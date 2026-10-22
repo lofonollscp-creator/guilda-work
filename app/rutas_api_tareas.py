@@ -42,6 +42,10 @@ def cambiar_estado_tarea(tarea_id: int):
     """Cuerpo: `{"estado": "no_iniciada|en_progreso|completada|esperando|aplazada"}`. 409 si la tarea espera a otras."""
     previa = _visible_o_404(tarea_id)
     estado = (_body().get("estado") or "").strip()
+    if estado == "en_revision" and previa["estado"] != "en_revision":
+        return _err(tareas_trabajo.MENSAJE_SOLO_POR_REVISION, 409, "solo_por_revision", "estado")
+    if previa["estado"] == "en_revision" and estado != "en_revision":
+        return _err(tareas_trabajo.MENSAJE_EN_REVISION, 409, "revision_pendiente", "estado")
     if estado not in ESTADOS:
         return _err(f"estado debe ser uno de: {', '.join(ESTADOS)}.", 400, "estado_invalido", "estado")
     if estado in ("en_progreso", "completada") and db.tarea_bloqueada(tarea_id):

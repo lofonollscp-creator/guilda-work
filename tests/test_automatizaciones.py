@@ -582,7 +582,7 @@ def test_pedir_cambios_en_una_revision_y_reabrir_el_padre_tambien_son_cambios_de
     db.cambiar_estado_tarea_outlook(d.cus, hija, "no_iniciada")                    # reabrir la hija devuelve el padre a «en progreso»
     au.procesar_eventos(AHORA)
     titulos = [a["titulo"] for a in _avisos_de_automatizacion(d.sup)]
-    assert n0 == 1 and "Con revisión: de Sin empezar a En progreso" in titulos and "Padre: de Completada a En progreso" in titulos
+    assert n0 == 1 and "Con revisión: de En revisión a En progreso" in titulos and "Padre: de Completada a En progreso" in titulos
 
 
 def test_la_creacion_de_tareas_dispara_con_filtros_y_nunca_las_creadas_por_una_automatizacion(d):
@@ -796,11 +796,11 @@ def test_pedir_revision_automatica_y_sus_casos_limite(d):
 
 
 def test_una_revision_ya_pendiente_no_hace_fallar_a_la_regla(d):
-    au.crear_regla(d.t, d.sup, "Revisión", "tarea.estado", {"estado": "en_progreso"}, [{"tipo": "pedir_revision", "revisor": d.otro}])
-    t = db.crear_tarea_outlook(d.cus, asunto="Con revisión previa")
+    # La tarea ya está «en revisión», así que no puede cambiar de estado: el caso se da con un disparador diario (aquí, una tarea vencida).
+    au.crear_regla(d.t, d.sup, "Revisión", "tarea.vencida", {"dias_vencida": 1}, [{"tipo": "pedir_revision", "revisor": d.otro}])
+    t = db.crear_tarea_outlook(d.cus, asunto="Con revisión previa", fecha_vencimiento=(HOY - timedelta(days=3)).isoformat())
     tt.solicitar_revision(d.cus, t, d.sup)
-    db.cambiar_estado_tarea_outlook(d.cus, t, "en_progreso")
-    r = au.procesar_eventos(AHORA)
+    r = au.ejecutar(d.t, AHORA)
     assert (r["ok"], r["errores"]) == (1, 0) and tt.revision_pendiente(t)["revisor_id"] == d.sup and au.ejecuciones(d.t)[0]["progreso"] == ["ya había una revisión pendiente"]
 
 

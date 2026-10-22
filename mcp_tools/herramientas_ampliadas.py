@@ -245,8 +245,11 @@ def cambiar_estado_tarea(tarea_id: int, estado: str) -> dict:
     uid = _mt._uid()
     if estado not in ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada"):
         raise ValueError("estado debe ser no_iniciada, en_progreso, completada, esperando o aplazada.")
-    if _mt.db.obtener_tarea_outlook_visible(uid, tarea_id) is None:
+    actual = _mt.db.obtener_tarea_outlook_visible(uid, tarea_id)
+    if actual is None:
         raise ValueError(f"No existe la tarea {tarea_id} (o no tienes acceso).")
+    if actual["estado"] == "en_revision":
+        raise ValueError("La tarea está en revisión: resuélvela o retira la petición antes de cambiar su estado.")
     if estado in ("en_progreso", "completada") and _mt.db.tarea_bloqueada(tarea_id):
         raise ValueError("Esta tarea espera a otras que todavía no están completadas.")
     if not _mt.db.cambiar_estado_tarea_outlook(uid, tarea_id, estado):

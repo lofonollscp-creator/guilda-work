@@ -15,7 +15,7 @@
     formulario.querySelectorAll("[data-solo-disparador]").forEach(function (bloque) {
       mostrar(bloque, bloque.getAttribute("data-solo-disparador") === actual);
     });
-    var conTarea = ["tarea.vencida", "tarea.creada", "tarea.estado", "recurrencia.generada"].indexOf(actual) !== -1;
+    var conTarea = ["tarea.vencida", "tarea.creada", "tarea.estado", "recurrencia.generada", "tarea.liberada"].indexOf(actual) !== -1;
     formulario.querySelectorAll("[data-tipo-accion] option").forEach(function (opcion) {
       if (["comentar", "fijar_fecha", "asignar", "pedir_revision"].indexOf(opcion.value) !== -1) opcion.disabled = !conTarea;
     });

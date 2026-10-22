@@ -342,6 +342,8 @@ def cambiar_estado(proyecto_id: int, tarea_id: int):
         return _responder(False, _("No tienes permiso para cambiar esta tarea."), "proyectos.tablero", proyecto_id, 403)
     if estado in ("en_progreso", "completada") and db.tarea_bloqueada(tarea_id):
         return _responder(False, _("Esta tarea espera a otras que aún no están completadas."), "proyectos.tablero", proyecto_id, 409)
+    if estado != tarea["estado"] and "en_revision" in (estado, tarea["estado"]):
+        return _responder(False, _("El estado «en revisión» se pone pidiendo la revisión de la tarea, y no se cambia hasta resolverla o retirarla."), "proyectos.tablero", proyecto_id, 409)
     anterior = tarea["estado"]
     db.cambiar_estado_tarea_outlook(g.usuario_id, tarea_id, estado)
     return _responder(True, None, "proyectos.tablero", proyecto_id, estado=estado, anterior=anterior)

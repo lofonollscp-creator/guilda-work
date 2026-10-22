@@ -14,8 +14,10 @@ from datetime import date, datetime, timedelta
 
 from . import auditoria, db
 
-ESTADOS = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada")
+ESTADOS = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada", "en_revision")
 ESTADOS_CERRADOS = ("completada",)
+MENSAJE_EN_REVISION = "La tarea está en revisión: resuélvela o retira la petición antes de cambiar su estado."
+MENSAJE_SOLO_POR_REVISION = "El estado «en revisión» se pone pidiendo la revisión de la tarea, no a mano."
 MAX_CLIENTES_POR_TAREA = 50
 
 ESQUEMA = """
@@ -133,6 +135,44 @@ BEGIN
 END;
 """
 
+# «En revisión» es un estado real de la tarea, pero solo se entra y se sale por el flujo de revisión. Estos dos disparadores lo garantizan para CUALQUIER camino (web, API, importación…): no se puede poner
+# «en revisión» sin una revisión pendiente, ni sacar la tarea de ahí mientras siga pendiente. El flujo (solicitar/resolver/cancelar) cambia primero la revisión y después la tarea, así que los cumple.
+DISPARADORES_EN_REVISION = """
+DROP TRIGGER IF EXISTS tareas_outlook_en_revision_entrada;
+CREATE TRIGGER tareas_outlook_en_revision_entrada BEFORE UPDATE OF estado ON tareas_outlook
+WHEN NEW.estado = 'en_revision' AND OLD.estado != 'en_revision'
+  AND NOT EXISTS (SELECT 1 FROM tarea_revisiones r WHERE r.tarea_id = NEW.id AND r.estado = 'pendiente')
+BEGIN SELECT RAISE(ABORT, 'solo_por_revision'); END;
+DROP TRIGGER IF EXISTS tareas_outlook_en_revision_salida;
+CREATE TRIGGER tareas_outlook_en_revision_salida BEFORE UPDATE OF estado ON tareas_outlook
+WHEN OLD.estado = 'en_revision' AND NEW.estado != 'en_revision'
+  AND EXISTS (SELECT 1 FROM tarea_revisiones r WHERE r.tarea_id = NEW.id AND r.estado = 'pendiente')
+BEGIN SELECT RAISE(ABORT, 'revision_pendiente'); END;
+"""
+
+
+def _permitir_estado_en_revision(conn) -> None:
+    """Añade «en_revision» al CHECK del estado de `tareas_outlook`. SQLite no deja alterar un CHECK, y reconstruir la tabla con las claves foráneas activas es arriesgado; para AMPLIAR (nunca restringir)
+    un CHECK, la documentación de SQLite admite reescribir su definición (`writable_schema` + `schema_version`), sin tocar ni mover ningún dato. Idempotente: si ya lo admite, no hace nada."""
+    import re
+    fila = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'tareas_outlook'").fetchone()
+    if fila is None or "en_revision" in fila[0]:
+        return
+    nuevo = re.sub(r"'aplazada'\s*\)\s*\)", "'aplazada','en_revision'))", fila[0], count=1)
+    if nuevo == fila[0]:
+        raise RuntimeError("No se reconoce la definición del estado de tareas_outlook: no se puede añadir «en_revision».")
+    conn.commit()
+    version = conn.execute("PRAGMA schema_version").fetchone()[0]
+    conn.execute("PRAGMA writable_schema = ON")
+    try:
+        conn.execute("UPDATE sqlite_master SET sql = ? WHERE type = 'table' AND name = 'tareas_outlook'", (nuevo,))
+        conn.execute(f"PRAGMA schema_version = {int(version) + 1}")
+    finally:
+        conn.execute("PRAGMA writable_schema = OFF")
+    conn.commit()
+    if conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+        raise RuntimeError("La comprobación de integridad falló tras ampliar el estado de tareas_outlook.")
+
 
 def crear_esquema(conn) -> None:
     """Idempotente: columnas nuevas, tabla de vínculos, disparador de versión y vínculo principal de lo que ya existía."""
@@ -144,6 +184,16 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "tareas_outlook", "comentarios_cliente", "INTEGER NOT NULL DEFAULT 0")
     conn.executescript(ESQUEMA)
     db._asegurar_columna(conn, "tarea_revisiones", "modo", "TEXT NOT NULL DEFAULT 'todos'")
+    db._asegurar_columna(conn, "tarea_revisiones", "estado_previo", "TEXT")            # el estado que tenía la tarea al pedir la revisión, para devolvérselo al resolverla o retirarla
+    _permitir_estado_en_revision(conn)
+    conn.executescript(DISPARADORES_EN_REVISION)
+    # Las revisiones que ya estaban pendientes pasan a verse «en revisión» (y guardan el estado del que venían); una tarea «en revisión» sin revisión pendiente vuelve a «en progreso».
+    conn.execute("""UPDATE tarea_revisiones SET estado_previo = (SELECT t.estado FROM tareas_outlook t WHERE t.id = tarea_revisiones.tarea_id)
+                    WHERE estado = 'pendiente' AND estado_previo IS NULL""")
+    conn.execute("""UPDATE tareas_outlook SET estado = 'en_revision' WHERE estado NOT IN ('completada', 'en_revision') AND papelera_en IS NULL
+                    AND EXISTS (SELECT 1 FROM tarea_revisiones r WHERE r.tarea_id = tareas_outlook.id AND r.estado = 'pendiente')""")
+    conn.execute("""UPDATE tareas_outlook SET estado = 'en_progreso' WHERE estado = 'en_revision'
+                    AND NOT EXISTS (SELECT 1 FROM tarea_revisiones r WHERE r.tarea_id = tareas_outlook.id AND r.estado = 'pendiente')""")
     conn.execute(                    # las revisiones de antes tenían un solo revisor: pasan a tener su voto (pendiente, aprobado o con cambios según cómo acabaron)
         """INSERT OR IGNORE INTO tarea_revision_votos (revision_id, revisor_id, estado, nota, votado_en)
            SELECT r.id, r.revisor_id, CASE r.estado WHEN 'aprobada' THEN 'aprobado' WHEN 'cambios' THEN 'cambios' ELSE 'pendiente' END,
@@ -224,8 +274,13 @@ def transicionar(usuario_id: int, tarea_id: int, estado: str, motivo: str | None
     «esperando» el motivo se borra; y si se manda `version`, solo vale si nadie ha tocado la tarea."""
     if estado not in ESTADOS:
         raise TransicionInvalida("estado_invalido", "El estado no es válido.", "estado")
-    if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
+    actual = db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
+    if actual is None:
         raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+    if estado == "en_revision" and actual["estado"] != "en_revision":
+        raise TransicionInvalida("solo_por_revision", MENSAJE_SOLO_POR_REVISION, "estado")
+    if actual["estado"] == "en_revision" and estado not in ("en_revision", "completada"):          # completar tiene su propio aviso (comprobar_completable: revisión pendiente)
+        raise TransicionInvalida("revision_pendiente", MENSAJE_EN_REVISION, "estado")
     if not db.puede_trabajar_tarea(usuario_id, tarea_id):
         raise TransicionInvalida("sin_permiso", "No tienes permiso para hacer esto con esta tarea.")
     motivo = (motivo or "").strip()[:500]
@@ -671,6 +726,9 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
         except sqlite3.IntegrityError:
             raise TransicionInvalida("revision_pendiente", "Esta tarea ya tiene una revisión pendiente.") from None
         revision_id = cur.lastrowid
+        previo = tarea["estado"]
+        conn.execute("UPDATE tarea_revisiones SET estado_previo = ? WHERE id = ?", (previo, revision_id))
+        conn.execute("UPDATE tareas_outlook SET estado = 'en_revision', actualizada_en = ? WHERE id = ?", (db.now_iso(), tarea_id))        # la revisión ya está pendiente: el disparador lo admite
         for r in ids:
             conn.execute("INSERT INTO tarea_revision_votos (revision_id, revisor_id) VALUES (?, ?)", (revision_id, r))
             if db.obtener_tarea_outlook_visible(r, tarea_id) is None:            # para poder revisarla tiene que verla: se le comparte como observador
@@ -680,6 +738,7 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
     finally:
         conn.close()
     db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_solicitada", ", ".join(db.nombre_mostrado_usuario(r) or "" for r in ids))
+    db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": previo, "a": "en_revision"})
     for r in (ids[:1] if modo == "cadena" else ids):               # en cadena solo se avisa a quien tiene el turno
         _avisar(r, f"Te piden revisar: {tarea['asunto']}", (nota or "").strip() or "Revisión pendiente", tarea_id)
     return revision_id
@@ -704,6 +763,7 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
     voto = "aprobado" if decision == "aprobar" else "cambios"
     conn = db.get_connection()
     previo = None
+    destino = "en_progreso"
     try:
         cur = conn.execute("UPDATE tarea_revision_votos SET estado = ?, nota = ?, votado_en = ? WHERE revision_id = ? AND revisor_id = ? AND estado = 'pendiente'",
                            (voto, nota or None, db.now_iso(), rev["id"], usuario_id))
@@ -723,6 +783,10 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
             elif final == "cambios":
                 previo = conn.execute("SELECT estado FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
                 conn.execute("UPDATE tareas_outlook SET estado = 'en_progreso', fecha_completada = NULL, actualizada_en = ? WHERE id = ? AND estado != 'en_progreso'", (db.now_iso(), tarea_id))
+            elif final == "aprobada":                         # aprobada: la tarea vuelve al estado del que venía (aprobar no la completa; lo hace quien la lleva)
+                previo = conn.execute("SELECT estado FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
+                destino = _estado_al_salir_de_revision(conn, rev["id"])
+                conn.execute("UPDATE tareas_outlook SET estado = ?, actualizada_en = ? WHERE id = ? AND estado = 'en_revision'", (destino, db.now_iso(), tarea_id))
         auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision.voto", "tarea", tarea_id, {"revision": rev["id"], "voto": voto}, conn=conn)
         if final:
             auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision." + decision, "tarea", tarea_id, {"revision": rev["id"], "modo": rev["modo"]}, conn=conn)
@@ -737,11 +801,18 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
         if rev["modo"] == "cadena" and pendientes:                      # le toca al siguiente de la cadena
             _avisar(pendientes[0], f"Te toca revisar: {asunto}", f"{quien} ya la ha aprobado", tarea_id)
         return {**rev, "estado": "pendiente", "pendientes": pendientes, "turno": pendientes[0] if rev["modo"] == "cadena" and pendientes else None, "nota_resolucion": None}
-    if final == "cambios" and previo is not None and previo["estado"] != "en_progreso":
-        db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": previo["estado"], "a": "en_progreso"})
+    if final in ("cambios", "aprobada") and previo is not None and previo["estado"] != destino:
+        db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": previo["estado"], "a": destino})
     db.registrar_actividad_tarea(usuario_id, tarea_id, "revision_aprobada" if final == "aprobada" else "revision_cambios", f"{quien}: {nota}" if nota else quien)
     _avisar(rev["solicitada_por"], (f"Revisión aprobada: {asunto}" if final == "aprobada" else f"Piden cambios: {asunto}"), (f"{quien}: " if len(rev["revisores"]) > 1 else "") + (nota or "Sin comentarios"), tarea_id)
     return {**rev, "estado": final, "nota_resolucion": nota or None, "pendientes": []}
+
+
+def _estado_al_salir_de_revision(conn, revision_id: int) -> str:
+    """El estado que tenía la tarea al pedir la revisión; «en progreso» si no consta o ya no vale (completada o la propia revisión)."""
+    f = conn.execute("SELECT estado_previo FROM tarea_revisiones WHERE id = ?", (revision_id,)).fetchone()
+    previo = f["estado_previo"] if f else None
+    return previo if previo in ESTADOS and previo not in ("en_revision", "completada") else "en_progreso"
 
 
 def cancelar_revision(usuario_id: int, tarea_id: int) -> bool:
@@ -753,11 +824,18 @@ def cancelar_revision(usuario_id: int, tarea_id: int) -> bool:
     conn = db.get_connection()
     try:
         cur = conn.execute("UPDATE tarea_revisiones SET estado = 'cancelada', resuelta_en = ?, resuelta_por = ? WHERE id = ? AND estado = 'pendiente'", (db.now_iso(), usuario_id, rev["id"]))
+        devuelta = None
+        if cur.rowcount:                                      # retirada: la tarea vuelve al estado del que venía
+            destino = _estado_al_salir_de_revision(conn, rev["id"])
+            if conn.execute("UPDATE tareas_outlook SET estado = ?, actualizada_en = ? WHERE id = ? AND estado = 'en_revision'", (destino, db.now_iso(), tarea_id)).rowcount:
+                devuelta = destino
         auditoria.registrar(rev["tenant_id"], usuario_id, "tarea.revision.cancelar", "tarea", tarea_id, {"revision": rev["id"]}, conn=conn)
         conn.commit()
-        return bool(cur.rowcount)
     finally:
         conn.close()
+    if devuelta:
+        db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": "en_revision", "a": devuelta})
+    return bool(cur.rowcount)
 
 
 # --- Colaboración con el cliente (portal) ------------------------------------------------------------------------------------
@@ -770,7 +848,7 @@ def cancelar_revision(usuario_id: int, tarea_id: int) -> bool:
 #   - el equipo puede ocultar un comentario (queda en la base, auditado, pero ya no se ve en el portal ni cuenta); contestar al cliente le manda un correo con un enlace al portal;
 #   - si la tarea se completa, se borra o se deja de enseñar, el cliente deja de poder comentar y de verla (la conversación se conserva para el equipo).
 
-ESTADOS_PARA_CLIENTE = {"no_iniciada": "Pendiente", "en_progreso": "En curso", "esperando": "En espera", "aplazada": "Aplazada", "completada": "Completada"}
+ESTADOS_PARA_CLIENTE = {"no_iniciada": "Pendiente", "en_progreso": "En curso", "esperando": "En espera", "aplazada": "Aplazada", "completada": "Completada", "en_revision": "En curso"}      # la revisión interna no se le cuenta al cliente
 MAX_CARACTERES_COMENTARIO = 1000
 MAX_COMENTARIOS_POR_HORA_Y_TAREA = 10
 MAX_COMENTARIOS_POR_DIA = 40

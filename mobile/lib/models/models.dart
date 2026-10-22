@@ -260,6 +260,8 @@ const estadosTareaOutlook = [
   ('completada', 'Completada'),
   ('esperando', 'Esperando a otros'),
   ('aplazada', 'Aplazada'),
+  // Solo se entra y se sale pidiendo/resolviendo/retirando la revisión (el servidor rechaza cambiarlo a mano); está en la lista para poder MOSTRARLO.
+  ('en_revision', 'En revisión'),
 ];
 
 const prioridadesTareaOutlook = [

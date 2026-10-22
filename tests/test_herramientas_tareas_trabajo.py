@@ -5,9 +5,9 @@ import mcp_tools
 from app import db, herramientas_grupos as hg, ia_herramientas as ih, tareas_trabajo as tt
 from app.db_fiscal import crear_cliente_fiscal
 
-LECTURA = ("listar_subtareas_tarea", "listar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "informe_tareas", "listar_conversaciones_cliente_tarea",
+LECTURA = ("listar_subtareas_tarea", "listar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "informe_tareas", "listar_conversaciones_cliente_tarea", "listar_dependencias_tarea",
            "listar_reglas_automatizacion", "simular_regla_automatizacion", "listar_ejecuciones_automatizacion")
-ESCRITURA = ("cambiar_estado_tarea_con_motivo", "crear_subtarea", "fijar_clientes_de_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "ocultar_comentario_cliente_tarea")
+ESCRITURA = ("cambiar_estado_tarea_con_motivo", "crear_subtarea", "fijar_clientes_de_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "ocultar_comentario_cliente_tarea", "anadir_dependencia_tarea", "quitar_dependencia_tarea")
 
 
 def _equipo(nombre):
@@ -157,3 +157,26 @@ def test_ninguna_herramienta_toca_lo_que_ve_el_cliente_ni_crea_reglas():
     nombres = {t.__name__ for t in mcp_tools.TOOLS}
     assert not ({"fijar_visible_cliente_de_la_tarea", "crear_regla_automatizacion", "cambiar_regla_automatizacion", "borrar_regla_automatizacion"} & nombres)
     assert not any("visible_cliente" in n or n.startswith(("crear_regla_auto", "borrar_regla_auto")) for n in nombres)
+
+
+# --- Dependencias entre tareas -----------------------------------------------------------------------------------------------
+
+def test_herramientas_de_dependencias_entre_tareas():
+    t, d, ana, beto = _equipo("Despacho dependencias herramientas")
+    a, b, c = (db.crear_tarea_outlook(ana, asunto=n) for n in ("Primera", "Segunda", "Tercera"))
+    ajena = db.crear_tarea_outlook(beto, asunto="Privada de Beto")
+    r = ih.ejecutar(ana, "anadir_dependencia_tarea", {"tarea_id": b, "depende_de_id": a})
+    assert r["bloqueada"] is True and [x["id"] for x in r["depende_de"]] == [a]
+    assert ih.ejecutar(ana, "listar_dependencias_tarea", {"tarea_id": b})["bloqueada"] is True
+    ih.ejecutar(ana, "anadir_dependencia_tarea", {"tarea_id": c, "depende_de_id": b})
+    for args, texto in (({"tarea_id": a, "depende_de_id": a}, "a sí misma"), ({"tarea_id": a, "depende_de_id": c}, "ciclo"), ({"tarea_id": b, "depende_de_id": ajena}, "no puedes verla")):
+        with pytest.raises(ih.ErrorHerramientaIA, match=texto):
+            ih.ejecutar(ana, "anadir_dependencia_tarea", args)
+    with pytest.raises(ih.ErrorHerramientaIA, match="no puedes verla"):
+        ih.ejecutar(beto, "listar_dependencias_tarea", {"tarea_id": b})                               # otra persona sin acceso a la tarea
+    db.completar_tarea_outlook(ana, a)
+    assert ih.ejecutar(ana, "listar_dependencias_tarea", {"tarea_id": b})["bloqueada"] is False
+    r = ih.ejecutar(ana, "quitar_dependencia_tarea", {"tarea_id": c, "depende_de_id": b})
+    assert r["depende_de"] == [] and r["bloqueada"] is False
+    with pytest.raises(ih.ErrorHerramientaIA, match="no esperaba"):
+        ih.ejecutar(ana, "quitar_dependencia_tarea", {"tarea_id": c, "depende_de_id": b})

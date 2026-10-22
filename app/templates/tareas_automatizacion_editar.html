@@ -106,6 +106,21 @@
       </label>
       <small class="muted">{{ _('Cuenta el cambio desde cualquier sitio: la lista, el tablero, la ficha o la API.') }}</small>
     </div>
+    <div data-solo-disparador="tarea.liberada">
+      <p class="muted">{{ _('Se activa cuando se completa la última tarea de la que dependía otra, que queda libre para empezar. Sirve, por ejemplo, para avisar a quien la lleva o fijarle una fecha.') }}</p>
+      <div role="group" aria-label="{{ _('Solo con estas prioridades') }}">
+        <span class="muted">{{ _('Solo con estas prioridades (ninguna marcada = todas)') }}</span>
+        {% for valor, etiqueta in prioridades %}
+        <label class="checkbox"><input type="checkbox" name="c_prioridades_l" value="{{ valor }}" {% if valor in c.get('prioridades', []) %}checked{% endif %}> {{ etiqueta }}</label>
+        {% endfor %}
+      </div>
+      <label>{{ _('Solo de este cliente') }}
+        <select name="c_cliente_l">
+          <option value="">{{ _('Cualquiera') }}</option>
+          {% for cl in clientes_fiscales %}<option value="{{ cl.id }}" {% if c.get('cliente_fiscal_id') == cl.id %}selected{% endif %}>{{ cl.nombre }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
     <div data-solo-disparador="recurrencia.generada">
       <p class="muted">{{ _('Se activa cuando una regla recurrente genera su tarea del periodo (se comprueba una vez al día). Sirve, por ejemplo, para ponerle fecha límite, asignarla o pedir su revisión.') }}</p>
       <div role="group" aria-label="{{ _('Solo con estas periodicidades') }}">

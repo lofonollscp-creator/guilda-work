@@ -13,7 +13,7 @@
     {% if secciones_lote %}<option value="seccion">{{ _('Mover a una sección…') }}</option>{% endif %}
   </select>
   <select name="valor_estado" data-valor-para="estado" aria-label="{{ _('Estado') }}">
-    {% for valor, etiqueta in estados %}<option value="{{ valor }}">{{ etiqueta }}</option>{% endfor %}
+    {% for valor, etiqueta in estados if valor != 'en_revision' %}<option value="{{ valor }}">{{ etiqueta }}</option>{% endfor %}
   </select>
   <select name="valor_prioridad" data-valor-para="prioridad" aria-label="{{ _('Prioridad') }}">
     {% for valor, etiqueta in prioridades %}<option value="{{ valor }}" {{ 'selected' if valor == 'normal' }}>{{ etiqueta }}</option>{% endfor %}

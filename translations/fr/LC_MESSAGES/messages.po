@@ -14449,3 +14449,15 @@ msgstr "Seulement celles liées à une échéance fiscale (générées par une r
 
 msgid "Solo del modelo (vacío = todos; implica la opción de arriba)"
 msgstr "Seulement du modèle (vide = tous ; implique l'option ci-dessus)"
+
+msgid "El estado «en revisión» se pone pidiendo la revisión de la tarea, y no se cambia hasta resolverla o retirarla."
+msgstr "L'état « en révision » se définit en demandant la relecture de la tâche, et ne change pas tant qu'elle n'est pas résolue ou retirée."
+
+msgid "El estado «en revisión» se pone pidiendo la revisión de la tarea, no a mano."
+msgstr "L'état « en révision » se définit en demandant la relecture de la tâche, pas à la main."
+
+msgid "La tarea está en revisión: resuélvela o retira la petición antes de cambiar su estado."
+msgstr "La tâche est en révision : résolvez-la ou retirez la demande avant de changer son état."
+
+msgid "Se activa cuando se completa la última tarea de la que dependía otra, que queda libre para empezar. Sirve, por ejemplo, para avisar a quien la lleva o fijarle una fecha."
+msgstr "Se déclenche quand la dernière tâche dont une autre dépendait est terminée, ce qui la libère pour démarrer. Utile, par exemple, pour prévenir la personne qui la gère ou fixer une échéance."

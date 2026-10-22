@@ -23,6 +23,7 @@ ESTADOS = [
     ("completada", _l("Completada")),
     ("esperando", _l("Esperando a otros")),
     ("aplazada", _l("Aplazada")),
+    ("en_revision", _l("En revisión")),          # solo se entra y se sale pidiendo/resolviendo/retirando la revisión (ver app/tareas_trabajo.py); no se elige a mano
 ]
 PRIORIDADES = [
     ("baja", _l("Baja")),
@@ -476,6 +477,9 @@ def editar(tarea_id: int):
         if not es_dueno:
             campos.pop("categoria_id")
         motivo = request.form.get("motivo_bloqueo", "").strip()
+        if campos["estado"] != tarea["estado"] and (campos["estado"] == "en_revision" or tarea["estado"] == "en_revision"):
+            mensaje = tareas_trabajo.MENSAJE_SOLO_POR_REVISION if campos["estado"] == "en_revision" else tareas_trabajo.MENSAJE_EN_REVISION
+            return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _(mensaje)))
         if campos["estado"] == "esperando" and not motivo:
             return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _("Indica por qué la tarea queda bloqueada.")))
         if campos["estado"] in ("en_progreso", "completada") and campos["estado"] != tarea["estado"] and db.tarea_bloqueada(tarea_id):
@@ -497,7 +501,10 @@ def editar(tarea_id: int):
             _avisar_desbloqueos(g.usuario_id, tarea_id, False)
             campos.pop("estado")
             campos.pop("porcentaje_completado")
-        db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
+        try:
+            db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
+        except ValueError as e:
+            return render_template("tarea_outlook_editar.html", **_contexto_edicion(tarea, _(str(e)))), 409
         tareas_trabajo.al_cambiar_estado(g.usuario_id, tarea_id, tarea["estado"], campos.get("estado") or "completada")
         tareas_trabajo.guardar_motivo(tarea_id, campos.get("estado") or "completada", motivo)
         if request.form.get("clientes_enviados"):
@@ -650,6 +657,11 @@ def tablero():
 @login_required
 def cambiar_estado(tarea_id: int):
     previa = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    nuevo = request.form.get("estado", "")
+    if previa is not None and nuevo == "en_revision" and previa["estado"] != "en_revision":
+        return _volver_con_error(_(tareas_trabajo.MENSAJE_SOLO_POR_REVISION))
+    if previa is not None and previa["estado"] == "en_revision" and nuevo not in ("en_revision", "completada"):       # completar tiene su propio aviso (revisión pendiente)
+        return _volver_con_error(_(tareas_trabajo.MENSAJE_EN_REVISION))
     estaba_completada = previa is not None and previa["estado"] == "completada"
     impedimento = tareas_trabajo.impedimento_de_cierre(tarea_id) if previa is not None and request.form.get("estado") == "completada" and db.puede_trabajar_tarea(g.usuario_id, tarea_id) else None
     if impedimento:

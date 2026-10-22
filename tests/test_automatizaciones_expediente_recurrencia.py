@@ -266,3 +266,67 @@ def test_pantalla_del_filtro_de_vencimiento(cliente):
     assert au.listar_reglas(t)[0]["condiciones"] == {"modelo": "303", "desde_vencimiento": True}
     editar = cliente.get(f"/tareas/automatizaciones/regla/{au.listar_reglas(t)[0]['id']}").get_data(as_text=True)
     assert 'value="303"' in editar and 'name="c_venc_c" value="1" checked' in editar
+
+
+# --- «Una tarea queda libre» ----------------------------------------------------------------------------------------------
+
+def test_completar_lo_que_esperaba_dispara_la_regla_de_tarea_liberada(d):
+    au.crear_regla(d.t, d.sup, "Libre", "tarea.liberada", {"prioridades": ["alta"]},
+                   [{"tipo": "notificar", "titulo": "Libre: {asunto} (tras «{previa}»)", "a": "direccion"}, {"tipo": "fijar_fecha", "dias_plazo": 4}])
+    previa = db.crear_tarea_outlook(d.cus, asunto="Recoger documentación")
+    otra_previa = db.crear_tarea_outlook(d.cus, asunto="Pedir certificado")
+    siguiente = db.crear_tarea_outlook(d.cus, asunto="Preparar la declaración", prioridad="alta")
+    normal = db.crear_tarea_outlook(d.cus, asunto="Archivar", prioridad="normal")
+    for previa_id in (previa, otra_previa):
+        assert db.anadir_dependencia_tarea(d.cus, siguiente, previa_id)
+    assert db.anadir_dependencia_tarea(d.cus, normal, previa)
+    db.completar_tarea_outlook(d.cus, previa)
+    assert au.procesar_eventos(AHORA)["ejecuciones"] == 0                                              # «siguiente» aún espera a la otra; «normal» no cumple la prioridad
+    db.completar_tarea_outlook(d.cus, otra_previa)
+    r = au.procesar_eventos(AHORA)
+    assert r["ejecuciones"] == 1 and r["fallidas"] == 0
+    assert [a["titulo"] for a in _avisos_de_automatizacion(d.sup)] == ["Libre: Preparar la declaración (tras «Pedir certificado»)"]
+    assert [t for t in db.listar_tareas_outlook(d.cus) if t["id"] == siguiente][0]["fecha_vencimiento"]
+
+
+def test_validacion_y_pantalla_de_tarea_liberada(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    assert au.validar_condiciones("tarea.liberada", {"prioridades": ["alta", "x"]}) == {"prioridades": ["alta"]}
+    assert au.validar_condiciones("tarea.liberada", {"modelo": "303"}) == {}                              # el filtro de vencimiento es solo de «Se crea una tarea»
+    au.validar_acciones("tarea.liberada", [{"tipo": "asignar", "a": 1}, {"tipo": "notificar", "titulo": "{previa}"}])
+    with pytest.raises(ValueError, match="no existe"):
+        au.validar_acciones("tarea.liberada", [{"tipo": "notificar", "titulo": "{modelo}"}])
+    uid = iniciar_sesion_de_prueba(cliente, "liberada-pantalla@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho pantalla liberada")
+    db.asignar_tenant(uid, t)
+    db.asignar_supervisor_tenant(uid, True)
+    assert 'name="c_prioridades_l"' in cliente.get("/tareas/automatizaciones/regla").get_data(as_text=True)
+    r = cliente.post("/tareas/automatizaciones/regla", data={"nombre": "Libres", "disparador": "tarea.liberada", "c_prioridades_l": ["alta"], "activa": "1",
+                                                           "a0_tipo": "notificar", "a0_titulo": "Libre {asunto}", "a0_dest_aviso": "responsable"})
+    assert r.status_code == 302 and au.listar_reglas(t)[0]["condiciones"] == {"prioridades": ["alta"]}
+
+
+# --- «En revisión» como estado: las reglas lo ven ---------------------------------------------------------------------------
+
+def test_pedir_la_revision_es_un_cambio_de_estado_que_las_reglas_ven(d):
+    from app import tareas_trabajo as tt
+    au.crear_regla(d.t, d.sup, "A revisión", "tarea.estado", {"estado": "en_revision"}, [{"tipo": "notificar", "titulo": "{asunto}: de {anterior} a {estado}", "a": "direccion"}])
+    t = db.crear_tarea_outlook(d.cus, asunto="Para revisar")
+    db.cambiar_estado_tarea_outlook(d.cus, t, "en_progreso")
+    au.procesar_eventos(AHORA)
+    tt.solicitar_revision(d.cus, t, d.otro)
+    assert au.procesar_eventos(AHORA)["ejecuciones"] == 1
+    assert [a["titulo"] for a in _avisos_de_automatizacion(d.sup)] == ["Para revisar: de En progreso a En revisión"]
+    with pytest.raises(ValueError, match="ya está en revisión"):
+        au.crear_regla(d.t, d.sup, "Absurda", "tarea.estado", {"estado": "en_revision"}, [{"tipo": "pedir_revision", "revisor": d.otro}])
+
+
+def test_el_cliente_no_ve_la_revision_interna_y_el_calendario_externo_la_exporta_como_en_curso(d):
+    from app import outlook_ics, tareas_trabajo as tt
+    t = db.crear_tarea_outlook(d.cus, asunto="Con cliente", cliente_fiscal_id=d.cliente)
+    tt.fijar_visible_cliente(d.cus, t, True)
+    tt.solicitar_revision(d.cus, t, d.otro)
+    cliente_nucleo = tt.tareas_para_cliente(d.t, d.cliente)
+    assert cliente_nucleo[0]["estado_texto"] == "En curso" and "revisi" not in cliente_nucleo[0]["estado_texto"].lower()
+    assert outlook_ics.ESTADO_A_ICS["en_revision"] == "IN-PROCESS" and outlook_ics.ESTADO_A_CSV_EXPORTAR["en_revision"] == "In Progress"
+    assert "en_revision" not in outlook_ics.CSV_A_ESTADO.values()

@@ -704,7 +704,10 @@ def editar_tarea_outlook(tarea_id: int):
     if error:
         return error
     if campos:
-        db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
+        try:
+            db.editar_tarea_outlook(g.usuario_id, tarea_id, **campos)
+        except ValueError as e:                  # «en revisión» solo se pone y se quita por el flujo de revisión
+            return _err(str(e), 409, "estado_en_revision", "estado")
     _guardar_referencia("tareas_outlook", g.usuario_id, tarea_id, datos)
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)))
 

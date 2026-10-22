@@ -29,7 +29,7 @@ def _tarea_visible(tarea_id: int):
 
 
 def cambiar_estado_tarea_con_motivo(tarea_id: int, estado: str, motivo: str | None = None, version: int | None = None) -> dict:
-    """Cambia el estado de una tarea (no_iniciada, en_progreso, completada, esperando o aplazada). `esperando` (bloqueada) exige `motivo`. Con `version` (la que devuelve detalle_tarea) solo vale si
+    """Cambia el estado de una tarea (no_iniciada, en_progreso, completada, esperando o aplazada; «en_revision» lo pone y quita el flujo de revisión). `esperando` (bloqueada) exige `motivo`. Con `version` (la que devuelve detalle_tarea) solo vale si
     nadie ha tocado la tarea antes. No completa una tarea con subtareas abiertas ni con una revisión pendiente."""
     _mt._tarea_visible(tarea_id)
     tt = _mt._tt()
@@ -196,3 +196,36 @@ def ocultar_comentario_cliente_tarea(comentario_id: int) -> dict:
     if tarea_id is None:
         raise _mt._como_error(_mt._tt().TransicionInvalida("no_encontrada", "Comentario no encontrado."))
     return {"id": comentario_id, "tarea_id": tarea_id, "oculto": True}
+
+
+def listar_dependencias_tarea(tarea_id: int) -> dict:
+    """De qué tareas depende una tarea (con su estado) y si está bloqueada. Una tarea bloqueada espera a otras que aún no están completadas: no se puede empezar ni completar hasta entonces."""
+    _mt._tarea_visible(tarea_id)
+    return {"bloqueada": _mt.db.tarea_bloqueada(tarea_id), "depende_de": _mt.db.dependencias_de_tarea(tarea_id)}
+
+
+def anadir_dependencia_tarea(tarea_id: int, depende_de_id: int) -> dict:
+    """Hace que una tarea espere a otra: no se podrá empezar ni completar hasta que `depende_de_id` esté completada. Hace falta poder editar la primera y ver la segunda; no se admiten ciclos
+    (A espera a B y B a A, ni cadenas que vuelvan al principio) ni que una tarea dependa de sí misma."""
+    _mt._tarea_visible(tarea_id)
+    db, uid = _mt.db, _mt._uid()
+    if tarea_id == depende_de_id:
+        raise ValueError("Una tarea no puede esperarse a sí misma.")
+    if not db.puede_editar_tarea(uid, tarea_id):
+        raise ValueError("No tienes permiso para cambiar las dependencias de esta tarea.")
+    if db.rol_en_tarea(uid, depende_de_id) is None:
+        raise ValueError(f"No existe la tarea {depende_de_id} (o no puedes verla).")
+    if not db.anadir_dependencia_tarea(uid, tarea_id, depende_de_id):
+        raise ValueError("Esa dependencia crearía un ciclo: la otra tarea ya espera (directa o indirectamente) a esta.")
+    return {"bloqueada": db.tarea_bloqueada(tarea_id), "depende_de": db.dependencias_de_tarea(tarea_id)}
+
+
+def quitar_dependencia_tarea(tarea_id: int, depende_de_id: int) -> dict:
+    """Quita la espera de una tarea a otra. Hace falta poder editar la tarea."""
+    _mt._tarea_visible(tarea_id)
+    db = _mt.db
+    if not db.puede_editar_tarea(_mt._uid(), tarea_id):
+        raise ValueError("No tienes permiso para cambiar las dependencias de esta tarea.")
+    if not db.quitar_dependencia_tarea(_mt._uid(), tarea_id, depende_de_id):
+        raise ValueError("Esa tarea no esperaba a la otra.")
+    return {"bloqueada": db.tarea_bloqueada(tarea_id), "depende_de": db.dependencias_de_tarea(tarea_id)}

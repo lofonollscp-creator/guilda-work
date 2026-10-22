@@ -1261,6 +1261,12 @@ def editar_tarea_outlook(usuario_id: int, tarea_id: int, **campos) -> None:
         asignaciones = ", ".join(f"{c} = ?" for c in columnas)
         valores = [campos[c] for c in columnas]
         antes = conn.execute("SELECT * FROM tareas_outlook WHERE id = ?", (tarea_id,)).fetchone()
+        if "estado" in columnas and antes is not None and campos["estado"] != antes["estado"]:
+            from . import tareas_trabajo
+            if campos["estado"] == "en_revision":                 # «en revisión» solo se pone pidiendo la revisión; y no se sale de ahí con la revisión pendiente
+                raise ValueError(tareas_trabajo.MENSAJE_SOLO_POR_REVISION)
+            if antes["estado"] == "en_revision":
+                raise ValueError(tareas_trabajo.MENSAJE_EN_REVISION)
         conn.execute(
             f"UPDATE tareas_outlook SET {asignaciones}, actualizada_en = ? WHERE id = ?",
             [*valores, _db.now_iso(), tarea_id],
@@ -1313,7 +1319,7 @@ def completar_tarea_outlook(usuario_id: int, tarea_id: int) -> None:
         _db.registrar_actividad_tarea(usuario_id, tarea_id, "completada")
         for libre in _db.tareas_desbloqueadas_por(tarea_id):
             _db.registrar_actividad_tarea(usuario_id, libre["id"], "desbloqueada", _db._asunto_tarea(tarea_id))
-            _db._emitir_evento(usuario_id, "tarea.desbloqueada", {"tarea_id": libre["id"], "responsable_id": libre["responsable_id"]})
+            _db._emitir_evento(usuario_id, "tarea.desbloqueada", {"tarea_id": libre["id"], "responsable_id": libre["responsable_id"], "por": tarea_id})
         _db._emitir_evento(usuario_id, "tarea.completada", {"tarea_id": tarea_id, "completada_por": usuario_id})
         if previo is not None and previo["estado"] != "completada":
             _db._emitir_evento(usuario_id, "tarea.estado_cambiado", {"tarea_id": tarea_id, "de": previo["estado"], "a": "completada"})
@@ -1324,6 +1330,9 @@ def cambiar_estado_tarea_outlook(usuario_id: int, tarea_id: int, estado: str) ->
     (porcentaje, fecha y cronómetros); al reabrir una completada se limpia su fecha."""
     estados = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada")
     if estado not in estados or not _db.puede_trabajar_tarea(usuario_id, tarea_id):
+        return False
+    actual = _db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
+    if actual is not None and actual["estado"] == "en_revision":        # en revisión: la tarea no cambia de estado hasta que se resuelva o se retire la revisión
         return False
     if estado in ("en_progreso", "completada") and _db.tarea_bloqueada(tarea_id):
         return False
@@ -2176,7 +2185,7 @@ def reasignar_tarea_outlook(usuario_id: int, tarea_id: int, asignada_a: int | No
 
 def filtros_vista_validos(filtros: dict) -> dict:
     """Se queda solo con los filtros conocidos y con valores razonables (lo que llega de un formulario no se guarda tal cual)."""
-    estados = {"no_iniciada", "en_progreso", "completada", "esperando", "aplazada"}
+    estados = {"no_iniciada", "en_progreso", "completada", "esperando", "aplazada", "en_revision"}
     limpios = {}
     for clave in _db.FILTROS_VISTA_TAREAS:
         valor = str(filtros.get(clave) or "").strip()[:100]

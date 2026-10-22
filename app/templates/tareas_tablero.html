@@ -49,7 +49,7 @@
       <form class="tareas-tarjeta-mover" action="{{ url_for('tareas.cambiar_estado', tarea_id=t.id) }}" method="post">
         <label class="sr-only" for="mover-{{ t.id }}">{{ _('Mover a') }}</label>
         <select id="mover-{{ t.id }}" name="estado" data-autoenviar>
-          {% for v, e in estados %}<option value="{{ v }}" {{ 'selected' if v == t.estado }}>{{ e }}</option>{% endfor %}
+          {% for v, e in estados if v != 'en_revision' or t.estado == 'en_revision' %}<option value="{{ v }}" {{ 'selected' if v == t.estado }}>{{ e }}</option>{% endfor %}
         </select>
         <noscript><button type="submit" class="btn btn-ghost">{{ _('Mover') }}</button></noscript>
       </form>

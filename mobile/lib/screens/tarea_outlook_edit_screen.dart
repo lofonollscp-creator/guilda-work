@@ -127,7 +127,11 @@ class _TareaOutlookEditScreenState extends State<TareaOutlookEditScreen> {
           DropdownButtonFormField<String>(
             initialValue: _estado,
             decoration: const InputDecoration(labelText: 'Estado'),
-            items: estadosTareaOutlook.map((e) => DropdownMenuItem(value: e.$1, child: Text(e.$2))).toList(),
+            // «En revisión» no se elige: solo aparece si la tarea ya está en ese estado.
+            items: estadosTareaOutlook
+                .where((e) => e.$1 != 'en_revision' || e.$1 == _estado)
+                .map((e) => DropdownMenuItem(value: e.$1, child: Text(e.$2)))
+                .toList(),
             onChanged: (v) => setState(() => _estado = v ?? _estado),
           ),
           const SizedBox(height: 12),

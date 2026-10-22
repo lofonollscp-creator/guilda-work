@@ -14373,3 +14373,15 @@ msgstr "Només les vinculades a un venciment fiscal (les que genera una regla de
 
 msgid "Solo del modelo (vacío = todos; implica la opción de arriba)"
 msgstr "Només del model (buit = tots; implica l'opció de dalt)"
+
+msgid "El estado «en revisión» se pone pidiendo la revisión de la tarea, y no se cambia hasta resolverla o retirarla."
+msgstr "L'estat «en revisió» es posa demanant la revisió de la tasca, i no canvia fins que es resol o es retira."
+
+msgid "El estado «en revisión» se pone pidiendo la revisión de la tarea, no a mano."
+msgstr "L'estat «en revisió» es posa demanant la revisió de la tasca, no a mà."
+
+msgid "La tarea está en revisión: resuélvela o retira la petición antes de cambiar su estado."
+msgstr "La tasca és en revisió: resol-la o retira la petició abans de canviar-ne l'estat."
+
+msgid "Se activa cuando se completa la última tarea de la que dependía otra, que queda libre para empezar. Sirve, por ejemplo, para avisar a quien la lleva o fijarle una fecha."
+msgstr "S'activa quan es completa l'última tasca de la qual en depenia una altra, que queda lliure per començar. Serveix, per exemple, per avisar qui la du o posar-hi una data límit."

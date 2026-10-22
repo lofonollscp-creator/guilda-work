@@ -26,7 +26,7 @@
       {% if organiza %}
       <form class="tareas-tarjeta-mover" action="{{ url_for('proyectos.cambiar_estado', proyecto_id=p.id, tarea_id=t.id) }}" method="post">
         <label class="sr-only" for="mover-{{ t.id }}">{{ _('Mover a') }}</label>
-        <select id="mover-{{ t.id }}" name="estado">{% for v, e in estados_tablero %}<option value="{{ v }}" {{ 'selected' if v == t.estado }}>{{ e }}</option>{% endfor %}</select>
+        <select id="mover-{{ t.id }}" name="estado">{% for v, e in estados_tablero if v != 'en_revision' or t.estado == 'en_revision' %}<option value="{{ v }}" {{ 'selected' if v == t.estado }}>{{ e }}</option>{% endfor %}</select>
         <button type="submit" class="btn btn-ghost">{{ _('Mover') }}</button>
       </form>
       {% endif %}

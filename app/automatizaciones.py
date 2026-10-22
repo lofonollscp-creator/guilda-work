@@ -30,18 +30,19 @@ DISPARADORES = {
     "tarea.creada": "Se crea una tarea",
     "tarea.estado": "Una tarea cambia de estado",
     "recurrencia.generada": "Se genera una tarea recurrente",
+    "tarea.liberada": "Una tarea queda libre (se completa lo que esperaba)",
     "expediente.creado": "Se abre un expediente",
     "expediente.estado": "Un expediente cambia de estado",
 }
 # Los cinco últimos no se buscan una vez al día: reaccionan a un evento (cola `automatizaciones_eventos`). Cada disparador de evento escucha un evento interno.
-DISPARADORES_DE_EVENTO = {"tarea.creada": "tarea.creada", "tarea.estado": "tarea.estado_cambiado", "recurrencia.generada": "recurrencia.generada",
+DISPARADORES_DE_EVENTO = {"tarea.creada": "tarea.creada", "tarea.estado": "tarea.estado_cambiado", "recurrencia.generada": "recurrencia.generada", "tarea.liberada": "tarea.desbloqueada",
                           "expediente.creado": "expediente.creado", "expediente.estado": "expediente.estado_cambiado"}
 # Los de tarea tienen UNA tarea sobre la que se puede actuar (comentar, fijar fecha, asignar, pedir revisión); los de expediente no: solo crear tareas y avisar.
-DISPARADORES_CON_TAREA = ("tarea.vencida", "tarea.creada", "tarea.estado", "recurrencia.generada")
+DISPARADORES_CON_TAREA = ("tarea.vencida", "tarea.creada", "tarea.estado", "recurrencia.generada", "tarea.liberada")
 EVENTOS_DE_EXPEDIENTE = ("expediente.creado", "expediente.estado_cambiado")
 PERIODICIDADES_TEXTO = {"diaria": "diaria", "laborables": "en días laborables", "semanal": "semanal", "mensual": "mensual", "trimestral": "trimestral", "anual": "anual"}
 _ID_EXPEDIENTE = re.compile(r"[a-z0-9_]{1,40}")
-ESTADOS_TAREA = {"no_iniciada": "Sin empezar", "en_progreso": "En progreso", "completada": "Completada", "esperando": "Esperando a otros", "aplazada": "Aplazada"}
+ESTADOS_TAREA = {"no_iniciada": "Sin empezar", "en_progreso": "En progreso", "completada": "Completada", "esperando": "Esperando a otros", "aplazada": "Aplazada", "en_revision": "En revisión"}
 ACCIONES = ("crear_tarea", "notificar", "comentar", "fijar_fecha", "asignar", "pedir_revision")
 # Estas actúan sobre LA tarea del disparador, así que solo valen cuando el disparador es una tarea (vencida, creada o que cambia de estado).
 ACCIONES_SOBRE_LA_TAREA = ("comentar", "fijar_fecha", "asignar", "pedir_revision")
@@ -53,6 +54,7 @@ VARIABLES = {
     "tarea.creada": ("asunto", "prioridad", "cliente", "fecha", "modelo", "periodo"),     # modelo y periodo: solo si la tarea está vinculada a un vencimiento fiscal; si no, vacíos
     "tarea.estado": ("asunto", "estado", "anterior", "prioridad", "cliente", "fecha"),
     "recurrencia.generada": ("asunto", "periodicidad", "prioridad", "cliente", "fecha"),
+    "tarea.liberada": ("asunto", "previa", "prioridad", "cliente", "fecha"),                 # previa: la tarea que se acaba de completar y que esta esperaba
     "expediente.creado": ("expediente", "referencia", "tipo", "cliente", "estado"),
     "expediente.estado": ("expediente", "referencia", "tipo", "cliente", "estado", "anterior"),
 }
@@ -157,13 +159,13 @@ def validar_condiciones(disparador: str, condiciones: dict) -> dict:
         if (c.get("modelo") or "").strip():
             out["modelo"] = c["modelo"].strip()[:10]
         return out
-    if disparador in ("tarea.creada", "tarea.estado"):
+    if disparador in ("tarea.creada", "tarea.estado", "tarea.liberada"):
         out = {}
         if disparador == "tarea.estado":
             if c.get("estado") not in ESTADOS_TAREA:
                 raise ValueError("Elige a qué estado tiene que pasar la tarea.")
             out["estado"] = c["estado"]
-        else:
+        elif disparador == "tarea.creada":
             modelo = (c.get("modelo") or "").strip()[:10]
             if modelo:
                 out["modelo"] = modelo
@@ -294,6 +296,8 @@ def comprobar_coherencia(disparador: str, condiciones: dict, acciones: list[dict
     """Combinaciones que nunca pueden funcionar y que es mejor rechazar al guardar que ver fallar cada vez: pedir la revisión de una tarea que, por la propia condición, ya está completada."""
     if disparador == "tarea.estado" and condiciones.get("estado") == "completada" and any(a["tipo"] == "pedir_revision" for a in acciones):
         raise ValueError("No se puede pedir la revisión de una tarea ya completada: elige otro estado o quita esa acción.")
+    if disparador == "tarea.estado" and condiciones.get("estado") == "en_revision" and any(a["tipo"] == "pedir_revision" for a in acciones):
+        raise ValueError("La tarea ya está en revisión cuando se activa esta regla: no se puede pedir otra revisión. Elige otro estado o quita esa acción.")
 
 
 def _destino_de_formulario(valor: str):
@@ -316,6 +320,8 @@ def formulario_a_regla(form, disparador: str) -> tuple[dict, list[dict]]:
         cond = {"prioridades": form.getlist("c_prioridades_c"), "cliente_fiscal_id": form.get("c_cliente_c"), "desde_vencimiento": form.get("c_venc_c"), "modelo": form.get("c_modelo_c")}
     elif disparador == "tarea.estado":
         cond = {"estado": form.get("c_estado_e"), "prioridades": form.getlist("c_prioridades_e"), "cliente_fiscal_id": form.get("c_cliente_e")}
+    elif disparador == "tarea.liberada":
+        cond = {"prioridades": form.getlist("c_prioridades_l"), "cliente_fiscal_id": form.get("c_cliente_l")}
     elif disparador == "recurrencia.generada":
         cond = {"periodicidades": form.getlist("c_periodicidades_r")}
     elif disparador == "expediente.creado":
@@ -750,6 +756,8 @@ def _simular_evento(tenant_id: int, regla: dict, hoy: date) -> dict:
     desde = (hoy - timedelta(days=7)).isoformat()
     if regla["disparador"] == "recurrencia.generada":
         return _simular_recurrencia(tenant_id, regla, desde)
+    if regla["disparador"] == "tarea.liberada":
+        return _simular_liberada(tenant_id, regla, desde)
     if regla["disparador"] in ("expediente.creado", "expediente.estado"):
         return _simular_expediente(tenant_id, regla, desde)
     estado = regla["condiciones"].get("estado")
@@ -767,6 +775,25 @@ def _simular_evento(tenant_id: int, regla: dict, hoy: date) -> dict:
         tarea = _tarea_del_evento(f["id"])
         if tarea and cumple_evento(regla, tarea, {"a": estado}):
             oc = _ocurrencia_de_evento(0, regla, tarea, {"a": estado})
+            ejemplos.append({"objeto": oc["objeto"], "fecha": oc["fecha"], "datos": oc["datos"]})
+    return {"cumplen": len(ejemplos), "nuevas": len(ejemplos), "ya_atendidas": 0, "reciente": True, "ejemplos": ejemplos[:20]}
+
+
+def _simular_liberada(tenant_id: int, regla: dict, desde: str) -> dict:
+    """Tareas abiertas que esperaban a otras y que ahora están libres (todo lo previo está completado), movidas en los últimos 7 días."""
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT DISTINCT t.id FROM tareas_dependencias d JOIN tareas_outlook t ON t.id = d.tarea_id JOIN usuarios u ON u.id = t.usuario_id
+               WHERE u.tenant_id = ? AND t.papelera_en IS NULL AND t.estado != 'completada' AND substr(t.actualizada_en, 1, 10) >= ? LIMIT 200""", (tenant_id, desde)).fetchall()
+        libres = [f["id"] for f in filas if not db.bloqueos_de_tareas([f["id"]]).get(f["id"])]
+    finally:
+        conn.close()
+    ejemplos = []
+    for tarea_id in libres:
+        tarea = _tarea_del_evento(tarea_id)
+        if tarea and cumple_evento(regla, tarea, {}):
+            oc = _ocurrencia_de_evento(0, regla, tarea, {})
             ejemplos.append({"objeto": oc["objeto"], "fecha": oc["fecha"], "datos": oc["datos"]})
     return {"cumplen": len(ejemplos), "nuevas": len(ejemplos), "ya_atendidas": 0, "reciente": True, "ejemplos": ejemplos[:20]}
 
@@ -961,7 +988,7 @@ def registrar_evento(tenant_id: int, evento: str, payload: dict) -> None:
         if conn.execute(f"SELECT 1 FROM automatizaciones_reglas WHERE tenant_id = ? AND activa = 1 AND disparador IN ({','.join('?' * len(disparadores))}) LIMIT 1", (tenant_id, *disparadores)).fetchone() is None:
             return
         conn.execute("INSERT INTO automatizaciones_eventos (tenant_id, evento, tarea_id, objeto_id, datos, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
-                     (tenant_id, evento, payload.get("tarea_id"), payload.get("expediente_id"), json.dumps({k: payload[k] for k in ("de", "a", "periodicidad", "recurrente_id") if k in payload}), db.now_iso()))
+                     (tenant_id, evento, payload.get("tarea_id"), payload.get("expediente_id"), json.dumps({k: payload[k] for k in ("de", "a", "periodicidad", "recurrente_id", "por") if k in payload}), db.now_iso()))
         conn.commit()
     finally:
         conn.close()
@@ -1020,6 +1047,8 @@ def _ocurrencia_de_evento(evento_id: int, regla: dict, tarea: dict, datos: dict)
         d.update({"estado": ESTADOS_TAREA.get(datos.get("a"), datos.get("a") or ""), "anterior": ESTADOS_TAREA.get(datos.get("de"), datos.get("de") or "")})
     if regla["disparador"] == "tarea.creada":
         d.update({"modelo": tarea.get("modelo") or "", "periodo": tarea.get("periodo") or ""})
+    if regla["disparador"] == "tarea.liberada":
+        d["previa"] = db._asunto_tarea(datos["por"]) if datos.get("por") else ""
     if regla["disparador"] == "recurrencia.generada":
         d["periodicidad"] = PERIODICIDADES_TEXTO.get(datos.get("periodicidad"), datos.get("periodicidad") or "")
     return {"clave": f"evt:{evento_id}", "objeto": f"tarea {tarea['id']}: {tarea['asunto'][:60]}", "responsable": tarea["responsable"], "cliente_fiscal_id": tarea["cliente_fiscal_id"],

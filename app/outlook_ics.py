@@ -37,6 +37,7 @@ ESTADO_A_ICS = {
     "completada": "COMPLETED",
     "esperando": "NEEDS-ACTION",
     "aplazada": "NEEDS-ACTION",
+    "en_revision": "IN-PROCESS",              # Outlook no tiene «en revisión»: para fuera es trabajo en curso
 }
 ICS_A_ESTADO = {
     "NEEDS-ACTION": "no_iniciada",
@@ -54,6 +55,7 @@ ESTADO_A_CSV = {
     "aplazada": "Deferred",
 }
 CSV_A_ESTADO = {v.lower(): k for k, v in ESTADO_A_CSV.items()}
+ESTADO_A_CSV_EXPORTAR = {**ESTADO_A_CSV, "en_revision": "In Progress"}      # al exportar, «en revisión» sale como «En curso»; al importar nunca se produce
 PRIORIDAD_A_CSV = {"baja": "Low", "normal": "Normal", "alta": "High"}
 CSV_A_PRIORIDAD = {v.lower(): k for k, v in PRIORIDAD_A_CSV.items()}
 
@@ -214,7 +216,7 @@ def exportar_csv_outlook(tareas) -> str:
             t["asunto"],
             (t["fecha_inicio"] or "")[:10],
             (t["fecha_vencimiento"] or "")[:10],
-            ESTADO_A_CSV.get(t["estado"], "Not Started"),
+            ESTADO_A_CSV_EXPORTAR.get(t["estado"], "Not Started"),
             t["porcentaje_completado"],
             PRIORIDAD_A_CSV.get(t["prioridad"], "Normal"),
             t["categoria_outlook"] or "",

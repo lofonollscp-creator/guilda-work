@@ -31,7 +31,7 @@
   <div class="ia-form-row">
     <label>{{ _('Estado') }}
       <select name="estado">
-        {% for valor, etiqueta in estados %}
+        {% for valor, etiqueta in estados if valor != 'en_revision' or tarea.estado == 'en_revision' %}
         <option value="{{ valor }}" {% if tarea.estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
         {% endfor %}
       </select>

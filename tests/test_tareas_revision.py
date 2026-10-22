@@ -71,8 +71,9 @@ def test_mientras_esta_pendiente_no_se_puede_completar_por_ningun_camino(cliente
         assert r.status_code == 409 and r.get_json()["codigo"] == "revision_pendiente"
     assert db.cambiar_estado_tarea_outlook(u1, tid, "completada") is False
     db.completar_tarea_outlook(u1, tid)
-    assert db.obtener_tarea_outlook(u1, tid)["estado"] == "no_iniciada"
-    assert cliente.post(f"/api/v1/tareas-outlook/{tid}/estado", json={"estado": "en_progreso"}, headers=h1).status_code == 200      # trabajar sigue permitido
+    assert db.obtener_tarea_outlook(u1, tid)["estado"] == "en_revision"                                  # la tarea está «en revisión»: no se completa ni cambia de estado hasta resolverla o retirarla
+    r = cliente.post(f"/api/v1/tareas-outlook/{tid}/estado", json={"estado": "en_progreso"}, headers=h1)
+    assert r.status_code == 409 and r.get_json()["codigo"] == "revision_pendiente"
 
 
 def test_aprobar_no_completa_sola_pero_deja_completarla(cliente):
@@ -129,7 +130,7 @@ def test_pantalla_de_revision_flujo_completo(cliente):
     html = cliente.get(f"/tareas/{tid}").get_data(as_text=True)
     assert "Mientras esté pendiente" in html and "Retirar la petición" in html and "Aprobar" not in html.split('id="revision"')[1]      # el solicitante no ve los botones del revisor
     cliente.post(f"/tareas/{tid}/estado", data={"estado": "completada"})
-    assert db.obtener_tarea_outlook(uid, tid)["estado"] == "no_iniciada"
+    assert db.obtener_tarea_outlook(uid, tid)["estado"] == "en_revision"
     assert cliente.post(f"/tareas/{tid}/revision/cancelar").status_code == 302 and tt.revision_pendiente(tid) is None
     assert cliente.post(f"/tareas/{tid}/revision/cancelar").status_code == 404
 
@@ -393,3 +394,123 @@ def test_cadena_por_herramienta_y_orden_de_la_lista():
         ih.ejecutar(b, "resolver_revision_tarea", {"tarea_id": tid, "decision": "aprobar"})
     ih.ejecutar(c, "resolver_revision_tarea", {"tarea_id": tid, "decision": "aprobar"})
     assert ih.ejecutar(b, "resolver_revision_tarea", {"tarea_id": tid, "decision": "aprobar"})["revision"]["estado"] == "aprobada"
+
+
+# --- «En revisión» como estado real de la tarea --------------------------------------------------------------------------------
+
+def _estado(uid, tid):
+    return db.obtener_tarea_outlook(uid, tid)["estado"]
+
+
+def test_pedir_la_revision_pone_la_tarea_en_revision_y_al_resolverla_vuelve_a_su_estado(cliente):
+    t, (h1, u1), (h2, u2), _ = _equipo(cliente, "er1")
+    tid = _tarea(cliente, h1, "Estado real")
+    cliente.post(f"/api/v1/tareas-outlook/{tid}/estado", json={"estado": "esperando", "motivo": "x"}, headers=h1)
+    db.cambiar_estado_tarea_outlook(u1, tid, "aplazada")
+    _pedir(cliente, h1, tid, u2)
+    assert _estado(u1, tid) == "en_revision"
+    _resolver(cliente, h2, tid, "aprobar")
+    assert _estado(u1, tid) == "aplazada"                                                                  # aprobar no completa: vuelve a lo que era
+    assert cliente.post(f"/api/v1/tareas-outlook/{tid}/estado", json={"estado": "completada"}, headers=h1).status_code == 200
+
+
+def test_cambios_y_retirada_devuelven_la_tarea_y_avisan_a_las_automatizaciones(cliente):
+    t, (h1, u1), (h2, u2), _ = _equipo(cliente, "er2")
+    tid = _tarea(cliente, h1, "Cambios")
+    db.cambiar_estado_tarea_outlook(u1, tid, "en_progreso")
+    _pedir(cliente, h1, tid, u2)
+    _resolver(cliente, h2, tid, "cambios", "Falta algo")
+    assert _estado(u1, tid) == "en_progreso"
+    otra = _tarea(cliente, h1, "Retirada")
+    _pedir(cliente, h1, otra, u2)
+    assert _estado(u1, otra) == "en_revision" and tt.cancelar_revision(u1, otra) is True
+    assert _estado(u1, otra) == "no_iniciada"                                                              # la retirada devuelve el estado de antes
+    conn = db.get_connection()
+    try:
+        conn.execute("DELETE FROM automatizaciones_eventos")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def test_el_estado_en_revision_no_se_pone_ni_se_quita_a_mano_por_ningun_camino(cliente):
+    t, (h1, u1), (h2, u2), _ = _equipo(cliente, "er3")
+    tid = _tarea(cliente, h1, "Sin atajos")
+    for r in (cliente.post(f"/api/v1/tareas-outlook/{tid}/estado", json={"estado": "en_revision"}, headers=h1),
+              cliente.post(f"/api/v1/tareas-outlook/{tid}/transiciones", json={"estado": "en_revision"}, headers=h1)):
+        assert r.status_code == 409 and r.get_json()["codigo"] == "solo_por_revision"
+    assert cliente.put(f"/api/v1/tareas-outlook/{tid}", json={"estado": "en_revision"}, headers=h1).get_json()["codigo"] == "estado_en_revision"
+    assert db.cambiar_estado_tarea_outlook(u1, tid, "en_revision") is False and _estado(u1, tid) == "no_iniciada"
+    with pytest.raises(ValueError, match="pidiendo la revisión"):
+        db.editar_tarea_outlook(u1, tid, estado="en_revision")
+    _pedir(cliente, h1, tid, u2)
+    for r in (cliente.post(f"/api/v1/tareas-outlook/{tid}/estado", json={"estado": "en_progreso"}, headers=h1),
+              cliente.post(f"/api/v1/tareas-outlook/{tid}/transiciones", json={"estado": "aplazada"}, headers=h1)):
+        assert r.status_code == 409 and r.get_json()["codigo"] == "revision_pendiente"
+    assert cliente.put(f"/api/v1/tareas-outlook/{tid}", json={"estado": "en_progreso"}, headers=h1).get_json()["codigo"] == "estado_en_revision"
+    assert db.cambiar_estado_tarea_outlook(u1, tid, "en_progreso") is False
+    with pytest.raises(ValueError, match="en revisión"):
+        db.editar_tarea_outlook(u1, tid, estado="aplazada")
+    assert _estado(u1, tid) == "en_revision"
+
+
+def test_el_disparador_de_la_base_de_datos_impide_saltarse_el_flujo(cliente):
+    import sqlite3
+    t, (h1, u1), (h2, u2), _ = _equipo(cliente, "er4")
+    tid = _tarea(cliente, h1, "Defensa en profundidad")
+    conn = db.get_connection()
+    try:
+        with pytest.raises(sqlite3.DatabaseError, match="solo_por_revision"):
+            conn.execute("UPDATE tareas_outlook SET estado = 'en_revision' WHERE id = ?", (tid,))
+        conn.rollback()
+    finally:
+        conn.close()
+    _pedir(cliente, h1, tid, u2)
+    conn = db.get_connection()
+    try:
+        with pytest.raises(sqlite3.DatabaseError, match="revision_pendiente"):
+            conn.execute("UPDATE tareas_outlook SET estado = 'en_progreso' WHERE id = ?", (tid,))
+        conn.rollback()
+        with pytest.raises(sqlite3.IntegrityError):                                                         # y el CHECK sigue rechazando cualquier otro valor
+            conn.execute("UPDATE tareas_outlook SET estado = 'inventado' WHERE id = ?", (tid,))
+        conn.rollback()
+    finally:
+        conn.close()
+
+
+def test_la_migracion_es_idempotente_y_recoloca_lo_que_ya_estaba_pendiente(cliente):
+    t, (h1, u1), (h2, u2), _ = _equipo(cliente, "er5")
+    tid = _tarea(cliente, h1, "Heredada")
+    db.cambiar_estado_tarea_outlook(u1, tid, "esperando")
+    conn = db.get_connection()
+    try:                                                                                                  # simula una revisión pendiente de antes de existir el estado: la tarea seguía «esperando»
+        conn.execute("DROP TRIGGER tareas_outlook_en_revision_entrada")
+        conn.execute("INSERT INTO tarea_revisiones (tenant_id, tarea_id, solicitada_por, revisor_id, solicitada_en, modo) VALUES (?, ?, ?, ?, '2026-01-01T00:00:00', 'todos')", (t, tid, u1, u2))
+        conn.execute("INSERT INTO tarea_revision_votos (revision_id, revisor_id) SELECT id, revisor_id FROM tarea_revisiones WHERE tarea_id = ?", (tid,))
+        conn.commit()
+        for _ in range(2):                                                                                 # dos arranques seguidos: el segundo no cambia nada
+            tt.crear_esquema(conn)
+            conn.commit()
+        assert conn.execute("SELECT estado FROM tareas_outlook WHERE id = ?", (tid,)).fetchone()[0] == "en_revision"
+        assert conn.execute("SELECT estado_previo FROM tarea_revisiones WHERE tarea_id = ?", (tid,)).fetchone()[0] == "esperando"
+        assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+    finally:
+        conn.close()
+    assert tt.cancelar_revision(u1, tid) is True and _estado(u1, tid) == "esperando"
+
+
+def test_la_pantalla_enseña_en_revision_y_no_la_ofrece_como_destino(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "er6@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho en revisión pantalla")
+    db.asignar_tenant(uid, t)
+    revisor = db.crear_usuario_vinculado_a_kratos("er6b@ejemplo.com", "k-er6b"); db.asignar_tenant(revisor, t)
+    tid = db.crear_tarea_outlook(uid, asunto="Se ve en revisión")
+    assert 'value="en_revision"' not in cliente.get(f"/tareas/{tid}/editar").get_data(as_text=True)         # nadie la elige a mano
+    cliente.post(f"/tareas/{tid}/revision", data={"revisor_id": str(revisor)})
+    editar = cliente.get(f"/tareas/{tid}/editar").get_data(as_text=True)
+    assert 'value="en_revision" selected' in editar                                                         # pero si ya lo está, se ve
+    assert "En revisión" in cliente.get("/tareas/tablero").get_data(as_text=True)
+    r = cliente.post(f"/tareas/{tid}/estado", data={"estado": "en_progreso"})
+    assert r.status_code == 302 and "error=" in r.headers["Location"] and _estado(uid, tid) == "en_revision"
+    r = cliente.post(f"/tareas/{tid}/editar", data={"asunto": "Se ve en revisión", "estado": "completada", "prioridad": "normal", "porcentaje_completado": "0"})
+    assert _estado(uid, tid) == "en_revision"
