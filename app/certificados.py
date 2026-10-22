@@ -951,11 +951,15 @@ def riesgos(tenant_id: int, hoy: date | None = None, horizonte_dias: int = 90) -
         venc = conn.execute("SELECT v.id, v.cliente_fiscal_id, v.modelo, v.periodo, v.fecha_limite, c.nombre AS cliente FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id "
                             "WHERE v.tenant_id = ? AND v.estado = 'pendiente' AND v.papelera_en IS NULL AND substr(v.fecha_limite, 1, 10) <= ? ORDER BY v.fecha_limite", (tenant_id, hasta)).fetchall()
         res = []
+        # Una sola consulta con los certificados que dan servicio a cada cliente (antes, una por obligación pendiente: con miles de vencimientos eran miles de consultas).
+        por_cliente: dict[int, list] = {}
+        for f in conn.execute(
+                "SELECT b.cliente_fiscal_id, c.id, c.sujeto, c.not_after, c.estado_operativo FROM certificados_vinculos b JOIN certificados c ON c.id = b.certificado_id WHERE b.tenant_id = ? AND b.estado = 'activo' "
+                "AND b.servicio IN ('presentacion', 'acceso_buzon') AND c.estado_operativo NOT IN ('archivado', 'sustituido') ORDER BY b.id", (tenant_id,)):
+            por_cliente.setdefault(f["cliente_fiscal_id"], []).append(f)
         for v in venc:
             lim = v["fecha_limite"][:10]
-            certs = conn.execute(
-                "SELECT c.id, c.sujeto, c.not_after, c.estado_operativo FROM certificados_vinculos b JOIN certificados c ON c.id = b.certificado_id WHERE b.tenant_id = ? AND b.cliente_fiscal_id = ? AND b.estado = 'activo' "
-                "AND b.servicio IN ('presentacion', 'acceso_buzon') AND c.estado_operativo NOT IN ('archivado', 'sustituido')", (tenant_id, v["cliente_fiscal_id"])).fetchall()
+            certs = por_cliente.get(v["cliente_fiscal_id"], [])
             base = {"vencimiento_id": v["id"], "cliente_fiscal_id": v["cliente_fiscal_id"], "cliente": v["cliente"], "modelo": v["modelo"], "periodo": v["periodo"], "fecha_limite": lim}
             if not certs:
                 res.append(base | {"tipo": "cobertura_desconocida", "motivo": "No hay ningún certificado registrado para presentar o acceder en nombre de este cliente.", "certificado_id": None})

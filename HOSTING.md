@@ -105,6 +105,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [PHP de los contenedores: actualización de octubre de 2026](#php-de-los-contenedores-actualización-de-octubre-de-2026)
 - [Automatizaciones: tarea recurrente y expedientes (octubre de 2026)](#automatizaciones-tarea-recurrente-y-expedientes-octubre-de-2026)
 - [«Se crea una tarea»: filtro por vencimiento fiscal y variables {modelo} y {periodo} (octubre de 2026)](#se-crea-una-tarea-filtro-por-vencimiento-fiscal-y-variables-modelo-y-periodo-octubre-de-2026)
+- [Rendimiento del panel fiscal con muchos vencimientos (octubre de 2026)](#rendimiento-del-panel-fiscal-con-muchos-vencimientos-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3520,3 +3521,11 @@ La regla «Se crea una tarea» (`tarea.creada`) puede ahora limitarse a las tare
 - **Variables nuevas** en esta regla: `{modelo}` y `{periodo}` (vacías si la tarea no viene de un vencimiento). Ejemplo: «Avisar a la dirección cuando se genere la tarea del 303 de un cliente»: modelo 303, aviso «{modelo} {periodo}: {asunto}».
 - Corrige el planteamiento de la nota anterior: no hacía falta un disparador nuevo para «por vencimiento fiscal», porque esas tareas ya disparaban «Se crea una tarea» (solo faltaba poder filtrarlas). Sin migración; las reglas existentes no cambian.
 - **Pruebas**: 4 tests nuevos en `tests/test_automatizaciones_expediente_recurrencia.py` (validación, solo las de vencimiento con sus variables, filtro por modelo, simulación y pantalla).
+
+## Rendimiento del panel fiscal con muchos vencimientos (octubre de 2026)
+
+Medido en una copia aislada con 50.000 vencimientos (la mayoría ya presentados) y 1.500 clientes: el panel del control fiscal (`app/panel_fiscal.py`) tardaba **~614 ms** por visita; ahora **~330 ms**.
+
+- **Qué cambió**: el panel cargaba en Python TODOS los vencimientos del despacho (también los ya presentados, que son la inmensa mayoría con los años) solo para contarlos. Ahora carga únicamente las obligaciones **activas** (pendiente, en preparación, en revisión, aprobada: las que pueden vencer, bloquearse o revisarse) y calcula los indicadores de cumplimiento en plazo y de evidencias con consultas de agregado en SQL (que además ya no construyen listas de decenas de miles de parámetros, que tropezarían con el límite de SQLite). `certificados.riesgos` hacía una consulta por obligación pendiente (miles); ahora hace una sola para todos los clientes.
+- **Mismos resultados**: `tests/test_panel_fiscal_rendimiento.py` compara las cifras con un cálculo de referencia sobre todas las filas (con y sin restricción de clientes por oficina) y comprueba que `riesgos` ya no escala con el número de vencimientos.
+- **Lo que queda**: el tiempo restante crece con el número de obligaciones ACTIVAS (11.000 en esa prueba), no con el histórico. El listado completo sin filtros (`listar_vencimientos_fiscales` sin límite) solo se usa en exportaciones y en la API sin `limit`; el resto de pantallas piden periodo o cliente y tardan milisegundos. No se ha tocado.

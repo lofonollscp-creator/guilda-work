@@ -29,10 +29,14 @@ def construir(tenant_id: int, usuario_id: int, hoy: date | None = None) -> dict:
         filtro, p = "", []
         if visibles is not None:
             filtro, p = f" AND v.cliente_fiscal_id IN ({_marcas(len(visibles))})", list(visibles)
+        # Solo se cargan en Python las obligaciones ACTIVAS (las que se pueden vencer, bloquear o revisar); los indicadores de lo ya presentado se cuentan en SQL. Con decenas de miles de
+        # vencimientos históricos, cargarlos todos costaba más de medio segundo en cada visita.
+        marcas_activas = _marcas(len(obligaciones.ACTIVAS))
         filas = conn.execute(
             "SELECT v.id, v.cliente_fiscal_id, v.modelo, v.periodo, substr(v.fecha_limite, 1, 10) AS limite, v.fase, v.bloqueada, v.bloqueo_motivo, v.presentada_tarde, v.usuario_id AS preparador, "
             "c.nombre AS cliente, c.oficina_id, c.responsable_id, o.nombre AS oficina FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id "
-            "LEFT JOIN oficinas o ON o.id = c.oficina_id WHERE v.tenant_id = ? AND v.papelera_en IS NULL AND c.papelera_en IS NULL" + filtro, [tenant_id, *p]).fetchall()
+            f"LEFT JOIN oficinas o ON o.id = c.oficina_id WHERE v.tenant_id = ? AND v.papelera_en IS NULL AND c.papelera_en IS NULL AND v.fase IN ({marcas_activas})" + filtro,
+            [tenant_id, *obligaciones.ACTIVAS, *p]).fetchall()
         cf, cp = "", []
         if visibles is not None:
             cf, cp = f" AND c.id IN ({_marcas(len(visibles))})", list(visibles)
@@ -81,23 +85,32 @@ def construir(tenant_id: int, usuario_id: int, hoy: date | None = None) -> dict:
     por_oficina = carga("oficina_id", "oficina_id", lambda c: c["oficina"]) if acceso.tiene_oficinas(tenant_id) else []
     # Indicadores con muestra y exclusiones.
     desde = (hoy - timedelta(days=DIAS_INDICADOR)).isoformat()
-    periodo = [f for f in filas if desde <= f["limite"] < hoy_s]
-    excluidas = [f for f in periodo if f["fase"] in ("no_aplica", "anulada")]
-    aplicables = [f for f in periodo if f["fase"] not in ("no_aplica", "anulada")]
-    a_tiempo = [f for f in aplicables if f["fase"] in obligaciones.PRESENTADAS and not f["presentada_tarde"]]
+    conn = db.get_connection()
+    try:
+        # Mismas reglas de siempre, contadas en SQL sobre TODAS las obligaciones visibles: las del periodo que aplican, las excluidas (no aplica / anulada) y las presentadas a tiempo.
+        base = ("FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id WHERE v.tenant_id = ? AND v.papelera_en IS NULL AND c.papelera_en IS NULL"
+                + (f" AND v.cliente_fiscal_id IN ({_marcas(len(visibles))})" if visibles is not None else ""))
+        base_p = [tenant_id, *(list(visibles) if visibles is not None else [])]
+        marcas_pres = _marcas(len(obligaciones.PRESENTADAS))
+        n_aplicables, n_excluidas, n_a_tiempo = conn.execute(
+            "SELECT COALESCE(SUM(CASE WHEN COALESCE(v.fase, '') NOT IN ('no_aplica', 'anulada') THEN 1 ELSE 0 END), 0), "
+            "COALESCE(SUM(CASE WHEN v.fase IN ('no_aplica', 'anulada') THEN 1 ELSE 0 END), 0), "
+            f"COALESCE(SUM(CASE WHEN v.fase IN ({marcas_pres}) AND COALESCE(v.presentada_tarde, 0) = 0 THEN 1 ELSE 0 END), 0) {base} "
+            "AND substr(v.fecha_limite, 1, 10) >= ? AND substr(v.fecha_limite, 1, 10) < ?", [*obligaciones.PRESENTADAS, *base_p, desde, hoy_s]).fetchone()
+        n_pres, n_sin_evidencia = conn.execute(
+            f"SELECT COUNT(*), COALESCE(SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM obligaciones_evidencias e WHERE e.vencimiento_id = v.id) THEN 1 ELSE 0 END), 0) {base} AND v.fase IN ({marcas_pres})",
+            [*base_p, *obligaciones.PRESENTADAS]).fetchone()
+    finally:
+        conn.close()
     sin_resp = [c for c in clientes if c["responsable_id"] is None]
     indicadores = {
-        "en_plazo": {"n": len(aplicables), "buenas": len(a_tiempo), "porcentaje": round(100 * len(a_tiempo) / len(aplicables)) if aplicables else None, "excluidas": len(excluidas), "dias": DIAS_INDICADOR},
+        "en_plazo": {"n": n_aplicables, "buenas": n_a_tiempo, "porcentaje": round(100 * n_a_tiempo / n_aplicables) if n_aplicables else None, "excluidas": n_excluidas, "dias": DIAS_INDICADOR},
         "clientes": {"n": len(clientes), "sin_responsable": len(sin_resp)},
         "bloqueadas": len(bloqueadas),
-        "sin_evidencia": None,
+        "sin_evidencia": {"n": n_pres, "sin": n_sin_evidencia} if n_pres else None,
     }
     conn = db.get_connection()
     try:
-        ids_pres = [f["id"] for f in filas if f["fase"] in obligaciones.PRESENTADAS]
-        if ids_pres:
-            con = {r[0] for r in conn.execute(f"SELECT DISTINCT vencimiento_id FROM obligaciones_evidencias WHERE vencimiento_id IN ({_marcas(len(ids_pres))})", ids_pres)}
-            indicadores["sin_evidencia"] = {"n": len(ids_pres), "sin": len(ids_pres) - len(con)}
         if ve_cert:
             tot = conn.execute("SELECT COUNT(*) FROM certificados WHERE tenant_id = ? AND estado_operativo NOT IN ('archivado', 'sustituido')", (tenant_id,)).fetchone()[0]
             con_c = conn.execute("SELECT COUNT(*) FROM certificados WHERE tenant_id = ? AND estado_operativo NOT IN ('archivado', 'sustituido') AND custodio_id IS NOT NULL", (tenant_id,)).fetchone()[0]
