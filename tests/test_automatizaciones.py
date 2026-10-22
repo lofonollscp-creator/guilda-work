@@ -327,6 +327,8 @@ def test_hoy_depende_de_la_zona_del_despacho(d):
 
 
 def test_las_plantillas_son_validas_y_rellenar_no_ejecuta_nada(d):
+    from app import verticales
+    verticales.fijar_activo(d.t, "comercial", True)                                                  # la plantilla de oportunidades solo vale con el módulo Comercial
     for p in au.PLANTILLAS.values():
         au.crear_regla(d.t, d.sup, p["nombre"], p["disparador"], p["condiciones"], p["acciones"])
     assert len(au.listar_reglas(d.t)) == len(au.PLANTILLAS)

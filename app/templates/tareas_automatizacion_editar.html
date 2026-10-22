@@ -153,6 +153,14 @@
       </label>
       <small class="muted">{{ _('Los avisos y las tareas solo llegan a quien puede ver ese expediente. No se pueden usar acciones sobre una tarea, porque aquí no hay ninguna.') }}</small>
     </div>
+    <div data-solo-disparador="oportunidad.etapa">
+      <label>{{ _('Cuando una oportunidad pase a') }}
+        <select name="c_etapa_o">
+          {% for e in etapas_comercial %}<option value="{{ e.clave }}" {% if c.get('etapa') == e.clave %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}
+        </select>
+      </label>
+      <small class="muted">{{ _('Los avisos y las tareas solo llegan a quien puede ver esa oportunidad. No se pueden usar acciones sobre una tarea, porque aquí no hay ninguna.') }}</small>
+    </div>
     <div data-solo-disparador="vencimiento.proximo">
       <label>{{ _('Cuando falten, como máximo, estos días para la fecha límite') }}
         <input type="number" name="c_dias_venc" min="0" max="365" value="{{ c.get('dias_antes', 7) }}">

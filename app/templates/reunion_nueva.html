@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Nueva reunión') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Nueva reunión') }}</h1></div></header>
+{% set subnav_activa = 'reuniones' %}
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="edit-form ds-max-640" method="post">
+  <input type="hidden" name="oportunidad_id" value="{{ r.get('oportunidad_id') or '' }}">
+  <label>{{ _('Título') }} <input type="text" name="titulo" maxlength="200" required value="{{ r.get('titulo') or '' }}" placeholder="{{ _('Por ejemplo: Revisión trimestral con Panadería Sol') }}"></label>
+  <label>{{ _('Fecha') }} <input type="date" name="fecha" value="{{ r.get('fecha') or hoy }}"></label>
+  <label>{{ _('Tipo de reunión') }}
+    <select name="plantilla">{% for k, v in plantillas.items() %}<option value="{{ k }}" {{ 'selected' if r.get('plantilla') == k }}>{{ v[0] }}</option>{% endfor %}</select></label>
+  <label>{{ _('Cliente (opcional)') }}
+    <select name="cliente_id"><option value="">{{ _('— Reunión interna —') }}</option>{% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if r.get('cliente_id') == c.id }}>{{ c.nombre }}</option>{% endfor %}</select></label>
+  <label>{{ _('Participantes') }} <input type="text" name="participantes" maxlength="500" value="{{ r.get('participantes') or '' }}" placeholder="{{ _('Ana (cliente), Luis, tú…') }}"></label>
+  <label>{{ _('Notas iniciales (opcional)') }} <textarea name="notas" rows="4">{{ r.get('notas') or '' }}</textarea></label>
+  <p class="muted">{{ _('Una reunión interna (sin cliente ni oportunidad) solo la ves tú y la dirección.') }}</p>
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Crear y empezar') }}</button><a class="btn btn-ghost" href="{{ url_for('comercial.reuniones_lista') }}">{{ _('Cancelar') }}</a></div>
+</form>
+{% endblock %}

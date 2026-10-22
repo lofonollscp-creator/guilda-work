@@ -1,0 +1,8 @@
+{# Navegación del módulo Comercial. `subnav_activa`: embudo | lista | reuniones | etapas | informes #}
+<nav class="tareas-subnav" aria-label="{{ _('Comercial') }}">
+  <a class="{{ 'active' if subnav_activa == 'embudo' }}" href="{{ url_for('comercial.tablero') }}">{{ _('Embudo') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'lista' }}" href="{{ url_for('comercial.tablero', vista='lista') }}">{{ _('Lista') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'reuniones' }}" href="{{ url_for('comercial.reuniones_lista') }}">{{ _('Reuniones') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'informes' }}" href="{{ url_for('comercial.informes') }}">{{ _('Informes') }}</a>
+  <a class="{{ 'active' if subnav_activa == 'etapas' }}" href="{{ url_for('comercial.etapas') }}">{{ _('Etapas') }}</a>
+</nav>

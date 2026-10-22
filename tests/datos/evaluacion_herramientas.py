@@ -80,6 +80,12 @@ CASOS: list[tuple[str, str]] = [
     ("crea un lead para la panadería nueva", "crm_crear_lead"),
     ("qué leads tengo en el CRM", "crm_listar_leads"),
     ("añade un contacto al CRM", "crm_crear_contacto"),
+    # comercial: embudo de oportunidades y reuniones con acta
+    ("apunta una oportunidad para llevar la contabilidad de la panadería", "comercial_crear_oportunidad"),
+    ("qué oportunidades tengo abiertas en el embudo", "comercial_listar_oportunidades"),
+    ("pasa la oportunidad de la panadería a propuesta enviada", "comercial_mover_oportunidad"),
+    ("cómo va el embudo comercial este trimestre", "comercial_embudo"),
+    ("redacta el acta de la reunión con el cliente", "comercial_generar_acta"),
     # archivos
     ("busca el pdf de la escritura en el drive", "drive_buscar_archivos"),
     ("sube este archivo al Drive", "drive_subir_archivo"),

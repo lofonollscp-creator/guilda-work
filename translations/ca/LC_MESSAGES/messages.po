@@ -14397,3 +14397,378 @@ msgstr "Aquestes eines no responen ara mateix i no es mostren a l'equip:"
 
 msgid "Si es inesperado, revisa el panel de salud."
 msgstr "Si és inesperat, revisa el tauler de salut."
+
+msgid "Comercial"
+msgstr "Comercial"
+
+msgid "Oportunidades y embudo, seguimiento de prospectos, informes de ventas y notas de reunión con acta de IA."
+msgstr "Oportunitats i embut, seguiment de prospectes, informes de vendes i notes de reunió amb acta d'IA."
+
+msgid "Reuniones"
+msgstr "Reunions"
+
+msgid "Embudo"
+msgstr "Embut"
+
+msgid "Etapas"
+msgstr "Etapes"
+
+msgid "Oportunidad"
+msgstr "Oportunitat"
+
+msgid "Reunión"
+msgstr "Reunió"
+
+msgid "Sin oportunidades."
+msgstr "Sense oportunitats."
+
+msgid "Últimas reuniones"
+msgstr "Darreres reunions"
+
+msgid "Etapas del embudo"
+msgstr "Etapes de l'embut"
+
+msgid "Las etapas por las que pasa una oportunidad y la probabilidad de cerrarla en cada una. Solo la dirección las cambia."
+msgstr "Les etapes per les quals passa una oportunitat i la probabilitat de tancar-la en cadascuna. Només la direcció les canvia."
+
+msgid "Etapa"
+msgstr "Etapa"
+
+msgid "Probabilidad"
+msgstr "Probabilitat"
+
+msgid "Ganada"
+msgstr "Guanyada"
+
+msgid "Añadir una etapa"
+msgstr "Afegir una etapa"
+
+msgid "Previsión ponderada"
+msgstr "Previsió ponderada"
+
+msgid "Cierre previsto"
+msgstr "Tancament previst"
+
+msgid "Motivo de la pérdida"
+msgstr "Motiu de la pèrdua"
+
+msgid "Motivo (obligatorio si se pierde)"
+msgstr "Motiu (obligatori si es perd)"
+
+msgid "Con gestión fiscal"
+msgstr "Amb gestió fiscal"
+
+msgid "Convertir en cliente y dar por ganada"
+msgstr "Convertir en client i donar per guanyada"
+
+msgid "Ya es cliente."
+msgstr "Ja és client."
+
+msgid "Anotar una actividad"
+msgstr "Anotar una activitat"
+
+msgid "¿De qué se trató?"
+msgstr "De què va tractar?"
+
+msgid "Detalles (opcional)"
+msgstr "Detalls (opcional)"
+
+msgid "Detalles"
+msgstr "Detalls"
+
+msgid "Próxima acción (crea una tarea)"
+msgstr "Propera acció (crea una tasca)"
+
+msgid "Próxima acción"
+msgstr "Propera acció"
+
+msgid "Para cuándo"
+msgstr "Per a quan"
+
+msgid "Cronología"
+msgstr "Cronologia"
+
+msgid "¿Mover esta oportunidad a la papelera?"
+msgstr "Moure aquesta oportunitat a la paperera?"
+
+msgid "Mover a la papelera"
+msgstr "Moure a la paperera"
+
+msgid "Nueva oportunidad"
+msgstr "Nova oportunitat"
+
+msgid "Editar oportunidad"
+msgstr "Editar oportunitat"
+
+msgid "Elige un cliente existente o apunta los datos del prospecto; podrás convertirlo en cliente cuando se cierre."
+msgstr "Tria un client existent o apunta les dades del prospecte; el podràs convertir en client quan es tanqui."
+
+msgid "¿De qué es?"
+msgstr "De què és?"
+
+msgid "Por ejemplo: Llevanza contable y fiscal de la sociedad"
+msgstr "Per exemple: Comptabilitat i gestió fiscal de la societat"
+
+msgid "Cliente existente"
+msgstr "Client existent"
+
+msgid "— Es un prospecto —"
+msgstr "— És un prospecte —"
+
+msgid "Persona de contacto"
+msgstr "Persona de contacte"
+
+msgid "La oportunidad"
+msgstr "L'oportunitat"
+
+msgid "Importe estimado (€)"
+msgstr "Import estimat (€)"
+
+msgid "Etapa inicial"
+msgstr "Etapa inicial"
+
+msgid "Recomendación, web, evento…"
+msgstr "Recomanació, web, esdeveniment…"
+
+msgid "Informes comerciales"
+msgstr "Informes comercials"
+
+msgid "El embudo de ahora y lo ganado y perdido en el periodo. Solo cuenta lo que tú puedes ver."
+msgstr "L'embut d'ara i el que s'ha guanyat i perdut en el període. Només compta el que tu pots veure."
+
+msgid "Embudo abierto"
+msgstr "Embut obert"
+
+msgid "%(n)s abiertas"
+msgstr "%(n)s obertes"
+
+msgid "Importe: %(i)s"
+msgstr "Import: %(i)s"
+
+msgid "Ponderado: %(i)s"
+msgstr "Ponderat: %(i)s"
+
+msgid "%(n)s sin actividad en 14 días"
+msgstr "%(n)s sense activitat en 14 dies"
+
+msgid "Prob."
+msgstr "Prob."
+
+msgid "Oportunidades"
+msgstr "Oportunitats"
+
+msgid "Ponderado"
+msgstr "Ponderat"
+
+msgid "Resultados del periodo"
+msgstr "Resultats del període"
+
+msgid "Ganadas"
+msgstr "Guanyades"
+
+msgid "Perdidas"
+msgstr "Perdudes"
+
+msgid "Tasa de éxito"
+msgstr "Taxa d'èxit"
+
+msgid "Ciclo medio de venta"
+msgstr "Cicle mitjà de venda"
+
+msgid "Por qué se pierden"
+msgstr "Per què es perden"
+
+msgid "Importe ganado"
+msgstr "Import guanyat"
+
+msgid "Del primer contacto al cierre: cada oportunidad avanza por las etapas del embudo."
+msgstr "Del primer contacte al tancament: cada oportunitat avança per les etapes de l'embut."
+
+msgid "Título, prospecto o cliente"
+msgstr "Títol, prospecte o client"
+
+msgid "Abierto: %(i)s"
+msgstr "Obert: %(i)s"
+
+msgid "Previsión ponderada: %(i)s"
+msgstr "Previsió ponderada: %(i)s"
+
+msgid "Todavía no hay oportunidades"
+msgstr "Encara no hi ha oportunitats"
+
+msgid "Apunta aquí a quien podría ser cliente y sigue cada paso hasta cerrarlo."
+msgstr "Apunta aquí qui podria ser client i segueix cada pas fins a tancar-ho."
+
+msgid "Cierre previsto: %(f)s"
+msgstr "Tancament previst: %(f)s"
+
+msgid "Mover a la etapa"
+msgstr "Moure a l'etapa"
+
+msgid "Para marcar una oportunidad como perdida (hace falta un motivo), ábrela."
+msgstr "Per marcar una oportunitat com a perduda (cal un motiu), obre-la."
+
+msgid "Reunión interna"
+msgstr "Reunió interna"
+
+msgid "¿Mover esta reunión a la papelera?"
+msgstr "Moure aquesta reunió a la paperera?"
+
+msgid "Tus notas"
+msgstr "Les teves notes"
+
+msgid "Escríbelas durante la reunión, como te salgan: la IA las usará como guía principal del acta."
+msgstr "Escriu-les durant la reunió, com et surtin: la IA les farà servir com a guia principal de l'acta."
+
+msgid "Tipo de reunión"
+msgstr "Tipus de reunió"
+
+msgid "Participantes"
+msgstr "Participants"
+
+msgid "Guardar notas"
+msgstr "Desar notes"
+
+msgid "Transcripción"
+msgstr "Transcripció"
+
+msgid "Transcripción (opcional)"
+msgstr "Transcripció (opcional)"
+
+msgid "Guardada"
+msgstr "Desada"
+
+msgid "%(n)s caracteres. Conviene borrarla cuando hayas revisado el acta."
+msgstr "%(n)s caràcters. Convé esborrar-la quan hagis revisat l'acta."
+
+msgid "Ver la transcripción"
+msgstr "Veure la transcripció"
+
+msgid "¿Borrar la transcripción? El acta y las notas se quedan."
+msgstr "Esborrar la transcripció? L'acta i les notes es queden."
+
+msgid "Borrar la transcripción"
+msgstr "Esborrar la transcripció"
+
+msgid "Pega aquí la transcripción de la reunión (de Teams, Meet, Element Call o la herramienta que uses). Este módulo no graba audio."
+msgstr "Enganxa aquí la transcripció de la reunió (de Teams, Meet, Element Call o l'eina que facis servir). Aquest mòdul no grava àudio."
+
+msgid "Confirmo que se avisó a los participantes de que la reunión se grababa o transcribía."
+msgstr "Confirmo que es va avisar els participants que la reunió es gravava o es transcrivia."
+
+msgid "Guardar transcripción"
+msgstr "Desar la transcripció"
+
+msgid "Acta"
+msgstr "Acta"
+
+msgid "Para generar actas hace falta un modelo y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "Per generar actes cal un model i la teva clau d'OpenRouter, a Ajustos de l'Assistent d'IA."
+
+msgid "Se sustituirá el acta actual por una nueva. ¿Continuar?"
+msgstr "Se substituirà l'acta actual per una de nova. Continuar?"
+
+msgid "Volver a generar el acta"
+msgstr "Tornar a generar l'acta"
+
+msgid "Generar el acta con IA"
+msgstr "Generar l'acta amb IA"
+
+msgid "El texto de tus notas y la transcripción se envía al modelo de IA que has configurado, y a nadie más."
+msgstr "El text de les teves notes i la transcripció s'envia al model d'IA que has configurat, i a ningú més."
+
+msgid "Temas (uno por línea)"
+msgstr "Temes (un per línia)"
+
+msgid "Decisiones (una por línea)"
+msgstr "Decisions (una per línia)"
+
+msgid "Próximos pasos (uno por línea)"
+msgstr "Propers passos (un per línia)"
+
+msgid "La IA solo propone: marca las que quieras crear, elige quién las lleva y la fecha."
+msgstr "La IA només proposa: marca les que vulguis crear, tria qui les du i la data."
+
+msgid "Creada"
+msgstr "Creada"
+
+msgid "La IA apuntó a «%(n)s»: elige a la persona."
+msgstr "La IA va apuntar «%(n)s»: tria la persona."
+
+msgid "Añadir una tarea"
+msgstr "Afegir una tasca"
+
+msgid "Guardar el acta"
+msgstr "Desar l'acta"
+
+msgid "Guardar y crear las tareas marcadas"
+msgstr "Desar i crear les tasques marcades"
+
+msgid "Nueva reunión"
+msgstr "Nova reunió"
+
+msgid "Por ejemplo: Revisión trimestral con Panadería Sol"
+msgstr "Per exemple: Revisió trimestral amb Panadería Sol"
+
+msgid "Cliente (opcional)"
+msgstr "Client (opcional)"
+
+msgid "— Reunión interna —"
+msgstr "— Reunió interna —"
+
+msgid "Ana (cliente), Luis, tú…"
+msgstr "Ana (client), Luis, tu…"
+
+msgid "Notas iniciales (opcional)"
+msgstr "Notes inicials (opcional)"
+
+msgid "Una reunión interna (sin cliente ni oportunidad) solo la ves tú y la dirección."
+msgstr "Una reunió interna (sense client ni oportunitat) només la veus tu i la direcció."
+
+msgid "Crear y empezar"
+msgstr "Crear i començar"
+
+msgid "Toma tus notas durante la reunión y deja que la IA redacte el acta; tú la revisas y conviertes en tareas lo que toque."
+msgstr "Pren les teves notes durant la reunió i deixa que la IA redacti l'acta; tu la revises i converteixes en tasques el que toqui."
+
+msgid "Todavía no hay reuniones"
+msgstr "Encara no hi ha reunions"
+
+msgid "Crea una al empezar la reunión, escribe tus notas y genera el acta al terminar."
+msgstr "Crea'n una en començar la reunió, escriu les teves notes i genera l'acta en acabar."
+
+msgid "Interna"
+msgstr "Interna"
+
+msgid "Con acta"
+msgstr "Amb acta"
+
+msgid "Sin acta"
+msgstr "Sense acta"
+
+msgid "Cuando una oportunidad pase a"
+msgstr "Quan una oportunitat passi a"
+
+msgid "Los avisos y las tareas solo llegan a quien puede ver esa oportunidad. No se pueden usar acciones sobre una tarea, porque aquí no hay ninguna."
+msgstr "Els avisos i les tasques només arriben a qui pot veure aquesta oportunitat. No es poden fer servir accions sobre una tasca, perquè aquí no n'hi ha cap."
+
+msgid "Avisar cuando se gane una oportunidad"
+msgstr "Avisar quan es guanyi una oportunitat"
+
+msgid "Reunión con un cliente"
+msgstr "Reunió amb un client"
+
+msgid "Llamada o reunión comercial"
+msgstr "Trucada o reunió comercial"
+
+msgid "Reunión interna del equipo"
+msgstr "Reunió interna de l'equip"
+
+msgid "Llamada"
+msgstr "Trucada"
+
+msgid "Visita"
+msgstr "Visita"
+
+msgid "Sin oportunidades cerradas en el periodo no hay tasa de éxito: no se inventa un cero ni un cien por cien."
+msgstr "Sense oportunitats tancades en el període no hi ha taxa d'èxit: no s'inventa un zero ni un cent per cent."

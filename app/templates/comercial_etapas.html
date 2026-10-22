@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Etapas del embudo') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Etapas del embudo') }}</h1>
+  <p class="subtitle">{{ _('Las etapas por las que pasa una oportunidad y la probabilidad de cerrarla en cada una. Solo la dirección las cambia.') }}</p></div></header>
+{% set subnav_activa = 'etapas' %}
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  <table class="ds-tabla">
+    <thead><tr><th>{{ _('Etapa') }}</th><th>{{ _('Probabilidad') }}</th><th></th></tr></thead>
+    <tbody>
+    {% for e in etapas %}
+      <tr>
+        {% if puede_editar %}
+        <td colspan="2"><form class="quick-row" method="post">
+          <input type="hidden" name="accion" value="guardar"><input type="hidden" name="clave" value="{{ e.clave }}">
+          <input type="text" name="nombre" maxlength="60" required value="{{ e.nombre }}" aria-label="{{ _('Nombre') }}">
+          {% if e.tipo == 'abierta' %}<input type="number" name="probabilidad" min="0" max="100" value="{{ e.probabilidad }}" aria-label="{{ _('Probabilidad') }}"> %{% else %}{{ chip(_('Ganada') if e.tipo == 'ganada' else _('Perdida'), 'exito' if e.tipo == 'ganada' else 'peligro') }}{% endif %}
+          <button type="submit" class="btn btn-secondary">{{ _('Guardar') }}</button></form></td>
+        <td>
+          {% if e.tipo == 'abierta' %}
+          <form method="post" class="ds-fila"><input type="hidden" name="clave" value="{{ e.clave }}">
+            <button type="submit" name="accion" value="subir" class="btn btn-ghost" aria-label="{{ _('Subir') }}">↑</button>
+            <button type="submit" name="accion" value="bajar" class="btn btn-ghost" aria-label="{{ _('Bajar') }}">↓</button>
+            <button type="submit" name="accion" value="borrar" class="btn btn-ghost">{{ _('Borrar') }}</button></form>
+          {% endif %}
+        </td>
+        {% else %}
+        <td>{{ e.nombre }}</td><td>{{ e.probabilidad }} %</td><td></td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% if puede_editar %}
+<section class="dash-panel">
+  <h2>{{ _('Añadir una etapa') }}</h2>
+  <form class="quick-row" method="post"><input type="hidden" name="accion" value="crear">
+    <input type="text" name="nombre" maxlength="60" required placeholder="{{ _('Nombre') }}" aria-label="{{ _('Nombre') }}">
+    <input type="number" name="probabilidad" min="0" max="100" value="50" aria-label="{{ _('Probabilidad') }}"> %
+    <button type="submit" class="btn btn-primary">{{ _('Añadir') }}</button></form>
+</section>
+{% endif %}
+{% endblock %}

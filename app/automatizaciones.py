@@ -33,13 +33,15 @@ DISPARADORES = {
     "tarea.liberada": "Una tarea queda libre (se completa lo que esperaba)",
     "expediente.creado": "Se abre un expediente",
     "expediente.estado": "Un expediente cambia de estado",
+    "oportunidad.etapa": "Una oportunidad comercial cambia de etapa",
 }
 # Los cinco últimos no se buscan una vez al día: reaccionan a un evento (cola `automatizaciones_eventos`). Cada disparador de evento escucha un evento interno.
 DISPARADORES_DE_EVENTO = {"tarea.creada": "tarea.creada", "tarea.estado": "tarea.estado_cambiado", "recurrencia.generada": "recurrencia.generada", "tarea.liberada": "tarea.desbloqueada",
-                          "expediente.creado": "expediente.creado", "expediente.estado": "expediente.estado_cambiado"}
+                          "expediente.creado": "expediente.creado", "expediente.estado": "expediente.estado_cambiado", "oportunidad.etapa": "oportunidad.etapa_cambiada"}
 # Los de tarea tienen UNA tarea sobre la que se puede actuar (comentar, fijar fecha, asignar, pedir revisión); los de expediente no: solo crear tareas y avisar.
 DISPARADORES_CON_TAREA = ("tarea.vencida", "tarea.creada", "tarea.estado", "recurrencia.generada", "tarea.liberada")
 EVENTOS_DE_EXPEDIENTE = ("expediente.creado", "expediente.estado_cambiado")
+EVENTOS_DE_OPORTUNIDAD = ("oportunidad.etapa_cambiada",)
 PERIODICIDADES_TEXTO = {"diaria": "diaria", "laborables": "en días laborables", "semanal": "semanal", "mensual": "mensual", "trimestral": "trimestral", "anual": "anual"}
 _ID_EXPEDIENTE = re.compile(r"[a-z0-9_]{1,40}")
 ESTADOS_TAREA = {"no_iniciada": "Sin empezar", "en_progreso": "En progreso", "completada": "Completada", "esperando": "Esperando a otros", "aplazada": "Aplazada", "en_revision": "En revisión"}
@@ -57,6 +59,7 @@ VARIABLES = {
     "tarea.liberada": ("asunto", "previa", "prioridad", "cliente", "fecha"),                 # previa: la tarea que se acaba de completar y que esta esperaba
     "expediente.creado": ("expediente", "referencia", "tipo", "cliente", "estado"),
     "expediente.estado": ("expediente", "referencia", "tipo", "cliente", "estado", "anterior"),
+    "oportunidad.etapa": ("oportunidad", "contacto", "etapa", "anterior", "importe", "responsable"),
 }
 PRIORIDADES = ("baja", "normal", "alta")
 MAX_REGLAS = 50
@@ -191,6 +194,10 @@ def validar_condiciones(disparador: str, condiciones: dict) -> dict:
                 raise ValueError("El tipo de expediente no es válido.")
             out["tipo"] = c["tipo"]
         return out
+    if disparador == "oportunidad.etapa":
+        if not _ID_EXPEDIENTE.fullmatch(c.get("etapa") or ""):
+            raise ValueError("Elige a qué etapa tiene que pasar la oportunidad.")
+        return {"etapa": c["etapa"]}
     raise ValueError("Disparador no válido.")
 
 
@@ -270,6 +277,12 @@ def _destino(valor, defecto: str):
 def comprobar_pertenencia(tenant_id: int, condiciones: dict, acciones: list[dict], disparador: str | None = None) -> None:
     """Las personas y el cliente que nombra una regla tienen que ser del propio despacho (también al crearla por la API o por código, no solo desde la pantalla). En los disparadores de
     expediente, el tipo y el estado tienen que existir para ese despacho."""
+    if disparador == "oportunidad.etapa":
+        from . import comercial, verticales
+        if not verticales.esta_activo(tenant_id, "comercial"):
+            raise ValueError("Tu despacho no tiene el módulo Comercial.")
+        if condiciones.get("etapa") not in {e["clave"] for e in comercial.listar_etapas(tenant_id)}:
+            raise ValueError("Esa etapa no existe en tu embudo.")
     if disparador in ("expediente.creado", "expediente.estado"):
         from . import verticales
         tipos = verticales.tipos_expediente(tenant_id)
@@ -328,6 +341,8 @@ def formulario_a_regla(form, disparador: str) -> tuple[dict, list[dict]]:
         cond = {"tipo": form.get("c_tipo_xc")}
     elif disparador == "expediente.estado":
         cond = {"estado": form.get("c_estado_x"), "tipo": form.get("c_tipo_x")}
+    elif disparador == "oportunidad.etapa":
+        cond = {"etapa": form.get("c_etapa_o")}
     else:
         raise ValueError("Disparador no válido.")
     acciones = []
@@ -473,6 +488,8 @@ PLANTILLAS = {
                              "acciones": [{"tipo": "fijar_fecha", "dias_plazo": 7, "solo_si_vacia": True}]},
     "expediente_cerrado": {"nombre": "Avisar a la dirección cuando se cierre un expediente", "disparador": "expediente.estado", "condiciones": {"estado": "cerrado"},
                            "acciones": [{"tipo": "notificar", "titulo": "Expediente cerrado: {expediente}", "cuerpo": "Cliente: {cliente}. Tipo: {tipo}.", "a": "direccion"}]},
+    "oportunidad_ganada": {"nombre": "Avisar a la dirección cuando se gane una oportunidad", "disparador": "oportunidad.etapa", "condiciones": {"etapa": "ganada"},
+                           "acciones": [{"tipo": "notificar", "titulo": "Oportunidad ganada: {oportunidad}", "cuerpo": "{contacto}: {importe}. Lleva: {responsable}.", "a": "direccion"}]},
     "preparar_modelo": {"nombre": "Preparar el modelo 7 días antes", "disparador": "vencimiento.proximo", "condiciones": {"dias_antes": 7},
                         "acciones": [{"tipo": "crear_tarea", "asunto": "Preparar el modelo {modelo} de {cliente} ({periodo})", "prioridad": "normal", "dias_plazo": 5, "asignar_a": "responsable"}]},
 }
@@ -597,6 +614,9 @@ def _destinatarios(tenant_id: int, destino, oc: dict, regla: dict) -> list[int]:
     else:
         quien = _usuario_del_despacho(tenant_id, destino)
         quienes = [quien] if quien else []
+    if oc.get("oportunidad_id"):
+        from . import comercial
+        return [u for u in quienes if comercial.obtener_oportunidad(tenant_id, u, oc["oportunidad_id"], incluir_papelera=True) is not None]
     return _con_acceso_al_expediente(tenant_id, oc["expediente_id"], quienes) if oc.get("expediente_id") else quienes
 
 
@@ -760,6 +780,8 @@ def _simular_evento(tenant_id: int, regla: dict, hoy: date) -> dict:
         return _simular_liberada(tenant_id, regla, desde)
     if regla["disparador"] in ("expediente.creado", "expediente.estado"):
         return _simular_expediente(tenant_id, regla, desde)
+    if regla["disparador"] == "oportunidad.etapa":
+        return _simular_oportunidad(tenant_id, regla, desde)
     estado = regla["condiciones"].get("estado")
     campo = "t.creada_en" if regla["disparador"] == "tarea.creada" else "t.actualizada_en"
     conn = db.get_connection()
@@ -811,6 +833,23 @@ def _simular_recurrencia(tenant_id: int, regla: dict, desde: str) -> dict:
         tarea, datos = _tarea_del_evento(f["id"]), {"periodicidad": f["periodicidad"]}
         if tarea and cumple_evento(regla, tarea, datos):
             oc = _ocurrencia_de_evento(0, regla, tarea, datos)
+            ejemplos.append({"objeto": oc["objeto"], "fecha": oc["fecha"], "datos": oc["datos"]})
+    return {"cumplen": len(ejemplos), "nuevas": len(ejemplos), "ya_atendidas": 0, "reciente": True, "ejemplos": ejemplos[:20]}
+
+
+def _simular_oportunidad(tenant_id: int, regla: dict, desde: str) -> dict:
+    """Oportunidades que han llegado a esa etapa en los últimos 7 días (por la cronología de cambios de etapa)."""
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT DISTINCT o.id FROM crm_oportunidades o WHERE o.tenant_id = ? AND o.papelera_en IS NULL AND o.etapa = ? AND substr(COALESCE(o.actualizada_en, o.creada_en), 1, 10) >= ? LIMIT 200",
+                             (tenant_id, regla["condiciones"]["etapa"], desde)).fetchall()
+    finally:
+        conn.close()
+    ejemplos = []
+    for f in filas:
+        o = _oportunidad_del_evento(f["id"])
+        if o:
+            oc = _ocurrencia_de_oportunidad(0, regla, o, {"a": regla["condiciones"]["etapa"]})
             ejemplos.append({"objeto": oc["objeto"], "fecha": oc["fecha"], "datos": oc["datos"]})
     return {"cumplen": len(ejemplos), "nuevas": len(ejemplos), "ya_atendidas": 0, "reciente": True, "ejemplos": ejemplos[:20]}
 
@@ -981,14 +1020,14 @@ def registrar_evento(tenant_id: int, evento: str, payload: dict) -> None:
     if _ACTUANDO.get():
         return
     disparadores = [d for d, e in DISPARADORES_DE_EVENTO.items() if e == evento]
-    if not disparadores or not payload or not (payload.get("tarea_id") or payload.get("expediente_id")):
+    if not disparadores or not payload or not (payload.get("tarea_id") or payload.get("expediente_id") or payload.get("oportunidad_id")):
         return
     conn = db.get_connection()
     try:
         if conn.execute(f"SELECT 1 FROM automatizaciones_reglas WHERE tenant_id = ? AND activa = 1 AND disparador IN ({','.join('?' * len(disparadores))}) LIMIT 1", (tenant_id, *disparadores)).fetchone() is None:
             return
         conn.execute("INSERT INTO automatizaciones_eventos (tenant_id, evento, tarea_id, objeto_id, datos, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
-                     (tenant_id, evento, payload.get("tarea_id"), payload.get("expediente_id"), json.dumps({k: payload[k] for k in ("de", "a", "periodicidad", "recurrente_id", "por") if k in payload}), db.now_iso()))
+                     (tenant_id, evento, payload.get("tarea_id"), payload.get("expediente_id") or payload.get("oportunidad_id"), json.dumps({k: payload[k] for k in ("de", "a", "periodicidad", "recurrente_id", "por") if k in payload}), db.now_iso()))
         conn.commit()
     finally:
         conn.close()
@@ -1096,6 +1135,34 @@ def _ocurrencia_de_expediente(evento_id: int, regla: dict, exp: dict, datos: dic
             "expediente_id": exp["id"], "datos": d, "fecha": ""}
 
 
+def _oportunidad_del_evento(oportunidad_id: int) -> dict | None:
+    conn = db.get_connection()
+    try:
+        f = conn.execute(
+            """SELECT o.id, o.titulo, o.etapa, o.importe_centimos, o.responsable_id, o.cliente_id, COALESCE(c.nombre, o.empresa, o.contacto_nombre, '') AS contacto,
+                      (SELECT id FROM clientes_fiscales WHERE cliente_id = o.cliente_id LIMIT 1) AS cliente_fiscal_id
+               FROM crm_oportunidades o LEFT JOIN clientes c ON c.id = o.cliente_id WHERE o.id = ? AND o.papelera_en IS NULL""", (oportunidad_id,)).fetchone()
+        return dict(f) if f else None
+    finally:
+        conn.close()
+
+
+def cumple_evento_oportunidad(regla: dict, o: dict, datos: dict) -> bool:
+    return datos.get("a") == regla["condiciones"].get("etapa")
+
+
+def _ocurrencia_de_oportunidad(evento_id: int, regla: dict, o: dict, datos: dict) -> dict:
+    conn = db.get_connection()
+    try:
+        nombres = {f["clave"]: f["nombre"] for f in conn.execute("SELECT clave, nombre FROM crm_etapas WHERE tenant_id = (SELECT tenant_id FROM crm_oportunidades WHERE id = ?)", (o["id"],))}
+    finally:
+        conn.close()
+    d = {"oportunidad": o["titulo"], "contacto": o["contacto"], "etapa": nombres.get(datos.get("a"), datos.get("a") or ""), "anterior": nombres.get(datos.get("de"), datos.get("de") or ""),
+         "importe": f"{o['importe_centimos'] / 100:,.2f} €".replace(",", "X").replace(".", ",").replace("X", "."), "responsable": (db.nombre_mostrado_usuario(o["responsable_id"]) if o["responsable_id"] else "") or ""}
+    return {"clave": f"evt:{evento_id}", "objeto": f"oportunidad {o['id']}: {o['titulo'][:60]}", "responsable": o["responsable_id"], "cliente_fiscal_id": o["cliente_fiscal_id"],
+            "oportunidad_id": o["id"], "datos": d, "fecha": ""}
+
+
 def procesar_eventos(ahora: datetime | None = None, limite: int = MAX_EVENTOS_POR_LOTE) -> dict:
     """Procesa los eventos pendientes (los más antiguos primero): para cada regla activa del despacho que escuche ese evento y cuyas condiciones cumpla la tarea, abre la ejecución (clave única)
     y hace las acciones, con los mismos reintentos y avisos que el análisis diario. Devuelve cuántos eventos y ejecuciones ha tratado."""
@@ -1108,8 +1175,11 @@ def procesar_eventos(ahora: datetime | None = None, limite: int = MAX_EVENTOS_PO
         conn.close()
     for ev in eventos:
         de_expediente = ev["evento"] in EVENTOS_DE_EXPEDIENTE
-        tarea = _expediente_del_evento(ev["objeto_id"]) if de_expediente else _tarea_del_evento(ev["tarea_id"])       # `tarea` es el objeto del evento: una tarea o un expediente
-        cumple, ocurrencia = (cumple_evento_expediente, _ocurrencia_de_expediente) if de_expediente else (cumple_evento, _ocurrencia_de_evento)
+        de_oportunidad = ev["evento"] in EVENTOS_DE_OPORTUNIDAD
+        tarea = (_expediente_del_evento(ev["objeto_id"]) if de_expediente else _oportunidad_del_evento(ev["objeto_id"]) if de_oportunidad
+                 else _tarea_del_evento(ev["tarea_id"]))                                       # `tarea` es el objeto del evento: una tarea, un expediente o una oportunidad
+        cumple, ocurrencia = ((cumple_evento_expediente, _ocurrencia_de_expediente) if de_expediente else (cumple_evento_oportunidad, _ocurrencia_de_oportunidad) if de_oportunidad
+                              else (cumple_evento, _ocurrencia_de_evento))
         datos = json.loads(ev["datos"] or "{}")
         if tarea is not None:
             conn = db.get_connection()

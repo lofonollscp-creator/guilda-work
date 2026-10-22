@@ -275,4 +275,4 @@ def entradas_de_menu(tenant_id: int | None) -> list[EntradaMenu]:
 
 
 # Los módulos de negocio se registran al importarse (cada uno completa su entrada de VERTICALES). Va al final: necesitan todo lo de arriba.
-from . import abogados, facturas_contables, inmobiliaria  # noqa: E402,F401
+from . import abogados, comercial, facturas_contables, inmobiliaria  # noqa: E402,F401

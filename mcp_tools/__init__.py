@@ -544,6 +544,10 @@ from .herramientas_contabilidad import (  # noqa: E402,F401
     _ctx_conta, _conta,
     contabilidad_listar_facturas, contabilidad_ver_factura, contabilidad_resumen, contabilidad_comprobar_exportacion, contabilidad_anotar_factura, contabilidad_cambiar_estado_factura, contabilidad_leer_factura_con_ia, contabilidad_exportar,
 )
+from .herramientas_comercial import (  # noqa: E402,F401
+    _ctx_comercial, _traducir_comercial, _oportunidad_json,
+    comercial_listar_oportunidades, comercial_ver_oportunidad, comercial_embudo, comercial_ver_reunion, comercial_crear_oportunidad, comercial_mover_oportunidad, comercial_anotar_actividad, comercial_crear_reunion, comercial_generar_acta,
+)
 from .herramientas_tareas_trabajo import (  # noqa: E402,F401
     _tt, _como_error, _tarea_visible, _direccion,
     cambiar_estado_tarea_con_motivo, listar_subtareas_tarea, crear_subtarea, listar_clientes_de_tarea, fijar_clientes_de_tarea, listar_tareas_de_cliente, listar_adjuntos_tarea, listar_revisiones_tarea, pedir_revision_tarea, resolver_revision_tarea, listar_conversaciones_cliente_tarea, responder_cliente_tarea, ocultar_comentario_cliente_tarea, listar_dependencias_tarea, anadir_dependencia_tarea, quitar_dependencia_tarea, informe_tareas, listar_reglas_automatizacion, simular_regla_automatizacion, listar_ejecuciones_automatizacion,
@@ -692,6 +696,8 @@ TOOLS = [
     contabilidad_listar_facturas, contabilidad_ver_factura, contabilidad_resumen, contabilidad_comprobar_exportacion, contabilidad_anotar_factura, contabilidad_cambiar_estado_factura, contabilidad_leer_factura_con_ia, contabilidad_exportar,
     # Trabajo con tareas: estado con motivo, subtareas, clientes, revisiones, informe y automatizaciones
     cambiar_estado_tarea_con_motivo, listar_subtareas_tarea, crear_subtarea, listar_clientes_de_tarea, fijar_clientes_de_tarea, listar_tareas_de_cliente, listar_adjuntos_tarea, listar_revisiones_tarea, pedir_revision_tarea, resolver_revision_tarea, listar_conversaciones_cliente_tarea, responder_cliente_tarea, ocultar_comentario_cliente_tarea, listar_dependencias_tarea, anadir_dependencia_tarea, quitar_dependencia_tarea, informe_tareas, listar_reglas_automatizacion, simular_regla_automatizacion, listar_ejecuciones_automatizacion,
+    # Comercial: oportunidades, embudo y reuniones con acta de IA
+    comercial_listar_oportunidades, comercial_ver_oportunidad, comercial_embudo, comercial_ver_reunion, comercial_crear_oportunidad, comercial_mover_oportunidad, comercial_anotar_actividad, comercial_crear_reunion, comercial_generar_acta,
     # Fichaje
     fichar, listar_mis_fichajes,
     listar_mis_ausencias, saldo_vacaciones, pedir_ausencia, cancelar_ausencia, listar_ausencias_equipo, resolver_ausencia, ver_mis_turnos, ver_cuadrante, asignar_turno, ver_bolsa_de_horas, ajustar_bolsa_de_horas,

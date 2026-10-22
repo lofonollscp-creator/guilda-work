@@ -244,6 +244,7 @@ from .rutas_hoy import hoy_bp  # noqa: E402
 from .rutas_menu import menu_bp  # noqa: E402
 from .rutas_cobros import cobros_bp  # noqa: E402
 from .rutas_contabilidad import contabilidad_bp  # noqa: E402
+from .rutas_comercial import comercial_bp  # noqa: E402
 app.register_blueprint(abogados_bp)
 app.register_blueprint(inmobiliaria_bp)
 app.register_blueprint(seguridad_bp)
@@ -255,6 +256,7 @@ app.register_blueprint(hoy_bp)
 app.register_blueprint(menu_bp)
 app.register_blueprint(cobros_bp)
 app.register_blueprint(contabilidad_bp)
+app.register_blueprint(comercial_bp)
 app.register_blueprint(expedientes_bp)
 app.register_blueprint(plazos_bp)
 app.register_blueprint(tiempo_bp)

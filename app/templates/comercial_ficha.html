@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ o.titulo }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ o.titulo }}</h1>
+    <p class="subtitle">{{ chip(o.etapa_nombre, 'exito' if o.estado == 'ganada' else ('peligro' if o.estado == 'perdida' else 'neutro')) }}
+      {% if o.cliente_id %}<a href="{{ url_for('clientes.ficha', cliente_id=o.cliente_id) }}">{{ o.cliente_nombre }}</a>{% else %}{{ o.contacto }}{% endif %}</p>
+  </div>
+  <div class="ds-fila">
+    <a class="btn btn-ghost" href="{{ url_for('comercial.reunion_nueva', oportunidad_id=o.id) }}">+ {{ _('Reunión') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('comercial.editar', oportunidad_id=o.id) }}">{{ _('Editar') }}</a>
+  </div>
+</header>
+{% set subnav_activa = 'embudo' %}
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+
+<section class="dash-panel" aria-label="{{ _('Resumen') }}">
+  <ul class="log-list">
+    <li class="log-item"><span class="log-text">{{ _('Importe') }}</span><strong>{{ o.importe_centimos|importe }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Probabilidad') }}</span><strong>{{ o.probabilidad }} %</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Previsión ponderada') }}</span><strong>{{ (o.ponderado * 100)|round|int|importe }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Cierre previsto') }}</span><strong>{{ o.cierre_previsto|fecha_dia if o.cierre_previsto else '—' }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Responsable') }}</span><strong>{{ o.responsable or '—' }}</strong></li>
+    {% if o.contacto_email %}<li class="log-item"><span class="log-text">{{ _('Correo') }}</span><a href="mailto:{{ o.contacto_email }}">{{ o.contacto_email }}</a></li>{% endif %}
+    {% if o.contacto_telefono %}<li class="log-item"><span class="log-text">{{ _('Teléfono') }}</span><strong>{{ o.contacto_telefono }}</strong></li>{% endif %}
+    {% if o.origen %}<li class="log-item"><span class="log-text">{{ _('Cómo llegó') }}</span><strong>{{ o.origen }}</strong></li>{% endif %}
+    {% if o.motivo_perdida %}<li class="log-item"><span class="log-text">{{ _('Motivo de la pérdida') }}</span><strong>{{ o.motivo_perdida }}</strong></li>{% endif %}
+  </ul>
+  {% if o.notas %}<p>{{ o.notas }}</p>{% endif %}
+</section>
+
+<section class="dash-panel" aria-label="{{ _('Etapa') }}">
+  <h2>{{ _('Etapa') }}</h2>
+  <form class="quick-row" method="post" action="{{ url_for('comercial.etapa', oportunidad_id=o.id) }}">
+    <select name="etapa" aria-label="{{ _('Etapa') }}">{% for e in etapas %}<option value="{{ e.clave }}" {{ 'selected' if e.clave == o.etapa }}>{{ e.nombre }}</option>{% endfor %}</select>
+    <input type="text" name="motivo" maxlength="500" placeholder="{{ _('Motivo (obligatorio si se pierde)') }}" aria-label="{{ _('Motivo') }}">
+    <button type="submit" class="btn btn-secondary">{{ _('Cambiar') }}</button>
+  </form>
+  {% if not o.cliente_id %}
+  <form class="quick-row" method="post" action="{{ url_for('comercial.convertir', oportunidad_id=o.id) }}">
+    <input type="text" name="nif" maxlength="30" placeholder="{{ _('NIF (opcional)') }}" aria-label="{{ _('NIF') }}">
+    {% if gestion_fiscal %}<label class="checkbox"><input type="checkbox" name="gestion_fiscal" value="1"> {{ _('Con gestión fiscal') }}</label>{% endif %}
+    <button type="submit" class="btn btn-primary">{{ _('Convertir en cliente y dar por ganada') }}</button>
+  </form>
+  {% else %}<p class="muted">{{ _('Ya es cliente.') }}</p>{% endif %}
+</section>
+
+<section class="dash-panel" aria-label="{{ _('Anotar') }}">
+  <h2>{{ _('Anotar una actividad') }}</h2>
+  <form class="edit-form" method="post" action="{{ url_for('comercial.actividad', oportunidad_id=o.id) }}">
+    <div class="quick-row">
+      <select name="tipo" aria-label="{{ _('Tipo') }}">{% for k, n in tipos.items() %}<option value="{{ k }}">{{ _(n) }}</option>{% endfor %}</select>
+      <input type="date" name="fecha" value="{{ hoy }}" aria-label="{{ _('Fecha') }}">
+      <input type="text" name="asunto" maxlength="300" required placeholder="{{ _('¿De qué se trató?') }}" aria-label="{{ _('Asunto') }}">
+    </div>
+    <textarea name="texto" rows="2" maxlength="4000" placeholder="{{ _('Detalles (opcional)') }}" aria-label="{{ _('Detalles') }}"></textarea>
+    <div class="quick-row">
+      <input type="text" name="proxima_accion" maxlength="300" placeholder="{{ _('Próxima acción (crea una tarea)') }}" aria-label="{{ _('Próxima acción') }}">
+      <input type="date" name="proxima_fecha" aria-label="{{ _('Para cuándo') }}">
+      <button type="submit" class="btn btn-primary">{{ _('Anotar') }}</button>
+    </div>
+  </form>
+</section>
+
+<section class="dash-panel" aria-label="{{ _('Cronología') }}">
+  <h2>{{ _('Cronología') }}</h2>
+  {% if cronologia %}
+  <ul class="log-list">
+    {% for a in cronologia %}
+    <li class="log-item">
+      <span class="log-text">{{ chip(_(a.tipo_texto)) }}
+        {% if a.reunion_id %}<a href="{{ url_for('comercial.reunion', reunion_id=a.reunion_id) }}">{{ a.asunto }}</a>{% else %}<strong>{{ a.asunto }}</strong>{% endif %}
+        {% if a.texto %}<br><span class="muted">{{ a.texto }}</span>{% endif %}
+        {% if a.tarea_id %}<br><a href="{{ url_for('tareas.ver', tarea_id=a.tarea_id) }}">{{ _('Tarea') }}</a>{% if a.tarea_fecha %} · {{ a.tarea_fecha|fecha_dia }}{% endif %}{% endif %}</span>
+      <span class="muted">{{ a.fecha|fecha_dia }}{% if a.autor %} · {{ a.autor }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay actividad.') }}</p>{% endif %}
+</section>
+
+<form method="post" action="{{ url_for('comercial.papelera', oportunidad_id=o.id) }}" data-confirmar-envio="{{ _('¿Mover esta oportunidad a la papelera?') }}">
+  <button type="submit" class="btn btn-ghost">{{ _('Mover a la papelera') }}</button>
+</form>
+{% endblock %}

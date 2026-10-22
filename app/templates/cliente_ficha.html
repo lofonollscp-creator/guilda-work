@@ -105,6 +105,9 @@
 </section>
 {% endif %}
 
+{% set crm = crm_de_cliente(c.id) if crm_de_cliente is defined else none %}
+{% if crm is not none %}{% include "_crm_cliente.html" %}{% endif %}
+
 {% if not c.papelera_en %}
 <section class="dash-panel ds-mt-16">
   <h2>{{ _('Fusionar con otro cliente') }}</h2>

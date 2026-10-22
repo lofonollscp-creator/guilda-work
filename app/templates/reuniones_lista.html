@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Reuniones') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Reuniones') }}</h1>
+  <p class="subtitle">{{ _('Toma tus notas durante la reunión y deja que la IA redacte el acta; tú la revisas y conviertes en tareas lo que toque.') }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('comercial.reunion_nueva') }}">+ {{ _('Nueva reunión') }}</a></header>
+{% set subnav_activa = 'reuniones' %}
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+{% if not reuniones %}
+  {{ estado_vacio(_('Todavía no hay reuniones'), _('Crea una al empezar la reunión, escribe tus notas y genera el acta al terminar.'), 'folder', _('Nueva reunión'), url_for('comercial.reunion_nueva')) }}
+{% else %}
+<ul class="log-list">
+  {% for r in reuniones %}
+  <li class="log-item"><span class="log-text"><a href="{{ url_for('comercial.reunion', reunion_id=r.id) }}">{{ r.titulo }}</a>
+    <br><span class="muted">{{ r.cliente_nombre or _('Interna') }} · {{ r.plantilla_nombre }}</span></span>
+    <span>{{ chip(_('Con acta'), 'exito') if r.acta else chip(_('Sin acta')) }} <span class="muted">{{ r.fecha|fecha_dia }}</span></span></li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

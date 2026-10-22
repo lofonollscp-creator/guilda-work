@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Informes comerciales') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Informes comerciales') }}</h1>
+  <p class="subtitle">{{ _('El embudo de ahora y lo ganado y perdido en el periodo. Solo cuenta lo que tú puedes ver.') }}</p></div></header>
+{% set subnav_activa = 'informes' %}
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get">
+  <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ e.periodo.desde }}"></label>
+  <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ e.periodo.hasta }}"></label>
+  <button type="submit" class="btn btn-primary">{{ _('Ver') }}</button>
+</form>
+
+<section class="dash-panel" aria-label="{{ _('Embudo abierto') }}">
+  <h2>{{ _('Embudo abierto') }}</h2>
+  <p>{{ chip(_('%(n)s abiertas', n=e.abiertas.n)) }} {{ chip(_('Importe: %(i)s', i=(e.abiertas.importe * 100)|round|int|importe)) }} {{ chip(_('Ponderado: %(i)s', i=(e.abiertas.ponderado * 100)|round|int|importe), 'exito') }}
+     {% if e.estancadas %}{{ chip(_('%(n)s sin actividad en 14 días', n=e.estancadas), 'aviso') }}{% endif %}</p>
+  <table class="ds-tabla">
+    <thead><tr><th>{{ _('Etapa') }}</th><th>{{ _('Prob.') }}</th><th>{{ _('Oportunidades') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Ponderado') }}</th></tr></thead>
+    <tbody>{% for x in e.etapas %}<tr><td>{{ x.nombre }}</td><td>{{ x.probabilidad }} %</td><td>{{ x.n }}</td><td>{{ (x.importe * 100)|round|int|importe }}</td><td>{{ (x.ponderado * 100)|round|int|importe }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+
+<section class="dash-panel" aria-label="{{ _('Resultados del periodo') }}">
+  <h2>{{ _('Resultados del periodo') }}</h2>
+  <ul class="log-list">
+    <li class="log-item"><span class="log-text">{{ _('Ganadas') }}</span><strong>{{ e.ganadas.n }} · {{ (e.ganadas.importe * 100)|round|int|importe }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Perdidas') }}</span><strong>{{ e.perdidas.n }} · {{ (e.perdidas.importe * 100)|round|int|importe }}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Tasa de éxito') }}</span><strong>{% if e.tasa_exito is none %}—{% else %}{{ e.tasa_exito|string|replace('.', ',') }} %{% endif %}</strong></li>
+    <li class="log-item"><span class="log-text">{{ _('Ciclo medio de venta') }}</span><strong>{% if e.ciclo_medio_dias is none %}—{% else %}{{ e.ciclo_medio_dias|string|replace('.', ',') }} {{ _('días') }}{% endif %}</strong></li>
+  </ul>
+  <p class="muted">{{ _('Sin oportunidades cerradas en el periodo no hay tasa de éxito: no se inventa un cero ni un cien por cien.') }}</p>
+  {% if e.motivos_perdida %}<h3>{{ _('Por qué se pierden') }}</h3><ul class="log-list">{% for m in e.motivos_perdida %}<li class="log-item"><span class="log-text">{{ m.motivo }}</span><strong>{{ m.n }}</strong></li>{% endfor %}</ul>{% endif %}
+  {% if e.por_responsable %}<h3>{{ _('Por responsable') }}</h3>
+  <table class="ds-tabla"><thead><tr><th>{{ _('Persona') }}</th><th>{{ _('Ganadas') }}</th><th>{{ _('Perdidas') }}</th><th>{{ _('Importe ganado') }}</th></tr></thead>
+    <tbody>{% for r in e.por_responsable %}<tr><td>{{ r.responsable or '—' }}</td><td>{{ r.ganadas }}</td><td>{{ r.perdidas }}</td><td>{{ (r.importe_ganado * 100)|round|int|importe }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+</section>
+{% endblock %}

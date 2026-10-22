@@ -1233,10 +1233,10 @@ def _direccion_o_404():
 
 
 def _pagina_automatizaciones(simulacion=None, error=None):
-    from . import automatizaciones
+    from . import automatizaciones, verticales
     reglas = automatizaciones.listar_reglas(g.tenant_id)
     return render_template(
-        "tareas_automatizaciones.html", reglas=reglas, plantillas=automatizaciones.PLANTILLAS, ejecuciones=automatizaciones.ejecuciones(g.tenant_id, limite=40),
+        "tareas_automatizaciones.html", reglas=reglas, plantillas=automatizaciones.PLANTILLAS, plantilla_comercial=verticales.esta_activo(g.tenant_id, "comercial"), ejecuciones=automatizaciones.ejecuciones(g.tenant_id, limite=40),
         salud=automatizaciones.resumen_de_salud(g.tenant_id), simulacion=simulacion, error=error or (request.args.get("error") or "")[:200] or None,
         parametro_de={r["id"]: ("dias_antes" if "dias_antes" in r["condiciones"] else ("dias_vencida" if "dias_vencida" in r["condiciones"] else None)) for r in reglas},
     )
@@ -1265,7 +1265,8 @@ def automatizaciones_nueva():
 
 
 def _pagina_constructor(valores: dict, regla_id: int | None = None, error: str | None = None):
-    from . import automatizaciones, verticales
+    from . import automatizaciones, comercial, verticales
+    comercial_activo = verticales.esta_activo(g.tenant_id, "comercial")
     tipos_x = verticales.tipos_expediente(g.tenant_id)
     estados_x: dict[str, str] = {}
     for tipo in tipos_x.values():
@@ -1274,7 +1275,9 @@ def _pagina_constructor(valores: dict, regla_id: int | None = None, error: str |
     acciones = list(valores["acciones"])[:automatizaciones.MAX_ACCIONES]
     acciones += [{}] * (automatizaciones.MAX_ACCIONES - len(acciones))
     respuesta = render_template(
-        "tareas_automatizacion_editar.html", valores={**valores, "acciones": acciones}, regla_id=regla_id, error=error, disparadores=automatizaciones.DISPARADORES,
+        "tareas_automatizacion_editar.html", valores={**valores, "acciones": acciones}, regla_id=regla_id, error=error,
+        disparadores={k: v for k, v in automatizaciones.DISPARADORES.items() if k != "oportunidad.etapa" or comercial_activo or valores.get("disparador") == k},
+        etapas_comercial=comercial.listar_etapas(g.tenant_id) if comercial_activo else [],
         variables=automatizaciones.VARIABLES, companeros=db.listar_companeros_tenant(g.usuario_id), clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id),
         prioridades=PRIORIDADES, estados_tarea=automatizaciones.ESTADOS_TAREA, periodicidades=automatizaciones.PERIODICIDADES_TEXTO,
         tipos_expediente=[(t.id, str(t.nombre)) for t in tipos_x.values()], estados_expediente=list(estados_x.items()), modelos_ejemplo=("303", "111", "115", "130", "190", "347", "390"))

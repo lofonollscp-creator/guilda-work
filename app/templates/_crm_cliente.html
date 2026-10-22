@@ -1,0 +1,22 @@
+{# Panel «Comercial» de la ficha del cliente (solo si el despacho tiene el módulo). Variables: c (cliente), crm = {oportunidades, reuniones}. #}
+<section class="dash-panel ds-mt-16" aria-label="{{ _('Comercial') }}">
+  <h2>{{ _('Comercial') }}</h2>
+  <div class="ds-fila">
+    <a class="btn btn-ghost" href="{{ url_for('comercial.nueva', cliente_id=c.id) }}">+ {{ _('Oportunidad') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('comercial.reunion_nueva', cliente_id=c.id) }}">+ {{ _('Reunión') }}</a>
+  </div>
+  {% if crm.oportunidades %}
+  <ul class="log-list">
+    {% for o in crm.oportunidades %}
+    <li class="log-item"><span class="log-text"><a href="{{ url_for('comercial.ficha', oportunidad_id=o.id) }}">{{ o.titulo }}</a></span>
+      <span>{{ o.etapa_nombre }}{% if o.importe_centimos %} · {{ o.importe_centimos|importe }}{% endif %}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Sin oportunidades.') }}</p>{% endif %}
+  {% if crm.reuniones %}
+  <h3>{{ _('Últimas reuniones') }}</h3>
+  <ul class="log-list">
+    {% for r in crm.reuniones %}<li class="log-item"><span class="log-text"><a href="{{ url_for('comercial.reunion', reunion_id=r.id) }}">{{ r.titulo }}</a></span><span class="muted">{{ r.fecha|fecha_dia }}</span></li>{% endfor %}
+  </ul>
+  {% endif %}
+</section>

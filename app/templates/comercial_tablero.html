@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error, selector_equipo %}
+{% block title %}{{ _('Comercial') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Comercial') }}</h1>
+    <p class="subtitle">{{ _('Del primer contacto al cierre: cada oportunidad avanza por las etapas del embudo.') }}</p>
+  </div>
+  <div class="ds-fila">
+    <a class="btn btn-ghost" href="{{ url_for('comercial.reunion_nueva') }}">+ {{ _('Reunión') }}</a>
+    <a class="btn btn-primary" href="{{ url_for('comercial.nueva') }}">+ {{ _('Nueva oportunidad') }}</a>
+  </div>
+</header>
+{% set subnav_activa = 'lista' if vista == 'lista' else 'embudo' %}
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+
+<form class="filters" method="get">
+  <input type="hidden" name="vista" value="{{ vista }}">
+  <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Título, prospecto o cliente') }}"></label>
+  <label>{{ _('Estado') }}
+    <select name="estado" data-autoenviar>
+      {% for v, n in (('abierta', _('Abiertas')), ('ganada', _('Ganadas')), ('perdida', _('Perdidas')), ('todas', _('Todas'))) %}<option value="{{ v }}" {{ 'selected' if estado == v }}>{{ n }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>{{ _('Responsable') }} {{ selector_equipo('responsable_id', equipo, responsable_id, vacio=_('Todos')) }}</label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+
+{% if estado == 'abierta' %}
+<p>{{ chip(_('Abierto: %(i)s', i=total|importe)) }} {{ chip(_('Previsión ponderada: %(i)s', i=ponderado|importe), 'exito') }}
+  {% if estancadas %}{{ chip(_('%(n)s sin actividad en 14 días', n=estancadas|length), 'aviso') }}{% endif %}</p>
+{% endif %}
+
+{% if not oportunidades %}
+  {{ estado_vacio(_('Todavía no hay oportunidades'), _('Apunta aquí a quien podría ser cliente y sigue cada paso hasta cerrarlo.'), 'folder', _('Nueva oportunidad'), url_for('comercial.nueva')) }}
+{% elif vista == 'lista' %}
+<table class="ds-tabla">
+  <thead><tr><th>{{ _('Oportunidad') }}</th><th>{{ _('Etapa') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Prob.') }}</th><th>{{ _('Cierre previsto') }}</th><th>{{ _('Responsable') }}</th></tr></thead>
+  <tbody>
+  {% for o in oportunidades %}
+    <tr><td><a href="{{ url_for('comercial.ficha', oportunidad_id=o.id) }}">{{ o.titulo }}</a><br><span class="muted">{{ o.contacto }}</span></td>
+      <td>{{ chip(o.etapa_nombre, 'exito' if o.estado == 'ganada' else ('peligro' if o.estado == 'perdida' else 'neutro')) }}</td>
+      <td>{{ o.importe_centimos|importe }}</td><td>{{ o.probabilidad }} %</td><td>{{ o.cierre_previsto|fecha_dia if o.cierre_previsto else '—' }}</td><td>{{ o.responsable or '—' }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="ds-tablero">
+  {% for e in mostradas %}
+  <section class="ds-tablero-col" aria-label="{{ e.nombre }}">
+    <h2>{{ e.nombre }} <span class="muted">{{ columnas[e.clave]|length }}</span></h2>
+    {% for o in columnas[e.clave] %}
+    <article class="ds-tarjeta">
+      <a href="{{ url_for('comercial.ficha', oportunidad_id=o.id) }}">{{ o.titulo }}</a>
+      <span class="muted">{{ o.contacto }}</span>
+      <span>{% if o.importe_centimos %}<strong>{{ o.importe_centimos|importe }}</strong>{% endif %} {% if o.id in estancadas %}{{ chip(_('Sin actividad'), 'aviso') }}{% endif %}</span>
+      {% if o.cierre_previsto %}<span class="muted">{{ _('Cierre previsto: %(f)s', f=o.cierre_previsto|fecha_dia) }}</span>{% endif %}
+      {% if o.estado == 'abierta' %}
+      <form method="post" action="{{ url_for('comercial.etapa', oportunidad_id=o.id) }}">
+        <input type="hidden" name="volver_a" value="{{ request.full_path.rstrip('?') }}">
+        <select name="etapa" data-autoenviar aria-label="{{ _('Mover a la etapa') }}">{% for e2 in etapas %}{% if e2.tipo != 'perdida' %}<option value="{{ e2.clave }}" {{ 'selected' if e2.clave == o.etapa }}>{{ e2.nombre }}</option>{% endif %}{% endfor %}</select>
+      </form>
+      {% endif %}
+    </article>
+    {% else %}<p class="muted">—</p>{% endfor %}
+  </section>
+  {% endfor %}
+</div>
+<p class="muted">{{ _('Para marcar una oportunidad como perdida (hace falta un motivo), ábrela.') }}</p>
+{% endif %}
+{% endblock %}

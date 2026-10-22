@@ -32,6 +32,7 @@
       {% elif clave == 'tarea_urgente' %}{{ boton(_('Avisar de las tareas urgentes nuevas'), 'secundario', tipo='submit') }}
       {% elif clave == 'recurrente_con_fecha' %}{{ boton(_('Poner fecha límite a las tareas recurrentes'), 'secundario', tipo='submit') }}
       {% elif clave == 'expediente_cerrado' %}{{ boton(_('Avisar cuando se cierre un expediente'), 'secundario', tipo='submit') }}
+      {% elif clave == 'oportunidad_ganada' %}{% if plantilla_comercial %}{{ boton(_('Avisar cuando se gane una oportunidad'), 'secundario', tipo='submit') }}{% endif %}
       {% else %}{{ boton(_('Preparar el modelo antes de su fecha límite'), 'secundario', tipo='submit') }}{% endif %}
     </form>
     {% endfor %}

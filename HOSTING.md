@@ -111,6 +111,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Antivirus (ClamAV) para los archivos que suben los clientes (octubre de 2026)](#antivirus-clamav-para-los-archivos-que-suben-los-clientes-octubre-de-2026)
 - [Pruebas de navegador de los flujos críticos (octubre de 2026)](#pruebas-de-navegador-de-los-flujos-críticos-octubre-de-2026)
 - [Herramientas conectadas que responden de verdad (octubre de 2026)](#herramientas-conectadas-que-responden-de-verdad-octubre-de-2026)
+- [Comercial: CRM nativo y notas de reunión con acta de IA (octubre de 2026)](#comercial-crm-nativo-y-notas-de-reunión-con-acta-de-ia-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3584,3 +3585,18 @@ Fase 1 de `docs/hoja-de-ruta.md`. Código en `app/estado_herramientas.py`.
 - **Estado real el 22-oct-2026**: responden Outline, Chat, n8n, Correo (Stalwart), Drive, Firmas, MinIO, Vaultwarden y Uptime Kuma; no responden OpenProject y Documentos (ya no se enseñan); «Observabilidad» (Grafana) responde pero sigue marcada `disponible: False` en el catálogo: decisión tuya si se enseña.
 - **Para desplegar una herramienta más** basta con arrancarla y quitar su `disponible: False` del catálogo; para retirarla del todo, ponerlo. Reversión: el módulo es solo de lectura; quitar las llamadas devuelve el comportamiento anterior.
 - **Pruebas**: `tests/test_estado_herramientas.py` (10 tests: sondeo real contra un servidor local, caché, dependencias del asistente, errores de servicio, web, API móvil y panel de salud). Los tests ya no dependen de qué servicios corren en la máquina (fixture automática en `tests/conftest.py`).
+
+## Comercial: CRM nativo y notas de reunión con acta de IA (octubre de 2026)
+
+Módulo vertical `comercial` (`app/comercial.py`, `app/reuniones.py`, `app/rutas_comercial.py`), pensado para venderse con el producto. Se activa por despacho como los demás verticales (Backoffice → módulos); sin activar, sus rutas devuelven 404 y no aparece en el menú.
+
+- **Embudo de oportunidades**: etapas por despacho (Nuevo, Contactado, Reunión, Propuesta, Negociación, Ganada, Perdida) que solo la dirección edita; cada una con su probabilidad. Tablero por etapas, ficha con cronología (actividades: llamada, reunión, visita, correo, nota), «próxima acción» que crea una tarea, e informes (embudo abierto, previsión ponderada, tasa de éxito, ciclo medio y motivos de pérdida; sin oportunidades cerradas no se inventa un 0 % ni un 100 %).
+- **Visibilidad**: una oportunidad con cliente la ve quien ve ese cliente; un prospecto sin cliente lo ve todo el despacho. El auditor solo lee. «Convertir en cliente» reutiliza el alta de cliente completa y da la oportunidad por ganada. Borrar manda a la papelera.
+- **Panel en la ficha del cliente** con sus oportunidades y reuniones (solo si el módulo está activo).
+- **Notas de reunión («estilo Granola», sin audio)**: se toman notas durante la reunión, opcionalmente se pega la transcripción (Teams, Meet, Element Call…) confirmando que se avisó a los participantes, y la IA redacta el acta (temas, decisiones, próximos pasos y tareas propuestas) con la plantilla elegida (cliente, comercial, interna). **La IA solo propone**: las tareas se crean únicamente al marcarlas y elegir responsable. La transcripción se puede borrar sin perder el acta. Una reunión interna solo la ven quien la creó y la dirección.
+- **Privacidad**: el texto de las notas y la transcripción se envía únicamente al modelo configurado en Ajustes del Asistente IA (clave OpenRouter del despacho). Sin él, las notas funcionan y el botón de acta avisa de lo que falta. **Este módulo no graba ni transcribe audio.**
+- **Automatizaciones**: disparador `oportunidad.etapa` (condición: etapa; variables oportunidad, contacto, etapa, anterior, importe, responsable) con acciones crear tarea o avisar, y plantilla «Avisar cuando se gane una oportunidad». Los avisos solo llegan a quien puede ver la oportunidad.
+- **Asistente de IA y MCP**: 9 herramientas `comercial_*` (listar/ver/crear/mover oportunidades, embudo, anotar actividad, crear/ver reunión, generar acta). Grupo de herramientas «comercial».
+- **Pendiente (no hecho)**: API REST/OpenAPI del módulo, propuestas en PDF con firma, formulario de captación web, grabación y transcripción de audio (exige elegir proveedor), tarifa propia en el Backoffice. La purga de transcripciones es manual.
+- **Migración**: aditiva e idempotente (`crm_etapas`, `crm_oportunidades`, `crm_actividades`, `crm_reuniones`); no toca tablas existentes. Reversión: desactivar el módulo; «borrar datos» del vertical elimina sus tablas de ese despacho.
+- **Pruebas**: `tests/test_comercial.py`, `tests/test_reuniones.py`.

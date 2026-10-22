@@ -14388,3 +14388,378 @@ msgstr "These tools are not responding right now and are not shown to the team:"
 
 msgid "Si es inesperado, revisa el panel de salud."
 msgstr "If this is unexpected, check the health panel."
+
+msgid "Comercial"
+msgstr "Sales"
+
+msgid "Oportunidades y embudo, seguimiento de prospectos, informes de ventas y notas de reunión con acta de IA."
+msgstr "Opportunities and pipeline, prospect follow-up, sales reports and meeting notes with AI-written minutes."
+
+msgid "Reuniones"
+msgstr "Meetings"
+
+msgid "Embudo"
+msgstr "Pipeline"
+
+msgid "Etapas"
+msgstr "Stages"
+
+msgid "Oportunidad"
+msgstr "Opportunity"
+
+msgid "Reunión"
+msgstr "Meeting"
+
+msgid "Sin oportunidades."
+msgstr "No opportunities."
+
+msgid "Últimas reuniones"
+msgstr "Latest meetings"
+
+msgid "Etapas del embudo"
+msgstr "Pipeline stages"
+
+msgid "Las etapas por las que pasa una oportunidad y la probabilidad de cerrarla en cada una. Solo la dirección las cambia."
+msgstr "The stages an opportunity goes through and the chance of closing it at each one. Only management can change them."
+
+msgid "Etapa"
+msgstr "Stage"
+
+msgid "Probabilidad"
+msgstr "Probability"
+
+msgid "Ganada"
+msgstr "Won"
+
+msgid "Añadir una etapa"
+msgstr "Add a stage"
+
+msgid "Previsión ponderada"
+msgstr "Weighted forecast"
+
+msgid "Cierre previsto"
+msgstr "Expected close"
+
+msgid "Motivo de la pérdida"
+msgstr "Reason for loss"
+
+msgid "Motivo (obligatorio si se pierde)"
+msgstr "Reason (required if lost)"
+
+msgid "Con gestión fiscal"
+msgstr "With tax management"
+
+msgid "Convertir en cliente y dar por ganada"
+msgstr "Convert to client and mark as won"
+
+msgid "Ya es cliente."
+msgstr "Already a client."
+
+msgid "Anotar una actividad"
+msgstr "Log an activity"
+
+msgid "¿De qué se trató?"
+msgstr "What was it about?"
+
+msgid "Detalles (opcional)"
+msgstr "Details (optional)"
+
+msgid "Detalles"
+msgstr "Details"
+
+msgid "Próxima acción (crea una tarea)"
+msgstr "Next action (creates a task)"
+
+msgid "Próxima acción"
+msgstr "Next action"
+
+msgid "Para cuándo"
+msgstr "Due when"
+
+msgid "Cronología"
+msgstr "Timeline"
+
+msgid "¿Mover esta oportunidad a la papelera?"
+msgstr "Move this opportunity to the trash?"
+
+msgid "Mover a la papelera"
+msgstr "Move to trash"
+
+msgid "Nueva oportunidad"
+msgstr "New opportunity"
+
+msgid "Editar oportunidad"
+msgstr "Edit opportunity"
+
+msgid "Elige un cliente existente o apunta los datos del prospecto; podrás convertirlo en cliente cuando se cierre."
+msgstr "Choose an existing client or enter the prospect's details; you can turn them into a client when it closes."
+
+msgid "¿De qué es?"
+msgstr "What is it for?"
+
+msgid "Por ejemplo: Llevanza contable y fiscal de la sociedad"
+msgstr "For example: Accounting and tax management for the company"
+
+msgid "Cliente existente"
+msgstr "Existing client"
+
+msgid "— Es un prospecto —"
+msgstr "— It is a prospect —"
+
+msgid "Persona de contacto"
+msgstr "Contact person"
+
+msgid "La oportunidad"
+msgstr "The opportunity"
+
+msgid "Importe estimado (€)"
+msgstr "Estimated amount (€)"
+
+msgid "Etapa inicial"
+msgstr "Initial stage"
+
+msgid "Recomendación, web, evento…"
+msgstr "Referral, website, event…"
+
+msgid "Informes comerciales"
+msgstr "Sales reports"
+
+msgid "El embudo de ahora y lo ganado y perdido en el periodo. Solo cuenta lo que tú puedes ver."
+msgstr "The current pipeline and what was won and lost in the period. It only counts what you can see."
+
+msgid "Embudo abierto"
+msgstr "Open pipeline"
+
+msgid "%(n)s abiertas"
+msgstr "%(n)s open"
+
+msgid "Importe: %(i)s"
+msgstr "Amount: %(i)s"
+
+msgid "Ponderado: %(i)s"
+msgstr "Weighted: %(i)s"
+
+msgid "%(n)s sin actividad en 14 días"
+msgstr "%(n)s with no activity in 14 days"
+
+msgid "Prob."
+msgstr "Prob."
+
+msgid "Oportunidades"
+msgstr "Opportunities"
+
+msgid "Ponderado"
+msgstr "Weighted"
+
+msgid "Resultados del periodo"
+msgstr "Results for the period"
+
+msgid "Ganadas"
+msgstr "Won"
+
+msgid "Perdidas"
+msgstr "Lost"
+
+msgid "Tasa de éxito"
+msgstr "Win rate"
+
+msgid "Ciclo medio de venta"
+msgstr "Average sales cycle"
+
+msgid "Por qué se pierden"
+msgstr "Why they are lost"
+
+msgid "Importe ganado"
+msgstr "Amount won"
+
+msgid "Del primer contacto al cierre: cada oportunidad avanza por las etapas del embudo."
+msgstr "From first contact to close: each opportunity moves through the pipeline stages."
+
+msgid "Título, prospecto o cliente"
+msgstr "Title, prospect or client"
+
+msgid "Abierto: %(i)s"
+msgstr "Open: %(i)s"
+
+msgid "Previsión ponderada: %(i)s"
+msgstr "Weighted forecast: %(i)s"
+
+msgid "Todavía no hay oportunidades"
+msgstr "No opportunities yet"
+
+msgid "Apunta aquí a quien podría ser cliente y sigue cada paso hasta cerrarlo."
+msgstr "Note here whoever could become a client and follow each step until it closes."
+
+msgid "Cierre previsto: %(f)s"
+msgstr "Expected close: %(f)s"
+
+msgid "Mover a la etapa"
+msgstr "Move to stage"
+
+msgid "Para marcar una oportunidad como perdida (hace falta un motivo), ábrela."
+msgstr "To mark an opportunity as lost (a reason is required), open it."
+
+msgid "Reunión interna"
+msgstr "Internal meeting"
+
+msgid "¿Mover esta reunión a la papelera?"
+msgstr "Move this meeting to the trash?"
+
+msgid "Tus notas"
+msgstr "Your notes"
+
+msgid "Escríbelas durante la reunión, como te salgan: la IA las usará como guía principal del acta."
+msgstr "Write them during the meeting, however they come: the AI will use them as the main guide for the minutes."
+
+msgid "Tipo de reunión"
+msgstr "Meeting type"
+
+msgid "Participantes"
+msgstr "Participants"
+
+msgid "Guardar notas"
+msgstr "Save notes"
+
+msgid "Transcripción"
+msgstr "Transcript"
+
+msgid "Transcripción (opcional)"
+msgstr "Transcript (optional)"
+
+msgid "Guardada"
+msgstr "Saved"
+
+msgid "%(n)s caracteres. Conviene borrarla cuando hayas revisado el acta."
+msgstr "%(n)s characters. It is a good idea to delete it once you have reviewed the minutes."
+
+msgid "Ver la transcripción"
+msgstr "View the transcript"
+
+msgid "¿Borrar la transcripción? El acta y las notas se quedan."
+msgstr "Delete the transcript? The minutes and the notes stay."
+
+msgid "Borrar la transcripción"
+msgstr "Delete the transcript"
+
+msgid "Pega aquí la transcripción de la reunión (de Teams, Meet, Element Call o la herramienta que uses). Este módulo no graba audio."
+msgstr "Paste the meeting transcript here (from Teams, Meet, Element Call or whatever tool you use). This module does not record audio."
+
+msgid "Confirmo que se avisó a los participantes de que la reunión se grababa o transcribía."
+msgstr "I confirm that the participants were told the meeting was being recorded or transcribed."
+
+msgid "Guardar transcripción"
+msgstr "Save transcript"
+
+msgid "Acta"
+msgstr "Minutes"
+
+msgid "Para generar actas hace falta un modelo y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "To generate minutes you need a model and your OpenRouter key, in the AI Assistant settings."
+
+msgid "Se sustituirá el acta actual por una nueva. ¿Continuar?"
+msgstr "The current minutes will be replaced by new ones. Continue?"
+
+msgid "Volver a generar el acta"
+msgstr "Generate the minutes again"
+
+msgid "Generar el acta con IA"
+msgstr "Generate the minutes with AI"
+
+msgid "El texto de tus notas y la transcripción se envía al modelo de IA que has configurado, y a nadie más."
+msgstr "The text of your notes and the transcript is sent to the AI model you configured, and to no one else."
+
+msgid "Temas (uno por línea)"
+msgstr "Topics (one per line)"
+
+msgid "Decisiones (una por línea)"
+msgstr "Decisions (one per line)"
+
+msgid "Próximos pasos (uno por línea)"
+msgstr "Next steps (one per line)"
+
+msgid "La IA solo propone: marca las que quieras crear, elige quién las lleva y la fecha."
+msgstr "The AI only suggests: tick the ones you want to create and choose who handles them and the date."
+
+msgid "Creada"
+msgstr "Created"
+
+msgid "La IA apuntó a «%(n)s»: elige a la persona."
+msgstr "The AI named “%(n)s”: choose the person."
+
+msgid "Añadir una tarea"
+msgstr "Add a task"
+
+msgid "Guardar el acta"
+msgstr "Save the minutes"
+
+msgid "Guardar y crear las tareas marcadas"
+msgstr "Save and create the ticked tasks"
+
+msgid "Nueva reunión"
+msgstr "New meeting"
+
+msgid "Por ejemplo: Revisión trimestral con Panadería Sol"
+msgstr "For example: Quarterly review with Panadería Sol"
+
+msgid "Cliente (opcional)"
+msgstr "Client (optional)"
+
+msgid "— Reunión interna —"
+msgstr "— Internal meeting —"
+
+msgid "Ana (cliente), Luis, tú…"
+msgstr "Ana (client), Luis, you…"
+
+msgid "Notas iniciales (opcional)"
+msgstr "Initial notes (optional)"
+
+msgid "Una reunión interna (sin cliente ni oportunidad) solo la ves tú y la dirección."
+msgstr "An internal meeting (with no client or opportunity) is only visible to you and management."
+
+msgid "Crear y empezar"
+msgstr "Create and start"
+
+msgid "Toma tus notas durante la reunión y deja que la IA redacte el acta; tú la revisas y conviertes en tareas lo que toque."
+msgstr "Take your notes during the meeting and let the AI write the minutes; you review them and turn what is needed into tasks."
+
+msgid "Todavía no hay reuniones"
+msgstr "No meetings yet"
+
+msgid "Crea una al empezar la reunión, escribe tus notas y genera el acta al terminar."
+msgstr "Create one when the meeting starts, write your notes and generate the minutes at the end."
+
+msgid "Interna"
+msgstr "Internal"
+
+msgid "Con acta"
+msgstr "With minutes"
+
+msgid "Sin acta"
+msgstr "No minutes"
+
+msgid "Cuando una oportunidad pase a"
+msgstr "When an opportunity moves to"
+
+msgid "Los avisos y las tareas solo llegan a quien puede ver esa oportunidad. No se pueden usar acciones sobre una tarea, porque aquí no hay ninguna."
+msgstr "Notices and tasks only reach people who can see that opportunity. Actions on a task cannot be used, because there is none here."
+
+msgid "Avisar cuando se gane una oportunidad"
+msgstr "Notify when an opportunity is won"
+
+msgid "Reunión con un cliente"
+msgstr "Meeting with a client"
+
+msgid "Llamada o reunión comercial"
+msgstr "Sales call or meeting"
+
+msgid "Reunión interna del equipo"
+msgstr "Internal team meeting"
+
+msgid "Llamada"
+msgstr "Call"
+
+msgid "Visita"
+msgstr "Visit"
+
+msgid "Sin oportunidades cerradas en el periodo no hay tasa de éxito: no se inventa un cero ni un cien por cien."
+msgstr "With no closed opportunities in the period there is no win rate: no zero or one hundred percent is made up."
