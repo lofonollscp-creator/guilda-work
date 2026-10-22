@@ -164,3 +164,10 @@ def test_la_evaluacion_mide_recuperacion_y_no_inventa_calidad(dos):
     assert rev[0]["respuesta"]["status"] == "answered" and rev[0]["puntuacion_profesional"]["correcta"] is None, "la puntuación la pone una persona"
     with pytest.raises(ValueError):
         evaluacion.cargar(str(Path(__file__).parent / "fixtures_juridico" / "README.md"))
+
+
+def test_el_backoffice_ofrece_el_modulo_y_su_uso_sin_babel(dos):
+    """El backoffice es otra aplicación Flask sin Babel: el uso del módulo tiene que ser texto plano (un `str(_l(...))` allí da un 500)."""
+    verticales.fijar_activo(dos.t1, "juridico", True)
+    fila = next(e for e in verticales.estado_para_backoffice(dos.t1) if e["id"] == "juridico")
+    assert fila["activo"] and dict(fila["uso"]) == {"Consultas jurídicas este mes": "0"}
