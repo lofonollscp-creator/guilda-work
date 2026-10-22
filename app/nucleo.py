@@ -597,6 +597,15 @@ def _evento(conn, expediente_id: int, tipo: str, texto: str, usuario_id: int | N
     conn.execute("INSERT INTO expediente_eventos (expediente_id, tipo, texto, usuario_id, creado_en) VALUES (?, ?, ?, ?, ?)", (expediente_id, tipo, texto[:1000], usuario_id, db.now_iso()))
 
 
+def _automatizar(tenant_id: int, evento: str, payload: dict) -> None:
+    """Avisa a las automatizaciones del despacho (no hace nada si no tiene reglas para ese evento). Un fallo nunca afecta al cambio ya guardado."""
+    try:
+        from . import automatizaciones
+        automatizaciones.registrar_evento(tenant_id, evento, payload)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def crear_expediente(tenant_id: int, usuario_id: int, cliente_id: int, titulo: str, *, tipo: str = "general", referencia: str | None = None,
                      descripcion: str | None = None, responsable_id: int | None = None, confidencial: bool = False, datos: dict | None = None) -> int:
     titulo = (titulo or "").strip()
@@ -620,9 +629,11 @@ def crear_expediente(tenant_id: int, usuario_id: int, cliente_id: int, titulo: s
         )
         _evento(conn, cur.lastrowid, "creado", "Expediente abierto.", usuario_id)
         conn.commit()
-        return cur.lastrowid
+        nuevo_id = cur.lastrowid
     finally:
         conn.close()
+    _automatizar(tenant_id, "expediente.creado", {"expediente_id": nuevo_id})
+    return nuevo_id
 
 
 def obtener_expediente(tenant_id: int, expediente_id: int, usuario_id: int, supervisor: bool = False):
@@ -690,6 +701,7 @@ def cambiar_estado_expediente(tenant_id: int, usuario_id: int, expediente_id: in
         conn.commit()
     finally:
         conn.close()
+    _automatizar(tenant_id, "expediente.estado_cambiado", {"expediente_id": expediente_id, "de": exp["estado"], "a": estado})
 
 
 def asignar_expediente(tenant_id: int, usuario_id: int, expediente_id: int, responsable_id: int, supervisor: bool = False) -> None:

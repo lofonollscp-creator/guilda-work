@@ -232,7 +232,7 @@ def test_reintentos_con_espera_y_aviso_unico_a_la_direccion_al_fallar_del_todo(d
     with pytest.raises(PermissionError):
         au.reintentar(d.t, d.otro, e["id"])
     assert au.reintentar(d.t, d.sup, e["id"]) is True and au.reintentar(d.t, d.sup, e["id"]) is False
-    assert au.ejecutar(d.t, AHORA + timedelta(days=2))["ok"] == 1
+    assert au.ejecutar(d.t, datetime.now(timezone.utc) + timedelta(minutes=1))["ok"] == 1          # «reintentar» usa el reloj real: se avanza desde ahora, no desde la fecha simulada
     assert len(_tareas(d.cus)) == 1
 
 
@@ -390,7 +390,7 @@ def test_la_pantalla_enseña_los_fallos_y_permite_reintentar(cliente, monkeypatc
     monkeypatch.setattr(au, "_aplicar", original)
     ejecucion = au.ejecuciones(t)[0]
     assert cliente.post(f"/tareas/automatizaciones/ejecuciones/{ejecucion['id']}/reintentar").status_code == 302
-    au.ejecutar(t, AHORA + timedelta(days=2))
+    au.ejecutar(t, datetime.now(timezone.utc) + timedelta(minutes=1))                     # «reintentar» usa el reloj real
     assert au.ejecuciones(t)[0]["estado"] == "ok" and "ha fallado del todo" not in cliente.get("/tareas/automatizaciones").get_data(as_text=True)
 
 

@@ -14413,3 +14413,33 @@ msgstr "L'un des fichiers est vide."
 
 msgid "Has subido muchos archivos hoy. Vuelve a intentarlo mañana."
 msgstr "Vous avez envoyé beaucoup de fichiers aujourd'hui. Réessayez demain."
+
+msgid "Se activa cada vez que alguien crea una tarea (a mano, por correo o desde la API). Las tareas que genera una regla recurrente tienen su propio disparador, y las creadas por otra automatización no cuentan."
+msgstr "Se déclenche chaque fois que quelqu'un crée une tâche (à la main, par e-mail ou depuis l'API). Les tâches générées par une règle récurrente ont leur propre déclencheur, et celles créées par une autre automatisation ne comptent pas."
+
+msgid "Se activa cuando una regla recurrente genera su tarea del periodo (se comprueba una vez al día). Sirve, por ejemplo, para ponerle fecha límite, asignarla o pedir su revisión."
+msgstr "Se déclenche quand une règle récurrente génère sa tâche de la période (vérifié une fois par jour). Utile, par exemple, pour fixer une échéance, l'assigner ou demander sa relecture."
+
+msgid "Solo con estas periodicidades"
+msgstr "Seulement avec ces périodicités"
+
+msgid "Solo las de estas periodicidades (ninguna marcada = todas)"
+msgstr "Seulement celles de ces périodicités (aucune cochée = toutes)"
+
+msgid "Se activa cuando alguien abre un expediente. Los avisos y las tareas solo llegan a quien puede ver ese expediente."
+msgstr "Se déclenche quand quelqu'un ouvre un dossier. Les avis et les tâches n'arrivent qu'à ceux qui peuvent voir ce dossier."
+
+msgid "Solo de este tipo"
+msgstr "Seulement de ce type"
+
+msgid "Cuando un expediente pase a"
+msgstr "Quand un dossier passe à"
+
+msgid "Los avisos y las tareas solo llegan a quien puede ver ese expediente. No se pueden usar acciones sobre una tarea, porque aquí no hay ninguna."
+msgstr "Les avis et les tâches n'arrivent qu'à ceux qui peuvent voir ce dossier. Les actions sur une tâche ne sont pas utilisables, car il n'y en a aucune ici."
+
+msgid "Poner fecha límite a las tareas recurrentes"
+msgstr "Fixer une échéance aux tâches récurrentes"
+
+msgid "Avisar cuando se cierre un expediente"
+msgstr "Prévenir à la clôture d'un dossier"

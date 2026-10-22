@@ -467,7 +467,7 @@ def _emitir_evento(usuario_id: int, evento: str, payload: dict) -> None:
         pass
 
 
-EVENTOS_INTERNOS = {"tarea.estado_cambiado"}
+EVENTOS_INTERNOS = {"tarea.estado_cambiado", "recurrencia.generada"}
 
 
 def _emitir_evento_tarea_finalizada(usuario_id: int, tarea_id: int, nombre: str, duracion_segundos: int) -> None:
@@ -1032,6 +1032,7 @@ def generar_tareas_recurrentes() -> int:
     ultimo_dia_del_mes = (_db.datetime.fromisoformat(fin_mes) - _db.timedelta(days=1)).day
 
     creadas = 0
+    generadas: list[tuple] = []
     conn = _db.get_connection()
     try:
         reglas = conn.execute("SELECT * FROM tareas_recurrentes WHERE activa = 1").fetchall()
@@ -1060,14 +1061,18 @@ def generar_tareas_recurrentes() -> int:
             if _db._existe_tarea_generada_este_periodo(conn, regla["id"], desde, hasta):
                 continue
             categoria_id = _db._categoria_id_propio(conn, regla["usuario_id"], regla["categoria_id"])
-            conn.execute(
+            cur = conn.execute(
                 """INSERT INTO tareas_outlook
                    (usuario_id, asunto, categoria_id, tarea_recurrente_id, creada_en)
                    VALUES (?, ?, ?, ?, ?)""",
                 (regla["usuario_id"], regla["asunto"], categoria_id, regla["id"], _db.now_iso()),
             )
+            generadas.append((regla["usuario_id"], cur.lastrowid, regla["id"], periodicidad))
             creadas += 1
         conn.commit()
+        # Ya guardadas: se avisa a las automatizaciones (disparador «Se genera una tarea recurrente»). Esta inserción no pasa por `crear_tarea_outlook`, así que NO emite `tarea.creada`.
+        for usuario_id, tarea_id, regla_id, periodicidad in generadas:
+            _db._emitir_evento(usuario_id, "recurrencia.generada", {"tarea_id": tarea_id, "recurrente_id": regla_id, "periodicidad": periodicidad})
         return creadas
     finally:
         conn.close()

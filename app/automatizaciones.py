@@ -29,10 +29,18 @@ DISPARADORES = {
     "vencimiento.proximo": "Se acerca la fecha límite de un modelo fiscal pendiente",
     "tarea.creada": "Se crea una tarea",
     "tarea.estado": "Una tarea cambia de estado",
+    "recurrencia.generada": "Se genera una tarea recurrente",
+    "expediente.creado": "Se abre un expediente",
+    "expediente.estado": "Un expediente cambia de estado",
 }
-# Los dos últimos no se buscan una vez al día: reaccionan a un evento (cola `automatizaciones_eventos`). Cada disparador de evento escucha un evento interno.
-DISPARADORES_DE_EVENTO = {"tarea.creada": "tarea.creada", "tarea.estado": "tarea.estado_cambiado"}
-DISPARADORES_CON_TAREA = ("tarea.vencida", "tarea.creada", "tarea.estado")
+# Los cinco últimos no se buscan una vez al día: reaccionan a un evento (cola `automatizaciones_eventos`). Cada disparador de evento escucha un evento interno.
+DISPARADORES_DE_EVENTO = {"tarea.creada": "tarea.creada", "tarea.estado": "tarea.estado_cambiado", "recurrencia.generada": "recurrencia.generada",
+                          "expediente.creado": "expediente.creado", "expediente.estado": "expediente.estado_cambiado"}
+# Los de tarea tienen UNA tarea sobre la que se puede actuar (comentar, fijar fecha, asignar, pedir revisión); los de expediente no: solo crear tareas y avisar.
+DISPARADORES_CON_TAREA = ("tarea.vencida", "tarea.creada", "tarea.estado", "recurrencia.generada")
+EVENTOS_DE_EXPEDIENTE = ("expediente.creado", "expediente.estado_cambiado")
+PERIODICIDADES_TEXTO = {"diaria": "diaria", "laborables": "en días laborables", "semanal": "semanal", "mensual": "mensual", "trimestral": "trimestral", "anual": "anual"}
+_ID_EXPEDIENTE = re.compile(r"[a-z0-9_]{1,40}")
 ESTADOS_TAREA = {"no_iniciada": "Sin empezar", "en_progreso": "En progreso", "completada": "Completada", "esperando": "Esperando a otros", "aplazada": "Aplazada"}
 ACCIONES = ("crear_tarea", "notificar", "comentar", "fijar_fecha", "asignar", "pedir_revision")
 # Estas actúan sobre LA tarea del disparador, así que solo valen cuando el disparador es una tarea (vencida, creada o que cambia de estado).
@@ -44,6 +52,9 @@ VARIABLES = {
     "vencimiento.proximo": ("modelo", "periodo", "cliente", "fecha", "dias"),
     "tarea.creada": ("asunto", "prioridad", "cliente", "fecha"),
     "tarea.estado": ("asunto", "estado", "anterior", "prioridad", "cliente", "fecha"),
+    "recurrencia.generada": ("asunto", "periodicidad", "prioridad", "cliente", "fecha"),
+    "expediente.creado": ("expediente", "referencia", "tipo", "cliente", "estado"),
+    "expediente.estado": ("expediente", "referencia", "tipo", "cliente", "estado", "anterior"),
 }
 PRIORIDADES = ("baja", "normal", "alta")
 MAX_REGLAS = 50
@@ -103,7 +114,8 @@ CREATE INDEX IF NOT EXISTS idx_auto_eventos_pendientes ON automatizaciones_event
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
-    db._asegurar_columna(conn, "automatizaciones_ejecuciones", "contexto", "TEXT")        # la ocurrencia de un evento, para poder reintentarla sin volver a buscarla
+    db._asegurar_columna(conn, "automatizaciones_ejecuciones", "contexto", "TEXT")
+    db._asegurar_columna(conn, "automatizaciones_eventos", "objeto_id", "INTEGER")        # el expediente de los eventos de expediente (los de tarea usan tarea_id)        # la ocurrencia de un evento, para poder reintentarla sin volver a buscarla
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
@@ -156,6 +168,20 @@ def validar_condiciones(disparador: str, condiciones: dict) -> dict:
             out["prioridades"] = prioridades
         if c.get("cliente_fiscal_id") not in (None, ""):
             out["cliente_fiscal_id"] = _entero(c.get("cliente_fiscal_id"), "El cliente", 1, 10**9)
+        return out
+    if disparador == "recurrencia.generada":
+        periodicidades = [p for p in (c.get("periodicidades") or []) if p in PERIODICIDADES_TEXTO]
+        return {"periodicidades": periodicidades} if periodicidades else {}
+    if disparador in ("expediente.creado", "expediente.estado"):
+        out = {}
+        if disparador == "expediente.estado":
+            if not _ID_EXPEDIENTE.fullmatch(c.get("estado") or ""):
+                raise ValueError("Elige a qué estado tiene que pasar el expediente.")
+            out["estado"] = c["estado"]
+        if (c.get("tipo") or "") != "":
+            if not _ID_EXPEDIENTE.fullmatch(c["tipo"]):
+                raise ValueError("El tipo de expediente no es válido.")
+            out["tipo"] = c["tipo"]
         return out
     raise ValueError("Disparador no válido.")
 
@@ -233,8 +259,16 @@ def _destino(valor, defecto: str):
         raise ValueError("El destinatario no es válido.") from None
 
 
-def comprobar_pertenencia(tenant_id: int, condiciones: dict, acciones: list[dict]) -> None:
-    """Las personas y el cliente que nombra una regla tienen que ser del propio despacho (también al crearla por la API o por código, no solo desde la pantalla)."""
+def comprobar_pertenencia(tenant_id: int, condiciones: dict, acciones: list[dict], disparador: str | None = None) -> None:
+    """Las personas y el cliente que nombra una regla tienen que ser del propio despacho (también al crearla por la API o por código, no solo desde la pantalla). En los disparadores de
+    expediente, el tipo y el estado tienen que existir para ese despacho."""
+    if disparador in ("expediente.creado", "expediente.estado"):
+        from . import verticales
+        tipos = verticales.tipos_expediente(tenant_id)
+        if condiciones.get("tipo") and condiciones["tipo"] not in tipos:
+            raise ValueError("Ese tipo de expediente no está disponible para tu despacho.")
+        if condiciones.get("estado") and not any(t.estado(condiciones["estado"]) for t in ([tipos[condiciones["tipo"]]] if condiciones.get("tipo") else tipos.values())):
+            raise ValueError("Ese estado no existe para ese tipo de expediente.")
     personas = {a["asignar_a"] for a in acciones if a["tipo"] == "crear_tarea" and isinstance(a["asignar_a"], int)}
     personas |= {a["a"] for a in acciones if a["tipo"] in ("notificar", "asignar") and isinstance(a["a"], int)}
     personas |= {a["revisor"] for a in acciones if a["tipo"] == "pedir_revision"}
@@ -276,6 +310,12 @@ def formulario_a_regla(form, disparador: str) -> tuple[dict, list[dict]]:
         cond = {"prioridades": form.getlist("c_prioridades_c"), "cliente_fiscal_id": form.get("c_cliente_c")}
     elif disparador == "tarea.estado":
         cond = {"estado": form.get("c_estado_e"), "prioridades": form.getlist("c_prioridades_e"), "cliente_fiscal_id": form.get("c_cliente_e")}
+    elif disparador == "recurrencia.generada":
+        cond = {"periodicidades": form.getlist("c_periodicidades_r")}
+    elif disparador == "expediente.creado":
+        cond = {"tipo": form.get("c_tipo_xc")}
+    elif disparador == "expediente.estado":
+        cond = {"estado": form.get("c_estado_x"), "tipo": form.get("c_tipo_x")}
     else:
         raise ValueError("Disparador no válido.")
     acciones = []
@@ -346,7 +386,7 @@ def crear_regla(tenant_id: int, usuario_id: int, nombre: str, disparador: str, c
     if disparador not in DISPARADORES:
         raise ValueError("Disparador no válido.")
     cond, acc = validar_condiciones(disparador, condiciones), validar_acciones(disparador, acciones)
-    comprobar_pertenencia(tenant_id, cond, acc)
+    comprobar_pertenencia(tenant_id, cond, acc, disparador)
     comprobar_coherencia(disparador, cond, acc)
     conn = db.get_connection()
     try:
@@ -374,7 +414,7 @@ def cambiar_regla(tenant_id: int, usuario_id: int, regla_id: int, *, nombre=None
     acc = validar_acciones(r["disparador"], acciones) if acciones is not None else r["acciones"]
     cambia_logica = cond != r["condiciones"] or acc != r["acciones"]
     if cambia_logica:
-        comprobar_pertenencia(tenant_id, cond, acc)
+        comprobar_pertenencia(tenant_id, cond, acc, r["disparador"])
         comprobar_coherencia(r["disparador"], cond, acc)
     conn = db.get_connection()
     try:
@@ -417,6 +457,10 @@ PLANTILLAS = {
                         "acciones": [{"tipo": "notificar", "titulo": "Tarea en espera: {asunto}", "cuerpo": "Cliente: {cliente}. Antes estaba en «{anterior}».", "a": "direccion"}]},
     "tarea_urgente": {"nombre": "Avisar de las tareas urgentes nuevas", "disparador": "tarea.creada", "condiciones": {"prioridades": ["alta"]},
                       "acciones": [{"tipo": "notificar", "titulo": "Tarea urgente nueva: {asunto}", "cuerpo": "Fecha límite: {fecha}", "a": "responsable"}]},
+    "recurrente_con_fecha": {"nombre": "Poner fecha límite a las tareas recurrentes (en 7 días)", "disparador": "recurrencia.generada", "condiciones": {},
+                             "acciones": [{"tipo": "fijar_fecha", "dias_plazo": 7, "solo_si_vacia": True}]},
+    "expediente_cerrado": {"nombre": "Avisar a la dirección cuando se cierre un expediente", "disparador": "expediente.estado", "condiciones": {"estado": "cerrado"},
+                           "acciones": [{"tipo": "notificar", "titulo": "Expediente cerrado: {expediente}", "cuerpo": "Cliente: {cliente}. Tipo: {tipo}.", "a": "direccion"}]},
     "preparar_modelo": {"nombre": "Preparar el modelo 7 días antes", "disparador": "vencimiento.proximo", "condiciones": {"dias_antes": 7},
                         "acciones": [{"tipo": "crear_tarea", "asunto": "Preparar el modelo {modelo} de {cliente} ({periodo})", "prioridad": "normal", "dias_plazo": 5, "asignar_a": "responsable"}]},
 }
@@ -525,14 +569,23 @@ def _usuario_del_despacho(tenant_id: int, usuario_id) -> int | None:
         conn.close()
 
 
+def _con_acceso_al_expediente(tenant_id: int, expediente_id: int, usuarios: list[int]) -> list[int]:
+    """Un aviso o una tarea sobre un expediente solo llega a quien puede verlo (confidencial, oficina…): la regla nunca enseña su título a nadie más."""
+    from . import nucleo
+    direccion = set(_direccion_del_despacho(tenant_id))
+    return [u for u in usuarios if nucleo.obtener_expediente(tenant_id, expediente_id, u, u in direccion) is not None]
+
+
 def _destinatarios(tenant_id: int, destino, oc: dict, regla: dict) -> list[int]:
     if destino == "direccion":
-        return _direccion_del_despacho(tenant_id)
-    if destino == "responsable":
+        quienes = _direccion_del_despacho(tenant_id)
+    elif destino == "responsable":
         quien = _usuario_del_despacho(tenant_id, oc.get("responsable")) or _usuario_del_despacho(tenant_id, regla["creada_por"])
-        return [quien] if quien else _direccion_del_despacho(tenant_id)[:1]
-    quien = _usuario_del_despacho(tenant_id, destino)
-    return [quien] if quien else []
+        quienes = [quien] if quien else _direccion_del_despacho(tenant_id)[:1]
+    else:
+        quien = _usuario_del_despacho(tenant_id, destino)
+        quienes = [quien] if quien else []
+    return _con_acceso_al_expediente(tenant_id, oc["expediente_id"], quienes) if oc.get("expediente_id") else quienes
 
 
 _ACTUANDO: contextvars.ContextVar[bool] = contextvars.ContextVar("automatizacion_actuando", default=False)
@@ -689,6 +742,10 @@ def simular(tenant_id: int, regla_id: int, ahora: datetime | None = None) -> dic
 def _simular_evento(tenant_id: int, regla: dict, hoy: date) -> dict:
     """Una regla de evento reacciona cuando ocurre, así que no hay «casos ahora»: se enseñan los de los últimos 7 días que la habrían activado. No escribe nada."""
     desde = (hoy - timedelta(days=7)).isoformat()
+    if regla["disparador"] == "recurrencia.generada":
+        return _simular_recurrencia(tenant_id, regla, desde)
+    if regla["disparador"] in ("expediente.creado", "expediente.estado"):
+        return _simular_expediente(tenant_id, regla, desde)
     estado = regla["condiciones"].get("estado")
     campo = "t.creada_en" if regla["disparador"] == "tarea.creada" else "t.actualizada_en"
     conn = db.get_connection()
@@ -704,6 +761,41 @@ def _simular_evento(tenant_id: int, regla: dict, hoy: date) -> dict:
         tarea = _tarea_del_evento(f["id"])
         if tarea and cumple_evento(regla, tarea, {"a": estado}):
             oc = _ocurrencia_de_evento(0, regla, tarea, {"a": estado})
+            ejemplos.append({"objeto": oc["objeto"], "fecha": oc["fecha"], "datos": oc["datos"]})
+    return {"cumplen": len(ejemplos), "nuevas": len(ejemplos), "ya_atendidas": 0, "reciente": True, "ejemplos": ejemplos[:20]}
+
+
+def _simular_recurrencia(tenant_id: int, regla: dict, desde: str) -> dict:
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(
+            """SELECT t.id, r.periodicidad FROM tareas_outlook t JOIN tareas_recurrentes r ON r.id = t.tarea_recurrente_id JOIN usuarios u ON u.id = t.usuario_id
+               WHERE u.tenant_id = ? AND t.papelera_en IS NULL AND substr(t.creada_en, 1, 10) >= ? ORDER BY t.creada_en DESC LIMIT 200""", (tenant_id, desde)).fetchall()
+    finally:
+        conn.close()
+    ejemplos = []
+    for f in filas:
+        tarea, datos = _tarea_del_evento(f["id"]), {"periodicidad": f["periodicidad"]}
+        if tarea and cumple_evento(regla, tarea, datos):
+            oc = _ocurrencia_de_evento(0, regla, tarea, datos)
+            ejemplos.append({"objeto": oc["objeto"], "fecha": oc["fecha"], "datos": oc["datos"]})
+    return {"cumplen": len(ejemplos), "nuevas": len(ejemplos), "ya_atendidas": 0, "reciente": True, "ejemplos": ejemplos[:20]}
+
+
+def _simular_expediente(tenant_id: int, regla: dict, desde: str) -> dict:
+    estado = regla["condiciones"].get("estado")
+    campo = "abierto_en" if regla["disparador"] == "expediente.creado" else "actualizado_en"
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(f"SELECT id FROM expedientes WHERE tenant_id = ? AND papelera_en IS NULL AND substr({campo}, 1, 10) >= ? {'AND estado = ?' if estado else ''} ORDER BY {campo} DESC LIMIT 200",
+                             (tenant_id, desde, *([estado] if estado else []))).fetchall()
+    finally:
+        conn.close()
+    ejemplos = []
+    for f in filas:
+        exp = _expediente_del_evento(f["id"])
+        if exp and cumple_evento_expediente(regla, exp, {"a": estado}):
+            oc = _ocurrencia_de_expediente(0, regla, exp, {"a": estado})
             ejemplos.append({"objeto": oc["objeto"], "fecha": oc["fecha"], "datos": oc["datos"]})
     return {"cumplen": len(ejemplos), "nuevas": len(ejemplos), "ya_atendidas": 0, "reciente": True, "ejemplos": ejemplos[:20]}
 
@@ -856,14 +948,14 @@ def registrar_evento(tenant_id: int, evento: str, payload: dict) -> None:
     if _ACTUANDO.get():
         return
     disparadores = [d for d, e in DISPARADORES_DE_EVENTO.items() if e == evento]
-    if not disparadores or not payload or not payload.get("tarea_id"):
+    if not disparadores or not payload or not (payload.get("tarea_id") or payload.get("expediente_id")):
         return
     conn = db.get_connection()
     try:
         if conn.execute(f"SELECT 1 FROM automatizaciones_reglas WHERE tenant_id = ? AND activa = 1 AND disparador IN ({','.join('?' * len(disparadores))}) LIMIT 1", (tenant_id, *disparadores)).fetchone() is None:
             return
-        conn.execute("INSERT INTO automatizaciones_eventos (tenant_id, evento, tarea_id, datos, creado_en) VALUES (?, ?, ?, ?, ?)",
-                     (tenant_id, evento, payload["tarea_id"], json.dumps({k: payload[k] for k in ("de", "a") if k in payload}), db.now_iso()))
+        conn.execute("INSERT INTO automatizaciones_eventos (tenant_id, evento, tarea_id, objeto_id, datos, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
+                     (tenant_id, evento, payload.get("tarea_id"), payload.get("expediente_id"), json.dumps({k: payload[k] for k in ("de", "a", "periodicidad", "recurrente_id") if k in payload}), db.now_iso()))
         conn.commit()
     finally:
         conn.close()
@@ -900,6 +992,8 @@ def cumple_evento(regla: dict, tarea: dict, datos: dict) -> bool:
     c = regla["condiciones"]
     if regla["disparador"] == "tarea.estado" and datos.get("a") != c.get("estado"):
         return False
+    if regla["disparador"] == "recurrencia.generada" and c.get("periodicidades") and datos.get("periodicidad") not in c["periodicidades"]:
+        return False
     if c.get("prioridades") and tarea["prioridad"] not in c["prioridades"]:
         return False
     if c.get("cliente_fiscal_id") and tarea["cliente_fiscal_id"] != c["cliente_fiscal_id"]:
@@ -912,8 +1006,51 @@ def _ocurrencia_de_evento(evento_id: int, regla: dict, tarea: dict, datos: dict)
     d = {"asunto": tarea["asunto"], "prioridad": tarea["prioridad"], "cliente": tarea["cliente"] or "", "fecha": fecha}
     if regla["disparador"] == "tarea.estado":
         d.update({"estado": ESTADOS_TAREA.get(datos.get("a"), datos.get("a") or ""), "anterior": ESTADOS_TAREA.get(datos.get("de"), datos.get("de") or "")})
+    if regla["disparador"] == "recurrencia.generada":
+        d["periodicidad"] = PERIODICIDADES_TEXTO.get(datos.get("periodicidad"), datos.get("periodicidad") or "")
     return {"clave": f"evt:{evento_id}", "objeto": f"tarea {tarea['id']}: {tarea['asunto'][:60]}", "responsable": tarea["responsable"], "cliente_fiscal_id": tarea["cliente_fiscal_id"],
             "tarea_id": tarea["id"], "datos": d, "fecha": fecha}
+
+
+def _expediente_del_evento(expediente_id: int) -> dict | None:
+    conn = db.get_connection()
+    try:
+        f = conn.execute(
+            """SELECT x.id, x.titulo, x.referencia, x.tipo, x.estado, x.responsable_id, x.cliente_id, c.nombre AS cliente,
+                      (SELECT id FROM clientes_fiscales WHERE cliente_id = x.cliente_id LIMIT 1) AS cliente_fiscal_id
+               FROM expedientes x JOIN clientes c ON c.id = x.cliente_id WHERE x.id = ? AND x.papelera_en IS NULL""", (expediente_id,)).fetchone()
+        return dict(f) if f else None
+    finally:
+        conn.close()
+
+
+def cumple_evento_expediente(regla: dict, exp: dict, datos: dict) -> bool:
+    c = regla["condiciones"]
+    if c.get("tipo") and exp["tipo"] != c["tipo"]:
+        return False
+    if regla["disparador"] == "expediente.estado" and datos.get("a") != c.get("estado"):
+        return False
+    return True
+
+
+def _texto(valor) -> str:
+    try:
+        return str(valor)
+    except Exception:  # noqa: BLE001 -- un texto traducible fuera de una petición
+        return ""
+
+
+def _ocurrencia_de_expediente(evento_id: int, regla: dict, exp: dict, datos: dict) -> dict:
+    from . import verticales
+    tipo = verticales.tipo_de(exp["tipo"])
+    estado_actual = tipo.estado(exp["estado"])
+    d = {"expediente": exp["titulo"], "referencia": exp["referencia"] or "", "tipo": _texto(tipo.nombre), "cliente": exp["cliente"] or "", "estado": _texto(estado_actual.nombre) if estado_actual else exp["estado"]}
+    if regla["disparador"] == "expediente.estado":
+        nuevo, anterior = tipo.estado(datos.get("a") or ""), tipo.estado(datos.get("de") or "")
+        d["estado"] = _texto(nuevo.nombre) if nuevo else (datos.get("a") or "")
+        d["anterior"] = _texto(anterior.nombre) if anterior else (datos.get("de") or "")
+    return {"clave": f"evt:{evento_id}", "objeto": f"expediente {exp['id']}: {exp['titulo'][:60]}", "responsable": exp["responsable_id"], "cliente_fiscal_id": exp["cliente_fiscal_id"],
+            "expediente_id": exp["id"], "datos": d, "fecha": ""}
 
 
 def procesar_eventos(ahora: datetime | None = None, limite: int = MAX_EVENTOS_POR_LOTE) -> dict:
@@ -927,7 +1064,9 @@ def procesar_eventos(ahora: datetime | None = None, limite: int = MAX_EVENTOS_PO
     finally:
         conn.close()
     for ev in eventos:
-        tarea = _tarea_del_evento(ev["tarea_id"])
+        de_expediente = ev["evento"] in EVENTOS_DE_EXPEDIENTE
+        tarea = _expediente_del_evento(ev["objeto_id"]) if de_expediente else _tarea_del_evento(ev["tarea_id"])       # `tarea` es el objeto del evento: una tarea o un expediente
+        cumple, ocurrencia = (cumple_evento_expediente, _ocurrencia_de_expediente) if de_expediente else (cumple_evento, _ocurrencia_de_evento)
         datos = json.loads(ev["datos"] or "{}")
         if tarea is not None:
             conn = db.get_connection()
@@ -937,9 +1076,9 @@ def procesar_eventos(ahora: datetime | None = None, limite: int = MAX_EVENTOS_PO
                 conn.close()
             hoy = hoy_del_despacho(ev["tenant_id"], ahora)
             for regla in reglas:
-                if DISPARADORES_DE_EVENTO.get(regla["disparador"]) != ev["evento"] or not cumple_evento(regla, tarea, datos):
+                if DISPARADORES_DE_EVENTO.get(regla["disparador"]) != ev["evento"] or not cumple(regla, tarea, datos):
                     continue
-                oc = _ocurrencia_de_evento(ev["id"], regla, tarea, datos)
+                oc = ocurrencia(ev["id"], regla, tarea, datos)
                 conn = db.get_connection()
                 try:
                     cur = conn.execute("INSERT OR IGNORE INTO automatizaciones_ejecuciones (tenant_id, regla_id, regla_version, clave, objeto, estado, contexto, creada_en, actualizada_en) "

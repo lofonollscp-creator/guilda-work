@@ -68,7 +68,7 @@
       <small class="muted">{{ _('Las tareas que crea una automatización no vuelven a disparar reglas.') }}</small>
     </div>
     <div data-solo-disparador="tarea.creada">
-      <p class="muted">{{ _('Se activa cada vez que alguien crea una tarea (a mano, por correo o por una regla recurrente). Las tareas creadas por otra automatización no cuentan.') }}</p>
+      <p class="muted">{{ _('Se activa cada vez que alguien crea una tarea (a mano, por correo o desde la API). Las tareas que genera una regla recurrente tienen su propio disparador, y las creadas por otra automatización no cuentan.') }}</p>
       <div role="group" aria-label="{{ _('Solo con estas prioridades') }}">
         <span class="muted">{{ _('Solo con estas prioridades (ninguna marcada = todas)') }}</span>
         {% for valor, etiqueta in prioridades %}
@@ -101,6 +101,38 @@
         </select>
       </label>
       <small class="muted">{{ _('Cuenta el cambio desde cualquier sitio: la lista, el tablero, la ficha o la API.') }}</small>
+    </div>
+    <div data-solo-disparador="recurrencia.generada">
+      <p class="muted">{{ _('Se activa cuando una regla recurrente genera su tarea del periodo (se comprueba una vez al día). Sirve, por ejemplo, para ponerle fecha límite, asignarla o pedir su revisión.') }}</p>
+      <div role="group" aria-label="{{ _('Solo con estas periodicidades') }}">
+        <span class="muted">{{ _('Solo las de estas periodicidades (ninguna marcada = todas)') }}</span>
+        {% for clave, texto in periodicidades.items() %}
+        <label class="checkbox"><input type="checkbox" name="c_periodicidades_r" value="{{ clave }}" {% if clave in c.get('periodicidades', []) %}checked{% endif %}> {{ texto }}</label>
+        {% endfor %}
+      </div>
+    </div>
+    <div data-solo-disparador="expediente.creado">
+      <p class="muted">{{ _('Se activa cuando alguien abre un expediente. Los avisos y las tareas solo llegan a quien puede ver ese expediente.') }}</p>
+      <label>{{ _('Solo de este tipo') }}
+        <select name="c_tipo_xc">
+          <option value="">{{ _('Cualquiera') }}</option>
+          {% for clave, texto in tipos_expediente %}<option value="{{ clave }}" {% if c.get('tipo') == clave %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <div data-solo-disparador="expediente.estado">
+      <label>{{ _('Cuando un expediente pase a') }}
+        <select name="c_estado_x">
+          {% for clave, texto in estados_expediente %}<option value="{{ clave }}" {% if c.get('estado') == clave %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>{{ _('Solo de este tipo') }}
+        <select name="c_tipo_x">
+          <option value="">{{ _('Cualquiera') }}</option>
+          {% for clave, texto in tipos_expediente %}<option value="{{ clave }}" {% if c.get('tipo') == clave %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+        </select>
+      </label>
+      <small class="muted">{{ _('Los avisos y las tareas solo llegan a quien puede ver ese expediente. No se pueden usar acciones sobre una tarea, porque aquí no hay ninguna.') }}</small>
     </div>
     <div data-solo-disparador="vencimiento.proximo">
       <label>{{ _('Cuando falten, como máximo, estos días para la fecha límite') }}

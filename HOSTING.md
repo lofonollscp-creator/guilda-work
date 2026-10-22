@@ -103,6 +103,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Avisos por correo al equipo cuando un cliente comenta (octubre de 2026)](#avisos-por-correo-al-equipo-cuando-un-cliente-comenta-octubre-de-2026)
 - [Archivos del cliente en sus comentarios del portal (octubre de 2026)](#archivos-del-cliente-en-sus-comentarios-del-portal-octubre-de-2026)
 - [PHP de los contenedores: actualización de octubre de 2026](#php-de-los-contenedores-actualización-de-octubre-de-2026)
+- [Automatizaciones: tarea recurrente y expedientes (octubre de 2026)](#automatizaciones-tarea-recurrente-y-expedientes-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3496,3 +3497,16 @@ No hay PHP instalado en el servidor; solo corre dentro de dos contenedores (Fact
   - Nextcloud: `docker compose up -d nextcloud`; comprobar con `docker exec guilda-work-nextcloud php -v` y `docker exec -u www-data guilda-work-nextcloud php occ status`.
   - FacturaScripts: el contenedor del tenant no vive en `docker-compose.yml`. Se reconstruye con `reparar_tenant`, que resetea la contraseña del rol, recrea el contenedor con la imagen fijada y reinstala `config.php` sobre los datos existentes (`MyFiles/Plugins/Dinamic` están en el segundo disco y la base de datos es ajena al contenedor). Lo más simple: `docker stop guilda-work-facturascripts-tenant-1` y `sudo systemctl start vigilar-facturascripts.service` (o esperar a su timer de 5 minutos); hay una breve caída del servicio. Después: `docker exec guilda-work-facturascripts-tenant-1 php -v`. Hace falta reiniciar `guilda-work` para que la app lea el digest nuevo al crear tenants.
 - **Para la próxima vez**: comprobar la versión con `docker exec <contenedor> php -v` y mirar si hay parche de PHP nuevo (php.net) antes de pensar que está al día; un digest fijado no se mueve solo.
+
+## Automatizaciones: tarea recurrente y expedientes (octubre de 2026)
+
+Tres disparadores nuevos en el constructor de reglas (Tareas › Automatizaciones), por evento y con la misma garantía de siempre (idempotencia, reintentos, sin bucles). Código en `app/automatizaciones.py`.
+
+- **«Se genera una tarea recurrente»** (`recurrencia.generada`): reacciona cuando la regla recurrente crea su tarea del periodo (la pasada diaria de las 04:30). Filtro opcional por periodicidad. Es una tarea, así que valen todas las acciones (fijar fecha, asignar, pedir revisión, comentar, crear tarea, avisar). Variables: `{asunto}`, `{periodicidad}`, `{prioridad}`, `{cliente}`, `{fecha}`. Plantilla: «Poner fecha límite a las tareas recurrentes» (nacen sin fecha).
+- **«Se abre un expediente»** (`expediente.creado`) y **«Un expediente cambia de estado»** (`expediente.estado`, con el estado de destino obligatorio): sirven para los expedientes del núcleo de cualquier tipo (general, y los de cada vertical activo), con filtro opcional por tipo; el estado y el tipo tienen que existir para el despacho. Variables: `{expediente}`, `{referencia}`, `{tipo}`, `{cliente}`, `{estado}` y, al cambiar, `{anterior}`. **Solo se pueden usar las acciones «crear tarea» y «avisar»** (un expediente no es una tarea). Plantilla: «Avisar a la dirección cuando se cierre un expediente».
+- **Privacidad**: un aviso o una tarea sobre un expediente solo llega a quien puede verlo (expedientes confidenciales y oficinas); si la persona elegida no lo ve, la acción falla y se avisa a la dirección, sin revelar el título a nadie más. Las reglas solo ven los expedientes de su propio despacho.
+- **Hallazgo y corrección**: las tareas que genera la recurrencia (y las de «por vencimiento fiscal») se insertan sin pasar por `crear_tarea_outlook`, así que **nunca han emitido `tarea.creada`**: una regla «Se crea una tarea» no se disparaba con ellas, al contrario de lo que decían los textos. Se ha corregido el texto del constructor y para las recurrentes está el disparador nuevo. Las tareas generadas «por vencimiento fiscal» siguen sin disparador propio.
+- **Migración al arrancar** (idempotente): columna `automatizaciones_eventos.objeto_id`. Reversión: se ignora. Hace falta reiniciar `guilda-work` (los eventos de recurrencia los emite el script de las 04:30 y los procesa el servidor).
+- **Cobertura de estados**: el evento de estado sale de `nucleo.cambiar_estado_expediente`, que usan todas las pantallas y la API de expedientes.
+- **Prueba de tiempo**: dos tests antiguos de `tests/test_automatizaciones.py` (reintentos) dependían del reloj real (fallaban desde el 22 de octubre a las 08:00 UTC); ahora avanzan desde «ahora».
+- **Pruebas**: `tests/test_automatizaciones_expediente_recurrencia.py` (11 tests: validación, tipo y estado, recurrencia con y sin filtro, no repetir ni dispararse a sí misma, expedientes con variables, estado y tipo, confidencialidad, aislamiento entre despachos, simulación, pantalla y plantillas).

@@ -14337,3 +14337,33 @@ msgstr "Un dels fitxers està buit."
 
 msgid "Has subido muchos archivos hoy. Vuelve a intentarlo mañana."
 msgstr "Has pujat molts fitxers avui. Torna-ho a provar demà."
+
+msgid "Se activa cada vez que alguien crea una tarea (a mano, por correo o desde la API). Las tareas que genera una regla recurrente tienen su propio disparador, y las creadas por otra automatización no cuentan."
+msgstr "S'activa cada cop que algú crea una tasca (a mà, per correu o des de l'API). Les tasques que genera una regla recurrent tenen el seu propi disparador, i les creades per una altra automatització no compten."
+
+msgid "Se activa cuando una regla recurrente genera su tarea del periodo (se comprueba una vez al día). Sirve, por ejemplo, para ponerle fecha límite, asignarla o pedir su revisión."
+msgstr "S'activa quan una regla recurrent genera la seva tasca del període (es comprova un cop al dia). Serveix, per exemple, per posar-hi data límit, assignar-la o demanar-ne la revisió."
+
+msgid "Solo con estas periodicidades"
+msgstr "Només amb aquestes periodicitats"
+
+msgid "Solo las de estas periodicidades (ninguna marcada = todas)"
+msgstr "Només les d'aquestes periodicitats (cap marcada = totes)"
+
+msgid "Se activa cuando alguien abre un expediente. Los avisos y las tareas solo llegan a quien puede ver ese expediente."
+msgstr "S'activa quan algú obre un expedient. Els avisos i les tasques només arriben a qui pot veure aquest expedient."
+
+msgid "Solo de este tipo"
+msgstr "Només d'aquest tipus"
+
+msgid "Cuando un expediente pase a"
+msgstr "Quan un expedient passi a"
+
+msgid "Los avisos y las tareas solo llegan a quien puede ver ese expediente. No se pueden usar acciones sobre una tarea, porque aquí no hay ninguna."
+msgstr "Els avisos i les tasques només arriben a qui pot veure aquest expedient. No es poden fer servir accions sobre una tasca, perquè aquí no n'hi ha cap."
+
+msgid "Poner fecha límite a las tareas recurrentes"
+msgstr "Posar data límit a les tasques recurrents"
+
+msgid "Avisar cuando se cierre un expediente"
+msgstr "Avisar quan es tanqui un expedient"

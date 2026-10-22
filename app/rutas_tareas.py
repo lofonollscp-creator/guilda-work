@@ -1253,13 +1253,19 @@ def automatizaciones_nueva():
 
 
 def _pagina_constructor(valores: dict, regla_id: int | None = None, error: str | None = None):
-    from . import automatizaciones
+    from . import automatizaciones, verticales
+    tipos_x = verticales.tipos_expediente(g.tenant_id)
+    estados_x: dict[str, str] = {}
+    for tipo in tipos_x.values():
+        for e in tipo.estados:
+            estados_x.setdefault(e.id, str(e.nombre))
     acciones = list(valores["acciones"])[:automatizaciones.MAX_ACCIONES]
     acciones += [{}] * (automatizaciones.MAX_ACCIONES - len(acciones))
     respuesta = render_template(
         "tareas_automatizacion_editar.html", valores={**valores, "acciones": acciones}, regla_id=regla_id, error=error, disparadores=automatizaciones.DISPARADORES,
         variables=automatizaciones.VARIABLES, companeros=db.listar_companeros_tenant(g.usuario_id), clientes_fiscales=db.listar_clientes_fiscales(g.tenant_id),
-        prioridades=PRIORIDADES, estados_tarea=automatizaciones.ESTADOS_TAREA, modelos_ejemplo=("303", "111", "115", "130", "190", "347", "390"))
+        prioridades=PRIORIDADES, estados_tarea=automatizaciones.ESTADOS_TAREA, periodicidades=automatizaciones.PERIODICIDADES_TEXTO,
+        tipos_expediente=[(t.id, str(t.nombre)) for t in tipos_x.values()], estados_expediente=list(estados_x.items()), modelos_ejemplo=("303", "111", "115", "130", "190", "347", "390"))
     return (respuesta, 422) if error else respuesta
 
 
