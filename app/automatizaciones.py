@@ -50,7 +50,7 @@ VARIABLES = {
     "certificado.caduca": ("titular", "fecha", "dias"),
     "tarea.vencida": ("asunto", "fecha", "dias"),
     "vencimiento.proximo": ("modelo", "periodo", "cliente", "fecha", "dias"),
-    "tarea.creada": ("asunto", "prioridad", "cliente", "fecha"),
+    "tarea.creada": ("asunto", "prioridad", "cliente", "fecha", "modelo", "periodo"),     # modelo y periodo: solo si la tarea está vinculada a un vencimiento fiscal; si no, vacíos
     "tarea.estado": ("asunto", "estado", "anterior", "prioridad", "cliente", "fecha"),
     "recurrencia.generada": ("asunto", "periodicidad", "prioridad", "cliente", "fecha"),
     "expediente.creado": ("expediente", "referencia", "tipo", "cliente", "estado"),
@@ -163,6 +163,12 @@ def validar_condiciones(disparador: str, condiciones: dict) -> dict:
             if c.get("estado") not in ESTADOS_TAREA:
                 raise ValueError("Elige a qué estado tiene que pasar la tarea.")
             out["estado"] = c["estado"]
+        else:
+            modelo = (c.get("modelo") or "").strip()[:10]
+            if modelo:
+                out["modelo"] = modelo
+            if modelo or c.get("desde_vencimiento") in (True, 1, "1", "on", "true"):          # pedir un modelo implica que venga de un vencimiento
+                out["desde_vencimiento"] = True
         prioridades = [p for p in (c.get("prioridades") or []) if p in PRIORIDADES]
         if prioridades:
             out["prioridades"] = prioridades
@@ -307,7 +313,7 @@ def formulario_a_regla(form, disparador: str) -> tuple[dict, list[dict]]:
     elif disparador == "vencimiento.proximo":
         cond = {"dias_antes": form.get("c_dias_venc"), "modelo": form.get("c_modelo")}
     elif disparador == "tarea.creada":
-        cond = {"prioridades": form.getlist("c_prioridades_c"), "cliente_fiscal_id": form.get("c_cliente_c")}
+        cond = {"prioridades": form.getlist("c_prioridades_c"), "cliente_fiscal_id": form.get("c_cliente_c"), "desde_vencimiento": form.get("c_venc_c"), "modelo": form.get("c_modelo_c")}
     elif disparador == "tarea.estado":
         cond = {"estado": form.get("c_estado_e"), "prioridades": form.getlist("c_prioridades_e"), "cliente_fiscal_id": form.get("c_cliente_e")}
     elif disparador == "recurrencia.generada":
@@ -978,6 +984,7 @@ def _tarea_del_evento(tarea_id: int) -> dict | None:
     try:
         f = conn.execute(
             """SELECT t.id, t.asunto, t.estado, t.prioridad, t.fecha_vencimiento, t.cliente_fiscal_id, t.referencia_externa, t.usuario_id AS dueno, COALESCE(t.asignada_a, t.usuario_id) AS responsable,
+                      t.vencimiento_id, (SELECT modelo FROM vencimientos_fiscales WHERE id = t.vencimiento_id) AS modelo, (SELECT periodo FROM vencimientos_fiscales WHERE id = t.vencimiento_id) AS periodo,
                       (SELECT nombre FROM clientes_fiscales WHERE id = t.cliente_fiscal_id) AS cliente
                FROM tareas_outlook t WHERE t.id = ? AND t.papelera_en IS NULL""", (tarea_id,)).fetchone()
         return dict(f) if f else None
@@ -994,6 +1001,11 @@ def cumple_evento(regla: dict, tarea: dict, datos: dict) -> bool:
         return False
     if regla["disparador"] == "recurrencia.generada" and c.get("periodicidades") and datos.get("periodicidad") not in c["periodicidades"]:
         return False
+    if regla["disparador"] == "tarea.creada":
+        if c.get("desde_vencimiento") and not tarea.get("vencimiento_id"):
+            return False
+        if c.get("modelo") and (tarea.get("modelo") or "").lower() != c["modelo"].lower():
+            return False
     if c.get("prioridades") and tarea["prioridad"] not in c["prioridades"]:
         return False
     if c.get("cliente_fiscal_id") and tarea["cliente_fiscal_id"] != c["cliente_fiscal_id"]:
@@ -1006,6 +1018,8 @@ def _ocurrencia_de_evento(evento_id: int, regla: dict, tarea: dict, datos: dict)
     d = {"asunto": tarea["asunto"], "prioridad": tarea["prioridad"], "cliente": tarea["cliente"] or "", "fecha": fecha}
     if regla["disparador"] == "tarea.estado":
         d.update({"estado": ESTADOS_TAREA.get(datos.get("a"), datos.get("a") or ""), "anterior": ESTADOS_TAREA.get(datos.get("de"), datos.get("de") or "")})
+    if regla["disparador"] == "tarea.creada":
+        d.update({"modelo": tarea.get("modelo") or "", "periodo": tarea.get("periodo") or ""})
     if regla["disparador"] == "recurrencia.generada":
         d["periodicidad"] = PERIODICIDADES_TEXTO.get(datos.get("periodicidad"), datos.get("periodicidad") or "")
     return {"clave": f"evt:{evento_id}", "objeto": f"tarea {tarea['id']}: {tarea['asunto'][:60]}", "responsable": tarea["responsable"], "cliente_fiscal_id": tarea["cliente_fiscal_id"],

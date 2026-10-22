@@ -14443,3 +14443,9 @@ msgstr "Fixer une échéance aux tâches récurrentes"
 
 msgid "Avisar cuando se cierre un expediente"
 msgstr "Prévenir à la clôture d'un dossier"
+
+msgid "Solo las vinculadas a un vencimiento fiscal (las que genera una regla de tareas por vencimiento o las que se vinculan a mano)"
+msgstr "Seulement celles liées à une échéance fiscale (générées par une règle de tâches par échéance ou liées à la main)"
+
+msgid "Solo del modelo (vacío = todos; implica la opción de arriba)"
+msgstr "Seulement du modèle (vide = tous ; implique l'option ci-dessus)"

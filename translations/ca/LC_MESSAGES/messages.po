@@ -14367,3 +14367,9 @@ msgstr "Posar data límit a les tasques recurrents"
 
 msgid "Avisar cuando se cierre un expediente"
 msgstr "Avisar quan es tanqui un expedient"
+
+msgid "Solo las vinculadas a un vencimiento fiscal (las que genera una regla de tareas por vencimiento o las que se vinculan a mano)"
+msgstr "Només les vinculades a un venciment fiscal (les que genera una regla de tasques per venciment o les que es vinculen a mà)"
+
+msgid "Solo del modelo (vacío = todos; implica la opción de arriba)"
+msgstr "Només del model (buit = tots; implica l'opció de dalt)"

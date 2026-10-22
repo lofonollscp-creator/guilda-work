@@ -180,3 +180,89 @@ def test_plantillas_nuevas_y_pantalla_del_constructor(cliente):
     assert {r["disparador"] for r in au.listar_reglas(t)} == {"expediente.estado", "recurrencia.generada"}
     pagina = cliente.get("/tareas/automatizaciones").get_data(as_text=True)
     assert "Poner fecha límite a las tareas recurrentes" in pagina and "Avisar cuando se cierre un expediente" in pagina
+
+
+def test_las_tareas_por_vencimiento_si_disparan_tarea_creada(d):
+    """Comprobado a propósito: las tareas «por vencimiento fiscal» pasan por crear_tarea_outlook, así que ya tienen disparador («Se crea una tarea»), a diferencia de las recurrentes."""
+    from datetime import date, timedelta
+    au.crear_regla(d.t, d.sup, "Toda tarea nueva", "tarea.creada", {}, [{"tipo": "notificar", "titulo": "Nueva {asunto}", "a": "direccion"}])
+    hoy = date.today()
+    db.crear_vencimiento_fiscal(d.t, d.cliente, "303", "2026-T4", (hoy + timedelta(days=5)).isoformat())
+    db.crear_regla_por_vencimiento(d.sup, "303", "Preparar el {modelo} de {cliente}", crear_dias_antes=10, vence_dias_antes=2)
+    assert db.generar_tareas_por_vencimiento(hoy) == 1
+    r = au.procesar_eventos(AHORA)
+    assert r["eventos"] == 1 and r["ejecuciones"] == 1
+    assert [a["titulo"] for a in _avisos_de_automatizacion(d.sup)] == ["Nueva Preparar el 303 de Marta Puig"]
+
+
+# --- «Se crea una tarea»: filtro por vencimiento fiscal y variables {modelo}/{periodo} --------------------------------------
+
+def test_validacion_del_filtro_de_vencimiento_en_tarea_creada(d):
+    assert au.validar_condiciones("tarea.creada", {}) == {}
+    assert au.validar_condiciones("tarea.creada", {"desde_vencimiento": "1"}) == {"desde_vencimiento": True}
+    assert au.validar_condiciones("tarea.creada", {"modelo": " 303 "}) == {"modelo": "303", "desde_vencimiento": True}        # pedir un modelo implica la opción
+    assert au.validar_condiciones("tarea.creada", {"desde_vencimiento": ""}) == {}
+    assert au.validar_condiciones("tarea.estado", {"estado": "esperando", "modelo": "303"}) == {"estado": "esperando"}          # en los demás disparadores no existe
+    au.validar_acciones("tarea.creada", [{"tipo": "notificar", "titulo": "{modelo} {periodo}: {asunto}"}])
+    with pytest.raises(ValueError, match="no existe"):
+        au.validar_acciones("tarea.estado", [{"tipo": "notificar", "titulo": "{modelo}"}])
+
+
+def _vencimientos(d):
+    from datetime import date, timedelta
+    hoy = date.today()
+    for modelo, periodo in (("303", "2026-T4"), ("111", "2026-T4")):
+        db.crear_vencimiento_fiscal(d.t, d.cliente, modelo, periodo, (hoy + timedelta(days=5)).isoformat())
+    db.crear_regla_por_vencimiento(d.sup, "303", "Preparar el {modelo} de {cliente}", crear_dias_antes=10, vence_dias_antes=2)
+    db.crear_regla_por_vencimiento(d.sup, "111", "Preparar el {modelo} de {cliente}", crear_dias_antes=10, vence_dias_antes=2)
+    return hoy
+
+
+def test_solo_las_tareas_de_un_vencimiento_y_las_variables_modelo_y_periodo(d):
+    au.crear_regla(d.t, d.sup, "De vencimiento", "tarea.creada", {"desde_vencimiento": True},
+                   [{"tipo": "notificar", "titulo": "Generada {modelo} {periodo}: {asunto}", "a": "direccion"}])
+    hoy = _vencimientos(d)
+    db.crear_tarea_outlook(d.cus, asunto="Tarea cualquiera")                                          # no viene de un vencimiento
+    assert db.generar_tareas_por_vencimiento(hoy) == 2
+    r = au.procesar_eventos(AHORA)
+    assert r["eventos"] == 3 and r["ejecuciones"] == 2
+    assert sorted(a["titulo"] for a in _avisos_de_automatizacion(d.sup)) == ["Generada 111 2026-T4: Preparar el 111 de Marta Puig", "Generada 303 2026-T4: Preparar el 303 de Marta Puig"]
+
+
+def test_filtro_por_modelo_y_variables_vacias_en_las_demas(d):
+    au.crear_regla(d.t, d.sup, "Solo 303", "tarea.creada", {"modelo": "303"}, [{"tipo": "notificar", "titulo": "Solo {modelo}", "a": "direccion"}])
+    au.crear_regla(d.t, d.sup, "Todas", "tarea.creada", {}, [{"tipo": "notificar", "titulo": "Todas [{modelo}|{periodo}]: {asunto}", "a": "direccion"}])
+    hoy = _vencimientos(d)
+    db.crear_tarea_outlook(d.cus, asunto="Suelta")
+    db.generar_tareas_por_vencimiento(hoy)
+    au.procesar_eventos(AHORA)
+    titulos = sorted(a["titulo"] for a in _avisos_de_automatizacion(d.sup))
+    assert titulos == ["Solo 303", "Todas [111|2026-T4]: Preparar el 111 de Marta Puig", "Todas [303|2026-T4]: Preparar el 303 de Marta Puig", "Todas [|]: Suelta"]
+
+
+def test_el_modelo_no_distingue_mayusculas_y_la_simulacion_lo_respeta(d):
+    rid = au.crear_regla(d.t, d.sup, "Modelo", "tarea.creada", {"modelo": "190"}, [{"tipo": "notificar", "titulo": "{modelo}", "a": "direccion"}])
+    from datetime import date, timedelta
+    db.crear_vencimiento_fiscal(d.t, d.cliente, "190", "2026", (date.today() + timedelta(days=3)).isoformat())
+    db.crear_regla_por_vencimiento(d.sup, "190", "Resumen {modelo}", crear_dias_antes=10, vence_dias_antes=1)
+    db.generar_tareas_por_vencimiento(date.today())
+    db.crear_tarea_outlook(d.cus, asunto="Otra")
+    from datetime import datetime, timezone
+    s = au.simular(d.t, rid, datetime.now(timezone.utc))
+    assert [e["datos"]["modelo"] for e in s["ejemplos"]] == ["190"]
+
+
+def test_pantalla_del_filtro_de_vencimiento(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    uid = iniciar_sesion_de_prueba(cliente, "venc-pantalla@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho pantalla vencimiento")
+    db.asignar_tenant(uid, t)
+    db.asignar_supervisor_tenant(uid, True)
+    html = cliente.get("/tareas/automatizaciones/regla").get_data(as_text=True)
+    assert 'name="c_venc_c"' in html and 'name="c_modelo_c"' in html and "{modelo}" in html
+    r = cliente.post("/tareas/automatizaciones/regla", data={"nombre": "303 nuevos", "disparador": "tarea.creada", "c_modelo_c": "303", "activa": "1",
+                                                           "a0_tipo": "notificar", "a0_titulo": "Nuevo {modelo} de {cliente}", "a0_dest_aviso": "direccion"})
+    assert r.status_code == 302
+    assert au.listar_reglas(t)[0]["condiciones"] == {"modelo": "303", "desde_vencimiento": True}
+    editar = cliente.get(f"/tareas/automatizaciones/regla/{au.listar_reglas(t)[0]['id']}").get_data(as_text=True)
+    assert 'value="303"' in editar and 'name="c_venc_c" value="1" checked' in editar

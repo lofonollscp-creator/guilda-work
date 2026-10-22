@@ -81,6 +81,10 @@
           {% for cl in clientes_fiscales %}<option value="{{ cl.id }}" {% if c.get('cliente_fiscal_id') == cl.id %}selected{% endif %}>{{ cl.nombre }}</option>{% endfor %}
         </select>
       </label>
+      <label class="checkbox"><input type="checkbox" name="c_venc_c" value="1" {% if c.get('desde_vencimiento') %}checked{% endif %}> {{ _('Solo las vinculadas a un vencimiento fiscal (las que genera una regla de tareas por vencimiento o las que se vinculan a mano)') }}</label>
+      <label>{{ _('Solo del modelo (vacío = todos; implica la opción de arriba)') }}
+        <input type="text" name="c_modelo_c" maxlength="10" list="modelos-ejemplo" value="{{ c.get('modelo', '') }}">
+      </label>
     </div>
     <div data-solo-disparador="tarea.estado">
       <label>{{ _('Cuando una tarea pase a') }}
