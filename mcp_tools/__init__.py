@@ -550,6 +550,10 @@ from .herramientas_comercial import (  # noqa: E402,F401
     comercial_listar_oportunidades, comercial_ver_oportunidad, comercial_embudo, comercial_ver_reunion, comercial_crear_oportunidad, comercial_mover_oportunidad, comercial_anotar_actividad, comercial_crear_reunion, comercial_generar_acta,
     comercial_listar_etapas, comercial_editar_oportunidad, comercial_convertir_en_cliente, comercial_eliminar_oportunidad, comercial_listar_reuniones, comercial_editar_reunion, comercial_guardar_transcripcion, comercial_borrar_transcripcion, comercial_guardar_acta, comercial_crear_tareas_de_acta, comercial_eliminar_reunion,
 )
+from .herramientas_juridico import (  # noqa: E402,F401
+    _ctx_juridico, _traducir_juridico,
+    juridico_buscar, juridico_ver_documento, juridico_consultar, juridico_guardar_informe, juridico_listar_informes, juridico_ver_informe,
+)
 from .herramientas_tareas_trabajo import (  # noqa: E402,F401
     _tt, _como_error, _tarea_visible, _direccion,
     cambiar_estado_tarea_con_motivo, listar_subtareas_tarea, crear_subtarea, listar_clientes_de_tarea, fijar_clientes_de_tarea, listar_tareas_de_cliente, listar_adjuntos_tarea, listar_revisiones_tarea, pedir_revision_tarea, resolver_revision_tarea, listar_conversaciones_cliente_tarea, responder_cliente_tarea, ocultar_comentario_cliente_tarea, listar_dependencias_tarea, anadir_dependencia_tarea, quitar_dependencia_tarea, informe_tareas, listar_reglas_automatizacion, simular_regla_automatizacion, listar_ejecuciones_automatizacion,
@@ -701,6 +705,8 @@ TOOLS = [
     # Comercial: oportunidades, embudo y reuniones con acta de IA
     comercial_listar_oportunidades, comercial_ver_oportunidad, comercial_embudo, comercial_ver_reunion, comercial_crear_oportunidad, comercial_mover_oportunidad, comercial_anotar_actividad, comercial_crear_reunion, comercial_generar_acta,
     comercial_listar_etapas, comercial_editar_oportunidad, comercial_convertir_en_cliente, comercial_eliminar_oportunidad, comercial_listar_reuniones, comercial_editar_reunion, comercial_guardar_transcripcion, comercial_borrar_transcripcion, comercial_guardar_acta, comercial_crear_tareas_de_acta, comercial_eliminar_reunion,
+    # Asistente jurídico: biblioteca, consultas con citas e informes
+    juridico_buscar, juridico_ver_documento, juridico_consultar, juridico_guardar_informe, juridico_listar_informes, juridico_ver_informe,
     # Fichaje
     fichar, listar_mis_fichajes,
     listar_mis_ausencias, saldo_vacaciones, pedir_ausencia, cancelar_ausencia, listar_ausencias_equipo, resolver_ausencia, ver_mis_turnos, ver_cuadrante, asignar_turno, ver_bolsa_de_horas, ajustar_bolsa_de_horas,

@@ -15054,3 +15054,396 @@ msgstr "Call"
 
 msgid "Visita"
 msgstr "Visit"
+
+msgid "%(n)s documentos"
+msgstr "%(n)s documents"
+
+msgid "%(n)s en cuarentena"
+msgstr "%(n)s in quarantine"
+
+msgid "%(n)s fragmentos"
+msgstr "%(n)s fragments"
+
+msgid "%(n)s por reintentar"
+msgstr "%(n)s to retry"
+
+msgid "Abrir en la biblioteca"
+msgstr "Open in the library"
+
+msgid "Activa en tu despacho"
+msgstr "Active in your firm"
+
+msgid "Activar en mi despacho"
+msgstr "Activate in my firm"
+
+msgid "Adjunto privado"
+msgstr "Private attachment"
+
+msgid "Adjuntos (hasta 5; Word, PDF con texto o texto plano)"
+msgstr "Attachments (up to 5; Word, PDF with text or plain text)"
+
+msgid "Administración de la fuente"
+msgstr "Source administration"
+
+msgid "Almacenar"
+msgstr "Store"
+
+msgid "Análisis actual de hechos de esa fecha"
+msgstr "Current analysis of facts from that date"
+
+msgid "Asistente jurídico"
+msgstr "Legal assistant"
+
+msgid "Atribución obligatoria (texto)"
+msgstr "Required attribution (text)"
+
+msgid "Biblioteca"
+msgstr "Library"
+
+msgid "Biblioteca de legislación y jurisprudencia autorizada, consultas con citas verificables e informes revisables en el expediente del cliente."
+msgstr "Library of authorised legislation and case law, queries with verifiable citations and reviewable reports in the client's file."
+
+msgid "Biblioteca jurídica"
+msgstr "Legal library"
+
+msgid "Borrador pendiente de revisión profesional"
+msgstr "Draft pending professional review"
+
+msgid "Búsqueda"
+msgstr "Search"
+
+msgid "Citar"
+msgstr "Cite"
+
+msgid "Cobertura"
+msgstr "Coverage"
+
+msgid "Cobertura real"
+msgstr "Actual coverage"
+
+msgid "Colección"
+msgstr "Collection"
+
+msgid "Conclusión"
+msgstr "Conclusion"
+
+msgid "Consulta"
+msgstr "Query"
+
+msgid "Consulta jurídica"
+msgstr "Legal query"
+
+msgid "Consultar"
+msgstr "Ask"
+
+msgid "Consultas con fuentes comprobables: cada afirmación lleva su cita y nada se contesta de memoria. Un borrador del asistente no es un informe revisado."
+msgstr "Queries with verifiable sources: every statement carries its citation and nothing is answered from memory. An assistant draft is not a reviewed report."
+
+msgid "Consultas guardadas en el expediente del cliente: una instantánea con sus fuentes, que no cambia aunque la biblioteca se actualice."
+msgstr "Queries saved in the client's file: a snapshot with its sources that does not change even if the library is updated."
+
+msgid "Consultas jurídicas este mes"
+msgstr "Legal queries this month"
+
+msgid "Copiar con referencias"
+msgstr "Copy with references"
+
+msgid "Creado"
+msgstr "Created"
+
+msgid "Datos que faltan"
+msgstr "Missing information"
+
+msgid "Desactivar en mi despacho"
+msgstr "Deactivate in my firm"
+
+msgid "Deshabilitar fuente"
+msgstr "Disable source"
+
+msgid "Dónde buscar"
+msgstr "Where to search"
+
+msgid "El texto consolidado es informativo: la referencia oficial es la publicación original."
+msgstr "The consolidated text is informative: the official reference is the original publication."
+
+msgid "Enviar al modelo"
+msgstr "Send to the model"
+
+msgid "Esta consulta no se pudo completar."
+msgstr "This query could not be completed."
+
+msgid "Estado del conocimiento en esa fecha"
+msgstr "State of knowledge at that date"
+
+msgid "Estado real de cada fuente: lo que está habilitado, lo que se ha cargado y lo que falta. Que exista código no la habilita: hace falta una política de uso con su evidencia."
+msgstr "Actual status of each source: what is enabled, what has been loaded and what is missing. Having code does not enable it: a usage policy with its evidence is required."
+
+msgid "Este conector todavía no tiene transporte: no se puede sincronizar."
+msgstr "This connector has no transport yet: it cannot be synchronised."
+
+msgid "Evidencia"
+msgstr "Evidence"
+
+msgid "Evidencia de los derechos de uso (contrato, condiciones, URL)"
+msgstr "Evidence of usage rights (contract, terms, URL)"
+
+msgid "Faltan datos"
+msgstr "Information missing"
+
+msgid "Fecha jurídica"
+msgstr "Legal reference date"
+
+msgid "Fecha jurídica de referencia"
+msgstr "Legal reference date"
+
+msgid "Fecha jurídica: %(f)s"
+msgstr "Legal reference date: %(f)s"
+
+msgid "Fuente"
+msgstr "Source"
+
+msgid "Fuente original"
+msgstr "Original source"
+
+msgid "Fuente retirada"
+msgstr "Source withdrawn"
+
+msgid "Fuentes"
+msgstr "Sources"
+
+msgid "Fuentes jurídicas"
+msgstr "Legal sources"
+
+msgid "Fuentes recuperadas (no citadas):"
+msgstr "Retrieved sources (not cited):"
+
+msgid "Fundamento"
+msgstr "Grounds"
+
+msgid "Guardado el %(f)s"
+msgstr "Saved on %(f)s"
+
+msgid "Guardar como informe del cliente"
+msgstr "Save as client report"
+
+msgid "Habilitada, no activada en tu despacho"
+msgstr "Enabled, not activated in your firm"
+
+msgid "Habilitar fuente"
+msgstr "Enable source"
+
+msgid "Hechos considerados"
+msgstr "Facts considered"
+
+msgid "Huecos de cobertura"
+msgstr "Coverage gaps"
+
+msgid "Indexar"
+msgstr "Index"
+
+msgid "Informes jurídicos"
+msgstr "Legal reports"
+
+msgid "La fuente no indica su vigencia: aplicabilidad temporal desconocida."
+msgstr "The source does not state its validity: temporal applicability unknown."
+
+msgid "Las fuentes recuperadas no bastan para responder con fundamento, o la respuesta propuesta no superó la verificación de citas. No se contesta de memoria."
+msgstr "The retrieved sources are not enough to answer with grounds, or the proposed answer failed citation verification. We do not answer from memory."
+
+msgid "Legislación y jurisprudencia de las fuentes habilitadas para tu despacho, con su procedencia y su cobertura real."
+msgstr "Legislation and case law from the sources enabled for your firm, with their provenance and actual coverage."
+
+msgid "Límites de aplicabilidad"
+msgstr "Limits of applicability"
+
+msgid "Marcar como revisado"
+msgstr "Mark as reviewed"
+
+msgid "Materia (opcional)"
+msgstr "Subject matter (optional)"
+
+msgid "Mis consultas"
+msgstr "My queries"
+
+msgid "Modo temporal"
+msgstr "Time mode"
+
+msgid "Más resultados"
+msgstr "More results"
+
+msgid "No hay fuentes habilitadas para tu despacho."
+msgstr "There are no sources enabled for your firm."
+
+msgid "Nota de revisión (opcional)"
+msgstr "Review note (optional)"
+
+msgid "Nueva consulta"
+msgstr "New query"
+
+msgid "Para consultar hace falta un modelo y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "To ask questions you need a model and your OpenRouter key, in the AI Assistant settings."
+
+msgid "Pendiente de habilitación"
+msgstr "Pending enablement"
+
+msgid "Pendientes de habilitación"
+msgstr "Pending enablement"
+
+msgid "Política v%(v)s"
+msgstr "Policy v%(v)s"
+
+msgid "Por ejemplo: ¿Es deducible el gasto descrito en el adjunto para un autónomo en estimación directa?"
+msgstr "For example: Is the expense described in the attachment deductible for a self-employed person under direct estimation?"
+
+msgid "Próximos pasos"
+msgstr "Next steps"
+
+msgid "Publicación: %(f)s"
+msgstr "Publication: %(f)s"
+
+msgid "Puede tardar hasta un minuto."
+msgstr "It may take up to a minute."
+
+msgid "Qué hay en la biblioteca"
+msgstr "What is in the library"
+
+msgid "Registrar política"
+msgstr "Register policy"
+
+msgid "Registros con problemas"
+msgstr "Records with problems"
+
+msgid "Relaciones"
+msgstr "Relations"
+
+msgid "Relaciones documentadas"
+msgstr "Documented relations"
+
+msgid "Resolución: %(f)s"
+msgstr "Decision: %(f)s"
+
+msgid "Respondida con fuentes"
+msgstr "Answered with sources"
+
+msgid "Respuesta"
+msgstr "Answer"
+
+msgid "Revisado el %(f)s"
+msgstr "Reviewed on %(f)s"
+
+msgid "Sin base suficiente"
+msgstr "Not enough basis"
+
+msgid "Sin fuentes citadas."
+msgstr "No sources cited."
+
+msgid "Sin política de uso registrada: la fuente no puede sincronizar ni consultarse."
+msgstr "No usage policy registered: the source can neither be synchronised nor queried."
+
+msgid "Sin texto aplicable para esos parámetros."
+msgstr "No applicable text for those parameters."
+
+msgid "Sincronizar ahora"
+msgstr "Synchronise now"
+
+msgid "Territorio (opcional)"
+msgstr "Territory (optional)"
+
+msgid "Texto o identificador (BOE-A-…, ECLI:…)"
+msgstr "Text or identifier (BOE-A-…, ECLI:…)"
+
+msgid "Todavía no has hecho ninguna consulta."
+msgstr "You have not made any queries yet."
+
+msgid "Todavía no hay fuentes jurídicas habilitadas para tu despacho. Mientras tanto, el asistente no responderá a consultas: no se contesta de memoria."
+msgstr "There are no legal sources enabled for your firm yet. Until then the assistant will not answer queries: it does not answer from memory."
+
+msgid "Todavía no hay informes guardados."
+msgstr "There are no saved reports yet."
+
+msgid "Tu consulta"
+msgstr "Your query"
+
+msgid "Título del informe"
+msgstr "Report title"
+
+msgid "Un adjunto aporta hechos, no autoridad jurídica. Su texto se envía solo a tu modelo de IA y se borra a los 90 días. No se guarda el archivo original."
+msgstr "An attachment provides facts, not legal authority. Its text is sent only to your AI model and is deleted after 90 days. The original file is not kept."
+
+msgid "Ver las fuentes"
+msgstr "See the sources"
+
+msgid "Versión"
+msgstr "Version"
+
+msgid "Versión capturada el"
+msgstr "Version captured on"
+
+msgid "Versión capturada el %(f)s"
+msgstr "Version captured on %(f)s"
+
+msgid "Vigente desde %(d)s"
+msgstr "In force since %(d)s"
+
+msgid "Vuelve a lanzar la consulta antes de revisarlo."
+msgstr "Run the query again before reviewing it."
+
+msgid "almacenar"
+msgstr "store"
+
+msgid "búsqueda de texto (sin similitud semántica)"
+msgstr "text search (no semantic similarity)"
+
+msgid "búsqueda híbrida"
+msgstr "hybrid search"
+
+msgid "capturado el"
+msgstr "captured on"
+
+msgid "citar"
+msgstr "cite"
+
+msgid "documentos"
+msgstr "documents"
+
+msgid "enviar al modelo"
+msgstr "send to the model"
+
+msgid "exportar"
+msgstr "export"
+
+msgid "fiscal, laboral…"
+msgstr "tax, labour…"
+
+msgid "hasta %(h)s"
+msgstr "until %(h)s"
+
+msgid "indexar"
+msgstr "index"
+
+msgid "ninguna todavía"
+msgstr "none yet"
+
+msgid "publicación"
+msgstr "publication"
+
+msgid "resolución"
+msgstr "decision"
+
+msgid "respaldo léxico"
+msgstr "lexical support"
+
+msgid "retirada"
+msgstr "withdrawn"
+
+msgid "«Última carga correcta» no significa que esté al día: comprueba también el retraso de cada fuente en Fuentes."
+msgstr "“Last successful load” does not mean it is up to date: also check each source's delay in Sources."
+
+msgid "¿Archivar este informe?"
+msgstr "Archive this report?"
+
+msgid "Última carga correcta"
+msgstr "Last successful load"
+
+msgid "— Sin cliente —"
+msgstr "— No client —"

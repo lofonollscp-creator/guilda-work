@@ -15139,3 +15139,396 @@ msgstr "Appel"
 
 msgid "Visita"
 msgstr "Visite"
+
+msgid "%(n)s documentos"
+msgstr "%(n)s documents"
+
+msgid "%(n)s en cuarentena"
+msgstr "%(n)s en quarantaine"
+
+msgid "%(n)s fragmentos"
+msgstr "%(n)s fragments"
+
+msgid "%(n)s por reintentar"
+msgstr "%(n)s à réessayer"
+
+msgid "Abrir en la biblioteca"
+msgstr "Ouvrir dans la bibliothèque"
+
+msgid "Activa en tu despacho"
+msgstr "Active dans votre cabinet"
+
+msgid "Activar en mi despacho"
+msgstr "Activer dans mon cabinet"
+
+msgid "Adjunto privado"
+msgstr "Pièce jointe privée"
+
+msgid "Adjuntos (hasta 5; Word, PDF con texto o texto plano)"
+msgstr "Pièces jointes (jusqu'à 5 ; Word, PDF avec texte ou texte brut)"
+
+msgid "Administración de la fuente"
+msgstr "Administration de la source"
+
+msgid "Almacenar"
+msgstr "Stocker"
+
+msgid "Análisis actual de hechos de esa fecha"
+msgstr "Analyse actuelle de faits de cette date"
+
+msgid "Asistente jurídico"
+msgstr "Assistant juridique"
+
+msgid "Atribución obligatoria (texto)"
+msgstr "Attribution obligatoire (texte)"
+
+msgid "Biblioteca"
+msgstr "Bibliothèque"
+
+msgid "Biblioteca de legislación y jurisprudencia autorizada, consultas con citas verificables e informes revisables en el expediente del cliente."
+msgstr "Bibliothèque de législation et de jurisprudence autorisées, consultations avec citations vérifiables et rapports révisables dans le dossier du client."
+
+msgid "Biblioteca jurídica"
+msgstr "Bibliothèque juridique"
+
+msgid "Borrador pendiente de revisión profesional"
+msgstr "Brouillon en attente de révision professionnelle"
+
+msgid "Búsqueda"
+msgstr "Recherche"
+
+msgid "Citar"
+msgstr "Citer"
+
+msgid "Cobertura"
+msgstr "Couverture"
+
+msgid "Cobertura real"
+msgstr "Couverture réelle"
+
+msgid "Colección"
+msgstr "Collection"
+
+msgid "Conclusión"
+msgstr "Conclusion"
+
+msgid "Consulta"
+msgstr "Consultation"
+
+msgid "Consulta jurídica"
+msgstr "Consultation juridique"
+
+msgid "Consultar"
+msgstr "Consulter"
+
+msgid "Consultas con fuentes comprobables: cada afirmación lleva su cita y nada se contesta de memoria. Un borrador del asistente no es un informe revisado."
+msgstr "Consultations avec sources vérifiables : chaque affirmation porte sa citation et rien n'est répondu de mémoire. Un brouillon de l'assistant n'est pas un rapport révisé."
+
+msgid "Consultas guardadas en el expediente del cliente: una instantánea con sus fuentes, que no cambia aunque la biblioteca se actualice."
+msgstr "Consultations enregistrées dans le dossier du client : un instantané avec ses sources, qui ne change pas même si la bibliothèque est mise à jour."
+
+msgid "Consultas jurídicas este mes"
+msgstr "Consultations juridiques ce mois-ci"
+
+msgid "Copiar con referencias"
+msgstr "Copier avec références"
+
+msgid "Creado"
+msgstr "Créé"
+
+msgid "Datos que faltan"
+msgstr "Informations manquantes"
+
+msgid "Desactivar en mi despacho"
+msgstr "Désactiver dans mon cabinet"
+
+msgid "Deshabilitar fuente"
+msgstr "Désactiver la source"
+
+msgid "Dónde buscar"
+msgstr "Où chercher"
+
+msgid "El texto consolidado es informativo: la referencia oficial es la publicación original."
+msgstr "Le texte consolidé est informatif : la référence officielle est la publication originale."
+
+msgid "Enviar al modelo"
+msgstr "Envoyer au modèle"
+
+msgid "Esta consulta no se pudo completar."
+msgstr "Cette consultation n'a pas pu être menée à bien."
+
+msgid "Estado del conocimiento en esa fecha"
+msgstr "État des connaissances à cette date"
+
+msgid "Estado real de cada fuente: lo que está habilitado, lo que se ha cargado y lo que falta. Que exista código no la habilita: hace falta una política de uso con su evidencia."
+msgstr "État réel de chaque source : ce qui est activé, ce qui a été chargé et ce qui manque. L'existence du code ne l'active pas : il faut une politique d'usage avec sa preuve."
+
+msgid "Este conector todavía no tiene transporte: no se puede sincronizar."
+msgstr "Ce connecteur n'a pas encore de transport : il ne peut pas être synchronisé."
+
+msgid "Evidencia"
+msgstr "Preuve"
+
+msgid "Evidencia de los derechos de uso (contrato, condiciones, URL)"
+msgstr "Preuve des droits d'usage (contrat, conditions, URL)"
+
+msgid "Faltan datos"
+msgstr "Informations manquantes"
+
+msgid "Fecha jurídica"
+msgstr "Date juridique"
+
+msgid "Fecha jurídica de referencia"
+msgstr "Date juridique de référence"
+
+msgid "Fecha jurídica: %(f)s"
+msgstr "Date juridique : %(f)s"
+
+msgid "Fuente"
+msgstr "Source"
+
+msgid "Fuente original"
+msgstr "Source originale"
+
+msgid "Fuente retirada"
+msgstr "Source retirée"
+
+msgid "Fuentes"
+msgstr "Sources"
+
+msgid "Fuentes jurídicas"
+msgstr "Sources juridiques"
+
+msgid "Fuentes recuperadas (no citadas):"
+msgstr "Sources retrouvées (non citées) :"
+
+msgid "Fundamento"
+msgstr "Fondement"
+
+msgid "Guardado el %(f)s"
+msgstr "Enregistré le %(f)s"
+
+msgid "Guardar como informe del cliente"
+msgstr "Enregistrer comme rapport du client"
+
+msgid "Habilitada, no activada en tu despacho"
+msgstr "Activée, non activée dans votre cabinet"
+
+msgid "Habilitar fuente"
+msgstr "Activer la source"
+
+msgid "Hechos considerados"
+msgstr "Faits pris en compte"
+
+msgid "Huecos de cobertura"
+msgstr "Lacunes de couverture"
+
+msgid "Indexar"
+msgstr "Indexer"
+
+msgid "Informes jurídicos"
+msgstr "Rapports juridiques"
+
+msgid "La fuente no indica su vigencia: aplicabilidad temporal desconocida."
+msgstr "La source n'indique pas sa validité : applicabilité temporelle inconnue."
+
+msgid "Las fuentes recuperadas no bastan para responder con fundamento, o la respuesta propuesta no superó la verificación de citas. No se contesta de memoria."
+msgstr "Les sources retrouvées ne suffisent pas pour répondre avec fondement, ou la réponse proposée n'a pas passé la vérification des citations. On ne répond pas de mémoire."
+
+msgid "Legislación y jurisprudencia de las fuentes habilitadas para tu despacho, con su procedencia y su cobertura real."
+msgstr "Législation et jurisprudence des sources activées pour votre cabinet, avec leur provenance et leur couverture réelle."
+
+msgid "Límites de aplicabilidad"
+msgstr "Limites d'applicabilité"
+
+msgid "Marcar como revisado"
+msgstr "Marquer comme révisé"
+
+msgid "Materia (opcional)"
+msgstr "Matière (facultatif)"
+
+msgid "Mis consultas"
+msgstr "Mes consultations"
+
+msgid "Modo temporal"
+msgstr "Mode temporel"
+
+msgid "Más resultados"
+msgstr "Plus de résultats"
+
+msgid "No hay fuentes habilitadas para tu despacho."
+msgstr "Aucune source n'est activée pour votre cabinet."
+
+msgid "Nota de revisión (opcional)"
+msgstr "Note de révision (facultatif)"
+
+msgid "Nueva consulta"
+msgstr "Nouvelle consultation"
+
+msgid "Para consultar hace falta un modelo y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "Pour consulter, il faut un modèle et votre clé OpenRouter, dans les réglages de l'Assistant IA."
+
+msgid "Pendiente de habilitación"
+msgstr "En attente d'activation"
+
+msgid "Pendientes de habilitación"
+msgstr "En attente d'activation"
+
+msgid "Política v%(v)s"
+msgstr "Politique v%(v)s"
+
+msgid "Por ejemplo: ¿Es deducible el gasto descrito en el adjunto para un autónomo en estimación directa?"
+msgstr "Par exemple : La dépense décrite dans la pièce jointe est-elle déductible pour un indépendant en estimation directe ?"
+
+msgid "Próximos pasos"
+msgstr "Prochaines étapes"
+
+msgid "Publicación: %(f)s"
+msgstr "Publication : %(f)s"
+
+msgid "Puede tardar hasta un minuto."
+msgstr "Cela peut prendre jusqu'à une minute."
+
+msgid "Qué hay en la biblioteca"
+msgstr "Ce que contient la bibliothèque"
+
+msgid "Registrar política"
+msgstr "Enregistrer la politique"
+
+msgid "Registros con problemas"
+msgstr "Enregistrements en difficulté"
+
+msgid "Relaciones"
+msgstr "Relations"
+
+msgid "Relaciones documentadas"
+msgstr "Relations documentées"
+
+msgid "Resolución: %(f)s"
+msgstr "Décision : %(f)s"
+
+msgid "Respondida con fuentes"
+msgstr "Répondu avec sources"
+
+msgid "Respuesta"
+msgstr "Réponse"
+
+msgid "Revisado el %(f)s"
+msgstr "Révisé le %(f)s"
+
+msgid "Sin base suficiente"
+msgstr "Base insuffisante"
+
+msgid "Sin fuentes citadas."
+msgstr "Aucune source citée."
+
+msgid "Sin política de uso registrada: la fuente no puede sincronizar ni consultarse."
+msgstr "Aucune politique d'usage enregistrée : la source ne peut ni être synchronisée ni consultée."
+
+msgid "Sin texto aplicable para esos parámetros."
+msgstr "Aucun texte applicable pour ces paramètres."
+
+msgid "Sincronizar ahora"
+msgstr "Synchroniser maintenant"
+
+msgid "Territorio (opcional)"
+msgstr "Territoire (facultatif)"
+
+msgid "Texto o identificador (BOE-A-…, ECLI:…)"
+msgstr "Texte ou identifiant (BOE-A-…, ECLI:…)"
+
+msgid "Todavía no has hecho ninguna consulta."
+msgstr "Vous n'avez encore fait aucune consultation."
+
+msgid "Todavía no hay fuentes jurídicas habilitadas para tu despacho. Mientras tanto, el asistente no responderá a consultas: no se contesta de memoria."
+msgstr "Aucune source juridique n'est encore activée pour votre cabinet. D'ici là, l'assistant ne répondra pas aux consultations : il ne répond pas de mémoire."
+
+msgid "Todavía no hay informes guardados."
+msgstr "Il n'y a pas encore de rapports enregistrés."
+
+msgid "Tu consulta"
+msgstr "Votre consultation"
+
+msgid "Título del informe"
+msgstr "Titre du rapport"
+
+msgid "Un adjunto aporta hechos, no autoridad jurídica. Su texto se envía solo a tu modelo de IA y se borra a los 90 días. No se guarda el archivo original."
+msgstr "Une pièce jointe apporte des faits, pas une autorité juridique. Son texte n'est envoyé qu'à votre modèle d'IA et est supprimé au bout de 90 jours. Le fichier original n'est pas conservé."
+
+msgid "Ver las fuentes"
+msgstr "Voir les sources"
+
+msgid "Versión"
+msgstr "Version"
+
+msgid "Versión capturada el"
+msgstr "Version capturée le"
+
+msgid "Versión capturada el %(f)s"
+msgstr "Version capturée le %(f)s"
+
+msgid "Vigente desde %(d)s"
+msgstr "En vigueur depuis %(d)s"
+
+msgid "Vuelve a lanzar la consulta antes de revisarlo."
+msgstr "Relancez la consultation avant de le réviser."
+
+msgid "almacenar"
+msgstr "stocker"
+
+msgid "búsqueda de texto (sin similitud semántica)"
+msgstr "recherche textuelle (sans similarité sémantique)"
+
+msgid "búsqueda híbrida"
+msgstr "recherche hybride"
+
+msgid "capturado el"
+msgstr "capturé le"
+
+msgid "citar"
+msgstr "citer"
+
+msgid "documentos"
+msgstr "documents"
+
+msgid "enviar al modelo"
+msgstr "envoyer au modèle"
+
+msgid "exportar"
+msgstr "exporter"
+
+msgid "fiscal, laboral…"
+msgstr "fiscal, social…"
+
+msgid "hasta %(h)s"
+msgstr "jusqu'au %(h)s"
+
+msgid "indexar"
+msgstr "indexer"
+
+msgid "ninguna todavía"
+msgstr "aucune pour l'instant"
+
+msgid "publicación"
+msgstr "publication"
+
+msgid "resolución"
+msgstr "décision"
+
+msgid "respaldo léxico"
+msgstr "appui lexical"
+
+msgid "retirada"
+msgstr "retirée"
+
+msgid "«Última carga correcta» no significa que esté al día: comprueba también el retraso de cada fuente en Fuentes."
+msgstr "« Dernier chargement réussi » ne signifie pas que ce soit à jour : vérifiez aussi le retard de chaque source dans Sources."
+
+msgid "¿Archivar este informe?"
+msgstr "Archiver ce rapport ?"
+
+msgid "Última carga correcta"
+msgstr "Dernier chargement réussi"
+
+msgid "— Sin cliente —"
+msgstr "— Sans client —"

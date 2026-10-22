@@ -38,7 +38,7 @@ from .notas_formato import nota_a_html
 from . import acceso, ai_local, ayuda, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
-from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
+from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_juridico, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
 from .rutas_proyectos import proyectos_bp
 from .rutas_backoffice import backoffice_bp
 from .rutas_facturacion_proxy import FACTURACION_ORIGIN, facturacion_proxy_bp
@@ -245,6 +245,7 @@ from .rutas_menu import menu_bp  # noqa: E402
 from .rutas_cobros import cobros_bp  # noqa: E402
 from .rutas_contabilidad import contabilidad_bp  # noqa: E402
 from .rutas_comercial import comercial_bp  # noqa: E402
+from .rutas_juridico import juridico_bp  # noqa: E402
 app.register_blueprint(abogados_bp)
 app.register_blueprint(inmobiliaria_bp)
 app.register_blueprint(seguridad_bp)
@@ -257,6 +258,7 @@ app.register_blueprint(menu_bp)
 app.register_blueprint(cobros_bp)
 app.register_blueprint(contabilidad_bp)
 app.register_blueprint(comercial_bp)
+app.register_blueprint(juridico_bp)
 app.register_blueprint(expedientes_bp)
 app.register_blueprint(plazos_bp)
 app.register_blueprint(tiempo_bp)
@@ -2608,6 +2610,9 @@ def main():
     threading.Thread(target=_sincronizacion_correo_periodica, daemon=True).start()
     threading.Thread(target=_recordatorio_vencimientos_fiscales, daemon=True).start()
     threading.Thread(target=_resumen_ia_semanal, daemon=True).start()
+    from .juridico import trabajador as _trabajador_juridico
+    if _trabajador_juridico.activo():
+        threading.Thread(target=_trabajador_juridico.bucle, daemon=True).start()
 
     webview.start()
 

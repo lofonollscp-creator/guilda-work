@@ -15063,3 +15063,396 @@ msgstr "Trucada"
 
 msgid "Visita"
 msgstr "Visita"
+
+msgid "%(n)s documentos"
+msgstr "%(n)s documents"
+
+msgid "%(n)s en cuarentena"
+msgstr "%(n)s en quarantena"
+
+msgid "%(n)s fragmentos"
+msgstr "%(n)s fragments"
+
+msgid "%(n)s por reintentar"
+msgstr "%(n)s per reintentar"
+
+msgid "Abrir en la biblioteca"
+msgstr "Obrir a la biblioteca"
+
+msgid "Activa en tu despacho"
+msgstr "Activa al teu despatx"
+
+msgid "Activar en mi despacho"
+msgstr "Activar al meu despatx"
+
+msgid "Adjunto privado"
+msgstr "Adjunt privat"
+
+msgid "Adjuntos (hasta 5; Word, PDF con texto o texto plano)"
+msgstr "Adjunts (fins a 5; Word, PDF amb text o text pla)"
+
+msgid "Administración de la fuente"
+msgstr "Administració de la font"
+
+msgid "Almacenar"
+msgstr "Emmagatzemar"
+
+msgid "Análisis actual de hechos de esa fecha"
+msgstr "Anàlisi actual de fets d'aquesta data"
+
+msgid "Asistente jurídico"
+msgstr "Assistent jurídic"
+
+msgid "Atribución obligatoria (texto)"
+msgstr "Atribució obligatòria (text)"
+
+msgid "Biblioteca"
+msgstr "Biblioteca"
+
+msgid "Biblioteca de legislación y jurisprudencia autorizada, consultas con citas verificables e informes revisables en el expediente del cliente."
+msgstr "Biblioteca de legislació i jurisprudència autoritzada, consultes amb cites verificables i informes revisables a l'expedient del client."
+
+msgid "Biblioteca jurídica"
+msgstr "Biblioteca jurídica"
+
+msgid "Borrador pendiente de revisión profesional"
+msgstr "Esborrany pendent de revisió professional"
+
+msgid "Búsqueda"
+msgstr "Cerca"
+
+msgid "Citar"
+msgstr "Citar"
+
+msgid "Cobertura"
+msgstr "Cobertura"
+
+msgid "Cobertura real"
+msgstr "Cobertura real"
+
+msgid "Colección"
+msgstr "Col·lecció"
+
+msgid "Conclusión"
+msgstr "Conclusió"
+
+msgid "Consulta"
+msgstr "Consulta"
+
+msgid "Consulta jurídica"
+msgstr "Consulta jurídica"
+
+msgid "Consultar"
+msgstr "Consultar"
+
+msgid "Consultas con fuentes comprobables: cada afirmación lleva su cita y nada se contesta de memoria. Un borrador del asistente no es un informe revisado."
+msgstr "Consultes amb fonts comprovables: cada afirmació porta la seva cita i res no es contesta de memòria. Un esborrany de l'assistent no és un informe revisat."
+
+msgid "Consultas guardadas en el expediente del cliente: una instantánea con sus fuentes, que no cambia aunque la biblioteca se actualice."
+msgstr "Consultes desades a l'expedient del client: una instantània amb les seves fonts, que no canvia encara que la biblioteca s'actualitzi."
+
+msgid "Consultas jurídicas este mes"
+msgstr "Consultes jurídiques aquest mes"
+
+msgid "Copiar con referencias"
+msgstr "Copiar amb referències"
+
+msgid "Creado"
+msgstr "Creat"
+
+msgid "Datos que faltan"
+msgstr "Dades que falten"
+
+msgid "Desactivar en mi despacho"
+msgstr "Desactivar al meu despatx"
+
+msgid "Deshabilitar fuente"
+msgstr "Deshabilitar font"
+
+msgid "Dónde buscar"
+msgstr "On cercar"
+
+msgid "El texto consolidado es informativo: la referencia oficial es la publicación original."
+msgstr "El text consolidat és informatiu: la referència oficial és la publicació original."
+
+msgid "Enviar al modelo"
+msgstr "Enviar al model"
+
+msgid "Esta consulta no se pudo completar."
+msgstr "Aquesta consulta no s'ha pogut completar."
+
+msgid "Estado del conocimiento en esa fecha"
+msgstr "Estat del coneixement en aquesta data"
+
+msgid "Estado real de cada fuente: lo que está habilitado, lo que se ha cargado y lo que falta. Que exista código no la habilita: hace falta una política de uso con su evidencia."
+msgstr "Estat real de cada font: el que està habilitat, el que s'ha carregat i el que falta. Que existeixi codi no l'habilita: cal una política d'ús amb la seva evidència."
+
+msgid "Este conector todavía no tiene transporte: no se puede sincronizar."
+msgstr "Aquest connector encara no té transport: no es pot sincronitzar."
+
+msgid "Evidencia"
+msgstr "Evidència"
+
+msgid "Evidencia de los derechos de uso (contrato, condiciones, URL)"
+msgstr "Evidència dels drets d'ús (contracte, condicions, URL)"
+
+msgid "Faltan datos"
+msgstr "Falten dades"
+
+msgid "Fecha jurídica"
+msgstr "Data jurídica"
+
+msgid "Fecha jurídica de referencia"
+msgstr "Data jurídica de referència"
+
+msgid "Fecha jurídica: %(f)s"
+msgstr "Data jurídica: %(f)s"
+
+msgid "Fuente"
+msgstr "Font"
+
+msgid "Fuente original"
+msgstr "Font original"
+
+msgid "Fuente retirada"
+msgstr "Font retirada"
+
+msgid "Fuentes"
+msgstr "Fonts"
+
+msgid "Fuentes jurídicas"
+msgstr "Fonts jurídiques"
+
+msgid "Fuentes recuperadas (no citadas):"
+msgstr "Fonts recuperades (no citades):"
+
+msgid "Fundamento"
+msgstr "Fonament"
+
+msgid "Guardado el %(f)s"
+msgstr "Desat el %(f)s"
+
+msgid "Guardar como informe del cliente"
+msgstr "Desar com a informe del client"
+
+msgid "Habilitada, no activada en tu despacho"
+msgstr "Habilitada, no activada al teu despatx"
+
+msgid "Habilitar fuente"
+msgstr "Habilitar font"
+
+msgid "Hechos considerados"
+msgstr "Fets considerats"
+
+msgid "Huecos de cobertura"
+msgstr "Buits de cobertura"
+
+msgid "Indexar"
+msgstr "Indexar"
+
+msgid "Informes jurídicos"
+msgstr "Informes jurídics"
+
+msgid "La fuente no indica su vigencia: aplicabilidad temporal desconocida."
+msgstr "La font no indica la seva vigència: aplicabilitat temporal desconeguda."
+
+msgid "Las fuentes recuperadas no bastan para responder con fundamento, o la respuesta propuesta no superó la verificación de citas. No se contesta de memoria."
+msgstr "Les fonts recuperades no basten per respondre amb fonament, o la resposta proposada no ha superat la verificació de cites. No es contesta de memòria."
+
+msgid "Legislación y jurisprudencia de las fuentes habilitadas para tu despacho, con su procedencia y su cobertura real."
+msgstr "Legislació i jurisprudència de les fonts habilitades per al teu despatx, amb la seva procedència i la seva cobertura real."
+
+msgid "Límites de aplicabilidad"
+msgstr "Límits d'aplicabilitat"
+
+msgid "Marcar como revisado"
+msgstr "Marcar com a revisat"
+
+msgid "Materia (opcional)"
+msgstr "Matèria (opcional)"
+
+msgid "Mis consultas"
+msgstr "Les meves consultes"
+
+msgid "Modo temporal"
+msgstr "Mode temporal"
+
+msgid "Más resultados"
+msgstr "Més resultats"
+
+msgid "No hay fuentes habilitadas para tu despacho."
+msgstr "No hi ha fonts habilitades per al teu despatx."
+
+msgid "Nota de revisión (opcional)"
+msgstr "Nota de revisió (opcional)"
+
+msgid "Nueva consulta"
+msgstr "Nova consulta"
+
+msgid "Para consultar hace falta un modelo y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "Per consultar cal un model i la teva clau d'OpenRouter, a Ajustos de l'Assistent d'IA."
+
+msgid "Pendiente de habilitación"
+msgstr "Pendent d'habilitació"
+
+msgid "Pendientes de habilitación"
+msgstr "Pendents d'habilitació"
+
+msgid "Política v%(v)s"
+msgstr "Política v%(v)s"
+
+msgid "Por ejemplo: ¿Es deducible el gasto descrito en el adjunto para un autónomo en estimación directa?"
+msgstr "Per exemple: És deduïble la despesa descrita a l'adjunt per a un autònom en estimació directa?"
+
+msgid "Próximos pasos"
+msgstr "Propers passos"
+
+msgid "Publicación: %(f)s"
+msgstr "Publicació: %(f)s"
+
+msgid "Puede tardar hasta un minuto."
+msgstr "Pot trigar fins a un minut."
+
+msgid "Qué hay en la biblioteca"
+msgstr "Què hi ha a la biblioteca"
+
+msgid "Registrar política"
+msgstr "Registrar política"
+
+msgid "Registros con problemas"
+msgstr "Registres amb problemes"
+
+msgid "Relaciones"
+msgstr "Relacions"
+
+msgid "Relaciones documentadas"
+msgstr "Relacions documentades"
+
+msgid "Resolución: %(f)s"
+msgstr "Resolució: %(f)s"
+
+msgid "Respondida con fuentes"
+msgstr "Respost amb fonts"
+
+msgid "Respuesta"
+msgstr "Resposta"
+
+msgid "Revisado el %(f)s"
+msgstr "Revisat el %(f)s"
+
+msgid "Sin base suficiente"
+msgstr "Sense base suficient"
+
+msgid "Sin fuentes citadas."
+msgstr "Sense fonts citades."
+
+msgid "Sin política de uso registrada: la fuente no puede sincronizar ni consultarse."
+msgstr "Sense política d'ús registrada: la font no es pot sincronitzar ni consultar."
+
+msgid "Sin texto aplicable para esos parámetros."
+msgstr "Sense text aplicable per a aquests paràmetres."
+
+msgid "Sincronizar ahora"
+msgstr "Sincronitzar ara"
+
+msgid "Territorio (opcional)"
+msgstr "Territori (opcional)"
+
+msgid "Texto o identificador (BOE-A-…, ECLI:…)"
+msgstr "Text o identificador (BOE-A-…, ECLI:…)"
+
+msgid "Todavía no has hecho ninguna consulta."
+msgstr "Encara no has fet cap consulta."
+
+msgid "Todavía no hay fuentes jurídicas habilitadas para tu despacho. Mientras tanto, el asistente no responderá a consultas: no se contesta de memoria."
+msgstr "Encara no hi ha fonts jurídiques habilitades per al teu despatx. Mentrestant, l'assistent no respondrà consultes: no es contesta de memòria."
+
+msgid "Todavía no hay informes guardados."
+msgstr "Encara no hi ha informes desats."
+
+msgid "Tu consulta"
+msgstr "La teva consulta"
+
+msgid "Título del informe"
+msgstr "Títol de l'informe"
+
+msgid "Un adjunto aporta hechos, no autoridad jurídica. Su texto se envía solo a tu modelo de IA y se borra a los 90 días. No se guarda el archivo original."
+msgstr "Un adjunt aporta fets, no autoritat jurídica. El seu text s'envia només al teu model d'IA i s'esborra als 90 dies. No es desa l'arxiu original."
+
+msgid "Ver las fuentes"
+msgstr "Veure les fonts"
+
+msgid "Versión"
+msgstr "Versió"
+
+msgid "Versión capturada el"
+msgstr "Versió capturada el"
+
+msgid "Versión capturada el %(f)s"
+msgstr "Versió capturada el %(f)s"
+
+msgid "Vigente desde %(d)s"
+msgstr "Vigent des de %(d)s"
+
+msgid "Vuelve a lanzar la consulta antes de revisarlo."
+msgstr "Torna a llançar la consulta abans de revisar-lo."
+
+msgid "almacenar"
+msgstr "emmagatzemar"
+
+msgid "búsqueda de texto (sin similitud semántica)"
+msgstr "cerca de text (sense similitud semàntica)"
+
+msgid "búsqueda híbrida"
+msgstr "cerca híbrida"
+
+msgid "capturado el"
+msgstr "capturat el"
+
+msgid "citar"
+msgstr "citar"
+
+msgid "documentos"
+msgstr "documents"
+
+msgid "enviar al modelo"
+msgstr "enviar al model"
+
+msgid "exportar"
+msgstr "exportar"
+
+msgid "fiscal, laboral…"
+msgstr "fiscal, laboral…"
+
+msgid "hasta %(h)s"
+msgstr "fins al %(h)s"
+
+msgid "indexar"
+msgstr "indexar"
+
+msgid "ninguna todavía"
+msgstr "cap encara"
+
+msgid "publicación"
+msgstr "publicació"
+
+msgid "resolución"
+msgstr "resolució"
+
+msgid "respaldo léxico"
+msgstr "suport lèxic"
+
+msgid "retirada"
+msgstr "retirada"
+
+msgid "«Última carga correcta» no significa que esté al día: comprueba también el retraso de cada fuente en Fuentes."
+msgstr "«Última càrrega correcta» no vol dir que estigui al dia: comprova també el retard de cada font a Fonts."
+
+msgid "¿Archivar este informe?"
+msgstr "Arxivar aquest informe?"
+
+msgid "Última carga correcta"
+msgstr "Última càrrega correcta"
+
+msgid "— Sin cliente —"
+msgstr "— Sense client —"

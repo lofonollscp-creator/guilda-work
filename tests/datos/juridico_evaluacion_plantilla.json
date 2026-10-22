@@ -1,0 +1,7 @@
+[
+  {"id": "ejemplo-sintetico-1", "sintetico": true, "pregunta": "¿Qué límite tiene la deducción de gastos?", "fecha_juridica": "2099-01-15", "colecciones": ["legislacion"],
+   "esperadas": [{"id_externo": "BOE-A-2099-0001", "localizador": "Artículo 1"}], "debe_ser_insuficiente": false},
+  {"id": "ejemplo-sintetico-2", "sintetico": true, "pregunta": "recurso de amparo desestimado por falta de relevancia", "colecciones": ["jurisprudencia"],
+   "esperadas": [{"id_externo": "BOE-A-2099-9101"}], "debe_ser_insuficiente": false},
+  {"id": "ejemplo-sintetico-3", "sintetico": true, "pregunta": "supercalifragilístico inexistente", "esperadas": [], "debe_ser_insuficiente": true}
+]

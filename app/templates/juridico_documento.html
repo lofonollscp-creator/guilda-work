@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ d.titulo }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ d.titulo }}</h1>
+  <p class="subtitle">{{ d.fuente_nombre }}{% if d.emisor %} · {{ d.emisor }}{% endif %}</p></div></header>
+{% set subnav_activa = 'biblioteca' %}
+{% include "_juridico_subnav.html" %}
+<p>
+  {% if d.estado_normativo %}{{ chip(d.estado_normativo) }}{% endif %}
+  {% if d.rango %}{{ chip(d.rango) }}{% endif %}
+  {% if d.ecli %}{{ chip(d.ecli) }}{% endif %}
+  {% if d.fecha_resolucion %}{{ chip(_('Resolución: %(f)s', f=d.fecha_resolucion)) }}{% endif %}
+  {% if d.fecha_publicacion %}{{ chip(_('Publicación: %(f)s', f=d.fecha_publicacion)) }}{% endif %}
+  {{ chip(_('Versión capturada el %(f)s', f=t.version.capturada_en[:10])) }}
+</p>
+{% if d.url_canonica %}<p><a href="{{ d.url_canonica }}" rel="noopener noreferrer" target="_blank">{{ _('Fuente original') }}</a></p>{% endif %}
+{% if d.coleccion == 'legislacion' %}<p class="muted">{{ _('El texto consolidado es informativo: la referencia oficial es la publicación original.') }}</p>{% endif %}
+{% if d.atribucion %}<p class="muted">{{ d.atribucion }}</p>{% endif %}
+{% for h in t.huecos %}<div class="aviso" role="status">{{ h }}</div>{% endfor %}
+<form class="filters" method="get">
+  <label>{{ _('Fecha jurídica') }} <input type="date" name="fecha_juridica" value="{{ fecha }}"></label>
+  <label>{{ _('Versión') }} <select name="version"><option value="">{{ _('Activa') }}</option>{% for v in d.versiones %}<option value="{{ v.id }}" {{ 'selected' if v.id == t.version.id and request.args.get('version') }}>{{ v.capturada_en[:10] }}{% if v.bloqueada %} ({{ _('retirada') }}){% endif %}</option>{% endfor %}</select></label>
+  <button type="submit" class="btn">{{ _('Ver') }}</button>
+</form>
+<section class="dash-panel" aria-label="{{ _('Texto') }}">
+  {% for f in t.fragmentos %}
+  <article id="f-{{ f.id }}" {% if localizador and localizador == f.localizador %}class="resaltado"{% endif %}>
+    <h3>{{ f.localizador }}</h3>
+    {% if f.vigente_desde or f.vigente_hasta %}<p class="muted"><small>{{ _('Vigente desde %(d)s', d=f.vigente_desde or '?') }}{% if f.vigente_hasta %} · {{ _('hasta %(h)s', h=f.vigente_hasta) }}{% endif %}</small></p>
+    {% elif d.coleccion == 'legislacion' %}<p class="muted"><small>{{ _('La fuente no indica su vigencia: aplicabilidad temporal desconocida.') }}</small></p>{% endif %}
+    {% for p in f.texto.split('\n') %}<p>{{ p }}</p>{% endfor %}
+  </article>
+  {% else %}<p class="muted">{{ _('Sin texto aplicable para esos parámetros.') }}</p>{% endfor %}
+</section>
+{% if d.relaciones %}
+<section class="dash-panel" aria-label="{{ _('Relaciones') }}">
+  <h2>{{ _('Relaciones documentadas') }}</h2>
+  <ul class="log-list">{% for r in d.relaciones %}<li class="log-item"><span class="log-text"><strong>{{ r.tipo|replace('_', ' ') }}</strong>
+    {% if r.destino_documento_id %}<a href="{{ url_for('juridico.documento', documento_id=r.destino_documento_id) }}">{{ r.destino_titulo }}</a>{% else %}{{ r.destino_externo }}{% endif %}
+    {% if r.evidencia %}<br><small class="muted">{{ r.evidencia }}</small>{% endif %}</span></li>{% endfor %}</ul>
+</section>{% endif %}
+{% endblock %}

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<documento fecha_actualizacion="20990110082601">
+  <metadatos>
+    <identificador>BOE-A-2099-9101</identificador>
+    <origen_legislativo codigo="1">Estatal</origen_legislativo>
+    <departamento codigo="9980">Tribunal Constitucional</departamento>
+    <rango codigo="1">Sentencia</rango>
+    <fecha_disposicion>20990105</fecha_disposicion>
+    <titulo>Sala Primera. Sentencia 12/2099, de 5 de enero de 2099. Recurso de amparo 1234-2098. Sintético.</titulo>
+    <diario codigo="BOE">Boletín Oficial del Estado</diario>
+    <fecha_publicacion>20990110</fecha_publicacion>
+    <diario_numero>9</diario_numero>
+    <seccion>3</seccion>
+    <url_pdf>https://www.boe.es/boe/dias/2099/01/10/pdfs/BOE-A-2099-9101.pdf</url_pdf>
+  </metadatos>
+  <analisis>
+    <materias/>
+    <notas/>
+    <referencias><anteriores/><posteriores/></referencias>
+  </analisis>
+  <texto>
+    <p class="parrafo">Sala Primera. Sentencia 12/2099, de 5 de enero de 2099. Texto sintético. ECLI:ES:TC:2099:12</p>
+    <p class="centro_negrita">I. Antecedentes</p>
+    <p class="parrafo">1. Mediante escrito sintético se interpuso recurso de amparo contra una resolución ficticia.</p>
+    <p class="parrafo">2. La Sala acordó admitir a trámite el recurso inventado.</p>
+    <p class="centro_negrita">II. Fundamentos jurídicos</p>
+    <p class="parrafo">1. El primer fundamento sintético analiza la admisibilidad del recurso inventado.</p>
+    <p class="parrafo">2. El segundo fundamento sintético desestima la queja por falta de relevancia constitucional ficticia.</p>
+    <p class="centro_negrita">FALLO</p>
+    <p class="parrafo">Desestimar el recurso de amparo sintético.</p>
+    <p class="centro_negrita">Voto particular que formula un magistrado ficticio</p>
+    <p class="parrafo">1. Discrepo de la mayoría por razones inventadas para la prueba.</p>
+  </texto>
+</documento>

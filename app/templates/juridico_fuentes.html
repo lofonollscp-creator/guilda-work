@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Fuentes jurídicas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Fuentes jurídicas') }}</h1>
+  <p class="subtitle">{{ _('Estado real de cada fuente: lo que está habilitado, lo que se ha cargado y lo que falta. Que exista código no la habilita: hace falta una política de uso con su evidencia.') }}</p></div></header>
+{% set subnav_activa = 'fuentes' %}
+{% include "_juridico_subnav.html" %}
+{{ aviso_error(error) }}
+{% for f in fuentes %}
+<section class="dash-panel" aria-label="{{ f.nombre }}">
+  <h2>{{ f.nombre }}</h2>
+  <p>
+    {% if f.usable %}{{ chip(_('Activa en tu despacho'), 'ok') }}
+    {% elif f.habilitada %}{{ chip(_('Habilitada, no activada en tu despacho'), 'aviso') }}
+    {% elif f.estado == 'incidencia' %}{{ chip(_('Incidencia'), 'aviso') }}
+    {% else %}{{ chip(_('Pendiente de habilitación')) }}{% endif %}
+    {% if f.estado == 'incidencia' %}{{ chip(_('Incidencia'), 'aviso') }}{% endif %}
+    {{ chip(_('%(n)s documentos', n=f.cob.documentos)) }} {{ chip(_('%(n)s fragmentos', n=f.cob.fragmentos)) }}
+    {% if f.cob.cuarentena %}{{ chip(_('%(n)s en cuarentena', n=f.cob.cuarentena), 'aviso') }}{% endif %}
+    {% if f.cob.reintentables %}{{ chip(_('%(n)s por reintentar', n=f.cob.reintentables), 'aviso') }}{% endif %}
+  </p>
+  <p class="muted">{{ _('Última carga correcta') }}: {{ f.ultimo_exito_en or _('ninguna todavía') }}{% if f.cob.hasta %} · {{ _('Cobertura') }}: {{ f.cob.desde }} → {{ f.cob.hasta }}{% endif %}</p>
+  <p class="muted">{{ f.verificacion }}</p>
+  {% if f.politica %}<p class="muted">{{ _('Política v%(v)s', v=f.politica.version) }} · {{ _('almacenar') }} {{ '✓' if f.politica.permite_almacenar else '✗' }} · {{ _('indexar') }} {{ '✓' if f.politica.permite_indexar else '✗' }} · {{ _('enviar al modelo') }} {{ '✓' if f.politica.permite_enviar_llm else '✗' }} · {{ _('citar') }} {{ '✓' if f.politica.permite_citar else '✗' }} · {{ _('exportar') }} {{ '✓' if f.politica.permite_exportar else '✗' }}<br>{{ _('Evidencia') }}: {{ f.politica.evidencia }}</p>
+  {% else %}<p class="muted">{{ _('Sin política de uso registrada: la fuente no puede sincronizar ni consultarse.') }}</p>{% endif %}
+  {% if f.habilitada and director %}
+  <form method="post" action="{{ url_for('juridico.fuente_despacho', fuente_id=f.id) }}" class="filters">
+    <input type="hidden" name="habilitada" value="{{ '0' if f.usable else '1' }}">
+    <button type="submit" class="btn">{{ _('Desactivar en mi despacho') if f.usable else _('Activar en mi despacho') }}</button></form>
+  {% endif %}
+  {% if admin %}
+  <details><summary>{{ _('Administración de la fuente') }}</summary>
+    <form method="post" action="{{ url_for('juridico.fuente_politica', fuente_id=f.id) }}" class="form-grid">
+      <label class="span-2">{{ _('Evidencia de los derechos de uso (contrato, condiciones, URL)') }}<textarea name="evidencia" rows="3" required minlength="10"></textarea></label>
+      <label class="inline"><input type="checkbox" name="almacenar" value="1"> {{ _('Almacenar') }}</label>
+      <label class="inline"><input type="checkbox" name="indexar" value="1"> {{ _('Indexar') }}</label>
+      <label class="inline"><input type="checkbox" name="enviar_llm" value="1"> {{ _('Enviar al modelo') }}</label>
+      <label class="inline"><input type="checkbox" name="citar" value="1"> {{ _('Citar') }}</label>
+      <label class="inline"><input type="checkbox" name="exportar" value="1"> {{ _('Exportar') }}</label>
+      <label class="span-2">{{ _('Atribución obligatoria (texto)') }}<input name="atribucion" maxlength="300"></label>
+      <div class="span-2"><button type="submit" class="btn">{{ _('Registrar política') }}</button></div>
+    </form>
+    <form method="post" action="{{ url_for('juridico.fuente_habilitar', fuente_id=f.id) }}" class="filters">
+      <input type="hidden" name="habilitada" value="{{ '0' if f.habilitada else '1' }}"><button type="submit" class="btn">{{ _('Deshabilitar fuente') if f.habilitada else _('Habilitar fuente') }}</button></form>
+    {% if f.capaz and f.habilitada %}
+    <form method="post" action="{{ url_for('juridico.fuente_sincronizar', fuente_id=f.id) }}" class="filters">
+      <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ hace_semana }}" required></label><label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ hoy }}" required></label>
+      <button type="submit" class="btn btn-primary">{{ _('Sincronizar ahora') }}</button></form>
+    {% elif not f.capaz %}<p class="muted">{{ _('Este conector todavía no tiene transporte: no se puede sincronizar.') }}</p>{% endif %}
+    {% if f.ejecuciones %}<h3>{{ _('Últimas ejecuciones') }}</h3><ul class="log-list">{% for x in f.ejecuciones %}<li class="log-item"><span class="log-text">{{ x.iniciada_en[:16] }} · {{ x.desde }} → {{ x.hasta }} · <strong>{{ x.estado }}</strong>{% if x.error %} · {{ x.error }}{% endif %}</span><span class="muted">{{ x.contadores }}</span></li>{% endfor %}</ul>{% endif %}
+    {% if f.problemas %}<h3>{{ _('Registros con problemas') }}</h3><ul class="log-list">{% for p in f.problemas %}<li class="log-item"><span class="log-text">{{ p.id_externo }} · {{ p.estado }} · {{ p.ultimo_error }}</span></li>{% endfor %}</ul>{% endif %}
+  </details>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<response>
+  <status>
+    <code>200</code>
+    <text>ok</text>
+  </status>
+  <data>
+    <sumario>
+      <metadatos>
+        <publicacion>BOE</publicacion>
+        <fecha_publicacion>20990110</fecha_publicacion>
+      </metadatos>
+      <diario numero="9">
+        <seccion codigo="3" nombre="III. Otras disposiciones">
+          <departamento codigo="9990" nombre="MINISTERIO DE PRUEBAS SINTÉTICAS">
+            <epigrafe nombre="Convenios">
+              <item>
+                <identificador>BOE-A-2099-9001</identificador>
+                <titulo>Resolución sintética que menciona al Tribunal Constitucional en su texto.</titulo>
+                <url_xml>https://www.boe.es/diario_boe/xml.php?id=BOE-A-2099-9001</url_xml>
+              </item>
+            </epigrafe>
+          </departamento>
+          <departamento codigo="9980" nombre="TRIBUNAL CONSTITUCIONAL">
+            <epigrafe nombre="Recursos de amparo">
+              <item>
+                <identificador>BOE-A-2099-9101</identificador>
+                <titulo>Sala Primera. Sentencia 12/2099, de 5 de enero de 2099. Recurso de amparo 1234-2098. Sintético.</titulo>
+                <url_pdf>https://www.boe.es/boe/dias/2099/01/10/pdfs/BOE-A-2099-9101.pdf</url_pdf>
+                <url_html>https://www.boe.es/diario_boe/txt.php?id=BOE-A-2099-9101</url_html>
+                <url_xml>https://www.boe.es/diario_boe/xml.php?id=BOE-A-2099-9101</url_xml>
+              </item>
+              <item>
+                <identificador>BOE-A-2099-9102</identificador>
+                <titulo>Pleno. Auto 7/2099, de 8 de enero de 2099. Inadmite la cuestión de inconstitucionalidad 55-2098. Sintético.</titulo>
+                <url_html>https://www.boe.es/diario_boe/txt.php?id=BOE-A-2099-9102</url_html>
+                <url_xml>https://www.boe.es/diario_boe/xml.php?id=BOE-A-2099-9102</url_xml>
+              </item>
+            </epigrafe>
+            <epigrafe nombre="Nombramientos">
+              <item>
+                <identificador>BOE-A-2099-9103</identificador>
+                <titulo>Resolución sintética por la que se nombra a un letrado del Tribunal Constitucional.</titulo>
+                <url_xml>https://www.boe.es/diario_boe/xml.php?id=BOE-A-2099-9103</url_xml>
+              </item>
+            </epigrafe>
+          </departamento>
+        </seccion>
+        <seccion codigo="5B" nombre="V. Anuncios. - B. Otros anuncios oficiales">
+          <departamento codigo="1" nombre="ADMINISTRACIÓN DE JUSTICIA">
+            <epigrafe nombre="Anuncios">
+              <item>
+                <identificador>BOE-B-2099-5001</identificador>
+                <titulo>Anuncio sintético: Sentencia 99/2099 de un juzgado, publicada como anuncio.</titulo>
+                <url_xml>https://www.boe.es/diario_boe/xml.php?id=BOE-B-2099-5001</url_xml>
+              </item>
+            </epigrafe>
+          </departamento>
+        </seccion>
+      </diario>
+    </sumario>
+  </data>
+</response>

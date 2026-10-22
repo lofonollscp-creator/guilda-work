@@ -62,6 +62,10 @@ if __name__ == "__main__":
     threading.Thread(target=traspasos.bucle, daemon=True).start()
     # Motor de avisos del control fiscal: alertas con acuse y escalado (app/avisos.py); solo actúa en los despachos que lo activan.
     threading.Thread(target=avisos.bucle, daemon=True).start()
+    # Asistente jurídico: sincroniza las fuentes habilitadas y purga adjuntos vencidos; apagado salvo LEGAL_AI_ENABLED=1 y LEGAL_AI_SYNC=1 (app/juridico/trabajador.py).
+    from app.juridico import trabajador as _trabajador_juridico
+    if _trabajador_juridico.activo():
+        threading.Thread(target=_trabajador_juridico.bucle, daemon=True).start()
     # Auto-sync del correo de todas las cuentas (GUILDA_CORREO_SYNC_MINUTOS,
     # 5 por defecto, 0 lo desactiva). _sincronizacion_correo_periodica sigue
     # siendo solo de escritorio; esta es su versión multi-usuario.

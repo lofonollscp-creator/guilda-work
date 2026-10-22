@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<response>
+  <status>
+    <code>200</code>
+    <text>ok</text>
+  </status>
+  <data>
+    <metadatos>
+      <fecha_actualizacion>20990105T101500Z</fecha_actualizacion>
+      <identificador>BOE-A-2099-0001</identificador>
+      <ambito codigo="1">Estatal</ambito>
+      <departamento codigo="9999">Ministerio de Pruebas Sintéticas</departamento>
+      <rango codigo="1300">Ley</rango>
+      <fecha_disposicion>20200110</fecha_disposicion>
+      <numero_oficial>1/2020</numero_oficial>
+      <titulo>Ley sintética 1/2020, de 10 de enero, de pruebas del módulo jurídico.</titulo>
+      <diario>Boletín Oficial del Estado</diario>
+      <fecha_publicacion>20200111</fecha_publicacion>
+      <diario_numero>10</diario_numero>
+      <fecha_vigencia>20200101</fecha_vigencia>
+      <estatus_derogacion>N</estatus_derogacion>
+      <estatus_anulacion>N</estatus_anulacion>
+      <vigencia_agotada>N</vigencia_agotada>
+      <estado_consolidacion codigo="3">Finalizado</estado_consolidacion>
+      <url_eli>https://www.boe.es/eli/es/l/2020/01/10/1</url_eli>
+      <url_html_consolidada>https://www.boe.es/buscar/act.php?id=BOE-A-2099-0001</url_html_consolidada>
+    </metadatos>
+    <analisis>
+      <materias>
+        <materia codigo="1">Pruebas sintéticas</materia>
+        <materia codigo="2">Gastos deducibles de ejemplo</materia>
+      </materias>
+      <notas>
+        <nota>Documento sintético de prueba.</nota>
+      </notas>
+      <referencias>
+        <anteriores>
+          <anterior>
+            <id_norma>BOE-A-2099-0002</id_norma>
+            <relacion codigo="210">DEROGA</relacion>
+            <texto>el Real Decreto sintético 5/2015</texto>
+          </anterior>
+        </anteriores>
+        <posteriores>
+          <posterior>
+            <id_norma>BOE-A-2099-0003</id_norma>
+            <relacion codigo="270">MODIFICA</relacion>
+            <texto>el artículo 1</texto>
+          </posterior>
+        </posteriores>
+      </referencias>
+    </analisis>
+    <texto>
+      <bloque id="pr" tipo="preambulo" titulo="[preambulo]">
+        <version id_norma="BOE-A-2099-0001" fecha_publicacion="20200111" fecha_vigencia="20200101">
+          <p class="parrafo">Preámbulo sintético: esta ley inventada sirve para probar el software.</p>
+        </version>
+      </bloque>
+      <bloque id="ci" tipo="encabezado" titulo="CAPÍTULO I">
+        <version id_norma="BOE-A-2099-0001" fecha_publicacion="20200111" fecha_vigencia="20200101">
+          <p class="capitulo_num">CAPÍTULO I</p>
+        </version>
+      </bloque>
+      <bloque id="a1" tipo="precepto" titulo="Artículo 1">
+        <version id_norma="BOE-A-2099-0001" fecha_publicacion="20200111" fecha_vigencia="20200101">
+          <p class="articulo">Artículo 1. Objeto.</p>
+          <p class="parrafo">Esta ley regula el supuesto sintético de la deducción de gastos de ejemplo con un límite del diez por ciento.</p>
+        </version>
+        <version id_norma="BOE-A-2099-0003" fecha_publicacion="20220630" fecha_vigencia="20220701">
+          <p class="articulo">Artículo 1. Objeto.</p>
+          <p class="parrafo">Esta ley regula el supuesto sintético de la deducción de gastos de ejemplo con un límite del quince por ciento.</p>
+          <blockquote class="sangrado">
+            <p class="parrafo">Cita anidada de prueba dentro de un blockquote.</p>
+          </blockquote>
+        </version>
+      </bloque>
+      <bloque id="a2" tipo="precepto" titulo="Artículo 2">
+        <version id_norma="BOE-A-2099-0001" fecha_publicacion="20200111" fecha_vigencia="20200101">
+          <p class="articulo">Artículo 2. Ámbito.</p>
+          <p class="parrafo">Se aplica a los contribuyentes sintéticos residentes en territorio ficticio.</p>
+        </version>
+      </bloque>
+      <bloque id="a3" tipo="precepto" titulo="Artículo 3">
+        <version id_norma="BOE-A-2099-0001" fecha_publicacion="20200111" fecha_vigencia="20200101">
+          <p class="articulo">Artículo 3. Cómputo de gastos.</p>
+          <p class="parrafo">Apartado 1. El gasto sintético número 1 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 2. El gasto sintético número 2 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 3. El gasto sintético número 3 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 4. El gasto sintético número 4 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 5. El gasto sintético número 5 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 6. El gasto sintético número 6 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 7. El gasto sintético número 7 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 8. El gasto sintético número 8 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 9. El gasto sintético número 9 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 10. El gasto sintético número 10 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 11. El gasto sintético número 11 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+          <p class="parrafo">Apartado 12. El gasto sintético número 12 se computará conforme a las reglas de prueba, sin que ello suponga criterio jurídico alguno ni coincida con norma real. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. Texto de relleno inventado para forzar la fragmentación. </p>
+        </version>
+      </bloque>
+    </texto>
+  </data>
+</response>

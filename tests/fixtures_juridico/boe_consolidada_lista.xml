@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<response>
+  <status>
+    <code>200</code>
+    <text>ok</text>
+  </status>
+  <data>
+    <item>
+      <fecha_actualizacion>20990105T101500Z</fecha_actualizacion>
+      <identificador>BOE-A-2099-0001</identificador>
+      <ambito codigo="1">Estatal</ambito>
+      <departamento codigo="9999">Ministerio de Pruebas Sintéticas</departamento>
+      <rango codigo="1300">Ley</rango>
+      <fecha_disposicion>20200110</fecha_disposicion>
+      <numero_oficial>1/2020</numero_oficial>
+      <titulo>Ley sintética 1/2020, de 10 de enero, de pruebas del módulo jurídico.</titulo>
+      <diario>Boletín Oficial del Estado</diario>
+      <fecha_publicacion>20200111</fecha_publicacion>
+      <diario_numero>10</diario_numero>
+      <fecha_vigencia>20200101</fecha_vigencia>
+      <vigencia_agotada>N</vigencia_agotada>
+      <estado_consolidacion codigo="3">Finalizado</estado_consolidacion>
+      <url_eli>https://www.boe.es/eli/es/l/2020/01/10/1</url_eli>
+      <url_html_consolidada>https://www.boe.es/buscar/act.php?id=BOE-A-2099-0001</url_html_consolidada>
+    </item>
+    <item>
+      <fecha_actualizacion>20990104T090000Z</fecha_actualizacion>
+      <identificador>BOE-A-2099-0002</identificador>
+      <ambito codigo="1">Estatal</ambito>
+      <departamento codigo="9999">Ministerio de Pruebas Sintéticas</departamento>
+      <rango codigo="1340">Real Decreto</rango>
+      <fecha_disposicion>20150301</fecha_disposicion>
+      <numero_oficial>5/2015</numero_oficial>
+      <titulo>Real Decreto sintético 5/2015, de 1 de marzo, derogado.</titulo>
+      <diario>Boletín Oficial del Estado</diario>
+      <fecha_publicacion>20150302</fecha_publicacion>
+      <diario_numero>51</diario_numero>
+      <fecha_vigencia>20150303</fecha_vigencia>
+      <vigencia_agotada>N</vigencia_agotada>
+      <estado_consolidacion codigo="3">Finalizado</estado_consolidacion>
+      <url_eli>https://www.boe.es/eli/es/rd/2015/03/01/5</url_eli>
+      <url_html_consolidada>https://www.boe.es/buscar/act.php?id=BOE-A-2099-0002</url_html_consolidada>
+    </item>
+  </data>
+</response>

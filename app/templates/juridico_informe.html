@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ inf.titulo }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ inf.titulo }}</h1>
+  <p class="subtitle">{{ inf.instantanea.pregunta }}</p></div></header>
+{% set subnav_activa = 'informes' %}
+{% include "_juridico_subnav.html" %}
+{{ aviso_error(error) }}
+<p>
+  {% if inf.estado == 'revisado' %}{{ chip(_('Revisado el %(f)s', f=inf.revisado_en[:10]), 'ok') }}
+  {% elif inf.estado == 'archivado' %}{{ chip(_('Archivado')) }}
+  {% else %}{{ chip(_('Borrador pendiente de revisión profesional'), 'aviso') }}{% endif %}
+  {{ chip(_('Fecha jurídica: %(f)s', f=inf.instantanea.fecha_juridica)) }}
+  {{ chip(_('Guardado el %(f)s', f=inf.creado_en[:10])) }}
+</p>
+{% if inf.aviso_fuente %}<div class="aviso" role="alert">{{ inf.aviso_fuente }} {{ _('Vuelve a lanzar la consulta antes de revisarlo.') }}</div>{% endif %}
+<section class="dash-panel">
+  {% if r.conclusion %}<h2>{{ _('Conclusión') }}</h2><p>{{ r.conclusion }}</p>{% endif %}
+  <h2>{{ _('Fundamento') }}</h2>
+  <ul>{% for a in r.claims %}<li>{{ a.text }} {% for cid in a.citationIds %}<a href="#cita-{{ cid }}">[{{ loop.index }}]</a>{% endfor %}</li>{% endfor %}</ul>
+  {% if r.limitations %}<h2>{{ _('Límites de aplicabilidad') }}</h2><ul>{% for l in r.limitations %}<li>{{ l }}</li>{% endfor %}</ul>{% endif %}
+</section>
+<section class="dash-panel"><h2>{{ _('Fuentes') }}</h2>
+  <ol>{% for c in r.citations %}<li id="cita-{{ c.id }}"><strong>{{ c.title }}</strong> · {{ c.locator }}<br><small>«{{ c.quote }}»</small><br>
+    {% if c.captura %}<small class="muted">{{ _('Versión capturada el') }} {{ c.captura.capturada_en[:10] }}{% if c.captura.fecha_resolucion %} · {{ _('resolución') }} {{ c.captura.fecha_resolucion }}{% endif %}</small>{% endif %}
+    {% if c.canonicalUrl %}<br><a href="{{ c.canonicalUrl }}" rel="noopener noreferrer" target="_blank">{{ _('Fuente original') }}</a>{% endif %}</li>{% endfor %}</ol></section>
+<section class="dash-panel"><h2>{{ _('Copiar con referencias') }}</h2><textarea readonly rows="10" class="ds-ancho-total" aria-label="{{ _('Copiar con referencias') }}">{{ texto }}</textarea></section>
+{% if puede_revisar and not inf.aviso_fuente %}
+<form method="post" action="{{ url_for('juridico.revisar_informe', informe_id=inf.id) }}" class="filters">
+  <input type="hidden" name="decision" value="revisado">
+  <label>{{ _('Nota de revisión (opcional)') }} <input name="nota" maxlength="300"></label>
+  <button type="submit" class="btn btn-primary">{{ _('Marcar como revisado') }}</button>
+</form>
+{% endif %}
+{% if inf.estado != 'archivado' %}
+<form method="post" action="{{ url_for('juridico.revisar_informe', informe_id=inf.id) }}" data-confirmar-envio="{{ _('¿Archivar este informe?') }}">
+  <input type="hidden" name="decision" value="archivado"><button type="submit" class="btn">{{ _('Archivar') }}</button></form>
+{% endif %}
+{% endblock %}

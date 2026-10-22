@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<response>
+  <status>
+    <code>200</code>
+    <text>ok</text>
+  </status>
+  <data>
+    <metadatos>
+      <fecha_actualizacion>20990105T101500Z</fecha_actualizacion>
+      <identificador>BOE-A-2099-0002</identificador>
+      <ambito codigo="1">Estatal</ambito>
+      <departamento codigo="9999">Ministerio de Pruebas Sintéticas</departamento>
+      <rango codigo="1300">Ley</rango>
+      <fecha_disposicion>20200110</fecha_disposicion>
+      <numero_oficial>1/2020</numero_oficial>
+      <titulo>Real Decreto sintético 5/2015, de 1 de marzo, derogado.</titulo>
+      <diario>Boletín Oficial del Estado</diario>
+      <fecha_publicacion>20200111</fecha_publicacion>
+      <diario_numero>10</diario_numero>
+      <fecha_vigencia>20200101</fecha_vigencia>
+      <estatus_derogacion>S</estatus_derogacion>
+      <estatus_anulacion>N</estatus_anulacion>
+      <vigencia_agotada>N</vigencia_agotada>
+      <estado_consolidacion codigo="3">Finalizado</estado_consolidacion>
+      <url_eli>https://www.boe.es/eli/es/l/2020/01/10/1</url_eli>
+      <url_html_consolidada>https://www.boe.es/buscar/act.php?id=BOE-A-2099-0002</url_html_consolidada>
+    </metadatos>
+    <analisis>
+      <materias>
+        <materia codigo="3">Derogaciones sintéticas</materia>
+      </materias>
+      <notas/>
+      <referencias>
+        <anteriores/>
+        <posteriores>
+          <posterior>
+            <id_norma>BOE-A-2099-0001</id_norma>
+            <relacion codigo="210">DEROGA</relacion>
+            <texto>íntegramente</texto>
+          </posterior>
+        </posteriores>
+      </referencias>
+    </analisis>
+    <texto>
+      <bloque id="a1" tipo="precepto" titulo="Artículo 1">
+        <version id_norma="BOE-A-2099-0002" fecha_publicacion="20150302">
+          <p class="articulo">Artículo 1. Único.</p>
+          <p class="parrafo">Texto derogado sintético sin fecha de vigencia en la fuente.</p>
+        </version>
+      </bloque>
+    </texto>
+  </data>
+</response>

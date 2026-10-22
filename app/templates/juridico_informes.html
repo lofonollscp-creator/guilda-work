@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Informes jurídicos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Informes jurídicos') }}</h1>
+  <p class="subtitle">{{ _('Consultas guardadas en el expediente del cliente: una instantánea con sus fuentes, que no cambia aunque la biblioteca se actualice.') }}</p></div></header>
+{% set subnav_activa = 'informes' %}
+{% include "_juridico_subnav.html" %}
+{{ aviso_error(error) }}
+{% if informes %}
+<table class="ds-tabla"><thead><tr><th>{{ _('Título') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Creado') }}</th><th>{{ _('Revisado') }}</th></tr></thead>
+<tbody>{% for i in informes %}<tr><td><a href="{{ url_for('juridico.informe', informe_id=i.id) }}">{{ i.titulo }}</a>{% if i.aviso_fuente %} {{ chip(_('Fuente retirada'), 'aviso') }}{% endif %}</td>
+  <td>{{ {'borrador': _('Borrador'), 'revisado': _('Revisado'), 'archivado': _('Archivado')}[i.estado] }}</td><td>{{ i.creado_en[:10] }}</td><td>{{ i.revisado_en[:10] if i.revisado_en else '—' }}</td></tr>{% endfor %}</tbody></table>
+{% else %}<p class="muted">{{ _('Todavía no hay informes guardados.') }}</p>{% endif %}
+{% endblock %}

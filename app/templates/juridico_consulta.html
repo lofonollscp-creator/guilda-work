@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Consulta jurídica') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Consulta jurídica') }}</h1>
+  <p class="subtitle">{{ e.pregunta }}</p></div></header>
+{% set subnav_activa = 'consultar' %}
+{% include "_juridico_subnav.html" %}
+{{ aviso_error(error) }}
+{% if not r %}
+<div class="aviso" role="alert">{{ _('Esta consulta no se pudo completar.') }} {{ e.error or '' }}</div>
+{% else %}
+<p>
+  {% if r.status == 'answered' %}{{ chip(_('Respondida con fuentes'), 'ok') }}
+  {% elif r.status == 'needs_context' %}{{ chip(_('Faltan datos'), 'aviso') }}
+  {% else %}{{ chip(_('Sin base suficiente'), 'aviso') }}{% endif %}
+  {{ chip(_('Borrador pendiente de revisión profesional')) }}
+  {{ chip(_('Fecha jurídica: %(f)s', f=r.coverage.legalAsOf)) }}
+</p>
+{% if r.status == 'insufficient_evidence' %}
+<div class="aviso" role="status">{{ _('Las fuentes recuperadas no bastan para responder con fundamento, o la respuesta propuesta no superó la verificación de citas. No se contesta de memoria.') }}</div>
+{% endif %}
+{% if r.missingFacts %}<section class="dash-panel"><h2>{{ _('Datos que faltan') }}</h2><ul>{% for m in r.missingFacts %}<li>{{ m }}</li>{% endfor %}</ul></section>{% endif %}
+{% if r.facts %}<section class="dash-panel"><h2>{{ _('Hechos considerados') }}</h2><ul>{% for f in r.facts %}<li>{{ f }}</li>{% endfor %}</ul></section>{% endif %}
+<div class="two-col">
+<section class="dash-panel" aria-label="{{ _('Respuesta') }}">
+  {% if r.conclusion %}<h2>{{ _('Conclusión') }}</h2><p>{{ r.conclusion }}</p>{% endif %}
+  {% if r.claims %}<h2>{{ _('Fundamento') }}</h2>
+  <ul class="log-list">{% for a in r.claims %}<li class="log-item"><span class="log-text">{{ a.text }} {% for cid in a.citationIds %}<a href="#cita-{{ cid }}" class="chip">[{{ loop.index }}]</a>{% endfor %}</span>
+    <span class="muted">{{ _('respaldo léxico') if a.evidence == 'respaldo_lexico' else '' }}</span></li>{% endfor %}</ul>{% endif %}
+  {% if r.limitations %}<h2>{{ _('Límites de aplicabilidad') }}</h2><ul>{% for l in r.limitations %}<li>{{ l }}</li>{% endfor %}</ul>{% endif %}
+  {% if r.suggestedNextSteps %}<h2>{{ _('Próximos pasos') }}</h2><ul>{% for s in r.suggestedNextSteps %}<li>{{ s }}</li>{% endfor %}</ul>{% endif %}
+  {% if r.coverage.gaps %}<h2>{{ _('Huecos de cobertura') }}</h2><ul>{% for g_ in r.coverage.gaps %}<li>{{ g_ }}</li>{% endfor %}</ul>{% endif %}
+</section>
+<aside class="dash-panel" aria-label="{{ _('Fuentes') }}">
+  <h2>{{ _('Fuentes') }}</h2>
+  {% if r.citations %}<ol>{% for c in r.citations %}<li id="cita-{{ c.id }}"><strong>{{ c.title }}</strong> · {{ c.locator }}<br>
+    <small>«{{ c.quote }}»</small><br>
+    {% if c.kind == 'legal_source' %}<a href="{{ url_for('juridico.documento', documento_id=c.documentId, version=c.versionId) }}">{{ _('Abrir en la biblioteca') }}</a>
+      {% if c.canonicalUrl %} · <a href="{{ c.canonicalUrl }}" rel="noopener noreferrer" target="_blank">{{ _('Fuente original') }}</a>{% endif %}
+    {% else %}<span class="muted">{{ _('Adjunto privado') }}</span>{% endif %}</li>{% endfor %}</ol>
+  {% elif r.sources %}<p class="muted">{{ _('Fuentes recuperadas (no citadas):') }}</p><ul>{% for c in r.sources %}<li><a href="{{ url_for('juridico.documento', documento_id=c.documentId) }}">{{ c.title }}</a> · {{ c.locator }}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Sin fuentes citadas.') }}</p>{% endif %}
+</aside>
+</div>
+{% if r.status == 'answered' and puede_guardar %}
+<form method="post" action="{{ url_for('juridico.guardar_informe', run_id=e.id) }}" class="filters">
+  <label>{{ _('Título del informe') }} <input name="titulo" maxlength="200" value="{{ e.pregunta[:80] }}"></label>
+  <button type="submit" class="btn btn-primary">{{ _('Guardar como informe del cliente') }}</button>
+</form>
+{% endif %}
+{% endif %}
+{% endblock %}

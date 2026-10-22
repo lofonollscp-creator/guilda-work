@@ -622,3 +622,49 @@ RESPUESTAS.update({"listar_etapas_comercial_api": ("EtapaComercial", True), "emb
                    "obtener_reunion_comercial_api": ("ReunionComercial", False), "editar_reunion_comercial_api": ("ReunionComercial", False), "generar_acta_comercial_api": ("ReunionComercial", False),
                    "guardar_acta_comercial_api": ("ReunionComercial", False), "crear_tareas_reunion_comercial_api": ("TareasCreadasDeReunion", False)})
 SIN_DATOS_ESPERADOS |= {"eliminar_oportunidad_comercial_api", "guardar_transcripcion_comercial_api", "borrar_transcripcion_comercial_api", "eliminar_reunion_comercial_api"}
+
+
+# --- Asistente jurídico (app/rutas_api_juridico.py) -----------------------------------------------------------------------------------------------------------
+ETIQUETAS["juridico"] = "Asistente jurídico: biblioteca autorizada (legislación y jurisprudencia con su cobertura real), adjuntos privados, consultas con citas verificadas e informes revisables."
+_TIPOS["colecciones"] = {"type": "array", "items": {"type": "string", "enum": ["legislacion", "jurisprudencia", "doctrina"]}}
+_TIPOS["adjunto_ids"] = {"type": "array", "items": {"type": "integer"}, "description": "Ids de adjuntos privados ya subidos y listos (máximo 5)."}
+_TIPOS["limite"] = {"type": "integer", "description": "Máximo de documentos por página (50 como tope)."}
+_TIPOS["fecha_juridica"] = {"type": "string", "format": "date", "description": "AAAA-MM-DD. En legislación se devuelve la versión vigente en esa fecha según la fuente."}
+_TIPOS["modo_temporal"] = {"type": "string", "enum": ["actual", "historico"], "description": "`actual`: normativa de esa fecha y jurisprudencia posterior avisada; `historico`: nada publicado o resuelto después."}
+_TIPOS["objetivo"] = {"type": "string", "enum": ["consulta", "busqueda", "resumen", "borrador"]}
+_TIPOS["decision"] = {"type": "string", "enum": ["revisado", "archivado"]}
+REQUERIDOS.update({"consultar_juridico_api": ("pregunta",)})
+_S, _I, _B, _SN = {"type": "string"}, {"type": "integer"}, {"type": "boolean"}, {"type": "string", "nullable": True}
+_RESULTADO_JUR = {"type": "object", "properties": {"documento_id": _I, "fragmento_id": _I, "version_id": _I, "coleccion": _S, "fuente_id": _S, "titulo": _S, "emisor": _SN, "territorio": _SN, "rango": _SN, "tipo": _SN,
+                  "estado_normativo": _SN, "fecha_publicacion": _SN, "fecha_resolucion": _SN, "localizador": _S, "vigente_desde": _SN, "vigente_hasta": _SN, "vigencia_origen": _SN,
+                  "extracto": _S, "motivo": _S, "url_canonica": _SN, "capturada_en": _S}}
+_CITA_JUR = {"type": "object", "properties": {"id": _S, "kind": {"type": "string", "enum": ["legal_source", "private_attachment"]}, "documentId": _I, "versionId": {"type": "integer", "nullable": True}, "chunkId": _I,
+                  "locator": _S, "quote": {**_S, "description": "Extracto elegido por el servidor del fragmento citado; nunca lo escribe el modelo."}, "canonicalUrl": _SN, "ref": _S, "title": _SN}}
+ESQUEMAS.update({
+    "ColeccionJuridica": {"type": "object", "properties": {"clave": _S, "nombre": _S, "disponible": _B, "fuentes": {"type": "array", "items": {"type": "object", "properties": {
+        "fuente_id": _S, "nombre": _S, "documentos": _I, "fragmentos": _I, "desde": _SN, "hasta": _SN, "ultimo_exito_en": {**_SN, "description": "Última sincronización COMPLETA; no equivale a estar al día."}, "pendientes": _I, "reintentables": _I, "cuarentena": _I}}}}},
+    "BusquedaJuridica": {"type": "object", "properties": {"resultados": {"type": "array", "items": _RESULTADO_JUR}, "total": _I, "siguiente_cursor": _SN, "modo": {"type": "string", "enum": ["texto", "hibrido", "sin_fuentes"]},
+                         "avisos": {"type": "array", "items": _S}, "huecos": {"type": "array", "items": _S, "description": "Normas sin texto aplicable a la fecha jurídica pedida."}, "fuentes": {"type": "array", "items": _S}}},
+    "DocumentoJuridico": {"type": "object", "additionalProperties": True, "properties": {"id": _I, "fuente_id": _S, "id_externo": _S, "coleccion": _S, "titulo": _S, "emisor": _SN, "rango": _SN, "tipo": _SN, "ecli": _SN, "eli": _SN, "estado_normativo": _SN,
+                         "fecha_publicacion": _SN, "fecha_resolucion": _SN, "url_canonica": _SN, "atribucion": _SN, "versiones": {"type": "array", "items": {"type": "object"}}, "relaciones": {"type": "array", "items": {"type": "object"}}}},
+    "VersionJuridica": {"type": "object", "additionalProperties": True, "properties": {"documento": {"type": "object"}, "version": {"type": "object"}, "fecha_juridica": _SN, "huecos": {"type": "array", "items": _S},
+                        "fragmentos": {"type": "array", "items": {"type": "object", "properties": {"id": _I, "orden": _I, "bloque_id": _SN, "localizador": _S, "texto": _S, "vigente_desde": _SN, "vigente_hasta": _SN, "vigencia_origen": _SN}}}}},
+    "AdjuntoJuridico": {"type": "object", "properties": {"id": _I, "nombre": _S, "tipo_mime": _SN, "tamano": _I, "estado": {"type": "string", "enum": ["pendiente", "lista", "fallida"]}, "error": _SN, "retener_hasta": _SN, "creado_en": _S,
+                        "cliente_id": {"type": "integer", "nullable": True}, "expediente_id": {"type": "integer", "nullable": True}, "fragmentos": _I}},
+    "RespuestaJuridica": {"type": "object", "additionalProperties": True, "properties": {
+        "runId": _I, "status": {"type": "string", "enum": ["answered", "needs_context", "insufficient_evidence", "failed", "en_curso"]}, "facts": {"type": "array", "items": _S}, "missingFacts": {"type": "array", "items": _S},
+        "conclusion": _SN, "claims": {"type": "array", "items": {"type": "object", "properties": {"id": _S, "text": _S, "kind": {"type": "string", "enum": ["legal", "fact"]}, "citationIds": {"type": "array", "items": _S}, "evidence": _S}}},
+        "citations": {"type": "array", "items": _CITA_JUR}, "limitations": {"type": "array", "items": _S}, "suggestedNextSteps": {"type": "array", "items": _S},
+        "coverage": {"type": "object", "properties": {"sourceIds": {"type": "array", "items": _S}, "legalAsOf": _S, "gaps": {"type": "array", "items": _S}}}}},
+    "InformeJuridico": {"type": "object", "properties": {"id": _I, "ejecucion_id": _I, "cliente_id": {"type": "integer", "nullable": True}, "expediente_id": {"type": "integer", "nullable": True}, "titulo": _S,
+                        "estado": {"type": "string", "enum": ["borrador", "revisado", "archivado"]}, "creado_por": _I, "revisado_por": {"type": "integer", "nullable": True}, "revisado_en": _SN, "creado_en": _S,
+                        "aviso_fuente": {**_SN, "description": "Presente si una fuente citada se retiró o corrigió después de guardar el informe."}}},
+    "InformeJuridicoDetalle": {"allOf": [{"$ref": "#/components/schemas/InformeJuridico"}], "type": "object", "properties": {"instantanea": {"type": "object", "additionalProperties": True}}},
+    "FuenteJuridica": {"type": "object", "additionalProperties": True, "properties": {"id": _S, "nombre": _S, "estado": _S, "habilitada": _B, "cobertura": {"type": "object"}, "politica": {"type": "object", "nullable": True},
+                       "verificacion": _SN, "ejecuciones": {"type": "array", "items": {"type": "object"}}, "problemas": {"type": "array", "items": {"type": "object"}}}},
+})
+RESPUESTAS.update({"colecciones_juridico_api": ("ColeccionJuridica", True), "buscar_juridico_api": ("BusquedaJuridica", False), "documento_juridico_api": ("DocumentoJuridico", False), "version_juridico_api": ("VersionJuridica", False),
+                   "subir_adjunto_juridico_api": ("AdjuntoJuridico", False), "estado_adjunto_juridico_api": ("AdjuntoJuridico", False), "crear_conversacion_juridico_api": ("Identificador", False),
+                   "consultar_juridico_api": ("RespuestaJuridica", False), "ejecucion_juridico_api": ("RespuestaJuridica", False), "guardar_informe_juridico_api": ("InformeJuridicoDetalle", False),
+                   "informes_juridico_api": ("InformeJuridico", True), "informe_juridico_api": ("InformeJuridicoDetalle", False), "revisar_informe_juridico_api": ("InformeJuridico", False), "fuentes_juridico_api": ("FuenteJuridica", True)})
+SIN_DATOS_ESPERADOS.add("borrar_adjunto_juridico_api")

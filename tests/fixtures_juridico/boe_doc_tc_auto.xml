@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<documento fecha_actualizacion="20990110082601">
+  <metadatos>
+    <identificador>BOE-A-2099-9102</identificador>
+    <origen_legislativo codigo="1">Estatal</origen_legislativo>
+    <departamento codigo="9980">Tribunal Constitucional</departamento>
+    <rango codigo="1">Sentencia</rango>
+    <fecha_disposicion>20990108</fecha_disposicion>
+    <titulo>Pleno. Auto 7/2099, de 8 de enero de 2099. Inadmite la cuestión de inconstitucionalidad 55-2098. Sintético.</titulo>
+    <diario codigo="BOE">Boletín Oficial del Estado</diario>
+    <fecha_publicacion>20990110</fecha_publicacion>
+    <diario_numero>9</diario_numero>
+    <seccion>3</seccion>
+    <url_pdf>https://www.boe.es/boe/dias/2099/01/10/pdfs/BOE-A-2099-9102.pdf</url_pdf>
+  </metadatos>
+  <analisis>
+    <materias/>
+    <notas/>
+    <referencias><anteriores/><posteriores/></referencias>
+  </analisis>
+  <texto>
+    <p class="parrafo">Pleno. Auto 7/2099, de 8 de enero de 2099. Texto sintético.</p>
+    <p class="centro_negrita">ANTECEDENTES</p>
+    <p class="parrafo">1. Se planteó una cuestión de inconstitucionalidad ficticia.</p>
+    <p class="centro_negrita">FUNDAMENTOS JURÍDICOS</p>
+    <p class="parrafo">1. No se cumplen los requisitos sintéticos de la cuestión.</p>
+    <p class="centro_negrita">ACUERDO</p>
+    <p class="parrafo">Inadmitir la cuestión sintética.</p>
+  </texto>
+</documento>

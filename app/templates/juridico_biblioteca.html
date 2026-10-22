@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Biblioteca jurídica') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Biblioteca jurídica') }}</h1>
+  <p class="subtitle">{{ _('Legislación y jurisprudencia de las fuentes habilitadas para tu despacho, con su procedencia y su cobertura real.') }}</p></div></header>
+{% set subnav_activa = 'biblioteca' %}
+{% include "_juridico_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get">
+  <label>{{ _('Buscar') }} <input name="q" value="{{ q.get('q', '') }}" placeholder="{{ _('Texto o identificador (BOE-A-…, ECLI:…)') }}"></label>
+  <fieldset><legend>{{ _('Colección') }}</legend>{% for k, nombre in colecciones.items() %}<label class="inline"><input type="checkbox" name="coleccion" value="{{ k }}" {{ 'checked' if k in colecciones_sel }}> {{ _(nombre) }}</label> {% endfor %}</fieldset>
+  <label>{{ _('Emisor') }} <input name="emisor" value="{{ q.get('emisor', '') }}"></label>
+  <label>{{ _('Tipo') }} <input name="tipo" value="{{ q.get('tipo', '') }}" placeholder="sentencia, auto, norma"></label>
+  <label>{{ _('Materia') }} <input name="materia" value="{{ q.get('materia', '') }}"></label>
+  <label>{{ _('Desde') }} <input type="date" name="desde" value="{{ q.get('desde', '') }}"></label>
+  <label>{{ _('Hasta') }} <input type="date" name="hasta" value="{{ q.get('hasta', '') }}"></label>
+  <label>{{ _('Fecha jurídica') }} <input type="date" name="fecha_juridica" value="{{ q.get('fecha_juridica', '') }}"></label>
+  <button type="submit" class="btn btn-primary">{{ _('Buscar') }}</button>
+</form>
+{% if resultados is not none %}
+  {% for a in resultados.avisos %}<div class="aviso" role="status">{{ a }}</div>{% endfor %}
+  {% for h in resultados.huecos %}<div class="aviso" role="status">{{ h }}</div>{% endfor %}
+  <p class="muted">{{ _('%(n)s documentos', n=resultados.total) }} · {{ _('búsqueda híbrida') if resultados.modo == 'hibrido' else _('búsqueda de texto (sin similitud semántica)') }}</p>
+  {% if resultados.resultados %}
+  <ul class="log-list">{% for x in resultados.resultados %}
+    <li class="log-item"><span class="log-text"><a href="{{ url_for('juridico.documento', documento_id=x.documento_id, fecha_juridica=q.get('fecha_juridica') or None) }}"><strong>{{ x.titulo }}</strong></a>
+      <br><small>{{ x.emisor or '' }} · {{ x.localizador }}{% if x.fecha_resolucion %} · {{ _('resolución') }} {{ x.fecha_resolucion }}{% endif %}{% if x.fecha_publicacion %} · {{ _('publicación') }} {{ x.fecha_publicacion }}{% endif %}
+      {% if x.estado_normativo %} · {{ x.estado_normativo }}{% endif %}</small>
+      <br>{{ x.extracto }}<br><small class="muted">{{ x.motivo }} · {{ _('capturado el') }} {{ x.capturada_en[:10] }}</small></span></li>{% endfor %}</ul>
+  {% if resultados.siguiente_cursor %}<p><a class="btn" href="{{ url_for('juridico.biblioteca') }}?{{ (params + [('cursor', resultados.siguiente_cursor)])|map('join', '=')|join('&') }}">{{ _('Más resultados') }}</a></p>{% endif %}
+  {% else %}<p class="muted">{{ _('Sin resultados.') }}</p>{% endif %}
+{% endif %}
+<section class="dash-panel" aria-label="{{ _('Cobertura') }}">
+  <h2>{{ _('Cobertura real') }}</h2>
+  {% if cobertura %}<table class="ds-tabla"><thead><tr><th>{{ _('Fuente') }}</th><th>{{ _('Documentos') }}</th><th>{{ _('Fechas') }}</th><th>{{ _('Última carga correcta') }}</th><th>{{ _('Pendientes') }}</th></tr></thead>
+    <tbody>{% for c in cobertura %}<tr><td>{{ c.nombre }}</td><td>{{ c.documentos }}</td><td>{{ c.desde or '—' }} → {{ c.hasta or '—' }}</td><td>{{ c.ultimo_exito_en or _('ninguna todavía') }}</td><td>{{ c.pendientes + c.reintentables }}{% if c.cuarentena %} · {{ _('%(n)s en cuarentena', n=c.cuarentena) }}{% endif %}</td></tr>{% endfor %}</tbody></table>
+  <p class="muted">{{ _('«Última carga correcta» no significa que esté al día: comprueba también el retraso de cada fuente en Fuentes.') }}</p>
+  {% else %}<p class="muted">{{ _('No hay fuentes habilitadas para tu despacho.') }}</p>{% endif %}
+  {% if pendientes %}<h3>{{ _('Pendientes de habilitación') }}</h3><ul>{% for f in pendientes %}<li>{{ f.nombre }}</li>{% endfor %}</ul>{% endif %}
+</section>
+{% endblock %}
