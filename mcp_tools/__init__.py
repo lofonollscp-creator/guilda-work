@@ -872,6 +872,8 @@ def _con_guardian(tool):
                 if propio is None:
                     raise ValueError("Indica el nombre del despacho (`tenant`): tu usuario no tiene ninguno asignado.")
                 kwargs["tenant"] = propio["nombre"]
+            from app import estado_herramientas
+            estado_herramientas.exigir_servicio(tool.__name__)          # ValueError claro si el servicio del que depende no responde
             resultado = mu.recortar_resultado(tool(*args, **kwargs))
         except Exception as e:  # noqa: BLE001
             anotar("error", f"{type(e).__name__}: {e}")

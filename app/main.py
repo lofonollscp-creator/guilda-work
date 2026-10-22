@@ -35,7 +35,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .notas_formato import nota_a_html
-from . import ai_local, ayuda, busqueda, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import acceso, ai_local, ayuda, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -1694,10 +1694,15 @@ def herramientas_vista():
     # usuario sin tenant asignado ve el catálogo completo sin filtrar.
     ocultas = db.herramientas_ocultas_de_tenant(tenant["id"]) if tenant else set()
     visibles = [h for h in herramientas.HERRAMIENTAS if h["id"] not in ocultas]
+    # Solo se enseña lo que funciona: las que no responden ahora no se ven (la dirección sí ve cuáles son). Ver app/estado_herramientas.py.
+    vivas = estado_herramientas.estados()
+    no_responden = [h["nombre"] for h in visibles if h.get("disponible") is not False and not vivas.get(h["id"])]
+    visibles = [h for h in visibles if h.get("disponible") is False or vivas.get(h["id"])]
     return render_template(
         "herramientas.html",
         herramientas=visibles,
         facturascripts_url=facturascripts_url,
+        no_responden=no_responden if (tenant and acceso.es_directivo(g.usuario_id)) else [],
     )
 
 

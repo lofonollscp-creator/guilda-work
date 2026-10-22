@@ -14,7 +14,7 @@ sobre app/db.py, app/correo.py y app/export.py) — al no llevar decorador
 normal de Python (verificado: `type(mcp_tools.listar_notas) is function`).
 """
 import mcp_tools
-from app import herramientas_grupos, ia_soporte
+from app import estado_herramientas, herramientas_grupos, ia_soporte
 from app.correo import ErrorCorreo
 
 
@@ -1228,6 +1228,15 @@ def necesita_confirmacion(nombre: str, modo_autonomo: bool) -> bool:
     return not modo_autonomo
 
 
+def _errores_de_servicios() -> tuple[type, ...]:
+    """Los errores legibles de los clientes de servicios externos (EspoCRM, Nextcloud, Documenso…). Antes se escapaban como una excepción cruda y el chat acababa en un error 500; ahora llegan al modelo
+    como un error de herramienta con el mensaje del servicio."""
+    from app import baserow, calcom, chatwoot, collabora, documenso, espocrm, facturascripts, jitsi, listmonk, metabase, minio_cliente, n8n, nextcloud, ntfy, openproject, outline, paperless, stalwart, synapse, umami, uptime_kuma
+    return (baserow.ErrorBaserow, calcom.ErrorCalcom, chatwoot.ErrorChatwoot, collabora.ErrorCollabora, documenso.ErrorDocumenso, espocrm.ErrorEspoCRM, facturascripts.ErrorFacturaScripts,
+            jitsi.ErrorJitsi, listmonk.ErrorListmonk, metabase.ErrorMetabase, minio_cliente.ErrorMinio, n8n.ErrorN8n, nextcloud.ErrorNextcloud, ntfy.ErrorNtfy, openproject.ErrorOpenProject,
+            outline.ErrorOutline, paperless.ErrorPaperless, stalwart.ErrorStalwart, synapse.ErrorSynapse, umami.ErrorUmami, uptime_kuma.ErrorUptimeKuma)
+
+
 def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
     """Ejecuta una tool "como" `usuario_id` — ninguna tool de mcp_tools.py
     expone un parámetro de usuario (un cliente MCP externo como Claude Code
@@ -1242,10 +1251,14 @@ def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
     funcion = getattr(mcp_tools, nombre, None)
     if funcion is None:
         raise ErrorHerramientaIA(f"Herramienta '{nombre}' no está implementada en mcp_tools.")
+    try:
+        estado_herramientas.exigir_servicio(nombre)
+    except ValueError as e:
+        raise ErrorHerramientaIA(str(e)) from e
     token = mcp_tools._usuario_id_actual.set(usuario_id)
     try:
         return funcion(**argumentos)
-    except (ValueError, ErrorCorreo) as e:
+    except ((ValueError, ErrorCorreo) + _errores_de_servicios()) as e:
         raise ErrorHerramientaIA(str(e)) from e
     except TypeError as e:
         # El LLM manda los argumentos como JSON libre, sin que ejecutar()
@@ -1270,4 +1283,4 @@ def herramientas_para(mensajes: list[dict] | None = None, solo_lectura: bool = F
         ofrecidas = [t for t in HERRAMIENTAS if herramientas_grupos.grupo_de(t["function"]["name"]) in grupos]
     if solo_lectura:
         ofrecidas = [t for t in ofrecidas if t["function"]["name"] in LECTURA]
-    return ofrecidas
+    return [t for t in ofrecidas if estado_herramientas.herramienta_usable(t["function"]["name"])]       # sin las de un servicio que no responde (app/estado_herramientas.py)

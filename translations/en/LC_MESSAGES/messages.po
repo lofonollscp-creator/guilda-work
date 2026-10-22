@@ -14382,3 +14382,9 @@ msgstr "The file could not be accepted: our antivirus detected something dangero
 
 msgid "Ahora mismo no podemos comprobar el archivo con el antivirus. Inténtalo de nuevo dentro de unos minutos."
 msgstr "We cannot check the file with the antivirus right now. Please try again in a few minutes."
+
+msgid "Estas herramientas no responden ahora mismo y no se muestran al equipo:"
+msgstr "These tools are not responding right now and are not shown to the team:"
+
+msgid "Si es inesperado, revisa el panel de salud."
+msgstr "If this is unexpected, check the health panel."

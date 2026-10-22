@@ -14467,3 +14467,9 @@ msgstr "Le fichier n'a pas pu être accepté : notre antivirus y a détecté que
 
 msgid "Ahora mismo no podemos comprobar el archivo con el antivirus. Inténtalo de nuevo dentro de unos minutos."
 msgstr "Nous ne pouvons pas vérifier le fichier avec l'antivirus pour le moment. Réessayez dans quelques minutes."
+
+msgid "Estas herramientas no responden ahora mismo y no se muestran al equipo:"
+msgstr "Ces outils ne répondent pas pour le moment et ne sont pas affichés à l'équipe :"
+
+msgid "Si es inesperado, revisa el panel de salud."
+msgstr "Si c'est inattendu, consultez le tableau de santé."

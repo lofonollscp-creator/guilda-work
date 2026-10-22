@@ -14391,3 +14391,9 @@ msgstr "El fitxer no s'ha pogut acceptar: el nostre antivirus hi ha detectat alg
 
 msgid "Ahora mismo no podemos comprobar el archivo con el antivirus. Inténtalo de nuevo dentro de unos minutos."
 msgstr "Ara mateix no podem comprovar el fitxer amb l'antivirus. Torna-ho a provar d'aquí a uns minuts."
+
+msgid "Estas herramientas no responden ahora mismo y no se muestran al equipo:"
+msgstr "Aquestes eines no responen ara mateix i no es mostren a l'equip:"
+
+msgid "Si es inesperado, revisa el panel de salud."
+msgstr "Si és inesperat, revisa el tauler de salut."

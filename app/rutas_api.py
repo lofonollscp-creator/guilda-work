@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, Response, abort, g, jsonify, make_response, request, stream_with_context, url_for
 from werkzeug.exceptions import HTTPException
 
-from . import alta_cliente, correo, db, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
+from . import alta_cliente, correo, db, estado_herramientas, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -1731,7 +1731,9 @@ def listar_herramientas():
     versión móvil se había quedado sin este apartado."""
     tenant = db.tenant_de_usuario(g.usuario_id)
     ocultas = db.herramientas_ocultas_de_tenant(tenant["id"]) if tenant else set()
-    lista = [h for h in herramientas.HERRAMIENTAS if h["id"] != "chat" and h["id"] not in ocultas]
+    vivas = estado_herramientas.estados()
+    # La app móvil enseña en gris lo no disponible (campo `disponible`): se marca así también lo que está desplegado pero no responde ahora, para que no sea un enlace muerto.
+    lista = [{**h, "disponible": bool(h.get("disponible", True)) and bool(vivas.get(h["id"]))} for h in herramientas.HERRAMIENTAS if h["id"] != "chat" and h["id"] not in ocultas]
     facturascripts_url = tenant["facturascripts_url"] if tenant else None
     lista.append({
         "id": "facturascripts",

@@ -110,6 +110,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [«En revisión» como estado real de la tarea (octubre de 2026)](#en-revisión-como-estado-real-de-la-tarea-octubre-de-2026)
 - [Antivirus (ClamAV) para los archivos que suben los clientes (octubre de 2026)](#antivirus-clamav-para-los-archivos-que-suben-los-clientes-octubre-de-2026)
 - [Pruebas de navegador de los flujos críticos (octubre de 2026)](#pruebas-de-navegador-de-los-flujos-críticos-octubre-de-2026)
+- [Herramientas conectadas que responden de verdad (octubre de 2026)](#herramientas-conectadas-que-responden-de-verdad-octubre-de-2026)
 
 <!-- /INDICE -->
 
@@ -3570,3 +3571,16 @@ Código en `app/antivirus.py`; contenedor `clamav` en `docker-compose.yml`. **Ap
 - **Instalación** (una vez, la hace una persona; instala Playwright y descarga Chromium, ~300 MB, con sus librerías del sistema): `.venv/bin/pip install -r requirements-e2e.txt && .venv/bin/playwright install --with-deps chromium`.
 - **Ejecución**: `scripts/probar_navegador.sh` (o `-k portal` para una sola). Corre en una copia aislada como el resto y usa el Kratos de pruebas: el equipo inicia sesión por el camino real y sus cookies pasan al navegador.
 - **Estado**: escritas sin poder ejecutarlas en el servidor (no hay navegador instalado); la primera ejecución real puede necesitar retoques de selectores.
+
+## Herramientas conectadas que responden de verdad (octubre de 2026)
+
+Fase 1 de `docs/hoja-de-ruta.md`. Código en `app/estado_herramientas.py`.
+
+- **Qué pasaba** (comprobado contra los puertos reales del servidor): el catálogo escondía a mano las herramientas no desplegadas (`disponible: False`), pero OpenProject y Documentos (Paperless) no estaban marcadas y no responden: eran enlaces muertos. La API de la app móvil ya enseñaba en gris lo marcado como no disponible (su campo `disponible`), pero no sabía de lo caído. Y las herramientas del asistente de IA que hablan con EspoCRM, Nextcloud, Documenso, etc. dejaban escapar los errores de esos servicios como una excepción cruda.
+- **Regla**: una herramienta está disponible si no está marcada `disponible: False` (decisión de configuración: «no se despliega») **y** su puerto contesta ahora por HTTP con cualquier código (un 401 o un 302 cuentan como vivo; no se siguen redirecciones). Se comprueba en paralelo, con 1,5 s de espera, y se guarda 45 s.
+- **Web** (`/herramientas`): solo enseña lo que responde; la dirección ve un aviso con las que no. **App móvil** (`/api/v1/herramientas`): sigue enseñando todo el catálogo, con `disponible: false` (en gris) para lo no desplegado **y** para lo desplegado que no responde ahora. **Asistente de IA**: no se ofrece las herramientas de un servicio caído. **MCP e IA**: si se llama a una, el mensaje es «el servicio X no está disponible ahora mismo». Los errores de los clientes de servicios externos llegan al chat como error de herramienta, no como un 500.
+- **Qué herramienta depende de qué servicio**: por prefijo del nombre (`crm_`, `citas_`, `newsletter_`, `hojas_`, `drive_`, `firmas_`, `documentos_`, `chat_`, `soporte_`, `proyectos_`, `almacenamiento_`, `automatizaciones_`, `correo_stalwart_`, `monitorizacion_`, `videollamadas_`, `analitica_`, `documentacion_`) y unos pocos nombres sueltos (ver `PREFIJOS_DE_SERVICIO` y `SERVICIO_POR_NOMBRE`). Lo que no depende de ningún servicio nunca se bloquea.
+- **Panel de salud**: latido `herramientas_conectadas` en rojo con el nombre de las herramientas que deberían estar y no responden.
+- **Estado real el 22-oct-2026**: responden Outline, Chat, n8n, Correo (Stalwart), Drive, Firmas, MinIO, Vaultwarden y Uptime Kuma; no responden OpenProject y Documentos (ya no se enseñan); «Observabilidad» (Grafana) responde pero sigue marcada `disponible: False` en el catálogo: decisión tuya si se enseña.
+- **Para desplegar una herramienta más** basta con arrancarla y quitar su `disponible: False` del catálogo; para retirarla del todo, ponerlo. Reversión: el módulo es solo de lectura; quitar las llamadas devuelve el comportamiento anterior.
+- **Pruebas**: `tests/test_estado_herramientas.py` (10 tests: sondeo real contra un servidor local, caché, dependencias del asistente, errores de servicio, web, API móvil y panel de salud). Los tests ya no dependen de qué servicios corren en la máquina (fixture automática en `tests/conftest.py`).

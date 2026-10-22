@@ -386,3 +386,14 @@ def correo_sin_hilos_de_empuje(monkeypatch):
     from app import correo
 
     monkeypatch.setattr(correo, "_SIN_SEGUNDO_PLANO", True)
+
+
+@pytest.fixture(autouse=True)
+def herramientas_conectadas_vivas(monkeypatch):
+    """Los tests no deben depender de qué servicios hay en marcha en la máquina: por defecto todas las herramientas del catálogo «responden». Los tests de app/estado_herramientas.py lo cambian a propósito."""
+    from app import estado_herramientas
+    monkeypatch.setattr(estado_herramientas, "_sondear", lambda url: True)
+    monkeypatch.setattr(estado_herramientas, "CONSIDERAR_MARCA_ESTATICA", False)      # los tests simulan CRM, hojas…, que en el servidor real están marcadas «no se despliega»
+    estado_herramientas.reiniciar_cache()
+    yield
+    estado_herramientas.reiniciar_cache()

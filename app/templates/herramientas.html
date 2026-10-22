@@ -13,6 +13,10 @@
   <input type="search" id="tools-buscar-input" placeholder="{{ _('Buscar herramienta...') }}" aria-label="{{ _('Buscar herramienta') }}">
 </div>
 
+{% if no_responden %}
+<p class="ia-error" role="status">{{ _('Estas herramientas no responden ahora mismo y no se muestran al equipo:') }} <strong>{{ no_responden|join(', ') }}</strong>. {{ _('Si es inesperado, revisa el panel de salud.') }}</p>
+{% endif %}
+
 <div class="tools-chips" id="tools-chips" role="group" aria-label="{{ _('Categorías') }}"></div>
 
 <div class="tools-page">
