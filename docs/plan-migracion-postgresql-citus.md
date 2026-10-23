@@ -1,6 +1,6 @@
 # Plan de migración a PostgreSQL + Citus (distribución por `tenant_id`)
 
-Estado: **fases 0 a 5 completadas** (2026-10-23). Resultados en `docs/adr-postgresql-citus.md`.
+Estado: **fases 0 a 5 completadas, 6a y 6b hechas** (2026-10-23). Resultados en `docs/adr-postgresql-citus.md`.
 Ejecutor: Claude (código, scripts, tests, documentación). Usuario: acciones de sistema, aprobaciones y ventana de corte.
 
 ## 0. Punto de partida (medido en el código)
@@ -66,7 +66,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 
 ### Fase 6 — Modelo multitenant para Citus (≈ 2-3 semanas)
 - **6a (HECHA 2026-10-24, en una copia aislada; el relleno se hace al cargar en PostgreSQL, ver ADR):** añadir `tenant_id` a las 47 tablas con solo `usuario_id` y a las hijas que lo necesiten, con relleno desde el padre, y comprobaciones de que no hay filas huérfanas ni cruzadas entre despachos.
-- **6b (esquema PostgreSQL/Citus):**
+- **6b (HECHA 2026-10-24, ver ADR; generador `--multitenant`, 186 tablas distribuidas, RLS y roles probados en Citus real):**
   - Claves primarias `(tenant_id, id)` y claves foráneas compuestas entre tablas distribuidas.
   - Los `UNIQUE` globales (token, email, etc.) se revisan uno a uno: incluir `tenant_id`, moverlos a tabla de referencia o resolverlos con una tabla de búsqueda.
   - Tablas de referencia: `tenants`, `usuarios`, catálogos. Corpus jurídico compartido: tabla local del coordinador (esquema `corpus`) para no replicar GB en cada nodo.

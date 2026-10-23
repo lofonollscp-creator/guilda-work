@@ -39,6 +39,9 @@ REFERENCIA = {
     "mcp_uso": "contador diario por persona",
     "api_idempotencia": "idempotencia por persona",
     "comunicados_cerrados": "preferencia por persona",
+    "comunicados": "avisos de la plataforma a los despachos; su tenant_id opcional es el destinatario (NULL = todos), no el propietario",
+    "jur_fuentes": "catálogo (pequeño) de fuentes jurídicas: lo referencian las políticas, los documentos del corpus y la tabla por despacho",
+    "auditoria_control": "claves de control de la cadena de auditoría; las leen los triggers que protegen la auditoría (corren en cada shard)",
 }
 LOCAL = {
     "errores_servidor": "registro técnico global",
@@ -46,7 +49,6 @@ LOCAL = {
     "salud_alertas": "alertas de salud globales",
     "leads_contacto": "formulario público de la web de Guilda (aún sin despacho)",
     "solicitudes_acceso_portal": "solicitudes públicas previas a tener despacho",
-    "auditoria_control": "claves de control de la cadena de auditoría (valores globales)",
     "api_cambios_purgado": "marca de purga global",
     "contabilidad_tarifas": "tarifas de consumo globales y por ámbito",
     "auditoria_backoffice": "acciones del operador de plataforma",

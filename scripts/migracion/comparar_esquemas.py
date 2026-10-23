@@ -59,8 +59,36 @@ def esquema_postgres(url):
     return out
 
 
-def comparar(a, b):
+def _normalizar_multitenant(a, b):
+    """La variante multitenant añade `tenant_id` (columna, delante de la PK, los UNIQUE y las claves foráneas) y cambia ON DELETE SET NULL por un trigger: se quita todo eso para
+    comparar el RESTO (tablas, columnas, nulos, tipos, claves) con SQLite."""
+    a = {t: {**v, "cols": dict(v["cols"]), "unicos": set(v["unicos"]), "fks": set(v["fks"])} for t, v in a.items()}
+    b = {t: {**v, "cols": dict(v["cols"]), "unicos": set(v["unicos"]), "fks": set(v["fks"])} for t, v in b.items()}
+
+    def sin(cols):
+        return tuple(c for c in cols if c != "tenant_id") if len(cols) > 1 else tuple(cols)
+    for t, vb in b.items():
+        va = a.get(t)
+        if va is None:
+            continue
+        if "tenant_id" in vb["cols"] and "tenant_id" not in va["cols"]:
+            vb["cols"].pop("tenant_id")                                           # columna añadida por el modelo multitenant
+        elif "tenant_id" in vb["cols"]:
+            va["cols"]["tenant_id"] = (va["cols"]["tenant_id"][0], vb["cols"]["tenant_id"][1])        # era anulable en SQLite; la nulabilidad real de PostgreSQL manda
+        va["pk"], vb["pk"] = sin(va["pk"]), sin(vb["pk"])
+        va["unicos"], vb["unicos"] = {sin(u) for u in va["unicos"]}, {sin(u) for u in vb["unicos"]}
+        extra = {f for f in vb["fks"] if f[0] == ("tenant_id",) and f[1] == "tenants" and not any(g[0] == ("tenant_id",) and g[1] == "tenants" for g in va["fks"])}
+        vb["fks"] = {(sin(c), p, acc) for c, p, acc in vb["fks"] - extra}
+        va["fks"] = {(sin(c), p, acc) for c, p, acc in va["fks"]}
+        # SET NULL entre distribuidas: la clave foránea de PostgreSQL no lleva acción y el borrado lo anula un trigger
+        va["fks"] = {(f[0], f[1], "NO ACTION") if f[2] == "SET NULL" and (f[0], f[1], "NO ACTION") in vb["fks"] else f for f in va["fks"]}
+    return a, b
+
+
+def comparar(a, b, multitenant=False):
     b = {t: v for t, v in b.items() if t != "bd_esquema_version"}          # propia de PostgreSQL (versión del esquema)
+    if multitenant:
+        a, b = _normalizar_multitenant(a, b)
     for v in b.values():                                                    # columnas tsvector de búsqueda: sustituyen a las tablas FTS5 (fase 5)
         v["cols"] = {c: d for c, d in v["cols"].items() if c != "busqueda"}
     dif = []
@@ -81,6 +109,6 @@ def comparar(a, b):
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         sys.exit(__doc__)
-    dif = comparar(esquema_sqlite(sys.argv[1]), esquema_postgres(sys.argv[2]))
+    dif = comparar(esquema_sqlite(sys.argv[1]), esquema_postgres(sys.argv[2]), multitenant="--multitenant" in sys.argv)
     print("\n".join(dif) if dif else "esquemas equivalentes")
     sys.exit(1 if dif else 0)

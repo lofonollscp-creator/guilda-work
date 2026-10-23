@@ -86,8 +86,8 @@
   "via": []
  },
  "auditoria_control": {
-  "clase": "local",
-  "motivo": "claves de control de la cadena de auditoría (valores globales)",
+  "clase": "referencia",
+  "motivo": "claves de control de la cadena de auditoría; las leen los triggers que protegen la auditoría (corren en cada shard)",
   "via": []
  },
  "auditoria_eventos": {
@@ -281,8 +281,8 @@
   ]
  },
  "comunicados": {
-  "clase": "propio",
-  "motivo": "ya lleva tenant_id",
+  "clase": "referencia",
+  "motivo": "avisos de la plataforma a los despachos; su tenant_id opcional es el destinatario (NULL = todos), no el propietario",
   "via": []
  },
  "comunicados_cerrados": {
@@ -1123,8 +1123,8 @@
   "via": []
  },
  "jur_fuentes": {
-  "clase": "local",
-  "motivo": "corpus jurídico compartido (sin despacho)",
+  "clase": "referencia",
+  "motivo": "catálogo (pequeño) de fuentes jurídicas: lo referencian las políticas, los documentos del corpus y la tabla por despacho",
   "via": []
  },
  "jur_informes": {

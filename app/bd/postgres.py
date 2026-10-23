@@ -21,7 +21,7 @@ import weakref
 from typing import Optional
 
 from .fila import fabrica_filas
-from .traduccion import NoPortable, PRAGMAS_SIN_EFECTO, preparar
+from .traduccion import NoPortable, PRAGMAS_SIN_EFECTO, dividir_sentencias, preparar
 
 _IDLE = 0                                   # psycopg.pq.TransactionStatus.IDLE
 _CLAVE_BEGIN_IMMEDIATE = "guilda.begin_immediate"
@@ -241,10 +241,15 @@ class ConexionPG:
             return _CursorVacio()
         return self.ejecutar_script(script)
 
-    def ejecutar_script(self, script):
-        """Ejecuta el script tal cual (varias sentencias, una sola transacción implícita), sin filtrar."""
+    def ejecutar_script(self, script, por_sentencias: bool = False):
+        """Ejecuta el script tal cual, sin filtrar. Por defecto de una vez (una sola transacción implícita); con `por_sentencias`, una a una (Citus no admite varias
+        sentencias de definición en un mismo mensaje, y la distribución de tablas no es transaccional de todos modos)."""
         self.commit()                                       # como sqlite3: confirma lo pendiente antes
-        self._raw.execute(script)                           # sin parámetros psycopg admite varias sentencias
+        if por_sentencias:
+            for sentencia in dividir_sentencias(script):
+                self._raw.execute(sentencia)
+        else:
+            self._raw.execute(script)                       # sin parámetros psycopg admite varias sentencias
         return _CursorVacio()
 
     def create_function(self, *a, **k):

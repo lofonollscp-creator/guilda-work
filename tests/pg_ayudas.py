@@ -5,8 +5,8 @@ import uuid
 URL = os.environ.get("GUILDA_TEST_PG_URL", "")
 
 
-def crear_base_con_esquema() -> tuple[str, callable]:
-    """Crea una base de datos con el esquema de PostgreSQL y apunta el pool de la aplicación a ella. Devuelve (url, limpiar)."""
+def crear_base_con_esquema(modo: str = "simple") -> tuple[str, callable]:
+    """Crea una base de datos con el esquema de PostgreSQL (`simple`, `multitenant` o `citus`) y apunta el pool de la aplicación a ella. Devuelve (url, limpiar)."""
     import psycopg
     from psycopg.conninfo import make_conninfo
     from app.bd import esquema
@@ -17,9 +17,13 @@ def crear_base_con_esquema() -> tuple[str, callable]:
     url = make_conninfo(URL, dbname=nombre)
     with psycopg.connect(url, autocommit=True) as c:
         c.execute(f"ALTER DATABASE {nombre} SET timezone TO 'Europe/Madrid'")
+        if modo == "citus":
+            c.execute("CREATE EXTENSION citus")
+            c.execute("SELECT citus_set_coordinator_host('localhost', 5432)")
+            c.execute("SELECT citus_set_node_property('localhost', 5432, 'shouldhaveshards', true)")
     pg.fijar_url(url)
     conn = pg.conectar()
-    esquema.crear_si_falta(conn)
+    esquema.crear_si_falta(conn, modo)
     conn.close()
 
     def limpiar():
@@ -27,5 +31,10 @@ def crear_base_con_esquema() -> tuple[str, callable]:
         pg.fijar_url(None)
         with psycopg.connect(URL, autocommit=True) as c:
             c.execute(f"DROP DATABASE IF EXISTS {nombre} WITH (FORCE)")
+            for rol in ("guilda_app", "guilda_plataforma"):             # los roles son del servidor, no de la base de datos
+                try:
+                    c.execute(f"DROP OWNED BY {rol}")
+                except psycopg.Error:
+                    pass
 
     return url, limpiar

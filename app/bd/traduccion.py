@@ -144,3 +144,52 @@ def preparar(sql: str) -> Preparada:
         sql_con, sql_sin = _a_pg(sql_con), _a_pg(sql_sin)
     escritura = verbo in ("INSERT", "UPDATE", "DELETE")
     return Preparada(sql_con, sql_sin, nombrados, verbo, escritura, tabla, tiene_returning, pragma, begin_inmediato)
+
+
+def dividir_sentencias(script: str) -> list[str]:
+    """Separa un script de PostgreSQL en sentencias por los «;» que están fuera de literales, comentarios y cuerpos entre $$…$$ (o $etiqueta$…$etiqueta$)."""
+    sentencias, actual, i, n = [], [], 0, len(script)
+    while i < n:
+        c = script[i]
+        if c == "'":
+            j = i + 1
+            while j < n:
+                if script[j] == "'":
+                    if j + 1 < n and script[j + 1] == "'":
+                        j += 2
+                        continue
+                    break
+                j += 1
+            actual.append(script[i:j + 1])
+            i = j + 1
+        elif script.startswith("--", i):
+            j = script.find("\n", i)
+            j = n if j < 0 else j
+            i = j
+        elif script.startswith("/*", i):
+            j = script.find("*/", i + 2)
+            i = n if j < 0 else j + 2
+        elif c == "$":
+            m = re.match(r"\$([A-Za-z_]\w*)?\$", script[i:])
+            if m:
+                cierre = m.group(0)
+                j = script.find(cierre, i + len(cierre))
+                j = n if j < 0 else j + len(cierre)
+                actual.append(script[i:j])
+                i = j
+            else:
+                actual.append(c)
+                i += 1
+        elif c == ";":
+            texto = "".join(actual).strip()
+            if texto:
+                sentencias.append(texto)
+            actual = []
+            i += 1
+        else:
+            actual.append(c)
+            i += 1
+    texto = "".join(actual).strip()
+    if texto:
+        sentencias.append(texto)
+    return sentencias

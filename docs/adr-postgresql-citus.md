@@ -1,6 +1,6 @@
 # ADR: migración de SQLite a PostgreSQL + Citus (distribución por `tenant_id`)
 
-Estado: **fases 0 a 5 completadas y 6a hecha (… búsqueda de texto y modelo del despacho)**. Aún no se ha cambiado código de la aplicación. Plan por fases: [plan-migracion-postgresql-citus.md](plan-migracion-postgresql-citus.md). Clasificación tabla a tabla: [migracion-clasificacion-tablas.csv](migracion-clasificacion-tablas.csv). Scripts: `scripts/migracion/` (solo lectura).
+Estado: **fases 0 a 5 completadas, 6a y 6b hechas (… modelo del despacho y esquema Citus)**. Aún no se ha cambiado código de la aplicación. Plan por fases: [plan-migracion-postgresql-citus.md](plan-migracion-postgresql-citus.md). Clasificación tabla a tabla: [migracion-clasificacion-tablas.csv](migracion-clasificacion-tablas.csv). Scripts: `scripts/migracion/` (solo lectura).
 
 ## Decisiones tomadas (2026-10-23)
 
@@ -221,3 +221,32 @@ Lo que **todavía no** existe (6c): el despacho ACTIVO de la sesión (selector),
 
 - **D14 (decidida 2026-10-24). Personas sin despacho** (operador de plataforma, usuario local) y eventos de plataforma: Citus no admite `NULL` en la columna de distribución, así que van al despacho reservado **`id = 0`, «Plataforma»**. Existe en el esquema de PostgreSQL (`app/bd/esquema_pg/07_semillas.sql`, `tenant.TENANT_PLATAFORMA`), no se puede borrar (`borrar_tenant(0)` lo rechaza) y ningún despacho nuevo puede tomar ese id (la identidad empieza en 1). `tenant.rellenar(por_defecto=TENANT_PLATAFORMA)` le asigna lo que no se deduce de la persona ni del padre. **No se crea en SQLite/producción**: aparecería en el listado de despachos del backoffice; en la 6c, los listados de despachos de PostgreSQL deben excluir el 0.
 - Las inserciones llevarán `tenant_id bigint NOT NULL DEFAULT current_setting('app.tenant_id')::bigint` (Citus evalúa la función en el coordinador); RLS lo comprueba con `WITH CHECK`. Pendiente de probar en la 6b.
+
+## Fase 6b: esquema multitenant y Citus (2026-10-24)
+
+`scripts/migracion/generar_esquema_pg.py <base.db> --multitenant` genera, desde el esquema de SQLite y `tenant_modelo.json`, la variante `app/bd/esquema_pg/mt/`: `01_tablas` (+`tenant_id bigint NOT NULL DEFAULT nullif(current_setting('app.tenant_id', true), '')::bigint` en las 186 tablas distribuidas; PK `(tenant_id, …)`; todo UNIQUE con `tenant_id` delante), `02_indices`, `03_claves_foraneas` (compuestas entre distribuidas; simples hacia referencia), `04_vistas`, `05b_set_null`, `08_distribuir` y `09_rls`. `10_roles` y `05_triggers` (variante con `tenant_id`) son manuales. `esquema.crear_si_falta(conn, modo)`: `simple` (como hasta ahora), `multitenant` (sin Citus; sirve para el grueso de los tests, D12) y `citus` (distribuido, 16 shards). Construcción en Citus: ≈ 35 s; base vacía de 166 MB y 3.004 shards.
+
+**Resultado**: 186 tablas distribuidas (todas colocalizadas), 18 de referencia, 10 locales; 186 políticas RLS; FK, triggers y vista creados; 10 pruebas en `tests/test_citus.py` sobre Citus real, todas en verde.
+
+### Lo que Citus obligó a cambiar
+
+| Problema | Solución |
+|---|---|
+| «cannot execute multiple utility events»: un mensaje con varias sentencias de definición | `ConexionPG.ejecutar_script(por_sentencias=True)` con `traduccion.dividir_sentencias` (respeta literales, comentarios y `$$…$$`) |
+| `ON DELETE SET NULL` no se admite si la clave foránea incluye la columna de distribución (ni con lista de columnas) | clave foránea sin acción + trigger `BEFORE DELETE` generado en el padre que anula la columna de los hijos (`05b_set_null.sql`, 14 relaciones) |
+| Triggers en tablas distribuidas | `SET citus.enable_unsafe_triggers = on` al crearlos (D7); sus consultas filtran por `tenant_id`; el historial `api_cambios` lleva el despacho de la fila |
+| `comunicados` (destinatario opcional), `jur_fuentes` (catálogo) y `auditoria_control` (la leen los triggers en cada shard) | pasan a tablas de **referencia**; así `comunicados_cerrados` y `jur_fuente_despacho` no quedan apuntando a una tabla local o distribuida |
+| Claves foráneas antes de distribuir (identidad + FK) | las FK van después de `create_distributed_table` (D9) |
+
+**Roles** (`mt/10_roles.sql`, sin contraseñas: las fija quien despliega): `guilda_app` (NOBYPASSRLS: cada conexión ve y escribe solo su despacho) y `guilda_plataforma` (BYPASSRLS: backoffice, trabajadores, borrado de despachos). La aplicación no puede modificar ni borrar `auditoria_eventos`/`jur_auditoria` ni escribir en `tenants` y los catálogos.
+
+### Viabilidad de las consultas existentes (el hallazgo principal)
+
+`scripts/migracion/validar_sql_citus.py` planifica (PREPARE + EXPLAIN, sin ejecutar) las 1.747 sentencias de la aplicación contra Citus: **1.635 se planifican bien** (799 a un solo shard) y **112 (6 %)** no, en 33 ficheros (`docs/migracion-citus-consultas-pendientes.txt`): 61 «join requires repartitioning» y 45 «complex joins» —joins o subconsultas entre dos tablas distribuidas que no incluyen la igualdad de `tenant_id`—, 3 `UPDATE … SET tenant_id` (borrado de un despacho, mover una vista guardada) y 2 `INSERT … SELECT` entre distribuidas. 94 INSERT dejan que `tenant_id` lo ponga el valor por defecto de la conexión (funciona: Citus evalúa `current_setting` en el coordinador, probado). Un test (`PENDIENTES_CITUS = 112`) impide que aparezcan más.
+
+**Cómo se arreglan (6c)**: añadir `AND a.tenant_id = b.tenant_id` a esos joins. SQLite no tiene `tenant_id` en la mayoría de esas tablas, así que el SQL no puede escribirse tal cual: o un ayudante `_bd.mismo_despacho('a', 'b')` que devuelva la condición en PostgreSQL y vacío en SQLite, o reescritura automática en `ConexionPG`. Se prefiere el ayudante (explícito, sin magia, lo verifica el validador).
+
+### Pendiente
+- 6c: despacho activo en la sesión y `get_connection(despacho)` por petición (sin él, las inserciones fallan por `tenant_id` NULL y las lecturas no ven nada: fallo seguro), las 112 consultas, los 3 `UPDATE tenant_id`, atributos por despacho (supervisor, gestor de fichajes, custodio, tarifa), listados de despachos sin el 0.
+- `usuarios` y `tenants` (referencia) no tienen RLS: las ve cualquier conexión. Decidir en 6c qué ve cada despacho de las personas de otros.
+- Prueba con Citus de varios nodos (fase 9).
