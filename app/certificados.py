@@ -920,7 +920,7 @@ def avanzar_renovacion(tenant_id: int, usuario_id: int, renovacion_id: int, a_fa
         else:
             conn.execute("UPDATE certificados_renovaciones SET fase = ?, cerrada_en = ? WHERE id = ?", (a_fase, db.now_iso() if a_fase == "cancelada" else None, renovacion_id))
         if nota and nota.strip():
-            conn.execute("UPDATE certificados_renovaciones SET notas = COALESCE(notas || char(10), '') || ? WHERE id = ?", (_sin_secretos(nota, "Nota"), renovacion_id))
+            conn.execute("UPDATE certificados_renovaciones SET notas = COALESCE(notas || ?, '') || ? WHERE id = ?", ("\n", _sin_secretos(nota, "Nota"), renovacion_id))
         _evento(conn, tenant_id, r["certificado_id"], usuario_id, f"renovacion_{a_fase}", {"renovacion_id": renovacion_id})
         conn.commit()
     finally:

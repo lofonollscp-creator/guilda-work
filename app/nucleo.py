@@ -566,8 +566,8 @@ def fusionar_clientes(tenant_id: int, destino_id: int, origen_id: int) -> None:
         if ficha_destino is None:
             conn.execute("UPDATE clientes_fiscales SET cliente_id = ? WHERE cliente_id = ? AND tenant_id = ?", (destino_id, origen_id, tenant_id))
         # Si los dos tenían ficha fiscal no se mezclan (vencimientos, pagos y portal cuelgan de ella): la del origen se queda enlazada a su ficha en la papelera
-        conn.execute("UPDATE clientes SET papelera_en = ?, actualizado_en = ?, notas = COALESCE(notas || char(10), '') || ? WHERE id = ?",
-                     (db._marca_papelera(), db.now_iso(), f"Fusionado en el cliente #{destino_id}.", origen_id))
+        conn.execute("UPDATE clientes SET papelera_en = ?, actualizado_en = ?, notas = COALESCE(notas || ?, '') || ? WHERE id = ?",
+                     (db._marca_papelera(), db.now_iso(), "\n", f"Fusionado en el cliente #{destino_id}.", origen_id))
         conn.commit()
     finally:
         conn.close()

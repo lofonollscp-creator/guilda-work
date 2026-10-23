@@ -34,6 +34,7 @@ REGLAS = {
     "pragma": (r"\bPRAGMA\b", 3, "PRAGMA"),
     "begin_inmediato": (r"\bBEGIN\s+(IMMEDIATE|EXCLUSIVE|DEFERRED)\b", 2, "BEGIN IMMEDIATE (lo traduce la capa)"),
     "fts5": (r"\bfts5\b|\bMATCH\b|\bbm25\s*\(|\bsnippet\s*\(|\bhighlight\s*\(", 5, "FTS5"),
+    "char_func": (r"\bchar\s*\(", 3, "char() de SQLite (en PostgreSQL es chr(): pasar el carácter como parámetro)"),
     "limit_menos_uno": (r"\bLIMIT\s+-1\b", 3, "LIMIT -1"),
     "sqlite_master": (r"\bsqlite_(master|schema|sequence|stat\d?)\b", 3, "sqlite_master/sqlite_sequence"),
     "autoincrement": (r"\bAUTOINCREMENT\b|\bWITHOUT\s+ROWID\b|\bINTEGER\s+PRIMARY\s+KEY\b", 4, "DDL de SQLite"),
@@ -85,7 +86,7 @@ def cadenas(ruta: Path):
 
 
 # Construcciones que YA no deben aparecer (fases 2-3 completadas). Se comprueban en tests/test_sql_portable.py.
-PROHIBIDAS = ("insert_or", "strftime", "fecha_sqlite", "group_concat", "collate_nocase", "ifnull_iif", "typeof", "last_insert",
+PROHIBIDAS = ("char_func", "insert_or", "strftime", "fecha_sqlite", "group_concat", "collate_nocase", "ifnull_iif", "typeof", "last_insert",
               "limit_menos_uno", "comillas_dobles_literal", "is_igualdad", "igual_doble", "limit_en_escritura")
 # Pendientes para fases posteriores o propias de código solo-SQLite (guardado por bd.MOTOR): categoría -> ficheros donde se admiten.
 PERMITIDAS_EN = {
