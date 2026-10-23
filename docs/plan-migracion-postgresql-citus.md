@@ -80,7 +80,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 - Pruebas específicas: bloqueos y concurrencia, transacciones entre tablas colocalizadas, reequilibrado.
 - **Salida:** `scripts/probar.sh` y `scripts/probar_pg.sh` en verde en ambos motores.
 
-### Fase 8 — Herramienta de migración de datos (≈ 1,5 semanas)
+### Fase 8 — Herramienta de migración de datos (≈ 1,5 semanas) — **hecha (2026-10-24)**: 3 ensayos seguidos sin discrepancias sobre una copia de producción en Citus (ver ADR); falta `backoffice.db`
 - `scripts/migrar_a_postgres.py`: lee `registro.db` y `backoffice.db`, convierte tipos, carga por lotes con `COPY`, reinicia las secuencias y ejecuta controles.
 - Controles: recuento por tabla y por despacho, suma de control por columna, claves foráneas, huérfanos, tamaños de BLOB, búsqueda de texto equivalente.
 - Re-ejecutable, con informe y sin escribir nunca en SQLite.

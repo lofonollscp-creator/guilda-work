@@ -306,3 +306,26 @@ Comprueban algo propio de SQLite: migraciones de su esquema (`DROP TRIGGER`, `sq
 
 - Aislamiento sobre Citus real: `tests/test_citus.py` (13) sigue pasando; la suite principal NO se ejecuta distribuida (D12).
 - CI: falta un `scripts/probar_pg.sh` que levante el contenedor de ensayo y lance la suite en ambos motores.
+
+## Fase 8: herramienta de migración de datos (2026-10-24)
+
+`scripts/migrar_a_postgres.py --origen data/registro.db --url postgresql://…/gw_ensayo1 --esquema citus --recrear-base --informe informe.json` (código en `app/bd/migrar_datos.py` y `app/bd/verificar_migracion.py`, tests en `tests/test_migracion_datos.py`).
+
+### Qué hace
+- **Solo lee SQLite**: abre `registro.db` en modo de solo lectura, la copia con la API de copia de SQLite (coherente aunque haya WAL) y trabaja sobre esa copia temporal, a la que añade el `tenant_id` que falta (`tenant.rellenar`, lo no deducible va al despacho 0 «Plataforma»).
+- **Carga con `COPY`** por lotes de 5.000, en el orden de las claves foráneas REALES de la base de destino (`orden_de_carga`; el del modelo no bastaba: `certificados` → `clientes_fiscales`). Reinicia las secuencias de identidad (máximo + 1).
+- **Triggers**: en PostgreSQL llano basta `session_replication_role = replica`; en Citus ese ajuste no llega a los fragmentos (el registro de cambios duplicaba `api_cambios`), así que se desactivan los triggers de usuario tabla a tabla (`citus.enable_unsafe_triggers`) y se reactivan en un `finally`.
+- **Bytes NUL**: PostgreSQL no los admite en `text`. Se quitan al cargar y se anotan (`nul_eliminados`; en la copia de producción: 2 filas de `correo_mensajes.cuerpo_html`). La suma de control compara contra lo que se carga.
+- **Pertenencias**: una base anterior a `usuarios_tenants` no la trae rellena; se crea la fila del despacho principal de cada persona (lo que hace `init_db` en SQLite). Sin ello el RLS de `usuarios` no deja ver a los compañeros.
+- **Re-ejecutable**: `--recrear-base` borra y crea la base (solo nombres `gw_*`/`ensayo*`, o `--forzar`); sin él se niega si ya hay despachos. Código de salida 0 / 1 (discrepancias) / 2 (error). El informe JSON (0600) lleva recuentos, no datos.
+
+### Controles (todos tras la carga)
+Recuento por tabla y por despacho · suma de control por columna (hash de 64 bits sumado: no depende del orden; dice tabla y columna) · tamaño total de los BLOB · filas huérfanas (claves foráneas) · secuencias por detrás del máximo · pertenencias · **RLS**: con el rol `guilda_app` y un despacho fijado cada tabla devuelve exactamente sus filas (159 comprobaciones) · **búsqueda**: 25 palabras reales por índice dan las mismas filas en FTS5 y en tsvector. Los tests provocan un valor cambiado, una fila perdida y un hijo sin padre, y comprueban que se delatan.
+
+### Ensayos con una copia de producción (dentro del VPS, sin sacar datos)
+`registro.db` de 68,9 MB (221 tablas, 18.635 filas, 1 despacho con datos + 7 filas de «Plataforma»), sobre el contenedor de ensayo con **Citus**: 3 ensayos seguidos con `--recrear-base`, todos «todo cuadra» (≈56 s cada uno: 31 s de esquema Citus, 24 s de carga —`jur_fragmentos` 9 s—, 13 s de controles); además una pasada sobre el esquema multitenant llano (15 s). Informes en `data/pg-ensayo/fase8-ensayo*.json`. Las bases de ensayo se borraron al terminar (llevaban una copia de datos reales).
+
+### Pendiente
+- **`backoffice.db`** (10 tablas, `sqlite3` directo) no se migra: hay que pasar su código por la capa `app/bd` o decidir que sigue siendo SQLite (D2 lo retira).
+- La copia de producción es pequeña (un despacho): los tiempos para muchos despachos se medirán en la fase 9 con datos sintéticos.
+- La exportación inversa (`scripts/exportar_a_sqlite.py`) es de la fase 11.
