@@ -2955,6 +2955,13 @@ CREATE TABLE IF NOT EXISTS usuarios (
     CHECK (rol IN ('usuario','admin'))
 );
 
+CREATE TABLE IF NOT EXISTS usuarios_tenants (
+    usuario_id bigint,
+    tenant_id bigint,
+    creado_en text NOT NULL,
+    PRIMARY KEY (usuario_id, tenant_id)
+);
+
 CREATE TABLE IF NOT EXISTS vencimientos_escalados (
     vencimiento_id bigint,
     dias_antes bigint,

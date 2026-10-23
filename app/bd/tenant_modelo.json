@@ -1,0 +1,1874 @@
+{
+ "abogados_ajustes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "abogados_enlaces": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "abogados_fondos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "abogados_minuta_lineas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de abogados_minutas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "minuta_id",
+    "obligatoria": true,
+    "padre": "abogados_minutas"
+   }
+  ]
+ },
+ "abogados_minutas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "abogados_partes": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de expedientes",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "expediente_id",
+    "obligatoria": true,
+    "padre": "expedientes"
+   }
+  ]
+ },
+ "abogados_vistas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "accesos_contenido": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "alertas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "api_cambios": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "api_cambios_purgado": {
+  "clase": "local",
+  "motivo": "marca de purga global",
+  "via": []
+ },
+ "api_idempotencia": {
+  "clase": "referencia",
+  "motivo": "idempotencia por persona",
+  "via": []
+ },
+ "auditoria_backoffice": {
+  "clase": "local",
+  "motivo": "acciones del operador de plataforma",
+  "via": []
+ },
+ "auditoria_control": {
+  "clase": "local",
+  "motivo": "claves de control de la cadena de auditoría (valores globales)",
+  "via": []
+ },
+ "auditoria_eventos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id (filas sin él: se rellenan desde la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "ausencias": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "ausencias_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "ausencias_saldos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "automatizaciones_ejecuciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "automatizaciones_eventos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "automatizaciones_reglas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "avisos_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "bolsa_horas_ajustes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "categorias": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "certificados": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "certificados_avisos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "certificados_avisos_cliente": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "certificados_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "certificados_evaluaciones": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de certificados",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "certificado_id",
+    "obligatoria": true,
+    "padre": "certificados"
+   }
+  ]
+ },
+ "certificados_eventos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "certificados_implantaciones": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de certificados_renovaciones, certificados_vinculos",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "renovacion_id",
+    "obligatoria": true,
+    "padre": "certificados_renovaciones"
+   },
+   {
+    "clave": "id",
+    "columna": "vinculo_id",
+    "obligatoria": true,
+    "padre": "certificados_vinculos"
+   }
+  ]
+ },
+ "certificados_renovaciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "certificados_vinculos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "cifrado_despacho": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "cliente_accesos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "cliente_contactos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de clientes",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cliente_id",
+    "obligatoria": true,
+    "padre": "clientes"
+   }
+  ]
+ },
+ "cliente_documentos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "cliente_etiquetas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de clientes",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cliente_id",
+    "obligatoria": true,
+    "padre": "clientes"
+   }
+  ]
+ },
+ "clientes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "clientes_fiscales": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "clientes_fiscales_accesos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de clientes_fiscales",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cliente_fiscal_id",
+    "obligatoria": true,
+    "padre": "clientes_fiscales"
+   }
+  ]
+ },
+ "comunicados": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "comunicados_cerrados": {
+  "clase": "referencia",
+  "motivo": "preferencia por persona",
+  "via": []
+ },
+ "concesion_servicio": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "concesiones_clave": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "concesiones_cliente": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_cierres": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_clientes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_despacho": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_liquidaciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_lotes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_plan": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_recordatorios": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_reglas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contabilidad_tarifas": {
+  "clase": "local",
+  "motivo": "tarifas de consumo globales y por ámbito",
+  "via": []
+ },
+ "contabilidad_terceros": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contacto_grupo_miembros": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de contactos, contacto_grupos",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "contacto_id",
+    "obligatoria": true,
+    "padre": "contactos"
+   },
+   {
+    "clave": "id",
+    "columna": "grupo_id",
+    "obligatoria": true,
+    "padre": "contacto_grupos"
+   }
+  ]
+ },
+ "contacto_grupos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "contactos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "correo_adjuntos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_mensajes",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "mensaje_id",
+    "obligatoria": true,
+    "padre": "correo_mensajes"
+   }
+  ]
+ },
+ "correo_autorespuesta": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_cuentas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cuenta_id",
+    "obligatoria": true,
+    "padre": "correo_cuentas"
+   }
+  ]
+ },
+ "correo_autorespuesta_enviadas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_cuentas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cuenta_id",
+    "obligatoria": true,
+    "padre": "correo_cuentas"
+   }
+  ]
+ },
+ "correo_bloqueados": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_borradores": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_borradores_adjuntos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_borradores",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "borrador_id",
+    "obligatoria": true,
+    "padre": "correo_borradores"
+   }
+  ]
+ },
+ "correo_carpetas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_cuentas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cuenta_id",
+    "obligatoria": true,
+    "padre": "correo_cuentas"
+   }
+  ]
+ },
+ "correo_categorias": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_compartidos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_mensajes (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "mensaje_id",
+    "obligatoria": true,
+    "padre": "correo_mensajes"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_cuentas": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_destinatarios_recientes": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_envios": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_envios_adjuntos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_envios",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "envio_id",
+    "obligatoria": true,
+    "padre": "correo_envios"
+   }
+  ]
+ },
+ "correo_equipo": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_mensajes",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "mensaje_id",
+    "obligatoria": true,
+    "padre": "correo_mensajes"
+   }
+  ]
+ },
+ "correo_equipo_auditoria": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_mensajes (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "mensaje_id",
+    "obligatoria": true,
+    "padre": "correo_mensajes"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_identidades": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_cuentas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cuenta_id",
+    "obligatoria": true,
+    "padre": "correo_cuentas"
+   }
+  ]
+ },
+ "correo_mensajes": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_cuentas, correo_categorias",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cuenta_id",
+    "obligatoria": true,
+    "padre": "correo_cuentas"
+   },
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": false,
+    "padre": "correo_categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "cliente_fiscal_id",
+    "obligatoria": false,
+    "padre": "clientes_fiscales"
+   }
+  ]
+ },
+ "correo_notas_internas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_mensajes (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "mensaje_id",
+    "obligatoria": true,
+    "padre": "correo_mensajes"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_operaciones": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_cuentas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "cuenta_id",
+    "obligatoria": true,
+    "padre": "correo_cuentas"
+   }
+  ]
+ },
+ "correo_plantillas": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_preferencias": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_reglas": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon (cruza con correo_categorias)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": false,
+    "padre": "correo_categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_reglas_categoria": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de correo_categorias (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": true,
+    "padre": "correo_categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_remitentes_confiables": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "correo_seguimientos": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "crm_actividades": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "crm_etapas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "crm_oportunidades": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "crm_reuniones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "dispositivos_push": {
+  "clase": "referencia",
+  "motivo": "dispositivos de la persona",
+  "via": []
+ },
+ "documentos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "errores_servidor": {
+  "clase": "local",
+  "motivo": "registro técnico global",
+  "via": []
+ },
+ "expediente_checklist": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de expedientes",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "expediente_id",
+    "obligatoria": true,
+    "padre": "expedientes"
+   }
+  ]
+ },
+ "expediente_control": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de expedientes, oficinas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "expediente_id",
+    "obligatoria": true,
+    "padre": "expedientes"
+   },
+   {
+    "clave": "id",
+    "columna": "oficina_id",
+    "obligatoria": false,
+    "padre": "oficinas"
+   }
+  ]
+ },
+ "expediente_eventos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de expedientes (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "expediente_id",
+    "obligatoria": true,
+    "padre": "expedientes"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "expediente_miembros": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de expedientes (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "expediente_id",
+    "obligatoria": true,
+    "padre": "expedientes"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "expedientes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "extras_guilda": {
+  "clase": "referencia",
+  "motivo": "catálogo comercial global",
+  "via": []
+ },
+ "facturacion_accesos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "facturacion_expedientes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "facturas_contables": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "facturas_contables_lineas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de facturas_contables",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "factura_id",
+    "obligatoria": true,
+    "padre": "facturas_contables"
+   }
+  ]
+ },
+ "festivos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "fichaje_avisos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de fichajes (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "entrada_id",
+    "obligatoria": true,
+    "padre": "fichajes"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "fichaje_avisos_turno": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "fichaje_datos": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "fichajes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id (filas sin él: se rellenan desde la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "fiscal_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "ia_adjuntos": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "ia_atajos": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "ia_consumo": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "ia_conversaciones": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "ia_mensajes": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "ia_preferencias": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "ia_soporte_uso": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "informes_tareas_suscripciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "inmobiliaria_ajustes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "inmobiliaria_comisiones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "inmobiliaria_contratos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "inmobiliaria_demandas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "inmobiliaria_enlaces": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "inmobiliaria_inmuebles": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "inmobiliaria_ofertas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "inmobiliaria_precios": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de inmobiliaria_inmuebles (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "inmueble_id",
+    "obligatoria": true,
+    "padre": "inmobiliaria_inmuebles"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "inmobiliaria_visitas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_adjuntos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_afirmaciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_auditoria": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_citas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_cobertura": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_conversaciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_documentos": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_ejecuciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_fragmentos": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_fragmentos_privados": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_fuente_despacho": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_fuentes": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_informes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "jur_originales": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_outbox": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_politicas": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_registros_fuente": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_relaciones": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_sync_runs": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "jur_versiones": {
+  "clase": "local",
+  "motivo": "corpus jurídico compartido (sin despacho)",
+  "via": []
+ },
+ "laboral_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "latidos": {
+  "clase": "local",
+  "motivo": "latidos de procesos globales",
+  "via": []
+ },
+ "leads_contacto": {
+  "clase": "local",
+  "motivo": "formulario público de la web de Guilda (aún sin despacho)",
+  "via": []
+ },
+ "mantenimiento": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "mcp_auditoria": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "mcp_uso": {
+  "clase": "referencia",
+  "motivo": "contador diario por persona",
+  "via": []
+ },
+ "membresias": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "mensajes_enlace": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "nominas_seguimiento": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "notas": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon (cruza con categorias)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": false,
+    "padre": "categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "notas_adjuntos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de notas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "nota_id",
+    "obligatoria": true,
+    "padre": "notas"
+   }
+  ]
+ },
+ "notas_participantes": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de notas (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "nota_id",
+    "obligatoria": true,
+    "padre": "notas"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "notificaciones": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "obligaciones_evidencias": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "oficinas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "partes_tiempo": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "pausas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "tarea_id",
+    "obligatoria": true,
+    "padre": "tareas"
+   }
+  ]
+ },
+ "planes_guilda": {
+  "clase": "referencia",
+  "motivo": "catálogo comercial global",
+  "via": []
+ },
+ "plantilla_tareas_items": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de plantillas_tareas",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "plantilla_id",
+    "obligatoria": true,
+    "padre": "plantillas_tareas"
+   }
+  ]
+ },
+ "plantillas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de categorias",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": true,
+    "padre": "categorias"
+   }
+  ]
+ },
+ "plantillas_cliente": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "plantillas_tareas": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "plazos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_recordatorios_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "proyecto_miembros": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de categorias (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": true,
+    "padre": "categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "proyecto_notas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de categorias (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": true,
+    "padre": "categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "proyecto_plantillas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "proyecto_secciones": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de categorias",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": true,
+    "padre": "categorias"
+   }
+  ]
+ },
+ "registro_rgpd": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "reglas_fiscales": {
+  "clase": "referencia",
+  "motivo": "catálogo fiscal global (lo valida el titular)",
+  "via": []
+ },
+ "reglas_laborales": {
+  "clase": "referencia",
+  "motivo": "catálogo laboral global",
+  "via": []
+ },
+ "salud_alertas": {
+  "clase": "local",
+  "motivo": "alertas de salud globales",
+  "via": []
+ },
+ "solicitudes_acceso_portal": {
+  "clase": "local",
+  "motivo": "solicitudes públicas previas a tener despacho",
+  "via": []
+ },
+ "tarea_actividad": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas_outlook (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "tarea_id",
+    "obligatoria": true,
+    "padre": "tareas_outlook"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tarea_adjuntos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tarea_avisos_correo": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas_outlook (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "tarea_id",
+    "obligatoria": true,
+    "padre": "tareas_outlook"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tarea_checklist": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas_outlook",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "tarea_outlook_id",
+    "obligatoria": true,
+    "padre": "tareas_outlook"
+   }
+  ]
+ },
+ "tarea_clientes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tarea_comentarios": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas_outlook (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "tarea_id",
+    "obligatoria": true,
+    "padre": "tareas_outlook"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tarea_comentarios_cliente": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tarea_comentarios_cliente_adjuntos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tarea_recordatorios": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas_outlook (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "tarea_id",
+    "obligatoria": true,
+    "padre": "tareas_outlook"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tarea_revision_votos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tarea_revisiones (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "revision_id",
+    "obligatoria": true,
+    "padre": "tarea_revisiones"
+   },
+   {
+    "clave": "id",
+    "columna": "revisor_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tarea_revisiones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tareas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de categorias (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": true,
+    "padre": "categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tareas_dependencias": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas_outlook, tareas_outlook",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "depende_de_id",
+    "obligatoria": true,
+    "padre": "tareas_outlook"
+   },
+   {
+    "clave": "id",
+    "columna": "tarea_id",
+    "obligatoria": true,
+    "padre": "tareas_outlook"
+   }
+  ]
+ },
+ "tareas_outlook": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon (cruza con categorias)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": false,
+    "padre": "categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tareas_participantes": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas_outlook (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "tarea_id",
+    "obligatoria": true,
+    "padre": "tareas_outlook"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tareas_por_vencimiento": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tareas_por_vencimiento_generadas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tareas_por_vencimiento",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "regla_id",
+    "obligatoria": true,
+    "padre": "tareas_por_vencimiento"
+   }
+  ]
+ },
+ "tareas_recurrentes": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon (cruza con categorias)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "categoria_id",
+    "obligatoria": false,
+    "padre": "categorias"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tareas_vistas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tenant_marca": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tenants": {
+  "clase": "referencia",
+  "motivo": "raíz del modelo multitenant",
+  "via": []
+ },
+ "tenants_extras_activos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tenants_herramientas_ocultas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tenants_verticales": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "tiquets": {
+  "clase": "usuario",
+  "motivo": "datos personales: despacho en que se crearon",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": true,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "tiquets_adjuntos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de tiquets",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "tiquet_id",
+    "obligatoria": true,
+    "padre": "tiquets"
+   }
+  ]
+ },
+ "tokens_api": {
+  "clase": "referencia",
+  "motivo": "credenciales de la persona",
+  "via": []
+ },
+ "tokens_api_uso": {
+  "clase": "referencia",
+  "motivo": "hija de tokens_api (referencia)",
+  "via": []
+ },
+ "trabajadores_cliente": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "traspasos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "turnos_asignados": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "turnos_tipos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "usuario_perfil": {
+  "clase": "referencia",
+  "motivo": "perfil de la persona, no del despacho",
+  "via": []
+ },
+ "usuarios": {
+  "clase": "referencia",
+  "motivo": "identidad global: un usuario puede estar en varios despachos",
+  "via": []
+ },
+ "usuarios_tenants": {
+  "clase": "referencia",
+  "motivo": "pertenencia usuario ↔ despacho (puede haber varias por usuario)",
+  "via": []
+ },
+ "vencimientos_escalados": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de vencimientos_fiscales",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "vencimiento_id",
+    "obligatoria": true,
+    "padre": "vencimientos_fiscales"
+   }
+  ]
+ },
+ "vencimientos_fiscales": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "vencimientos_fiscales_documentos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de vencimientos_fiscales",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "vencimiento_id",
+    "obligatoria": true,
+    "padre": "vencimientos_fiscales"
+   }
+  ]
+ },
+ "vencimientos_fiscales_mensajes": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de vencimientos_fiscales (o de la persona)",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "vencimiento_id",
+    "obligatoria": true,
+    "padre": "vencimientos_fiscales"
+   },
+   {
+    "clave": "id",
+    "columna": "usuario_id",
+    "obligatoria": false,
+    "padre": "usuarios"
+   }
+  ]
+ },
+ "vencimientos_fiscales_pagos": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de vencimientos_fiscales",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "vencimiento_id",
+    "obligatoria": true,
+    "padre": "vencimientos_fiscales"
+   }
+  ]
+ },
+ "vencimientos_recordatorios": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de vencimientos_fiscales",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "vencimiento_id",
+    "obligatoria": true,
+    "padre": "vencimientos_fiscales"
+   }
+  ]
+ },
+ "ver_como_tokens": {
+  "clase": "referencia",
+  "motivo": "suplantación por el operador de plataforma",
+  "via": []
+ },
+ "webhooks": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "webhooks_cola": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de webhooks",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "webhook_id",
+    "obligatoria": true,
+    "padre": "webhooks"
+   }
+  ]
+ },
+ "webhooks_entregas": {
+  "clase": "hija",
+  "motivo": "hereda el despacho de webhooks",
+  "via": [
+   {
+    "clave": "id",
+    "columna": "webhook_id",
+    "obligatoria": true,
+    "padre": "webhooks"
+   }
+  ]
+ }
+}

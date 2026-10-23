@@ -1,6 +1,6 @@
 # ADR: migración de SQLite a PostgreSQL + Citus (distribución por `tenant_id`)
 
-Estado: **fases 0 a 5 completadas (… esquema de PostgreSQL y búsqueda de texto)**. Aún no se ha cambiado código de la aplicación. Plan por fases: [plan-migracion-postgresql-citus.md](plan-migracion-postgresql-citus.md). Clasificación tabla a tabla: [migracion-clasificacion-tablas.csv](migracion-clasificacion-tablas.csv). Scripts: `scripts/migracion/` (solo lectura).
+Estado: **fases 0 a 5 completadas y 6a hecha (… búsqueda de texto y modelo del despacho)**. Aún no se ha cambiado código de la aplicación. Plan por fases: [plan-migracion-postgresql-citus.md](plan-migracion-postgresql-citus.md). Clasificación tabla a tabla: [migracion-clasificacion-tablas.csv](migracion-clasificacion-tablas.csv). Scripts: `scripts/migracion/` (solo lectura).
 
 ## Decisiones tomadas (2026-10-23)
 
@@ -192,3 +192,32 @@ Otras correcciones: los `LIKE` sobre texto escrito por personas ahora usan `LOWE
 Pruebas (`tests/test_busqueda_pg.py`, contra el servidor de ensayo): las 16 consultas jurídicas del corpus sintético devuelven los mismos documentos, totales, modos, huecos y avisos en SQLite y PostgreSQL (el MEJOR fragmento de un documento puede cambiar de uno a otro cuando varios coinciden: bm25 frente a ts_rank_cd); 18 búsquedas de correo idénticas (acentos, mayúsculas, prefijo, frase, números con punto, `50%`); el mensaje por sellar no se encuentra y sí tras sellarlo; la evaluación de recuperación del repositorio da el mismo resultado; los fragmentos privados respetan el despacho; el modo híbrido con embeddings funciona.
 
 **Lo que SÍ cambia para quien busca:** el orden de los resultados dentro de un mismo documento y entre documentos con puntuaciones parecidas puede variar respecto a SQLite. Con un corpus real y casos anotados por un profesional (hito 5 del piloto) conviene repetir la medición antes del corte.
+
+## Fase 6a: modelo multitenant, en una copia aislada (2026-10-24)
+
+**Cambio respecto al plan.** Se pensaba desplegar el relleno de `tenant_id` en producción sobre SQLite antes del corte. Se descarta: obligaría a triggers de SQLite que chocan con los que ya llevan `tareas_outlook`, `notas`, `categorias` y `tareas` (cada `UPDATE` generaría historial en `api_cambios` y subiría `version`). El `tenant_id` se calcula **al cargar los datos en PostgreSQL** (fase 8), donde la carga no dispara triggers y cada inserción toma el despacho de la conexión (`app.tenant_id`). La 6a queda en: el modelo como dato, su verificación sobre una copia de producción, y la pertenencia de una persona a varios despachos.
+
+### `app/bd/tenant.py` + `app/bd/tenant_modelo.json` (222 tablas)
+
+| Clase | Tablas | De dónde sale el despacho |
+|---|---:|---|
+| propio | 105 | ya lleva `tenant_id` (en `fichajes` y `auditoria_eventos`, las filas sin él se rellenan desde la persona) |
+| hija | 55 | hereda de su padre por clave foránea OBLIGATORIA (`correo_mensajes` → `correo_cuentas`, `notas_adjuntos` → `notas`…); si el padre no lo resuelve, de la persona |
+| usuario | 27 | datos personales (`notas`, `tareas_outlook`, correo, IA…): el despacho en que se crearon; hoy el principal de la persona |
+| referencia | 15 | catálogo global replicado: `tenants`, `usuarios`, `usuarios_tenants`, planes, reglas, perfiles y credenciales de la persona |
+| local | 20 | solo en el coordinador: corpus jurídico compartido y registros técnicos globales |
+
+`tests/test_tenant_modelo.py` obliga a clasificar cualquier tabla nueva (falla si el JSON se queda atrás) y comprueba que no hay ciclos y que cada hija tiene camino.
+
+**Verificación sobre una copia de producción** (`sqlite3.backup` desde una conexión de solo lectura): 229 filas rellenadas, **segunda pasada 0**, sin discrepancias entre padres (`padres_en_desacuerdo` y `distinto_del_padre` a 0), triggers restaurados, `api_cambios` y `version` sin tocar. 42 de las 43 tablas con datos quedan con despacho en TODAS sus filas; la restante es `jur_auditoria` (7 de 9 eventos de plataforma: registrar políticas, habilitar fuentes), que se admite sin despacho. Las dos personas sin despacho de producción no tienen datos propios hoy.
+
+### Una persona en varios despachos (y en varios tenants)
+
+Tabla `usuarios_tenants (usuario_id, tenant_id)`, de referencia. **`usuarios.tenant_id` sigue siendo el despacho PRINCIPAL** y la aplicación entera sigue leyéndolo: no hay cambio de comportamiento. El principal figura siempre en la tabla (se rellena en `init_db`). Funciones nuevas en `db`: `tenants_de_usuario`, `es_miembro_de_tenant`, `anadir_usuario_a_tenant`, `quitar_usuario_de_tenant` (si era el principal pasa al siguiente) y `fijar_tenant_principal`. `asignar_tenant` sigue MOVIENDO a la persona (su único despacho) y `desasignar_tenant` la saca de todos; `borrar_tenant` pasa a los miembros al siguiente despacho que tengan.
+
+Lo que **todavía no** existe (6c): el despacho ACTIVO de la sesión (selector), que `get_connection(despacho)` lo use en cada petición, y mover a la tabla de pertenencia los atributos que hoy son de la persona pero en realidad son del despacho (`supervisor_tenant`, `gestor_fichajes`, `custodio_certificados`, `tarifa_hora_centimos`).
+
+### Decisiones que quedan para la 6b/6c
+
+- **D14 (decidida 2026-10-24). Personas sin despacho** (operador de plataforma, usuario local) y eventos de plataforma: Citus no admite `NULL` en la columna de distribución, así que van al despacho reservado **`id = 0`, «Plataforma»**. Existe en el esquema de PostgreSQL (`app/bd/esquema_pg/07_semillas.sql`, `tenant.TENANT_PLATAFORMA`), no se puede borrar (`borrar_tenant(0)` lo rechaza) y ningún despacho nuevo puede tomar ese id (la identidad empieza en 1). `tenant.rellenar(por_defecto=TENANT_PLATAFORMA)` le asigna lo que no se deduce de la persona ni del padre. **No se crea en SQLite/producción**: aparecería en el listado de despachos del backoffice; en la 6c, los listados de despachos de PostgreSQL deben excluir el 0.
+- Las inserciones llevarán `tenant_id bigint NOT NULL DEFAULT current_setting('app.tenant_id')::bigint` (Citus evalúa la función en el coordinador); RLS lo comprueba con `WITH CHECK`. Pendiente de probar en la 6b.

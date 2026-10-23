@@ -328,6 +328,8 @@ ALTER TABLE turnos_asignados ADD CONSTRAINT fk_turnos_asignados_usuario_id FOREI
 ALTER TABLE turnos_tipos ADD CONSTRAINT fk_turnos_tipos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE usuario_perfil ADD CONSTRAINT fk_usuario_perfil_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
 ALTER TABLE usuarios ADD CONSTRAINT fk_usuarios_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
+ALTER TABLE usuarios_tenants ADD CONSTRAINT fk_usuarios_tenants_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE usuarios_tenants ADD CONSTRAINT fk_usuarios_tenants_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;
 ALTER TABLE vencimientos_escalados ADD CONSTRAINT fk_vencimientos_escalados_vencimiento_id FOREIGN KEY (vencimiento_id) REFERENCES vencimientos_fiscales (id) ON DELETE CASCADE;
 ALTER TABLE vencimientos_fiscales ADD CONSTRAINT fk_vencimientos_fiscales_cliente_fiscal_id FOREIGN KEY (cliente_fiscal_id) REFERENCES clientes_fiscales (id);
 ALTER TABLE vencimientos_fiscales ADD CONSTRAINT fk_vencimientos_fiscales_rectifica_a FOREIGN KEY (rectifica_a) REFERENCES vencimientos_fiscales (id);

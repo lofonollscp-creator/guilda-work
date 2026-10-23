@@ -699,6 +699,8 @@ def contar_fichajes_tenant(tenant_id: int) -> int:
 
 
 def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
+    if tenant_id == 0:
+        raise ValueError("El despacho «Plataforma» es interno y no se puede borrar.")
     """Borra el tenant y todo lo que cuelga de él (clientes fiscales con sus
     vencimientos, documentos, mensajes, pagos y accesos del portal; webhooks y
     sus entregas; extras y accesos de facturación). Los usuarios quedan sin
@@ -744,7 +746,9 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
         conn.execute("DELETE FROM tenants_extras_activos WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM facturacion_accesos WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM tenants_herramientas_ocultas WHERE tenant_id = ?", (tenant_id,))
-        conn.execute("UPDATE usuarios SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("DELETE FROM usuarios_tenants WHERE tenant_id = ?", (tenant_id,))
+        # quien tenía este despacho como principal pasa al siguiente que tenga, o a ninguno
+        conn.execute("UPDATE usuarios SET tenant_id = (SELECT MIN(m.tenant_id) FROM usuarios_tenants m WHERE m.usuario_id = usuarios.id) WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM tenants WHERE id = ?", (tenant_id,))
         conn.commit()
     except BaseException:
@@ -755,9 +759,11 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
 
 
 def desasignar_tenant(usuario_id: int) -> None:
+    """La persona deja TODOS sus despachos."""
     conn = _db.get_connection()
     try:
         conn.execute("UPDATE usuarios SET tenant_id = NULL WHERE id = ?", (usuario_id,))
+        conn.execute("DELETE FROM usuarios_tenants WHERE usuario_id = ?", (usuario_id,))
         conn.commit()
     finally:
         conn.close()
@@ -1019,8 +1025,68 @@ def obtener_tenant_por_nombre(nombre: str) -> sqlite3.Row | None:
 
 
 def asignar_tenant(usuario_id: int, tenant_id: int) -> None:
+    """MUEVE a la persona a ese despacho: pasa a ser su único despacho y el principal (como siempre). Para pertenecer a varios, `anadir_usuario_a_tenant`."""
     conn = _db.get_connection()
     try:
+        conn.execute("UPDATE usuarios SET tenant_id = ? WHERE id = ?", (tenant_id, usuario_id))
+        conn.execute("DELETE FROM usuarios_tenants WHERE usuario_id = ? AND tenant_id != ?", (usuario_id, tenant_id))
+        conn.execute("INSERT INTO usuarios_tenants (usuario_id, tenant_id, creado_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING", (usuario_id, tenant_id, _db.now_iso()))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def tenants_de_usuario(usuario_id: int) -> list[dict]:
+    """Despachos de la persona, el principal primero: [{id, nombre, principal}]."""
+    conn = _db.get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            "SELECT t.id, t.nombre, CASE WHEN t.id = u.tenant_id THEN 1 ELSE 0 END AS principal FROM usuarios_tenants m JOIN tenants t ON t.id = m.tenant_id "
+            "JOIN usuarios u ON u.id = m.usuario_id WHERE m.usuario_id = ? ORDER BY principal DESC, LOWER(t.nombre), t.id", (usuario_id,))]
+    finally:
+        conn.close()
+
+
+def es_miembro_de_tenant(usuario_id: int, tenant_id: int) -> bool:
+    conn = _db.get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM usuarios_tenants WHERE usuario_id = ? AND tenant_id = ?", (usuario_id, tenant_id)).fetchone() is not None
+    finally:
+        conn.close()
+
+
+def anadir_usuario_a_tenant(usuario_id: int, tenant_id: int) -> None:
+    """La persona pasa a pertenecer también a ese despacho (sin dejar los suyos). Si no tenía ninguno, este es el principal."""
+    conn = _db.get_connection()
+    try:
+        if conn.execute("SELECT 1 FROM usuarios WHERE id = ?", (usuario_id,)).fetchone() is None:
+            raise ValueError("La persona no existe.")
+        if conn.execute("SELECT 1 FROM tenants WHERE id = ?", (tenant_id,)).fetchone() is None:
+            raise ValueError("El despacho no existe.")
+        conn.execute("INSERT INTO usuarios_tenants (usuario_id, tenant_id, creado_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING", (usuario_id, tenant_id, _db.now_iso()))
+        conn.execute("UPDATE usuarios SET tenant_id = ? WHERE id = ? AND tenant_id IS NULL", (tenant_id, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def quitar_usuario_de_tenant(usuario_id: int, tenant_id: int) -> None:
+    """La persona deja ese despacho. Si era el principal, pasa a serlo el siguiente que tenga (o ninguno)."""
+    conn = _db.get_connection()
+    try:
+        conn.execute("DELETE FROM usuarios_tenants WHERE usuario_id = ? AND tenant_id = ?", (usuario_id, tenant_id))
+        conn.execute("UPDATE usuarios SET tenant_id = (SELECT MIN(m.tenant_id) FROM usuarios_tenants m WHERE m.usuario_id = usuarios.id) WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def fijar_tenant_principal(usuario_id: int, tenant_id: int) -> None:
+    """El despacho principal de la persona, que tiene que ser uno de los suyos."""
+    conn = _db.get_connection()
+    try:
+        if conn.execute("SELECT 1 FROM usuarios_tenants WHERE usuario_id = ? AND tenant_id = ?", (usuario_id, tenant_id)).fetchone() is None:
+            raise ValueError("La persona no pertenece a ese despacho.")
         conn.execute("UPDATE usuarios SET tenant_id = ? WHERE id = ?", (tenant_id, usuario_id))
         conn.commit()
     finally:

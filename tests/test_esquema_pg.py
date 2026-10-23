@@ -130,3 +130,19 @@ def test_todo_el_sql_de_la_aplicacion_es_valido_contra_el_esquema_de_postgres(ba
     total, fallos = validar_sql_pg.validar(url)
     assert total > 1500
     assert not fallos, f"{len(fallos)} sentencias que PostgreSQL rechaza:\n" + "\n".join(f"  {r}:{l}  {e}\n      {q}" for r, l, e, q in sorted(fallos)[:30])
+
+
+@pg_real
+def test_el_despacho_plataforma_existe_y_los_nuevos_nunca_toman_el_id_0(base_pg):
+    from app.bd import postgres as pg
+    conn = pg.conectar()
+    try:
+        assert conn.execute("SELECT nombre FROM tenants WHERE id = 0").fetchone()["nombre"] == "Plataforma"
+        nuevo = conn.execute("INSERT INTO tenants (nombre, creado_en) VALUES ('Despacho real', 'ahora')").lastrowid
+        assert nuevo >= 1
+        from app.bd import esquema
+        assert esquema.crear_si_falta(conn) is False                 # la semilla no se duplica ni se repite
+        assert conn.execute("SELECT COUNT(*) FROM tenants WHERE id = 0").fetchone()[0] == 1
+        conn.commit()
+    finally:
+        conn.close()

@@ -65,7 +65,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 - **Salida:** tests de búsqueda en verde en ambos motores y evaluación sin regresión.
 
 ### Fase 6 — Modelo multitenant para Citus (≈ 2-3 semanas)
-- **6a (en SQLite, se despliega antes del corte):** añadir `tenant_id` a las 47 tablas con solo `usuario_id` y a las hijas que lo necesiten, con relleno desde el padre, y comprobaciones de que no hay filas huérfanas ni cruzadas entre despachos.
+- **6a (HECHA 2026-10-24, en una copia aislada; el relleno se hace al cargar en PostgreSQL, ver ADR):** añadir `tenant_id` a las 47 tablas con solo `usuario_id` y a las hijas que lo necesiten, con relleno desde el padre, y comprobaciones de que no hay filas huérfanas ni cruzadas entre despachos.
 - **6b (esquema PostgreSQL/Citus):**
   - Claves primarias `(tenant_id, id)` y claves foráneas compuestas entre tablas distribuidas.
   - Los `UNIQUE` globales (token, email, etc.) se revisan uno a uno: incluir `tenant_id`, moverlos a tabla de referencia o resolverlos con una tabla de búsqueda.

@@ -65,6 +65,16 @@ CREATE TABLE IF NOT EXISTS tenants (
     creado_en TEXT NOT NULL
 );
 
+-- Despachos a los que pertenece cada persona. `usuarios.tenant_id` sigue siendo el despacho PRINCIPAL (el que usa hoy toda la aplicación) y
+-- siempre figura aquí; una persona puede además pertenecer a otros (app/db_plataforma.py: anadir_usuario_a_tenant). Ver app/bd/tenant.py.
+CREATE TABLE IF NOT EXISTS usuarios_tenants (
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    creado_en TEXT NOT NULL,
+    PRIMARY KEY (usuario_id, tenant_id)
+);
+CREATE INDEX IF NOT EXISTS idx_usuarios_tenants_tenant ON usuarios_tenants(tenant_id);
+
 -- Clientes fiscales de un tenant (gestoría), para el calendario de
 -- vencimientos -- deliberadamente NO integrado con EspoCRM (app/espocrm.py):
 -- EspoCRM es opcional/ocultable por tenant (ver tabla de abajo), así que
@@ -2320,6 +2330,8 @@ def init_db() -> None:
         traspasos.crear_esquema(conn)         # traspasos de clientes entre personas y oficinas, y responsable del cliente (app/traspasos.py)
         from . import avisos
         avisos.crear_esquema(conn)            # motor de avisos del control fiscal: alertas con acuse y escalado (app/avisos.py)
+        # El despacho principal de cada persona figura siempre entre sus despachos (idempotente; las altas y bajas posteriores lo mantienen db_plataforma).
+        conn.execute("INSERT INTO usuarios_tenants (usuario_id, tenant_id, creado_en) SELECT id, tenant_id, ? FROM usuarios WHERE tenant_id IS NOT NULL ON CONFLICT DO NOTHING", (now_iso(),))
 
         conn.commit()
     finally:
@@ -2821,6 +2833,11 @@ from .db_plataforma import (  # noqa: E402,F401
     guardar_umami,
     obtener_tenant_por_nombre,
     asignar_tenant,
+    tenants_de_usuario,
+    es_miembro_de_tenant,
+    anadir_usuario_a_tenant,
+    quitar_usuario_de_tenant,
+    fijar_tenant_principal,
     guardar_datos_tenant,
     zona_horaria_valida,
     zona_horaria_tenant,
