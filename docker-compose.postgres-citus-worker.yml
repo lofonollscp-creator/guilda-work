@@ -1,0 +1,41 @@
+# Segundo nodo (worker) de Citus para el ENSAYO de crecimiento (fase 9 de docs/plan-migracion-postgresql-citus.md): demuestra que la vía de crecimiento funciona
+# —añadir un nodo y reequilibrar los fragmentos sin parar— antes de necesitarla. Se une a la red de la instancia de ensayo (docker-compose.postgres-citus.yml, que debe estar
+# arrancada) y se maneja con scripts/pg_ensayo_worker.sh. Sin puerto publicado, sin datos reales, memoria acotada.
+name: guilda-pg-ensayo-worker
+services:
+  worker:
+    image: guilda-work-citus:ensayo
+    container_name: guilda-pg-ensayo-worker
+    restart: "no"
+    environment:
+      POSTGRES_USER: guilda
+      POSTGRES_PASSWORD: ${PG_ENSAYO_PASSWORD:-ensayo}
+      POSTGRES_DB: postgres
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=citus,pg_stat_statements
+      - -c
+      - wal_level=logical
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - max_connections=100
+      - -c
+      - citus.shard_count=16
+    shm_size: 128mb
+    mem_limit: 1024m
+    networks: [ensayo]
+    volumes:
+      - citus-ensayo-worker:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guilda -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+networks:
+  ensayo:
+    external: true
+    name: guilda-pg-ensayo_default
+volumes:
+  citus-ensayo-worker:

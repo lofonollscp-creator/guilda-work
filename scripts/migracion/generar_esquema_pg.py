@@ -306,10 +306,14 @@ def generar_multitenant(ruta_sqlite, modelo=None):
     # despacho, o trabaja en el 0, no pierde la suya). Lo demás de la persona (perfil, credenciales, dispositivos...) se ve si se ve a la persona. Las políticas llaman a
     # funciones SECURITY DEFINER porque Citus no admite subconsultas dentro de CREATE POLICY ("unexpected non-SELECT command in SubLink").
     ctx_usuario = "nullif(current_setting('app.usuario_id', true), '')::bigint"
+    # Estas funciones se evalúan DENTRO de las consultas de los fragmentos (al unir una tabla distribuida con `usuarios`) y solo leen tablas de REFERENCIA, presentes en todos los
+    # nodos: por eso, y solo para ellas, se permite la ejecución anidada de Citus (sin ello, "cannot execute a distributed query from a query on a shard"). Hallazgo de la fase 9.
+    anidada = "SET citus.allow_nested_distributed_execution = on"
     rls += ["", "-- Personas y despachos (tablas de referencia): lo que ve cada despacho de los demás.",
-            f"CREATE OR REPLACE FUNCTION usuario_visible(uid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$\n"
+            "-- Las funciones solo leen tablas de REFERENCIA y se evalúan dentro de las consultas de los fragmentos: se permite la ejecución anidada de Citus (fase 9).",
+            f"CREATE OR REPLACE FUNCTION usuario_visible(uid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public {anidada} AS $$\n"
             f"    SELECT uid = {ctx_usuario} OR EXISTS (SELECT 1 FROM usuarios_tenants m WHERE m.usuario_id = uid AND m.tenant_id = {CONTEXTO_TENANT})\n$$;",
-            "CREATE OR REPLACE FUNCTION token_visible(tid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$\n"
+            f"CREATE OR REPLACE FUNCTION token_visible(tid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public {anidada} AS $$\n"
             "    SELECT EXISTS (SELECT 1 FROM tokens_api t WHERE t.id = tid AND usuario_visible(t.usuario_id))\n$$;",
             "ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;", "DROP POLICY IF EXISTS aislamiento ON tenants;",
             f"CREATE POLICY aislamiento ON tenants USING (id = {CONTEXTO_TENANT});",

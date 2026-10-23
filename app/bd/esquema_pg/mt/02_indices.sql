@@ -159,6 +159,7 @@ CREATE INDEX IF NOT EXISTS idx_trabajadores_cliente ON trabajadores_cliente (cli
 CREATE INDEX IF NOT EXISTS idx_traspasos_tenant ON traspasos (tenant_id, estado);
 CREATE INDEX IF NOT EXISTS idx_turnos_asignados_fecha ON turnos_asignados (tenant_id, fecha);
 CREATE INDEX IF NOT EXISTS idx_turnos_tipos_tenant ON turnos_tipos (tenant_id, archivado);
+CREATE INDEX IF NOT EXISTS idx_usuarios_tenant ON usuarios (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_usuarios_tenants_tenant ON usuarios_tenants (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_cliente ON vencimientos_fiscales (cliente_fiscal_id);
 CREATE INDEX IF NOT EXISTS idx_vencimientos_fiscales_documentos_vencimiento ON vencimientos_fiscales_documentos (vencimiento_id);

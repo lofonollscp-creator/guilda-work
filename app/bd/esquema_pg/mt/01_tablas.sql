@@ -2849,8 +2849,8 @@ CREATE TABLE IF NOT EXISTS tenants_extras_activos (
 
 CREATE TABLE IF NOT EXISTS tenants_herramientas_ocultas (
     tenant_id bigint NOT NULL DEFAULT nullif(current_setting('app.tenant_id', true), '')::bigint,
-    herramienta_id text NOT NULL,
-    UNIQUE (tenant_id, herramienta_id)
+    herramienta_id text,
+    PRIMARY KEY (tenant_id, herramienta_id)
 );
 
 CREATE TABLE IF NOT EXISTS tenants_verticales (

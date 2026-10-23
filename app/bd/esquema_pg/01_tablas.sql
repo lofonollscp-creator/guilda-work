@@ -2775,9 +2775,9 @@ CREATE TABLE IF NOT EXISTS tenants_extras_activos (
 );
 
 CREATE TABLE IF NOT EXISTS tenants_herramientas_ocultas (
-    tenant_id bigint NOT NULL,
-    herramienta_id text NOT NULL,
-    UNIQUE (tenant_id, herramienta_id)
+    tenant_id bigint,
+    herramienta_id text,
+    PRIMARY KEY (tenant_id, herramienta_id)
 );
 
 CREATE TABLE IF NOT EXISTS tenants_verticales (

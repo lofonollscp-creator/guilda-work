@@ -329,3 +329,47 @@ Recuento por tabla y por despacho · suma de control por columna (hash de 64 bit
 - **`backoffice.db`** (10 tablas, `sqlite3` directo) no se migra: hay que pasar su código por la capa `app/bd` o decidir que sigue siendo SQLite (D2 lo retira).
 - La copia de producción es pequeña (un despacho): los tiempos para muchos despachos se medirán en la fase 9 con datos sintéticos.
 - La exportación inversa (`scripts/exportar_a_sqlite.py`) es de la fase 11.
+
+## Fase 9: rendimiento, concurrencia y escalado (2026-10-24)
+
+Herramienta: `scripts/probar.sh --carga --motor postgres --url postgresql://guilda:ensayo@127.0.0.1:55432/postgres --despachos 30 --usuarios 90 --vencimientos 30000 --segundos 60 --pausa 3 --fondo [--procesos 3] [--explicar] [--esquema multitenant]` (`scripts/prueba_carga.py`). Siembra los datos en SQLite, los **migra con la herramienta de la fase 8** a una base Citus, y recorre la aplicación real (Flask, mismas pantallas y 15 % de escrituras) con el rol **sin privilegios** `guilda_app` (RLS activa) y 30 despachos; además, el trabajador del BOE (normas y fragmentos), la sincronización de correo y las pasadas de automatizaciones/tareas recurrentes. Vigila las esperas de bloqueo y los interbloqueos, recoge de `pg_stat_statements` el tiempo que ve el servidor y hace `EXPLAIN (ANALYZE)` de las 30 consultas más costosas.
+
+### Hallazgos que la carga destapó (los cuatro eran invisibles con una sola conexión y los tests de la fase 7)
+1. **RLS + unión con `usuarios` = error 500.** La política de `usuarios` llama a `usuario_visible()`, que lee `usuarios_tenants`; al unir una tabla distribuida con `usuarios` la función se evalúa DENTRO de la consulta del fragmento y Citus la rechazaba («cannot execute a distributed query from a query on a shard»). Las funciones solo leen tablas de **referencia**, así que se les permite la ejecución anidada (`SET citus.allow_nested_distributed_execution = on` en la propia función, no en el rol). Generador y `09_rls.sql` actualizados; test de regresión en `tests/test_citus.py`.
+2. **`BEGIN IMMEDIATE` global.** En PostgreSQL se traducía a un bloqueo consultivo ÚNICO: todos los escritores de todos los despachos hacían cola (657 esperas «advisory» y 59 interbloqueos en un minuto). Ahora el bloqueo es **por despacho** (`pg_advisory_xact_lock(clave, despacho)`).
+3. **Escribir en tablas de referencia serializa a todos los escritores.** Citus toma un bloqueo exclusivo del fragmento replicado en cada escritura (`usuario_perfil`, `usuarios.ultimo_acceso`…) y lo mantiene hasta el commit: en el arranque en frío (90 primeras visitas a la vez) la media de un `INSERT` en `usuario_perfil` fue de **1,0 s** y hubo interbloqueos distribuidos. En régimen estable no hay escrituras en tablas de referencia (medido: 0 por minuto; solo el alta de una fuente jurídica), pero **la regla queda escrita: nada en la ruta caliente de una petición debe escribir en una tabla de referencia**. La herramienta ahora cuenta esas escrituras y calienta la primera visita (`--sin-calentar` mide el arranque en frío).
+4. **Sin índice en `usuarios(tenant_id)`, la política evalúa una función por CADA persona de la plataforma** antes de filtrar por despacho (cada llamada ≈ 50–100 µs: lectura de compañeros 21,8 ms de media con 90 personas; con 50.000 serían segundos). Con `idx_usuarios_tenant` el plan usa el índice y la función se evalúa solo en las filas del despacho (3,6 ms). Índice creado en `init_db` y regenerados los ficheros del esquema.
+
+### Cifras (90 personas, 30 despachos, 60 s, 15 % de escrituras, trabajos de fondo; VPS de 4 núcleos compartido con ~25 contenedores)
+| Configuración | Peticiones/s | Peor p95 de pantalla | Errores | Esperas de bloqueo / interbloqueos |
+|---|---|---|---|---|
+| SQLite, 1 proceso (la instalación actual) | 19 | 6,9 s | 0 | – |
+| SQLite, 3 procesos | 28 | 0,12 s | 0 | – |
+| Citus, 1 proceso, sin los arreglos 1–2 (prueba corta de 10 personas: 33 de 69 peticiones con HTTP 500) | – | – | 33 × HTTP 500 | – |
+| Citus, 1 proceso, con el hallazgo 1 corregido y sin los demás | 22 | 5,7 s | 0 | 18 de 248 muestras (hasta 39 sesiones esperando) / 40 |
+| **Citus, 1 proceso, con los arreglos** | 23 | **2,2 s** | **0** | **0 / 0** |
+| **Citus, 3 procesos, con los arreglos** | 26 | **1,2 s** | **0** | **0 / 0** |
+| PostgreSQL llano (multitenant sin distribuir), 1 proceso | 25 | 2,1 s | 0 | 0 / 0 |
+
+Cómo leerlo: con un proceso de Python (como hoy, 16 hilos de waitress) el límite es el GIL, no la base de datos: SQLite y PostgreSQL se parecen, y PostgreSQL gana en la cola larga porque no serializa escritores. Con varios procesos SQLite es más rápido en latencia pura (consultas en el mismo proceso) y PostgreSQL ya no se satura. **El servidor ve ≈ 2.200 sentencias/s (≈ 95 por petición) con 0,64 ms de media y 100 % de aciertos de caché**; en PostgreSQL llano la media es 0,12 ms: **Citus de un nodo cuesta ≈ 5× más CPU de servidor por sentencia** (el planificador distribuido), a cambio de la vía de crecimiento. Las sentencias preparadas (`GUILDA_PG_PREPARAR=3`) no lo compensan (−6 % de tiempo de servidor) y quedan desactivadas por defecto (PgBouncer).
+
+### Consultas (EXPLAIN de las 30 más costosas, ya con RLS)
+Todas las de la aplicación van a **un solo fragmento** (`Task Count: 1`) y ninguna recorre en secuencial una tabla grande; el tiempo de ejecución en el servidor es ≈ 1 ms (el resto de lo que ve Python es espera del GIL). La única con 16 fragmentos era una llamada de la propia herramienta sin despacho. Candidatas a mejorar (no urgentes): ≈ 95 sentencias por pantalla, con la misma fila leída varias veces (`usuarios` por id ×1,5, `tenants`, `usuario_perfil`, idioma, `onboarding_visible`); una memoización por petición ahorraría ≈ 8 por pantalla.
+
+### Dimensionado del pool
+Con 90 personas en un proceso: pool 4 → p95 2,9 s; 8 → 2,6 s; 16 → 2,5 s; 20 → 2,2 s; el servidor llegó a 9, 14, 20 y 19 sesiones activas. Recomendación: **`GUILDA_PG_POOL_MAX = hilos de waitress (16) − 4 = 12` por proceso y rol**, y `max_connections` ≥ suma de los pools de todos los procesos (web, MCP, backoffice, trabajos) + 20. **PgBouncer no hace falta todavía** (≈ 25 sesiones activas); el cliente ya es compatible (sin sentencias preparadas, `SET LOCAL` dentro de la transacción).
+
+### Ensayo con un segundo nodo (la vía de crecimiento funciona)
+Contenedor `guilda-pg-ensayo-worker` (misma imagen, 1 GB) unido a la base de la prueba de carga (3.000 fragmentos de 30 despachos): `scripts/pg_ensayo_worker.sh unir|reequilibrar|drenar|estado` y `scripts/pg_ensayo_rebalanceo.py`, que mantiene 12 hilos leyendo y escribiendo con el rol `guilda_app` (RLS) mientras el coordinador mueve fragmentos.
+| Operación bajo tráfico | Duración | Errores | Escrituras confirmadas / perdidas | p95 durante (máx.) |
+|---|---|---|---|---|
+| Reequilibrar 3.000 fragmentos hacia el worker (1.516 / 1.506) | 150–200 s | **0** | 42.229 / **0** | 10 ms (1,5 s) |
+| Drenar el worker (todo vuelve al coordinador) | 146 s | **0** | 41.111 / **0** | 9 ms (1,8 s) |
+Las uniones con `usuarios` (política con función) funcionan con el fragmento en el worker (30 de 30 despachos). Tres hallazgos operativos:
+1. **Los nodos necesitan autenticarse entre sí con el MISMO rol de la sesión** (`guilda_app`, `guilda_plataforma`, el de las migraciones): Citus no admite `password` en `citus.node_conninfo`. Sin ello, en cuanto un fragmento se mueve, 27.418 de 99.297 operaciones fallaron con «ConnectionFailure … no password supplied». En el ensayo se resolvió con un `.pgpass` del usuario `postgres` en cada nodo; en producción, `.pgpass` o `pg_hba` por red privada/certificados. **Runbook de la fase 10: añadir un nodo = crear la base y las extensiones, `.pgpass` con los tres roles, `citus_add_node`, `citus_rebalance_start`.**
+2. **Toda tabla distribuida necesita clave primaria** (la replicación lógica con la que se mueven los fragmentos): `tenants_herramientas_ocultas` solo tenía `UNIQUE`. Ahora es `PRIMARY KEY` (SQLite y esquemas regenerados) y un test lo vigila.
+3. Un nodo drenado queda con `shouldhaveshards=false`; para reutilizarlo hay que ponerlo a `true` antes de reequilibrar.
+
+### Pendiente de la fase 9
+- PgBouncer sin probar (haría falta descargar su imagen); no hace falta hoy.
+- Limpieza del ensayo: `scripts/pg_ensayo_worker.sh destruir` y `scripts/pg_ensayo.sh borrar gw_carga` cuando no se necesiten.

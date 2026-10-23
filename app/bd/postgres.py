@@ -165,7 +165,9 @@ class ConexionPG:
         self._raw.execute("BEGIN")
         self._aplicar_despacho()
         if inmediata:
-            self._raw.execute("select pg_advisory_xact_lock(hashtext(%s))", (_CLAVE_BEGIN_IMMEDIATE,))
+            # BEGIN IMMEDIATE de SQLite serializa a TODOS los escritores; en PostgreSQL basta con serializar los de un mismo despacho (los que no tienen, el 0): un bloqueo global
+            # frenaba a todos los despachos entre sí y provocaba interbloqueos con los bloqueos de fila (fase 9).
+            self._raw.execute("select pg_advisory_xact_lock(hashtext(%s), %s)", (_CLAVE_BEGIN_IMMEDIATE, int(self._despacho or 0) % 2147483647))
 
     def modo_secuencial(self):
         """Citus: dentro de esta transacción los borrados/actualizaciones sobre varios shards van uno tras otro. Hace falta en operaciones largas que mezclan tablas distribuidas y de referencia
@@ -413,7 +415,9 @@ def _obtener_pool(rol: str = "app"):
             maximo = int(os.environ.get("GUILDA_PG_POOL_MAX", "20"))
             _pools[rol] = ConnectionPool(
                 _url(rol), min_size=1, max_size=maximo, open=True, timeout=float(os.environ.get("GUILDA_PG_POOL_ESPERA", "10")),
-                kwargs={"autocommit": True, "prepare_threshold": None},    # sin sentencias preparadas: compatible con PgBouncer
+                # Sin sentencias preparadas por defecto (compatible con PgBouncer en modo transacción). GUILDA_PG_PREPARAR=N las usa tras N ejecuciones de la misma sentencia
+                # (solo con conexión directa a PostgreSQL): Citus guarda entonces el plan de las consultas de un solo fragmento en vez de planificarlas cada vez.
+                kwargs={"autocommit": True, "prepare_threshold": int(os.environ.get("GUILDA_PG_PREPARAR", "0")) or None},
                 max_lifetime=1800, configure=_configurar_conexion,
             )
         return _pools[rol]

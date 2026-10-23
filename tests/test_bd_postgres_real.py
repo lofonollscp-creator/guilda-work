@@ -132,3 +132,23 @@ def test_rls_con_despacho_por_transaccion(pgdb):
     assert nadie.execute(f"SELECT count(*) AS n FROM {t}").fetchone()["n"] == 0          # sin contexto: nada (fallo seguro)
     nadie.execute("RESET ROLE")
     nadie.close()
+
+
+def test_begin_immediate_solo_serializa_a_los_escritores_del_mismo_despacho(pgdb):
+    """Hallazgo de la fase 9: un bloqueo global frenaba a todos los despachos entre sí (y daba interbloqueos con los bloqueos de fila de Citus)."""
+    pg.fijar_url(URL)
+    a, otro_despacho, mismo_despacho = pg.conectar(despacho=1), pg.conectar(despacho=2), pg.conectar(despacho=1)
+    try:
+        a.execute("BEGIN IMMEDIATE")
+        otro_despacho.execute("BEGIN IMMEDIATE")                                  # no espera: es de otro despacho
+        mismo_despacho._raw.execute("SET lock_timeout = '300ms'")
+        with pytest.raises(psycopg.errors.LockNotAvailable):
+            mismo_despacho.execute("BEGIN IMMEDIATE")                             # el mismo despacho sí espera a que termine la transacción de `a`
+        mismo_despacho.rollback()
+        a.rollback()
+        otro_despacho.rollback()
+        mismo_despacho.execute("BEGIN IMMEDIATE")                                 # liberado, ya entra
+        mismo_despacho.rollback()
+    finally:
+        for c in (a, otro_despacho, mismo_despacho):
+            c.close()

@@ -68,6 +68,14 @@ def test_los_ficheros_multitenant_estan_al_dia(_plantilla_bd):
     assert not atrasados, f"{atrasados} no coinciden: ejecuta scripts/migracion/generar_esquema_pg.py <base.db> --multitenant"
 
 
+def test_toda_tabla_distribuida_tiene_clave_primaria_para_poder_moverse_entre_nodos(citus):
+    """Hallazgo de la fase 9: Citus mueve los fragmentos con replicación lógica, que exige clave primaria o identidad de réplica (`tenants_herramientas_ocultas` solo tenía UNIQUE)."""
+    with psycopg.connect(citus, autocommit=True) as c:
+        sin = c.execute("SELECT p.logicalrelid::text FROM pg_dist_partition p JOIN pg_class k ON k.oid = p.logicalrelid WHERE k.relreplident = 'd' "
+                        "AND NOT EXISTS (SELECT 1 FROM pg_index i WHERE i.indrelid = k.oid AND i.indisprimary) ORDER BY 1").fetchall()
+    assert not sin, f"sin clave primaria (no se pueden reequilibrar sin parar): {[r[0] for r in sin]}"
+
+
 def test_el_esquema_citus_tiene_la_forma_esperada(citus):
     with psycopg.connect(citus, autocommit=True) as c:
         tipos = dict(c.execute("SELECT table_name::text, citus_table_type FROM citus_tables").fetchall())
@@ -108,6 +116,27 @@ def test_cada_despacho_solo_ve_y_escribe_lo_suyo(citus, como_app):
         assert p.execute("SELECT count(*) FROM notas").fetchone()[0] >= 1
     finally:
         p.close()
+
+
+def test_unir_una_tabla_distribuida_con_usuarios_funciona_con_el_rol_de_la_aplicacion(citus, como_app):
+    """Hallazgo de la fase 9: la política de `usuarios` llama a una función que lee `usuarios_tenants`; al unirla con una tabla distribuida se evalúa DENTRO de la consulta del
+    fragmento y Citus la rechazaba ("cannot execute a distributed query from a query on a shard") salvo que la función permita la ejecución anidada (solo lee tablas de referencia)."""
+    _sembrar(citus)
+    with psycopg.connect(citus, autocommit=True) as c:
+        for u, t in ((10, 1), (20, 2)):
+            c.execute("INSERT INTO usuarios_tenants (usuario_id, tenant_id, creado_en) VALUES (%s, %s, 'x') ON CONFLICT DO NOTHING", (u, t))
+            c.execute("INSERT INTO correo_cuentas (tenant_id, usuario_id, nombre, protocolo, host, puerto, usuario, creada_en) VALUES (%s, %s, 'c', 'imap', 'h', 993, 'u', 'x')", (t, u))
+    a = como_app()
+    try:
+        a.execute("SET LOCAL citus.propagate_set_commands = 'local'")
+        a.execute("SET LOCAL app.tenant_id = '1'")
+        a.execute("SET LOCAL app.usuario_id = '10'")
+        assert a.execute("SELECT c.tenant_id FROM correo_cuentas c JOIN usuarios u ON u.id = c.usuario_id AND c.tenant_id = 1").fetchall() == [(1,)]
+        assert a.execute("SELECT EXISTS(SELECT 1 FROM correo_cuentas c JOIN usuarios u ON u.id = c.usuario_id WHERE u.tenant_id = 2 AND c.tenant_id = 1)").fetchone()[0] is False, \
+            "las personas de otro despacho no se ven en la unión"
+        a.rollback()
+    finally:
+        a.close()
 
 
 def test_las_claves_foraneas_compuestas_impiden_apuntar_a_otro_despacho(citus, como_app):

@@ -87,7 +87,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 - **Ensayo con una copia de producción dentro del mismo servidor** (mismos permisos, sin sacar datos del VPS).
 - **Salida:** migración de la copia completa sin discrepancias en 3 ensayos seguidos.
 
-### Fase 9 — Rendimiento, concurrencia y escalado (≈ 1 semana)
+### Fase 9 — Rendimiento, concurrencia y escalado (≈ 1 semana) — **hecha (2026-10-24)**: 4 hallazgos corregidos, cifras, dimensionado del pool y ensayo de un segundo nodo (reequilibrar y drenar bajo tráfico sin errores ni escrituras perdidas) en el ADR
 - Prueba de carga con escritores concurrentes, el trabajador del BOE, correo y automatizaciones; dimensionado de pool y PgBouncer.
 - Revisión de `EXPLAIN` de las 30 consultas críticas y de planes distribuidos.
 - Ensayo local con **un worker adicional** y reequilibrado de shards para demostrar la vía de crecimiento (en contenedores).

@@ -201,7 +201,7 @@ CREATE TABLE IF NOT EXISTS solicitudes_acceso_portal (
 CREATE TABLE IF NOT EXISTS tenants_herramientas_ocultas (
     tenant_id INTEGER NOT NULL REFERENCES tenants(id),
     herramienta_id TEXT NOT NULL,
-    UNIQUE (tenant_id, herramienta_id)
+    PRIMARY KEY (tenant_id, herramienta_id)      -- (clave primaria y no UNIQUE: Citus mueve los fragmentos con replicación lógica, que la exige)
 );
 
 CREATE TABLE IF NOT EXISTS tokens_api (
@@ -1904,6 +1904,8 @@ def init_db() -> None:
         # el widget de soporte de Chatwoot, que necesita saber a qué
         # tenant pertenece quien escribe).
         _asegurar_columna(conn, "usuarios", "tenant_id", "INTEGER REFERENCES tenants(id)")
+        # «Las personas de un despacho» (compañeros, asignaciones): sin índice, en PostgreSQL la política de seguridad evalúa una función por cada persona de la plataforma antes de filtrar.
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_usuarios_tenant ON usuarios(tenant_id)")
 
         # Fichaje (registro horario): quien tiene este flag administra el
         # fichaje SOLO de su propio tenant (usuarios.tenant_id) -- distinto

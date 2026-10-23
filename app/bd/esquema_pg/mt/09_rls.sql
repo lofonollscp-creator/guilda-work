@@ -561,10 +561,11 @@ DROP POLICY IF EXISTS aislamiento ON webhooks_entregas;
 CREATE POLICY aislamiento ON webhooks_entregas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 
 -- Personas y despachos (tablas de referencia): lo que ve cada despacho de los demás.
-CREATE OR REPLACE FUNCTION usuario_visible(uid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+-- Las funciones solo leen tablas de REFERENCIA y se evalúan dentro de las consultas de los fragmentos: se permite la ejecución anidada de Citus (fase 9).
+CREATE OR REPLACE FUNCTION usuario_visible(uid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public SET citus.allow_nested_distributed_execution = on AS $$
     SELECT uid = nullif(current_setting('app.usuario_id', true), '')::bigint OR EXISTS (SELECT 1 FROM usuarios_tenants m WHERE m.usuario_id = uid AND m.tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint)
 $$;
-CREATE OR REPLACE FUNCTION token_visible(tid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+CREATE OR REPLACE FUNCTION token_visible(tid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public SET citus.allow_nested_distributed_execution = on AS $$
     SELECT EXISTS (SELECT 1 FROM tokens_api t WHERE t.id = tid AND usuario_visible(t.usuario_id))
 $$;
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
