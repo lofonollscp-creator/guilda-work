@@ -261,7 +261,7 @@ def crear_tenant(nombre: str) -> int:
 def listar_tenants() -> list[sqlite3.Row]:
     conn = _db.get_connection()
     try:
-        return conn.execute("SELECT * FROM tenants ORDER BY nombre").fetchall()
+        return conn.execute("SELECT * FROM tenants WHERE id > 0 ORDER BY nombre").fetchall()           # el 0 es «Plataforma», no un despacho
     finally:
         conn.close()
 
@@ -288,13 +288,14 @@ def resumen_equipos_tenants() -> dict[int, dict]:
     try:
         filas = conn.execute(
             """SELECT t.id,
-                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id) AS usuarios,
-                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.rol = 'admin') AS admins,
-                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.gestor_fichajes = 1) AS gestores,
-                      (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id AND u.supervisor_tenant = 1) AS supervisores,
-                      (SELECT COUNT(*) FROM clientes_fiscales c WHERE c.tenant_id = t.id AND c.papelera_en IS NULL) AS clientes,
-                      (SELECT p.nombre FROM planes_guilda p WHERE p.id = t.plan_id) AS plan
-               FROM tenants t"""
+                      COALESCE(u.n, 0) AS usuarios, COALESCE(u.admins, 0) AS admins, COALESCE(u.gestores, 0) AS gestores, COALESCE(u.supervisores, 0) AS supervisores,
+                      COALESCE(c.n, 0) AS clientes, p.nombre AS plan
+               FROM tenants t
+               LEFT JOIN (SELECT tenant_id, COUNT(*) AS n, SUM(CASE WHEN rol = 'admin' THEN 1 ELSE 0 END) AS admins,
+                                 SUM(CASE WHEN gestor_fichajes = 1 THEN 1 ELSE 0 END) AS gestores, SUM(CASE WHEN supervisor_tenant = 1 THEN 1 ELSE 0 END) AS supervisores
+                          FROM usuarios WHERE tenant_id IS NOT NULL GROUP BY tenant_id) u ON u.tenant_id = t.id
+               LEFT JOIN (SELECT tenant_id, COUNT(*) AS n FROM clientes_fiscales WHERE papelera_en IS NULL GROUP BY tenant_id) c ON c.tenant_id = t.id
+               LEFT JOIN planes_guilda p ON p.id = t.plan_id WHERE t.id > 0"""
         ).fetchall()
         return {f["id"]: dict(f) for f in filas}
     finally:
@@ -320,8 +321,8 @@ def resumen_plataforma() -> dict:
     sobre tablas pequeñas) y siempre se piden juntas."""
     conn = _db.get_connection()
     try:
-        tenants_total = conn.execute("SELECT COUNT(*) FROM tenants").fetchone()[0]
-        tenants_activos = conn.execute("SELECT COUNT(*) FROM tenants WHERE activo = 1").fetchone()[0]
+        tenants_total = conn.execute("SELECT COUNT(*) FROM tenants WHERE id > 0").fetchone()[0]
+        tenants_activos = conn.execute("SELECT COUNT(*) FROM tenants WHERE activo = 1 AND id > 0").fetchone()[0]
         usuarios_total = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
         mrr_centimos = conn.execute(
             "SELECT COALESCE(SUM(pg.precio_mensual_centimos), 0) FROM tenants t "
@@ -329,7 +330,7 @@ def resumen_plataforma() -> dict:
             "WHERE t.suscripcion_estado = 'activa'"
         ).fetchone()[0]
         tenants_recientes = conn.execute(
-            "SELECT id, nombre, creado_en FROM tenants ORDER BY creado_en DESC LIMIT 5"
+            "SELECT id, nombre, creado_en FROM tenants WHERE id > 0 ORDER BY creado_en DESC LIMIT 5"
         ).fetchall()
         return {
             "tenants_total": tenants_total,
@@ -704,7 +705,8 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
     """Borra el tenant y todo lo que cuelga de él (clientes fiscales con sus
     vencimientos, documentos, mensajes, pagos y accesos del portal; webhooks y
     sus entregas; extras y accesos de facturación). Los usuarios quedan sin
-    tenant, no se borran, igual que sus tareas, notas y correo.
+    tenant, no se borran. En SQLite se conservan también sus tareas, notas y correo; en PostgreSQL con despachos, lo que se creó en ese despacho (también lo
+    personal) se borra con él: la columna de despacho de cada fila no se puede cambiar.
 
     El registro de jornada (fichajes) hay que conservarlo cuatro años por ley
     (art. 34.9 ET): si el tenant tiene fichajes, se rechaza el borrado salvo que
@@ -719,6 +721,8 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
                     f"El tenant tiene {n} fichajes, que la ley obliga a conservar cuatro años. "
                     "Expórtalos y confirma que quieres borrarlos también."
                 )
+        if _db._bd.es_postgres(conn):
+            conn.modo_secuencial()
         from . import auditoria, avisos, certificados, traspasos
         auditoria.purgar_tenant(conn, tenant_id)                   # el despacho se elimina entero: su rastro también (solo aquí se puede borrar)
         avisos.borrar_datos_de_tenant(conn, tenant_id)
@@ -746,6 +750,8 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
         conn.execute("DELETE FROM tenants_extras_activos WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM facturacion_accesos WHERE tenant_id = ?", (tenant_id,))
         conn.execute("DELETE FROM tenants_herramientas_ocultas WHERE tenant_id = ?", (tenant_id,))
+        if _db._bd.es_postgres(conn):
+            _db._bd.tenant.borrar_filas_de_tenant(conn, tenant_id)
         conn.execute("DELETE FROM usuarios_tenants WHERE tenant_id = ?", (tenant_id,))
         # quien tenía este despacho como principal pasa al siguiente que tenga, o a ninguno
         conn.execute("UPDATE usuarios SET tenant_id = (SELECT MIN(m.tenant_id) FROM usuarios_tenants m WHERE m.usuario_id = usuarios.id) WHERE tenant_id = ?", (tenant_id,))
@@ -1043,6 +1049,62 @@ def tenants_de_usuario(usuario_id: int) -> list[dict]:
         return [dict(f) for f in conn.execute(
             "SELECT t.id, t.nombre, CASE WHEN t.id = u.tenant_id THEN 1 ELSE 0 END AS principal FROM usuarios_tenants m JOIN tenants t ON t.id = m.tenant_id "
             "JOIN usuarios u ON u.id = m.usuario_id WHERE m.usuario_id = ? ORDER BY principal DESC, LOWER(t.nombre), t.id", (usuario_id,))]
+    finally:
+        conn.close()
+
+
+def tenant_activo(usuario_id: int, preferido: int | None = None) -> int | None:
+    """Despacho con el que trabaja la persona en esta sesión: el `preferido` (el que eligió en el selector) si sigue siendo suyo; si no, el principal."""
+    conn = _db.get_connection(plataforma=True)
+    try:
+        principal = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        principal = principal["tenant_id"] if principal else None
+        if preferido is None or preferido == principal:
+            return principal
+        return preferido if conn.execute("SELECT 1 FROM usuarios_tenants WHERE usuario_id = ? AND tenant_id = ?", (usuario_id, preferido)).fetchone() else principal
+    finally:
+        conn.close()
+
+
+_ATRIBUTOS_POR_DESPACHO = ("gestor_fichajes", "supervisor_tenant", "custodio_certificados", "tarifa_hora_centimos")
+
+
+def atributos_en_despacho(usuario_id: int, tenant_id: int | None) -> dict:
+    """gestor_fichajes, supervisor_tenant, custodio_certificados y tarifa_hora_centimos de la persona EN ese despacho: en el principal, los de `usuarios`; en los demás, los de su pertenencia."""
+    vacio = {"gestor_fichajes": 0, "supervisor_tenant": 0, "custodio_certificados": 0, "tarifa_hora_centimos": None}
+    if tenant_id is None:
+        return vacio
+    conn = _db.get_connection(plataforma=True)
+    try:
+        u = conn.execute("SELECT tenant_id, gestor_fichajes, supervisor_tenant, custodio_certificados, tarifa_hora_centimos FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        if u is None:
+            return vacio
+        if u["tenant_id"] == tenant_id:
+            return {k: u[k] for k in _ATRIBUTOS_POR_DESPACHO}
+        m = conn.execute("SELECT gestor_fichajes, supervisor_tenant, custodio_certificados, tarifa_hora_centimos FROM usuarios_tenants WHERE usuario_id = ? AND tenant_id = ?",
+                         (usuario_id, tenant_id)).fetchone()
+        return {k: m[k] for k in _ATRIBUTOS_POR_DESPACHO} if m else vacio
+    finally:
+        conn.close()
+
+
+def fijar_atributos_en_despacho(usuario_id: int, tenant_id: int, **atributos) -> None:
+    """Cambia atributos de la persona en ese despacho (en el principal, en `usuarios`; en los demás, en su pertenencia). Solo los cuatro conocidos."""
+    desconocidos = set(atributos) - set(_ATRIBUTOS_POR_DESPACHO)
+    if desconocidos:
+        raise ValueError(f"Atributo desconocido: {', '.join(sorted(desconocidos))}")
+    if not atributos:
+        return
+    conn = _db.get_connection(plataforma=True)
+    try:
+        u = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+        if u is None:
+            raise ValueError("La persona no existe.")
+        tabla, clave = ("usuarios", ("id = ?", (usuario_id,))) if u["tenant_id"] == tenant_id else ("usuarios_tenants", ("usuario_id = ? AND tenant_id = ?", (usuario_id, tenant_id)))
+        if tabla == "usuarios_tenants" and conn.execute("SELECT 1 FROM usuarios_tenants WHERE usuario_id = ? AND tenant_id = ?", (usuario_id, tenant_id)).fetchone() is None:
+            raise ValueError("La persona no pertenece a ese despacho.")
+        conn.execute(f"UPDATE {tabla} SET " + ", ".join(f"{k} = ?" for k in atributos) + f" WHERE {clave[0]}", (*atributos.values(), *clave[1]))
+        conn.commit()
     finally:
         conn.close()
 

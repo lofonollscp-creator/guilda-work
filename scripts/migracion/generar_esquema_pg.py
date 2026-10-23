@@ -161,6 +161,33 @@ CONTEXTO_TENANT = "nullif(current_setting('app.tenant_id', true), '')::bigint"
 SALIDA_MT = RAIZ / "app" / "bd" / "esquema_pg" / "mt"
 
 
+def _cuerpo_vista_multitenant(cuerpo: str) -> str:
+    """El SELECT de una vista con `tenant_id` como PRIMERA columna de cada rama y los joins entre tablas distribuidas unidos también por tenant_id (Citus los exige)."""
+    sys.path.insert(0, str(RAIZ))
+    from pglast import ast, enums, parse_sql
+    from pglast.stream import RawStream
+    from app.bd import citus
+    arbol = parse_sql(cuerpo)
+
+    def hojas(sel):
+        if sel.op != enums.SetOperation.SETOP_NONE:
+            yield from hojas(sel.larg)
+            yield from hojas(sel.rarg)
+        else:
+            yield sel
+    for hoja in hojas(arbol[0].stmt):
+        alias = next(a for a, t in citus._tablas(hoja.fromClause).items() if t in citus.distribuidas())
+        # las constantes de texto llevan tipo explícito: Citus no resuelve «unknown» entre las ramas de un UNION
+        objetivos = []
+        for rt in hoja.targetList:
+            if isinstance(rt.val, ast.A_Const) and isinstance(rt.val.val, ast.String):
+                rt = ast.ResTarget(name=rt.name, val=ast.TypeCast(arg=rt.val, typeName=ast.TypeName(names=(ast.String(sval="pg_catalog"), ast.String(sval="text")), typemod=-1)))
+            objetivos.append(rt)
+        hoja.targetList = (ast.ResTarget(name="tenant_id", val=citus._colref(alias)),) + tuple(objetivos)
+    citus._Reescritor().sentencia(arbol[0].stmt, [])
+    return RawStream()(arbol)
+
+
 def generar_multitenant(ruta_sqlite, modelo=None):
     """Esquema con `tenant_id` en toda tabla de un despacho, claves primarias, UNIQUE y claves foráneas compuestas, y los guiones de distribución y de RLS.
 
@@ -275,7 +302,32 @@ def generar_multitenant(ruta_sqlite, modelo=None):
         rls.append(f"ALTER TABLE {t} ENABLE ROW LEVEL SECURITY;")
         rls.append(f"DROP POLICY IF EXISTS aislamiento ON {t};")
         rls.append(f"CREATE POLICY aislamiento ON {t} USING (tenant_id = {CONTEXTO_TENANT}) WITH CHECK (tenant_id = {CONTEXTO_TENANT});")
-    vistas = [f"CREATE OR REPLACE VIEW {n} AS\n" + re.sub(r"^\s*CREATE\s+VIEW\s+\S+\s+AS\s*", "", sql, flags=re.I).strip() + ";\n" for t, n, _, sql in maestro if t == "view"]
+    # Tablas de referencia con datos de personas: cada despacho ve a SUS miembros (usuarios_tenants), y cada persona su propia ficha (app.usuario_id: así quien aún no tiene
+    # despacho, o trabaja en el 0, no pierde la suya). Lo demás de la persona (perfil, credenciales, dispositivos...) se ve si se ve a la persona. Las políticas llaman a
+    # funciones SECURITY DEFINER porque Citus no admite subconsultas dentro de CREATE POLICY ("unexpected non-SELECT command in SubLink").
+    ctx_usuario = "nullif(current_setting('app.usuario_id', true), '')::bigint"
+    rls += ["", "-- Personas y despachos (tablas de referencia): lo que ve cada despacho de los demás.",
+            f"CREATE OR REPLACE FUNCTION usuario_visible(uid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$\n"
+            f"    SELECT uid = {ctx_usuario} OR EXISTS (SELECT 1 FROM usuarios_tenants m WHERE m.usuario_id = uid AND m.tenant_id = {CONTEXTO_TENANT})\n$$;",
+            "CREATE OR REPLACE FUNCTION token_visible(tid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$\n"
+            "    SELECT EXISTS (SELECT 1 FROM tokens_api t WHERE t.id = tid AND usuario_visible(t.usuario_id))\n$$;",
+            "ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;", "DROP POLICY IF EXISTS aislamiento ON tenants;",
+            f"CREATE POLICY aislamiento ON tenants USING (id = {CONTEXTO_TENANT});",
+            "ALTER TABLE usuarios_tenants ENABLE ROW LEVEL SECURITY;", "DROP POLICY IF EXISTS aislamiento ON usuarios_tenants;",
+            f"CREATE POLICY aislamiento ON usuarios_tenants USING (tenant_id = {CONTEXTO_TENANT}) WITH CHECK (tenant_id = {CONTEXTO_TENANT});",
+            "ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;", "DROP POLICY IF EXISTS aislamiento ON usuarios;",
+            "CREATE POLICY aislamiento ON usuarios USING (usuario_visible(id)) WITH CHECK (usuario_visible(id));"]
+    for t in refs:
+        cols_t = {c[1] for c in con.execute(f'PRAGMA table_info("{t}")').fetchall()} if t in sql_de else set()
+        if t in ("tenants", "usuarios", "usuarios_tenants") or t not in sql_de:
+            continue
+        if "usuario_id" in cols_t:
+            rls += [f"ALTER TABLE {t} ENABLE ROW LEVEL SECURITY;", f"DROP POLICY IF EXISTS aislamiento ON {t};",
+                    f"CREATE POLICY aislamiento ON {t} USING (usuario_visible(usuario_id)) WITH CHECK (usuario_visible(usuario_id));"]
+        elif t == "tokens_api_uso":
+            rls += [f"ALTER TABLE {t} ENABLE ROW LEVEL SECURITY;", f"DROP POLICY IF EXISTS aislamiento ON {t};",
+                    f"CREATE POLICY aislamiento ON {t} USING (token_visible(token_id)) WITH CHECK (token_visible(token_id));"]
+    vistas = [f"CREATE OR REPLACE VIEW {n} AS\n" + _cuerpo_vista_multitenant(re.sub(r"^\s*CREATE\s+VIEW\s+\S+\s+AS\s*", "", sql, flags=re.I).strip()) + ";\n" for t, n, _, sql in maestro if t == "view"]
     set_null = ["-- ON DELETE SET NULL entre tablas distribuidas, como triggers (Citus no lo admite en claves foráneas que incluyen tenant_id). Generado.", ""]
     for padre, hijas in sorted(anulan.items()):
         cuerpo = "\n".join(f"    UPDATE {h} SET {c} = NULL WHERE tenant_id = OLD.tenant_id AND {c} = OLD.{k};" for h, c, k in sorted(hijas))

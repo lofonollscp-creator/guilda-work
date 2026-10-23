@@ -15456,3 +15456,6 @@ msgstr "Última càrrega correcta"
 
 msgid "— Sin cliente —"
 msgstr "— Sense client —"
+
+msgid "Despacho"
+msgstr "Despatx"

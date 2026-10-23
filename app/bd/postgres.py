@@ -134,8 +134,9 @@ def _devolver_seguro(raw, devolver):
 
 
 class ConexionPG:
-    def __init__(self, raw, devolver, despacho=None, savepoints=True):
+    def __init__(self, raw, devolver, despacho=None, savepoints=True, usuario=None):
         self._raw = raw
+        self._usuario = usuario
         self._savepoints = savepoints
         self._despacho = despacho
         self._cerrada = False
@@ -155,7 +156,7 @@ class ConexionPG:
 
     def _aplicar_despacho(self):
         if self._despacho is not None:
-            self._raw.execute("select set_config('app.tenant_id', %s, true)", (str(self._despacho),))
+            self._raw.execute("select set_config('app.tenant_id', %s, true), set_config('app.usuario_id', %s, true)", (str(self._despacho), "" if self._usuario is None else str(self._usuario)))
 
     # --- transacciones -----------------------------------------------------
     def _abrir_transaccion(self, inmediata=False):
@@ -165,6 +166,13 @@ class ConexionPG:
         self._aplicar_despacho()
         if inmediata:
             self._raw.execute("select pg_advisory_xact_lock(hashtext(%s))", (_CLAVE_BEGIN_IMMEDIATE,))
+
+    def modo_secuencial(self):
+        """Citus: dentro de esta transacción los borrados/actualizaciones sobre varios shards van uno tras otro. Hace falta en operaciones largas que mezclan tablas distribuidas y de referencia
+        (p. ej. borrar un despacho entero); sin él Citus las rechaza («parallel DML access…»). No hace nada si no hay Citus."""
+        self._abrir_transaccion()
+        if self._raw.execute("SELECT current_setting('citus.multi_shard_modify_mode', true)").fetchone()[0] is not None:
+            self._raw.execute("SET LOCAL citus.multi_shard_modify_mode TO 'sequential'")
 
     def commit(self):
         if self.in_transaction:
@@ -256,13 +264,34 @@ class ConexionPG:
         raise NoPortable("create_function es de SQLite: la función debe existir como función SQL en PostgreSQL")
 
     # --- internos ----------------------------------------------------------
-    @staticmethod
-    def _argumentos(p, params):
+    def _argumentos(self, p, params):
+        con, sin = (p.sql_con_parametros, p.sql_sin_parametros)
+        if p.con_despacho is not None:                                              # Citus: la consulta lleva `tenant_id = <despacho>` y se resuelve en un solo shard
+            from .citus import SENTINELA
+            despacho = self._despacho if self._despacho is not None else self._despacho_de_la_fila(p, params)
+            if despacho is not None:
+                con, sin = (x.replace(SENTINELA, str(int(despacho))) for x in p.con_despacho)
+            elif p.insert_vias is not None:
+                raise RuntimeError("INSERT en una tabla de despacho sin despacho: abre la conexión con db.get_connection(despacho) o dentro de `with bd.contexto.en_despacho(...)`.")
+            else:
+                con, sin = p.sql_con_parametros, p.sql_sin_parametros
         if p.nombrados:
-            return p.sql_con_parametros, dict(params or {})
+            return con, dict(params or {})
         if params is None or len(params) == 0:
-            return p.sql_sin_parametros, None
-        return p.sql_con_parametros, tuple(params)
+            return sin, None
+        return con, tuple(params)
+
+    def _despacho_de_la_fila(self, p, params):
+        """Conexión de la plataforma (trabajos en segundo plano, sin despacho): el de la persona o del padre de la fila que se inserta, según el modelo (app/bd/tenant_modelo.json)."""
+        for _columna, padre, clave, numero in (p.insert_vias or ()):
+            try:
+                valor = params[numero - 1]
+            except (TypeError, IndexError, KeyError):
+                continue
+            fila = self._raw.execute(f'SELECT tenant_id FROM "{padre}" WHERE "{clave}" = %s', (valor,)).fetchone()
+            if fila is not None:
+                return fila[0] if fila[0] is not None else 0                          # la persona sin despacho trabaja en «Plataforma»
+        return None
 
     def _con_savepoint(self, accion):
         if not (self._savepoints and self.in_transaction):
@@ -312,48 +341,72 @@ class ConexionPG:
 
 
 # --- pool -------------------------------------------------------------------
-_pool = None
+# Dos pools: el de la aplicación (rol sujeto a RLS) y el de la plataforma (se salta la RLS). Si no se configura una URL propia para la plataforma, ambos usan GUILDA_DATABASE_URL
+# (desarrollo y pruebas con un solo rol).
+_pools: dict = {}
 _url_forzada: Optional[str] = None
+_url_plataforma_forzada: Optional[str] = None
 _candado_pool = threading.Lock()
 
 
-def fijar_url(url: Optional[str]) -> None:
-    """Para tests y herramientas: usa esta URL en lugar de GUILDA_DATABASE_URL (y descarta el pool actual)."""
-    global _url_forzada
-    _url_forzada = url
+def activar_citus(activo: bool = True) -> None:
+    """Reescribe las consultas para que Citus las reparta (app/bd/citus.py). También con GUILDA_PG_CITUS=1 al arrancar."""
+    from . import citus, traduccion
+    traduccion.configurar_reescritor(citus.reescribir_sqlite if activo else None, citus.reescribir_sqlite_con_despacho if activo else None,
+                                     citus.reescribir_insert if activo else None)
+
+
+if os.environ.get("GUILDA_PG_CITUS", "0") == "1":
+    activar_citus(True)
+
+
+def fijar_url(url: Optional[str], url_plataforma: Optional[str] = None) -> None:
+    """Para tests y herramientas: usa estas URL en lugar de las variables de entorno (y descarta los pools actuales)."""
+    global _url_forzada, _url_plataforma_forzada
+    _url_forzada, _url_plataforma_forzada = url, url_plataforma
     cerrar_pool()
 
 
-def _url() -> str:
-    url = _url_forzada or os.environ.get("GUILDA_DATABASE_URL", "")
+def _url(rol: str = "app") -> str:
+    if rol == "plataforma":
+        url = _url_plataforma_forzada or os.environ.get("GUILDA_DATABASE_URL_PLATAFORMA", "") or _url_forzada or os.environ.get("GUILDA_DATABASE_URL", "")
+    else:
+        url = _url_forzada or os.environ.get("GUILDA_DATABASE_URL", "")
     if not url:
         raise RuntimeError("GUILDA_DB_ENGINE=postgres requiere GUILDA_DATABASE_URL")
     return url
 
 
-def _obtener_pool():
-    global _pool
+def _obtener_pool(rol: str = "app"):
     with _candado_pool:
-        if _pool is None:
+        if rol not in _pools:
             from psycopg_pool import ConnectionPool
             maximo = int(os.environ.get("GUILDA_PG_POOL_MAX", "20"))
-            _pool = ConnectionPool(
-                _url(), min_size=1, max_size=maximo, open=True, timeout=float(os.environ.get("GUILDA_PG_POOL_ESPERA", "10")),
+            _pools[rol] = ConnectionPool(
+                _url(rol), min_size=1, max_size=maximo, open=True, timeout=float(os.environ.get("GUILDA_PG_POOL_ESPERA", "10")),
                 kwargs={"autocommit": True, "prepare_threshold": None},    # sin sentencias preparadas: compatible con PgBouncer
                 max_lifetime=1800,
             )
-        return _pool
+        return _pools[rol]
 
 
 def cerrar_pool() -> None:
-    global _pool
     with _candado_pool:
-        pool, _pool = _pool, None
-    if pool is not None:
+        pools = list(_pools.values())
+        _pools.clear()
+    for pool in pools:
         pool.close()
 
 
-def conectar(despacho: Optional[int] = None) -> ConexionPG:
-    pool = _obtener_pool()
+def conectar(despacho: Optional[int] = None, plataforma: bool = False) -> ConexionPG:
+    """Conexión como la aplicación (con `despacho`, sujeta a RLS) o como la plataforma. Sin argumentos, lo que diga el contexto (app/bd/contexto.py)."""
+    from . import contexto
+    if despacho is None and not plataforma:
+        despacho = contexto.despacho_actual()
+        plataforma = contexto.es_plataforma() or despacho is None
+    elif despacho is not None:
+        plataforma = False
+    rol = "plataforma" if plataforma else "app"
+    pool = _obtener_pool(rol)
     raw = pool.getconn()
-    return ConexionPG(raw, pool.putconn, despacho=despacho, savepoints=os.environ.get("GUILDA_PG_SAVEPOINTS", "1") != "0")
+    return ConexionPG(raw, pool.putconn, despacho=despacho, savepoints=os.environ.get("GUILDA_PG_SAVEPOINTS", "1") != "0", usuario=None if plataforma else contexto.usuario_actual())

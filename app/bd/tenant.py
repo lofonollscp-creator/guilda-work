@@ -293,3 +293,18 @@ def informe(conn) -> dict:
                 f'AND tenant_id != (SELECT p.tenant_id FROM "{v.padre}" p WHERE p."{v.clave}" = "{t}"."{v.columna}")').fetchone()[0]
         out[t] = d
     return out
+
+
+def borrar_filas_de_tenant(conn, tenant_id: int, excepto: tuple = ("auditoria_eventos",)) -> dict[str, int]:
+    """PostgreSQL con despachos: borra TODAS las filas del despacho de todas las tablas distribuidas, hijas antes que padres. Citus no deja cambiar el `tenant_id` de una fila, así que
+    lo creado en un despacho (también lo personal: tareas, notas, correo) no puede quedarse «sin despacho» como en SQLite: se va con él. La auditoría se purga aparte
+    (`auditoria.purgar_tenant`, la única puerta). Se llama dentro de la transacción de `borrar_tenant`."""
+    clases = cargar_modelo()
+    borradas = {}
+    for t in reversed(orden_de_relleno(clases)):
+        if t in excepto:
+            continue
+        n = conn.execute(f'DELETE FROM "{t}" WHERE tenant_id = ?', (tenant_id,)).rowcount
+        if n:
+            borradas[t] = n
+    return borradas

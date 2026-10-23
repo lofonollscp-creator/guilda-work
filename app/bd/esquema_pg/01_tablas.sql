@@ -2959,6 +2959,10 @@ CREATE TABLE IF NOT EXISTS usuarios_tenants (
     usuario_id bigint,
     tenant_id bigint,
     creado_en text NOT NULL,
+    gestor_fichajes bigint NOT NULL DEFAULT 0,
+    supervisor_tenant bigint NOT NULL DEFAULT 0,
+    custodio_certificados bigint NOT NULL DEFAULT 0,
+    tarifa_hora_centimos bigint,
     PRIMARY KEY (usuario_id, tenant_id)
 );
 

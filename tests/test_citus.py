@@ -172,15 +172,91 @@ def test_las_consultas_de_un_despacho_van_a_un_solo_shard_y_el_join_colocalizado
         assert "Task Count: 16" in sin_filtro, "sin el despacho en la consulta se reparte por los 16 shards"
 
 
-PENDIENTES_CITUS = 112          # consultas que Citus aún no sabe planificar (docs/migracion-citus-consultas-pendientes.txt): al arreglarlas, baja este número
-
-
-def test_las_consultas_que_citus_rechaza_no_aumentan(citus):
-    """Planifica (sin ejecutar) todo el SQL de la aplicación contra Citus. Una consulta nueva con un join sin `tenant_id` sube el número y hace fallar la prueba."""
+def _planificar(citus, **kw):
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "migracion"))
     import validar_sql_citus
-    ok, router, repartidas, fallos, inserciones = validar_sql_citus.validar(citus, valor="1")
+    ok, router, repartidas, fallos, inserciones = validar_sql_citus.validar(citus, valor="1", **kw)
     reales = [f for f in fallos if "cannot be coerced" not in f[2]]                 # los de «bytea» son del propio planificador de pruebas (pasa un entero)
-    assert ok > 1500
-    assert len(reales) <= PENDIENTES_CITUS, f"{len(reales)} consultas rechazadas por Citus (límite {PENDIENTES_CITUS}); las nuevas:\n" + "\n".join(f"  {r}:{l}  {e}\n      {q}" for r, l, e, q in sorted(reales)[:15])
+    return ok, router, repartidas, reales
+
+
+def test_ninguna_consulta_de_la_aplicacion_es_rechazada_por_citus_con_una_conexion_de_despacho(citus):
+    """Planifica (sin ejecutar) todo el SQL de la aplicación como lo envía una conexión de la aplicación con despacho: reescrito y con el filtro de despacho."""
+    ok, router, repartidas, reales = _planificar(citus, con_despacho=True)
+    assert ok > 1700
+    assert router > ok * 0.95, f"solo {router} de {ok} van a un solo shard"
+    assert not reales, f"{len(reales)} consultas rechazadas por Citus:\n" + "\n".join(f"  {r}:{l}  {e}\n      {q}" for r, l, e, q in sorted(reales)[:15])
+
+
+def test_las_consultas_de_la_plataforma_solo_fallan_las_conocidas(citus):
+    """Una conexión de la plataforma (sin despacho) lleva solo las igualdades de tenant_id; las 4 de «participantes» con OR + vista se usan siempre desde una petición con despacho."""
+    ok, router, repartidas, reales = _planificar(citus, reescribir=True)
+    assert len(reales) <= 4, "\n".join(f"  {r}:{l}  {e}" for r, l, e, q in sorted(reales)[:10])
+
+
+@pytest.fixture
+def aplicacion_en_citus(citus, como_app, monkeypatch):
+    """La aplicación entera apuntando a Citus: pool de la aplicación con el rol sujeto a RLS, pool de la plataforma con el que se la salta, y la reescritura activada."""
+    from psycopg.conninfo import make_conninfo
+    from app import bd
+    from app.bd import postgres as pg
+    with psycopg.connect(citus, autocommit=True) as c:
+        c.execute("ALTER ROLE guilda_app PASSWORD 'prueba-app'")
+        c.execute("ALTER ROLE guilda_plataforma PASSWORD 'prueba-plataforma'")
+    pg.fijar_url(make_conninfo(citus, user="guilda_app", password="prueba-app"), make_conninfo(citus, user="guilda_plataforma", password="prueba-plataforma"))
+    pg.activar_citus(True)
+    monkeypatch.setattr(bd, "MOTOR", "postgres")
+    yield
+    pg.activar_citus(False)
+    pg.fijar_url(None)
+
+
+def test_la_aplicacion_corre_en_citus_con_su_despacho_y_los_trabajos_con_el_de_la_fila(citus, aplicacion_en_citus):
+    from app import db
+    from app.bd import contexto
+    _sembrar(citus)
+    with psycopg.connect(citus, autocommit=True) as c:
+        c.execute("INSERT INTO usuarios_tenants (usuario_id, tenant_id, creado_en) VALUES (10, 1, 'x'), (20, 2, 'x') ON CONFLICT DO NOTHING")
+    with contexto.en_despacho(1):
+        conn = db.get_connection()
+        nid = conn.execute("INSERT INTO notas (usuario_id, texto, creada_en) VALUES (?, ?, ?)", (10, "del despacho 1", "x")).lastrowid
+        conn.execute("INSERT INTO categorias (usuario_id, nombre, creada_en) VALUES (?, 'P1', 'x')", (10,))
+        conn.commit()
+        fila = conn.execute("SELECT n.id, c.nombre FROM notas n LEFT JOIN categorias c ON c.usuario_id = n.usuario_id WHERE n.id = ?", (nid,)).fetchone()   # join sin tenant_id: lo añade la capa
+        assert fila["id"] == nid and fila["nombre"] == "P1"
+        conn.close()
+    with contexto.en_despacho(2):
+        conn = db.get_connection()
+        assert conn.execute("SELECT COUNT(*) FROM notas WHERE id = ?", (nid,)).fetchone()[0] == 0, "el despacho 2 no ve la nota del 1"
+        conn.close()
+    with contexto.como_plataforma():                                                  # un trabajo en segundo plano: ve todo y no tiene despacho
+        conn = db.get_connection()
+        assert conn.execute("SELECT COUNT(*) FROM notas WHERE id = ?", (nid,)).fetchone()[0] == 1
+        # inserta una fila de una persona SIN despacho en la conexión: el despacho sale de la persona (modelo de tenant_modelo.json)
+        conn.execute("INSERT INTO notificaciones (usuario_id, tipo, titulo, creado_en) VALUES (?, 'aviso', 'hola', 'x')", (20,))
+        conn.commit()
+        assert conn.execute("SELECT tenant_id FROM notificaciones WHERE usuario_id = 20").fetchone()[0] == 2
+        conn.close()
+        # una fila que no se puede atribuir a ningún despacho se rechaza con un mensaje que dice qué hacer
+        conn = db.get_connection()
+        with pytest.raises(RuntimeError, match="sin despacho"):
+            conn.execute("INSERT INTO notas (usuario_id, texto, creada_en) VALUES (?, 'huérfana', 'x')", (99999,))
+        conn.close()
+
+
+def test_borrar_un_despacho_borra_todo_lo_suyo_incluido_lo_personal(citus, aplicacion_en_citus):
+    from app import db
+    from app.bd import contexto
+    with psycopg.connect(citus, autocommit=True) as c:
+        c.execute("INSERT INTO tenants (id, nombre, creado_en) VALUES (77, 'A borrar', 'x') ON CONFLICT DO NOTHING")
+        c.execute("INSERT INTO usuarios (id, email, contrasena_hash, creado_en, tenant_id) VALUES (770, 'borrar@x.es', 'x', 'x', 77) ON CONFLICT DO NOTHING")
+        c.execute("INSERT INTO usuarios_tenants (usuario_id, tenant_id, creado_en) VALUES (770, 77, 'x') ON CONFLICT DO NOTHING")
+        c.execute("INSERT INTO notas (tenant_id, usuario_id, texto, creada_en) VALUES (77, 770, 'n', 'x')")
+        c.execute("INSERT INTO clientes (tenant_id, nombre, creado_en) VALUES (77, 'Cliente', 'x')")
+    db.borrar_tenant(77)
+    with psycopg.connect(citus, autocommit=True) as c:
+        assert c.execute("SELECT count(*) FROM tenants WHERE id = 77").fetchone()[0] == 0
+        assert c.execute("SELECT count(*) FROM notas WHERE tenant_id = 77").fetchone()[0] == 0
+        assert c.execute("SELECT count(*) FROM clientes WHERE tenant_id = 77").fetchone()[0] == 0
+        assert c.execute("SELECT tenant_id FROM usuarios WHERE id = 770").fetchone()[0] is None, "la persona no se borra: se queda sin despacho"

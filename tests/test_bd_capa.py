@@ -214,7 +214,7 @@ def test_despacho_se_fija_con_set_local_en_cada_transaccion():
     conn = ConexionPG_falsa(despacho=7)
     conn.execute("UPDATE t SET a = 1")
     assert any("set_config('app.tenant_id', %s, true)" in x for x in _sentencias(conn))
-    assert ("select set_config('app.tenant_id', %s, true)", ("7",)) in conn._raw.registro
+    assert ("select set_config('app.tenant_id', %s, true), set_config('app.usuario_id', %s, true)", ("7", "")) in conn._raw.registro
     conn.commit()
     conn._raw.registro.clear()
     conn.execute("SELECT 1")                                    # lectura con despacho fuera de transacción: transacción corta

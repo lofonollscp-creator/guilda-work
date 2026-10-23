@@ -15447,3 +15447,6 @@ msgstr "Last successful load"
 
 msgid "— Sin cliente —"
 msgstr "— No client —"
+
+msgid "Despacho"
+msgstr "Firm"

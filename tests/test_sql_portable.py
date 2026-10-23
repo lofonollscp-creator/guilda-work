@@ -29,10 +29,11 @@ def test_las_sentencias_dml_se_parsean_como_postgresql():
     """Sintaxis (no semántica): cada SELECT/INSERT/UPDATE/DELETE embebido debe ser SQL válido para el analizador de PostgreSQL."""
     pglast = pytest.importorskip("pglast")
     omitidas = re.compile(r"\bMATCH\b|\bfts5\b|_fts\b|PRAGMA|sqlite_|\bplano\s*\(", re.I)         # FTS5 y funciones propias: fase 4-5
+    propias_del_backoffice = re.compile(r"\b(FROM|INTO|UPDATE|JOIN)\s+(admins|intentos_login|auditoria|cobros|notas_tenant|snapshots_tenants|salud_historial|seguimiento_tenant|auditorias_dependencias|resumenes_enviados)\b", re.I)
     fallos = []
     total = 0
     for rel, linea, texto in auditar_sql.sentencias_completas():
-        if omitidas.search(texto) or "__x__" in texto or "%s" in texto or re.search(r"\b(NEW|OLD)\.", texto) or re.search(r"\b(WHERE|AND|OR|SET)\s*$", texto.strip(), re.I):
+        if omitidas.search(texto) or propias_del_backoffice.search(texto) or "__x__" in texto or "%s" in texto or re.search(r"\b(NEW|OLD)\.", texto) or re.search(r"(\b(WHERE|AND|OR|SET)|,)\s*$", texto.strip(), re.I):
             continue                                                    # fragmentos de SQL dinámico (f-strings, `%s`) y cuerpos de triggers: no son sentencias completas
         sql = re.sub(r"(?<![:\w]):[A-Za-z_]\w*", "$1", texto)          # :nombre → $1
         sql = sql.replace("?", "$1")                                    # ? → $1

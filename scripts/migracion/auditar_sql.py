@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[2]
-CARPETAS = ("app", "mcp_tools")
+CARPETAS = ("app", "mcp_tools", "backoffice")
 FICHEROS_RAIZ = ("cli.py", "serve.py", "serve_backoffice.py", "run.py", "mcp_server.py", "mcp_server_remoto.py")
 
 # categoría -> (expresión, fase en la que se resuelve, descripción)
@@ -34,6 +34,7 @@ REGLAS = {
     "pragma": (r"\bPRAGMA\b", 3, "PRAGMA"),
     "begin_inmediato": (r"\bBEGIN\s+(IMMEDIATE|EXCLUSIVE|DEFERRED)\b", 2, "BEGIN IMMEDIATE (lo traduce la capa)"),
     "fts5": (r"\bfts5\b|\bMATCH\b|\bbm25\s*\(|\bsnippet\s*\(|\bhighlight\s*\(", 5, "FTS5"),
+    "suma_booleana": (r"\bSUM\s*\(\s*(?!CASE\b|DISTINCT\b)[^()]*?(?:[<>]=?|!=|<>|\bIS\s+(?:NOT\s+)?NULL\b|\bIN\s*\(|\b(?:AND|OR)\b|[^<>=!]=[^=])", 3, "SUM(<condición>): en PostgreSQL una comparación es booleana, no 0/1 (usar SUM(CASE WHEN … THEN 1 ELSE 0 END))"),
     "char_func": (r"\bchar\s*\(", 3, "char() de SQLite (en PostgreSQL es chr(): pasar el carácter como parámetro)"),
     "limit_menos_uno": (r"\bLIMIT\s+-1\b", 3, "LIMIT -1"),
     "sqlite_master": (r"\bsqlite_(master|schema|sequence|stat\d?)\b", 3, "sqlite_master/sqlite_sequence"),
@@ -92,9 +93,11 @@ def cadenas(ruta: Path):
 
 
 # Construcciones que YA no deben aparecer (fases 2-3 completadas). Se comprueban en tests/test_sql_portable.py.
-PROHIBIDAS = ("char_func", "insert_or", "strftime", "fecha_sqlite", "group_concat", "collate_nocase", "ifnull_iif", "typeof", "last_insert",
+PROHIBIDAS = ("suma_booleana", "char_func", "insert_or", "strftime", "fecha_sqlite", "group_concat", "collate_nocase", "ifnull_iif", "typeof", "last_insert",
               "limit_menos_uno", "comillas_dobles_literal", "is_igualdad", "igual_doble", "limit_en_escritura")
 # Pendientes para fases posteriores o propias de código solo-SQLite (guardado por bd.MOTOR): categoría -> ficheros donde se admiten.
+# Sentencias que van a backoffice.db (la base SQLite PROPIA del backoffice, con sqlite3 directo: no pasa por esta capa)
+BACKOFFICE_DB = {("insert_or", "backoffice/seguimiento.py")}
 PERMITIDAS_EN = {
     "pragma_sqlite": ("app/db.py", "app/tareas_trabajo.py"),        # integrity_check, foreign_key_check, writable_schema, schema_version
     "sqlite_master": ("app/db.py", "app/tareas_trabajo.py", "app/bd/__init__.py"),
@@ -116,6 +119,8 @@ def incumplimientos():
                 if ddl and cat in ("insert_or", "fecha_sqlite", "ifnull_iif", "comillas_dobles_literal", "is_igualdad"):
                     continue                                      # triggers y valores por defecto de DDL de SQLite: fase 4
                 if cat == "comillas_dobles_literal" and not completa:
+                    continue
+                if (cat, rel) in BACKOFFICE_DB:
                     continue
                 for m in re.finditer(REGLAS[cat][0], texto, re.I):
                     if cat == "is_igualdad" and re.search(r"\b(OLD|NEW)\.", m.group(0) + texto[m.end():m.end() + 20], re.I):

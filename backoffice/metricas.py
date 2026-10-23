@@ -113,7 +113,7 @@ def actividad_tenant(tenant_id: int, modulos: list[dict]) -> dict:
             }
         clientes = _uno(conn, "SELECT COUNT(*) FROM clientes_fiscales WHERE tenant_id = ? AND papelera_en IS NULL", (tenant_id,))
         venc = conn.execute(
-            "SELECT COUNT(*) AS n, SUM(estado = 'presentado') AS presentados, MAX(actualizado_en) AS ultima "
+            "SELECT COUNT(*) AS n, SUM(CASE WHEN estado = 'presentado' THEN 1 ELSE 0 END) AS presentados, MAX(actualizado_en) AS ultima "
             "FROM vencimientos_fiscales WHERE tenant_id = ? AND papelera_en IS NULL", (tenant_id,)).fetchone()
         usuarios = conn.execute(
             "SELECT COUNT(*) AS n, MAX(creado_en) AS ultimo FROM usuarios WHERE tenant_id = ?", (tenant_id,)).fetchone()
@@ -183,7 +183,7 @@ def journey() -> dict:
     """Etapa alcanzada por cada tenant y totales del embudo."""
     conn = plataforma.get_connection()
     try:
-        tenants = [dict(f) for f in conn.execute("SELECT id, nombre, activo, plan_id, creado_en, stripe_subscription_id FROM tenants ORDER BY id")]
+        tenants = [dict(f) for f in conn.execute("SELECT id, nombre, activo, plan_id, creado_en, stripe_subscription_id FROM tenants WHERE id > 0 ORDER BY id")]
     finally:
         conn.close()
     cobrados = set()

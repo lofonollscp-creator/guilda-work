@@ -1,23 +1,3 @@
 -- GENERADO por scripts/migracion/generar_esquema_pg.py a partir del esquema de SQLite. No editar a mano.
 CREATE OR REPLACE VIEW tareas_participantes_todos AS
-SELECT tarea_id, usuario_id, rol FROM tareas_participantes
-           UNION
-           SELECT t.id, m.usuario_id, m.rol
-             FROM tareas_outlook t
-             JOIN categorias c ON c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL
-             JOIN proyecto_miembros m ON m.categoria_id = c.id
-             JOIN usuarios um ON um.id = m.usuario_id
-             JOIN usuarios uo ON uo.id = c.usuario_id
-            WHERE um.tenant_id IS NOT NULL AND um.tenant_id = uo.tenant_id
-           UNION
-           SELECT t.id, c.usuario_id, 'colabora'
-             FROM tareas_outlook t
-             JOIN categorias c ON c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL
-            WHERE t.usuario_id != c.usuario_id
-           UNION
-           SELECT t.id, us.id, 'observa'
-             FROM tareas_outlook t
-             JOIN categorias c ON c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL
-             JOIN usuarios uo ON uo.id = c.usuario_id
-             JOIN usuarios us ON us.tenant_id = uo.tenant_id AND us.supervisor_tenant = 1
-            WHERE uo.tenant_id IS NOT NULL AND us.id != t.usuario_id AND us.id != c.usuario_id;
+((SELECT tareas_participantes.tenant_id AS tenant_id, tarea_id, usuario_id, rol FROM tareas_participantes UNION SELECT t.tenant_id AS tenant_id, t.id, m.usuario_id, m.rol FROM tareas_outlook AS t INNER JOIN categorias AS c ON (c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL) AND t.tenant_id = c.tenant_id INNER JOIN proyecto_miembros AS m ON m.categoria_id = c.id AND c.tenant_id = m.tenant_id INNER JOIN usuarios AS um ON um.id = m.usuario_id INNER JOIN usuarios AS uo ON uo.id = c.usuario_id WHERE um.tenant_id IS NOT NULL AND um.tenant_id = uo.tenant_id) UNION SELECT t.tenant_id AS tenant_id, t.id, c.usuario_id, CAST('colabora' AS pg_catalog.text) FROM tareas_outlook AS t INNER JOIN categorias AS c ON (c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL) AND t.tenant_id = c.tenant_id WHERE t.usuario_id <> c.usuario_id) UNION SELECT t.tenant_id AS tenant_id, t.id, us.id, CAST('observa' AS pg_catalog.text) FROM tareas_outlook AS t INNER JOIN categorias AS c ON (c.id = t.categoria_id AND c.proy_compartido = 1 AND c.papelera_en IS NULL) AND t.tenant_id = c.tenant_id INNER JOIN usuarios AS uo ON uo.id = c.usuario_id INNER JOIN usuarios AS us ON us.tenant_id = uo.tenant_id AND us.supervisor_tenant = 1 WHERE uo.tenant_id IS NOT NULL AND us.id <> t.usuario_id AND us.id <> c.usuario_id;

@@ -16,6 +16,7 @@ MOTOR = os.environ.get("GUILDA_DB_ENGINE", "sqlite").strip().lower() or "sqlite"
 if MOTOR not in ("sqlite", "postgres"):
     raise RuntimeError(f"GUILDA_DB_ENGINE no válido: {MOTOR!r} (sqlite o postgres)")
 
+from . import contexto, tenant  # noqa: E402,F401
 from .errores import ErrorBD, ErrorIntegridad, ErrorOperacional  # noqa: E402,F401
 from .fila import Fila  # noqa: E402,F401
 

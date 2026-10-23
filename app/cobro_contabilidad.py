@@ -141,7 +141,7 @@ def _con_modulo() -> list[tuple[int, str]]:
     from . import verticales
     conn = db.get_connection()
     try:
-        filas = [(r["id"], r["nombre"]) for r in conn.execute("SELECT id, nombre FROM tenants ORDER BY nombre")]
+        filas = [(r["id"], r["nombre"]) for r in conn.execute("SELECT id, nombre FROM tenants WHERE id > 0 ORDER BY nombre")]
     finally:
         conn.close()
     return [(i, n) for i, n in filas if verticales.esta_activo(i, "contabilizacion")]

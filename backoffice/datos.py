@@ -37,7 +37,7 @@ def kpis_dashboard() -> dict:
     conn = _con()
     try:
         marcadores = ",".join("?" * len(ESTADOS_RIESGO))
-        activas = conn.execute("SELECT COUNT(*) FROM tenants WHERE suscripcion_estado = 'activa'").fetchone()[0]
+        activas = conn.execute("SELECT COUNT(*) FROM tenants WHERE suscripcion_estado = 'activa' AND id > 0").fetchone()[0]
         mrr = conn.execute(
             "SELECT COALESCE(SUM(p.precio_mensual_centimos), 0) FROM tenants t JOIN planes_guilda p ON p.id = t.plan_id "
             "WHERE t.suscripcion_estado = 'activa'"
@@ -62,8 +62,8 @@ def kpis_dashboard() -> dict:
             "AND NOT (estado_http IS NOT NULL AND estado_http BETWEEN 200 AND 299)", (desde,),
         ).fetchone()[0]
         totales = {
-            "tenants": conn.execute("SELECT COUNT(*) FROM tenants").fetchone()[0],
-            "tenants_activos": conn.execute("SELECT COUNT(*) FROM tenants WHERE activo = 1").fetchone()[0],
+            "tenants": conn.execute("SELECT COUNT(*) FROM tenants WHERE id > 0").fetchone()[0],
+            "tenants_activos": conn.execute("SELECT COUNT(*) FROM tenants WHERE activo = 1 AND id > 0").fetchone()[0],
             "usuarios": conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0],
             "usuarios_sin_tenant": conn.execute("SELECT COUNT(*) FROM usuarios WHERE tenant_id IS NULL").fetchone()[0],
             "clientes": conn.execute("SELECT COUNT(*) FROM clientes_fiscales WHERE papelera_en IS NULL").fetchone()[0],
@@ -84,7 +84,7 @@ def tenants_en_riesgo_churn() -> list[dict]:
     resultado = []
     conn = _con()
     try:
-        filas = conn.execute("SELECT id, nombre, activo, suscripcion_estado FROM tenants ORDER BY nombre").fetchall()
+        filas = conn.execute("SELECT id, nombre, activo, suscripcion_estado FROM tenants WHERE id > 0 ORDER BY nombre").fetchall()
     finally:
         conn.close()
     for t in filas:
@@ -106,9 +106,9 @@ def tenants_en_riesgo_churn() -> list[dict]:
 # --- Tenants ----------------------------------------------------------------
 
 def listar_tenants(q: str = "", estado: str = "", plan: str = "", orden: str = "nombre", pagina: int = 1, por_pagina: int = 25):
-    donde, params = ["1=1"], []
+    donde, params = ["t.id > 0"], []
     if q.strip():
-        donde.append("t.nombre LIKE ? ESCAPE '\\'")
+        donde.append("LOWER(t.nombre) LIKE LOWER(?) ESCAPE '\\'")
         params.append("%" + q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%")
     if estado == "activo":
         donde.append("t.activo = 1")
@@ -119,7 +119,7 @@ def listar_tenants(q: str = "", estado: str = "", plan: str = "", orden: str = "
     elif plan.isdigit():
         donde.append("t.plan_id = ?")
         params.append(int(plan))
-    ordenes = {"nombre": "t.nombre COLLATE NOCASE", "usuarios": "n_usuarios DESC, t.nombre", "recientes": "t.creado_en DESC"}
+    ordenes = {"nombre": "LOWER(t.nombre)", "usuarios": "n_usuarios DESC, t.nombre", "recientes": "t.creado_en DESC"}
     conn = _con()
     try:
         total = conn.execute(f"SELECT COUNT(*) FROM tenants t WHERE {' AND '.join(donde)}", params).fetchone()[0]
@@ -215,7 +215,7 @@ def listar_usuarios(q: str = "", tenant: str = "", rol: str = "", orden: str = "
     donde, params = ["1=1"], []
     if q.strip():
         like = "%" + q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
-        donde.append("(u.email LIKE ? ESCAPE '\\' OR COALESCE(p.nombre_mostrado, '') LIKE ? ESCAPE '\\')")
+        donde.append("(LOWER(u.email) LIKE LOWER(?) ESCAPE '\\' OR LOWER(COALESCE(p.nombre_mostrado, '')) LIKE LOWER(?) ESCAPE '\\')")
         params += [like, like]
     if tenant == "ninguno":
         donde.append("u.tenant_id IS NULL")
@@ -231,7 +231,7 @@ def listar_usuarios(q: str = "", tenant: str = "", rol: str = "", orden: str = "
     elif rol == "usuario":
         donde.append("u.rol = 'usuario' AND u.gestor_fichajes = 0 AND u.supervisor_tenant = 0")
     ordenes = {
-        "creado": "u.creado_en DESC", "email": "u.email COLLATE NOCASE", "nombre": "COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) COLLATE NOCASE",
+        "creado": "u.creado_en DESC", "email": "LOWER(u.email)", "nombre": "LOWER(COALESCE(NULLIF(p.nombre_mostrado, ''), u.email))",
     }
     conn = _con()
     try:

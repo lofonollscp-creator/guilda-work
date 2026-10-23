@@ -13,7 +13,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import auditar_sql  # noqa: E402
 
-OMITIR = re.compile(r"\bMATCH\b|\bfts5\b|_fts\b|PRAGMA|sqlite_|\bbm25\b|_nueva\b", re.I)
+# Tablas de backoffice.db (la base SQLite propia del backoffice): no existen en el esquema de PostgreSQL de la aplicación.
+TABLAS_DEL_BACKOFFICE = r"(admins|intentos_login|auditoria|cobros|notas_tenant|snapshots_tenants|salud_historial|seguimiento_tenant|auditorias_dependencias|resumenes_enviados)"
+OMITIR = re.compile(r"\bMATCH\b|\bfts5\b|_fts\b|PRAGMA|sqlite_|\bbm25\b|_nueva\b|\b(FROM|INTO|UPDATE|JOIN)\s+" + TABLAS_DEL_BACKOFFICE + r"\b", re.I)
 
 
 def preparar_texto(texto):
@@ -38,7 +40,7 @@ def validar(url, verboso=False):
     fallos, total = [], 0
     with psycopg.connect(url, autocommit=True) as c:
         for rel, linea, texto in auditar_sql.sentencias_completas():
-            if OMITIR.search(texto) or "__x__" in texto or "%s" in texto or re.search(r"\b(NEW|OLD)\.", texto) or re.search(r"\b(WHERE|AND|OR|SET)\s*$", texto.strip(), re.I):
+            if OMITIR.search(texto) or "__x__" in texto or "%s" in texto or re.search(r"\b(NEW|OLD)\.", texto) or re.search(r"(\b(WHERE|AND|OR|SET)|,)\s*$", texto.strip(), re.I):
                 continue
             sql, _ = preparar_texto(re.sub(r"\{[^{}]*\}", "x", texto))
             total += 1

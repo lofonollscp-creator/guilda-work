@@ -561,7 +561,8 @@ def fusionar_clientes(tenant_id: int, destino_id: int, origen_id: int) -> None:
         for tabla in ("expedientes", "plazos", "partes_tiempo"):
             conn.execute(f"UPDATE {tabla} SET cliente_id = ? WHERE cliente_id = ? AND tenant_id = ?", (destino_id, origen_id, tenant_id))
         conn.execute("UPDATE cliente_contactos SET cliente_id = ?, principal = 0 WHERE cliente_id = ?", (destino_id, origen_id))
-        conn.execute("INSERT INTO cliente_etiquetas (cliente_id, etiqueta) SELECT ?, etiqueta FROM cliente_etiquetas WHERE cliente_id = ? ON CONFLICT DO NOTHING", (destino_id, origen_id))
+        for e in conn.execute("SELECT etiqueta FROM cliente_etiquetas WHERE cliente_id = ?", (origen_id,)).fetchall():
+            conn.execute("INSERT INTO cliente_etiquetas (cliente_id, etiqueta) VALUES (?, ?) ON CONFLICT DO NOTHING", (destino_id, e["etiqueta"]))
         ficha_destino = conn.execute("SELECT 1 FROM clientes_fiscales WHERE cliente_id = ?", (destino_id,)).fetchone()
         if ficha_destino is None:
             conn.execute("UPDATE clientes_fiscales SET cliente_id = ? WHERE cliente_id = ? AND tenant_id = ?", (destino_id, origen_id, tenant_id))

@@ -4,7 +4,7 @@ parámetros NULL. Citus rechaza al planificar lo que no sabe repartir (joins ent
 
     python scripts/migracion/validar_sql_citus.py postgresql://usuario:clave@host:puerto/base_citus [-v]
 
-Con --con-valores los parámetros valen 1 en vez de NULL (el planificador no puede descartar todos los shards por un NULL). Muestra cuántas sentencias se planifican bien, cuáles son de un solo shard («router») y cuáles se reparten, y agrupa los errores. No modifica datos.
+Con --reescribir se aplica la reescritura de app/bd/citus.py y con --con-despacho además el filtro de despacho de una conexión de la aplicación. Con --con-valores los parámetros valen 1 en vez de NULL (el planificador no puede descartar todos los shards por un NULL). Muestra cuántas sentencias se planifican bien, cuáles son de un solo shard («router») y cuáles se reparten, y agrupa los errores. No modifica datos.
 """
 import re
 import sys
@@ -14,19 +14,32 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import auditar_sql  # noqa: E402
 import validar_sql_pg  # noqa: E402
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from app.bd import citus  # noqa: E402
+
 
 verboso_lista = {"por_defecto": []}
 
 
-def validar(url, verboso=False, valor="NULL"):
+# Migraciones de bases SQLite antiguas y el UPDATE tenant_id del borrado (en PostgreSQL se borra con tenant.borrar_filas_de_tenant): no se ejecutan sobre Citus.
+SOLO_SQLITE = re.compile(r"SET tenant_id = NULL|INSERT INTO tarea_revision_votos \(revision_id, revisor_id, estado, nota, votado_en\)\s+SELECT|INSERT INTO tarea_clientes \([^)]*\)\s+SELECT\s+cf\.tenant_id", re.I)
+
+
+def validar(url, verboso=False, valor="NULL", reescribir=False, con_despacho=False):
     import psycopg
     ok, router, repartidas, fallos = 0, 0, 0, []
     inserciones = {"explicito": 0, "por_defecto": 0}               # INSERT: con tenant_id en las columnas, o dejando que lo ponga el valor por defecto de la conexión
     with psycopg.connect(url, autocommit=True) as c:
         for rel, linea, texto in auditar_sql.sentencias_completas():
-            if validar_sql_pg.OMITIR.search(texto) or "__x__" in texto or "%s" in texto or re.search(r"\b(NEW|OLD)\.", texto) or re.search(r"\b(WHERE|AND|OR|SET)\s*$", texto.strip(), re.I):
+            if SOLO_SQLITE.search(texto) or validar_sql_pg.OMITIR.search(texto) or "__x__" in texto or "%s" in texto or re.search(r"\b(NEW|OLD)\.", texto) or re.search(r"(\b(WHERE|AND|OR|SET)|,)\s*$", texto.strip(), re.I):
                 continue
-            sql, n = validar_sql_pg.preparar_texto(re.sub(r"\{[^{}]*\}", "x", texto))
+            texto = re.sub(r"\{[^{}]*\}", "x", texto)
+            if con_despacho:                                                    # como una conexión de la aplicación con despacho 1
+                ins = citus.reescribir_insert(texto)
+                texto = (ins[0] if ins else citus.reescribir_sqlite_con_despacho(texto) or citus.reescribir_sqlite(texto) or texto).replace(citus.SENTINELA, "1")
+            elif reescribir:
+                texto = citus.reescribir_sqlite(texto) or texto
+            sql, n = validar_sql_pg.preparar_texto(texto)
             try:
                 c.execute("PREPARE v AS " + sql)
             except psycopg.Error:
@@ -59,7 +72,7 @@ def validar(url, verboso=False, valor="NULL"):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    ok, router, repartidas, fallos, inserciones = validar(sys.argv[1], valor="1" if "--con-valores" in sys.argv else "NULL")
+    ok, router, repartidas, fallos, inserciones = validar(sys.argv[1], valor="1" if "--con-valores" in sys.argv else "NULL", reescribir="--reescribir" in sys.argv, con_despacho="--con-despacho" in sys.argv)
     print(f"{ok} sentencias planificadas ({router} de un solo shard, {repartidas} repartidas, {sum(inserciones.values())} INSERT: {inserciones['explicito']} con tenant_id en las columnas y "
           f"{inserciones['por_defecto']} que lo toman del despacho de la conexión) y {len(fallos)} que Citus rechaza")
     import collections

@@ -25,6 +25,7 @@ from flask import Response, abort, g, jsonify, make_response, redirect, request,
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+from .bd import contexto as contexto_bd
 from . import api_areas, db
 
 # Los contadores viven en memoria del proceso: se reinician con cada reinicio
@@ -173,6 +174,14 @@ def token_required(vista):
         g.es_admin = db.es_admin(usuario_id)
         g.gestor_fichajes = db.es_gestor_fichajes(usuario_id)
         g.supervisor_tenant = db.es_supervisor_tenant(usuario_id)
+        # Una persona en varios despachos elige con qué despacho trabaja este token con la cabecera `X-Despacho: <id>` (solo vale uno suyo; si no, el principal).
+        elegido = request.headers.get("X-Despacho", type=int)
+        if elegido and g.tenant_id is not None and elegido != g.tenant_id:
+            activo = db.tenant_activo(usuario_id, elegido)
+            if activo != g.tenant_id:
+                a = db.atributos_en_despacho(usuario_id, activo)
+                g.tenant_id, g.gestor_fichajes, g.supervisor_tenant = activo, bool(a["gestor_fichajes"]), bool(a["supervisor_tenant"])
+        g._ctx_despacho = contexto_bd.fijar_para_la_peticion(g.tenant_id if g.tenant_id is not None else 0, usuario_id)       # lo libera el teardown de main.py
 
         tipo = tipo_de_peticion(request.method, request.path)
         permitido, limite, restantes, reinicio, cupo = _consumir_cupo_api(usuario_id, tipo)

@@ -102,7 +102,7 @@ def cartera() -> dict:
     """Puntuación de todos los tenants, de peor a mejor, y recuento por nivel."""
     conn = plataforma.get_connection()
     try:
-        tenants = [dict(f) for f in conn.execute("SELECT id, nombre FROM tenants ORDER BY nombre")]
+        tenants = [dict(f) for f in conn.execute("SELECT id, nombre FROM tenants WHERE id > 0 ORDER BY nombre")]
     finally:
         conn.close()
     filas = []

@@ -559,3 +559,44 @@ CREATE POLICY aislamiento ON webhooks_cola USING (tenant_id = nullif(current_set
 ALTER TABLE webhooks_entregas ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON webhooks_entregas;
 CREATE POLICY aislamiento ON webhooks_entregas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+
+-- Personas y despachos (tablas de referencia): lo que ve cada despacho de los demás.
+CREATE OR REPLACE FUNCTION usuario_visible(uid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT uid = nullif(current_setting('app.usuario_id', true), '')::bigint OR EXISTS (SELECT 1 FROM usuarios_tenants m WHERE m.usuario_id = uid AND m.tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint)
+$$;
+CREATE OR REPLACE FUNCTION token_visible(tid bigint) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT EXISTS (SELECT 1 FROM tokens_api t WHERE t.id = tid AND usuario_visible(t.usuario_id))
+$$;
+ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON tenants;
+CREATE POLICY aislamiento ON tenants USING (id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE usuarios_tenants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON usuarios_tenants;
+CREATE POLICY aislamiento ON usuarios_tenants USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON usuarios;
+CREATE POLICY aislamiento ON usuarios USING (usuario_visible(id)) WITH CHECK (usuario_visible(id));
+ALTER TABLE api_idempotencia ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON api_idempotencia;
+CREATE POLICY aislamiento ON api_idempotencia USING (usuario_visible(usuario_id)) WITH CHECK (usuario_visible(usuario_id));
+ALTER TABLE comunicados_cerrados ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON comunicados_cerrados;
+CREATE POLICY aislamiento ON comunicados_cerrados USING (usuario_visible(usuario_id)) WITH CHECK (usuario_visible(usuario_id));
+ALTER TABLE dispositivos_push ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON dispositivos_push;
+CREATE POLICY aislamiento ON dispositivos_push USING (usuario_visible(usuario_id)) WITH CHECK (usuario_visible(usuario_id));
+ALTER TABLE mcp_uso ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON mcp_uso;
+CREATE POLICY aislamiento ON mcp_uso USING (usuario_visible(usuario_id)) WITH CHECK (usuario_visible(usuario_id));
+ALTER TABLE tokens_api ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON tokens_api;
+CREATE POLICY aislamiento ON tokens_api USING (usuario_visible(usuario_id)) WITH CHECK (usuario_visible(usuario_id));
+ALTER TABLE tokens_api_uso ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON tokens_api_uso;
+CREATE POLICY aislamiento ON tokens_api_uso USING (token_visible(token_id)) WITH CHECK (token_visible(token_id));
+ALTER TABLE usuario_perfil ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON usuario_perfil;
+CREATE POLICY aislamiento ON usuario_perfil USING (usuario_visible(usuario_id)) WITH CHECK (usuario_visible(usuario_id));
+ALTER TABLE ver_como_tokens ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON ver_como_tokens;
+CREATE POLICY aislamiento ON ver_como_tokens USING (usuario_visible(usuario_id)) WITH CHECK (usuario_visible(usuario_id));

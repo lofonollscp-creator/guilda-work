@@ -609,8 +609,9 @@ def eliminar_adjunto(usuario_id: int, adjunto_id: int) -> bool:
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     """Al borrar un despacho entero: sus vínculos tarea-cliente se van con él (referencian a sus clientes) y los adjuntos, que son de la tarea y de la persona, dejan de apuntar a un despacho que ya no existe."""
     conn.execute("DELETE FROM tarea_clientes WHERE tenant_id = ?", (tenant_id,))
-    conn.execute("UPDATE tarea_adjuntos SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
-    conn.execute("UPDATE tarea_revisiones SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+    if not _bd.es_postgres(conn):                      # en PostgreSQL la fila no puede cambiar de despacho: se borra con él (tenant.borrar_filas_de_tenant)
+        conn.execute("UPDATE tarea_adjuntos SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
+        conn.execute("UPDATE tarea_revisiones SET tenant_id = NULL WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM informes_tareas_suscripciones WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM tarea_comentarios_cliente_adjuntos WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM tarea_comentarios_cliente WHERE tenant_id = ?", (tenant_id,))             # son conversaciones con clientes de ese despacho: se van con él

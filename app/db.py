@@ -71,6 +71,11 @@ CREATE TABLE IF NOT EXISTS usuarios_tenants (
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     creado_en TEXT NOT NULL,
+    -- Atributos de la persona EN ESTE despacho. En el despacho principal siguen mandando los de `usuarios` (los lee media aplicación); aquí van los de los demás despachos.
+    gestor_fichajes INTEGER NOT NULL DEFAULT 0,
+    supervisor_tenant INTEGER NOT NULL DEFAULT 0,
+    custodio_certificados INTEGER NOT NULL DEFAULT 0,
+    tarifa_hora_centimos INTEGER,
     PRIMARY KEY (usuario_id, tenant_id)
 );
 CREATE INDEX IF NOT EXISTS idx_usuarios_tenants_tenant ON usuarios_tenants(tenant_id);
@@ -1439,12 +1444,13 @@ def cerrar_conexiones_compartidas() -> None:
             c._cerrar_de_verdad()
 
 
-def get_connection(despacho: int | None = None) -> sqlite3.Connection:
-    """Conexión de la aplicación. Con GUILDA_DB_ENGINE=postgres devuelve una `bd.postgres.ConexionPG` con la misma interfaz;
-    `despacho` fija el contexto de RLS (solo tiene efecto en PostgreSQL: SQLite aísla por las columnas `tenant_id` de cada consulta)."""
+def get_connection(despacho: int | None = None, plataforma: bool = False) -> sqlite3.Connection:
+    """Conexión de la aplicación. Con GUILDA_DB_ENGINE=postgres devuelve una `bd.postgres.ConexionPG` con la misma interfaz. El despacho (RLS) sale de `despacho`, si se indica,
+    y si no del contexto de la petición o del trabajo (app/bd/contexto.py); `plataforma=True` abre la conexión que se salta la RLS. En SQLite no tiene efecto: allí cada
+    consulta filtra por `tenant_id`."""
     if _bd.MOTOR == "postgres":
         from .bd import postgres as _pg
-        return _pg.conectar(despacho)
+        return _pg.conectar(despacho, plataforma)
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     ruta = str(DB_PATH)
     if POOL_ACTIVO:
@@ -2330,6 +2336,9 @@ def init_db() -> None:
         traspasos.crear_esquema(conn)         # traspasos de clientes entre personas y oficinas, y responsable del cliente (app/traspasos.py)
         from . import avisos
         avisos.crear_esquema(conn)            # motor de avisos del control fiscal: alertas con acuse y escalado (app/avisos.py)
+        for columna, definicion in (("gestor_fichajes", "INTEGER NOT NULL DEFAULT 0"), ("supervisor_tenant", "INTEGER NOT NULL DEFAULT 0"),
+                                    ("custodio_certificados", "INTEGER NOT NULL DEFAULT 0"), ("tarifa_hora_centimos", "INTEGER")):
+            _asegurar_columna(conn, "usuarios_tenants", columna, definicion)          # bases creadas con la primera versión de la tabla
         # El despacho principal de cada persona figura siempre entre sus despachos (idempotente; las altas y bajas posteriores lo mantienen db_plataforma).
         conn.execute("INSERT INTO usuarios_tenants (usuario_id, tenant_id, creado_en) SELECT id, tenant_id, ? FROM usuarios WHERE tenant_id IS NOT NULL ON CONFLICT DO NOTHING", (now_iso(),))
 
@@ -2835,6 +2844,9 @@ from .db_plataforma import (  # noqa: E402,F401
     asignar_tenant,
     tenants_de_usuario,
     es_miembro_de_tenant,
+    tenant_activo,
+    atributos_en_despacho,
+    fijar_atributos_en_despacho,
     anadir_usuario_a_tenant,
     quitar_usuario_de_tenant,
     fijar_tenant_principal,

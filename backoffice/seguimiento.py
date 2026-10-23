@@ -85,7 +85,7 @@ def tendencia_uso(tenant_id: int, ahora: datetime | None = None) -> dict:
     try:
         for tabla, fecha, columna, extra in _FUENTES:
             fila = conn.execute(
-                f"""SELECT COALESCE(SUM({fecha} >= ?), 0), COALESCE(SUM({fecha} >= ? AND {fecha} < ?), 0)
+                f"""SELECT COALESCE(SUM(CASE WHEN {fecha} >= ? THEN 1 ELSE 0 END), 0), COALESCE(SUM(CASE WHEN {fecha} >= ? AND {fecha} < ? THEN 1 ELSE 0 END), 0)
                     FROM {tabla} WHERE {columna} IN ({marcas}) {extra} AND {fecha} >= ?""",
                 [corte, inicio, corte, *ids, inicio],
             ).fetchone()
@@ -193,7 +193,7 @@ def ranking(nivel: str | None = None, ahora: datetime | None = None) -> dict:
     ahora = ahora or datetime.now()
     conn = plataforma.get_connection()
     try:
-        tenants = [dict(f) for f in conn.execute("SELECT id, nombre FROM tenants ORDER BY nombre")]
+        tenants = [dict(f) for f in conn.execute("SELECT id, nombre FROM tenants WHERE id > 0 ORDER BY nombre")]
     finally:
         conn.close()
     bo = auth.conectar()

@@ -15532,3 +15532,6 @@ msgstr "Dernier chargement réussi"
 
 msgid "— Sin cliente —"
 msgstr "— Sans client —"
+
+msgid "Despacho"
+msgstr "Cabinet"

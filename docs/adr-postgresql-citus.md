@@ -1,6 +1,6 @@
 # ADR: migración de SQLite a PostgreSQL + Citus (distribución por `tenant_id`)
 
-Estado: **fases 0 a 5 completadas, 6a y 6b hechas (… modelo del despacho y esquema Citus)**. Aún no se ha cambiado código de la aplicación. Plan por fases: [plan-migracion-postgresql-citus.md](plan-migracion-postgresql-citus.md). Clasificación tabla a tabla: [migracion-clasificacion-tablas.csv](migracion-clasificacion-tablas.csv). Scripts: `scripts/migracion/` (solo lectura).
+Estado: **fases 0 a 6 completadas (… modelo del despacho, esquema Citus y la aplicación sobre él)**. Aún no se ha cambiado código de la aplicación. Plan por fases: [plan-migracion-postgresql-citus.md](plan-migracion-postgresql-citus.md). Clasificación tabla a tabla: [migracion-clasificacion-tablas.csv](migracion-clasificacion-tablas.csv). Scripts: `scripts/migracion/` (solo lectura).
 
 ## Decisiones tomadas (2026-10-23)
 
@@ -242,7 +242,7 @@ Lo que **todavía no** existe (6c): el despacho ACTIVO de la sesión (selector),
 
 ### Viabilidad de las consultas existentes (el hallazgo principal)
 
-`scripts/migracion/validar_sql_citus.py` planifica (PREPARE + EXPLAIN, sin ejecutar) las 1.747 sentencias de la aplicación contra Citus: **1.635 se planifican bien** (799 a un solo shard) y **112 (6 %)** no, en 33 ficheros (`docs/migracion-citus-consultas-pendientes.txt`): 61 «join requires repartitioning» y 45 «complex joins» —joins o subconsultas entre dos tablas distribuidas que no incluyen la igualdad de `tenant_id`—, 3 `UPDATE … SET tenant_id` (borrado de un despacho, mover una vista guardada) y 2 `INSERT … SELECT` entre distribuidas. 94 INSERT dejan que `tenant_id` lo ponga el valor por defecto de la conexión (funciona: Citus evalúa `current_setting` en el coordinador, probado). Un test (`PENDIENTES_CITUS = 112`) impide que aparezcan más.
+`scripts/migracion/validar_sql_citus.py` planifica (PREPARE + EXPLAIN, sin ejecutar) las 1.747 sentencias de la aplicación contra Citus: **1.635 se planifican bien** (799 a un solo shard) y **112 (6 %)** no, en 33 ficheros (ya resueltas en la 6c): 61 «join requires repartitioning» y 45 «complex joins» —joins o subconsultas entre dos tablas distribuidas que no incluyen la igualdad de `tenant_id`—, 3 `UPDATE … SET tenant_id` (borrado de un despacho, mover una vista guardada) y 2 `INSERT … SELECT` entre distribuidas. 94 INSERT dejan que `tenant_id` lo ponga el valor por defecto de la conexión (funciona: Citus evalúa `current_setting` en el coordinador, probado). Un test (`PENDIENTES_CITUS = 112`) impide que aparezcan más.
 
 **Cómo se arreglan (6c)**: añadir `AND a.tenant_id = b.tenant_id` a esos joins. SQLite no tiene `tenant_id` en la mayoría de esas tablas, así que el SQL no puede escribirse tal cual: o un ayudante `_bd.mismo_despacho('a', 'b')` que devuelva la condición en PostgreSQL y vacío en SQLite, o reescritura automática en `ConexionPG`. Se prefiere el ayudante (explícito, sin magia, lo verifica el validador).
 
@@ -250,3 +250,30 @@ Lo que **todavía no** existe (6c): el despacho ACTIVO de la sesión (selector),
 - 6c: despacho activo en la sesión y `get_connection(despacho)` por petición (sin él, las inserciones fallan por `tenant_id` NULL y las lecturas no ven nada: fallo seguro), las 112 consultas, los 3 `UPDATE tenant_id`, atributos por despacho (supervisor, gestor de fichajes, custodio, tarifa), listados de despachos sin el 0.
 - `usuarios` y `tenants` (referencia) no tienen RLS: las ve cualquier conexión. Decidir en 6c qué ve cada despacho de las personas de otros.
 - Prueba con Citus de varios nodos (fase 9).
+
+## Fase 6c: la aplicación sobre el esquema multitenant (2026-10-24)
+
+### Qué se ha hecho
+
+| Pieza | Detalle |
+|---|---|
+| **Despacho de la conexión** (`app/bd/contexto.py`) | `en_despacho(t)`, `como_plataforma()` y, por petición, `fijar_para_la_peticion(tenant, persona)`. `db.get_connection()` lo lee: con despacho, conexión del rol de la aplicación (sujeto a RLS) y `set_config('app.tenant_id'/'app.usuario_id', …, true)` al abrir cada transacción; sin él, la de la plataforma (`BYPASSRLS`). Dos pools (`GUILDA_DATABASE_URL`, `GUILDA_DATABASE_URL_PLATAFORMA`). Las peticiones autenticadas SIEMPRE fijan un despacho (el 0 si la persona no tiene) |
+| **Despacho activo y selector** | `session["tenant_activo"]`, ruta `POST /despacho/activo/<id>` (solo uno suyo), selector en el panel de cuenta solo si la persona tiene más de uno, cabecera `X-Despacho` para tokens de API. `usuarios_tenants` lleva `gestor_fichajes`, `supervisor_tenant`, `custodio_certificados` y `tarifa_hora_centimos` de cada despacho que no es el principal (`db.atributos_en_despacho`, `fijar_atributos_en_despacho`) |
+| **RLS de personas** | `tenants`: solo el activo; `usuarios_tenants`: solo las del activo; `usuarios` y todo lo que cuelga de una persona (perfil, credenciales API, dispositivos…): se ve a quien pertenece al despacho activo y a uno mismo. Funciones `SECURITY DEFINER` (`usuario_visible`, `token_visible`) porque Citus no admite subconsultas en `CREATE POLICY` |
+| **Reescritura de consultas** (`app/bd/citus.py`, necesita `pglast`) | Cuando `GUILDA_PG_CITUS=1`: añade `a.tenant_id = b.tenant_id` a los joins y subconsultas entre tablas distribuidas, completa los `INSERT … SELECT`, y en las conexiones con despacho añade `tenant_id = <despacho>` a CADA consulta (también subconsultas): Citus las resuelve en un solo shard. Un `INSERT … VALUES` sin `tenant_id` lo lleva explícito; en un trabajo sin despacho se deduce de la persona o del padre de la fila (modelo) |
+| **Código cambiado** | listados de despachos sin el 0; `INSERT … SELECT` entre distribuidas → leer y reinsertar (2 sitios); la visión global del backoffice sin subconsultas correlacionadas; vistas guardadas (el despacho no cambia al editarlas); `SUM(<condición>)` en el backoffice; `COLLATE NOCASE`/`LIKE` del backoffice |
+| **Borrado de un despacho** | en PostgreSQL se borra TODO lo suyo, también lo personal (`tenant.borrar_filas_de_tenant`): Citus no deja cambiar el `tenant_id` de una fila, así que ya no puede quedar «sin despacho» como en SQLite. Transacción en modo secuencial (`ConexionPG.modo_secuencial`) |
+| **Vista** `tareas_participantes_todos` | lleva `tenant_id` y sus joins unidos por él; constantes de texto con tipo |
+
+### Resultado medido
+
+- Planificando contra Citus las **1.778 sentencias** de la aplicación y el backoffice (`validar_sql_citus.py --con-valores --con-despacho`), como las envía una conexión con despacho: **1.752 se resuelven en UN solo shard, 0 repartidas, 0 rechazadas**. Con una conexión de la plataforma (sin filtro de despacho) quedan 4 consultas de «participantes» (OR con una vista): se usan siempre desde peticiones con despacho.
+- 13 pruebas sobre Citus real (`tests/test_citus.py`): aislamiento, claves compuestas, `SET NULL`/`CASCADE` por trigger, historial y auditoría, privilegios, visibilidad de personas, la aplicación entera con sus dos pools (rol sujeto a RLS y rol de plataforma), un trabajo que inserta sin despacho, y `db.borrar_tenant` completo.
+- 5 pruebas de Flask+Kratos del selector (`tests/test_despacho_activo.py`) y 6 de la reescritura (`tests/test_bd_citus_reescritor.py`).
+
+### Limitaciones conocidas
+
+1. **Personas en varios despachos y listados de compañeros.** Unas 80 consultas que escogen «las personas de un despacho» filtran por `usuarios.tenant_id` (el despacho PRINCIPAL). Quien trabaja en un despacho que no es el suyo principal ve y escribe todo lo de ese despacho, pero no aparece en los selectores de responsable/compañeros de él (sí en el principal). No es un fallo de seguridad (la RLS manda), sino de integridad funcional; se arregla cambiando esas consultas por una pertenencia a `usuarios_tenants`.
+2. **`backoffice.db` sigue siendo SQLite aparte.** Es la base PROPIA del backoffice (10 tablas: administradores, intentos de acceso, cobros, notas, seguimiento…), con `sqlite3` directo, que no pasa por esta capa. Migrarla es un trabajo pequeño pero distinto (otra base, sin `tenant_id`); queda en el plan para antes de retirar SQLite.
+3. Las 89 inserciones que toman el despacho del contexto, en un trabajo en segundo plano, se atribuyen al despacho PRINCIPAL de la persona.
+4. Pendiente de la fase 7: ejecutar la suite funcional completa contra PostgreSQL con el esquema multitenant (hoy se ha probado la capa, las consultas planificadas y los flujos clave).

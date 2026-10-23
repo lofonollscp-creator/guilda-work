@@ -2215,16 +2215,18 @@ def crear_vista_tareas(usuario_id: int, nombre: str, filtros: dict, compartida: 
         if u is None:
             return None
         existente = conn.execute("SELECT id FROM tareas_vistas WHERE usuario_id = ? AND nombre = ?", (usuario_id, nombre)).fetchone()
-        valores = (json.dumps(limpios, ensure_ascii=False), 1 if (compartida and u["tenant_id"] is not None) else 0)
+        # El despacho de la vista es el de la conexión (el activo de la persona); sin contexto (SQLite), el principal. Una vista ya guardada no cambia de despacho.
+        tenant = _db._bd.contexto.despacho_actual() if (_db._bd.es_postgres(conn) and _db._bd.contexto.despacho_actual() is not None) else u["tenant_id"]
+        valores = (json.dumps(limpios, ensure_ascii=False), 1 if (compartida and tenant is not None) else 0)
         if existente:
-            conn.execute("UPDATE tareas_vistas SET filtros = ?, compartida = ?, tenant_id = ? WHERE id = ?", (*valores, u["tenant_id"], existente["id"]))
+            conn.execute("UPDATE tareas_vistas SET filtros = ?, compartida = ? WHERE id = ?", (*valores, existente["id"]))
             conn.commit()
             return existente["id"]
         if conn.execute("SELECT COUNT(*) FROM tareas_vistas WHERE usuario_id = ?", (usuario_id,)).fetchone()[0] >= _db.MAX_VISTAS_TAREAS:
             return None
         cur = conn.execute(
             "INSERT INTO tareas_vistas (usuario_id, tenant_id, nombre, filtros, compartida, creada_en) VALUES (?, ?, ?, ?, ?, ?)",
-            (usuario_id, u["tenant_id"], nombre, *valores, _db.now_iso()),
+            (usuario_id, tenant if tenant is not None or not _db._bd.es_postgres(conn) else 0, nombre, *valores, _db.now_iso()),
         )
         conn.commit()
         return cur.lastrowid

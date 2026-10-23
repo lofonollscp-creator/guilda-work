@@ -278,6 +278,19 @@
             {% endfor %}
           </div>
 
+          {% if despachos_usuario %}
+          <div class="ajustes-panel-separador" role="separator"></div>
+          <span class="ajustes-panel-grupo-etiqueta">{{ _('Despacho') }}</span>
+          {% for d in despachos_usuario %}
+          <form action="{{ url_for('cambiar_despacho_activo', tenant_id=d.id) }}" method="post">
+            <button type="submit" class="ajustes-panel-btn {{ 'is-activo' if d.id == g.tenant_id }}" {% if d.id == g.tenant_id %}aria-current="true"{% endif %}>
+              <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-building-2"></use></svg>
+              <span class="ajustes-panel-texto">{{ d.nombre }}</span>
+            </button>
+          </form>
+          {% endfor %}
+          {% endif %}
+
           <div class="ajustes-panel-separador" role="separator"></div>
           <span class="ajustes-panel-grupo-etiqueta">{{ _('Cuenta') }}</span>
           <a href="{{ url_for('ajustes') }}" class="ajustes-panel-btn">

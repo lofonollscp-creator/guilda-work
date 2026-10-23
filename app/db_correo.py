@@ -673,13 +673,12 @@ def adjuntos_borrador_para_enviar(usuario_id: int, borrador_id: int, ids: list[i
 def copiar_adjuntos_envio_a_borrador(envio_id: int, borrador_id: int) -> int:
     conn = _db.get_connection()
     try:
-        cur = conn.execute(
-            """INSERT INTO correo_borradores_adjuntos (borrador_id, nombre, tipo, contenido)
-               SELECT ?, nombre, tipo, contenido FROM correo_envios_adjuntos WHERE envio_id = ? ORDER BY id""",
-            (borrador_id, envio_id),
-        )
+        # Se leen y se vuelven a insertar (en orden): un INSERT ... SELECT ... ORDER BY entre tablas distribuidas no lo reparte Citus.
+        filas = conn.execute("SELECT nombre, tipo, contenido FROM correo_envios_adjuntos WHERE envio_id = ? ORDER BY id", (envio_id,)).fetchall()
+        for f in filas:
+            conn.execute("INSERT INTO correo_borradores_adjuntos (borrador_id, nombre, tipo, contenido) VALUES (?, ?, ?, ?)", (borrador_id, f["nombre"], f["tipo"], f["contenido"]))
         conn.commit()
-        return cur.rowcount
+        return len(filas)
     finally:
         conn.close()
 

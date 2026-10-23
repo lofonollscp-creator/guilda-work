@@ -33,6 +33,7 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from .bd import contexto as contexto_bd
 from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
 from . import acceso, ai_local, ayuda, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
@@ -371,6 +372,20 @@ def _cabeceras_de_seguridad(respuesta):
 KRATOS_SESSION_COOKIE = "ory_kratos_session"
 
 
+def _fijar_despacho_activo(usuario) -> None:
+    """`g.tenant_id` y los atributos de la persona (gestor de fichajes, supervisor, custodio) en el despacho con el que trabaja AHORA: el que eligió en el selector
+    (`session["tenant_activo"]`) si sigue siendo suyo, y si no el principal. Quien solo tiene un despacho no hace ninguna consulta extra."""
+    preferido = session.get("tenant_activo")
+    activo = usuario["tenant_id"] if preferido in (None, usuario["tenant_id"]) else db.tenant_activo(usuario["id"], preferido)
+    g.tenant_id = activo
+    if activo == usuario["tenant_id"]:
+        g.gestor_fichajes, g.supervisor_tenant = bool(usuario["gestor_fichajes"]), bool(usuario["supervisor_tenant"])
+        g.custodio_certificados = bool(usuario["custodio_certificados"])
+    else:
+        a = db.atributos_en_despacho(usuario["id"], activo)
+        g.gestor_fichajes, g.supervisor_tenant, g.custodio_certificados = bool(a["gestor_fichajes"]), bool(a["supervisor_tenant"]), bool(a["custodio_certificados"])
+
+
 @app.before_request
 def _resolver_usuario_actual():
     # Modo escritorio (GuildaWork.exe): un único usuario local de confianza,
@@ -431,20 +446,27 @@ def _resolver_usuario_actual():
             usuario = db.usuario_por_kratos_id(identity_id)
             g.usuario_id = usuario["id"]
             g.es_admin = usuario["rol"] == "admin"
-            g.tenant_id = usuario["tenant_id"]
-            g.gestor_fichajes = bool(usuario["gestor_fichajes"])
-            g.supervisor_tenant = bool(usuario["supervisor_tenant"])
-            g.custodio_certificados = bool(usuario["custodio_certificados"])
+            _fijar_despacho_activo(usuario)
     else:
         g.usuario_id = usuario["id"]
         g.es_admin = usuario["rol"] == "admin"
-        g.tenant_id = usuario["tenant_id"]
-        g.gestor_fichajes = bool(usuario["gestor_fichajes"])
-        g.supervisor_tenant = bool(usuario["supervisor_tenant"])
-        g.custodio_certificados = bool(usuario["custodio_certificados"])
+        _fijar_despacho_activo(usuario)
         g.apariencia = {"tema": usuario["tema"], "densidad": usuario["densidad"]}      # ya está en la fila leída: sin consulta extra
         if request.endpoint != "static":
             db.registrar_acceso(usuario["id"])
+
+
+@app.before_request
+def _contexto_de_despacho():
+    """Las conexiones a PostgreSQL de esta petición se abren con el despacho de la persona (RLS). Sin despacho, con el 0 («Plataforma»): nunca con acceso a todo. Las peticiones
+    anónimas (login, enlaces públicos) no fijan nada y usan el rol de la plataforma. En SQLite no tiene efecto."""
+    if g.get("usuario_id") is not None:
+        g._ctx_despacho = contexto_bd.fijar_para_la_peticion(g.tenant_id if g.get("tenant_id") is not None else 0, g.usuario_id)
+
+
+@app.teardown_request
+def _liberar_contexto_de_despacho(_exc):
+    contexto_bd.restaurar(g.pop("_ctx_despacho", None))
 
 
 _RUTAS_ABIERTAS_EN_MANTENIMIENTO = ("/static/", "/.ory/", "/webhooks/", "/soporte/ver-como", "/login", "/logout", "/idioma/")
@@ -1070,6 +1092,35 @@ def cambiar_idioma(codigo):
     if destino and destino.startswith(request.host_url):
         return redirect(destino)
     return redirect(url_for("inicio"))
+
+
+@app.route("/despacho/activo/<int:tenant_id>", methods=["POST"])
+@login_required
+def cambiar_despacho_activo(tenant_id):
+    """Selector de despacho para quien pertenece a varios: lo que se ve y se guarda a partir de ahora es de ese despacho."""
+    if g.get("ver_como"):
+        abort(403)
+    if not db.es_miembro_de_tenant(g.usuario_id, tenant_id):
+        abort(403)
+    session["tenant_activo"] = tenant_id
+    destino = request.referrer
+    if destino and destino.startswith(request.host_url):
+        return redirect(destino)
+    return redirect(url_for("inicio"))
+
+
+@app.context_processor
+def inyectar_despachos_de_la_persona():
+    """Despachos de la persona para el selector del panel de cuenta; vacío si solo tiene uno (el selector no se muestra)."""
+    if not g.get("usuario_id") or g.get("ver_como"):
+        return {"despachos_usuario": []}
+    # La lista se recuerda en la sesión 1 minuto: casi nadie tiene más de un despacho y no merece una consulta en cada pantalla.
+    guardado = session.get("despachos_usuario")
+    if not guardado or guardado[0] != g.usuario_id or time.time() - guardado[1] > 60:
+        guardado = [g.usuario_id, time.time(), [[d["id"], d["nombre"]] for d in db.tenants_de_usuario(g.usuario_id)]]
+        session["despachos_usuario"] = guardado
+    despachos = [{"id": i, "nombre": n} for i, n in guardado[2]]
+    return {"despachos_usuario": despachos if len(despachos) > 1 else []}
 
 
 ICONOS_MENU_VALIDOS = {

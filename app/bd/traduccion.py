@@ -5,6 +5,7 @@ Solo lo MECÁNICO y seguro: marcadores de parámetros, `%` literal, `BEGIN IMMED
 FTS5, `INSERT OR REPLACE`...) se reescribe en el propio SQL de la aplicación en la fase 3
 y aquí falla con un mensaje claro en vez de ejecutar algo distinto.
 """
+import dataclasses
 import re
 from dataclasses import dataclass
 from functools import lru_cache
@@ -35,6 +36,8 @@ class Preparada:
     tiene_returning: bool
     pragma: Optional[tuple]        # (nombre, argumento) si es un PRAGMA
     begin_inmediato: bool          # BEGIN IMMEDIATE/EXCLUSIVE: serializa escritores como SQLite
+    con_despacho: Optional[tuple] = None   # (con parámetros, sin parámetros) con el filtro `tenant_id = SENTINELA` que sitúa la consulta en un solo shard (Citus)
+    insert_vias: Optional[tuple] = None    # INSERT sin tenant_id: (columna, tabla padre, clave del padre, nº de parámetro) con los que deducir el despacho si la conexión no tiene uno
 
 
 def _recorrer(sql: str, nombrados: bool):
@@ -80,8 +83,38 @@ def _sin_comentarios(sql: str) -> str:
     return "".join(t if codigo else (" " if t.startswith(("--", "/*")) else t) for t, codigo in _recorrer(sql, False)).strip()
 
 
+_reescritor = None                      # función SQL de la aplicación -> SQL con ajustes para Citus, o None (app/bd/citus.py)
+_reescritor_despacho = None             # igual, pero además con el filtro de despacho (SENTINELA)
+_reescritor_insert = None               # INSERT sin tenant_id -> (SQL con tenant_id = SENTINELA, formas de deducirlo)
+
+
+def configurar_reescritor(funcion, con_despacho=None, para_insert=None) -> None:
+    """Activa (o desactiva con None) la reescritura de consultas para Citus. Vacía la caché de sentencias preparadas."""
+    global _reescritor, _reescritor_despacho, _reescritor_insert
+    _reescritor, _reescritor_despacho, _reescritor_insert = funcion, con_despacho, para_insert
+    preparar.cache_clear()
+
+
 @lru_cache(maxsize=4096)
 def preparar(sql: str) -> Preparada:
+    base = sql
+    if _reescritor is not None:
+        sql = _reescritor(base) or base
+    p = _preparar(sql)
+    if _reescritor_insert is not None and p.verbo == "INSERT" and p.tabla_insert:
+        ins = _reescritor_insert(base)
+        if ins:
+            q = _preparar(ins[0])
+            return dataclasses.replace(p, con_despacho=(q.sql_con_parametros, q.sql_sin_parametros), insert_vias=ins[1])
+    if _reescritor_despacho is not None and p.verbo in ("SELECT", "WITH", "UPDATE", "DELETE"):
+        filtrada = _reescritor_despacho(base)
+        if filtrada:
+            q = _preparar(filtrada)
+            p = dataclasses.replace(p, con_despacho=(q.sql_con_parametros, q.sql_sin_parametros))
+    return p
+
+
+def _preparar(sql: str) -> Preparada:
     limpio = _sin_comentarios(sql)
     verbo = (_PALABRA.match(limpio).group(0).upper() if _PALABRA.match(limpio) else "")
     nombrados = bool(re.search(r"(?<![:\w]):[A-Za-z_]\w*", "".join(t for t, c in _recorrer(sql, False) if c)))
