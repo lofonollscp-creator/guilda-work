@@ -10,9 +10,12 @@ import base64
 import math
 import re
 
+from .. import bd as _bd
 from .. import db
 from . import corpus
 
+# ts_rank_cd normaliza por la longitud del fragmento (2): bm25 de SQLite también favorece el texto corto con la misma frecuencia de palabras.
+PG_NORMALIZACION_RANGO = int(__import__("os").environ.get("GUILDA_PG_RANK_NORM", "2"))
 MAX_VECTORIAL = 20000
 CANDIDATOS_POR_VIA = 40
 _TOKEN = re.compile(r"[\wáéíóúüñÁÉÍÓÚÜÑ]{2,}", re.UNICODE)
@@ -32,15 +35,31 @@ _VACIAS = frozenset("""de la el los las un una unos unas y o u e en que qué a p
 este esta esto estos estas ese esa eso sobre entre desde hasta tiene tienen puede pueden debe deben según segun sin muy más mas ya también tambien o""".split())
 
 
-def _fts_consulta(texto: str, modo: str = "y") -> str | None:
-    """Consulta FTS5 segura: cada palabra entre comillas (nada de operadores del usuario). `y` = todas las palabras (búsqueda precisa); `o` = las significativas, cualquiera (preguntas en lenguaje natural)."""
+def _fts_consulta(texto: str, modo: str = "y", conn=None) -> str | None:
+    """Consulta de texto segura: nada de operadores del usuario. `y` = todas las palabras (búsqueda precisa); `o` = las significativas, cualquiera (preguntas en lenguaje natural).
+    Con una conexión de PostgreSQL devuelve una expresión de `to_tsquery` (palabras unidas por & o |); si no, la de FTS5 (cada palabra entre comillas)."""
     tokens = _TOKEN.findall(texto or "")
     if modo == "o":
         tokens = [t for t in tokens if t.lower() not in _VACIAS and len(t) >= 3]
     if not tokens:
         return None
+    if conn is not None and _bd.es_postgres(conn):
+        return (" | " if modo == "o" else " & ").join(t.replace("'", "") for t in tokens[:24])           # _TOKEN solo admite letras, cifras y «_»: nada que sea sintaxis de tsquery
     union = " OR " if modo == "o" else " "
     return union.join('"' + t.replace('"', "") + '"' for t in tokens[:24])
+
+
+def _sql_texto(conn, alias: str = "g", fts: str = "jur_fragmentos_fts"):
+    """(unión, condición, orden, ¿el orden lleva parámetro?) de la búsqueda de texto según el motor: FTS5 con bm25 en SQLite, tsvector con ts_rank_cd en PostgreSQL."""
+    if _bd.es_postgres(conn):
+        return "", f"{alias}.busqueda @@ to_tsquery('es_simple', ?)", f"ts_rank_cd({alias}.busqueda, to_tsquery('es_simple', ?), {PG_NORMALIZACION_RANGO}) DESC", True
+    return f" JOIN {fts} ON {fts}.rowid = {alias}.id", f"{fts} MATCH ?", f"bm25({fts})", False
+
+
+def _consulta_texto(conn, donde: str, params: list, expresion: str, limite: int):
+    union, cond, orden, orden_con_parametro = _sql_texto(conn)
+    args = [expresion, *params] + ([expresion] if orden_con_parametro else []) + [limite]
+    return conn.execute(f"{_SELECT}{union} WHERE {cond} AND {donde} ORDER BY {orden} LIMIT ?", args).fetchall()
 
 
 def _coseno(a: list[float], b: list[float]) -> float:
@@ -65,7 +84,7 @@ def _filtros_sql(fuentes: list[str], colecciones, materia, territorio, emisor, t
         params += list(colecciones)
     for col, val in (("materia", materia), ("territorio", territorio), ("emisor", emisor), ("tipo", tipo)):
         if val:
-            donde.append(f"d.{col} LIKE ?")
+            donde.append(f"LOWER(d.{col}) LIKE LOWER(?)")
             params.append(f"%{val}%" if col in ("materia", "emisor") else val)
     if desde:
         donde.append("COALESCE(d.fecha_resolucion, d.fecha_publicacion) >= ?")
@@ -136,20 +155,18 @@ def buscar(tenant_id: int, consulta: str, *, colecciones: list[str] | None = Non
             for m in patron.finditer(consulta):
                 valor = m.group(1)
                 col = {"id_externo": "d.id_externo", "ecli": "d.ecli", "celex": "d.celex", "roj": "d.roj"}[campo]
-                for f in conn.execute(f"{_SELECT} WHERE {donde} AND {col} = ? COLLATE NOCASE ORDER BY g.orden LIMIT 5", (*params, valor)):
+                for f in conn.execute(f"{_SELECT} WHERE {donde} AND LOWER({col}) = LOWER(?) ORDER BY g.orden LIMIT 5", (*params, valor)):
                     candidatos.setdefault(f["fragmento_id"], {"fila": f, "motivo": f"Identificador exacto ({valor})", "rrf": 1.0})
         # 2. Texto (FTS5, bm25)
-        fts = _fts_consulta(consulta)
+        fts = _fts_consulta(consulta, "y", conn)
         n_texto = 0
         fts_usada = fts
         if fts:
-            filas = conn.execute(f"{_SELECT} JOIN jur_fragmentos_fts ON jur_fragmentos_fts.rowid = g.id WHERE jur_fragmentos_fts MATCH ? AND {donde} ORDER BY bm25(jur_fragmentos_fts) LIMIT ?",
-                                 (fts, *params, CANDIDATOS_POR_VIA)).fetchall()
+            filas = _consulta_texto(conn, donde, params, fts, CANDIDATOS_POR_VIA)
             if len(filas) < 5 and not any(pat.search(consulta) for _c, pat in _RE_ID):                                              # pocas con todas las palabras: se amplía a «cualquiera de las significativas» (pregunta en lenguaje natural)
-                fts_o = _fts_consulta(consulta, "o")
+                fts_o = _fts_consulta(consulta, "o", conn)
                 if fts_o and fts_o != fts:
-                    extra = conn.execute(f"{_SELECT} JOIN jur_fragmentos_fts ON jur_fragmentos_fts.rowid = g.id WHERE jur_fragmentos_fts MATCH ? AND {donde} ORDER BY bm25(jur_fragmentos_fts) LIMIT ?",
-                                         (fts_o, *params, CANDIDATOS_POR_VIA)).fetchall()
+                    extra = _consulta_texto(conn, donde, params, fts_o, CANDIDATOS_POR_VIA)
                     vistos = {f["fragmento_id"] for f in filas}
                     filas = list(filas) + [f for f in extra if f["fragmento_id"] not in vistos]
                     fts_usada = fts_o
@@ -167,7 +184,7 @@ def buscar(tenant_id: int, consulta: str, *, colecciones: list[str] | None = Non
             if q:
                 puntuados = []
                 modelo = getattr(embedder, "modelo", None)
-                for f in conn.execute(f"{_SELECT.replace('SELECT g.id', 'SELECT g.embedding AS emb, g.id')} WHERE {donde} AND g.embedding IS NOT NULL AND g.embedding_modelo IS ? LIMIT ?", (*params, modelo, MAX_VECTORIAL)):
+                for f in conn.execute(f"{_SELECT.replace('SELECT g.id', 'SELECT g.embedding AS emb, g.id')} WHERE {donde} AND g.embedding IS NOT NULL AND g.embedding_modelo IS NOT DISTINCT FROM ? LIMIT ?", (*params, modelo, MAX_VECTORIAL)):
                     puntuados.append((_coseno(q, corpus.bytes_a_vector(f["emb"])), f))
                 if puntuados:
                     modo = "hibrido"
@@ -191,15 +208,18 @@ def buscar(tenant_id: int, consulta: str, *, colecciones: list[str] | None = Non
         for c in pagina:
             extracto = None
             if fts and c["motivo"].startswith(("Coincidencia", "Similitud")):
-                s = conn.execute("SELECT snippet(jur_fragmentos_fts, 0, '«', '»', ' … ', 24) AS s FROM jur_fragmentos_fts WHERE jur_fragmentos_fts MATCH ? AND rowid = ?", (fts_usada, c["fila"]["fragmento_id"])).fetchone()
+                if _bd.es_postgres(conn):
+                    s = conn.execute("SELECT ts_headline('es_simple', texto, to_tsquery('es_simple', ?), 'StartSel=«, StopSel=», MaxFragments=1, MaxWords=24, MinWords=8') AS s "
+                                     "FROM jur_fragmentos WHERE id = ? AND busqueda @@ to_tsquery('es_simple', ?)", (fts_usada, c["fila"]["fragmento_id"], fts_usada)).fetchone()
+                else:
+                    s = conn.execute("SELECT snippet(jur_fragmentos_fts, 0, '«', '»', ' … ', 24) AS s FROM jur_fragmentos_fts WHERE jur_fragmentos_fts MATCH ? AND rowid = ?", (fts_usada, c["fila"]["fragmento_id"])).fetchone()
                 extracto = s["s"] if s and s["s"] else None
             resultados.append(_resultado(c["fila"], c["motivo"], extracto))
         huecos = _huecos_temporales(conn, [r["documento_id"] for r in resultados], fecha_juridica) if fecha_juridica else []
         if fecha_juridica and fts_usada:                                    # normas que coinciden con la búsqueda pero no tienen texto aplicable a esa fecha: se dicen aunque no salgan como resultado
             sin_fecha_donde, sin_fecha_p = _filtros_sql(fuentes, colecciones, materia, territorio, emisor, tipo, desde, hasta, None, _fecha(corte_historico, "Corte histórico"))
             sin_fecha_donde = sin_fecha_donde.replace(" AND g.vigente_hasta IS NULL", "")
-            ids = [f["documento_id"] for f in conn.execute(f"{_SELECT} JOIN jur_fragmentos_fts ON jur_fragmentos_fts.rowid = g.id WHERE jur_fragmentos_fts MATCH ? AND {sin_fecha_donde} AND d.coleccion = 'legislacion' "
-                                                           f"ORDER BY bm25(jur_fragmentos_fts) LIMIT 30", (fts_usada, *sin_fecha_p))]
+            ids = [f["documento_id"] for f in _consulta_texto(conn, f"{sin_fecha_donde} AND d.coleccion = 'legislacion'", sin_fecha_p, fts_usada, 30)]
             nuevos = [i for i in dict.fromkeys(ids) if i not in {r["documento_id"] for r in resultados}][:5]
             huecos += [h for h in _huecos_temporales(conn, nuevos, fecha_juridica) if h not in huecos]
         siguiente = base64.urlsafe_b64encode(str(offset + limite).encode()).decode() if offset + limite < total else None

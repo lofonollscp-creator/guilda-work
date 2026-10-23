@@ -328,7 +328,7 @@ def listar_notas(
             cond.append("n.categoria_id = ?"); params.append(categoria_id)
         if texto:
             patron = "%" + texto.replace("%", r"\%").replace("_", r"\_") + "%"
-            cond.append("(n.texto LIKE ? ESCAPE '\\' OR n.titulo LIKE ? ESCAPE '\\')"); params += [patron, patron]
+            cond.append("(LOWER(n.texto) LIKE LOWER(?) ESCAPE '\\' OR LOWER(n.titulo) LIKE LOWER(?) ESCAPE '\\')"); params += [patron, patron]
         return conn.execute(
             f"""SELECT n.*, c.nombre AS categoria_nombre, c.color AS categoria_color,
                        COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS dueno_nombre
@@ -349,7 +349,7 @@ def contar_notas(usuario_id: int, categoria_id: int | None = None, texto: str | 
         cond.append("categoria_id = ?"); params.append(categoria_id)
     if texto:
         patron = "%" + texto.replace("%", r"\%").replace("_", r"\_") + "%"
-        cond.append("(texto LIKE ? ESCAPE '\\' OR titulo LIKE ? ESCAPE '\\')"); params += [patron, patron]
+        cond.append("(LOWER(texto) LIKE LOWER(?) ESCAPE '\\' OR LOWER(titulo) LIKE LOWER(?) ESCAPE '\\')"); params += [patron, patron]
     conn = _db.get_connection()
     try:
         return conn.execute(f"SELECT COUNT(*) FROM notas WHERE {' AND '.join(cond)}", params).fetchone()[0]

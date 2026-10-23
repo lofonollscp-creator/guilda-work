@@ -1140,7 +1140,7 @@ def listar_tareas_outlook(
         if categoria_outlook:
             cond.append("categoria_outlook = ?"); params.append(categoria_outlook)
         if texto:
-            cond.append("(asunto LIKE ? OR cuerpo LIKE ?)")
+            cond.append("(LOWER(asunto) LIKE LOWER(?) OR LOWER(cuerpo) LIKE LOWER(?))")
             params.extend([f"%{texto}%", f"%{texto}%"])
         if desde:
             cond.append("fecha_vencimiento >= ?"); params.append(desde)

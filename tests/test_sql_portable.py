@@ -19,6 +19,12 @@ def test_no_hay_construcciones_sqlite_no_portables():
     assert not malos, "SQL no portable a PostgreSQL:\n" + "\n".join(f"  [{c}] {r}:{l}  …{f[:120]}" for c, r, l, f in malos)
 
 
+def test_los_like_sobre_texto_de_personas_no_dependen_de_las_mayusculas():
+    """En SQLite LIKE no distingue mayúsculas; en PostgreSQL sí: se compara LOWER(columna) con LOWER(?) (o plano())."""
+    malos = auditar_sql.likes_sin_normalizar()
+    assert not malos, "LIKE sin LOWER()/plano():\n" + "\n".join(f"  {r}:{l}  {o}" for r, l, o in malos)
+
+
 def test_las_sentencias_dml_se_parsean_como_postgresql():
     """Sintaxis (no semántica): cada SELECT/INSERT/UPDATE/DELETE embebido debe ser SQL válido para el analizador de PostgreSQL."""
     pglast = pytest.importorskip("pglast")

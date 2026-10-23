@@ -38,6 +38,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from . import bd as _bd
+from .bd.errores import ErrorBD
 from . import cifrado_despacho as cd
 from . import db
 
@@ -528,6 +529,15 @@ def sellar_todo(tenant_id: int) -> int:
 
 
 def _depurar_indice(conn) -> None:
+    if _bd.es_postgres(conn):
+        # El índice es una columna generada: al sellar un mensaje se recalcula sola. Lo que puede quedar son versiones antiguas de la fila (con el texto en claro)
+        # hasta que se limpien: VACUUM las retira (mejor esfuerzo; el autovacuum lo hace de todos modos). El WAL archivado se rota en la operación de copias.
+        conn.commit()
+        try:
+            conn.execute("VACUUM correo_mensajes")
+        except ErrorBD:
+            pass
+        return
     if _bd.existe_tabla(conn, 'correo_fts'):
         conn.execute("INSERT INTO correo_fts(correo_fts) VALUES ('rebuild')")
         conn.execute("INSERT INTO correo_fts(correo_fts) VALUES ('optimize')")

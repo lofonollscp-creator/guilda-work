@@ -62,8 +62,8 @@ def historial(
             cond_n.append("n.categoria_id = ?"); params_n.append(categoria_id)
             cond_t.append("t.categoria_id = ?"); params_t.append(categoria_id)
         if texto:
-            cond_n.append("(n.texto LIKE ? OR n.titulo LIKE ?)"); params_n.extend([f"%{texto}%", f"%{texto}%"])
-            cond_t.append("t.nombre LIKE ?"); params_t.append(f"%{texto}%")
+            cond_n.append("(LOWER(n.texto) LIKE LOWER(?) OR LOWER(n.titulo) LIKE LOWER(?))"); params_n.extend([f"%{texto}%", f"%{texto}%"])
+            cond_t.append("LOWER(t.nombre) LIKE LOWER(?)"); params_t.append(f"%{texto}%")
 
         query = f"""
             SELECT * FROM (

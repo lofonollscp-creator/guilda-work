@@ -61,6 +61,8 @@ def esquema_postgres(url):
 
 def comparar(a, b):
     b = {t: v for t, v in b.items() if t != "bd_esquema_version"}          # propia de PostgreSQL (versión del esquema)
+    for v in b.values():                                                    # columnas tsvector de búsqueda: sustituyen a las tablas FTS5 (fase 5)
+        v["cols"] = {c: d for c, d in v["cols"].items() if c != "busqueda"}
     dif = []
     for t in sorted(set(a) | set(b)):
         if t not in b:

@@ -1,6 +1,6 @@
 # ADR: migración de SQLite a PostgreSQL + Citus (distribución por `tenant_id`)
 
-Estado: **fases 0 a 4 completadas (inventario, ensayo de Citus, capa de acceso a datos, SQL portable y esquema de PostgreSQL)**. Aún no se ha cambiado código de la aplicación. Plan por fases: [plan-migracion-postgresql-citus.md](plan-migracion-postgresql-citus.md). Clasificación tabla a tabla: [migracion-clasificacion-tablas.csv](migracion-clasificacion-tablas.csv). Scripts: `scripts/migracion/` (solo lectura).
+Estado: **fases 0 a 5 completadas (… esquema de PostgreSQL y búsqueda de texto)**. Aún no se ha cambiado código de la aplicación. Plan por fases: [plan-migracion-postgresql-citus.md](plan-migracion-postgresql-citus.md). Clasificación tabla a tabla: [migracion-clasificacion-tablas.csv](migracion-clasificacion-tablas.csv). Scripts: `scripts/migracion/` (solo lectura).
 
 ## Decisiones tomadas (2026-10-23)
 
@@ -173,3 +173,22 @@ Comprobaciones (todas automáticas): `tests/test_esquema_pg.py` (ficheros al dí
 ### Lo que sigue sin comprobarse (fases 5-7)
 
 `PREPARE` valida nombres, funciones y tipos de columnas, no los TIPOS de los parámetros que envía Python (texto frente a entero en una comparación real), el orden de NULL (SQLite los pone primero en ASC; PostgreSQL al final), ni la semántica de `LIKE` con `\`. Eso solo aparece ejecutando la suite completa contra PostgreSQL (fase 7); mientras tanto, `ORDER BY` sobre columnas anulables hay que revisarlos.
+
+## Fase 5: búsqueda de texto y vectores (2026-10-23)
+
+| SQLite | PostgreSQL |
+|---|---|
+| Tablas FTS5 `correo_fts`, `jur_fragmentos_fts`, `jur_fragmentos_privados_fts` + triggers | Columna **`busqueda tsvector` GENERADA** (`ALTER TABLE … ADD COLUMN … GENERATED ALWAYS AS (…) STORED`) + índice GIN: sin triggers que mantener (`app/bd/esquema_pg/06_busqueda.sql`) |
+| Tokenizador `unicode61 remove_diacritics 2` | Configuración `es_simple` (copia de `simple` con el diccionario `unaccent`) y `texto_buscable()`, que convierte en separador todo lo que no sea letra o cifra: «1.101», «BOE-A-2023-1234» y «acme.com» se parten igual. **Sin raíces (stemming)**, para medir la recuperación contra el comportamiento de SQLite; activarlo es una mejora aparte |
+| `MATCH`, `bm25()`, `snippet()` | `@@ to_tsquery('es_simple', …)`, `ts_rank_cd(…, 2)` (normalizado por longitud: lo más parecido a bm25 que hay en PostgreSQL), `ts_headline()` |
+| Correo: prefijo `fact*`, frase `"a b"`, todas las palabras | `consulta_tsquery()`: `(fact:*) & (a <-> b)`; solo letras y cifras pasan, nada del texto del usuario es sintaxis de tsquery |
+| Mensaje «entrando, por sellar» (`cifrado = 2`) no se indexa | La expresión generada devuelve NULL mientras `cifrado = 2` y se recalcula sola al sellar; `_depurar_indice` hace `VACUUM correo_mensajes` (mejor esfuerzo) para retirar versiones antiguas de la fila |
+| Embeddings en BLOB y coseno en Python | **Sin cambios** (bytea). `pgvector` queda para cuando `LEGAL_EMBEDDINGS` se use de verdad: columna `vector(N)` + índice HNSW (D13) |
+
+Requisito de la base de datos: **LC_CTYPE UTF-8 (no «C»)**; con «C» las letras acentuadas no cuentan como letras y `lower()` no las pasa a minúsculas. Comprobado en la instancia de ensayo (`en_US.utf8`).
+
+Otras correcciones: los `LIKE` sobre texto escrito por personas ahora usan `LOWER(col) LIKE LOWER(?)` (en SQLite no distinguen mayúsculas y en PostgreSQL sí): correo, notas, tareas, historial, clientes fiscales y filtros de la biblioteca; `COLLATE NOCASE` y `IS ?` de `busqueda.py` reescritos. El auditor (`likes_sin_normalizar`) y `tests/test_sql_portable.py` lo vigilan, y ahora detecta también fragmentos de SQL que no empiezan por SELECT (el auditor anterior los pasaba por alto).
+
+Pruebas (`tests/test_busqueda_pg.py`, contra el servidor de ensayo): las 16 consultas jurídicas del corpus sintético devuelven los mismos documentos, totales, modos, huecos y avisos en SQLite y PostgreSQL (el MEJOR fragmento de un documento puede cambiar de uno a otro cuando varios coinciden: bm25 frente a ts_rank_cd); 18 búsquedas de correo idénticas (acentos, mayúsculas, prefijo, frase, números con punto, `50%`); el mensaje por sellar no se encuentra y sí tras sellarlo; la evaluación de recuperación del repositorio da el mismo resultado; los fragmentos privados respetan el despacho; el modo híbrido con embeddings funciona.
+
+**Lo que SÍ cambia para quien busca:** el orden de los resultados dentro de un mismo documento y entre documentos con puntuaciones parecidas puede variar respecto a SQLite. Con un corpus real y casos anotados por un profesional (hito 5 del piloto) conviene repetir la medición antes del corte.

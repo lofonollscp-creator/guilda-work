@@ -1592,6 +1592,8 @@ def reconstruir_indice_correo() -> int:
     """Vuelve a construir el índice de búsqueda del correo desde cero (por si se desincroniza)."""
     conn = _db.get_connection()
     try:
+        if _db._bd.es_postgres(conn):                                   # la columna tsvector es generada: no hay nada que reconstruir
+            return conn.execute("SELECT COUNT(*) FROM correo_mensajes").fetchone()[0]
         if not _db._asegurar_fts_correo(conn):
             return 0
         conn.execute("INSERT INTO correo_fts(correo_fts) VALUES ('rebuild')")
@@ -1604,7 +1606,7 @@ def reconstruir_indice_correo() -> int:
 def fts_correo_disponible() -> bool:
     conn = _db.get_connection()
     try:
-        return _db._bd.existe_tabla(conn, 'correo_fts')
+        return _db._bd.es_postgres(conn) or _db._bd.existe_tabla(conn, 'correo_fts')
     finally:
         conn.close()
 
@@ -1625,6 +1627,23 @@ def consulta_fts(texto: str) -> str | None:
         elif palabra:
             partes.append('"' + palabra.replace('"', '""') + '"*')
     return " ".join(partes) or None
+
+
+def consulta_tsquery(texto: str) -> str | None:
+    """Equivalente de consulta_fts() para PostgreSQL (`to_tsquery('es_simple', …)`): cada palabra busca por prefijo, lo que va entre comillas busca la frase exacta (palabras
+    consecutivas) y se exigen todas. Solo pasan letras y cifras, así que nada del texto del usuario puede ser sintaxis de tsquery. Un punto o un guion parten la palabra, igual que al indexar."""
+    if not re.search(r"[^\W_]", texto or "") or re.search(r"[%_$€#&/\\]", texto or ""):
+        return None
+    partes = []
+    for m in _db._TROZO_BUSQUEDA.finditer(texto or ""):
+        frase, palabra = m.group(1), m.group(2)
+        trozos = re.findall(r"[^\W_]+", frase or palabra or "")
+        if not trozos:
+            continue
+        if not frase:
+            trozos[-1] += ":*"
+        partes.append("(" + " <-> ".join(trozos) + ")")
+    return " & ".join(partes) or None
 
 
 def _crear_vista_participantes_todos(conn: sqlite3.Connection) -> None:
@@ -2074,21 +2093,27 @@ def listar_mensajes_correo(
         if solo_no_leidos:
             cond.append("leido = 0")
         if texto:
-            expresion = _db.consulta_fts(texto) if _db._bd.existe_tabla(conn, 'correo_fts') else None
+            if _db._bd.es_postgres(conn):
+                expresion = _db.consulta_tsquery(texto)
+            else:
+                expresion = _db.consulta_fts(texto) if _db._bd.existe_tabla(conn, 'correo_fts') else None
             if expresion:
                 # Índice de texto completo: instantáneo aunque haya decenas de miles de correos
                 # (LIKE '%x%' recorría todos los cuerpos). Sin acentos ni mayúsculas, por prefijo.
-                cond.append("id IN (SELECT rowid FROM correo_fts WHERE correo_fts MATCH ?)")
+                if _db._bd.es_postgres(conn):
+                    cond.append("busqueda @@ to_tsquery('es_simple', ?)")                     # columna tsvector generada (app/bd/esquema_pg/06_busqueda.sql)
+                else:
+                    cond.append("id IN (SELECT rowid FROM correo_fts WHERE correo_fts MATCH ?)")
                 params.append(expresion)
             else:
                 cond.append(
-                    "(asunto LIKE ? ESCAPE '\\' OR remitente LIKE ? ESCAPE '\\' OR destinatarios LIKE ? ESCAPE '\\' "
-                    "OR cuerpo_texto LIKE ? ESCAPE '\\')"
+                    "(LOWER(asunto) LIKE LOWER(?) ESCAPE '\\' OR LOWER(remitente) LIKE LOWER(?) ESCAPE '\\' OR LOWER(destinatarios) LIKE LOWER(?) ESCAPE '\\' "
+                    "OR LOWER(cuerpo_texto) LIKE LOWER(?) ESCAPE '\\')"
                 )
                 params.extend([_db._like_literal(texto)] * 4)
         for columna, valor in (("remitente", remitente), ("destinatarios", destinatarios), ("asunto", asunto)):
             if valor:
-                cond.append(f"{columna} LIKE ? ESCAPE '\\'"); params.append(_db._like_literal(valor))
+                cond.append(f"LOWER({columna}) LIKE LOWER(?) ESCAPE '\\'"); params.append(_db._like_literal(valor))
         if con_adjuntos:
             cond.append("EXISTS (SELECT 1 FROM correo_adjuntos a WHERE a.mensaje_id = correo_mensajes.id)")
         if categoria_id is not None:

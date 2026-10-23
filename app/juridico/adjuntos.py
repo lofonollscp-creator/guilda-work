@@ -252,15 +252,17 @@ def fragmentos_para(tenant_id: int, adjunto_ids: list[int], pregunta: str, maxim
     """Fragmentos de los adjuntos (ya validados) más pertinentes a la pregunta (FTS) y, si no hay coincidencias, los primeros de cada archivo. Siempre acotados por `tenant_id`."""
     if not adjunto_ids:
         return []
-    from .busqueda import _fts_consulta
+    from .busqueda import _fts_consulta, _sql_texto
     conn = db.get_connection()
     try:
         marcas = ",".join("?" for _ in adjunto_ids)
         elegidos: dict[int, dict] = {}
-        fts = _fts_consulta(pregunta)
+        fts = _fts_consulta(pregunta, "y", conn)
         if fts:
-            for f in conn.execute(f"SELECT p.id, p.adjunto_id, p.localizador, p.texto, a.nombre FROM jur_fragmentos_privados p JOIN jur_adjuntos a ON a.id = p.adjunto_id JOIN jur_fragmentos_privados_fts ON jur_fragmentos_privados_fts.rowid = p.id "
-                                  f"WHERE jur_fragmentos_privados_fts MATCH ? AND p.tenant_id = ? AND p.adjunto_id IN ({marcas}) ORDER BY bm25(jur_fragmentos_privados_fts) LIMIT ?", (fts, tenant_id, *adjunto_ids, maximo)):
+            union, cond, orden, orden_con_parametro = _sql_texto(conn, "p", "jur_fragmentos_privados_fts")
+            args = [fts, tenant_id, *adjunto_ids] + ([fts] if orden_con_parametro else []) + [maximo]
+            for f in conn.execute(f"SELECT p.id, p.adjunto_id, p.localizador, p.texto, a.nombre FROM jur_fragmentos_privados p JOIN jur_adjuntos a ON a.id = p.adjunto_id{union} "
+                                  f"WHERE {cond} AND p.tenant_id = ? AND p.adjunto_id IN ({marcas}) ORDER BY {orden} LIMIT ?", args):
                 elegidos[f["id"]] = dict(f)
         for aid in adjunto_ids:
             if len(elegidos) >= maximo:

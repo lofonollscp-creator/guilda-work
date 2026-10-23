@@ -3268,6 +3268,7 @@ from .db_correo import (  # noqa: E402,F401
     reconstruir_indice_correo,
     fts_correo_disponible,
     consulta_fts,
+    consulta_tsquery,
     _crear_vista_participantes_todos,
     estado_carpeta_correo,
     guardar_estado_carpeta_correo,

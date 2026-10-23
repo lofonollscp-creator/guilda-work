@@ -1,6 +1,6 @@
 # Plan de migración a PostgreSQL + Citus (distribución por `tenant_id`)
 
-Estado: **fases 0 a 4 completadas** (2026-10-23). Resultados en `docs/adr-postgresql-citus.md`.
+Estado: **fases 0 a 5 completadas** (2026-10-23). Resultados en `docs/adr-postgresql-citus.md`.
 Ejecutor: Claude (código, scripts, tests, documentación). Usuario: acciones de sistema, aprobaciones y ventana de corte.
 
 ## 0. Punto de partida (medido en el código)
@@ -58,7 +58,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 - Comprobador que compara el esquema SQLite con el de PostgreSQL (tablas, columnas, nulos, únicos, FK).
 - **Salida:** `crear_esquema()` en PostgreSQL deja el mismo modelo que en SQLite.
 
-### Fase 5 — Búsqueda de texto y vectores (≈ 1,5-2 semanas)
+### Fase 5 — Búsqueda de texto y vectores (COMPLETADA 2026-10-23, ver ADR)
 - FTS5 → `tsvector` con configuración `spanish` + `unaccent`, índice GIN y columnas generadas; `bm25` → `ts_rank_cd`; mantener la estrategia AND con respaldo OR y la búsqueda por identificadores exactos.
 - Correo y corpus jurídico (compartido y privado). Embeddings → `pgvector` con índice HNSW, filtrado por modelo.
 - Evaluación comparada con `scripts/evaluar_juridico.py`: la calidad de recuperación no puede bajar respecto a SQLite.

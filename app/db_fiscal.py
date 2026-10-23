@@ -146,7 +146,7 @@ def listar_clientes_fiscales(tenant_id: int, q: str | None = None, pais: str | N
         cond = ["tenant_id = ?", "papelera_en IS NULL"]
         params: list = [tenant_id]
         if q:
-            cond.append("(nombre LIKE ? OR nif LIKE ?)")
+            cond.append("(LOWER(nombre) LIKE LOWER(?) OR LOWER(nif) LIKE LOWER(?))")
             comodin = f"%{q.strip()}%"
             params.extend([comodin, comodin])
         if pais:

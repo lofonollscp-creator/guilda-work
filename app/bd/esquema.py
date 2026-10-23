@@ -1,13 +1,13 @@
 """Esquema de PostgreSQL: se crea una sola vez (ficheros de app/bd/esquema_pg/) y después evoluciona con migraciones numeradas.
 
-`01`-`04` los genera scripts/migracion/generar_esquema_pg.py a partir del esquema de SQLite; `00` (funciones) y `05` (triggers) son
+`01`-`04` los genera scripts/migracion/generar_esquema_pg.py a partir del esquema de SQLite; `00` (funciones), `05` (triggers) y `06` (búsqueda de texto) son
 manuales. Mientras SQLite siga siendo el motor de producción, cualquier tabla nueva se añade a SQLite y se regenera; tests/test_esquema_pg.py
 avisa si los ficheros del repositorio se han quedado atrás.
 """
 from pathlib import Path
 
 DIRECTORIO = Path(__file__).resolve().parent / "esquema_pg"
-ORDEN = ("00_funciones.sql", "01_tablas.sql", "02_indices.sql", "03_claves_foraneas.sql", "04_vistas.sql", "05_triggers.sql")
+ORDEN = ("00_funciones.sql", "01_tablas.sql", "02_indices.sql", "03_claves_foraneas.sql", "04_vistas.sql", "05_triggers.sql", "06_busqueda.sql")
 VERSION_BASE = 1
 
 

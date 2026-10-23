@@ -46,6 +46,8 @@ REGLAS = {
     "plano": (r"\bplano\s*\(", 4, "plano() (función registrada con create_function)"),
 }
 _SQL = re.compile(r"^\s*(?:--[^\n]*\n\s*)*(SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|DROP|ALTER|PRAGMA|REPLACE|VACUUM|ANALYZE|BEGIN|SAVEPOINT|RELEASE)\b", re.I)
+# Fragmentos de SQL que no empiezan por SELECT/INSERT/... (condiciones, f-strings que empiezan por una variable...): palabras clave en MAYÚSCULAS.
+_FRAGMENTO = re.compile(r"\b(WHERE|ORDER BY|GROUP BY|LEFT JOIN|INNER JOIN|JOIN|ON CONFLICT|COLLATE|LIKE|ESCAPE|INSERT INTO|DELETE FROM|VALUES|HAVING|LIMIT|OFFSET|NOT EXISTS|IS NOT NULL|IS NULL)\b")
 _ALGUNA_PALABRA = re.compile(r"\b(FROM|INTO|WHERE|VALUES|SET|JOIN|TABLE|INDEX|TRIGGER)\b", re.I)
 
 
@@ -70,6 +72,10 @@ def cadenas(ruta: Path):
     """(línea, texto, es_sentencia_completa) de cada cadena del fichero que parezca SQL."""
     arbol = ast.parse(ruta.read_text(encoding="utf-8"))
     dentro_de_fstring = set()
+    for n in ast.walk(arbol):                                          # las docstrings explican, no ejecutan
+        if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.body and isinstance(n.body[0], ast.Expr) \
+                and isinstance(getattr(n.body[0], "value", None), ast.Constant) and isinstance(n.body[0].value.value, str):
+            dentro_de_fstring.add(id(n.body[0].value))
     for n in ast.walk(arbol):
         if isinstance(n, ast.JoinedStr):
             for v in ast.walk(n):
@@ -81,7 +87,7 @@ def cadenas(ruta: Path):
         t = _texto(n)
         if t is None or len(t) < 12:
             continue
-        if _SQL.match(t) or (_ALGUNA_PALABRA.search(t) and re.search(r"\b(SELECT|INSERT|UPDATE|DELETE|CREATE)\b", t, re.I)):
+        if _SQL.match(t) or (_ALGUNA_PALABRA.search(t) and re.search(r"\b(SELECT|INSERT|UPDATE|DELETE|CREATE)\b", t, re.I)) or _FRAGMENTO.search(t):
             yield n.lineno, t, bool(_SQL.match(t))
 
 
@@ -120,6 +126,31 @@ def incumplimientos():
                     malos.append(("pragma_sqlite", rel, linea, m.group(0)))
             if re.search(REGLAS["sqlite_master"][0], texto, re.I) and rel not in PERMITIDAS_EN["sqlite_master"]:
                 malos.append(("sqlite_master", rel, linea, "sqlite_master fuera de código solo-SQLite (usar bd.existe_tabla)"))
+    return malos
+
+
+# LIKE sobre datos que escribe la propia aplicación (prefijos, fechas, marcas): no dependen de mayúsculas. (fichero, columna)
+LIKE_SEGURO = {("app/abogados.py", "numero"), ("app/nucleo.py", "fecha"), ("app/automatizaciones.py", "COALESCE(t.referencia_externa, '')"),
+               ("app/cifrado_despacho.py", "m.contenido"), ("app/juridico/corpus.py", "instantanea"), ("app/listmonk.py", "subscribers.email"),
+               ("app/listmonk.py", "subscribers.name")}
+
+
+def likes_sin_normalizar():
+    """[(fichero, línea, operando izquierdo)] de los LIKE que comparan texto escrito por personas sin LOWER()/plano(): en SQLite no distinguen mayúsculas y en PostgreSQL sí."""
+    malos = []
+    operando = re.compile(r"((?:lower|plano)\s*\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\)|[\w\.]+\s*\)?|\))\s*(?:NOT\s+)?LIKE\b", re.I)
+    for f in ficheros():
+        rel = str(f.relative_to(RAIZ))
+        if rel.startswith("app/bd/") or rel in ("app/sdk_generador.py", "app/nextcloud.py", "app/documentacion_dev.py"):
+            continue
+        for linea, texto, _ in cadenas(f):
+            for m in operando.finditer(texto):
+                izq = " ".join(m.group(1).split())
+                if re.match(r"(?i)(lower|plano)\s*\(", izq):
+                    continue
+                if any(rel == r and c.lower() in izq.lower() for r, c in LIKE_SEGURO) or izq.upper() in ("", ")", "THEN", "AND", "OR", "WHERE"):
+                    continue
+                malos.append((rel, linea, izq[-60:]))
     return malos
 
 
