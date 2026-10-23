@@ -34,3 +34,6 @@ data/backoffice_secret.key
 data/*.key
 data/registro.db.bak*
 data/*.bak*
+
+# Informes de la instancia de ensayo de PostgreSQL+Citus
+data/pg-ensayo/

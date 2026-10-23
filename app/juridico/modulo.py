@@ -42,7 +42,8 @@ def _uso(tenant_id: int) -> list[tuple[str, str]]:
     from .. import db
     conn = db.get_connection()
     try:
-        n = conn.execute("SELECT COUNT(*) FROM jur_ejecuciones WHERE tenant_id = ? AND creada_en >= date('now', 'start of month')", (tenant_id,)).fetchone()[0]
+        from datetime import date
+        n = conn.execute("SELECT COUNT(*) FROM jur_ejecuciones WHERE tenant_id = ? AND creada_en >= ?", (tenant_id, date.today().replace(day=1).isoformat())).fetchone()[0]
         return [("Consultas jurídicas este mes", str(n))]            # texto plano: el backoffice no tiene Babel
     finally:
         conn.close()

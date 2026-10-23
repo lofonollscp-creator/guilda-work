@@ -62,7 +62,7 @@ def activar(tenant_id: int | None, mensaje: str = "", hasta: str | None = None, 
     try:
         if tenant_id is not None and not conn.execute("SELECT 1 FROM tenants WHERE id = ?", (tenant_id,)).fetchone():
             raise ValueError("El despacho no existe.")
-        if conn.execute("SELECT 1 FROM mantenimiento WHERE activo = 1 AND tenant_id IS ?", (tenant_id,)).fetchone():
+        if conn.execute("SELECT 1 FROM mantenimiento WHERE activo = 1 AND tenant_id IS NOT DISTINCT FROM ?", (tenant_id,)).fetchone():
             raise ValueError("Ya hay un mantenimiento activo para ese ámbito.")
         cur = conn.execute(
             "INSERT INTO mantenimiento (tenant_id, mensaje, hasta, activo, creado_en, creado_por) VALUES (?, ?, ?, 1, ?, ?)",

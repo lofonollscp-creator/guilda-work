@@ -668,7 +668,8 @@ def activar_servicio(tenant_id: int, usuario_id: int, alcances: list[str], dias:
     caduca = (datetime.now() + timedelta(days=int(dias))).isoformat(timespec="seconds")
     conn = db.get_connection()
     try:
-        conn.execute("INSERT OR REPLACE INTO concesion_servicio (tenant_id, envoltura, alcances, creada_por, creada_en, caduca_en) VALUES (?, ?, ?, ?, ?, ?)",
+        conn.execute("INSERT INTO concesion_servicio (tenant_id, envoltura, alcances, creada_por, creada_en, caduca_en) VALUES (?, ?, ?, ?, ?, ?) "
+                     "ON CONFLICT (tenant_id) DO UPDATE SET envoltura = excluded.envoltura, alcances = excluded.alcances, creada_por = excluded.creada_por, creada_en = excluded.creada_en, caduca_en = excluded.caduca_en",
                      (tenant_id, envoltura, json.dumps(alcances), usuario_id, db.now_iso(), caduca))
         conn.commit()
     finally:

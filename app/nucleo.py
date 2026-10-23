@@ -439,7 +439,7 @@ def listar_clientes(tenant_id: int, q: str | None = None, etiqueta: str | None =
     try:
         total = conn.execute(f"SELECT COUNT(*) FROM clientes c WHERE {cond}", p).fetchone()[0]
         filas = conn.execute(
-            f"SELECT c.*, (SELECT group_concat(etiqueta, ',') FROM cliente_etiquetas WHERE cliente_id = c.id) AS etiquetas, "
+            f"SELECT c.*, (SELECT string_agg(etiqueta, ',') FROM cliente_etiquetas WHERE cliente_id = c.id) AS etiquetas, "
             f"(SELECT COUNT(*) FROM expedientes x WHERE x.cliente_id = c.id AND x.papelera_en IS NULL AND x.estado != 'cerrado') AS expedientes_abiertos "
             f"FROM clientes c WHERE {cond} ORDER BY lower(c.nombre) LIMIT ? OFFSET ?", [*p, limite, (max(1, pagina) - 1) * limite]).fetchall()
         return filas, total
@@ -561,7 +561,7 @@ def fusionar_clientes(tenant_id: int, destino_id: int, origen_id: int) -> None:
         for tabla in ("expedientes", "plazos", "partes_tiempo"):
             conn.execute(f"UPDATE {tabla} SET cliente_id = ? WHERE cliente_id = ? AND tenant_id = ?", (destino_id, origen_id, tenant_id))
         conn.execute("UPDATE cliente_contactos SET cliente_id = ?, principal = 0 WHERE cliente_id = ?", (destino_id, origen_id))
-        conn.execute("INSERT OR IGNORE INTO cliente_etiquetas (cliente_id, etiqueta) SELECT ?, etiqueta FROM cliente_etiquetas WHERE cliente_id = ?", (destino_id, origen_id))
+        conn.execute("INSERT INTO cliente_etiquetas (cliente_id, etiqueta) SELECT ?, etiqueta FROM cliente_etiquetas WHERE cliente_id = ? ON CONFLICT DO NOTHING", (destino_id, origen_id))
         ficha_destino = conn.execute("SELECT 1 FROM clientes_fiscales WHERE cliente_id = ?", (destino_id,)).fetchone()
         if ficha_destino is None:
             conn.execute("UPDATE clientes_fiscales SET cliente_id = ? WHERE cliente_id = ? AND tenant_id = ?", (destino_id, origen_id, tenant_id))
@@ -765,7 +765,7 @@ def anadir_miembro(tenant_id: int, usuario_id: int, expediente_id: int, miembro_
     conn = db.get_connection()
     try:
         _usuario_de_tenant(conn, miembro_id, tenant_id, "La persona")
-        conn.execute("INSERT OR IGNORE INTO expediente_miembros (expediente_id, usuario_id) VALUES (?, ?)", (expediente_id, miembro_id))
+        conn.execute("INSERT INTO expediente_miembros (expediente_id, usuario_id) VALUES (?, ?) ON CONFLICT DO NOTHING", (expediente_id, miembro_id))
         _evento(conn, expediente_id, "miembro", "Se ha añadido una persona al expediente.", usuario_id)
         conn.commit()
     finally:

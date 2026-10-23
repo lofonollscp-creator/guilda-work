@@ -16,7 +16,6 @@ import logging
 import os
 import secrets
 import socket
-import sqlite3
 import sys
 import threading
 import time
@@ -34,6 +33,7 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
 from . import acceso, ai_local, ayuda, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
@@ -422,7 +422,7 @@ def _resolver_usuario_actual():
         email = sesion_kratos["identity"]["traits"]["email"]
         try:
             g.usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             # Dos peticiones casi simultáneas de la misma identidad recién
             # registrada (dos pestañas, doble clic, red lenta) -- la otra ya
             # ganó la carrera (kratos_identity_id es UNIQUE en `usuarios`),

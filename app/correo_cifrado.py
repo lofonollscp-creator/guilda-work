@@ -37,6 +37,7 @@ import unicodedata
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from . import bd as _bd
 from . import cifrado_despacho as cd
 from . import db
 
@@ -527,7 +528,7 @@ def sellar_todo(tenant_id: int) -> int:
 
 
 def _depurar_indice(conn) -> None:
-    if conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'correo_fts'").fetchone():
+    if _bd.existe_tabla(conn, 'correo_fts'):
         conn.execute("INSERT INTO correo_fts(correo_fts) VALUES ('rebuild')")
         conn.execute("INSERT INTO correo_fts(correo_fts) VALUES ('optimize')")
     conn.commit()

@@ -32,7 +32,7 @@ def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool, s
     """`solo_lectura` None = no tocar (los clientes antiguos no lo envían)."""
     conn = _db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute("INSERT INTO ia_preferencias (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
         conn.execute(
             "UPDATE ia_preferencias SET modelo = ?, modo_autonomo = ? WHERE usuario_id = ?",
             (modelo, int(modo_autonomo), usuario_id),
@@ -59,7 +59,7 @@ def obtener_preferencias_ia_local(usuario_id: int) -> sqlite3.Row:
 def guardar_preferencias_ia_local(usuario_id: int, proveedor: str, modelo: str) -> None:
     conn = _db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO ia_preferencias (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute("INSERT INTO ia_preferencias (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
         conn.execute(
             "UPDATE ia_preferencias SET proveedor_local = ?, modelo_local = ? WHERE usuario_id = ?",
             (proveedor, modelo, usuario_id),

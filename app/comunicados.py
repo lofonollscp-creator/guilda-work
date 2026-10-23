@@ -151,7 +151,7 @@ def cerrar(usuario_id: int, comunicado_id: int) -> bool:
         fila = conn.execute("SELECT nivel FROM comunicados WHERE id = ?", (comunicado_id,)).fetchone()
         if fila is None or fila["nivel"] == "critico":
             return False
-        conn.execute("INSERT OR IGNORE INTO comunicados_cerrados (usuario_id, comunicado_id) VALUES (?, ?)", (usuario_id, comunicado_id))
+        conn.execute("INSERT INTO comunicados_cerrados (usuario_id, comunicado_id) VALUES (?, ?) ON CONFLICT DO NOTHING", (usuario_id, comunicado_id))
         conn.commit()
         return True
     finally:

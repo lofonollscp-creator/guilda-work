@@ -1,0 +1,225 @@
+tabla,clase,motivo,filas,tiene_tenant_id,tiene_usuario_id,pk,unicos_sin_tenant,fks_a,triggers,tiene_blob
+abogados_ajustes,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,0
+abogados_enlaces,distribuida,ya lleva tenant_id,0,1,0,id,token_hash,"expedientes,tenants,usuarios",,0
+abogados_fondos,distribuida,ya lleva tenant_id,0,1,0,id,,"expedientes,tenants,usuarios",,0
+abogados_minuta_lineas,distribuida+hija,hereda tenant_id de abogados_minutas,0,0,0,id,,abogados_minutas,,0
+abogados_minutas,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,expedientes,tenants,usuarios",,0
+abogados_partes,distribuida+hija,hereda tenant_id de expedientes,0,0,0,id,,expedientes,,0
+abogados_vistas,distribuida,ya lleva tenant_id,0,1,0,id,,"expedientes,tenants,usuarios",,0
+accesos_contenido,distribuida,ya lleva tenant_id,0,1,1,id,,,,0
+alertas,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes_fiscales,tenants,usuarios",,0
+api_cambios,distribuida+usuario,datos personales: añadir tenant_id de creación,6,0,1,id,,,,0
+api_cambios_purgado,local,marca de purga global,0,0,0,id,,,,0
+api_idempotencia,referencia,idempotencia por persona (asociada a usuarios),0,0,1,usuario_id+clave,,,,0
+auditoria_backoffice,local,acciones del backoffice (operador de plataforma),7,0,1,id,,usuarios,,0
+auditoria_control,local,claves de control de la cadena de auditoría (valores globales),0,0,0,clave,,,,0
+auditoria_eventos,distribuida,ya lleva tenant_id,11,1,1,id,,,"auditoria_sin_modificar,auditoria_sin_borrar",0
+ausencias,distribuida,ya lleva tenant_id,0,1,1,id,,"tenants,usuarios",,0
+ausencias_config,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,0
+ausencias_saldos,distribuida,ya lleva tenant_id,0,1,1,tenant_id+usuario_id+anio,,"tenants,usuarios",,0
+automatizaciones_ejecuciones,distribuida,ya lleva tenant_id,0,1,0,id,"regla_id,clave",automatizaciones_reglas,,0
+automatizaciones_eventos,distribuida,ya lleva tenant_id,0,1,0,id,,,,0
+automatizaciones_reglas,distribuida,ya lleva tenant_id,0,1,0,id,,"tenants,usuarios",,0
+avisos_config,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,0
+bolsa_horas_ajustes,distribuida,ya lleva tenant_id,2,1,1,id,,"tenants,usuarios",,0
+categorias,distribuida+usuario,datos personales: añadir tenant_id de creación,3,0,1,id,"usuario_id,nombre",,"trg_cambios_categorias_ai,trg_cambios_categorias_au,trg_cambios_categorias_ad",0
+certificados,distribuida,ya lleva tenant_id,1,1,0,id,,"certificados,clientes_fiscales,tenants,usuarios",,1
+certificados_avisos,distribuida,ya lleva tenant_id,0,1,0,id,"certificado_id,umbral,destinatario_id,canal,version_fecha",certificados,,0
+certificados_avisos_cliente,distribuida,ya lleva tenant_id,0,1,0,id,"certificado_id,dias,version_fecha",certificados,,0
+certificados_config,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,0
+certificados_evaluaciones,distribuida+hija,hereda tenant_id de certificados,1,0,0,id,,"certificados,usuarios",,0
+certificados_eventos,distribuida,ya lleva tenant_id,4,1,1,id,,,,0
+certificados_implantaciones,distribuida+hija,hereda tenant_id de certificados_vinculos,0,0,0,id,,"certificados_renovaciones,certificados_vinculos,usuarios",,0
+certificados_renovaciones,distribuida,ya lleva tenant_id,0,1,0,id,certificado_id,"certificados,tenants,usuarios",,0
+certificados_vinculos,distribuida,ya lleva tenant_id,1,1,0,id,,"certificados,clientes_fiscales,tenants,usuarios",,0
+cifrado_despacho,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,"tenants,usuarios",,0
+cliente_accesos,distribuida,ya lleva tenant_id,10,1,1,id,,,,0
+cliente_contactos,distribuida+hija,hereda tenant_id de clientes,0,0,0,id,,clientes,,0
+cliente_documentos,distribuida,ya lleva tenant_id,0,1,0,id,"cliente_fiscal_id,hash_sha256","clientes_fiscales,usuarios",,1
+cliente_etiquetas,distribuida+hija,hereda tenant_id de clientes,0,0,0,cliente_id+etiqueta,,clientes,,0
+clientes,distribuida,ya lleva tenant_id,2,1,0,id,,"tenants,usuarios",,0
+clientes_fiscales,distribuida,ya lleva tenant_id,2,1,0,id,,"clientes,oficinas,tenants,usuarios",,0
+clientes_fiscales_accesos,distribuida+hija,hereda tenant_id de clientes_fiscales,3,0,0,id,token,clientes_fiscales,,0
+comunicados,distribuida,ya lleva tenant_id,0,1,0,id,,tenants,,0
+comunicados_cerrados,referencia,preferencia por persona (asociada a usuarios),0,0,1,usuario_id+comunicado_id,,"comunicados,usuarios",,0
+concesion_servicio,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,"tenants,usuarios",,0
+concesiones_clave,distribuida,ya lleva tenant_id,0,1,0,id,referencia,"tenants,usuarios",,0
+concesiones_cliente,distribuida,ya lleva tenant_id,0,1,1,id,,"clientes_fiscales,oficinas,tenants,usuarios",,0
+contabilidad_cierres,distribuida,ya lleva tenant_id,0,1,0,id,"cliente_fiscal_id,trimestre",clientes_fiscales,,0
+contabilidad_clientes,distribuida,ya lleva tenant_id,0,1,0,cliente_fiscal_id,,clientes_fiscales,,0
+contabilidad_despacho,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,,,0
+contabilidad_liquidaciones,distribuida,ya lleva tenant_id,0,1,0,id,,,,0
+contabilidad_lotes,distribuida,ya lleva tenant_id,0,1,0,id,,clientes_fiscales,,1
+contabilidad_plan,distribuida,ya lleva tenant_id,0,1,0,id,"cliente_fiscal_id,cuenta",clientes_fiscales,,0
+contabilidad_recordatorios,distribuida,ya lleva tenant_id,0,1,0,id,,clientes_fiscales,,0
+contabilidad_reglas,distribuida,ya lleva tenant_id,0,1,0,id,"cliente_fiscal_id,tipo,nif",clientes_fiscales,,0
+contabilidad_tarifas,local,tarifas de consumo globales y por ámbito (revisar),0,0,0,id,"ambito,referencia_id",,,0
+contabilidad_terceros,distribuida,ya lleva tenant_id,0,1,0,id,"cliente_fiscal_id,tipo,nif",clientes_fiscales,,0
+contacto_grupo_miembros,distribuida+hija,hereda tenant_id de contactos,0,0,0,grupo_id+contacto_id,,"contacto_grupos,contactos",,0
+contacto_grupos,distribuida,ya lleva tenant_id,0,1,0,id,,tenants,,0
+contactos,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,tenants",,0
+correo_adjuntos,distribuida+hija,hereda tenant_id de correo_mensajes,13,0,0,id,,correo_mensajes,,1
+correo_autorespuesta,distribuida+hija,hereda tenant_id de correo_cuentas,0,0,0,cuenta_id,,correo_cuentas,,0
+correo_autorespuesta_enviadas,distribuida+hija,hereda tenant_id de correo_cuentas,0,0,0,cuenta_id+direccion,,correo_cuentas,,0
+correo_bloqueados,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,"usuario_id,patron",,,0
+correo_borradores,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,,,,0
+correo_borradores_adjuntos,distribuida+hija,hereda tenant_id de correo_borradores,0,0,0,id,,correo_borradores,,1
+correo_carpetas,distribuida+hija,hereda tenant_id de correo_cuentas,11,0,0,id,"cuenta_id,nombre",correo_cuentas,,0
+correo_categorias,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,"usuario_id,nombre",,,0
+correo_compartidos,distribuida+hija,hereda tenant_id de correo_mensajes,0,0,1,mensaje_id+usuario_id,,"correo_mensajes,usuarios",,0
+correo_cuentas,distribuida+usuario,datos personales: añadir tenant_id de creación,1,0,1,id,,,,0
+correo_destinatarios_recientes,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,"usuario_id,direccion",,,0
+correo_envios,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,,,,0
+correo_envios_adjuntos,distribuida+hija,hereda tenant_id de correo_envios,0,0,0,id,,correo_envios,,1
+correo_equipo,distribuida+hija,hereda tenant_id de correo_mensajes,0,0,0,mensaje_id,,"correo_mensajes,usuarios",,0
+correo_equipo_auditoria,distribuida+hija,hereda tenant_id de correo_mensajes,0,0,1,id,,"correo_mensajes,usuarios",,0
+correo_fts,virtual,FTS5 → tsvector + índice GIN,107,0,0,,,,,0
+correo_identidades,distribuida+hija,hereda tenant_id de correo_cuentas,0,0,0,id,"cuenta_id,direccion",correo_cuentas,,0
+correo_mensajes,distribuida+hija,hereda tenant_id de correo_categorias,107,0,0,id,"cuenta_id,carpeta,uid","clientes_fiscales,correo_categorias,correo_cuentas","correo_fts_ai,correo_fts_ad,correo_fts_au,correo_fts_sellado",1
+correo_notas_internas,distribuida+hija,hereda tenant_id de correo_mensajes,0,0,1,id,,"correo_mensajes,usuarios",,0
+correo_operaciones,distribuida+hija,hereda tenant_id de correo_cuentas,0,0,0,id,,correo_cuentas,,0
+correo_plantillas,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,,,,0
+correo_preferencias,distribuida+usuario,datos personales: añadir tenant_id de creación,1,0,1,usuario_id,,,,0
+correo_reglas,distribuida+hija,hereda tenant_id de correo_categorias,0,0,1,id,,correo_categorias,,0
+correo_reglas_categoria,distribuida+hija,hereda tenant_id de correo_categorias,0,0,1,id,,correo_categorias,,0
+correo_remitentes_confiables,distribuida+usuario,datos personales: añadir tenant_id de creación,3,0,1,id,"usuario_id,direccion",,,0
+correo_seguimientos,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,,usuarios,,0
+crm_actividades,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,crm_oportunidades,tenants,usuarios",,0
+crm_etapas,distribuida,ya lleva tenant_id,7,1,0,id,,tenants,,0
+crm_oportunidades,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,tenants,usuarios",,0
+crm_reuniones,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,crm_oportunidades,tenants,usuarios",,0
+dispositivos_push,referencia,dispositivos de la persona (asociada a usuarios),0,0,1,id,fcm_token,usuarios,,0
+documentos,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,documentos,expedientes,tenants,usuarios",,1
+errores_servidor,local,registro técnico global,9,0,0,id,,,,0
+expediente_checklist,distribuida+hija,hereda tenant_id de expedientes,0,0,0,id,,"expedientes,usuarios",,0
+expediente_control,distribuida+hija,hereda tenant_id de oficinas,0,0,0,expediente_id,,"expedientes,oficinas,usuarios",,0
+expediente_eventos,distribuida+hija,hereda tenant_id de expedientes,0,0,1,id,,"expedientes,usuarios",,0
+expediente_miembros,distribuida+hija,hereda tenant_id de expedientes,0,0,1,expediente_id+usuario_id,,"expedientes,usuarios",,0
+expedientes,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,tenants,usuarios",,0
+extras_guilda,referencia,catálogo comercial global,0,0,0,id,,,,0
+facturacion_accesos,distribuida,ya lleva tenant_id,18,1,1,id,token,"tenants,usuarios",,0
+facturacion_expedientes,distribuida,ya lleva tenant_id,0,1,0,id,,expedientes,,0
+facturas_contables,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes_fiscales,contabilidad_lotes",,0
+facturas_contables_lineas,distribuida+hija,hereda tenant_id de facturas_contables,0,0,0,id,,facturas_contables,,0
+festivos,distribuida,ya lleva tenant_id,0,1,0,id,,tenants,,0
+fichaje_avisos,distribuida+hija,hereda tenant_id de fichajes,0,0,1,id,"usuario_id,entrada_id","fichajes,usuarios",,0
+fichaje_avisos_turno,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,usuario_id+entrada_id,,,,0
+fichaje_datos,distribuida+usuario,datos personales: añadir tenant_id de creación,2,0,1,usuario_id,,usuarios,,0
+fichajes,distribuida,ya lleva tenant_id,39,1,1,id,cliente_uuid,"fichajes,tenants,usuarios",,0
+fiscal_config,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,0
+ia_adjuntos,distribuida+usuario,datos personales: añadir tenant_id de creación,1,0,1,id,,usuarios,,1
+ia_atajos,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,,,,0
+ia_consumo,distribuida,ya lleva tenant_id,1,1,0,tenant_id+mes,,tenants,,0
+ia_conversaciones,distribuida+usuario,datos personales: añadir tenant_id de creación,1,0,1,id,,,,0
+ia_mensajes,distribuida+usuario,datos personales: añadir tenant_id de creación,18,0,1,id,,,,0
+ia_preferencias,distribuida+usuario,datos personales: añadir tenant_id de creación,2,0,1,usuario_id,,,,0
+ia_soporte_uso,distribuida+usuario,datos personales: añadir tenant_id de creación,1,0,1,usuario_id+dia,,usuarios,,0
+informes_tareas_suscripciones,distribuida,ya lleva tenant_id,0,1,1,usuario_id,,,,0
+inmobiliaria_ajustes,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,0
+inmobiliaria_comisiones,distribuida,ya lleva tenant_id,0,1,0,id,inmueble_id,"inmobiliaria_inmuebles,tenants",,0
+inmobiliaria_contratos,distribuida,ya lleva tenant_id,0,1,0,id,,"inmobiliaria_inmuebles,tenants,usuarios",,0
+inmobiliaria_demandas,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,tenants,usuarios",,0
+inmobiliaria_enlaces,distribuida,ya lleva tenant_id,0,1,0,id,token_hash,"expedientes,tenants,usuarios",,0
+inmobiliaria_inmuebles,distribuida,ya lleva tenant_id,0,1,0,id,expediente_id,"expedientes,tenants",,0
+inmobiliaria_ofertas,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,inmobiliaria_demandas,inmobiliaria_inmuebles,tenants",,0
+inmobiliaria_precios,distribuida+hija,hereda tenant_id de inmobiliaria_inmuebles,0,0,1,id,,"inmobiliaria_inmuebles,usuarios",,0
+inmobiliaria_visitas,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,inmobiliaria_demandas,inmobiliaria_inmuebles,tenants,usuarios",,0
+jur_adjuntos,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,tenants",,1
+jur_afirmaciones,distribuida,ya lleva tenant_id,0,1,0,id,,"jur_ejecuciones,tenants",,0
+jur_auditoria,distribuida,ya lleva tenant_id,9,1,0,id,,,,0
+jur_citas,distribuida,ya lleva tenant_id,0,1,0,id,,"jur_afirmaciones,jur_ejecuciones,tenants",,0
+jur_cobertura,local,corpus jurídico compartido (sin despacho),2,0,0,id,,jur_fuentes,,0
+jur_conversaciones,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,tenants",,0
+jur_documentos,local,corpus jurídico compartido (sin despacho),121,0,0,id,"fuente_id,id_externo",jur_fuentes,,0
+jur_ejecuciones,distribuida,ya lleva tenant_id,0,1,1,id,,"jur_conversaciones,tenants",,0
+jur_fragmentos,local,corpus jurídico compartido (sin despacho),15570,0,0,id,,jur_versiones,"jur_fragmentos_ai,jur_fragmentos_ad",1
+jur_fragmentos_fts,virtual,FTS5 → tsvector + índice GIN,15570,0,0,,,,,0
+jur_fragmentos_privados,distribuida,ya lleva tenant_id,0,1,0,id,,"jur_adjuntos,tenants","jur_fragmentos_privados_ai,jur_fragmentos_privados_ad",0
+jur_fragmentos_privados_fts,virtual,FTS5 → tsvector + índice GIN,0,0,0,,,,,0
+jur_fuente_despacho,distribuida,ya lleva tenant_id,1,1,0,tenant_id+fuente_id,,"jur_fuentes,tenants",,0
+jur_fuentes,local,corpus jurídico compartido (sin despacho),6,0,0,id,,,,0
+jur_informes,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,jur_ejecuciones,tenants",,0
+jur_originales,local,corpus jurídico compartido (sin despacho),130,0,0,hash,,,,1
+jur_outbox,local,corpus jurídico compartido (sin despacho),121,0,0,id,,jur_sync_runs,,0
+jur_politicas,local,corpus jurídico compartido (sin despacho),5,0,0,id,"fuente_id,version",jur_fuentes,,0
+jur_registros_fuente,local,corpus jurídico compartido (sin despacho),121,0,0,id,"fuente_id,id_externo","jur_documentos,jur_fuentes",,0
+jur_relaciones,local,corpus jurídico compartido (sin despacho),2009,0,0,id,"documento_id,destino_externo,tipo",jur_documentos,,0
+jur_sync_runs,local,corpus jurídico compartido (sin despacho),3,0,0,id,,jur_fuentes,,0
+jur_versiones,local,corpus jurídico compartido (sin despacho),121,0,0,id,"documento_id,hash_texto",jur_documentos,,0
+laboral_config,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,0
+latidos,local,latidos de procesos globales,18,0,0,nombre,,,,0
+leads_contacto,local,formulario público de la web de Guilda (aún sin despacho),1,0,0,id,,,,0
+mantenimiento,distribuida,ya lleva tenant_id,0,1,0,id,,tenants,,0
+mcp_auditoria,distribuida,ya lleva tenant_id,0,1,1,id,,,,0
+mcp_uso,referencia,contador diario por persona (asociada a usuarios),0,0,1,dia+usuario_id+herramienta,,,,0
+membresias,distribuida,ya lleva tenant_id,0,1,1,id,,"tenants,usuarios",,0
+mensajes_enlace,distribuida,ya lleva tenant_id,0,1,1,id,,"expedientes,tenants,usuarios",,0
+nominas_seguimiento,distribuida,ya lleva tenant_id,0,1,0,id,"trabajador_id,periodo","tenants,trabajadores_cliente",,0
+notas,distribuida+hija,hereda tenant_id de tareas,4,0,1,id,"usuario_id,referencia_externa | cliente_uuid","categorias,tareas","trg_cambios_notas_ai,trg_cambios_notas_au,trg_cambios_notas_ad",0
+notas_adjuntos,distribuida+hija,hereda tenant_id de notas,0,0,0,id,,notas,,1
+notas_participantes,distribuida+hija,hereda tenant_id de notas,0,0,1,nota_id+usuario_id,,"notas,usuarios",,0
+notificaciones,distribuida+usuario,datos personales: añadir tenant_id de creación,2,0,1,id,,usuarios,,0
+obligaciones_evidencias,distribuida,ya lleva tenant_id,6,1,0,id,,"tenants,usuarios,vencimientos_fiscales",,0
+oficinas,distribuida,ya lleva tenant_id,0,1,0,id,,tenants,,0
+partes_tiempo,distribuida,ya lleva tenant_id,0,1,1,id,,"clientes,expedientes,tenants,usuarios",,0
+pausas,distribuida+hija,hereda tenant_id de tareas,0,0,0,id,,tareas,,0
+planes_guilda,referencia,catálogo comercial global,0,0,0,id,,,,0
+plantilla_tareas_items,distribuida+hija,hereda tenant_id de plantillas_tareas,0,0,0,id,,plantillas_tareas,,0
+plantillas,distribuida+hija,hereda tenant_id de categorias,0,0,0,id,,categorias,,0
+plantillas_cliente,distribuida,ya lleva tenant_id,0,1,0,id,,tenants,,0
+plantillas_tareas,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,,usuarios,,0
+plazos,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes,expedientes,tenants,usuarios",,0
+portal_recordatorios_config,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,0
+proyecto_miembros,distribuida+hija,hereda tenant_id de categorias,1,0,1,categoria_id+usuario_id,,"categorias,usuarios",,0
+proyecto_notas,distribuida+hija,hereda tenant_id de categorias,0,0,1,id,,"categorias,usuarios",,0
+proyecto_plantillas,distribuida,ya lleva tenant_id,0,1,1,id,,usuarios,,0
+proyecto_secciones,distribuida+hija,hereda tenant_id de categorias,0,0,0,id,,categorias,,0
+registro_rgpd,distribuida,ya lleva tenant_id,0,1,1,id,,,,0
+reglas_fiscales,referencia,catálogo fiscal global (lo valida el titular),6,0,0,id,"pais,modelo,version",,,0
+reglas_laborales,referencia,catálogo laboral global,0,0,0,id,"clave,version",,,0
+salud_alertas,local,alertas de salud globales,3,0,0,motivo+dia,,,,0
+solicitudes_acceso_portal,local,solicitudes públicas previas a tener despacho,1,0,0,id,,,,0
+tarea_actividad,distribuida+hija,hereda tenant_id de tareas_outlook,6,0,1,id,,"tareas_outlook,usuarios",,0
+tarea_adjuntos,distribuida,ya lleva tenant_id,0,1,0,id,,"tareas_outlook,usuarios",,1
+tarea_avisos_correo,distribuida+hija,hereda tenant_id de tareas_outlook,0,0,1,usuario_id+tarea_id,,tareas_outlook,,0
+tarea_checklist,distribuida+hija,hereda tenant_id de tareas_outlook,0,0,0,id,,tareas_outlook,,0
+tarea_clientes,distribuida,ya lleva tenant_id,0,1,0,id,"tarea_id | tarea_id,cliente_fiscal_id","clientes_fiscales,tareas_outlook,tenants",,0
+tarea_comentarios,distribuida+hija,hereda tenant_id de tareas_outlook,0,0,1,id,,"tareas_outlook,usuarios",,0
+tarea_comentarios_cliente,distribuida,ya lleva tenant_id,0,1,1,id,,"clientes_fiscales,tareas_outlook,usuarios",,0
+tarea_comentarios_cliente_adjuntos,distribuida,ya lleva tenant_id,0,1,0,id,,tarea_comentarios_cliente,,1
+tarea_recordatorios,distribuida+hija,hereda tenant_id de tareas_outlook,0,0,1,id,,"tareas_outlook,usuarios",,0
+tarea_revision_votos,distribuida+hija,hereda tenant_id de tarea_revisiones,0,0,0,id,"revision_id,revisor_id","tarea_revisiones,usuarios",,0
+tarea_revisiones,distribuida,ya lleva tenant_id,0,1,0,id,tarea_id,"tareas_outlook,usuarios",,0
+tareas,distribuida+hija,hereda tenant_id de categorias,7,0,1,id,,categorias,"trg_cambios_tareas_ai,trg_cambios_tareas_au,trg_cambios_tareas_ad",0
+tareas_dependencias,distribuida+hija,hereda tenant_id de tareas_outlook,0,0,0,tarea_id+depende_de_id,,tareas_outlook,,0
+tareas_outlook,distribuida+hija,hereda tenant_id de tareas_outlook,2,0,1,id,"usuario_id,referencia_externa | outlook_entry_id","categorias,tareas_outlook,tareas_recurrentes","tareas_outlook_version,tareas_outlook_cliente_alta,tareas_outlook_cliente_cambio,trg_cambios_tareas_outlook_ai,trg_cambios_tareas_outlook_au,trg_cambios_tareas_outlook_ad,tareas_outlook_en_revision_entrada,tareas_outlook_en_revision_salida",0
+tareas_participantes,distribuida+hija,hereda tenant_id de tareas_outlook,0,0,1,tarea_id+usuario_id,,"tareas_outlook,usuarios",,0
+tareas_por_vencimiento,distribuida,ya lleva tenant_id,0,1,1,id,,usuarios,,0
+tareas_por_vencimiento_generadas,distribuida+hija,hereda tenant_id de tareas_por_vencimiento,0,0,0,regla_id+vencimiento_id,,tareas_por_vencimiento,,0
+tareas_recurrentes,distribuida+hija,hereda tenant_id de categorias,0,0,1,id,,"categorias,usuarios",,0
+tareas_vistas,distribuida,ya lleva tenant_id,0,1,1,id,"usuario_id,nombre",usuarios,,0
+tenant_marca,distribuida,ya lleva tenant_id,0,1,0,tenant_id,,tenants,,1
+tenants,referencia,raíz del modelo multitenant,1,0,0,id,nombre,planes_guilda,,0
+tenants_extras_activos,distribuida,ya lleva tenant_id,0,1,0,id,,"extras_guilda,tenants",,0
+tenants_herramientas_ocultas,distribuida,ya lleva tenant_id,2,1,0,,,tenants,,0
+tenants_verticales,distribuida,ya lleva tenant_id,5,1,0,tenant_id+vertical_id,,tenants,,0
+tiquets,distribuida+usuario,datos personales: añadir tenant_id de creación,0,0,1,id,,usuarios,,0
+tiquets_adjuntos,distribuida+hija,hereda tenant_id de tiquets,0,0,0,id,,tiquets,,1
+tokens_api,referencia,credenciales de la persona (con despacho opcional) (asociada a usuarios),1,0,1,id,token_hash,usuarios,,0
+tokens_api_uso,referencia,hija de tokens_api (referencia),0,0,0,token_id+dia,,tokens_api,,0
+trabajadores_cliente,distribuida,ya lleva tenant_id,0,1,0,id,,"clientes_fiscales,tenants",,0
+traspasos,distribuida,ya lleva tenant_id,0,1,0,id,cliente_fiscal_id,"clientes_fiscales,oficinas,tenants,usuarios",,0
+turnos_asignados,distribuida,ya lleva tenant_id,0,1,1,id,"usuario_id,fecha","tenants,turnos_tipos,usuarios",,0
+turnos_tipos,distribuida,ya lleva tenant_id,0,1,0,id,,tenants,,0
+usuario_perfil,referencia,"perfil de la persona, no del despacho (asociada a usuarios)",2,0,1,usuario_id,,usuarios,,1
+usuarios,referencia,identidad global: un usuario puede estar en varios despachos,4,1,0,id,kratos_identity_id | email,tenants,,0
+vencimientos_escalados,distribuida+hija,hereda tenant_id de vencimientos_fiscales,0,0,0,vencimiento_id+dias_antes,,vencimientos_fiscales,,0
+vencimientos_fiscales,distribuida,ya lleva tenant_id,36,1,1,id,"cliente_fiscal_id,modelo,periodo","clientes_fiscales,tenants,usuarios,vencimientos_fiscales",,0
+vencimientos_fiscales_documentos,distribuida+hija,hereda tenant_id de vencimientos_fiscales,8,0,0,id,,vencimientos_fiscales,,1
+vencimientos_fiscales_mensajes,distribuida+hija,hereda tenant_id de vencimientos_fiscales,2,0,1,id,,"usuarios,vencimientos_fiscales",,0
+vencimientos_fiscales_pagos,distribuida+hija,hereda tenant_id de vencimientos_fiscales,0,0,0,id,stripe_checkout_session_id,vencimientos_fiscales,,0
+vencimientos_recordatorios,distribuida+hija,hereda tenant_id de vencimientos_fiscales,10,0,0,vencimiento_id+dias_antes,,vencimientos_fiscales,,0
+ver_como_tokens,referencia,suplantación por el operador de plataforma (asociada a usuarios),0,0,1,token_hash,,usuarios,,0
+webhooks,distribuida,ya lleva tenant_id,0,1,1,id,,"tenants,usuarios",,0
+webhooks_cola,distribuida+hija,hereda tenant_id de webhooks,0,0,0,id,,webhooks,,0
+webhooks_entregas,distribuida+hija,hereda tenant_id de webhooks,0,0,0,id,,webhooks,,0

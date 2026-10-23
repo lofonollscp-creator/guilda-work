@@ -1,0 +1,6 @@
+# Dependencias OPCIONALES para ejecutar Guilda Work contra PostgreSQL (migración, fase 2 en adelante).
+# Con GUILDA_DB_ENGINE=sqlite (el valor por defecto) no hacen falta.
+psycopg[binary]>=3.2
+psycopg_pool>=3.2
+# Solo desarrollo: tests/test_sql_portable.py analiza todo el SQL embebido con el analizador de PostgreSQL (se salta si falta).
+pglast>=6

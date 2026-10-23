@@ -13,6 +13,7 @@ import sqlite3
 
 from flask_babel import lazy_gettext as _l
 
+from .bd.errores import ErrorIntegridad
 from . import db, perfil_fiscal
 
 ESQUEMA = """
@@ -117,7 +118,7 @@ def crear(tenant_id: int, usuario_id: int, nombre: str, *, perfil_tipo: str | No
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (tenant_id, nombre, perfil_tipo or None, json.dumps(atributos), 1 if generacion_automatica else 0, plantilla_tareas_id,
                  ",".join(_etiquetas_limpias(etiquetas)) or None, usuario_id, db.now_iso()))
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             raise ValueError("Ya hay una plantilla con ese nombre.") from None
         conn.commit()
         return str(cur.lastrowid)

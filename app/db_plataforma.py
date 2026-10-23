@@ -15,6 +15,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from .bd.errores import ErrorBD, ErrorIntegridad
 from . import db as _db
 
 
@@ -22,7 +23,7 @@ from . import db as _db
 
 def crear_usuario(email: str, contrasena: str) -> int:
     """Crea una cuenta con la contraseña ya hasheada (nunca en texto plano).
-    Lanza sqlite3.IntegrityError si el email ya existe (el email es UNIQUE)."""
+    Lanza ErrorIntegridad (sqlite3.IntegrityError o la de psycopg) si el email ya existe (el email es UNIQUE)."""
     conn = _db.get_connection()
     try:
         cur = conn.execute(
@@ -244,7 +245,7 @@ def crear_usuario_vinculado_a_kratos(email: str, identity_id: str) -> int:
 # --- Tenants (Fase 7c.3) -------------------------------------------------
 
 def crear_tenant(nombre: str) -> int:
-    """Lanza sqlite3.IntegrityError si el nombre ya existe (UNIQUE)."""
+    """Lanza ErrorIntegridad (sqlite3.IntegrityError o la de psycopg) si el nombre ya existe (UNIQUE)."""
     conn = _db.get_connection()
     try:
         cur = conn.execute(
@@ -358,7 +359,7 @@ def listar_suscripciones_tenants() -> list[sqlite3.Row]:
 
 
 def renombrar_tenant(tenant_id: int, nuevo_nombre: str) -> None:
-    """Lanza sqlite3.IntegrityError si el nombre ya existe (UNIQUE)."""
+    """Lanza ErrorIntegridad (sqlite3.IntegrityError o la de psycopg) si el nombre ya existe (UNIQUE)."""
     conn = _db.get_connection()
     try:
         conn.execute("UPDATE tenants SET nombre = ? WHERE id = ?", (nuevo_nombre.strip(), tenant_id))
@@ -441,7 +442,7 @@ def registrar_pago_vencimiento(vencimiento_id: int, stripe_checkout_session_id: 
             )
             conn.commit()
             return True
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             return False
     finally:
         conn.close()
@@ -777,7 +778,7 @@ def ocultar_herramienta(tenant_id: int, herramienta_id: str) -> None:
     conn = _db.get_connection()
     try:
         conn.execute(
-            "INSERT OR IGNORE INTO tenants_herramientas_ocultas (tenant_id, herramienta_id) VALUES (?, ?)",
+            "INSERT INTO tenants_herramientas_ocultas (tenant_id, herramienta_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
             (tenant_id, herramienta_id),
         )
         conn.commit()
@@ -1090,7 +1091,7 @@ def registrar_acceso(usuario_id: int, cada_minutos: int = 10) -> None:
             conn.commit()
         finally:
             conn.close()
-    except sqlite3.Error:
+    except ErrorBD:
         pass
 
 
@@ -1350,9 +1351,9 @@ def listar_tokens_api(usuario_id: int):
     try:
         return conn.execute(
             "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en, permisos, areas, caduca_en, ultima_ip, origenes_cors, ips_permitidas, "
-            "COALESCE((SELECT SUM(llamadas) FROM tokens_api_uso x WHERE x.token_id = tokens_api.id AND x.dia >= date('now', 'localtime', '-29 day')), 0) AS llamadas_30d "
+            "COALESCE((SELECT SUM(llamadas) FROM tokens_api_uso x WHERE x.token_id = tokens_api.id AND x.dia >= ?), 0) AS llamadas_30d "
             "FROM tokens_api WHERE usuario_id = ? ORDER BY COALESCE(ultimo_uso_en, creado_en) DESC",
-            (usuario_id,),
+            ((_db.date.today() - _db.timedelta(days=29)).isoformat(), usuario_id),
         ).fetchall()
     finally:
         conn.close()
@@ -1644,7 +1645,7 @@ def idempotencia_reservar(usuario_id: int, clave: str, huella: str) -> tuple:
             conn.execute("INSERT INTO api_idempotencia (usuario_id, clave, huella, creado_en) VALUES (?, ?, ?, ?)", (usuario_id, clave, huella, _db.now_iso()))
             conn.commit()
             return ("nuevo",)
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             conn.rollback()
         f = conn.execute("SELECT huella, estado, status, cuerpo FROM api_idempotencia WHERE usuario_id = ? AND clave = ?", (usuario_id, clave)).fetchone()
         if f is None:
@@ -1707,7 +1708,7 @@ def fijar_referencia_externa(tabla: str, dueno_id: int, fila_id: int, referencia
         try:
             conn.execute(f"UPDATE {tabla} SET referencia_externa = ? WHERE id = ? AND {columna} = ?", (referencia, fila_id, dueno_id))
             conn.commit()
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             conn.rollback()
             raise ValueError("duplicada")
     finally:
@@ -2345,7 +2346,7 @@ def obtener_perfil_usuario(usuario_id: int) -> sqlite3.Row:
         # transacción de escritura por página vista aunque la fila ya existiera.
         fila = conn.execute("SELECT * FROM usuario_perfil WHERE usuario_id = ?", (usuario_id,)).fetchone()
         if fila is None:
-            conn.execute("INSERT OR IGNORE INTO usuario_perfil (usuario_id) VALUES (?)", (usuario_id,))
+            conn.execute("INSERT INTO usuario_perfil (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
             conn.commit()
             fila = conn.execute("SELECT * FROM usuario_perfil WHERE usuario_id = ?", (usuario_id,)).fetchone()
         return fila
@@ -2375,7 +2376,7 @@ def guardar_perfil_usuario(
     notificaciones, sin pisar el resto con valores por defecto."""
     conn = _db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO usuario_perfil (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute("INSERT INTO usuario_perfil (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
         asignaciones, valores = [], []
         if nombre_mostrado is not None:
             asignaciones.append("nombre_mostrado = ?")
@@ -2498,7 +2499,7 @@ def notificacion_tipo_activa(usuario_id: int, tipo: str) -> bool:
 def guardar_avatar_usuario(usuario_id: int, contenido: bytes, tipo_mime: str) -> None:
     conn = _db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO usuario_perfil (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute("INSERT INTO usuario_perfil (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
         conn.execute(
             "UPDATE usuario_perfil SET avatar_contenido = ?, avatar_tipo_mime = ? WHERE usuario_id = ?",
             (contenido, tipo_mime, usuario_id),

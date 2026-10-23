@@ -15,6 +15,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from .bd.errores import ErrorIntegridad, ErrorOperacional
 from . import db as _db
 
 
@@ -485,7 +486,7 @@ def crear_categoria_correo(usuario_id: int, nombre: str, color: str) -> int:
                 "INSERT INTO correo_categorias (usuario_id, nombre, color, creada_en) VALUES (?, ?, ?, ?)",
                 (usuario_id, nombre.strip(), color, _db.now_iso()),
             )
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             raise ValueError(f"Ya tienes una categoría de correo llamada '{nombre.strip()}'.") from None
         conn.commit()
         return cur.lastrowid
@@ -969,7 +970,7 @@ def buscar_destinatarios_recientes(usuario_id: int, q: str | None = None, limite
             patron = f"%{q.strip().lower()}%"
             return conn.execute(
                 """SELECT * FROM correo_destinatarios_recientes
-                   WHERE usuario_id = ? AND (direccion LIKE ? OR LOWER(nombre_mostrado) LIKE ?)
+                   WHERE usuario_id = ? AND (LOWER(direccion) LIKE ? OR LOWER(nombre_mostrado) LIKE ?)
                    ORDER BY veces_usado DESC, ultima_vez_en DESC LIMIT ?""",
                 (usuario_id, patron, patron, limite),
             ).fetchall()
@@ -1115,7 +1116,7 @@ def respuesta_a_mensaje(cuenta_id: int, message_id: str, desde: str, direcciones
     try:
         filas = conn.execute(
             """SELECT id, remitente, asunto FROM correo_mensajes
-               WHERE cuenta_id = ? AND descargado_en >= ? AND (in_reply_to LIKE ? ESCAPE '\\' OR referencias LIKE ? ESCAPE '\\')
+               WHERE cuenta_id = ? AND descargado_en >= ? AND (LOWER(in_reply_to) LIKE LOWER(?) ESCAPE '\\' OR LOWER(referencias) LIKE LOWER(?) ESCAPE '\\')
                ORDER BY id LIMIT 50""",
             (cuenta_id, desde, _db._like_literal(message_id), _db._like_literal(message_id)),
         ).fetchall()
@@ -1282,7 +1283,7 @@ def _obtener_o_crear(conn: sqlite3.Connection, tabla: str, usuario_id: int) -> s
     existe: leerla en cada petición no debe abrir una transacción de escritura."""
     fila = conn.execute(f"SELECT * FROM {tabla} WHERE usuario_id = ?", (usuario_id,)).fetchone()
     if fila is None:
-        conn.execute(f"INSERT OR IGNORE INTO {tabla} (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute(f"INSERT INTO {tabla} (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
         conn.commit()
         fila = conn.execute(f"SELECT * FROM {tabla} WHERE usuario_id = ?", (usuario_id,)).fetchone()
     return fila
@@ -1305,7 +1306,7 @@ def guardar_preferencias_correo(
     from . import correo_vista
     conn = _db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO correo_preferencias (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute("INSERT INTO correo_preferencias (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
         if deshacer_segundos in _db.DESHACER_ENVIO_OPCIONES:
             conn.execute(
                 "UPDATE correo_preferencias SET deshacer_segundos = ? WHERE usuario_id = ?",
@@ -1356,7 +1357,7 @@ def registrar_latido(nombre: str, ok: bool, intervalo_segundos: int, detalle: st
     """Anota que una tarea periódica ha terminado una pasada (bien o con error)."""
     conn = _db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO latidos (nombre, intervalo_segundos) VALUES (?, ?)", (nombre, intervalo_segundos))
+        conn.execute("INSERT INTO latidos (nombre, intervalo_segundos) VALUES (?, ?) ON CONFLICT DO NOTHING", (nombre, intervalo_segundos))
         if ok:
             conn.execute(
                 "UPDATE latidos SET ultimo_ok = ?, detalle = ?, intervalo_segundos = ? WHERE nombre = ?",
@@ -1420,7 +1421,7 @@ def marcar_alerta_salud(motivo: str, dia: str) -> None:
     conn = _db.get_connection()
     try:
         conn.execute(
-            "INSERT OR IGNORE INTO salud_alertas (motivo, dia, enviada_en) VALUES (?, ?, ?)", (motivo, dia, _db.now_iso())
+            "INSERT INTO salud_alertas (motivo, dia, enviada_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING", (motivo, dia, _db.now_iso())
         )
         limite = (_db.datetime.strptime(dia, "%Y-%m-%d") - _db.timedelta(days=30)).strftime("%Y-%m-%d")
         conn.execute("DELETE FROM salud_alertas WHERE dia < ?", (limite,))
@@ -1544,12 +1545,12 @@ def _asegurar_fts_correo(conn: sqlite3.Connection) -> bool:
     crea y se rellena una sola vez; devuelve False si este SQLite no tiene FTS5 (entonces la
     búsqueda sigue usando LIKE)."""
     try:
-        existia = conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'correo_fts'").fetchone() is not None
+        existia = _db._bd.existe_tabla(conn, 'correo_fts')
         conn.execute(
             f"CREATE VIRTUAL TABLE IF NOT EXISTS correo_fts USING fts5({_db._FTS_CORREO_COLUMNAS}, "
             "content='correo_mensajes', content_rowid='id', tokenize='unicode61 remove_diacritics 2', prefix='2 3')"
         )
-    except sqlite3.OperationalError:
+    except ErrorOperacional:
         return False
     if not existia:
         # Primero el texto de los solo-HTML y la reconstrucción, SIN disparadores: un 'delete' de
@@ -1603,7 +1604,7 @@ def reconstruir_indice_correo() -> int:
 def fts_correo_disponible() -> bool:
     conn = _db.get_connection()
     try:
-        return conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'correo_fts'").fetchone() is not None
+        return _db._bd.existe_tabla(conn, 'correo_fts')
     finally:
         conn.close()
 
@@ -2012,11 +2013,11 @@ def guardar_mensaje_correo(
         )
         from . import correo_cifrado
         conn.execute(
-            """INSERT OR IGNORE INTO correo_mensajes
+            """INSERT INTO correo_mensajes
                (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
                 cc, fecha, cuerpo_texto, cuerpo_html, message_id, in_reply_to, referencias,
                 hilo_clave, descargado_en, leido, destacado, cifrado)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING""",
             (cuenta_id, carpeta, uid, asunto, remitente, destinatarios,
              cc, fecha, cuerpo_texto, cuerpo_html, message_id,
              (in_reply_to or None) and in_reply_to[:1000], (referencias or None) and referencias[:4000],
@@ -2073,7 +2074,7 @@ def listar_mensajes_correo(
         if solo_no_leidos:
             cond.append("leido = 0")
         if texto:
-            expresion = _db.consulta_fts(texto) if conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'correo_fts'").fetchone() else None
+            expresion = _db.consulta_fts(texto) if _db._bd.existe_tabla(conn, 'correo_fts') else None
             if expresion:
                 # Índice de texto completo: instantáneo aunque haya decenas de miles de correos
                 # (LIKE '%x%' recorría todos los cuerpos). Sin acentos ni mayúsculas, por prefijo.

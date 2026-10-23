@@ -102,7 +102,7 @@ def resumen_global(ahora: datetime | None = None) -> list[dict]:
             """SELECT t.id, t.nombre, t.ia_limite_mensual AS limite, COALESCE(c.usadas, 0) AS usadas
                FROM tenants t LEFT JOIN ia_consumo c ON c.tenant_id = t.id AND c.mes = ?
                WHERE COALESCE(c.usadas, 0) > 0 OR t.ia_limite_mensual IS NOT NULL
-               ORDER BY usadas DESC, t.nombre COLLATE NOCASE""", (_mes(ahora),),
+               ORDER BY usadas DESC, LOWER(t.nombre)""", (_mes(ahora),),
         ).fetchall()
     finally:
         conn.close()

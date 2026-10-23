@@ -914,7 +914,7 @@ def ejecutar(tenant_id: int | None = None, ahora: datetime | None = None) -> dic
                 break
             conn = db.get_connection()
             try:
-                cur = conn.execute("INSERT OR IGNORE INTO automatizaciones_ejecuciones (tenant_id, regla_id, regla_version, clave, objeto, estado, creada_en, actualizada_en) VALUES (?, ?, ?, ?, ?, 'pendiente', ?, ?)",
+                cur = conn.execute("INSERT INTO automatizaciones_ejecuciones (tenant_id, regla_id, regla_version, clave, objeto, estado, creada_en, actualizada_en) VALUES (?, ?, ?, ?, ?, 'pendiente', ?, ?) ON CONFLICT DO NOTHING",
                                    (tid, regla["id"], regla["version"], oc["clave"], oc["objeto"][:200], _ahora_texto(ahora), _ahora_texto(ahora)))
                 conn.commit()
                 nueva = cur.rowcount == 1
@@ -1194,8 +1194,8 @@ def procesar_eventos(ahora: datetime | None = None, limite: int = MAX_EVENTOS_PO
                 oc = ocurrencia(ev["id"], regla, tarea, datos)
                 conn = db.get_connection()
                 try:
-                    cur = conn.execute("INSERT OR IGNORE INTO automatizaciones_ejecuciones (tenant_id, regla_id, regla_version, clave, objeto, estado, contexto, creada_en, actualizada_en) "
-                                       "VALUES (?, ?, ?, ?, ?, 'pendiente', ?, ?, ?)", (ev["tenant_id"], regla["id"], regla["version"], oc["clave"], oc["objeto"][:200], json.dumps(oc, ensure_ascii=False),
+                    cur = conn.execute("INSERT INTO automatizaciones_ejecuciones (tenant_id, regla_id, regla_version, clave, objeto, estado, contexto, creada_en, actualizada_en) "
+                                       "VALUES (?, ?, ?, ?, ?, 'pendiente', ?, ?, ?) ON CONFLICT DO NOTHING", (ev["tenant_id"], regla["id"], regla["version"], oc["clave"], oc["objeto"][:200], json.dumps(oc, ensure_ascii=False),
                                                                                       _ahora_texto(ahora), _ahora_texto(ahora)))
                     conn.commit()
                     nueva = cur.rowcount == 1

@@ -137,7 +137,7 @@ def guardar(tenant_id: int, *, nombre: str | None = None, color: str | None = No
     nuevo_logo = preparar_logo(logo_subido) if logo_subido else None
     conn = db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO tenant_marca (tenant_id, actualizada_en) VALUES (?, ?)", (tenant_id, db.now_iso()))
+        conn.execute("INSERT INTO tenant_marca (tenant_id, actualizada_en) VALUES (?, ?) ON CONFLICT DO NOTHING", (tenant_id, db.now_iso()))
         conn.execute("UPDATE tenant_marca SET nombre = ?, color = ?, actualizada_en = ? WHERE tenant_id = ?", (nombre, color, db.now_iso(), tenant_id))
         if nuevo_logo is not None:
             conn.execute("UPDATE tenant_marca SET logo = ? WHERE tenant_id = ?", (nuevo_logo, tenant_id))

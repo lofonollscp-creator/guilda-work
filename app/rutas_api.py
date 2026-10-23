@@ -18,12 +18,12 @@ import logging
 import base64
 import hashlib
 import json
-import sqlite3
 from datetime import datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, jsonify, make_response, request, stream_with_context, url_for
 from werkzeug.exceptions import HTTPException
 
+from .bd.errores import ErrorIntegridad
 from . import alta_cliente, correo, db, estado_herramientas, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
@@ -60,13 +60,16 @@ def _cliente_duplicado(e):
     return _err(str(e), 409, "cliente_duplicado")
 
 
-@api_bp.errorhandler(sqlite3.IntegrityError)
-def _integridad(e: sqlite3.IntegrityError):
+def _integridad(e):
     """Un valor que la base de datos rechaza (estado o prioridad inexistentes, duplicados...) es un error del cliente,
     no un fallo del servidor."""
-    if "UNIQUE" in str(e):
+    if "UNIQUE" in str(e).upper():
         return _err("Ya existe un registro con esos datos.", 409, "conflicto")
     return _err("Alguno de los valores enviados no es válido (revisa campos como estado o prioridad).", 400, "valor_invalido")
+
+
+for _clase in ErrorIntegridad:
+    api_bp.errorhandler(_clase)(_integridad)
 
 
 _CORS_METODOS = "GET, POST, PUT, PATCH, DELETE, OPTIONS"

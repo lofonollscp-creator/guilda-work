@@ -944,7 +944,7 @@ def generar_tareas_por_vencimiento(hoy: _db.date | None = None, regla_id: int | 
         try:
             # Se reserva primero: si dos procesos coinciden, solo uno crea la tarea.
             reservado = conn.execute(
-                "INSERT OR IGNORE INTO tareas_por_vencimiento_generadas (regla_id, vencimiento_id, creada_en) VALUES (?, ?, ?)",
+                "INSERT INTO tareas_por_vencimiento_generadas (regla_id, vencimiento_id, creada_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
                 (regla["id"], v["id"], _db.now_iso()),
             ).rowcount
             conn.commit()
@@ -1818,7 +1818,7 @@ def anadir_dependencia_tarea(usuario_id: int, tarea_id: int, depende_de_id: int)
         if _db._depende_transitivamente(conn, depende_de_id, tarea_id):
             return False  # crearía un ciclo
         conn.execute(
-            "INSERT OR IGNORE INTO tareas_dependencias (tarea_id, depende_de_id) VALUES (?, ?)", (tarea_id, depende_de_id)
+            "INSERT INTO tareas_dependencias (tarea_id, depende_de_id) VALUES (?, ?) ON CONFLICT DO NOTHING", (tarea_id, depende_de_id)
         )
         conn.commit()
     finally:

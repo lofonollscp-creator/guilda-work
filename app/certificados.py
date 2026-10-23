@@ -582,7 +582,7 @@ def listar(tenant_id: int, *, q: str | None = None, temporal: str | None = None,
     elif not incluir_archivados:
         donde.append("estado_operativo NOT IN ('archivado', 'sustituido')")
     if q:
-        donde.append("(lower(sujeto) LIKE ? OR lower(emisor) LIKE ? OR lower(COALESCE(nif_confirmado, nif_sugerido, '')) LIKE ? OR numero_serie LIKE ?)")
+        donde.append("(lower(sujeto) LIKE ? OR lower(emisor) LIKE ? OR lower(COALESCE(nif_confirmado, nif_sugerido, '')) LIKE ? OR lower(numero_serie) LIKE ?)")
         like = f"%{q.lower().strip()}%"
         p += [like, like, like, like]
         donde[-1] = donde[-1][:-1] + " OR lower(COALESCE((SELECT nombre FROM clientes_fiscales cf WHERE cf.id = certificados.cliente_titular_id), '')) LIKE ?)"

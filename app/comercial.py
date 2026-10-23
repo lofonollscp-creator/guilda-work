@@ -185,7 +185,7 @@ def asegurar_etapas(tenant_id: int) -> None:
     try:
         if conn.execute("SELECT 1 FROM crm_etapas WHERE tenant_id = ? LIMIT 1", (tenant_id,)).fetchone() is None:
             for orden, (clave, nombre, prob, tipo) in enumerate(ETAPAS_INICIALES, start=1):
-                conn.execute("INSERT OR IGNORE INTO crm_etapas (tenant_id, clave, nombre, orden, probabilidad, tipo) VALUES (?, ?, ?, ?, ?, ?)", (tenant_id, clave, nombre, orden, prob, tipo))
+                conn.execute("INSERT INTO crm_etapas (tenant_id, clave, nombre, orden, probabilidad, tipo) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING", (tenant_id, clave, nombre, orden, prob, tipo))
             conn.commit()
     finally:
         conn.close()

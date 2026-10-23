@@ -266,13 +266,19 @@ def tiempo_medio_resolucion_vencimientos(tenant_id: int) -> float | None:
     ahí."""
     conn = _db.get_connection()
     try:
-        fila = conn.execute(
-            """SELECT AVG(julianday(actualizado_en) - julianday(creado_en)) AS media_dias
-               FROM vencimientos_fiscales
+        filas = conn.execute(
+            """SELECT actualizado_en, creado_en FROM vencimientos_fiscales
                WHERE tenant_id = ? AND estado = 'presentado' AND actualizado_en IS NOT NULL""",
             (tenant_id,),
-        ).fetchone()
-        return fila["media_dias"]
+        ).fetchall()
+        from datetime import datetime          # la diferencia se calcula aquí: julianday() es de SQLite
+        dias = []
+        for f in filas:
+            try:
+                dias.append((datetime.fromisoformat(f["actualizado_en"]) - datetime.fromisoformat(f["creado_en"])).total_seconds() / 86400)
+            except (TypeError, ValueError):
+                continue                       # una fecha ilegible no cuenta (julianday() daba NULL y AVG() la ignoraba)
+        return sum(dias) / len(dias) if dias else None
     finally:
         conn.close()
 

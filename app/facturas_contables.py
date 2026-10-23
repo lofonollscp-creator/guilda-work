@@ -628,7 +628,7 @@ def cerrar_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, trim
     rango_del_trimestre(trimestre)
     conn = db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO contabilidad_cierres (tenant_id, cliente_fiscal_id, trimestre, cerrado_por, cerrado_en) VALUES (?, ?, ?, ?, ?)", (tenant_id, cliente_fiscal_id, trimestre, usuario_id, db.now_iso()))
+        conn.execute("INSERT INTO contabilidad_cierres (tenant_id, cliente_fiscal_id, trimestre, cerrado_por, cerrado_en) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING", (tenant_id, cliente_fiscal_id, trimestre, usuario_id, db.now_iso()))
         auditoria.registrar(tenant_id, usuario_id, "contabilidad.periodo_cerrado", "cliente_fiscal", cliente_fiscal_id, {"trimestre": trimestre}, conn=conn)
         conn.commit()
     finally:

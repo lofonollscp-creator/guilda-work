@@ -12,6 +12,8 @@ from __future__ import annotations
 import sqlite3
 from datetime import date, datetime, timedelta
 
+from . import bd as _bd
+from .bd.errores import ErrorIntegridad
 from . import antivirus, auditoria, db
 
 ESTADOS = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada", "en_revision")
@@ -154,6 +156,8 @@ BEGIN SELECT RAISE(ABORT, 'revision_pendiente'); END;
 def _permitir_estado_en_revision(conn) -> None:
     """Añade «en_revision» al CHECK del estado de `tareas_outlook`. SQLite no deja alterar un CHECK, y reconstruir la tabla con las claves foráneas activas es arriesgado; para AMPLIAR (nunca restringir)
     un CHECK, la documentación de SQLite admite reescribir su definición (`writable_schema` + `schema_version`), sin tocar ni mover ningún dato. Idempotente: si ya lo admite, no hace nada."""
+    if _bd.MOTOR != "sqlite":          # reconstruye tablas de bases SQLite antiguas; en PostgreSQL el esquema nace ya con el diseño final
+        return
     import re
     fila = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'tareas_outlook'").fetchone()
     if fila is None or "en_revision" in fila[0]:
@@ -195,17 +199,17 @@ def crear_esquema(conn) -> None:
     conn.execute("""UPDATE tareas_outlook SET estado = 'en_progreso' WHERE estado = 'en_revision'
                     AND NOT EXISTS (SELECT 1 FROM tarea_revisiones r WHERE r.tarea_id = tareas_outlook.id AND r.estado = 'pendiente')""")
     conn.execute(                    # las revisiones de antes tenían un solo revisor: pasan a tener su voto (pendiente, aprobado o con cambios según cómo acabaron)
-        """INSERT OR IGNORE INTO tarea_revision_votos (revision_id, revisor_id, estado, nota, votado_en)
+        """INSERT INTO tarea_revision_votos (revision_id, revisor_id, estado, nota, votado_en)
            SELECT r.id, r.revisor_id, CASE r.estado WHEN 'aprobada' THEN 'aprobado' WHEN 'cambios' THEN 'cambios' ELSE 'pendiente' END,
                   CASE WHEN r.estado IN ('aprobada', 'cambios') THEN r.nota_resolucion END, CASE WHEN r.estado IN ('aprobada', 'cambios') THEN r.resuelta_en END
-           FROM tarea_revisiones r WHERE r.estado != 'cancelada' AND NOT EXISTS (SELECT 1 FROM tarea_revision_votos v WHERE v.revision_id = r.id)"""
+           FROM tarea_revisiones r WHERE r.estado != 'cancelada' AND NOT EXISTS (SELECT 1 FROM tarea_revision_votos v WHERE v.revision_id = r.id) ON CONFLICT DO NOTHING"""
     )
     conn.execute(
-        """INSERT OR IGNORE INTO tarea_clientes (tenant_id, tarea_id, cliente_fiscal_id, principal, creado_en)
+        """INSERT INTO tarea_clientes (tenant_id, tarea_id, cliente_fiscal_id, principal, creado_en)
            SELECT cf.tenant_id, t.id, t.cliente_fiscal_id, 1, t.creada_en
            FROM tareas_outlook t JOIN clientes_fiscales cf ON cf.id = t.cliente_fiscal_id
            WHERE t.cliente_fiscal_id IS NOT NULL
-             AND NOT EXISTS (SELECT 1 FROM tarea_clientes v WHERE v.tarea_id = t.id)"""
+             AND NOT EXISTS (SELECT 1 FROM tarea_clientes v WHERE v.tarea_id = t.id) ON CONFLICT DO NOTHING"""
     )
 
 
@@ -723,7 +727,7 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
         try:
             cur = conn.execute("INSERT INTO tarea_revisiones (tenant_id, tarea_id, solicitada_por, revisor_id, nota_solicitud, solicitada_en, modo) VALUES (?, ?, ?, ?, ?, ?, ?)",
                                (tenant, tarea_id, usuario_id, ids[0], (nota or "").strip()[:500] or None, db.now_iso(), modo))
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             raise TransicionInvalida("revision_pendiente", "Esta tarea ya tiene una revisión pendiente.") from None
         revision_id = cur.lastrowid
         previo = tarea["estado"]
@@ -732,7 +736,7 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
         for r in ids:
             conn.execute("INSERT INTO tarea_revision_votos (revision_id, revisor_id) VALUES (?, ?)", (revision_id, r))
             if db.obtener_tarea_outlook_visible(r, tarea_id) is None:            # para poder revisarla tiene que verla: se le comparte como observador
-                conn.execute("INSERT OR IGNORE INTO tareas_participantes (tarea_id, usuario_id, rol, compartida_en) VALUES (?, ?, 'observa', ?)", (tarea_id, r, db.now_iso()))
+                conn.execute("INSERT INTO tareas_participantes (tarea_id, usuario_id, rol, compartida_en) VALUES (?, ?, 'observa', ?) ON CONFLICT DO NOTHING", (tarea_id, r, db.now_iso()))
         auditoria.registrar(tenant, usuario_id, "tarea.revision.solicitar", "tarea", tarea_id, {"revisores": ids, "modo": modo}, conn=conn)
         conn.commit()
     finally:
@@ -1143,7 +1147,7 @@ def avisar_por_correo_comentario_cliente(destinatario_id: int, tarea_id: int, as
         limite = (ahora - timedelta(minutes=AVISO_CORREO_MINUTOS)).isoformat()
         cur = conn.execute("UPDATE tarea_avisos_correo SET enviado_en = ? WHERE usuario_id = ? AND tarea_id = ? AND enviado_en < ?", (ahora.isoformat(), destinatario_id, tarea_id, limite))
         if cur.rowcount == 0:
-            cur = conn.execute("INSERT OR IGNORE INTO tarea_avisos_correo (usuario_id, tarea_id, enviado_en) VALUES (?, ?, ?)", (destinatario_id, tarea_id, ahora.isoformat()))
+            cur = conn.execute("INSERT INTO tarea_avisos_correo (usuario_id, tarea_id, enviado_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING", (destinatario_id, tarea_id, ahora.isoformat()))
         conn.commit()
         if cur.rowcount == 0:                                  # ya se avisó hace menos de una hora
             return False

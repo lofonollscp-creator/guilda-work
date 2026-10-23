@@ -25,7 +25,7 @@ def obtener_fichaje_datos(usuario_id: int) -> sqlite3.Row:
     try:
         fila = conn.execute("SELECT * FROM fichaje_datos WHERE usuario_id = ?", (usuario_id,)).fetchone()
         if fila is None:  # solo la primera vez (ver obtener_perfil_usuario)
-            conn.execute("INSERT OR IGNORE INTO fichaje_datos (usuario_id) VALUES (?)", (usuario_id,))
+            conn.execute("INSERT INTO fichaje_datos (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
             conn.commit()
             fila = conn.execute("SELECT * FROM fichaje_datos WHERE usuario_id = ?", (usuario_id,)).fetchone()
         return fila
@@ -41,7 +41,7 @@ def guardar_fichaje_datos(
 ) -> None:
     conn = _db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO fichaje_datos (usuario_id) VALUES (?)", (usuario_id,))
+        conn.execute("INSERT INTO fichaje_datos (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
         conn.execute(
             """UPDATE fichaje_datos SET nombre_completo = ?, dni_nie = ?, numero_afiliacion_ss = ?,
                categoria_profesional = ?, tipo_contrato = ?, fecha_alta = ?, jornada_semanal_horas = ?,
@@ -231,7 +231,7 @@ def registrar_aviso_turno(usuario_id: int, entrada_id: int) -> bool:
     """True si es la primera vez que se avisa, por el turno, de esta jornada."""
     conn = _db.get_connection()
     try:
-        cur = conn.execute("INSERT OR IGNORE INTO fichaje_avisos_turno (usuario_id, entrada_id, avisado_en) VALUES (?, ?, ?)", (usuario_id, entrada_id, _db.now_iso()))
+        cur = conn.execute("INSERT INTO fichaje_avisos_turno (usuario_id, entrada_id, avisado_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING", (usuario_id, entrada_id, _db.now_iso()))
         conn.commit()
         return cur.rowcount == 1
     finally:
@@ -243,7 +243,7 @@ def registrar_aviso_fichaje(usuario_id: int, entrada_id: int) -> bool:
     conn = _db.get_connection()
     try:
         cur = conn.execute(
-            "INSERT OR IGNORE INTO fichaje_avisos (usuario_id, entrada_id, avisado_en) VALUES (?, ?, ?)",
+            "INSERT INTO fichaje_avisos (usuario_id, entrada_id, avisado_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
             (usuario_id, entrada_id, _db.now_iso()),
         )
         conn.commit()

@@ -344,7 +344,7 @@ def editar_control(tenant_id: int, usuario_id: int, expediente_id: int, **campos
             sets.append("oficina_id = ?"); vals.append(o); cambios["oficina_id"] = o
         if not sets:
             return datos_de(expediente_id)
-        conn.execute("INSERT OR IGNORE INTO expediente_control (expediente_id) VALUES (?)", (expediente_id,))
+        conn.execute("INSERT INTO expediente_control (expediente_id) VALUES (?) ON CONFLICT DO NOTHING", (expediente_id,))
         conn.execute(f"UPDATE expediente_control SET {', '.join(sets)} WHERE expediente_id = ?", [*vals, expediente_id])
         nucleo._evento(conn, expediente_id, "control", "Datos de control actualizados.", usuario_id)
         auditoria.registrar(tenant_id, usuario_id, "expediente.control", "expediente", expediente_id, cambios, conn=conn)

@@ -47,7 +47,6 @@ import os
 import poplib
 import re
 import smtplib
-import sqlite3
 import socket
 import threading
 import time
@@ -59,6 +58,7 @@ from email.utils import formataddr, make_msgid, getaddresses, parsedate_to_datet
 import keyring
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
+from .bd.errores import ErrorIntegridad
 from . import almacen_documentos, busqueda, cifrado_despacho, correo_cifrado, correo_oauth, db, eventos, notificaciones
 from .texto_html import html_a_texto_indexable
 
@@ -1702,7 +1702,7 @@ def crear_identidad(usuario_id: int, cuenta_id: int, nombre: str, direccion: str
         raise ErrorCorreo("Indica un nombre y una dirección de correo válida.")
     try:
         return db.crear_identidad_correo(usuario_id, cuenta_id, nombre, direccion)
-    except sqlite3.IntegrityError:
+    except ErrorIntegridad:
         raise ErrorCorreo("Esa dirección ya está añadida a la cuenta.") from None
 
 

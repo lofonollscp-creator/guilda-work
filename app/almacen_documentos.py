@@ -234,10 +234,10 @@ def guardar(usuario_id: int, nombre: str, tipo_mime: str | None, contenido: byte
         if not acceso.puede_ver_cliente_nucleo(tenant_id, usuario_id, cliente_id):
             return "cliente" if expediente_id is None else "expediente", None
         repetido = conn.execute(
-            "SELECT id FROM documentos WHERE tenant_id = ? AND cliente_id IS ? AND expediente_id IS ? AND hash_sha256 = ? AND papelera_en IS NULL", (tenant_id, cliente_id, expediente_id, huella)).fetchone()
+            "SELECT id FROM documentos WHERE tenant_id = ? AND cliente_id IS NOT DISTINCT FROM ? AND expediente_id IS NOT DISTINCT FROM ? AND hash_sha256 = ? AND papelera_en IS NULL", (tenant_id, cliente_id, expediente_id, huella)).fetchone()
         if repetido:
             return "duplicado", repetido["id"]
-        if conn.execute("SELECT COUNT(*) FROM documentos WHERE tenant_id = ? AND cliente_id IS ? AND expediente_id IS ? AND papelera_en IS NULL", (tenant_id, cliente_id, expediente_id)).fetchone()[0] >= db.MAX_DOCUMENTOS_POR_CLIENTE:
+        if conn.execute("SELECT COUNT(*) FROM documentos WHERE tenant_id = ? AND cliente_id IS NOT DISTINCT FROM ? AND expediente_id IS NOT DISTINCT FROM ? AND papelera_en IS NULL", (tenant_id, cliente_id, expediente_id)).fetchone()[0] >= db.MAX_DOCUMENTOS_POR_CLIENTE:
             return "limite", None
         guardado, cifrado, sobre = _sellar(tenant_id, contenido)
         nombre_seguro = db._nombre_de_archivo_seguro(nombre)

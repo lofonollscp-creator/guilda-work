@@ -11,6 +11,7 @@ import re
 import sqlite3
 from email.utils import getaddresses
 
+from .bd.errores import ErrorIntegridad
 from . import acceso, db
 
 ESQUEMA = """
@@ -96,7 +97,7 @@ def crear(tenant_id: int, usuario_id: int, **datos) -> int:
         try:
             cur = conn.execute("INSERT INTO contactos (tenant_id, nombre, email, telefono, empresa, notas, cliente_id, creado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                (tenant_id, campos["nombre"], campos["email"], campos["telefono"], campos["empresa"], campos["notas"], cliente_id, usuario_id, db.now_iso()))
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             raise ValueError("Ya hay un contacto con ese correo.") from None
         conn.commit()
         return cur.lastrowid
@@ -125,7 +126,7 @@ def editar(tenant_id: int, usuario_id: int, contacto_id: int, **datos) -> None:
             return
         try:
             conn.execute(f"UPDATE contactos SET {', '.join(f'{c} = ?' for c in campos)}, actualizado_en = ? WHERE id = ? AND tenant_id = ?", (*campos.values(), db.now_iso(), contacto_id, tenant_id))
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             raise ValueError("Ya hay un contacto con ese correo.") from None
         conn.commit()
     finally:
@@ -175,7 +176,7 @@ def crear_grupo(tenant_id: int, nombre: str) -> int:
     try:
         try:
             cur = conn.execute("INSERT INTO contacto_grupos (tenant_id, nombre, creado_en) VALUES (?, ?, ?)", (tenant_id, nombre, db.now_iso()))
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             raise ValueError("Ya hay un grupo con ese nombre.") from None
         conn.commit()
         return cur.lastrowid
@@ -217,7 +218,7 @@ def poner_en_grupo(tenant_id: int, usuario_id: int, grupo_id: int, contacto_id: 
     try:
         _grupo_del_despacho(conn, tenant_id, grupo_id)
         if dentro:
-            conn.execute("INSERT OR IGNORE INTO contacto_grupo_miembros (grupo_id, contacto_id) VALUES (?, ?)", (grupo_id, contacto_id))
+            conn.execute("INSERT INTO contacto_grupo_miembros (grupo_id, contacto_id) VALUES (?, ?) ON CONFLICT DO NOTHING", (grupo_id, contacto_id))
         else:
             conn.execute("DELETE FROM contacto_grupo_miembros WHERE grupo_id = ? AND contacto_id = ?", (grupo_id, contacto_id))
         conn.commit()

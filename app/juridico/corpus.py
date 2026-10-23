@@ -103,7 +103,7 @@ def registrar_fuente(fuente_id: str, nombre: str, conector: str, coleccion: str,
     propia = conn is None
     conn = conn or db.get_connection()
     try:
-        conn.execute("INSERT OR IGNORE INTO jur_fuentes (id, nombre, url, conector, coleccion, acceso, creada_en) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        conn.execute("INSERT INTO jur_fuentes (id, nombre, url, conector, coleccion, acceso, creada_en) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING",
                      (fuente_id, nombre, url, conector, coleccion, acceso, ahora()))
         if propia:
             conn.commit()
@@ -246,7 +246,7 @@ def guardar_original(fuente_id: str, contenido: bytes, url: str | None, tipo_mim
         if not operacion_permitida(fuente_id, "almacenar", conn):
             raise ErrorCorpus("La política de la fuente no permite almacenar su contenido.")
         h = hash_bytes(contenido)
-        conn.execute("INSERT OR IGNORE INTO jur_originales (hash, fuente_id, url, tipo_mime, contenido, capturado_en) VALUES (?, ?, ?, ?, ?, ?)",
+        conn.execute("INSERT INTO jur_originales (hash, fuente_id, url, tipo_mime, contenido, capturado_en) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING",
                      (h, fuente_id, url, tipo_mime, zlib.compress(contenido, 6), ahora()))
         if propia:
             conn.commit()
@@ -376,7 +376,7 @@ def _resolver_relaciones_hacia(conn, documento_id: int, id_externo: str) -> None
 
 def _guardar_relaciones(conn, documento_id: int, relaciones: list[dict] | None) -> None:
     for r in relaciones or []:
-        conn.execute("INSERT OR IGNORE INTO jur_relaciones (documento_id, destino_externo, tipo, evidencia, verificada) VALUES (?, ?, ?, ?, 0)",
+        conn.execute("INSERT INTO jur_relaciones (documento_id, destino_externo, tipo, evidencia, verificada) VALUES (?, ?, ?, ?, 0) ON CONFLICT DO NOTHING",
                      (documento_id, r["destino_externo"], r["tipo"], (r.get("evidencia") or "")[:600] or None))
     conn.execute("UPDATE jur_relaciones SET destino_documento_id = (SELECT d.id FROM jur_documentos d WHERE d.id_externo = jur_relaciones.destino_externo LIMIT 1) "
                  "WHERE documento_id = ? AND destino_documento_id IS NULL", (documento_id,))

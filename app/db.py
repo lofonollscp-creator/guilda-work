@@ -35,6 +35,8 @@ from pathlib import Path
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from . import bd as _bd
+
 if hasattr(sys, "_MEIPASS"):
     # Empaquetado con PyInstaller: sys._MEIPASS es una carpeta temporal que se
     # borra al cerrar, así que la base de datos vive junto al .exe, no ahí.
@@ -1427,7 +1429,12 @@ def cerrar_conexiones_compartidas() -> None:
             c._cerrar_de_verdad()
 
 
-def get_connection() -> sqlite3.Connection:
+def get_connection(despacho: int | None = None) -> sqlite3.Connection:
+    """Conexión de la aplicación. Con GUILDA_DB_ENGINE=postgres devuelve una `bd.postgres.ConexionPG` con la misma interfaz;
+    `despacho` fija el contexto de RLS (solo tiene efecto en PostgreSQL: SQLite aísla por las columnas `tenant_id` de cada consulta)."""
+    if _bd.MOTOR == "postgres":
+        from .bd import postgres as _pg
+        return _pg.conectar(despacho)
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     ruta = str(DB_PATH)
     if POOL_ACTIVO:
@@ -1578,6 +1585,8 @@ def _migrar_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connection) -> 
     nombre definitivo -- así las hijas, que nunca dejan de decir
     "REFERENCES categorias(...)", vuelven a apuntar a una tabla real en
     cuanto esta reaparece con ese nombre, sin necesidad de tocarlas."""
+    if _bd.MOTOR != "sqlite":          # reconstruye tablas de bases SQLite antiguas; en PostgreSQL el esquema nace ya con el diseño final
+        return
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
@@ -1626,6 +1635,8 @@ def _migrar_tareas_recurrentes_periodicidades(conn_ignorada: sqlite3.Connection)
     docstring: conexión propia con foreign_keys=OFF, tabla nueva con otro
     nombre, copia, DROP de la vieja y renombrado -- porque
     tareas_outlook.tarea_recurrente_id apunta a esta tabla."""
+    if _bd.MOTOR != "sqlite":          # reconstruye tablas de bases SQLite antiguas; en PostgreSQL el esquema nace ya con el diseño final
+        return
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
@@ -1671,6 +1682,8 @@ def _migrar_correo_categorias_unique_por_usuario(conn_ignorada: sqlite3.Connecti
     con correo_mensajes.categoria_id (ON DELETE SET NULL) y
     correo_reglas_categoria.categoria_id (ON DELETE CASCADE) como tablas
     hijas en vez de notas/tareas/tareas_outlook."""
+    if _bd.MOTOR != "sqlite":          # reconstruye tablas de bases SQLite antiguas; en PostgreSQL el esquema nace ya con el diseño final
+        return
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
@@ -1715,6 +1728,8 @@ def _migrar_documentos_vencimiento_a_nextcloud(conn_ignorada: sqlite3.Connection
     de reconstrucción de tabla que _migrar_correo_categorias_unique_por_usuario
     (ver su docstring) -- `contenido` tiene que dejar de ser NOT NULL, y
     SQLite no permite quitar una restricción NOT NULL con ALTER TABLE."""
+    if _bd.MOTOR != "sqlite":          # reconstruye tablas de bases SQLite antiguas; en PostgreSQL el esquema nace ya con el diseño final
+        return
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:

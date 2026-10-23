@@ -16,6 +16,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from .bd.errores import ErrorIntegridad
 from . import db as _db
 
 
@@ -92,7 +93,7 @@ def crear_cliente_fiscal(
                     _db.serializar_modelos_fiscales(modelos_fiscales), (email or "").strip() or None, _db.now_iso(),
                 ),
             )
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             raise _db._cliente_duplicado(conn, tenant_id, pais, clave, nif) from None
         if cliente_id is not None:
             conn.execute("UPDATE clientes_fiscales SET cliente_id = ? WHERE id = ? AND tenant_id = ?", (cliente_id, cur.lastrowid, tenant_id))
@@ -214,7 +215,7 @@ def editar_cliente_fiscal(tenant_id: int, cliente_id: int, **campos) -> None:
                 f"UPDATE clientes_fiscales SET {asignaciones}, version = version + 1 WHERE id = ? AND tenant_id = ?",
                 [*valores, cliente_id, tenant_id],
             )
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             conn.rollback()
             raise _db._cliente_duplicado(conn, tenant_id, pais or "ES", clave, campos.get("nif")) from None
         conn.commit()
@@ -252,7 +253,7 @@ def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
                 "UPDATE clientes_fiscales SET papelera_en = NULL WHERE id = ? AND tenant_id = ?",
                 (cliente_id, tenant_id),
             )
-        except sqlite3.IntegrityError:
+        except ErrorIntegridad:
             conn.rollback()
             f = conn.execute("SELECT nif, pais, nif_normalizado FROM clientes_fiscales WHERE id = ?", (cliente_id,)).fetchone()
             raise _db._cliente_duplicado(conn, tenant_id, f["pais"] if f else "ES", f["nif_normalizado"] if f else None, f["nif"] if f else None) from None
@@ -288,7 +289,7 @@ def crear_vencimiento_fiscal(
     usuario_id: int | None = None, notas: str | None = None, rectifica_a: int | None = None,
 ) -> int:
     """Alta de un vencimiento. Un mismo cliente, modelo y período solo puede tener uno (si no es una rectificación: `rectifica_a` lo vincula a su original);
-    repetirlo lanza `sqlite3.IntegrityError` (la API lo contesta como 409)."""
+    repetirlo lanza `ErrorIntegridad` (la API lo contesta como 409)."""
     conn = _db.get_connection()
     try:
         cur = conn.execute(
@@ -1049,7 +1050,7 @@ def marcar_vencimiento_escalado(vencimiento_id: int, dias_antes: int) -> bool:
     conn = _db.get_connection()
     try:
         cur = conn.execute(
-            "INSERT OR IGNORE INTO vencimientos_escalados (vencimiento_id, dias_antes, avisado_en) VALUES (?, ?, ?)",
+            "INSERT INTO vencimientos_escalados (vencimiento_id, dias_antes, avisado_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
             (vencimiento_id, dias_antes, _db.now_iso()),
         )
         conn.commit()
@@ -1099,7 +1100,7 @@ def marcar_recordatorio_portal_enviado(vencimiento_id: int, dias_antes: int) -> 
     conn = _db.get_connection()
     try:
         conn.execute(
-            "INSERT OR IGNORE INTO vencimientos_recordatorios (vencimiento_id, dias_antes, enviado_en) VALUES (?, ?, ?)",
+            "INSERT INTO vencimientos_recordatorios (vencimiento_id, dias_antes, enviado_en) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
             (vencimiento_id, dias_antes, _db.now_iso()),
         )
         conn.commit()
@@ -1280,7 +1281,7 @@ def registrar_acceso_cliente(tenant_id: int, cliente_fiscal_id: int, usuario_id:
             if accion in ("ficha_vista", "laboral_visto"):
                 desde = (_db.datetime.now() - _db.timedelta(minutes=_db.VENTANA_FICHA_VISTA_MINUTOS)).isoformat(timespec="seconds")
                 if conn.execute(
-                    "SELECT 1 FROM cliente_accesos WHERE cliente_fiscal_id = ? AND usuario_id IS ? AND accion = ? AND creado_en >= ? LIMIT 1",
+                    "SELECT 1 FROM cliente_accesos WHERE cliente_fiscal_id = ? AND usuario_id IS NOT DISTINCT FROM ? AND accion = ? AND creado_en >= ? LIMIT 1",
                     (cliente_fiscal_id, usuario_id, accion, desde),
                 ).fetchone():
                     return False
