@@ -219,8 +219,8 @@ def _huecos_temporales(conn, documento_ids: list[int], fecha_juridica: str) -> l
     """Normas cuya primera versión recogida es posterior a la fecha jurídica: no hay texto aplicable a esa fecha en el corpus."""
     huecos = []
     for did in documento_ids:
-        f = conn.execute("SELECT d.titulo, d.coleccion, MIN(g.vigente_desde) AS primera, SUM(g.vigente_desde IS NULL) AS sin_fecha FROM jur_fragmentos g JOIN jur_versiones v ON v.id = g.version_id "
-                         "JOIN jur_documentos d ON d.id = v.documento_id WHERE d.id = ? AND v.activa = 1", (did,)).fetchone()
+        f = conn.execute("SELECT d.titulo, d.coleccion, MIN(g.vigente_desde) AS primera, SUM(CASE WHEN g.vigente_desde IS NULL THEN 1 ELSE 0 END) AS sin_fecha FROM jur_fragmentos g JOIN jur_versiones v ON v.id = g.version_id "
+                         "JOIN jur_documentos d ON d.id = v.documento_id WHERE d.id = ? AND v.activa = 1 GROUP BY d.id", (did,)).fetchone()
         if f and f["coleccion"] == "legislacion" and f["primera"] and f["primera"] > fecha_juridica:
             huecos.append(f"«{f['titulo'][:90]}»: la primera versión recogida es de {f['primera']}, posterior a {fecha_juridica}; no hay texto aplicable a esa fecha en la biblioteca.")
         elif f and f["coleccion"] == "legislacion" and f["sin_fecha"]:

@@ -757,7 +757,7 @@ def resumen_tareas_de_vencimiento(tenant_id: int, vencimiento_id: int) -> dict:
     conn = _db.get_connection()
     try:
         f = conn.execute(
-            """SELECT COUNT(*) AS total, COALESCE(SUM(t.estado != 'completada'), 0) AS abiertas FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
+            """SELECT COUNT(*) AS total, COALESCE(SUM(CASE WHEN t.estado != 'completada' THEN 1 ELSE 0 END), 0) AS abiertas FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
                WHERE t.vencimiento_id = ? AND u.tenant_id = ? AND t.papelera_en IS NULL""", (vencimiento_id, tenant_id)).fetchone()
         return {"total": f["total"], "abiertas": f["abiertas"]}
     finally:
@@ -2075,7 +2075,7 @@ def carga_equipo(usuario_id: int) -> list[dict]:
                WHERE t.papelera_en IS NULL AND t.estado != 'completada'
                  AND (t.usuario_id = ? OR t.asignada_a = ?
                       OR t.id IN (SELECT tarea_id FROM tareas_participantes WHERE usuario_id = ?))
-               GROUP BY responsable_id ORDER BY atrasadas DESC, abiertas DESC, nombre""",
+               GROUP BY responsable_id, pf.nombre_mostrado, u.email ORDER BY atrasadas DESC, abiertas DESC, nombre""",
             (hoy, hoy, usuario_id, usuario_id, usuario_id),
         ).fetchall()
         return [dict(f) for f in filas]
@@ -2115,7 +2115,7 @@ def carga_semanal(usuario_id: int, lunes: _db.date) -> dict:
         personas_filas = conn.execute(
             """SELECT u.id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, fd.jornada_semanal_horas AS jornada
                FROM usuarios u LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id LEFT JOIN fichaje_datos fd ON fd.usuario_id = u.id
-               WHERE u.id = ? OR (? IS NOT NULL AND u.tenant_id = ?) ORDER BY (u.id = ?) DESC, nombre""",
+               WHERE u.id = ? OR (CAST(? AS BIGINT) IS NOT NULL AND u.tenant_id = ?) ORDER BY (u.id = ?) DESC, nombre""",
             (usuario_id, yo["tenant_id"], yo["tenant_id"], usuario_id),
         ).fetchall()
         filas = conn.execute(
@@ -2350,7 +2350,7 @@ def tiempo_equipo_tarea(usuario_id: int, tarea_id: int) -> dict:
                FROM tareas t JOIN usuarios u ON u.id = t.usuario_id
                LEFT JOIN usuario_perfil pf ON pf.usuario_id = t.usuario_id
                WHERE t.tarea_outlook_id = ? AND t.estado = 'finalizada' AND t.papelera_en IS NULL
-               GROUP BY t.usuario_id ORDER BY segundos DESC""",
+               GROUP BY t.usuario_id, pf.nombre_mostrado, u.email ORDER BY segundos DESC""",
             (tarea_id,),
         ).fetchall()
     finally:
@@ -2602,8 +2602,8 @@ def contar_mi_dia(usuario_id: int) -> tuple[int, int]:
     conn = _db.get_connection()
     try:
         fila = conn.execute(
-            """SELECT COALESCE(SUM(substr(t.fecha_vencimiento, 1, 10) < ?), 0) AS vencidas,
-                      COALESCE(SUM(substr(t.fecha_vencimiento, 1, 10) = ?), 0) AS hoy
+            """SELECT COALESCE(SUM(CASE WHEN substr(t.fecha_vencimiento, 1, 10) < ? THEN 1 ELSE 0 END), 0) AS vencidas,
+                      COALESCE(SUM(CASE WHEN substr(t.fecha_vencimiento, 1, 10) = ? THEN 1 ELSE 0 END), 0) AS hoy
                FROM tareas_outlook t
                WHERE t.papelera_en IS NULL AND t.estado != 'completada'
                  AND t.fecha_vencimiento IS NOT NULL AND substr(t.fecha_vencimiento, 1, 10) <= ?

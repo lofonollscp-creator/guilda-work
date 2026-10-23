@@ -214,7 +214,7 @@ def resumen(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> dict:
     fc._cliente(tenant_id, usuario_id, cliente_fiscal_id)
     conn = db.get_connection()
     try:
-        f = conn.execute("SELECT COUNT(*) AS n, COALESCE(SUM(tipo = 'proveedor'), 0) AS proveedores, COALESCE(SUM(tipo = 'cliente'), 0) AS clientes, MAX(importado_en) AS cuando "
+        f = conn.execute("SELECT COUNT(*) AS n, COALESCE(SUM(CASE WHEN tipo = 'proveedor' THEN 1 ELSE 0 END), 0) AS proveedores, COALESCE(SUM(CASE WHEN tipo = 'cliente' THEN 1 ELSE 0 END), 0) AS clientes, MAX(importado_en) AS cuando "
                          "FROM contabilidad_plan WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id)).fetchone()
     finally:
         conn.close()

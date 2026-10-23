@@ -85,10 +85,11 @@ def consumir_gratis(usuario_id: int, hoy: date | None = None) -> bool:
             conn.rollback()
             return False
         conn.execute(
-            "INSERT INTO ia_soporte_uso (usuario_id, dia, usadas) VALUES (?, ?, 1) ON CONFLICT(usuario_id, dia) DO UPDATE SET usadas = usadas + 1",
+            "INSERT INTO ia_soporte_uso (usuario_id, dia, usadas) VALUES (?, ?, 1) ON CONFLICT(usuario_id, dia) DO UPDATE SET usadas = ia_soporte_uso.usadas + 1",
             (usuario_id, dia),
         )
-        conn.execute("DELETE FROM ia_soporte_uso WHERE dia < date(?, '-7 days')", (dia,))
+        from datetime import timedelta
+        conn.execute("DELETE FROM ia_soporte_uso WHERE dia < ?", ((date.fromisoformat(dia) - timedelta(days=7)).isoformat(),))
         conn.commit()
         return True
     finally:

@@ -15,6 +15,7 @@ Lo que se reproduce (todo observable en el código actual):
 `psycopg` se importa solo al abrir la primera conexión: con GUILDA_DB_ENGINE=sqlite no hace falta.
 """
 import os
+import re
 import threading
 import weakref
 from typing import Optional
@@ -54,6 +55,18 @@ def _fabrica_filas(cursor):
     if descripcion is None:
         return lambda valores: valores
     return fabrica_filas([c.name for c in descripcion])
+
+
+_DDL_IDEMPOTENTE = re.compile(
+    r"^\s*(CREATE\s+(UNIQUE\s+)?(TABLE|INDEX|VIRTUAL\s+TABLE|TRIGGER|VIEW)\s+IF\s+NOT\s+EXISTS|DROP\s+(TRIGGER|VIEW|INDEX)\s+IF\s+EXISTS)", re.I)
+
+
+def _es_ddl_idempotente(script: str) -> bool:
+    """¿Todas las sentencias del script son CREATE ... IF NOT EXISTS / DROP ... IF EXISTS? Un script con cualquier otra sentencia (INSERT, UPDATE, ALTER...) NO lo es y se ejecuta."""
+    sin = re.sub(r"--[^\n]*", "", script)
+    sin = re.sub(r"CREATE\s+TRIGGER\s+IF\s+NOT\s+EXISTS\s+\w+.*?\bEND\b\s*;", "CREATE TRIGGER IF NOT EXISTS t;", sin, flags=re.I | re.S)    # cuerpo del trigger fuera
+    trozos = [t for t in sin.split(";") if t.strip()]
+    return bool(trozos) and all(_DDL_IDEMPOTENTE.match(t) for t in trozos)
 
 
 class CursorPG:
@@ -222,6 +235,14 @@ class ConexionPG:
         return CursorPG(cur)
 
     def executescript(self, script):
+        """Como sqlite3. Los scripts que son solo DDL idempotente de SQLite (los `crear_esquema` de cada módulo) se ignoran: en PostgreSQL el
+        esquema lo crea app/bd/esquema.py. Si falta algo, tests/test_esquema_pg.py y el generador lo delatan."""
+        if _es_ddl_idempotente(script):
+            return _CursorVacio()
+        return self.ejecutar_script(script)
+
+    def ejecutar_script(self, script):
+        """Ejecuta el script tal cual (varias sentencias, una sola transacción implícita), sin filtrar."""
         self.commit()                                       # como sqlite3: confirma lo pendiente antes
         self._raw.execute(script)                           # sin parámetros psycopg admite varias sentencias
         return _CursorVacio()

@@ -26,6 +26,6 @@ def es_postgres() -> bool:
 
 def existe_tabla(conn, nombre: str) -> bool:
     """¿Existe la tabla (o la tabla virtual) en la base de datos de esta conexión? Sustituye a consultar `sqlite_master`."""
-    if MOTOR == "postgres":
+    if hasattr(conn, "fijar_despacho"):                    # ConexionPG: se decide por la conexión, no por el motor global (los tests mezclan los dos)
         return bool(conn.execute("SELECT to_regclass(?) IS NOT NULL AS existe", (nombre,)).fetchone()[0])
     return conn.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (nombre,)).fetchone() is not None

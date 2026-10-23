@@ -523,7 +523,7 @@ def listar(tenant_id: int, usuario_id: int, *, estado: str | None = None, tipo: 
         c = datos_de(x["id"])
         conn = db.get_connection()
         try:
-            tot, hechos = conn.execute("SELECT COUNT(*), COALESCE(SUM(hecho_en IS NOT NULL), 0) FROM expediente_checklist WHERE expediente_id = ?", (x["id"],)).fetchone()
+            tot, hechos = conn.execute("SELECT COUNT(*), COALESCE(SUM(CASE WHEN hecho_en IS NOT NULL THEN 1 ELSE 0 END), 0) FROM expediente_checklist WHERE expediente_id = ?", (x["id"],)).fetchone()
             obligatorios = conn.execute("SELECT COUNT(*) FROM expediente_checklist WHERE expediente_id = ? AND obligatorio = 1 AND hecho_en IS NULL", (x["id"],)).fetchone()[0]
         finally:
             conn.close()

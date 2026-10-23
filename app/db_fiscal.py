@@ -1087,7 +1087,7 @@ def vencimientos_para_recordatorio_portal(fecha_objetivo: str, dias_antes: int, 
                WHERE v.estado = 'pendiente' AND v.papelera_en IS NULL AND c.papelera_en IS NULL
                  AND c.recordatorios_portal = 1 AND c.email IS NOT NULL AND trim(c.email) <> ''
                  AND v.modelo NOT IN ('NOMINAS', 'ALTA-SS', 'BAJA-SS', 'CONTRATO')
-                 AND v.fecha_limite >= ? AND v.fecha_limite < ? AND (? IS NULL OR v.tenant_id = ?)
+                 AND v.fecha_limite >= ? AND v.fecha_limite < ? AND (CAST(? AS BIGINT) IS NULL OR v.tenant_id = ?)
                  AND NOT EXISTS (SELECT 1 FROM vencimientos_recordatorios r
                                  WHERE r.vencimiento_id = v.id AND r.dias_antes = ?)""",
             (fecha_objetivo, _db._fecha_exclusiva(fecha_objetivo), tenant_id, tenant_id, dias_antes),

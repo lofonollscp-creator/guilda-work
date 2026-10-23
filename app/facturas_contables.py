@@ -1320,8 +1320,8 @@ def pendientes_por_cliente(tenant_id: int, usuario_id: int) -> list[dict]:
     visibles = acceso.clientes_visibles(tenant_id, usuario_id)
     conn = db.get_connection()
     try:
-        filas = conn.execute("SELECT x.cliente_fiscal_id, c.nombre, SUM(x.estado = 'pendiente') AS pendientes, SUM(x.estado = 'revisada') AS revisadas, "
-                             "SUM(x.estado = 'pendiente' AND x.lectura IN ('pendiente', 'fallida')) AS por_leer, SUM(x.estado = 'pendiente' AND x.origen = 'portal') AS del_portal, "
+        filas = conn.execute("SELECT x.cliente_fiscal_id, c.nombre, SUM(CASE WHEN x.estado = 'pendiente' THEN 1 ELSE 0 END) AS pendientes, SUM(CASE WHEN x.estado = 'revisada' THEN 1 ELSE 0 END) AS revisadas, "
+                             "SUM(CASE WHEN x.estado = 'pendiente' AND x.lectura IN ('pendiente', 'fallida') THEN 1 ELSE 0 END) AS por_leer, SUM(CASE WHEN x.estado = 'pendiente' AND x.origen = 'portal' THEN 1 ELSE 0 END) AS del_portal, "
                              "MIN(CASE WHEN x.estado = 'pendiente' THEN x.creado_en END) AS antigua FROM facturas_contables x JOIN clientes_fiscales c ON c.id = x.cliente_fiscal_id "
                              "WHERE x.tenant_id = ? AND x.estado IN ('pendiente', 'revisada') AND c.papelera_en IS NULL GROUP BY x.cliente_fiscal_id, c.nombre", (tenant_id,)).fetchall()
     finally:
@@ -1341,7 +1341,7 @@ def para_recordar(tenant_id: int, usuario_id: int, trimestre: str) -> list[dict]
     conn = db.get_connection()
     try:
         notas = {r["cliente_fiscal_id"]: r for r in conn.execute(
-            "SELECT cliente_fiscal_id, COUNT(*) AS anotadas, COALESCE(SUM(estado = 'pendiente'), 0) AS por_revisar FROM facturas_contables WHERE tenant_id = ? AND fecha BETWEEN ? AND ? AND estado != 'descartada' "
+            "SELECT cliente_fiscal_id, COUNT(*) AS anotadas, COALESCE(SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END), 0) AS por_revisar FROM facturas_contables WHERE tenant_id = ? AND fecha BETWEEN ? AND ? AND estado != 'descartada' "
             "GROUP BY cliente_fiscal_id", (tenant_id, desde, hasta))}
         ultimos = {r["cliente_fiscal_id"]: r["ultimo"] for r in conn.execute(
             "SELECT cliente_fiscal_id, MAX(enviado_en) AS ultimo FROM contabilidad_recordatorios WHERE tenant_id = ? AND trimestre = ? GROUP BY cliente_fiscal_id", (tenant_id, trimestre))}
@@ -1414,7 +1414,7 @@ def uso_del_mes(tenant_id: int, mes: str | None = None) -> dict:
     mes = mes or db.now_iso()[:7]
     conn = db.get_connection()
     try:
-        f = conn.execute("SELECT COUNT(*) AS anotadas, COALESCE(SUM(origen = 'portal'), 0) AS portal, COALESCE(SUM(documento_id IS NOT NULL), 0) AS con_archivo, COALESCE(SUM(lectura = 'ia'), 0) AS leidas_ia FROM facturas_contables "
+        f = conn.execute("SELECT COUNT(*) AS anotadas, COALESCE(SUM(CASE WHEN origen = 'portal' THEN 1 ELSE 0 END), 0) AS portal, COALESCE(SUM(CASE WHEN documento_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS con_archivo, COALESCE(SUM(CASE WHEN lectura = 'ia' THEN 1 ELSE 0 END), 0) AS leidas_ia FROM facturas_contables "
                          "WHERE tenant_id = ? AND substr(creado_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
         e = conn.execute("SELECT COUNT(*) AS ficheros, COALESCE(SUM(n_facturas), 0) AS facturas FROM contabilidad_lotes WHERE tenant_id = ? AND substr(creado_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
     finally:

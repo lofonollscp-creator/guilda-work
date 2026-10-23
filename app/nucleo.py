@@ -262,7 +262,7 @@ def equipo(tenant_id: int) -> list:
     conn = db.get_connection()
     try:
         return conn.execute("SELECT u.id, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS nombre FROM usuarios u LEFT JOIN usuario_perfil p ON p.usuario_id = u.id "
-                            "WHERE u.tenant_id = ? ORDER BY lower(nombre)", (tenant_id,)).fetchall()
+                            "WHERE u.tenant_id = ? ORDER BY lower(COALESCE(NULLIF(p.nombre_mostrado, ''), u.email))", (tenant_id,)).fetchall()
     finally:
         conn.close()
 

@@ -411,6 +411,6 @@ def membresias_del_despacho(tenant_id: int) -> list[dict]:
         return [dict(f) for f in conn.execute(
             "SELECT m.*, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS persona, o.nombre AS oficina, c.nombre AS cliente FROM membresias m JOIN usuarios u ON u.id = m.usuario_id "
             "LEFT JOIN usuario_perfil p ON p.usuario_id = m.usuario_id LEFT JOIN oficinas o ON o.id = m.alcance_id AND m.alcance_tipo = 'oficina' "
-            "LEFT JOIN clientes_fiscales c ON c.id = m.alcance_id AND m.alcance_tipo = 'cliente' WHERE m.tenant_id = ? AND m.revocada_en IS NULL ORDER BY lower(persona), m.id", (tenant_id,))]
+            "LEFT JOIN clientes_fiscales c ON c.id = m.alcance_id AND m.alcance_tipo = 'cliente' WHERE m.tenant_id = ? AND m.revocada_en IS NULL ORDER BY lower(COALESCE(NULLIF(p.nombre_mostrado, ''), u.email)), m.id", (tenant_id,))]
     finally:
         conn.close()

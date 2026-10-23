@@ -1779,6 +1779,15 @@ def _migrar_documentos_vencimiento_a_nextcloud(conn_ignorada: sqlite3.Connection
 
 
 def init_db() -> None:
+    if _bd.MOTOR == "postgres":
+        # El esquema de PostgreSQL no se construye aquí (ese DDL es de SQLite): nace de app/bd/esquema_pg/ y evoluciona con migraciones numeradas.
+        from .bd import esquema as _esquema
+        conn = get_connection()
+        try:
+            _esquema.crear_si_falta(conn)
+        finally:
+            conn.close()
+        return
     conn = get_connection()
     try:
         conn.executescript(SCHEMA)

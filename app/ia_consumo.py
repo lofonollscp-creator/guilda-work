@@ -35,7 +35,7 @@ def reservar(usuario_id: int, ahora: datetime | None = None) -> None:
                 raise LimiteIA("El asistente de IA no está activado para tu despacho. Contacta con soporte.")
             raise LimiteIA(f"Tu despacho ha agotado su límite mensual de IA ({limite} consultas). Se renueva el día 1 del mes que viene, o contacta con soporte para ampliarlo.")
         conn.execute(
-            "INSERT INTO ia_consumo (tenant_id, mes, usadas) VALUES (?, ?, 1) ON CONFLICT(tenant_id, mes) DO UPDATE SET usadas = usadas + 1",
+            "INSERT INTO ia_consumo (tenant_id, mes, usadas) VALUES (?, ?, 1) ON CONFLICT(tenant_id, mes) DO UPDATE SET usadas = ia_consumo.usadas + 1",
             (tenant_id, mes),
         )
         conn.commit()

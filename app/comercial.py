@@ -654,9 +654,9 @@ def uso_del_mes(tenant_id: int) -> dict:
     mes = date.today().strftime("%Y-%m")
     conn = db.get_connection()
     try:
-        o = conn.execute("SELECT COUNT(*) AS n, COALESCE(SUM(estado = 'ganada'), 0) AS ganadas FROM crm_oportunidades WHERE tenant_id = ? AND substr(creada_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
+        o = conn.execute("SELECT COUNT(*) AS n, COALESCE(SUM(CASE WHEN estado = 'ganada' THEN 1 ELSE 0 END), 0) AS ganadas FROM crm_oportunidades WHERE tenant_id = ? AND substr(creada_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
         a = conn.execute("SELECT COUNT(*) FROM crm_actividades WHERE tenant_id = ? AND substr(creada_en, 1, 7) = ? AND tipo != 'etapa'", (tenant_id, mes)).fetchone()[0]
-        r = conn.execute("SELECT COUNT(*), COALESCE(SUM(acta_generada_en IS NOT NULL), 0) FROM crm_reuniones WHERE tenant_id = ? AND substr(creada_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
+        r = conn.execute("SELECT COUNT(*), COALESCE(SUM(CASE WHEN acta_generada_en IS NOT NULL THEN 1 ELSE 0 END), 0) FROM crm_reuniones WHERE tenant_id = ? AND substr(creada_en, 1, 7) = ?", (tenant_id, mes)).fetchone()
     finally:
         conn.close()
     return {"mes": mes, "oportunidades": o["n"], "ganadas": o["ganadas"], "actividades": a, "reuniones": r[0], "actas": r[1]}

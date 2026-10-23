@@ -955,7 +955,7 @@ def registrar_destinatario_reciente(usuario_id: int, direccion: str, nombre_most
                ON CONFLICT (usuario_id, direccion) DO UPDATE SET
                    nombre_mostrado = excluded.nombre_mostrado,
                    ultima_vez_en = excluded.ultima_vez_en,
-                   veces_usado = veces_usado + 1""",
+                   veces_usado = correo_destinatarios_recientes.veces_usado + 1""",
             (usuario_id, direccion.strip().lower(), nombre_mostrado, _db.now_iso()),
         )
         conn.commit()

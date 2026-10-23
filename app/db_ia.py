@@ -183,7 +183,7 @@ def activar_conversacion_ia(usuario_id: int, conversacion_id: int) -> bool:
             "SELECT 1 FROM ia_conversaciones WHERE id = ? AND usuario_id = ?", (conversacion_id, usuario_id)
         ).fetchone():
             return False
-        conn.execute("UPDATE ia_conversaciones SET activa = (id = ?) WHERE usuario_id = ?", (conversacion_id, usuario_id))
+        conn.execute("UPDATE ia_conversaciones SET activa = CASE WHEN id = ? THEN 1 ELSE 0 END WHERE usuario_id = ?", (conversacion_id, usuario_id))
         conn.commit()
         return True
     finally:

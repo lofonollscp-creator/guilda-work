@@ -320,7 +320,7 @@ def fichajes_tenant_crudos(
             "FROM fichajes f "
             "JOIN usuarios u ON u.id = f.usuario_id "
             "LEFT JOIN fichaje_datos fd ON fd.usuario_id = f.usuario_id "
-            "WHERE (f.tenant_id = ? OR (? IS NULL AND f.tenant_id IS NULL))"
+            "WHERE (f.tenant_id = ? OR (CAST(? AS BIGINT) IS NULL AND f.tenant_id IS NULL))"
         )
         params: list = [tenant_id, tenant_id]
         if usuario_id:
@@ -350,7 +350,7 @@ def resumen_fichajes_tenant(tenant_id: int | None, desde: str | None = None, has
             "FROM fichajes f "
             "JOIN usuarios u ON u.id = f.usuario_id "
             "LEFT JOIN fichaje_datos fd ON fd.usuario_id = f.usuario_id "
-            "WHERE (f.tenant_id = ? OR (? IS NULL AND f.tenant_id IS NULL))"
+            "WHERE (f.tenant_id = ? OR (CAST(? AS BIGINT) IS NULL AND f.tenant_id IS NULL))"
         )
         params: list = [tenant_id, tenant_id]
         if desde:

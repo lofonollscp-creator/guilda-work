@@ -272,3 +272,21 @@ def test_motor_por_defecto_es_sqlite_y_get_connection_no_cambia():
         assert isinstance(conn, sqlite3.Connection)
     finally:
         conn.close()
+
+
+def test_executescript_ignora_solo_el_ddl_idempotente_de_sqlite():
+    ddl = """
+    CREATE TABLE IF NOT EXISTS t (id INTEGER PRIMARY KEY AUTOINCREMENT, a TEXT);
+    CREATE UNIQUE INDEX IF NOT EXISTS i ON t(a);
+    CREATE TRIGGER IF NOT EXISTS tr AFTER INSERT ON t BEGIN INSERT INTO x VALUES (NEW.id); END;
+    DROP TRIGGER IF EXISTS viejo;
+    """
+    conn = ConexionPG_falsa()
+    conn.executescript(ddl)
+    assert conn._raw.registro == []                              # no llega nada al servidor
+    conn.executescript("INSERT INTO t (a) VALUES ('semilla');")   # un script con datos SÍ se ejecuta
+    conn.executescript("CREATE TABLE IF NOT EXISTS u (a int); INSERT INTO u VALUES (1);")
+    conn.executescript("ALTER TABLE t ADD COLUMN b TEXT;")
+    assert len(conn._raw.registro) == 3
+    conn.ejecutar_script("CREATE TABLE IF NOT EXISTS t (a int);")  # sin filtrar
+    assert len(conn._raw.registro) == 4

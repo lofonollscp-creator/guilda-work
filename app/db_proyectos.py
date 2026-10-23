@@ -420,8 +420,8 @@ def resumen_proyecto(usuario_id: int, categoria_id: int) -> dict | None:
         hoy = _db.datetime.now().strftime("%Y-%m-%d")
         lunes = (_db.datetime.now() - _db.timedelta(days=_db.datetime.now().weekday())).strftime("%Y-%m-%d")
         t = conn.execute(
-            """SELECT COUNT(*) AS total, COALESCE(SUM(estado = 'completada'), 0) AS hechas,
-                      COALESCE(SUM(estado != 'completada' AND fecha_vencimiento IS NOT NULL AND substr(fecha_vencimiento, 1, 10) < ?), 0) AS vencidas
+            """SELECT COUNT(*) AS total, COALESCE(SUM(CASE WHEN estado = 'completada' THEN 1 ELSE 0 END), 0) AS hechas,
+                      COALESCE(SUM(CASE WHEN estado != 'completada' AND fecha_vencimiento IS NOT NULL AND substr(fecha_vencimiento, 1, 10) < ? THEN 1 ELSE 0 END), 0) AS vencidas
                FROM tareas_outlook WHERE categoria_id = ? AND papelera_en IS NULL""",
             (hoy, categoria_id),
         ).fetchone()
@@ -454,7 +454,7 @@ def resumen_proyecto(usuario_id: int, categoria_id: int) -> dict | None:
         carga = [dict(f) for f in conn.execute(
             """SELECT COALESCE(t.asignada_a, t.usuario_id) AS usuario_id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, COUNT(*) AS abiertas
                FROM tareas_outlook t JOIN usuarios u ON u.id = COALESCE(t.asignada_a, t.usuario_id) LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id
-               WHERE t.categoria_id = ? AND t.papelera_en IS NULL AND t.estado != 'completada' GROUP BY 1 ORDER BY abiertas DESC, nombre""",
+               WHERE t.categoria_id = ? AND t.papelera_en IS NULL AND t.estado != 'completada' GROUP BY 1, pf.nombre_mostrado, u.email ORDER BY abiertas DESC, nombre""",
             (categoria_id,),
         )]
         por_persona = []
@@ -463,7 +463,7 @@ def resumen_proyecto(usuario_id: int, categoria_id: int) -> dict | None:
             por_persona = [dict(f) for f in conn.execute(
                 """SELECT t.usuario_id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, COALESCE(SUM(t.duracion_segundos), 0) AS segundos
                    FROM tareas t JOIN usuarios u ON u.id = t.usuario_id LEFT JOIN usuario_perfil pf ON pf.usuario_id = t.usuario_id
-                   WHERE t.categoria_id = ? AND t.estado = 'finalizada' AND t.papelera_en IS NULL GROUP BY t.usuario_id ORDER BY segundos DESC""",
+                   WHERE t.categoria_id = ? AND t.estado = 'finalizada' AND t.papelera_en IS NULL GROUP BY t.usuario_id, pf.nombre_mostrado, u.email ORDER BY segundos DESC""",
                 (categoria_id,),
             )] if (rol == "dueno" or conn.execute("SELECT supervisor_tenant FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()[0]) else []
         return {

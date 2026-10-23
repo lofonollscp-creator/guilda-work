@@ -1274,7 +1274,7 @@ def registrar_uso_token(token_id: int, status: int) -> None:
     try:
         conn.execute(
             "INSERT INTO tokens_api_uso (token_id, dia, llamadas, errores) VALUES (?, ?, 1, ?) "
-            "ON CONFLICT(token_id, dia) DO UPDATE SET llamadas = llamadas + 1, errores = errores + excluded.errores",
+            "ON CONFLICT(token_id, dia) DO UPDATE SET llamadas = tokens_api_uso.llamadas + 1, errores = tokens_api_uso.errores + excluded.errores",
             (token_id, _db.date.today().isoformat(), 1 if status >= 400 else 0),
         )
         conn.commit()
@@ -1590,7 +1590,7 @@ def _purgar_cambios(conn: sqlite3.Connection) -> None:
     maximo = conn.execute("SELECT MAX(id) FROM api_cambios WHERE creado_en < ?", (limite,)).fetchone()[0]
     if maximo:
         conn.execute("DELETE FROM api_cambios WHERE id <= ?", (maximo,))
-        conn.execute("INSERT INTO api_cambios_purgado (id, max_id) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET max_id = MAX(max_id, excluded.max_id)", (maximo,))
+        conn.execute("INSERT INTO api_cambios_purgado (id, max_id) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET max_id = CASE WHEN api_cambios_purgado.max_id > excluded.max_id THEN api_cambios_purgado.max_id ELSE excluded.max_id END", (maximo,))
 
 
 def cursor_cambios_actual() -> int:
@@ -1732,7 +1732,7 @@ def mcp_registrar_llamada(
         if usuario_id:
             conn.execute(
                 "INSERT INTO mcp_uso (dia, usuario_id, herramienta, llamadas, errores) VALUES (?, ?, ?, 1, ?) "
-                "ON CONFLICT(dia, usuario_id, herramienta) DO UPDATE SET llamadas = llamadas + 1, errores = errores + excluded.errores",
+                "ON CONFLICT(dia, usuario_id, herramienta) DO UPDATE SET llamadas = mcp_uso.llamadas + 1, errores = mcp_uso.errores + excluded.errores",
                 (_db.date.today().isoformat(), usuario_id, herramienta, 0 if resultado == "ok" else 1),
             )
         if random.random() < 0.01:
