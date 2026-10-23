@@ -1,5 +1,6 @@
 """Revisión (aprobación) de tareas: otra persona del despacho, bloquea el cierre mientras esté pendiente, aprobar o pedir cambios."""
 import pytest
+from app.bd.errores import ErrorIntegridad, ErrorOperacional, ErrorBD
 
 from app import auditoria, db, tareas_trabajo as tt
 from tests.conftest import iniciar_sesion_de_prueba
@@ -135,6 +136,7 @@ def test_pantalla_de_revision_flujo_completo(cliente):
     assert cliente.post(f"/tareas/{tid}/revision/cancelar").status_code == 404
 
 
+@pytest.mark.solo_sqlite          # en PostgreSQL borrar un despacho borra también lo personal creado en él (decisión 6c)
 def test_borrar_el_despacho_y_la_tarea_no_se_atascan_con_revisiones(cliente):
     t, (h1, u1), (h2, u2), _ = _equipo(cliente, "rv7")
     tid = _tarea(cliente, h1, "Con revisión")
@@ -256,6 +258,7 @@ def test_solo_vota_quien_esta_designado_y_se_puede_retirar(cliente):
     assert _pedir_varios(cliente, h1, tid, [u2, u3]).status_code == 201                                    # y se puede pedir otra
 
 
+@pytest.mark.solo_sqlite
 def test_las_revisiones_de_antes_pasan_a_tener_su_voto(cliente):
     t, (h1, u1), (h2, u2), _ = _equipo(cliente, "mv6")
     pendiente = _tarea(cliente, h1, "Antigua pendiente")
@@ -460,7 +463,7 @@ def test_el_disparador_de_la_base_de_datos_impide_saltarse_el_flujo(cliente):
     tid = _tarea(cliente, h1, "Defensa en profundidad")
     conn = db.get_connection()
     try:
-        with pytest.raises(sqlite3.DatabaseError, match="solo_por_revision"):
+        with pytest.raises(ErrorBD, match="solo_por_revision"):
             conn.execute("UPDATE tareas_outlook SET estado = 'en_revision' WHERE id = ?", (tid,))
         conn.rollback()
     finally:
@@ -468,16 +471,17 @@ def test_el_disparador_de_la_base_de_datos_impide_saltarse_el_flujo(cliente):
     _pedir(cliente, h1, tid, u2)
     conn = db.get_connection()
     try:
-        with pytest.raises(sqlite3.DatabaseError, match="revision_pendiente"):
+        with pytest.raises(ErrorBD, match="revision_pendiente"):
             conn.execute("UPDATE tareas_outlook SET estado = 'en_progreso' WHERE id = ?", (tid,))
         conn.rollback()
-        with pytest.raises(sqlite3.IntegrityError):                                                         # y el CHECK sigue rechazando cualquier otro valor
+        with pytest.raises(ErrorIntegridad):                                                         # y el CHECK sigue rechazando cualquier otro valor
             conn.execute("UPDATE tareas_outlook SET estado = 'inventado' WHERE id = ?", (tid,))
         conn.rollback()
     finally:
         conn.close()
 
 
+@pytest.mark.solo_sqlite
 def test_la_migracion_es_idempotente_y_recoloca_lo_que_ya_estaba_pendiente(cliente):
     t, (h1, u1), (h2, u2), _ = _equipo(cliente, "er5")
     tid = _tarea(cliente, h1, "Heredada")

@@ -115,6 +115,7 @@ SIN_KRATOS = os.environ.get("GUILDA_SIN_KRATOS") == "1"
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "kratos: necesita la instancia real de Kratos (login/registro reales)")
+    config.addinivalue_line("markers", "solo_sqlite: comprueba algo propio de SQLite (migraciones de su esquema, EXPLAIN QUERY PLAN, FTS5, el archivo .db); se salta con GUILDA_TEST_MOTOR=postgres")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -122,6 +123,10 @@ def pytest_collection_modifyitems(config, items):
     cliente HTTP `cliente`, o cuyo fichero inicia sesión real / habla con kratos).
     Con GUILDA_SIN_KRATOS=1 (scripts/probar.sh --rapida) se saltan y Kratos ni se
     arranca: es el modo rápido para comprobar lógica de datos sin Docker."""
+    if os.environ.get("GUILDA_TEST_MOTOR", "sqlite") == "postgres":
+        for item in items:
+            if item.get_closest_marker("solo_sqlite"):
+                item.add_marker(pytest.mark.skip(reason="propio de SQLite"))
     huella = ("iniciar_sesion_de_prueba", "kratos_test", "crear_identidad")
     cache: dict[str, bool] = {}
     descartados = []
@@ -208,17 +213,75 @@ def _plantilla_bd(tmp_path_factory):
     return ruta
 
 
+# --- Las pruebas contra PostgreSQL -------------------------------------------------------------------------------------------
+# GUILDA_TEST_MOTOR=postgres  GUILDA_TEST_PG_URL=postgresql://usuario:clave@host:puerto/postgres  (superusuario: crea y borra bases de datos)
+# Cada proceso de pytest crea UNA plantilla (esquema multitenant + los datos de la plantilla de SQLite, cargados con app/bd/migrar_datos.py) y cada test trabaja en un clon suyo.
+MOTOR_DE_PRUEBA = os.environ.get("GUILDA_TEST_MOTOR", "sqlite")
+URL_PG_DE_PRUEBA = os.environ.get("GUILDA_TEST_PG_URL", "")
+
+
+@pytest.fixture(scope="session")
+def _plantilla_pg(_plantilla_bd):
+    if MOTOR_DE_PRUEBA != "postgres":
+        yield None
+        return
+    import uuid
+    import psycopg
+    from psycopg.conninfo import make_conninfo
+    from app.bd import esquema, migrar_datos
+    from app.bd import postgres as pg
+    nombre = "gw_tpl_" + uuid.uuid4().hex[:10]
+    with psycopg.connect(URL_PG_DE_PRUEBA, autocommit=True) as c:
+        c.execute(f"CREATE DATABASE {nombre}")
+    url = make_conninfo(URL_PG_DE_PRUEBA, dbname=nombre)
+    with psycopg.connect(url, autocommit=True) as c:
+        c.execute(f"ALTER DATABASE {nombre} SET timezone TO 'Europe/Madrid'")
+        pg.fijar_url(url)
+        conn = pg.conectar()
+        esquema.crear_si_falta(conn, "multitenant")
+        conn.close()
+        migrar_datos.copiar(_plantilla_bd, c)
+    pg.cerrar_pool()
+    pg.fijar_url(None)
+    yield nombre
+    with psycopg.connect(URL_PG_DE_PRUEBA, autocommit=True) as c:
+        c.execute(f"DROP DATABASE IF EXISTS {nombre} WITH (FORCE)")
+
+
 @pytest.fixture(autouse=True)
-def base_de_datos_temporal(tmp_path, monkeypatch, _plantilla_bd):
+def base_de_datos_temporal(tmp_path, monkeypatch, _plantilla_bd, _plantilla_pg):
     import shutil
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "test.db")
     monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path / "backups")
     shutil.copyfile(_plantilla_bd, db.DB_PATH)
+    clon = None
+    if _plantilla_pg:
+        import uuid
+        import psycopg
+        from psycopg.conninfo import make_conninfo
+        from app import bd
+        from app.bd import postgres as pg
+        clon = "gw_t_" + uuid.uuid4().hex[:12]
+        with psycopg.connect(URL_PG_DE_PRUEBA, autocommit=True) as c:
+            c.execute(f"CREATE DATABASE {clon} TEMPLATE {_plantilla_pg}")
+        pg.fijar_url(make_conninfo(URL_PG_DE_PRUEBA, dbname=clon))
+        from app.bd import contexto as _ctx
+        _ctx._despacho.set(None), _ctx._plataforma.set(False), _ctx._usuario.set(None)   # el contexto de un test no pasa al siguiente
+        pg.activar_esquema("multitenant")
+        monkeypatch.setattr(bd, "MOTOR", "postgres")
     db._ULTIMO_ACCESO_ANOTADO.clear()  # memoria del proceso: no puede arrastrarse de un test a otro
     from app import acceso
     acceso.invalidar()                 # ídem: la caché de «¿este despacho usa oficinas?» va por id de despacho, y cada test reinicia los ids
     db.init_db()  # sobre el esquema ya hecho solo repasa lo idempotente (algunos tests dependen de ello)
     yield
+    if clon:
+        from app import bd
+        from app.bd import postgres as pg
+        pg.cerrar_pool()
+        pg.fijar_url(None)
+        pg.activar_esquema("simple")
+        with psycopg.connect(URL_PG_DE_PRUEBA, autocommit=True) as c:
+            c.execute(f"DROP DATABASE IF EXISTS {clon} WITH (FORCE)")
     db.cerrar_conexiones_compartidas()      # y no se acumulan conexiones a ficheros que ya no existirán
     # Cada test deja de ocupar disco al terminar: con ~2.500 tests y un esquema de cientos de tablas, las copias de la base acumuladas llenaban el /tmp del VPS (un tmpfs de 3,8 GB).
     for sufijo in ("", "-wal", "-shm", "-journal"):

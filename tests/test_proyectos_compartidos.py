@@ -1,3 +1,4 @@
+import pytest
 """Proyectos compartidos (fase 1): quién ve y qué puede hacer cada rol, que nada cruce de
 despacho, que las listas generales no se llenen con el trabajo del equipo y las secciones."""
 from datetime import datetime, timedelta
@@ -224,6 +225,7 @@ def test_resumen_de_proyecto_vacio():
 
 # --- migración ------------------------------------------------------------------------------------------------------
 
+@pytest.mark.solo_sqlite
 def test_la_migracion_es_idempotente_y_conserva_los_proyectos_existentes():
     _, (ana,) = _equipo("p-i1@x.com")
     p = db.crear_categoria(ana, "Antiguo")

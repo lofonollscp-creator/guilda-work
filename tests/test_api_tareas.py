@@ -1,4 +1,5 @@
 """API de tareas completa (`app/rutas_api_tareas.py`) y las herramientas MCP de tareas nuevas."""
+from datetime import datetime, timedelta
 import pytest
 
 import mcp_tools as mt
@@ -152,7 +153,7 @@ def test_recurrentes_y_reglas_por_vencimiento(cliente):
     assert cliente.post("/api/v1/tareas-reglas-vencimiento", json={"modelo": "303", "asunto": "x", "crear_dias_antes": 2, "vence_dias_antes": 9}, headers=h).status_code == 400
     c = db.crear_cliente_fiscal(t, "Acme SL")
     conn = db.get_connection()
-    conn.execute("INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, '303', '3T', date('now', '+5 day'), 'pendiente', datetime('now'))", (t, c))
+    conn.execute("INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, '303', '3T', ?, 'pendiente', ?)", (t, c, (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d"), db.now_iso()))
     conn.commit(); conn.close()
     r = cliente.post("/api/v1/tareas-reglas-vencimiento", json={"modelo": "303", "asunto": "Preparar {modelo} de {cliente}", "estimacion": "2h", "prioridad": "alta"}, headers=h)
     assert r.status_code == 201 and r.get_json()["data"]["estimacion_min"] == 120

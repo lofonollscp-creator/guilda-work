@@ -111,7 +111,7 @@ def test_inmobiliaria_no_enseña_confidenciales_ni_otras_agencias(usuario_id):
     t, (u1, u2) = _despacho("Agencia Conf IA", "inmobiliaria")
     prop = nucleo.crear_cliente(t, "P")
     i1, x1 = im.crear_inmueble(t, u1, prop, "venta", "Calle Reservada 9", precio="100.000")
-    db.get_connection().execute("UPDATE expedientes SET confidencial = 1 WHERE id = ?", (x1,)).connection.commit()
+    _c = db.get_connection(); _c.execute("UPDATE expedientes SET confidencial = 1 WHERE id = ?", (x1,));  _c.commit(); _c.close()
     assert ih.ejecutar(u1, "inmobiliaria_listar_inmuebles", {}) and ih.ejecutar(u2, "inmobiliaria_listar_inmuebles", {}) == []
     t2, (o,) = _despacho("Otra Agencia", "inmobiliaria", 1)
     assert ih.ejecutar(o, "inmobiliaria_listar_inmuebles", {}) == []

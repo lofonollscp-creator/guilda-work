@@ -96,7 +96,7 @@ def test_cada_borrador_y_cada_aprobacion_quedan_en_la_auditoria():
     conn = db.get_connection()
     filas = conn.execute("SELECT accion, entidad_id, detalle, tenant_id FROM auditoria_eventos WHERE entidad = 'regla_laboral' ORDER BY id").fetchall()
     conn.close()
-    assert [f["accion"] for f in filas] == ["regla_laboral.borrador", "regla_laboral.aprobada"] and all(f["entidad_id"] == "alta_ss:1" and f["tenant_id"] is None for f in filas)
+    assert [f["accion"] for f in filas] == ["regla_laboral.borrador", "regla_laboral.aprobada"] and all(f["entidad_id"] == "alta_ss:1" and not f["tenant_id"] for f in filas)
     assert '"por": "jorge"' in filas[1]["detalle"]
 
 

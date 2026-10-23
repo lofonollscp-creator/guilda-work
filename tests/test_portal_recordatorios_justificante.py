@@ -180,6 +180,7 @@ def test_marcar_presentado_genera_la_constancia_y_el_cliente_la_descarga(cliente
     # volver a presentar no duplica la constancia
     cliente.post(f"/fiscal/vencimientos/{v}/constancia")
     assert [d["origen"] for d in db.listar_documentos_vencimiento(v)].count("constancia") == 1
+    origenes = {d["origen"]: d for d in db.listar_documentos_vencimiento(v)}                 # (la constancia se rehace: no siempre con el mismo id)
 
     # el cliente (otro navegador) ve y descarga ambos, y solo los de SU vencimiento
     from app.auth import limiter

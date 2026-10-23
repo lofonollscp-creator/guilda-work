@@ -276,4 +276,33 @@ Lo que **todavía no** existe (6c): el despacho ACTIVO de la sesión (selector),
 1. **Personas en varios despachos y listados de compañeros.** Unas 80 consultas que escogen «las personas de un despacho» filtran por `usuarios.tenant_id` (el despacho PRINCIPAL). Quien trabaja en un despacho que no es el suyo principal ve y escribe todo lo de ese despacho, pero no aparece en los selectores de responsable/compañeros de él (sí en el principal). No es un fallo de seguridad (la RLS manda), sino de integridad funcional; se arregla cambiando esas consultas por una pertenencia a `usuarios_tenants`.
 2. **`backoffice.db` sigue siendo SQLite aparte.** Es la base PROPIA del backoffice (10 tablas: administradores, intentos de acceso, cobros, notas, seguimiento…), con `sqlite3` directo, que no pasa por esta capa. Migrarla es un trabajo pequeño pero distinto (otra base, sin `tenant_id`); queda en el plan para antes de retirar SQLite.
 3. Las 89 inserciones que toman el despacho del contexto, en un trabajo en segundo plano, se atribuyen al despacho PRINCIPAL de la persona.
-4. Pendiente de la fase 7: ejecutar la suite funcional completa contra PostgreSQL con el esquema multitenant (hoy se ha probado la capa, las consultas planificadas y los flujos clave).
+4. (Resuelto en la fase 7: la suite completa pasa contra PostgreSQL multitenant.)
+
+## Fase 7: la suite completa contra PostgreSQL (2026-10-24)
+
+`GUILDA_TEST_MOTOR=postgres GUILDA_TEST_PG_URL=postgresql://…/postgres scripts/probar.sh -n 3` ejecuta los 4.356 tests con el esquema **multitenant** (PostgreSQL sin distribuir, decisión D12). `tests/conftest.py` crea UNA plantilla por proceso (esquema + los datos de la plantilla de SQLite cargados con `app/bd/migrar_datos.py`) y cada test trabaja en un clon (`CREATE DATABASE … TEMPLATE`). Evolución: 956 fallos en la primera pasada → 243 → 104 → 19 → 1 → 0 (41 tests saltados, ver abajo).
+
+### Causas encontradas y arreglos (todos válidos también en SQLite)
+
+| Causa | Arreglo |
+|---|---|
+| `ON CONFLICT (a, b)` sin `tenant_id`: las claves únicas del esquema multitenant lo llevan delante (347 fallos) | `citus.reescribir_conflicto` lo antepone al objetivo (se aplica en `traduccion.preparar`) |
+| `INSERT OR IGNORE` no se podía reescribir (pglast no lo entiende) y la fila se quedaba sin `tenant_id` | `traduccion._ignorar_a_on_conflict` lo convierte antes de los reescritores |
+| `tenant_id` NULL = «de toda la plataforma» en SQLite; en PostgreSQL es el despacho 0 «Plataforma» | los parámetros `tenant_id` de un INSERT pasan por `COALESCE(?, 0)`; los lectores comparan con `COALESCE(tenant_id, 0) = 0` (webhooks, comunicados, mantenimiento, fichajes); `crear_webhook` devuelve `None` |
+| `executemany` con lista vacía / despacho deducido de la primera fila | vacía no ejecuta; la primera fila decide el despacho |
+| `NUMERIC` llegaba como `Decimal` | cargador psycopg: float si tiene decimales, entero si no (`SUM(entero)`) |
+| `create_function("plano")` | no-op si la función existe en PostgreSQL |
+| `GROUP BY` incompleto (SQLite lo admite) en 4 consultas, ordenaciones con empates | columnas añadidas; desempate por `id` |
+| `except sqlite3.IntegrityError` en `backoffice/datos.py` | `ErrorIntegridad` (tupla de ambos motores); tests con `ErrorIntegridad`/`ErrorBD` |
+| Fugas de contexto (despacho activo) de un test al siguiente | `conftest` lo reinicia por test |
+| `PRAGMA table_info` en `openapi.py` | `bd.columnas_de_tabla` (equivalente con `information_schema`) |
+| Borrado de un despacho: orden de las tablas | orden por las claves foráneas reales (`tenant._orden_de_borrado`) |
+
+### Tests marcados `solo_sqlite` (41, se saltan en el modo PostgreSQL)
+
+Comprueban algo propio de SQLite: migraciones de su esquema (`DROP TRIGGER`, `sqlite_master`, `BLOB`), `EXPLAIN QUERY PLAN`, el archivo `.db` (backup, cifrado), el pool de conexiones de SQLite, `set_trace_callback`, FTS5 directo (`… MATCH`; la búsqueda en PostgreSQL la cubre `tests/test_busqueda_pg.py`), y tres que fijan una diferencia deliberada: en PostgreSQL la clave foránea compuesta impide enlazar un cliente de otro despacho, y borrar un despacho borra también lo personal creado en él. Tres más trabajan con su propia base de PostgreSQL (esquema simple) y se ejecutan en el modo normal con `GUILDA_TEST_PG_URL`.
+
+### Pendiente
+
+- Aislamiento sobre Citus real: `tests/test_citus.py` (13) sigue pasando; la suite principal NO se ejecuta distribuida (D12).
+- CI: falta un `scripts/probar_pg.sh` que levante el contenedor de ensayo y lance la suite en ambos motores.

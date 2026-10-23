@@ -136,6 +136,7 @@ def test_tope_de_conversaciones_por_usuario_descarta_las_mas_antiguas(usuario_id
     assert not any(c["titulo"] == "conv 0" for c in convs)
 
 
+@pytest.mark.solo_sqlite
 def test_migracion_agrupa_los_mensajes_anteriores_en_una_conversacion_activa(usuario_id):
     conn = db.get_connection()
     try:

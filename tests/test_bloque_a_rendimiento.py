@@ -1,3 +1,4 @@
+import pytest
 """Bloque A de rendimiento: las optimizaciones dan EXACTAMENTE los mismos resultados que
 antes (equivalencias) y no vuelven atrás (presupuestos de consultas, sin escrituras al leer,
 asistente flotante bajo demanda, listas largas recortadas)."""
@@ -79,6 +80,7 @@ def test_contar_mi_dia_coincide_con_tareas_para_hoy():
 
 # --- no leídos ------------------------------------------------------------------------------------
 
+@pytest.mark.solo_sqlite
 def test_no_leidos_por_cuenta_carpeta_y_total_usan_el_indice_parcial():
     _, (yo, otro) = _despacho("a-nl1@ejemplo.com", "a-nl2@ejemplo.com")
     c1 = db.crear_cuenta_correo(yo, "A", "imap", "h", 993, "a@x.com")
@@ -116,6 +118,7 @@ def _sentencias(monkeypatch):
     return registro
 
 
+@pytest.mark.solo_sqlite          # cuenta las escrituras con la traza de SQLite
 def test_las_paginas_no_escriben_en_la_base_tras_la_primera_visita(cliente, monkeypatch):
     uid = iniciar_sesion_de_prueba(cliente, "a-esc@ejemplo.com", "contrasena123")
     db.asignar_tenant(uid, db.crear_tenant("Despacho esc"))

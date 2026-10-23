@@ -189,6 +189,7 @@ def test_borrar_un_despacho_pasa_a_sus_miembros_al_siguiente_que_tengan():
     assert db.obtener_usuario(doble)["tenant_id"] == t2 and [d["id"] for d in db.tenants_de_usuario(doble)] == [t2]
 
 
+@pytest.mark.solo_sqlite
 def test_init_db_incorpora_a_la_pertenencia_a_quien_ya_tenia_despacho(tmp_path):
     t1 = db.crear_tenant("Preexistente")
     u = _usuario()

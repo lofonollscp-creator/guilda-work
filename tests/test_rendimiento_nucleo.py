@@ -1,3 +1,4 @@
+import pytest
 """Rendimiento del núcleo con datos grandes: se vigila que no vuelva lo que `scripts/probar.sh --perfil` encontró (un calendario recalculado en cada fila de plazos
 y subconsultas sin índice)."""
 from datetime import date, timedelta
@@ -25,6 +26,7 @@ def test_listar_plazos_calcula_el_calendario_una_vez_por_tipo_no_por_fila(usuari
     assert len(llamadas) == 1, f"el calendario se calculó {len(llamadas)} veces para 60 plazos"
 
 
+@pytest.mark.solo_sqlite
 def test_las_subconsultas_por_expediente_tienen_indice(usuario_id):
     conn = db.get_connection()
     try:

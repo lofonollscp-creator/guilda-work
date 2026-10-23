@@ -9,6 +9,7 @@ import sqlite3
 from datetime import datetime, timedelta
 
 from app import db as plataforma
+from app.bd.errores import ErrorIntegridad
 from app import herramientas
 
 ESTADOS_RIESGO = ("pago_fallido", "past_due", "unpaid")
@@ -177,7 +178,7 @@ def crear_tenant(nombre: str) -> int:
         raise ValueError("Indica el nombre de la organización (máx. 120 caracteres).")
     try:
         return plataforma.crear_tenant(nombre)
-    except sqlite3.IntegrityError:
+    except ErrorIntegridad:
         raise ValueError("Ya existe un tenant con ese nombre.") from None
 
 
@@ -187,7 +188,7 @@ def renombrar_tenant(tenant_id: int, nombre: str) -> None:
         raise ValueError("Indica un nombre válido (máx. 120 caracteres).")
     try:
         plataforma.renombrar_tenant(tenant_id, nombre)
-    except sqlite3.IntegrityError:
+    except ErrorIntegridad:
         raise ValueError("Ya existe un tenant con ese nombre.") from None
 
 

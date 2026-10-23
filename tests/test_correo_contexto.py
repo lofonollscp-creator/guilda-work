@@ -1,3 +1,4 @@
+import pytest
 """Correo C4: contexto de cada mensaje con clientes, vencimientos y tareas, y «Escribir» desde las demás pantallas."""
 from app import correo, correo_contexto, db, nucleo
 from tests.conftest import iniciar_sesion_de_prueba
@@ -72,6 +73,7 @@ def test_sin_cliente_vinculado_propone_candidatos_por_email(cliente):
     assert correo_contexto.contexto_de_mensaje(uid, None, correo.obtener_mensaje(m), "taller@ruiz.test") is None
 
 
+@pytest.mark.solo_sqlite          # en PostgreSQL la clave foránea compuesta (tenant_id, cliente_fiscal_id) ya impide enlazar un cliente de otro despacho
 def test_el_contexto_no_enseña_clientes_de_otro_despacho(cliente):
     uid, t, cuenta = _montar(cliente, "ctx-6@ejemplo.com")
     otro = db.crear_tenant("Otro"); ajeno = db.crear_cliente_fiscal(otro, "Ajeno SL", email="a@ajeno.test")

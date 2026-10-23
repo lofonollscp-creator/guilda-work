@@ -1,3 +1,4 @@
+import pytest
 """Capa BD del blindaje del fichaje (Fase G3): encadenado de hashes y
 geolocalización opcional por tenant."""
 import threading
@@ -76,6 +77,7 @@ def test_manipular_tipo_directamente_en_bd_rompe_la_cadena():
     assert resultado["primera_fila_rota"] == v1
 
 
+@pytest.mark.solo_sqlite
 def test_backfill_de_hash_para_filas_creadas_antes_de_la_migracion():
     usuario_id = _usuario()
     conn = db.get_connection()

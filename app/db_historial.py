@@ -199,7 +199,7 @@ def estadisticas_por_dia(usuario_id: int, desde: str | None = None, hasta: str |
                        SUM(t.duracion_segundos) AS segundos
                 FROM tareas t JOIN categorias c ON c.id = t.categoria_id
                 WHERE {where}
-                GROUP BY fecha, c.id
+                GROUP BY fecha, c.id, c.nombre, c.color
                 ORDER BY fecha DESC, segundos DESC""",
             params,
         ).fetchall()

@@ -22,6 +22,7 @@ def crear_base_con_esquema(modo: str = "simple") -> tuple[str, callable]:
             c.execute("SELECT citus_set_coordinator_host('localhost', 5432)")
             c.execute("SELECT citus_set_node_property('localhost', 5432, 'shouldhaveshards', true)")
     pg.fijar_url(url)
+    pg.activar_esquema(modo)
     conn = pg.conectar()
     esquema.crear_si_falta(conn, modo)
     conn.close()

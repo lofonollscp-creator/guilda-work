@@ -108,7 +108,7 @@ def test_cada_cambio_queda_en_la_auditoria():
     conn = db.get_connection()
     filas = conn.execute("SELECT accion, entidad_id, tenant_id FROM auditoria_eventos WHERE entidad = 'regla_fiscal' ORDER BY id").fetchall()
     conn.close()
-    assert [(f["accion"], f["entidad_id"]) for f in filas] == [("regla_fiscal.borrador", "ES:130:2"), ("regla_fiscal.aprobada", "ES:130:2")] and all(f["tenant_id"] is None for f in filas)
+    assert [(f["accion"], f["entidad_id"]) for f in filas] == [("regla_fiscal.borrador", "ES:130:2"), ("regla_fiscal.aprobada", "ES:130:2")] and all(not f["tenant_id"] for f in filas)
 
 
 # --- Backoffice ----------------------------------------------------------------------------------------------------------------------------------

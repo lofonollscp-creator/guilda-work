@@ -35,3 +35,18 @@ def existe_tabla(conn, nombre: str) -> bool:
     if es_postgres(conn):
         return bool(conn.execute("SELECT to_regclass(?) IS NOT NULL AS existe", (nombre,)).fetchone()[0])
     return conn.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (nombre,)).fetchone() is not None
+
+
+_TIPO_SQLITE_DE_PG = {"bigint": "INTEGER", "integer": "INTEGER", "smallint": "INTEGER", "double precision": "REAL", "real": "REAL", "numeric": "REAL", "bytea": "BLOB"}
+
+
+def columnas_de_tabla(conn, tabla: str) -> list[dict]:
+    """Las columnas de la tabla como las da `PRAGMA table_info` de SQLite: `[{name, type, notnull, pk}]`, con el tipo en el vocabulario de SQLite (INTEGER, REAL, TEXT, BLOB)."""
+    if not es_postgres(conn):
+        return [dict(f) for f in conn.execute(f"PRAGMA table_info({tabla})").fetchall()]
+    claves = {f[0] for f in conn.execute(
+        "SELECT a.attname FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) "
+        "WHERE i.indrelid = to_regclass(?) AND i.indisprimary AND a.attname <> 'tenant_id'", (tabla,)).fetchall()}
+    filas = conn.execute("SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? "
+                         "AND column_name <> 'tenant_id' ORDER BY ordinal_position", (tabla,)).fetchall()
+    return [{"name": f[0], "type": _TIPO_SQLITE_DE_PG.get(f[1], "TEXT"), "notnull": 1 if f[2] == "NO" else 0, "pk": 1 if f[0] in claves else 0} for f in filas]

@@ -133,7 +133,7 @@ def activos_para(usuario_id: int, tenant_id: int | None, ahora: str | None = Non
         filas = conn.execute(
             """SELECT c.id, c.titulo, c.texto, c.nivel FROM comunicados c
                WHERE c.activo = 1 AND (c.desde IS NULL OR c.desde <= ?) AND (c.hasta IS NULL OR c.hasta >= ?)
-                 AND (c.tenant_id IS NULL OR c.tenant_id = ?)
+                 AND (COALESCE(c.tenant_id, 0) = 0 OR c.tenant_id = ?)
                  AND (c.nivel = 'critico' OR NOT EXISTS
                       (SELECT 1 FROM comunicados_cerrados x WHERE x.comunicado_id = c.id AND x.usuario_id = ?))
                ORDER BY CASE c.nivel WHEN 'critico' THEN 0 WHEN 'aviso' THEN 1 ELSE 2 END, c.id DESC LIMIT 3""",

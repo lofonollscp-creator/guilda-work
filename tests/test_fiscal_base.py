@@ -2,6 +2,7 @@
 import sqlite3
 
 import pytest
+from app.bd.errores import ErrorIntegridad, ErrorOperacional
 
 from app import db, fiscal_base, fiscal_identidad as fi
 
@@ -68,14 +69,14 @@ def test_un_vencimiento_por_cliente_modelo_y_periodo_salvo_rectificaciones(usuar
     t = db.crear_tenant("Despacho Unicidad")
     c = db.crear_cliente_fiscal(t, "Cliente SL")
     v = db.crear_vencimiento_fiscal(t, c, "303", "2026-T3", "2026-10-20")
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(ErrorIntegridad):
         db.crear_vencimiento_fiscal(t, c, "303", "2026-T3", "2026-10-20")
     r = db.crear_vencimiento_fiscal(t, c, "303", "2026-T3", "2026-11-30", rectifica_a=v)
     assert db.obtener_vencimiento_fiscal(t, r)["rectifica_a"] == v
     db.crear_vencimiento_fiscal(t, c, "303", "2026-T4", "2027-01-20"); db.crear_vencimiento_fiscal(t, c, "111", "2026-T3", "2026-10-20")
     db.eliminar_vencimiento_fiscal(t, v)
     assert db.crear_vencimiento_fiscal(t, c, "303", "2026-T3", "2026-10-20"), "el de la papelera no cuenta"
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(ErrorIntegridad):
         db.restaurar_vencimiento_fiscal(t, v)
 
 

@@ -89,6 +89,7 @@ def test_con_muchos_vencimientos_el_panel_no_los_carga_todos(base_de_datos_tempo
     assert time.perf_counter() - a < 1.5                                                           # margen amplio: la regresión sería de varios segundos con 50.000
 
 
+@pytest.mark.solo_sqlite
 def test_los_riesgos_de_certificados_no_hacen_una_consulta_por_vencimiento(base_de_datos_temporal):
     from app import certificados
     t, us, clientes = _montar(n_clientes=60, n_venc=500)

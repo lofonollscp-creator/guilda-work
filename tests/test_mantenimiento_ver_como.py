@@ -65,7 +65,7 @@ def test_activar_valida_y_no_duplica_ambito():
 
 def test_cierre_caducado_no_cuenta():
     conn = db.get_connection()
-    conn.execute("INSERT INTO mantenimiento (tenant_id, mensaje, hasta, activo, creado_en) VALUES (NULL, 'x', ?, 1, ?)", (_iso(days=-1), _iso(days=-2)))
+    conn.execute("INSERT INTO mantenimiento (tenant_id, mensaje, hasta, activo, creado_en) VALUES (?, 'x', ?, 1, ?)", (None, _iso(days=-1), _iso(days=-2)))
     conn.commit(); conn.close()
     mantenimiento._invalidar()
     assert mantenimiento.vigente_para(None) is None

@@ -272,6 +272,7 @@ def test_recurrente_con_periodicidad_invalida_se_rechaza(usuario_id):
         db.crear_tarea_recurrente(usuario_id, "x", "quincenal", 1)
 
 
+@pytest.mark.solo_sqlite
 def test_migracion_de_recurrentes_conserva_reglas_y_claves_foraneas(usuario_id):
     """Base de datos antigua: CHECK solo con semanal/mensual y tareas que
     apuntan a la regla. La migración amplía el CHECK sin perder nada."""

@@ -264,6 +264,7 @@ def test_errores_comunes_incluyen_sqlite3():
     assert sqlite3.IntegrityError in bd.ErrorIntegridad and sqlite3.OperationalError in bd.ErrorOperacional and sqlite3.Error in bd.ErrorBD
 
 
+@pytest.mark.solo_sqlite
 def test_motor_por_defecto_es_sqlite_y_get_connection_no_cambia():
     from app import db
     assert bd.MOTOR == "sqlite"

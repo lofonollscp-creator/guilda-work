@@ -42,6 +42,7 @@ def base_pg(_plantilla_bd, tmp_path_factory):
     with psycopg.connect(url, autocommit=True) as c:
         c.execute(f"ALTER DATABASE {nombre} SET timezone TO 'Europe/Madrid'")
     pg.fijar_url(url)
+    pg.activar_esquema("simple")                          # (con GUILDA_TEST_MOTOR=postgres la aplicación trabaja con el esquema multitenant; aquí se prueba el simple)
     conn = pg.conectar()
     creado = esquema.crear_si_falta(conn)
     conn.close()
@@ -85,6 +86,7 @@ def test_triggers_de_cambios_y_version(base_pg):
 
 
 @pg_real
+@pytest.mark.solo_sqlite          # trabaja con su propia base de PostgreSQL y esquema simple: se ejecuta en el modo normal con GUILDA_TEST_PG_URL
 def test_auditoria_solo_de_anexado(base_pg):
     from app import bd
     from app.bd import postgres as pg

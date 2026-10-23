@@ -16,7 +16,7 @@ import re
 
 from flask import current_app, request
 
-from . import db, openapi_analisis as analisis
+from . import bd as _bd, db, openapi_analisis as analisis
 from . import openapi_catalogo as cat
 from .api_areas import AREAS, area_de_ruta
 
@@ -57,7 +57,7 @@ def _esquema_de_tabla(tabla: str, excluir: tuple[str, ...], extra: dict) -> dict
     propiedades: dict[str, dict] = {}
     conn = db.get_connection()
     try:
-        columnas = conn.execute(f"PRAGMA table_info({tabla})").fetchall()
+        columnas = _bd.columnas_de_tabla(conn, tabla)
     finally:
         conn.close()
     for c in columnas:

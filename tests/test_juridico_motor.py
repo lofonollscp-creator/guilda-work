@@ -112,6 +112,7 @@ def test_un_fallo_a_mitad_de_la_publicacion_no_deja_versiones_a_medias(monkeypat
         conn.close()
 
 
+@pytest.mark.solo_sqlite
 def test_retirar_bloquea_purga_y_marca_los_informes():
     habilitar("boe-consolidada")
     h = corpus.guardar_original("boe-consolidada", b"<x/>", "https://www.boe.es/x", "application/xml")

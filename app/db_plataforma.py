@@ -1885,7 +1885,7 @@ def mcp_resumen(dias: int = 30, tenant_id: int | None = None) -> dict:
         por_usuario = [dict(f) for f in conn.execute(
             f"SELECT u.id AS usuario_id, u.email, t.nombre AS tenant, SUM(m.llamadas) AS llamadas, SUM(m.errores) AS errores "
             f"FROM mcp_uso m JOIN usuarios u ON u.id = m.usuario_id LEFT JOIN tenants t ON t.id = u.tenant_id WHERE m.dia >= ? {filtro} "
-            f"GROUP BY u.id ORDER BY llamadas DESC LIMIT 25", [desde, *params])]
+            f"GROUP BY u.id, u.email, t.nombre ORDER BY llamadas DESC LIMIT 25", [desde, *params])]
         por_dia = [dict(f) for f in conn.execute(f"SELECT m.dia, SUM(m.llamadas) AS llamadas, SUM(m.errores) AS errores {base} GROUP BY m.dia ORDER BY m.dia", [desde, *params])]
     finally:
         conn.close()
@@ -2093,7 +2093,9 @@ def crear_webhook(usuario_id: int, tenant_id: int | None, url: str, eventos: lis
             (tenant_id, usuario_id, url, json.dumps(eventos), secreto, _db.now_iso(), origen),
         )
         conn.commit()
-        return dict(_db.obtener_webhook(cursor.lastrowid))
+        w = dict(_db.obtener_webhook(cursor.lastrowid))
+        w["tenant_id"] = w["tenant_id"] or None                      # el webhook de toda la plataforma: NULL en SQLite, 0 en PostgreSQL
+        return w
     finally:
         conn.close()
 
@@ -2146,7 +2148,7 @@ def listar_webhooks(tenant_id: int | None) -> list[sqlite3.Row]:
     try:
         if tenant_id is None:
             return conn.execute(
-                "SELECT * FROM webhooks WHERE tenant_id IS NULL ORDER BY creado_en DESC"
+                "SELECT * FROM webhooks WHERE COALESCE(tenant_id, 0) = 0 ORDER BY creado_en DESC"
             ).fetchall()
         return conn.execute(
             "SELECT * FROM webhooks WHERE tenant_id = ? ORDER BY creado_en DESC", (tenant_id,)
@@ -2161,10 +2163,10 @@ def listar_todos_los_webhooks() -> dict[int | None, list[sqlite3.Row]]:
     consulta por tenant listado."""
     conn = _db.get_connection()
     try:
-        filas = conn.execute("SELECT * FROM webhooks ORDER BY tenant_id IS NOT NULL, tenant_id, creado_en DESC").fetchall()
+        filas = conn.execute("SELECT * FROM webhooks ORDER BY COALESCE(tenant_id, 0) <> 0, tenant_id, creado_en DESC").fetchall()
         resultado: dict[int | None, list[sqlite3.Row]] = {}
         for w in filas:
-            resultado.setdefault(w["tenant_id"], []).append(w)
+            resultado.setdefault(w["tenant_id"] or None, []).append(w)
         return resultado
     finally:
         conn.close()

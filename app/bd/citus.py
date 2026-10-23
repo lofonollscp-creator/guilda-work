@@ -239,6 +239,38 @@ class _Reescritor:
         self.cambios += 1
         return vias
 
+    def despacho_nulo_es_plataforma(self, st) -> None:
+        """INSERT ... VALUES (..., ?, ...) con `tenant_id` explícito: un NULL (fila de toda la plataforma en SQLite) pasa a ser el despacho 0 «Plataforma»."""
+        from pglast import ast
+        if not isinstance(st, ast.InsertStmt) or st.relation.relname not in self.dist or not st.cols or not isinstance(st.selectStmt, ast.SelectStmt):
+            return
+        columnas = [c.name for c in st.cols]
+        filas = st.selectStmt.valuesLists
+        if "tenant_id" not in columnas or not filas:
+            return
+        i = columnas.index("tenant_id")
+        nuevas = []
+        for fila in filas:
+            if isinstance(fila[i], ast.ParamRef):
+                fila = tuple(ast.CoalesceExpr(args=(fila[i], ast.A_Const(val=ast.Integer(ival=0)))) if j == i else x for j, x in enumerate(fila))
+                self.cambios += 1
+            nuevas.append(fila)
+        st.selectStmt.valuesLists = tuple(nuevas)
+
+    def conflicto_con_despacho(self, st) -> None:
+        """`ON CONFLICT (a, b)`: en el esquema multitenant las claves únicas llevan `tenant_id` delante, así que el objetivo debe nombrarlo también."""
+        from pglast import ast
+        if not isinstance(st, ast.InsertStmt) or st.relation.relname not in self.dist:
+            return
+        c = st.onConflictClause
+        if c is None or c.infer is None or not c.infer.indexElems:
+            return
+        if any(getattr(e, "name", None) == "tenant_id" for e in c.infer.indexElems):
+            return
+        primero = c.infer.indexElems[0]
+        c.infer.indexElems = (ast.IndexElem(name="tenant_id", ordering=primero.ordering, nulls_ordering=primero.nulls_ordering),) + tuple(c.infer.indexElems)
+        self.cambios += 1
+
     # --- joins ---------------------------------------------------------------------------------------------------------------
     def join(self, j) -> None:
         izq, der = self.d(_tablas(j.larg)), self.d(_tablas(j.rarg))
@@ -364,6 +396,38 @@ def _reescribir_sqlite(sql: str, con_filtro: bool) -> str | None:
 
 
 @lru_cache(maxsize=4096)
+def reescribir_conflicto(sql: str):
+    """INSERT de la aplicación: el mismo SQL con `tenant_id` al frente del objetivo de ON CONFLICT y con COALESCE(?, 0) si `tenant_id` va como parámetro; None si no aplica."""
+    if not re.search(r"\bON\s+CONFLICT\s*\(|^\s*INSERT\b[^(]*\([^)]*\btenant_id\b", sql, re.I):
+        return None
+    try:
+        from pglast import parse_sql
+        from pglast.stream import RawStream
+        from .traduccion import _recorrer
+        marcas: list = []
+        partes = []
+        for trozo, es_codigo in _recorrer(sql, False):
+            if es_codigo:
+                if re.search(r"(?<![:\w]):[A-Za-z_]\w*", trozo):
+                    return None
+                trozo = re.sub(r"\?", lambda m: (marcas.append("?"), f"${len(marcas)}")[1], trozo)
+            partes.append(trozo)
+        arbol = parse_sql("".join(partes))
+        r = _Reescritor()
+        if len(arbol) != 1:
+            return None
+        r.conflicto_con_despacho(arbol[0].stmt)
+        r.despacho_nulo_es_plataforma(arbol[0].stmt)
+        if not r.cambios:
+            return None
+        nuevo = RawStream()(arbol)
+        if len(re.findall(r"\$\d+", nuevo)) != len(marcas):
+            return None
+        return re.sub(r"\$(\d+)", lambda m: marcas[int(m.group(1)) - 1], nuevo)
+    except Exception:                                                                                           # noqa: BLE001
+        return None
+
+
 def reescribir_insert(sql: str):
     """Para un INSERT ... VALUES de la aplicación (con `?`): (SQL con `tenant_id` = SENTINELA, formas de deducir el despacho) o None si no aplica."""
     try:

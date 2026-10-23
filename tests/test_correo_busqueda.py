@@ -111,6 +111,7 @@ def test_los_correos_solo_html_se_encuentran_por_su_cuerpo(monkeypatch, usuario_
     assert "irrepetible" in db.mensaje_correo_por_uid(cuenta, "INBOX", "1")["cuerpo_texto"]
 
 
+@pytest.mark.solo_sqlite
 def test_migracion_de_un_buzon_existente_rellena_el_indice_y_el_texto_de_los_html(usuario_id):
     c = _cuenta(usuario_id)
     a = _m(c, 1, asunto="Antiguo", cuerpo="contenido heredado")
@@ -130,6 +131,7 @@ def test_migracion_de_un_buzon_existente_rellena_el_indice_y_el_texto_de_los_htm
     assert _ids(c, "heredado") == {a}
 
 
+@pytest.mark.solo_sqlite
 def test_reconstruir_indice_repara_un_indice_desincronizado(usuario_id):
     c = _cuenta(usuario_id)
     a = _m(c, 1, cuerpo="importante")
@@ -142,6 +144,7 @@ def test_reconstruir_indice_repara_un_indice_desincronizado(usuario_id):
     assert _ids(c, "importante") == {a}
 
 
+@pytest.mark.solo_sqlite
 def test_sin_fts5_la_busqueda_sigue_funcionando_con_like(usuario_id):
     c = _cuenta(usuario_id)
     a = _m(c, 1, asunto="Presupuesto abril")
@@ -155,6 +158,7 @@ def test_sin_fts5_la_busqueda_sigue_funcionando_con_like(usuario_id):
     assert _ids(c, "presupuesto") == {a}
 
 
+@pytest.mark.solo_sqlite
 def test_la_busqueda_usa_el_indice(usuario_id):
     c = _cuenta(usuario_id)
     for i in range(50):

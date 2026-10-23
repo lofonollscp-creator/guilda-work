@@ -86,17 +86,34 @@ def _sin_comentarios(sql: str) -> str:
 _reescritor = None                      # función SQL de la aplicación -> SQL con ajustes para Citus, o None (app/bd/citus.py)
 _reescritor_despacho = None             # igual, pero además con el filtro de despacho (SENTINELA)
 _reescritor_insert = None               # INSERT sin tenant_id -> (SQL con tenant_id = SENTINELA, formas de deducirlo)
+_reescritor_conflicto = None            # INSERT ... ON CONFLICT (cols) -> SQL con tenant_id al frente del objetivo
 
 
-def configurar_reescritor(funcion, con_despacho=None, para_insert=None) -> None:
+def configurar_reescritor(funcion, con_despacho=None, para_insert=None, para_conflicto=None) -> None:
     """Activa (o desactiva con None) la reescritura de consultas para Citus. Vacía la caché de sentencias preparadas."""
-    global _reescritor, _reescritor_despacho, _reescritor_insert
-    _reescritor, _reescritor_despacho, _reescritor_insert = funcion, con_despacho, para_insert
+    global _reescritor, _reescritor_despacho, _reescritor_insert, _reescritor_conflicto
+    _reescritor, _reescritor_despacho, _reescritor_insert, _reescritor_conflicto = funcion, con_despacho, para_insert, para_conflicto
     preparar.cache_clear()
+
+
+def _ignorar_a_on_conflict(sql: str) -> str:
+    """INSERT OR IGNORE INTO t ...  ->  INSERT INTO t ... ON CONFLICT DO NOTHING (antes de RETURNING si lo hay)."""
+    if not re.match(r"\s*(?:/\*.*?\*/\s*)*INSERT\s+OR\s+IGNORE\s+INTO", sql, re.I | re.S):
+        return sql
+    s = re.sub(r"^(\s*(?:/\*.*?\*/\s*)*INSERT)\s+OR\s+IGNORE\s+INTO", r"\1 INTO", sql, count=1, flags=re.I | re.S)
+    if re.search(r"\bON\s+CONFLICT\b", s, re.I):
+        return s
+    if re.search(r"\bRETURNING\b", s, re.I):
+        return re.sub(r"\s+RETURNING\b", " ON CONFLICT DO NOTHING RETURNING", s, count=1, flags=re.I)
+    return s.rstrip().rstrip(";") + " ON CONFLICT DO NOTHING"
 
 
 @lru_cache(maxsize=4096)
 def preparar(sql: str) -> Preparada:
+    if sql.lstrip()[:6].upper() == "INSERT":
+        sql = _ignorar_a_on_conflict(sql)                       # los reescritores (pglast) solo entienden SQL de PostgreSQL
+    if _reescritor_conflicto is not None and sql.lstrip()[:6].upper() == "INSERT":
+        sql = _reescritor_conflicto(sql) or sql
     base = sql
     if _reescritor is not None:
         sql = _reescritor(base) or base

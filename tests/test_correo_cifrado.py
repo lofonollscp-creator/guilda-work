@@ -122,6 +122,7 @@ def test_nada_secreto_queda_en_el_fichero_de_la_base_de_datos(usuario_id):
         assert marca not in datos, f"«{marca.decode()}» sigue en claro en el fichero de la base de datos"
 
 
+@pytest.mark.solo_sqlite
 def test_nivel_laxo_deja_el_asunto_buscable_pero_no_el_cuerpo(usuario_id):
     d, antes, despues, _ = _con_cifrado("laxo")
     datos = db.DB_PATH.read_bytes()

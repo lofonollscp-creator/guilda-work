@@ -121,7 +121,7 @@ def test_comprobar_certificado_por_api(cliente):
     from app import certificados
     h, t, u = _despacho(cliente, "cert@ejemplo.com", None)
     assert cliente.post("/api/v1/certificados/999/comprobar", headers=h).status_code in (403, 404)
-    db.get_connection().execute("UPDATE usuarios SET custodio_certificados = 1 WHERE id = ?", (u,)).connection.commit()
+    _c = db.get_connection(); _c.execute("UPDATE usuarios SET custodio_certificados = 1 WHERE id = ?", (u,));  _c.commit(); _c.close()
     assert cliente.post("/api/v1/certificados/999/comprobar", headers=h).status_code == 404
     r = certificados.alta_rapida(t, u, tipo="dnie", caduca="2030-01-01", titular="Ana")
     resp = cliente.post(f"/api/v1/certificados/{r['id']}/comprobar", headers=h)

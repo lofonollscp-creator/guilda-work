@@ -116,6 +116,7 @@ def _buscar_correo(cuenta, textos):
     return {t: sorted(db.listar_mensajes_correo(cuenta, "INBOX", texto=t, incluir_pospuestos=True)[i]["uid"] for i in range(len(db.listar_mensajes_correo(cuenta, "INBOX", texto=t, incluir_pospuestos=True)))) for t in textos}
 
 
+@pytest.mark.solo_sqlite          # trabaja con su propia base de PostgreSQL y esquema simple: se ejecuta en el modo normal con GUILDA_TEST_PG_URL
 def test_la_busqueda_de_correo_da_lo_mismo_en_sqlite_y_en_postgres(monkeypatch):
     from app import bd, db
     en_sqlite = _buscar_correo(_cargar_correo(), BUSQUEDAS_CORREO)

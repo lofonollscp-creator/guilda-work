@@ -48,6 +48,7 @@ def test_la_tarea_generada_por_una_regla_guarda_su_vencimiento():
     assert _estado(tarea)["vencimiento_id"] == v
 
 
+@pytest.mark.solo_sqlite
 def test_las_tareas_ya_generadas_antes_de_existir_la_columna_se_enlazan_al_arrancar():
     tenant, ana, _, cliente = _despacho()
     v, tarea = _por_regla(tenant, ana, cliente)

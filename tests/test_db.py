@@ -372,6 +372,7 @@ def test_tiempo_medio_resolucion_vencimientos_calcula_la_media_en_dias(monkeypat
 
 # --- Migración: vencimientos_fiscales_documentos a Nextcloud ---------------
 
+@pytest.mark.solo_sqlite
 def test_migrar_documentos_vencimiento_conserva_los_ya_existentes(usuario_id):
     """Simula una base de datos creada ANTES de este cambio (contenido
     BLOB NOT NULL, sin ruta_nextcloud), con un documento ya subido, y
@@ -423,6 +424,7 @@ def test_migrar_documentos_vencimiento_conserva_los_ya_existentes(usuario_id):
 
 # --- Copia de seguridad ----------------------------------------------------
 
+@pytest.mark.solo_sqlite
 def test_backup_crea_un_archivo_y_no_lo_duplica_el_mismo_dia(usuario_id):
     db.crear_categoria(usuario_id, "Guilda")  # asegura que exista la base de datos
 
@@ -458,6 +460,7 @@ def test_backup_deja_una_sola_copia_aunque_haya_antiguas(usuario_id):
     assert not list(db.BACKUPS_DIR.glob("*.tmp"))
 
 
+@pytest.mark.solo_sqlite
 def test_backup_forzar_sustituye_la_copia_de_hoy(usuario_id):
     import sqlite3
     db.crear_categoria(usuario_id, "Guilda")

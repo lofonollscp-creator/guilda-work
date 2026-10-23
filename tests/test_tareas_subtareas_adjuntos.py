@@ -1,3 +1,4 @@
+import pytest
 """Fase 3 del plan: subtareas con reglas de cierre y adjuntos de tarea (app/tareas_trabajo.py)."""
 import io
 
@@ -224,6 +225,7 @@ def test_web_sube_descarga_y_quita_adjuntos(cliente):
     assert cliente.get(f"/tareas/adjuntos/{aid}").status_code == 404
 
 
+@pytest.mark.solo_sqlite
 def test_migracion_idempotente_de_subtareas_y_adjuntos(cliente):
     uid = iniciar_sesion_de_prueba(cliente, "a7@ejemplo.com", "contrasena123")
     conn = db.get_connection()

@@ -232,8 +232,10 @@ class ConexionPG:
 
     def executemany(self, sql, secuencia):
         p = preparar(sql)
-        texto, _ = self._argumentos(p, ())
         lote = [tuple(x) if not isinstance(x, dict) else x for x in secuencia]
+        if not lote:
+            return CursorPG(self._raw.cursor(row_factory=_fabrica_filas))
+        texto, _ = self._argumentos(p, lote[0])
         cur = self._raw.cursor(row_factory=_fabrica_filas)
         if p.es_escritura:
             self._abrir_transaccion()
@@ -260,8 +262,10 @@ class ConexionPG:
             self._raw.execute(script)                       # sin parámetros psycopg admite varias sentencias
         return _CursorVacio()
 
-    def create_function(self, *a, **k):
-        raise NoPortable("create_function es de SQLite: la función debe existir como función SQL en PostgreSQL")
+    def create_function(self, nombre, *a, **k):
+        """En SQLite registra una función de Python; en PostgreSQL la función ya tiene que existir en el esquema (p. ej. `plano`)."""
+        if self._raw.execute("SELECT 1 FROM pg_proc WHERE proname = %s", (nombre,)).fetchone() is None:
+            raise NoPortable(f"create_function({nombre}): la función debe existir como función SQL en PostgreSQL")
 
     # --- internos ----------------------------------------------------------
     def _argumentos(self, p, params):
@@ -349,15 +353,29 @@ _url_plataforma_forzada: Optional[str] = None
 _candado_pool = threading.Lock()
 
 
-def activar_citus(activo: bool = True) -> None:
-    """Reescribe las consultas para que Citus las reparta (app/bd/citus.py). También con GUILDA_PG_CITUS=1 al arrancar."""
+def activar_esquema(modo: str = "simple") -> None:
+    """Qué reescritura de consultas necesita el esquema con el que se creó la base de datos (app/bd/esquema.py). También con GUILDA_PG_ESQUEMA al arrancar.
+      simple        ninguna.
+      multitenant   los INSERT llevan `tenant_id` (el de la conexión, o el de la persona o del padre de la fila en un trabajo sin despacho).
+      citus         lo anterior + igualdades de tenant_id en joins y subconsultas + filtro de despacho en cada consulta (app/bd/citus.py)."""
     from . import citus, traduccion
-    traduccion.configurar_reescritor(citus.reescribir_sqlite if activo else None, citus.reescribir_sqlite_con_despacho if activo else None,
-                                     citus.reescribir_insert if activo else None)
+    if modo == "simple":
+        traduccion.configurar_reescritor(None, None, None)
+    elif modo == "multitenant":
+        traduccion.configurar_reescritor(None, None, citus.reescribir_insert, citus.reescribir_conflicto)
+    elif modo == "citus":
+        traduccion.configurar_reescritor(citus.reescribir_sqlite, citus.reescribir_sqlite_con_despacho, citus.reescribir_insert, citus.reescribir_conflicto)
+    else:
+        raise ValueError(f"esquema desconocido: {modo!r}")
 
 
-if os.environ.get("GUILDA_PG_CITUS", "0") == "1":
-    activar_citus(True)
+def activar_citus(activo: bool = True) -> None:
+    activar_esquema("citus" if activo else "simple")
+
+
+_modo_inicial = os.environ.get("GUILDA_PG_ESQUEMA") or ("citus" if os.environ.get("GUILDA_PG_CITUS", "0") == "1" else "simple")
+if _modo_inicial != "simple":
+    activar_esquema(_modo_inicial)
 
 
 def fijar_url(url: Optional[str], url_plataforma: Optional[str] = None) -> None:
@@ -377,6 +395,17 @@ def _url(rol: str = "app") -> str:
     return url
 
 
+def _configurar_conexion(conn) -> None:
+    """Como SQLite: los NUMERIC (que vienen de columnas REAL) llegan a Python como float, no como Decimal."""
+    from psycopg.adapt import Loader
+
+    class _Numerico(Loader):
+        def load(self, data):
+            texto = bytes(data).decode()
+            return float(texto) if "." in texto or "e" in texto.lower() else int(texto)      # SUM(entero) es NUMERIC sin decimales: entero, como en SQLite
+    conn.adapters.register_loader("numeric", _Numerico)
+
+
 def _obtener_pool(rol: str = "app"):
     with _candado_pool:
         if rol not in _pools:
@@ -385,7 +414,7 @@ def _obtener_pool(rol: str = "app"):
             _pools[rol] = ConnectionPool(
                 _url(rol), min_size=1, max_size=maximo, open=True, timeout=float(os.environ.get("GUILDA_PG_POOL_ESPERA", "10")),
                 kwargs={"autocommit": True, "prepare_threshold": None},    # sin sentencias preparadas: compatible con PgBouncer
-                max_lifetime=1800,
+                max_lifetime=1800, configure=_configurar_conexion,
             )
         return _pools[rol]
 

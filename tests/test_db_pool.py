@@ -11,6 +11,7 @@ def _crear(conn):
     conn.commit()
 
 
+@pytest.mark.solo_sqlite
 def test_close_devuelve_la_conexion_y_la_siguiente_la_reutiliza():
     a = db.get_connection(); _crear(a); a.close()
     b = db.get_connection()
@@ -19,6 +20,7 @@ def test_close_devuelve_la_conexion_y_la_siguiente_la_reutiliza():
     b.close()
 
 
+@pytest.mark.solo_sqlite
 def test_dos_usos_a_la_vez_nunca_comparten_conexion():
     a = db.get_connection()
     b = db.get_connection()
@@ -29,6 +31,7 @@ def test_dos_usos_a_la_vez_nunca_comparten_conexion():
     c.close(); d.close()
 
 
+@pytest.mark.solo_sqlite
 def test_lo_no_confirmado_se_descarta_al_devolverla_como_al_cerrarla():
     a = db.get_connection(); _crear(a)
     a.execute("INSERT INTO pool_prueba (v) VALUES ('sin confirmar')")
@@ -39,6 +42,7 @@ def test_lo_no_confirmado_se_descarta_al_devolverla_como_al_cerrarla():
     b.close()
 
 
+@pytest.mark.solo_sqlite
 def test_lo_confirmado_se_conserva_y_se_ve_desde_otra_conexion():
     a = db.get_connection(); _crear(a)
     a.execute("INSERT INTO pool_prueba (v) VALUES ('ok')"); a.commit()
@@ -54,6 +58,7 @@ def test_doble_close_no_duplica_la_conexion_en_el_pool():
     b.close(); c.close()
 
 
+@pytest.mark.solo_sqlite
 def test_cada_hilo_tiene_las_suyas_y_las_del_pool_no_cruzan_hilos():
     principal = db.get_connection(); principal.close()
     vistas = {}
@@ -68,6 +73,7 @@ def test_cada_hilo_tiene_las_suyas_y_las_del_pool_no_cruzan_hilos():
     assert db.get_connection() is principal
 
 
+@pytest.mark.solo_sqlite
 def test_el_pool_tiene_tope_y_las_sobrantes_se_cierran(monkeypatch):
     monkeypatch.setattr(db, "MAX_LIBRES_POR_RUTA", 2)
     conns = [db.get_connection() for _ in range(4)]
@@ -99,6 +105,7 @@ def test_apagado_con_la_variable_cierra_de_verdad(monkeypatch):
     assert db.get_connection() is not a
 
 
+@pytest.mark.solo_sqlite
 def test_cada_ruta_de_base_de_datos_tiene_su_pool(tmp_path, monkeypatch):
     a = db.get_connection(); a.close()
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "otra.db")

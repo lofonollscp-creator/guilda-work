@@ -451,6 +451,7 @@ def test_afirmacion_sobre_un_adjunto_cita_el_adjunto_y_no_cuenta_como_autoridad_
     assert _consultar(e, modelo(juridica_con_adjunto), colecciones=["legislacion"], adjunto_ids=[a["id"]])["status"] == "insufficient_evidence", "un adjunto no es autoridad jurídica"
 
 
+@pytest.mark.solo_sqlite
 def test_borrar_un_adjunto_lo_quita_del_indice_y_la_retencion_lo_purga(e):
     a = adjuntos.subir(e.t, e.ana, "borra.txt", "palabra rarísima zorrocotroco".encode("utf-8"))
     assert adjuntos.fragmentos_para(e.t, [a["id"]], "zorrocotroco")

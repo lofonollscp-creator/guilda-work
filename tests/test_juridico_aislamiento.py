@@ -43,6 +43,7 @@ def test_todas_las_tablas_privadas_llevan_tenant_id_no_nulo():
         conn.close()
 
 
+@pytest.mark.solo_sqlite
 def test_ids_adivinados_entre_despachos_no_dan_acceso_a_nada_privado(dos, monkeypatch):
     monkeypatch.setattr(ia_asistente, "completar_texto", lambda u, s, c: json.dumps(ok_articulo1(c)))
     c1 = nucleo.crear_cliente(dos.t1, "Cliente de uno", nif="B11111111")
@@ -86,6 +87,7 @@ def test_los_informes_se_filtran_por_cliente_dentro_del_despacho(dos, monkeypatc
     assert [i["id"] for i in informes.listar(t, dos.u1, cliente_id=c_b)] == [inf["id"]] and informes.listar(t, dos.u1, cliente_id=c_a) == []
 
 
+@pytest.mark.solo_sqlite
 def test_borrar_un_despacho_borra_lo_privado_y_deja_el_corpus(dos, monkeypatch):
     monkeypatch.setattr(ia_asistente, "completar_texto", lambda u, s, c: json.dumps(ok_articulo1(c)))
     conv = asistente.crear_conversacion(dos.t1, dos.u1)
@@ -109,6 +111,7 @@ def test_borrar_un_despacho_borra_lo_privado_y_deja_el_corpus(dos, monkeypatch):
     assert asistente.obtener_conversacion(dos.t2, dos.u2, otro) is not None
 
 
+@pytest.mark.solo_sqlite
 def test_el_corpus_compartido_nunca_recibe_texto_de_un_despacho(dos):
     adjuntos.subir(dos.t1, dos.u1, "a.txt", "palabra única privadísima pimpampum".encode())
     conn = db.get_connection()

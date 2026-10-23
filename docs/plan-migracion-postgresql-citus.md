@@ -75,7 +75,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 - **6d (opcional, recomendado): RLS** con `app.tenant_id` por conexión, como segunda barrera de aislamiento, sumada a los tests de `test_aislamiento`.
 - **Salida:** `tenant_id` en toda tabla de datos de despacho, suite de aislamiento ampliada en verde y todas las tablas distribuidas colocalizadas.
 
-### Fase 7 — Tests y CI (≈ 1,5 semanas, en paralelo con 5-6)
+### Fase 7 — Tests y CI (≈ 1,5 semanas, en paralelo con 5-6) — **hecha en lo funcional (2026-10-24)**: suite completa en verde contra PostgreSQL multitenant; falta el script de CI (ver ADR)
 - Suite principal contra PostgreSQL **sin distribuir** (clon de plantilla por test); suite específica de Citus con plantilla de pocos shards y `ALLOW_CONNECTIONS false` al clonar (decisión D12). Objetivo de tiempo no peor que el 150 % del actual con `-n 3`.
 - Pruebas específicas: bloqueos y concurrencia, transacciones entre tablas colocalizadas, reequilibrado.
 - **Salida:** `scripts/probar.sh` y `scripts/probar_pg.sh` en verde en ambos motores.

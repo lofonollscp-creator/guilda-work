@@ -1,3 +1,4 @@
+import pytest
 """Fase 1 del plan (app/tareas_trabajo.py): versión con 409, motivo de bloqueo, varios clientes por tarea con un solo principal, vencida derivada y tareas de un cliente."""
 from datetime import date, timedelta
 
@@ -204,6 +205,7 @@ def test_ficha_del_cliente_muestra_los_contadores(cliente):
     assert [x["vencida"] for x in ctx["tareas"]] == [True, False]
 
 
+@pytest.mark.solo_sqlite
 def test_migracion_idempotente_y_rellena_lo_existente(cliente):
     t, h, uid = _despacho(cliente, "m1@ejemplo.com", "Despacho migración")
     c1 = db.crear_cliente_fiscal(t, "Lambda SL")
@@ -221,6 +223,7 @@ def test_migracion_idempotente_y_rellena_lo_existente(cliente):
     assert [f["principal"] for f in filas] == [1]
 
 
+@pytest.mark.solo_sqlite          # en PostgreSQL borrar un despacho borra también lo personal creado en él (decisión 6c)
 def test_borrar_un_cliente_o_un_despacho_no_se_atasca_con_tareas_vinculadas(cliente):
     t, h, uid = _despacho(cliente, "bd1@ejemplo.com", "Despacho borrado")
     c1, c2 = db.crear_cliente_fiscal(t, "Borrable SL"), db.crear_cliente_fiscal(t, "Quedará SL")

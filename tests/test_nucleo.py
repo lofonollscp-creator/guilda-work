@@ -36,6 +36,7 @@ def test_cada_cliente_fiscal_tiene_su_ficha_en_el_nucleo_y_se_mantienen_iguales(
     assert nucleo.obtener_cliente(t, f["cliente_id"])["papelera_en"] is None
 
 
+@pytest.mark.solo_sqlite
 def test_la_migracion_rellena_los_clientes_fiscales_que_ya_existian(usuario_id):
     t, _ = _despacho()
     conn = db.get_connection()

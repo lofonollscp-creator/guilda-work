@@ -41,7 +41,7 @@ def vigente_para(tenant_id: int | None) -> dict | None:
     if not filas:
         return None
     for f in filas:
-        if f["tenant_id"] is None:
+        if not f["tenant_id"]:                                     # sin despacho: NULL en SQLite, 0 «Plataforma» en PostgreSQL
             return f
     for f in filas:
         if tenant_id is not None and f["tenant_id"] == tenant_id:
@@ -62,7 +62,7 @@ def activar(tenant_id: int | None, mensaje: str = "", hasta: str | None = None, 
     try:
         if tenant_id is not None and not conn.execute("SELECT 1 FROM tenants WHERE id = ?", (tenant_id,)).fetchone():
             raise ValueError("El despacho no existe.")
-        if conn.execute("SELECT 1 FROM mantenimiento WHERE activo = 1 AND tenant_id IS NOT DISTINCT FROM ?", (tenant_id,)).fetchone():
+        if conn.execute("SELECT 1 FROM mantenimiento WHERE activo = 1 AND COALESCE(tenant_id, 0) = COALESCE(CAST(? AS BIGINT), 0)", (tenant_id,)).fetchone():
             raise ValueError("Ya hay un mantenimiento activo para ese ámbito.")
         cur = conn.execute(
             "INSERT INTO mantenimiento (tenant_id, mensaje, hasta, activo, creado_en, creado_por) VALUES (?, ?, ?, 1, ?, ?)",

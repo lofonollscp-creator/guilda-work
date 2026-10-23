@@ -15,6 +15,7 @@ tests/test_tenant_modelo.py obliga a decidir la clase de cada tabla nueva.
 """
 from __future__ import annotations
 
+import heapq
 import json
 from pathlib import Path
 
@@ -295,13 +296,39 @@ def informe(conn) -> dict:
     return out
 
 
+def _orden_de_borrado(conn, tablas: list[str]) -> list[str]:
+    """Las tablas en el orden en que se pueden vaciar: la que tiene una clave foránea hacia otra se vacía antes que ella (según las claves foráneas reales de la base de datos)."""
+    conjunto = set(tablas)
+    padres = {t: set() for t in tablas}
+    for hija, padre in conn.execute(
+            "SELECT c.conrelid::regclass::text, c.confrelid::regclass::text FROM pg_constraint c WHERE c.contype = 'f' AND c.conrelid <> c.confrelid").fetchall():
+        if hija in conjunto and padre in conjunto:
+            padres[hija].add(padre)
+    orden = []
+    # Kahn sobre el grafo «hija -> padre»; entre las que están listas se respeta el orden inverso del modelo (las que llenan los disparadores, como api_cambios, quedan al final)
+    posicion = {t: i for i, t in enumerate(reversed(tablas))}
+    referencias = {t: sum(1 for ps in padres.values() if t in ps) for t in tablas}
+    listas = [(posicion[t], t) for t in tablas if referencias[t] == 0]
+    heapq.heapify(listas)
+    while listas:
+        _, t = heapq.heappop(listas)
+        orden.append(t)
+        for p in padres[t]:
+            referencias[p] -= 1
+            if referencias[p] == 0:
+                heapq.heappush(listas, (posicion[p], p))
+    if len(orden) < len(tablas):                                                                    # ciclos entre tablas: el resto, en el orden inverso del modelo
+        orden += [t for t in reversed(tablas) if t not in orden]
+    return orden
+
+
 def borrar_filas_de_tenant(conn, tenant_id: int, excepto: tuple = ("auditoria_eventos",)) -> dict[str, int]:
     """PostgreSQL con despachos: borra TODAS las filas del despacho de todas las tablas distribuidas, hijas antes que padres. Citus no deja cambiar el `tenant_id` de una fila, así que
     lo creado en un despacho (también lo personal: tareas, notas, correo) no puede quedarse «sin despacho» como en SQLite: se va con él. La auditoría se purga aparte
     (`auditoria.purgar_tenant`, la única puerta). Se llama dentro de la transacción de `borrar_tenant`."""
     clases = cargar_modelo()
     borradas = {}
-    for t in reversed(orden_de_relleno(clases)):
+    for t in _orden_de_borrado(conn, orden_de_relleno(clases)):
         if t in excepto:
             continue
         n = conn.execute(f'DELETE FROM "{t}" WHERE tenant_id = ?', (tenant_id,)).rowcount

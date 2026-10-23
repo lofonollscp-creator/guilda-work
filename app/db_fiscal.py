@@ -1138,7 +1138,7 @@ def listar_mensajes_vencimiento(vencimiento_id: int) -> list[sqlite3.Row]:
         return conn.execute(
             "SELECT m.*, u.email AS usuario_email FROM vencimientos_fiscales_mensajes m "
             "LEFT JOIN usuarios u ON u.id = m.usuario_id "
-            "WHERE m.vencimiento_id = ? ORDER BY m.creado_en",
+            "WHERE m.vencimiento_id = ? ORDER BY m.creado_en, m.id",
             (vencimiento_id,),
         ).fetchall()
     finally:

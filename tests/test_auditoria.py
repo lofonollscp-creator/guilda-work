@@ -2,6 +2,7 @@
 import sqlite3
 
 import pytest
+from app.bd.errores import ErrorBD
 
 from app import auditoria as au, db
 
@@ -26,9 +27,9 @@ def test_no_se_puede_modificar_ni_borrar(usuario_id):
     eid = au.registrar(t, None, "x", "y", 1)
     conn = db.get_connection()
     try:
-        with pytest.raises(sqlite3.DatabaseError, match="solo de anexado"):
+        with pytest.raises(ErrorBD, match="solo de anexado"):
             conn.execute("UPDATE auditoria_eventos SET accion = 'otra' WHERE id = ?", (eid,))
-        with pytest.raises(sqlite3.DatabaseError, match="solo de anexado"):
+        with pytest.raises(ErrorBD, match="solo de anexado"):
             conn.execute("DELETE FROM auditoria_eventos WHERE id = ?", (eid,))
         conn.rollback()
         assert conn.execute("SELECT accion FROM auditoria_eventos WHERE id = ?", (eid,)).fetchone()["accion"] == "x"
@@ -63,7 +64,7 @@ def test_borrar_el_despacho_borra_su_rastro_y_el_permiso_no_se_queda_abierto(usu
     conn = db.get_connection()
     try:
         assert conn.execute("SELECT valor FROM auditoria_control WHERE clave = 'permitir_borrado'").fetchone()["valor"] == "0"
-        with pytest.raises(sqlite3.DatabaseError):
+        with pytest.raises(ErrorBD):
             conn.execute("DELETE FROM auditoria_eventos")
     finally:
         conn.close()
