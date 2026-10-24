@@ -38,4 +38,7 @@ def crear_si_falta(conn, modo: str = "simple") -> bool:
         + f"\nINSERT INTO bd_esquema_version VALUES ({VERSION_BASE}, to_char(localtimestamp, 'YYYY-MM-DD\"T\"HH24:MI:SS'), 'esquema base generado desde SQLite ({modo})');",
         por_sentencias=(modo == "citus"),
     )
+    from . import migraciones
+    if migraciones.pendientes(conn):                                  # una base nueva nace al día: lo posterior al esquema base (restricciones de exclusión, etc.) se aplica ya
+        migraciones.aplicar(conn)
     return True

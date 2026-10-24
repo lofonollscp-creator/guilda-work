@@ -164,6 +164,13 @@ ALTER TABLE fichajes ADD CONSTRAINT fk_fichajes_creado_por FOREIGN KEY (creado_p
 ALTER TABLE fichajes ADD CONSTRAINT fk_fichajes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE fichajes ADD CONSTRAINT fk_fichajes_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
 ALTER TABLE fiscal_config ADD CONSTRAINT fk_fiscal_config_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE fiscal_perfiles ADD CONSTRAINT fk_fiscal_perfiles_cliente_fiscal_id FOREIGN KEY (cliente_fiscal_id) REFERENCES clientes_fiscales (id) ON DELETE CASCADE;
+ALTER TABLE fiscal_perfiles ADD CONSTRAINT fk_fiscal_perfiles_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id);
+ALTER TABLE fiscal_perfiles ADD CONSTRAINT fk_fiscal_perfiles_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
+ALTER TABLE fiscal_relaciones ADD CONSTRAINT fk_fiscal_relaciones_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id);
+ALTER TABLE fiscal_relaciones ADD CONSTRAINT fk_fiscal_relaciones_desde_cliente_id FOREIGN KEY (desde_cliente_id) REFERENCES clientes_fiscales (id) ON DELETE CASCADE;
+ALTER TABLE fiscal_relaciones ADD CONSTRAINT fk_fiscal_relaciones_hasta_cliente_id FOREIGN KEY (hasta_cliente_id) REFERENCES clientes_fiscales (id) ON DELETE CASCADE;
+ALTER TABLE fiscal_relaciones ADD CONSTRAINT fk_fiscal_relaciones_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE ia_adjuntos ADD CONSTRAINT fk_ia_adjuntos_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
 ALTER TABLE ia_consumo ADD CONSTRAINT fk_ia_consumo_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;

@@ -15535,3 +15535,15 @@ msgstr "— Sans client —"
 
 msgid "Despacho"
 msgstr "Cabinet"
+
+msgid "Guilda Fiscal"
+msgstr "Guilda Fiscal"
+
+msgid "Facturas, libros de IVA, cálculo del modelo 303 y fichero para presentar en la AEAT."
+msgstr "Factures, livres de TVA, calcul du modèle 303 et fichier à présenter à l'AEAT."
+
+msgid "Guilda Fiscal Alquileres"
+msgstr "Guilda Fiscal Locations"
+
+msgid "Fiscalidad de alquileres de larga y corta duración, también a través de plataformas."
+msgstr "Fiscalité des locations de longue et courte durée, y compris via des plateformes."

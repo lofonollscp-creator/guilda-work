@@ -178,6 +178,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "correo_adjuntos", "nombre_cifrado", "TEXT")
     db._asegurar_columna(conn, "documentos", "compartido_cliente", "INTEGER NOT NULL DEFAULT 0")    # el despacho lo enseña al cliente (enlace de solo lectura)
     from . import control_expedientes      # noqa: F401  (registra los tipos de expediente del control fiscal en la Gestoría antes de crear sus tablas)
+    from . import fiscal_perfiles          # noqa: F401  (Guilda Fiscal: perfiles fiscales versionados y relaciones gestora↔titular)
     for v in verticales.VERTICALES.values():
         if v.esquema:
             v.esquema(conn)

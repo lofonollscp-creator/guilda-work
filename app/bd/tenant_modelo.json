@@ -927,6 +927,16 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "fiscal_perfiles": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "fiscal_relaciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "ia_adjuntos": {
   "clase": "usuario",
   "motivo": "datos personales: despacho en que se crearon",

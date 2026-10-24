@@ -15459,3 +15459,15 @@ msgstr "— Sense client —"
 
 msgid "Despacho"
 msgstr "Despatx"
+
+msgid "Guilda Fiscal"
+msgstr "Guilda Fiscal"
+
+msgid "Facturas, libros de IVA, cálculo del modelo 303 y fichero para presentar en la AEAT."
+msgstr "Factures, llibres d'IVA, càlcul del model 303 i fitxer per presentar a l'AEAT."
+
+msgid "Guilda Fiscal Alquileres"
+msgstr "Guilda Fiscal Lloguers"
+
+msgid "Fiscalidad de alquileres de larga y corta duración, también a través de plataformas."
+msgstr "Fiscalitat de lloguers de llarga i curta durada, també a través de plataformes."

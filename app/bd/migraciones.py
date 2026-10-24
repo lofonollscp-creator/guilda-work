@@ -52,10 +52,10 @@ def version_actual(conn) -> int | None:
 
 
 def modo_de(conn) -> str:
-    """'citus' si la base tiene la extensión y tablas distribuidas, 'multitenant' si tiene `usuarios_tenants`, 'simple' si no."""
+    """'citus' si la base tiene la extensión y tablas distribuidas, 'multitenant' si tiene las políticas de aislamiento por despacho (RLS), 'simple' si no (`usuarios_tenants` existe también en el esquema simple)."""
     if conn.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'").fetchone() and conn.execute("SELECT 1 FROM pg_dist_partition LIMIT 1").fetchone():
         return "citus"
-    return "multitenant" if conn.execute("SELECT to_regclass('usuarios_tenants') IS NOT NULL").fetchone()[0] else "simple"
+    return "multitenant" if conn.execute("SELECT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'aislamiento')").fetchone()[0] else "simple"
 
 
 def pendientes(conn) -> list[int]:
