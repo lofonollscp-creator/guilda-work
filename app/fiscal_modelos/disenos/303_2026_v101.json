@@ -1,0 +1,4514 @@
+{
+ "esquema": 1,
+ "origen": {
+  "fichero": "DR303e26v101.xlsx",
+  "sha256": "0be8b156da2250c6b11f6253e0165221ed2e549ec4c65a562021bec6b9b8489b",
+  "bytes": 386926
+ },
+ "envoltura": "DP30300",
+ "paginas": [
+  {
+   "hoja": "DP30300",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante.",
+     "validacion": "",
+     "contenido": "\"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Modelo",
+     "validacion": "",
+     "contenido": "\"303\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Discriminante",
+     "validacion": "",
+     "contenido": "\"0\""
+    },
+    {
+     "n": 4,
+     "pos": 7,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Ejercicio de devengo (EEEE)",
+     "validacion": "",
+     "contenido": "Nota 2"
+    },
+    {
+     "n": 5,
+     "pos": 11,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Período. (PP)",
+     "validacion": "",
+     "contenido": "\"01\"...\"12\" o \"1T\"…\"4T\""
+    },
+    {
+     "n": 6,
+     "pos": 13,
+     "lon": 5,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Tipo y cierre",
+     "validacion": "",
+     "contenido": "\"0000>\""
+    },
+    {
+     "n": 7,
+     "pos": 18,
+     "lon": 5,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante",
+     "validacion": "",
+     "contenido": "\"<AUX>\""
+    },
+    {
+     "n": 8,
+     "pos": 23,
+     "lon": 70,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la Administración. Rellenar con blancos",
+     "validacion": "",
+     "contenido": "BLANCOS"
+    },
+    {
+     "n": 9,
+     "pos": 93,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Versión del Programa (Nota 1)",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 10,
+     "pos": 97,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la Administración. Rellenar con blancos",
+     "validacion": "",
+     "contenido": "BLANCOS"
+    },
+    {
+     "n": 11,
+     "pos": 101,
+     "lon": 9,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "NIF Empresa Desarrollo (Nota 1)",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 12,
+     "pos": 110,
+     "lon": 213,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la Administración. Rellenar con blancos",
+     "validacion": "",
+     "contenido": "BLANCOS"
+    },
+    {
+     "n": 13,
+     "pos": 323,
+     "lon": 6,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante",
+     "validacion": "",
+     "contenido": "\"</AUX>\""
+    },
+    {
+     "n": 14,
+     "pos": 329,
+     "lon": "Variable",
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Contenido del fichero. Aquí se debe incluir el contenido de las páginas correspondientes a la declaración según el formato descrito para cada página en este mismo documento",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 15,
+     "pos": "***",
+     "lon": 18,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante. </T+ modelo+discriminante+Ejercicio+periodo+Tipo+>",
+     "validacion": "",
+     "contenido": "\"</T3030AAAAPP0000>\""
+    }
+   ],
+   "total_posiciones": null,
+   "notas": [
+    "Nota 1",
+    "A cumplimentar por las entidades desarrolladoras (EEDD):",
+    "Versión del programa: Debe consignarse el identificador de la versión del SW desarrollado por la ED",
+    "NIF Empresa Desarrollo: Debe consignarse el NIF de la ED del SW",
+    "Nota2:",
+    "EEEE indica las cuatro cifras del ejercicio en curso",
+    "Nota 3",
+    "El número máximo de ocurrencias de la página 2 del modelo es 6 para las actividades del régimen agrícolas, ganaderas y forestales; y 6 para las actividades del régimen simplificado (excepto agrícolas, ganaderas y forestales). Por lo que el número máximo de páginas 2 será 3.",
+    "Nota 4",
+    "Este Diseño de Registro deber ser utilizado para las presentaciones a partir del ejercicio 2026."
+   ]
+  },
+  {
+   "hoja": "DP30301",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Inicio del identificador de modelo y página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"303\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"01000\""
+    },
+    {
+     "n": 4,
+     "pos": 11,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Fin de identificador de modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \">\""
+    },
+    {
+     "n": 5,
+     "pos": 12,
+     "lon": 1,
+     "tipo": "A",
+     "comp": "",
+     "descripcion": "Indicador de página complementaria.",
+     "validacion": "",
+     "contenido": "En blanco"
+    },
+    {
+     "n": 6,
+     "pos": 13,
+     "lon": 1,
+     "tipo": "A",
+     "comp": "",
+     "descripcion": "Tipo Declaración",
+     "validacion": "Obligatorio PI",
+     "contenido": "Nota 1"
+    },
+    {
+     "n": 7,
+     "pos": 14,
+     "lon": 9,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificación (1) - NIF",
+     "validacion": "Obligatorio",
+     "contenido": ""
+    },
+    {
+     "n": 8,
+     "pos": 23,
+     "lon": 80,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificación (1) - Apellidos y nombre o Razón social",
+     "validacion": "Obligatorio",
+     "contenido": ""
+    },
+    {
+     "n": 9,
+     "pos": 103,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Devengo (2) - Ejercicio",
+     "validacion": "Obligatorio",
+     "contenido": ""
+    },
+    {
+     "n": 10,
+     "pos": 107,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Devengo (2) - Período",
+     "validacion": "Obligatorio",
+     "contenido": "\"01\",..., \"12\" o \"1T\" … \"4T\""
+    },
+    {
+     "n": 11,
+     "pos": 109,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Tributación exclusivamente foral. Sujeto pasivo que tributa exclusivamente a una Administración tributaria Foral con IVA a la importación liquidado por la Aduana pendiente de ingreso",
+     "validacion": "",
+     "contenido": "\"1\" SI, \"2\" NO. Nota 5"
+    },
+    {
+     "n": 12,
+     "pos": 110,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo inscrito en el Registro de devolución mensual (art. 30 RIVA)",
+     "validacion": "",
+     "contenido": "\"1\" SI, \"2\" NO. Nota 5"
+    },
+    {
+     "n": 13,
+     "pos": 111,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo que tributa exclusivamente en régimen simplificado",
+     "validacion": "",
+     "contenido": "\"1\" SI (sólo RS), \"2\" NO (RG + RS), \"3\" NO (sólo RG). Nota 5"
+    },
+    {
+     "n": 14,
+     "pos": 112,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Autoliquidación conjunta",
+     "validacion": "",
+     "contenido": "\"1\" SI, \"2\" NO. Nota 5"
+    },
+    {
+     "n": 15,
+     "pos": 113,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo acogido al régimen especial del criterio de Caja (art. 163 undecies LIVA)",
+     "validacion": "",
+     "contenido": "\"1\" SI, \"2\" NO. Nota 5"
+    },
+    {
+     "n": 16,
+     "pos": 114,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo destinatario de operaciones acogidas al régimen especial del criterio de caja",
+     "validacion": "",
+     "contenido": "\"1\" SI, \"2\" NO. Nota 5"
+    },
+    {
+     "n": 17,
+     "pos": 115,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Opción por la aplicación de la prorrata especial (art. 103.Dos.1º LIVA)",
+     "validacion": "",
+     "contenido": "Nota 6. Nota 5"
+    },
+    {
+     "n": 18,
+     "pos": 116,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Revocación de la opción por la aplicación de la prorrata especial",
+     "validacion": "",
+     "contenido": "Nota 6. Nota 5"
+    },
+    {
+     "n": 19,
+     "pos": 117,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo declarado en concurso de acreedores en el presente período de liquidación",
+     "validacion": "",
+     "contenido": "\"1\" SI, \"2\" NO. Nota 5"
+    },
+    {
+     "n": 20,
+     "pos": 118,
+     "lon": 8,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificación (1) - Fecha en que se dictó el auto de declaración de concurso",
+     "validacion": "",
+     "contenido": "DDMMYYYY"
+    },
+    {
+     "n": 21,
+     "pos": 126,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificación (1) - Tipo de autoliquidación si se ha dictado auto de declaración de concurso en este período",
+     "validacion": "",
+     "contenido": "\"1\" SI Preconcursal, \"2\" SI Postconcursal blanco NO. Nota 5"
+    },
+    {
+     "n": 22,
+     "pos": 127,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo acogido voluntariamente al SII",
+     "validacion": "",
+     "contenido": "\"1\" SI, \"2\" NO. Nota 5"
+    },
+    {
+     "n": 23,
+     "pos": 128,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo exonerado de la Declaración-resumen anual del IVA, modelo 390",
+     "validacion": "",
+     "contenido": "Nota 4. Nota 5"
+    },
+    {
+     "n": 24,
+     "pos": 129,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo con volumen anual de operaciones distinto de cero (art. 121 LIVA)",
+     "validacion": "",
+     "contenido": "Nota 3. Nota 5"
+    },
+    {
+     "n": 25,
+     "pos": 130,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación (1) - Sujeto pasivo con derecho a deducir pago a cuenta de entregas de gasolinas, gasóleos y biocarburantes posteriores a la ultimación del régimen de depósito distinto del aduanero",
+     "validacion": "",
+     "contenido": "\"1\" SI, \"2\" NO. Nota 8. Nota 9. Nota 5"
+    },
+    {
+     "n": 26,
+     "pos": 131,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Base imponible [150]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 27,
+     "pos": 148,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Tipo % [151]",
+     "validacion": "",
+     "contenido": "Constante \"00000\""
+    },
+    {
+     "n": 28,
+     "pos": 153,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Cuota [152]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 29,
+     "pos": 170,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Base imponible [165]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales."
+    },
+    {
+     "n": 30,
+     "pos": 187,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Tipo % [166]",
+     "validacion": "",
+     "contenido": "Constante \"00000\""
+    },
+    {
+     "n": 31,
+     "pos": 192,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Cuota [167]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales."
+    },
+    {
+     "n": 32,
+     "pos": 209,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Base imponible [01]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 33,
+     "pos": 226,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Tipo % [02]",
+     "validacion": "",
+     "contenido": "Constante \"00400\". Nota 7"
+    },
+    {
+     "n": 34,
+     "pos": 231,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Cuota [03]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 35,
+     "pos": 248,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Base imponible [153]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 36,
+     "pos": 265,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Tipo % [154]",
+     "validacion": "",
+     "contenido": "Constante \"00000\""
+    },
+    {
+     "n": 37,
+     "pos": 270,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Cuota [155]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 38,
+     "pos": 287,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Base imponible [04]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 39,
+     "pos": 304,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Tipo % [05]",
+     "validacion": "",
+     "contenido": "Constante \"01000\". Nota 7"
+    },
+    {
+     "n": 40,
+     "pos": 309,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Cuota [06]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 41,
+     "pos": 326,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Base imponible [07]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 42,
+     "pos": 343,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Tipo % [08]",
+     "validacion": "",
+     "contenido": "Constante \"02100\". Nota 7"
+    },
+    {
+     "n": 43,
+     "pos": 348,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Régimen general - Cuota [09]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 44,
+     "pos": 365,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Adquisiciones intracomunitarias de bienes y servicios - Base imponible [10]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 45,
+     "pos": 382,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Adquisiciones intracomunitarias de bienes y servicios - Cuota [11]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 46,
+     "pos": 399,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Otras operaciones con inversión del sujeto pasivo (excepto. adq. intracom) - Base imponible [12]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 47,
+     "pos": 416,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Otras operaciones con inversión del sujeto pasivo (excepto. adq. intracom) - Cuota [13]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 48,
+     "pos": 433,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Modificación bases y cuotas- Base imponible [14]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 49,
+     "pos": 450,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Modificación bases y cuotas - Cuota [15]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 50,
+     "pos": 467,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Base imponible [156]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 51,
+     "pos": 484,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Tipo % [157]",
+     "validacion": "",
+     "contenido": "Constante \"00175\". Nota 7"
+    },
+    {
+     "n": 52,
+     "pos": 489,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Cuota [158]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 53,
+     "pos": 506,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Base imponible [168]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales."
+    },
+    {
+     "n": 54,
+     "pos": 523,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Tipo % [169]",
+     "validacion": "",
+     "contenido": "\"00050\". Nota 7."
+    },
+    {
+     "n": 55,
+     "pos": 528,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Cuota [170]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales."
+    },
+    {
+     "n": 56,
+     "pos": 545,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Base imponible [16]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 57,
+     "pos": 562,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Tipo % [17]",
+     "validacion": "",
+     "contenido": "Constante \"00000\""
+    },
+    {
+     "n": 58,
+     "pos": 567,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Cuota [18]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 59,
+     "pos": 584,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Base imponible [19]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 60,
+     "pos": 601,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Tipo % [20]",
+     "validacion": "",
+     "contenido": "Constante \"00140\". Nota 7"
+    },
+    {
+     "n": 61,
+     "pos": 606,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Cuota [21]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 62,
+     "pos": 623,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Base imponible [22]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 63,
+     "pos": 640,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Tipo % [23]",
+     "validacion": "",
+     "contenido": "Constante \"00520\". Nota 7"
+    },
+    {
+     "n": 64,
+     "pos": 645,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Recargo equivalencia - Cuota [24]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 65,
+     "pos": 662,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Modificaciones bases y cuotas del recargo de equivalencia - Base imponible [25]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 66,
+     "pos": 679,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Modificaciones bases y cuotas del recargo de equivalencia - Cuota [26]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 67,
+     "pos": 696,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Devengado - Total cuota devengada ( [152] + [167] + [03] + [155] + [06] + [09] + [11] + [13] + [15] + [158] + [170] + [18] + [21] + [24] + [26] ) [27]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 68,
+     "pos": 713,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Por cuotas soportadas en operaciones interiores corrientes - Base [28]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 69,
+     "pos": 730,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Por cuotas soportadas en operaciones interiores corrientes - Cuota [29]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 70,
+     "pos": 747,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Por cuotas soportadas en operaciones interiores con bienes de inversión - Base [30]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 71,
+     "pos": 764,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Por cuotas soportadas en operaciones interiores con bienes de inversión - Cuota [31]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 72,
+     "pos": 781,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Por cuotas soportadas en las importaciones de bienes corrientes - Base [32]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 73,
+     "pos": 798,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Por cuotas soportadas en las importaciones de bienes corrientes - Cuota [33]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 74,
+     "pos": 815,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Por cuotas soportadas en las importaciones de bienes de inversión - Base [34]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 75,
+     "pos": 832,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Por cuotas soportadas en las importaciones de bienes de inversión - Cuota [35]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 76,
+     "pos": 849,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - En adquisiciones intracomunitarias de bienes y servicios corrientes - Base [36]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 77,
+     "pos": 866,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - En adquisiciones intracomunitarias de bienes y servicios corrientes - Cuota [37]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 78,
+     "pos": 883,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - En adquisiciones intracomunitarias de bienes de inversión - Base [38]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 79,
+     "pos": 900,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - En adquisiciones intracomunitarias de bienes de inversión - Cuota [39]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 80,
+     "pos": 917,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Rectificación de deducciones - Base [40]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 81,
+     "pos": 934,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Rectificación de deducciones - Cuota [41]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 82,
+     "pos": 951,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Compensaciones Régimen Especial A.G. y P. - Cuota [42]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 83,
+     "pos": 968,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Regularización inversiones - Cuota [43]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 84,
+     "pos": 985,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Regularización por aplicación del porcentaje definitivo de prorrata - Cuota [44]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 85,
+     "pos": 1002,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Total a deducir ( [29] + [31] + [33] + [35] + [37] + [39] + [41] + [42] + [43] + [44] ) - Cuota [45]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 86,
+     "pos": 1019,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - Regimen General - IVA Deducible - Resultado régimen general ( [27] - [45] ) - Cuota [46]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 87,
+     "pos": 1036,
+     "lon": 521,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 88,
+     "pos": 1557,
+     "lon": 13,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT - Sello electrónico reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 89,
+     "pos": 1570,
+     "lon": 12,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Indicador de fin de registro",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"</T30301000>\""
+    }
+   ],
+   "total_posiciones": 1581,
+   "notas": [
+    "Nota 1:",
+    "PI: El tipo de declaración puede ser: C (solicitud de compensación) D (devolución) G (cuenta corriente tributaria-ingreso) I (ingreso) N (sin actividad/resultado cero) V (cuenta corriente tributaria -devolución)",
+    "U (domiciliacion del ingreso en CCC) X (Devolución por transferencia al extranjero)",
+    "En caso de autoliquidaciones rectificativas con resultado negativo (casilla 71) y con importe de rectificación mayor que cero (casilla 111), el tipo de declaración debe corresponder al importe de la casilla 71 sin la parte correspondiente a la casilla 111.",
+    "Nota 2:",
+    "1. Los campos deben ser A (Alfabético) An (Alfanumérico), Num (Numérico sin signo) o N (Numérico con signo).",
+    "2. Los campos alfanuméricos (An) sólo admiten letras, números y blancos. Deberán estar alineados a la izquierda, rellenando con blancos por la derecha.",
+    "3. Los campos numéricos (Num) sólo admiten números. Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izquierda.",
+    "4. Los campos numéricos con signo (N) admiten números más el carácter N . Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izqda.",
+    "5. Los datos numéricos negativos llevarán una N en la primera posición del campo.",
+    "Nota 3:",
+    "Valor | Descripción",
+    "0 | Para todos los periodos distintos del último (12 y 4T), y en el último periodo (12 y 4T) para aquellos que No estén exonerados",
+    "1 | SI",
+    "2 | NO",
+    "Nota 4:",
+    "Valor | Descripción",
+    "0 | Para todos los periodos distintos del último (12 y 4T)",
+    "1 | SI",
+    "2 | NO",
+    "Nota 5 - Tributación exclusivamente a una Administración Foral",
+    "Todos los campos referenciados con la Nota 5, en el caso de de tributación exclusivamente a una Administración Foral, se cumplimentarán con el valor \"2\" NO",
+    "Salvo los siguientes campos, que en este caso, tomarán los valores que se indican:",
+    "- | Sujeto pasivo que tributa exclusivamente a una Administración tributaria Foral con IVA a la importación liquidado por la Aduana pendiente de ingreso >> \"1\" SI",
+    "- | Identificación (1) - Tributa exclusivamente en Régimen Simplificado (RS) >> \"3\" NO (sólo RG).",
+    "- | Identificación (1) - Auto de declaración de concurso dictado en el período >> blanco NO",
+    "- | Identificación (1) - Opción por la aplicación de la prorrata especial (art. 103.Dos.1º LIVA) >> \"2\" blanco",
+    "- | Identificación (1) - Revocación de la opción por la aplicación de la prorrata especial >> \"2\" blanco",
+    "Nota 6:",
+    "Valor | Descripción",
+    "1 | SI para el último periodo (12 y 4T)",
+    "2 | Blanco para periodos distintos del último (12 y 4T), y NO para el último periodo (12 y 4T)",
+    "Nota 7 - Tributación exclusivamente a una Administración Foral",
+    "Todos los campos referenciados con la Nota 7, en el caso de de tributación exclusivamente a una Administración Foral, se podrán cumplimentarán con el valor \"00000\"",
+    "Nota 8:",
+    "Valor | Descripción",
+    "0 | Para los periodos 1T, 2T, 3T, 4T y 01",
+    "1 | SI",
+    "2 | NO",
+    "Nota 9:",
+    "Sólo para periodo 02 y siguientes."
+   ]
+  },
+  {
+   "hoja": "DP30302",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Inicio del identificador de modelo y página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"303\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"02000\""
+    },
+    {
+     "n": 4,
+     "pos": 11,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Fin de identificador de modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \">\""
+    },
+    {
+     "n": 5,
+     "pos": 12,
+     "lon": 1,
+     "tipo": "A",
+     "comp": "C",
+     "descripcion": "Indicador de página complementaria. Blanco (No complementaria) o \"C\" (Complementaria)",
+     "validacion": "",
+     "contenido": "Nota 1"
+    },
+    {
+     "n": 6,
+     "pos": 13,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - Código",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 7,
+     "pos": 15,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - Volumen de ingresos",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 8,
+     "pos": 32,
+     "lon": 6,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - Índice de cuota",
+     "validacion": "",
+     "contenido": "1 entero y 5 decimales"
+    },
+    {
+     "n": 9,
+     "pos": 38,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - Cuota devengada",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 10,
+     "pos": 55,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - 1T/2T/3T - Porcentaje ingreso a cuenta",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 11,
+     "pos": 60,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - 1T/2T/3T - Ingreso a cuenta [A]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 12,
+     "pos": 77,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - 4T - Cuota soportada operaciones corrientes",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 13,
+     "pos": 94,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - 4T - Cuota anual derivada del regimen simplificado [B]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 14,
+     "pos": 111,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - Código",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 15,
+     "pos": 113,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - Volumen de ingresos",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 16,
+     "pos": 130,
+     "lon": 6,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - Índice de cuota",
+     "validacion": "",
+     "contenido": "1 entero y 5 decimales"
+    },
+    {
+     "n": 17,
+     "pos": 136,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - Cuota devengada",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 18,
+     "pos": 153,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - 1T/2T/3T - Porcentaje ingreso a cuenta",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 19,
+     "pos": 158,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - 1T/2T/3T - Ingreso a cuenta [A]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 20,
+     "pos": 175,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - 4T - Cuota soportada operaciones corrientes",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 21,
+     "pos": 192,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - 4T - Cuota anual derivada del regimen simplificado [B]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 22,
+     "pos": 209,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Epigrafe IAE",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 23,
+     "pos": 213,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Epigrafe IAE - Indicador auxiliar de actividad en el caso de epígrafes 691.9 y 722",
+     "validacion": "",
+     "contenido": "blanco, \"1\" o \"2\" (Nota 3)"
+    },
+    {
+     "n": 24,
+     "pos": 214,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 1 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 25,
+     "pos": 224,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 1 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 26,
+     "pos": 241,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 2 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 27,
+     "pos": 251,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 2 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 28,
+     "pos": 268,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 3 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 29,
+     "pos": 278,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 3 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 30,
+     "pos": 295,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 4 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 31,
+     "pos": 305,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 4 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 32,
+     "pos": 322,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 5 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 33,
+     "pos": 332,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 5 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 34,
+     "pos": 349,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 6 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 35,
+     "pos": 359,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 6 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 36,
+     "pos": 376,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 7 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 37,
+     "pos": 386,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo 7 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 38,
+     "pos": 403,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Cuota devengada operaciones corrientes [C]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 39,
+     "pos": 420,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Reducciones [D]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 40,
+     "pos": 437,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 1T/2T/3T - Indice corrector activ. de temporada [Z]",
+     "validacion": "",
+     "contenido": "1 entero y 2 decimales"
+    },
+    {
+     "n": 41,
+     "pos": 440,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 1T/2T/3T - Porcentaje ingreso a cuenta [E]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 42,
+     "pos": 445,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 1T/2T/3T - Ingreso a cuenta ( ([C] - [D] ) x [E]) [F]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 43,
+     "pos": 462,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 4T - Cuotas soportadas operaciones corrientes [G]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 44,
+     "pos": 479,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 4T - Índice corrector de actividades de temporada [H]",
+     "validacion": "",
+     "contenido": "1 entero y 2 decimales"
+    },
+    {
+     "n": 45,
+     "pos": 482,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 4T - RESULTADO (( [C] - [D] - [G] ) x [H]) [I]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 46,
+     "pos": 499,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 4T - Porcentaje cuota mínima [J]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 47,
+     "pos": 504,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 4T - Devolución cuotas soportadas otros países [K]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 48,
+     "pos": 521,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 4T - Cuota mínima [L]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 49,
+     "pos": 538,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - 4T - Cuota anual derivada RS [M]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 50,
+     "pos": 555,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Epigrafe IAE",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 51,
+     "pos": 559,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Epigrafe IAE - Indicador auxiliar de actividad en el caso de epígrafes 691.9 y 722",
+     "validacion": "",
+     "contenido": "blanco, \"1\" o \"2\" (Nota 3)"
+    },
+    {
+     "n": 52,
+     "pos": 560,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 1 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 53,
+     "pos": 570,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 1 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 54,
+     "pos": 587,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 2 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 55,
+     "pos": 597,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 2 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 56,
+     "pos": 614,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 3 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 57,
+     "pos": 624,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 3 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 58,
+     "pos": 641,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 4 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 59,
+     "pos": 651,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 4 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 60,
+     "pos": 668,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 5 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 61,
+     "pos": 678,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 5 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 62,
+     "pos": 695,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 6 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 63,
+     "pos": 705,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 6 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 64,
+     "pos": 722,
+     "lon": 10,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 7 - Nº Unidades",
+     "validacion": "",
+     "contenido": "8 enteros y 2 decimales"
+    },
+    {
+     "n": 65,
+     "pos": 732,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo 7 - Importe",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 66,
+     "pos": 749,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Cuota devengada operaciones corrientes [C]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 67,
+     "pos": 766,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Reducciones [D]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 68,
+     "pos": 783,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 1T/2T/3T - Indice corrector activ. de temporada [Z]",
+     "validacion": "",
+     "contenido": "1 entero y 2 decimales"
+    },
+    {
+     "n": 69,
+     "pos": 786,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 1T/2T/3T - Porcentaje ingreso a cuenta [E]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 70,
+     "pos": 791,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 1T/2T/3T - Ingreso a cuenta ( ([C] - [D] ) x [E]) [F]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 71,
+     "pos": 808,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 4T - Cuotas soportadas operaciones corrientes [G]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 72,
+     "pos": 825,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 4T - Índice corrector de actividades de temporada [H]",
+     "validacion": "",
+     "contenido": "1 entero y 2 decimales"
+    },
+    {
+     "n": 73,
+     "pos": 828,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 4T - RESULTADO (( [C] - [D] - [G] ) x [H]) [I]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 74,
+     "pos": 845,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 4T - Porcentaje cuota mínima [J]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 75,
+     "pos": 850,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 4T - Devolución cuotas soportadas otros países [K]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 76,
+     "pos": 867,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 4T - Cuota mínima [L]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 77,
+     "pos": 884,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - 4T - Cuota anual derivada RS [M]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 78,
+     "pos": 901,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS - 1T/2T/3T - Suma de ingresos a cuenta del conjunto de actividades (A1 + A2 + A3 + … + F1 + F2 + F3 + ...) [47]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 79,
+     "pos": 918,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - (A+B) Actividades en RS - 4T - Suma de cuotas derivadas RS del conjunto de actividades ( B1 + B2 + ... + M1 + M2 + ... ) [48]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 80,
+     "pos": 935,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - (A+B) Actividades en RS - 4T - Suma de ingresos a cuenta realizados en el ejercicio [49]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 81,
+     "pos": 952,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - (A+B) Actividades en RS - 4T - Resultado ( [48] - [49] ) [50]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 82,
+     "pos": 969,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - Cuotas devengadas - Adquisiciones intracomunitarias de bienes [51]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 83,
+     "pos": 986,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - Cuotas devengadas - Entregas de activos fijos [52]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 84,
+     "pos": 1003,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - Cuotas devengadas - IVA devengado por inversión del sujeto pasivo [53]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 85,
+     "pos": 1020,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - Cuotas devengadas - Total cuota resultante Si 1T, 2T, 3T: ( [47] + [51] + [52] + [53] ) [54] Si 4T: ( [50] + [51] + [52] + [53] ) [54]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 86,
+     "pos": 1037,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - IVA deducible - Adquisición o importación de activos fijos [55]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 87,
+     "pos": 1054,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - IVA deducible - Regularización bienes de inversión [56]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 88,
+     "pos": 1071,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - IVA deducible - Total IVA deducible ( [55] + [56] ) [57]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 89,
+     "pos": 1088,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Liquidación (3) - RS - Resultado RS ( [54] - [57] ) [58]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 90,
+     "pos": 1105,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - ACTIVIDAD DE TEMPORADA: nº de días en los que se ejerció la actividad en el año anterior - 1T/2T/3T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 91,
+     "pos": 1108,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Número de días de ejercicio de la actividad en el trimestre - 1T/2T/3T",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 92,
+     "pos": 1110,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 93,
+     "pos": 1113,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Actividad de temporada. Número de días de ejercicio - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 94,
+     "pos": 1116,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 95,
+     "pos": 1120,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Cuotas soportadas - 4T",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 96,
+     "pos": 1137,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Compensaciones satisfechas a sujetos pasivos en R.E.A.G.P. - 4T",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 97,
+     "pos": 1154,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Personal Empleado - Personal Asalariado - Horas anuales - Mayores de 19 años",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 98,
+     "pos": 1161,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Personal Empleado - Personal Asalariado - Horas anuales - Menores de 19 años y trabajadores con contratos de aprendizaje o formación que no sean personas con discapacidad",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 99,
+     "pos": 1168,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Personal Empleado - Personal Asalariado - Horas anuales - Personas con discapacidad con grado de discapacidad igual o superior al 33 por 100",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 100,
+     "pos": 1175,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Personal Empleado - Personal Asalariado - Horas anuales - Horas anuales fijadas en el convenio colectivo vigente",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 101,
+     "pos": 1179,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Personal Empleado - Personal No Asalariado - Horas anuales: titular",
+     "validacion": "",
+     "contenido": "4 enteros. Nota 6"
+    },
+    {
+     "n": 102,
+     "pos": 1183,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Personal Empleado - Personal No Asalariado - El titular es una persona con discapacidad en grado igual o superior al 33 por 100",
+     "validacion": "",
+     "contenido": "X o blanco"
+    },
+    {
+     "n": 103,
+     "pos": 1184,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Personal Empleado - Personal No Asalariado - Horas anuales: cónyuge",
+     "validacion": "",
+     "contenido": "4 enteros. Nota 6"
+    },
+    {
+     "n": 104,
+     "pos": 1188,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Personal Empleado - Personal No Asalariado - Horas anuales: hijos menores de 18 años",
+     "validacion": "",
+     "contenido": "7 enteros. Nota 6"
+    },
+    {
+     "n": 105,
+     "pos": 1195,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Capacidad",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 106,
+     "pos": 1197,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Mesas",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 107,
+     "pos": 1201,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 108,
+     "pos": 1204,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Capacidad",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 109,
+     "pos": 1206,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Mesas",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 110,
+     "pos": 1210,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 111,
+     "pos": 1213,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Capacidad",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 112,
+     "pos": 1215,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Mesas",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 113,
+     "pos": 1219,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 114,
+     "pos": 1222,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Capacidad",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 115,
+     "pos": 1224,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Mesas",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 116,
+     "pos": 1228,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Mesas - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 117,
+     "pos": 1231,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - ACTIVIDAD DE TEMPORADA: nº de días en los que se ejerció la actividad en el año anterior - 1T/2T/3T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 118,
+     "pos": 1234,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Número de días de ejercicio de la actividad en el trimestre - 1T/2T/3T",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 119,
+     "pos": 1236,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 120,
+     "pos": 1239,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Actividad de temporada. Número de días de ejercicio - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 121,
+     "pos": 1242,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 122,
+     "pos": 1246,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Cuotas soportadas - 4T",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 123,
+     "pos": 1263,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Compensaciones satisfechas a sujetos pasivos en R.E.A.G.P. - 4T",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 124,
+     "pos": 1280,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Personal Empleado - Personal Asalariado - Horas anuales - Mayores de 19 años",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 125,
+     "pos": 1287,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Personal Empleado - Personal Asalariado - Horas anuales - Menores de 19 años y trabajadores con contratos de aprendizaje o formación que no sean personas con discapacidad",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 126,
+     "pos": 1294,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Personal Empleado - Personal Asalariado - Horas anuales - Personas con discapacidad con grado de discapacidad igual o superior al 33 por 100",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 127,
+     "pos": 1301,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Personal Empleado - Personal Asalariado - Horas anuales - Horas anuales fijadas en el convenio colectivo vigente",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 128,
+     "pos": 1305,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Personal Empleado - Personal No Asalariado - Horas anuales: titular",
+     "validacion": "",
+     "contenido": "4 enteros. Nota 6"
+    },
+    {
+     "n": 129,
+     "pos": 1309,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Personal Empleado - Personal No Asalariado - El titular es una persona con discapacidad en grado igual o superior al 33 por 100",
+     "validacion": "",
+     "contenido": "X o blanco"
+    },
+    {
+     "n": 130,
+     "pos": 1310,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Personal Empleado - Personal No Asalariado - Horas anuales: cónyuge",
+     "validacion": "",
+     "contenido": "4 enteros. Nota 6"
+    },
+    {
+     "n": 131,
+     "pos": 1314,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Personal Empleado - Personal No Asalariado - Horas anuales: hijos menores de 18 años",
+     "validacion": "",
+     "contenido": "7 enteros. Nota 6"
+    },
+    {
+     "n": 132,
+     "pos": 1321,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Capacidad",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 133,
+     "pos": 1323,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Mesas",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 134,
+     "pos": 1327,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 135,
+     "pos": 1330,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Capacidad",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 136,
+     "pos": 1332,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Mesas",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 137,
+     "pos": 1336,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 138,
+     "pos": 1339,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Capacidad",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 139,
+     "pos": 1341,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Mesas",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 140,
+     "pos": 1345,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 141,
+     "pos": 1348,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Capacidad",
+     "validacion": "",
+     "contenido": "2 enteros"
+    },
+    {
+     "n": 142,
+     "pos": 1350,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Mesas",
+     "validacion": "",
+     "contenido": "4 enteros"
+    },
+    {
+     "n": 143,
+     "pos": 1354,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Mesas - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 144,
+     "pos": 1357,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - Cuotas soportadas - 4T",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 145,
+     "pos": 1374,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 1 - Compensaciones satisfechas a sujetos pasivos en R.E.A.G.P. - 4T",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 146,
+     "pos": 1391,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - Cuotas soportadas - 4T",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 147,
+     "pos": 1408,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (A) Actividades agrícolas, ganaderas y forestales - Actividad 2 - Compensaciones satisfechas a sujetos pasivos en R.E.A.G.P. - 4T",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 148,
+     "pos": 1425,
+     "lon": 110,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 149,
+     "pos": 1535,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Superficie de horno - Superficie - 4T",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 150,
+     "pos": 1542,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Superficie de horno - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 151,
+     "pos": 1545,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Superficie de horno - Superficie - 4T",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 152,
+     "pos": 1552,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Superficie de horno - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 153,
+     "pos": 1555,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Superficie de horno - Superficie - 4T",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 154,
+     "pos": 1562,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Superficie de horno - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 155,
+     "pos": 1565,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Superficie de horno - Superficie - 4T",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 156,
+     "pos": 1572,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 1 - Módulo Superficie de horno - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 157,
+     "pos": 1575,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Superficie de horno - Superficie - 4T",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 158,
+     "pos": 1582,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Superficie de horno - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 159,
+     "pos": 1585,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Superficie de horno - Superficie - 4T",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 160,
+     "pos": 1592,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Superficie de horno - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 161,
+     "pos": 1595,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Superficie de horno - Superficie - 4T",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 162,
+     "pos": 1602,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Superficie de horno - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 163,
+     "pos": 1605,
+     "lon": 7,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Superficie de horno - Superficie - 4T",
+     "validacion": "",
+     "contenido": "7 enteros"
+    },
+    {
+     "n": 164,
+     "pos": 1612,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Liquidación (3) - RS - (B) Actividades en RS (exc. a, g y f) - Actividad 2 - Módulo Superficie de horno - Días - 4T",
+     "validacion": "",
+     "contenido": "3 enteros"
+    },
+    {
+     "n": 165,
+     "pos": 1615,
+     "lon": 274,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 166,
+     "pos": 1889,
+     "lon": 12,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Indicador de fin de registro",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"</T30302000>\""
+    }
+   ],
+   "total_posiciones": 1900,
+   "notas": [
+    "Nota 1:",
+    "El campo indicador de página complementaria se cumplimentará cuando en el fichero van más de una página del mismo tipo.",
+    "La C de la columna Comp indica los campos que pueden tener contenido en las páginas complementarias",
+    "Nota 2:",
+    "1. Los campos deben ser A (Alfabético) An (Alfanumérico), Num (Numérico sin signo) o N (Numérico con signo).",
+    "2. Los campos alfanuméricos (An) sólo admiten letras, números y blancos. Deberán estar alineados a la izquierda, rellenando con blancos por la derecha.",
+    "3. Los campos numéricos (Num) sólo admiten números. Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izquierda.",
+    "4. Los campos numéricos con signo (N) admiten números más el carácter N . Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izqda.",
+    "5. Los datos numéricos negativos llevarán una N en la primera posición del campo.",
+    "Nota 3:",
+    "La cumplimentación de estos campos deberá realizarse de la siguiente forma:",
+    "blanco | Cuando el epígrafe de la actividad correspondiente sea distinto de 691.9 o 722 (o no esté cumplimentada esa actividad).",
+    "Epígrafe I.A.E.: 691.9",
+    "1 | Actividad: Reparación de calzado.",
+    "2 | Actividad: Reparación de otros bienes de consumo n.c.o.p. (excepto reparación de calzado, restauración de obras de arte, muebles, antigüedades e instrumentos musicales).",
+    "Epígrafe I.A.E.: 722",
+    "1 | Actividad: Transporte de mercancías por carretera, excepto residuos.",
+    "2 | Actividad: Transporte de residuos por carretera.",
+    "Nota 4:",
+    "En el caso de un sujeto pasivo de IVA para el que no aplique el régimen simplificado, esta página 2 no debe incluirse en el diseño de registro.",
+    "Nota 6:",
+    "Para determinar el módulo de personal no asalariado:",
+    "En el caso del titular de la actividad, las horas deben consignarse sin la reducción por discapacidad.",
+    "En el caso del cónyuge y el hijo menor, las horas deben consignarse aplicando previamente la reducción del 75% sobre las horas trabajadas.",
+    "Nota 7:",
+    "El orden en el que se deben incluir los módulos debe ser el que se indique en la Orden de módulos correspondiente.",
+    "Nota abreviaturas:",
+    "RS - Régimen Simplificado",
+    "exc. - excepto",
+    "inc. - incluido",
+    "a, g y f - agrícolas, ganaderas y forestales"
+   ]
+  },
+  {
+   "hoja": "DP30303",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Inicio del identificador de modelo y página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"303\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"03000\""
+    },
+    {
+     "n": 4,
+     "pos": 11,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Fin de identificador de modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \">\""
+    },
+    {
+     "n": 5,
+     "pos": 12,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Entregas intracomunitarias de bienes y servicios [59]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 6,
+     "pos": 29,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Exportaciones y operaciones asimiladas [60]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 7,
+     "pos": 46,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Operaciones no sujetas por reglas de localización (excepto las incluidas en la casilla 123) [120]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 8,
+     "pos": 63,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Operaciones sujetas con inversión del sujeto pasivo [122]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 9,
+     "pos": 80,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Operaciones no sujetas por reglas de localización acogidas a los regímenes especiales de ventanilla única [123]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 10,
+     "pos": 97,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Operaciones sujetas y acogidas a los regímenes especiales de ventanilla única [124]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 11,
+     "pos": 114,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Importes de las entregas de bienes y prestaciones de servicios a las que habiéndoles sido aplicado el régimen especial del criterio de caja hubieran resultado devengadas conforme a la regla general de devengo contenida en el art. 75 LIVA - Base Imponible [62]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 12,
+     "pos": 131,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Importes de las entregas de bienes y prestaciones de servicios a las que habiéndoles sido aplicado el régimen especial del criterio de caja hubieran resultado devengadas conforme a la regla general de devengo contenida en el art. 75 LIVA - Cuota [63]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 13,
+     "pos": 148,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Importes de las adquisiciones de bienes y servicios a las que sea de aplicación o afecte el régimen especial del criterio de caja - Base Imponible [74]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 14,
+     "pos": 165,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Información adicional - Importes de las adquisiciones de bienes y servicios a las que sea de aplicación o afecte el régimen especial del criterio de caja - Cuota [75]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 15,
+     "pos": 182,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Resultado - Regularización cuotas art. 80.cinco.5ª LIVA [76]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 16,
+     "pos": 199,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Resultado - Suma de resultados ( [46] + [58] + [76] ) [64]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 17,
+     "pos": 216,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Resultado - % Atribuible a la Administración del Estado [65]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 18,
+     "pos": 221,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Resultado - Atribuible a la Administración del Estado [66]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 19,
+     "pos": 238,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Resultado - IVA a la importación liquidado por la Aduana pendiente de ingreso [77]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 20,
+     "pos": 255,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Resultado - Cuotas a compensar pendientes de periodos anteriores [110]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 21,
+     "pos": 272,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Resultado - Cuotas a compensar de periodos anteriores aplicadas en este periodo [78]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 22,
+     "pos": 289,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Resultado - Cuotas a compensar de periodos previos pendientes para periodos posteriores ([110] - [78]) [87]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 23,
+     "pos": 306,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Resultado - Exclusivamente para sujetos pasivos que tributan conjuntamente a la Administración del Estado y a las Haciendas Forales Resultado de la regularización anual [68]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 24,
+     "pos": 323,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Rectificativa - Exclusivamente para determinados supuestos de autoliquidación rectificativa por discrepancia de criterio administrativo que no deban incluirse en otras casillas. Otros ajustes [108]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 25,
+     "pos": 340,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Resultado - Resultado de la autoliquidación ( [66] + [77] - [78] + [68] + [108] ) [69]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 26,
+     "pos": 357,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Resultado - Resultados a ingresar de anteriores autoliquidaciones o liquidaciones administrativas correspondientes al ejercicio y período objeto de la autoliquidación [70]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 27,
+     "pos": 374,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Resultado - Devoluciones acordadas por la Agencia Tributaria como consecuencia de la tramitación de anteriores autoliquidaciones correspondientes al ejercicio y período objeto de la autoliquidación [109]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 28,
+     "pos": 391,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Resultado - Pago a cuenta de entregas de gasolinas, gasóleos y biocarburantes posteriores a la ultimación del régimen de depósito distinto del aduanero atribuible a la Administración del Estado (Suma de la casilla 36 de todos los modelos 319 correspondientes a entregas incluidas en esta autoliquidación) [112]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales. Nota 2"
+    },
+    {
+     "n": 29,
+     "pos": 408,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Resultado - Resultado ( [69] - [70] + [109] - [112] ) [71]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 30,
+     "pos": 425,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Declaración Sin actividad",
+     "validacion": "",
+     "contenido": "X o blanco"
+    },
+    {
+     "n": 31,
+     "pos": 426,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Rectificativa - Autoliquidación rectificativa",
+     "validacion": "",
+     "contenido": "X o blanco"
+    },
+    {
+     "n": 32,
+     "pos": 427,
+     "lon": 13,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Rectificativa - Número justificante identificativo de la autoliquidación anterior",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 33,
+     "pos": 440,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Rectificativa - Como consecuencia de la presentación de la autoliquidación rectificativa solicito dar de baja/modificar la domiciliación efectuada",
+     "validacion": "",
+     "contenido": "X o blanco"
+    },
+    {
+     "n": 34,
+     "pos": 441,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Rectificativa - Rectificación - Importe [111]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 35,
+     "pos": 458,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Rectificativa - Motivo de la rectificación: Rectificaciones (excepto incluidas en el motivo siguiente)",
+     "validacion": "",
+     "contenido": "X o blanco"
+    },
+    {
+     "n": 36,
+     "pos": 459,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Rectificativa - Motivo de la rectificación: Discrepancia criterio administrativo",
+     "validacion": "",
+     "contenido": "X o blanco"
+    },
+    {
+     "n": 37,
+     "pos": 460,
+     "lon": 546,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 38,
+     "pos": 1006,
+     "lon": 12,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Indicador de fin de registro",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"</T30303000>\""
+    }
+   ],
+   "total_posiciones": 1017,
+   "notas": [
+    "Nota 1:",
+    "1. Los campos deben ser A (Alfabético) An (Alfanumérico), Num (Numérico sin signo) o N (Numérico con signo).",
+    "2. Los campos alfanuméricos (An) sólo admiten letras, números y blancos. Deberán estar alineados a la izquierda, rellenando con blancos por la derecha.",
+    "3. Los campos numéricos (Num) sólo admiten números. Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izquierda.",
+    "4. Los campos numéricos con signo (N) admiten números más el carácter N . Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izqda.",
+    "5. Los datos numéricos negativos llevarán una N en la primera posición del campo.",
+    "6. Para el IBAN español deberá empezar por ES y únicamente se usan las primeras 24 posiciones.",
+    "Nota 2:",
+    "Sólo para periodo 02 y siguientes."
+   ]
+  },
+  {
+   "hoja": "DP30304",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Inicio del identificador de modelo y página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"303\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"04000\""
+    },
+    {
+     "n": 4,
+     "pos": 11,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Fin de identificador de modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \">\""
+    },
+    {
+     "n": 5,
+     "pos": 12,
+     "lon": 1,
+     "tipo": "A",
+     "comp": "",
+     "descripcion": "Indicador de página complementaria.",
+     "validacion": "",
+     "contenido": "En blanco"
+    },
+    {
+     "n": 6,
+     "pos": 13,
+     "lon": 3,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: B - Código de actividad - Principal",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 7,
+     "pos": 16,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: C - Epígrafe IAE - Principal",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 8,
+     "pos": 20,
+     "lon": 3,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: B - Código de actividad - Otras - 1ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 9,
+     "pos": 23,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: C - Epígrafe IAE - Otras - 1ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 10,
+     "pos": 27,
+     "lon": 3,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: B - Código de actividad - Otras - 2ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 11,
+     "pos": 30,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: C - Epígrafe IAE - Otras - 2ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 12,
+     "pos": 34,
+     "lon": 3,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: B - Código de actividad - Otras - 3ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 13,
+     "pos": 37,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: C - Epígrafe IAE - Otras - 3ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 14,
+     "pos": 41,
+     "lon": 3,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: B - Código de actividad - Otras - 4ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 15,
+     "pos": 44,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: C - Epígrafe IAE - Otras - 4ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 16,
+     "pos": 48,
+     "lon": 3,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: B - Código de actividad - Otras - 5ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 17,
+     "pos": 51,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: C - Epígrafe IAE - Otras - 5ª",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 18,
+     "pos": 55,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA: D - Marque si ha efectuado operaciones por las que tenga obligación de presentar la declaración anual de operaciones con terceras personas.",
+     "validacion": "",
+     "contenido": "X o blanco"
+    },
+    {
+     "n": 19,
+     "pos": 56,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Información de la tributación por razón de territorio: Álava [89]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 20,
+     "pos": 61,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Información de la tributación por razón de territorio: Guipuzcoa [90]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 21,
+     "pos": 66,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Información de la tributación por razón de territorio: Vizcaya [91]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 22,
+     "pos": 71,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Información de la tributación por razón de territorio: Navarra [92]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 23,
+     "pos": 76,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Información de la tributación por razón de territorio: Territorio común [107]",
+     "validacion": "",
+     "contenido": "3 enteros y 2 decimales"
+    },
+    {
+     "n": 24,
+     "pos": 81,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones en régimen general [80]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 25,
+     "pos": 98,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones en régimen especial del criterio de caja conforme art. 75 LIVA [81]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 26,
+     "pos": 115,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Entregas intracomunitarias de bienes y servicios [93]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 27,
+     "pos": 132,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Exportaciones y otras operaciones exentas con derecho a deducción [94]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 28,
+     "pos": 149,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones exentas sin derecho a deducción [83]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 29,
+     "pos": 166,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones no sujetas por reglas de localización (excepto las incluidas en la casilla 126) [84]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 30,
+     "pos": 183,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones sujetas con inversión del sujeto pasivo [125]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 31,
+     "pos": 200,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones no sujetas por reglas de localización acogidas a los regímenes especiales de ventanilla única [126]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 32,
+     "pos": 217,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - OSS. Operaciones sujetas y acogidas a los regímenes especiales de ventanilla única [127]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 33,
+     "pos": 234,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones intragrupo valoradas conforme a lo dispuesto en los arts. 78 y 79 LIVA [128]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 34,
+     "pos": 251,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones en régimen simplificado [86]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 35,
+     "pos": 268,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones en régimen especial de la agricultura, ganadería y pesca [95]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 36,
+     "pos": 285,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones realizadas por sujetos pasivos acogidos al régimen especial del recargo de equivalencia [96]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 37,
+     "pos": 302,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones en Régimen especial de bienes usados, objetos de arte, antigüedades y objetos de colección [97]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 38,
+     "pos": 319,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Operaciones en régimen especial de Agencias de Viajes [98]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 39,
+     "pos": 336,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Entregas de bienes inmuebles, operaciones financieras y relativas al oro de inversión no habituales [79]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 40,
+     "pos": 353,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Entregas de bienes de inversión [99]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 41,
+     "pos": 370,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "",
+     "descripcion": "Exclusivamente a cumplimentar en el último periodo por sujetos pasivos exonerados de la Declaración-resumen anual del IVA - Operaciones realizadas en el ejercicio - Total volumen de operaciones ([80]+[81]+[93]+[94]+[83]+[84]+[125]+[126]+[127]+[128]+[86]+[95]+[96]+[97]+[98]-[79]-[99]) [88]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 42,
+     "pos": 387,
+     "lon": 600,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 43,
+     "pos": 987,
+     "lon": 12,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Indicador de fin de registro",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"</T30304000>\""
+    }
+   ],
+   "total_posiciones": 998,
+   "notas": [
+    "Nota 1:",
+    "1. Los campos deben ser A (Alfabético) An (Alfanumérico), Num (Numérico sin signo) o N (Numérico con signo).",
+    "2. Los campos alfanuméricos (An) sólo admiten letras, números y blancos. Deberán estar alineados a la izquierda, rellenando con blancos por la derecha.",
+    "3. Los campos numéricos (Num) sólo admiten números. Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izquierda.",
+    "4. Los campos numéricos con signo (N) admiten números más el carácter N . Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izqda.",
+    "5. Los datos numéricos negativos llevarán una N en la primera posición del campo.",
+    "6. Para el IBAN español deberá empezar por ES y únicamente se usan las primeras 24 posiciones.",
+    "Nota 2:",
+    "En el caso de no tener contenido, esta página 4 no debe incluirse en el diseño de registro."
+   ]
+  },
+  {
+   "hoja": "DP30305",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Inicio del identificador de modelo y página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"303\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"05000\""
+    },
+    {
+     "n": 4,
+     "pos": 11,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Fin de identificador de modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \">\""
+    },
+    {
+     "n": 5,
+     "pos": 12,
+     "lon": 1,
+     "tipo": "A",
+     "comp": "C",
+     "descripcion": "Indicador de página complementaria. Blanco (No complementaria) o \"C\" (Complementaria)",
+     "validacion": "",
+     "contenido": "Nota 1"
+    },
+    {
+     "n": 6,
+     "pos": 13,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 1 - Código CNAE [500]",
+     "validacion": "",
+     "contenido": "CNAE-2025"
+    },
+    {
+     "n": 7,
+     "pos": 17,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 1 - Importe de operaciones [501]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 8,
+     "pos": 34,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 1 - Importe de operaciones con derecho a deducción [502]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 9,
+     "pos": 51,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 1 - Tipo de prorrata [503]",
+     "validacion": "",
+     "contenido": "\"G\", \"E\" o blanco."
+    },
+    {
+     "n": 10,
+     "pos": 52,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Prorratas - 1 - % de prorrata [504]",
+     "validacion": "",
+     "contenido": "3 enteros 2 decimales, menor o igual que 100."
+    },
+    {
+     "n": 11,
+     "pos": 57,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 2 - Código CNAE [505]",
+     "validacion": "",
+     "contenido": "CNAE-2025"
+    },
+    {
+     "n": 12,
+     "pos": 61,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 2 - Importe de operaciones [506]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 13,
+     "pos": 78,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 2 - Importe de operaciones con derecho a deducción [507]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 14,
+     "pos": 95,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 2 - Tipo de prorrata [508]",
+     "validacion": "",
+     "contenido": "\"G\", \"E\" o blanco."
+    },
+    {
+     "n": 15,
+     "pos": 96,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Prorratas - 2 - % de prorrata [509]",
+     "validacion": "",
+     "contenido": "3 enteros 2 decimales, menor o igual que 100."
+    },
+    {
+     "n": 16,
+     "pos": 101,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 3 - Código CNAE [510]",
+     "validacion": "",
+     "contenido": "CNAE-2025"
+    },
+    {
+     "n": 17,
+     "pos": 105,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 3 - Importe de operaciones [511]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 18,
+     "pos": 122,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 3 - Importe de operaciones con derecho a deducción [512]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 19,
+     "pos": 139,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 3 - Tipo de prorrata [513]",
+     "validacion": "",
+     "contenido": "\"G\", \"E\" o blanco."
+    },
+    {
+     "n": 20,
+     "pos": 140,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Prorratas - 3 - % de prorrata [514]",
+     "validacion": "",
+     "contenido": "3 enteros 2 decimales, menor o igual que 100."
+    },
+    {
+     "n": 21,
+     "pos": 145,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 4 - Código CNAE [515]",
+     "validacion": "",
+     "contenido": "CNAE-2025"
+    },
+    {
+     "n": 22,
+     "pos": 149,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 4 - Importe de operaciones [516]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 23,
+     "pos": 166,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 4 - Importe de operaciones con derecho a deducción [517]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 24,
+     "pos": 183,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 4 - Tipo de prorrata [518]",
+     "validacion": "",
+     "contenido": "\"G\", \"E\" o blanco."
+    },
+    {
+     "n": 25,
+     "pos": 184,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Prorratas - 4 - % de prorrata [519]",
+     "validacion": "",
+     "contenido": "3 enteros 2 decimales, menor o igual que 100."
+    },
+    {
+     "n": 26,
+     "pos": 189,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 5 - Código CNAE [520]",
+     "validacion": "",
+     "contenido": "CNAE-2025"
+    },
+    {
+     "n": 27,
+     "pos": 193,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 5 - Importe de operaciones [521]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 28,
+     "pos": 210,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "Prorratas - 5 - Importe de operaciones con derecho a deducción [522]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 29,
+     "pos": 227,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "C",
+     "descripcion": "Prorratas - 5 - Tipo de prorrata [523]",
+     "validacion": "",
+     "contenido": "\"G\", \"E\" o blanco."
+    },
+    {
+     "n": 30,
+     "pos": 228,
+     "lon": 5,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "Prorratas - 5 - % de prorrata [524]",
+     "validacion": "",
+     "contenido": "3 enteros 2 decimales, menor o igual que 100."
+    },
+    {
+     "n": 31,
+     "pos": 233,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Operac. Interiores - Bienes y servicios corrientes - Base imponible [700]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 32,
+     "pos": 250,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Operac. Interiores - Bienes y servicios corrientes - Cuota deducible [701]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 33,
+     "pos": 267,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Operac. Interiores - Bienes inversión - Base imponible [702]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 34,
+     "pos": 284,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Operac. Interiores - Bienes inversión - Cuota deducible [703]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 35,
+     "pos": 301,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Importaciones - Bienes corrientes - Base imponible [704]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 36,
+     "pos": 318,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Importaciones - Bienes corrientes - Cuota deducible [705]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 37,
+     "pos": 335,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Importaciones - Bienes inversión - Base imponible [706]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 38,
+     "pos": 352,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Importaciones - Bienes inversión - Cuota deducible [707]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 39,
+     "pos": 369,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Adquisic. intracomun. - Bienes corrientes y servicios - Base imponible [708]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 40,
+     "pos": 386,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Adquisic. intracomun. - Bienes corrientes y servicios - Cuota deducible [709]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 41,
+     "pos": 403,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Adquisic. intracomun. - Bienes inversión - Base imponible [710]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 42,
+     "pos": 420,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - IVA ded. Adquisic. intracomun. - Bienes inversión - Cuota deducible [711]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 43,
+     "pos": 437,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - Compensac. rég. especial agric./ganad./pesca - Base impon. [712]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 44,
+     "pos": 454,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - Compensac. rég. especial agric./ganad./pesca - Cuota deduc. [713]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 45,
+     "pos": 471,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - Rectificación de deducciones - Base impon. [714]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 46,
+     "pos": 488,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - Rectificación de deducciones - Cuota deduc. [715]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 47,
+     "pos": 505,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - Regularización de bienes de inversión [716]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 48,
+     "pos": 522,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 1 - Suma de deducciones [717]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 49,
+     "pos": 539,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Operac. Interiores - Bienes y servicios corrientes - Base imponible [718]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 50,
+     "pos": 556,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Operac. Interiores - Bienes y servicios corrientes - Cuota deducible [719]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 51,
+     "pos": 573,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Operac. Interiores - Bienes inversión - Base imponible [720]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 52,
+     "pos": 590,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Operac. Interiores - Bienes inversión - Cuota deducible [721]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 53,
+     "pos": 607,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Importaciones - Bienes corrientes - Base imponible [722]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 54,
+     "pos": 624,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Importaciones - Bienes corrientes - Cuota deducible [723]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 55,
+     "pos": 641,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Importaciones - Bienes inversión - Base imponible [724]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 56,
+     "pos": 658,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Importaciones - Bienes inversión - Cuota deducible [725]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 57,
+     "pos": 675,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Adquisic. intracomun. - Bienes corrientes y servicios - Base imponible [726]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 58,
+     "pos": 692,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Adquisic. intracomun. - Bienes corrientes y servicios - Cuota deducible [727]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 59,
+     "pos": 709,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Adquisic. intracomun. - Bienes inversión - Base imponible [728]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 60,
+     "pos": 726,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - IVA ded. Adquisic. intracomun. - Bienes inversión - Cuota deducible [729]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 61,
+     "pos": 743,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - Compensac. rég. especial agric./ganad./pesca - Base impon. [730]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 62,
+     "pos": 760,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - Compensac. rég. especial agric./ganad./pesca - Cuota deduc. [731]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 63,
+     "pos": 777,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - Rectificación de deducciones - Base impon. [732]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 64,
+     "pos": 794,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - Rectificación de deducciones - Cuota deduc. [733]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 65,
+     "pos": 811,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - Regularización de bienes de inversión [734]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 66,
+     "pos": 828,
+     "lon": 17,
+     "tipo": "N",
+     "comp": "C",
+     "descripcion": "13. Reg. Deducc. Diferenc.- 2 - Suma de deducciones [735]",
+     "validacion": "",
+     "contenido": "15 enteros 2 decimales"
+    },
+    {
+     "n": 67,
+     "pos": 845,
+     "lon": 672,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 68,
+     "pos": 1517,
+     "lon": 12,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Indicador de fin de registro",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"</T30305000>\""
+    }
+   ],
+   "total_posiciones": 1528,
+   "notas": [
+    "Nota 1:",
+    "El campo indicador de página complementaria se cumplimentará cuando en el fichero van más de una página del mismo tipo.",
+    "La C de la columna Comp indica los campos que pueden tener contenido en las páginas complementarias",
+    "Nota 2:",
+    "1. Los campos deben ser A (Alfabético) An (Alfanumérico), Num (Numérico sin signo) o N (Numérico con signo).",
+    "2. Los campos alfanuméricos (An) sólo admiten letras, números y blancos. Deberán estar alineados a la izquierda, rellenando con blancos por la derecha.",
+    "3. Los campos numéricos (Num) sólo admiten números. Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izquierda.",
+    "4. Los campos numéricos con signo (N) admiten números más el carácter N . Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izqda.",
+    "5. Los datos numéricos negativos llevarán una N en la primera posición del campo.",
+    "6. Para el IBAN español deberá empezar por ES y únicamente se usan las primeras 24 posiciones.",
+    "Nota 3:",
+    "En el caso de no tener contenido, esta página 5 no debe incluirse en el diseño de registro."
+   ]
+  },
+  {
+   "hoja": "DP303DID",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Inicio del identificador de modelo y página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"303\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 5,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Página.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"DID00\""
+    },
+    {
+     "n": 4,
+     "pos": 11,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Fin de identificador de modelo.",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \">\""
+    },
+    {
+     "n": 5,
+     "pos": 12,
+     "lon": 11,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Devolución. SWIFT-BIC",
+     "validacion": "",
+     "contenido": "Nota 3"
+    },
+    {
+     "n": 6,
+     "pos": 23,
+     "lon": 34,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Domiciliación/Devolución - IBAN",
+     "validacion": "",
+     "contenido": "Nota 3"
+    },
+    {
+     "n": 7,
+     "pos": 57,
+     "lon": 70,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Devolución - Banco/Bank name",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 8,
+     "pos": 127,
+     "lon": 35,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Devolución - Dirección del Banco/ Bank address",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 9,
+     "pos": 162,
+     "lon": 30,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Devolución - Ciudad/City",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 10,
+     "pos": 192,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Devolución - Código País/Country code",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 11,
+     "pos": 194,
+     "lon": 1,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Devolución - Marca SEPA",
+     "validacion": "",
+     "contenido": "\"0\", \"1\", \"2\", \"3\" Nota 2, Nota 3"
+    },
+    {
+     "n": 12,
+     "pos": 195,
+     "lon": 617,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la AEAT",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 13,
+     "pos": 812,
+     "lon": 12,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Indicador de fin de registro",
+     "validacion": "Obligatorio",
+     "contenido": "Constante \"</T303DID00>\""
+    }
+   ],
+   "total_posiciones": 823,
+   "notas": [
+    "Nota 1:",
+    "1. Los campos deben ser A (Alfabético) An (Alfanumérico), Num (Numérico sin signo) o N (Numérico con signo).",
+    "2. Los campos alfanuméricos (An) sólo admiten letras, números y blancos. Deberán estar alineados a la izquierda, rellenando con blancos por la derecha.",
+    "3. Los campos numéricos (Num) sólo admiten números. Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izquierda.",
+    "4. Los campos numéricos con signo (N) admiten números más el carácter N . Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izqda.",
+    "5. Los datos numéricos negativos llevarán una N en la primera posición del campo.",
+    "6. Para el IBAN español deberá empezar por ES y únicamente se usan las primeras 24 posiciones.",
+    "Nota 2: Devolución marca SEPA",
+    "Valor | Descripción",
+    "0 | Vacía",
+    "1 | Cuenta España",
+    "2 | Unión Europea SEPA",
+    "3 | Resto Países",
+    "Nota 3:",
+    "En caso de autoliquidaciones rectificativas en las que la casilla 111 tenga contenido, se deben rellenar los datos de cuenta bancaria, aunque la forma de pago seleccionada no sea devolución, excepto si se ha marcado el campo \"Rectificativa - Como consecuencia de la presentación de la autoliquidación rectificativa solicito dar de baja/modificar la domiciliación efectuada\" (página 3)."
+   ]
+  }
+ ]
+}

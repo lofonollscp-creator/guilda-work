@@ -1,0 +1,30 @@
+[
+ {
+  "fichero": "DR303e26v101.xlsx",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Disenyo_registro/DR_300_399/archivos_26/DR303e26v101.xlsx",
+  "bytes": 386926,
+  "sha256": "0be8b156da2250c6b11f6253e0165221ed2e549ec4c65a562021bec6b9b8489b",
+  "descargado": "2026-10-24T22:13:52"
+ },
+ {
+  "fichero": "303_instrucciones_2026.html",
+  "url": "https://sede.agenciatributaria.gob.es/Sede/todas-gestiones/impuestos-tasas/iva/modelo-303-iva-autoliquidacion_/instrucciones-2026.html",
+  "bytes": 109982,
+  "sha256": "e4e5204da9d059119b11094df9c9864120da337bd47dc4cbe06fa05ffc45b603",
+  "descargado": "2026-10-24T22:13:52"
+ },
+ {
+  "fichero": "303_ayuda_tecnica.html",
+  "url": "https://sede.agenciatributaria.gob.es/Sede/ayuda/consultas-informaticas/presentacion-declaraciones-ayuda-tecnica/modelo-303.html",
+  "bytes": 38091,
+  "sha256": "1bb9e3e7e3e40c3de8b99ecd75830bcaee494caf60b0f4026dd95dedb3cb540d",
+  "descargado": "2026-10-24T22:13:52"
+ },
+ {
+  "fichero": "disenos_300_399.html",
+  "url": "https://sede.agenciatributaria.gob.es/Sede/ayuda/disenos-registro/modelos-300-399.html",
+  "bytes": 15813,
+  "sha256": "7df7813fc7fea0d0f44ba6eada7cb578bb007ee5813f3aca5ede9b828470375e",
+  "descargado": "2026-10-24T22:13:52"
+ }
+]

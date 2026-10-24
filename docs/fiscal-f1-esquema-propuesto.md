@@ -2,7 +2,7 @@
 
 > **Estado:** propuesta; **no aplicada** (ni en SQLite ni en PostgreSQL). Cumple el paso 3 de §13 de `plan-modulo-fiscal-alquileres.md`: «proponerte el esquema exacto de F1 antes de aplicar nada».
 > **Cuándo se puede aplicar:** no antes del **lun 26-oct 12:34** (cierra la vuelta atrás B; hasta entonces no hay cambios de esquema). Es la **primera migración numerada real** de PostgreSQL (hoy `app/bd/migraciones/` solo tiene el `LEEME.md`).
-> **Lo que NO está cerrado:** la lista final de columnas del perfil se **confirma en F0** leyendo el diseño oficial del 303 y las instrucciones (qué datos pide realmente la declaración). Aquí va la propuesta de partida, razonada; lo que cambie se cambia **antes** de aplicar.
+> **Revisado tras F0** (`fiscal-f0-informe.md` §3): el diseño oficial del 303 pide cuatro indicadores que el perfil no tenía (`tributacion_foral`, `autoliquidacion_conjunta`, `exonerado_390`, `deduce_pago_cuenta_carburantes`), separa la opción de **prorrata especial** y distingue «solo régimen simplificado / general + simplificado / solo general» (`regimen_iva`). Los datos **por periodo** (concurso, destinatario de criterio de caja, volumen de operaciones, tipo de declaración, IBAN) **no** van en el perfil sino en `fiscal_declaraciones` (F4). Las instrucciones por periodo (2T–4T) pueden aún añadir algo; cualquier cambio se hace **antes** de aplicar.
 
 ## 1. Alcance de F1
 
@@ -28,12 +28,17 @@ CREATE TABLE IF NOT EXISTS fiscal_perfiles (
     residencia TEXT NOT NULL DEFAULT 'ES' CHECK (residencia IN ('ES','UE','otro')),
     pais TEXT,                                         -- ISO-3166 alfa-2 cuando no es ES
     territorio_iva TEXT NOT NULL DEFAULT 'peninsula_baleares' CHECK (territorio_iva IN ('peninsula_baleares','canarias','ceuta_melilla')),
-    regimen_iva TEXT NOT NULL DEFAULT 'general' CHECK (regimen_iva IN ('general','simplificado','recargo','exento','otro')),
+    regimen_iva TEXT NOT NULL DEFAULT 'general' CHECK (regimen_iva IN ('general','simplificado','general_y_simplificado','recargo','exento','otro')),
     periodicidad TEXT NOT NULL DEFAULT 'trimestral' CHECK (periodicidad IN ('trimestral','mensual')),
     criterio_caja INTEGER NOT NULL DEFAULT 0,
     sii INTEGER NOT NULL DEFAULT 0,
     redeme INTEGER NOT NULL DEFAULT 0,
-    prorrata_centesimas INTEGER,                       -- NULL = sin prorrata; en centésimas de punto
+    tributacion_foral INTEGER NOT NULL DEFAULT 0,          -- tributa exclusivamente a una Administración foral (F0: lo pide el diseño oficial)
+    autoliquidacion_conjunta INTEGER NOT NULL DEFAULT 0,
+    exonerado_390 INTEGER NOT NULL DEFAULT 0,              -- exonerado de la declaración-resumen anual
+    deduce_pago_cuenta_carburantes INTEGER NOT NULL DEFAULT 0,
+    prorrata_especial INTEGER NOT NULL DEFAULT 0,          -- opción por la prorrata especial (art. 103.Dos.1º LIVA)
+    prorrata_centesimas INTEGER,                       -- NULL = sin prorrata general; en centésimas de punto
     sectores_diferenciados INTEGER NOT NULL DEFAULT 0,
     saldo_a_compensar_centimos INTEGER NOT NULL DEFAULT 0,
     actividades TEXT,                                  -- JSON: [{epigrafe, descripcion}]
@@ -87,11 +92,16 @@ CREATE TABLE IF NOT EXISTS fiscal_perfiles (
     residencia text NOT NULL DEFAULT 'ES' CHECK (residencia IN ('ES','UE','otro')),
     pais text,
     territorio_iva text NOT NULL DEFAULT 'peninsula_baleares' CHECK (territorio_iva IN ('peninsula_baleares','canarias','ceuta_melilla')),
-    regimen_iva text NOT NULL DEFAULT 'general' CHECK (regimen_iva IN ('general','simplificado','recargo','exento','otro')),
+    regimen_iva text NOT NULL DEFAULT 'general' CHECK (regimen_iva IN ('general','simplificado','general_y_simplificado','recargo','exento','otro')),
     periodicidad text NOT NULL DEFAULT 'trimestral' CHECK (periodicidad IN ('trimestral','mensual')),
     criterio_caja bigint NOT NULL DEFAULT 0,
     sii bigint NOT NULL DEFAULT 0,
     redeme bigint NOT NULL DEFAULT 0,
+    tributacion_foral bigint NOT NULL DEFAULT 0,
+    autoliquidacion_conjunta bigint NOT NULL DEFAULT 0,
+    exonerado_390 bigint NOT NULL DEFAULT 0,
+    deduce_pago_cuenta_carburantes bigint NOT NULL DEFAULT 0,
+    prorrata_especial bigint NOT NULL DEFAULT 0,
     prorrata_centesimas bigint,
     sectores_diferenciados bigint NOT NULL DEFAULT 0,
     saldo_a_compensar_centimos bigint NOT NULL DEFAULT 0,
