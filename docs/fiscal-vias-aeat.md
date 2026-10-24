@@ -71,6 +71,22 @@ El simulador es público y **no pide certificado**: `https://www2.agenciatributa
 
 **Lo que esto cambia:** el simulador es un **oráculo automático** de formato, de coherencia entre casillas y del resultado, accesible desde Linux sin certificado ni intervención humana. La prueba en línea (`GUILDA_FISCAL_SIMULADOR=1`) es opcional y no corre en la suite normal. **Sigue sin acreditar** la aceptación en producción: el simulador y el formulario real comparten reglas, pero la presentación, el censo (Ventana Censal) y la firma solo existen en el servicio real.
 
+## 4e. La vía B (libros registro) funciona en el simulador y es nuestro oráculo (25-oct-2026)
+
+El formulario trae el botón **«Libros de registro»** (solo en periodos TRIMESTRALES; en mensual no existe) → «Importar libro de registro» → un `.xlsx`. La AEAT valida el libro, calcula las casillas con sus propias reglas y deja exportar el `.303` resultante. Así, **el mismo libro se calcula con nuestro motor y con la AEAT y se comparan las casillas** (`scripts/fiscal/simulador_libros.py`, `grabar_oraculo.py`, `tests/escenarios_303.py`).
+
+Formato del `.xlsx` (descubierto por prueba y error contra el simulador; el fichero «LSI.xlsx» de la AEAT es solo documentación):
+- Hojas `EXPEDIDAS_INGRESOS`, `RECIBIDAS_GASTOS` y `BIENES-INVERSIÓN`; **datos desde la fila 1, sin cabeceras** (con cabeceras, el simulador las lee como registros erróneos). Columnas = las de las plantillas oficiales.
+- Fechas como fecha de Excel; importes con dos decimales; una fila por factura; el libro es el del ejercicio completo hasta el periodo (desde 2023).
+- Actividad: código `B` + tipo `01` (el par que no pide inmueble ni epígrafe del IAE). `A01` y `D` exigen situación y referencia catastral.
+- Tras importar hay que contestar las preguntas de «Identificación» (autoliquidación conjunta, criterio de caja, destinatario de caja, concurso, SII); si no, error PAR018.
+
+Reglas de validación que el simulador aplica al libro (y que nuestro validador de entrada debe replicar): la fecha de expedición no puede ser posterior a hoy; el IVA al 0 % y al 5 % solo se aceptan en periodos concretos; con inversión del sujeto pasivo o clave 09 el total de la factura es la base; el NIF-IVA intracomunitario se valida con el algoritmo de su Estado miembro (formato `FR40303265045` con el prefijo, tipo `02` y país); S2 exige tipo y cuota a cero (no vacíos); F5 (DUA) lleva como expedidor el NIF del propio titular y un nº de DUA español (`26ES…`), y si no es español la cuota deducible debe ser cero; «deducible en periodo posterior» exige un periodo de deducción posterior al de la fila.
+
+**Resultado:** 16 escenarios (ventas por tipo, otros trimestres, fecha de operación, rectificativas y abonos, bien de inversión, importación, adquisición intracomunitaria, inversión del sujeto pasivo en recibidas y en expedidas, exentas y no sujetas, recepción posterior, deducción diferida, resultado negativo, céntimos con decimales) dan **exactamente las mismas casillas** en nuestro `motor_303` y en la AEAT, y el `.303` que generamos (`fichero_303`) coincide byte a byte con el que exporta la AEAT salvo identificación del programa.
+
+Límites: el simulador no presenta; no cubre censo, firma ni presentación real. El último periodo (4T/12) lleva información anual (casillas 79-99) y no se genera todavía. No están soportados (se BLOQUEAN, no se calculan): criterio de caja, recargo de equivalencia, prorrata, régimen simplificado/agrario, ventanilla única (OSS), tributación foral, compensaciones del régimen especial y regularización de inversiones.
+
 ## 5. Lo que sigue sin saberse (y cómo se resuelve)
 
 | Duda | Cómo se cierra |

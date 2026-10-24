@@ -235,3 +235,24 @@ def campos_distintos(diseno: dict, a: bytes, b: bytes) -> list[tuple[str, int | 
         raise ErrorDeFormato(f"los ficheros miden {len(a)} y {len(b)}: no tienen la misma estructura")
     distintos = {i for i, (x, y) in enumerate(zip(a, b)) if x != y}
     return [(h, n, d) for ini, fin, h, n, d in segmentos(diseno, a) if any(i in distintos for i in range(ini, fin))]
+
+
+def leer_casillas(diseno: dict, datos: bytes, *, codificacion: str = "iso-8859-15") -> dict[str, int]:
+    """Los valores NUMÉRICOS de las casillas de un `.303` (el nuestro o el que exporta la AEAT) como enteros: los importes en CÉNTIMOS (con signo: una `N` en la primera posición = negativo) y los
+    porcentajes en centésimas. Solo las casillas con valor distinto de cero. Es lo que se compara con lo que calcula nuestro motor."""
+    from .disenos_oficiales import indice_casillas
+    por_pagina = {p["hoja"]: p["campos"] for p in descomponer(diseno, datos, codificacion=codificacion)["paginas"]}
+    salida: dict[str, int] = {}
+    for casilla, apariciones in indice_casillas(diseno).items():
+        for c in apariciones:
+            texto = por_pagina.get(c["hoja"], {}).get(c["n"])
+            if texto is None or c["tipo"].strip() not in ("Num", "N") or not texto.strip():
+                continue
+            negativo = texto.startswith("N")
+            digitos = texto[1:] if negativo else texto
+            if not digitos.strip().isdigit():
+                continue
+            valor = int(digitos) * (-1 if negativo else 1)
+            if valor:
+                salida[casilla] = valor
+    return salida
