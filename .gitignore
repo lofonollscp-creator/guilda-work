@@ -37,3 +37,6 @@ data/*.bak*
 
 # Informes de la instancia de ensayo de PostgreSQL+Citus
 data/pg-ensayo/
+# copias y exportaciones del corte a PostgreSQL (llevan datos reales): nunca al repositorio
+data/pre-corte/
+data/vuelta/

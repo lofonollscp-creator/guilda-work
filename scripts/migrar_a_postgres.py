@@ -31,7 +31,7 @@ def _preparar_base(url: str, esquema: str) -> None:
     nombre = conninfo_to_dict(url)["dbname"]
     with psycopg.connect(url, autocommit=True) as c:
         c.execute(f'ALTER DATABASE "{nombre}" SET timezone TO \'Europe/Madrid\'')
-        for extension in (["citus"] if esquema == "citus" else []) + ["unaccent", "pg_trgm"]:
+        for extension in (["citus"] if esquema == "citus" else []) + ["unaccent", "pg_trgm", "pg_stat_statements"]:
             c.execute(f"CREATE EXTENSION IF NOT EXISTS {extension}")
         if esquema == "citus" and not c.execute("SELECT 1 FROM pg_dist_node WHERE groupid = 0").fetchone():
             c.execute("SELECT citus_set_coordinator_host('localhost', 5432)")

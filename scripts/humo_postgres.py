@@ -63,6 +63,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--instantanea", help="guarda los recuentos por tabla en este JSON")
     ap.add_argument("--comparar", help="compara los recuentos con los de este JSON (de otra ejecución)")
+    ap.add_argument("--rutas-get", action="store_true", help="recorre TODAS las rutas GET sin parámetros de la aplicación (no usar en producción: algunas GET tienen efectos, p. ej. sincronizar el correo)")
     ap.add_argument("--personas-por-despacho", type=int, default=3)
     ap.add_argument("--despachos", type=int, default=40, help="máximo de despachos a recorrer")
     args = ap.parse_args(argv)
@@ -98,19 +99,25 @@ def main(argv=None) -> int:
     limiter.enabled = False
     app.config.update(TESTING=True, SERVER_NAME="127.0.0.1:8000", PROPAGATE_EXCEPTIONS=False)
     malas, total = [], 0
+    pantallas = list(PANTALLAS)
+    if args.rutas_get:
+        excluidas = ("/static", "/salir", "/logout", "/cerrar", "/borrar", "/eliminar", "/exportar", "/descargar")
+        pantallas = sorted({r.rule for r in app.url_map.iter_rules() if "GET" in r.methods and not r.arguments and not r.rule.startswith(excluidas) and "salir" not in r.rule and "logout" not in r.rule})
     for d, lista in personas.items():
         for p in lista:
             cli = app.test_client()
             cli.set_cookie("ory_kratos_session", p["kratos_identity_id"], domain="127.0.0.1")
-            for ruta in PANTALLAS:
+            for ruta in pantallas:
                 total += 1
                 try:
                     resp = cli.get(ruta)
-                    cuerpo = resp.get_data(as_text=True) if resp.status_code == 200 else ""
-                    if resp.status_code >= 500 or "Ha ocurrido un error interno" in cuerpo:
+                    cuerpo = resp.get_data(as_text=True) if resp.status_code == 200 and resp.mimetype.startswith("text/") else ""
+                    if (resp.status_code >= 500 and resp.status_code != 503) or "Ha ocurrido un error interno" in cuerpo:       # (503: un servicio externo sin configurar)
                         malas.append(f"despacho {d} persona {p['id']} {ruta}: HTTP {resp.status_code}")
                 except Exception as e:                                                               # noqa: BLE001
                     malas.append(f"despacho {d} persona {p['id']} {ruta}: {type(e).__name__}: {str(e)[:80]}")
+    for m in malas[:40]:
+        print(f"      · {m}")
     r.anotar("pantallas principales sin errores", not malas, f"{total} pantallas" + (f"; fallan {len(malas)}: {malas[:3]}" if malas else ""))
 
     # --- escritura de prueba que se deshace, con la conexión de cada despacho ---
