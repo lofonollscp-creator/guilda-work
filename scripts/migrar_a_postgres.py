@@ -112,6 +112,7 @@ def main(argv=None) -> int:
                 print(f"  backoffice.db: {sum(filas_bo.values())} filas en {len(filas_bo)} tablas")
             else:
                 informe["backoffice"] = None
+            conn.execute("ANALYZE")                                                                    # (estadísticas del planificador de lo recién cargado; sin ellas, planes malos hasta que el autovacuum pase)
             informe["segundos_totales"] = round(time.monotonic() - t0, 1)
             informe["segundos_esquema"] = segundos_esquema
     except migrar_datos.ErrorDeCarga as e:

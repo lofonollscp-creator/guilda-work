@@ -1796,11 +1796,14 @@ def _migrar_documentos_vencimiento_a_nextcloud(conn_ignorada: sqlite3.Connection
 
 def init_db() -> None:
     if _bd.MOTOR == "postgres":
-        # El esquema de PostgreSQL no se construye aquí (ese DDL es de SQLite): nace de app/bd/esquema_pg/ y evoluciona con migraciones numeradas.
-        from .bd import esquema as _esquema
+        # El esquema de PostgreSQL no se construye ni se modifica aquí (los servicios no son propietarios de las tablas): lo crea scripts/migrar_a_postgres.py y lo hace evolucionar
+        # scripts/migrar_esquema_pg.py con las migraciones numeradas de app/bd/migraciones/. El arranque solo comprueba que la base esté en la versión que el código espera.
+        from .bd import migraciones as _migraciones
         conn = get_connection()
         try:
-            _esquema.crear_si_falta(conn)
+            if _migraciones.version_actual(conn) is None:
+                raise RuntimeError("la base de datos PostgreSQL está vacía: créala con scripts/migrar_a_postgres.py (o crea el esquema base) antes de arrancar")
+            _migraciones.comprobar(conn)
         finally:
             conn.close()
         return

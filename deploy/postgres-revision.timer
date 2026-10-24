@@ -1,0 +1,10 @@
+[Unit]
+Description=Guilda Work - revisión semanal de PostgreSQL (ver postgres-revision.service)
+
+[Timer]
+OnCalendar=Mon *-*-* 07:30:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

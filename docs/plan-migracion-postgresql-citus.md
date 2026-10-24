@@ -106,7 +106,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 4. Cambio de `DB_ENGINE=postgres` y `DATABASE_URL` por ti, y reinicio de servicios.
 5. **Vuelta atrás:** hasta 48 h con `scripts/exportar_a_sqlite.py` (exportación inversa PostgreSQL → SQLite) para no perder las escrituras posteriores al corte; SQLite original intacto como copia de seguridad.
 
-### Fase 12 — Estabilización y retirada (≈ 2 semanas de observación)
+### Fase 12 — Estabilización y retirada (≈ 2 semanas de observación) — **en curso desde el corte (2026-10-24)**: revisión semanal, migraciones de esquema y plan de retirada en `docs/fase12-estabilizacion.md`
 - Vigilancia reforzada, ajuste de índices y parámetros.
 - Retirada de la ruta SQLite del código de producción (sujeto a D3) y limpieza de adaptadores.
 - Cierre del ADR, bitácora y hoja de ruta.

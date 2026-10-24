@@ -2680,6 +2680,10 @@ sudo cp deploy/postgres-backup.service deploy/postgres-backup.timer /etc/systemd
 replicación; los rojos llegan por correo con el vigilante de siempre). Para mirar: provisionar en Grafana `deploy/grafana-datasource-postgres.yml` (contraseña de `guilda_monitor` en
 `PG_MONITOR_PASSWORD`) y `deploy/grafana-dashboard-postgres.json`; el contenedor de la base se une a la red del stack para que Grafana lo vea por su nombre.
 
+**Estabilización y cambios de esquema** (`docs/fase12-estabilizacion.md`): `postgres-revision.timer` (`deploy/`, lunes 07:30) lanza `scripts/revision_postgres.py`, que lee las estadísticas del servidor y avisa por correo solo si hay hallazgos
+(consultas lentas, consultas que tocan todos los fragmentos, tablas con basura, índices sin uso, copias, errores). Un cambio de esquema es una **migración numerada** (`app/bd/migraciones/LEEME.md`) que se aplica en el despliegue, **antes de reiniciar los servicios**,
+con `guilda_py scripts/migrar_esquema_pg.py` (los servicios no son propietarios de las tablas: al arrancar solo comprueban que la versión del esquema sea la que espera el código y, si no, se niegan a arrancar con un mensaje claro).
+
 **Restauración**: `docs/runbooks-postgresql.md` (recuperar a un instante, recuperar un despacho, restaurar todo, añadir un nodo, rotar contraseñas). **Una copia que no se ha restaurado
 no vale**: `scripts/simulacro_restauracion_pg.py` hace el ejercicio completo en contenedores desechables (copia base, desastre, recuperación a un instante por punto y por hora,
 recuperación de dos despachos, y las alertas del panel) y debe ejecutarse tras cada cambio de versión de PostgreSQL/Citus y al menos cada trimestre.
