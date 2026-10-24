@@ -80,7 +80,7 @@ def test_el_push_respeta_no_molestar_pero_la_prueba_lo_ignora(cliente, monkeypat
     enviados = []
     monkeypatch.setattr(push, "configurado", lambda: True)
     monkeypatch.setattr(db, "tokens_push_de_usuario", lambda u: ["tok"])
-    monkeypatch.setattr(push, "_enviar_a_token", lambda t, ti, cu, da: enviados.append(ti) or True)
+    monkeypatch.setattr(push, "_enviar_a_token", lambda t, ti, cu, da, canal=None: enviados.append(ti) or True)
     monkeypatch.setattr(db, "en_horas_de_silencio", lambda u, ahora=None: True)
     push.enviar_a_usuario(uid, "Aviso", "cuerpo")
     assert enviados == []

@@ -18,7 +18,9 @@ TABLAS: dict[str, tuple[str, tuple[str, ...], dict]] = {
     "DocumentoDespacho": ("documentos", ("contenido", "sobre", "hash_sha256", "papelera_en", "tenant_id", "subido_por", "mensaje_correo_id", "compartido_cliente"),
                           {"contenido_disponible": {"type": "boolean", "description": "`false` si está cifrado y este token no tiene la clave disponible (la descarga daría 423 `despacho_bloqueado`)."}}),
     "Webhook": ("webhooks", ("secreto",), {"eventos": {"type": "array", "items": {"type": "string"}}}),
-    "Notificacion": ("notificaciones", (), {}),
+    "Notificacion": ("notificaciones", (), {
+        "destino": {"$ref": "#/components/schemas/DestinoAviso"},
+        "canal": {"type": "string", "enum": ["tareas", "correo", "fiscal", "equipo", "resumenes", "general"], "description": "Familia del aviso (canal de notificación de Android)."}}),
     "Fichaje": ("fichajes", (), {}),
     "ExpedienteControl": ("expedientes", ("tenant_id", "cliente_id", "vertical_id", "datos", "papelera_en", "confidencial", "referencia", "creado_por", "creado_en", "actualizado_en"),
                           {"cliente": {"type": "string"}, "prioridad": {"type": "string", "enum": ["baja", "normal", "alta", "urgente"]}, "fecha_objetivo": {"type": "string", "nullable": True},
@@ -216,7 +218,7 @@ ESQUEMAS: dict[str, dict] = {
 # Operación -> (esquema de `data`, es_lista). Sobrescribe lo inferido por GETTERS.
 RESPUESTAS: dict[str, tuple[str, bool]] = {
     "login": ("Sesion", False), "registro": ("Sesion", False), "me": ("Usuario", False), "sincronizar": ("Sincronizacion", False),
-    "mi_dia": ("MiDia", False), "tablero": ("Tablero", False), "accion_en_lote": ("ResultadoLote", False), "accion_en_lote_correo": ("ResultadoLote", False),
+    "hoy": ("BandejaHoy", False), "mi_dia": ("MiDia", False), "tablero": ("Tablero", False), "accion_en_lote": ("ResultadoLote", False), "accion_en_lote_correo": ("ResultadoLote", False),
     "flujo_vencimiento": ("FlujoObligacion", False), "transicionar_vencimiento": ("ResultadoTransicion", False), "bloquear_vencimiento": ("FlujoObligacion", False),
     "configuracion_flujo": ("ConfigFlujo", False), "guardar_configuracion_flujo": ("ConfigFlujo", False), "eventos_de_auditoria": ("EventoAuditoria", True),
     "listar_expedientes_control_api": ("ExpedienteControl", True), "crear_expediente_control_api": ("DetalleExpedienteControl", False), "expediente_de_obligacion_api": ("DetalleExpedienteControl", False),
@@ -275,6 +277,25 @@ RESPUESTAS: dict[str, tuple[str, bool]] = {
     "crear_categoria_correo": ("Identificador", False), "crear_regla_categoria": ("Identificador", False), "crear_remitente_confiable": ("Identificador", False),
     "crear_atajo_ia": ("Identificador", False), "crear_conversacion_ia": ("Identificador", False),
 }
+ESQUEMAS["DestinoHoy"] = {"type": "object", "properties": {"tipo": {"type": "string", "enum": ["tarea", "correo", "vencimiento", "plazo", "expediente", "visita", "traspaso", "ausencia", "factura", "contabilizacion", "certificado"]},
+                                                  "id": {"type": "integer", "nullable": True, "description": "Id del elemento (de `contabilizacion`: el cliente fiscal)."}},
+                          "additionalProperties": True, "description": "A dónde lleva el elemento. Según el tipo puede traer ids relacionados (`expediente_id`, `cliente_id`, `cliente_fiscal_id`)."}
+ESQUEMAS["ElementoHoy"] = {"type": "object", "properties": {
+    "titulo": {"type": "string"}, "detalle": {"type": "string", "nullable": True}, "fecha": {"type": "string", "description": "`AAAA-MM-DD` o `AAAA-MM-DDTHH:MM`, hora local sin zona; vacío si no tiene."},
+    "urgencia": {"type": "string", "enum": ["vencido", "hoy", "proximo", "info"]}, "destino": {"$ref": "#/components/schemas/DestinoHoy"},
+    "acciones": {"type": "array", "items": {"type": "string"}, "description": "Lo que la app puede ofrecer sin abrirlo: `abrir` siempre; además `completar`, `presentar`, `aceptar`, `rechazar` según el tipo."},
+    "url": {"type": "string", "description": "Ruta de la web para el mismo elemento (puente web); la app navega por `destino`."},
+    "seccion": {"type": "string", "description": "Solo en `destacados`: título de la sección de origen."}, "clave": {"type": "string", "description": "Solo en `destacados`: clave de la sección de origen."}}}
+ESQUEMAS["SeccionHoy"] = {"type": "object", "properties": {"clave": {"type": "string"}, "titulo": {"type": "string"}, "total": {"type": "integer"}, "urgentes": {"type": "integer"},
+                                                         "elementos": {"type": "array", "items": {"$ref": "#/components/schemas/ElementoHoy"}, "description": "Hasta 25, por urgencia."}}}
+ESQUEMAS["BandejaHoy"] = {"type": "object", "properties": {
+    "total": {"type": "integer"}, "urgentes": {"type": "integer"}, "despacho_id": {"type": "integer", "nullable": True}, "generado_en": {"type": "string"},
+    "secciones": {"type": "array", "items": {"$ref": "#/components/schemas/SeccionHoy"}, "description": "Solo las que tienen algo y de módulos activos."},
+    "destacados": {"type": "array", "items": {"$ref": "#/components/schemas/ElementoHoy"}, "description": "Los 30 más urgentes de todas las secciones."}}}
+ESQUEMAS["DestinoAviso"] = {"type": "object", "properties": {"tipo": {"type": "string", "description": "`tarea`, `correo`, `vencimiento`, `expediente`, `certificado`, `aviso_fiscal`, `tiquet`, `nota`, `factura_contable`, o una pantalla "
+                                                  "(`ausencias`, `turnos`, `bolsa_horas`, `fichaje`, `traspasos`, `hoy`, `ia`, `aviso`)."},
+                                                  "id": {"type": "integer", "nullable": True}}, "additionalProperties": True,
+                            "description": "A dónde lleva el aviso en la app móvil. Igual que el `destino` del push (`data.destino`, JSON) y que el de `GET /hoy`."}
 ESQUEMAS["ConversacionesIA"] = {"type": "object", "properties": {"activa": {"type": "integer", "nullable": True, "description": "Id de la conversación activa (`null` si aún no hay ninguna)."},
                                   "conversaciones": {"type": "array", "items": {"$ref": "#/components/schemas/ConversacionIA"}}}}
 ESQUEMAS["Papelera"] = {"type": "object", "properties": {"origen": {"type": "string"}, "id": {"type": "integer"}, "texto": {"type": "string"}, "papelera_en": {"type": "string"}}}
@@ -438,7 +459,7 @@ ETIQUETAS: dict[str, str] = {
     "correo": "Cuentas, mensajes, envío (incluido programado y con adjuntos), plantillas, reglas y seguimientos.", "fiscal": "Calendario fiscal: clientes, vencimientos, expediente, mensajes con el cliente, recordatorios.",
     "fichaje": "Registro horario: fichar y administración (correcciones auditables, exportaciones, integridad).", "tiquets": "Tiquets de soporte.", "ia": "Asistente de IA.",
     "webhooks": "Webhooks del despacho: crear, rotar secreto, probar, entregas.", "sync": "Sincronización incremental por cursor.", "notificaciones": "Notificaciones.", "comunicados": "Avisos de Guilda.",
-    "buscar": "Búsqueda.", "dashboard": "Resumen del día.", "historial": "Notas y tareas en orden cronológico.", "export": "Exportación.", "papelera": "Papelera.", "perfil": "Perfil.",
+    "buscar": "Búsqueda.", "hoy": "Bandeja de lo que necesita tu atención hoy, de todos los módulos.", "dashboard": "Resumen del día.", "historial": "Notas y tareas en orden cronológico.", "export": "Exportación.", "papelera": "Papelera.", "perfil": "Perfil.",
 }
 
 # --- Ejemplos: operación -> {"peticion": ..., "respuesta": ...} ---------------------------------------------------------------------------

@@ -7,6 +7,7 @@ from flask import Response, abort, g, request
 from . import correo, db, fichaje_export
 from .auth import token_required
 from .rutas_api import _body, _dict, _dicts, _err, _ok, _ok_paginado, api_bp
+from . import rutas_api_hoy  # noqa: F401 -- registra GET /hoy en api_bp
 
 
 # --- Adjuntos de notas --------------------------------------------------------------------------------------------------

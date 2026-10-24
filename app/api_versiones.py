@@ -15,6 +15,10 @@ HISTORIAL = [
         ("Mejora", "Los `412 version_obsoleta` de clientes fiscales y vencimientos incluyen `version_actual` (como ya hacían los `409` de las tareas), "
                    "para ofrecer «ver cambios / sobrescribir» sin otra petición."),
         ("Mejora", "El contrato describe con exactitud `GET /ia/conversaciones` (`{activa, conversaciones}`) y admite `id: null` en los atajos de serie de `GET /ia/atajos`."),
+        ("Nuevo", "`GET /hoy`: la bandeja única de lo que necesita tu atención (tareas, correo, plazos, vencimientos, visitas, traspasos, ausencias, facturas, certificados...) del "
+                  "despacho activo, por urgencia, en una sola llamada. Cada elemento lleva `destino` (`{tipo, id}`) y las `acciones` posibles; los módulos no activos no aparecen."),
+        ("Nuevo", "`GET /notificaciones` devuelve en cada aviso su `destino` (`{tipo, id}`) y `canal`, y admite los filtros `tipo`, `desde` y `no_leidas`. Los push llevan el mismo "
+                  "contrato: `data.destino` (JSON), `destino_tipo`, `destino_id`, `despacho_id`, `notificacion_id` y `canal` (canal de Android por familia de aviso)."),
         ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
     ]),
     ("1.4", "2026-10-11", [

@@ -50,7 +50,7 @@ def _access_token() -> str:
     return creds.token
 
 
-def _enviar_a_token(fcm_token: str, titulo: str, cuerpo: str, datos: dict | None) -> bool:
+def _enviar_a_token(fcm_token: str, titulo: str, cuerpo: str, datos: dict | None, canal: str | None = None) -> bool:
     """True si FCM aceptó la entrega. False si el token ya no es válido
     (app desinstalada, token expirado) -- en ese caso el llamante debe
     limpiarlo de `dispositivos_push` (ver `db.eliminar_tokens_push`). Un
@@ -63,6 +63,9 @@ def _enviar_a_token(fcm_token: str, titulo: str, cuerpo: str, datos: dict | None
             "data": {k: str(v) for k, v in (datos or {}).items()},
         }
     }
+    if canal:
+        # Canal de notificación de Android (familia del aviso): la app los crea al arrancar; si no existiera, Android usa el predeterminado.
+        mensaje["message"]["android"] = {"notification": {"channel_id": canal}}
     req = urllib.request.Request(
         f"https://fcm.googleapis.com/v1/projects/{_project_id}/messages:send",
         data=json.dumps(mensaje).encode("utf-8"),
@@ -81,7 +84,7 @@ def _enviar_a_token(fcm_token: str, titulo: str, cuerpo: str, datos: dict | None
         return True
 
 
-def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | None = None, ignorar_silencio: bool = False) -> None:
+def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | None = None, ignorar_silencio: bool = False, canal: str | None = None) -> None:
     """Punto de entrada usado desde los puntos de emisión de eventos (ver
     p.ej. `app/correo.py:_emitir_evento_correo_nuevo`) -- manda el push a
     todos los dispositivos del usuario, limpiando los que FCM rechace como
@@ -96,7 +99,7 @@ def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | No
         tokens = db.tokens_push_de_usuario(usuario_id)
         if not tokens:
             return
-        invalidos = [t for t in tokens if not _enviar_a_token(t, titulo, cuerpo, datos)]
+        invalidos = [t for t in tokens if not _enviar_a_token(t, titulo, cuerpo, datos, canal)]
         if invalidos:
             db.eliminar_tokens_push(invalidos)
     except Exception:

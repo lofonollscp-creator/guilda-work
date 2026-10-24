@@ -6,7 +6,7 @@ import json
 
 from flask import abort, g, jsonify, request
 
-from . import busqueda, comunicados, correo, db, eventos, ia_consumo
+from . import aviso_destino, busqueda, comunicados, correo, db, eventos, ia_consumo
 from . import rutas_api as _api
 from .rutas_api import _body, _dict, _dicts, _err, _ok, _ok_paginado, api_bp
 from .auth import token_required
@@ -245,9 +245,18 @@ def listar_plantillas():
 @api_bp.route("/notificaciones", methods=["GET"])
 @token_required
 def listar_notificaciones():
-    """Últimas notificaciones (`limit`, máx. 100, por defecto 30) y cuántas hay sin leer (cabecera y campo)."""
+    """Últimas notificaciones (`limit`, máx. 100, por defecto 30) y cuántas hay sin leer (cabecera y campo). Filtros opcionales: `tipo` (uno o varios separados por
+    comas), `desde` (fecha/hora ISO: solo las posteriores) y `no_leidas=1`. Cada una lleva `destino` (`{tipo, id, ...}`: a dónde lleva) y `canal` (familia del aviso)."""
     limite = max(1, min(request.args.get("limit", default=30, type=int) or 30, 100))
-    respuesta, status = _ok({"no_leidas": db.contar_notificaciones_no_leidas(g.usuario_id), "notificaciones": _dicts(db.listar_notificaciones(g.usuario_id, limite))})
+    tipos = {t.strip() for t in (request.args.get("tipo") or "").split(",") if t.strip()}
+    desde = (request.args.get("desde") or "").strip()
+    solo_no_leidas = request.args.get("no_leidas") in ("1", "true")
+    filas = _dicts(db.listar_notificaciones(g.usuario_id, 500 if (tipos or desde or solo_no_leidas) else limite))
+    filas = [f for f in filas if (not tipos or f["tipo"] in tipos) and (not desde or f["creado_en"] > desde) and (not solo_no_leidas or not f["leido_en"])][:limite]
+    for f in filas:
+        f["destino"] = aviso_destino.destino_de(f["tipo"], None, f.get("url"))
+        f["canal"] = aviso_destino.canal_de(f["tipo"])
+    respuesta, status = _ok({"no_leidas": db.contar_notificaciones_no_leidas(g.usuario_id), "notificaciones": filas})
     return respuesta, status
 
 

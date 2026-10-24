@@ -110,7 +110,11 @@ def test_crear_y_enviar_registra_y_manda_push(usuario_id, monkeypatch):
     assert len(notis) == 1
     assert notis[0]["url"] == "/fiscal/x"
     assert len(llamadas) == 1
-    assert llamadas[0][0] == (usuario_id, "Título", "Cuerpo", {"a": 1})
+    args = llamadas[0][0]
+    assert args[:3] == (usuario_id, "Título", "Cuerpo")
+    assert args[3]["a"] == 1                                                  # lo que ya mandaba quien emite, intacto...
+    assert args[3]["tipo"] == "vencimiento_fiscal" and args[3]["canal"] == "fiscal" and args[3]["destino_tipo"] == "aviso"     # ...más el contrato unificado
+    assert args[3]["notificacion_id"] == notis[0]["id"]
 
 
 def test_crear_y_enviar_si_falla_el_registro_igual_manda_el_push(usuario_id, monkeypatch):
