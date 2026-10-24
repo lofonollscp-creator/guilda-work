@@ -814,6 +814,30 @@ def limites_mcp() -> tuple[int, int]:
     return entero("GUILDA_MCP_LIMITE_POR_MINUTO", 120), entero("GUILDA_MCP_LIMITE_ESCRITURAS_POR_MINUTO", 40)
 
 
+def _fijar_despacho_en_bd(tool, firma, usuario_id, kwargs):
+    """PostgreSQL: la llamada trabaja con la conexión del DESPACHO de quien llama (rol sin privilegios, RLS y filtro de despacho), igual que la web. Con `tenant` (nombre) manda ese despacho, si se
+    puede operar sobre él; sin él, el principal de la persona. Se queda con la conexión de la plataforma (como hasta ahora) las herramientas del backoffice y las que tienen un `tenant`
+    opcional que, vacío, significa «toda la plataforma». Devuelve los testigos para `contexto.restaurar`, o None si no fija nada (SQLite, sin persona identificada…)."""
+    from app import bd as _bd
+    if _bd.MOTOR != "postgres" or usuario_id is None or tool.__name__.startswith("backoffice_"):
+        return None
+    from app.bd import contexto as _contexto
+    if _contexto.despacho_actual() is not None:
+        return None                                        # ya hay despacho (el asistente de la web llama a estas herramientas dentro de una petición con el despacho activo de la persona): no se pisa
+    nombre = kwargs.get("tenant")
+    if nombre:
+        fila = _tenant_autorizado_por_nombre(nombre)
+        if fila is None:
+            return None                                    # no autorizado: la herramienta lo rechaza como siempre
+        destino = fila["id"]
+    elif "tenant" in firma.parameters:
+        return None                                        # `tenant` vacío en una herramienta que lo admite: ámbito de toda la plataforma
+    else:
+        propio = db.tenant_de_usuario(usuario_id)
+        destino = propio["id"] if propio is not None else 0
+    return _contexto.fijar_para_la_peticion(destino, usuario_id)
+
+
 def _con_guardian(tool):
     """Envuelve una herramienta del MCP para que cada llamada quede **medida, limitada y auditada**:
 
@@ -881,6 +905,7 @@ def _con_guardian(tool):
         if remoto:       # el secreto con el que se abre su concesión: el propio token personal, o el que Guilda metió en el token OAuth al consentir
             secreto = token.token if personal else next((x[3:] for x in (token.scopes or []) if x.startswith("cs:")), None)
         testigo = cifrado_despacho.fijar_concesion("mcp", secreto)
+        testigos_bd = None
         try:
             if firma_publica is not None and not kwargs.get("tenant"):
                 propio = db.tenant_de_usuario(usuario_id) if usuario_id else None
@@ -889,12 +914,16 @@ def _con_guardian(tool):
                 kwargs["tenant"] = propio["nombre"]
             from app import estado_herramientas
             estado_herramientas.exigir_servicio(tool.__name__)          # ValueError claro si el servicio del que depende no responde
+            testigos_bd = _fijar_despacho_en_bd(tool, firma_original, usuario_id, kwargs)
             resultado = mu.recortar_resultado(tool(*args, **kwargs))
         except Exception as e:  # noqa: BLE001
             anotar("error", f"{type(e).__name__}: {e}")
             raise
         finally:
             cifrado_despacho.restablecer_concesion(testigo)
+            if testigos_bd is not None:
+                from app.bd import contexto as _contexto
+                _contexto.restaurar(testigos_bd)
         anotar("ok")
         return resultado
 

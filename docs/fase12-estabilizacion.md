@@ -9,6 +9,7 @@ Corte hecho el **2026-10-24 (12:34)**. Esta página es el calendario, los criter
 | Cada día | Panel *Salud* del backoffice en verde (sección «Base de datos»); correos de alerta | automático; los rojos llegan por correo |
 | Cada noche | Copia base (02:15) y Restic (03:00) | `postgres-backup.timer`, `restic-backup.timer`; el panel Salud los vigila |
 | **Cada lunes** | Revisión de estabilización | `postgres-revision.timer` (07:30) → correo si hay hallazgos; a mano: `scripts/revision_postgres.py` |
+| Tras cada despliegue | Barridos de lectura: `scripts/humo_postgres.py` (web), `scripts/barrido_mcp.py` (MCP) y la API (token de solo lectura) — en el ensayo con `--rutas-get`; en producción solo lo de solo lectura | `scripts/probar.sh --ejecutar …` |
 | Día 3 (2026-10-27) | Primera revisión a mano con tráfico de entre semana; mirar consultas por tiempo total y las que tocan todos los fragmentos | `guilda_py`-style (ver cabecera del script) |
 | Día 7 (2026-10-31) | Simulacro de restauración con la configuración real y revisión de índices sin uso | `scripts/probar.sh --ejecutar scripts/simulacro_restauracion_pg.py` |
 | Día 14 (2026-11-07) | **Decisión de retirada** (criterios abajo) | esta página |

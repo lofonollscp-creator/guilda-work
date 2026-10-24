@@ -12,12 +12,14 @@ def test_cada_rol_ve_solo_lo_suyo_y_la_auditoria_del_backoffice_es_de_solo_anexa
     url, limpiar = pg_ayudas.crear_base_con_esquema("multitenant")
     try:
         with psycopg.connect(url, autocommit=True) as admin:
-            for rol in ("guilda_app", "guilda_plataforma", "guilda_backoffice"):
-                admin.execute(f"ALTER ROLE {rol} PASSWORD 'x'")
+            # (los roles son del servidor, no de la base: las contraseñas de prueba son las MISMAS que usa tests/test_citus.py para que, en paralelo, no se pisen)
+            claves = {"guilda_app": "prueba-app", "guilda_plataforma": "prueba-plataforma", "guilda_backoffice": "prueba-backoffice"}
+            for rol, clave in claves.items():
+                admin.execute(f"ALTER ROLE {rol} PASSWORD '{clave}'")
             admin.execute("INSERT INTO backoffice.admins (usuario, nombre, password_hash, creado_en) VALUES ('ana', 'Ana', 'hash', 'hoy')")
 
         def como(rol):
-            return psycopg.connect(make_conninfo(url, user=rol, password="x", options="-c search_path=backoffice,public"), autocommit=True)
+            return psycopg.connect(make_conninfo(url, user=rol, password=claves[rol], options="-c search_path=backoffice,public"), autocommit=True)
         for rol in ("guilda_app", "guilda_plataforma"):
             with como(rol) as c, pytest.raises(psycopg.errors.InsufficientPrivilege):
                 c.execute("SELECT * FROM backoffice.admins")                                  # ni la aplicación ni la plataforma ven los administradores del backoffice
