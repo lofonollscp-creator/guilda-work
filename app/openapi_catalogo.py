@@ -146,7 +146,9 @@ ESQUEMAS: dict[str, dict] = {
     "ConsumoIA": {"type": "object", "properties": {"mes": {"type": "string"}, "usadas": {"type": "integer"}, "limite": {"type": "integer", "nullable": True}, "ilimitado": {"type": "boolean"}, "restantes": {"type": "integer", "nullable": True}, "pct": {"type": "integer", "nullable": True}}},
     "Comunicado": {"type": "object", "properties": {"id": {"type": "integer"}, "titulo": {"type": "string"}, "texto": {"type": "string"}, "nivel": {"type": "string", "enum": ["info", "aviso", "critico"]}}},
     "NotificacionesRespuesta": {"type": "object", "properties": {"no_leidas": {"type": "integer"}, "notificaciones": {"type": "array", "items": {"$ref": "#/components/schemas/Notificacion"}}}},
-    "ResultadoBusqueda": {"type": "array", "items": {"type": "object", "properties": {"tipo": {"type": "string"}, "id": {"type": "integer"}, "texto": {"type": "string"}, "url": {"type": "string"}}}},
+    "ResultadoBusqueda": {"type": "array", "items": {"type": "object", "properties": {
+        "tipo": {"type": "string", "description": "`nota`, `tarea`, `mensaje`, `vencimiento_fiscal` o `cliente_fiscal`."}, "id": {"type": "string", "description": "Id en el índice: «tipo-N» (p. ej. `tarea-12`)."},
+        "texto": {"type": "string"}, "url": {"type": "string"}, "destino": {"$ref": "#/components/schemas/DestinoAviso"}}}},
     "Documento": {"type": "string", "format": "binary"},
     "Companero": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "email": {"type": "string"}}},
     "Vista": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "filtros": {"type": "object", "additionalProperties": {"type": "string"}},

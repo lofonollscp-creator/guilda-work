@@ -282,7 +282,9 @@ def buscar():
     if not q:
         return _err("Indica qué buscar con ?q=.")
     limite = max(1, min(request.args.get("limit", default=8, type=int) or 8, 20))
-    return _ok(busqueda.buscar_hibrido(g.usuario_id, q, limite, tenant_id=g.get("tenant_id")))
+    resultados = busqueda.buscar_hibrido(g.usuario_id, q, limite, tenant_id=g.get("tenant_id"))
+    # `destino`: a dónde lleva cada resultado en la app móvil (el `id` del índice es «tipo-N»); fuera los vectores, que no sirven a quien consulta.
+    return _ok([{**{k: v for k, v in r.items() if not k.startswith("_")}, "destino": aviso_destino.destino_de_resultado(r)} for r in resultados])
 
 
 @api_bp.route("/ia/consumo", methods=["GET"])

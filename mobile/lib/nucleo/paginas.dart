@@ -9,9 +9,9 @@ import '../screens/fiscal_screen.dart';
 import '../screens/herramientas_screen.dart';
 import '../screens/ia_chat_screen.dart';
 import '../screens/login_screen.dart';
-import '../screens/tareas_outlook_screen.dart';
 import '../screens/tiquets_screen.dart';
 import '../funciones/hoy/hoy_screen.dart';
+import '../funciones/tareas/tareas_screen.dart';
 import '../services/api_client.dart';
 import '../services/element_launcher.dart';
 import 'servicios.dart';
@@ -54,7 +54,7 @@ class PaginasApp {
           );
         },
         inicio: (ref, usuario) => const HoyScreen(),
-        tareas: (ref) => TareasOutlookScreen(api: ref.read(serviciosProvider).api),
+        tareas: (ref) => const TareasScreen(),
         correo: (ref) => CorreoBandejaScreen(api: ref.read(serviciosProvider).api),
         fichaje: (ref, usuario) {
           final s = ref.read(serviciosProvider);

@@ -12,6 +12,8 @@ HISTORIAL = [
         ("Nuevo", "`426 actualiza_app`: una app que manda `X-App-Version` menor que la mínima admitida recibe este error, con `version_minima` y `url_tienda`. "
                   "Quien no manda la cabecera (web, integraciones, MCP) no se ve afectado."),
         ("Nuevo", "`GET /perfil` incluye `apariencia` (`tema`, `densidad`, `idioma`) y `PUT /perfil` los acepta: el tema y el idioma de la cuenta son los mismos en la web y en la app."),
+        ("Mejora", "`GET /tareas-outlook` incluye `vencida` en cada fila (derivada de la fecha y el estado, igual que en el detalle)."),
+        ("Nuevo", "`GET /buscar` devuelve en cada resultado su `destino` (`{tipo, id}`), no incluye los vectores internos, y su `id` se documenta como lo que es: «tipo-N» (`tarea-12`)."),
         ("Mejora", "Los `412 version_obsoleta` de clientes fiscales y vencimientos incluyen `version_actual` (como ya hacían los `409` de las tareas), "
                    "para ofrecer «ver cambios / sobrescribir» sin otra petición."),
         ("Mejora", "El contrato describe con exactitud `GET /ia/conversaciones` (`{activa, conversaciones}`) y admite `id: null` en los atajos de serie de `GET /ia/atajos`."),

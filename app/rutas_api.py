@@ -684,12 +684,13 @@ def listar_tareas_outlook():
         solo_asignadas=ambito == "asignadas",
         solo_compartidas=ambito == "compartidas",
     )
-    if ambito == "propias":
-        return _ok_paginado(filas)
+    from . import tareas_trabajo as _tt
     resultado = []
     for f in filas:
         fila = dict(f)
-        fila["rol"] = "dueno" if f["usuario_id"] == g.usuario_id else ("asignada" if f["asignada_a"] == g.usuario_id else "compartida")
+        fila["vencida"] = _tt.esta_vencida(fila.get("fecha_vencimiento"), fila.get("estado"))      # derivada, como en el detalle (API 1.5: la lista también la trae)
+        if ambito != "propias":
+            fila["rol"] = "dueno" if f["usuario_id"] == g.usuario_id else ("asignada" if f["asignada_a"] == g.usuario_id else "compartida")
         resultado.append(fila)
     return _ok_paginado(resultado)
 

@@ -9,7 +9,7 @@ import '../screens/ausencias_screen.dart';
 import '../screens/correo_mensaje_screen.dart';
 import '../screens/fiscal_vencimiento_edit_screen.dart';
 import '../screens/ia_chat_screen.dart';
-import '../screens/tarea_outlook_edit_screen.dart';
+import '../funciones/tareas/tarea_detalle_screen.dart';
 import '../screens/tiquets_screen.dart';
 import 'avisos.dart';
 import 'destinos.dart';
@@ -45,10 +45,7 @@ Future<void> abrirDestino(Ref ref, Destino destino, {String? urlWeb}) async {
     case IrAPestana(:final ruta):
       router.go(ruta);
     case AbrirTarea(:final id):
-      final tarea = await traer('/tareas-outlook/$id', TareaOutlook.fromJson);
-      if (tarea != null && contexto.mounted) {
-        await Navigator.of(contexto).push(MaterialPageRoute(builder: (_) => TareaOutlookEditScreen(tarea: tarea, api: s.api)));
-      }
+      await Navigator.of(contexto).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: id)));
     case AbrirCorreo(:final id):
       if (id == null) {
         router.go(rutaCorreo);

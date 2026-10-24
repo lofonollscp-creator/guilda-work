@@ -76,3 +76,23 @@ def test_la_bandeja_de_avisos_trae_destino_y_filtros(cliente, monkeypatch):
     assert cliente.get("/api/v1/notificaciones?desde=2999-01-01T00:00", headers=h).get_json()["data"]["notificaciones"] == []
     cliente.post("/api/v1/notificaciones/leidas", headers=h)
     assert cliente.get("/api/v1/notificaciones?no_leidas=1", headers=h).get_json()["data"]["notificaciones"] == []
+
+
+@pytest.mark.parametrize("resultado,esperado", [
+    ({"id": "tarea-12", "tipo": "tarea"}, {"tipo": "tarea", "id": 12}),
+    ({"id": "mensaje-7", "tipo": "mensaje"}, {"tipo": "correo", "id": 7}),
+    ({"id": "vencimiento_fiscal-41", "tipo": "vencimiento_fiscal"}, {"tipo": "vencimiento", "id": 41}),
+    ({"id": "nota-3", "tipo": "nota"}, {"tipo": "nota", "id": 3}),
+    ({"id": "cliente_fiscal-9", "tipo": "cliente_fiscal"}, {"tipo": "cliente_fiscal", "id": 9}),
+    ({"id": "raro", "tipo": "otro"}, {"tipo": "aviso"}),
+])
+def test_destino_de_resultado_de_busqueda(resultado, esperado):
+    assert ad.destino_de_resultado(resultado) == esperado
+
+
+def test_la_busqueda_trae_destino_y_quita_vectores(cliente, monkeypatch):
+    from app import busqueda
+    h = _auth(_registrar(cliente, "busca@ejemplo.com")["token"])
+    monkeypatch.setattr(busqueda, "buscar_hibrido", lambda *a, **k: [{"id": "tarea-5", "tipo": "tarea", "texto": "Llamar a Acme", "_vectors": {"default": [0.1]}, "_rankingScore": 0.9}])
+    r = cliente.get("/api/v1/buscar?q=acme", headers=h).get_json()["data"]
+    assert r == [{"id": "tarea-5", "tipo": "tarea", "texto": "Llamar a Acme", "destino": {"tipo": "tarea", "id": 5}}]

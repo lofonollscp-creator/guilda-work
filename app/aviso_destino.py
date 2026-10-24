@@ -45,6 +45,17 @@ _CANAL_DE_TIPO = {
 }
 
 
+# Resultados de la búsqueda global (`GET /buscar`): tipo del documento indexado → tipo de destino.
+_DESTINO_DE_RESULTADO = {"nota": "nota", "tarea": "tarea", "mensaje": "correo", "vencimiento_fiscal": "vencimiento", "cliente_fiscal": "cliente_fiscal"}
+
+
+def destino_de_resultado(resultado: dict) -> dict:
+    """Destino de un resultado de búsqueda. El índice guarda `id` como «tipo-N» (p. ej. `tarea-12`); aquí se saca el N."""
+    m = re.search(r"-(\d+)$", str(resultado.get("id", "")))
+    tipo = _DESTINO_DE_RESULTADO.get(resultado.get("tipo"))
+    return {"tipo": tipo, "id": int(m.group(1))} if tipo and m else {"tipo": "aviso"}
+
+
 def canal_de(tipo: str | None) -> str:
     return _CANAL_DE_TIPO.get(tipo or "", "general")
 

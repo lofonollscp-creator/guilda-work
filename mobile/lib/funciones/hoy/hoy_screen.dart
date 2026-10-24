@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +11,9 @@ import '../../nucleo/abrir_destino.dart';
 import '../../nucleo/destinos.dart';
 import '../../nucleo/servicios.dart';
 import '../../nucleo/sesion.dart';
+import '../avisos/avisos_controlador.dart';
+import '../avisos/avisos_screen.dart';
+import '../busqueda/busqueda_screen.dart';
 import 'hoy_controlador.dart';
 
 /// «Hoy»: lo que necesita tu atención, de todos los módulos del despacho activo,
@@ -29,13 +34,40 @@ class HoyScreen extends ConsumerWidget {
           Text(t.navInicio),
           if (despacho != null) Text(despacho, style: Theme.of(context).textTheme.bodySmall),
         ]),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: t.busquedaTitulo,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BusquedaScreen())),
+          ),
+          _Campana(sinLeer: ref.watch(avisosNoLeidosProvider)),
+        ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(hoyProvider.notifier).refrescar(),
+        onRefresh: () async {
+          unawaited(ref.read(avisosProvider.notifier).refrescar()); // la insignia de la campana
+          await ref.read(hoyProvider.notifier).refrescar();
+        },
         child: estado == null
             ? (hoy.hasError ? _Error(error: hoy.error!) : const _Cargando())
             : _Bandeja(bandeja: estado.bandeja, desactualizado: estado.desactualizado, obtenidoEn: estado.obtenidoEn),
       ),
+    );
+  }
+}
+
+/// La campana de avisos con su insignia de sin leer.
+class _Campana extends StatelessWidget {
+  final int sinLeer;
+  const _Campana({required this.sinLeer});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return IconButton(
+      icon: Badge(isLabelVisible: sinLeer > 0, label: Text(sinLeer > 99 ? '99+' : '$sinLeer'), child: const Icon(Icons.notifications_none)),
+      tooltip: sinLeer > 0 ? t.avisosNoLeidas(sinLeer) : t.avisosTitulo,
+      onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AvisosScreen())),
     );
   }
 }

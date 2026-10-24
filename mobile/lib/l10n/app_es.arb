@@ -412,5 +412,90 @@
         "type": "String"
       }
     }
-  }
+  },
+  "avisosTitulo": "Avisos",
+  "avisosVacio": "No tienes avisos.",
+  "avisosMarcarLeidos": "Marcar todo como leído",
+  "avisosAyer": "Ayer",
+  "avisosEliminado": "Aviso eliminado",
+  "avisosNoLeidas": "{n, plural, =1{1 aviso sin leer} other{{n} avisos sin leer}}",
+  "busquedaTitulo": "Buscar",
+  "busquedaHint": "Buscar en notas, tareas y correo",
+  "busquedaMinimo": "Escribe al menos dos letras.",
+  "busquedaSinResultados": "Sin resultados para «{q}».",
+  "busquedaError": "No se ha podido buscar. Inténtalo de nuevo.",
+  "busquedaTipoNota": "Nota",
+  "busquedaTipoTarea": "Tarea",
+  "busquedaTipoCorreo": "Correo",
+  "busquedaTipoVencimiento": "Vencimiento",
+  "busquedaTipoCliente": "Cliente",
+  "@avisosNoLeidas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@busquedaSinResultados": {
+    "placeholders": {
+      "q": {
+        "type": "String"
+      }
+    }
+  },
+  "tareasTitulo": "Tareas",
+  "tareasAmbitoPropias": "Mías",
+  "tareasAmbitoAsignadas": "Asignadas",
+  "tareasAmbitoCompartidas": "Compartidas",
+  "tareasAmbitoTodas": "Todas",
+  "tareasFiltroTodas": "Cualquier estado",
+  "estadoNoIniciada": "Sin empezar",
+  "estadoEnProgreso": "En curso",
+  "estadoEsperando": "Esperando",
+  "estadoAplazada": "Aplazada",
+  "estadoEnRevision": "En revisión",
+  "estadoCompletada": "Completada",
+  "prioridadBaja": "Baja",
+  "prioridadNormal": "Normal",
+  "prioridadAlta": "Alta",
+  "tareasNueva": "Nueva tarea",
+  "tareasNuevaHint": "Escribe una tarea y pulsa enviar",
+  "tareasVacio": "No hay tareas aquí.",
+  "tareasSinResultados": "Ninguna tarea coincide.",
+  "tareasBuscar": "Buscar tareas",
+  "tareasVencida": "Vencida",
+  "tareasNoSePudoCrear": "No se ha podido crear la tarea.",
+  "tareasFecha": "Fecha de vencimiento",
+  "tareaDetalleTitulo": "Tarea",
+  "tareaEstado": "Estado",
+  "tareaPrioridad": "Prioridad",
+  "tareaVence": "Vence",
+  "tareaSinFecha": "Sin fecha",
+  "tareaNotas": "Notas",
+  "tareaMotivoBloqueo": "Motivo de la espera",
+  "tareaMotivoPregunta": "¿Por qué queda en espera?",
+  "tareaMotivoHint": "Motivo",
+  "tareaAceptar": "Aceptar",
+  "tareaGuardar": "Guardar",
+  "tareaEditar": "Editar tarea",
+  "tareaAsunto": "Asunto",
+  "tareaSubtareas": "Subtareas",
+  "tareaSubtareaNueva": "Añadir subtarea",
+  "tareaChecklist": "Lista de comprobación",
+  "tareaChecklistNuevo": "Añadir punto",
+  "tareaComentarios": "Comentarios",
+  "tareaComentarioNuevo": "Escribe un comentario",
+  "tareaAdjuntos": "Adjuntos",
+  "tareaAdjuntar": "Adjuntar",
+  "tareaAdjuntoFoto": "Hacer una foto",
+  "tareaAdjuntoGaleria": "Elegir de la galería",
+  "tareaAdjuntoArchivo": "Elegir un archivo",
+  "tareaAdjuntoSubido": "Archivo adjuntado",
+  "tareaNoSePudoAbrir": "No se ha podido abrir el archivo.",
+  "tareaConflictoTitulo": "Alguien la ha cambiado",
+  "tareaConflictoCuerpo": "Esta tarea se ha modificado desde que la abriste. ¿Qué quieres hacer?",
+  "tareaConflictoVer": "Ver los cambios",
+  "tareaConflictoAplicar": "Aplicar igualmente",
+  "tareaConflictoDescartar": "Descartar mi cambio",
+  "tareaEliminar": "Eliminar adjunto"
 }
