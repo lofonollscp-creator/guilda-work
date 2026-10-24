@@ -1,0 +1,4504 @@
+[
+ {
+  "ruta": "/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/",
+  "ms": 2062,
+  "errores": [],
+  "medidas": {
+   "titulo": "Guilda Work — Dashboard",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 40,
+   "pequenos": 31,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "BUTTON Ocultar",
+    "BUTTON Marcar como completada: Reunir",
+    "BUTTON Marcar como completada: Presen"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 2006
+  },
+  "axe": [
+   {
+    "id": "aria-progressbar-name",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "ARIA progressbar nodes must have an accessible name",
+    "ejemplo": ".onboarding-progreso",
+    "html": "<div class=\"onboarding-progreso\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"50\"><span style=\"width: 50%\"></span></div>"
+   },
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "#rail-principal",
+    "html": "<aside class=\"icon-rail\" id=\"rail-principal\">"
+   },
+   {
+    "id": "target-size",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "All touch targets must be 24px large, or leave sufficient space",
+    "ejemplo": ".favorito-boton",
+    "html": "<button class=\"favorito-boton\" type=\"submit\" title=\"Fijar en favoritos\" aria-label=\"Fijar en favoritos\">\n        <svg class=\"icono-inline\" aria-hidden=\"true\" st"
+   }
+  ],
+  "img": "inicio__escritorio.jpg"
+ },
+ {
+  "ruta": "/hoy/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/hoy/",
+  "ms": 1173,
+  "errores": [],
+  "medidas": {
+   "titulo": "Hoy — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 5,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "BUTTON ?"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "hoy__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/",
+  "ms": 1445,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 58,
+   "pequenos": 54,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 942
+  },
+  "axe": [
+   {
+    "id": "label-title-only",
+    "impacto": "serious",
+    "nodos": 6,
+    "ayuda": "Form elements should have a visible label",
+    "ejemplo": "input[name=\"fecha_inicio\"]",
+    "html": "<input type=\"datetime-local\" name=\"fecha_inicio\" title=\"Fecha y hora de inicio\">"
+   }
+  ],
+  "img": "tareas__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/hoy",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/hoy",
+  "ms": 1167,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mi día — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 24,
+   "pequenos": 20,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "tareas_hoy__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/tablero",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/tablero",
+  "ms": 1233,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tablero de tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "section.tareas-columna.estado-en_revision",
+    "h2#col-en_revision.tareas-columna-titulo",
+    "span.tareas-columna-punto",
+    "span.tareas-columna-nombre"
+   ],
+   "tocables": 21,
+   "pequenos": 17,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "tareas_tablero__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/calendario",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/calendario",
+  "ms": 1287,
+  "errores": [],
+  "medidas": {
+   "titulo": "Calendario de tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "div.cal-weekday",
+    "div.cal-weekday",
+    "div.cal-cell.cal-seleccionable",
+    "div.cal-cell.cal-seleccionable"
+   ],
+   "tocables": 22,
+   "pequenos": 18,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 968
+  },
+  "axe": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 7,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds",
+    "ejemplo": "a[title=\"303 · Talleres Soler SL · 3T\"]",
+    "html": "<a class=\"cal-chip cal-chip-fiscal cal-capa-item-fiscal \" href=\"/fiscal/vencimientos/1/editar\" title=\"303 · Talleres Soler SL · 3T\">\n  303 · Talleres Soler SL\n<"
+   },
+   {
+    "id": "target-size",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "All touch targets must be 24px large, or leave sufficient space",
+    "ejemplo": "a[title=\"130 · María Pons Vidal · 3T\"]",
+    "html": "<a class=\"cal-chip cal-chip-fiscal cal-capa-item-fiscal \" href=\"/fiscal/vencimientos/2/editar\" title=\"130 · María Pons Vidal · 3T\">\n  130 · María Pons Vidal\n</a"
+   }
+  ],
+  "img": "tareas_calendario__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/carga",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/carga",
+  "ms": 1183,
+  "errores": [],
+  "medidas": {
+   "titulo": "Carga del equipo — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.carga-tabla",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 18,
+   "pequenos": 14,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "tareas_carga__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/recurrentes",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/recurrentes",
+  "ms": 1212,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tareas recurrentes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 31,
+   "pequenos": 27,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 888
+  },
+  "axe": [],
+  "img": "tareas_recurrentes__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/plantillas",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/plantillas",
+  "ms": 1261,
+  "errores": [],
+  "medidas": {
+   "titulo": "Plantillas de tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 20,
+   "pequenos": 15,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 940
+  },
+  "axe": [],
+  "img": "tareas_plantillas__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/automatizaciones",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/automatizaciones",
+  "ms": 1263,
+  "errores": [],
+  "medidas": {
+   "titulo": "Automatizaciones — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 23,
+   "pequenos": 19,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 998
+  },
+  "axe": [],
+  "img": "tareas_automatizaciones__escritorio.jpg"
+ },
+ {
+  "ruta": "/tareas/informes",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tareas/informes",
+  "ms": 1627,
+  "errores": [],
+  "medidas": {
+   "titulo": "Informes de tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 22,
+   "pequenos": 18,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Lista",
+    "A Mi día",
+    "A Tablero"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 2123
+  },
+  "axe": [],
+  "img": "tareas_informes__escritorio.jpg"
+ },
+ {
+  "ruta": "/notas",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/notas",
+  "ms": 1335,
+  "errores": [],
+  "medidas": {
+   "titulo": "Notas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 20,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Todas",
+    "A Compartidas conmigo",
+    "INPUT titulo"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1153
+  },
+  "axe": [],
+  "img": "notas__escritorio.jpg"
+ },
+ {
+  "ruta": "/correo/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/correo/",
+  "ms": 1387,
+  "errores": [],
+  "medidas": {
+   "titulo": "Correo — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 5,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "BUTTON ?"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [
+   {
+    "id": "aria-required-attr",
+    "impacto": "critical",
+    "nodos": 1,
+    "ayuda": "Required ARIA attributes must be provided",
+    "ejemplo": "#correo-divisor",
+    "html": "<div class=\"correo-divisor\" id=\"correo-divisor\" role=\"separator\" aria-orientation=\"vertical\" tabindex=\"0\" title=\"Arrastra para cambiar el ancho de la lista\"></d"
+   },
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "#rail-principal",
+    "html": "<aside class=\"icon-rail\" id=\"rail-principal\">"
+   }
+  ],
+  "img": "correo__escritorio.jpg"
+ },
+ {
+  "ruta": "/correo/cuentas",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/correo/cuentas",
+  "ms": 1201,
+  "errores": [],
+  "medidas": {
+   "titulo": "Cuentas de correo — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 17,
+   "pequenos": 5,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A ← Volver al correo",
+    "INPUT usa_tls",
+    "INPUT smtp_tls"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1172
+  },
+  "axe": [],
+  "img": "correo_cuentas__escritorio.jpg"
+ },
+ {
+  "ruta": "/correo/ajustes",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/correo/ajustes",
+  "ms": 1334,
+  "errores": [],
+  "medidas": {
+   "titulo": "Ajustes de correo — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 39,
+   "pequenos": 22,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A ← Volver al correo",
+    "INPUT densidad",
+    "INPUT densidad"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 3117
+  },
+  "axe": [
+   {
+    "id": "label-title-only",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Form elements should have a visible label",
+    "ejemplo": "input[name=\"modelo\"]",
+    "html": "<input type=\"text\" name=\"modelo\" maxlength=\"20\" size=\"8\" placeholder=\"Modelo (ej. 303)\" title=\"Si es para un modelo fiscal, las variables usan el próximo vencim"
+   },
+   {
+    "id": "select-name",
+    "impacto": "critical",
+    "nodos": 1,
+    "ayuda": "Select element must have an accessible name",
+    "ejemplo": "select[name=\"cliente_fiscal_id\"]",
+    "html": "<select name=\"cliente_fiscal_id\" data-buscable-listo=\"1\" class=\"selbus-origen\" aria-haspopup=\"listbox\" aria-expanded=\"false\">"
+   }
+  ],
+  "img": "correo_ajustes__escritorio.jpg"
+ },
+ {
+  "ruta": "/correo/redactar",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/correo/redactar",
+  "ms": 1083,
+  "errores": [],
+  "medidas": {
+   "titulo": "Nuevo mensaje — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 5,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "BUTTON ?"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "correo_redactar__escritorio.jpg"
+ },
+ {
+  "ruta": "/correo/programados",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/correo/programados",
+  "ms": 1027,
+  "errores": [],
+  "medidas": {
+   "titulo": "Programados — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 6,
+   "pequenos": 2,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Volver al correo"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "correo_programados__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/panel",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/panel",
+  "ms": 1397,
+  "errores": [],
+  "medidas": {
+   "titulo": "Panel fiscal — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 6,
+   "pequenos": 2,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Traspasos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1718
+  },
+  "axe": [
+   {
+    "id": "empty-table-header",
+    "impacto": "minor",
+    "nodos": 3,
+    "ayuda": "Table header text should not be empty",
+    "ejemplo": "#vencidas > .table-wrap > table > thead > tr > th:nth-child(7)",
+    "html": "<th></th>"
+   }
+  ],
+  "img": "fiscal_panel__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/vencimientos",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/vencimientos",
+  "ms": 1294,
+  "errores": [],
+  "medidas": {
+   "titulo": "Vencimientos fiscales — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 34,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Clientes",
+    "A Vencimientos",
+    "A Recordatorios"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1092
+  },
+  "axe": [
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "#rail-principal",
+    "html": "<aside class=\"icon-rail\" id=\"rail-principal\">"
+   }
+  ],
+  "img": "fiscal_vencimientos__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/vencimientos/calendario",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/vencimientos/calendario",
+  "ms": 1219,
+  "errores": [],
+  "medidas": {
+   "titulo": "Calendario fiscal — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 15,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Clientes",
+    "A Vencimientos",
+    "A Papelera"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 956
+  },
+  "axe": [
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "nav:nth-child(2)",
+    "html": "<nav class=\"tareas-subnav\">\n  <a href=\"/fiscal/clientes\">Clientes</a>\n  <a class=\"active\" href=\"/fiscal/vencimientos\">Vencimientos</a>\n  <a href=\"/fiscal/papele"
+   }
+  ],
+  "img": "fiscal_vencimientos_calendario__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/clientes",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/clientes",
+  "ms": 1344,
+  "errores": [],
+  "medidas": {
+   "titulo": "Clientes fiscales — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 33,
+   "pequenos": 29,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Clientes",
+    "A Vencimientos",
+    "A Papelera"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 924
+  },
+  "axe": [
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "#rail-principal",
+    "html": "<aside class=\"icon-rail\" id=\"rail-principal\">"
+   }
+  ],
+  "img": "fiscal_clientes__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/avisos",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/avisos",
+  "ms": 1184,
+  "errores": [],
+  "medidas": {
+   "titulo": "Avisos fiscales — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 18,
+   "pequenos": 14,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Panel fiscal",
+    "A Sin atender",
+    "A Acusados"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1329
+  },
+  "axe": [
+   {
+    "id": "aria-allowed-attr",
+    "impacto": "critical",
+    "nodos": 1,
+    "ayuda": "Elements must only use supported ARIA attributes",
+    "ejemplo": ".btn-sm.btn-secondary.btn:nth-child(4)",
+    "html": "<a class=\"btn btn-sm btn-secondary\" href=\"/fiscal/avisos?estado=abierta&amp;mios=1\" aria-pressed=\"false\">Solo los míos</a>"
+   }
+  ],
+  "img": "fiscal_avisos__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/expedientes",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/expedientes",
+  "ms": 1152,
+  "errores": [],
+  "medidas": {
+   "titulo": "Expedientes de control — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 21,
+   "pequenos": 12,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Panel fiscal",
+    "A Abiertos",
+    "A Abierto"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "fiscal_expedientes__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/traspasos",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/traspasos",
+  "ms": 1085,
+  "errores": [],
+  "medidas": {
+   "titulo": "Traspasos de clientes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 13,
+   "pequenos": 4,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Panel fiscal",
+    "BUTTON Proponer traspaso",
+    "BUTTON Guardar"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 937
+  },
+  "axe": [],
+  "img": "fiscal_traspasos__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/oficinas",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/oficinas",
+  "ms": 1513,
+  "errores": [],
+  "medidas": {
+   "titulo": "Oficinas y permisos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 32,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "INPUT nombre",
+    "BUTTON Crear",
+    "BUTTON Guardar"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 2524
+  },
+  "axe": [],
+  "img": "fiscal_oficinas__escritorio.jpg"
+ },
+ {
+  "ruta": "/fiscal/flujo",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fiscal/flujo",
+  "ms": 1098,
+  "errores": [],
+  "medidas": {
+   "titulo": "Flujo de trabajo fiscal — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 8,
+   "pequenos": 4,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "INPUT flujo_estricto",
+    "INPUT exigir_justificante",
+    "BUTTON Guardar"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "fiscal_flujo__escritorio.jpg"
+ },
+ {
+  "ruta": "/fichaje/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fichaje/",
+  "ms": 1149,
+  "errores": [],
+  "medidas": {
+   "titulo": "Fichaje — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 12,
+   "pequenos": 8,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "fichaje__escritorio.jpg"
+ },
+ {
+  "ruta": "/fichaje/historial",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fichaje/historial",
+  "ms": 1120,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mi historial de fichaje — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 15,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "fichaje_historial__escritorio.jpg"
+ },
+ {
+  "ruta": "/fichaje/ausencias",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fichaje/ausencias",
+  "ms": 1222,
+  "errores": [],
+  "medidas": {
+   "titulo": "Ausencias y vacaciones — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 18,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1062
+  },
+  "axe": [],
+  "img": "fichaje_ausencias__escritorio.jpg"
+ },
+ {
+  "ruta": "/fichaje/turnos",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fichaje/turnos",
+  "ms": 1317,
+  "errores": [],
+  "medidas": {
+   "titulo": "Cuadrante de turnos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 39,
+   "pequenos": 18,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1492
+  },
+  "axe": [],
+  "img": "fichaje_turnos__escritorio.jpg"
+ },
+ {
+  "ruta": "/fichaje/bolsa",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/fichaje/bolsa",
+  "ms": 1306,
+  "errores": [],
+  "medidas": {
+   "titulo": "Bolsa de horas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 22,
+   "pequenos": 13,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1424
+  },
+  "axe": [],
+  "img": "fichaje_bolsa__escritorio.jpg"
+ },
+ {
+  "ruta": "/fichaje/admin",
+  "vista": "escritorio",
+  "estado": 403,
+  "final": "/fichaje/admin",
+  "ms": 760,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 403 (FORBIDDEN)"
+  ],
+  "medidas": {
+   "titulo": "403 Forbidden",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Forbidden</h1>"
+   }
+  ],
+  "img": "fichaje_admin__escritorio.jpg"
+ },
+ {
+  "ruta": "/clientes/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/clientes/",
+  "ms": 1173,
+  "errores": [],
+  "medidas": {
+   "titulo": "Clientes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 15,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Plantillas de cliente",
+    "A Importar desde Excel o CSV",
+    "A + Nuevo cliente"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "clientes__escritorio.jpg"
+ },
+ {
+  "ruta": "/clientes/nuevo",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/clientes/nuevo",
+  "ms": 1447,
+  "errores": [],
+  "medidas": {
+   "titulo": "Nuevo cliente — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 30,
+   "pequenos": 13,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Clientes",
+    "A Expedientes",
+    "A Plazos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 2106
+  },
+  "axe": [],
+  "img": "clientes_nuevo__escritorio.jpg"
+ },
+ {
+  "ruta": "/expedientes/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/expedientes/",
+  "ms": 1140,
+  "errores": [],
+  "medidas": {
+   "titulo": "Expedientes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 15,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A + Nuevo expediente",
+    "A Clientes",
+    "A Expedientes"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "expedientes__escritorio.jpg"
+ },
+ {
+  "ruta": "/plazos/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/plazos/",
+  "ms": 1241,
+  "errores": [],
+  "medidas": {
+   "titulo": "Plazos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 20,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Festivos",
+    "A Clientes",
+    "A Expedientes"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1159
+  },
+  "axe": [],
+  "img": "plazos__escritorio.jpg"
+ },
+ {
+  "ruta": "/tiempo/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tiempo/",
+  "ms": 1297,
+  "errores": [],
+  "medidas": {
+   "titulo": "Horas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 27,
+   "pequenos": 16,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A PDF",
+    "A CSV",
+    "A Clientes"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1099
+  },
+  "axe": [],
+  "img": "tiempo__escritorio.jpg"
+ },
+ {
+  "ruta": "/contactos/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/contactos/",
+  "ms": 1345,
+  "errores": [],
+  "medidas": {
+   "titulo": "Contactos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 17,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Volver al correo",
+    "INPUT nombre",
+    "BUTTON Crear grupo"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1174
+  },
+  "axe": [
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "#rail-principal",
+    "html": "<aside class=\"icon-rail\" id=\"rail-principal\">"
+   }
+  ],
+  "img": "contactos__escritorio.jpg"
+ },
+ {
+  "ruta": "/citas/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/citas/",
+  "ms": 1066,
+  "errores": [],
+  "medidas": {
+   "titulo": "Agenda — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 5,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "BUTTON ?"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "citas__escritorio.jpg"
+ },
+ {
+  "ruta": "/herramientas",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/herramientas",
+  "ms": 1483,
+  "errores": [],
+  "medidas": {
+   "titulo": "Herramientas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 11,
+   "pequenos": 6,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "BUTTON Todas",
+    "BUTTON Conocimiento",
+    "BUTTON Productividad"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1397
+  },
+  "axe": [],
+  "img": "herramientas__escritorio.jpg"
+ },
+ {
+  "ruta": "/ia/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/ia/",
+  "ms": 1246,
+  "errores": [],
+  "medidas": {
+   "titulo": "Asistente IA · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "button.ia-atajo"
+   ],
+   "tocables": 19,
+   "pequenos": 12,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Ajustes",
+    "BUTTON Resumen de mi día",
+    "BUTTON ¿Qué vence esta semana?"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "ia__escritorio.jpg"
+ },
+ {
+  "ruta": "/ia/ajustes",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/ia/ajustes",
+  "ms": 1260,
+  "errores": [],
+  "medidas": {
+   "titulo": "Ajustes del Asistente IA · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 15,
+   "pequenos": 6,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A ← Volver al chat",
+    "INPUT modo_autonomo",
+    "INPUT solo_lectura"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1167
+  },
+  "axe": [],
+  "img": "ia_ajustes__escritorio.jpg"
+ },
+ {
+  "ruta": "/ajustes",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/ajustes",
+  "ms": 1387,
+  "errores": [],
+  "medidas": {
+   "titulo": "Ajustes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 15,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "BUTTON Sistema",
+    "BUTTON Claro",
+    "BUTTON Oscuro"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1668
+  },
+  "axe": [],
+  "img": "ajustes__escritorio.jpg"
+ },
+ {
+  "ruta": "/ajustes/perfil",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/ajustes/perfil",
+  "ms": 1531,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mi perfil — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 44,
+   "pequenos": 38,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Todos los ajustes",
+    "A Perfil",
+    "A Notificaciones"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 2475
+  },
+  "axe": [],
+  "img": "ajustes_perfil__escritorio.jpg"
+ },
+ {
+  "ruta": "/ajustes/cuenta",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/ajustes/cuenta?flow=dc0fe123-1f1e-4c88-8a77-8361725c99b4",
+  "ms": 1368,
+  "errores": [],
+  "medidas": {
+   "titulo": "Contraseña y email — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 12,
+   "pequenos": 8,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "BUTTON Generate new backup recovery c",
+    "INPUT password",
+    "BUTTON Save"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1673
+  },
+  "axe": [],
+  "img": "ajustes_cuenta__escritorio.jpg"
+ },
+ {
+  "ruta": "/mis-dispositivos",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/mis-dispositivos",
+  "ms": 1174,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mis dispositivos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 28,
+   "pequenos": 19,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "BUTTON Crear token",
+    "INPUT areas",
+    "INPUT areas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "mis-dispositivos__escritorio.jpg"
+ },
+ {
+  "ruta": "/seguridad/cifrado",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/seguridad/cifrado",
+  "ms": 1179,
+  "errores": [],
+  "medidas": {
+   "titulo": "Cifrado de documentos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 12,
+   "pequenos": 5,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Cifrado de documentos",
+    "A Privacidad y retención",
+    "INPUT entendido"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 898
+  },
+  "axe": [],
+  "img": "seguridad_cifrado__escritorio.jpg"
+ },
+ {
+  "ruta": "/seguridad/privacidad",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/seguridad/privacidad",
+  "ms": 1076,
+  "errores": [],
+  "medidas": {
+   "titulo": "Privacidad y retención — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 9,
+   "pequenos": 4,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Cifrado de documentos",
+    "A Privacidad y retención",
+    "BUTTON Vaciar la papelera"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "seguridad_privacidad__escritorio.jpg"
+ },
+ {
+  "ruta": "/estadisticas",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/estadisticas",
+  "ms": 1268,
+  "errores": [],
+  "medidas": {
+   "titulo": "Estadísticas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 8,
+   "pequenos": 4,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "INPUT desde",
+    "INPUT hasta",
+    "BUTTON Filtrar"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 905
+  },
+  "axe": [],
+  "img": "estadisticas__escritorio.jpg"
+ },
+ {
+  "ruta": "/historial",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/historial",
+  "ms": 1328,
+  "errores": [],
+  "medidas": {
+   "titulo": "Histórico — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 24,
+   "pequenos": 14,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "INPUT q",
+    "INPUT desde",
+    "INPUT hasta"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1300
+  },
+  "axe": [
+   {
+    "id": "empty-table-header",
+    "impacto": "minor",
+    "nodos": 1,
+    "ayuda": "Table header text should not be empty",
+    "ejemplo": "th:nth-child(6)",
+    "html": "<th></th>"
+   },
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "#rail-principal",
+    "html": "<aside class=\"icon-rail\" id=\"rail-principal\">"
+   }
+  ],
+  "img": "historial__escritorio.jpg"
+ },
+ {
+  "ruta": "/papelera",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/papelera",
+  "ms": 1064,
+  "errores": [],
+  "medidas": {
+   "titulo": "Papelera — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 5,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "BUTTON ?"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "papelera__escritorio.jpg"
+ },
+ {
+  "ruta": "/importar",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/importar",
+  "ms": 1085,
+  "errores": [],
+  "medidas": {
+   "titulo": "Importar — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 7,
+   "pequenos": 3,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "INPUT archivo",
+    "BUTTON Importar"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "importar__escritorio.jpg"
+ },
+ {
+  "ruta": "/clientes/importar/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/clientes/importar/",
+  "ms": 1177,
+  "errores": [],
+  "medidas": {
+   "titulo": "Importar clientes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 13,
+   "pequenos": 9,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Clientes",
+    "A Expedientes",
+    "A Plazos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 968
+  },
+  "axe": [],
+  "img": "clientes_importar__escritorio.jpg"
+ },
+ {
+  "ruta": "/tiquets/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tiquets/",
+  "ms": 1242,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tiquets — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 14,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Tarjetas",
+    "A Kanban",
+    "SELECT Todas las prioridades\nAlta\nNor"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 839
+  },
+  "axe": [],
+  "img": "tiquets__escritorio.jpg"
+ },
+ {
+  "ruta": "/tiquets/kanban",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tiquets/kanban",
+  "ms": 1137,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tiquets — Kanban — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 9,
+   "pequenos": 5,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Tarjetas",
+    "A Kanban",
+    "SELECT Todas las prioridades\nAlta\nNor"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "tiquets_kanban__escritorio.jpg"
+ },
+ {
+  "ruta": "/videollamadas/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/videollamadas/",
+  "ms": 1063,
+  "errores": [],
+  "medidas": {
+   "titulo": "Videollamada — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 7,
+   "pequenos": 3,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "INPUT nombre_mostrado",
+    "BUTTON Crear sala y entrar"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "videollamadas__escritorio.jpg"
+ },
+ {
+  "ruta": "/certificados/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/certificados/",
+  "ms": 2119,
+  "errores": [],
+  "medidas": {
+   "titulo": "Certificados digitales — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 30,
+   "pequenos": 19,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "A Añadir certificado",
+    "A Avisos a clientes",
+    "INPUT q"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 1357
+  },
+  "axe": [
+   {
+    "id": "aria-allowed-attr",
+    "impacto": "critical",
+    "nodos": 4,
+    "ayuda": "Elements must only use supported ARIA attributes",
+    "ejemplo": ".cert-tono-caducado",
+    "html": "<a class=\"cert-tarjeta-resumen cert-tono-caducado \" href=\"/certificados/?plazo=caducados\" aria-pressed=\"false\">\n    <strong>0</strong><span>Caducados</span>\n  <"
+   }
+  ],
+  "img": "certificados__escritorio.jpg"
+ },
+ {
+  "ruta": "/comercial/",
+  "vista": "escritorio",
+  "estado": 404,
+  "final": "/comercial/",
+  "ms": 757,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "comercial__escritorio.jpg"
+ },
+ {
+  "ruta": "/comercial/reuniones",
+  "vista": "escritorio",
+  "estado": 404,
+  "final": "/comercial/reuniones",
+  "ms": 735,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "comercial_reuniones__escritorio.jpg"
+ },
+ {
+  "ruta": "/contabilidad/",
+  "vista": "escritorio",
+  "estado": 404,
+  "final": "/contabilidad/",
+  "ms": 750,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "contabilidad__escritorio.jpg"
+ },
+ {
+  "ruta": "/abogados/",
+  "vista": "escritorio",
+  "estado": 404,
+  "final": "/abogados/",
+  "ms": 747,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "abogados__escritorio.jpg"
+ },
+ {
+  "ruta": "/inmobiliaria/",
+  "vista": "escritorio",
+  "estado": 404,
+  "final": "/inmobiliaria/",
+  "ms": 755,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "inmobiliaria__escritorio.jpg"
+ },
+ {
+  "ruta": "/juridico/",
+  "vista": "escritorio",
+  "estado": 404,
+  "final": "/juridico/",
+  "ms": 808,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "juridico__escritorio.jpg"
+ },
+ {
+  "ruta": "/marca/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/marca/",
+  "ms": 1098,
+  "errores": [],
+  "medidas": {
+   "titulo": "Marca del despacho — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 11,
+   "pequenos": 7,
+   "ejemplos_pequenos": [
+    "BUTTON ?",
+    "INPUT nombre",
+    "INPUT usar_color",
+    "INPUT color"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.6,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "marca__escritorio.jpg"
+ },
+ {
+  "ruta": "/login",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/login?flow=32c3e35e-b7c4-42bd-bda6-7179f1d27c9e",
+  "ms": 941,
+  "errores": [],
+  "medidas": {
+   "titulo": "Iniciar sesión — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 3,
+   "pequenos": 3,
+   "ejemplos_pequenos": [
+    "INPUT identifier",
+    "INPUT password",
+    "BUTTON ENTRAR"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.3,
+   "alto": 800
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"es\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 7,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": ".auth-logo",
+    "html": "<img class=\"auth-logo\" src=\"/static/logo.png?v=1785878332\" alt=\"Guilda Work\">"
+   }
+  ],
+  "img": "login__escritorio.jpg"
+ },
+ {
+  "ruta": "/registro",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/registro?flow=14b1fff9-2f98-4ae1-9b0f-5a8b71e230f4",
+  "ms": 848,
+  "errores": [],
+  "medidas": {
+   "titulo": "Crear cuenta — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 3,
+   "pequenos": 2,
+   "ejemplos_pequenos": [
+    "INPUT traits.email",
+    "INPUT password"
+   ],
+   "sinAlt": 0,
+   "texto_min": 13.2,
+   "alto": 800
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"es\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 5,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "img",
+    "html": "<img class=\"auth-logo\" src=\"/static/logo.png?v=1785878332\" alt=\"Guilda Work\">"
+   }
+  ],
+  "img": "registro__escritorio.jpg"
+ },
+ {
+  "ruta": "/recuperar-contrasena",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/recuperar-contrasena?flow=c3a5a9a2-fdf5-401a-8130-ba1fd3bf929b",
+  "ms": 818,
+  "errores": [],
+  "medidas": {
+   "titulo": "Recuperar contraseña — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 2,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "INPUT email"
+   ],
+   "sinAlt": 0,
+   "texto_min": 13.2,
+   "alto": 800
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"es\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 5,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "img",
+    "html": "<img class=\"auth-logo\" src=\"/static/logo.png?v=1785878332\" alt=\"Guilda Work\">"
+   }
+  ],
+  "img": "recuperar-contrasena__escritorio.jpg"
+ },
+ {
+  "ruta": "/portal/solicitar-acceso",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/portal/solicitar-acceso",
+  "ms": 816,
+  "errores": [],
+  "medidas": {
+   "titulo": "Solicitar acceso al portal — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 6,
+   "pequenos": 4,
+   "ejemplos_pequenos": [
+    "INPUT nombre",
+    "INPUT email",
+    "INPUT nif",
+    "INPUT checkbox"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12,
+   "alto": 800
+  },
+  "axe": [
+   {
+    "id": "aria-hidden-focus",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "ARIA hidden element must not be focusable or contain focusable elements",
+    "ejemplo": ".altcha-logo",
+    "html": "<a target=\"_blank\" class=\"altcha-logo\" aria-hidden=\"true\" href=\"https://altcha.org/\" aria-label=\"Visit Altcha.org\">"
+   }
+  ],
+  "img": "portal_solicitar-acceso__escritorio.jpg"
+ },
+ {
+  "ruta": "/docs/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/docs/",
+  "ms": 956,
+  "errores": [],
+  "medidas": {
+   "titulo": "Guía para desarrolladores — Guilda Work Developers",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 18,
+   "pequenos": 17,
+   "ejemplos_pequenos": [
+    "BUTTON 🔍\nBuscar en la documentación.",
+    "A ← Volver a la app",
+    "A Guía para desarrolladores",
+    "A Autenticación"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.18,
+   "alto": 1823
+  },
+  "axe": [
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": ".docs-topbar-links",
+    "html": "<nav class=\"docs-topbar-links\">\n      <a href=\"/\">← Volver a la app</a>\n    </nav>"
+   }
+  ],
+  "img": "docs__escritorio.jpg"
+ },
+ {
+  "ruta": "/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/",
+  "ms": 1341,
+  "errores": [],
+  "medidas": {
+   "titulo": "Guilda Work — Dashboard",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 36,
+   "pequenos": 21,
+   "ejemplos_pequenos": [
+    "BUTTON Marcar como completada: Reunir",
+    "BUTTON Marcar como completada: Presen",
+    "BUTTON Fijar en favoritos",
+    "BUTTON folder"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 3541
+  },
+  "axe": [
+   {
+    "id": "aria-progressbar-name",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "ARIA progressbar nodes must have an accessible name",
+    "ejemplo": ".onboarding-progreso",
+    "html": "<div class=\"onboarding-progreso\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"50\"><span style=\"width: 50%\"></span></div>"
+   },
+   {
+    "id": "target-size",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "All touch targets must be 24px large, or leave sufficient space",
+    "ejemplo": ".favorito-boton",
+    "html": "<button class=\"favorito-boton\" type=\"submit\" title=\"Fijar en favoritos\" aria-label=\"Fijar en favoritos\">\n        <svg class=\"icono-inline\" aria-hidden=\"true\" st"
+   }
+  ],
+  "img": "inicio__movil.jpg"
+ },
+ {
+  "ruta": "/hoy/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/hoy/",
+  "ms": 1095,
+  "errores": [],
+  "medidas": {
+   "titulo": "Hoy — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 1,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "hoy__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/",
+  "ms": 1240,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 54,
+   "pequenos": 28,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 2372
+  },
+  "axe": [
+   {
+    "id": "label-title-only",
+    "impacto": "serious",
+    "nodos": 6,
+    "ayuda": "Form elements should have a visible label",
+    "ejemplo": "input[name=\"fecha_inicio\"]",
+    "html": "<input type=\"datetime-local\" name=\"fecha_inicio\" title=\"Fecha y hora de inicio\">"
+   }
+  ],
+  "img": "tareas__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/hoy",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/hoy",
+  "ms": 1105,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mi día — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 20,
+   "pequenos": 13,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 986
+  },
+  "axe": [],
+  "img": "tareas_hoy__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/tablero",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/tablero",
+  "ms": 1089,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tablero de tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 17,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "tareas_tablero__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/calendario",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/calendario",
+  "ms": 1151,
+  "errores": [],
+  "medidas": {
+   "titulo": "Calendario de tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 18,
+   "pequenos": 14,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1052
+  },
+  "axe": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 8,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds",
+    "ejemplo": "a[title=\"303 · Talleres Soler SL · 3T\"]",
+    "html": "<a class=\"cal-chip cal-chip-fiscal cal-capa-item-fiscal \" href=\"/fiscal/vencimientos/1/editar\" title=\"303 · Talleres Soler SL · 3T\">\n  303 · Talleres Soler SL\n<"
+   },
+   {
+    "id": "target-size",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "All touch targets must be 24px large, or leave sufficient space",
+    "ejemplo": "a[title=\"130 · María Pons Vidal · 3T\"]",
+    "html": "<a class=\"cal-chip cal-chip-fiscal cal-capa-item-fiscal \" href=\"/fiscal/vencimientos/2/editar\" title=\"130 · María Pons Vidal · 3T\">\n  130 · María Pons Vidal\n</a"
+   }
+  ],
+  "img": "tareas_calendario__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/carga",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/carga",
+  "ms": 1088,
+  "errores": [],
+  "medidas": {
+   "titulo": "Carga del equipo — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a.active",
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 14,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "tareas_carga__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/recurrentes",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/recurrentes",
+  "ms": 1117,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tareas recurrentes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a",
+    "a.active"
+   ],
+   "tocables": 27,
+   "pequenos": 12,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1316
+  },
+  "axe": [],
+  "img": "tareas_recurrentes__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/plantillas",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/plantillas",
+  "ms": 1113,
+  "errores": [],
+  "medidas": {
+   "titulo": "Plantillas de tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a.active",
+    "a"
+   ],
+   "tocables": 16,
+   "pequenos": 11,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1100
+  },
+  "axe": [],
+  "img": "tareas_plantillas__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/automatizaciones",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/automatizaciones",
+  "ms": 1082,
+  "errores": [],
+  "medidas": {
+   "titulo": "Automatizaciones — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 19,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1328
+  },
+  "axe": [],
+  "img": "tareas_automatizaciones__movil.jpg"
+ },
+ {
+  "ruta": "/tareas/informes",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tareas/informes",
+  "ms": 1447,
+  "errores": [],
+  "medidas": {
+   "titulo": "Informes de tareas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a",
+    "a.active"
+   ],
+   "tocables": 18,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "A Lista",
+    "A Mi día",
+    "A Tablero",
+    "A Calendario"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 2904
+  },
+  "axe": [],
+  "img": "tareas_informes__movil.jpg"
+ },
+ {
+  "ruta": "/notas",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/notas",
+  "ms": 1105,
+  "errores": [],
+  "medidas": {
+   "titulo": "Notas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 16,
+   "pequenos": 3,
+   "ejemplos_pequenos": [
+    "A Todas",
+    "A Compartidas conmigo",
+    "INPUT fijada"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1968
+  },
+  "axe": [],
+  "img": "notas__movil.jpg"
+ },
+ {
+  "ruta": "/correo/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/correo/",
+  "ms": 1104,
+  "errores": [],
+  "medidas": {
+   "titulo": "Correo — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "p.correo-rail-vacio"
+   ],
+   "tocables": 1,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "correo__movil.jpg"
+ },
+ {
+  "ruta": "/correo/cuentas",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/correo/cuentas",
+  "ms": 1034,
+  "errores": [],
+  "medidas": {
+   "titulo": "Cuentas de correo — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 13,
+   "pequenos": 2,
+   "ejemplos_pequenos": [
+    "INPUT usa_tls",
+    "INPUT smtp_tls"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1217
+  },
+  "axe": [
+   {
+    "id": "target-size",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "All touch targets must be 24px large, or leave sufficient space",
+    "ejemplo": "input[name=\"usa_tls\"]",
+    "html": "<input type=\"checkbox\" name=\"usa_tls\" checked=\"\">"
+   }
+  ],
+  "img": "correo_cuentas__movil.jpg"
+ },
+ {
+  "ruta": "/correo/ajustes",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/correo/ajustes",
+  "ms": 1184,
+  "errores": [],
+  "medidas": {
+   "titulo": "Ajustes de correo — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 35,
+   "pequenos": 13,
+   "ejemplos_pequenos": [
+    "INPUT densidad",
+    "INPUT densidad",
+    "INPUT tam_letra",
+    "INPUT tam_letra"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 4800
+  },
+  "axe": [
+   {
+    "id": "label-title-only",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Form elements should have a visible label",
+    "ejemplo": "input[name=\"modelo\"]",
+    "html": "<input type=\"text\" name=\"modelo\" maxlength=\"20\" size=\"8\" placeholder=\"Modelo (ej. 303)\" title=\"Si es para un modelo fiscal, las variables usan el próximo vencim"
+   },
+   {
+    "id": "select-name",
+    "impacto": "critical",
+    "nodos": 1,
+    "ayuda": "Select element must have an accessible name",
+    "ejemplo": "select[name=\"cliente_fiscal_id\"]",
+    "html": "<select name=\"cliente_fiscal_id\" data-buscable-listo=\"1\" class=\"selbus-origen\" aria-haspopup=\"listbox\" aria-expanded=\"false\">"
+   }
+  ],
+  "img": "correo_ajustes__movil.jpg"
+ },
+ {
+  "ruta": "/correo/redactar",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/correo/redactar",
+  "ms": 1043,
+  "errores": [],
+  "medidas": {
+   "titulo": "Nuevo mensaje — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 1,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "correo_redactar__movil.jpg"
+ },
+ {
+  "ruta": "/correo/programados",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/correo/programados",
+  "ms": 1067,
+  "errores": [],
+  "medidas": {
+   "titulo": "Programados — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 2,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "correo_programados__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/panel",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/panel",
+  "ms": 1178,
+  "errores": [],
+  "medidas": {
+   "titulo": "Panel fiscal — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.historial-table",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 2,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 3232
+  },
+  "axe": [
+   {
+    "id": "empty-table-header",
+    "impacto": "minor",
+    "nodos": 3,
+    "ayuda": "Table header text should not be empty",
+    "ejemplo": "#vencidas > .table-wrap > table > thead > tr > th:nth-child(7)",
+    "html": "<th></th>"
+   },
+   {
+    "id": "scrollable-region-focusable",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Scrollable region must have keyboard access",
+    "ejemplo": "#carga > .table-wrap",
+    "html": "<div class=\"table-wrap\">"
+   }
+  ],
+  "img": "fiscal_panel__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/vencimientos",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/vencimientos",
+  "ms": 1138,
+  "errores": [],
+  "medidas": {
+   "titulo": "Vencimientos fiscales — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a"
+   ],
+   "tocables": 30,
+   "pequenos": 13,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Vencimientos",
+    "A Recordatorios",
+    "A Papelera"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1927
+  },
+  "axe": [
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "nav:nth-child(2)",
+    "html": "<nav class=\"tareas-subnav\">\n  <a href=\"/fiscal/clientes\">Clientes</a>\n  <a class=\"active\" href=\"/fiscal/vencimientos\">Vencimientos</a>\n  <a href=\"/fiscal/record"
+   }
+  ],
+  "img": "fiscal_vencimientos__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/vencimientos/calendario",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/vencimientos/calendario",
+  "ms": 1113,
+  "errores": [],
+  "medidas": {
+   "titulo": "Calendario fiscal — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 11,
+   "pequenos": 5,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Vencimientos",
+    "A Papelera",
+    "A Lista"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 972
+  },
+  "axe": [
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "nav:nth-child(2)",
+    "html": "<nav class=\"tareas-subnav\">\n  <a href=\"/fiscal/clientes\">Clientes</a>\n  <a class=\"active\" href=\"/fiscal/vencimientos\">Vencimientos</a>\n  <a href=\"/fiscal/papele"
+   }
+  ],
+  "img": "fiscal_vencimientos_calendario__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/clientes",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/clientes",
+  "ms": 1171,
+  "errores": [],
+  "medidas": {
+   "titulo": "Clientes fiscales — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 29,
+   "pequenos": 7,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Vencimientos",
+    "A Papelera",
+    "BUTTON Construccions Ferrer SA"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1682
+  },
+  "axe": [],
+  "img": "fiscal_clientes__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/avisos",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/avisos",
+  "ms": 1093,
+  "errores": [],
+  "medidas": {
+   "titulo": "Avisos fiscales — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 14,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "INPUT activo"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1752
+  },
+  "axe": [
+   {
+    "id": "aria-allowed-attr",
+    "impacto": "critical",
+    "nodos": 1,
+    "ayuda": "Elements must only use supported ARIA attributes",
+    "ejemplo": ".btn-sm.btn-secondary.btn:nth-child(4)",
+    "html": "<a class=\"btn btn-sm btn-secondary\" href=\"/fiscal/avisos?estado=abierta&amp;mios=1\" aria-pressed=\"false\">Solo los míos</a>"
+   }
+  ],
+  "img": "fiscal_avisos__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/expedientes",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/expedientes",
+  "ms": 1047,
+  "errores": [],
+  "medidas": {
+   "titulo": "Expedientes de control — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 17,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1146
+  },
+  "axe": [],
+  "img": "fiscal_expedientes__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/traspasos",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/traspasos",
+  "ms": 1045,
+  "errores": [],
+  "medidas": {
+   "titulo": "Traspasos de clientes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 9,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1113
+  },
+  "axe": [],
+  "img": "fiscal_traspasos__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/oficinas",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/oficinas",
+  "ms": 1214,
+  "errores": [],
+  "medidas": {
+   "titulo": "Oficinas y permisos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.historial-table",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 28,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 3124
+  },
+  "axe": [],
+  "img": "fiscal_oficinas__movil.jpg"
+ },
+ {
+  "ruta": "/fiscal/flujo",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fiscal/flujo",
+  "ms": 1000,
+  "errores": [],
+  "medidas": {
+   "titulo": "Flujo de trabajo fiscal — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 4,
+   "pequenos": 2,
+   "ejemplos_pequenos": [
+    "INPUT flujo_estricto",
+    "INPUT exigir_justificante"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "fiscal_flujo__movil.jpg"
+ },
+ {
+  "ruta": "/fichaje/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fichaje/",
+  "ms": 998,
+  "errores": [],
+  "medidas": {
+   "titulo": "Fichaje — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 8,
+   "pequenos": 6,
+   "ejemplos_pequenos": [
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos",
+    "A Ausencias"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "fichaje__movil.jpg"
+ },
+ {
+  "ruta": "/fichaje/historial",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fichaje/historial",
+  "ms": 1019,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mi historial de fichaje — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 11,
+   "pequenos": 6,
+   "ejemplos_pequenos": [
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos",
+    "A Ausencias"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "fichaje_historial__movil.jpg"
+ },
+ {
+  "ruta": "/fichaje/ausencias",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fichaje/ausencias",
+  "ms": 1073,
+  "errores": [],
+  "medidas": {
+   "titulo": "Ausencias y vacaciones — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a.active",
+    "a",
+    "a",
+    "a"
+   ],
+   "tocables": 14,
+   "pequenos": 8,
+   "ejemplos_pequenos": [
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos",
+    "A Ausencias"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1183
+  },
+  "axe": [],
+  "img": "fichaje_ausencias__movil.jpg"
+ },
+ {
+  "ruta": "/fichaje/turnos",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fichaje/turnos",
+  "ms": 1128,
+  "errores": [],
+  "medidas": {
+   "titulo": "Cuadrante de turnos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a.active",
+    "a",
+    "a"
+   ],
+   "tocables": 35,
+   "pequenos": 8,
+   "ejemplos_pequenos": [
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos",
+    "A Ausencias"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1844
+  },
+  "axe": [],
+  "img": "fichaje_turnos__movil.jpg"
+ },
+ {
+  "ruta": "/fichaje/bolsa",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/fichaje/bolsa",
+  "ms": 1084,
+  "errores": [],
+  "medidas": {
+   "titulo": "Bolsa de horas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a",
+    "a.active",
+    "a"
+   ],
+   "tocables": 18,
+   "pequenos": 7,
+   "ejemplos_pequenos": [
+    "A Fichar",
+    "A Mi historial",
+    "A Mis datos",
+    "A Ausencias"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1680
+  },
+  "axe": [
+   {
+    "id": "scrollable-region-focusable",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Scrollable region must have keyboard access",
+    "ejemplo": ".table-wrap",
+    "html": "<div class=\"table-wrap\">"
+   }
+  ],
+  "img": "fichaje_bolsa__movil.jpg"
+ },
+ {
+  "ruta": "/fichaje/admin",
+  "vista": "movil",
+  "estado": 403,
+  "final": "/fichaje/admin",
+  "ms": 778,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 403 (FORBIDDEN)"
+  ],
+  "medidas": {
+   "titulo": "403 Forbidden",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Forbidden</h1>"
+   }
+  ],
+  "img": "fichaje_admin__movil.jpg"
+ },
+ {
+  "ruta": "/clientes/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/clientes/",
+  "ms": 1064,
+  "errores": [],
+  "medidas": {
+   "titulo": "Clientes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.historial-table",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 11,
+   "pequenos": 4,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Expedientes",
+    "A Plazos",
+    "A Horas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1118
+  },
+  "axe": [],
+  "img": "clientes__movil.jpg"
+ },
+ {
+  "ruta": "/clientes/nuevo",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/clientes/nuevo",
+  "ms": 1165,
+  "errores": [],
+  "medidas": {
+   "titulo": "Nuevo cliente — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 26,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Expedientes",
+    "A Plazos",
+    "A Horas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 2195
+  },
+  "axe": [],
+  "img": "clientes_nuevo__movil.jpg"
+ },
+ {
+  "ruta": "/expedientes/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/expedientes/",
+  "ms": 1131,
+  "errores": [],
+  "medidas": {
+   "titulo": "Expedientes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 11,
+   "pequenos": 5,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Expedientes",
+    "A Plazos",
+    "A Horas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 856
+  },
+  "axe": [],
+  "img": "expedientes__movil.jpg"
+ },
+ {
+  "ruta": "/plazos/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/plazos/",
+  "ms": 1104,
+  "errores": [],
+  "medidas": {
+   "titulo": "Plazos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 16,
+   "pequenos": 6,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Expedientes",
+    "A Plazos",
+    "A Horas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1247
+  },
+  "axe": [],
+  "img": "plazos__movil.jpg"
+ },
+ {
+  "ruta": "/tiempo/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tiempo/",
+  "ms": 1157,
+  "errores": [],
+  "medidas": {
+   "titulo": "Horas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 23,
+   "pequenos": 6,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Expedientes",
+    "A Plazos",
+    "A Horas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1462
+  },
+  "axe": [],
+  "img": "tiempo__movil.jpg"
+ },
+ {
+  "ruta": "/contactos/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/contactos/",
+  "ms": 1106,
+  "errores": [],
+  "medidas": {
+   "titulo": "Contactos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 13,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1534
+  },
+  "axe": [],
+  "img": "contactos__movil.jpg"
+ },
+ {
+  "ruta": "/citas/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/citas/",
+  "ms": 1016,
+  "errores": [],
+  "medidas": {
+   "titulo": "Agenda — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 1,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "citas__movil.jpg"
+ },
+ {
+  "ruta": "/herramientas",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/herramientas",
+  "ms": 1310,
+  "errores": [],
+  "medidas": {
+   "titulo": "Herramientas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 7,
+   "pequenos": 5,
+   "ejemplos_pequenos": [
+    "BUTTON Todas",
+    "BUTTON Conocimiento",
+    "BUTTON Productividad",
+    "BUTTON Documentos y datos"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 2930
+  },
+  "axe": [],
+  "img": "herramientas__movil.jpg"
+ },
+ {
+  "ruta": "/ia/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/ia/",
+  "ms": 1047,
+  "errores": [],
+  "medidas": {
+   "titulo": "Asistente IA · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "button.ia-atajo",
+    "button.ia-atajo",
+    "button.ia-atajo",
+    "button.ia-atajo"
+   ],
+   "tocables": 15,
+   "pequenos": 10,
+   "ejemplos_pequenos": [
+    "BUTTON Resumen de mi día",
+    "BUTTON ¿Qué vence esta semana?",
+    "BUTTON Correos importantes sin leer",
+    "BUTTON Tareas atrasadas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "ia__movil.jpg"
+ },
+ {
+  "ruta": "/ia/ajustes",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/ia/ajustes",
+  "ms": 1056,
+  "errores": [],
+  "medidas": {
+   "titulo": "Ajustes del Asistente IA · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 11,
+   "pequenos": 2,
+   "ejemplos_pequenos": [
+    "INPUT modo_autonomo",
+    "INPUT solo_lectura"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1724
+  },
+  "axe": [],
+  "img": "ia_ajustes__movil.jpg"
+ },
+ {
+  "ruta": "/ajustes",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/ajustes",
+  "ms": 1218,
+  "errores": [],
+  "medidas": {
+   "titulo": "Ajustes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 11,
+   "pequenos": 9,
+   "ejemplos_pequenos": [
+    "BUTTON Sistema",
+    "BUTTON Claro",
+    "BUTTON Oscuro",
+    "BUTTON Normal"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 2934
+  },
+  "axe": [],
+  "img": "ajustes__movil.jpg"
+ },
+ {
+  "ruta": "/ajustes/perfil",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/ajustes/perfil",
+  "ms": 1405,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mi perfil — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a",
+    "a"
+   ],
+   "tocables": 40,
+   "pequenos": 24,
+   "ejemplos_pequenos": [
+    "A Perfil",
+    "A Notificaciones",
+    "A Apariencia",
+    "A Seguridad"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 3726
+  },
+  "axe": [],
+  "img": "ajustes_perfil__movil.jpg"
+ },
+ {
+  "ruta": "/ajustes/cuenta",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/ajustes/cuenta?flow=72327eef-a250-4ba5-a6b9-c4e2a0fe53be",
+  "ms": 1160,
+  "errores": [],
+  "medidas": {
+   "titulo": "Contraseña y email — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 8,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1762
+  },
+  "axe": [],
+  "img": "ajustes_cuenta__movil.jpg"
+ },
+ {
+  "ruta": "/mis-dispositivos",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/mis-dispositivos",
+  "ms": 1077,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mis dispositivos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 24,
+   "pequenos": 17,
+   "ejemplos_pequenos": [
+    "INPUT areas",
+    "INPUT areas",
+    "INPUT areas",
+    "INPUT areas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1359
+  },
+  "axe": [
+   {
+    "id": "target-size",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "All touch targets must be 24px large, or leave sufficient space",
+    "ejemplo": "input[value=\"certificados\"]",
+    "html": "<input type=\"checkbox\" name=\"areas\" value=\"certificados\">"
+   }
+  ],
+  "img": "mis-dispositivos__movil.jpg"
+ },
+ {
+  "ruta": "/seguridad/cifrado",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/seguridad/cifrado",
+  "ms": 1053,
+  "errores": [],
+  "medidas": {
+   "titulo": "Cifrado de documentos — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 8,
+   "pequenos": 3,
+   "ejemplos_pequenos": [
+    "A Cifrado de documentos",
+    "A Privacidad y retención",
+    "INPUT entendido"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 974
+  },
+  "axe": [],
+  "img": "seguridad_cifrado__movil.jpg"
+ },
+ {
+  "ruta": "/seguridad/privacidad",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/seguridad/privacidad",
+  "ms": 990,
+  "errores": [],
+  "medidas": {
+   "titulo": "Privacidad y retención — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 5,
+   "pequenos": 2,
+   "ejemplos_pequenos": [
+    "A Cifrado de documentos",
+    "A Privacidad y retención"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "seguridad_privacidad__movil.jpg"
+ },
+ {
+  "ruta": "/estadisticas",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/estadisticas",
+  "ms": 1096,
+  "errores": [],
+  "medidas": {
+   "titulo": "Estadísticas — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.historial-table",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 4,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1203
+  },
+  "axe": [
+   {
+    "id": "scrollable-region-focusable",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Scrollable region must have keyboard access",
+    "ejemplo": ".stats-section:nth-child(4) > .table-wrap",
+    "html": "<div class=\"table-wrap\">"
+   }
+  ],
+  "img": "estadisticas__movil.jpg"
+ },
+ {
+  "ruta": "/historial",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/historial",
+  "ms": 1196,
+  "errores": [],
+  "medidas": {
+   "titulo": "Histórico — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.historial-table",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 20,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 3044
+  },
+  "axe": [
+   {
+    "id": "empty-table-header",
+    "impacto": "minor",
+    "nodos": 1,
+    "ayuda": "Table header text should not be empty",
+    "ejemplo": "th:nth-child(6)",
+    "html": "<th></th>"
+   }
+  ],
+  "img": "historial__movil.jpg"
+ },
+ {
+  "ruta": "/papelera",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/papelera",
+  "ms": 993,
+  "errores": [],
+  "medidas": {
+   "titulo": "Papelera — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 1,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "papelera__movil.jpg"
+ },
+ {
+  "ruta": "/importar",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/importar",
+  "ms": 1017,
+  "errores": [],
+  "medidas": {
+   "titulo": "Importar — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 3,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "INPUT archivo"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "importar__movil.jpg"
+ },
+ {
+  "ruta": "/clientes/importar/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/clientes/importar/",
+  "ms": 1047,
+  "errores": [],
+  "medidas": {
+   "titulo": "Importar clientes — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 9,
+   "pequenos": 4,
+   "ejemplos_pequenos": [
+    "A Clientes",
+    "A Expedientes",
+    "A Plazos",
+    "A Horas"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 1040
+  },
+  "axe": [],
+  "img": "clientes_importar__movil.jpg"
+ },
+ {
+  "ruta": "/tiquets/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tiquets/",
+  "ms": 1073,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tiquets — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 10,
+   "pequenos": 5,
+   "ejemplos_pequenos": [
+    "A Tarjetas",
+    "A Kanban",
+    "INPUT titulo",
+    "INPUT descripcion"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 990
+  },
+  "axe": [],
+  "img": "tiquets__movil.jpg"
+ },
+ {
+  "ruta": "/tiquets/kanban",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tiquets/kanban",
+  "ms": 1065,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tiquets — Kanban — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 5,
+   "pequenos": 2,
+   "ejemplos_pequenos": [
+    "A Tarjetas",
+    "A Kanban"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 971
+  },
+  "axe": [],
+  "img": "tiquets_kanban__movil.jpg"
+ },
+ {
+  "ruta": "/videollamadas/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/videollamadas/",
+  "ms": 990,
+  "errores": [],
+  "medidas": {
+   "titulo": "Videollamada — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 3,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "videollamadas__movil.jpg"
+ },
+ {
+  "ruta": "/certificados/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/certificados/",
+  "ms": 1266,
+  "errores": [],
+  "medidas": {
+   "titulo": "Certificados digitales — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.historial-table",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 26,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 2083
+  },
+  "axe": [
+   {
+    "id": "aria-allowed-attr",
+    "impacto": "critical",
+    "nodos": 4,
+    "ayuda": "Elements must only use supported ARIA attributes",
+    "ejemplo": ".cert-tono-caducado",
+    "html": "<a class=\"cert-tarjeta-resumen cert-tono-caducado \" href=\"/certificados/?plazo=caducados\" aria-pressed=\"false\">\n    <strong>0</strong><span>Caducados</span>\n  <"
+   }
+  ],
+  "img": "certificados__movil.jpg"
+ },
+ {
+  "ruta": "/comercial/",
+  "vista": "movil",
+  "estado": 404,
+  "final": "/comercial/",
+  "ms": 767,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "comercial__movil.jpg"
+ },
+ {
+  "ruta": "/comercial/reuniones",
+  "vista": "movil",
+  "estado": 404,
+  "final": "/comercial/reuniones",
+  "ms": 767,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "comercial_reuniones__movil.jpg"
+ },
+ {
+  "ruta": "/contabilidad/",
+  "vista": "movil",
+  "estado": 404,
+  "final": "/contabilidad/",
+  "ms": 780,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "contabilidad__movil.jpg"
+ },
+ {
+  "ruta": "/abogados/",
+  "vista": "movil",
+  "estado": 404,
+  "final": "/abogados/",
+  "ms": 751,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "abogados__movil.jpg"
+ },
+ {
+  "ruta": "/inmobiliaria/",
+  "vista": "movil",
+  "estado": 404,
+  "final": "/inmobiliaria/",
+  "ms": 770,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "inmobiliaria__movil.jpg"
+ },
+ {
+  "ruta": "/juridico/",
+  "vista": "movil",
+  "estado": 404,
+  "final": "/juridico/",
+  "ms": 797,
+  "errores": [
+   "consola: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ],
+  "medidas": {
+   "titulo": "404 Not Found",
+   "lang": "en",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 0,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 16,
+   "alto": 76
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"en\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 2,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "h1",
+    "html": "<h1>Not Found</h1>"
+   }
+  ],
+  "img": "juridico__movil.jpg"
+ },
+ {
+  "ruta": "/marca/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/marca/",
+  "ms": 1010,
+  "errores": [],
+  "medidas": {
+   "titulo": "Marca del despacho — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 7,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "INPUT usar_color"
+   ],
+   "sinAlt": 0,
+   "texto_min": 0,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "marca__movil.jpg"
+ },
+ {
+  "ruta": "/login",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/login?flow=3b526488-3988-4e2d-92f0-035d8be96c15",
+  "ms": 866,
+  "errores": [],
+  "medidas": {
+   "titulo": "Iniciar sesión — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 3,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 12.3,
+   "alto": 844
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"es\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 7,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": ".auth-logo",
+    "html": "<img class=\"auth-logo\" src=\"/static/logo.png?v=1785878332\" alt=\"Guilda Work\">"
+   }
+  ],
+  "img": "login__movil.jpg"
+ },
+ {
+  "ruta": "/registro",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/registro?flow=fa917aff-8ae4-40de-a418-0c768780b435",
+  "ms": 814,
+  "errores": [],
+  "medidas": {
+   "titulo": "Crear cuenta — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 3,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 13.2,
+   "alto": 844
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"es\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 5,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "img",
+    "html": "<img class=\"auth-logo\" src=\"/static/logo.png?v=1785878332\" alt=\"Guilda Work\">"
+   }
+  ],
+  "img": "registro__movil.jpg"
+ },
+ {
+  "ruta": "/recuperar-contrasena",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/recuperar-contrasena?flow=e7ea84e8-a365-42c4-b7c6-107f7283d94f",
+  "ms": 783,
+  "errores": [],
+  "medidas": {
+   "titulo": "Recuperar contraseña — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 2,
+   "pequenos": 0,
+   "ejemplos_pequenos": [],
+   "sinAlt": 0,
+   "texto_min": 13.2,
+   "alto": 844
+  },
+  "axe": [
+   {
+    "id": "landmark-one-main",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Document should have one main landmark",
+    "ejemplo": "html",
+    "html": "<html lang=\"es\">"
+   },
+   {
+    "id": "region",
+    "impacto": "moderate",
+    "nodos": 5,
+    "ayuda": "All page content should be contained by landmarks",
+    "ejemplo": "img",
+    "html": "<img class=\"auth-logo\" src=\"/static/logo.png?v=1785878332\" alt=\"Guilda Work\">"
+   }
+  ],
+  "img": "recuperar-contrasena__movil.jpg"
+ },
+ {
+  "ruta": "/portal/solicitar-acceso",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/portal/solicitar-acceso",
+  "ms": 792,
+  "errores": [],
+  "medidas": {
+   "titulo": "Solicitar acceso al portal — Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 6,
+   "pequenos": 1,
+   "ejemplos_pequenos": [
+    "INPUT checkbox"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12,
+   "alto": 844
+  },
+  "axe": [
+   {
+    "id": "aria-hidden-focus",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "ARIA hidden element must not be focusable or contain focusable elements",
+    "ejemplo": ".altcha-logo",
+    "html": "<a target=\"_blank\" class=\"altcha-logo\" aria-hidden=\"true\" href=\"https://altcha.org/\" aria-label=\"Visit Altcha.org\">"
+   }
+  ],
+  "img": "portal_solicitar-acceso__movil.jpg"
+ },
+ {
+  "ruta": "/docs/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/docs/",
+  "ms": 956,
+  "errores": [],
+  "medidas": {
+   "titulo": "Guía para desarrolladores — Guilda Work Developers",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 18,
+   "pequenos": 16,
+   "ejemplos_pequenos": [
+    "A Guía para desarrolladores",
+    "A Autenticación",
+    "A Primera llamada a la API",
+    "A Referencia de la API"
+   ],
+   "sinAlt": 0,
+   "texto_min": 9.945,
+   "alto": 3472
+  },
+  "axe": [
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": ".docs-topbar-links",
+    "html": "<nav class=\"docs-topbar-links\">\n      <a href=\"/\">← Volver a la app</a>\n    </nav>"
+   }
+  ],
+  "img": "docs__movil.jpg"
+ }
+]

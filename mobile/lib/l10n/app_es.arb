@@ -346,5 +346,19 @@
   "ausenciaEstadoRechazada": "Rechazada",
   "ausenciaEstadoCancelada": "Cancelada",
   "ausenciasMantener": "Mantenerla",
-  "ausenciasCancelarAccion": "Cancelar ausencia"
+  "ausenciasCancelarAccion": "Cancelar ausencia",
+  "navInicio": "Inicio",
+  "navTareas": "Tareas",
+  "navCorreo": "Correo",
+  "navFichaje": "Fichaje",
+  "navMas": "Más",
+  "masTitulo": "Más",
+  "despachoActivoTitulo": "Despacho activo",
+  "despachoCambiarTitulo": "Cambiar de despacho",
+  "despachoPrincipal": "Principal",
+  "actualizarTitulo": "Actualiza la app",
+  "actualizarCuerpo": "Esta versión de Guilda Work ya no es compatible con el servidor. Instala la última versión para seguir trabajando.",
+  "actualizarBoton": "Ir a la tienda",
+  "arranqueSinConexion": "No se ha podido conectar con el servidor.",
+  "arranqueReintentar": "Reintentar"
 }

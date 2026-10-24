@@ -79,6 +79,8 @@ dependencies:
   # Fichaje 100% compliant (Fase G3): ubicación opcional al fichar, solo
   # si el tenant la activa (ver Usuario.fichajeGeolocalizacion).
   geolocator: ^13.0.2
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.1.1
 
 dev_dependencies:
   flutter_test:

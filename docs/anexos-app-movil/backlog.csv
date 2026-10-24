@@ -1,0 +1,103 @@
+id,ola,ambito,titulo
+S-01,Ola 1,Servidor,"GET /hoy — la bandeja de bandeja_hoy.reunir() con destino tipado ({tipo, id}) en lugar de la url web, y acciones permitidas por elemento [M]"
+S-02,Ola 0,Servidor,"/auth/me ampliado (despachos, modulos, permisos, cifrado, apariencia, marca, app) — §4.4 [M]"
+S-03,Ola 0,Servidor,"Higiene del contrato (§5.5): corregir ia/conversaciones y ia/atajos, dar esquema a 15 endpoints «sin forma», declarar enums, ConflictoDeVers [S]"
+S-04,Ola 2,Servidor,"Núcleo por REST: /clientes (ficha única), /clientes/{id}/…, /expedientes, /plazos, /horas, /contactos, /citas. Nueva área de token nucleo en [L]"
+S-05,Ola 1,Servidor,"Push estándar: todo mensaje lleva data = {tipo, destino:{tipo,id}, despacho_id, notificacion_id}, título/cuerpo en el idioma de la persona,  [M]"
+S-06,Ola 2,Servidor,"/sync con más entidades: vencimientos, clientes_fiscales, notificaciones, ausencias, fichajes_propios [M]"
+S-07,Ola 2,Servidor,"Cifrado desde el móvil: GET /seguridad/cifrado/estado y POST /seguridad/cifrado/desbloquear (frase de paso → concesión ligada al token, con  [M]"
+S-08,Ola 2,Servidor,POST /documentos (multipart) a cliente o expediente; categorías [M]
+S-09,Ola 0–1,Servidor,Mensajes de la API en el idioma de Accept-Language: envolver con gettext los ≈220 literales de error (113 líneas con _err(...) y 107 con abo [M]
+S-10,Ola 0,Servidor,Versión mínima de la app: X-App-Version → 426 actualiza solo si es inferior a la mínima (y campo app en /auth/me) [S]
+S-12,Ola 1,Servidor,"Enlaces universales: /.well-known/assetlinks.json, /.well-known/apple-app-site-association y reglas para /tareas/, /correo/, /fiscal/, /expe [S]"
+S-13,Ola 1 / 5,Servidor,"dispositivos-push con despacho, idioma, app_version, plataforma; y «mis dispositivos» (listar/revocar sesiones del móvil) [S]"
+S-14,Ola 0,Servidor,"/perfil: apariencia (tema, densidad, idioma) en lectura y escritura [S]"
+S-15,Ola 4,Servidor,"Contabilidad por archivo: POST /contabilidad/facturas/archivos (multipart: cliente_fiscal_id, tipo, 1–10 archivos) sobre facturas_contables. [S]"
+S-16,Ola 4,Servidor,Inmobiliaria: POST de resultado de visita y nota; Abogados: marcar señalamiento visto [S]
+S-17,Ola 1,Servidor,"GET /tareas-outlook con campos=, limit/offset y X-Total-Count validados en todos los listados que use la app; ETag en detalle [S]"
+S-18,Ola 0,Servidor,"Entorno de demostración aislado para pruebas de integración y revisión de tiendas (scripts/servidor_demo.sh, reutiliza la fixture de Playwri [M]"
+APP-0.1,Ola 0,App,Publicable en Android e iOS
+APP-0.2,Ola 0,App,Firebase de verdad
+APP-0.3,Ola 0,App,Dependencias
+APP-0.4,Ola 0,App,CI/CD
+APP-0.5,Ola 0,App,SDK Dart generado + cliente v2
+APP-0.6,Ola 0,App,"Estado, rutas y *shell*"
+APP-0.7,Ola 0,App,Sistema de diseño
+APP-0.8,Ola 0,App,i18n
+APP-0.9,Ola 0,App,Cola de escritura genérica (drift)
+APP-0.10,Ola 0,App,Seguridad base
+APP-0.11,Ola 0,App,Cumplimiento de tiendas
+APP-1.1,Ola 1,App,Hoy (pantalla inicial)
+APP-1.2,Ola 1,App,Tareas — lista y filtros
+APP-1.3,Ola 1,App,"Tareas — tablero, calendario, Mi día, carga"
+APP-1.4,Ola 1,App,Tarea — detalle completo
+APP-1.5,Ola 1,App,Crear rápido
+APP-1.6,Ola 1,App,Avisos (centro de notificaciones)
+APP-1.7,Ola 1,App,Notas
+APP-1.8,Ola 1,App,Búsqueda global
+APP-1.9,Ola 1,App,Asistente de IA
+APP-1.10,Ola 1,App,Papelera
+APP-1.11,Ola 1,App,Sin conexión de tareas y notas
+APP-1.12,Ola 1,App,Enlaces universales y push con destino
+APP-2.1,Ola 2,App,Panel fiscal («qué mirar hoy»)
+APP-2.2,Ola 2,App,Obligación (vencimiento) con flujo
+APP-2.3,Ola 2,App,Avisos fiscales con acuse
+APP-2.4,Ola 2,App,Expedientes de control
+APP-2.5,Ola 2,App,Traspasos
+APP-2.6,Ola 2,App,Clientes — ficha única
+APP-2.7,Ola 2,App,Expedientes y plazos del núcleo
+APP-2.8,Ola 2,App,Documentos
+APP-2.9,Ola 2,App,Certificados
+APP-2.10,Ola 2,App,Calendario fiscal (existente)
+APP-3.1,Ola 3,App,Fichaje (rediseño menor)
+APP-3.2,Ola 3,App,Turnos y cuadrante
+APP-3.3,Ola 3,App,Bolsa de horas
+APP-3.4,Ola 3,App,Ausencias (completar)
+APP-3.5,Ola 3,App,Avisos de fichaje
+APP-3.6,Ola 3,App,Correo — bandeja
+APP-3.7,Ola 3,App,Correo — lectura
+APP-3.8,Ola 3,App,Correo — redactar
+APP-3.9,Ola 3,App,Notificación de correo accionable
+APP-3.10,Ola 3,App,Acceso rápido al fichaje
+APP-4.1,Ola 4,App,Contabilidad — captura
+APP-4.2,Ola 4,App,Inmobiliaria
+APP-4.3,Ola 4,App,Comercial
+APP-4.4,Ola 4,App,Abogados
+APP-4.5,Ola 4,App,Asistente jurídico
+APP-5.1,Ola 5,App,"Tablet y plegables: `NavigationRail`, lista-detalle en dos paneles, horizontal"
+APP-5.2,Ola 5,App,"Widgets de inicio (Android/iOS): «Fichar», «Hoy» (3 elementos), «Próximo vencimiento»; compartir hacia Guilda (foto/PDF → tarea, expediente "
+APP-5.3,Ola 5,App,"Puente web completo (S-11 implementado): Laboral, reglas fiscales/laborales, automatizaciones, importar cartera, ajustes de despacho, inform"
+APP-5.4,Ola 5,App,"Cuenta y seguridad: mis dispositivos, cerrar sesión remota, 2FA (alta vía puente), borrar cuenta"
+APP-5.5,Ola 5,App,Accesibilidad: auditoría completa con TalkBack/VoiceOver y escala 200 %; guías de contraste y objetivos en pruebas de widget
+APP-5.6,Ola 5,App,"Rendimiento: perfilado, tamaño de la app (≤ 40 MB arm64), arranque, memoria, batería (sin sondeos; push + `/sync`)"
+APP-5.7,Ola 5,App,Sincronización en segundo plano limitada (WorkManager / BGTaskScheduler) para vaciar la cola
+APP-5.8,Ola 5,App,"Observabilidad (GlitchTip), paneles de adopción en servidor"
+APP-5.9,Ola 5,App,"Tiendas: fichas, capturas por idioma, vídeo, textos legales, revisión final"
+APP-5.10,Ola 5,App,Ayuda contextual en la app reutilizando `ayuda.py` y la documentación
+UX-01,Ola W,UX,"Las páginas 403/404 son las de Werkzeug: sin marca, en inglés, lang=""en"", sin zona principal («Not Found / The requested URL was not found…»"
+UX-02,Ola W,UX,"Tareas (lista): el alta y los filtros empujan la lista fuera de pantalla. En móvil, más de 1.000 px de formularios antes de la primera tarea"
+UX-03,Ola W,UX,"Fila de tarea sobrecargada: dos casillas distintas (seleccionar y completar), botón de texto «Cronómetro» en cada fila, y en móvil la «✕» qu"
+UX-04,Ola W,UX,"Fechas: «Vence 2026-10-22» y «2026-10-28» en Hoy, Tareas y Calendario fiscal (formato técnico); los datetime-local nativos dependen del idio"
+UX-05,Ola W,UX,"Calendario fiscal · Vencimientos: agrupa por cliente con una cabecera por un vencimiento, ordena por cliente (los vencidos quedan al final),"
+UX-06,Ola W,UX,"Inicio en móvil: 3.541 px de scroll y 11 bloques apilados (primeros pasos, estadísticas, nota rápida, nueva tarea, proyectos, formulario de "
+UX-07,Ola W,UX,"Hoy (escritorio): dos tarjetas y ~60 % de pantalla vacía; sin acciones rápidas (completar, posponer); sin estado «todo al día»; fechas técni"
+UX-08,Ola W,UX,"Accesibilidad (axe, 138 cargas) — críticas: aria-pressed sobre un enlace («Solo los míos», Avisos fiscales, 10 nodos); select sin nombre (cl"
+UX-09,Ola W,UX,"Objetivos táctiles: en móvil, 353 de 888 controles (40 %) miden < 40 px (iconos «✎», «✕», favorito, chips); la guía mínima de WCAG 2.2 es 24"
+UX-10,Ola W,UX,"Texto muy pequeño: mínimo 9,2 px en escritorio (chips/etiquetas) y 9,9 px en móvil"
+UX-11,Ola W,UX,Pestañas con desborde sin pista en móvil (Tareas: «Carga…» cortada)
+UX-25,Ola W,UX,"Barra superior en móvil críptica: «2 para hoy» y «Fuera de jornada · Fichar» se reducen a un sol con borde rojo, un punto y un libro, sin te"
+UX-26,Ola W,UX,"Estados vacíos solo con texto, sin acción: Correo sin cuenta («Ninguna cuenta tiene datos de SMTP configurados todavía») y Fichaje en el pri"
+UX-27,Ola W,UX,"Centro de Ajustes en móvil: ~25 tarjetas en una columna de 2.900 px y las etiquetas de valor se truncan («Toda…», «0 dis…», «0 cu…»)"
+UX-12,Ola W,UX,"Ficha de tenant con cinco formularios independientes, cada uno con su «Guardar» (nombre, límite de IA, datos fiscales, geolocalización…) y 2"
+UX-13,Ola W,UX,Dashboard: tarjetas repetidas (ARR aparece dos veces: «ARR» y «Facturación anual (ARR)»; MRR en dos sitios) y muchas a 0; «Salud de la carte
+UX-14,Ola W,UX,La barra lateral recorta «Leads…» a 800 px de alto sin indicio de scroll
+UX-15,Ola W,UX,"No está pensado para táctil: 299 de 335 controles < 40 px también en móvil (herramienta interna, pero «ver como»/soporte se usa desde el móv"
+UX-16,Ola W,UX,"Axe: contraste de los avatares (color arbitrario por tenant), barras de progreso sin nombre, th vacíos, tablas con scroll sin teclado, aside"
+UX-17,Ola 0,UX,Errores en crudo: 80 sitios enseñan e.toString() / snapshot.error al usuario («Error al cargar: DioException…»)
+UX-18,Ola 0,UX,La pantalla inicial es la de «proyectos» antiguos (el botón «+» crea un proyecto) y no hay «Hoy»; la rejilla de 8 accesos de 3 columnas
+UX-19,Ola 0,UX,Sin navegación persistente: todo es push; para cambiar de sección hay que volver al inicio
+UX-20,Ola 0,UX,28 indicadores de carga circulares y 0 esqueletos; sin transiciones ni hápticos
+UX-21,Ola 0,UX,Sin «deshacer» (0 SnackBarAction) tras borrar o completar; 16 diálogos de confirmación bloqueantes
+UX-22,Ola 0,UX,"Teclado y autocompletado: autofillHints/textInputAction en 1 sitio; 6 keyboardType en toda la app (login sin gestor de contraseñas fluido, f"
+UX-23,Ola 0,UX,~120 textos fijos en castellano y 16 colores Colors. directos que rompen el tema oscuro
+UX-24,Ola 0,UX,Accesibilidad: 24 tooltip/Semantics y apenas pruebas de escala de texto

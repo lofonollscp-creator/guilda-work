@@ -1,0 +1,93 @@
+{
+ "con_escrituras_de_uso_1h": {
+  "hilos": 1,
+  "peticiones": 60,
+  "rps": 67.8,
+  "p50": 12.4,
+  "p95": 15.6,
+  "max": 118.6,
+  "codigos": {
+   "200": 60
+  }
+ },
+ "con_escrituras_de_uso_4h": {
+  "hilos": 4,
+  "peticiones": 240,
+  "rps": 33.9,
+  "p50": 35.5,
+  "p95": 401.8,
+  "max": 1045.0,
+  "codigos": {
+   "200": 223,
+   "500": 17
+  }
+ },
+ "con_escrituras_de_uso_8h": {
+  "hilos": 8,
+  "peticiones": 480,
+  "rps": 21.8,
+  "p50": 209.0,
+  "p95": 802.4,
+  "max": 1314.4,
+  "codigos": {
+   "200": 256,
+   "500": 224
+  }
+ },
+ "con_escrituras_de_uso_12h": {
+  "hilos": 12,
+  "peticiones": 720,
+  "rps": 15.9,
+  "p50": 403.6,
+  "p95": 1795.8,
+  "max": 2702.1,
+  "codigos": {
+   "200": 254,
+   "500": 466
+  }
+ },
+ "sin_escrituras_de_uso_1h": {
+  "hilos": 1,
+  "peticiones": 60,
+  "rps": 100.4,
+  "p50": 9.8,
+  "p95": 11.9,
+  "max": 12.1,
+  "codigos": {
+   "200": 60
+  }
+ },
+ "sin_escrituras_de_uso_4h": {
+  "hilos": 4,
+  "peticiones": 240,
+  "rps": 191.4,
+  "p50": 20.8,
+  "p95": 25.1,
+  "max": 31.0,
+  "codigos": {
+   "200": 240
+  }
+ },
+ "sin_escrituras_de_uso_8h": {
+  "hilos": 8,
+  "peticiones": 480,
+  "rps": 179.7,
+  "p50": 43.9,
+  "p95": 55.6,
+  "max": 72.0,
+  "codigos": {
+   "200": 480
+  }
+ },
+ "sin_escrituras_de_uso_12h": {
+  "hilos": 12,
+  "peticiones": 720,
+  "rps": 162.9,
+  "p50": 73.0,
+  "p95": 91.1,
+  "max": 114.2,
+  "codigos": {
+   "200": 720
+  }
+ }
+}

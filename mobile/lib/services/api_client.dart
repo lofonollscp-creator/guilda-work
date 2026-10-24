@@ -3,30 +3,13 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
+import '../api/errores.dart';
 import '../models/models.dart';
 import 'session_service.dart';
 
-/// Error legible para mostrar en la UI cuando falla una llamada a la API.
-class ApiException implements Exception {
-  final String mensaje;
-
-  /// true si el fallo es "no hay red/no se llega al servidor" -- lo usan
-  /// fichaje_screen.dart y dashboard_screen.dart para decidir si encolar la
-  /// acción offline en vez de mostrar el error tal cual (un error de
-  /// negocio, ej. secuencia de fichaje inválida, sigue mostrándose normal).
-  final bool esDeConexion;
-
-  /// Clave estable que manda la API en `codigo` (p. ej. `requiere_2fa`): es lo
-  /// que debe leer el programa; `mensaje` es solo para mostrar a la persona.
-  final String? codigo;
-  ApiException(this.mensaje, {this.esDeConexion = false, this.codigo});
-
-  /// La cuenta tiene verificación en dos pasos y falta el código.
-  bool get requiere2fa => codigo == 'requiere_2fa';
-
-  @override
-  String toString() => mensaje;
-}
+// ApiException vive ahora en api/errores.dart (ampliada); se reexporta para que
+// las pantallas actuales sigan importándola desde aquí.
+export '../api/errores.dart';
 
 class Usuario {
   final int id;
@@ -74,6 +57,17 @@ class ApiClient {
   /// simplemente "credenciales incorrectas", no una sesión caducada).
   void Function()? onSesionExpirada;
 
+  /// Despacho activo (`X-Despacho`), idioma (`Accept-Language`) y versión de la
+  /// app: los fija el núcleo (nucleo/sesion.dart) para que todas las
+  /// peticiones, también las de las pantallas antiguas, vayan con el contexto.
+  String? despacho;
+  String idioma = 'es';
+  String versionApp = '';
+  String plataforma = '';
+
+  /// El servidor contestó 426: esta versión de la app ya no se admite.
+  void Function(String? urlTienda)? onActualizarApp;
+
   ApiClient(this.sesion) {
     _dio = Dio();
     _dio.interceptors.add(
@@ -81,6 +75,10 @@ class ApiClient {
         onRequest: (options, handler) async {
           final baseUrl = await sesion.obtenerServidor();
           options.baseUrl = '$baseUrl/api/v1';
+          options.headers['Accept-Language'] = idioma;
+          if (versionApp.isNotEmpty) options.headers['X-App-Version'] = versionApp;
+          if (plataforma.isNotEmpty) options.headers['X-App-Platform'] = plataforma;
+          if (despacho != null) options.headers['X-Despacho'] = despacho;
           final token = await sesion.obtenerToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -89,6 +87,10 @@ class ApiClient {
           handler.next(options);
         },
         onError: (e, handler) async {
+          if (e.response?.statusCode == 426) {
+            final cuerpo = e.response?.data;
+            onActualizarApp?.call(cuerpo is Map ? cuerpo['url_tienda']?.toString() : null);
+          }
           if (e.response?.statusCode == 401 &&
               e.requestOptions.extra['conToken'] == true) {
             await sesion.borrarToken();

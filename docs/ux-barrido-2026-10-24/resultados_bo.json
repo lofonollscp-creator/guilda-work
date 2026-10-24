@@ -1,0 +1,655 @@
+[
+ {
+  "ruta": "BO/",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/",
+  "ms": 1042,
+  "errores": [],
+  "medidas": {
+   "titulo": "Dashboard · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 31,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 1087
+  },
+  "axe": [],
+  "img": "bo_inicio__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/tenants",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tenants",
+  "ms": 980,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tenants · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 41,
+   "pequenos": 35,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 11.52,
+   "alto": 800
+  },
+  "axe": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds",
+    "ejemplo": ".celda-usuario[href$=\"tenants/1\"] > .avatar",
+    "html": "<span class=\"avatar\" style=\"--c: #ef4444\">GD</span>"
+   },
+   {
+    "id": "empty-table-header",
+    "impacto": "minor",
+    "nodos": 1,
+    "ayuda": "Table header text should not be empty",
+    "ejemplo": "th:nth-child(10)",
+    "html": "<th></th>"
+   }
+  ],
+  "img": "bo_tenants__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/tenants/1",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/tenants/1",
+  "ms": 1244,
+  "errores": [],
+  "medidas": {
+   "titulo": "Gestoría Demo · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 52,
+   "pequenos": 46,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 11.52,
+   "alto": 1798
+  },
+  "axe": [
+   {
+    "id": "aria-progressbar-name",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "ARIA progressbar nodes must have an accessible name",
+    "ejemplo": ".barra-progreso",
+    "html": "<div class=\"barra-progreso\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"0\"><span style=\"width: 0%\"></span></div>"
+   },
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "#lateral",
+    "html": "<aside class=\"lateral\" id=\"lateral\">"
+   }
+  ],
+  "img": "bo_tenants_1__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/planes",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/planes",
+  "ms": 943,
+  "errores": [],
+  "medidas": {
+   "titulo": "Planes y extras · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 41,
+   "pequenos": 32,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "bo_planes__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/usuarios",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/usuarios",
+  "ms": 928,
+  "errores": [],
+  "medidas": {
+   "titulo": "Usuarios · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 41,
+   "pequenos": 35,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 11.52,
+   "alto": 800
+  },
+  "axe": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds",
+    "ejemplo": ".celda-usuario > .avatar",
+    "html": "<span class=\"avatar\" style=\"--c: #2a9d8f\">LG</span>"
+   }
+  ],
+  "img": "bo_usuarios__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/actividad",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/actividad",
+  "ms": 923,
+  "errores": [],
+  "medidas": {
+   "titulo": "Actividad · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 31,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "bo_actividad__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/mapa",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/mapa",
+  "ms": 941,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mapa de acceso · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.tabla",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 31,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "bo_mapa__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/journey",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/journey",
+  "ms": 940,
+  "errores": [],
+  "medidas": {
+   "titulo": "Customer Journey · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.tabla",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 31,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "bo_journey__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/cuenta",
+  "vista": "escritorio",
+  "estado": 200,
+  "final": "/cuenta",
+  "ms": 946,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mi cuenta · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 36,
+   "pequenos": 32,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 800
+  },
+  "axe": [],
+  "img": "bo_cuenta__escritorio.jpg"
+ },
+ {
+  "ruta": "BO/",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/",
+  "ms": 976,
+  "errores": [],
+  "medidas": {
+   "titulo": "Dashboard · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 31,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 2558
+  },
+  "axe": [],
+  "img": "bo_inicio__movil.jpg"
+ },
+ {
+  "ruta": "BO/tenants",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tenants",
+  "ms": 900,
+  "errores": [],
+  "medidas": {
+   "titulo": "Tenants · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.tabla",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 41,
+   "pequenos": 35,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 11.52,
+   "alto": 844
+  },
+  "axe": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds",
+    "ejemplo": ".celda-usuario[href$=\"tenants/1\"] > .avatar",
+    "html": "<span class=\"avatar\" style=\"--c: #ef4444\">GD</span>"
+   },
+   {
+    "id": "empty-table-header",
+    "impacto": "minor",
+    "nodos": 1,
+    "ayuda": "Table header text should not be empty",
+    "ejemplo": "th:nth-child(10)",
+    "html": "<th></th>"
+   }
+  ],
+  "img": "bo_tenants__movil.jpg"
+ },
+ {
+  "ruta": "BO/tenants/1",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/tenants/1",
+  "ms": 978,
+  "errores": [],
+  "medidas": {
+   "titulo": "Gestoría Demo · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "a.nav-enlace",
+    "svg",
+    "use",
+    "span"
+   ],
+   "tocables": 52,
+   "pequenos": 46,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 11.52,
+   "alto": 2376
+  },
+  "axe": [
+   {
+    "id": "aria-progressbar-name",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "ARIA progressbar nodes must have an accessible name",
+    "ejemplo": ".barra-progreso",
+    "html": "<div class=\"barra-progreso\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"0\"><span style=\"width: 0%\"></span></div>"
+   },
+   {
+    "id": "landmark-unique",
+    "impacto": "moderate",
+    "nodos": 1,
+    "ayuda": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "ejemplo": "#lateral",
+    "html": "<aside class=\"lateral\" id=\"lateral\">"
+   }
+  ],
+  "img": "bo_tenants_1__movil.jpg"
+ },
+ {
+  "ruta": "BO/planes",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/planes",
+  "ms": 886,
+  "errores": [],
+  "medidas": {
+   "titulo": "Planes y extras · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.tabla",
+    "tbody",
+    "tr",
+    "td.vacio"
+   ],
+   "tocables": 41,
+   "pequenos": 31,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 965
+  },
+  "axe": [
+   {
+    "id": "scrollable-region-focusable",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Scrollable region must have keyboard access",
+    "ejemplo": "section:nth-child(2) > .tabla-caja",
+    "html": "<div class=\"tabla-caja\">\n    <table class=\"tabla\">\n      <tbody>\n        <tr><td colspan=\"6\" class=\"vacio\">Todavía no hay planes.</td></tr>\n      </tbody>\n    <"
+   }
+  ],
+  "img": "bo_planes__movil.jpg"
+ },
+ {
+  "ruta": "BO/usuarios",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/usuarios",
+  "ms": 901,
+  "errores": [],
+  "medidas": {
+   "titulo": "Usuarios · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.tabla",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 41,
+   "pequenos": 35,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 11.52,
+   "alto": 844
+  },
+  "axe": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds",
+    "ejemplo": ".celda-usuario > .avatar",
+    "html": "<span class=\"avatar\" style=\"--c: #2a9d8f\">LG</span>"
+   }
+  ],
+  "img": "bo_usuarios__movil.jpg"
+ },
+ {
+  "ruta": "BO/actividad",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/actividad",
+  "ms": 831,
+  "errores": [],
+  "medidas": {
+   "titulo": "Actividad · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.tabla",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 31,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 844
+  },
+  "axe": [
+   {
+    "id": "scrollable-region-focusable",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Scrollable region must have keyboard access",
+    "ejemplo": ".tabla-caja",
+    "html": "<div class=\"tabla-caja\">"
+   }
+  ],
+  "img": "bo_actividad__movil.jpg"
+ },
+ {
+  "ruta": "BO/mapa",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/mapa",
+  "ms": 857,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mapa de acceso · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.tabla",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 31,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "bo_mapa__movil.jpg"
+ },
+ {
+  "ruta": "BO/journey",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/journey",
+  "ms": 905,
+  "errores": [],
+  "medidas": {
+   "titulo": "Customer Journey · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [
+    "table.tabla",
+    "thead",
+    "tr",
+    "th"
+   ],
+   "tocables": 31,
+   "pequenos": 30,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 938
+  },
+  "axe": [],
+  "img": "bo_journey__movil.jpg"
+ },
+ {
+  "ruta": "BO/cuenta",
+  "vista": "movil",
+  "estado": 200,
+  "final": "/cuenta",
+  "ms": 811,
+  "errores": [],
+  "medidas": {
+   "titulo": "Mi cuenta · Guilda Work",
+   "lang": "es",
+   "h1": 1,
+   "desborde": 0,
+   "anchos": [],
+   "tocables": 36,
+   "pequenos": 32,
+   "ejemplos_pequenos": [
+    "A Dashboard",
+    "A Tenants",
+    "A Usuarios",
+    "A Mapa de acceso"
+   ],
+   "sinAlt": 0,
+   "texto_min": 12.48,
+   "alto": 844
+  },
+  "axe": [],
+  "img": "bo_cuenta__movil.jpg"
+ }
+]

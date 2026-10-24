@@ -5,6 +5,18 @@ Al subir `rutas_api.API_VERSION` hay que añadir aquí su entrada: un test lo ex
 
 # (versión | None, fecha, [(tipo, texto)]). Antes de la 1.3 la API no enviaba la cabecera: esas entradas llevan solo la fecha.
 HISTORIAL = [
+    ("1.5", "2026-10-24", [
+        ("Nuevo", "`GET /auth/me` amplía su respuesta para la app móvil: `despachos` (los de la persona, con el principal y lo que es en cada uno), "
+                  "`despacho_activo`, `modulos` (qué módulos de negocio tiene activos el despacho), `permisos`, `cifrado`, `apariencia` y `app` "
+                  "(versión mínima y recomendada, enlace de la tienda). La cabecera `X-Despacho` ya elegía el despacho; ahora la app puede listarlos."),
+        ("Nuevo", "`426 actualiza_app`: una app que manda `X-App-Version` menor que la mínima admitida recibe este error, con `version_minima` y `url_tienda`. "
+                  "Quien no manda la cabecera (web, integraciones, MCP) no se ve afectado."),
+        ("Nuevo", "`GET /perfil` incluye `apariencia` (`tema`, `densidad`, `idioma`) y `PUT /perfil` los acepta: el tema y el idioma de la cuenta son los mismos en la web y en la app."),
+        ("Mejora", "Los `412 version_obsoleta` de clientes fiscales y vencimientos incluyen `version_actual` (como ya hacían los `409` de las tareas), "
+                   "para ofrecer «ver cambios / sobrescribir» sin otra petición."),
+        ("Mejora", "El contrato describe con exactitud `GET /ia/conversaciones` (`{activa, conversaciones}`) y admite `id: null` en los atajos de serie de `GET /ia/atajos`."),
+        ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
+    ]),
     ("1.4", "2026-10-11", [
         ("Nuevo", "`GET /health`: comprobación de vida pública (sin token) para monitores externos; 200 si responde la base de datos, 503 si no."),
         ("Nuevo", "Restricciones de red por token: `ips_permitidas` (IP o redes CIDR; `403 ip_no_permitida` desde otra dirección) y `origenes_cors` "

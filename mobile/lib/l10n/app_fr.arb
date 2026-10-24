@@ -253,5 +253,19 @@
   "ausenciaEstadoRechazada": "Refusée",
   "ausenciaEstadoCancelada": "Annulée",
   "ausenciasMantener": "La garder",
-  "ausenciasCancelarAccion": "Annuler l'absence"
+  "ausenciasCancelarAccion": "Annuler l'absence",
+  "navInicio": "Accueil",
+  "navTareas": "Tâches",
+  "navCorreo": "Courrier",
+  "navFichaje": "Pointage",
+  "navMas": "Plus",
+  "masTitulo": "Plus",
+  "despachoActivoTitulo": "Cabinet actif",
+  "despachoCambiarTitulo": "Changer de cabinet",
+  "despachoPrincipal": "Principal",
+  "actualizarTitulo": "Mettez l'application à jour",
+  "actualizarCuerpo": "Cette version de Guilda Work n'est plus compatible avec le serveur. Installez la dernière version pour continuer à travailler.",
+  "actualizarBoton": "Aller sur la boutique",
+  "arranqueSinConexion": "Impossible de se connecter au serveur.",
+  "arranqueReintentar": "Réessayer"
 }

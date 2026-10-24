@@ -40,6 +40,9 @@ class DashboardScreen extends StatefulWidget {
   final ThemeService tema;
   final LocaleService locale;
 
+  /// Lo da el enrutador: cerrar sesión desde Ajustes le avisa a él.
+  final Future<void> Function()? alCerrarSesion;
+
   const DashboardScreen({
     super.key,
     required this.usuario,
@@ -49,6 +52,7 @@ class DashboardScreen extends StatefulWidget {
     required this.push,
     required this.tema,
     required this.locale,
+    this.alCerrarSesion,
   });
 
   @override
@@ -179,6 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   push: widget.push,
                   tema: widget.tema,
                   locale: widget.locale,
+                  alCerrarSesion: widget.alCerrarSesion,
                 ),
               ),
             ),

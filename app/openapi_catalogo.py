@@ -61,7 +61,7 @@ TABLAS: dict[str, tuple[str, tuple[str, ...], dict]] = {
     "SeguimientoCorreo": ("correo_seguimientos", (), {}),
     "ConversacionIA": ("ia_conversaciones", (), {}),
     "MensajeIA": ("ia_mensajes", (), {}),
-    "AtajoIA": ("ia_atajos", (), {}),
+    "AtajoIA": ("ia_atajos", (), {"id": {"type": "integer", "nullable": True, "description": "Los atajos de serie no tienen id (`null`); los propios sí."}}),
     "PreferenciasCorreo": ("correo_preferencias", (), {}),
     "CategoriaCorreo": ("correo_categorias", (), {}),
     "ReglaCategoriaCorreo": ("correo_reglas_categoria", (), {}),
@@ -88,7 +88,7 @@ GETTERS: dict[str, tuple[str, bool]] = {   # función de db -> (componente, es_l
     "obtener_envio_correo": ("EnvioCorreo", False), "listar_adjuntos_nota": ("AdjuntoNota", True), "listar_checklist": ("ChecklistItem", True),
     "listar_comentarios_tarea": ("ComentarioTarea", True), "listar_recordatorios_tarea": ("RecordatorioTarea", True),
     "listar_tareas_recurrentes": ("ReglaRecurrente", True), "listar_reglas_por_vencimiento": ("ReglaVencimiento", True),
-    "listar_seguimientos_correo": ("SeguimientoCorreo", True), "listar_conversaciones_ia": ("ConversacionIA", True), "listar_mensajes_ia": ("MensajeIA", True),
+    "listar_seguimientos_correo": ("SeguimientoCorreo", True), "listar_conversaciones_ia": ("ConversacionesIA", False), "listar_mensajes_ia": ("MensajeIA", True),
     "listar_webhooks": ("Webhook", True), "obtener_webhook": ("Webhook", False),
 }
 
@@ -108,7 +108,19 @@ ESQUEMAS: dict[str, dict] = {
         },
         "example": {"ok": False, "error": "Nota no encontrada.", "codigo": "no_encontrado", "request_id": "9f3c2a1b7d8e4f6a8b0c1d2e3f4a5b6c"},
     },
-    "Usuario": {"type": "object", "properties": {"id": {"type": "integer"}, "email": {"type": "string", "format": "email"}, "tenant_id": {"type": "integer", "nullable": True}, "tenant": {"type": "string", "nullable": True}}},
+    "Usuario": {"type": "object", "properties": {"id": {"type": "integer"}, "email": {"type": "string", "format": "email"}, "tenant_id": {"type": "integer", "nullable": True}, "tenant": {"type": "string", "nullable": True},
+                "despacho_activo": {"type": "integer", "nullable": True, "description": "Despacho con el que trabaja este token (el de `X-Despacho` si es uno suyo; si no, el principal)."},
+                "despachos": {"type": "array", "items": {"$ref": "#/components/schemas/DespachoDeUsuario"}, "description": "Todos los despachos de la persona, el principal primero."},
+                "modulos": {"type": "object", "additionalProperties": {"type": "boolean"}, "description": "Módulos de negocio disponibles y si el despacho activo los tiene activos (`gestoria`, `abogados`, `inmobiliaria`, `contabilizacion`, `comercial`...)."},
+                "permisos": {"type": "object", "additionalProperties": {"type": "boolean"}, "description": "Lo que la persona puede hacer en el despacho activo: `fichaje_admin`, `supervisor_fiscal`, `admin`."},
+                "cifrado": {"type": "object", "properties": {"activo": {"type": "boolean"}, "nivel": {"type": "string", "nullable": True}}, "description": "Cifrado por despacho: si está activo y su nivel."},
+                "apariencia": {"$ref": "#/components/schemas/Apariencia"},
+                "app": {"$ref": "#/components/schemas/InfoAppMovil"}}},
+    "DespachoDeUsuario": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "principal": {"type": "boolean"}, "gestor_fichajes": {"type": "boolean"}, "supervisor": {"type": "boolean"}}},
+    "Apariencia": {"type": "object", "properties": {"tema": {"type": "string", "nullable": True, "enum": ["system", "light", "dark"]}, "densidad": {"type": "string", "nullable": True, "enum": ["normal", "compacta"]}, "idioma": {"type": "string", "nullable": True, "enum": ["es", "ca", "en", "fr"]}},
+                   "description": "Preferencias de la cuenta, iguales en la web y en la app. `null` = la persona no ha elegido (manda el dispositivo)."},
+    "InfoAppMovil": {"type": "object", "properties": {"version_minima": {"type": "string", "nullable": True}, "version_recomendada": {"type": "string", "nullable": True}, "url_tienda": {"type": "string", "nullable": True}},
+                     "description": "Qué versión de la app móvil admite el servidor. Con `X-App-Version` menor que `version_minima`, la API responde `426 actualiza_app`."},
     "Sesion": {"type": "object", "required": ["token", "usuario"], "properties": {
         "token": {"type": "string", "description": "Token de API: guárdalo, no se vuelve a mostrar."}, "usuario": {"$ref": "#/components/schemas/Usuario"}}},
     "TokenCreado": {"type": "object", "properties": {"token": {"type": "string", "description": "Solo se muestra esta vez."}, "id": {"type": "integer"}, "permisos": {"type": "string", "enum": ["completo", "solo_lectura"]},
@@ -137,7 +149,8 @@ ESQUEMAS: dict[str, dict] = {
     "Companero": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "email": {"type": "string"}}},
     "Vista": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "filtros": {"type": "object", "additionalProperties": {"type": "string"}},
               "compartida": {"type": "boolean"}, "mia": {"type": "boolean"}, "autor": {"type": "string"}}},
-    "Perfil": {"type": "object", "properties": {"nombre_mostrado": {"type": "string", "nullable": True}, "tiene_avatar": {"type": "boolean"}, "avatar_url": {"type": "string", "nullable": True}}},
+    "Perfil": {"type": "object", "properties": {"nombre_mostrado": {"type": "string", "nullable": True}, "tiene_avatar": {"type": "boolean"}, "avatar_url": {"type": "string", "nullable": True},
+                "apariencia": {"$ref": "#/components/schemas/Apariencia"}}},
     "RespuestaIA": {"type": "object", "properties": {"mensajes_nuevos": {"type": "array", "items": {"$ref": "#/components/schemas/MensajeIA"}},
                     "pendiente": {"type": "object", "nullable": True, "description": "Acción que espera tu confirmación (`POST /ia/confirmar`)."}}},
     "ModeloIA": {"type": "object", "properties": {"id": {"type": "string"}, "nombre": {"type": "string"}}},
@@ -234,7 +247,7 @@ RESPUESTAS: dict[str, tuple[str, bool]] = {
     "estado_envio": ("EnvioCorreo", False), "listar_programados": ("EnvioCorreo", True), "listar_checklist": ("ChecklistItem", True),
     "listar_comentarios": ("ComentarioTarea", True), "listar_recordatorios": ("RecordatorioTarea", True), "listar_recurrentes": ("ReglaRecurrente", True),
     "listar_reglas_vencimiento": ("ReglaVencimiento", True), "listar_plantillas": ("PlantillaCorreo", True), "listar_seguimientos": ("SeguimientoCorreo", True),
-    "listar_adjuntos_nota": ("AdjuntoNota", True), "listar_conversaciones_ia": ("ConversacionIA", True), "listar_mensajes_ia": ("MensajeIA", True),
+    "listar_adjuntos_nota": ("AdjuntoNota", True), "listar_conversaciones_ia": ("ConversacionesIA", False), "listar_mensajes_ia": ("MensajeIA", True),
     "listar_atajos_ia": ("AtajoIA", True), "historial_fichaje": ("Fichaje", True), "listar_webhooks": ("Webhook", True), "obtener_webhook": ("Webhook", False),
     "editar_webhook": ("Webhook", False), "crear_plantilla": ("PlantillaCorreo", False), "editar_plantilla": ("PlantillaCorreo", False),
     "editar_tarea_outlook": ("TareaOutlook", False), "completar_tarea_outlook": ("TareaOutlook", False), "cambiar_estado_tarea": ("TareaOutlook", False),
@@ -258,10 +271,12 @@ RESPUESTAS: dict[str, tuple[str, bool]] = {
     "papelera": ("Papelera", True), "obtener_perfil": ("Perfil", False), "editar_perfil": ("Perfil", False), "subir_avatar_api": ("Perfil", False),
     "listar_vistas": ("Vista", True), "guardar_vista": ("Vista", False), "listar_participantes": ("Companero", True), "compartir_tarea": ("Companero", True),
     "tiempo_de_tarea": ("TiempoTarea", False), "listar_plantillas_tareas": ("PlantillaTareas", True), "crear_plantilla_tareas": ("PlantillaTareas", False),
-    "editar_plantilla_tareas": ("PlantillaTareas", False), "uso_de_token": ("UsoToken", False), "listar_conversaciones_ia": ("ConversacionIA", True),
+    "editar_plantilla_tareas": ("PlantillaTareas", False), "uso_de_token": ("UsoToken", False), "listar_conversaciones_ia": ("ConversacionesIA", False),
     "crear_categoria_correo": ("Identificador", False), "crear_regla_categoria": ("Identificador", False), "crear_remitente_confiable": ("Identificador", False),
     "crear_atajo_ia": ("Identificador", False), "crear_conversacion_ia": ("Identificador", False),
 }
+ESQUEMAS["ConversacionesIA"] = {"type": "object", "properties": {"activa": {"type": "integer", "nullable": True, "description": "Id de la conversación activa (`null` si aún no hay ninguna)."},
+                                  "conversaciones": {"type": "array", "items": {"$ref": "#/components/schemas/ConversacionIA"}}}}
 ESQUEMAS["Papelera"] = {"type": "object", "properties": {"origen": {"type": "string"}, "id": {"type": "integer"}, "texto": {"type": "string"}, "papelera_en": {"type": "string"}}}
 
 # Operaciones que devuelven un fichero (no el sobre JSON): operación -> tipo MIME.

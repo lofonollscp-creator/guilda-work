@@ -253,5 +253,19 @@
   "ausenciaEstadoRechazada": "Rebutjada",
   "ausenciaEstadoCancelada": "Cancel·lada",
   "ausenciasMantener": "Mantenir-la",
-  "ausenciasCancelarAccion": "Cancel·lar absència"
+  "ausenciasCancelarAccion": "Cancel·lar absència",
+  "navInicio": "Inici",
+  "navTareas": "Tasques",
+  "navCorreo": "Correu",
+  "navFichaje": "Fitxatge",
+  "navMas": "Més",
+  "masTitulo": "Més",
+  "despachoActivoTitulo": "Despatx actiu",
+  "despachoCambiarTitulo": "Canviar de despatx",
+  "despachoPrincipal": "Principal",
+  "actualizarTitulo": "Actualitza l'aplicació",
+  "actualizarCuerpo": "Aquesta versió de Guilda Work ja no és compatible amb el servidor. Instal·la l'última versió per continuar treballant.",
+  "actualizarBoton": "Anar a la botiga",
+  "arranqueSinConexion": "No s'ha pogut connectar amb el servidor.",
+  "arranqueReintentar": "Torna-ho a provar"
 }

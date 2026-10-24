@@ -29,6 +29,10 @@ class AjustesScreen extends StatelessWidget {
   final ThemeService tema;
   final LocaleService locale;
 
+  /// Si lo da el enrutador, cerrar sesión le avisa a él (que lleva a la
+  /// pantalla de login) en vez de abrir [LoginScreen] a mano.
+  final Future<void> Function()? alCerrarSesion;
+
   const AjustesScreen({
     super.key,
     required this.api,
@@ -38,12 +42,17 @@ class AjustesScreen extends StatelessWidget {
     required this.push,
     required this.tema,
     required this.locale,
+    this.alCerrarSesion,
   });
 
   Future<void> _cerrarSesion(BuildContext context) async {
     await push.alCerrarSesion();
     await api.logout();
     await sesion.borrarToken();
+    if (alCerrarSesion != null) {
+      await alCerrarSesion!();
+      return;
+    }
     if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(

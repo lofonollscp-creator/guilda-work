@@ -17,6 +17,9 @@ class RegistroScreen extends StatefulWidget {
   final PushService push;
   final ThemeService tema;
   final LocaleService locale;
+  /// Si lo da quien monta la pantalla (el enrutador), se llama con el usuario
+  /// al iniciar sesión en vez de abrir [DashboardScreen] directamente.
+  final void Function(Usuario usuario)? alIniciarSesion;
 
   const RegistroScreen({
     super.key,
@@ -26,6 +29,7 @@ class RegistroScreen extends StatefulWidget {
     required this.push,
     required this.tema,
     required this.locale,
+    this.alIniciarSesion,
   });
 
   @override
@@ -59,6 +63,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
       );
       await widget.sesion.guardarToken(token);
       if (!mounted) return;
+      if (widget.alIniciarSesion != null) {
+        widget.alIniciarSesion!(usuario);
+        return;
+      }
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => DashboardScreen(

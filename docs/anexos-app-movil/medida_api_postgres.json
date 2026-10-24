@@ -1,0 +1,302 @@
+{
+ "/api/v1/auth/me": {
+  "p50": 18.1,
+  "p95": 23.8,
+  "max": 30.2,
+  "sql_med": 9.0,
+  "sql_max": 9,
+  "ms_sql_med": 14.0,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 116
+ },
+ "/api/v1/dashboard": {
+  "p50": 27.2,
+  "p95": 29.7,
+  "max": 34.5,
+  "sql_med": 14.0,
+  "sql_max": 14,
+  "ms_sql_med": 22.8,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 520
+ },
+ "/api/v1/mi-dia": {
+  "p50": 26.5,
+  "p95": 38.6,
+  "max": 45.7,
+  "sql_med": 9.0,
+  "sql_max": 9,
+  "ms_sql_med": 21.8,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 34059
+ },
+ "/api/v1/tareas-outlook?limit=50": {
+  "p50": 22.7,
+  "p95": 27.3,
+  "max": 31.7,
+  "sql_med": 8.0,
+  "sql_max": 9,
+  "ms_sql_med": 17.1,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 42479
+ },
+ "/api/v1/tareas-outlook?ambito=todas&limit=50": {
+  "p50": 25.5,
+  "p95": 32.2,
+  "max": 73.3,
+  "sql_med": 8.0,
+  "sql_max": 8,
+  "ms_sql_med": 20.0,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 43179
+ },
+ "/api/v1/tareas-outlook/{tarea}": {
+  "p50": 23.3,
+  "p95": 28.9,
+  "max": 30.0,
+  "sql_med": 9.0,
+  "sql_max": 9,
+  "ms_sql_med": 19.3,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 791
+ },
+ "/api/v1/tareas-outlook/tablero": {
+  "p50": 30.5,
+  "p95": 38.3,
+  "max": 40.6,
+  "sql_med": 8.0,
+  "sql_max": 9,
+  "ms_sql_med": 24.3,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 85001
+ },
+ "/api/v1/tareas-outlook/carga": {
+  "p50": 29.1,
+  "p95": 40.2,
+  "max": 42.7,
+  "sql_med": 10.0,
+  "sql_max": 10,
+  "ms_sql_med": 24.6,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 289
+ },
+ "/api/v1/notas": {
+  "p50": 19.5,
+  "p95": 24.1,
+  "max": 29.9,
+  "sql_med": 9.0,
+  "sql_max": 9,
+  "ms_sql_med": 15.2,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 11571
+ },
+ "/api/v1/notificaciones": {
+  "p50": 18.1,
+  "p95": 21.3,
+  "max": 28.9,
+  "sql_med": 9.0,
+  "sql_max": 9,
+  "ms_sql_med": 14.0,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 4965
+ },
+ "/api/v1/fiscal/clientes": {
+  "p50": 17.8,
+  "p95": 20.1,
+  "max": 27.1,
+  "sql_med": 8.0,
+  "sql_max": 9,
+  "ms_sql_med": 13.0,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 28801
+ },
+ "/api/v1/fiscal/vencimientos": {
+  "p50": 36.7,
+  "p95": 46.0,
+  "max": 49.0,
+  "sql_med": 9.0,
+  "sql_max": 9,
+  "ms_sql_med": 20.9,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 523574
+ },
+ "/api/v1/fiscal/panel": {
+  "p50": 46.3,
+  "p95": 52.5,
+  "max": 81.3,
+  "sql_med": 20.0,
+  "sql_max": 20,
+  "ms_sql_med": 37.3,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 12481
+ },
+ "/api/v1/fichaje/estado": {
+  "p50": 18.2,
+  "p95": 24.3,
+  "max": 29.9,
+  "sql_med": 9.0,
+  "sql_max": 11,
+  "ms_sql_med": 13.9,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 62
+ },
+ "/api/v1/fichaje/resumen-semana": {
+  "p50": 23.9,
+  "p95": 31.0,
+  "max": 36.7,
+  "sql_med": 12.0,
+  "sql_max": 12,
+  "ms_sql_med": 19.3,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 466
+ },
+ "/api/v1/correo/cuentas": {
+  "p50": 15.1,
+  "p95": 19.5,
+  "max": 27.1,
+  "sql_med": 8.0,
+  "sql_max": 8,
+  "ms_sql_med": 11.4,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 413
+ },
+ "/api/v1/correo/mensajes?cuenta_id={cuenta}": {
+  "p50": 22.2,
+  "p95": 31.1,
+  "max": 32.7,
+  "sql_med": 10.0,
+  "sql_max": 13,
+  "ms_sql_med": 16.3,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 174373
+ },
+ "/api/v1/buscar?q=factura": {
+  "p50": 15.0,
+  "p95": 17.9,
+  "max": 19.1,
+  "sql_med": 7.0,
+  "sql_max": 8,
+  "ms_sql_med": 10.9,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 22
+ },
+ "/api/v1/sync": {
+  "p50": 17.0,
+  "p95": 21.9,
+  "max": 29.1,
+  "sql_med": 8.0,
+  "sql_max": 8,
+  "ms_sql_med": 12.7,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 98
+ },
+ "/api/v1/sync?cursor=0": {
+  "p50": 752.1,
+  "p95": 794.9,
+  "max": 823.2,
+  "sql_med": 130.0,
+  "sql_max": 131,
+  "ms_sql_med": 733.0,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 87025
+ },
+ "/api/v1/herramientas": {
+  "p50": 18.9,
+  "p95": 23.8,
+  "max": 204.8,
+  "sql_med": 9.0,
+  "sql_max": 11,
+  "ms_sql_med": 13.9,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 5798
+ },
+ "/api/v1/companeros": {
+  "p50": 17.6,
+  "p95": 25.2,
+  "max": 32.7,
+  "sql_med": 8.0,
+  "sql_max": 8,
+  "ms_sql_med": 13.6,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 121
+ },
+ "/api/v1/proyectos": {
+  "p50": 16.7,
+  "p95": 20.6,
+  "max": 23.6,
+  "sql_med": 8.0,
+  "sql_max": 9,
+  "ms_sql_med": 12.4,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 335
+ },
+ "/api/v1/ia/ajustes": {
+  "p50": 17.4,
+  "p95": 23.0,
+  "max": 35.2,
+  "sql_med": 8.0,
+  "sql_max": 10,
+  "ms_sql_med": 12.9,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 171
+ },
+ "/api/v1/perfil": {
+  "p50": 17.8,
+  "p95": 22.2,
+  "max": 24.6,
+  "sql_med": 8.0,
+  "sql_max": 10,
+  "ms_sql_med": 13.7,
+  "codigos": {
+   "200": 36
+  },
+  "bytes": 449
+ }
+}

@@ -24,7 +24,7 @@ from flask import Blueprint, Response, abort, g, jsonify, make_response, request
 from werkzeug.exceptions import HTTPException
 
 from .bd.errores import ErrorIntegridad
-from . import alta_cliente, correo, db, estado_herramientas, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
+from . import alta_cliente, api_contexto, correo, db, estado_herramientas, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -33,12 +33,12 @@ logger = logging.getLogger("guilda")
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
 # Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
-API_VERSION = "1.4"
+API_VERSION = "1.5"
 
 
 _CODIGOS_HTTP = {
     400: "peticion_invalida", 401: "no_autenticado", 403: "prohibido", 404: "no_encontrado", 405: "metodo_no_permitido",
-    409: "conflicto", 413: "demasiado_grande", 415: "tipo_no_soportado", 422: "entidad_no_procesable", 429: "limite_excedido",
+    409: "conflicto", 412: "version_obsoleta", 413: "demasiado_grande", 415: "tipo_no_soportado", 422: "entidad_no_procesable", 426: "actualiza_app", 429: "limite_excedido",
 }
 
 
@@ -98,6 +98,19 @@ def _preflight_cors():
         respuesta.headers["Access-Control-Allow-Headers"] = _CORS_ENVIAR
         respuesta.headers["Access-Control-Max-Age"] = "600"
     return respuesta
+
+
+@api_bp.before_request
+def _version_minima_de_app():
+    """La app móvil manda `X-App-Version`: si es menor que la mínima admitida (`GUILDA_APP_VERSION_MINIMA`) responde `426 actualiza_app`,
+    con el enlace de la tienda. Quien no manda la cabecera (web, integraciones, MCP) no se ve afectado."""
+    version = request.headers.get("X-App-Version")
+    if not version or request.method == "OPTIONS" or request.path.endswith(("/health", "/openapi.json")) or not api_contexto.app_obsoleta(version):
+        return None
+    cfg = api_contexto.config_app()
+    respuesta = jsonify({"ok": False, "error": "Esta versión de la app ya no se admite: actualízala para seguir trabajando.", "codigo": "actualiza_app",
+                         "request_id": peticion.id_actual(), "version_minima": cfg["version_minima"], "url_tienda": cfg["url_tienda"]})
+    return respuesta, 426
 
 
 @api_bp.after_request
@@ -175,6 +188,15 @@ def _err(mensaje: str, status: int = 400, codigo: str | None = None, campo: str 
     cuerpo = {"ok": False, "error": mensaje, "codigo": codigo or _codigo_de(status), "request_id": peticion.id_actual()}
     if campo:
         cuerpo["campo"] = campo
+    return jsonify(cuerpo), status
+
+
+def _err_version(mensaje: str, version_actual: int):
+    """412 `version_obsoleta` con la versión que tiene ahora el recurso (`version_actual`): la app ofrece «ver cambios / sobrescribir» sin otra
+    petición. Mismo cuerpo que el 409 de las tareas (`rutas_api_tareas_trabajo`), que usa otro número de estado para el mismo concepto."""
+    respuesta, status = _err(mensaje, 412, "version_obsoleta")
+    cuerpo = respuesta.get_json()
+    cuerpo["version_actual"] = version_actual
     return jsonify(cuerpo), status
 
 
@@ -386,6 +408,9 @@ def me():
         "id": usuario["id"], "email": usuario["email"], "es_admin": usuario["rol"] == "admin",
         "tenant_id": g.tenant_id,
         "fichaje_geolocalizacion": bool(tenant and tenant["fichaje_geolocalizacion"]),
+        # API 1.5 (app móvil): despachos, módulos activos, permisos, cifrado, apariencia y versión mínima de la app.
+        **api_contexto.contexto(usuario["id"], g.tenant_id, es_admin=bool(g.es_admin), gestor_fichajes=bool(g.gestor_fichajes),
+                                supervisor=bool(g.supervisor_tenant)),
     })
 
 
@@ -921,7 +946,7 @@ def editar_cliente_fiscal(cliente_id: int):
         abort(404, "Cliente fiscal no encontrado.")
     esperada = _version_if_match()
     if esperada is not None and esperada != actual["version"]:
-        return _err("Otra persona ha cambiado este cliente: recárgalo y revisa los cambios.", 412, "version_obsoleta")
+        return _err_version("Otra persona ha cambiado este cliente: recárgalo y revisa los cambios.", actual["version"])
     datos = _body()
     campos = {}
     if "nombre" in datos:
@@ -1020,7 +1045,7 @@ def editar_vencimiento_fiscal(vencimiento_id: int):
     datos = _body()
     esperada = _version_if_match()
     if esperada is not None and esperada != vencimiento["version"]:
-        return _err("Otra persona ha cambiado este vencimiento: recárgalo y revisa los cambios.", 412, "version_obsoleta")
+        return _err_version("Otra persona ha cambiado este vencimiento: recárgalo y revisa los cambios.", vencimiento["version"])
     campos = {k: datos[k] for k in db.CAMPOS_VENCIMIENTO_FISCAL if k in datos}
     if "estado" in campos:
         from . import obligaciones
@@ -1804,6 +1829,7 @@ def _perfil_json(perfil) -> dict:
     datos = dict(perfil)
     datos["tiene_avatar"] = datos.pop("avatar_contenido") is not None
     datos.pop("avatar_tipo_mime", None)
+    datos["apariencia"] = api_contexto.apariencia_de(g.usuario_id)      # API 1.5: tema, densidad e idioma de la cuenta
     return datos
 
 
@@ -1817,6 +1843,13 @@ def obtener_perfil():
 @token_required
 def editar_perfil():
     datos = _body()
+    # API 1.5: apariencia en la cuenta (se aplica en la web y en cualquier dispositivo). Un valor no válido es un 400, no se ignora.
+    for campo, validos in (("tema", db.TEMAS_VALIDOS), ("densidad", db.DENSIDADES_VALIDAS), ("idioma", api_contexto.IDIOMAS)):
+        if campo in datos and datos.get(campo) not in validos:
+            return _err(f"Valor no válido para «{campo}»: usa {', '.join(validos)}.", 400, "valor_invalido", campo)
+    db.guardar_apariencia_usuario(g.usuario_id, tema=datos.get("tema"), densidad=datos.get("densidad"))
+    if datos.get("idioma"):
+        db.cambiar_idioma_usuario(g.usuario_id, datos.get("idioma"))
     db.guardar_perfil_usuario(
         g.usuario_id,
         nombre_mostrado=datos.get("nombre_mostrado"),

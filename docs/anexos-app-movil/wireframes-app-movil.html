@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframes de la app móvil</title>
+<style>
+:root{--bg:#f7f8fa;--surface:#fff;--border:#d8dbe1;--text:#1a1d23;--muted:#6b7280;--primary:#a6e600;--on:#0a0a0a;--danger:#e0555a;--danger-t:#b3262b;--success-t:#17713f;--warn-t:#8a6508;--chip:#eef0f3;--shadow:0 8px 30px rgba(0,0,0,.12);--page:#e9ecf1}
+@media (prefers-color-scheme:dark){:root{--bg:#0a0a0c;--surface:#101113;--border:#2a2d33;--text:#e8eae9;--muted:#8a9099;--primary:#ccff33;--danger:#ff6b70;--danger-t:#ff6b70;--success-t:#3fb67c;--warn-t:#eab308;--chip:#1b1d22;--shadow:0 8px 30px rgba(0,0,0,.5);--page:#050506}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text);font:15px/1.45 Manrope,Inter,system-ui,sans-serif;padding:24px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 24px;max-width:70ch}
+.fila{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start}
+.col{width:300px}
+.col h2{font-size:14px;margin:0 0 4px}.col p{font-size:12.5px;color:var(--muted);margin:0 0 10px}
+.tel{width:300px;height:620px;border-radius:30px;background:var(--bg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:8px;padding:12px 14px 8px}
+.desp{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px}
+.sp{flex:1}.ico{width:34px;height:34px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;position:relative;font-size:15px}
+.badge{position:absolute;top:-3px;right:-3px;background:var(--danger);color:#fff;border-radius:999px;font-size:10px;padding:1px 5px;font-weight:700}
+.cont{flex:1;overflow:hidden;padding:0 14px}
+.t{font-size:20px;font-weight:800;margin:4px 0 0}.m{font-size:12.5px;color:var(--muted)}
+.sec{font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px;display:flex;justify-content:space-between}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:center}
+.card.v{border-left:4px solid var(--danger)}
+.ck{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);flex:none}
+.card b{display:block;font-size:13.5px}.card small{color:var(--muted);font-size:12px}
+.chip{font-size:11px;border-radius:999px;padding:2px 8px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.chip.d{color:var(--danger-t);background:color-mix(in srgb,var(--danger) 14%,transparent)}.chip.w{color:var(--warn-t);background:color-mix(in srgb,#eab308 16%,transparent)}.chip.s{color:var(--success-t);background:color-mix(in srgb,#1f9d55 14%,transparent)}
+.btn{background:var(--primary);color:var(--on);border:0;border-radius:10px;padding:7px 12px;font-weight:800;font-size:12.5px}
+.btn.g{background:var(--chip);color:var(--text)}
+.nav{display:flex;border-top:1px solid var(--border);background:var(--surface);padding:6px 4px 10px}
+.nav div{flex:1;text-align:center;font-size:10.5px;color:var(--muted)}.nav div i{display:block;font-style:normal;font-size:18px}.nav .on{color:var(--text);font-weight:800}.nav .on i{filter:none}
+.fich{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 10px;margin:10px 0}
+.tabs{display:flex;gap:14px;border-bottom:1px solid var(--border);font-size:12.5px;margin:10px 0;overflow:hidden}.tabs span{padding:6px 0;color:var(--muted);white-space:nowrap}.tabs .on{color:var(--text);font-weight:800;border-bottom:2px solid var(--primary)}
+.aviso{background:color-mix(in srgb,#eab308 14%,transparent);border:1px solid color-mix(in srgb,#eab308 40%,transparent);border-radius:10px;padding:8px 10px;font-size:12.5px;margin:8px 0}
+.snack{position:absolute;left:12px;right:12px;bottom:74px;background:#1a1d23;color:#fff;border-radius:12px;padding:10px 12px;font-size:12.5px;display:flex;justify-content:space-between;gap:8px}.snack b{color:var(--primary)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top-left-radius:22px;border-top-right-radius:22px;border:1px solid var(--border);padding:14px;box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+.veil{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.op{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:12px;margin:6px 0;font-weight:700;font-size:13.5px}.op.on{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 14%,transparent)}
+.rad{width:18px;height:18px;border-radius:50%;border:2px solid var(--border)}.on .rad{border:5px solid var(--primary)}
+.cm{display:flex;gap:8px;margin:8px 0;font-size:12.5px}.av{width:26px;height:26px;border-radius:50%;background:var(--chip);flex:none;display:grid;place-items:center;font-size:10px;font-weight:800}
+.comp{display:flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:var(--surface);font-size:12.5px;color:var(--muted)}
+.nota{max-width:1250px;margin:28px auto 0;font-size:13px;color:var(--muted)}
+.nota code{background:var(--chip);padding:1px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<h1>Wireframes de la app móvil · propuesta del plan</h1>
+<p class="sub">Cuatro pantallas que fijan el lenguaje de las Olas 0 y 1: <b>Hoy</b>, <b>Tarea</b>, <b>Avisos con acciones</b> y <b>cambio de despacho</b>. Tokens de la web (lima, radio 12, Manrope); se adaptan solos al modo oscuro del sistema. No son diseño final: sirven para decidir estructura.</p>
+
+<div class="fila">
+
+<!-- 1 HOY -->
+<div class="col"><h2>1 · Hoy (pantalla inicial) — 1.1, S-01</h2><p>Una sola llamada. Secciones por urgencia, acción rápida en cada elemento, despacho activo arriba, fichaje a mano.</p>
+<div class="tel">
+  <div class="bar"><div class="desp">Gestoría Pla ▾</div><div class="sp"></div><div class="ico">🔍</div><div class="ico">🔔<span class="badge">4</span></div></div>
+  <div class="cont">
+    <div class="t">Hoy</div><div class="m">5 cosas necesitan tu atención · 2 urgentes</div>
+    <div class="fich"><span>●</span><span style="flex:1;font-size:12.5px">Fuera de jornada</span><button class="btn">Fichar entrada</button></div>
+    <div class="sec"><span>Vencido</span><span>2</span></div>
+    <div class="card v"><div class="ck"></div><div style="flex:1"><b>Modelo 303 · Talleres Soler</b><small>Obligación · venció el 16 oct</small></div><span class="chip d">Hace 8 d</span></div>
+    <div class="card v"><div class="ck"></div><div style="flex:1"><b>Reunir facturas del 3T</b><small>Tarea · Cierre trimestral</small></div><span class="chip d">Ayer</span></div>
+    <div class="sec"><span>Hoy</span><span>1</span></div>
+    <div class="card"><div class="ck"></div><div style="flex:1"><b>Contestar a Clínica Dental Mar</b><small>Correo sin contestar</small></div><span class="chip w">Hoy</span></div>
+    <div class="sec"><span>Esta semana ▸</span><span>2</span></div>
+  </div>
+  <div class="nav"><div class="on"><i>☀</i>Hoy</div><div><i>✔</i>Tareas</div><div><i>✉</i>Correo</div><div><i>⏱</i>Fichaje</div><div><i>⋯</i>Más</div></div>
+</div></div>
+
+<!-- 2 TAREA -->
+<div class="col"><h2>2 · Tarea — 1.4</h2><p>Estado con motivo, conflicto de versión tratado, subtareas, comentarios con adjuntos y cámara.</p>
+<div class="tel">
+  <div class="bar"><div class="ico">‹</div><div class="sp"></div><span class="chip w" style="font-size:12px;padding:5px 10px">Esperando ▾</span><div class="ico">⋯</div></div>
+  <div class="cont">
+    <div class="t" style="font-size:17px">Preparar el IVA del 4T de Talleres Soler</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><span class="chip">🏢 Talleres Soler SL <b>+1</b></span><span class="chip d">Vence mañana</span><span class="chip">Alta</span></div>
+    <div class="aviso"><b>Esperando:</b> falta el certificado de retenciones del cliente.</div>
+    <div class="tabs"><span class="on">Detalle</span><span>Subtareas 2/4</span><span>Comentarios 3</span><span>Adjuntos 1</span><span>Actividad</span></div>
+    <div class="cm"><div class="av">MP</div><div><b>María</b> <span class="m">· hace 2 h</span><br>Le he pedido el certificado, @jordi lo revisa al llegar.</div></div>
+    <div class="cm"><div class="av">JR</div><div><b>Jordi</b> <span class="m">· hace 1 h</span><br>Perfecto 👍 <span class="chip">📎 retenciones.pdf</span></div></div>
+  </div>
+  <div class="snack"><span>Alguien ha editado esta tarea.</span><b>Ver cambios</b></div>
+  <div style="padding:8px 12px;border-top:1px solid var(--border);background:var(--surface)"><div class="comp"><span>📷</span><span>📎</span><span style="flex:1">Escribe un comentario…</span><span>🎤</span></div></div>
+</div></div>
+
+<!-- 3 AVISOS -->
+<div class="col"><h2>3 · Avisos con acciones — 1.6, S-05</h2><p>La notificación se resuelve sin abrir la app: «Lo llevo», «Aprobar», «Completar». Mismo diseño en la bandeja.</p>
+<div class="tel">
+  <div class="bar"><div class="t" style="font-size:19px;margin:0">Avisos</div><div class="sp"></div><span class="m">Marcar leídas</span></div>
+  <div class="cont">
+    <div style="display:flex;gap:6px;margin:4px 0 6px"><span class="chip" style="background:var(--primary);color:var(--on);font-weight:800">Todos</span><span class="chip">Fiscal</span><span class="chip">Tareas</span><span class="chip">Correo</span><span class="chip">Equipo</span></div>
+    <div class="sec"><span>Hoy</span></div>
+    <div class="card" style="display:block"><b>● Aviso fiscal · 303 Talleres Soler</b><small>Vence en 3 días y nadie lo ha acusado.</small><div style="display:flex;gap:6px;margin-top:8px"><button class="btn">Lo llevo</button><button class="btn g">Abrir</button></div></div>
+    <div class="card" style="display:block"><b>● Ausencia · María pide 3 días</b><small>Del 4 al 6 de noviembre · 2 días de saldo.</small><div style="display:flex;gap:6px;margin-top:8px"><button class="btn">Aprobar</button><button class="btn g">Rechazar</button></div></div>
+    <div class="card" style="display:block"><b>● Tarea asignada por Jordi</b><small>Revisar nóminas de octubre · vence el 28.</small><div style="display:flex;gap:6px;margin-top:8px"><button class="btn g">Completar</button><button class="btn g">Posponer</button></div></div>
+    <div class="sec"><span>Ayer</span></div>
+    <div class="card"><div style="flex:1"><b style="font-weight:600">Correo de Clínica Dental Mar</b><small>Asunto: facturas 3T</small></div></div>
+  </div>
+  <div class="nav"><div><i>☀</i>Hoy</div><div><i>✔</i>Tareas</div><div><i>✉</i>Correo</div><div><i>⏱</i>Fichaje</div><div class="on"><i>⋯</i>Más</div></div>
+</div></div>
+
+<!-- 4 DESPACHO + PROTEGIDO -->
+<div class="col"><h2>4 · Despacho y documentos protegidos — 0.6, S-02, S-07</h2><p>Cambio de despacho en una hoja (la caché se separa por despacho). Con el cifrado activo y sin clave, un estado claro con desbloqueo, nunca una pantalla vacía.</p>
+<div class="tel">
+  <div class="bar"><div class="desp">Gestoría Pla ▾</div><div class="sp"></div><div class="ico">🔔</div></div>
+  <div class="cont">
+    <div class="t" style="font-size:17px">Documentos · Talleres Soler</div>
+    <div class="card" style="display:block;text-align:center;margin-top:12px;padding:18px"><div style="font-size:30px">🔒</div><b>Documentos protegidos</b><small>El cifrado del despacho está activo. Introduce la frase de paso para verlos en este móvil (caduca en 12 h).</small><div style="margin-top:10px"><button class="btn">Desbloquear</button></div></div>
+  </div>
+  <div class="veil"></div>
+  <div class="sheet">
+    <div style="width:36px;height:4px;border-radius:4px;background:var(--border);margin:0 auto 10px"></div>
+    <b>Cambiar de despacho</b>
+    <div class="op on"><div class="rad"></div>Gestoría Pla <span class="chip s" style="margin-left:auto">Activo</span></div>
+    <div class="op"><div class="rad"></div>Inmobiliaria Costa</div>
+    <div class="m" style="margin-top:6px">Al cambiar se vacía la caché local del despacho anterior.</div>
+  </div>
+</div></div>
+
+</div>
+
+<p class="nota">Referencias: <code>docs/plan-app-movil.md</code> (§4 arquitectura, §7 olas, §12 UX/UI). Las cifras y nombres de ejemplo son inventados.</p>
+</body>
+</html>
