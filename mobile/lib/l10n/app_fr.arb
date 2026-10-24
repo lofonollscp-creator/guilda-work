@@ -513,5 +513,18 @@
   "loginInvitadoTitulo": "L'accès se fait sur invitation",
   "loginInvitadoCuerpo": "Votre cabinet vous invite depuis Guilda Work et vous recevez un courriel pour créer votre mot de passe. Si vous ne l'avez pas encore reçu, demandez-le à la personne qui administre votre cabinet.",
   "loginEntendido": "Compris",
-  "loginServidorPulsacion": "Appuyez longuement sur le logo pour changer de serveur"
+  "loginServidorPulsacion": "Appuyez longuement sur le logo pour changer de serveur",
+  "bloqueoTitulo": "Verrouillage par empreinte, Face ID ou code",
+  "bloqueoSubtitulo": "Demande votre empreinte, votre visage ou le code du téléphone à l'ouverture",
+  "bloqueoNoDisponible": "Ce téléphone n'a ni empreinte, ni Face ID, ni verrouillage configuré",
+  "bloqueoMotivoActivar": "Confirmez que c'est vous pour activer le verrouillage",
+  "bloqueoMotivoDesactivar": "Confirmez que c'est vous pour désactiver le verrouillage",
+  "bloqueoMotivoDesbloquear": "Déverrouillez Guilda Work",
+  "bloqueoPantallaTitulo": "Guilda Work est verrouillée",
+  "bloqueoDesbloquear": "Déverrouiller",
+  "bloqueoCerrarSesion": "Se déconnecter",
+  "bloqueoOfertaTitulo": "Protéger l'application ?",
+  "bloqueoOfertaCuerpo": "Vous pouvez demander votre empreinte, votre visage ou le code du téléphone à chaque ouverture de Guilda Work. Ainsi, si quelqu'un prend votre téléphone, il ne verra pas les données de vos clients.",
+  "bloqueoOfertaActivar": "Activer",
+  "bloqueoOfertaAhoraNo": "Pas maintenant"
 }

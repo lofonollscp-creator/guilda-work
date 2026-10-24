@@ -29,6 +29,8 @@
 	<!-- Asistente de IA con voz (Fase V3): dictado (speech_to_text) y
 	     lectura en voz alta (flutter_tts) de las respuestas, ver
 	     ia_chat_screen.dart. -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Guilda Work usa Face ID para desbloquear la app y proteger los datos de tus clientes.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Guilda Work necesita el micrófono para que puedas dictarle mensajes al asistente de IA.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

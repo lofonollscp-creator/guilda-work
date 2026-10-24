@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/pantalla_bloqueo.dart';
+
 import '../l10n/app_localizations.dart';
 import '../services/api_client.dart';
 import '../services/locale_service.dart';
@@ -137,6 +139,7 @@ class AjustesScreen extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => mostrarAjustesServidor(context, sesion),
           ),
+          const InterruptorBloqueo(),
           const Divider(height: 32),
           ListTile(
             leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),

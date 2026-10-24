@@ -513,5 +513,18 @@
   "loginInvitadoTitulo": "L'accés és per invitació",
   "loginInvitadoCuerpo": "El teu despatx t'hi convida des de Guilda Work i rebràs un correu per crear la contrasenya. Si encara no l'has rebut, demana-ho a qui administra el teu despatx.",
   "loginEntendido": "Entesos",
-  "loginServidorPulsacion": "Mantén premut el logotip per canviar de servidor"
+  "loginServidorPulsacion": "Mantén premut el logotip per canviar de servidor",
+  "bloqueoTitulo": "Bloqueig amb empremta, Face ID o codi",
+  "bloqueoSubtitulo": "Demana la teva empremta, la cara o el codi del mòbil en obrir l'aplicació",
+  "bloqueoNoDisponible": "Aquest mòbil no té empremta, Face ID ni codi de bloqueig configurat",
+  "bloqueoMotivoActivar": "Confirma que ets tu per activar el bloqueig",
+  "bloqueoMotivoDesactivar": "Confirma que ets tu per desactivar el bloqueig",
+  "bloqueoMotivoDesbloquear": "Desbloqueja Guilda Work",
+  "bloqueoPantallaTitulo": "Guilda Work està bloquejada",
+  "bloqueoDesbloquear": "Desbloquejar",
+  "bloqueoCerrarSesion": "Tanca la sessió",
+  "bloqueoOfertaTitulo": "Vols protegir l'aplicació?",
+  "bloqueoOfertaCuerpo": "Pots demanar l'empremta, la cara o el codi del mòbil cada cop que obris Guilda Work. Així, si algú agafa el teu mòbil, no veurà les dades dels teus clients.",
+  "bloqueoOfertaActivar": "Activar",
+  "bloqueoOfertaAhoraNo": "Ara no"
 }

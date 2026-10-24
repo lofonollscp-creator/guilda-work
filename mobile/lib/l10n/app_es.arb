@@ -759,5 +759,18 @@
   "loginInvitadoTitulo": "El acceso es por invitación",
   "loginInvitadoCuerpo": "Tu despacho te invita desde Guilda Work y recibes un correo para crear tu contraseña. Si aún no lo has recibido, pídeselo a quien administra tu despacho.",
   "loginEntendido": "Entendido",
-  "loginServidorPulsacion": "Mantén pulsado el logotipo para cambiar de servidor"
+  "loginServidorPulsacion": "Mantén pulsado el logotipo para cambiar de servidor",
+  "bloqueoTitulo": "Bloqueo con huella, Face ID o código",
+  "bloqueoSubtitulo": "Pide tu huella, tu cara o el código del móvil al abrir la app",
+  "bloqueoNoDisponible": "Este móvil no tiene huella, Face ID ni código de bloqueo configurado",
+  "bloqueoMotivoActivar": "Confirma que eres tú para activar el bloqueo",
+  "bloqueoMotivoDesactivar": "Confirma que eres tú para desactivar el bloqueo",
+  "bloqueoMotivoDesbloquear": "Desbloquea Guilda Work",
+  "bloqueoPantallaTitulo": "Guilda Work está bloqueada",
+  "bloqueoDesbloquear": "Desbloquear",
+  "bloqueoCerrarSesion": "Cerrar sesión",
+  "bloqueoOfertaTitulo": "¿Proteger la app?",
+  "bloqueoOfertaCuerpo": "Puedes pedir tu huella, tu cara o el código del móvil cada vez que abras Guilda Work. Así, si alguien coge tu móvil, no verá los datos de tus clientes.",
+  "bloqueoOfertaActivar": "Activar",
+  "bloqueoOfertaAhoraNo": "Ahora no"
 }

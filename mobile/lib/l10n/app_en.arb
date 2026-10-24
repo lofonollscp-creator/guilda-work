@@ -513,5 +513,18 @@
   "loginInvitadoTitulo": "Access is by invitation",
   "loginInvitadoCuerpo": "Your office invites you from Guilda Work and you receive an email to create your password. If you haven't received it yet, ask whoever manages your office.",
   "loginEntendido": "Got it",
-  "loginServidorPulsacion": "Long-press the logo to change server"
+  "loginServidorPulsacion": "Long-press the logo to change server",
+  "bloqueoTitulo": "Lock with fingerprint, Face ID or passcode",
+  "bloqueoSubtitulo": "Asks for your fingerprint, face or phone passcode when you open the app",
+  "bloqueoNoDisponible": "This phone has no fingerprint, Face ID or screen lock set up",
+  "bloqueoMotivoActivar": "Confirm it's you to turn the lock on",
+  "bloqueoMotivoDesactivar": "Confirm it's you to turn the lock off",
+  "bloqueoMotivoDesbloquear": "Unlock Guilda Work",
+  "bloqueoPantallaTitulo": "Guilda Work is locked",
+  "bloqueoDesbloquear": "Unlock",
+  "bloqueoCerrarSesion": "Sign out",
+  "bloqueoOfertaTitulo": "Protect the app?",
+  "bloqueoOfertaCuerpo": "You can ask for your fingerprint, face or phone passcode every time you open Guilda Work. That way, if someone picks up your phone, they won't see your clients' data.",
+  "bloqueoOfertaActivar": "Turn on",
+  "bloqueoOfertaAhoraNo": "Not now"
 }
