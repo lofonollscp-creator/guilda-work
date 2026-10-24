@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -96,7 +98,7 @@ class _FichajeHistorialScreenState extends State<FichajeHistorialScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
+                    return Center(child: Text(mensajeDeError(t, snapshot.error!)));
                   }
                   final fichajes = snapshot.data ?? [];
                   if (fichajes.isEmpty) {

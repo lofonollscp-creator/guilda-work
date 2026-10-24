@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -55,7 +57,7 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _guardando = false);
     }

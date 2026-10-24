@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../diseno/componentes.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../l10n/app_localizations.dart';
@@ -46,7 +48,7 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('${snapshot.error}'));
+            return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
           }
           final (herramientas, baseUrl) = snapshot.data!;
           if (herramientas.isEmpty) {

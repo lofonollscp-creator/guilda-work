@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
+import '../l10n/app_localizations.dart';
+
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../theme/app_theme.dart';
@@ -60,11 +64,11 @@ class _HistorialRapidoScreenState extends State<HistorialRapidoScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('${snapshot.error}'));
+            return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
           }
           final entradas = snapshot.data ?? [];
           if (entradas.isEmpty) {
-            return const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('Nada que mostrar aquí ahora mismo.')));
+            return Center(child: Padding(padding: EdgeInsets.all(24), child: Text(AppLocalizations.of(context).historialVacio)));
           }
           return ListView.builder(
             itemCount: entradas.length,

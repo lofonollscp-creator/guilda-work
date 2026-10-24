@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
+import '../l10n/app_localizations.dart';
+
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../theme/app_theme.dart';
@@ -67,7 +71,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
       _notaController.clear();
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
   }
 
@@ -79,7 +83,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
       _eventoController.clear();
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
   }
 
@@ -91,7 +95,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
       _tareaController.clear();
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
   }
 
@@ -106,7 +110,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar: ${snapshot.error}'));
+            return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
           }
           return RefreshIndicator(
             onRefresh: _recargar,
@@ -114,26 +118,26 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 _cardAccionRapida(
-                  etiqueta: '📝 Nota rápida',
+                  etiqueta: AppLocalizations.of(context).dashboardNotaRapidaTitulo,
                   controlador: _notaController,
-                  hint: 'Escribe algo que ha pasado...',
-                  botonTexto: 'Anotar',
+                  hint: AppLocalizations.of(context).menuNotaHint,
+                  botonTexto: AppLocalizations.of(context).dashboardAnotarBoton,
                   onPressed: _anotar,
                 ),
                 const SizedBox(height: 8),
                 _cardAccionRapida(
-                  etiqueta: '⚡ Evento instantáneo',
+                  etiqueta: AppLocalizations.of(context).menuEvento,
                   controlador: _eventoController,
-                  hint: 'Algo puntual que acaba de ocurrir...',
-                  botonTexto: 'Registrar',
+                  hint: AppLocalizations.of(context).menuEventoHint,
+                  botonTexto: AppLocalizations.of(context).menuRegistrar,
                   onPressed: _registrarEvento,
                 ),
                 const SizedBox(height: 8),
                 _cardAccionRapida(
-                  etiqueta: '▶ Tarea con duración',
+                  etiqueta: AppLocalizations.of(context).menuTareaDuracion,
                   controlador: _tareaController,
-                  hint: 'Nombre de la tarea a iniciar...',
-                  botonTexto: 'Iniciar',
+                  hint: AppLocalizations.of(context).menuTareaDuracionHint,
+                  botonTexto: AppLocalizations.of(context).menuIniciar,
                   onPressed: _iniciarTarea,
                 ),
                 if (_error != null) ...[
@@ -142,26 +146,26 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
                 ],
                 if (_activas.isNotEmpty) ...[
                   const SizedBox(height: 24),
-                  Text('En curso ahora', style: Theme.of(context).textTheme.titleMedium),
+                  Text(AppLocalizations.of(context).menuEnCursoAhora, style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   ..._activas.map(_tarjetaTareaActiva),
                 ],
                 const SizedBox(height: 24),
-                Text('Registro de ${widget.categoria.nombre}', style: Theme.of(context).textTheme.titleMedium),
+                Text(AppLocalizations.of(context).menuRegistroDe(widget.categoria.nombre), style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _buscarController,
-                  decoration: const InputDecoration(
-                    hintText: 'Buscar en este proyecto...',
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context).menuBuscarEnProyecto,
                     prefixIcon: Icon(Icons.search),
                   ),
                   onSubmitted: (_) => _recargar(),
                 ),
                 const SizedBox(height: 8),
                 if (_historial.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Text('Este proyecto todavía está vacío.'),
+                    child: Text(AppLocalizations.of(context).menuProyectoVacio),
                   )
                 else
                   ..._historial.map(_tarjetaHistorial),
@@ -214,7 +218,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: StatusBadge(
-            texto: pausada ? 'En pausa' : 'En curso',
+            texto: pausada ? AppLocalizations.of(context).menuEnPausa : AppLocalizations.of(context).estadoEnProgreso,
             tono: pausada ? BadgeTono.aviso : BadgeTono.exito,
           ),
         ),
@@ -223,7 +227,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
           children: [
             IconButton(
               icon: Icon(pausada ? Icons.play_arrow : Icons.pause),
-              tooltip: pausada ? 'Reanudar' : 'Pausar',
+              tooltip: pausada ? AppLocalizations.of(context).menuReanudar : AppLocalizations.of(context).menuPausar,
               onPressed: () async {
                 if (pausada) {
                   await widget.api.reanudarTarea(t.id);
@@ -235,7 +239,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.stop),
-              tooltip: 'Finalizar',
+              tooltip: AppLocalizations.of(context).menuFinalizar,
               onPressed: () async {
                 await widget.api.finalizarTarea(t.id);
                 await _recargar();
@@ -251,15 +255,15 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
     final esNota = f.origen == 'nota';
     String etiqueta;
     if (esNota) {
-      etiqueta = 'Nota';
+      etiqueta = AppLocalizations.of(context).menuTipoNota;
     } else if (f.tipo == 'instantanea') {
-      etiqueta = 'Evento';
+      etiqueta = AppLocalizations.of(context).menuTipoEvento;
     } else if (f.estado == 'en_curso') {
-      etiqueta = 'En curso';
+      etiqueta = AppLocalizations.of(context).estadoEnProgreso;
     } else if (f.estado == 'pausada') {
-      etiqueta = 'En pausa';
+      etiqueta = AppLocalizations.of(context).menuEnPausa;
     } else {
-      etiqueta = 'Tarea';
+      etiqueta = AppLocalizations.of(context).busquedaTipoTarea;
     }
     String? duracion;
     if (f.duracionSegundos != null) {

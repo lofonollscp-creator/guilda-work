@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
+import '../l10n/app_localizations.dart';
+
 import '../models/models.dart';
 import '../services/api_client.dart';
 
@@ -56,7 +60,7 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
       _patronController.clear();
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
   }
 
@@ -64,10 +68,10 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar esta regla?'),
+        title: Text(AppLocalizations.of(context).correoReglaEliminarTitulo),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context).comunCancelar)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context).comunEliminar)),
         ],
       ),
     );
@@ -86,7 +90,7 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reglas de categorización')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).correoReglasTitulo)),
       body: Column(
         children: [
           Padding(
@@ -94,17 +98,17 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Los correos nuevos de un remitente o dominio que coincida se categorizan solos.',
+                Text(
+                  AppLocalizations.of(context).correoReglasAyuda,
                   style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 if (_categorias.isEmpty)
-                  const Text('Crea al menos una categoría desde el detalle de un mensaje primero.')
+                  Text(AppLocalizations.of(context).correoReglasSinCategorias)
                 else ...[
                   TextField(
                     controller: _patronController,
-                    decoration: const InputDecoration(hintText: 'email@ejemplo.com o @dominio.com'),
+                    decoration: InputDecoration(hintText: AppLocalizations.of(context).correoReglasPatronHint),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -120,7 +124,7 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
                         ),
                       ),
                       const SizedBox(width: 8),
-                      FilledButton(onPressed: _anadir, child: const Text('+ Añadir')),
+                      FilledButton(onPressed: _anadir, child: Text('+ ${AppLocalizations.of(context).comunAnadir}')),
                     ],
                   ),
                 ],
@@ -139,11 +143,11 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error al cargar: ${snapshot.error}'));
+                  return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
                 }
                 final reglas = snapshot.data ?? [];
                 if (reglas.isEmpty) {
-                  return const Center(child: Text('Todavía no tienes ninguna regla.'));
+                  return Center(child: Text(AppLocalizations.of(context).correoReglasVacio));
                 }
                 return ListView.builder(
                   itemCount: reglas.length,
@@ -158,7 +162,7 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
                       subtitle: Text('→ ${r.categoriaNombre}'),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
-                        tooltip: 'Eliminar',
+                        tooltip: AppLocalizations.of(context).comunEliminar,
                         onPressed: () => _eliminar(r),
                       ),
                     );

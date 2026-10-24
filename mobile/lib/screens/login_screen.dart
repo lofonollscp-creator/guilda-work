@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
 import '../l10n/app_localizations.dart';
 import '../services/api_client.dart';
 import '../services/locale_service.dart';
@@ -87,11 +89,11 @@ class _LoginScreenState extends State<LoginScreen> {
           _pide2fa = true;
           _error = null;
         } else {
-          _error = e.toString();
+          _error = mensajeDeError(AppLocalizations.of(context), e);
         }
       });
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _cargando = false);
     }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -57,7 +59,7 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
       _tituloController.clear();
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
   }
 
@@ -157,7 +159,7 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
+                    return Center(child: Text(mensajeDeError(t, snapshot.error!)));
                   }
                   final tiquets = snapshot.data ?? [];
                   if (tiquets.isEmpty) {

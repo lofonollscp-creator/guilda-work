@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -97,7 +99,7 @@ class _FiscalVencimientosScreenState extends State<FiscalVencimientosScreen> {
                   if (snapshot.hasError) {
                     return Center(
                       child: Text(
-                        t.comunErrorCargar(snapshot.error.toString()),
+                        mensajeDeError(t, snapshot.error!),
                       ),
                     );
                   }

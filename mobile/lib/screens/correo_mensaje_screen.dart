@@ -1,6 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
+import '../diseno/componentes.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -95,7 +99,7 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
       await llamada();
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
   }
 
@@ -109,11 +113,11 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar este mensaje?'),
-        content: const Text('Se eliminará de la copia local de este correo.'),
+        title: Text(AppLocalizations.of(context).correoEliminarTitulo),
+        content: Text(AppLocalizations.of(context).correoEliminarCuerpo),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context).comunCancelar)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context).comunEliminar)),
         ],
       ),
     );
@@ -123,7 +127,7 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
   }
 
@@ -174,14 +178,11 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
       final confirmar = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Remitente no confiable'),
-          content: Text(
-            'Este adjunto viene de "${m.remitente}", que no está en tu lista de confianza. '
-            '¿Abrir igualmente "${a.nombreArchivo}"?',
-          ),
+          title: Text(AppLocalizations.of(context).correoNoConfiableTitulo),
+          content: Text(AppLocalizations.of(context).correoNoConfiableCuerpo(m.remitente, a.nombreArchivo)),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Abrir')),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context).comunCancelar)),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context).comunAbrir)),
           ],
         ),
       );
@@ -195,7 +196,7 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
       await archivo.writeAsBytes(bytes);
       await OpenFilex.open(archivo.path);
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _descargandoAdjuntoId = null);
     }
@@ -205,9 +206,9 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mensaje'),
+        title: Text(AppLocalizations.of(context).comunMensaje),
         actions: [
-          IconButton(icon: const Icon(Icons.delete_outline), tooltip: 'Eliminar', onPressed: _eliminar),
+          IconButton(icon: Icon(Icons.delete_outline), tooltip: AppLocalizations.of(context).comunEliminar, onPressed: _eliminar),
         ],
       ),
       body: FutureBuilder<Mensaje>(
@@ -217,7 +218,7 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar: ${snapshot.error}'));
+            return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
           }
           final m = snapshot.data!;
           final mostrarSinBloqueo = m.remitenteConfiable || _mostrarImagenes;
@@ -229,8 +230,8 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
             children: [
               Text(m.asunto, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
-              Text('De: ${m.remitente}'),
-              Text('Para: ${m.destinatarios}'),
+              Text(AppLocalizations.of(context).correoDe(m.remitente)),
+              Text(AppLocalizations.of(context).correoPara(m.destinatarios)),
               if (m.cc != null && m.cc!.isNotEmpty) Text('Cc: ${m.cc}'),
               if (m.fecha != null) Text(m.fecha!),
               const SizedBox(height: 16),
@@ -240,18 +241,18 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
                 children: [
                   ActionChip(
                     avatar: Icon(m.leido ? Icons.mark_email_read : Icons.mark_email_unread),
-                    label: Text(m.leido ? 'Leído' : 'No leído'),
+                    label: Text(m.leido ? AppLocalizations.of(context).correoLeido : AppLocalizations.of(context).correoNoLeido),
                     onPressed: () => _accion(() => widget.api.marcarLeido(m.id, !m.leido)),
                   ),
                   ActionChip(
                     avatar: Icon(m.destacado ? Icons.star : Icons.star_border),
-                    label: const Text('Destacar'),
+                    label: Text(AppLocalizations.of(context).correoDestacar),
                     onPressed: () => _accion(() => widget.api.destacarMensaje(m.id, !m.destacado)),
                   ),
                   if (!m.remitenteConfiable)
                     ActionChip(
                       avatar: const Icon(Icons.shield_outlined),
-                      label: const Text('Confiar en remitente'),
+                      label: Text(AppLocalizations.of(context).correoConfiarRemitente),
                       onPressed: () => _confiarEnRemitente(m.remitente),
                     ),
                 ],
@@ -262,9 +263,9 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
                   Expanded(
                     child: DropdownButtonFormField<int?>(
                       initialValue: m.categoriaId,
-                      decoration: const InputDecoration(labelText: 'Categoría'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context).correoCategoria),
                       items: [
-                        const DropdownMenuItem(value: null, child: Text('Sin categoría')),
+                        DropdownMenuItem(value: null, child: Text(AppLocalizations.of(context).correoSinCategoria)),
                         ..._categorias.map((c) => DropdownMenuItem(value: c.id, child: Text(c.nombre))),
                       ],
                       onChanged: (v) => _accion(() => widget.api.asignarCategoria(m.id, v)),
@@ -275,7 +276,7 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         initialValue: m.carpeta,
-                        decoration: const InputDecoration(labelText: 'Mover a'),
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context).correoMoverA),
                         items: widget.carpetas
                             .map((f) => DropdownMenuItem(value: f.nombre, child: Text(f.nombreVisible)))
                             .toList(),
@@ -301,17 +302,17 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('🖼 Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza.'),
+                      Text(AppLocalizations.of(context).correoImagenesOcultas),
                       const SizedBox(height: 8),
                       Row(
                         children: [
                           TextButton(
                             onPressed: () => setState(() => _mostrarImagenes = true),
-                            child: const Text('Mostrar solo esta vez'),
+                            child: Text(AppLocalizations.of(context).correoMostrarUnaVez),
                           ),
                           TextButton(
                             onPressed: () => _confiarEnRemitente(m.remitente),
-                            child: const Text('Confiar en remitente'),
+                            child: Text(AppLocalizations.of(context).correoConfiarRemitente),
                           ),
                         ],
                       ),
@@ -325,10 +326,10 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
               else if ((m.cuerpoTexto ?? '').trim().isNotEmpty)
                 Text(m.cuerpoTexto!)
               else
-                const Text('Sin contenido legible.'),
+                Text(AppLocalizations.of(context).correoSinContenido),
               if (m.adjuntos.isNotEmpty) ...[
                 const Divider(height: 32),
-                Text('Adjuntos', style: Theme.of(context).textTheme.titleSmall),
+                Text(AppLocalizations.of(context).tareaAdjuntos, style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 8),
                 ...m.adjuntos.map(
                   (a) => ListTile(
@@ -347,13 +348,13 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
                   FilledButton.icon(
                     onPressed: () => _responder(m),
                     icon: const Icon(Icons.reply),
-                    label: const Text('Responder'),
+                    label: Text(AppLocalizations.of(context).correoResponder),
                   ),
                   const SizedBox(width: 12),
                   OutlinedButton.icon(
                     onPressed: () => _reenviar(m),
                     icon: const Icon(Icons.forward),
-                    label: const Text('Reenviar'),
+                    label: Text(AppLocalizations.of(context).correoReenviar),
                   ),
                 ],
               ),

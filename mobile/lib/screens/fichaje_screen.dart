@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../diseno/componentes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -120,9 +122,9 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
     } on ColaLlena {
       setState(() => _error = t.colaLlena);
     } on ApiException catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _marcando = false);
     }
@@ -164,7 +166,7 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
+            return Center(child: Text(mensajeDeError(t, snapshot.error!)));
           }
           final (estado, datosCompletos) = snapshot.data!;
           if (!datosCompletos) {

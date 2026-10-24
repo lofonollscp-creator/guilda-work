@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 import '../services/session_service.dart';
 
 /// Diálogo simple para cambiar la URL del servidor sin salir de la pantalla
@@ -15,11 +17,11 @@ Future<void> mostrarAjustesServidor(
   await showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Servidor'),
+      title: Text(AppLocalizations.of(context).ajustesServidorTitulo),
       content: TextField(
         controller: controlador,
-        decoration: const InputDecoration(
-          labelText: 'URL base (ej. http://10.0.2.2:8000)',
+        decoration: InputDecoration(
+          labelText: AppLocalizations.of(context).ajustesServidorUrlLabel,
         ),
         keyboardType: TextInputType.url,
         autocorrect: false,
@@ -27,14 +29,14 @@ Future<void> mostrarAjustesServidor(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: Text(AppLocalizations.of(context).comunCancelar),
         ),
         FilledButton(
           onPressed: () async {
             await sesion.guardarServidor(controlador.text.trim());
             if (context.mounted) Navigator.pop(context);
           },
-          child: const Text('Guardar'),
+          child: Text(AppLocalizations.of(context).comunGuardar),
         ),
       ],
     ),

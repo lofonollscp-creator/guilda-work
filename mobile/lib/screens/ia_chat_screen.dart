@@ -4,6 +4,8 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
 import '../l10n/app_localizations.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -165,7 +167,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
         _pendiente = _pendienteDesdeHistorial(mensajes);
       });
     } on ApiException catch (e) {
-      setState(() => _errorCarga = e.mensaje);
+      setState(() => _errorCarga = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
@@ -238,7 +240,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
             setState(() => _pendiente = evento.pendiente);
             if (_liveActivo && evento.pendiente != null) {
               _flushTts();
-              _hablar('¿Ejecuto ${evento.pendiente!.herramienta}?');
+              _hablar(AppLocalizations.of(context).iaEjecutarPregunta(evento.pendiente!.herramienta));
             }
             break;
           case 'error':
@@ -250,9 +252,9 @@ class _IaChatScreenState extends State<IaChatScreen> {
         }
       }
     } on ApiException catch (e) {
-      if (mounted) setState(() => _errorTurno = e.mensaje);
+      if (mounted) setState(() => _errorTurno = mensajeDeError(AppLocalizations.of(context), e));
     } catch (_) {
-      if (mounted) setState(() => _errorTurno = 'No se pudo contactar con el servidor.');
+      if (mounted) setState(() => _errorTurno = AppLocalizations.of(context).errRed);
     } finally {
       if (mounted) setState(() => _enviando = false);
       _scrollAlFinal();
@@ -264,11 +266,11 @@ class _IaChatScreenState extends State<IaChatScreen> {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Vaciar conversación'),
-        content: const Text('¿Borrar todo el historial de esta conversación? No se puede deshacer.'),
+        title: Text(AppLocalizations.of(context).iaMenuVaciar),
+        content: Text(AppLocalizations.of(context).iaVaciarConfirmar),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Borrar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context).comunCancelar)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context).comunBorrar)),
         ],
       ),
     );
@@ -419,7 +421,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Asistente IA'),
+        title: Text(AppLocalizations.of(context).dashboardAsistenteIaTooltip),
         // Antes tres iconos sueltos; ahora un menú con nombre (la acción destructiva, «Vaciar», ya no está a un toque por error).
         actions: [
           PopupMenuButton<String>(
@@ -473,7 +475,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
             children: [
               Text(_errorCarga!, textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              FilledButton(onPressed: _cargarHistorial, child: const Text('Reintentar')),
+              FilledButton(onPressed: _cargarHistorial, child: Text(AppLocalizations.of(context).estadoVacioReintentar)),
             ],
           ),
         ),
@@ -489,9 +491,8 @@ class _IaChatScreenState extends State<IaChatScreen> {
             children: [
               Icon(Icons.smart_toy_outlined, size: 48, color: Theme.of(context).colorScheme.outline),
               const SizedBox(height: 12),
-              const Text(
-                'Escríbele al asistente sobre tus notas, tareas o correo. '
-                'Puede leer y modificar tus datos si se lo pides.',
+              Text(
+                AppLocalizations.of(context).iaVacioTexto,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -541,7 +542,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Text('Pensando…', style: TextStyle(fontStyle: FontStyle.italic)),
+        child: Text(AppLocalizations.of(context).iaPensando, style: TextStyle(fontStyle: FontStyle.italic)),
       ),
     );
   }
@@ -592,7 +593,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Text(
-              _textoMensajeTool(m),
+              _textoMensajeTool(AppLocalizations.of(context), m),
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.outline,
@@ -630,15 +631,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text.rich(
-              TextSpan(
-                children: [
-                  const TextSpan(text: '¿Ejecuto '),
-                  TextSpan(text: pendiente.herramienta, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const TextSpan(text: '?'),
-                ],
-              ),
-            ),
+            Text(AppLocalizations.of(context).iaEjecutarPregunta(pendiente.herramienta), style: const TextStyle(fontWeight: FontWeight.bold)),
             if (pendiente.argumentos.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
@@ -666,7 +659,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: AppButton(
-                    texto: 'Sí, hazlo',
+                    texto: AppLocalizations.of(context).iaSiHazlo,
                     cargando: _confirmando,
                     onPressed: () => _confirmarStream(true),
                   ),
@@ -688,7 +681,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
           if (_vozDisponible) ...[
             IconButton.outlined(
               icon: Icon(_escuchando ? Icons.mic : Icons.mic_none),
-              tooltip: 'Dictar mensaje',
+              tooltip: AppLocalizations.of(context).iaDictar,
               style: _escuchando
                   ? IconButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.error,
@@ -708,7 +701,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _enviarTexto(),
               decoration: InputDecoration(
-                hintText: bloqueado ? 'Responde a la confirmación de arriba primero…' : 'Escribe un mensaje…',
+                hintText: bloqueado ? AppLocalizations.of(context).iaResponderConfirmacion : AppLocalizations.of(context).iaEscribeMensaje,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
@@ -717,7 +710,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
           const SizedBox(width: 8),
           IconButton.filled(
             icon: const Icon(Icons.send),
-            tooltip: 'Enviar',
+            tooltip: AppLocalizations.of(context).comunEnviar,
             onPressed: (bloqueado || _enviando) ? null : () => _enviarTexto(),
           ),
         ],
@@ -729,18 +722,18 @@ class _IaChatScreenState extends State<IaChatScreen> {
 /// Texto compacto para un mensaje "tool" (misma lógica que textoMensajeTool
 /// en app/static/ia_asistente.js): distingue error/rechazo/ejecución normal
 /// leyendo el JSON crudo guardado en `contenido`.
-String _textoMensajeTool(IaMensaje m) {
+String _textoMensajeTool(AppLocalizations t, IaMensaje m) {
   final herramienta = m.nombreHerramienta ?? 'herramienta';
   final contenido = m.contenido;
-  if (contenido == null || contenido.isEmpty) return '🔧 usó $herramienta';
+  if (contenido == null || contenido.isEmpty) return t.iaToolUso(herramienta);
   try {
     final datos = jsonDecode(contenido);
-    if (datos is Map && datos['error'] != null) return '⚠️ $herramienta: ${datos['error']}';
-    if (datos is Map && datos['rechazado'] == true) return '❌ $herramienta (rechazada)';
+    if (datos is Map && datos['error'] != null) return t.iaToolError(herramienta, '${datos['error']}');
+    if (datos is Map && datos['rechazado'] == true) return t.iaToolRechazada(herramienta);
   } catch (_) {
     // contenido no era JSON válido: se deja el texto por defecto
   }
-  return '🔧 usó $herramienta';
+  return t.iaToolUso(herramienta);
 }
 
 /// Reconstruye, a partir del historial completo, si hay una acción esperando

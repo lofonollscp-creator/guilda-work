@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -65,7 +67,7 @@ class _FiscalClientesScreenState extends State<FiscalClientesScreen> {
       );
       if (cambiado == true) await _recargar();
     } catch (e) {
-      setState(() => _error = t.comunErrorCargar(e.toString()));
+      setState(() => _error = mensajeDeError(t, e));
     }
   }
 
@@ -118,7 +120,7 @@ class _FiscalClientesScreenState extends State<FiscalClientesScreen> {
                   if (snapshot.hasError) {
                     return Center(
                       child: Text(
-                        t.comunErrorCargar(snapshot.error.toString()),
+                        mensajeDeError(t, snapshot.error!),
                       ),
                     );
                   }

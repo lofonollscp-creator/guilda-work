@@ -564,5 +564,188 @@
         "type": "int"
       }
     }
-  }
+  },
+  "comunEnviar": "Enviar",
+  "comunAbrir": "Abrir",
+  "comunQuitar": "Quitar",
+  "comunBorrar": "Borrar",
+  "comunAnadir": "Añadir",
+  "comunMensaje": "Mensaje",
+  "comunBuscarHint": "Buscar…",
+  "comunDescartar": "Descartar",
+  "ajustesServidorUrlLabel": "URL base (ej. http://10.0.2.2:8000)",
+  "correoAjustesTitulo": "Ajustes de correo",
+  "correoRemitentesTitulo": "Remitentes de confianza",
+  "correoRemitentesSub": "Sus imágenes y adjuntos no se bloquean ni avisan",
+  "correoReglasTitulo": "Reglas de categorización",
+  "correoReglasSub": "Categoriza el correo entrante según el remitente",
+  "correoRedactar": "Redactar",
+  "correoSinCuenta": "Todavía no tienes ninguna cuenta de correo configurada. Añade una desde la app de escritorio.",
+  "correoSoloNoLeidos": "Solo no leídos",
+  "correoSinMensajes": "No hay mensajes para este filtro.",
+  "correoNoLeido": "No leído",
+  "correoLeido": "Leído",
+  "correoElegirCuenta": "Elige una cuenta desde la que enviar.",
+  "correoFaltanDatos": "Rellena al menos destinatarios y asunto.",
+  "correoConfirmarEnviar": "¿Enviar a {destinatarios}?",
+  "@correoConfirmarEnviar": {
+    "placeholders": {
+      "destinatarios": {
+        "type": "String"
+      }
+    }
+  },
+  "correoEnviado": "Correo enviado.",
+  "correoParaLabel": "Para",
+  "correoAnadirCc": "Añadir Cc/Cco",
+  "correoCcoLabel": "Cco",
+  "correoAsuntoLabel": "Asunto",
+  "correoEliminarTitulo": "¿Eliminar este mensaje?",
+  "correoEliminarCuerpo": "Se eliminará de la copia local de este correo.",
+  "correoNoConfiableTitulo": "Remitente no confiable",
+  "correoNoConfiableCuerpo": "Este adjunto viene de «{remitente}», que no está en tu lista de confianza. ¿Abrir igualmente «{adjunto}»?",
+  "@correoNoConfiableCuerpo": {
+    "placeholders": {
+      "remitente": {
+        "type": "String"
+      },
+      "adjunto": {
+        "type": "String"
+      }
+    }
+  },
+  "correoDe": "De: {remitente}",
+  "@correoDe": {
+    "placeholders": {
+      "remitente": {
+        "type": "String"
+      }
+    }
+  },
+  "correoPara": "Para: {destinatarios}",
+  "@correoPara": {
+    "placeholders": {
+      "destinatarios": {
+        "type": "String"
+      }
+    }
+  },
+  "correoDestacar": "Destacar",
+  "correoConfiarRemitente": "Confiar en remitente",
+  "correoCategoria": "Categoría",
+  "correoSinCategoria": "Sin categoría",
+  "correoMoverA": "Mover a",
+  "correoImagenesOcultas": "🖼 Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza.",
+  "correoMostrarUnaVez": "Mostrar solo esta vez",
+  "correoSinContenido": "Sin contenido legible.",
+  "correoResponder": "Responder",
+  "correoReenviar": "Reenviar",
+  "correoReglaEliminarTitulo": "¿Eliminar esta regla?",
+  "correoReglasAyuda": "Los correos nuevos de un remitente o dominio que coincida se categorizan solos.",
+  "correoReglasSinCategorias": "Crea al menos una categoría desde el detalle de un mensaje primero.",
+  "correoReglasPatronHint": "email@ejemplo.com o @dominio.com",
+  "correoReglasVacio": "Todavía no tienes ninguna regla.",
+  "correoConfianzaQuitarTitulo": "¿Quitar de la lista de confianza?",
+  "correoConfianzaQuitarCuerpo": "«{direccion}» volverá a bloquear sus imágenes y avisar antes de abrir adjuntos.",
+  "@correoConfianzaQuitarCuerpo": {
+    "placeholders": {
+      "direccion": {
+        "type": "String"
+      }
+    }
+  },
+  "correoConfianzaAyuda": "Sus imágenes remotas y adjuntos se muestran o abren sin avisar.",
+  "correoConfianzaHint": "correo@ejemplo.com",
+  "correoConfianzaVacio": "Todavía no tienes ningún remitente de confianza.",
+  "historialVacio": "Nada que mostrar aquí ahora mismo.",
+  "iaAjustesGuardados": "Ajustes guardados.",
+  "iaAjustesTitulo": "Ajustes del asistente IA",
+  "iaAjustesModelo": "Modelo (OpenRouter, solo gratuitos)",
+  "iaAjustesAutonomo": "Modo autónomo",
+  "iaAjustesAutonomoAyuda": "El asistente ejecuta acciones que modifican datos sin pedir confirmación (excepto enviar correos, que siempre la piden).",
+  "iaAjustesClaveSi": "Clave de API de OpenRouter configurada",
+  "iaAjustesClaveNo": "No hay ninguna clave de API de OpenRouter configurada",
+  "iaAjustesClaveAyuda": "Las claves de API solo se pueden añadir o cambiar desde la web, en Ajustes del Asistente IA (/ia/ajustes) — por seguridad, no se gestionan desde el móvil.",
+  "iaAjustesModeloActual": "{modelo} (actual)",
+  "@iaAjustesModeloActual": {
+    "placeholders": {
+      "modelo": {
+        "type": "String"
+      }
+    }
+  },
+  "iaAjustesSinModelos": "No se ha podido obtener el listado de modelos gratuitos ahora mismo.",
+  "iaAjustesElegirModelo": "Elige un modelo",
+  "iaEjecutarPregunta": "¿Ejecuto {herramienta}?",
+  "@iaEjecutarPregunta": {
+    "placeholders": {
+      "herramienta": {
+        "type": "String"
+      }
+    }
+  },
+  "iaVaciarConfirmar": "¿Borrar todo el historial de esta conversación? No se puede deshacer.",
+  "iaVacioTexto": "Escríbele al asistente sobre tus notas, tareas o correo. Puede leer y modificar tus datos si se lo pides.",
+  "iaPensando": "Pensando…",
+  "iaSiHazlo": "Sí, hazlo",
+  "iaDictar": "Dictar mensaje",
+  "iaResponderConfirmacion": "Responde a la confirmación de arriba primero…",
+  "iaEscribeMensaje": "Escribe un mensaje…",
+  "iaToolUso": "🔧 usó {herramienta}",
+  "@iaToolUso": {
+    "placeholders": {
+      "herramienta": {
+        "type": "String"
+      }
+    }
+  },
+  "iaToolError": "⚠️ {herramienta}: {error}",
+  "@iaToolError": {
+    "placeholders": {
+      "herramienta": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "iaToolRechazada": "❌ {herramienta} (rechazada)",
+  "@iaToolRechazada": {
+    "placeholders": {
+      "herramienta": {
+        "type": "String"
+      }
+    }
+  },
+  "menuNotaHint": "Escribe algo que ha pasado...",
+  "menuEvento": "⚡ Evento instantáneo",
+  "menuEventoHint": "Algo puntual que acaba de ocurrir...",
+  "menuRegistrar": "Registrar",
+  "menuTareaDuracion": "▶ Tarea con duración",
+  "menuTareaDuracionHint": "Nombre de la tarea a iniciar...",
+  "menuIniciar": "Iniciar",
+  "menuEnCursoAhora": "En curso ahora",
+  "menuRegistroDe": "Registro de {nombre}",
+  "@menuRegistroDe": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "menuBuscarEnProyecto": "Buscar en este proyecto...",
+  "menuProyectoVacio": "Este proyecto todavía está vacío.",
+  "menuEnPausa": "En pausa",
+  "menuReanudar": "Reanudar",
+  "menuPausar": "Pausar",
+  "menuFinalizar": "Finalizar",
+  "menuTipoNota": "Nota",
+  "menuTipoEvento": "Evento",
+  "registroContrasenaCorta": "La contraseña debe tener al menos 8 caracteres.",
+  "registroContrasenasNoCoinciden": "Las contraseñas no coinciden.",
+  "registroCrearCuenta": "Crear cuenta",
+  "registroContrasenaLabel": "Contraseña (mínimo 8 caracteres)",
+  "registroRepiteContrasena": "Repite la contraseña",
+  "registroYaTienesCuenta": "¿Ya tienes cuenta? Inicia sesión"
 }

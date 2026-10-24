@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
+import '../l10n/app_localizations.dart';
+
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../widgets/app_button.dart';
@@ -157,22 +161,22 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
 
   Future<void> _enviar() async {
     if (_cuentaId == null) {
-      setState(() => _error = 'Elige una cuenta desde la que enviar.');
+      setState(() => _error = AppLocalizations.of(context).correoElegirCuenta);
       return;
     }
     final destinatarios = _destinatariosController.text.trim();
     final asunto = _asuntoController.text.trim();
     if (destinatarios.isEmpty || asunto.isEmpty) {
-      setState(() => _error = 'Rellena al menos destinatarios y asunto.');
+      setState(() => _error = AppLocalizations.of(context).correoFaltanDatos);
       return;
     }
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('¿Enviar a $destinatarios?'),
+        title: Text(AppLocalizations.of(context).correoConfirmarEnviar(destinatarios)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Enviar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context).comunCancelar)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context).comunEnviar)),
         ],
       ),
     );
@@ -198,11 +202,11 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Correo enviado.')),
+        SnackBar(content: Text(AppLocalizations.of(context).correoEnviado)),
       );
       Navigator.of(context).pop();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
@@ -211,7 +215,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Redactar')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).correoRedactar)),
       body: FutureBuilder<List<CuentaCorreo>>(
         future: _cuentas,
         builder: (context, snapshot) {
@@ -219,7 +223,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar: ${snapshot.error}'));
+            return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
           }
           final cuentas = snapshot.data ?? [];
           _cuentaId ??= cuentas.isNotEmpty ? cuentas.first.id : null;
@@ -237,7 +241,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
               const SizedBox(height: 12),
               _campoConAutocompletar(
                 controlador: _destinatariosController,
-                etiqueta: 'Para',
+                etiqueta: AppLocalizations.of(context).correoParaLabel,
                 sugerencias: _sugerenciasPara,
                 alEscribir: (texto) => _buscarSugerencias(
                   texto,
@@ -250,7 +254,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
                   alignment: Alignment.centerLeft,
                   child: TextButton(
                     onPressed: () => setState(() => _mostrarCcBcc = true),
-                    child: const Text('Añadir Cc/Cco'),
+                    child: Text(AppLocalizations.of(context).correoAnadirCc),
                   ),
                 )
               else ...[
@@ -268,7 +272,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
                 const SizedBox(height: 12),
                 _campoConAutocompletar(
                   controlador: _bccController,
-                  etiqueta: 'Cco',
+                  etiqueta: AppLocalizations.of(context).correoCcoLabel,
                   sugerencias: _sugerenciasBcc,
                   alEscribir: (texto) => _buscarSugerencias(
                     texto,
@@ -280,13 +284,13 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: _asuntoController,
-                decoration: const InputDecoration(labelText: 'Asunto'),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context).correoAsuntoLabel),
                 autofocus: widget.asuntoInicial.isEmpty,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _cuerpoController,
-                decoration: const InputDecoration(labelText: 'Mensaje'),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context).comunMensaje),
                 maxLines: 10,
               ),
               const SizedBox(height: 12),
@@ -302,7 +306,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
                   ),
                   ActionChip(
                     avatar: const Icon(Icons.attach_file, size: 18),
-                    label: const Text('Adjuntar'),
+                    label: Text(AppLocalizations.of(context).tareaAdjuntar),
                     onPressed: _adjuntarArchivo,
                   ),
                 ],
@@ -314,11 +318,11 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  AppButton(texto: 'Enviar', cargando: _enviando, onPressed: _enviar),
+                  AppButton(texto: AppLocalizations.of(context).comunEnviar, cargando: _enviando, onPressed: _enviar),
                   const SizedBox(width: 12),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Descartar'),
+                    child: Text(AppLocalizations.of(context).comunDescartar),
                   ),
                 ],
               ),
