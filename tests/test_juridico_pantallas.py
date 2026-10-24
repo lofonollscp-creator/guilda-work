@@ -162,3 +162,11 @@ def test_fuentes_la_direccion_activa_y_el_admin_gobierna_politicas(sesion, monke
     c.post("/juridico/fuentes/cendoj-licenciado/habilitar", data={"habilitada": "1"})
     assert "pendiente de habilitación" in c.post("/juridico/fuentes/cendoj-licenciado/sincronizar", data={"desde": "2099-01-01", "hasta": "2099-01-31"}, follow_redirects=True).get_data(as_text=True).lower()
     assert c.post("/juridico/fuentes/inexistente/sincronizar", data={"desde": "2099-01-01", "hasta": "2099-01-31"}).status_code == 404
+
+
+def test_toda_entrada_de_menu_de_los_verticales_tiene_su_icono():
+    import pathlib
+    sprite = (pathlib.Path(__file__).parent.parent / "app" / "static" / "iconos.svg").read_text()
+    for v in verticales.VERTICALES.values():
+        for icono in [v.icono] + [e.icono for e in v.entradas_menu]:
+            assert f'id="icono-{icono}"' in sprite, (v.id, icono)

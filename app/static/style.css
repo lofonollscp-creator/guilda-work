@@ -5181,3 +5181,37 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .ficha-volver { margin: 0 0 var(--space-3, 12px); font-size: 0.9em; }
 .ficha-volver a { color: var(--text-muted); text-decoration: none; }
 .ficha-volver a:hover { text-decoration: underline; }
+
+/* Textos largos sin espacios (URLs, ECLI, títulos del BOE) y tablas anchas: no ensanchan la página, se parten o se desplazan dentro de su caja. */
+.page-header .subtitle, .dash-panel, .log-text, .ds-chip { overflow-wrap: anywhere; }
+.ds-chip.ds-chip { max-width: 100%; white-space: normal; }
+.tabla-scroll { max-width: 100%; overflow-x: auto; }
+
+/* Selector de color de acento (Perfil → Apariencia): la muestra enseña el color; el texto va en el color normal, así que se lee siempre. */
+.acentos { display: flex; flex-wrap: wrap; gap: 8px; }
+.acento-opcion { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 999px; border: 1px solid var(--glass-border, var(--border)); background: var(--panel-2, transparent); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.acento-opcion:hover { background: var(--panel-2-hover, var(--panel-2)); }
+.acento-opcion[aria-checked="true"] { border-color: var(--text); box-shadow: 0 0 0 1px var(--text); }
+.acento-opcion:focus-visible { outline: 2px solid var(--focus-ring, var(--primary)); outline-offset: 2px; }
+.acento-muestra { width: 18px; height: 18px; border-radius: 50%; background: var(--muestra); border: 1px solid color-mix(in srgb, var(--text) 35%, transparent); }
+.acento-opcion[aria-checked="true"] .acento-muestra { box-shadow: inset 0 0 0 3px var(--bg, #fff); }
+
+/* Formularios en rejilla (Asistente jurídico): dos columnas en pantalla ancha, una en móvil; cada campo con su etiqueta encima. */
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; align-items: start; }
+.form-grid > .span-2 { grid-column: 1 / -1; }
+.form-grid label:not(.inline):not(.checkbox-label) { display: flex; flex-direction: column; gap: 6px; font-size: 0.85em; color: var(--text-muted); min-width: 0; }
+.form-grid label.inline { display: inline-flex; align-items: center; gap: 8px; margin-right: 18px; color: var(--text); }
+.form-grid input:not([type="checkbox"]), .form-grid select, .form-grid textarea { width: 100%; box-sizing: border-box; min-width: 0; font: inherit; }
+.form-grid textarea { resize: vertical; min-height: 110px; }
+.form-grid fieldset { min-width: 0; margin: 0; padding: 10px 14px 12px; border: 1px solid var(--glass-border, var(--border)); border-radius: 12px; }
+.form-grid fieldset legend { padding: 0 6px; font-size: 0.85em; color: var(--text-muted); }
+.form-grid p { margin: 0; }
+@media (max-width: 720px) { .form-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* «Hoy»: marcar como hecho, uno a uno o en conjunto. */
+.hoy-hecho { display: inline; margin: 0 0 0 auto; }
+.hoy-item { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.hoy-item .hoy-fecha { margin-left: auto; }
+.hoy-item .hoy-fecha + .hoy-hecho { margin-left: 0; }
+.hoy-todo { margin: 0 0 var(--space-3, 12px); }
+.hoy-seccion .dash-panel-cab form { margin: 0; }
