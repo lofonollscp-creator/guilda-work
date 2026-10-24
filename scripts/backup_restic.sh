@@ -118,8 +118,8 @@ RUTAS_HOST=()
 for ruta in \
   "$REPO_APP/.env" /etc/guilda-work.env /etc/caddy/Caddyfile \
   "$REPO_APP/data/backoffice_secret.key" "$REPO_APP/data/correo-keyring.cfg" \
-  /mnt/HC_Volume_106540289/facturascripts-tenants; do
-  [ -e "$ruta" ] && RUTAS_HOST+=("/host$ruta")
+  /mnt/HC_Volume_106540289/facturascripts-tenants "${GUILDA_PG_BACKUPS:-}"; do   # (esta última: copias base + WAL de la base de datos, ver scripts/backup_postgres.sh)
+  [ -n "$ruta" ] && [ -e "$ruta" ] && RUTAS_HOST+=("/host$ruta")
 done
 restic_host backup /staging "${RUTAS_HOST[@]}" --tag host --host "$HOST_TAG" -q || fallo "host"
 

@@ -1,0 +1,10 @@
+[Unit]
+Description=Guilda Work - copia base diaria de PostgreSQL (ver postgres-backup.service)
+
+[Timer]
+OnCalendar=*-*-* 02:15:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

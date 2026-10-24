@@ -312,6 +312,11 @@ def _estado_caducidades(ahora: datetime) -> list[dict]:
     return items
 
 
+def _motor_postgres() -> bool:
+    from . import bd
+    return bd.MOTOR == "postgres"
+
+
 def panel(ahora: datetime | None = None) -> list[dict]:
     """Todos los elementos del panel, cada comprobación aislada: si una falla,
     sale en gris y el resto sigue."""
@@ -329,6 +334,9 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Copias de seguridad", "backup", _("Última copia de seguridad"), lambda: _estado_backup(ahora))
     _seguro("Copias de seguridad", "restic", _("Copia de seguridad en otro disco (Restic)"), lambda: _estado_copia_externa(ahora))
     _seguro("Copias de seguridad", "restauracion", _("Prueba de restauración de la copia"), lambda: _estado_prueba_restauracion(ahora))
+    if _motor_postgres():
+        from . import salud_postgres
+        _seguro("Base de datos", "postgres", "Base de datos PostgreSQL", salud_postgres.panel_items)
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
     _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))

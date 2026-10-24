@@ -1,4 +1,4 @@
--- Roles de la aplicación (escrito a mano). Los CREA SIN CONTRASEÑA: quien despliega fija la contraseña fuera del repositorio
+-- Roles de la aplicación (escrito a mano). `guilda_monitor` es SOLO para Grafana: ve las estadísticas del servidor (pg_monitor), ningún dato de los despachos. Los CREA SIN CONTRASEÑA: quien despliega fija la contraseña fuera del repositorio
 -- (ALTER ROLE guilda_app PASSWORD '…'). Citus abre conexiones internas con el MISMO rol de la sesión, así que ambos son LOGIN.
 --
 --   guilda_app         la aplicación web / API / MCP. NO se salta la RLS: cada conexión ve y escribe solo su despacho (app.tenant_id).
@@ -8,6 +8,9 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'guilda_app') THEN
         CREATE ROLE guilda_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'guilda_monitor') THEN
+        CREATE ROLE guilda_monitor LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'guilda_plataforma') THEN
         CREATE ROLE guilda_plataforma LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE BYPASSRLS;
@@ -25,3 +28,7 @@ REVOKE UPDATE, DELETE, TRUNCATE ON auditoria_eventos, jur_auditoria FROM guilda_
 REVOKE UPDATE, TRUNCATE ON auditoria_eventos, jur_auditoria FROM guilda_plataforma;
 -- La configuración global y el catálogo de despachos no los toca la aplicación de un despacho.
 REVOKE INSERT, UPDATE, DELETE ON tenants, planes_guilda, extras_guilda, reglas_fiscales, reglas_laborales, auditoria_control FROM guilda_app;
+
+-- Panel Salud (app/salud_postgres.py): la plataforma lee las vistas de estadísticas de todo el servidor (sesiones, archivador, ranuras, bloqueos).
+GRANT pg_monitor TO guilda_plataforma;
+GRANT pg_monitor TO guilda_monitor;

@@ -1,0 +1,20 @@
+# Provisioning de Grafana: la base de datos de la aplicación como datasource (PostgreSQL), para el panel de deploy/grafana-dashboard-postgres.json (HOSTING.md §9.4 y
+# docs/runbooks-postgresql.md). Se conecta con el rol `guilda_monitor`: solo estadísticas del servidor (pg_monitor), ningún dato de los despachos.
+# Antes: ALTER ROLE guilda_monitor PASSWORD '…'  y PG_MONITOR_PASSWORD en el entorno del contenedor de Grafana.
+apiVersion: 1
+
+datasources:
+  - name: Guilda PostgreSQL
+    uid: guilda-postgres
+    type: postgres
+    access: proxy
+    url: guilda-work-postgres-app:5432          # (por la red del stack principal, ver docker-compose.postgres-app.yml)
+    user: guilda_monitor
+    jsonData:
+      database: guilda
+      sslmode: disable
+      postgresVersion: 1700
+      timescaledb: false
+    secureJsonData:
+      password: ${PG_MONITOR_PASSWORD}
+    editable: false

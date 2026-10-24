@@ -15,7 +15,7 @@
 
 [Unit]
 Description=Guilda Work - servidor MCP remoto para ChatGPT (mcp_server_remoto.py)
-After=network.target
+After=network.target docker.service
 
 [Service]
 Type=simple

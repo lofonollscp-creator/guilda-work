@@ -1,0 +1,18 @@
+# Copia física diaria de la base de datos de la aplicación (PostgreSQL + Citus): copia base + retención + estado para el panel Salud.
+# Ver scripts/backup_postgres.sh, HOSTING.md §9.4 y docs/runbooks-postgresql.md. Corre ANTES que Restic (03:00), que luego guarda la carpeta de copias.
+#
+#   sudo cp deploy/postgres-backup.service deploy/postgres-backup.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now postgres-backup.timer
+#
+# Corre como root porque habla con el contenedor (docker exec), igual que restic-backup.service. GUILDA_PG_BACKUPS (carpeta en OTRO disco) sale de /etc/guilda-work.env.
+[Unit]
+Description=Guilda Work - copia base diaria de PostgreSQL
+After=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/guilda-work.env
+Environment=GUILDA_BACKUPS_DIR=/home/guilda/guilda-work/data/backups
+ExecStart=/home/guilda/guilda-work/scripts/backup_postgres.sh todo
+ExecStartPost=/bin/chown -R guilda:guilda /home/guilda/guilda-work/data/backups
+Nice=10

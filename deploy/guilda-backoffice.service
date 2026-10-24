@@ -10,7 +10,7 @@
 
 [Unit]
 Description=Guilda Work - Backoffice (serve_backoffice.py)
-After=network.target
+After=network.target docker.service
 
 [Service]
 Type=simple

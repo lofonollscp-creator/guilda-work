@@ -10,6 +10,7 @@ trabaja sobre una copia temporal a la que añade el `tenant_id` que falta (app/b
 """
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 import sqlite3
@@ -42,6 +43,30 @@ def _orden(clases: dict) -> list[str]:
     # tenants antes que usuarios antes que lo demás de referencia (usuarios.tenant_id → tenants)
     primeras = [t for t in ("tenants", "planes_guilda", "usuarios", "usuarios_tenants") if t in referencia]
     return primeras + [t for t in referencia if t not in primeras] + tenant.orden_de_relleno(clases) + [t for t, c in clases.items() if c.nombre == "local"]
+
+
+@contextlib.contextmanager
+def sin_disparadores(raw, activo: bool = True):
+    """Durante el bloque no se ejecutan triggers ni se comprueban claves foráneas (carga de datos ya consistentes). Hace falta un superusuario. En PostgreSQL llano basta
+    `session_replication_role = replica`; en Citus ese ajuste no llega a los fragmentos (el registro de cambios duplicaba filas), así que además se desactivan los triggers de
+    usuario tabla a tabla (`citus.enable_unsafe_triggers`) y se reactivan SIEMPRE al salir."""
+    if not activo:
+        yield
+        return
+    raw.execute("SET session_replication_role = replica")
+    desactivadas = [r[0] for r in raw.execute(
+        "SELECT DISTINCT c.relname FROM pg_trigger g JOIN pg_class c ON c.oid = g.tgrelid WHERE NOT g.tgisinternal AND c.relnamespace = current_schema()::regnamespace "
+        "AND c.relkind IN ('r', 'p')").fetchall()]
+    try:
+        if desactivadas and _hay_citus(raw):
+            raw.execute("SET citus.enable_unsafe_triggers = true")
+        for t in desactivadas:
+            raw.execute(f'ALTER TABLE "{t}" DISABLE TRIGGER USER')
+        yield
+    finally:
+        for t in desactivadas:
+            raw.execute(f'ALTER TABLE "{t}" ENABLE TRIGGER USER')
+        raw.execute("SET session_replication_role = DEFAULT")
 
 
 def orden_de_carga(raw, preferido: list[str]) -> list[str]:
@@ -82,23 +107,12 @@ def copiar(ruta_sqlite, conn_pg, *, sin_comprobaciones: bool = True, informar=No
         tenant.rellenar(destino, crear_columnas=True, por_defecto=tenant.TENANT_PLATAFORMA)
         destino.row_factory = None
         existentes = set(tenant.tablas_de_datos(destino))
-        con_disparadores: list[str] = []
-        if sin_comprobaciones:
-            raw.execute("SET session_replication_role = replica")
-            # En Citus ese ajuste no llega a los fragmentos: los disparadores (registro de cambios, versiones…) se desactivan tabla a tabla y se reactivan al terminar.
-            con_disparadores = [r[0] for r in raw.execute(
-                "SELECT DISTINCT c.relname FROM pg_trigger g JOIN pg_class c ON c.oid = g.tgrelid WHERE NOT g.tgisinternal AND c.relnamespace = current_schema()::regnamespace "
-                "AND c.relkind IN ('r', 'p')").fetchall()]
-            if con_disparadores:
-                raw.execute("SET citus.enable_unsafe_triggers = true") if _hay_citus(raw) else None
-            for t in con_disparadores:
-                raw.execute(f'ALTER TABLE "{t}" DISABLE TRIGGER USER')
         cargadas: dict[str, int] = {}
         usadas: dict[str, list[str]] = {}
         tiempos: dict[str, float] = {}
         avisos: dict[str, dict[str, int]] = {}
         preferido = [t for t in _orden(clases) if t in existentes and t not in SALTAR]
-        try:
+        with sin_disparadores(raw, sin_comprobaciones):
             for t in orden_de_carga(raw, preferido):
                 cols_sqlite = [r[1] for r in destino.execute(f'PRAGMA table_info("{t}")')]
                 cols_pg = {c: g for c, _t, g in _columnas_pg(raw, t)}
@@ -113,11 +127,6 @@ def copiar(ruta_sqlite, conn_pg, *, sin_comprobaciones: bool = True, informar=No
                     cargadas[t] = n
                 if informar:
                     informar(t, n)
-        finally:
-            for t in con_disparadores:
-                raw.execute(f'ALTER TABLE "{t}" ENABLE TRIGGER USER')
-            if sin_comprobaciones:
-                raw.execute("SET session_replication_role = DEFAULT")
         # El despacho principal de cada persona figura siempre entre sus despachos (lo que hace init_db en SQLite): una base anterior a la tabla no la trae rellena.
         creadas = raw.execute("INSERT INTO usuarios_tenants (usuario_id, tenant_id, creado_en) SELECT id, tenant_id, to_char(localtimestamp, 'YYYY-MM-DD\"T\"HH24:MI:SS') "
                               "FROM usuarios WHERE tenant_id IS NOT NULL ON CONFLICT DO NOTHING").rowcount

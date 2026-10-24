@@ -211,6 +211,13 @@ Variables opcionales:
 | Variable | Por defecto | Para qué |
 |---|---|---|
 | `GUILDA_THREADS` | `16` | Hilos de waitress (su valor propio es 4). |
+| `GUILDA_DB_ENGINE` | `sqlite` | `postgres` usa la base de datos PostgreSQL + Citus (§9.4) en lugar de `data/registro.db`. Solo tras el corte (fase 11 del plan de migración). |
+| `GUILDA_DATABASE_URL` | _(vacío)_ | Con `postgres`: URL del rol `guilda_app` (sin privilegios, sujeto a RLS): `postgresql://guilda_app:CLAVE@127.0.0.1:5433/guilda`. |
+| `GUILDA_DATABASE_URL_PLATAFORMA` | _(la anterior)_ | URL del rol `guilda_plataforma` (backoffice, trabajos en segundo plano, borrado de despachos; se salta la RLS y tiene `pg_monitor`). |
+| `GUILDA_PG_ESQUEMA` | `simple` | Con `postgres`: `citus` en producción (reescritura de consultas por despacho), `multitenant` o `simple` solo para pruebas. |
+| `GUILDA_PG_POOL_MAX` | `20` | Conexiones máximas del pool por proceso y rol. Recomendado `12` con 16 hilos de waitress (ver ADR, fase 9). `max_connections` de PostgreSQL ≥ suma de todos los pools + 20. |
+| `GUILDA_PG_PREPARAR` | _(desactivado)_ | Sentencias preparadas tras N ejecuciones. Medido sin ganancia relevante; incompatible con PgBouncer en modo transacción. |
+| `GUILDA_PG_BACKUPS` | _(vacío)_ | Carpeta en OTRO disco con `base/` y `wal/` (copias físicas + archivo de WAL). Obligatoria para `docker-compose.postgres-app.yml` y `scripts/backup_postgres.sh`. |
 | `GUILDA_POOL_CONEXIONES` | `1` | Reutiliza las conexiones a `registro.db` dentro de cada hilo en vez de abrir una por consulta (abrirla cuesta ~3 ms por el esquema; con el pool, 16 peticiones simultáneas pasan de 12 a ~185 por segundo). `0` lo apaga y vuelve al comportamiento anterior. |
 | `GUILDA_BACKUPS_DIR` | `data/backups` | Carpeta de la copia única de `registro.db` (ver §9.1). |
 | `GUILDA_LIMITER_URI` | `memory://` | Almacén de los contadores del limitador de peticiones. |
@@ -2639,6 +2646,42 @@ docker run --rm --env-file /etc/restic.env -v restic-cache:/cache \
   -v guilda-work_postgres-espocrm-data:/data \
   restic/restic restore latest --target / --tag postgres-espocrm-data
 ```
+
+### 9.4 Base de datos de la aplicación en PostgreSQL + Citus (después del corte)
+
+Cuando la aplicación trabaje sobre PostgreSQL (`GUILDA_DB_ENGINE=postgres`, ver el plan en `docs/plan-migracion-postgresql-citus.md`), `registro.db` deja de ser la fuente de verdad y
+los tres mecanismos de §9 que la cubrían (copia diaria, Litestream) dejan de aplicarse a ella. Su sustitución, probada de extremo a extremo con `scripts/simulacro_restauracion_pg.py`:
+
+| Mecanismo | Qué cubre | Frecuencia / RPO | Destino |
+|---|---|---|---|
+| **Archivo continuo de WAL** (`archive_command` del contenedor, `docker-compose.postgres-app.yml`) | Cada cambio, para recuperar **a un instante** | Segmentos cerrados como mucho cada 5 min (`archive_timeout`) → RPO ≤ 5 min | `$GUILDA_PG_BACKUPS/wal` (otro disco) |
+| **Copia base** (`scripts/backup_postgres.sh todo`, timer `deploy/postgres-backup.timer`, 02:15) | Todo el clúster, con un punto de restauración de Citus | Diaria; se conservan 7 + el WAL desde la más antigua | `$GUILDA_PG_BACKUPS/base` |
+| **Restic** (§9.2) | `pg_dumpall` diario del contenedor (red de seguridad lógica: se restaura sobre un esquema recién creado) **y** la carpeta de copias de arriba | Diaria 03:00 | el repositorio de Restic |
+| **Un despacho** (`scripts/copia_despacho.py`) | Exportar/importar solo un despacho (recuperarlo tras un error sin tocar a los demás, o moverlo de instalación) | A demanda | un `.tar.gz` |
+
+**Puesta en marcha** (acciones de administración, en este orden):
+
+```bash
+# 1. Disco y variables: la carpeta de copias, en OTRO disco que los datos
+sudo mkdir -p /mnt/HC_Volume_106540289/guilda-pg-backups/{base,wal} && sudo chmod 777 /mnt/HC_Volume_106540289/guilda-pg-backups/wal
+echo 'GUILDA_PG_BACKUPS=/mnt/HC_Volume_106540289/guilda-pg-backups' | sudo tee -a /etc/guilda-work.env
+# 2. La imagen (PostgreSQL 17 + Citus + pgvector) y el contenedor
+docker compose -f docker-compose.postgres-citus.yml build   # solo construye la imagen guilda-work-citus:ensayo (la misma que usa el contenedor de producción)
+export PG_APP_PASSWORD=...   # fuera del repositorio (gestor de contraseñas)
+docker compose -f docker-compose.postgres-app.yml --env-file /etc/guilda-work.env up -d --wait
+# 3. Contraseñas de los roles (se crean sin contraseña) y la primera copia base
+docker exec -it guilda-work-postgres-app psql -U guilda -d guilda -c "ALTER ROLE guilda_app PASSWORD '…'" -c "ALTER ROLE guilda_plataforma PASSWORD '…'" -c "ALTER ROLE guilda_monitor PASSWORD '…'"
+sudo scripts/backup_postgres.sh todo
+sudo cp deploy/postgres-backup.service deploy/postgres-backup.timer /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now postgres-backup.timer
+```
+
+**Vigilancia**: el panel *Salud* del backoffice añade «Base de datos» (conexiones, archivo de WAL, copia base, esperas de bloqueo, transacciones abiertas, nodos de Citus, ranuras de
+replicación; los rojos llegan por correo con el vigilante de siempre). Para mirar: provisionar en Grafana `deploy/grafana-datasource-postgres.yml` (contraseña de `guilda_monitor` en
+`PG_MONITOR_PASSWORD`) y `deploy/grafana-dashboard-postgres.json`; el contenedor de la base se une a la red del stack para que Grafana lo vea por su nombre.
+
+**Restauración**: `docs/runbooks-postgresql.md` (recuperar a un instante, recuperar un despacho, restaurar todo, añadir un nodo, rotar contraseñas). **Una copia que no se ha restaurado
+no vale**: `scripts/simulacro_restauracion_pg.py` hace el ejercicio completo en contenedores desechables (copia base, desastre, recuperación a un instante por punto y por hora,
+recuperación de dos despachos, y las alertas del panel) y debe ejecutarse tras cada cambio de versión de PostgreSQL/Citus y al menos cada trimestre.
 
 ## 10. MCP remoto (ChatGPT)
 

@@ -49,7 +49,10 @@ case "$caso" in
     nombre="${1:?falta NOMBRE}"
     [[ "$nombre" =~ ^[a-z][a-z0-9_]{0,40}$ ]] || { echo "nombre no válido"; exit 2; }
     ini=$(date +%s.%N)
-    psql_en -d postgres -q -c "drop database if exists $nombre with (force)"
+    # con un worker unido, el demonio de mantenimiento de Citus no se va con FORCE: se quita la extensión y se reintenta
+    psql_en -d postgres -q -c "drop database if exists $nombre with (force)" 2>/dev/null || {
+      psql_en -d "$nombre" -q -c "drop extension if exists citus cascade" 2>/dev/null; sleep 2
+      psql_en -d postgres -q -c "drop database if exists $nombre with (force)"; }
     fin=$(date +%s.%N)
     printf 'base %s borrada en %.2f s\n' "$nombre" "$(echo "$fin - $ini" | bc)" ;;
   experimentos)

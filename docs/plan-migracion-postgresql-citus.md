@@ -93,7 +93,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 - Ensayo local con **un worker adicional** y reequilibrado de shards para demostrar la vía de crecimiento (en contenedores).
 - **Salida:** informe con latencias p95 y sin esperas de bloqueo relevantes.
 
-### Fase 10 — Operación (≈ 1 semana)
+### Fase 10 — Operación (≈ 1 semana) — **hecha (2026-10-24)**: copias base + archivo de WAL + recuperación a un instante y por despacho, panel Salud y Grafana, runbooks, simulacro completo en verde (ver ADR)
 - Copias: `pgBackRest` o WAL-G con archivado continuo (recuperación a un instante) más `pg_dump` cifrado en el flujo de Restic; **restauración de un solo despacho** y simulacro de restauración completa documentado.
 - Monitorización: `postgres_exporter` hacia el Grafana/Loki existentes, alertas de retraso, espacio, bloqueos y conexiones.
 - `HOSTING.md`, runbooks, variables (`DATABASE_URL`…), adaptación de las unidades `guilda-work`, `guilda-work-mcp` y `guilda-backoffice`.

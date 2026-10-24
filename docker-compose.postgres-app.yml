@@ -1,0 +1,89 @@
+# Base de datos de la APLICACIÓN en producción: PostgreSQL 17 + Citus (un solo nodo) + pgvector. Sustituye a data/registro.db tras el corte (fase 11 de
+# docs/plan-migracion-postgresql-citus.md). NO se arranca sola con el resto del stack: se levanta aparte, con su propio proyecto, red y volumen.
+#
+#   docker compose -f docker-compose.postgres-app.yml up -d --wait
+#
+# El nombre del contenedor sigue la convención `guilda-work-postgres-*`: el script de Restic (scripts/backup_restic.sh) lo encuentra solo y le hace su `pg_dumpall` diario.
+# Las copias físicas y el archivo de WAL (recuperación a un instante) van a $GUILDA_PG_BACKUPS —OTRO disco, ver HOSTING.md §9.4— con scripts/backup_postgres.sh.
+#
+# Variables (en /etc/guilda-work.env o en un .env junto a este fichero; las contraseñas FUERA del repositorio):
+#   PG_APP_PASSWORD     contraseña del superusuario `guilda` (solo administración: migraciones, copias, ensayos)
+#   GUILDA_PG_BACKUPS   carpeta del segundo disco con subcarpetas base/ y wal/ (obligatoria: se niega a arrancar sin ella)
+#   PG_APP_MEMORIA      límite de memoria del contenedor (por defecto 3g; ver HOSTING.md «Dimensionar»)
+name: guilda-work-postgres-app
+services:
+  postgres-app:
+    image: guilda-work-citus:ensayo            # construida con deploy/postgres-citus/Dockerfile (PostgreSQL 17 + Citus 14 + pgvector)
+    container_name: guilda-work-postgres-app
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: guilda
+      POSTGRES_PASSWORD: ${PG_APP_PASSWORD:?define PG_APP_PASSWORD}
+      POSTGRES_DB: guilda
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --data-checksums"      # (la misma configuración regional que en los ensayos: las pruebas se hicieron con ella)
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=citus,pg_stat_statements
+      - -c
+      - wal_level=logical                       # Citus mueve fragmentos con replicación lógica (reequilibrar sin parar)
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=20
+      - -c
+      - archive_mode=on                         # recuperación a un instante: cada segmento de WAL se archiva en /backup/wal
+      - -c
+      - archive_command=test ! -f /backup/wal/%f && cp %p /backup/wal/%f.tmp && mv /backup/wal/%f.tmp /backup/wal/%f
+      - -c
+      - archive_timeout=300                     # como mucho 5 min de datos sin archivar (RPO)
+      - -c
+      - wal_compression=on
+      - -c
+      - max_wal_size=4GB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - shared_buffers=768MB
+      - -c
+      - effective_cache_size=2GB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - max_connections=200                     # ≥ suma de los pools (GUILDA_PG_POOL_MAX por proceso y rol) + 20
+      - -c
+      - password_encryption=scram-sha-256
+      - -c
+      - log_min_duration_statement=500
+      - -c
+      - log_lock_waits=on
+      - -c
+      - deadlock_timeout=1s
+      - -c
+      - log_checkpoints=on
+      - -c
+      - citus.shard_count=16
+      - -c
+      - citus.max_adaptive_executor_pool_size=8
+    ports:
+      - "127.0.0.1:5433:5432"                   # solo en local: serve.py, el MCP y el backoffice corren en el mismo servidor
+    shm_size: 512mb
+    mem_limit: ${PG_APP_MEMORIA:-3g}
+    networks: [default, pila]                  # `pila`: la red del stack principal, para que Grafana (guilda-work-grafana) llegue a guilda-work-postgres-app:5432
+    volumes:
+      - postgres-app-data:/var/lib/postgresql/data
+      - ${GUILDA_PG_BACKUPS:?define GUILDA_PG_BACKUPS (carpeta en otro disco)}/wal:/backup/wal
+      - ${GUILDA_PG_BACKUPS}/base:/backup/base
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guilda -d guilda"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+networks:
+  pila:
+    external: true
+    name: ${GUILDA_RED_PILA:-guilda-work_default}
+volumes:
+  postgres-app-data:
