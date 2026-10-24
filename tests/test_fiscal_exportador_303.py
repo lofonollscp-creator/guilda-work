@@ -183,9 +183,9 @@ def test_el_simulador_acepta_el_ejemplo_y_rechaza_uno_incoherente(tmp_path):
     assert "E010671" in codigos
 
 
-def test_la_envoltura_lleva_la_entidad_desarrolladora_por_defecto():
-    f = e.construir(D, ejercicio=2026, periodo="2T", paginas={}).decode("iso-8859-15")
-    r = e.descomponer(D, f.encode("iso-8859-15"))
-    assert e.NIF_ENTIDAD_DESARROLLADORA == "B16406233" and len(e.VERSION_PROGRAMA) == 4
-    assert e.NIF_ENTIDAD_DESARROLLADORA in f and e.VERSION_PROGRAMA in f
-    assert r
+def test_la_entidad_desarrolladora_va_vacia_por_defecto_y_se_puede_informar():
+    assert e.NIF_ENTIDAD_DESARROLLADORA == "" and e.VERSION_PROGRAMA == ""
+    vacia = e.construir(D, ejercicio=2026, periodo="2T", paginas={}).decode("iso-8859-15")
+    con = e.construir(D, ejercicio=2026, periodo="2T", paginas={}, version_programa="1.00", nif_empresa_desarrollo="B16406233").decode("iso-8859-15")
+    assert "B16406233" not in vacia and "1.00" not in vacia
+    assert "B16406233" in con and "1.00" in con and len(con) == len(vacia)

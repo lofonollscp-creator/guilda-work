@@ -18,8 +18,8 @@ from pathlib import Path
 
 DISENO_303_2026 = Path(__file__).resolve().parent / "disenos" / "303_2026_v101.json"
 # Quién DESARROLLA el programa que genera el fichero (campos 9 y 11 de la envoltura). No es quien presenta: la presentación la hace el colaborador social o el obligado con su certificado.
-NIF_ENTIDAD_DESARROLLADORA = "B16406233"                              # GUILDA ASSESSORS HISTORICS SL
-VERSION_PROGRAMA = "1.00"                                            # 4 posiciones, con el punto (la propia AEAT escribe «1.06»); subir al cambiar el cálculo o el diseño
+NIF_ENTIDAD_DESARROLLADORA = ""                                      # vacío por ahora (decisión de Jorge, 25-oct-2026); GUILDA ASSESSORS HISTORICS SL sería B16406233
+VERSION_PROGRAMA = ""                                                # vacío por ahora; cuando se use: 4 posiciones, con el punto (la propia AEAT escribe «1.06»), p. ej. «1.00»; subir al cambiar el cálculo o el diseño
 PERIODOS = tuple(f"{m:02d}" for m in range(1, 13)) + ("1T", "2T", "3T", "4T")
 ULTIMOS = ("12", "4T")
 TIPOS_DECLARACION = ("C", "D", "G", "I", "N", "V", "U", "X")          # Nota 1 de la página 1
