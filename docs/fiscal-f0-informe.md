@@ -83,6 +83,8 @@ Los 17 indicadores de «Identificación (1)» y los de «Devengo (2)» de la pá
 3. **Compensación de cuotas de periodos anteriores** y la casilla de resultado final (página 3): requieren las instrucciones del periodo y un caso tuyo.
 4. **Periodos 2T–4T:** la especificación indica instrucciones separadas (`02–12/2T–4T`); solo he descargado las de 01/1T. Cuando llegue la hora de 2T–4T se descargan y se versionan igual.
 
+> La vía de subida a la AEAT, las condiciones de cada una y cómo se prueba están en [`fiscal-vias-aeat.md`](fiscal-vias-aeat.md).
+
 ## 6. Qué falta para cerrar F0 (y qué necesito de ti)
 
 1. ✅ Diseño leído y verificado (hecho). 🔜 **Actualizar** `fiscal-f1-esquema-propuesto.md` con las columnas de §3 (lo hago ahora, es papel).
