@@ -747,5 +747,17 @@
   "registroCrearCuenta": "Crear cuenta",
   "registroContrasenaLabel": "Contraseña (mínimo 8 caracteres)",
   "registroRepiteContrasena": "Repite la contraseña",
-  "registroYaTienesCuenta": "¿Ya tienes cuenta? Inicia sesión"
+  "registroYaTienesCuenta": "¿Ya tienes cuenta? Inicia sesión",
+  "loginMostrarContrasena": "Mostrar contraseña",
+  "loginOcultarContrasena": "Ocultar contraseña",
+  "login2faTitulo": "Verificación en dos pasos",
+  "login2faRecuperacion": "Usar un código de recuperación",
+  "login2faUsarApp": "Usar el código de la app",
+  "loginVerificar": "Verificar",
+  "loginOtraCuenta": "Usar otra cuenta",
+  "loginInvitadoLink": "¿Tu despacho te ha invitado?",
+  "loginInvitadoTitulo": "El acceso es por invitación",
+  "loginInvitadoCuerpo": "Tu despacho te invita desde Guilda Work y recibes un correo para crear tu contraseña. Si aún no lo has recibido, pídeselo a quien administra tu despacho.",
+  "loginEntendido": "Entendido",
+  "loginServidorPulsacion": "Mantén pulsado el logotipo para cambiar de servidor"
 }

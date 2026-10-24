@@ -501,5 +501,17 @@
   "registroCrearCuenta": "Crear compte",
   "registroContrasenaLabel": "Contrasenya (mínim 8 caràcters)",
   "registroRepiteContrasena": "Repeteix la contrasenya",
-  "registroYaTienesCuenta": "Ja tens compte? Inicia la sessió"
+  "registroYaTienesCuenta": "Ja tens compte? Inicia la sessió",
+  "loginMostrarContrasena": "Mostra la contrasenya",
+  "loginOcultarContrasena": "Amaga la contrasenya",
+  "login2faTitulo": "Verificació en dos passos",
+  "login2faRecuperacion": "Utilitza un codi de recuperació",
+  "login2faUsarApp": "Utilitza el codi de l'aplicació",
+  "loginVerificar": "Verificar",
+  "loginOtraCuenta": "Utilitza un altre compte",
+  "loginInvitadoLink": "El teu despatx t'ha convidat?",
+  "loginInvitadoTitulo": "L'accés és per invitació",
+  "loginInvitadoCuerpo": "El teu despatx t'hi convida des de Guilda Work i rebràs un correu per crear la contrasenya. Si encara no l'has rebut, demana-ho a qui administra el teu despatx.",
+  "loginEntendido": "Entesos",
+  "loginServidorPulsacion": "Mantén premut el logotip per canviar de servidor"
 }

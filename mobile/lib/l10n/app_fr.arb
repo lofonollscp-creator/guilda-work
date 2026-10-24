@@ -501,5 +501,17 @@
   "registroCrearCuenta": "Créer un compte",
   "registroContrasenaLabel": "Mot de passe (8 caractères minimum)",
   "registroRepiteContrasena": "Répétez le mot de passe",
-  "registroYaTienesCuenta": "Vous avez déjà un compte ? Connectez-vous"
+  "registroYaTienesCuenta": "Vous avez déjà un compte ? Connectez-vous",
+  "loginMostrarContrasena": "Afficher le mot de passe",
+  "loginOcultarContrasena": "Masquer le mot de passe",
+  "login2faTitulo": "Vérification en deux étapes",
+  "login2faRecuperacion": "Utiliser un code de récupération",
+  "login2faUsarApp": "Utiliser le code de l'application",
+  "loginVerificar": "Vérifier",
+  "loginOtraCuenta": "Utiliser un autre compte",
+  "loginInvitadoLink": "Votre cabinet vous a-t-il invité ?",
+  "loginInvitadoTitulo": "L'accès se fait sur invitation",
+  "loginInvitadoCuerpo": "Votre cabinet vous invite depuis Guilda Work et vous recevez un courriel pour créer votre mot de passe. Si vous ne l'avez pas encore reçu, demandez-le à la personne qui administre votre cabinet.",
+  "loginEntendido": "Compris",
+  "loginServidorPulsacion": "Appuyez longuement sur le logo pour changer de serveur"
 }

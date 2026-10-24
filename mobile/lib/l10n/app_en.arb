@@ -501,5 +501,17 @@
   "registroCrearCuenta": "Create account",
   "registroContrasenaLabel": "Password (at least 8 characters)",
   "registroRepiteContrasena": "Repeat the password",
-  "registroYaTienesCuenta": "Already have an account? Sign in"
+  "registroYaTienesCuenta": "Already have an account? Sign in",
+  "loginMostrarContrasena": "Show password",
+  "loginOcultarContrasena": "Hide password",
+  "login2faTitulo": "Two-step verification",
+  "login2faRecuperacion": "Use a recovery code",
+  "login2faUsarApp": "Use the app code",
+  "loginVerificar": "Verify",
+  "loginOtraCuenta": "Use another account",
+  "loginInvitadoLink": "Has your office invited you?",
+  "loginInvitadoTitulo": "Access is by invitation",
+  "loginInvitadoCuerpo": "Your office invites you from Guilda Work and you receive an email to create your password. If you haven't received it yet, ask whoever manages your office.",
+  "loginEntendido": "Got it",
+  "loginServidorPulsacion": "Long-press the logo to change server"
 }
