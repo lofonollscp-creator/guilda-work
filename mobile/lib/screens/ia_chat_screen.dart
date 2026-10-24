@@ -3,6 +3,8 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
@@ -418,25 +420,28 @@ class _IaChatScreenState extends State<IaChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Asistente IA'),
+        // Antes tres iconos sueltos; ahora un menú con nombre (la acción destructiva, «Vaciar», ya no está a un toque por error).
         actions: [
-          if (_vozDisponible)
-            IconButton(
-              icon: Icon(_liveActivo ? Icons.headset_mic : Icons.headset_mic_outlined),
-              tooltip: 'Modo Live (manos libres)',
-              color: _liveActivo ? Theme.of(context).colorScheme.error : null,
-              onPressed: _alPulsarLive,
-            ),
-          IconButton(
-            icon: const Icon(Icons.tune),
-            tooltip: 'Ajustes del asistente',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => IaAjustesScreen(api: widget.api)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            tooltip: 'Vaciar conversación',
-            onPressed: _mensajes.isEmpty ? null : _vaciar,
+          PopupMenuButton<String>(
+            tooltip: AppLocalizations.of(context).menuMasOpciones,
+            onSelected: (v) {
+              switch (v) {
+                case 'live':
+                  _alPulsarLive();
+                case 'ajustes':
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => IaAjustesScreen(api: widget.api)));
+                case 'vaciar':
+                  _vaciar();
+              }
+            },
+            itemBuilder: (_) {
+              final t = AppLocalizations.of(context);
+              return [
+                if (_vozDisponible) PopupMenuItem(value: 'live', child: ListTile(leading: Icon(_liveActivo ? Icons.headset_mic : Icons.headset_mic_outlined), title: Text(t.iaMenuLive), contentPadding: EdgeInsets.zero)),
+                PopupMenuItem(value: 'ajustes', child: ListTile(leading: const Icon(Icons.tune), title: Text(t.iaMenuAjustes), contentPadding: EdgeInsets.zero)),
+                PopupMenuItem(value: 'vaciar', enabled: _mensajes.isNotEmpty, child: ListTile(leading: const Icon(Icons.delete_outline), title: Text(t.iaMenuVaciar), contentPadding: EdgeInsets.zero)),
+              ];
+            },
           ),
         ],
       ),
@@ -489,6 +494,25 @@ class _IaChatScreenState extends State<IaChatScreen> {
                 'Puede leer y modificar tus datos si se lo pides.',
                 textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 20),
+              Text(AppLocalizations.of(context).iaSugerenciasTitulo, style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 8),
+              // Sugerencias como chips: un toque y se envía (no hay que saber qué se le puede pedir).
+              Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
+                for (final s in [
+                  AppLocalizations.of(context).iaSugerencia1,
+                  AppLocalizations.of(context).iaSugerencia2,
+                  AppLocalizations.of(context).iaSugerencia3,
+                  AppLocalizations.of(context).iaSugerencia4,
+                ])
+                  ActionChip(
+                    label: Text(s),
+                    onPressed: (_enviando || _pendiente != null) ? null : () {
+                      _controller.text = s;
+                      _enviarTexto();
+                    },
+                  ),
+              ]),
             ],
           ),
         ),
@@ -662,7 +686,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
       child: Row(
         children: [
           if (_vozDisponible) ...[
-            IconButton.filled(
+            IconButton.outlined(
               icon: Icon(_escuchando ? Icons.mic : Icons.mic_none),
               tooltip: 'Dictar mensaje',
               style: _escuchando
@@ -693,6 +717,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
           const SizedBox(width: 8),
           IconButton.filled(
             icon: const Icon(Icons.send),
+            tooltip: 'Enviar',
             onPressed: (bloqueado || _enviando) ? null : () => _enviarTexto(),
           ),
         ],

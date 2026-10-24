@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show toBeginningOfSentenceCase;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/fechas.dart';
+import '../../diseno/componentes.dart';
+import '../../diseno/formatos.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../l10n/app_localizations.dart';
 import '../../nucleo/abrir_destino.dart';
@@ -35,26 +38,18 @@ class AvisosScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () => ref.read(avisosProvider.notifier).refrescar(),
         child: datos == null
-            ? ListView(children: [
-                const SizedBox(height: 160),
-                Center(child: avisos.hasError ? _Reintentar(onTap: () => ref.read(avisosProvider.notifier).refrescar()) : const CircularProgressIndicator()),
-              ])
+            ? (avisos.hasError ? EstadoError(error: avisos.error!, alReintentar: () => ref.read(avisosProvider.notifier).refrescar()) : const EsqueletoLista())
             : lista.isEmpty
-                ? ListView(children: [const SizedBox(height: 160), Center(child: Text(t.avisosVacio))])
-                : ListView(children: _agrupar(context, ref, lista)),
+                ? ListView(physics: const AlwaysScrollableScrollPhysics(), children: [SizedBox(height: 420, child: EstadoVacio(icono: Icons.notifications_none, titulo: t.avisosVacio))])
+                : ListView(padding: const EdgeInsets.only(bottom: 24), children: _agrupar(context, ref, lista)),
       ),
     );
   }
 
   List<Widget> _agrupar(BuildContext context, WidgetRef ref, List<Notificacion> lista) {
-    final t = AppLocalizations.of(context);
-    final ahora = DateTime.now();
-    final hoy = Fecha(ahora.year, ahora.month, ahora.day);
     String dia(Notificacion n) {
       final f = Fecha.intentar(n.creadoEn);
-      if (f == null) return '';
-      final d = f.diasHasta(hoy);
-      return d == 0 ? t.hoyUrgenciaHoy : (d == 1 ? t.avisosAyer : '${f.dia.toString().padLeft(2, '0')}/${f.mes.toString().padLeft(2, '0')}/${f.anio}');
+      return f == null ? '' : (toBeginningOfSentenceCase(context.formatos.fecha(f), Localizations.localeOf(context).languageCode) ?? '');
     }
 
     final salida = <Widget>[];
@@ -69,13 +64,6 @@ class AvisosScreen extends ConsumerWidget {
     }
     return salida;
   }
-}
-
-class _Reintentar extends StatelessWidget {
-  final VoidCallback onTap;
-  const _Reintentar({required this.onTap});
-  @override
-  Widget build(BuildContext context) => FilledButton(onPressed: onTap, child: Text(AppLocalizations.of(context).arranqueReintentar));
 }
 
 class _Aviso extends ConsumerWidget {

@@ -525,5 +525,44 @@
         "type": "int"
       }
     }
+  },
+  "formatoHoy": "hoy",
+  "formatoAyer": "ayer",
+  "formatoManana": "mañana",
+  "errRed": "Sin conexión. Comprueba tu red e inténtalo de nuevo.",
+  "errAutenticacion": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+  "errProhibido": "No tienes permiso para hacer esto.",
+  "errNoEncontrado": "Ya no está disponible.",
+  "errBloqueado": "Este despacho tiene los documentos protegidos. Desbloquéalos para continuar.",
+  "errConflicto": "Alguien lo ha cambiado. Recarga para ver los cambios.",
+  "errLimite": "Demasiadas peticiones seguidas. Espera un momento.",
+  "errActualizar": "Hay que actualizar la app para seguir.",
+  "errServidor": "Algo ha fallado en el servidor. Inténtalo de nuevo en un momento.",
+  "errDesconocido": "No se ha podido completar. Inténtalo de nuevo.",
+  "errReferencia": "Código de soporte: {id}",
+  "estadoVacioReintentar": "Reintentar",
+  "@errReferencia": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "herramientasProximamente": "{n, plural, =1{1 herramienta más llegará pronto} other{{n} herramientas más llegarán pronto}}",
+  "menuMasOpciones": "Más opciones",
+  "iaMenuLive": "Modo Live (manos libres)",
+  "iaMenuAjustes": "Ajustes del asistente",
+  "iaMenuVaciar": "Vaciar conversación",
+  "iaSugerenciasTitulo": "Prueba a preguntar",
+  "iaSugerencia1": "¿Qué tengo pendiente hoy?",
+  "iaSugerencia2": "Resume mis correos sin contestar",
+  "iaSugerencia3": "¿Qué vencimientos fiscales hay esta semana?",
+  "iaSugerencia4": "Crea una nota con lo que te dicte",
+  "@herramientasProximamente": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   }
 }

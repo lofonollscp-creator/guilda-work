@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/formatos.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
+import '../theme/brand_colors.dart';
 import 'correo_ajustes_screen.dart';
 import 'correo_compose_screen.dart';
 import 'correo_mensaje_screen.dart';
@@ -207,6 +209,7 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
                             return const Center(child: Text('No hay mensajes para este filtro.'));
                           }
                           return ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 88), // que el botón «+» no tape el último correo
                             itemCount: mensajes.length,
                             itemBuilder: (context, i) => _tarjetaMensaje(mensajes[i]),
                           );
@@ -223,17 +226,27 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
   Widget _tarjetaMensaje(Mensaje m) {
     final vistaPrevia = (m.cuerpoTexto ?? '').trim();
     return ListTile(
-      leading: m.destacado ? const Icon(Icons.star, color: Colors.amber) : const Icon(Icons.mail_outline),
-      title: Text(
-        m.asunto,
-        style: TextStyle(fontWeight: m.leido ? FontWeight.normal : FontWeight.bold),
+      // Punto de «no leído» (no solo la negrita) y estrella si es destacado.
+      leading: SizedBox(
+        width: 28,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Semantics(label: m.leido ? null : 'No leído', child: Icon(Icons.circle, size: 10, color: m.leido ? Colors.transparent : Theme.of(context).colorScheme.primary)),
+          const SizedBox(width: 6),
+          Icon(m.destacado ? Icons.star : Icons.mail_outline, size: 18, color: m.destacado ? BrandColors.warningLight : null),
+        ]),
       ),
-      subtitle: Text(
-        '${m.remitente}${vistaPrevia.isNotEmpty ? ' · $vistaPrevia' : ''}',
+      title: Text(
+        nombreDeRemitente(m.remitente),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontWeight: m.leido ? FontWeight.w400 : FontWeight.w700),
       ),
-      trailing: m.fecha != null ? Text(m.fecha!.substring(0, 10)) : null,
+      subtitle: Text(
+        '${m.asunto}${vistaPrevia.isNotEmpty ? ' · $vistaPrevia' : ''}',
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: m.fecha == null ? null : Text(context.formatos.deServidor(m.fecha) ?? '', style: Theme.of(context).textTheme.labelMedium),
       onTap: () async {
         await Navigator.of(context).push(
           MaterialPageRoute(

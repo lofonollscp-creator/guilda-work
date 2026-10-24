@@ -1,6 +1,3 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'brand_colors.dart';
@@ -8,55 +5,50 @@ import 'brand_colors.dart';
 /// Sistema de diseño de la app móvil — construye ThemeData explícitamente a
 /// partir de BrandColors (NO ColorScheme.fromSeed: esa API deriva colores a
 /// partir de una semilla y no puede reproducir el acento único + fondo casi
-/// negro que define app/static/style.css).
+/// negro que define app/static/style.css). Los colores y medidas salen de los
+/// tokens generados desde esa misma hoja de estilos (`diseno/tokens.g.dart`).
 ///
-/// Tipografía híbrida (decisión tomada en el plan de la Fase 3): fuente
-/// monoespaciada del sistema en titulares/cifras para evocar el look
-/// "terminal" de la web sin depender de descargar una fuente en tiempo de
-/// ejecución (nada de google_fonts: Menlo/monospace ya vienen en el SO), y
-/// sans-serif normal en el resto del texto para mantener la app legible.
+/// Tipografía: **Manrope** en todo (títulos 20–28 sp, cuerpo 15–16 sp), con Inter
+/// de respaldo para los glifos que Manrope no trae. Las cifras (horas, importes,
+/// saldos) usan números tabulares para que se alineen: ver [cifra].
 class AppTheme {
   AppTheme._();
 
-  /// Menlo en iOS/macOS, "monospace" (alias de Droid Sans Mono) en Android;
-  /// en cualquier otra plataforma se deja que Flutter use su fallback
-  /// habitual en vez de forzar un nombre de fuente que no existiría ahí.
-  static String? get _fuenteMono {
-    if (kIsWeb) return null;
-    if (Platform.isIOS || Platform.isMacOS) return 'Menlo';
-    if (Platform.isAndroid) return 'monospace';
-    return null;
-  }
+  static const _familia = 'Manrope';
+  static const _respaldo = ['Inter'];
 
-  static TextTheme _construirTextTheme(TextTheme base, Color color, Color colorMuted) {
-    final mono = _fuenteMono;
-    return base.copyWith(
-      // Titulares y etiquetas en mono -- eco de la identidad "terminal".
-      headlineLarge: base.headlineLarge?.copyWith(fontFamily: mono, color: color, fontWeight: FontWeight.w600),
-      headlineMedium: base.headlineMedium?.copyWith(fontFamily: mono, color: color, fontWeight: FontWeight.w600),
-      headlineSmall: base.headlineSmall?.copyWith(fontFamily: mono, color: color, fontWeight: FontWeight.w600),
-      titleLarge: base.titleLarge?.copyWith(fontFamily: mono, color: color, fontWeight: FontWeight.w600),
-      titleMedium: base.titleMedium?.copyWith(fontFamily: mono, color: color, fontWeight: FontWeight.w600),
-      titleSmall: base.titleSmall?.copyWith(fontFamily: mono, color: color, fontWeight: FontWeight.w500),
-      labelLarge: base.labelLarge?.copyWith(fontFamily: mono, color: color),
-      labelMedium: base.labelMedium?.copyWith(fontFamily: mono, color: colorMuted),
-      labelSmall: base.labelSmall?.copyWith(fontFamily: mono, color: colorMuted),
-      // Cuerpo de texto en la sans-serif normal del sistema -- legible en
-      // bloques largos (correos, notas, respuestas del asistente).
-      bodyLarge: base.bodyLarge?.copyWith(color: color),
-      bodyMedium: base.bodyMedium?.copyWith(color: color),
-      bodySmall: base.bodySmall?.copyWith(color: colorMuted),
-    );
-  }
+  static TextStyle _estilo(double tamano, FontWeight peso, Color color, {double? altura}) =>
+      TextStyle(fontFamily: _familia, fontFamilyFallback: _respaldo, fontSize: tamano, fontWeight: peso, color: color, height: altura);
 
-  /// TextStyle suelto en mono, para usarlo directamente en cifras sensibles
-  /// (horas de fichaje, duraciones, saldos) fuera del TextTheme normal.
-  static TextStyle cifra({double? fontSize, FontWeight? fontWeight, Color? color}) =>
-      TextStyle(fontFamily: _fuenteMono, fontSize: fontSize, fontWeight: fontWeight ?? FontWeight.w600, color: color);
+  static TextTheme _construirTextTheme(TextTheme base, Color color, Color colorMuted) => base.copyWith(
+        headlineLarge: _estilo(28, FontWeight.w700, color, altura: 1.2),
+        headlineMedium: _estilo(24, FontWeight.w700, color, altura: 1.25),
+        headlineSmall: _estilo(20, FontWeight.w700, color, altura: 1.3),
+        titleLarge: _estilo(20, FontWeight.w700, color, altura: 1.3),
+        titleMedium: _estilo(16, FontWeight.w600, color, altura: 1.35),
+        titleSmall: _estilo(14, FontWeight.w600, color, altura: 1.35),
+        bodyLarge: _estilo(16, FontWeight.w400, color, altura: 1.45),
+        bodyMedium: _estilo(15, FontWeight.w400, color, altura: 1.45),
+        bodySmall: _estilo(13, FontWeight.w400, colorMuted, altura: 1.4),
+        labelLarge: _estilo(14, FontWeight.w600, color),
+        labelMedium: _estilo(12, FontWeight.w600, colorMuted),
+        labelSmall: _estilo(11, FontWeight.w500, colorMuted),
+      );
+
+  /// Estilo para cifras sensibles (horas de fichaje, duraciones, saldos): números tabulares, para que las columnas de cifras se alineen.
+  static TextStyle cifra({double? fontSize, FontWeight? fontWeight, Color? color}) => TextStyle(
+        fontFamily: _familia,
+        fontFamilyFallback: _respaldo,
+        fontSize: fontSize,
+        fontWeight: fontWeight ?? FontWeight.w600,
+        color: color,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      );
 
   static ThemeData get light => _construir(
         brightness: Brightness.light,
         primary: BrandColors.primaryLight,
+        primaryText: BrandColors.primaryTextLight,
         bg: BrandColors.bgLight,
         surface: BrandColors.surfaceLight,
         border: BrandColors.borderLight,
@@ -69,6 +61,7 @@ class AppTheme {
   static ThemeData get dark => _construir(
         brightness: Brightness.dark,
         primary: BrandColors.primaryDark,
+        primaryText: BrandColors.primaryTextDark,
         bg: BrandColors.bgDark,
         surface: BrandColors.surfaceDark,
         border: BrandColors.borderDark,
@@ -81,6 +74,7 @@ class AppTheme {
   static ThemeData _construir({
     required Brightness brightness,
     required Color primary,
+    required Color primaryText,
     required Color bg,
     required Color surface,
     required Color border,
@@ -139,6 +133,7 @@ class AppTheme {
           foregroundColor: BrandColors.onAccent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall)),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          minimumSize: const Size(48, 48),
           textStyle: textTheme.labelLarge,
         ),
       ),
@@ -151,8 +146,38 @@ class AppTheme {
           textStyle: textTheme.labelLarge,
         ),
       ),
+      // Texto de botón: el lima como TEXTO sobre fondo claro da 1,5:1 (ilegible); se usa su versión AA (--primary-text).
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: primary, textStyle: textTheme.labelLarge),
+        style: TextButton.styleFrom(foregroundColor: primaryText, minimumSize: const Size(48, 48), textStyle: textTheme.labelLarge),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface,
+        indicatorColor: primary,
+        iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(color: s.contains(WidgetState.selected) ? BrandColors.onAccent : textMuted)),
+        labelTextStyle: WidgetStateProperty.resolveWith((s) => textTheme.labelMedium?.copyWith(color: s.contains(WidgetState.selected) ? text : textMuted)),
+      ),
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall), side: BorderSide(color: border)),
+        side: BorderSide(color: border),
+        selectedColor: primary,
+        secondarySelectedColor: primary,
+        labelStyle: textTheme.labelLarge,
+        secondaryLabelStyle: textTheme.labelLarge?.copyWith(color: BrandColors.onAccent),
+        checkmarkColor: BrandColors.onAccent,
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall))),
+          side: WidgetStatePropertyAll(BorderSide(color: border)),
+          backgroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? primary : null),
+          foregroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? BrandColors.onAccent : text),
+          minimumSize: const WidgetStatePropertyAll(Size(48, 44)),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: surface,
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(BrandColors.radiusLarge))),
       ),
       // OJO: NO se fija aquí un IconButtonThemeData con foregroundColor fijo
       // -- forzaba el mismo color de icono en TODOS los IconButton,
@@ -189,7 +214,7 @@ class AppTheme {
       listTileTheme: ListTileThemeData(iconColor: textMuted, textColor: text),
       dialogTheme: DialogThemeData(
         backgroundColor: surface,
-        shape: RoundedRectangleBorder(borderRadius: radius),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusLarge)),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
     );

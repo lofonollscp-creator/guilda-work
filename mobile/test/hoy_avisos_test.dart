@@ -142,6 +142,11 @@ void main() {
 
   group('Pantalla «Hoy»', () {
     final ahora = DateTime(2026, 10, 24, 9, 5);
+    // Las fechas se escriben relativas a HOY (la app dice «hoy», «ayer»...), así la prueba no depende del día en que se ejecute.
+    String dia(int desplazamiento) {
+      final d = DateTime.now().add(Duration(days: desplazamiento));
+      return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    }
 
     BandejaHoy bandeja() => BandejaHoy.fromJson({
           'total': 3,
@@ -150,14 +155,14 @@ void main() {
             {
               'clave': 'tareas', 'titulo': 'Tareas', 'total': 2, 'urgentes': 1,
               'elementos': [
-                {'titulo': 'Llamar a Acme', 'detalle': null, 'fecha': '2026-10-23', 'urgencia': 'vencido', 'destino': {'tipo': 'tarea', 'id': 5}, 'acciones': ['abrir', 'completar'], 'url': '/tareas/5'},
-                {'titulo': 'Revisar contrato', 'fecha': '2026-10-24T10:30', 'urgencia': 'hoy', 'destino': {'tipo': 'tarea', 'id': 6}, 'acciones': ['abrir', 'completar']},
+                {'titulo': 'Llamar a Acme', 'detalle': null, 'fecha': dia(-1), 'urgencia': 'vencido', 'destino': {'tipo': 'tarea', 'id': 5}, 'acciones': ['abrir', 'completar'], 'url': '/tareas/5'},
+                {'titulo': 'Revisar contrato', 'fecha': '${dia(0)}T10:30', 'urgencia': 'hoy', 'destino': {'tipo': 'tarea', 'id': 6}, 'acciones': ['abrir', 'completar']},
               ],
             },
             {
               'clave': 'vencimientos', 'titulo': 'Vencimientos fiscales', 'total': 1, 'urgentes': 1,
               'elementos': [
-                {'titulo': '303 · Talleres Soler SL', 'fecha': '2026-10-24T00:00', 'urgencia': 'hoy', 'destino': {'tipo': 'vencimiento', 'id': 41}, 'acciones': ['abrir', 'presentar'], 'url': '/fiscal/vencimientos/41/editar'},
+                {'titulo': '303 · Talleres Soler SL', 'fecha': '${dia(0)}T00:00', 'urgencia': 'hoy', 'destino': {'tipo': 'vencimiento', 'id': 41}, 'acciones': ['abrir', 'presentar'], 'url': '/fiscal/vencimientos/41/editar'},
               ],
             },
           ],
@@ -190,9 +195,9 @@ void main() {
       expect(find.text('3 pendientes · 2 urgentes'), findsOneWidget);
       expect(find.text('Tareas  ·  2'), findsOneWidget);
       expect(find.text('Llamar a Acme'), findsOneWidget);
-      expect(find.text('23/10'), findsOneWidget); // solo el día
-      expect(find.text('24/10 10:30'), findsOneWidget);
-      expect(find.text('24/10'), findsOneWidget); // 00:00 no enseña hora
+      expect(find.text('ayer'), findsOneWidget); // fecha relativa, una sola forma de escribirla en toda la app
+      expect(find.text('hoy 10:30'), findsOneWidget);
+      expect(find.text('hoy'), findsOneWidget); // 00:00 no enseña hora
     });
 
     testWidgets('tocar un elemento abre su destino con la URL de la web como respaldo', (t) async {
@@ -227,7 +232,7 @@ void main() {
     testWidgets('sin datos y con error: mensaje y reintentar', (t) async {
       await t.pumpWidget(app(() async => throw ApiException('sin red', esDeConexion: true), []));
       await t.pumpAndSettle();
-      expect(find.text('No se ha podido cargar la pantalla de hoy.'), findsOneWidget);
+      expect(find.text('Sin conexión. Comprueba tu red e inténtalo de nuevo.'), findsOneWidget); // el texto sale de la categoría del error
       expect(find.text('Reintentar'), findsOneWidget);
     });
   });

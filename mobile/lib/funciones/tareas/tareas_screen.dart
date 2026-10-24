@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
 import '../../api/fechas.dart';
+import '../../diseno/componentes.dart';
+import '../../diseno/formatos.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../datos/local/cola_escritura.dart' show ColaLlena;
 import '../../dominio/tarea.dart';
@@ -137,16 +139,15 @@ class _Filtros extends ConsumerWidget {
     final c = ref.read(tareasListaProvider.notifier);
     final ambitos = [('propias', t.tareasAmbitoPropias), ('asignadas', t.tareasAmbitoAsignadas), ('compartidas', t.tareasAmbitoCompartidas), ('todas', t.tareasAmbitoTodas)];
     return Column(children: [
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(children: [
-          for (final (clave, etiqueta) in ambitos)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(label: Text(etiqueta), selected: estado.ambito == clave, onSelected: (_) => c.cambiarAmbito(clave)),
-            ),
-        ]),
+      // Los cuatro ámbitos siempre a la vista (antes había que deslizar para ver el último).
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+        child: SegmentedButton<String>(
+          showSelectedIcon: false,
+          segments: [for (final (clave, etiqueta) in ambitos) ButtonSegment(value: clave, label: Text(etiqueta, maxLines: 1, overflow: TextOverflow.ellipsis))],
+          selected: {estado.ambito},
+          onSelectionChanged: (s) => c.cambiarAmbito(s.first),
+        ),
       ),
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -178,20 +179,18 @@ class _Cuerpo extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final c = ref.read(tareasListaProvider.notifier);
     if (estado.tareas.isEmpty) {
+      if (estado.cargando) return const EsqueletoLista();
       return RefreshIndicator(
         onRefresh: c.recargar,
-        child: ListView(controller: scroll, children: [
-          const SizedBox(height: 120),
-          Center(
-            child: estado.cargando
-                ? const CircularProgressIndicator()
-                : estado.error != null
-                    ? Column(children: [
-                        Text(estado.error is ApiException ? (estado.error as ApiException).mensaje : t.hoyErrorCargar),
-                        const SizedBox(height: 12),
-                        FilledButton(onPressed: c.recargar, child: Text(t.arranqueReintentar)),
-                      ])
-                    : Text(estado.busqueda.isEmpty ? t.tareasVacio : t.tareasSinResultados),
+        child: ListView(controller: scroll, physics: const AlwaysScrollableScrollPhysics(), children: [
+          SizedBox(
+            height: 360,
+            child: estado.error != null
+                ? EstadoError(error: estado.error!, alReintentar: c.recargar)
+                : EstadoVacio(
+                    icono: estado.busqueda.isEmpty ? Icons.task_alt : Icons.search_off,
+                    titulo: estado.busqueda.isEmpty ? t.tareasVacio : t.tareasSinResultados,
+                  ),
           ),
         ]),
       );
@@ -200,6 +199,7 @@ class _Cuerpo extends ConsumerWidget {
       onRefresh: c.recargar,
       child: ListView.builder(
         controller: scroll,
+        padding: const EdgeInsets.only(bottom: 24),
         itemCount: estado.tareas.length + (estado.cargando ? 1 : 0),
         itemBuilder: (context, i) {
           if (i >= estado.tareas.length) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
@@ -223,14 +223,10 @@ class _FilaTarea extends StatelessWidget {
     final estado = EstadoTarea.desde(tarea.estado);
     final hecha = !estado.abierta;
     final vencida = tarea.vencida == true && !hecha;
-    final fecha = Fecha.intentar(tarea.fechaVencimiento);
-    final detalle = [
-      if (fecha != null) formatoFechaCorta(fecha),
-      if (estado != EstadoTarea.noIniciada && !hecha) etiquetaEstado(t, estado),
-      if (PrioridadTarea.desde(tarea.prioridad) == PrioridadTarea.alta) etiquetaPrioridad(t, PrioridadTarea.alta),
-    ].join(' · ');
+    final fecha = context.formatos.deServidor(tarea.fechaVencimiento);
 
     return ListTile(
+      minVerticalPadding: 10,
       leading: Checkbox(
         value: hecha,
         onChanged: (hecha || tarea.id < 0) ? null : (_) => alCompletar(tarea),
@@ -242,12 +238,16 @@ class _FilaTarea extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: hecha ? TextStyle(decoration: TextDecoration.lineThrough, color: tema.colorScheme.outline) : null,
       ),
-      subtitle: detalle.isEmpty && !vencida
-          ? null
-          : Text.rich(TextSpan(children: [
-              if (vencida) TextSpan(text: '${t.tareasVencida} · ', style: TextStyle(color: tema.colorScheme.error, fontWeight: FontWeight.w600)),
-              TextSpan(text: detalle),
-            ])),
+      // Estado = icono + etiqueta + color; lo vencido en rojo con su palabra («Vencida»): nunca solo color.
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Wrap(spacing: 12, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          ChipEstado(estado: estado, etiqueta: etiquetaEstado(t, estado), vencida: false),
+          if (vencida) ChipEstado(estado: estado, etiqueta: '${t.tareasVencida}${fecha == null ? '' : ' · $fecha'}', vencida: true)
+          else if (fecha != null) Text(fecha, style: tema.textTheme.labelMedium),
+          if (PrioridadTarea.desde(tarea.prioridad) == PrioridadTarea.alta) Text(etiquetaPrioridad(t, PrioridadTarea.alta), style: tema.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
+        ]),
+      ),
       trailing: pendiente
           ? Tooltip(message: t.colaTareaPendiente, child: const Icon(Icons.cloud_upload_outlined, size: 18))
           : ((tarea.motivoBloqueo ?? '').isNotEmpty ? const Icon(Icons.hourglass_empty, size: 18) : null),
@@ -282,7 +282,7 @@ class _AltaRapida extends StatelessWidget {
           ),
           fecha == null
               ? IconButton(icon: const Icon(Icons.event_outlined), tooltip: t.tareasFecha, onPressed: alElegirFecha)
-              : InputChip(label: Text(formatoFechaCorta(fecha!)), onPressed: alElegirFecha, onDeleted: alQuitarFecha),
+              : InputChip(label: Text(context.formatos.fecha(fecha!)), onPressed: alElegirFecha, onDeleted: alQuitarFecha),
           IconButton(icon: const Icon(Icons.send), tooltip: t.tareasNueva, onPressed: alEnviar),
         ]),
       ),

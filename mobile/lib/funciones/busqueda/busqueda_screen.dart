@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../diseno/componentes.dart';
 import '../../l10n/app_localizations.dart';
 import '../../nucleo/abrir_destino.dart';
 import '../../nucleo/destinos.dart';
@@ -121,11 +122,11 @@ class _BusquedaScreenState extends ConsumerState<BusquedaScreen> {
   }
 
   Widget _cuerpo(AppLocalizations t) {
-    if (_error) return Center(child: Text(t.busquedaError));
-    if (_buscando && _resultados == null) return const Center(child: CircularProgressIndicator());
+    if (_error) return EstadoError(error: Exception(), alReintentar: () => _buscar(_consulta));
+    if (_buscando && _resultados == null) return const EsqueletoLista(filas: 5);
     final r = _resultados;
-    if (r == null) return Center(child: Text(t.busquedaMinimo));
-    if (r.isEmpty) return Center(child: Text(t.busquedaSinResultados(_consulta)));
+    if (r == null) return EstadoVacio(icono: Icons.search, titulo: t.busquedaMinimo);
+    if (r.isEmpty) return EstadoVacio(icono: Icons.search_off, titulo: t.busquedaSinResultados(_consulta));
     return ListView.separated(
       itemCount: r.length,
       separatorBuilder: (_, _) => const Divider(height: 1),

@@ -21,7 +21,7 @@ import 'herramientas_screen.dart';
 import 'historial_rapido_screen.dart';
 import 'ia_chat_screen.dart';
 import 'menu_detail_screen.dart';
-import 'tareas_outlook_screen.dart';
+import '../funciones/tareas/tareas_screen.dart';
 import 'tiquets_screen.dart';
 
 /// Dashboard (equivalente móvil de app/templates/inicio.html): stats del
@@ -208,7 +208,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           return RefreshIndicator(
             onRefresh: _recargar,
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 88), // que el botón «+» no tape el último proyecto
               children: [
                 if (_dashboard?['onboarding_visible'] == true) ...[
                   _tarjetaOnboarding(t),
@@ -267,7 +267,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       (
         Icons.checklist,
         t.dashboardTareasTooltip,
-        () => _abrirPantalla(() => TareasOutlookScreen(api: widget.api)),
+        () => _abrirPantalla(() => const TareasScreen()),
       ),
       (
         Icons.mail_outline,

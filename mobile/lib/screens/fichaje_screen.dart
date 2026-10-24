@@ -134,30 +134,26 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(t.fichajeTitulo),
+        // Antes tres iconos sueltos sin texto; ahora un menú con nombre (historial, ausencias, mis datos).
         actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: t.fichajeHistorialTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => FichajeHistorialScreen(api: widget.api)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.beach_access_outlined),
-            tooltip: t.ausenciasTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => AusenciasScreen(api: widget.api)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.badge_outlined),
-            tooltip: t.fichajeMisDatosTooltip,
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => FichajeDatosScreen(api: widget.api)),
-              );
-              await _recargar();
+          PopupMenuButton<String>(
+            tooltip: t.menuMasOpciones,
+            onSelected: (v) async {
+              switch (v) {
+                case 'historial':
+                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) => FichajeHistorialScreen(api: widget.api)));
+                case 'ausencias':
+                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) => AusenciasScreen(api: widget.api)));
+                case 'datos':
+                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) => FichajeDatosScreen(api: widget.api)));
+                  await _recargar();
+              }
             },
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'historial', child: ListTile(leading: const Icon(Icons.history), title: Text(t.fichajeHistorialTooltip), contentPadding: EdgeInsets.zero)),
+              PopupMenuItem(value: 'ausencias', child: ListTile(leading: const Icon(Icons.beach_access_outlined), title: Text(t.ausenciasTooltip), contentPadding: EdgeInsets.zero)),
+              PopupMenuItem(value: 'datos', child: ListTile(leading: const Icon(Icons.badge_outlined), title: Text(t.fichajeMisDatosTooltip), contentPadding: EdgeInsets.zero)),
+            ],
           ),
         ],
       ),

@@ -58,17 +58,29 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
           // tarjetas miden lo mismo y el texto interior decide su propio
           // layout (Expanded + overflow controlado) en vez de que el grid
           // les imponga una altura que no siempre le cabía al contenido.
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              mainAxisExtent: 190,
+          // Las que aún no existen no ocupan sitio en la cuadrícula: una línea al final dice cuántas llegarán.
+          final disponibles = herramientas.where((h) => h.disponible).toList();
+          final proximas = herramientas.length - disponibles.length;
+          return Column(children: [
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: 190,
+                ),
+                itemCount: disponibles.length,
+                itemBuilder: (context, i) => _tarjetaHerramienta(context, disponibles[i], baseUrl, t),
+              ),
             ),
-            itemCount: herramientas.length,
-            itemBuilder: (context, i) => _tarjetaHerramienta(context, herramientas[i], baseUrl, t),
-          );
+            if (proximas > 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Text(t.herramientasProximamente(proximas), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+              ),
+          ]);
         },
       ),
     );

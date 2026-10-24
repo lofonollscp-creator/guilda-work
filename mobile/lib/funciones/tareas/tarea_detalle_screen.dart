@@ -11,6 +11,9 @@ import 'package:path_provider/path_provider.dart';
 import '../../api/errores.dart';
 import '../../api/fechas.dart';
 import '../../api/generado/modelos.g.dart';
+import '../../diseno/componentes.dart';
+import '../../diseno/estados.dart';
+import '../../diseno/formatos.dart';
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
 import '../../datos/local/cola_escritura.dart' show ColaLlena;
@@ -238,7 +241,7 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.event_outlined),
-                title: Text(fecha == null ? t.tareaSinFecha : formatoFechaCorta(fecha!)),
+                title: Text(fecha == null ? t.tareaSinFecha : context.formatos.fecha(fecha!)),
                 onTap: () async {
                   final ahora = DateTime.now();
                   final e = await showDatePicker(context: d, initialDate: ahora, firstDate: DateTime(ahora.year - 1), lastDate: DateTime(ahora.year + 5));
@@ -385,15 +388,7 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
         actions: [if (d != null) IconButton(icon: const Icon(Icons.edit_outlined), tooltip: t.tareaEditar, onPressed: _editar)],
       ),
       body: d == null
-          ? Center(
-              child: _cargando
-                  ? const CircularProgressIndicator()
-                  : Column(mainAxisSize: MainAxisSize.min, children: [
-                      Text(_error is ApiException ? (_error as ApiException).mensaje : t.hoyErrorCargar),
-                      const SizedBox(height: 12),
-                      FilledButton(onPressed: _cargar, child: Text(t.arranqueReintentar)),
-                    ]),
-            )
+          ? (_cargando ? const EsqueletoLista(filas: 5) : EstadoError(error: _error ?? Object(), alReintentar: _cargar))
           : RefreshIndicator(onRefresh: _cargar, child: _contenido(context, d)),
     );
   }
@@ -411,11 +406,15 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
       Text(tarea.asunto ?? '', style: tema.textTheme.titleLarge),
       const SizedBox(height: 12),
       Wrap(spacing: 8, runSpacing: 4, children: [
-        ActionChip(avatar: const Icon(Icons.flag_outlined, size: 18), label: Text('${t.tareaEstado}: ${etiquetaEstado(t, estado)}'), onPressed: _elegirEstado),
+        ActionChip(
+          avatar: Icon(aspectoDe(estado).icono, size: 18, color: aspectoDe(estado).color(tema.brightness)),
+          label: Text('${t.tareaEstado}: ${etiquetaEstado(t, estado)}'),
+          onPressed: _elegirEstado,
+        ),
         Chip(label: Text('${t.tareaPrioridad}: ${etiquetaPrioridad(t, PrioridadTarea.desde(tarea.prioridad))}')),
         Chip(
           avatar: Icon(Icons.event_outlined, size: 18, color: vencida ? tema.colorScheme.error : null),
-          label: Text(fecha == null ? t.tareaSinFecha : '${t.tareaVence}: ${formatoFechaCorta(fecha)}${vencida ? ' · ${t.tareasVencida}' : ''}'),
+          label: Text(fecha == null ? t.tareaSinFecha : '${t.tareaVence}: ${context.formatos.fecha(fecha)}${vencida ? ' · ${t.tareasVencida}' : ''}'),
         ),
       ]),
       if (estado == EstadoTarea.esperando && (tarea.motivoBloqueo ?? '').isNotEmpty) ...[
@@ -477,7 +476,7 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
 
   String _cuando(String? iso) {
     final m = MomentoLocal.intentar(iso);
-    return m == null ? '' : '${formatoFechaCorta(m.fecha)} ${m.hora.toString().padLeft(2, '0')}:${m.minuto.toString().padLeft(2, '0')}';
+    return m == null ? '' : context.formatos.momento(m);
   }
 }
 

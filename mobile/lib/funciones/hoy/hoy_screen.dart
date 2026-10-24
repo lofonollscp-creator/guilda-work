@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
-import '../../api/fechas.dart';
+import '../../diseno/componentes.dart';
+import '../../diseno/formatos.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../l10n/app_localizations.dart';
 import '../../nucleo/abrir_destino.dart';
@@ -79,7 +80,7 @@ class _Campana extends StatelessWidget {
 class _Cargando extends StatelessWidget {
   const _Cargando();
   @override
-  Widget build(BuildContext context) => ListView(children: const [SizedBox(height: 200), Center(child: CircularProgressIndicator())]);
+  Widget build(BuildContext context) => const EsqueletoLista();
 }
 
 class _Error extends ConsumerWidget {
@@ -87,18 +88,7 @@ class _Error extends ConsumerWidget {
   const _Error({required this.error});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    final texto = error is ApiException && !(error as ApiException).esDeConexion ? (error as ApiException).mensaje : t.hoyErrorCargar;
-    return ListView(padding: const EdgeInsets.all(24), children: [
-      const SizedBox(height: 80),
-      const Icon(Icons.cloud_off_outlined, size: 48),
-      const SizedBox(height: 12),
-      Text(texto, textAlign: TextAlign.center),
-      const SizedBox(height: 16),
-      Center(child: FilledButton(onPressed: () => ref.read(hoyProvider.notifier).refrescar(), child: Text(t.arranqueReintentar))),
-    ]);
-  }
+  Widget build(BuildContext context, WidgetRef ref) => EstadoError(error: error, alReintentar: () => ref.read(hoyProvider.notifier).refrescar());
 }
 
 class _Bandeja extends StatelessWidget {
@@ -111,24 +101,19 @@ class _Bandeja extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final secciones = bandeja.secciones ?? const [];
-    final aviso = desactualizado ? t.hoySinConexionDatosDe('${obtenidoEn.hour.toString().padLeft(2, '0')}:${obtenidoEn.minute.toString().padLeft(2, '0')}') : null;
+    final aviso = desactualizado ? t.hoySinConexionDatosDe(context.formatos.hora(obtenidoEn.hour, obtenidoEn.minute)) : null;
 
     if (secciones.isEmpty) {
-      return ListView(padding: const EdgeInsets.all(24), children: [
-        if (aviso != null) _Aviso(aviso),
-        const SizedBox(height: 80),
-        const Icon(Icons.check_circle_outline, size: 56),
-        const SizedBox(height: 12),
-        Text(t.hoyTodoAlDia, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
-        const SizedBox(height: 4),
-        Text(t.hoyTodoAlDiaDetalle, textAlign: TextAlign.center),
+      return ListView(physics: const AlwaysScrollableScrollPhysics(), children: [
+        if (aviso != null) BannerEstado(tipo: TipoBanner.sinConexion, texto: aviso),
+        SizedBox(height: 420, child: EstadoVacio(icono: Icons.check_circle_outline, titulo: t.hoyTodoAlDia, detalle: t.hoyTodoAlDiaDetalle)),
       ]);
     }
 
-    return ListView(padding: const EdgeInsets.fromLTRB(12, 8, 12, 24), children: [
-      if (aviso != null) _Aviso(aviso),
+    return ListView(padding: const EdgeInsets.only(bottom: 24), children: [
+      if (aviso != null) BannerEstado(tipo: TipoBanner.sinConexion, texto: aviso),
       Padding(
-        padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         child: Text(
           [t.hoyResumenTotal(bandeja.total ?? 0), if ((bandeja.urgentes ?? 0) > 0) t.hoyResumenUrgentes(bandeja.urgentes!)].join(' · '),
           style: Theme.of(context).textTheme.titleMedium,
@@ -137,16 +122,6 @@ class _Bandeja extends StatelessWidget {
       for (final s in secciones) _Seccion(seccion: s),
     ]);
   }
-}
-
-class _Aviso extends StatelessWidget {
-  final String texto;
-  const _Aviso(this.texto);
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(children: [const Icon(Icons.cloud_off_outlined, size: 16), const SizedBox(width: 6), Expanded(child: Text(texto, style: Theme.of(context).textTheme.bodySmall))]),
-      );
 }
 
 class _Seccion extends StatelessWidget {
@@ -158,7 +133,7 @@ class _Seccion extends StatelessWidget {
     final elementos = seccion.elementos ?? const [];
     final hay = seccion.total ?? elementos.length;
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -186,7 +161,7 @@ class _Elemento extends ConsumerWidget {
       _ => (tema.colorScheme.outline, ''),
     };
     final destino = elemento.destino;
-    final fecha = _fecha(elemento.fecha);
+    final fecha = context.formatos.deServidor(elemento.fecha);
     final detalle = [if (elemento.detalle != null && elemento.detalle!.isNotEmpty) elemento.detalle!, ?fecha].join(' · ');
     final puedeCompletar = (elemento.acciones ?? const []).contains('completar') && destino?.tipo == DestinoHoyTipo.tarea && destino?.id != null;
 
@@ -221,11 +196,4 @@ class _Elemento extends ConsumerWidget {
     }
   }
 
-  /// `AAAA-MM-DD` o `AAAA-MM-DDTHH:MM` → «24/10» o «24/10 09:30» (sin pasar por zonas horarias).
-  String? _fecha(String? texto) {
-    final m = MomentoLocal.intentar(texto);
-    if (m != null && (m.hora != 0 || m.minuto != 0)) return '${m.fecha.dia.toString().padLeft(2, '0')}/${m.fecha.mes.toString().padLeft(2, '0')} ${m.hora.toString().padLeft(2, '0')}:${m.minuto.toString().padLeft(2, '0')}';
-    final f = Fecha.intentar(texto); // sin hora (o a las 00:00): solo el día
-    return f == null ? null : '${f.dia.toString().padLeft(2, '0')}/${f.mes.toString().padLeft(2, '0')}';
-  }
 }

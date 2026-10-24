@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -83,12 +85,15 @@ Widget _app(Widget home, List<Override> overrides) => ProviderScope(
     );
 
 void main() {
+  setUpAll(() => initializeDateFormatting('es'));
+
   group('Avisos', () {
     final ahora = DateTime.now();
+    final hace12Dias = ahora.subtract(const Duration(days: 12));
     NotificacionesRespuesta bandeja() => NotificacionesRespuesta(noLeidas: 2, notificaciones: [
           _aviso(1, 'Te asignan una tarea', ahora),
           _aviso(2, 'Vencimiento próximo', ahora.subtract(const Duration(days: 1)), tipo: 'vencimiento', destinoId: 41, canal: 'fiscal'),
-          _aviso(3, 'Resumen semanal', DateTime(2026, 1, 5, 8), leido: true, canal: 'resumenes'),
+          _aviso(3, 'Resumen semanal', hace12Dias, leido: true, canal: 'resumenes'),
         ]);
 
     Widget montar(NotificacionesRespuesta datos, _ClienteFalso cliente, List<(Destino, String?)> abiertos) => _app(const AvisosScreen(), [
@@ -103,7 +108,8 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('Hoy'), findsOneWidget);
       expect(find.text('Ayer'), findsOneWidget);
-      expect(find.text('05/01/2026'), findsOneWidget);
+      // más de una semana atrás: día y mes («5 ene»), o con año si cambió el año
+      expect(find.text((hace12Dias.year == ahora.year ? DateFormat.MMMd('es') : DateFormat.yMMMd('es')).format(hace12Dias)), findsOneWidget);
       expect(find.text('Te asignan una tarea'), findsOneWidget);
     });
 
@@ -196,7 +202,7 @@ void main() {
       await t.enterText(find.byType(TextField), 'acme');
       await t.pump(const Duration(milliseconds: 400));
       await t.pumpAndSettle();
-      expect(find.text('No se ha podido buscar. Inténtalo de nuevo.'), findsOneWidget);
+      expect(find.text('No se ha podido completar. Inténtalo de nuevo.'), findsOneWidget);
     });
   });
 }

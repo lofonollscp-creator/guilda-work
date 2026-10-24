@@ -365,7 +365,7 @@ void main() {
       expect(find.text('Pedir certificado'), findsOneWidget);
       expect(find.text('Comprobar NIF'), findsOneWidget);
       expect(find.text('Ya lo tengo'), findsOneWidget);
-      expect(find.text('24/10 09:30'), findsOneWidget);
+      expect(find.textContaining('09:30'), findsOneWidget); // la fecha sale con el formateo único («hoy 09:30», «sáb 24 oct 09:30»...)
       expect(find.text('factura.pdf'), findsOneWidget);
       expect(find.text('2 KB'), findsOneWidget);
     });
