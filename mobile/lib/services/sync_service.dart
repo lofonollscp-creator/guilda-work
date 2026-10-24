@@ -1,121 +1,83 @@
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
-import 'package:uuid/uuid.dart';
 
-import 'api_client.dart';
+import '../datos/local/cola_escritura.dart';
 
-/// Cola local de acciones pulsadas sin conexión (fichaje y notas rápidas) --
-/// ver ApiException.esDeConexion en api_client.dart para cuándo se encola
-/// algo aquí en vez de mostrar el error tal cual. Se sincroniza sola al
-/// recuperar conexión o volver la app a primer plano (ver main.dart).
+/// La cola ANTIGUA de acciones pulsadas sin conexión (fichajes y notas rápidas, `guilda_work_cola.db`). Ya no se escribe en ella: todo va a la cola
+/// de escritura genérica (`datos/local/cola_escritura.dart`). Esta clase solo existe para **migrar** lo que una versión anterior de la app dejó pendiente.
 class SyncService {
-  static const _version = 1;
-  Database? _db;
-  final _uuid = const Uuid();
-  bool _sincronizando = false;
+  /// Ruta del fichero antiguo; en las pruebas se sustituye.
+  final Future<String> Function() _ruta;
 
-  Future<Database> _abrir() async {
-    if (_db != null) return _db!;
-    final ruta = p.join(await getDatabasesPath(), 'guilda_work_cola.db');
-    _db = await openDatabase(
-      ruta,
-      version: _version,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE cola_fichajes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo TEXT NOT NULL,
-            marca_tiempo TEXT NOT NULL,
-            cliente_uuid TEXT NOT NULL UNIQUE
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE cola_notas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            texto TEXT NOT NULL,
-            categoria_id INTEGER,
-            creada_en TEXT NOT NULL,
-            cliente_uuid TEXT NOT NULL UNIQUE
-          )
-        ''');
-      },
-    );
-    return _db!;
-  }
+  SyncService({Future<String> Function()? ruta}) : _ruta = ruta ?? (() async => p.join(await getDatabasesPath(), 'guilda_work_cola.db'));
 
-  Future<void> encolarFichaje(String tipo, DateTime marcaTiempo) async {
-    final db = await _abrir();
-    await db.insert('cola_fichajes', {
-      'tipo': tipo,
-      'marca_tiempo': marcaTiempo.toIso8601String(),
-      'cliente_uuid': _uuid.v4(),
-    });
-  }
-
-  Future<void> encolarNota(String texto, int? categoriaId, DateTime creadaEn) async {
-    final db = await _abrir();
-    await db.insert('cola_notas', {
-      'texto': texto,
-      'categoria_id': categoriaId,
-      'creada_en': creadaEn.toIso8601String(),
-      'cliente_uuid': _uuid.v4(),
-    });
-  }
-
-  Future<int> contarPendientes() async {
-    final db = await _abrir();
-    final f = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM cola_fichajes')) ?? 0;
-    final n = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM cola_notas')) ?? 0;
-    return f + n;
-  }
-
-  /// Recorre la cola y sube cada pendiente; borra localmente lo que el
-  /// servidor confirma. Los fichajes se mandan en orden de pulsación (por
-  /// id de inserción local) -- importante porque el servidor valida la
-  /// secuencia por orden de llegada, no por marca_tiempo (ver comentario de
-  /// db.fichar() en el backend).
-  Future<void> sincronizar(ApiClient api) async {
-    if (_sincronizando) return;
-    _sincronizando = true;
+  /// Pasa a la cola nueva lo que quedó pendiente en la antigua y lo borra de ella. Cada acción conserva su `cliente_uuid` como clave de idempotencia:
+  /// si ya había llegado al servidor, el reenvío no la duplica. Las filas antiguas no guardaban de quién eran: se asignan a la persona y el despacho
+  /// con los que se abre la app por primera vez tras actualizar. Devuelve cuántas se migraron. Es seguro llamarlo cada vez (sin fichero, no hace nada).
+  Future<int> migrarA(ColaEscritura cola, {required int usuarioId, required String despachoId}) async {
+    final ruta = await _ruta();
+    if (!await databaseExists(ruta)) return 0; // instalación nueva: nada que migrar (y no se crea el fichero)
+    final db = await openDatabase(ruta);
+    var migradas = 0;
     try {
-      final db = await _abrir();
+      final tablas = {for (final t in await db.rawQuery("SELECT name FROM sqlite_master WHERE type = 'table'")) t['name'] as String};
 
-      final fichajes = await db.query('cola_fichajes', orderBy: 'id ASC');
-      for (final f in fichajes) {
-        try {
-          await api.fichar(
-            f['tipo'] as String,
-            marcaTiempo: f['marca_tiempo'] as String,
-            clienteUuid: f['cliente_uuid'] as String,
-          );
+      if (tablas.contains('cola_fichajes')) {
+        // En el orden en que se pulsaron: el servidor valida la secuencia por orden de llegada.
+        for (final f in await db.query('cola_fichajes', orderBy: 'id ASC')) {
+          final uuid = f['cliente_uuid'] as String;
+          if (!await cola.existeClave(uuid)) {
+            try {
+              await cola.encolar(
+                metodo: 'POST',
+                ruta: '/fichaje/marcar',
+                cuerpo: {'tipo': f['tipo'], 'marca_tiempo': f['marca_tiempo'], 'cliente_uuid': uuid},
+                clave: uuid,
+                usuarioId: usuarioId,
+                despachoId: despachoId,
+                entidad: 'fichaje',
+                tipo: 'fichaje.marca',
+                descripcion: '${f['tipo']} ${_hora(f['marca_tiempo'] as String)}',
+              );
+            } on ColaLlena {
+              return migradas; // el resto se queda en la antigua hasta que haya sitio
+            }
+          }
           await db.delete('cola_fichajes', where: 'id = ?', whereArgs: [f['id']]);
-        } on ApiException catch (e) {
-          if (e.esDeConexion) return; // sigue sin red: se reintenta en la siguiente pasada
-          // Error de negocio (ej. secuencia inválida porque ya se fichó algo
-          // más reciente desde otro sitio mientras estaba offline): no se
-          // puede resolver reintentando igual, se descarta para no bloquear
-          // el resto de la cola.
-          await db.delete('cola_fichajes', where: 'id = ?', whereArgs: [f['id']]);
+          migradas++;
         }
       }
 
-      final notas = await db.query('cola_notas', orderBy: 'id ASC');
-      for (final n in notas) {
-        try {
-          await api.crearNota(
-            n['texto'] as String,
-            categoriaId: n['categoria_id'] as int?,
-            creadaEn: n['creada_en'] as String,
-            clienteUuid: n['cliente_uuid'] as String,
-          );
+      if (tablas.contains('cola_notas')) {
+        for (final n in await db.query('cola_notas', orderBy: 'id ASC')) {
+          final uuid = n['cliente_uuid'] as String;
+          if (!await cola.existeClave(uuid)) {
+            try {
+              await cola.encolar(
+                metodo: 'POST',
+                ruta: '/notas',
+                cuerpo: {'texto': n['texto'], 'categoria_id': n['categoria_id'], 'creada_en': n['creada_en'], 'cliente_uuid': uuid}..removeWhere((_, v) => v == null),
+                clave: uuid,
+                usuarioId: usuarioId,
+                despachoId: despachoId,
+                entidad: 'nota-nueva:$uuid',
+                tipo: 'nota.crear',
+                descripcion: n['texto'] as String,
+              );
+            } on ColaLlena {
+              return migradas;
+            }
+          }
           await db.delete('cola_notas', where: 'id = ?', whereArgs: [n['id']]);
-        } on ApiException catch (e) {
-          if (e.esDeConexion) return;
-          await db.delete('cola_notas', where: 'id = ?', whereArgs: [n['id']]);
+          migradas++;
         }
       }
     } finally {
-      _sincronizando = false;
+      await db.close();
     }
+    return migradas;
   }
+
+  /// «2026-10-24T09:05:00.000» → «09:05».
+  String _hora(String iso) => iso.length >= 16 ? iso.substring(11, 16) : iso;
 }

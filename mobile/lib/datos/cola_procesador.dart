@@ -37,6 +37,13 @@ class ProcesadorCola {
   ProcesadorCola({required this.cola, required this.enviar, required this.usuarioActivo, required this.despachoActivo, int Function()? ahoraMs, this.alTerminar})
       : _ahoraMs = ahoraMs ?? (() => DateTime.now().millisecondsSinceEpoch);
 
+  /// Un fichaje que el servidor rechaza (p. ej. «ya estabas fuera») no impide enviar los siguientes: cada pulsación se valida por orden de llegada y la
+  /// siguiente puede ser válida. Se queda a la vista, rechazado, para que la persona lo vea y lo descarte; nunca se pierde en silencio.
+  static bool _rechazoNoBloquea(Pendiente p) => p.entidad == entidadFichaje;
+
+  /// Todos los fichajes comparten entidad: salen estrictamente en el orden en que se pulsaron.
+  static const entidadFichaje = 'fichaje';
+
   /// Espera antes del intento número [intentos]: 1 s, 2 s, 4 s... hasta 5 minutos.
   static Duration espera(int intentos) {
     final seg = 1 << (intentos.clamp(0, 9));
@@ -59,6 +66,7 @@ class ProcesadorCola {
         final p = await cola.uno(previa.id);
         if (p == null) continue;
         if (bloqueadas.contains(p.entidad)) continue; // lo anterior de esa entidad aún no ha salido
+        if (p.estado == EstadoPendiente.rechazada && _rechazoNoBloquea(p)) continue;
         if (p.estado == EstadoPendiente.conflicto || p.estado == EstadoPendiente.rechazada) {
           bloqueadas.add(p.entidad);
           continue;
@@ -98,7 +106,7 @@ class ProcesadorCola {
               bloqueadas.add(p.entidad);
             default:
               await cola.marcar(p.id, estado: EstadoPendiente.rechazada, intentos: intentos, error: e.mensaje);
-              bloqueadas.add(p.entidad);
+              if (!_rechazoNoBloquea(p)) bloqueadas.add(p.entidad);
               rechazadas++;
           }
           if (parada != null) break;

@@ -59,7 +59,7 @@ class PaginasApp {
         correo: (ref) => CorreoBandejaScreen(api: ref.read(serviciosProvider).api),
         fichaje: (ref, usuario) {
           final s = ref.read(serviciosProvider);
-          return FichajeScreen(api: s.api, sync: s.sync, usuario: usuario);
+          return FichajeScreen(api: s.api, usuario: usuario);
         },
         accesosMas: (ref, usuario) {
           final s = ref.read(serviciosProvider);

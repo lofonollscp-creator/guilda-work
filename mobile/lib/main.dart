@@ -29,10 +29,10 @@ class GuildaWorkApp extends ConsumerStatefulWidget {
   ConsumerState<GuildaWorkApp> createState() => _GuildaWorkAppState();
 }
 
-/// Escucha conectividad y ciclo de vida de la app para disparar
-/// SyncService.sincronizar() al recuperar red o volver a primer plano --
-/// ver sync_service.dart para la cola offline de fichaje/notas. La navegación
-/// y la sesión viven en `nucleo/` (go_router + Riverpod).
+/// Escucha conectividad y ciclo de vida de la app para vaciar la cola de
+/// escrituras sin conexión al recuperar red o volver a primer plano (ver
+/// datos/cola_procesador.dart). La navegación y la sesión viven en `nucleo/`
+/// (go_router + Riverpod).
 class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindingObserver {
   StreamSubscription<List<ConnectivityResult>>? _conexionSub;
 
@@ -50,19 +50,29 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
     }, fireImmediately: true);
     _conexionSub = Connectivity().onConnectivityChanged.listen((estados) {
       if (!estados.contains(ConnectivityResult.none)) {
-        _s.sync.sincronizar(_s.api);
         _vaciarCola();
       }
     });
-    _s.sync.sincronizar(_s.api);
   }
 
   /// Envía lo que se hizo sin conexión (si aún no hay sesión, no hace nada).
   void _vaciarCola() => unawaited(ref.read(procesadorColaProvider).procesar());
 
+  /// Lo que una versión anterior de la app dejó pendiente (fichajes y notas sin enviar) pasa a la cola nueva. Se hace sin ruido y es seguro repetirlo.
+  Future<void> _migrarColaAntigua() async {
+    final e = ref.read(estadoSesionProvider);
+    if (e.usuario == null) return;
+    try {
+      await _s.sync.migrarA(ref.read(colaEscrituraProvider), usuarioId: e.usuario!.id, despachoId: despachoDeLaCola(e.despacho));
+    } catch (_) {
+      // se reintenta en el próximo inicio de sesión: la cola antigua no se borra hasta que pasa a la nueva
+    }
+  }
+
   /// Con sesión: prepara los avisos (Firebase, token del dispositivo, canales de Android) y abre el aviso que se tocó antes de entrar.
   Future<void> _alIniciarSesion() async {
     await WidgetsBinding.instance.endOfFrame; // que el enrutador ya haya pintado la pantalla de inicio
+    await _migrarColaAntigua();
     try {
       await _s.push.inicializar();
       final t = await AppLocalizations.delegate.load(_s.locale.locale);
@@ -91,7 +101,6 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _s.sync.sincronizar(_s.api);
       _vaciarCola();
     }
   }

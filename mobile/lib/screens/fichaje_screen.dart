@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
-import '../services/sync_service.dart';
+import '../datos/cola.dart';
+import '../datos/local/cola_escritura.dart' show ColaLlena;
+import '../funciones/fichaje/fichaje_acciones.dart';
+import '../funciones/pendientes/pendientes_sheet.dart';
 import '../theme/app_theme.dart';
 import '../theme/brand_colors.dart';
 import '../widgets/status_badge.dart';
@@ -17,35 +21,27 @@ import 'fichaje_historial_screen.dart';
 /// Entrada/Pausa/Fin de pausa/Salida, y los fichajes de hoy. Sin las
 /// vistas de administración (revisar horas de un tenant no es una tarea
 /// de móvil, se queda en web/escritorio -- ver app/rutas_fichaje.py).
-class FichajeScreen extends StatefulWidget {
+class FichajeScreen extends ConsumerStatefulWidget {
   final ApiClient api;
-  final SyncService sync;
   final Usuario usuario;
 
-  const FichajeScreen({super.key, required this.api, required this.sync, required this.usuario});
+  const FichajeScreen({super.key, required this.api, required this.usuario});
 
   @override
-  State<FichajeScreen> createState() => _FichajeScreenState();
+  ConsumerState<FichajeScreen> createState() => _FichajeScreenState();
 }
 
-class _FichajeScreenState extends State<FichajeScreen> {
+class _FichajeScreenState extends ConsumerState<FichajeScreen> {
   late Future<(String, bool)> _estado;
   Future<List<FichajeEvento>>? _hoy;
   Future<ResumenSemanaFichaje>? _semana;
   String? _error;
   bool _marcando = false;
-  int _pendientes = 0;
 
   @override
   void initState() {
     super.initState();
     _estado = _cargar();
-    _cargarPendientes();
-  }
-
-  Future<void> _cargarPendientes() async {
-    final n = await widget.sync.contarPendientes();
-    if (mounted) setState(() => _pendientes = n);
   }
 
   static const _estadoTrasMarcar = {
@@ -109,13 +105,9 @@ class _FichajeScreenState extends State<FichajeScreen> {
     });
     try {
       final (latitud, longitud) = await _ubicacionOpcional();
-      await widget.api.fichar(tipo, latitud: latitud, longitud: longitud);
-      await _recargar();
-    } on ApiException catch (e) {
-      if (e.esDeConexion) {
-        await widget.sync.encolarFichaje(tipo, DateTime.now());
-        await _cargarPendientes();
-        // UI optimista: refleja el nuevo estado sin esperar a sincronizar.
+      final r = await ref.read(accionesFichajeProvider).marcar(tipo, latitud: latitud, longitud: longitud);
+      if (r.encolada) {
+        // UI optimista: refleja el nuevo estado sin esperar a que se envíe.
         setState(() => _estado = Future.value((_estadoTrasMarcar[tipo]!, true)));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -123,8 +115,12 @@ class _FichajeScreenState extends State<FichajeScreen> {
           );
         }
       } else {
-        setState(() => _error = e.toString());
+        await _recargar();
       }
+    } on ColaLlena {
+      setState(() => _error = t.colaLlena);
+    } on ApiException catch (e) {
+      setState(() => _error = e.toString());
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -206,12 +202,13 @@ class _FichajeScreenState extends State<FichajeScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                const AvisoPendientes(),
                 Center(child: _pillEstado(estado, t)),
-                if (_pendientes > 0) ...[
+                if (ref.watch(numFichajesPendientesProvider) > 0) ...[
                   const SizedBox(height: 8),
                   Center(
                     child: Text(
-                      t.fichajePendientesSinc(_pendientes),
+                      t.fichajePendientesSinc(ref.watch(numFichajesPendientesProvider)),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),

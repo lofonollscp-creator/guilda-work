@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../datos/local/cola_escritura.dart' show ColaLlena;
+import '../funciones/notas/notas_acciones.dart';
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -31,7 +34,7 @@ import 'tiquets_screen.dart';
 /// resto vive ahora en la rejilla de accesos del cuerpo (más grande y con
 /// etiqueta, más fácil de acertar en el móvil) o dentro de Ajustes
 /// (idioma, cerrar sesión).
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   final Usuario usuario;
   final ApiClient api;
   final SessionService sesion;
@@ -58,10 +61,10 @@ class DashboardScreen extends StatefulWidget {
   });
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   late Future<void> _cargaInicial;
   Map<String, dynamic>? _dashboard;
   List<Categoria> _categorias = [];
@@ -105,28 +108,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _error = null;
     });
     try {
-      await widget.api.crearNota(
-        texto,
-        categoriaId: _categoriaNotaSeleccionada,
-      );
+      final encolada = await ref.read(accionesNotasProvider).crear(texto, categoriaId: _categoriaNotaSeleccionada);
       _notaController.clear();
-      await _recargar();
-    } on ApiException catch (e) {
-      if (e.esDeConexion) {
-        await widget.sync.encolarNota(
-          texto,
-          _categoriaNotaSeleccionada,
-          DateTime.now(),
-        );
-        _notaController.clear();
+      if (encolada) {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(t.dashboardSinConexionNota)));
         }
       } else {
-        setState(() => _error = e.toString());
+        await _recargar();
       }
+    } on ColaLlena {
+      setState(() => _error = t.colaLlena);
+    } on ApiException catch (e) {
+      setState(() => _error = e.toString());
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -294,7 +290,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Icons.punch_clock_outlined,
         t.dashboardFichajeTooltip,
         () => _abrirPantalla(
-          () => FichajeScreen(api: widget.api, sync: widget.sync, usuario: widget.usuario),
+          () => FichajeScreen(api: widget.api, usuario: widget.usuario),
         ),
       ),
       (

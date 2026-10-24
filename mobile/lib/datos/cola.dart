@@ -52,6 +52,9 @@ final pendientesProvider = FutureProvider<List<Pendiente>>((ref) async {
 /// Cuántas acciones sin enviar hay (0 mientras carga).
 final numPendientesProvider = Provider<int>((ref) => ref.watch(pendientesProvider).value?.length ?? 0);
 
+/// Cuántos fichajes hay sin enviar.
+final numFichajesPendientesProvider = Provider<int>((ref) => ref.watch(pendientesProvider).value?.where((p) => p.tipo == 'fichaje.marca').length ?? 0);
+
 /// Guarda una escritura en la cola con la persona y el despacho activos. Lanza [ColaLlena] si no cabe.
 Future<Pendiente> encolarEscritura(
   Ref ref, {

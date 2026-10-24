@@ -178,6 +178,10 @@ class ColaEscritura {
     return filas.isEmpty ? null : Pendiente.desdeFila(filas.single);
   }
 
+  /// ¿Ya hay una acción con esa clave? (la migración de la cola antigua no repite lo que ya pasó)
+  Future<bool> existeClave(String clave) async =>
+      (Sqflite.firstIntValue(await (await _abrir()).rawQuery('SELECT COUNT(*) FROM cola_escritura WHERE clave = ?', [clave])) ?? 0) > 0;
+
   /// Las de esa persona en ese despacho, en orden de creación.
   Future<List<Pendiente>> de(int usuarioId, String despachoId) async {
     final filas = await (await _abrir()).query('cola_escritura', where: 'usuario_id = ? AND despacho_id = ?', whereArgs: [usuarioId, despachoId], orderBy: 'id ASC');
