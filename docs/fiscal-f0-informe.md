@@ -10,6 +10,9 @@
 | `303_instrucciones_2026.html` — instrucciones 2026 (01 y 1T) | 109.982 B | `e4e5204da9d05911` | `…/modelo-303-iva-autoliquidacion_/instrucciones-2026.html` |
 | `303_ayuda_tecnica.html` — importar/validar/exportar en el formulario | 38.091 B | `1bb9e3e7e3e40c3d` | `…/presentacion-declaraciones-ayuda-tecnica/modelo-303.html` |
 | `disenos_300_399.html` — página de diseños 300–399 (para vigilar revisiones) | 15.813 B | `7df7813fc7fea0d0` | `…/ayuda/disenos-registro/modelos-300-399.html` |
+| `CALCULO_CASILLAS_IVA_PRE303-LSI.xlsx` — **especificación oficial de cómo se calculan las casillas a partir de los libros** (3 hojas: IVA devengado, deducible, información adicional; act. 01-01-2026) | 46.524 B | `700a42a33259eef8` | `…/Libros_registro/CALCULO_CASILLAS_IVA_PRE303-LSI.xlsx` |
+| `LSI.xlsx` / `LSIJ.xlsx` — diseños de registro normalizados de los libros (personas físicas / personas jurídicas no SII; 01-01-2026) | 58.337 / 58.515 B | `d35e92f2ebcdfba9` / `963e653c2f2ffca8` | `sede…/static_files/AEAT/` |
+| `Formato_Electronico_Comun_Libros_Registro_IVA_IRPF.pdf` — formato común (requerimientos, Renda WEB, Pre303, modelo 130) | 738.001 B | `071bdaabc3736e2e` | `…/Libros_registro/` |
 
 Guardados en `docs/fuentes-oficiales/aeat/` con `manifest.json`. No se pudo obtener el PDF técnico de entidades desarrolladoras (`IVA303-CoordColabora_7.02.pdf`, el servidor no respondió): no hace falta para el diseño, pero **la codificación de caracteres y los saltos de línea del fichero no figuran en el xlsx ni en la ayuda técnica** (§5).
 

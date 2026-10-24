@@ -10,3 +10,7 @@ Descargadas el 24-oct-2026 desde `sede.agenciatributaria.gob.es` para el módulo
 | `disenos_300_399.html` | Página de diseños de registro de los modelos 300–399 (para vigilar nuevas revisiones) |
 
 Son material de consulta con su ejercicio: **no son reglas ejecutables**. Si la AEAT publica otra revisión, se descarga, se regenera el JSON y `tests/test_fiscal_diseno_303.py` dice qué ha cambiado.
+
+| `CALCULO_CASILLAS_IVA_PRE303-LSI.xlsx` | **Tabla de decisión oficial** libro → casilla (calificación, tipo, clave de operación, fechas…): base de las reglas de F4 y **oráculo** de la vía de libros |
+| `LSI.xlsx`, `LSIJ.xlsx` | Diseños de registro normalizados de los libros de IVA (físicas / jurídicas no SII) |
+| `Formato_Electronico_Comun_Libros_Registro_IVA_IRPF.pdf` | Formato electrónico común de los libros |

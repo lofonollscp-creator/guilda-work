@@ -26,5 +26,33 @@
   "bytes": 15813,
   "sha256": "7df7813fc7fea0d0f44ba6eada7cb578bb007ee5813f3aca5ede9b828470375e",
   "descargado": "2026-10-24T22:13:52"
+ },
+ {
+  "fichero": "LSI.xlsx",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/AEAT/LSI.xlsx",
+  "bytes": 58337,
+  "sha256": "d35e92f2ebcdfba9d2d836da13f677758c27fd04f3903280accfd18ea6db497d",
+  "descargado": "2026-10-24T22:38:17"
+ },
+ {
+  "fichero": "LSIJ.xlsx",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/AEAT/LSIJ.xlsx",
+  "bytes": 58515,
+  "sha256": "963e653c2f2ffca8d894886965bb528b853801b7afa58643155681e396c8d1eb",
+  "descargado": "2026-10-24T22:38:17"
+ },
+ {
+  "fichero": "CALCULO_CASILLAS_IVA_PRE303-LSI.xlsx",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/IVA/Fact_registro/Libros_registro/CALCULO_CASILLAS_IVA_PRE303-LSI.xlsx",
+  "bytes": 46524,
+  "sha256": "700a42a33259eef838a4d78bee4228d987a2ecec8519bf0c1ab421a68b9ed4fb",
+  "descargado": "2026-10-24T22:38:17"
+ },
+ {
+  "fichero": "Formato_Electronico_Comun_Libros_Registro_IVA_IRPF.pdf",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/IVA/Fact_registro/Libros_registro/Formato_Electronico_Comun_Libros_Registro_IVA_IRPF.pdf",
+  "bytes": 738001,
+  "sha256": "071bdaabc3736e2e6def49be35c11fec744a74d5a9ab3f2ac50a2b1aa6fd7d22",
+  "descargado": "2026-10-24T22:38:17"
  }
 ]

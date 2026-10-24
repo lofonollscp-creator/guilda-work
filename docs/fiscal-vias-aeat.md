@@ -38,12 +38,29 @@ Pasos reales de la persona que sube el fichero (de la ayuda oficial): identifica
 
 **Regla de la casa (de la especificación y del plan):** un fichero bien formado **no** acredita aceptación AEAT. No se anuncia compatibilidad hasta que un fichero nuestro se importe y valide en el formulario (simulador o real) con la evidencia guardada.
 
+## 4b. Lo que Jorge ha comprobado en el simulador (24-oct, noche)
+
+- El **simulador del 303 2026** (Portal de Pruebas Externas) **permite importar y cargar** y trabaja con un fichero **`.SES`** (Jorge supone que es el que habría que generar). **Mi lectura:** `.ses` es, casi seguro, la **sesión guardada** del formulario (la ayuda oficial habla de «Guardar» la sesión y de recuperarla), un formato **propio de la AEAT** que **no está documentado**; el formato **documentado y estable** para programas externos es el **`.303`** (diseño publicado). Por eso **seguimos generando `.303`**; el `.ses` solo se tocaría si el simulador no aceptara el `.303`, y para eso hace falta ver uno real.
+- **Presentación preferente como colaborador social** (también cabe que presente el propio cliente) → respuesta a F-D11. Consecuencias: la gestoría presenta con su **certificado de colaborador**; la ayuda oficial indica que ciertas utilidades (p. ej. recuperar el NRC de un pago previo) **no están disponibles para colaboradores sociales**; y para usar el **servicio Pre303** en nombre de un tercero hace falta el **apoderamiento al trámite PRE303** o que el titular lo conceda con el enlace que el sistema muestra.
+- Datos de prueba del simulador visibles en su pantalla: **NIF `J21938519` (LO FONOLL SCP), ejercicio 2026, periodo 2T**; el formulario tiene 5 apartados («Identificació», «Règim general», «règim simplificat», «Informació addicional», «Resultat») y botones «Llibres de registre», «Vista prèvia», «Validar» e importar/cargar: **confirma el flujo de §2** y la vía B («Libros de registro») también en el simulador.
+
+## 4c. Ficheros de prueba ya generados (fuera del repositorio)
+
+`/home/guilda/muestras-303/` (NIF y nombre de la pantalla de Jorge; **no se versionan**):
+
+| Carpeta | Contenido | Para qué |
+|---|---|---|
+| `A_cero/J2193851920262T.303` | Declaración de **tipo N** (sin actividad / resultado cero): identificación, indicadores del periodo y todas las casillas a 0 | Comprobar que el simulador **abre** el fichero y qué errores de estructura da |
+| `B_ejemplo_21pc/J2193851920262T.303` | Una venta de **100,00 €** al 21 % (casillas 07, 09, 27, 45, 46 y 64–71), **tipo I** (ingreso 21,00 €) | Comprobar que la **cadena de casillas** que calculamos es la que la AEAT valida |
+
+Se generan con `app/fiscal_modelos/exportador_303.py` (diseño oficial + reglas de formato de la Nota 2). **La codificación y los saltos de línea son suposiciones** (ISO-8859-15, sin saltos de línea) hasta ver un `.303` exportado por el formulario. Lo que diga el simulador (errores y avisos) se pega aquí y se corrige el exportador **antes** de seguir.
+
 ## 5. Lo que sigue sin saberse (y cómo se resuelve)
 
 | Duda | Cómo se cierra |
 |---|---|
 | **Codificación de caracteres y saltos de línea** del `.303` (no figuran en el diseño ni en la ayuda; una fuente antigua habla de ISO-8859-15 sin CRLF) | Comparar con 2–3 ficheros **exportados por el formulario oficial** (datos de prueba) |
-| Si el **simulador OPEN 2026** admite «Importar» y qué certificado pide | Una persona lo abre con su certificado y lo cuenta |
+| ~~Si el simulador OPEN 2026 admite «Importar»~~ | **Sí** (Jorge, 24-oct): importa y carga, con `.SES`. Falta probar el `.303` (§4c) |
 | Si existe **presentación por lotes / servicio web** del 303 para colaboradores en 2026 (la sede lista una gestión «Presentación por lotes» junto al 303, pero no he podido leer su contrato y el documento técnico de coordinación, v7.02, es antiguo y no se descargó) | Preguntarlo a la AEAT / revisar el portal de desarrolladores antes de prometer nada; **no se presupuesta** |
 | Cómo reacciona el formulario si **identificación del fichero ≠ censo** | Prueba con un titular real en el piloto |
 | Qué **plantilla/diseño de libros** corresponde a cada perfil (hay una plantilla «para personas jurídicas» y otra para físicas) | Descargarlas (permiso) y leerlas en F5b |
@@ -54,5 +71,5 @@ Pasos reales de la persona que sube el fichero (de la ayuda oficial): identifica
 - **F5b (nuevo, ≈ 25–40 h):** **adaptador «Libros LSI (XLSX)»** como segunda salida y como **oráculo** de comparación; reutiliza el registro fiscal de F3.
 - **F2:** añadir a las facturas los campos que exige B (identificador y país de terceros extranjeros, método de rectificación).
 - **F6:** el flujo de presentación incluye la **comprobación del apoderamiento** (colaborador social o PRE303) y el cotejo con la **Ventana Censal**.
-- **Decisión F-D11:** ¿tu gestoría presenta como **colaborador social** o con **apoderamiento por cliente**? ¿Con qué certificado? Define quién ejecuta los pasos de §2 y qué titulares pueden usar la vía B.
+- **Decisión F-D11 (respondida):** presentar **preferentemente como colaborador social**; opcionalmente el propio cliente.
 - **Esfuerzo total del plan:** 340–530 h (+25–40 h de F5b).
