@@ -62,7 +62,7 @@ def _declaracion_a_cero(periodo="2T"):
 def test_la_envoltura_y_las_paginas_miden_lo_que_dice_el_diseno():
     f = _declaracion_a_cero().decode("iso-8859-15")
     assert f.startswith("<T30302026" + "2T" + "0000><AUX>") and f.endswith("</T30302026" + "2T0000>")
-    assert len(f) == 328 + 1581 + 1017 + len("</T30302026" + "2T0000>")
+    assert len(f) == 328 + 1581 + 1017 + 823 + len("</T30302026" + "2T0000>")
     assert "<T30301000>" in f and "</T30301000>" in f and "<T30303000>" in f and "</T30303000>" in f
     assert "<AUX>" in f and "</AUX>" in f
 
@@ -70,7 +70,7 @@ def test_la_envoltura_y_las_paginas_miden_lo_que_dice_el_diseno():
 def test_se_puede_leer_lo_construido_con_el_mismo_diseno():
     datos = _declaracion_a_cero()
     r = e.descomponer(D, datos)
-    assert [p["hoja"] for p in r["paginas"]] == ["DP30301", "DP30303"]
+    assert [p["hoja"] for p in r["paginas"]] == ["DP30301", "DP30303", "DP303DID"]
     assert r["cabecera"][4] == "2026" and r["cabecera"][5] == "2T"
     p1 = r["paginas"][0]["campos"]
     assert p1[6] == "N" and p1[7] == "A12345674" and p1[10] == "2T" and p1[13] == "3"
@@ -78,7 +78,7 @@ def test_se_puede_leer_lo_construido_con_el_mismo_diseno():
 
 
 def test_indicadores_segun_el_periodo():
-    assert e.indicadores_pagina1("2T")[23] == "0" and e.indicadores_pagina1("2T")[25] == "0"
+    assert e.indicadores_pagina1("2T")[23] == "0" and e.indicadores_pagina1("2T")[25] == "0" and e.indicadores_pagina1("2T")[17] == "2"
     assert e.indicadores_pagina1("4T")[23] == "2" and e.indicadores_pagina1("4T")[17] == "2"
     assert e.indicadores_pagina1("07")[25] == "2"
 
@@ -102,3 +102,82 @@ def test_valores_por_casilla():
     r = e.descomponer(D, f.encode("iso-8859-15"))
     c150, c152 = _campo(P1, "150"), _campo(P1, "152")
     assert r["paginas"][0]["campos"][c150["n"]] == "00000000000010000" and r["paginas"][0]["campos"][c152["n"]] == "00000000000002100"
+
+
+def test_la_pagina_did_va_siempre_aunque_este_vacia_y_el_orden_es_el_del_diseno():
+    f = e.construir(D, ejercicio=2026, periodo="1T", paginas={"DP30303": {}, "DP30301": {}}).decode("iso-8859-15")
+    assert f.index("<T30301000>") < f.index("<T30303000>") < f.index("<T303DID00>")
+
+
+def test_las_constantes_con_nota_a_continuacion_se_respetan():
+    """«Constante "00400". Nota 7» (tipo del 4 %): el simulador de la AEAT rechaza el campo si va a ceros (E010331)."""
+    r = e.descomponer(D, e.construir(D, ejercicio=2026, periodo="2T", paginas={"DP30301": {}}))
+    p1 = next(p for p in r["paginas"] if p["hoja"] == "DP30301")["campos"]
+    c = {x["descripcion"].rstrip().rsplit(" ", 1)[-1]: x["n"] for x in P1["campos"] if x["descripcion"].rstrip().endswith(("[02]", "[05]", "[08]", "[169]"))}
+    assert p1[c["[02]"]] == "00400" and p1[c["[05]"]] == "01000" and p1[c["[08]"]] == "02100" and p1[c["[169]"]] == "00050"
+
+
+# --- Contra el simulador oficial de la AEAT ------------------------------------------------------------------------------------------------
+
+from pathlib import Path  # noqa: E402
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures" / "aeat"
+
+
+def _ejemplo_21():
+    """La venta de 100,00 € al 21 % con el NIF de PRUEBA A12345674: lo que se subió al simulador y lo que éste exportó de vuelta (24-oct-2026)."""
+    b1 = {7: "A12345674", 8: "EMPRESA DE PRUEBA SL", 9: "2026", 10: "2T", **e.indicadores_pagina1("2T")}
+    v1 = {6: "I", **b1, "07": Decimal("100.00"), "09": Decimal("21.00"), "27": Decimal("21.00"), "45": Decimal("0"), "46": Decimal("21.00")}
+    v3 = {"64": Decimal("21.00"), "65": Decimal("100.00"), "66": Decimal("21.00"), "69": Decimal("21.00"), "71": Decimal("21.00")}
+    return e.construir(D, ejercicio=2026, periodo="2T", paginas={"DP30301": v1, "DP30303": v3})
+
+
+def test_nuestro_fichero_coincide_byte_a_byte_con_el_que_exporta_el_simulador_salvo_campos_de_la_aeat():
+    """El simulador importó nuestro fichero SIN errores, calculó el resultado 21,00 y lo exportó de vuelta: mismo tamaño y solo difieren campos que son de la AEAT (reservados) o de la entidad desarrolladora."""
+    nuestro = _ejemplo_21()
+    assert nuestro == (FIXTURES / "nuestro_303_2026_2T_ejemplo21.303").read_bytes()
+    aeat = (FIXTURES / "exportado_por_aeat_simulador_303_2026_2T_ejemplo21.303").read_bytes()
+    assert len(nuestro) == len(aeat)
+    distintos = {(h, n) for h, n, _d in e.campos_distintos(D, nuestro, aeat)}
+    assert distintos == {("DP30300", 8), ("DP30300", 9), ("DP30300", 11), ("DP30303", 37)}     # reservado, versión del programa, NIF de la entidad desarrolladora, reservado de la página 3
+
+
+def test_el_fichero_de_la_aeat_es_ascii_sin_saltos_de_linea():
+    """Evidencia de formato (antes eran suposiciones): una sola «línea», sin CR ni LF, y solo caracteres ASCII."""
+    aeat = (FIXTURES / "exportado_por_aeat_simulador_303_2026_2T_ejemplo21.303").read_bytes()
+    assert b"\r" not in aeat and b"\n" not in aeat and all(b < 128 for b in aeat)
+
+
+def test_cuando_no_hay_concurso_la_fecha_del_auto_va_a_ceros_como_hace_la_aeat():
+    r = e.descomponer(D, _ejemplo_21())
+    assert r["paginas"][0]["campos"][20] == "00000000"
+
+
+# --- Prueba en línea (opcional): GUILDA_FISCAL_SIMULADOR=1 y Playwright con Chromium ----------------------------------------------------------
+
+import importlib.util  # noqa: E402
+import os  # noqa: E402
+
+_ONLINE = os.environ.get("GUILDA_FISCAL_SIMULADOR") == "1" and importlib.util.find_spec("playwright") is not None
+
+
+@pytest.mark.skipif(not _ONLINE, reason="prueba en línea contra el simulador público de la AEAT: GUILDA_FISCAL_SIMULADOR=1 y Playwright")
+def test_el_simulador_acepta_el_ejemplo_y_rechaza_uno_incoherente(tmp_path):
+    import importlib.util as iu
+
+    spec = iu.spec_from_file_location("simulador_aeat", Path(__file__).resolve().parent.parent / "scripts" / "fiscal" / "simulador_aeat.py")
+    sim = iu.module_from_spec(spec)
+    spec.loader.exec_module(sim)
+    bueno = tmp_path / "A1234567420262T.303"
+    bueno.write_bytes(_ejemplo_21())
+    r = sim.probar(bueno)
+    codigos = {m["codigo"] for m in r["importacion"]["mensajes"]}
+    assert not r["importacion"]["rechazado"] and "00001" in codigos and not any(c.startswith("E") for c in codigos) and r["resultado"] == "21,00"
+    malo = bytearray(_ejemplo_21())
+    campo = next(c for c in P1["campos"] if c["descripcion"].rstrip().endswith("[27]"))
+    ini = 328 + sum(c["lon"] for c in P1["campos"] if c["n"] < campo["n"])
+    malo[ini:ini + 17] = b"00000000000002000"                    # la casilla 27 mal a propósito
+    f2 = tmp_path / "malo.303"
+    f2.write_bytes(bytes(malo))
+    codigos = {m["codigo"] for m in sim.probar(f2)["importacion"]["mensajes"]}
+    assert "E010671" in codigos

@@ -30,14 +30,14 @@ def cargar_diseno(ruta: str | Path = DISENO_303_2026) -> dict:
     return json.loads(Path(ruta).read_text(encoding="utf-8"))
 
 
-_CONSTANTE = re.compile(r'^\s*(?:Constante\s*)?"([^"]*)"\s*$')
+_CONSTANTE = re.compile(r'^\s*(?:Constante\s*"([^"]*)"|"([^"]*)"\s*\.?\s*(?:Nota\s*\d+\.?\s*)*$)')   # «Constante "00400". Nota 7» · «"0000>"» · «"00050". Nota 7.» (pero NO «"1" SI, "2" NO»)
 _DECIMALES = re.compile(r"(\d+)\s+enteros?\s+y\s+(\d+)\s+decimales?", re.I)
 
 
 def _constante(campo: dict) -> str | None:
     """El texto fijo de un campo, si el diseño lo da entre comillas (con o sin la palabra «Constante»)."""
     m = _CONSTANTE.match(campo["contenido"])
-    return m.group(1) if m else None
+    return (m.group(1) if m.group(1) is not None else m.group(2)) if m else None
 
 
 def _en_blanco(campo: dict) -> bool:
@@ -120,8 +120,8 @@ def _pagina(pagina: dict, valores: dict) -> str:
 
 def indicadores_pagina1(periodo: str, *, prorrata_especial: str | None = None, revocacion_prorrata: str | None = None) -> dict:
     """Los valores que el diseño fija según el PERIODO en la identificación de la página 1 (Notas 3, 4, 6 y 8), para un titular que NO tributa a una Administración foral, en régimen general
-    (solo RG), sin autoliquidación conjunta, sin criterio de caja, fuera del SII y no exonerado del 390. Lo demás (perfil real del titular) lo aporta el motor. SUPUESTOS marcados con ↯ se
-    comprueban en el simulador: la Nota 6 se lee como «en blanco salvo en el último periodo»."""
+    (solo RG), sin autoliquidación conjunta, sin criterio de caja, fuera del SII y no exonerado del 390. Lo demás (perfil real del titular) lo aporta el motor. Los valores se han
+    contrastado con el simulador de la AEAT (docs/fiscal-vias-aeat.md §4d)."""
     ultimo = periodo in ULTIMOS
     return {
         11: "2",                        # tributación exclusivamente foral: NO
@@ -130,14 +130,19 @@ def indicadores_pagina1(periodo: str, *, prorrata_especial: str | None = None, r
         14: "2",                        # autoliquidación conjunta: NO
         15: "2",                        # criterio de caja: NO
         16: "2",                        # destinatario de operaciones en criterio de caja: NO
-        17: (prorrata_especial or ("2" if ultimo else " ")),            # ↯ Nota 6
-        18: (revocacion_prorrata or ("2" if ultimo else " ")),          # ↯ Nota 6
+        17: prorrata_especial or "2",   # Nota 6: «2» (en periodos que no son el último el diseño lo llama «blanco», pero el simulador rechaza un blanco real: E010170)
+        18: revocacion_prorrata or "2", # ídem (E010180)
         19: "2",                        # concurso: NO
+        20: "00000000",                 # fecha del auto de concurso: la AEAT escribe ceros, no blancos, cuando no hay concurso (comparado con su propio «Exportar»)
         22: "2",                        # SII: NO
         23: "2" if ultimo else "0",     # exonerado del 390 (Nota 4)
         24: "2" if ultimo else "0",     # volumen de operaciones distinto de cero (Nota 3) ↯ en el último periodo hay que declararlo
         25: "0" if periodo in ("1T", "2T", "3T", "4T", "01") else "2",   # pago a cuenta de carburantes (Nota 8)
     }
+
+
+def _orden(diseno: dict, hoja: str) -> int:
+    return [p["hoja"] for p in diseno["paginas"]].index(hoja)
 
 
 def construir(diseno: dict, *, ejercicio: int, periodo: str, paginas: dict[str, dict], version_programa: str = "", nif_empresa_desarrollo: str = "",
@@ -149,7 +154,9 @@ def construir(diseno: dict, *, ejercicio: int, periodo: str, paginas: dict[str, 
         raise ErrorDeFormato("este diseño es para ejercicios 2026 y siguientes")
     envoltura = next(p for p in diseno["paginas"] if p["hoja"] == diseno["envoltura"])
     por_hoja = {p["hoja"]: p for p in diseno["paginas"]}
-    contenido = salto_de_linea.join(_pagina(por_hoja[h], v) for h, v in paginas.items())
+    paginas = {**paginas}
+    paginas.setdefault("DP303DID", {})                                 # la página de domiciliación/devolución VA SIEMPRE (si falta: E060010 en el simulador), aunque vacía
+    contenido = salto_de_linea.join(_pagina(por_hoja[h], v) for h, v in sorted(paginas.items(), key=lambda x: _orden(diseno, x[0])))
     campos = {c["n"]: c for c in envoltura["campos"]}
     cabecera = "".join([
         formatear(campos[1], None), formatear(campos[2], None), formatear(campos[3], None),
@@ -192,3 +199,34 @@ def descomponer(diseno: dict, datos: bytes, *, codificacion: str = "iso-8859-15"
         paginas.append({"hoja": hoja["hoja"], "campos": campos})
         indice += hoja["total_posiciones"]
     return {"cabecera": cab, "paginas": paginas, "cola": resto[indice:]}
+
+
+def segmentos(diseno: dict, datos: bytes, *, codificacion: str = "iso-8859-15") -> list[tuple[int, int, str, int | str, str]]:
+    """`[(inicio, fin, hoja, n_de_campo, descripción)]` con posiciones ABSOLUTAS (base 0, fin exclusivo) de cada campo de un fichero construido con este diseño. Sirve para decir **qué campo** es el que
+    difiere entre dos ficheros (p. ej. el nuestro y el que exporta el simulador de la AEAT)."""
+    envoltura = next(p for p in diseno["paginas"] if p["hoja"] == diseno["envoltura"])
+    seg, pos = [], 0
+    for c in envoltura["campos"]:
+        if not isinstance(c["lon"], int):
+            break
+        seg.append((pos, pos + c["lon"], envoltura["hoja"], c["n"], c["descripcion"]))
+        pos += c["lon"]
+    texto = datos.decode(codificacion)
+    while True:
+        m = re.match(r"<T303(\w{5})>", texto[pos:])
+        if not m:
+            break
+        hoja = next(p for p in diseno["paginas"][1:] if any(_constante(c) == m.group(1) for c in p["campos"][:4]))
+        for c in hoja["campos"]:
+            seg.append((pos, pos + c["lon"], hoja["hoja"], c["n"], c["descripcion"]))
+            pos += c["lon"]
+    seg.append((pos, len(texto), "cierre", 0, "Cierre de la envoltura"))
+    return seg
+
+
+def campos_distintos(diseno: dict, a: bytes, b: bytes) -> list[tuple[str, int | str, str]]:
+    """Los campos (hoja, n, descripción) en los que dos ficheros de la misma estructura difieren."""
+    if len(a) != len(b):
+        raise ErrorDeFormato(f"los ficheros miden {len(a)} y {len(b)}: no tienen la misma estructura")
+    distintos = {i for i, (x, y) in enumerate(zip(a, b)) if x != y}
+    return [(h, n, d) for ini, fin, h, n, d in segmentos(diseno, a) if any(i in distintos for i in range(ini, fin))]

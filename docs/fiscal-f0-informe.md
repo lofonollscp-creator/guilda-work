@@ -81,7 +81,7 @@ Los 17 indicadores de «Identificación (1)» y los de «Devengo (2)» de la pá
 
 ## 5. Lo que NO sé todavía y no voy a inventar
 
-1. **Codificación de caracteres y saltos de línea** del fichero (una fuente antigua habla de ISO-8859-15 y de no llevar CRLF, pero es de 2019 y no la he podido contrastar). **Se verifica con un fichero real exportado por el formulario oficial** (§6.3).
+1. ~~Codificación y saltos de línea~~ **Resuelto** con la exportación del simulador oficial: ASCII y sin CR/LF (`fiscal-vias-aeat.md` §4d).
 2. **Redondeo de las casillas calculadas** y reglas de signo de las casillas `N`: salen de las **instrucciones** (HTML descargado) y de tus casos de referencia; aún no los he leído a fondo.
 3. **Compensación de cuotas de periodos anteriores** y la casilla de resultado final (página 3): requieren las instrucciones del periodo y un caso tuyo.
 4. **Periodos 2T–4T:** la especificación indica instrucciones separadas (`02–12/2T–4T`); solo he descargado las de 01/1T. Cuando llegue la hora de 2T–4T se descargan y se versionan igual.

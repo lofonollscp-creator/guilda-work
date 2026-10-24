@@ -55,11 +55,28 @@ Pasos reales de la persona que sube el fichero (de la ayuda oficial): identifica
 
 Se generan con `app/fiscal_modelos/exportador_303.py` (diseño oficial + reglas de formato de la Nota 2). **La codificación y los saltos de línea son suposiciones** (ISO-8859-15, sin saltos de línea) hasta ver un `.303` exportado por el formulario. Lo que diga el simulador (errores y avisos) se pega aquí y se corrige el exportador **antes** de seguir.
 
+## 4d. Probado contra el simulador público desde Linux (24-oct-2026, noche)
+
+El simulador es público y **no pide certificado**: `https://www2.agenciatributaria.gob.es/wlpl/A303-FWME/E2026/OPEN/index.zul` («Datos identificativos OPEN», versión 1.06; botones **Cargar** = sesión guardada, **Importar** = fichero `.303`, **Aceptar** = nueva). Se maneja con un navegador automatizado: `scripts/fiscal/simulador_aeat.py` importa un `.303`, recoge los errores y avisos de la importación y de «Validar», lee el resultado que calcula la AEAT y, con `--exportar`, descarga lo que el propio simulador exporta de vuelta.
+
+| Intento | Respuesta del simulador | Qué se corrigió en el exportador |
+|---|---|---|
+| 1.º | **Fichero rechazado** (`FRECH`): `E010170`/`E010180` «Caracteres no válidos» en *Opción/Revocación de la prorrata especial* y `E060010` «Contenido incorrecto en 'Pagina DID'» | La Nota 6 del diseño dice «blanco» pero el valor que acepta es **`2`**; la **página DID va siempre**, aunque vacía |
+| 2.º | Importa; `E0103x1…E010631` «La casilla *Tipo %* sólo admite valor 4 / 10 / 21 / 1,75 / 0,5 / 1,4 / 5,2» y `E030171` «% Atribuible a la Administración del Estado [65] obligatoria» | Constantes con «Nota» a continuación (`Constante "00400". Nota 7`, `"00050". Nota 7.`) no se leían; la casilla **65 = 100,00** es obligatoria |
+| 3.º | **Fichero A (a cero)**: importa; validación `303M030` «NO tributa exclusivamente en régimen simplificado y no hay contenido en la liquidación del régimen general» (lógico: no hay actividad) | — |
+| 3.º | **Fichero B (100,00 € al 21 %)**: importa **sin errores** («No existen errores.» + aviso `31190` «Revise… Información adicional»); **la AEAT calcula resultado 21,00 €** | — |
+| Control | **Fichero C** (casilla 27 mal a propósito): `E010671` «Total cuota devengada [27] debe ser igual que la suma de…» y `E010861` «Resultado [46] debe ser igual que la 27 menos la 45» | El validador **sí detecta incoherencias**: el «sin errores» del fichero B es una validación real |
+
+**Exportado de vuelta por la AEAT.** Al elegir «Seleccionar Ingreso/Devolución → A ingresar → **Exportar**» el simulador entrega `A12345674_2026_2T.303` (nombre **NIF_ejercicio_periodo.303**, con guiones bajos). Comparado con nuestro fichero: **mismo tamaño (3.767 bytes) y solo 4 campos distintos**, todos de la AEAT o de la entidad desarrolladora: *Reservado para la Administración* (campo 8 de la envoltura), *Versión del programa* (la AEAT escribe `1.06`), *NIF de la entidad desarrolladora* (la AEAT escribe el suyo) y el *Reservado para la AEAT* de la página 3. Además confirma **tres dudas que eran suposiciones**: **ASCII, sin CR ni LF** (una sola línea) y la **fecha del auto de concurso va a ceros** cuando no hay concurso (corregido). Ambos ficheros (con un NIF de prueba) están en `tests/fixtures/aeat/` y `tests/test_fiscal_exportador_303.py` exige la coincidencia.
+
+**Lo que esto cambia:** el simulador es un **oráculo automático** de formato, de coherencia entre casillas y del resultado, accesible desde Linux sin certificado ni intervención humana. La prueba en línea (`GUILDA_FISCAL_SIMULADOR=1`) es opcional y no corre en la suite normal. **Sigue sin acreditar** la aceptación en producción: el simulador y el formulario real comparten reglas, pero la presentación, el censo (Ventana Censal) y la firma solo existen en el servicio real.
+
 ## 5. Lo que sigue sin saberse (y cómo se resuelve)
 
 | Duda | Cómo se cierra |
 |---|---|
-| **Codificación de caracteres y saltos de línea** del `.303` (no figuran en el diseño ni en la ayuda; una fuente antigua habla de ISO-8859-15 sin CRLF) | Comparar con 2–3 ficheros **exportados por el formulario oficial** (datos de prueba) |
+| ~~Codificación y saltos de línea del `.303`~~ | **Resuelto** (§4d): ASCII, una línea sin CR/LF. Solo emitimos ASCII (`limpiar_texto`); los nombres con tildes se transcriben sin ellas |
+| Qué escribir en *Versión del programa* y *NIF de la entidad desarrolladora* (hoy en blanco; la AEAT pone los suyos al exportar) | Decisión: ¿se consigna a Guilda como entidad desarrolladora? (campos 9 y 11 de la envoltura) |
 | ~~Si el simulador OPEN 2026 admite «Importar»~~ | **Sí** (Jorge, 24-oct): importa y carga, con `.SES`. Falta probar el `.303` (§4c) |
 | Si existe **presentación por lotes / servicio web** del 303 para colaboradores en 2026 (la sede lista una gestión «Presentación por lotes» junto al 303, pero no he podido leer su contrato y el documento técnico de coordinación, v7.02, es antiguo y no se descargó) | Preguntarlo a la AEAT / revisar el portal de desarrolladores antes de prometer nada; **no se presupuesta** |
 | Cómo reacciona el formulario si **identificación del fichero ≠ censo** | Prueba con un titular real en el piloto |
