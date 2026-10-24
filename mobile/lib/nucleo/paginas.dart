@@ -11,6 +11,7 @@ import '../screens/ia_chat_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/tiquets_screen.dart';
 import '../funciones/hoy/hoy_screen.dart';
+import '../funciones/pendientes/cerrar_sesion.dart';
 import '../funciones/tareas/tareas_screen.dart';
 import '../services/api_client.dart';
 import '../services/element_launcher.dart';
@@ -76,6 +77,7 @@ class PaginasApp {
                 tema: s.tema,
                 locale: s.locale,
                 alCerrarSesion: () => ref.read(estadoSesionProvider.notifier).cerrar(),
+                confirmarCerrarSesion: () => confirmarCerrarSesion(ref),
               ),
             ),
             AccesoMas(Icons.apps, ClaveEtiqueta.herramientas, (_) => HerramientasScreen(api: s.api)),
@@ -95,6 +97,7 @@ class PaginasApp {
                 tema: s.tema,
                 locale: s.locale,
                 alCerrarSesion: () => ref.read(estadoSesionProvider.notifier).cerrar(),
+                confirmarCerrarSesion: () => confirmarCerrarSesion(ref),
               ),
             ),
           ];

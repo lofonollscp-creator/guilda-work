@@ -362,5 +362,19 @@
   "tareaConflictoVer": "Voir les modifications",
   "tareaConflictoAplicar": "Appliquer quand même",
   "tareaConflictoDescartar": "Abandonner ma modification",
-  "tareaEliminar": "Supprimer la pièce jointe"
+  "tareaEliminar": "Supprimer la pièce jointe",
+  "colaGuardada": "Hors ligne : sera envoyé au retour du réseau.",
+  "colaLlena": "Trop de modifications en attente d'envoi. Attendez d'être en ligne.",
+  "colaPendientes": "{n, plural, =1{1 modification en attente d'envoi} other{{n} modifications en attente d'envoi}}",
+  "colaTitulo": "Modifications non envoyées",
+  "colaEstadoPendiente": "En attente d'envoi",
+  "colaEstadoEnviando": "Envoi…",
+  "colaEstadoConflicto": "Quelqu'un l'a modifié",
+  "colaEstadoRechazada": "Refusé",
+  "colaReintentar": "Réessayer maintenant",
+  "colaAplicar": "Appliquer quand même",
+  "colaDescartar": "Abandonner",
+  "colaCerrarSesionAviso": "{n, plural, =1{Vous avez 1 modification non envoyée} other{Vous avez {n} modifications non envoyées}}. Si vous vous déconnectez, elles seront perdues.",
+  "colaCerrarSesionAccion": "Se déconnecter et abandonner",
+  "colaTareaPendiente": "En attente d'envoi"
 }

@@ -83,6 +83,10 @@ class ClienteApi implements Transporte {
   /// Rutas sin token: un 401 ahí es «credenciales incorrectas», no sesión caducada.
   static const _sinSesion = ['/auth/login', '/auth/registro'];
 
+  /// Un transporte que manda siempre esa `Idempotency-Key`: para una acción que, si falla por falta de red, se guarda en la
+  /// cola sin conexión con la **misma** clave (así, si la primera petición sí llegó al servidor, el reenvío no duplica nada).
+  Transporte conClave(String clave) => _ConClave(this, clave);
+
   /// Olvida lo cacheado (cerrar sesión, cambiar de despacho).
   void vaciarCache() => _cache.clear();
 
@@ -224,4 +228,14 @@ class ClienteApi implements Transporte {
     }
     return ApiException('Error de red: ${e.message}', esDeConexion: true);
   }
+}
+
+class _ConClave implements Transporte {
+  final ClienteApi _c;
+  final String _clave;
+  _ConClave(this._c, this._clave);
+
+  @override
+  Future<dynamic> enviar(String metodo, String ruta, {Map<String, dynamic>? consulta, Object? cuerpo, bool multipart = false, bool binario = false}) =>
+      _c.enviarConClave(metodo, ruta, consulta: consulta, cuerpo: cuerpo, multipart: multipart, binario: binario, claveIdempotencia: _clave);
 }

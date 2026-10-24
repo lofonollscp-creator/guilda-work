@@ -497,5 +497,33 @@
   "tareaConflictoVer": "Ver los cambios",
   "tareaConflictoAplicar": "Aplicar igualmente",
   "tareaConflictoDescartar": "Descartar mi cambio",
-  "tareaEliminar": "Eliminar adjunto"
+  "tareaEliminar": "Eliminar adjunto",
+  "colaGuardada": "Sin conexión: se enviará cuando vuelva la red.",
+  "colaLlena": "Hay demasiados cambios sin enviar. Espera a tener conexión.",
+  "colaPendientes": "{n, plural, =1{1 cambio pendiente de enviar} other{{n} cambios pendientes de enviar}}",
+  "colaTitulo": "Cambios sin enviar",
+  "colaEstadoPendiente": "Pendiente de enviar",
+  "colaEstadoEnviando": "Enviando…",
+  "colaEstadoConflicto": "Alguien lo ha cambiado",
+  "colaEstadoRechazada": "Rechazado",
+  "colaReintentar": "Reintentar ahora",
+  "colaAplicar": "Aplicar igualmente",
+  "colaDescartar": "Descartar",
+  "colaCerrarSesionAviso": "{n, plural, =1{Tienes 1 cambio sin enviar} other{Tienes {n} cambios sin enviar}}. Si cierras sesión se perderán.",
+  "colaCerrarSesionAccion": "Cerrar sesión y descartar",
+  "colaTareaPendiente": "Pendiente de enviar",
+  "@colaPendientes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@colaCerrarSesionAviso": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

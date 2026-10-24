@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../api/errores.dart';
 import '../../api/fechas.dart';
 import '../../api/generado/modelos.g.dart';
+import '../../datos/local/cola_escritura.dart' show ColaLlena;
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
+import '../pendientes/pendientes_sheet.dart';
 import 'tarea_detalle_screen.dart';
 import 'tareas_lista_controlador.dart';
 import 'textos.dart';
@@ -48,9 +50,12 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
     if (texto.isEmpty) return;
     final mensajero = ScaffoldMessenger.of(context);
     try {
-      await ref.read(tareasListaProvider.notifier).crear(texto, fechaVencimiento: _fecha?.toJson());
+      final encolada = await ref.read(tareasListaProvider.notifier).crear(texto, fechaVencimiento: _fecha?.toJson());
       _nueva.clear();
       setState(() => _fecha = null);
+      if (encolada) mensajero.showSnackBar(SnackBar(content: Text(t.colaGuardada)));
+    } on ColaLlena {
+      mensajero.showSnackBar(SnackBar(content: Text(t.colaLlena)));
     } on ApiException catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(e.esDeConexion ? t.tareasNoSePudoCrear : e.mensaje)));
     }
@@ -70,9 +75,12 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
   }
 
   Future<void> _completar(TareaOutlook tarea) async {
+    final t = AppLocalizations.of(context);
     final mensajero = ScaffoldMessenger.of(context);
     try {
-      await ref.read(tareasListaProvider.notifier).completar(tarea);
+      if (await ref.read(tareasListaProvider.notifier).completar(tarea)) mensajero.showSnackBar(SnackBar(content: Text(t.colaGuardada)));
+    } on ColaLlena {
+      mensajero.showSnackBar(SnackBar(content: Text(t.colaLlena)));
     } on ApiException catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(e.mensaje)));
     }
@@ -110,6 +118,7 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
         ],
       ),
       body: Column(children: [
+        const AvisoPendientes(),
         _Filtros(estado: estado),
         Expanded(child: _Cuerpo(estado: estado, scroll: _scroll, alCompletar: _completar)),
         _AltaRapida(controlador: _nueva, fecha: _fecha, alElegirFecha: _elegirFecha, alQuitarFecha: () => setState(() => _fecha = null), alEnviar: _crear),
@@ -194,7 +203,7 @@ class _Cuerpo extends ConsumerWidget {
         itemCount: estado.tareas.length + (estado.cargando ? 1 : 0),
         itemBuilder: (context, i) {
           if (i >= estado.tareas.length) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
-          return _FilaTarea(tarea: estado.tareas[i], alCompletar: alCompletar);
+          return _FilaTarea(tarea: estado.tareas[i], alCompletar: alCompletar, pendiente: estado.pendientes.contains(estado.tareas[i].id));
         },
       ),
     );
@@ -204,7 +213,8 @@ class _Cuerpo extends ConsumerWidget {
 class _FilaTarea extends StatelessWidget {
   final TareaOutlook tarea;
   final Future<void> Function(TareaOutlook) alCompletar;
-  const _FilaTarea({required this.tarea, required this.alCompletar});
+  final bool pendiente; // hecha sin conexión, aún sin enviar
+  const _FilaTarea({required this.tarea, required this.alCompletar, required this.pendiente});
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +233,7 @@ class _FilaTarea extends StatelessWidget {
     return ListTile(
       leading: Checkbox(
         value: hecha,
-        onChanged: hecha ? null : (_) => alCompletar(tarea),
+        onChanged: (hecha || tarea.id < 0) ? null : (_) => alCompletar(tarea),
         semanticLabel: t.hoyCompletar,
       ),
       title: Text(
@@ -238,8 +248,10 @@ class _FilaTarea extends StatelessWidget {
               if (vencida) TextSpan(text: '${t.tareasVencida} · ', style: TextStyle(color: tema.colorScheme.error, fontWeight: FontWeight.w600)),
               TextSpan(text: detalle),
             ])),
-      trailing: (tarea.motivoBloqueo ?? '').isNotEmpty ? const Icon(Icons.hourglass_empty, size: 18) : null,
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id))),
+      trailing: pendiente
+          ? Tooltip(message: t.colaTareaPendiente, child: const Icon(Icons.cloud_upload_outlined, size: 18))
+          : ((tarea.motivoBloqueo ?? '').isNotEmpty ? const Icon(Icons.hourglass_empty, size: 18) : null),
+      onTap: tarea.id < 0 ? null : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id))),
     );
   }
 }

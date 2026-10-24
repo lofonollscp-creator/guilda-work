@@ -362,5 +362,19 @@
   "tareaConflictoVer": "Veure els canvis",
   "tareaConflictoAplicar": "Aplicar igualment",
   "tareaConflictoDescartar": "Descartar el meu canvi",
-  "tareaEliminar": "Eliminar adjunt"
+  "tareaEliminar": "Eliminar adjunt",
+  "colaGuardada": "Sense connexió: s'enviarà quan torni la xarxa.",
+  "colaLlena": "Hi ha massa canvis sense enviar. Espera a tenir connexió.",
+  "colaPendientes": "{n, plural, =1{1 canvi pendent d'enviar} other{{n} canvis pendents d'enviar}}",
+  "colaTitulo": "Canvis sense enviar",
+  "colaEstadoPendiente": "Pendent d'enviar",
+  "colaEstadoEnviando": "Enviant…",
+  "colaEstadoConflicto": "Algú l'ha canviat",
+  "colaEstadoRechazada": "Rebutjat",
+  "colaReintentar": "Reintentar ara",
+  "colaAplicar": "Aplicar igualment",
+  "colaDescartar": "Descartar",
+  "colaCerrarSesionAviso": "{n, plural, =1{Tens 1 canvi sense enviar} other{Tens {n} canvis sense enviar}}. Si tanques la sessió es perdran.",
+  "colaCerrarSesionAccion": "Tancar sessió i descartar",
+  "colaTareaPendiente": "Pendent d'enviar"
 }

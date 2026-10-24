@@ -85,3 +85,27 @@ def test_adjuntos_se_suben_en_el_campo_adjunto_y_se_listan_y_descargan(cliente):
     assert lista[0]["nombre_archivo"] == "notas.txt" and lista[0]["tamano_bytes"] == 4 and lista[0]["id"]
     assert cliente.get(f"/api/v1/tareas-outlook/adjuntos/{lista[0]['id']}", headers=h).data == b"hola"
     assert cliente.delete(f"/api/v1/tareas-outlook/adjuntos/{lista[0]['id']}", headers=h).status_code == 200
+
+
+def test_reenviar_una_escritura_con_la_misma_clave_no_la_duplica(cliente):
+    """La cola sin conexión de la app guarda la `Idempotency-Key` de cada acción: si la primera petición sí llegó al servidor aunque la app no vio la respuesta,
+    el reenvío tiene que devolver lo mismo y no crear otra."""
+    h, _ = _arranque(cliente, "reenvio@ejemplo.com")
+    clave = {"Idempotency-Key": "clave-de-la-cola-0001"}
+    primera = cliente.post("/api/v1/tareas-outlook", json={"asunto": "Creada sin red"}, headers={**h, **clave})
+    segunda = cliente.post("/api/v1/tareas-outlook", json={"asunto": "Creada sin red"}, headers={**h, **clave})
+    assert primera.status_code == 201 and segunda.status_code == 201
+    assert segunda.headers.get("Idempotent-Replay") == "true"
+    assert primera.get_json()["data"]["id"] == segunda.get_json()["data"]["id"]
+    visibles = [t for t in cliente.get("/api/v1/tareas-outlook", headers=h).get_json()["data"] if t["asunto"] == "Creada sin red"]
+    assert len(visibles) == 1
+
+    tid = primera.get_json()["data"]["id"]
+    v = cliente.get(f"/api/v1/tareas-outlook/{tid}", headers=h).get_json()["data"]["version"]
+    cambio = {"Idempotency-Key": "clave-de-la-cola-0002"}
+    a = cliente.post(f"/api/v1/tareas-outlook/{tid}/transiciones", json={"estado": "en_progreso", "version": v}, headers={**h, **cambio})
+    b = cliente.post(f"/api/v1/tareas-outlook/{tid}/transiciones", json={"estado": "en_progreso", "version": v}, headers={**h, **cambio})
+    assert a.status_code == 200 and b.status_code == 200 and b.headers.get("Idempotent-Replay") == "true"      # sin la clave, el segundo sería un 409 por versión vieja
+    # y con otra petición distinta bajo la misma clave, error claro
+    c = cliente.post(f"/api/v1/tareas-outlook/{tid}/transiciones", json={"estado": "aplazada", "version": v}, headers={**h, **cambio})
+    assert c.status_code == 422

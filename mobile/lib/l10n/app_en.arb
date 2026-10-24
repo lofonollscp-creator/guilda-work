@@ -362,5 +362,19 @@
   "tareaConflictoVer": "See the changes",
   "tareaConflictoAplicar": "Apply anyway",
   "tareaConflictoDescartar": "Discard my change",
-  "tareaEliminar": "Delete attachment"
+  "tareaEliminar": "Delete attachment",
+  "colaGuardada": "Offline: it will be sent when the network is back.",
+  "colaLlena": "Too many changes are waiting to be sent. Wait until you are online.",
+  "colaPendientes": "{n, plural, =1{1 change waiting to be sent} other{{n} changes waiting to be sent}}",
+  "colaTitulo": "Unsent changes",
+  "colaEstadoPendiente": "Waiting to be sent",
+  "colaEstadoEnviando": "Sending…",
+  "colaEstadoConflicto": "Someone changed it",
+  "colaEstadoRechazada": "Rejected",
+  "colaReintentar": "Retry now",
+  "colaAplicar": "Apply anyway",
+  "colaDescartar": "Discard",
+  "colaCerrarSesionAviso": "{n, plural, =1{You have 1 unsent change} other{You have {n} unsent changes}}. If you sign out they will be lost.",
+  "colaCerrarSesionAccion": "Sign out and discard",
+  "colaTareaPendiente": "Waiting to be sent"
 }

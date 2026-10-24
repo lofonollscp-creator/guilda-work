@@ -14,6 +14,7 @@ import '../../nucleo/sesion.dart';
 import '../avisos/avisos_controlador.dart';
 import '../avisos/avisos_screen.dart';
 import '../busqueda/busqueda_screen.dart';
+import '../pendientes/pendientes_sheet.dart';
 import 'hoy_controlador.dart';
 
 /// «Hoy»: lo que necesita tu atención, de todos los módulos del despacho activo,
@@ -43,7 +44,9 @@ class HoyScreen extends ConsumerWidget {
           _Campana(sinLeer: ref.watch(avisosNoLeidosProvider)),
         ],
       ),
-      body: RefreshIndicator(
+      body: Column(children: [
+        const AvisoPendientes(),
+        Expanded(child: RefreshIndicator(
         onRefresh: () async {
           unawaited(ref.read(avisosProvider.notifier).refrescar()); // la insignia de la campana
           await ref.read(hoyProvider.notifier).refrescar();
@@ -51,7 +54,8 @@ class HoyScreen extends ConsumerWidget {
         child: estado == null
             ? (hoy.hasError ? _Error(error: hoy.error!) : const _Cargando())
             : _Bandeja(bandeja: estado.bandeja, desactualizado: estado.desactualizado, obtenidoEn: estado.obtenidoEn),
-      ),
+        )),
+      ]),
     );
   }
 }

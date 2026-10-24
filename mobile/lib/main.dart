@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'l10n/app_localizations.dart';
+import 'datos/cola.dart';
 import 'nucleo/abrir_destino.dart';
 import 'nucleo/rutas.dart';
 import 'nucleo/servicios.dart';
@@ -50,10 +51,14 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
     _conexionSub = Connectivity().onConnectivityChanged.listen((estados) {
       if (!estados.contains(ConnectivityResult.none)) {
         _s.sync.sincronizar(_s.api);
+        _vaciarCola();
       }
     });
     _s.sync.sincronizar(_s.api);
   }
+
+  /// Envía lo que se hizo sin conexión (si aún no hay sesión, no hace nada).
+  void _vaciarCola() => unawaited(ref.read(procesadorColaProvider).procesar());
 
   /// Con sesión: prepara los avisos (Firebase, token del dispositivo, canales de Android) y abre el aviso que se tocó antes de entrar.
   Future<void> _alIniciarSesion() async {
@@ -73,6 +78,7 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
       // los avisos son opcionales: sin Firebase la app funciona igual
     }
     await ref.read(navegadorDeAvisosProvider).aplicarPendiente();
+    _vaciarCola();
   }
 
   @override
@@ -86,6 +92,7 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _s.sync.sincronizar(_s.api);
+      _vaciarCola();
     }
   }
 

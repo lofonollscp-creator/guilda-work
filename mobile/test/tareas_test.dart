@@ -83,13 +83,13 @@ class _RepoFalso implements TareasRepositorio {
   }
 
   @override
-  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad}) async {
+  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad, String? clave}) async {
     registro.add('crear:$asunto:${fechaVencimiento ?? '-'}');
     return TareaOutlook.fromJson(_t(999, estado: 'no_iniciada')..['asunto'] = asunto);
   }
 
   @override
-  Future<TareaOutlook> transicionar(int id, EstadoTarea estado, {String? motivo, int? version}) async {
+  Future<TareaOutlook> transicionar(int id, EstadoTarea estado, {String? motivo, int? version, String? clave}) async {
     registro.add('transicionar:$id:${estado.valor}:${motivo ?? '-'}:${version ?? '-'}');
     if (alTransicionar != null) return alTransicionar!(id, estado, motivo, version);
     return TareaOutlook.fromJson(_t(id, estado: estado.valor, version: (version ?? 0) + 1, motivo: motivo));
@@ -110,7 +110,7 @@ class _RepoFalso implements TareasRepositorio {
   @override
   Future<List<ComentarioTarea>> comentarios(int id) async => coments;
   @override
-  Future<void> comentar(int id, String texto) async => registro.add('comentar:$id:$texto');
+  Future<void> comentar(int id, String texto, {String? clave}) async => registro.add('comentar:$id:$texto');
   @override
   Future<List<AdjuntoTarea>> adjuntos(int id) async => adjs;
   @override

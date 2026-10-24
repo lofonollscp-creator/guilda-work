@@ -13,6 +13,8 @@ import '../../api/fechas.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
+import '../../datos/local/cola_escritura.dart' show ColaLlena;
+import 'tareas_acciones.dart';
 import 'tareas_lista_controlador.dart';
 import 'tareas_repositorio.dart';
 import 'textos.dart';
@@ -143,8 +145,17 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
 
   Future<void> _transicionar(EstadoTarea nuevo, String? motivo, int? version) async {
     try {
-      _publicar(await _repo.transicionar(widget.tareaId, nuevo, motivo: motivo, version: version));
-      await _recargarSecundarios();
+      final t = AppLocalizations.of(context);
+      final base = _datos!.tarea.copyWith(version: version);
+      final r = await ref.read(accionesTareasProvider).transicionar(base, nuevo, motivo: motivo);
+      _publicar(r.valor!);
+      if (r.encolada) {
+        _aviso(t.colaGuardada);
+      } else {
+        await _recargarSecundarios();
+      }
+    } on ColaLlena {
+      if (mounted) _aviso(AppLocalizations.of(context).colaLlena);
     } on ApiException catch (e) {
       if (e.categoria == CategoriaError.conflicto && e.codigo == 'version_obsoleta') {
         final r = await _preguntarConflicto();
@@ -285,11 +296,26 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
   Future<void> _comentar() async {
     final texto = _comentario.text.trim();
     if (texto.isEmpty) return;
-    if (await _intentar(() => _repo.comentar(widget.tareaId, texto))) {
-      _comentario.clear();
-      final lista = await _opcional(_repo.comentarios(widget.tareaId), _datos!.comentarios);
-      if (mounted) setState(() => _datos = _datos!.con(comentarios: lista));
+    final t = AppLocalizations.of(context);
+    var encolado = false;
+    final ok = await _intentar(() async {
+      try {
+        encolado = await ref.read(accionesTareasProvider).comentar(widget.tareaId, _datos!.tarea.asunto ?? '', texto);
+      } on ColaLlena {
+        throw ApiException(t.colaLlena);
+      }
+    });
+    if (!ok) return;
+    _comentario.clear();
+    if (encolado) {
+      _aviso(t.colaGuardada);
+      // Se enseña ya, marcado como pendiente (id negativo), hasta que la cola lo envíe.
+      final provisional = ComentarioTarea.fromJson({'id': -DateTime.now().millisecondsSinceEpoch, 'texto': texto, 'creado_en': DateTime.now().toIso8601String().substring(0, 16)});
+      if (mounted) setState(() => _datos = _datos!.con(comentarios: [..._datos!.comentarios, provisional]));
+      return;
     }
+    final lista = await _opcional(_repo.comentarios(widget.tareaId), _datos!.comentarios);
+    if (mounted) setState(() => _datos = _datos!.con(comentarios: lista));
   }
 
   // --- adjuntos ---
@@ -439,7 +465,7 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
         ListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.chat_bubble_outline, size: 20),
+          leading: Icon(c.id < 0 ? Icons.cloud_upload_outlined : Icons.chat_bubble_outline, size: 20),
           title: Text(c.texto ?? ''),
           subtitle: Text(_cuando(c.creadoEn)),
         ),

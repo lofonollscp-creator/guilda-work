@@ -15,13 +15,16 @@ class TareasRepositorio {
 
   Operaciones get _o => Operaciones(_cliente);
 
+  /// Las operaciones con una `Idempotency-Key` fija: para las acciones que pueden acabar en la cola sin conexión con esa misma clave.
+  Operaciones _conClave(String? clave) => clave == null ? _o : Operaciones(_cliente.conClave(clave));
+
   /// Una página. `ambito`: `propias`, `asignadas`, `compartidas` o `todas`.
   Future<List<TareaOutlook>> listar({String ambito = 'propias', String? estado, String? q, int limit = 30, int offset = 0}) =>
       _o.listarTareasOutlook(ambito: ambito, estado: estado, q: (q == null || q.trim().isEmpty) ? null : q.trim(), limit: limit, offset: offset);
 
   Future<TareaOutlook> obtener(int id) => _o.obtenerTareaOutlook(tareaId: id);
 
-  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad}) => _o.crearTareaOutlook(cuerpo: {
+  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad, String? clave}) => _conClave(clave).crearTareaOutlook(cuerpo: {
         'asunto': asunto.trim(),
         'fecha_vencimiento': ?fechaVencimiento,
         if (prioridad != null) 'prioridad': prioridad.valor,
@@ -35,7 +38,7 @@ class TareasRepositorio {
       });
 
   /// Cambia el estado. Con `version` solo vale si nadie ha tocado la tarea (si no, `ApiException` de conflicto con `versionActual`).
-  Future<TareaOutlook> transicionar(int id, EstadoTarea estado, {String? motivo, int? version}) => _o.transicionarTarea(tareaId: id, cuerpo: {
+  Future<TareaOutlook> transicionar(int id, EstadoTarea estado, {String? motivo, int? version, String? clave}) => _conClave(clave).transicionarTarea(tareaId: id, cuerpo: {
         'estado': estado.valor,
         'motivo': ?motivo,
         'version': ?version,
@@ -54,7 +57,7 @@ class TareasRepositorio {
   Future<void> agregarItem(int id, String texto) => _o.agregarItemChecklist(tareaId: id, cuerpo: {'texto': texto.trim()});
 
   Future<List<ComentarioTarea>> comentarios(int id) => _o.listarComentarios(tareaId: id, limit: 100);
-  Future<void> comentar(int id, String texto) => _o.comentarTarea(tareaId: id, cuerpo: {'texto': texto.trim()});
+  Future<void> comentar(int id, String texto, {String? clave}) => _conClave(clave).comentarTarea(tareaId: id, cuerpo: {'texto': texto.trim()});
 
   Future<List<AdjuntoTarea>> adjuntos(int id) => _o.adjuntosDeLaTarea(tareaId: id);
 
