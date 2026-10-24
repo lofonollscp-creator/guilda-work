@@ -47,6 +47,7 @@ def test_el_push_lleva_el_contrato_unificado(cliente, monkeypatch):
     assert d["tipo"] == "tarea_recordatorio" and d["tarea_id"] == 12                     # lo que ya mandaba quien emite, intacto
     assert json.loads(d["destino"]) == {"tipo": "tarea", "id": 12} and d["destino_tipo"] == "tarea" and d["destino_id"] == 12
     assert d["despacho_id"] == t and d["canal"] == "tareas" and enviado["canal"] == "tareas"
+    assert d["url"] == "/tareas/12"                                                      # respaldo para abrirlo en la web
     assert d["notificacion_id"] == db.listar_notificaciones(uid, 1)[0]["id"]
 
 

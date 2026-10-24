@@ -118,7 +118,7 @@ void main() {
       await t.pumpWidget(_app(EstadoSesion(fase: FaseSesion.conSesion, usuario: _usuario)));
       await t.pumpAndSettle();
       expect(find.text('INICIO'), findsOneWidget);
-      for (final e in ['Inicio', 'Tareas', 'Correo', 'Fichaje', 'Más']) {
+      for (final e in ['Hoy', 'Tareas', 'Correo', 'Fichaje', 'Más']) {
         expect(find.text(e), findsWidgets);
       }
       await t.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Tareas')));

@@ -6,8 +6,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'l10n/app_localizations.dart';
+import 'nucleo/abrir_destino.dart';
 import 'nucleo/rutas.dart';
 import 'nucleo/servicios.dart';
+import 'nucleo/sesion.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -39,18 +41,38 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Al tocar una notificación de correo nuevo, abrir la bandeja de
-    // entrada -- únicos datos que manda app/push.py hoy (ver
-    // app/correo.py:_emitir_evento_correo_nuevo).
-    _s.push.onTap = (datos) {
-      if (datos['tipo'] == 'correo_nuevo') ref.read(routerProvider).go(rutaCorreo);
-    };
+    // Al tocar un aviso (push) se abre la pantalla de su `destino` (ver nucleo/avisos.dart): espera a
+    // que haya sesión, avisa si es de otro despacho y cae en la web si aún no hay pantalla nativa.
+    _s.push.onTap = (datos) => ref.read(navegadorDeAvisosProvider).abrirDesdePush(datos);
+    ref.listenManual(estadoSesionProvider, (anterior, estado) {
+      if (estado.fase == FaseSesion.conSesion && anterior?.fase != FaseSesion.conSesion) _alIniciarSesion();
+    }, fireImmediately: true);
     _conexionSub = Connectivity().onConnectivityChanged.listen((estados) {
       if (!estados.contains(ConnectivityResult.none)) {
         _s.sync.sincronizar(_s.api);
       }
     });
     _s.sync.sincronizar(_s.api);
+  }
+
+  /// Con sesión: prepara los avisos (Firebase, token del dispositivo, canales de Android) y abre el aviso que se tocó antes de entrar.
+  Future<void> _alIniciarSesion() async {
+    await WidgetsBinding.instance.endOfFrame; // que el enrutador ya haya pintado la pantalla de inicio
+    try {
+      await _s.push.inicializar();
+      final t = await AppLocalizations.delegate.load(_s.locale.locale);
+      await _s.push.crearCanales({
+        'tareas': t.canalTareas,
+        'correo': t.canalCorreo,
+        'fiscal': t.canalFiscal,
+        'equipo': t.canalEquipo,
+        'resumenes': t.canalResumenes,
+        'general': t.canalGeneral,
+      });
+    } catch (_) {
+      // los avisos son opcionales: sin Firebase la app funciona igual
+    }
+    await ref.read(navegadorDeAvisosProvider).aplicarPendiente();
   }
 
   @override

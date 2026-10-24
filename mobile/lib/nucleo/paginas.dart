@@ -11,6 +11,7 @@ import '../screens/ia_chat_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/tareas_outlook_screen.dart';
 import '../screens/tiquets_screen.dart';
+import '../funciones/hoy/hoy_screen.dart';
 import '../services/api_client.dart';
 import '../services/element_launcher.dart';
 import 'servicios.dart';
@@ -52,19 +53,7 @@ class PaginasApp {
             alIniciarSesion: (u) => ref.read(estadoSesionProvider.notifier).iniciada(u),
           );
         },
-        inicio: (ref, usuario) {
-          final s = ref.read(serviciosProvider);
-          return DashboardScreen(
-            usuario: usuario,
-            api: s.api,
-            sesion: s.sesion,
-            sync: s.sync,
-            push: s.push,
-            tema: s.tema,
-            locale: s.locale,
-            alCerrarSesion: () => ref.read(estadoSesionProvider.notifier).cerrar(),
-          );
-        },
+        inicio: (ref, usuario) => const HoyScreen(),
         tareas: (ref) => TareasOutlookScreen(api: ref.read(serviciosProvider).api),
         correo: (ref) => CorreoBandejaScreen(api: ref.read(serviciosProvider).api),
         fichaje: (ref, usuario) {
@@ -74,6 +63,21 @@ class PaginasApp {
         accesosMas: (ref, usuario) {
           final s = ref.read(serviciosProvider);
           return [
+            // El panel de antes (nota rápida, accesos y proyectos): «Hoy» es ahora la pantalla inicial.
+            AccesoMas(
+              Icons.folder_open_outlined,
+              ClaveEtiqueta.panel,
+              (_) => DashboardScreen(
+                usuario: usuario,
+                api: s.api,
+                sesion: s.sesion,
+                sync: s.sync,
+                push: s.push,
+                tema: s.tema,
+                locale: s.locale,
+                alCerrarSesion: () => ref.read(estadoSesionProvider.notifier).cerrar(),
+              ),
+            ),
             AccesoMas(Icons.apps, ClaveEtiqueta.herramientas, (_) => HerramientasScreen(api: s.api)),
             AccesoMas(Icons.confirmation_number_outlined, ClaveEtiqueta.tiquets, (_) => TiquetsScreen(api: s.api, usuario: usuario)),
             AccesoMas(Icons.smart_toy_outlined, ClaveEtiqueta.asistenteIa, (_) => IaChatScreen(api: s.api, locale: s.locale)),
@@ -98,7 +102,7 @@ class PaginasApp {
       );
 }
 
-enum ClaveEtiqueta { herramientas, tiquets, asistenteIa, chat, fiscal, ajustes }
+enum ClaveEtiqueta { panel, herramientas, tiquets, asistenteIa, chat, fiscal, ajustes }
 
 class AccesoMas {
   final IconData icono;

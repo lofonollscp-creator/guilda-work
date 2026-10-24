@@ -347,7 +347,7 @@
   "ausenciaEstadoCancelada": "Cancelada",
   "ausenciasMantener": "Mantenerla",
   "ausenciasCancelarAccion": "Cancelar ausencia",
-  "navInicio": "Inicio",
+  "navInicio": "Hoy",
   "navTareas": "Tareas",
   "navCorreo": "Correo",
   "navFichaje": "Fichaje",
@@ -360,5 +360,57 @@
   "actualizarCuerpo": "Esta versión de Guilda Work ya no es compatible con el servidor. Instala la última versión para seguir trabajando.",
   "actualizarBoton": "Ir a la tienda",
   "arranqueSinConexion": "No se ha podido conectar con el servidor.",
-  "arranqueReintentar": "Reintentar"
+  "arranqueReintentar": "Reintentar",
+  "hoyTodoAlDia": "Todo al día",
+  "hoyTodoAlDiaDetalle": "No tienes nada pendiente ahora mismo.",
+  "hoyResumenTotal": "{n, plural, =1{1 pendiente} other{{n} pendientes}}",
+  "hoyResumenUrgentes": "{n, plural, =1{1 urgente} other{{n} urgentes}}",
+  "hoyUrgenciaVencido": "Vencido",
+  "hoyUrgenciaHoy": "Hoy",
+  "hoyUrgenciaProximo": "Próximo",
+  "hoyCompletar": "Completar",
+  "hoyCompletada": "Tarea completada",
+  "hoyErrorCargar": "No se ha podido cargar la pantalla de hoy.",
+  "hoySinConexionDatosDe": "Sin conexión · datos de las {hora}",
+  "destinoNoDisponible": "Ya no está disponible.",
+  "destinoSoloWebTitulo": "Esto se abre en la web",
+  "destinoSoloWebCuerpo": "Todavía no está en la app. Puedes abrirlo en el navegador.",
+  "destinoAbrirWeb": "Abrir en la web",
+  "despachoAvisoCambiar": "Este aviso es de {nombre}. ¿Cambiar de despacho?",
+  "despachoCambiarAccion": "Cambiar",
+  "canalTareas": "Tareas",
+  "canalCorreo": "Correo",
+  "canalFiscal": "Fiscal y clientes",
+  "canalEquipo": "Equipo y fichaje",
+  "canalResumenes": "Resúmenes",
+  "canalGeneral": "Otros avisos",
+  "masPanelClasico": "Proyectos y notas",
+  "@hoyResumenTotal": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@hoyResumenUrgentes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@hoySinConexionDatosDe": {
+    "placeholders": {
+      "hora": {
+        "type": "String"
+      }
+    }
+  },
+  "@despachoAvisoCambiar": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  }
 }

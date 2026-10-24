@@ -19,6 +19,11 @@ class PushService {
   final ApiClient api;
   final FlutterLocalNotificationsPlugin _local = FlutterLocalNotificationsPlugin();
   String? _tokenActual;
+  bool _iniciado = false;
+
+  /// Familias de aviso = canales de notificación de Android (los mismos ids que `canal` en el push del servidor,
+  /// `app/aviso_destino.py`). Cada una se puede silenciar por separado en los ajustes del sistema.
+  static const canales = ['tareas', 'correo', 'fiscal', 'equipo', 'resumenes', 'general'];
 
   /// Se llama al tocar una notificación (en primer plano vía
   /// flutter_local_notifications, o desde background/terminada vía
@@ -32,11 +37,29 @@ class PushService {
   bool get _plataformaSoportada =>
       !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
 
+  /// Crea los canales de Android con sus nombres (en el idioma de la app). Si ya existen, Android solo actualiza el nombre.
+  Future<void> crearCanales(Map<String, String> nombres) async {
+    if (!_plataformaSoportada || defaultTargetPlatform != TargetPlatform.android) return;
+    final android = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    for (final id in canales) {
+      await android?.createNotificationChannel(AndroidNotificationChannel(id, nombres[id] ?? id, importance: Importance.defaultImportance));
+    }
+  }
+
+  /// Se llama en cada inicio de sesión (y desde pantallas antiguas). La primera vez prepara Firebase y los avisos; las siguientes solo
+  /// vuelven a registrar el dispositivo (al cerrar sesión se dio de baja), sin duplicar los oyentes.
   Future<void> inicializar() async {
     if (!_plataformaSoportada) return; // solo Android/iOS -- FCM no aplica a escritorio/web
+    if (_iniciado) {
+      final token = _tokenActual;
+      if (token != null) await _registrar(token);
+      return;
+    }
+    _iniciado = true;
     try {
       await Firebase.initializeApp();
     } catch (_) {
+      _iniciado = false;
       return; // Firebase no configurado en este build todavía
     }
 
@@ -65,15 +88,24 @@ class PushService {
         mensaje.hashCode,
         notif.title,
         notif.body,
-        const NotificationDetails(
-          android: AndroidNotificationDetails('guilda_work', 'Guilda Work'),
-          iOS: DarwinNotificationDetails(),
+        NotificationDetails(
+          android: AndroidNotificationDetails(_canalDe(mensaje.data), _canalDe(mensaje.data)),
+          iOS: const DarwinNotificationDetails(),
         ),
         payload: jsonEncode(mensaje.data),
       );
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((mensaje) => onTap?.call(mensaje.data));
+
+    // La app estaba cerrada y se abrió tocando un aviso.
+    final inicial = await mensajeria.getInitialMessage();
+    if (inicial != null) onTap?.call(inicial.data);
+  }
+
+  String _canalDe(Map<String, dynamic> datos) {
+    final canal = datos['canal']?.toString();
+    return canales.contains(canal) ? canal! : 'general';
   }
 
   Future<void> _registrar(String token) async {

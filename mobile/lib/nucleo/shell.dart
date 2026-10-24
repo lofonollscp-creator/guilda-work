@@ -39,6 +39,7 @@ class MasScreen extends ConsumerWidget {
   const MasScreen({super.key});
 
   String _etiqueta(AppLocalizations t, ClaveEtiqueta c) => switch (c) {
+        ClaveEtiqueta.panel => t.masPanelClasico,
         ClaveEtiqueta.herramientas => t.dashboardHerramientasTooltip,
         ClaveEtiqueta.tiquets => t.dashboardTiquetsTooltip,
         ClaveEtiqueta.asistenteIa => t.dashboardAsistenteIaTooltip,

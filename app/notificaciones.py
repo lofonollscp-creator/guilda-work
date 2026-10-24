@@ -49,6 +49,8 @@ def crear_y_enviar(
     datos.update({"destino": json.dumps(destino, separators=(",", ":")), "destino_tipo": destino["tipo"], "canal": canal})
     if destino.get("id") is not None:
         datos["destino_id"] = destino["id"]
+    if url:
+        datos.setdefault("url", url)          # ruta de la web: respaldo de la app cuando el destino aún no tiene pantalla nativa
     despacho = despacho_id if despacho_id is not None else _despacho_del_aviso(usuario_id)
     if despacho is not None:
         datos["despacho_id"] = despacho
