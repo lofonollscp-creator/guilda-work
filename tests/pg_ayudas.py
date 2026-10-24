@@ -32,7 +32,7 @@ def crear_base_con_esquema(modo: str = "simple") -> tuple[str, callable]:
         pg.fijar_url(None)
         with psycopg.connect(URL, autocommit=True) as c:
             c.execute(f"DROP DATABASE IF EXISTS {nombre} WITH (FORCE)")
-            for rol in ("guilda_app", "guilda_plataforma"):             # los roles son del servidor, no de la base de datos
+            for rol in ("guilda_app", "guilda_plataforma", "guilda_backoffice", "guilda_monitor"):             # los roles son del servidor, no de la base de datos
                 try:
                     c.execute(f"DROP OWNED BY {rol}")
                 except psycopg.Error:

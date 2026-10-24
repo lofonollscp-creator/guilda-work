@@ -352,6 +352,7 @@ class ConexionPG:
 _pools: dict = {}
 _url_forzada: Optional[str] = None
 _url_plataforma_forzada: Optional[str] = None
+_url_backoffice_forzada: Optional[str] = None
 _candado_pool = threading.Lock()
 
 
@@ -380,15 +381,18 @@ if _modo_inicial != "simple":
     activar_esquema(_modo_inicial)
 
 
-def fijar_url(url: Optional[str], url_plataforma: Optional[str] = None) -> None:
+def fijar_url(url: Optional[str], url_plataforma: Optional[str] = None, url_backoffice: Optional[str] = None) -> None:
     """Para tests y herramientas: usa estas URL en lugar de las variables de entorno (y descarta los pools actuales)."""
-    global _url_forzada, _url_plataforma_forzada
-    _url_forzada, _url_plataforma_forzada = url, url_plataforma
+    global _url_forzada, _url_plataforma_forzada, _url_backoffice_forzada
+    _url_forzada, _url_plataforma_forzada, _url_backoffice_forzada = url, url_plataforma, url_backoffice
     cerrar_pool()
 
 
 def _url(rol: str = "app") -> str:
-    if rol == "plataforma":
+    if rol == "backoffice":
+        url = (_url_backoffice_forzada or os.environ.get("GUILDA_DATABASE_URL_BACKOFFICE", "") or _url_plataforma_forzada or os.environ.get("GUILDA_DATABASE_URL_PLATAFORMA", "")
+               or _url_forzada or os.environ.get("GUILDA_DATABASE_URL", ""))
+    elif rol == "plataforma":
         url = _url_plataforma_forzada or os.environ.get("GUILDA_DATABASE_URL_PLATAFORMA", "") or _url_forzada or os.environ.get("GUILDA_DATABASE_URL", "")
     else:
         url = _url_forzada or os.environ.get("GUILDA_DATABASE_URL", "")
@@ -417,7 +421,8 @@ def _obtener_pool(rol: str = "app"):
                 _url(rol), min_size=1, max_size=maximo, open=True, timeout=float(os.environ.get("GUILDA_PG_POOL_ESPERA", "10")),
                 # Sin sentencias preparadas por defecto (compatible con PgBouncer en modo transacción). GUILDA_PG_PREPARAR=N las usa tras N ejecuciones de la misma sentencia
                 # (solo con conexión directa a PostgreSQL): Citus guarda entonces el plan de las consultas de un solo fragmento en vez de planificarlas cada vez.
-                kwargs={"autocommit": True, "prepare_threshold": int(os.environ.get("GUILDA_PG_PREPARAR", "0")) or None},
+                kwargs={"autocommit": True, "prepare_threshold": int(os.environ.get("GUILDA_PG_PREPARAR", "0")) or None,
+                        **({"options": "-c search_path=backoffice,public"} if rol == "backoffice" else {})},    # (las tablas propias del backoffice se nombran sin esquema)
                 max_lifetime=1800, configure=_configurar_conexion,
             )
         return _pools[rol]
@@ -429,6 +434,12 @@ def cerrar_pool() -> None:
         _pools.clear()
     for pool in pools:
         pool.close()
+
+
+def conectar_backoffice() -> ConexionPG:
+    """Conexión del backoffice a SUS tablas (esquema `backoffice`, app/bd/esquema_pg/11_backoffice.sql) con el rol `guilda_backoffice` (GUILDA_DATABASE_URL_BACKOFFICE; si falta, la de la plataforma)."""
+    pool = _obtener_pool("backoffice")
+    return ConexionPG(pool.getconn(), pool.putconn, despacho=None, savepoints=os.environ.get("GUILDA_PG_SAVEPOINTS", "1") != "0")
 
 
 def conectar(despacho: Optional[int] = None, plataforma: bool = False) -> ConexionPG:

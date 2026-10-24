@@ -136,7 +136,12 @@ def _ahora() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
 
-def conectar() -> sqlite3.Connection:
+def conectar():
+    """La base propia del backoffice: `data/backoffice.db` (SQLite) o, con GUILDA_DB_ENGINE=postgres, el esquema `backoffice` de la base de datos de la aplicación (rol guilda_backoffice)."""
+    from app import bd
+    if bd.MOTOR == "postgres":
+        from app.bd import postgres as pg
+        return pg.conectar_backoffice()                    # el esquema lo crea app/bd/esquema_pg/11_backoffice.sql
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row

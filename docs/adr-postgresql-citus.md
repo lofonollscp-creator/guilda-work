@@ -396,3 +396,37 @@ Instancia con la configuración de producción → copia base (4,7 s, 17 MB) →
 3. **`pg_dump`/`pg_dumpall` sobre Citus** vuelcan los datos de las tablas distribuidas (vía COPY por el coordinador) pero no su distribución: sirven de red de seguridad lógica, no de recuperación rápida. Por eso la recuperación es física (WAL) + por despacho.
 4. **Citus y la recuperación a un instante**: en un nodo basta el WAL; con varios nodos hay que recuperar todos hasta el mismo punto de restauración de Citus, que cada copia base crea (`base_AAAAMMDD-HHMMSS`). Con varios nodos el simulacro no se ha ejecutado (un nodo).
 5. **Pendiente de la fase 11:** crear de verdad el contenedor y la carpeta de copias en el servidor (acción de administración), fijar las contraseñas de los roles fuera del repositorio, y decidir qué pasa con `backoffice.db` (sigue en SQLite: su copia sigue siendo la de §9.1/9.2). El RPO frente a la pérdida del servidor entero sigue siendo el de Restic (24 h) mientras no haya un destino externo para el WAL.
+
+## Fase 11: corte a producción — preparación y ensayo general (2026-10-24)
+
+La ejecución del corte la hace una persona del equipo cuando decida (sin hora fijada): aquí queda todo lo que hace falta, ensayado. **Runbook: `docs/runbook-corte-postgres.md`.**
+
+### `backoffice.db` migrada
+Las 10 tablas del backoffice (administradores con 2FA, intentos de acceso, auditoría de sus acciones, cobros, notas, seguimiento…) pasan al **esquema `backoffice`** de la misma base de datos (`app/bd/esquema_pg/11_backoffice.sql`), no distribuido. Solo las toca un rol propio, **`guilda_backoffice`** (sin acceso a los datos de los despachos; ni `guilda_app` ni `guilda_plataforma` ven el esquema; la auditoría del backoffice es de solo anexado). `backoffice/auth.py:conectar()` devuelve la conexión de ese rol con `search_path = backoffice, public`, así que el código del backoffice no cambió una línea de SQL; los 11 ficheros de tests del backoffice pasan contra PostgreSQL sin modificar. `migrar_datos.copiar_backoffice` carga la base (con recuentos y sumas de control) y la herramienta de migración la toma de la carpeta de `registro.db`.
+
+### Vuelta atrás: exportación inversa PostgreSQL → SQLite
+`scripts/exportar_a_sqlite.py` (`app/bd/exportar_sqlite.py`) crea `registro.db` y `backoffice.db` **nuevos** con el esquema de SQLite (`init_db`: índices, triggers, FTS5) y les carga lo que hay en PostgreSQL, comprobando cada tabla (filas y suma de control por columna), `integrity_check` y `foreign_key_check`. Detalles: el `tenant_id` que PostgreSQL añadió se descarta donde SQLite no lo tenía; el despacho 0 «Plataforma» vuelve a ser NULL; los triggers de SQLite alimentan los índices FTS5 al insertar y las tablas que otros triggers rellenan (`api_cambios`, `tarea_clientes`) se vacían y recargan al final. **Test de ida y vuelta**: SQLite → PostgreSQL → SQLite devuelve exactamente lo mismo, tabla por tabla, y lo escrito en PostgreSQL entre medias llega a SQLite (incluida la búsqueda de texto).
+
+### Herramientas del corte
+`scripts/corte_preflight.sh` (comprobaciones previas de solo lectura, sin contraseñas en pantalla; ya delata lo que falta en este servidor) · `scripts/humo_postgres.py` (pantallas de cada persona sin 5xx, escritura de prueba deshecha por despacho, búsqueda, backoffice, nodos de Citus, archivo de WAL, aislamiento por despacho con el rol de la aplicación, y recuentos por tabla comparables entre motores) · `scripts/migrar_a_postgres.py` (ahora también prepara una base existente: extensiones y coordinador de Citus; la URL del superusuario puede venir de `GUILDA_PG_ADMIN_URL`).
+La contraseña del superusuario va en `/etc/guilda-pg-admin.env` (modo 600), no en `/etc/guilda-work.env`: los 8 servicios que leen este último no deben verla. Las herramientas se lanzan con `guilda_py` (entorno de producción + usuario `guilda`).
+
+### Ensayo general (`scripts/ensayo_corte_postgres.py`)
+Siete pasos por pasada, con una copia de los datos reales y en una base de ensayo con Citus (`gw_corte`, borrada al terminar): copia final → humo SQLite → migración (con controles) → humo PostgreSQL con recuentos iguales a SQLite → «el día después» (la aplicación escribe notas, tareas y una nota de administración sobre PostgreSQL) → **vuelta atrás** (exportación inversa) → humo sobre el SQLite recuperado (mismos recuentos que PostgreSQL y las escrituras presentes).
+
+| | Datos reales (69 MB, 1 despacho) — 2 pasadas | Sintético (90 personas, 30 despachos, 100.000 filas) |
+|---|---|---|
+| Migración con controles | 56 s / 55 s | 68 s |
+| **Ventana con la plataforma parada** | **63 s / 63 s** | 150 s |
+| **Vuelta atrás (exportar a SQLite)** | **10,4 s / 10,6 s** | 21 s |
+| Resultado | todo correcto, 0 discrepancias | todo correcto |
+
+Informes en `data/pg-ensayo/ensayo-corte-*.json`.
+
+### Hallazgos
+1. **El corte exige desplegar antes el código nuevo con SQLite** (paso 0 del runbook): la `registro.db` de producción aún no tiene `usuarios_tenants` ni el resto del esquema nuevo, que crea `init_db()` al arrancar; el preflight lo comprueba. (La herramienta de migración también cubre una base antigua rellenando las pertenencias.)
+2. **Las herramientas que importan la aplicación necesitan la clave del llavero de correo** (`GUILDA_SECRET_KEY`, solo legible por root): sin ella `init_db()` falla con «MAC check failed». De ahí la función `guilda_py` del runbook (entorno de producción + `runuser` como `guilda`), comprobada en este servidor sin imprimir ningún secreto.
+3. **Un `tenant_id` NULL en SQLite es el despacho 0 en PostgreSQL**: ya tratado en la fase 7; la exportación inversa lo devuelve a NULL donde la columna lo admite (ninguna fila queda en «Plataforma» en la copia real).
+
+### Pendiente (acciones tuyas, sin fecha)
+Ejecutar el runbook: desplegar el código nuevo con SQLite, crear la carpeta de copias en el otro disco y el fichero `/etc/guilda-pg-admin.env`, levantar el contenedor, `sudo scripts/corte_preflight.sh` (0 fallos), y el corte. La fase 12 (estabilización y retirada de SQLite) empieza cuando el corte esté hecho.

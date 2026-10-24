@@ -30,6 +30,7 @@ def migrada(tmp_path):
             fuente.backup(origen)                                   # (la API de copia, no el fichero: los últimos cambios pueden estar aún en el WAL)
             fuente.close()
             tenant.rellenar(origen, crear_columnas=True, por_defecto=tenant.TENANT_PLATAFORMA)
+            conn.url_de_prueba = url
             yield origen, conn, informe
             origen.close()
     finally:
@@ -83,3 +84,35 @@ def test_el_orden_de_carga_respeta_las_claves_foraneas_reales(migrada):
     _origen, conn, _ = migrada
     orden = migrar_datos.orden_de_carga(conn, ["certificados", "clientes_fiscales", "tenants"])
     assert orden.index("tenants") < orden.index("clientes_fiscales") < orden.index("certificados")
+
+
+def test_backoffice_db_se_migra_al_esquema_backoffice_y_sigue_funcionando(migrada, tmp_path, monkeypatch):
+    """La base propia del backoffice (administradores, auditoría, cobros…) pasa al esquema `backoffice` de la misma base: mismas filas, mismas sumas de control, y las secuencias siguen."""
+    from backoffice import auth
+    monkeypatch.setattr(auth, "DB_PATH", tmp_path / "backoffice.db")
+    auth.crear_admin("ana", "una-contrasena-larga-1", "Ana")
+    auth.crear_admin("luis", "otra-contrasena-larga-2", "Luis")
+    bo = auth.conectar()
+    bo.execute("INSERT INTO cobros (tenant_id, concepto, importe_centimos, stripe_session_id, url, creado_en) VALUES (1, 'Alta', 4900, 'cs_1', 'https://x', 'hoy')")
+    bo.execute("INSERT INTO notas_tenant (tenant_id, texto, creado_en) VALUES (1, ?, 'hoy')", ("Llamar con \x00 NUL",))
+    bo.execute("INSERT INTO snapshots_tenants (fecha, tenant_id, precio_centimos) VALUES ('2026-10-01', 1, 4900)")
+    bo.commit()
+    bo.close()
+    _origen, conn, _ = migrada
+    informe: dict = {}
+    n = migrar_datos.copiar_backoffice(tmp_path / "backoffice.db", conn, informe=informe)
+    assert informe["ok"], informe["discrepancias"]
+    assert n["admins"] == 2 and n["cobros"] == 1 and n["notas_tenant"] == 1 and informe["nul_eliminados"] == {"notas_tenant": {"texto": 1}}
+    assert conn.execute("SELECT texto FROM backoffice.notas_tenant").fetchone()[0] == "Llamar con  NUL"
+    # el código del backoffice, ya sobre PostgreSQL: la identidad sigue (el siguiente admin es el 3) y los datos son los migrados
+    from app import bd
+    from app.bd import postgres as pg
+    monkeypatch.setattr(bd, "MOTOR", "postgres")
+    pg.fijar_url(conn.url_de_prueba)
+    try:
+        assert auth.crear_admin("marta", "tercera-contrasena-larga-3", "Marta") == 3
+        assert auth.obtener_admin(1)["usuario"] == "ana" and auth.obtener_admin(3)["nombre"] == "Marta"
+        assert auth.verificar("ana", "una-contrasena-larga-1", "127.0.0.1")[0]["usuario"] == "ana", "las contraseñas migradas siguen valiendo"
+    finally:
+        pg.cerrar_pool()
+        pg.fijar_url(None)

@@ -13,10 +13,10 @@ from pathlib import Path
 
 DIRECTORIO = Path(__file__).resolve().parent / "esquema_pg"
 ORDEN = ("00_funciones.sql", "01_tablas.sql", "02_indices.sql", "03_claves_foraneas.sql", "04_vistas.sql", "05_triggers.sql", "06_busqueda.sql", "07_semillas.sql")
-ORDEN_MULTITENANT = ("00_funciones.sql", "mt/01_tablas.sql", "mt/02_indices.sql", "06_busqueda.sql", "mt/03_claves_foraneas.sql", "mt/04_vistas.sql", "mt/05_triggers.sql", "mt/05b_set_null.sql", "07_semillas.sql", "mt/09_rls.sql", "mt/10_roles.sql")
+ORDEN_MULTITENANT = ("00_funciones.sql", "mt/01_tablas.sql", "mt/02_indices.sql", "06_busqueda.sql", "mt/03_claves_foraneas.sql", "mt/04_vistas.sql", "mt/05_triggers.sql", "mt/05b_set_null.sql", "07_semillas.sql", "mt/09_rls.sql", "mt/10_roles.sql", "11_backoffice.sql")
 # En Citus las tablas se distribuyen ANTES de las claves foráneas y los triggers, y la RLS va al final (las semillas la necesitan desactivada).
 ORDEN_CITUS = ("00_funciones.sql", "mt/01_tablas.sql", "mt/02_indices.sql", "06_busqueda.sql", "mt/08_distribuir.sql", "mt/03_claves_foraneas.sql", "mt/04_vistas.sql",
-               "mt/05_triggers.sql", "mt/05b_set_null.sql", "07_semillas.sql", "mt/09_rls.sql", "mt/10_roles.sql")
+               "mt/05_triggers.sql", "mt/05b_set_null.sql", "07_semillas.sql", "mt/09_rls.sql", "mt/10_roles.sql", "11_backoffice.sql")
 PREAMBULO_CITUS = "SET citus.shard_count = 16;\nSET citus.enable_unsafe_triggers = on;\n"
 VERSION_BASE = 1
 MODOS = {"simple": ORDEN, "multitenant": ORDEN_MULTITENANT, "citus": ORDEN_CITUS}

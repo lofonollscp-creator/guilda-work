@@ -99,7 +99,7 @@ Barrido por módulos (`db.py`, `db_correo.py`, cada vertical, rutas, MCP y API),
 - `HOSTING.md`, runbooks, variables (`DATABASE_URL`…), adaptación de las unidades `guilda-work`, `guilda-work-mcp` y `guilda-backoffice`.
 - **Salida:** restauración probada y alertas disparando en un simulacro.
 
-### Fase 11 — Corte a producción (ventana de unas horas, con tu aprobación)
+### Fase 11 — Corte a producción (ventana de unas horas, con tu aprobación) — **preparada y ensayada (2026-10-24)**: `backoffice.db` migrada, exportación inversa, preflight, humo y ensayo general de 2 pasadas (63 s de ventana, 10 s de vuelta atrás); el corte lo ejecuta una persona con `docs/runbook-corte-postgres.md`
 1. Ensayo general completo (2 pasadas) con tiempos medidos.
 2. Aviso a los despachos y modo mantenimiento (solo lectura).
 3. Copia final de SQLite, exportación, importación, controles automáticos y pruebas de humo (acceso, tareas, correo, fichajes, facturación, asistente jurídico).

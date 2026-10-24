@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -19,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("accion", choices=("exportar", "importar", "ver"))
-    ap.add_argument("--url")
+    ap.add_argument("--url", default=os.environ.get("GUILDA_PG_ADMIN_URL"), help="URL del superusuario (por defecto, GUILDA_PG_ADMIN_URL)")
     ap.add_argument("--despacho", type=int)
     ap.add_argument("--salida")
     ap.add_argument("--entrada")

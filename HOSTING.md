@@ -214,6 +214,7 @@ Variables opcionales:
 | `GUILDA_DB_ENGINE` | `sqlite` | `postgres` usa la base de datos PostgreSQL + Citus (§9.4) en lugar de `data/registro.db`. Solo tras el corte (fase 11 del plan de migración). |
 | `GUILDA_DATABASE_URL` | _(vacío)_ | Con `postgres`: URL del rol `guilda_app` (sin privilegios, sujeto a RLS): `postgresql://guilda_app:CLAVE@127.0.0.1:5433/guilda`. |
 | `GUILDA_DATABASE_URL_PLATAFORMA` | _(la anterior)_ | URL del rol `guilda_plataforma` (backoffice, trabajos en segundo plano, borrado de despachos; se salta la RLS y tiene `pg_monitor`). |
+| `GUILDA_DATABASE_URL_BACKOFFICE` | _(la de la plataforma)_ | URL del rol `guilda_backoffice`: solo ve el esquema `backoffice` (la antigua `backoffice.db`: administradores, auditoría, cobros…). |
 | `GUILDA_PG_ESQUEMA` | `simple` | Con `postgres`: `citus` en producción (reescritura de consultas por despacho), `multitenant` o `simple` solo para pruebas. |
 | `GUILDA_PG_POOL_MAX` | `20` | Conexiones máximas del pool por proceso y rol. Recomendado `12` con 16 hilos de waitress (ver ADR, fase 9). `max_connections` de PostgreSQL ≥ suma de todos los pools + 20. |
 | `GUILDA_PG_PREPARAR` | _(desactivado)_ | Sentencias preparadas tras N ejecuciones. Medido sin ganancia relevante; incompatible con PgBouncer en modo transacción. |
@@ -2659,7 +2660,7 @@ los tres mecanismos de §9 que la cubrían (copia diaria, Litestream) dejan de a
 | **Restic** (§9.2) | `pg_dumpall` diario del contenedor (red de seguridad lógica: se restaura sobre un esquema recién creado) **y** la carpeta de copias de arriba | Diaria 03:00 | el repositorio de Restic |
 | **Un despacho** (`scripts/copia_despacho.py`) | Exportar/importar solo un despacho (recuperarlo tras un error sin tocar a los demás, o moverlo de instalación) | A demanda | un `.tar.gz` |
 
-**Puesta en marcha** (acciones de administración, en este orden):
+**Puesta en marcha** (acciones de administración, en este orden; el corte completo está en `docs/runbook-corte-postgres.md`):
 
 ```bash
 # 1. Disco y variables: la carpeta de copias, en OTRO disco que los datos
@@ -2667,10 +2668,10 @@ sudo mkdir -p /mnt/HC_Volume_106540289/guilda-pg-backups/{base,wal} && sudo chmo
 echo 'GUILDA_PG_BACKUPS=/mnt/HC_Volume_106540289/guilda-pg-backups' | sudo tee -a /etc/guilda-work.env
 # 2. La imagen (PostgreSQL 17 + Citus + pgvector) y el contenedor
 docker compose -f docker-compose.postgres-citus.yml build   # solo construye la imagen guilda-work-citus:ensayo (la misma que usa el contenedor de producción)
-export PG_APP_PASSWORD=...   # fuera del repositorio (gestor de contraseñas)
-docker compose -f docker-compose.postgres-app.yml --env-file /etc/guilda-work.env up -d --wait
+# PG_APP_PASSWORD (superusuario) en /etc/guilda-pg-admin.env, modo 600, NO en /etc/guilda-work.env (los servicios no deben verla)
+docker compose -f docker-compose.postgres-app.yml --env-file /etc/guilda-work.env --env-file /etc/guilda-pg-admin.env up -d --wait
 # 3. Contraseñas de los roles (se crean sin contraseña) y la primera copia base
-docker exec -it guilda-work-postgres-app psql -U guilda -d guilda -c "ALTER ROLE guilda_app PASSWORD '…'" -c "ALTER ROLE guilda_plataforma PASSWORD '…'" -c "ALTER ROLE guilda_monitor PASSWORD '…'"
+docker exec -it guilda-work-postgres-app psql -U guilda -d guilda -c "ALTER ROLE guilda_app PASSWORD '…'" -c "ALTER ROLE guilda_plataforma PASSWORD '…'" -c "ALTER ROLE guilda_backoffice PASSWORD '…'" -c "ALTER ROLE guilda_monitor PASSWORD '…'"
 sudo scripts/backup_postgres.sh todo
 sudo cp deploy/postgres-backup.service deploy/postgres-backup.timer /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now postgres-backup.timer
 ```

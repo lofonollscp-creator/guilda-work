@@ -147,7 +147,11 @@ def copiar(ruta_sqlite, conn_pg, *, sin_comprobaciones: bool = True, informar=No
         shutil.rmtree(directorio, ignore_errors=True)
 
 
-def _copiar_tabla(origen, raw, tabla: str, cols: list[str], avisos: dict | None = None) -> int:
+def _nombre(tabla: str, esquema: str | None = None) -> str:
+    return f'"{esquema}"."{tabla}"' if esquema else f'"{tabla}"'
+
+
+def _copiar_tabla(origen, raw, tabla: str, cols: list[str], avisos: dict | None = None, esquema: str | None = None) -> int:
     """COPY por lotes. Un texto con bytes NUL (PostgreSQL no los admite en `text`) se carga sin ellos y se anota en `avisos[tabla][columna]` = filas afectadas."""
     lista = ", ".join(f'"{c}"' for c in cols)
     cur = origen.execute(f'SELECT {lista} FROM "{tabla}"')
@@ -158,12 +162,12 @@ def _copiar_tabla(origen, raw, tabla: str, cols: list[str], avisos: dict | None 
             break
         filas = [_sin_nul(f, cols, tabla, avisos) for f in filas]
         try:
-            with raw.cursor() as c, c.copy(f'COPY "{tabla}" ({lista}) FROM STDIN') as copy:
+            with raw.cursor() as c, c.copy(f'COPY {_nombre(tabla, esquema)} ({lista}) FROM STDIN') as copy:
                 for f in filas:
                     copy.write_row(f)
         except Exception as e:                                                                  # noqa: BLE001
             raw.rollback() if not raw.autocommit else None
-            culpable = _buscar_fila_rechazada(raw, tabla, cols, filas)
+            culpable = _buscar_fila_rechazada(raw, tabla, cols, filas, esquema)
             raise ErrorDeCarga(f"{tabla}: {culpable or e}") from e
         total += len(filas)
     return total
@@ -182,14 +186,14 @@ def _sin_nul(fila, cols, tabla, avisos):
     return tuple(nueva)
 
 
-def _buscar_fila_rechazada(raw, tabla: str, cols: list[str], filas) -> str | None:
+def _buscar_fila_rechazada(raw, tabla: str, cols: list[str], filas, esquema: str | None = None) -> str | None:
     """Reintenta fila a fila (en una transacción que se deshace) para decir cuál se rechaza y por qué."""
     lista = ", ".join(f'"{c}"' for c in cols)
     marcas = ", ".join(["%s"] * len(cols))
     for fila in filas:
         try:
             raw.execute("SAVEPOINT prueba") if not raw.autocommit else raw.execute("BEGIN")
-            raw.execute(f'INSERT INTO "{tabla}" ({lista}) VALUES ({marcas})', fila)
+            raw.execute(f'INSERT INTO {_nombre(tabla, esquema)} ({lista}) VALUES ({marcas})', fila)
             raw.execute("ROLLBACK TO SAVEPOINT prueba") if not raw.autocommit else raw.execute("ROLLBACK")
         except Exception as e:                                                                  # noqa: BLE001
             try:
@@ -225,3 +229,55 @@ def comprobar_claves(raw) -> list[tuple[str, str, int]]:
         if n:
             malas.append((hija, nombre, n))
     return malas
+
+
+# --- La base propia del backoffice (backoffice.db -> esquema `backoffice`) ------------------------------------------------------------------------------------------------------
+
+TABLAS_BACKOFFICE = ("admins", "intentos_login", "auditoria", "cobros", "notas_tenant", "snapshots_tenants", "salud_historial", "seguimiento_tenant", "auditorias_dependencias", "resumenes_enviados")
+
+
+def copiar_backoffice(ruta_sqlite, conn_pg, *, informe: dict | None = None) -> dict[str, int]:
+    """Carga `data/backoffice.db` en el esquema `backoffice` (app/bd/esquema_pg/11_backoffice.sql, que ya tiene que existir y estar vacío). Solo LEE la base de SQLite (copia consistente
+    con la API de copia). Con `informe` (un diccionario vacío) deja además recuentos y sumas de control por tabla: `informe["ok"]`, `informe["discrepancias"]`."""
+    from .verificar_migracion import huella
+    raw = getattr(conn_pg, "_raw", conn_pg)
+    directorio = tempfile.mkdtemp(prefix="guilda-migracion-bo-")
+    try:
+        origen = sqlite3.connect(f"file:{ruta_sqlite}?mode=ro", uri=True)
+        copia = sqlite3.connect(os.path.join(directorio, "copia.db"))
+        origen.backup(copia)
+        origen.close()
+        existentes = {r[0] for r in copia.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        cargadas: dict[str, int] = {}
+        avisos: dict[str, dict[str, int]] = {}
+        usadas: dict[str, list[str]] = {}
+        for t in TABLAS_BACKOFFICE:
+            if t not in existentes:
+                continue
+            en_pg = [r[0] for r in raw.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = 'backoffice' AND table_name = %s ORDER BY ordinal_position", (t,)).fetchall()]
+            cols = [r[1] for r in copia.execute(f'PRAGMA table_info("{t}")') if r[1] in en_pg]
+            if raw.execute(f'SELECT count(*) FROM backoffice."{t}"').fetchone()[0]:
+                raise ErrorDeCarga(f"backoffice.{t} ya tiene datos: la carga no mezcla (usa una base nueva)")
+            n = _copiar_tabla(copia, raw, t, cols, avisos, esquema="backoffice")
+            cargadas[t] = n
+            usadas[t] = cols
+            columna = raw.execute("SELECT a.attname FROM pg_attribute a WHERE a.attrelid = to_regclass(%s) AND a.attidentity <> '' AND NOT a.attisdropped", (f'backoffice."{t}"',)).fetchone()
+            if columna:
+                raw.execute(f'SELECT setval(pg_get_serial_sequence(%s, %s), COALESCE((SELECT MAX("{columna[0]}") FROM backoffice."{t}"), 0) + 1, false)', (f'backoffice."{t}"', columna[0]))
+        if informe is not None:
+            discrepancias = []
+            tablas = {}
+            for t, cols in usadas.items():
+                lista = ", ".join(f'"{c}"' for c in cols)
+                n_o, h_o = huella(copia.execute(f'SELECT {lista} FROM "{t}"'), len(cols))
+                n_d, h_d = huella(raw.execute(f'SELECT {lista} FROM backoffice."{t}"').fetchall(), len(cols))
+                tablas[t] = {"origen": n_o, "destino": n_d}
+                if n_o != n_d:
+                    discrepancias.append(f"backoffice.{t}: {n_o} filas en SQLite y {n_d} en PostgreSQL")
+                elif h_o != h_d:
+                    discrepancias.append(f"backoffice.{t}: la suma de control difiere en {', '.join(c for c, a, b in zip(cols, h_o, h_d) if a != b)}")
+            informe.update({"tablas": tablas, "discrepancias": discrepancias, "ok": not discrepancias, "nul_eliminados": avisos})
+        copia.close()
+        return cargadas
+    finally:
+        shutil.rmtree(directorio, ignore_errors=True)
