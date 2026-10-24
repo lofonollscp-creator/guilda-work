@@ -169,11 +169,11 @@ def token_required(vista):
         # completo), así que cualquier ruta de la app móvil/API que mirara
         # alguno de esos flags fallaría con un AttributeError en vez de
         # comportarse como el usuario que realmente es.
-        tenant = db.tenant_de_usuario(usuario_id)
-        g.tenant_id = tenant["id"] if tenant else None
-        g.es_admin = db.es_admin(usuario_id)
-        g.gestor_fichajes = db.es_gestor_fichajes(usuario_id)
-        g.supervisor_tenant = db.es_supervisor_tenant(usuario_id)
+        acceso = db.contexto_de_acceso(usuario_id) or {"tenant_id": None, "es_admin": False, "gestor_fichajes": False, "supervisor_tenant": False}       # una sola consulta (antes, cuatro)
+        g.tenant_id = acceso["tenant_id"]
+        g.es_admin = acceso["es_admin"]
+        g.gestor_fichajes = acceso["gestor_fichajes"]
+        g.supervisor_tenant = acceso["supervisor_tenant"]
         # Una persona en varios despachos elige con qué despacho trabaja este token con la cabecera `X-Despacho: <id>` (solo vale uno suyo; si no, el principal).
         elegido = request.headers.get("X-Despacho", type=int)
         if elegido and g.tenant_id is not None and elegido != g.tenant_id:

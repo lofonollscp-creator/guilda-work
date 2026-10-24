@@ -23,5 +23,7 @@ mcp = FastMCP("guilda-work")
 registrar_tools(mcp)
 
 if __name__ == "__main__":
+    from app import uso_diferido
+    uso_diferido.instalar()          # el contador de uso se vuelca cada 30 s y al parar el servicio
     db.init_db()  # idempotente: por si es la primera vez que se usa la app
     mcp.run()

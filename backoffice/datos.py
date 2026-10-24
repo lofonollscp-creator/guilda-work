@@ -260,6 +260,7 @@ def detalle_usuario(usuario_id: int) -> dict | None:
                FROM usuarios u LEFT JOIN usuario_perfil p ON p.usuario_id = u.id LEFT JOIN tenants t ON t.id = u.tenant_id
                WHERE u.id = ?""", (usuario_id,),
         ).fetchone()
+        _volcar_uso()
         dispositivos = conn.execute(
             "SELECT id, nombre_dispositivo, creado_en, ultimo_uso_en, permisos FROM tokens_api WHERE usuario_id = ? ORDER BY COALESCE(ultimo_uso_en, creado_en) DESC",
             (usuario_id,),
@@ -342,3 +343,12 @@ def personal_tenant(tenant_id: int) -> dict:
         "tipos_turno": turnos.listar_tipos(tenant_id),
         "turnos_proximos": sum(1 for p in turnos.cuadrante(tenant_id, hoy.isoformat(), (hoy + timedelta(days=13)).isoformat())["personas"] for d in p["dias"].values() if "turno_id" in d),
     }
+
+
+def _volcar_uso() -> None:
+    """Lo que esta misma aplicación aún tiene en memoria del uso de los tokens (se vuelca cada 30 s); el backoffice normalmente corre en otro proceso y verá el dato con ese retraso."""
+    try:
+        from app import uso_diferido
+        uso_diferido.volcar()
+    except Exception:                                                                    # noqa: BLE001
+        pass

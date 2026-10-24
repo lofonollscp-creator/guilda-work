@@ -161,6 +161,9 @@ IDIOMAS_DISPONIBLES = ["es", "ca", "en", "fr"]
 # encontraría los catálogos y serviría siempre castellano en silencio.
 app.config["BABEL_TRANSLATION_DIRECTORIES"] = str(BASE_DIR.parent / "translations")
 
+from . import uso_diferido  # noqa: E402 -- el uso de la API se vuelca cada 30 s y al parar el servicio (SIGTERM / salida)
+uso_diferido.instalar()
+
 
 def _seleccionar_idioma():
     idioma_guardado = db.idioma_usuario(getattr(g, "usuario_id", None)) if getattr(g, "usuario_id", None) else None

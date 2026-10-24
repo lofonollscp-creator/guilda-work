@@ -12,6 +12,8 @@ import secrets
 import sqlite3
 import sys
 from datetime import date, datetime, timedelta
+
+from . import uso_diferido
 from pathlib import Path
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -304,6 +306,7 @@ def resumen_equipos_tenants() -> dict[int, dict]:
 
 def resumen_usuarios_backoffice() -> dict[int, dict]:
     """Por usuario: nº de dispositivos/tokens y último uso de cualquiera de ellos."""
+    uso_diferido.volcar()
     conn = _db.get_connection()
     try:
         filas = conn.execute(
@@ -1237,6 +1240,21 @@ def tenant_de_usuario(usuario_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
+def contexto_de_acceso(usuario_id: int) -> dict | None:
+    """Lo que `token_required` necesita saber de quien llama, en UNA consulta: su despacho principal (`tenant_id`, None si no tiene), si es administrador global y sus dos permisos de fichaje.
+    Antes eran cuatro lecturas (`tenant_de_usuario`, `es_admin`, `es_gestor_fichajes`, `es_supervisor_tenant`): con PostgreSQL cada una es un viaje (≈ 1 ms) en cada petición de la API.
+    None si la persona no existe."""
+    conn = _db.get_connection()
+    try:
+        f = conn.execute(
+            "SELECT u.rol, u.gestor_fichajes, u.supervisor_tenant, t.id AS tenant_id FROM usuarios u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = ?", (usuario_id,)).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        return None
+    return {"tenant_id": f["tenant_id"], "es_admin": f["rol"] == "admin", "gestor_fichajes": bool(f["gestor_fichajes"]), "supervisor_tenant": bool(f["supervisor_tenant"])}
+
+
 def usuarios_de_tenant(tenant_id: int) -> list[int]:
     """IDs de los usuarios asignados a un tenant -- patrón reutilizable para
     cualquier consulta futura que necesite agregar entre varios usuarios de
@@ -1324,7 +1342,7 @@ def autenticar_token(token: str) -> tuple[int, str] | None:
     conn = _db.get_connection()
     try:
         fila = conn.execute(
-            "SELECT usuario_id, creado_en, ultimo_uso_en, permisos FROM tokens_api WHERE token_hash = ?",
+            "SELECT id, usuario_id, creado_en, ultimo_uso_en, permisos FROM tokens_api WHERE token_hash = ?",
             (_db._hash_token(token),),
         ).fetchone()
         if fila is None:
@@ -1335,11 +1353,10 @@ def autenticar_token(token: str) -> tuple[int, str] | None:
             conn.execute("DELETE FROM tokens_api WHERE token_hash = ?", (_db._hash_token(token),))
             conn.commit()
             return None
-        conn.execute(
-            "UPDATE tokens_api SET ultimo_uso_en = ? WHERE token_hash = ?",
-            (_db.now_iso(), _db._hash_token(token)),
-        )
-        conn.commit()
+        ahora = _db.now_iso()
+        if uso_diferido.tocar_token(fila["id"], fila["ultimo_uso_en"], None, ahora):          # con el diferido activo solo se anota en memoria (ver app/uso_diferido.py)
+            conn.execute("UPDATE tokens_api SET ultimo_uso_en = ? WHERE token_hash = ?", (ahora, _db._hash_token(token)))
+            conn.commit()
         return fila["usuario_id"], fila["permisos"]
     finally:
         conn.close()
@@ -1368,8 +1385,9 @@ def autenticar_token_completo(token: str, ip: str | None = None) -> dict | None:
         from . import token_restricciones
         if not token_restricciones.ip_permitida(ip, ips):
             return {"ip_no_permitida": True}      # no cuenta como uso ni actualiza la última IP: no es una llamada legítima
-        conn.execute("UPDATE tokens_api SET ultimo_uso_en = ?, ultima_ip = COALESCE(?, ultima_ip) WHERE id = ?", (ahora, ip, fila["id"]))
-        conn.commit()
+        if uso_diferido.tocar_token(fila["id"], fila["ultimo_uso_en"], ip, ahora):            # tabla de referencia: fuera de la ruta caliente (app/uso_diferido.py)
+            conn.execute("UPDATE tokens_api SET ultimo_uso_en = ?, ultima_ip = COALESCE(?, ultima_ip) WHERE id = ?", (ahora, ip, fila["id"]))
+            conn.commit()
         return {"usuario_id": fila["usuario_id"], "permisos": fila["permisos"], "areas": json.loads(fila["areas"]) if fila["areas"] else [], "token_id": fila["id"],
                 "origenes_cors": json.loads(fila["origenes_cors"]) if fila["origenes_cors"] else []}
     finally:
@@ -1397,20 +1415,13 @@ def origen_cors_conocido(origen: str) -> bool:
 
 
 def registrar_uso_token(token_id: int, status: int) -> None:
-    """Suma una llamada (y un error si status >= 400) al contador del día de ese token."""
-    conn = _db.get_connection()
-    try:
-        conn.execute(
-            "INSERT INTO tokens_api_uso (token_id, dia, llamadas, errores) VALUES (?, ?, 1, ?) "
-            "ON CONFLICT(token_id, dia) DO UPDATE SET llamadas = tokens_api_uso.llamadas + 1, errores = tokens_api_uso.errores + excluded.errores",
-            (token_id, _db.date.today().isoformat(), 1 if status >= 400 else 0),
-        )
-        conn.commit()
-    finally:
-        conn.close()
+    """Suma una llamada (y un error si status >= 400) al contador del día de ese token. En PostgreSQL se acumula en memoria y se vuelca cada 30 s (app/uso_diferido.py):
+    escribir aquí en cada petición, en una tabla de referencia de Citus, provocaba interbloqueos distribuidos con peticiones simultáneas."""
+    uso_diferido.sumar_uso_token(token_id, status)
 
 
 def uso_de_token(token_id: int, dias: int = 30) -> list[dict]:
+    uso_diferido.volcar()
     desde = (_db.date.today() - _db.timedelta(days=dias - 1)).isoformat()
     conn = _db.get_connection()
     try:
@@ -1422,6 +1433,7 @@ def uso_de_token(token_id: int, dias: int = 30) -> list[dict]:
 
 def listar_todos_los_tokens_api(tenant_id: int | None = None, dias: int = 30) -> list[dict]:
     """Todos los tokens (opcionalmente de un despacho) con su uso reciente, para el backoffice. Nunca el token."""
+    uso_diferido.volcar()
     desde = (_db.date.today() - _db.timedelta(days=dias - 1)).isoformat()
     filtro, params = ("WHERE u.tenant_id = ?", [tenant_id]) if tenant_id is not None else ("", [])
     conn = _db.get_connection()
@@ -1475,6 +1487,7 @@ def listar_tokens_api(usuario_id: int):
     ruta, para que un admin revoque los de un compañero de tenant) — nunca
     expone el token ni su hash, solo lo necesario para reconocerlo y
     decidir si revocarlo."""
+    uso_diferido.volcar()
     conn = _db.get_connection()
     try:
         return conn.execute(
@@ -1721,9 +1734,38 @@ def _purgar_cambios(conn: sqlite3.Connection) -> None:
         conn.execute("INSERT INTO api_cambios_purgado (id, max_id) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET max_id = CASE WHEN api_cambios_purgado.max_id > excluded.max_id THEN api_cambios_purgado.max_id ELSE excluded.max_id END", (maximo,))
 
 
+def _ventana_sync_seg(conn) -> int:
+    """Segundos que un cambio espera antes de entregarse con PostgreSQL (0 = sin espera; siempre 0 con SQLite, que tiene un único escritor).
+
+    `api_cambios.id` se asigna al insertar, pero el orden en que las transacciones CONFIRMAN no es el de sus ids: si A (id 100) confirma después que B (id 101) y un cliente ya ha leído
+    hasta 101, A no se le entrega nunca (reproducido, docs/plan-ux-ui-app-y-postgresql.md P-01). Solución provisional: no se entrega nada a partir del primer cambio «joven» (creado hace
+    menos de esta ventana), de modo que las transacciones lentas tienen ese margen para confirmar. Límite honesto: una transacción que dure más que la ventana aún puede perderse; el
+    diseño definitivo (cursor por transacción confirmada, `xid8`) es PG-07 del plan."""
+    if not _db._bd.es_postgres(conn):
+        return 0
+    try:
+        return max(0, int(os.environ.get("GUILDA_SYNC_VENTANA_SEG", "5")))
+    except ValueError:
+        return 5
+
+
+def _barrera_sync(conn, desde_id: int, ventana: int) -> int | None:
+    """El id del primer cambio posterior a `desde_id` que todavía está dentro de la ventana (nada se entrega a partir de él), o None si no hay ninguno."""
+    if ventana <= 0:
+        return None
+    f = conn.execute(
+        "SELECT MIN(id) FROM api_cambios WHERE id > ? AND creado_en > to_char(localtimestamp - (? * interval '1 second'), 'YYYY-MM-DD HH24:MI:SS')", (desde_id, ventana)).fetchone()
+    return f[0] if f and f[0] is not None else None
+
+
 def cursor_cambios_actual() -> int:
     conn = _db.get_connection()
     try:
+        ventana = _db._ventana_sync_seg(conn)
+        barrera = _db._barrera_sync(conn, 0, ventana)
+        if barrera is not None:                                 # el cursor «actual» no puede adelantarse al primer cambio aún joven
+            maximo = conn.execute("SELECT COALESCE(MAX(id), 0) FROM api_cambios WHERE id < ?", (barrera,)).fetchone()[0]
+            return maximo or _db._cursor_minimo_cero(conn)
         return conn.execute("SELECT COALESCE(MAX(id), 0) FROM api_cambios").fetchone()[0] or _db._cursor_minimo_cero(conn)
     finally:
         conn.close()
@@ -1747,10 +1789,11 @@ def cambios_desde(usuario_id: int, cursor: int, limite: int = 500) -> dict:
         f = conn.execute("SELECT max_id FROM api_cambios_purgado WHERE id = 1").fetchone()
         if f and cursor < f["max_id"]:
             return {"cursor": _db.cursor_cambios_actual(), "hay_mas": False, "reiniciar": True, "cambios": []}
+        barrera = _db._barrera_sync(conn, cursor, _db._ventana_sync_seg(conn))
         filas = conn.execute(
             """SELECT id, entidad, entidad_id, accion FROM api_cambios
-               WHERE id > ? AND (usuario_id = ? OR usuario2_id = ?) ORDER BY id LIMIT ?""",
-            (cursor, usuario_id, usuario_id, limite + 1),
+               WHERE id > ? AND (usuario_id = ? OR usuario2_id = ?) AND id < ? ORDER BY id LIMIT ?""",
+            (cursor, usuario_id, usuario_id, barrera if barrera is not None else 9223372036854775807, limite + 1),
         ).fetchall()
     finally:
         conn.close()
@@ -1768,14 +1811,23 @@ def idempotencia_reservar(usuario_id: int, clave: str, huella: str) -> tuple:
     ('conflicto',) si la misma clave se usó con otra petición; ('en_curso',) si aún se está procesando."""
     conn = _db.get_connection()
     try:
-        conn.execute("DELETE FROM api_idempotencia WHERE creado_en < ?", ((_db.datetime.now() - _db.timedelta(hours=_db.IDEMPOTENCIA_HORAS)).isoformat(timespec="seconds"),))
+        # Antes se borraban TODAS las caducadas en cada reserva (una escritura en una tabla de referencia por petición); ahora solo la fila de esta clave si ya caducó, y la limpieza general, una de cada cien.
+        limite = (_db.datetime.now() - _db.timedelta(hours=_db.IDEMPOTENCIA_HORAS)).isoformat(timespec="seconds")
         try:
             conn.execute("INSERT INTO api_idempotencia (usuario_id, clave, huella, creado_en) VALUES (?, ?, ?, ?)", (usuario_id, clave, huella, _db.now_iso()))
             conn.commit()
+            if random.random() < 0.01:
+                conn.execute("DELETE FROM api_idempotencia WHERE creado_en < ?", (limite,))
+                conn.commit()
             return ("nuevo",)
         except ErrorIntegridad:
             conn.rollback()
-        f = conn.execute("SELECT huella, estado, status, cuerpo FROM api_idempotencia WHERE usuario_id = ? AND clave = ?", (usuario_id, clave)).fetchone()
+        f = conn.execute("SELECT huella, estado, status, cuerpo, creado_en FROM api_idempotencia WHERE usuario_id = ? AND clave = ?", (usuario_id, clave)).fetchone()
+        if f is not None and f["creado_en"] < limite:               # la clave ya caducó: se puede reutilizar
+            conn.execute("DELETE FROM api_idempotencia WHERE usuario_id = ? AND clave = ? AND creado_en < ?", (usuario_id, clave, limite))
+            conn.execute("INSERT INTO api_idempotencia (usuario_id, clave, huella, creado_en) VALUES (?, ?, ?, ?)", (usuario_id, clave, huella, _db.now_iso()))
+            conn.commit()
+            return ("nuevo",)
         if f is None:
             return ("en_curso",)
         if f["huella"] != huella:
@@ -1857,23 +1909,19 @@ def mcp_registrar_llamada(
             (_db.now_iso(), usuario_id, tenant["id"] if tenant else None, cliente[:80], token_id, herramienta, 1 if lectura else 0, resultado,
              (detalle or "")[:300] or None, json.dumps(argumentos, ensure_ascii=False) if argumentos else None, duracion_ms),
         )
-        if usuario_id:
-            conn.execute(
-                "INSERT INTO mcp_uso (dia, usuario_id, herramienta, llamadas, errores) VALUES (?, ?, ?, 1, ?) "
-                "ON CONFLICT(dia, usuario_id, herramienta) DO UPDATE SET llamadas = mcp_uso.llamadas + 1, errores = mcp_uso.errores + excluded.errores",
-                (_db.date.today().isoformat(), usuario_id, herramienta, 0 if resultado == "ok" else 1),
-            )
         if random.random() < 0.01:
             limite = (_db.datetime.now() - _db.timedelta(days=_db.MCP_AUDITORIA_RETENCION_DIAS)).isoformat(timespec="seconds")
             conn.execute("DELETE FROM mcp_auditoria WHERE creado_en < ?", (limite,))
-            conn.execute("DELETE FROM mcp_uso WHERE dia < ?", (limite[:10],))
         conn.commit()
     finally:
         conn.close()
+    if usuario_id:                                      # contador diario (tabla de referencia): en memoria y volcado cada 30 s; la purga de `mcp_uso` va con el volcado
+        uso_diferido.sumar_uso_mcp(usuario_id, herramienta, resultado != "ok")
 
 
 def mcp_resumen(dias: int = 30, tenant_id: int | None = None) -> dict:
     """Totales, uso por herramienta y por persona de los últimos `dias` días, y los últimos fallos."""
+    uso_diferido.volcar()
     desde = (_db.date.today() - _db.timedelta(days=dias - 1)).isoformat()
     filtro, params = ("AND u.tenant_id = ?", [tenant_id]) if tenant_id is not None else ("", [])
     conn = _db.get_connection()

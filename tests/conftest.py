@@ -32,6 +32,8 @@ from pathlib import Path
 # Clave secreta propia de los tests, definida ANTES de importar la aplicación: lo que se firma fuera de una petición (el enlace público del logo en los correos, las tareas programadas)
 # la lee del entorno. Sin esto, esos tests dependían de que quien los ejecutara tuviera GUILDA_SECRET_KEY exportada; si ya está definida (la de quien desarrolla), manda la suya.
 os.environ.setdefault("GUILDA_SECRET_KEY", "clave-secreta-solo-para-los-tests-no-es-real")
+os.environ.setdefault("GUILDA_USO_HILO", "0")                        # el uso de la API se vuelca al leerlo, sin hilo de fondo
+os.environ.setdefault("GUILDA_SYNC_VENTANA_SEG", "0")                # las pruebas esperan ver sus cambios al instante (la prueba de la ventana la fija a mano)
 os.environ.setdefault("LEGAL_AI_ENABLED", "1")                       # el asistente jurídico existe en los tests (cada prueba decide si lo apaga)
 
 import keyring
@@ -270,6 +272,8 @@ def base_de_datos_temporal(tmp_path, monkeypatch, _plantilla_bd, _plantilla_pg):
         pg.activar_esquema("multitenant")
         monkeypatch.setattr(bd, "MOTOR", "postgres")
     db._ULTIMO_ACCESO_ANOTADO.clear()  # memoria del proceso: no puede arrastrarse de un test a otro
+    from app.bd import contexto as _ctx_comun
+    _ctx_comun._despacho.set(None), _ctx_comun._plataforma.set(False), _ctx_comun._usuario.set(None)   # también con SQLite: lo que fije un test (p. ej. una llamada con token) no debe verlo el siguiente del mismo proceso
     from app import acceso
     acceso.invalidar()                 # ídem: la caché de «¿este despacho usa oficinas?» va por id de despacho, y cada test reinicia los ids
     db.init_db()  # sobre el esquema ya hecho solo repasa lo idempotente (algunos tests dependen de ello)
@@ -461,3 +465,13 @@ def herramientas_conectadas_vivas(monkeypatch):
     estado_herramientas.reiniciar_cache()
     yield
     estado_herramientas.reiniciar_cache()
+
+
+@pytest.fixture(autouse=True)
+def uso_diferido_limpio():
+    """Lo que un test anota del uso de la API/MCP en memoria no puede aparecer en el siguiente (otra base de datos)."""
+    from app import uso_diferido
+
+    uso_diferido.reiniciar()
+    yield
+    uso_diferido.reiniciar()
