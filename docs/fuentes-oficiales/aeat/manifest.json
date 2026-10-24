@@ -54,5 +54,19 @@
   "bytes": 738001,
   "sha256": "071bdaabc3736e2e6def49be35c11fec744a74d5a9ab3f2ac50a2b1aa6fd7d22",
   "descargado": "2026-10-24T22:38:17"
+ },
+ {
+  "fichero": "PLANTILLA_LIBROS_Pers_Juridicas.xlsx",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/IVA/Fact_registro/Libros/PLANTILLA_LIBROS_Pers_Juridicas.xlsx",
+  "bytes": 286104,
+  "sha256": "e5127ab6c471ab47b80232bf6dccaadd88791ef610de818311dc582da7e6e813",
+  "descargado": "2026-10-24T22:59:59"
+ },
+ {
+  "fichero": "PLANTILLA_LIBROS_UNIFICADOS.xlsx",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/IVA/Fact_registro/Libros/PLANTILLA_LIBROS_UNIFICADOS.xlsx",
+  "bytes": 292511,
+  "sha256": "1011b811d71e5074dea08b946d2be2189343e419bcb668441d6e74fd1f639008",
+  "descargado": "2026-10-24T22:59:59"
  }
 ]

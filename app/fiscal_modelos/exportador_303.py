@@ -17,6 +17,9 @@ from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 DISENO_303_2026 = Path(__file__).resolve().parent / "disenos" / "303_2026_v101.json"
+# Quién DESARROLLA el programa que genera el fichero (campos 9 y 11 de la envoltura). No es quien presenta: la presentación la hace el colaborador social o el obligado con su certificado.
+NIF_ENTIDAD_DESARROLLADORA = "B16406233"                              # GUILDA ASSESSORS HISTORICS SL
+VERSION_PROGRAMA = "1.00"                                            # 4 posiciones, con el punto (la propia AEAT escribe «1.06»); subir al cambiar el cálculo o el diseño
 PERIODOS = tuple(f"{m:02d}" for m in range(1, 13)) + ("1T", "2T", "3T", "4T")
 ULTIMOS = ("12", "4T")
 TIPOS_DECLARACION = ("C", "D", "G", "I", "N", "V", "U", "X")          # Nota 1 de la página 1
@@ -145,9 +148,11 @@ def _orden(diseno: dict, hoja: str) -> int:
     return [p["hoja"] for p in diseno["paginas"]].index(hoja)
 
 
-def construir(diseno: dict, *, ejercicio: int, periodo: str, paginas: dict[str, dict], version_programa: str = "", nif_empresa_desarrollo: str = "",
+def construir(diseno: dict, *, ejercicio: int, periodo: str, paginas: dict[str, dict], version_programa: str | None = None, nif_empresa_desarrollo: str | None = None,
               codificacion: str = "iso-8859-15", salto_de_linea: str = "") -> bytes:
     """El fichero completo. `paginas`: `{"DP30301": {valores…}, "DP30303": {…}}` en el orden en que van en el fichero (las hojas del diseño son las páginas)."""
+    version_programa = VERSION_PROGRAMA if version_programa is None else version_programa
+    nif_empresa_desarrollo = NIF_ENTIDAD_DESARROLLADORA if nif_empresa_desarrollo is None else nif_empresa_desarrollo
     if periodo not in PERIODOS:
         raise ErrorDeFormato(f"periodo no válido: {periodo!r} (01…12 o 1T…4T)")
     if not 2026 <= ejercicio <= 9999:
@@ -161,7 +166,7 @@ def construir(diseno: dict, *, ejercicio: int, periodo: str, paginas: dict[str, 
     cabecera = "".join([
         formatear(campos[1], None), formatear(campos[2], None), formatear(campos[3], None),
         formatear(campos[4], str(ejercicio)), formatear(campos[5], periodo), formatear(campos[6], None),
-        formatear(campos[7], None), formatear(campos[8], None), formatear(campos[9], version_programa), formatear(campos[10], None),
+        formatear(campos[7], None), formatear(campos[8], None), str(version_programa)[:campos[9]["lon"]].ljust(campos[9]["lon"]), formatear(campos[10], None),
         formatear(campos[11], nif_empresa_desarrollo), formatear(campos[12], None), formatear(campos[13], None)])
     cierre = f"</T3030{ejercicio}{periodo}0000>"
     return (cabecera + salto_de_linea + contenido + salto_de_linea + cierre).encode(codificacion)

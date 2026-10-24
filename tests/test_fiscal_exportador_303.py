@@ -129,7 +129,7 @@ def _ejemplo_21():
     b1 = {7: "A12345674", 8: "EMPRESA DE PRUEBA SL", 9: "2026", 10: "2T", **e.indicadores_pagina1("2T")}
     v1 = {6: "I", **b1, "07": Decimal("100.00"), "09": Decimal("21.00"), "27": Decimal("21.00"), "45": Decimal("0"), "46": Decimal("21.00")}
     v3 = {"64": Decimal("21.00"), "65": Decimal("100.00"), "66": Decimal("21.00"), "69": Decimal("21.00"), "71": Decimal("21.00")}
-    return e.construir(D, ejercicio=2026, periodo="2T", paginas={"DP30301": v1, "DP30303": v3})
+    return e.construir(D, ejercicio=2026, periodo="2T", paginas={"DP30301": v1, "DP30303": v3}, version_programa="", nif_empresa_desarrollo="")
 
 
 def test_nuestro_fichero_coincide_byte_a_byte_con_el_que_exporta_el_simulador_salvo_campos_de_la_aeat():
@@ -181,3 +181,11 @@ def test_el_simulador_acepta_el_ejemplo_y_rechaza_uno_incoherente(tmp_path):
     f2.write_bytes(bytes(malo))
     codigos = {m["codigo"] for m in sim.probar(f2)["importacion"]["mensajes"]}
     assert "E010671" in codigos
+
+
+def test_la_envoltura_lleva_la_entidad_desarrolladora_por_defecto():
+    f = e.construir(D, ejercicio=2026, periodo="2T", paginas={}).decode("iso-8859-15")
+    r = e.descomponer(D, f.encode("iso-8859-15"))
+    assert e.NIF_ENTIDAD_DESARROLLADORA == "B16406233" and len(e.VERSION_PROGRAMA) == 4
+    assert e.NIF_ENTIDAD_DESARROLLADORA in f and e.VERSION_PROGRAMA in f
+    assert r
