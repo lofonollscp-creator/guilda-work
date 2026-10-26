@@ -193,3 +193,104 @@ class ChipEstado extends StatelessWidget {
     ]);
   }
 }
+
+/// Un dato pequeño con forma de píldora (icono + texto) para las filas y tarjetas: mismo tamaño y mismo aire en todas las pantallas. El tono por defecto es neutro; con
+/// [color] se tiñe (vencida en rojo, prioridad alta en ámbar…). Siempre lleva texto: el color nunca es lo único que informa.
+class Pildora extends StatelessWidget {
+  final IconData? icono;
+  final String texto;
+  final Color? color;
+  final bool fuerte;
+
+  /// Si se pasa, la píldora es un botón (lleva una flechita) —p. ej. el estado de la ficha, que se toca para cambiarlo.
+  final VoidCallback? alPulsar;
+  const Pildora({super.key, this.icono, required this.texto, this.color, this.fuerte = false, this.alPulsar});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final c = color ?? tema.colorScheme.onSurfaceVariant;
+    final grande = alPulsar != null;
+    final pildora = Container(
+      padding: EdgeInsets.symmetric(horizontal: grande ? 12 : 8, vertical: grande ? 8 : 3),
+      constraints: BoxConstraints(minHeight: grande ? 40 : 0),
+      decoration: BoxDecoration(color: c.withValues(alpha: color == null ? 0.10 : 0.14), borderRadius: BorderRadius.circular(999)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (icono != null) ...[ExcludeSemantics(child: Icon(icono, size: grande ? 18 : 14, color: c)), SizedBox(width: grande ? 6 : 4)],
+        Flexible(child: Text(texto, style: (grande ? tema.textTheme.labelLarge : tema.textTheme.labelMedium)?.copyWith(color: c, fontWeight: fuerte ? FontWeight.w700 : null), maxLines: 1, overflow: TextOverflow.ellipsis)),
+        if (grande) ExcludeSemantics(child: Icon(Icons.arrow_drop_down, size: 20, color: c)),
+      ]),
+    );
+    if (!grande) return pildora;
+    return Semantics(button: true, child: InkWell(borderRadius: BorderRadius.circular(999), onTap: alPulsar, child: pildora));
+  }
+}
+
+/// Pestañas de texto con el subrayado del acento en la activa (como el submenú de la web): ligeras, sin cajas, y se deslizan si no caben.
+class PestanasSubnav<T> extends StatelessWidget {
+  final List<(T, String, IconData)> opciones;
+  final T actual;
+  final void Function(T) alElegir;
+  const PestanasSubnav({super.key, required this.opciones, required this.actual, required this.alElegir});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: tema.colorScheme.outlineVariant))),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(children: [
+          for (final (valor, etiqueta, icono) in opciones)
+            Semantics(
+              button: true,
+              selected: valor == actual,
+              child: InkWell(
+                onTap: () => alElegir(valor),
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: valor == actual ? tema.colorScheme.primary : Colors.transparent, width: 3))),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    ExcludeSemantics(child: Icon(icono, size: 18, color: valor == actual ? tema.colorScheme.onSurface : tema.colorScheme.onSurfaceVariant)),
+                    const SizedBox(width: 6),
+                    Text(etiqueta, style: tema.textTheme.labelLarge?.copyWith(color: valor == actual ? tema.colorScheme.onSurface : tema.colorScheme.onSurfaceVariant)),
+                  ]),
+                ),
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Un bloque de la ficha: título y contenido dentro de una tarjeta, para que la ficha no sea una columna larga de texto suelto.
+class BloqueFicha extends StatelessWidget {
+  final String? titulo;
+  final Widget hijo;
+  final Widget? accion;
+  const BloqueFicha({super.key, this.titulo, required this.hijo, this.accion});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Material(
+        color: tema.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            if (titulo != null) Row(children: [Expanded(child: Text(titulo!, style: tema.textTheme.titleSmall)), ?accion]),
+            if (titulo != null) const SizedBox(height: 4),
+            hijo,
+          ]),
+        ),
+      ),
+    );
+  }
+}

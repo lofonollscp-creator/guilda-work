@@ -249,6 +249,7 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
   }
 }
 
+/// Una sola fila de filtros: ámbito y estado como menús desplegables en forma de píldora, y los botones de filtros y vistas. (Antes eran tres filas de controles.)
 class _Filtros extends ConsumerWidget {
   final EstadoListaTareas estado;
   const _Filtros({required this.estado});
@@ -257,49 +258,108 @@ class _Filtros extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final c = ref.read(tareasListaProvider.notifier);
-    final ambitos = [('propias', t.tareasAmbitoPropias), ('asignadas', t.tareasAmbitoAsignadas), ('compartidas', t.tareasAmbitoCompartidas), ('todas', t.tareasAmbitoTodas)];
-    return Column(children: [
-      // Los cuatro ámbitos siempre a la vista (antes había que deslizar para ver el último).
-      Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-        child: SegmentedButton<String>(
-          showSelectedIcon: false,
-          segments: [for (final (clave, etiqueta) in ambitos) ButtonSegment(value: clave, label: Text(etiqueta, maxLines: 1, overflow: TextOverflow.ellipsis))],
-          selected: {estado.ambito},
-          onSelectionChanged: (s) => c.cambiarAmbito(s.first),
+    final ambitos = {'propias': t.tareasAmbitoPropias, 'asignadas': t.tareasAmbitoAsignadas, 'compartidas': t.tareasAmbitoCompartidas, 'todas': t.tareasAmbitoTodas};
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      child: Row(children: [
+        _PildoraMenu<String>(
+          icono: Icons.person_outline,
+          texto: ambitos[estado.ambito] ?? '',
+          activo: estado.ambito != 'propias',
+          opciones: [for (final e in ambitos.entries) (e.key, e.value)],
+          seleccionado: estado.ambito,
+          alElegir: c.cambiarAmbito,
+        ),
+        const SizedBox(width: 8),
+        _PildoraMenu<EstadoTarea?>(
+          icono: Icons.flag_circle_outlined,
+          texto: estado.estado == null ? t.tareaEstado : etiquetaEstado(t, estado.estado!),
+          activo: estado.estado != null,
+          opciones: [(null, t.tareasFiltroTodas), for (final e in EstadoTarea.elegibles) (e, etiquetaEstado(t, e))],
+          seleccionado: estado.estado,
+          alElegir: c.cambiarEstado,
+        ),
+        const SizedBox(width: 8),
+        _PildoraBoton(
+          icono: Icons.tune,
+          texto: estado.filtrosActivos == 0 ? t.tareasFiltros : t.tareasFiltrosActivos(estado.filtrosActivos),
+          activo: estado.filtrosActivos > 0,
+          alPulsar: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => const _HojaFiltros()),
+        ),
+        const SizedBox(width: 8),
+        _PildoraBoton(
+          icono: Icons.bookmarks_outlined,
+          texto: t.tareasVistas,
+          alPulsar: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => const _HojaVistas()),
+        ),
+      ]),
+    );
+  }
+}
+
+class _PildoraBoton extends StatelessWidget {
+  final IconData icono;
+  final String texto;
+  final bool activo;
+  final VoidCallback alPulsar;
+  const _PildoraBoton({required this.icono, required this.texto, this.activo = false, required this.alPulsar});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final fondo = activo ? Color.alphaBlend(tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.22 : 0.30), tema.colorScheme.surface) : tema.colorScheme.surface;
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: alPulsar,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(999), border: Border.all(color: activo ? tema.colorScheme.primary : tema.colorScheme.outlineVariant, width: activo ? 1.5 : 1)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icono, size: 18, color: tema.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Text(texto, style: tema.textTheme.labelLarge?.copyWith(color: tema.colorScheme.onSurface)),
+          ]),
         ),
       ),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(label: Text(t.tareasFiltroTodas), selected: estado.estado == null, onSelected: (_) => c.cambiarEstado(null)),
-          ),
-          for (final e in EstadoTarea.elegibles)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(label: Text(etiquetaEstado(t, e)), selected: estado.estado == e, onSelected: (_) => c.cambiarEstado(e)),
-            ),
+    );
+  }
+}
+
+/// Un menú desplegable con forma de píldora: enseña la elección actual y abre la lista de opciones.
+class _PildoraMenu<T> extends StatelessWidget {
+  final IconData icono;
+  final String texto;
+  final bool activo;
+  final List<(T, String)> opciones;
+  final T seleccionado;
+  final void Function(T) alElegir;
+  const _PildoraMenu({required this.icono, required this.texto, required this.activo, required this.opciones, required this.seleccionado, required this.alElegir});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final fondo = activo ? Color.alphaBlend(tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.22 : 0.30), tema.colorScheme.surface) : tema.colorScheme.surface;
+    return PopupMenuButton<T>(
+      tooltip: texto,
+      position: PopupMenuPosition.under,
+      onSelected: alElegir,
+      itemBuilder: (_) => [for (final (valor, etiqueta) in opciones) CheckedPopupMenuItem<T>(value: valor, checked: valor == seleccionado, child: Text(etiqueta))],
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 40),
+        padding: const EdgeInsets.only(left: 14, right: 8),
+        decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(999), border: Border.all(color: activo ? tema.colorScheme.primary : tema.colorScheme.outlineVariant, width: activo ? 1.5 : 1)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icono, size: 18, color: tema.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(texto, style: tema.textTheme.labelLarge?.copyWith(color: tema.colorScheme.onSurface)),
+          Icon(Icons.arrow_drop_down, color: tema.colorScheme.onSurfaceVariant),
         ]),
       ),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(children: [
-          TextButton.icon(
-            onPressed: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => const _HojaFiltros()),
-            icon: const Icon(Icons.tune, size: 18),
-            label: Text(estado.filtrosActivos == 0 ? t.tareasFiltros : t.tareasFiltrosActivos(estado.filtrosActivos)),
-          ),
-          TextButton.icon(
-            onPressed: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => const _HojaVistas()),
-            icon: const Icon(Icons.bookmarks_outlined, size: 18),
-            label: Text(t.tareasVistas),
-          ),
-        ]),
-      ),
-    ]);
+    );
   }
 }
 
@@ -364,24 +424,38 @@ class _AltaRapida extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 4, 8),
-        child: Row(children: [
-          Expanded(
-            child: TextField(
-              controller: controlador,
-              textInputAction: TextInputAction.send,
-              decoration: InputDecoration(hintText: t.tareasNuevaHint, isDense: true, border: const OutlineInputBorder()),
-              onSubmitted: (_) => alEnviar(),
+    final tema = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(color: tema.colorScheme.surface, border: Border(top: BorderSide(color: tema.colorScheme.outlineVariant))),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+          child: Row(children: [
+            Expanded(
+              child: TextField(
+                controller: controlador,
+                textInputAction: TextInputAction.send,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  hintText: t.tareasNuevaHint,
+                  isDense: true,
+                  filled: true,
+                  fillColor: tema.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
+                ),
+                onSubmitted: (_) => alEnviar(),
+              ),
             ),
-          ),
-          fecha == null
-              ? IconButton(icon: const Icon(Icons.event_outlined), tooltip: t.tareasFecha, onPressed: alElegirFecha)
-              : InputChip(label: Text(context.formatos.fecha(fecha!)), onPressed: alElegirFecha, onDeleted: alQuitarFecha),
-          IconButton(icon: const Icon(Icons.send), tooltip: t.tareasNueva, onPressed: alEnviar),
-        ]),
+            const SizedBox(width: 4),
+            fecha == null
+                ? IconButton(icon: const Icon(Icons.event_outlined), tooltip: t.tareasFecha, onPressed: alElegirFecha)
+                : InputChip(label: Text(context.formatos.fecha(fecha!)), onPressed: alElegirFecha, onDeleted: alQuitarFecha),
+            IconButton.filled(icon: const Icon(Icons.arrow_upward), tooltip: t.tareasNueva, onPressed: alEnviar),
+          ]),
+        ),
       ),
     );
   }

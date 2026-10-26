@@ -5,8 +5,10 @@ import '../../api/generado/modelos.g.dart';
 import '../../datos/cola.dart';
 import '../../diseno/componentes.dart';
 import '../../diseno/formatos.dart';
+import '../../diseno/estados.dart';
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
+import '../../theme/brand_colors.dart';
 import '../../nucleo/lectura_guardada.dart';
 import '../../nucleo/sesion.dart';
 import '../pendientes/pendientes_sheet.dart';
@@ -72,6 +74,19 @@ class TableroScreen extends ConsumerWidget {
                 TabBar(
                   isScrollable: true,
                   tabAlignment: TabAlignment.start,
+                  dividerColor: Colors.transparent,
+                  // Las columnas son píldoras (no un segundo subrayado debajo de las vistas): la elegida lleva el tinte del acento.
+                  indicator: BoxDecoration(
+                    color: Color.alphaBlend(Theme.of(context).colorScheme.primary.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.22 : 0.30), Theme.of(context).colorScheme.surface),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5),
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicatorPadding: const EdgeInsets.symmetric(vertical: 6),
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 14),
+                  labelColor: Theme.of(context).colorScheme.onSurface,
+                  unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   tabs: [for (final e in columnasTablero) Tab(text: '${etiquetaEstado(t, e)} (${(columnas[e.valor] ?? const []).length})')],
                 ),
                 Expanded(
@@ -153,32 +168,40 @@ class _Tarjeta extends ConsumerWidget {
     final total = tarea.checklistTotal ?? 0;
     final prioridad = PrioridadTarea.desde(tarea.prioridad);
     final persona = tarea.rol == 'asignada' ? tarea.creadorNombre : tarea.asignadaNombre;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    final oscuro = tema.brightness == Brightness.dark;
+    final colorAlta = oscuro ? BrandColors.warningTextDark : BrandColors.warningTextLight;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+      color: tema.colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: tarea.id < 0 ? null : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id))),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Container(width: 4, color: prioridad == PrioridadTarea.alta ? colorAlta : Colors.transparent),
             Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(tarea.asunto ?? '', style: tema.textTheme.titleSmall, maxLines: 3, overflow: TextOverflow.ellipsis),
-                if (total > 0) ...[
-                  const SizedBox(height: 6),
-                  LinearProgressIndicator(value: hechas / total, minHeight: 4),
-                  const SizedBox(height: 2),
-                  Text(t.tableroPasos(hechas, total), style: tema.textTheme.labelSmall),
-                ],
-                const SizedBox(height: 6),
-                Wrap(spacing: 10, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                  if (prioridad != PrioridadTarea.normal)
-                    Text(etiquetaPrioridad(t, prioridad), style: tema.textTheme.labelMedium?.copyWith(fontWeight: prioridad == PrioridadTarea.alta ? FontWeight.w700 : null)),
-                  if ((tarea.categoriaNombre ?? '').isNotEmpty) Text(tarea.categoriaNombre!, style: tema.textTheme.labelMedium),
-                  if (fecha != null) Text(fecha, style: tema.textTheme.labelMedium?.copyWith(color: tarea.vencida == true ? tema.colorScheme.error : null)),
-                  if ((persona ?? '').isNotEmpty)
-                    Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.person_outline, size: 14), const SizedBox(width: 2), Text(persona!, style: tema.textTheme.labelMedium)]),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(tarea.asunto ?? '', style: tema.textTheme.titleMedium, maxLines: 3, overflow: TextOverflow.ellipsis),
+                  if (total > 0) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: hechas / total, minHeight: 6, backgroundColor: tema.colorScheme.surfaceContainerHighest)),
+                    const SizedBox(height: 4),
+                    Text(t.tableroPasos(hechas, total), style: tema.textTheme.labelSmall),
+                  ],
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                    if (prioridad == PrioridadTarea.alta) Pildora(icono: Icons.flag_outlined, texto: etiquetaPrioridad(t, prioridad), color: colorAlta, fuerte: true),
+                    if (prioridad == PrioridadTarea.baja) Pildora(icono: Icons.flag_outlined, texto: etiquetaPrioridad(t, prioridad)),
+                    if ((tarea.categoriaNombre ?? '').isNotEmpty) Pildora(icono: Icons.folder_outlined, texto: tarea.categoriaNombre!),
+                    if (fecha != null) Pildora(icono: tarea.vencida == true ? Icons.error_outline : Icons.event_outlined, texto: fecha, color: tarea.vencida == true ? aspectoVencida.color(tema.brightness) : null, fuerte: tarea.vencida == true),
+                    if ((persona ?? '').isNotEmpty) Pildora(icono: Icons.person_outline, texto: persona!),
+                  ]),
                 ]),
-              ]),
+              ),
             ),
             if (tarea.id > 0 && tarea.rol != 'compartida')
               PopupMenuButton<EstadoTarea>(
@@ -194,6 +217,7 @@ class _Tarjeta extends ConsumerWidget {
               ),
           ]),
         ),
+      ),
       ),
     );
   }
