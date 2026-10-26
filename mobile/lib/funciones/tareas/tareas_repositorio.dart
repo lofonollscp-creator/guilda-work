@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/cliente.dart';
+import '../../api/errores.dart';
+import '../../api/fechas.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../api/generado/operaciones.g.dart';
 import '../../dominio/tarea.dart';
@@ -74,6 +76,145 @@ class TareasRepositorio {
     };
   }
 
+  // --- la ficha completa (Fase 3): personas, dependencias, recordatorios, proyecto y cliente ---
+
+  /// Edición como la web. `estimacion` es texto libre («1h30», «45 min», «2» = horas) y lo interpreta el servidor; vacío la quita.
+  Future<TareaOutlook> editarFicha(
+    int id, {
+    String? asunto,
+    String? cuerpo,
+    PrioridadTarea? prioridad,
+    String? estimacion,
+    String? categoriaOutlook,
+    int? porcentaje,
+    String? fechaInicio,
+    bool quitarInicio = false,
+    String? fechaVencimiento,
+    bool quitarVencimiento = false,
+  }) =>
+      _o.editarTareaOutlook(tareaId: id, cuerpo: {
+        'asunto': ?asunto,
+        'cuerpo': ?cuerpo,
+        if (prioridad != null) 'prioridad': prioridad.valor,
+        'estimacion': ?estimacion,
+        'categoria_outlook': ?categoriaOutlook,
+        'porcentaje_completado': ?porcentaje,
+        if (quitarInicio) 'fecha_inicio': null else 'fecha_inicio': ?fechaInicio,
+        if (quitarVencimiento) 'fecha_vencimiento': null else 'fecha_vencimiento': ?fechaVencimiento,
+      });
+
+  Future<List<Companero>> companeros() => _o.listarCompaneros();
+
+  /// Proyectos (los tuyos) y clientes fiscales del despacho, para los selectores. Sin el módulo fiscal, los clientes vienen vacíos.
+  Future<List<Proyecto>> proyectos() => _o.listarProyectos();
+  Future<List<ClienteFiscal>> clientesFiscales() async {
+    try {
+      return await _o.listarClientesFiscales(limit: 200);
+    } on ApiException {
+      return const [];
+    }
+  }
+
+  /// Asigna (o quita con `null`) a una persona del despacho. Solo la dueña de la tarea.
+  Future<void> asignar(int id, int? companeroId) => _cliente.enviar('POST', '/tareas-outlook/$id/asignar', cuerpo: {'companero_id': companeroId});
+
+  /// Cambia de proyecto (`null` = sin proyecto): la misma acción en lote de la web, sobre una tarea.
+  Future<({int ok, int fallos})> moverAProyecto(int id, int? proyectoId) => lote([id], 'proyecto', valor: proyectoId?.toString());
+
+  /// Cliente principal (`null` = tarea interna). Conserva los demás clientes vinculados.
+  Future<void> fijarCliente(int id, int? clienteId, {List<int> otros = const []}) =>
+      _cliente.enviar('PUT', '/tareas-outlook/$id/clientes', cuerpo: {'cliente_ids': [?clienteId, ...otros.where((o) => o != clienteId)], 'principal_id': clienteId});
+
+  Future<List<ParticipanteTarea>> participantes(int id) async =>
+      [for (final p in (await _cliente.enviar('GET', '/tareas-outlook/$id/compartir') as List? ?? const [])) ParticipanteTarea.desdeJson(p as Map<String, dynamic>)];
+  Future<void> compartir(int id, int usuarioId, String rol) => _cliente.enviar('POST', '/tareas-outlook/$id/compartir', cuerpo: {'usuario_id': usuarioId, 'rol': rol});
+  Future<void> dejarDeCompartir(int id, int usuarioId) => _cliente.enviar('DELETE', '/tareas-outlook/$id/compartir/$usuarioId');
+
+  Future<({bool bloqueada, List<DependenciaTarea> esperaA})> dependencias(int id) async {
+    final r = await _cliente.enviar('GET', '/tareas-outlook/$id/dependencias') as Map<String, dynamic>? ?? const {};
+    return (bloqueada: r['bloqueada'] == true, esperaA: [for (final d in (r['depende_de'] as List? ?? const [])) DependenciaTarea.desdeJson(d as Map<String, dynamic>)]);
+  }
+
+  Future<void> esperaA(int id, int dependeDeId) => _cliente.enviar('POST', '/tareas-outlook/$id/dependencias', cuerpo: {'depende_de_id': dependeDeId});
+  Future<void> quitarEspera(int id, int dependeDeId) => _cliente.enviar('DELETE', '/tareas-outlook/$id/dependencias/$dependeDeId');
+
+  Future<List<RecordatorioTarea>> recordatorios(int id) => _o.listarRecordatorios(tareaId: id);
+
+  Future<TiempoDeTarea> tiempo(int id) async => TiempoDeTarea.desdeJson(await _cliente.enviar('GET', '/tareas-outlook/$id/tiempo') as Map<String, dynamic>? ?? const {});
+
+  /// Empieza a contar. `proyectoId` solo hace falta si la tarea no tiene proyecto. Devuelve el id del cronómetro.
+  Future<int> iniciarCronometro(int id, {int? proyectoId}) async {
+    final r = await _cliente.enviar('POST', '/tareas-outlook/$id/cronometro/iniciar', cuerpo: {'proyecto_id': ?proyectoId}) as Map<String, dynamic>;
+    return (r['tarea_cronometro_id'] as num).toInt();
+  }
+
+  Future<void> pausarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/pausar');
+  Future<void> reanudarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/reanudar');
+  Future<void> finalizarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/finalizar');
+
+  Future<RevisionesDeLaTarea> revisiones(int id) async => RevisionesDeLaTarea.desdeJson(await _cliente.enviar('GET', '/tareas-outlook/$id/revision') as Map<String, dynamic>? ?? const {});
+
+  /// `modo`: `todos`, `cualquiera` o `cadena` (uno tras otro, en el orden de `revisores`). Hasta cinco personas.
+  Future<void> pedirRevision(int id, List<int> revisores, {String modo = 'todos', String? nota}) =>
+      _cliente.enviar('POST', '/tareas-outlook/$id/revision', cuerpo: {'revisor_ids': revisores, 'modo': modo, 'nota': ?nota});
+
+  /// `decision`: `aprobar` o `cambios` (esta última exige nota).
+  Future<void> votarRevision(int id, String decision, {String? nota}) => _cliente.enviar('POST', '/tareas-outlook/$id/revision/resolver', cuerpo: {'decision': decision, 'nota': ?nota});
+  Future<void> retirarRevision(int id) => _cliente.enviar('POST', '/tareas-outlook/$id/revision/cancelar');
+
+  Future<List<ConversacionConCliente>> conversacionesConClientes(int id, {bool marcarLeidos = false}) async => [
+        for (final c in (await _cliente.enviar('GET', '/tareas-outlook/$id/conversaciones-cliente', consulta: {'marcar_leidos': marcarLeidos}) as List? ?? const []))
+          ConversacionConCliente.desdeJson(c as Map<String, dynamic>),
+      ];
+  Future<void> responderAlCliente(int id, int clienteId, String texto) => _cliente.enviar('POST', '/tareas-outlook/$id/conversaciones-cliente', cuerpo: {'cliente_fiscal_id': clienteId, 'texto': texto.trim()});
+  Future<void> ocultarComentarioDeCliente(int comentarioId) => _cliente.enviar('POST', '/tareas-outlook/cliente-comentarios/$comentarioId/ocultar');
+
+  Future<List<ActividadDeTarea>> actividad(int id) async =>
+      [for (final a in (await _cliente.enviar('GET', '/tareas-outlook/$id/actividad') as List? ?? const [])) ActividadDeTarea.desdeJson(a as Map<String, dynamic>)];
+
+  /// Enseña (o no) la tarea al cliente en su portal; `comentarios` deja además que escriba en ella.
+  Future<void> visibleParaCliente(int id, {required bool visible, bool? comentarios}) =>
+      _cliente.enviar('PUT', '/tareas-outlook/$id/visible-cliente', cuerpo: {'visible': visible, 'comentarios': ?comentarios});
+
+  /// `avisarEn` (`YYYY-MM-DDTHH:MM`) o un `atajo` relativo al vencimiento (`1d_antes`, `1h_antes`, `al_vencer`).
+  Future<void> anadirRecordatorio(int id, {String? avisarEn, String? atajo, List<String> canales = const ['app']}) =>
+      _cliente.enviar('POST', '/tareas-outlook/$id/recordatorios', cuerpo: {'avisar_en': ?avisarEn, 'atajo': ?atajo, 'canales': canales});
+  Future<void> quitarRecordatorio(int recordatorioId) => _cliente.enviar('DELETE', '/tareas-outlook/recordatorios/$recordatorioId');
+
+  /// `opcion`: `1h`, `manana` (9:00) o `1s` (una semana).
+  Future<void> posponerRecordatorio(int recordatorioId, String opcion) => _cliente.enviar('POST', '/tareas-outlook/recordatorios/$recordatorioId/posponer', cuerpo: {'opcion': opcion});
+
+  // --- calendario y carga (Fase 4) ---
+
+  /// El calendario de la web: `vista` (`mes`, `semana`, `semana_laboral`, `dia`) alrededor de `fecha`.
+  Future<CalendarioDeTareas> calendario(String vista, Fecha fecha) async {
+    final j = await _cliente.enviar('GET', '/tareas-outlook/calendario', consulta: {'vista': vista, 'fecha': fecha.toJson()}) as Map<String, dynamic>;
+    return CalendarioDeTareas(
+      vista,
+      fecha.toJson(),
+      [
+        for (final d in (j['dias'] as List? ?? const []))
+          DiaCalendario(
+            (d['fecha'] ?? '').toString(),
+            d['es_hoy'] == true,
+            d['es_mes_actual'] != false,
+            [for (final t in (d['tareas'] as List? ?? const [])) TareaOutlook.fromJson(t as Map<String, dynamic>)],
+            [for (final v in (d['vencimientos'] as List? ?? const [])) VencimientoDelDia.desdeJson(v as Map<String, dynamic>)],
+            [for (final c in (d['citas'] as List? ?? const [])) CitaDelDia.desdeJson(c as Map<String, dynamic>)],
+            (d['fichado_segundos'] as num?)?.toInt() ?? 0,
+          ),
+      ],
+      j['aviso_citas']?.toString(),
+    );
+  }
+
+  /// El plan de carga de la semana (la que contiene `semana`) por persona del despacho.
+  Future<CargaSemanal> carga(Fecha semana) async => CargaSemanal.desdeJson(await _cliente.enviar('GET', '/tareas-outlook/carga', consulta: {'semana': semana.toJson()}) as Map<String, dynamic>);
+
+  /// Reasigna (`cambiarPersona`) y/o cambia el día (`cambiarFecha`; `fecha` null la quita) de una tarea, con los permisos de la ficha.
+  Future<void> mover(int id, {bool cambiarPersona = false, int? personaId, bool cambiarFecha = false, String? fecha}) =>
+      _cliente.enviar('POST', '/tareas-outlook/$id/mover', cuerpo: {if (cambiarPersona) 'persona_id': personaId, if (cambiarFecha) 'fecha': fecha});
+
   /// A la papelera (se recupera con [restaurar]). La respuesta del servidor no trae la tarea: no se interpreta.
   Future<void> eliminar(int id) => _cliente.enviar('DELETE', '/tareas-outlook/$id');
   Future<void> restaurar(int id) => _cliente.enviar('POST', '/tareas-outlook/$id/restaurar');
@@ -130,3 +271,6 @@ class TareasRepositorio {
 }
 
 final tareasRepositorioProvider = Provider<TareasRepositorio>((ref) => TareasRepositorio(ref.read(clienteApiProvider)));
+
+/// Las personas del despacho a las que se puede asignar o compartir (para nombres y selectores). Se pide una vez.
+final companerosProvider = FutureProvider.autoDispose<List<Companero>>((ref) => ref.read(tareasRepositorioProvider).companeros());

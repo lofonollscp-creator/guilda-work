@@ -28,6 +28,11 @@ enum BusquedaJuridicaModo { texto('texto'), hibrido('hibrido'), sinFuentes('sin_
   static BusquedaJuridicaModo desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => BusquedaJuridicaModo.sinReconocer);
 }
 
+enum CalendarioTareasVista { mes('mes'), semana('semana'), semanaLaboral('semana_laboral'), dia('dia'), sinReconocer('');
+  final String valor; const CalendarioTareasVista(this.valor);
+  static CalendarioTareasVista desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => CalendarioTareasVista.sinReconocer);
+}
+
 enum CertificadoRenovacion { sinIniciar('sin_iniciar'), enGestion('en_gestion'), pendienteTitular('pendiente_titular'), obtenido('obtenido'), validado('validado'), implantado('implantado'), cerrado('cerrado'), cancelada('cancelada'), sinReconocer('');
   final String valor; const CertificadoRenovacion(this.valor);
   static CertificadoRenovacion desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => CertificadoRenovacion.sinReconocer);
@@ -676,6 +681,35 @@ class BusquedaJuridica {
   BusquedaJuridica copyWith({List<Map<String, dynamic>>? resultados, int? total, String? siguienteCursor, BusquedaJuridicaModo? modo, List<String>? avisos, List<String>? huecos, List<String>? fuentes, }) => BusquedaJuridica(resultados: resultados ?? this.resultados, total: total ?? this.total, siguienteCursor: siguienteCursor ?? this.siguienteCursor, modo: modo ?? this.modo, avisos: avisos ?? this.avisos, huecos: huecos ?? this.huecos, fuentes: fuentes ?? this.fuentes, );
   @override bool operator ==(Object other) => other is BusquedaJuridica && other.resultados == resultados && other.total == total && other.siguienteCursor == siguienteCursor && other.modo == modo && other.avisos == avisos && other.huecos == huecos && other.fuentes == fuentes;
   @override int get hashCode => Object.hashAll([resultados, total, siguienteCursor, modo, avisos, huecos, fuentes]);
+}
+
+class CalendarioTareas {
+  final CalendarioTareasVista? vista;
+  final String? fecha;
+  final String? inicio;
+  final String? fin;
+  final List<DiaDeCalendario>? dias;
+  final String? avisoCitas;
+  const CalendarioTareas({this.vista, this.fecha, this.inicio, this.fin, this.dias, this.avisoCitas, });
+  factory CalendarioTareas.fromJson(Map<String, dynamic> j) => CalendarioTareas(
+    vista: j['vista'] == null ? null : CalendarioTareasVista.desde(j['vista'] as String),
+    fecha: j['fecha'] == null ? null : j['fecha'] as String,
+    inicio: j['inicio'] == null ? null : j['inicio'] as String,
+    fin: j['fin'] == null ? null : j['fin'] as String,
+    dias: j['dias'] == null ? null : (j['dias'] as List).map((e) => DiaDeCalendario.fromJson(e as Map<String, dynamic>)).toList(),
+    avisoCitas: j['aviso_citas'] == null ? null : j['aviso_citas'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    if (vista != null) 'vista': vista!.valor,
+    'fecha': ?fecha,
+    'inicio': ?inicio,
+    'fin': ?fin,
+    if (dias != null) 'dias': dias!.map((e) => e.toJson()).toList(),
+    'aviso_citas': ?avisoCitas,
+  };
+  CalendarioTareas copyWith({CalendarioTareasVista? vista, String? fecha, String? inicio, String? fin, List<DiaDeCalendario>? dias, String? avisoCitas, }) => CalendarioTareas(vista: vista ?? this.vista, fecha: fecha ?? this.fecha, inicio: inicio ?? this.inicio, fin: fin ?? this.fin, dias: dias ?? this.dias, avisoCitas: avisoCitas ?? this.avisoCitas, );
+  @override bool operator ==(Object other) => other is CalendarioTareas && other.vista == vista && other.fecha == fecha && other.inicio == inicio && other.fin == fin && other.dias == dias && other.avisoCitas == avisoCitas;
+  @override int get hashCode => Object.hashAll([vista, fecha, inicio, fin, dias, avisoCitas]);
 }
 
 class Carpeta {
@@ -1771,6 +1805,38 @@ class DetalleExpedienteControl {
   DetalleExpedienteControl copyWith({int? id, String? tipo, String? titulo, String? descripcion, String? estado, String? cliente, int? responsableId, String? responsable, String? abiertoEn, String? cerradoEn, Map<String, dynamic>? control, List<Map<String, dynamic>>? lista, List<Map<String, dynamic>>? documentos, int? faltanObligatorios, bool? nuevo, }) => DetalleExpedienteControl(id: id ?? this.id, tipo: tipo ?? this.tipo, titulo: titulo ?? this.titulo, descripcion: descripcion ?? this.descripcion, estado: estado ?? this.estado, cliente: cliente ?? this.cliente, responsableId: responsableId ?? this.responsableId, responsable: responsable ?? this.responsable, abiertoEn: abiertoEn ?? this.abiertoEn, cerradoEn: cerradoEn ?? this.cerradoEn, control: control ?? this.control, lista: lista ?? this.lista, documentos: documentos ?? this.documentos, faltanObligatorios: faltanObligatorios ?? this.faltanObligatorios, nuevo: nuevo ?? this.nuevo, );
   @override bool operator ==(Object other) => other is DetalleExpedienteControl && other.id == id && other.tipo == tipo && other.titulo == titulo && other.descripcion == descripcion && other.estado == estado && other.cliente == cliente && other.responsableId == responsableId && other.responsable == responsable && other.abiertoEn == abiertoEn && other.cerradoEn == cerradoEn && other.control == control && other.lista == lista && other.documentos == documentos && other.faltanObligatorios == faltanObligatorios && other.nuevo == nuevo;
   @override int get hashCode => Object.hashAll([id, tipo, titulo, descripcion, estado, cliente, responsableId, responsable, abiertoEn, cerradoEn, control, lista, documentos, faltanObligatorios, nuevo]);
+}
+
+class DiaDeCalendario {
+  final String? fecha;
+  final bool? esHoy;
+  final bool? esMesActual;
+  final List<TareaOutlook>? tareas;
+  final List<Vencimiento>? vencimientos;
+  final List<Map<String, dynamic>>? citas;
+  final int? fichadoSegundos;
+  const DiaDeCalendario({this.fecha, this.esHoy, this.esMesActual, this.tareas, this.vencimientos, this.citas, this.fichadoSegundos, });
+  factory DiaDeCalendario.fromJson(Map<String, dynamic> j) => DiaDeCalendario(
+    fecha: j['fecha'] == null ? null : j['fecha'] as String,
+    esHoy: j['es_hoy'] == null ? null : _aBool(j['es_hoy']),
+    esMesActual: j['es_mes_actual'] == null ? null : _aBool(j['es_mes_actual']),
+    tareas: j['tareas'] == null ? null : (j['tareas'] as List).map((e) => TareaOutlook.fromJson(e as Map<String, dynamic>)).toList(),
+    vencimientos: j['vencimientos'] == null ? null : (j['vencimientos'] as List).map((e) => Vencimiento.fromJson(e as Map<String, dynamic>)).toList(),
+    citas: j['citas'] == null ? null : (j['citas'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+    fichadoSegundos: j['fichado_segundos'] == null ? null : (j['fichado_segundos'] as num).toInt(),
+  );
+  Map<String, dynamic> toJson() => {
+    'fecha': ?fecha,
+    'es_hoy': ?esHoy,
+    'es_mes_actual': ?esMesActual,
+    if (tareas != null) 'tareas': tareas!.map((e) => e.toJson()).toList(),
+    if (vencimientos != null) 'vencimientos': vencimientos!.map((e) => e.toJson()).toList(),
+    if (citas != null) 'citas': citas!.map((e) => e).toList(),
+    'fichado_segundos': ?fichadoSegundos,
+  };
+  DiaDeCalendario copyWith({String? fecha, bool? esHoy, bool? esMesActual, List<TareaOutlook>? tareas, List<Vencimiento>? vencimientos, List<Map<String, dynamic>>? citas, int? fichadoSegundos, }) => DiaDeCalendario(fecha: fecha ?? this.fecha, esHoy: esHoy ?? this.esHoy, esMesActual: esMesActual ?? this.esMesActual, tareas: tareas ?? this.tareas, vencimientos: vencimientos ?? this.vencimientos, citas: citas ?? this.citas, fichadoSegundos: fichadoSegundos ?? this.fichadoSegundos, );
+  @override bool operator ==(Object other) => other is DiaDeCalendario && other.fecha == fecha && other.esHoy == esHoy && other.esMesActual == esMesActual && other.tareas == tareas && other.vencimientos == vencimientos && other.citas == citas && other.fichadoSegundos == fichadoSegundos;
+  @override int get hashCode => Object.hashAll([fecha, esHoy, esMesActual, tareas, vencimientos, citas, fichadoSegundos]);
 }
 
 class DocumentoCliente {
@@ -5241,6 +5307,35 @@ class TareasCreadasDeReunion {
   TareasCreadasDeReunion copyWith({List<int>? tareaIds, }) => TareasCreadasDeReunion(tareaIds: tareaIds ?? this.tareaIds, );
   @override bool operator ==(Object other) => other is TareasCreadasDeReunion && other.tareaIds == tareaIds;
   @override int get hashCode => Object.hashAll([tareaIds]);
+}
+
+class TiempoTarea {
+  final int? total;
+  final List<Map<String, dynamic>>? personas;
+  final int? mioSegundos;
+  final int? equipoSegundos;
+  final String? ahora;
+  final Map<String, dynamic>? cronometro;
+  const TiempoTarea({this.total, this.personas, this.mioSegundos, this.equipoSegundos, this.ahora, this.cronometro, });
+  factory TiempoTarea.fromJson(Map<String, dynamic> j) => TiempoTarea(
+    total: j['total'] == null ? null : (j['total'] as num).toInt(),
+    personas: j['personas'] == null ? null : (j['personas'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+    mioSegundos: j['mio_segundos'] == null ? null : (j['mio_segundos'] as num).toInt(),
+    equipoSegundos: j['equipo_segundos'] == null ? null : (j['equipo_segundos'] as num).toInt(),
+    ahora: j['ahora'] == null ? null : j['ahora'] as String,
+    cronometro: j['cronometro'] == null ? null : Map<String, dynamic>.from(j['cronometro'] as Map),
+  );
+  Map<String, dynamic> toJson() => {
+    'total': ?total,
+    if (personas != null) 'personas': personas!.map((e) => e).toList(),
+    'mio_segundos': ?mioSegundos,
+    'equipo_segundos': ?equipoSegundos,
+    'ahora': ?ahora,
+    'cronometro': ?cronometro,
+  };
+  TiempoTarea copyWith({int? total, List<Map<String, dynamic>>? personas, int? mioSegundos, int? equipoSegundos, String? ahora, Map<String, dynamic>? cronometro, }) => TiempoTarea(total: total ?? this.total, personas: personas ?? this.personas, mioSegundos: mioSegundos ?? this.mioSegundos, equipoSegundos: equipoSegundos ?? this.equipoSegundos, ahora: ahora ?? this.ahora, cronometro: cronometro ?? this.cronometro, );
+  @override bool operator ==(Object other) => other is TiempoTarea && other.total == total && other.personas == personas && other.mioSegundos == mioSegundos && other.equipoSegundos == equipoSegundos && other.ahora == ahora && other.cronometro == cronometro;
+  @override int get hashCode => Object.hashAll([total, personas, mioSegundos, equipoSegundos, ahora, cronometro]);
 }
 
 class Tiquet {

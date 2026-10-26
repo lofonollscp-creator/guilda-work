@@ -263,17 +263,9 @@ def _volver_con_error(mensaje: str):
     return redirect(url_for("tareas.listar", error=mensaje))
 
 
-@tareas_bp.route("/calendario")
-@login_required
-def calendario():
-    vista = request.args.get("vista", "mes")
-    if vista not in VISTAS_CALENDARIO:
-        vista = "mes"
-    try:
-        ancla = date.fromisoformat(request.args.get("fecha", ""))
-    except ValueError:
-        ancla = date.today()
-
+def datos_calendario(vista: str, ancla: date) -> dict:
+    """Lo que enseña el calendario de tareas (web y API): para cada día del rango de la vista, sus tareas (en el día de su vencimiento o, si no tiene, el de inicio),
+    los vencimientos fiscales del despacho, las citas de Cal.diy y los segundos fichados. Una sola función para que la app vea lo mismo que la web."""
     inicio, fin = _rango_para_vista(vista, ancla)
 
     # Se traen todas las tareas activas (sin filtrar por fecha en SQL) porque
@@ -314,6 +306,22 @@ def calendario():
             "fichado": fichado_por_dia.get(iso),
         })
         cursor += timedelta(days=1)
+    return {"inicio": inicio, "fin": fin, "dias": dias, "aviso_citas": aviso_citas}
+
+
+@tareas_bp.route("/calendario")
+@login_required
+def calendario():
+    vista = request.args.get("vista", "mes")
+    if vista not in VISTAS_CALENDARIO:
+        vista = "mes"
+    try:
+        ancla = date.fromisoformat(request.args.get("fecha", ""))
+    except ValueError:
+        ancla = date.today()
+
+    datos = datos_calendario(vista, ancla)
+    inicio, fin, dias, aviso_citas = datos["inicio"], datos["fin"], datos["dias"], datos["aviso_citas"]
     semanas = [dias[i:i + 7] for i in range(0, len(dias), 7)] if vista == "mes" else None
 
     return render_template(

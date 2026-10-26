@@ -917,5 +917,216 @@
         "type": "String"
       }
     }
-  }
+  },
+  "tareaEsperaA": "Espera a",
+  "tareaEsperaVacio": "No espera a ninguna tarea.",
+  "tareaEsperaAnadir": "Esperar a otra tarea",
+  "tareaEsperaBuscar": "Busca una tarea…",
+  "tareaEsperaInvalida": "No se puede enlazar: crearía un ciclo o no tienes acceso a esa tarea.",
+  "tareaCompartidaCon": "Compartida con",
+  "tareaCompartirVacio": "No está compartida con nadie.",
+  "tareaCompartirAnadir": "Compartir con…",
+  "tareaRolColabora": "Puede editarla",
+  "tareaRolObserva": "Solo lectura",
+  "tareaQuitar": "Quitar",
+  "tareaRecordatorios": "Recordatorios",
+  "tareaRecordatoriosVacio": "No tienes recordatorios en esta tarea.",
+  "tareaRecordatorioAnadir": "Añadir recordatorio",
+  "tareaRecordatorioEnviado": "Enviado",
+  "tareaRecordatorioPendiente": "Pendiente",
+  "tareaRecordatorioPosponer": "Posponer",
+  "tareaPospUnaHora": "1 hora",
+  "tareaPospManana": "Mañana a las 9:00",
+  "tareaPospSemana": "1 semana",
+  "tareaAtajoDia": "1 día antes del vencimiento",
+  "tareaAtajoHora": "1 hora antes del vencimiento",
+  "tareaAtajoAlVencer": "Al vencer",
+  "tareaAtajoConcreta": "A una hora concreta…",
+  "tareaCanalApp": "App y móvil",
+  "tareaCanalCorreo": "Correo",
+  "tareaEstimacion": "Estimación",
+  "tareaEstimacionHint": "ej. 1h30, 45 min, 2",
+  "tareaInicio": "Inicio",
+  "tareaVencimiento": "Vencimiento",
+  "tareaQuitarFecha": "Quitar",
+  "tareaHora": "Hora",
+  "tareaProyecto": "Proyecto",
+  "tareaSinProyecto": "Sin proyecto",
+  "tareaCategoriaOutlook": "Categoría (Outlook)",
+  "tareaCliente": "Cliente",
+  "tareaSinCliente": "Sin cliente",
+  "tareaAsignarA": "Asignar a",
+  "tareaSinAsignar": "Sin asignar",
+  "tareaAsignadaA": "Asignada a {nombre}",
+  "@tareaAsignadaA": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaEstimadaEn": "Estimada: {tiempo}",
+  "@tareaEstimadaEn": {
+    "placeholders": {
+      "tiempo": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaGuardadoParcial": "Se guardó lo demás, pero esto no se pudo cambiar: {motivo}",
+  "@tareaGuardadoParcial": {
+    "placeholders": {
+      "motivo": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaTiempo": "Tiempo dedicado",
+  "tareaTiempoRegistrado": "Registrado hasta ahora: {tiempo}",
+  "@tareaTiempoRegistrado": {
+    "placeholders": {
+      "tiempo": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaTiempoNada": "Todavía no has registrado tiempo en esta tarea.",
+  "tareaCronoIniciar": "Iniciar el cronómetro",
+  "tareaCronoPausar": "Pausar",
+  "tareaCronoReanudar": "Reanudar",
+  "tareaCronoFinalizar": "Parar y guardar",
+  "tareaCronoProyecto": "¿En qué proyecto registras el tiempo?",
+  "tareaCronoEnMarcha": "Cronómetro en marcha",
+  "tareaCronoPausado": "Cronómetro en pausa",
+  "tareaTiempoEquipo": "Tiempo del equipo",
+  "tareaActividad": "Actividad",
+  "tareaActividadVacia": "Aún no hay actividad.",
+  "tareaOtrosClientes": "Otros clientes de esta tarea",
+  "tareaOtrosClientesAyuda": "El cliente de arriba es el principal; aquí marcas los demás a los que afecta la tarea.",
+  "tareaVisiblePortal": "Enseñar esta tarea al cliente en su portal",
+  "tareaVisiblePortalAyuda": "El cliente verá solo el asunto, el estado y la fecha límite, sin la descripción, los comentarios ni los archivos.",
+  "tareaComentariosCliente": "Permitir que el cliente escriba comentarios en esta tarea",
+  "tareaComentariosClienteAyuda": "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda.",
+  "tareaRevision": "Revisión",
+  "tareaRevisionNinguna": "No hay ninguna revisión pendiente.",
+  "tareaRevisionLaRevisa": "La revisa {quien}.",
+  "@tareaRevisionLaRevisa": {
+    "placeholders": {
+      "quien": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaRevisionLaRevisan": "La revisan {n} personas.",
+  "@tareaRevisionLaRevisan": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaRevisionModoTodos": "Tienen que aprobarla todos.",
+  "tareaRevisionModoCualquiera": "Basta con que la apruebe uno.",
+  "tareaRevisionModoCadena": "Aprueban uno tras otro, en el orden indicado.",
+  "tareaRevisionBloquea": "Mientras esté pendiente, la tarea no se puede completar.",
+  "tareaRevisionAprobar": "Aprobar",
+  "tareaRevisionCambios": "Pedir cambios",
+  "tareaRevisionNotaVoto": "Comentario (obligatorio si pides cambios)",
+  "tareaRevisionRetirar": "Retirar la petición",
+  "tareaRevisionPedir": "Pedir revisión",
+  "tareaRevisionPedirTitulo": "Pedir que la revise (hasta cinco personas)",
+  "tareaRevisionParaDarla": "Para darla por buena",
+  "tareaRevisionNotaSolicitud": "Nota para quien revisa (opcional)",
+  "tareaRevisionAprobo": "Ha aprobado",
+  "tareaRevisionPideCambios": "Pide cambios",
+  "tareaRevisionLeToca": "Le toca",
+  "tareaRevisionSinVotar": "Sin votar",
+  "tareaRevisionAprobada": "Aprobada",
+  "tareaRevisionCambiosPedidos": "Cambios pedidos",
+  "tareaRevisionRetirada": "Retirada",
+  "tareaClienteConversacion": "Conversación con el cliente",
+  "tareaClienteNuevos": "{n, plural, one{1 nuevo} other{{n} nuevos}}",
+  "@tareaClienteNuevos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaClientePuede": "El cliente ve esta tarea en su portal y puede escribir en ella mientras esté abierta.",
+  "tareaClienteSoloVe": "El cliente ve esta tarea en su portal, pero no puede escribir en ella.",
+  "tareaClienteYaNo": "Esta tarea ya no se enseña al cliente; la conversación se conserva aquí.",
+  "tareaClienteOculto": "Comentario oculto",
+  "tareaClienteOcultar": "Ocultar este comentario al cliente",
+  "tareaClienteContestarA": "Contestar a",
+  "tareaClienteRespuestaHint": "Respuesta para el cliente (la verá en su portal y le llegará un correo)",
+  "tareaClienteContestar": "Contestar al cliente",
+  "tareaClienteRespondida": "Respuesta enviada al cliente.",
+  "tareaPorcentaje": "% completado",
+  "tareasCalendario": "Calendario",
+  "tareasCarga": "Carga",
+  "calVistaDia": "Día",
+  "calVistaSemanaLaboral": "Semana laboral",
+  "calVistaSemana": "Semana",
+  "calVistaMes": "Mes",
+  "calHoy": "Hoy",
+  "calCapaTareas": "Tareas",
+  "calCapaFiscal": "Vencimientos fiscales",
+  "calCapaCitas": "Citas",
+  "calCapaFichajes": "Fichajes",
+  "calSinNada": "No hay nada este día.",
+  "calNuevaTarea": "Nueva tarea este día",
+  "calAsuntoNueva": "Asunto de la tarea…",
+  "calAvisoCitas": "No se han podido cargar las citas: {motivo}",
+  "@calAvisoCitas": {
+    "placeholders": {
+      "motivo": {
+        "type": "String"
+      }
+    }
+  },
+  "calHorasFichadas": "{tiempo} fichadas",
+  "@calHorasFichadas": {
+    "placeholders": {
+      "tiempo": {
+        "type": "String"
+      }
+    }
+  },
+  "calMasTareas": "+{n} más",
+  "@calMasTareas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cargaEstaSemana": "Esta semana",
+  "cargaAtrasadas": "Atrasadas",
+  "cargaSinFecha": "Sin fecha",
+  "cargaSemanaTotal": "Semana",
+  "cargaSinEstimar": "{n} sin estimar",
+  "@cargaSinEstimar": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cargaSoloTu": "Aquí verás la carga de tu equipo cuando haya más personas en tu despacho.",
+  "cargaReasignar": "Reasignar a…",
+  "cargaCambiarDia": "Cambiar el día…",
+  "cargaQuitarFecha": "Quitar la fecha",
+  "cargaMovida": "Tarea movida",
+  "cargaTu": "tú",
+  "cargaYMas": "y {n} más",
+  "@cargaYMas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasAnterior": "Anterior",
+  "tareasSiguiente": "Siguiente"
 }

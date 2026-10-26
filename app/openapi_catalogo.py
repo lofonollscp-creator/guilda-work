@@ -196,7 +196,15 @@ ESQUEMAS: dict[str, dict] = {
                        "aprobadas": {"type": "number"}, "pendientes": {"type": "number"}, "disponibles": {"type": "number"}}},
     "ResultadoAdjuntos": {"type": "array", "items": {"type": "object", "properties": {"archivo": {"type": "string"}, "ok": {"type": "boolean"}, "id": {"type": "integer"}, "error": {"type": "string"}}}},
     "Identificador": {"type": "object", "properties": {"id": {"type": "integer"}}},
-    "TiempoTarea": {"type": "object", "additionalProperties": True},
+    "TiempoTarea": {"type": "object", "properties": {
+        "total": {"type": "integer", "description": "Segundos registrados por todo el equipo (cronómetros finalizados)."},
+        "personas": {"type": "array", "items": {"type": "object", "properties": {"usuario_id": {"type": "integer"}, "nombre": {"type": "string"}, "segundos": {"type": "integer"}}}},
+        "mio_segundos": {"type": "integer", "description": "Segundos registrados por quien consulta."},
+        "equipo_segundos": {"type": "integer"},
+        "ahora": {"type": "string", "description": "Hora del servidor: el tiempo transcurrido de un cronómetro en marcha se calcula con ella."},
+        "cronometro": {"type": "object", "nullable": True, "description": "El cronómetro de quien consulta, en marcha o en pausa sobre esta tarea.",
+                       "properties": {"id": {"type": "integer"}, "estado": {"type": "string", "enum": ["en_curso", "pausada"]}, "inicio_en": {"type": "string"},
+                                      "segundos_pausados": {"type": "integer"}, "segundos_trabajados_congelado": {"type": "integer", "nullable": True}}}}},
     "DetalleExpedienteControl": {"type": "object", "properties": {
         "id": {"type": "integer"}, "tipo": {"type": "string"}, "titulo": {"type": "string"}, "descripcion": {"type": "string", "nullable": True}, "estado": {"type": "string"}, "cliente": {"type": "string"},
         "responsable_id": {"type": "integer", "nullable": True}, "responsable": {"type": "string", "nullable": True}, "abierto_en": {"type": "string"}, "cerrado_en": {"type": "string", "nullable": True},
@@ -319,6 +327,15 @@ RESPUESTAS.update({
 })
 ESQUEMAS["EstadoServicio"] = {"type": "object", "properties": {"estado": {"type": "string", "enum": ["ok"], "description": "`ok` si el servicio atiende peticiones."}, "version_api": {"type": "string", "description": "Versión del contrato (`X-API-Version`)."}, "base_de_datos": {"type": "string", "enum": ["ok"], "description": "La base de datos responde."}}}
 RESPUESTAS["estado_servicio"] = ("EstadoServicio", False)
+ESQUEMAS["DiaDeCalendario"] = {"type": "object", "properties": {
+    "fecha": {"type": "string", "description": "YYYY-MM-DD."}, "es_hoy": {"type": "boolean"}, "es_mes_actual": {"type": "boolean", "description": "En la vista `mes`, si el día es del mes de `fecha` (las semanas completas traen días de los meses vecinos)."},
+    "tareas": {"type": "array", "items": {"$ref": "#/components/schemas/TareaOutlook"}}, "vencimientos": {"type": "array", "items": {"$ref": "#/components/schemas/Vencimiento"}},
+    "citas": {"type": "array", "items": {"type": "object", "properties": {"inicio": {"type": "string", "nullable": True}, "fin": {"type": "string", "nullable": True}, "titulo": {"type": "string", "nullable": True}}}},
+    "fichado_segundos": {"type": "integer", "description": "Segundos fichados por quien consulta ese día."}}}
+ESQUEMAS["CalendarioTareas"] = {"type": "object", "properties": {
+    "vista": {"type": "string", "enum": ["mes", "semana", "semana_laboral", "dia"]}, "fecha": {"type": "string"}, "inicio": {"type": "string"}, "fin": {"type": "string"},
+    "dias": {"type": "array", "items": {"$ref": "#/components/schemas/DiaDeCalendario"}}, "aviso_citas": {"type": "string", "nullable": True}}}
+RESPUESTAS["calendario_de_tareas"] = ("CalendarioTareas", False)
 ESQUEMAS["CategoriaOutlook"] = {"type": "string", "example": "Fiscal"}
 RESPUESTAS["categorias_outlook"] = ("CategoriaOutlook", True)
 ESQUEMAS.update({
