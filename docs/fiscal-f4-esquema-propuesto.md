@@ -1,7 +1,7 @@
 # F4 · Esquema propuesto (apuntes, instantáneas, declaraciones y casillas) — para tu visto bueno 🔒
 
 > **Estado:** propuesta; **no aplicada** (ni en SQLite ni en PostgreSQL). Misma disciplina que F1: antes de escribir una sola tabla, te enseño el esquema exacto y espero tu «sí».
-> **Qué ya existe y no hace falta guardar:** el motor del 303 (`motor_303.py`), el escritor de libros (`libros_lsi.py`), el generador del `.303` (`fichero_303.py`), el validador (`validacion_apuntes.py`) y `preparar_303.py` son **funciones puras**, contrastadas con la AEAT en 20 escenarios. Lo que falta es **dónde viven los datos** que esas funciones consumen y producen.
+> **Qué ya existe y no hace falta guardar:** el motor del 303 (`motor_303.py`), el escritor de libros (`libros_lsi.py`), el generador del `.303` (`fichero_303.py`), el validador (`validacion_apuntes.py`) y `preparar_303.py` son **funciones puras**, contrastadas con la AEAT en 23 escenarios. Lo que falta es **dónde viven los datos** que esas funciones consumen y producen.
 > **Cuándo se puede aplicar:** después de F1 (migración 002) y de tu aprobación; sería la migración **003**. Reversible con `DROP TABLE` de tablas nuevas y vacías (mientras estén vacías).
 
 ## 1. Principios (los que fija el plan, §4 y §8)

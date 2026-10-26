@@ -48,7 +48,8 @@ class Apunte:
     cuota_deducible: int | None = None           # por defecto, toda la cuota soportada
     deducible_periodo_posterior: bool = False
     periodo_deduccion: tuple[int, str] | None = None     # (ejercicio, "2T") cuando se deduce en otro periodo
-    inmueble: bool = False
+    inmueble_situacion: str = ""                # situación del inmueble: 1 (resto de España) · 2 (foral) · 3 (sin referencia catastral) · 4 (extranjero) · 5 (no aplica)
+    inmueble_referencia: str = ""                # referencia catastral (20 caracteres)
 
     @property
     def total_efectivo(self) -> int:

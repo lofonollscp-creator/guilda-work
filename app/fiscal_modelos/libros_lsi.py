@@ -41,6 +41,8 @@ def fila_expedida(a: Apunte, ejercicio: int, periodo: str) -> dict[int, object]:
     if a.contraparte_nif_tipo:
         f[13], f[14] = a.contraparte_nif_tipo, a.contraparte_pais or None
     f[22], f[23] = (_pct(a.tipo_iva), _euros(a.cuota)) if a.calificacion == "S1" else (0.0, 0.0)       # S2/N/exentas: tipo y cuota a cero, no vacíos
+    if a.inmueble_situacion:
+        f[33], f[34] = a.inmueble_situacion, a.inmueble_referencia or None
     return f
 
 
@@ -54,6 +56,8 @@ def fila_recibida(a: Apunte, ejercicio: int, periodo: str) -> dict[int, object]:
         f[15], f[16] = a.contraparte_nif_tipo, a.contraparte_pais or None
     if a.periodo_deduccion:
         f[23], f[24] = a.periodo_deduccion
+    if a.inmueble_situacion:
+        f[39], f[40] = a.inmueble_situacion, a.inmueble_referencia or None
     return f
 
 

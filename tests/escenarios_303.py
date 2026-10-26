@@ -43,4 +43,10 @@ ESCENARIOS = {
                                                        compra(-5000, clave="09", numero="P-2", tipo_factura="R1", **dict(contraparte_nif="FR40303265045", contraparte_nif_tipo="02", contraparte_pais="FR"))], 2026, "2T"),
     "rectificativa_de_inversion_sujeto_pasivo": ([venta(10000), compra(15000, isp=True), compra(-3000, isp=True, numero="P-2", tipo_factura="R1")], 2026, "2T"),
     "abono_recibido_y_emitido_en_otro_periodo": ([venta(10000), venta(-4000, numero="2", tipo_factura="R2", fecha=d(2026, 5, 20)), compra(8000, fecha=d(2026, 2, 2)), compra(-8000, numero="P-2", tipo_factura="R1", fecha=d(2026, 6, 2))], 2026, "2T"),
+    # --- alquileres (Guilda Fiscal Alquileres)
+    "alquiler_local_comercial": ([venta(100000, clave="12", inmueble_situacion="1", inmueble_referencia="9872023VH5797S0001WX"),
+                                  compra(30000, clave="12", numero="A-7", inmueble_situacion="1", inmueble_referencia="9872023VH5797S0001WX"), compra(4500, numero="REP-1")], 2026, "2T"),
+    "alquiler_vivienda_exento": ([venta(80000, 0, 0, clave="13", calificacion="", exenta="E1", inmueble_situacion="1", inmueble_referencia="9872023VH5797S0001WX"), venta(10000, numero="2"),
+                                  compra(2500, numero="P-1")], 2026, "2T"),
+    "alquiler_turistico_al_10": ([venta(45000, 1000, numero="1"), venta(30000, 1000, numero="2", fecha=d(2026, 6, 3)), compra(9000, numero="LIMP-1"), compra(12000, 1000, numero="SUM-1")], 2026, "2T"),
 }
