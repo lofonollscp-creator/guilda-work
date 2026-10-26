@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
+import '../l10n/app_localizations.dart';
+
 import '../diseno/formatos.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -68,7 +72,7 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
       _error = null;
     });
     futuro.catchError((e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
       return <Mensaje>[];
     });
   }
@@ -77,11 +81,11 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Correo'),
+        title: Text(AppLocalizations.of(context).dashboardCorreoTooltip),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Ajustes de correo',
+            tooltip: AppLocalizations.of(context).correoAjustesTitulo,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => CorreoAjustesScreen(api: widget.api)),
             ),
@@ -101,7 +105,7 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
                   ),
                 );
               },
-        tooltip: 'Redactar',
+        tooltip: AppLocalizations.of(context).correoRedactar,
         child: const Icon(Icons.edit),
       ),
       body: FutureBuilder<List<CuentaCorreo>>(
@@ -111,16 +115,15 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar: ${snapshot.error}'));
+            return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
           }
           final cuentas = snapshot.data ?? [];
           if (cuentas.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Todavía no tienes ninguna cuenta de correo configurada. '
-                  'Añade una desde la app de escritorio.',
+                  AppLocalizations.of(context).correoSinCuenta,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -169,8 +172,8 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _buscarController,
-                      decoration: const InputDecoration(
-                        hintText: 'Buscar...',
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.of(context).comunBuscarHint,
                         prefixIcon: Icon(Icons.search),
                       ),
                       onSubmitted: (_) => _recargarMensajes(),
@@ -184,7 +187,7 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
                             _recargarMensajes();
                           },
                         ),
-                        const Text('Solo no leídos'),
+                        Text(AppLocalizations.of(context).correoSoloNoLeidos),
                       ],
                     ),
                     if (_error != null)
@@ -202,11 +205,11 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
                             return const Center(child: CircularProgressIndicator());
                           }
                           if (snapshot.hasError) {
-                            return Center(child: Text('Error al cargar: ${snapshot.error}'));
+                            return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
                           }
                           final mensajes = snapshot.data ?? [];
                           if (mensajes.isEmpty) {
-                            return const Center(child: Text('No hay mensajes para este filtro.'));
+                            return Center(child: Text(AppLocalizations.of(context).correoSinMensajes));
                           }
                           return ListView.builder(
                             padding: const EdgeInsets.only(bottom: 88), // que el botón «+» no tape el último correo
@@ -230,7 +233,7 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
       leading: SizedBox(
         width: 28,
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Semantics(label: m.leido ? null : 'No leído', child: Icon(Icons.circle, size: 10, color: m.leido ? Colors.transparent : Theme.of(context).colorScheme.primary)),
+          Semantics(label: m.leido ? null : AppLocalizations.of(context).correoNoLeido, child: Icon(Icons.circle, size: 10, color: m.leido ? Colors.transparent : Theme.of(context).colorScheme.primary)),
           const SizedBox(width: 6),
           Icon(m.destacado ? Icons.star : Icons.mail_outline, size: 18, color: m.destacado ? BrandColors.warningLight : null),
         ]),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../widgets/app_button.dart';
@@ -65,7 +67,7 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
     try {
       await widget.api.guardarAjustesIa(modelo: _modeloSeleccionado, modoAutonomo: _modoAutonomo);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ajustes guardados.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).iaAjustesGuardados)));
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.mensaje)));
@@ -77,7 +79,7 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes del asistente IA')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).iaAjustesTitulo)),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -89,7 +91,7 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
                       children: [
                         Text(_error!, textAlign: TextAlign.center),
                         const SizedBox(height: 12),
-                        FilledButton(onPressed: _cargar, child: const Text('Reintentar')),
+                        FilledButton(onPressed: _cargar, child: Text(AppLocalizations.of(context).estadoVacioReintentar)),
                       ],
                     ),
                   ),
@@ -97,17 +99,14 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Text('Modelo (OpenRouter, solo gratuitos)', style: Theme.of(context).textTheme.titleSmall),
+                    Text(AppLocalizations.of(context).iaAjustesModelo, style: Theme.of(context).textTheme.titleSmall),
                     const SizedBox(height: 8),
                     _selectorModelo(),
                     const SizedBox(height: 24),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Modo autónomo'),
-                      subtitle: const Text(
-                        'El asistente ejecuta acciones que modifican datos sin pedir confirmación '
-                        '(excepto enviar correos, que siempre la piden).',
-                      ),
+                      title: Text(AppLocalizations.of(context).iaAjustesAutonomo),
+                      subtitle: Text(AppLocalizations.of(context).iaAjustesAutonomoAyuda),
                       value: _modoAutonomo,
                       onChanged: (v) => setState(() => _modoAutonomo = v),
                     ),
@@ -121,17 +120,14 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
                             : Theme.of(context).colorScheme.error,
                       ),
                       title: Text(_apiKeyConfigurada
-                          ? 'Clave de API de OpenRouter configurada'
-                          : 'No hay ninguna clave de API de OpenRouter configurada'),
-                      subtitle: const Text(
-                        'Las claves de API solo se pueden añadir o cambiar desde la web, en '
-                        'Ajustes del Asistente IA (/ia/ajustes) — por seguridad, no se gestionan desde el móvil.',
-                      ),
+                          ? AppLocalizations.of(context).iaAjustesClaveSi
+                          : AppLocalizations.of(context).iaAjustesClaveNo),
+                      subtitle: Text(AppLocalizations.of(context).iaAjustesClaveAyuda),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      child: AppButton(texto: 'Guardar', cargando: _guardando, onPressed: _guardar),
+                      child: AppButton(texto: AppLocalizations.of(context).comunGuardar, cargando: _guardando, onPressed: _guardar),
                     ),
                   ],
                 ),
@@ -146,15 +142,15 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
     final opciones = [
       ..._modelos,
       if (_modeloSeleccionado.isNotEmpty && !idsConocidos.contains(_modeloSeleccionado))
-        IaModelo(id: _modeloSeleccionado, nombre: '$_modeloSeleccionado (actual)'),
+        IaModelo(id: _modeloSeleccionado, nombre: AppLocalizations.of(context).iaAjustesModeloActual(_modeloSeleccionado)),
     ];
     if (opciones.isEmpty) {
-      return const Text('No se ha podido obtener el listado de modelos gratuitos ahora mismo.');
+      return Text(AppLocalizations.of(context).iaAjustesSinModelos);
     }
     return DropdownButtonFormField<String>(
       initialValue: _modeloSeleccionado.isEmpty ? null : _modeloSeleccionado,
       decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
-      hint: const Text('Elige un modelo'),
+      hint: Text(AppLocalizations.of(context).iaAjustesElegirModelo),
       isExpanded: true,
       items: opciones
           .map((m) => DropdownMenuItem(value: m.id, child: Text(m.nombre, overflow: TextOverflow.ellipsis)))

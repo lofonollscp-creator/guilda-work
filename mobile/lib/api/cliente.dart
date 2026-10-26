@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
+import '../datos/local/cache_lectura.dart';
 import 'errores.dart';
 import 'generado/operaciones.g.dart' show Transporte;
 
@@ -28,6 +29,9 @@ abstract class ContextoApi {
 
   /// Una petición con token volvió con 401: la sesión ya no vale.
   Future<void> alSesionExpirada();
+
+  /// Id de la persona con sesión (para ligar la caché de lectura a ella); null si aún no se sabe.
+  int? get usuarioId => null;
 
   /// El servidor contestó 426: esta versión de la app ya no se admite.
   Future<void> alRequerirActualizacion({String? urlTienda}) async {}
@@ -62,6 +66,15 @@ class ClienteApi implements Transporte {
   static const _maxCache = 200;
   CancelToken _cancelar = CancelToken();
 
+  /// Caché de lectura sin conexión (null = sin ella). Solo guarda las rutas de [rutasConCache].
+  final AlmacenLectura? almacen;
+
+  /// Se llama tras cada lectura de esas rutas: con la hora de lo guardado si se ha servido de la caché por falta de red, o con `null` si vino del servidor.
+  final void Function(String ruta, DateTime? guardadaEn)? alLeer;
+
+  /// Qué lecturas se guardan para verlas sin conexión: «Hoy» y las tareas (no adjuntos).
+  static const rutasConCache = ['/hoy', '/mi-dia', '/tareas-outlook'];
+
   /// Peticiones hechas (incluidos reintentos), para vigilar el límite de 600/min.
   int peticiones = 0;
 
@@ -71,6 +84,8 @@ class ClienteApi implements Transporte {
     this.maxIntentos = 3,
     this.esperaMaxima = const Duration(seconds: 30),
     Future<void> Function(Duration)? espera,
+    this.almacen,
+    this.alLeer,
   })  : _dio = dio ?? Dio(),
         _espera = espera ?? Future<void>.delayed {
     _dio.options
@@ -104,6 +119,52 @@ class ClienteApi implements Transporte {
   /// Igual que [enviar] pero con una clave de idempotencia dada: la cola sin
   /// conexión guarda la suya para que el reenvío tras horas no duplique nada.
   Future<dynamic> enviarConClave(String metodo, String ruta,
+      {Map<String, dynamic>? consulta,
+      Object? cuerpo,
+      bool multipart = false,
+      bool binario = false,
+      String? claveIdempotencia}) async {
+    final usuario = contexto.usuarioId;
+    final persistible = almacen != null &&
+        usuario != null &&
+        metodo.toUpperCase() == 'GET' &&
+        !binario &&
+        rutasConCache.any(ruta.startsWith) &&
+        !ruta.contains('/adjunto');
+    if (!persistible) {
+      return _peticion(metodo, ruta, consulta: consulta, cuerpo: cuerpo, multipart: multipart, binario: binario, claveIdempotencia: claveIdempotencia);
+    }
+    final despacho = contexto.despacho;
+    final clave = '${despacho ?? ''}|$ruta?${_consultaOrdenada(consulta)}';
+    try {
+      final datos = await _peticion(metodo, ruta, consulta: consulta, cuerpo: cuerpo, multipart: multipart, binario: binario, claveIdempotencia: claveIdempotencia);
+      try {
+        await almacen!.guardar(clave: clave, usuarioId: usuario, despachoId: despacho ?? '', datos: datos);
+      } catch (_) {
+        // sin sitio o base dañada: la lectura en vivo sigue valiendo
+      }
+      alLeer?.call(ruta, null);
+      return datos;
+    } on ApiException catch (e) {
+      if (!e.esDeConexion) rethrow;
+      LecturaGuardada? guardada;
+      try {
+        guardada = await almacen!.leer(clave, usuario);
+      } catch (_) {
+        guardada = null;
+      }
+      if (guardada == null) rethrow;
+      alLeer?.call(ruta, guardada.guardadaEn);
+      return guardada.datos;
+    }
+  }
+
+  String _consultaOrdenada(Map<String, dynamic>? consulta) {
+    final q = (consulta?.entries.toList() ?? [])..sort((a, b) => a.key.compareTo(b.key));
+    return q.map((e) => '${e.key}=${e.value}').join('&');
+  }
+
+  Future<dynamic> _peticion(String metodo, String ruta,
       {Map<String, dynamic>? consulta,
       Object? cuerpo,
       bool multipart = false,

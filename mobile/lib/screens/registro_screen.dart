@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
+import '../l10n/app_localizations.dart';
+
 import '../services/api_client.dart';
 import '../services/locale_service.dart';
 import '../services/push_service.dart';
@@ -45,11 +49,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
   Future<void> _registrar() async {
     if (_contrasena.text.length < 8) {
-      setState(() => _error = 'La contraseña debe tener al menos 8 caracteres.');
+      setState(() => _error = AppLocalizations.of(context).registroContrasenaCorta);
       return;
     }
     if (_contrasena.text != _confirmar.text) {
-      setState(() => _error = 'Las contraseñas no coinciden.');
+      setState(() => _error = AppLocalizations.of(context).registroContrasenasNoCoinciden);
       return;
     }
     setState(() {
@@ -82,7 +86,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         (route) => false,
       );
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
@@ -92,11 +96,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Crear cuenta'),
+        title: Text(AppLocalizations.of(context).registroCrearCuenta),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_ethernet),
-            tooltip: 'Servidor',
+            tooltip: AppLocalizations.of(context).loginServidorTooltip,
             onPressed: () => mostrarAjustesServidor(context, widget.sesion),
           ),
         ],
@@ -114,22 +118,22 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   const SizedBox(height: 24),
                   TextField(
                     controller: _email,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context).loginEmailLabel),
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _contrasena,
-                    decoration: const InputDecoration(
-                      labelText: 'Contraseña (mínimo 8 caracteres)',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).registroContrasenaLabel,
                     ),
                     obscureText: true,
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _confirmar,
-                    decoration: const InputDecoration(labelText: 'Repite la contraseña'),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context).registroRepiteContrasena),
                     obscureText: true,
                     onSubmitted: (_) => _registrar(),
                   ),
@@ -140,11 +144,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
-                    child: AppButton(texto: 'Crear cuenta', cargando: _cargando, onPressed: _registrar),
+                    child: AppButton(texto: AppLocalizations.of(context).registroCrearCuenta, cargando: _cargando, onPressed: _registrar),
                   ),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('¿Ya tienes cuenta? Inicia sesión'),
+                    child: Text(AppLocalizations.of(context).registroYaTienesCuenta),
                   ),
                 ],
               ),

@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 /// Intenta abrir la app nativa de Element X (cliente Matrix oficial) y, si
 /// no está instalada, manda a la tienda correspondiente para descargarla --
 /// a petición del usuario, en vez de abrir el cliente Matrix propio de
-/// Guilda Work (chat_login_screen.dart/matrix_service.dart, que se deja
+/// Guilda Work (el cliente Matrix propio se retiró; antes se dejaba
 /// intacto por si se quiere volver a usar).
 ///
 /// OJO con el esquema personalizado: `io.element.elementx://` se deduce del

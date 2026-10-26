@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../diseno/componentes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../datos/local/cola_escritura.dart' show ColaLlena;
@@ -122,9 +124,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     } on ColaLlena {
       setState(() => _error = t.colaLlena);
     } on ApiException catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _guardandoNota = false);
     }
@@ -202,7 +204,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: Text(t.comunErrorCargar(snapshot.error.toString())),
+              child: Text(mensajeDeError(t, snapshot.error!)),
             );
           }
           return RefreshIndicator(
@@ -301,9 +303,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
       ),
       // A petición del usuario: "Chat de equipo" lanza la app nativa de
-      // Element X (o manda a la tienda si no la tiene) en vez de abrir el
-      // cliente Matrix propio de la app (chat_login_screen.dart, que se
-      // deja intacto sin usar desde aquí por si se retoma más adelante).
+      // Element X (o manda a la tienda si no la tiene); la app ya no lleva
+      // cliente Matrix propio.
       (Icons.chat_bubble_outline, t.dashboardChatTooltip, abrirElementX),
       // Fase F5 (calendario fiscal en móvil): solo visible con tenant
       // asignado -- primera vez que el dashboard móvil hace gating por

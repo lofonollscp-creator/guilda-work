@@ -36,7 +36,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .bd import contexto as contexto_bd
 from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
-from . import acceso, ai_local, ayuda, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import acceso, acento, ai_local, ayuda, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_juridico, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -1979,7 +1979,23 @@ def guardar_apariencia():
 def inyectar_apariencia_cuenta():
     """Tema y densidad guardados en la cuenta (si los hay): base.html los aplica antes de pintar, así te siguen entre dispositivos."""
     ap = g.get("apariencia")
-    return {"apariencia_cuenta": ap if ap and (ap["tema"] or ap["densidad"]) else None}
+    # El acento vive en una cookie del navegador: guardarlo en la cuenta pide una columna nueva y hasta el 2026-10-26 no se toca el esquema (docs/fase12-estabilizacion.md).
+    elegido = request.cookies.get(acento.COOKIE) if g.get("usuario_id") else None
+    elegido = elegido if acento.es_valido(elegido) else None
+    return {"apariencia_cuenta": {k: ap[k] for k in ("tema", "densidad")} if ap and (ap["tema"] or ap["densidad"]) else None,
+            "acento_css": acento.css(elegido), "acentos": acento.ACENTOS, "acento_actual": elegido or acento.ACENTO_POR_DEFECTO}
+
+
+@app.route("/ajustes/acento", methods=["POST"])
+@login_required
+def guardar_acento():
+    """Color de acento de este navegador (lista cerrada de `acento.py`). Vuelve a la página desde la que se eligió."""
+    clave = request.form.get("acento")
+    destino = request.referrer
+    r = redirect(destino if destino and destino.startswith(request.host_url) else url_for("ajustes_perfil") + "#apariencia")
+    if acento.es_valido(clave):
+        r.set_cookie(acento.COOKIE, clave, max_age=365 * 24 * 3600, samesite="Lax", secure=request.is_secure, httponly=True)
+    return r
 
 
 @app.route("/ajustes/perfil/avatar", methods=["POST"])

@@ -34,8 +34,8 @@
 {% endif %}
 <section class="dash-panel" aria-label="{{ _('Cobertura') }}">
   <h2>{{ _('Cobertura real') }}</h2>
-  {% if cobertura %}<table class="ds-tabla"><thead><tr><th>{{ _('Fuente') }}</th><th>{{ _('Documentos') }}</th><th>{{ _('Fechas') }}</th><th>{{ _('Última carga correcta') }}</th><th>{{ _('Pendientes') }}</th></tr></thead>
-    <tbody>{% for c in cobertura %}<tr><td>{{ c.nombre }}</td><td>{{ c.documentos }}</td><td>{{ c.desde or '—' }} → {{ c.hasta or '—' }}</td><td>{{ c.ultimo_exito_en or _('ninguna todavía') }}</td><td>{{ c.pendientes + c.reintentables }}{% if c.cuarentena %} · {{ _('%(n)s en cuarentena', n=c.cuarentena) }}{% endif %}</td></tr>{% endfor %}</tbody></table>
+  {% if cobertura %}<div class="tabla-scroll"><table class="ds-tabla"><thead><tr><th>{{ _('Fuente') }}</th><th>{{ _('Documentos') }}</th><th>{{ _('Fechas') }}</th><th>{{ _('Última carga correcta') }}</th><th>{{ _('Pendientes') }}</th></tr></thead>
+    <tbody>{% for c in cobertura %}<tr><td>{{ c.nombre }}</td><td>{{ c.documentos }}</td><td>{{ c.desde or '—' }} → {{ c.hasta or '—' }}</td><td>{{ c.ultimo_exito_en or _('ninguna todavía') }}</td><td>{{ c.pendientes + c.reintentables }}{% if c.cuarentena %} · {{ _('%(n)s en cuarentena', n=c.cuarentena) }}{% endif %}</td></tr>{% endfor %}</tbody></table></div>
   <p class="muted">{{ _('«Última carga correcta» no significa que esté al día: comprueba también el retraso de cada fuente en Fuentes.') }}</p>
   {% else %}<p class="muted">{{ _('No hay fuentes habilitadas para tu despacho.') }}</p>{% endif %}
   {% if pendientes %}<h3>{{ _('Pendientes de habilitación') }}</h3><ul>{% for f in pendientes %}<li>{{ f.nombre }}</li>{% endfor %}</ul>{% endif %}

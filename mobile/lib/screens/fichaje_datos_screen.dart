@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
 import '../l10n/app_localizations.dart';
 import '../services/api_client.dart';
 import '../widgets/app_button.dart';
@@ -47,7 +49,7 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
       _jornadaController.text = datos.jornadaSemanalHoras?.toString() ?? '';
       _convenioController.text = datos.convenioColectivo ?? '';
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
@@ -93,7 +95,7 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _guardando = false);
     }

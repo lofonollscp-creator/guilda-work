@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+
+import '../diseno/componentes.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../l10n/app_localizations.dart';
@@ -64,7 +66,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       await widget.api.editarPerfil(nombreMostrado: _nombreController.text.trim());
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -80,7 +82,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       await widget.api.subirAvatar(bytes, archivo.name);
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _subiendoAvatar = false);
     }
@@ -92,7 +94,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       await widget.api.eliminarAvatar();
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     } finally {
       if (mounted) setState(() => _subiendoAvatar = false);
     }
@@ -148,7 +150,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text(t.comunErrorCargar(snapshot.error.toString())));
+            return Center(child: Text(mensajeDeError(t, snapshot.error!)));
           }
           final perfil = snapshot.data!;
           return ListView(

@@ -169,8 +169,8 @@ def listar_companeros():
 @api_bp.route("/mi-dia", methods=["GET"])
 @token_required
 def mi_dia():
-    """«Mi día»: tareas vencidas, de hoy, en curso y asignadas."""
-    return _ok({seccion: _dicts(filas) for seccion, filas in db.tareas_para_hoy(g.usuario_id).items()})
+    """«Mi día», las mismas cinco secciones que la web: `vencidas`, `hoy`, `en_progreso`, `asignadas` y `compartidas`. Cada tarea trae los mismos indicadores que la lista de `GET /tareas-outlook`."""
+    return _ok({seccion: _api._filas_de_tarea(filas, con_rol=True) for seccion, filas in db.tareas_para_hoy(g.usuario_id).items()})
 
 
 # --- Correo: conversaciones y paso a tarea/nota -----------------------------------------------------------

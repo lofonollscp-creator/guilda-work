@@ -12,7 +12,6 @@
   <meta name="twitter:image" content="{{ url_for('static', filename='og-image.png', _external=True) }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  {% if marca_despacho and marca_despacho.color %}<link rel="stylesheet" href="{{ url_for('marca.estilo', v=marca_despacho.version) }}">{% endif %}
   <link rel="preload" as="font" type="font/woff2" href="{{ url_for('static', filename='fonts/ManropeVariable.woff2') }}" crossorigin>
   <script nonce="{{ g.csp_nonce }}">
     // Aplica el tema guardado ANTES de que se pinte la página, para que no
@@ -44,6 +43,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='superficies.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='ds.css') }}">
+  {% if marca_despacho and marca_despacho.color %}<link rel="stylesheet" href="{{ url_for('marca.estilo', v=marca_despacho.version) }}">{% endif %}
+  {% if acento_css %}<style nonce="{{ g.csp_nonce }}">{{ acento_css|safe }}</style>{% endif %}
 </head>
 <body data-url-iconos="{{ url_for('static', filename='iconos.svg') }}">
   <a class="skip-link" href="#contenido-principal">{{ _('Saltar al contenido') }}</a>

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/componentes.dart';
+
+import '../l10n/app_localizations.dart';
+
 import '../models/models.dart';
 import '../services/api_client.dart';
 
@@ -41,7 +45,7 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
       _direccionController.clear();
       await _recargar();
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
   }
 
@@ -49,11 +53,11 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Quitar de la lista de confianza?'),
-        content: Text('"${r.direccion}" volverá a bloquear sus imágenes y avisar antes de abrir adjuntos.'),
+        title: Text(AppLocalizations.of(context).correoConfianzaQuitarTitulo),
+        content: Text(AppLocalizations.of(context).correoConfianzaQuitarCuerpo(r.direccion)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Quitar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context).comunCancelar)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocalizations.of(context).comunQuitar)),
         ],
       ),
     );
@@ -65,7 +69,7 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Remitentes de confianza')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).correoRemitentesTitulo)),
       body: Column(
         children: [
           Padding(
@@ -73,8 +77,8 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Sus imágenes remotas y adjuntos se muestran/abren sin avisar.',
+                Text(
+                  AppLocalizations.of(context).correoConfianzaAyuda,
                   style: TextStyle(fontSize: 13),
                 ),
                 const SizedBox(height: 12),
@@ -83,13 +87,13 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
                     Expanded(
                       child: TextField(
                         controller: _direccionController,
-                        decoration: const InputDecoration(hintText: 'correo@ejemplo.com'),
+                        decoration: InputDecoration(hintText: AppLocalizations.of(context).correoConfianzaHint),
                         keyboardType: TextInputType.emailAddress,
                         onSubmitted: (_) => _anadir(),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    FilledButton(onPressed: _anadir, child: const Text('+ Añadir')),
+                    FilledButton(onPressed: _anadir, child: Text('+ ${AppLocalizations.of(context).comunAnadir}')),
                   ],
                 ),
                 if (_error != null) ...[
@@ -107,11 +111,11 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error al cargar: ${snapshot.error}'));
+                  return Center(child: Text(mensajeDeError(AppLocalizations.of(context), snapshot.error!)));
                 }
                 final remitentes = snapshot.data ?? [];
                 if (remitentes.isEmpty) {
-                  return const Center(child: Text('Todavía no tienes ningún remitente de confianza.'));
+                  return Center(child: Text(AppLocalizations.of(context).correoConfianzaVacio));
                 }
                 return ListView.builder(
                   itemCount: remitentes.length,
@@ -122,7 +126,7 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
                       title: Text(r.direccion),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
-                        tooltip: 'Eliminar',
+                        tooltip: AppLocalizations.of(context).comunEliminar,
                         onPressed: () => _eliminar(r),
                       ),
                     );

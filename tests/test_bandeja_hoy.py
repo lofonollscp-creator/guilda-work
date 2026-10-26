@@ -140,3 +140,35 @@ def test_el_panel_del_inicio_escapa_el_texto(cliente):
 def test_el_enlace_de_hoy_esta_en_la_barra_lateral(cliente):
     _web(cliente, "hoybarra@ejemplo.com")
     assert 'href="/hoy/"' in cliente.get("/").get_data(as_text=True)
+
+
+def test_marcar_como_hecho_una_a_una_y_en_conjunto(cliente):
+    uid, t = _web(cliente, "hoyhecho@ejemplo.com")
+    a = db.crear_tarea_outlook(uid, "Tarea A", fecha_vencimiento=(HOY - timedelta(days=1)).isoformat())
+    b = db.crear_tarea_outlook(uid, "Tarea B", fecha_vencimiento=HOY.isoformat())
+    c = db.crear_tarea_outlook(uid, "Tarea C", fecha_vencimiento=HOY.isoformat())
+    cl = nucleo.crear_cliente(t, "Cliente Hecho")
+    x = nucleo.crear_expediente(t, uid, cl, "Asunto hecho", tipo="procedimiento_judicial")
+    z = nucleo.crear_plazo(t, uid, "Plazo hecho", (HOY + timedelta(days=2)).isoformat(), expediente_id=x, responsable_id=uid)
+    html = cliente.get("/hoy/").get_data(as_text=True)
+    assert "Marcar todo como hecho" in html and "Marcar la sección como hecha" in html and html.count('class="hoy-hecho"') == 4
+    # una por una
+    r = cliente.post("/hoy/hecho", data={"elemento": f"tarea:{a}"})
+    assert r.status_code == 302 and "hechos=1" in r.headers["Location"] and "fallos=0" in r.headers["Location"]
+    assert db.obtener_tarea_outlook(uid, a)["estado"] == "completada"
+    assert "Tarea A" not in cliente.get("/hoy/").get_data(as_text=True)
+    # en conjunto, repitiendo una ya hecha y con una clave inventada (no cuenta como hecha)
+    r = cliente.post("/hoy/hecho", data={"elemento": [f"tarea:{b}", f"tarea:{c}", f"plazo:{z}", "correo:7"]})
+    assert "hechos=3" in r.headers["Location"] and "fallos=1" in r.headers["Location"]
+    assert db.obtener_tarea_outlook(uid, b)["estado"] == "completada" and db.obtener_tarea_outlook(uid, c)["estado"] == "completada"
+    assert "Todo al día" in cliente.get("/hoy/").get_data(as_text=True)
+
+
+def test_hecho_respeta_permisos_y_tareas_bloqueadas(cliente):
+    uid, t = _web(cliente, "hoyhecho2@ejemplo.com")
+    ajeno = db.crear_usuario_vinculado_a_kratos("ajeno-hecho@ejemplo.com", "kratos-ajeno-hecho")
+    de_otro = db.crear_tarea_outlook(ajeno, "Tarea de otra persona", fecha_vencimiento=HOY.isoformat())
+    r = cliente.post("/hoy/hecho", data={"elemento": f"tarea:{de_otro}"})
+    assert "hechos=0" in r.headers["Location"] and "fallos=1" in r.headers["Location"]
+    assert db.obtener_tarea_outlook(ajeno, de_otro)["estado"] != "completada"
+    assert cliente.get("/hoy/?hechos=0&fallos=1").status_code == 200

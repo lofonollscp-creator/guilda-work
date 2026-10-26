@@ -8,7 +8,7 @@ from __future__ import annotations
 TABLAS: dict[str, tuple[str, tuple[str, ...], dict]] = {
     "Nota": ("notas", (), {"categoria_nombre": {"type": "string", "nullable": True}, "dueno_nombre": {"type": "string", "nullable": True}}),
     "TareaConDuracion": ("tareas", (), {}),
-    "TareaOutlook": ("tareas_outlook", (), {"categoria_nombre": {"type": "string", "nullable": True}, "categoria_color": {"type": "string", "nullable": True}, "vencida": {"type": "boolean", "description": "Derivada: tiene fecha, ya pasó el día y no está completada (solo en las respuestas de transiciones y tareas de un cliente)."}, "clientes": {"type": "array", "items": {"$ref": "#/components/schemas/ClienteDeTarea"}}}),
+    "TareaOutlook": ("tareas_outlook", (), {"categoria_nombre": {"type": "string", "nullable": True}, "categoria_color": {"type": "string", "nullable": True}, "vencida": {"type": "boolean", "description": "Derivada: tiene fecha, ya pasó el día y no está completada (solo en las respuestas de transiciones y tareas de un cliente)."}, "clientes": {"type": "array", "items": {"$ref": "#/components/schemas/ClienteDeTarea"}}, "n_comentarios": {"type": "integer", "description": "Solo en lista, «Mi día» y tablero: comentarios de la tarea."}, "checklist_hechas": {"type": "integer", "description": "Solo en lista, «Mi día» y tablero: puntos de la checklist hechos."}, "checklist_total": {"type": "integer", "description": "Solo en lista, «Mi día» y tablero: puntos de la checklist."}, "asignada_nombre": {"type": "string", "nullable": True, "description": "Solo en lista y tablero: nombre de a quién está asignada."}, "creador_nombre": {"type": "string", "nullable": True, "description": "Solo en lista y tablero: nombre de quien la creó."}, "bloqueos": {"type": "integer", "description": "Solo en lista, «Mi día» y tablero: tareas previas sin completar de las que depende."}, "rol": {"type": "string", "nullable": True, "description": "Solo en la lista con ámbito distinto de `propias`: dueno, asignada o compartida."}}),
     "Proyecto": ("categorias", (), {}),
     "ClienteFiscal": ("clientes_fiscales", (), {"modelos_fiscales": {"type": "string", "nullable": True, "description": "Modelos que se le generan, **serializados como JSON** (p. ej. `[\"303\",\"130\"]`). Solo `GET /fiscal/clientes/{id}` los devuelve ya como lista (`ClienteFiscalDetalle`); al enviarlos siempre es una lista."}}),
     "Vencimiento": ("vencimientos_fiscales", (), {"cliente_nombre": {"type": "string"}}),
@@ -319,6 +319,8 @@ RESPUESTAS.update({
 })
 ESQUEMAS["EstadoServicio"] = {"type": "object", "properties": {"estado": {"type": "string", "enum": ["ok"], "description": "`ok` si el servicio atiende peticiones."}, "version_api": {"type": "string", "description": "Versión del contrato (`X-API-Version`)."}, "base_de_datos": {"type": "string", "enum": ["ok"], "description": "La base de datos responde."}}}
 RESPUESTAS["estado_servicio"] = ("EstadoServicio", False)
+ESQUEMAS["CategoriaOutlook"] = {"type": "string", "example": "Fiscal"}
+RESPUESTAS["categorias_outlook"] = ("CategoriaOutlook", True)
 ESQUEMAS.update({
     "ConfigRecordatorios": {"type": "object", "properties": {"dias_antes": {"type": "array", "items": {"type": "integer"}}, "dias_despues": {"type": "array", "items": {"type": "integer"}},
                             "avisar_equipo": {"type": "boolean"}, "asunto": {"type": "string"}, "cuerpo": {"type": "string"}}},

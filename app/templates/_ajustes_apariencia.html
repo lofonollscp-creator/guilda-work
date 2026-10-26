@@ -16,6 +16,14 @@
     </div>
   </div>
   <div class="apariencia-fila">
+    <span class="apariencia-etiqueta" id="ap-acento">{{ _('Color de los botones') }}</span>
+    <form action="{{ url_for('guardar_acento') }}" method="post" class="acentos" role="radiogroup" aria-labelledby="ap-acento">
+      {% for clave, (nombre, color) in acentos.items() %}
+      <button type="submit" name="acento" value="{{ clave }}" role="radio" aria-checked="{{ 'true' if acento_actual == clave else 'false' }}" class="acento-opcion" style="--muestra: {{ color }};" title="{{ nombre }}"><span class="acento-muestra" aria-hidden="true"></span>{{ nombre }}</button>
+      {% endfor %}
+    </form>
+  </div>
+  <div class="apariencia-fila">
     <span class="apariencia-etiqueta" id="ap-idioma">{{ _('Idioma') }}</span>
     <div class="segmentado" role="group" aria-labelledby="ap-idioma">
       {% for codigo, nombre in [('es', 'Castellano'), ('ca', 'Català'), ('en', 'English'), ('fr', 'Français')] %}

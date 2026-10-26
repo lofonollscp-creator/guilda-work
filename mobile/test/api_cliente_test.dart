@@ -9,6 +9,8 @@ import 'package:guilda_work_mobile/api/errores.dart';
 import 'package:guilda_work_mobile/api/fechas.dart';
 
 class _Contexto implements ContextoApi {
+  @override
+  int? get usuarioId => 1;
   String? tokenActual = 'tok';
   @override
   String? despacho = '3';

@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
 import 'datos/cola.dart';
 import 'nucleo/abrir_destino.dart';
+import 'nucleo/bloqueo.dart';
+import 'nucleo/pantalla_bloqueo.dart';
 import 'nucleo/rutas.dart';
 import 'nucleo/servicios.dart';
 import 'nucleo/sesion.dart';
@@ -46,13 +48,28 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
     // que haya sesión, avisa si es de otro despacho y cae en la web si aún no hay pantalla nativa.
     _s.push.onTap = (datos) => ref.read(navegadorDeAvisosProvider).abrirDesdePush(datos);
     ref.listenManual(estadoSesionProvider, (anterior, estado) {
-      if (estado.fase == FaseSesion.conSesion && anterior?.fase != FaseSesion.conSesion) _alIniciarSesion();
+      if (estado.fase == FaseSesion.conSesion && anterior?.fase != FaseSesion.conSesion) {
+        // Abierta con la sesión ya guardada (venía de «arrancando»): hay que desbloquear. Si acaba de escribir la contraseña (venía de «sin sesión»), no.
+        unawaited(ref.read(bloqueoProvider.notifier).alEntrarConSesion(arranqueEnFrio: anterior?.fase == FaseSesion.arrancando).then((_) => _ofrecerBloqueo()));
+        _alIniciarSesion();
+      } else if (estado.fase == FaseSesion.sinSesion && anterior?.fase == FaseSesion.conSesion) {
+        unawaited(ref.read(bloqueoProvider.notifier).alCerrarSesion());
+      }
     }, fireImmediately: true);
     _conexionSub = Connectivity().onConnectivityChanged.listen((estados) {
       if (!estados.contains(ConnectivityResult.none)) {
         _vaciarCola();
       }
     });
+  }
+
+  /// Tras la segunda entrada, ofrece proteger la app con la biometría del móvil (una sola vez).
+  Future<void> _ofrecerBloqueo() async {
+    final b = ref.read(bloqueoProvider);
+    if (!b.debeOfrecer || b.bloqueada) return;
+    await WidgetsBinding.instance.endOfFrame;
+    final contexto = ref.read(routerProvider).routerDelegate.navigatorKey.currentContext;
+    if (contexto != null && contexto.mounted) await ofrecerBloqueo(contexto, ref);
   }
 
   /// Envía lo que se hizo sin conexión (si aún no hay sesión, no hace nada).
@@ -100,6 +117,7 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    ref.read(bloqueoProvider.notifier).alCambiarCiclo(state);
     if (state == AppLifecycleState.resumed) {
       _vaciarCola();
     }
@@ -113,6 +131,7 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
       builder: (context, _) {
         return MaterialApp.router(
           routerConfig: router,
+          builder: (context, hijo) => _ConBloqueo(hijo: hijo ?? const SizedBox()),
           title: 'Guilda Work',
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
@@ -128,5 +147,23 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
         );
       },
     );
+  }
+}
+
+/// Pone el bloqueo y la cubierta de privacidad encima de toda la app (por encima también de los diálogos y las rutas empujadas).
+class _ConBloqueo extends ConsumerWidget {
+  final Widget hijo;
+  const _ConBloqueo({required this.hijo});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final conSesion = ref.watch(estadoSesionProvider.select((e) => e.fase == FaseSesion.conSesion));
+    final b = ref.watch(bloqueoProvider);
+    final bloqueada = conSesion && b.bloqueada;
+    return Stack(children: [
+      // Bloqueada, lo de debajo ni se toca ni se lee con un lector de pantalla.
+      ExcludeSemantics(excluding: bloqueada, child: IgnorePointer(ignoring: bloqueada, child: hijo)),
+      if (bloqueada) const Positioned.fill(child: PantallaBloqueo()) else if (conSesion && b.activo && b.cubierta) const Positioned.fill(child: CubiertaPrivacidad()),
+    ]);
   }
 }

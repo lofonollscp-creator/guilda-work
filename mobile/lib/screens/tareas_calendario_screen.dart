@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../diseno/componentes.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../l10n/app_localizations.dart';
@@ -74,7 +76,7 @@ class _TareasCalendarioScreenState extends State<TareasCalendarioScreen> {
         }
         if (snapshot.hasError) {
           return Center(
-            child: Text(t.comunErrorCargar(snapshot.error.toString())),
+            child: Text(mensajeDeError(t, snapshot.error!)),
           );
         }
         final eventosDia = _selectedDay != null

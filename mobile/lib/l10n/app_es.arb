@@ -459,7 +459,7 @@
   "prioridadNormal": "Normal",
   "prioridadAlta": "Alta",
   "tareasNueva": "Nueva tarea",
-  "tareasNuevaHint": "Escribe una tarea y pulsa enviar",
+  "tareasNuevaHint": "Nueva tarea… (mañana 10h · @persona · !alta · #proyecto)",
   "tareasVacio": "No hay tareas aquí.",
   "tareasSinResultados": "Ninguna tarea coincide.",
   "tareasBuscar": "Buscar tareas",
@@ -562,6 +562,359 @@
     "placeholders": {
       "n": {
         "type": "int"
+      }
+    }
+  },
+  "comunEnviar": "Enviar",
+  "comunAbrir": "Abrir",
+  "comunQuitar": "Quitar",
+  "comunBorrar": "Borrar",
+  "comunAnadir": "Añadir",
+  "comunMensaje": "Mensaje",
+  "comunBuscarHint": "Buscar…",
+  "comunDescartar": "Descartar",
+  "ajustesServidorUrlLabel": "URL base (ej. http://10.0.2.2:8000)",
+  "correoAjustesTitulo": "Ajustes de correo",
+  "correoRemitentesTitulo": "Remitentes de confianza",
+  "correoRemitentesSub": "Sus imágenes y adjuntos no se bloquean ni avisan",
+  "correoReglasTitulo": "Reglas de categorización",
+  "correoReglasSub": "Categoriza el correo entrante según el remitente",
+  "correoRedactar": "Redactar",
+  "correoSinCuenta": "Todavía no tienes ninguna cuenta de correo configurada. Añade una desde la app de escritorio.",
+  "correoSoloNoLeidos": "Solo no leídos",
+  "correoSinMensajes": "No hay mensajes para este filtro.",
+  "correoNoLeido": "No leído",
+  "correoLeido": "Leído",
+  "correoElegirCuenta": "Elige una cuenta desde la que enviar.",
+  "correoFaltanDatos": "Rellena al menos destinatarios y asunto.",
+  "correoConfirmarEnviar": "¿Enviar a {destinatarios}?",
+  "@correoConfirmarEnviar": {
+    "placeholders": {
+      "destinatarios": {
+        "type": "String"
+      }
+    }
+  },
+  "correoEnviado": "Correo enviado.",
+  "correoParaLabel": "Para",
+  "correoAnadirCc": "Añadir Cc/Cco",
+  "correoCcoLabel": "Cco",
+  "correoAsuntoLabel": "Asunto",
+  "correoEliminarTitulo": "¿Eliminar este mensaje?",
+  "correoEliminarCuerpo": "Se eliminará de la copia local de este correo.",
+  "correoNoConfiableTitulo": "Remitente no confiable",
+  "correoNoConfiableCuerpo": "Este adjunto viene de «{remitente}», que no está en tu lista de confianza. ¿Abrir igualmente «{adjunto}»?",
+  "@correoNoConfiableCuerpo": {
+    "placeholders": {
+      "remitente": {
+        "type": "String"
+      },
+      "adjunto": {
+        "type": "String"
+      }
+    }
+  },
+  "correoDe": "De: {remitente}",
+  "@correoDe": {
+    "placeholders": {
+      "remitente": {
+        "type": "String"
+      }
+    }
+  },
+  "correoPara": "Para: {destinatarios}",
+  "@correoPara": {
+    "placeholders": {
+      "destinatarios": {
+        "type": "String"
+      }
+    }
+  },
+  "correoDestacar": "Destacar",
+  "correoConfiarRemitente": "Confiar en remitente",
+  "correoCategoria": "Categoría",
+  "correoSinCategoria": "Sin categoría",
+  "correoMoverA": "Mover a",
+  "correoImagenesOcultas": "🖼 Imágenes ocultas por privacidad — este remitente no está en tu lista de confianza.",
+  "correoMostrarUnaVez": "Mostrar solo esta vez",
+  "correoSinContenido": "Sin contenido legible.",
+  "correoResponder": "Responder",
+  "correoReenviar": "Reenviar",
+  "correoReglaEliminarTitulo": "¿Eliminar esta regla?",
+  "correoReglasAyuda": "Los correos nuevos de un remitente o dominio que coincida se categorizan solos.",
+  "correoReglasSinCategorias": "Crea al menos una categoría desde el detalle de un mensaje primero.",
+  "correoReglasPatronHint": "email@ejemplo.com o @dominio.com",
+  "correoReglasVacio": "Todavía no tienes ninguna regla.",
+  "correoConfianzaQuitarTitulo": "¿Quitar de la lista de confianza?",
+  "correoConfianzaQuitarCuerpo": "«{direccion}» volverá a bloquear sus imágenes y avisar antes de abrir adjuntos.",
+  "@correoConfianzaQuitarCuerpo": {
+    "placeholders": {
+      "direccion": {
+        "type": "String"
+      }
+    }
+  },
+  "correoConfianzaAyuda": "Sus imágenes remotas y adjuntos se muestran o abren sin avisar.",
+  "correoConfianzaHint": "correo@ejemplo.com",
+  "correoConfianzaVacio": "Todavía no tienes ningún remitente de confianza.",
+  "historialVacio": "Nada que mostrar aquí ahora mismo.",
+  "iaAjustesGuardados": "Ajustes guardados.",
+  "iaAjustesTitulo": "Ajustes del asistente IA",
+  "iaAjustesModelo": "Modelo (OpenRouter, solo gratuitos)",
+  "iaAjustesAutonomo": "Modo autónomo",
+  "iaAjustesAutonomoAyuda": "El asistente ejecuta acciones que modifican datos sin pedir confirmación (excepto enviar correos, que siempre la piden).",
+  "iaAjustesClaveSi": "Clave de API de OpenRouter configurada",
+  "iaAjustesClaveNo": "No hay ninguna clave de API de OpenRouter configurada",
+  "iaAjustesClaveAyuda": "Las claves de API solo se pueden añadir o cambiar desde la web, en Ajustes del Asistente IA (/ia/ajustes) — por seguridad, no se gestionan desde el móvil.",
+  "iaAjustesModeloActual": "{modelo} (actual)",
+  "@iaAjustesModeloActual": {
+    "placeholders": {
+      "modelo": {
+        "type": "String"
+      }
+    }
+  },
+  "iaAjustesSinModelos": "No se ha podido obtener el listado de modelos gratuitos ahora mismo.",
+  "iaAjustesElegirModelo": "Elige un modelo",
+  "iaEjecutarPregunta": "¿Ejecuto {herramienta}?",
+  "@iaEjecutarPregunta": {
+    "placeholders": {
+      "herramienta": {
+        "type": "String"
+      }
+    }
+  },
+  "iaVaciarConfirmar": "¿Borrar todo el historial de esta conversación? No se puede deshacer.",
+  "iaVacioTexto": "Escríbele al asistente sobre tus notas, tareas o correo. Puede leer y modificar tus datos si se lo pides.",
+  "iaPensando": "Pensando…",
+  "iaSiHazlo": "Sí, hazlo",
+  "iaDictar": "Dictar mensaje",
+  "iaResponderConfirmacion": "Responde a la confirmación de arriba primero…",
+  "iaEscribeMensaje": "Escribe un mensaje…",
+  "iaToolUso": "🔧 usó {herramienta}",
+  "@iaToolUso": {
+    "placeholders": {
+      "herramienta": {
+        "type": "String"
+      }
+    }
+  },
+  "iaToolError": "⚠️ {herramienta}: {error}",
+  "@iaToolError": {
+    "placeholders": {
+      "herramienta": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "iaToolRechazada": "❌ {herramienta} (rechazada)",
+  "@iaToolRechazada": {
+    "placeholders": {
+      "herramienta": {
+        "type": "String"
+      }
+    }
+  },
+  "menuNotaHint": "Escribe algo que ha pasado...",
+  "menuEvento": "⚡ Evento instantáneo",
+  "menuEventoHint": "Algo puntual que acaba de ocurrir...",
+  "menuRegistrar": "Registrar",
+  "menuTareaDuracion": "▶ Tarea con duración",
+  "menuTareaDuracionHint": "Nombre de la tarea a iniciar...",
+  "menuIniciar": "Iniciar",
+  "menuEnCursoAhora": "En curso ahora",
+  "menuRegistroDe": "Registro de {nombre}",
+  "@menuRegistroDe": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "menuBuscarEnProyecto": "Buscar en este proyecto...",
+  "menuProyectoVacio": "Este proyecto todavía está vacío.",
+  "menuEnPausa": "En pausa",
+  "menuReanudar": "Reanudar",
+  "menuPausar": "Pausar",
+  "menuFinalizar": "Finalizar",
+  "menuTipoNota": "Nota",
+  "menuTipoEvento": "Evento",
+  "registroContrasenaCorta": "La contraseña debe tener al menos 8 caracteres.",
+  "registroContrasenasNoCoinciden": "Las contraseñas no coinciden.",
+  "registroCrearCuenta": "Crear cuenta",
+  "registroContrasenaLabel": "Contraseña (mínimo 8 caracteres)",
+  "registroRepiteContrasena": "Repite la contraseña",
+  "registroYaTienesCuenta": "¿Ya tienes cuenta? Inicia sesión",
+  "loginMostrarContrasena": "Mostrar contraseña",
+  "loginOcultarContrasena": "Ocultar contraseña",
+  "login2faTitulo": "Verificación en dos pasos",
+  "login2faRecuperacion": "Usar un código de recuperación",
+  "login2faUsarApp": "Usar el código de la app",
+  "loginVerificar": "Verificar",
+  "loginOtraCuenta": "Usar otra cuenta",
+  "loginInvitadoLink": "¿Tu despacho te ha invitado?",
+  "loginInvitadoTitulo": "El acceso es por invitación",
+  "loginInvitadoCuerpo": "Tu despacho te invita desde Guilda Work y recibes un correo para crear tu contraseña. Si aún no lo has recibido, pídeselo a quien administra tu despacho.",
+  "loginEntendido": "Entendido",
+  "loginServidorPulsacion": "Mantén pulsado el logotipo para cambiar de servidor",
+  "bloqueoTitulo": "Bloqueo con huella, Face ID o código",
+  "bloqueoSubtitulo": "Pide tu huella, tu cara o el código del móvil al abrir la app",
+  "bloqueoNoDisponible": "Este móvil no tiene huella, Face ID ni código de bloqueo configurado",
+  "bloqueoMotivoActivar": "Confirma que eres tú para activar el bloqueo",
+  "bloqueoMotivoDesactivar": "Confirma que eres tú para desactivar el bloqueo",
+  "bloqueoMotivoDesbloquear": "Desbloquea Guilda Work",
+  "bloqueoPantallaTitulo": "Guilda Work está bloqueada",
+  "bloqueoDesbloquear": "Desbloquear",
+  "bloqueoCerrarSesion": "Cerrar sesión",
+  "bloqueoOfertaTitulo": "¿Proteger la app?",
+  "bloqueoOfertaCuerpo": "Puedes pedir tu huella, tu cara o el código del móvil cada vez que abras Guilda Work. Así, si alguien coge tu móvil, no verá los datos de tus clientes.",
+  "bloqueoOfertaActivar": "Activar",
+  "bloqueoOfertaAhoraNo": "Ahora no",
+  "comunDeshacer": "Deshacer",
+  "tareaCompletadaAviso": "Tarea completada",
+  "tareaEstadoCambiadoAviso": "Cambiada a «{estado}»",
+  "tareaDeshechaAviso": "Cambio deshecho",
+  "tareaNoSePudoDeshacer": "No se pudo deshacer: la tarea ha cambiado. Revísala.",
+  "@tareaEstadoCambiadoAviso": {
+    "placeholders": {
+      "estado": {
+        "type": "String"
+      }
+    }
+  },
+  "tareasFiltros": "Filtros",
+  "tareasFiltrosActivos": "Filtros ({n})",
+  "@tareasFiltrosActivos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasFiltroPrioridad": "Prioridad",
+  "tareasFiltroCategoria": "Categoría",
+  "tareasFiltroCualquiera": "Cualquiera",
+  "tareasMostrarCompletadas": "Ver también completadas",
+  "tareasLimpiarFiltros": "Limpiar",
+  "tareasAplicar": "Aplicar",
+  "tareasVistas": "Vistas guardadas",
+  "tareasVistasVacio": "Aún no hay vistas guardadas. Pon filtros y pulsa «Guardar como vista».",
+  "tareasGuardarVista": "Guardar como vista",
+  "tareasVistaNombre": "Nombre de la vista",
+  "tareasVistaGuardada": "Vista guardada",
+  "tareasVistaNoSePudo": "No se pudo guardar: pon un nombre y al menos un filtro.",
+  "tareasVistaCompartida": "Compartida por el despacho",
+  "tareasSeleccionadas": "{n, plural, one{1 seleccionada} other{{n} seleccionadas}}",
+  "@tareasSeleccionadas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasSeleccionar": "Seleccionar",
+  "tareasLoteCompletar": "Completar",
+  "tareasLoteEstado": "Cambiar el estado",
+  "tareasLotePrioridad": "Cambiar la prioridad",
+  "tareasLoteVencimiento": "Cambiar el vencimiento",
+  "tareasLoteEliminar": "Eliminar",
+  "tareasLoteResultado": "{ok} hechas, {fallos} no se pudieron cambiar (permisos o reglas de la tarea).",
+  "@tareasLoteResultado": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "fallos": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasLoteExito": "{n, plural, one{1 tarea actualizada} other{{n} tareas actualizadas}}",
+  "@tareasLoteExito": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasEliminadas": "{n, plural, one{Tarea eliminada} other{{n} tareas eliminadas}}",
+  "@tareasEliminadas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasNoSePudoEliminar": "No se pudo eliminar (¿no es tuya?).",
+  "tareaIndComentarios": "{n, plural, one{1 comentario} other{{n} comentarios}}",
+  "@tareaIndComentarios": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaIndChecklist": "Lista {hechas}/{total}",
+  "@tareaIndChecklist": {
+    "placeholders": {
+      "hechas": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaIndEspera": "{n, plural, one{Espera a 1 tarea} other{Espera a {n} tareas}}",
+  "@tareaIndEspera": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaRolAsignada": "Asignada a ti",
+  "tareaRolCompartida": "Compartida contigo",
+  "tareasMarcarTodas": "Marcar todas",
+  "tareasMiDia": "Mi día",
+  "tareasVistaLista": "Lista",
+  "tareasVistaTablero": "Tablero",
+  "tareasDiaVencidas": "Vencidas",
+  "tareasDiaHoy": "Vencen hoy",
+  "tareasDiaEnProgreso": "En progreso",
+  "tareasDiaAsignadas": "Asignadas a mí",
+  "tareasDiaCompartidas": "Compartidas conmigo",
+  "tareasDiaVacio": "No tienes nada pendiente para hoy. Buen momento para adelantar trabajo.",
+  "tareasVerRestantes": "{n, plural, one{Ver la {n} restante} other{Ver las {n} restantes}}",
+  "@tareasVerRestantes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tableroMoverA": "Mover a",
+  "tableroNadaAqui": "Nada aquí",
+  "tableroMostrarMas": "Mostrar más",
+  "tableroPasos": "{hechas} de {total} pasos",
+  "@tableroPasos": {
+    "placeholders": {
+      "hechas": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaMovidaA": "Movida a «{estado}»",
+  "@tareaMovidaA": {
+    "placeholders": {
+      "estado": {
+        "type": "String"
       }
     }
   }

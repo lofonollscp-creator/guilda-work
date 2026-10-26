@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 import '../services/api_client.dart';
 import 'correo_reglas_categoria_screen.dart';
 import 'correo_remitentes_confiables_screen.dart';
@@ -15,13 +17,13 @@ class CorreoAjustesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes de correo')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).correoAjustesTitulo)),
       body: ListView(
         children: [
           ListTile(
             leading: const Icon(Icons.shield_outlined),
-            title: const Text('Remitentes de confianza'),
-            subtitle: const Text('Sus imágenes y adjuntos no se bloquean/avisan'),
+            title: Text(AppLocalizations.of(context).correoRemitentesTitulo),
+            subtitle: Text(AppLocalizations.of(context).correoRemitentesSub),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => CorreoRemitentesConfiablesScreen(api: api)),
@@ -29,8 +31,8 @@ class CorreoAjustesScreen extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.rule),
-            title: const Text('Reglas de categorización'),
-            subtitle: const Text('Categoriza el correo entrante según el remitente'),
+            title: Text(AppLocalizations.of(context).correoReglasTitulo),
+            subtitle: Text(AppLocalizations.of(context).correoReglasSub),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => CorreoReglasCategoriaScreen(api: api)),

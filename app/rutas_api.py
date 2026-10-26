@@ -33,7 +33,7 @@ logger = logging.getLogger("guilda")
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
 # Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
-API_VERSION = "1.5"
+API_VERSION = "1.7"
 
 
 _CODIGOS_HTTP = {
@@ -659,13 +659,34 @@ def eliminar_definitivamente_de_papelera(tipo: str, item_id: int):
 
 # --- Tareas Outlook (estilo To-Do de Outlook) ---------------------------------
 
+def _filas_de_tarea(filas, con_rol: bool = False) -> list[dict]:
+    """Las filas de tareas como las pinta la web en lista, «Mi día» y tablero: `vencida` (derivada), `n_comentarios`, `checklist_hechas`/`checklist_total` y `bloqueos`;
+    con `con_rol`, también `rol` (dueno, asignada o compartida). Lista, `/mi-dia` y `/tareas-outlook/tablero` comparten esto para que la app vea lo mismo que la web."""
+    from . import tareas_trabajo as _tt
+    filas = list(filas)
+    ids = [f["id"] for f in filas]
+    comentarios, checklists, bloqueos = db.contar_comentarios_tareas(ids), db.resumen_checklist(ids), db.bloqueos_de_tareas(ids)
+    resultado = []
+    for f in filas:
+        fila = dict(f)
+        fila["vencida"] = _tt.esta_vencida(fila.get("fecha_vencimiento"), fila.get("estado"))      # derivada, como en el detalle (API 1.5: la lista también la trae)
+        hechas, total = checklists.get(f["id"], (0, 0))
+        fila.update(n_comentarios=comentarios.get(f["id"], 0), checklist_hechas=int(hechas or 0), checklist_total=int(total or 0), bloqueos=bloqueos.get(f["id"], 0))
+        if con_rol:
+            fila["rol"] = "dueno" if f["usuario_id"] == g.usuario_id else ("asignada" if f["asignada_a"] == g.usuario_id else "compartida")
+        resultado.append(fila)
+    return resultado
+
+
 @api_bp.route("/tareas-outlook", methods=["GET"])
 @token_required
 def listar_tareas_outlook():
     """Filtros: `estado`, `prioridad`, `categoria`, `q`, `desde`/`hasta` (fecha de vencimiento, YYYY-MM-DD).
     `ambito` (opcional): `propias` (por defecto, como siempre), `asignadas`
     (las que me han asignado), `compartidas` (compartidas conmigo) o `todas`.
-    Cada fila lleva `rol`: dueno, asignada o compartida."""
+    Cada fila lleva `rol`: dueno, asignada o compartida.
+    `completadas` (opcional, como en la web): `0` oculta las completadas (salvo que se pida un `estado`), `1` las incluye; sin él, se devuelve todo como siempre.
+    Cada fila trae además `n_comentarios`, `checklist_hechas`, `checklist_total` y `bloqueos` (tareas previas sin completar), para pintar la lista sin más llamadas."""
     ref = request.args.get("referencia_externa")
     if ref:
         encontrado = db.id_por_referencia_externa("tareas_outlook", g.usuario_id, ref)
@@ -683,16 +704,9 @@ def listar_tareas_outlook():
         incluir_asignadas=ambito == "todas",
         solo_asignadas=ambito == "asignadas",
         solo_compartidas=ambito == "compartidas",
+        excluir_completadas=request.args.get("completadas") == "0" and not request.args.get("estado"),
     )
-    from . import tareas_trabajo as _tt
-    resultado = []
-    for f in filas:
-        fila = dict(f)
-        fila["vencida"] = _tt.esta_vencida(fila.get("fecha_vencimiento"), fila.get("estado"))      # derivada, como en el detalle (API 1.5: la lista también la trae)
-        if ambito != "propias":
-            fila["rol"] = "dueno" if f["usuario_id"] == g.usuario_id else ("asignada" if f["asignada_a"] == g.usuario_id else "compartida")
-        resultado.append(fila)
-    return _ok_paginado(resultado)
+    return _ok_paginado(_filas_de_tarea(filas, con_rol=ambito != "propias"))
 
 
 @api_bp.route("/tareas-outlook", methods=["POST"])
@@ -705,14 +719,42 @@ def crear_tarea_outlook():
     error = _error_referencia("tareas_outlook", g.usuario_id, datos)
     if error:
         return error
+    from datetime import date
+    from . import quickadd, tareas_trabajo
+    from .rutas_tareas import _notificar_asignacion
+    companeros = db.listar_companeros_tenant(g.usuario_id)
+    proyectos = db.listar_proyectos_usables(g.usuario_id)
+    # `texto_libre`: como el cuadro de alta de la web, «viernes 10h pedir extractos @luis !alta #IVA»; lo que se manda explícito manda sobre lo entendido.
+    entendido = None
+    if datos.get("texto_libre"):
+        entendido = quickadd.interpretar(asunto, date.today(), [(c["id"], c["nombre"], c["email"] if "email" in c.keys() else "") for c in companeros], [(m["id"], m["nombre"]) for m in proyectos])
+        asunto = entendido.asunto or asunto
+    categoria_id = datos.get("categoria_id") or (entendido.etiqueta_id if entendido else None)
+    asignada_a = datos.get("asignada_a") or (entendido.persona_id if entendido else None)
+    cliente_id = datos.get("cliente_fiscal_id")
+    if categoria_id is not None and categoria_id not in {m["id"] for m in proyectos}:
+        return _err("Ese proyecto no existe o no puedes poner tareas en él.", 400, "proyecto_invalido", "categoria_id")
+    if asignada_a is not None and asignada_a not in {c["id"] for c in companeros}:
+        return _err("Solo puedes asignar a personas de tu despacho.", 400, "asignada_invalida", "asignada_a")
+    if cliente_id is not None:
+        try:
+            tareas_trabajo.validar_clientes(g.usuario_id, [cliente_id], cliente_id)
+        except tareas_trabajo.TransicionInvalida as e:
+            return _err(str(e), 400, e.codigo, e.campo)
+    prioridad = datos.get("prioridad") or (entendido.prioridad if entendido and entendido.prioridad else "normal")
     tarea_id = db.crear_tarea_outlook(
         g.usuario_id, asunto=asunto, cuerpo=datos.get("cuerpo"),
-        prioridad=datos.get("prioridad", "normal"),
-        fecha_inicio=datos.get("fecha_inicio"), fecha_vencimiento=datos.get("fecha_vencimiento"),
-        categoria_outlook=datos.get("categoria_outlook"), estimacion_min=datos.get("estimacion_min"),
+        prioridad=prioridad,
+        fecha_inicio=datos.get("fecha_inicio"), fecha_vencimiento=datos.get("fecha_vencimiento") or (entendido.vencimiento if entendido else None),
+        categoria_outlook=datos.get("categoria_outlook"), estimacion_min=datos.get("estimacion_min") or (entendido.estimacion_min if entendido else None),
+        categoria_id=categoria_id, asignada_a=asignada_a, cliente_fiscal_id=cliente_id,
     )
     _guardar_referencia("tareas_outlook", g.usuario_id, tarea_id, datos)
-    return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)), 201)
+    _notificar_asignacion(g.usuario_id, tarea_id, asignada_a)
+    r = _dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id))
+    if entendido is not None:
+        r["sin_resolver"] = list(entendido.sin_resolver)       # @menciones o #etiquetas que no se pudieron resolver y se dejaron en el texto
+    return _ok(r, 201)
 
 
 @api_bp.route("/tareas-outlook/<int:tarea_id>", methods=["PUT"])
