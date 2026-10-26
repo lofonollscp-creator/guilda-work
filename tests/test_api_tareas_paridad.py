@@ -85,3 +85,21 @@ def test_la_estimacion_se_escribe_como_en_la_web_y_la_interpreta_el_servidor(cli
     r = put("mucho")
     assert r.status_code == 400 and r.get_json()["codigo"] == "estimacion_invalida"
     assert put("").get_json()["data"]["estimacion_min"] is None      # vacío la quita
+
+
+def test_el_tiempo_de_una_tarea_trae_mi_cronometro_y_la_hora_del_servidor(cliente):
+    h, uid, _ = _despacho(cliente, "paridad8@ejemplo.com")
+    t = _crear(cliente, h, asunto="con reloj")["id"]
+    d = cliente.get(f"/api/v1/tareas-outlook/{t}/tiempo", headers=h).get_json()["data"]
+    assert d["cronometro"] is None and d["mio_segundos"] == 0 and d["ahora"] and d["personas"] == []
+    proyecto = db.crear_categoria(uid, "Gestión")
+    r = cliente.post(f"/api/v1/tareas-outlook/{t}/cronometro/iniciar", json={"proyecto_id": proyecto}, headers=h)
+    assert r.status_code == 201
+    cron = cliente.get(f"/api/v1/tareas-outlook/{t}/tiempo", headers=h).get_json()["data"]["cronometro"]
+    assert cron["estado"] == "en_curso" and cron["id"] == r.get_json()["data"]["tarea_cronometro_id"]
+    assert cliente.post(f"/api/v1/tareas/{cron['id']}/pausar", headers=h).status_code == 200
+    pausado = cliente.get(f"/api/v1/tareas-outlook/{t}/tiempo", headers=h).get_json()["data"]["cronometro"]
+    assert pausado["estado"] == "pausada" and pausado["segundos_trabajados_congelado"] is not None
+    assert cliente.post(f"/api/v1/tareas/{cron['id']}/finalizar", headers=h).status_code == 200
+    final = cliente.get(f"/api/v1/tareas-outlook/{t}/tiempo", headers=h).get_json()["data"]
+    assert final["cronometro"] is None          # ya finalizado (sin segundos no hay persona en la lista)

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -437,6 +439,178 @@ class _HojaRecordatorioState extends State<_HojaRecordatorio> {
           ),
         ]),
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------- Tiempo dedicado ----
+
+/// El tiempo de la tarea: lo que has registrado, el cronómetro (iniciar, pausar, reanudar, parar) y, si se trabaja en equipo, lo de cada persona. El
+/// cronómetro cuenta con la hora del servidor al pedirlo y sigue con el reloj del móvil, así que un móvil con la hora mal puesta no lo desajusta.
+class BloqueTiempo extends ConsumerStatefulWidget {
+  final TareaOutlook tarea;
+  final VoidCallback? alCambiar;
+  const BloqueTiempo({super.key, required this.tarea, this.alCambiar});
+
+  @override
+  ConsumerState<BloqueTiempo> createState() => _BloqueTiempoState();
+}
+
+class _BloqueTiempoState extends ConsumerState<BloqueTiempo> {
+  TiempoDeTarea? _tiempo;
+  Timer? _reloj;
+
+  TareasRepositorio get _repo => ref.read(tareasRepositorioProvider);
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+    _reloj = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && (_tiempo?.cronometro != null && !_tiempo!.cronometro!.pausado)) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _reloj?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final r = await _repo.tiempo(widget.tarea.id);
+      if (mounted) setState(() => _tiempo = r);
+    } catch (_) {
+      // sin red: el bloque queda como estaba
+    }
+  }
+
+  Future<void> _hacer(Future<void> Function() f) async {
+    if (await _probar(context, f)) {
+      await _cargar();
+      widget.alCambiar?.call();
+    }
+  }
+
+  Future<void> _iniciar() async {
+    int? proyecto;
+    if (widget.tarea.categoriaId == null) {
+      // El tiempo se registra en un proyecto: si la tarea no tiene, se pregunta (como en la web).
+      final t = AppLocalizations.of(context);
+      List<Proyecto> proyectos;
+      try {
+        proyectos = await _repo.proyectos();
+      } on ApiException catch (e) {
+        if (mounted) _aviso(context, e.mensaje);
+        return;
+      }
+      if (!mounted || proyectos.isEmpty) return;
+      final elegido = await showModalBottomSheet<int>(
+        context: context,
+        showDragHandle: true,
+        builder: (_) => SafeArea(
+          child: ListView(shrinkWrap: true, children: [
+            Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8), child: Text(t.tareaCronoProyecto, style: Theme.of(context).textTheme.titleMedium)),
+            for (final p in proyectos) ListTile(title: Text(p.nombre ?? ''), onTap: () => Navigator.pop(context, p.id)),
+          ]),
+        ),
+      );
+      if (elegido == null) return;
+      proyecto = elegido;
+    }
+    await _hacer(() => _repo.iniciarCronometro(widget.tarea.id, proyectoId: proyecto));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    final x = _tiempo;
+    final abierta = EstadoTarea.desde(widget.tarea.estado).abierta;
+    final crono = x?.cronometro;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _Cabecera(t.tareaTiempo),
+      if (x != null && x.mioSegundos > 0)
+        Text(t.tareaTiempoRegistrado(duracionCorta((x.mioSegundos / 60).round().clamp(1, 1 << 31))))
+      else if (crono == null)
+        Text(t.tareaTiempoNada, style: tema.textTheme.bodySmall),
+      if (crono != null) ...[
+        const SizedBox(height: 8),
+        Row(children: [
+          Icon(crono.pausado ? Icons.pause_circle_outline : Icons.timer_outlined, color: crono.pausado ? null : tema.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(reloj(crono.segundos()), style: tema.textTheme.titleLarge?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+          const SizedBox(width: 8),
+          Expanded(child: Text(crono.pausado ? t.tareaCronoPausado : t.tareaCronoEnMarcha, style: tema.textTheme.bodySmall)),
+        ]),
+        Wrap(spacing: 8, children: [
+          if (crono.pausado)
+            OutlinedButton.icon(onPressed: () => _hacer(() => _repo.reanudarCronometro(crono.id)), icon: const Icon(Icons.play_arrow), label: Text(t.tareaCronoReanudar))
+          else
+            OutlinedButton.icon(onPressed: () => _hacer(() => _repo.pausarCronometro(crono.id)), icon: const Icon(Icons.pause), label: Text(t.tareaCronoPausar)),
+          FilledButton.icon(onPressed: () => _hacer(() => _repo.finalizarCronometro(crono.id)), icon: const Icon(Icons.stop), label: Text(t.tareaCronoFinalizar)),
+        ]),
+      ] else if (abierta && x != null)
+        Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: _iniciar, icon: const Icon(Icons.play_arrow), label: Text(t.tareaCronoIniciar))),
+      if (x != null && x.personas.length > 1) ...[
+        const SizedBox(height: 8),
+        Text(t.tareaTiempoEquipo, style: tema.textTheme.labelLarge),
+        for (final p in x.personas)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(children: [Expanded(child: Text(p.nombre)), Text(duracionCorta((p.segundos / 60).round().clamp(1, 1 << 31)))]),
+          ),
+      ],
+    ]);
+  }
+}
+
+// ---------------------------------------------------------------- Actividad ----
+
+/// El historial de la tarea (quién hizo qué y cuándo), plegado: solo se pide al abrirlo.
+class BloqueActividad extends ConsumerStatefulWidget {
+  final int tareaId;
+  const BloqueActividad({super.key, required this.tareaId});
+
+  @override
+  ConsumerState<BloqueActividad> createState() => _BloqueActividadState();
+}
+
+class _BloqueActividadState extends ConsumerState<BloqueActividad> {
+  List<ActividadDeTarea>? _lista;
+
+  Future<void> _cargar() async {
+    if (_lista != null) return;
+    try {
+      final r = await ref.read(tareasRepositorioProvider).actividad(widget.tareaId);
+      if (mounted) setState(() => _lista = r);
+    } catch (_) {
+      if (mounted) setState(() => _lista = const []);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final lista = _lista;
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      title: Text(t.tareaActividad, style: Theme.of(context).textTheme.titleSmall),
+      onExpansionChanged: (abierto) {
+        if (abierto) _cargar();
+      },
+      children: [
+        if (lista == null) const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
+        if (lista != null && lista.isEmpty) Align(alignment: Alignment.centerLeft, child: Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(t.tareaActividadVacia))),
+        for (final a in lista ?? const <ActividadDeTarea>[])
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: Text(a.detalle),
+            subtitle: Text([a.autor, if (MomentoLocal.intentar(a.cuando) != null) context.formatos.momento(MomentoLocal.intentar(a.cuando)!)].where((x) => x.isNotEmpty).join(' · ')),
+          ),
+      ],
     );
   }
 }

@@ -980,5 +980,31 @@
         "type": "String"
       }
     }
-  }
+  },
+  "tareaTiempo": "Tiempo dedicado",
+  "tareaTiempoRegistrado": "Registrado hasta ahora: {tiempo}",
+  "@tareaTiempoRegistrado": {
+    "placeholders": {
+      "tiempo": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaTiempoNada": "Todavía no has registrado tiempo en esta tarea.",
+  "tareaCronoIniciar": "Iniciar el cronómetro",
+  "tareaCronoPausar": "Pausar",
+  "tareaCronoReanudar": "Reanudar",
+  "tareaCronoFinalizar": "Parar y guardar",
+  "tareaCronoProyecto": "¿En qué proyecto registras el tiempo?",
+  "tareaCronoEnMarcha": "Cronómetro en marcha",
+  "tareaCronoPausado": "Cronómetro en pausa",
+  "tareaTiempoEquipo": "Tiempo del equipo",
+  "tareaActividad": "Actividad",
+  "tareaActividadVacia": "Aún no hay actividad.",
+  "tareaOtrosClientes": "Otros clientes de esta tarea",
+  "tareaOtrosClientesAyuda": "El cliente de arriba es el principal; aquí marcas los demás a los que afecta la tarea.",
+  "tareaVisiblePortal": "Enseñar esta tarea al cliente en su portal",
+  "tareaVisiblePortalAyuda": "El cliente verá solo el asunto, el estado y la fecha límite, sin la descripción, los comentarios ni los archivos.",
+  "tareaComentariosCliente": "Permitir que el cliente escriba comentarios en esta tarea",
+  "tareaComentariosClienteAyuda": "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda."
 }

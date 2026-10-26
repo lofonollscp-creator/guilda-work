@@ -74,9 +74,18 @@ def iniciar_cronometro_tarea(tarea_id: int):
 @api_bp.route("/tareas-outlook/<int:tarea_id>/tiempo", methods=["GET"])
 @token_required
 def tiempo_de_tarea(tarea_id: int):
-    """Tiempo registrado en la tarea (tuyo y del equipo)."""
+    """Tiempo registrado en la tarea: `total` y `personas` (el del equipo) y, para quien consulta, `mio_segundos`, `equipo_segundos` y el `cronometro` que tenga en marcha
+    o en pausa sobre ella (`id`, `estado`, `inicio_en`, `segundos_pausados`, `segundos_trabajados_congelado`; `null` si no hay). `ahora` es la hora del servidor: el
+    tiempo transcurrido se calcula con ella (no con el reloj del móvil). El cronómetro se pausa, reanuda y finaliza con `/tareas/{id}/pausar|reanudar|finalizar`."""
     _visible_o_404(tarea_id)
-    return _ok(db.tiempo_equipo_tarea(g.usuario_id, tarea_id))
+    datos = db.tiempo_equipo_tarea(g.usuario_id, tarea_id)
+    mio = db.cronometros_de_tareas_outlook(g.usuario_id, [tarea_id]).get(tarea_id, {})
+    activo = mio.get("activo")
+    datos.update(
+        mio_segundos=int(mio.get("total_segundos") or 0), equipo_segundos=int(mio.get("equipo_segundos") or 0), ahora=db.now_iso(),
+        cronometro=None if not activo else {k: activo.get(k) for k in ("id", "estado", "inicio_en", "segundos_pausados", "segundos_trabajados_congelado")},
+    )
+    return _ok(datos)
 
 
 @api_bp.route("/tareas-outlook/<int:tarea_id>/actividad", methods=["GET"])

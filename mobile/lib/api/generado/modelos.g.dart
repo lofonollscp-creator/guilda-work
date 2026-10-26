@@ -5243,6 +5243,35 @@ class TareasCreadasDeReunion {
   @override int get hashCode => Object.hashAll([tareaIds]);
 }
 
+class TiempoTarea {
+  final int? total;
+  final List<Map<String, dynamic>>? personas;
+  final int? mioSegundos;
+  final int? equipoSegundos;
+  final String? ahora;
+  final Map<String, dynamic>? cronometro;
+  const TiempoTarea({this.total, this.personas, this.mioSegundos, this.equipoSegundos, this.ahora, this.cronometro, });
+  factory TiempoTarea.fromJson(Map<String, dynamic> j) => TiempoTarea(
+    total: j['total'] == null ? null : (j['total'] as num).toInt(),
+    personas: j['personas'] == null ? null : (j['personas'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+    mioSegundos: j['mio_segundos'] == null ? null : (j['mio_segundos'] as num).toInt(),
+    equipoSegundos: j['equipo_segundos'] == null ? null : (j['equipo_segundos'] as num).toInt(),
+    ahora: j['ahora'] == null ? null : j['ahora'] as String,
+    cronometro: j['cronometro'] == null ? null : Map<String, dynamic>.from(j['cronometro'] as Map),
+  );
+  Map<String, dynamic> toJson() => {
+    'total': ?total,
+    if (personas != null) 'personas': personas!.map((e) => e).toList(),
+    'mio_segundos': ?mioSegundos,
+    'equipo_segundos': ?equipoSegundos,
+    'ahora': ?ahora,
+    'cronometro': ?cronometro,
+  };
+  TiempoTarea copyWith({int? total, List<Map<String, dynamic>>? personas, int? mioSegundos, int? equipoSegundos, String? ahora, Map<String, dynamic>? cronometro, }) => TiempoTarea(total: total ?? this.total, personas: personas ?? this.personas, mioSegundos: mioSegundos ?? this.mioSegundos, equipoSegundos: equipoSegundos ?? this.equipoSegundos, ahora: ahora ?? this.ahora, cronometro: cronometro ?? this.cronometro, );
+  @override bool operator ==(Object other) => other is TiempoTarea && other.total == total && other.personas == personas && other.mioSegundos == mioSegundos && other.equipoSegundos == equipoSegundos && other.ahora == ahora && other.cronometro == cronometro;
+  @override int get hashCode => Object.hashAll([total, personas, mioSegundos, equipoSegundos, ahora, cronometro]);
+}
+
 class Tiquet {
   final int id;
   final int? usuarioId;

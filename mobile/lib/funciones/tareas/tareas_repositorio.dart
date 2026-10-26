@@ -137,6 +137,25 @@ class TareasRepositorio {
 
   Future<List<RecordatorioTarea>> recordatorios(int id) => _o.listarRecordatorios(tareaId: id);
 
+  Future<TiempoDeTarea> tiempo(int id) async => TiempoDeTarea.desdeJson(await _cliente.enviar('GET', '/tareas-outlook/$id/tiempo') as Map<String, dynamic>? ?? const {});
+
+  /// Empieza a contar. `proyectoId` solo hace falta si la tarea no tiene proyecto. Devuelve el id del cronómetro.
+  Future<int> iniciarCronometro(int id, {int? proyectoId}) async {
+    final r = await _cliente.enviar('POST', '/tareas-outlook/$id/cronometro/iniciar', cuerpo: {'proyecto_id': ?proyectoId}) as Map<String, dynamic>;
+    return (r['tarea_cronometro_id'] as num).toInt();
+  }
+
+  Future<void> pausarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/pausar');
+  Future<void> reanudarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/reanudar');
+  Future<void> finalizarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/finalizar');
+
+  Future<List<ActividadDeTarea>> actividad(int id) async =>
+      [for (final a in (await _cliente.enviar('GET', '/tareas-outlook/$id/actividad') as List? ?? const [])) ActividadDeTarea.desdeJson(a as Map<String, dynamic>)];
+
+  /// Enseña (o no) la tarea al cliente en su portal; `comentarios` deja además que escriba en ella.
+  Future<void> visibleParaCliente(int id, {required bool visible, bool? comentarios}) =>
+      _cliente.enviar('PUT', '/tareas-outlook/$id/visible-cliente', cuerpo: {'visible': visible, 'comentarios': ?comentarios});
+
   /// `avisarEn` (`YYYY-MM-DDTHH:MM`) o un `atajo` relativo al vencimiento (`1d_antes`, `1h_antes`, `al_vencer`).
   Future<void> anadirRecordatorio(int id, {String? avisarEn, String? atajo, List<String> canales = const ['app']}) =>
       _cliente.enviar('POST', '/tareas-outlook/$id/recordatorios', cuerpo: {'avisar_en': ?avisarEn, 'atajo': ?atajo, 'canales': canales});

@@ -446,6 +446,7 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
           onTap: () => _abrirAdjunto(a),
         ),
       Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: _adjuntar, icon: const Icon(Icons.add), label: Text(t.tareaAdjuntar))),
+      BloqueTiempo(tarea: tarea, alCambiar: null),
       BloqueRecordatorios(tarea: tarea),
       _Titulo(t.tareaComentarios),
       for (final c in d.comentarios)
@@ -457,6 +458,7 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
           subtitle: Text(_cuando(c.creadoEn)),
         ),
       _Entrada(controlador: _comentario, hint: t.tareaComentarioNuevo, alEnviar: _comentar),
+      BloqueActividad(tareaId: tarea.id),
     ]);
   }
 

@@ -74,3 +74,70 @@ String duracionCorta(int minutos) {
   if (h > 0 && m > 0) return '$h h ${m.toString().padLeft(2, '0')}';
   return h > 0 ? '$h h' : '$m min';
 }
+
+/// El cronómetro de una persona sobre una tarea, en marcha o en pausa.
+class CronometroTarea {
+  final int id;
+  final bool pausado;
+
+  /// Segundos trabajados en el momento de pedirlo (con la hora del servidor, no la del móvil); en marcha, [segundos] sigue contando desde [cargadoEn].
+  final int _baseSegundos;
+  final DateTime cargadoEn;
+  CronometroTarea(this.id, this.pausado, this._baseSegundos, this.cargadoEn);
+
+  int segundos([DateTime? ahora]) => pausado ? _baseSegundos : _baseSegundos + (ahora ?? DateTime.now()).difference(cargadoEn).inSeconds;
+}
+
+/// `GET /tareas-outlook/{id}/tiempo`: lo registrado por ti y por el equipo, y tu cronómetro si hay uno abierto.
+class TiempoDeTarea {
+  final int mioSegundos;
+  final int equipoSegundos;
+  final List<({String nombre, int segundos})> personas;
+  final CronometroTarea? cronometro;
+  const TiempoDeTarea(this.mioSegundos, this.equipoSegundos, this.personas, this.cronometro);
+
+  static final _momento = RegExp(r'^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):?(\d{2})?');
+
+  static DateTime? _fecha(String? s) {
+    final m = s == null ? null : _momento.firstMatch(s);
+    return m == null ? null : DateTime.utc(int.parse(m[1]!), int.parse(m[2]!), int.parse(m[3]!), int.parse(m[4]!), int.parse(m[5]!), int.parse(m[6] ?? '0'));
+  }
+
+  factory TiempoDeTarea.desdeJson(Map<String, dynamic> j, {DateTime? ahoraLocal}) {
+    CronometroTarea? crono;
+    final c = j['cronometro'];
+    if (c is Map<String, dynamic>) {
+      final pausado = c['estado'] == 'pausada';
+      var base = (c['segundos_trabajados_congelado'] as num?)?.toInt() ?? 0;
+      if (!pausado) {
+        final desde = _fecha(c['inicio_en']?.toString()), ahora = _fecha(j['ahora']?.toString());
+        final pausados = (c['segundos_pausados'] as num?)?.toInt() ?? 0;
+        base = desde == null || ahora == null ? 0 : (ahora.difference(desde).inSeconds - pausados).clamp(0, 1 << 31);
+      }
+      crono = CronometroTarea((c['id'] as num).toInt(), pausado, base, ahoraLocal ?? DateTime.now());
+    }
+    return TiempoDeTarea(
+      (j['mio_segundos'] as num?)?.toInt() ?? 0,
+      (j['equipo_segundos'] as num?)?.toInt() ?? 0,
+      [for (final p in (j['personas'] as List? ?? const [])) (nombre: (p['nombre'] ?? '').toString(), segundos: (p['segundos'] as num?)?.toInt() ?? 0)],
+      crono,
+    );
+  }
+}
+
+/// Una línea de la actividad de la tarea (`GET /tareas-outlook/{id}/actividad`).
+class ActividadDeTarea {
+  final String autor;
+  final String detalle;
+  final String? cuando;
+  const ActividadDeTarea(this.autor, this.detalle, this.cuando);
+
+  factory ActividadDeTarea.desdeJson(Map<String, dynamic> j) => ActividadDeTarea((j['autor'] ?? j['usuario'] ?? '').toString(), (j['detalle'] ?? j['accion'] ?? j['tipo'] ?? '').toString(), j['creado_en']?.toString());
+}
+
+/// 3725 → «1:02:05», para el cronómetro.
+String reloj(int segundos) {
+  final h = segundos ~/ 3600, m = (segundos % 3600) ~/ 60, s = segundos % 60;
+  String d(int n) => n.toString().padLeft(2, '0');
+  return '$h:${d(m)}:${d(s)}';
+}

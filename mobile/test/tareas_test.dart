@@ -104,6 +104,41 @@ class _RepoFalso implements TareasRepositorio {
     return tareas[id] ?? TareaOutlook.fromJson(_t(id));
   }
 
+  TiempoDeTarea tiempoFalso = const TiempoDeTarea(0, 0, [], null);
+  List<ActividadDeTarea> actividadFalsa = const [];
+
+  @override
+  Future<TiempoDeTarea> tiempo(int id) async => tiempoFalso;
+  @override
+  Future<int> iniciarCronometro(int id, {int? proyectoId}) async {
+    registro.add('crono:$id:${proyectoId ?? '-'}');
+    tiempoFalso = TiempoDeTarea(0, 0, const [], CronometroTarea(90, false, 0, DateTime.now()));
+    return 90;
+  }
+
+  @override
+  Future<void> pausarCronometro(int cronometroId) async {
+    registro.add('pausa:$cronometroId');
+    tiempoFalso = TiempoDeTarea(0, 0, const [], CronometroTarea(cronometroId, true, 125, DateTime.now()));
+  }
+
+  @override
+  Future<void> reanudarCronometro(int cronometroId) async {
+    registro.add('reanuda:$cronometroId');
+    tiempoFalso = TiempoDeTarea(0, 0, const [], CronometroTarea(cronometroId, false, 125, DateTime.now()));
+  }
+
+  @override
+  Future<void> finalizarCronometro(int cronometroId) async {
+    registro.add('finaliza:$cronometroId');
+    tiempoFalso = const TiempoDeTarea(180, 180, [(nombre: 'Yo', segundos: 180)], null);
+  }
+
+  @override
+  Future<List<ActividadDeTarea>> actividad(int id) async => actividadFalsa;
+  @override
+  Future<void> visibleParaCliente(int id, {required bool visible, bool? comentarios}) async => registro.add('portal:$id:$visible:${comentarios ?? '-'}');
+
   @override
   Future<List<Companero>> companeros() async => gente;
   @override
@@ -285,6 +320,16 @@ ApiException _conflicto(int actual) => ApiException('Otra persona la ha cambiado
 
 void main() {
   group('dominio', () {
+    test('TiempoDeTarea calcula con la hora del servidor, no con la del móvil', () {
+      final ahoraLocal = DateTime(2030, 1, 1, 12);
+      final marcha = TiempoDeTarea.desdeJson({'ahora': '2026-10-26T10:10:00', 'cronometro': {'id': 4, 'estado': 'en_curso', 'inicio_en': '2026-10-26T10:00:00', 'segundos_pausados': 60}}, ahoraLocal: ahoraLocal);
+      expect(marcha.cronometro!.segundos(ahoraLocal), 540);
+      expect(marcha.cronometro!.segundos(ahoraLocal.add(const Duration(seconds: 30))), 570, reason: 'sigue contando con el reloj del móvil desde que se pidió');
+      final pausa = TiempoDeTarea.desdeJson({'cronometro': {'id': 4, 'estado': 'pausada', 'segundos_trabajados_congelado': 125}}, ahoraLocal: ahoraLocal);
+      expect(pausa.cronometro!.segundos(ahoraLocal.add(const Duration(hours: 1))), 125);
+      expect(reloj(3725), '1:02:05');
+    });
+
     test('duracionCorta como la web', () {
       expect([duracionCorta(90), duracionCorta(120), duracionCorta(45), duracionCorta(65)], ['1 h 30', '2 h', '45 min', '1 h 05']);
     });
@@ -826,6 +871,69 @@ void main() {
       await t.tap(find.byTooltip('Quitar').first);
       await t.pumpAndSettle();
       expect(repo.registro, contains('descompartir:7:8'));
+    });
+
+    testWidgets('«Tiempo dedicado»: inicia (pidiendo proyecto si no tiene), pausa, reanuda y para el cronómetro', (t) async {
+      final repo = repoConTarea();
+      await t.binding.setSurfaceSize(const Size(800, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('Todavía no has registrado tiempo en esta tarea.'), findsOneWidget);
+      await t.ensureVisible(find.text('Iniciar el cronómetro'));
+      await t.tap(find.text('Iniciar el cronómetro'));
+      await t.pumpAndSettle();
+      expect(find.text('¿En qué proyecto registras el tiempo?'), findsOneWidget);
+      await t.tap(find.text('Laboral'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('crono:7:4'));
+      expect(find.text('Cronómetro en marcha'), findsOneWidget);
+      await t.tap(find.text('Pausar'));
+      await t.pumpAndSettle();
+      expect(find.text('Cronómetro en pausa'), findsOneWidget);
+      expect(find.text('0:02:05'), findsOneWidget, reason: 'en pausa enseña lo trabajado hasta pausar');
+      await t.tap(find.text('Reanudar'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Parar y guardar'));
+      await t.pumpAndSettle();
+      expect(repo.registro, containsAllInOrder(['crono:7:4', 'pausa:90', 'reanuda:90', 'finaliza:90']));
+      expect(find.text('Registrado hasta ahora: 3 min'), findsOneWidget);
+    });
+
+    testWidgets('«Actividad» se pide al abrirla', (t) async {
+      final repo = repoConTarea()..actividadFalsa = const [ActividadDeTarea('Sol Pérez', 'Cambió el estado a En curso', '2026-10-24T09:30')];
+      await t.binding.setSurfaceSize(const Size(800, 3400));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('Cambió el estado a En curso'), findsNothing);
+      await t.ensureVisible(find.text('Actividad'));
+      await t.tap(find.text('Actividad'));
+      await t.pumpAndSettle();
+      expect(find.text('Cambió el estado a En curso'), findsOneWidget);
+    });
+
+    testWidgets('el editor guarda otros clientes y la visibilidad en el portal, y sin cliente no hay portal', (t) async {
+      final repo = repoConTarea();
+      await t.binding.setSurfaceSize(const Size(800, 3400));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.byIcon(Icons.edit_outlined));
+      await t.pumpAndSettle();
+      expect(find.text('Enseñar esta tarea al cliente en su portal'), findsNothing);
+      await t.tap(find.text('Sin cliente'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Acme SL'));
+      await t.pumpAndSettle();
+      await t.tap(find.widgetWithText(FilterChip, 'Beta SA'));
+      await t.tap(find.text('Enseñar esta tarea al cliente en su portal'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Permitir que el cliente escriba comentarios en esta tarea'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Guardar'));
+      await t.pumpAndSettle();
+      expect(repo.registro, containsAll(['cliente:7:11:12', 'portal:7:true:true']));
     });
 
     testWidgets('«Recordatorios»: uno relativo al vencimiento, con sus canales, y quitarlo', (t) async {

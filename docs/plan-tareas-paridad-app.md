@@ -38,8 +38,8 @@ Filtros de prioridad, categoría y «ver también completadas» (por defecto se 
 **Fase 2 — Mi día y Tablero (hecha, 2026-10-26).**
 La pestaña Tareas abre en la Lista y tiene el selector **Mi día · Lista · Tablero** (como el submenú de la web). «Mi día» pinta las mismas cinco secciones que la web (30 por sección y «Ver las N restantes») y completa con «Deshacer»; el Tablero tiene una columna por estado (en el orden de la web, completadas recientes 15, 25 tarjetas y «Mostrar más»), con barra de pasos, y mover una tarjeta con «Deshacer» (sin «En revisión» como destino). API 1.7: indicadores en `/mi-dia` y tablero, `?recientes=`. Pruebas de paridad: sección a sección y columna a columna contra la web. «Hoy» sigue siendo el resumen de todos los módulos (su enlace a «Mi día» queda para la Fase 5).
 
-**Fase 3 — La ficha completa (3a hecha, 2026-10-26: editor completo, asignar, compartir, «Espera a», recordatorios, cabecera con proyecto/cliente/persona/estimación; 3b pendiente: tiempo y cronómetro, actividad, clientes vinculados y portal, revisión).**
-Asignar y compartir, dependencias, recordatorios, cronómetro y tiempo, proyecto/sección/estimación, clientes vinculados, revisión (pedir/resolver), actividad. Cada bloque plegable.
+**Fase 3 — La ficha completa (3a y 3b hechas, 2026-10-26).**
+**Hecho:** editor completo (asunto, descripción, prioridad, estimación, inicio/vencimiento con hora, categoría Outlook, proyecto, cliente, otros clientes, visible en el portal y comentarios del cliente, asignar a), «Espera a», «Compartida con», recordatorios, «Tiempo dedicado» con cronómetro (iniciar, pausar, reanudar, parar; cuenta con la hora del servidor), tiempo del equipo y actividad, y la cabecera con proyecto, cliente, persona y estimación. **Falta (3c):** revisión (pedir, resolver, retirar) y la conversación con el cliente (responder y ocultar comentarios), la sección del proyecto y el % completado.
 
 **Fase 4 — Calendario y Carga.**
 Calendario de tareas con vencimientos (mes/semana), y «Carga» para quien dirige el despacho (`/tareas-outlook/carga`).

@@ -29,6 +29,8 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
   late PrioridadTarea _prioridad;
   String? _inicio, _vencimiento; // `AAAA-MM-DD` o `AAAA-MM-DDTHH:MM`
   int? _proyectoId, _clienteId, _asignadaA;
+  late Set<int> _otrosClientes;
+  late bool _visible, _comentariosCliente;
   List<Proyecto> _proyectos = const [];
   List<ClienteFiscal> _clientes = const [];
   List<Companero> _companeros = const [];
@@ -49,6 +51,9 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
     _proyectoId = _t0.categoriaId;
     _clienteId = _t0.clienteFiscalId;
     _asignadaA = _t0.asignadaA;
+    _otrosClientes = {for (final c in _t0.clientes ?? const <ClienteDeTarea>[]) if (c.id != null && c.principal != true) c.id!};
+    _visible = (_t0.visibleCliente ?? 0) == 1;
+    _comentariosCliente = (_t0.comentariosCliente ?? 0) == 1;
     _cargarListas();
   }
 
@@ -210,9 +215,15 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
         if (r.ok == 0) fallos.add(t.tareaProyecto);
       });
     }
-    if (_clienteId != _t0.clienteFiscalId) {
-      final otros = [for (final c in _t0.clientes ?? const <ClienteDeTarea>[]) if (c.id != null && c.principal != true) c.id!];
-      await aparte(t.tareaCliente, () => repo.fijarCliente(_t0.id, _clienteId, otros: otros));
+    final otrosAntes = {for (final c in _t0.clientes ?? const <ClienteDeTarea>[]) if (c.id != null && c.principal != true) c.id!};
+    final otros = _clienteId == null ? <int>{} : _otrosClientes.where((c) => c != _clienteId).toSet();
+    if (_clienteId != _t0.clienteFiscalId || otros.length != otrosAntes.length || !otros.containsAll(otrosAntes)) {
+      await aparte(t.tareaCliente, () => repo.fijarCliente(_t0.id, _clienteId, otros: otros.toList()));
+    }
+    final conCliente = _clienteId != null || otros.isNotEmpty;
+    final visible = conCliente && _visible, comentarios = visible && _comentariosCliente;
+    if (visible != ((_t0.visibleCliente ?? 0) == 1) || comentarios != ((_t0.comentariosCliente ?? 0) == 1)) {
+      await aparte(t.tareaVisiblePortal, () => repo.visibleParaCliente(_t0.id, visible: visible, comentarios: comentarios));
     }
     // La tarea como queda ahora (asignación, proyecto y cliente cambian filas aparte).
     try {
@@ -276,6 +287,35 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
               if (mounted && r != null) setState(() => _clienteId = r.$1);
             },
           ),
+        if (_clientes.length > 1 && _clienteId != null) ...[
+          Padding(padding: const EdgeInsets.only(top: 8), child: Text(t.tareaOtrosClientes, style: Theme.of(context).textTheme.labelLarge)),
+          Wrap(spacing: 8, children: [
+            for (final c in _clientes)
+              if (c.id != _clienteId)
+                FilterChip(
+                  label: Text(c.nombre ?? ''),
+                  selected: _otrosClientes.contains(c.id),
+                  onSelected: (v) => setState(() => v ? _otrosClientes.add(c.id) : _otrosClientes.remove(c.id)),
+                ),
+          ]),
+          Text(t.tareaOtrosClientesAyuda, style: Theme.of(context).textTheme.bodySmall),
+        ],
+        if (_clienteId != null || _otrosClientes.isNotEmpty) ...[
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(t.tareaVisiblePortal),
+            subtitle: Text(t.tareaVisiblePortalAyuda),
+            value: _visible,
+            onChanged: (v) => setState(() => _visible = v),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(t.tareaComentariosCliente),
+            subtitle: Text(t.tareaComentariosClienteAyuda),
+            value: _visible && _comentariosCliente,
+            onChanged: _visible ? (v) => setState(() => _comentariosCliente = v) : null,
+          ),
+        ],
         if (widget.esDueno && _companeros.isNotEmpty)
           _campoSelector(
             icono: Icons.person_outline,
