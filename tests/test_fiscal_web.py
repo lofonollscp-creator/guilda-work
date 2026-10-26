@@ -148,3 +148,17 @@ def test_importar_un_libro_desde_la_web(cliente):
     assert r.status_code == 200 and "Importadas: 2" in html and "Rechazadas: 1" in html and "no está vigente" in html
     assert len(fn.listar_apuntes(t, uid, c)) == 2
     assert cliente.post(f"/guilda-fiscal/{c}/importar-libro", data={}).status_code == 302
+
+
+def test_una_declaracion_anulada_sale_de_la_lista_y_el_periodo_se_puede_recalcular(cliente):
+    uid, t, c = _web(cliente, email="anulada@ejemplo.com")
+    fp.guardar_perfil(t, uid, c, {"forma_juridica": "sociedad"}, vigente_desde="2026-01-01")
+    assert cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "4T"}).status_code == 302
+    d = fn.listar_declaraciones(t, uid, c)[0]
+    assert "2026 4T" in cliente.get(f"/guilda-fiscal/{c}").get_data(as_text=True)
+    assert 'data-confirmar-clic' in cliente.get(f"/guilda-fiscal/{d['id']}".replace(f"/{d['id']}", f"/declaracion/{d['id']}")).get_data(as_text=True)
+    assert cliente.post(f"/guilda-fiscal/declaracion/{d['id']}/anular").status_code == 302
+    pagina = cliente.get(f"/guilda-fiscal/{c}").get_data(as_text=True)
+    assert "No hay declaraciones vigentes." in pagina and "Anuladas (1)" in pagina
+    assert cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "4T"}).status_code == 302
+    assert len([x for x in fn.listar_declaraciones(t, uid, c) if x["estado"] != "anulada"]) == 1

@@ -47,13 +47,16 @@
 {% endif %}
 
 <h2 class="ds-mt-16">{{ _('Declaraciones') }}</h2>
-{% if declaraciones %}
-<div class="table-wrap ds-mb-16"><table class="historial-table">
+{% set vivas = declaraciones|rejectattr('estado', 'equalto', 'anulada')|list %}{% set anuladas = declaraciones|selectattr('estado', 'equalto', 'anulada')|list %}
+{% macro tabla(lista) %}<div class="table-wrap ds-mb-16"><table class="historial-table">
   <thead><tr><th>{{ _('Periodo') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Resultado') }}</th><th></th></tr></thead>
-  <tbody>{% for d in declaraciones %}<tr><td>{{ d.ejercicio }} {{ d.periodo }}</td>
+  <tbody>{% for d in lista %}<tr><td>{{ d.ejercicio }} {{ d.periodo }}</td>
     <td>{{ {'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada'), 'anulada': _('Anulada')}[d.estado] }}</td>
     <td>{{ '%.2f'|format(d.resultado_centimos / 100) }} €</td><td><a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=d.id) }}">{{ _('Abrir') }}</a></td></tr>{% endfor %}</tbody>
-</table></div>
+</table></div>{% endmacro %}
+{% if declaraciones %}
+{% if vivas %}{{ tabla(vivas) }}{% else %}<p class="muted">{{ _('No hay declaraciones vigentes.') }}</p>{% endif %}
+{% if anuladas %}<details class="ds-mb-16"><summary class="muted">{{ _('Anuladas (%(n)s)', n=anuladas|length) }}</summary>{{ tabla(anuladas) }}</details>{% endif %}
 {% else %}<p class="muted">{{ _('Aún no hay declaraciones de este titular.') }}</p>{% endif %}
 
 {% if puede_aprobar %}

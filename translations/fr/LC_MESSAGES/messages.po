@@ -15943,3 +15943,12 @@ msgstr "Union européenne"
 
 msgid "Vigente hasta (vacío = sin fin)"
 msgstr "En vigueur jusqu'au (vide = sans fin)"
+
+msgid "No hay declaraciones vigentes."
+msgstr "Aucune déclaration en cours."
+
+msgid "Anuladas (%(n)s)"
+msgstr "Annulées (%(n)s)"
+
+msgid "¿Anular esta declaración? Quedará en el historial como anulada y podrás calcular el periodo de nuevo."
+msgstr "Annuler cette déclaration ? Elle restera dans l'historique comme annulée et vous pourrez recalculer la période."

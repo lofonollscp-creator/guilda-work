@@ -26,7 +26,7 @@
     {% if d.estado == 'borrador' and not d.bloqueos %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='revisar') }}"><button class="btn btn-primary" type="submit">{{ _('Marcar como revisada') }}</button></form>{% endif %}
     {% if d.estado == 'revisada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='exportar') }}"><button class="btn btn-primary" type="submit">{{ _('Generar el fichero para la AEAT') }}</button></form>{% endif %}
     {% if d.estado == 'exportada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='presentada') }}" class="ds-fila ds-envolver"><input type="text" name="referencia" placeholder="{{ _('CSV o justificante (opcional)') }}" maxlength="200"><button class="btn btn-primary" type="submit">{{ _('Anotar que se ha presentado') }}</button></form>{% endif %}
-    {% if d.estado in ('borrador', 'revisada', 'exportada') %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='anular') }}"><button class="btn btn-ghost" type="submit">{{ _('Anular') }}</button></form>{% endif %}
+    {% if d.estado in ('borrador', 'revisada', 'exportada') %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='anular') }}"><button class="btn btn-ghost" type="submit" data-confirmar-clic="{{ _('¿Anular esta declaración? Quedará en el historial como anulada y podrás calcular el periodo de nuevo.') }}">{{ _('Anular') }}</button></form>{% endif %}
   </div>
   {% endif %}
   {% if d.artefactos %}
