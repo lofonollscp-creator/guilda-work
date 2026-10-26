@@ -328,6 +328,8 @@ def proponer_desde_factura(tenant_id: int, usuario_id: int, factura_id: int) -> 
     propuestas = []
     for n, (pct, (base, cuota)) in enumerate(sorted(agrupadas.items()), 1):
         emitida = f["tipo"] == "emitida"
+        if f["abono"] and base > 0:                                    # un abono/rectificativa va en negativo en los libros
+            base, cuota = -base, -cuota
         propuestas.append({
             "factura_id": factura_id, "libro": "E" if emitida else "R", "tipo_factura": ("R1" if f["abono"] else "F1"), "clave": "01", "calificacion": "S1" if pct >= 0 else "N1", "exenta": "",
             "serie": "", "numero": f["numero"] if len(agrupadas) == 1 else f"{f['numero']}/{n}", "fecha_expedicion": f["fecha"], "fecha_operacion": f["fecha_operacion"],
@@ -338,6 +340,41 @@ def proponer_desde_factura(tenant_id: int, usuario_id: int, factura_id: int) -> 
 
 
 # --- Instantáneas -------------------------------------------------------------------------------------------------------------------------------
+def facturas_por_registrar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int) -> list[dict]:
+    """Facturas ya REVISADAS en «Facturas para contabilizar» del ejercicio que aún no tienen apunte fiscal. `automatica`: todas sus líneas son de IVA al 4, 10 o 21 % sin recargo ni conceptos
+    especiales, así que se pueden aprobar de golpe; las demás hay que mirarlas una a una."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        facturas = [dict(f) for f in conn.execute(
+            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, abono FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND estado IN ('revisada', 'exportada') "
+            "AND substr(fecha, 1, 4) = ? AND id NOT IN (SELECT factura_id FROM fiscal_apuntes WHERE tenant_id = ? AND factura_id IS NOT NULL AND anulado_en IS NULL) ORDER BY fecha, id",
+            (tenant_id, cliente_fiscal_id, str(ejercicio), tenant_id)).fetchall()]
+        for f in facturas:
+            lineas = conn.execute("SELECT pct_iva, pct_recargo, sujeta_iva, pct_retencion FROM facturas_contables_lineas WHERE factura_id = ?", (f["id"],)).fetchall()
+            f["automatica"] = bool(lineas) and all(l["sujeta_iva"] and l["pct_iva"] in (400, 1000, 2100) and not l["pct_recargo"] for l in lineas)
+    finally:
+        conn.close()
+    return facturas
+
+
+def aprobar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, factura_ids: list[int]) -> dict:
+    """Aprueba de golpe los apuntes de las facturas elegidas (régimen general, clave 01, F1 o R1). Cada factura es independiente: las que fallan no impiden las demás y se devuelven con su motivo."""
+    _exigir_aprobador(tenant_id, usuario_id)
+    resultado = {"aprobadas": 0, "errores": []}
+    for fid in factura_ids:
+        try:
+            propuestas = proponer_desde_factura(tenant_id, usuario_id, int(fid))
+            if not propuestas or any(p["calificacion"] != "S1" for p in propuestas):
+                raise ErrorFiscal("Tiene operaciones no sujetas: revísala a mano.")
+            for p in propuestas:
+                aprobar_apunte(tenant_id, usuario_id, cliente_fiscal_id, a_apunte(p), factura_id=int(fid))
+            resultado["aprobadas"] += len(propuestas)
+        except ErrorFiscal as e:
+            resultado["errores"].append({"factura_id": int(fid), "motivo": str(e)})
+    return resultado
+
+
 def _perfil_a_flags(perfil: dict, periodo: str) -> tuple[dict, list[str]]:
     ajustes = {"tributacion_foral": bool(perfil["tributacion_foral"]), "criterio_caja": bool(perfil["criterio_caja"]), "prorrata": bool(perfil["prorrata_especial"] or perfil["prorrata_centesimas"] is not None
                                                                                                                                        or perfil["sectores_diferenciados"]),
@@ -438,6 +475,13 @@ def obtener_instantanea(tenant_id: int, usuario_id: int, instantanea_id: int) ->
 
 
 # --- Declaraciones ------------------------------------------------------------------------------------------------------------------------------
+def _vencimiento_del_periodo(conn, tenant_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> int | None:
+    """El vencimiento del calendario fiscal que corresponde a este 303 («303» · «2T 2026»), si existe."""
+    f = conn.execute("SELECT id FROM vencimientos_fiscales WHERE tenant_id = ? AND cliente_fiscal_id = ? AND modelo = '303' AND periodo = ? AND papelera_en IS NULL ORDER BY id DESC LIMIT 1",
+                     (tenant_id, cliente_fiscal_id, f"{periodo} {ejercicio}")).fetchone()
+    return f["id"] if f else None
+
+
 def calcular_declaracion(tenant_id: int, usuario_id: int, instantanea_id: int, *, destino_negativo: str = "C", vencimiento_id: int | None = None) -> dict:
     """Calcula el borrador del 303 SOLO con lo congelado en la instantánea. Un borrador anterior de la misma instantánea se anula (queda en el historial)."""
     _exigir_aprobador(tenant_id, usuario_id)
@@ -452,6 +496,8 @@ def calcular_declaracion(tenant_id: int, usuario_id: int, instantanea_id: int, *
     r.bloqueos.extend(extra)
     conn = db.get_connection()
     try:
+        if vencimiento_id is None:
+            vencimiento_id = _vencimiento_del_periodo(conn, tenant_id, inst["cliente_fiscal_id"], d["ejercicio"], d["periodo"])
         conn.execute("UPDATE fiscal_declaraciones SET estado = 'anulada' WHERE tenant_id = ? AND instantanea_id = ? AND estado = 'borrador'", (tenant_id, instantanea_id))
         cur = conn.execute("INSERT INTO fiscal_declaraciones (tenant_id, cliente_fiscal_id, instantanea_id, vencimiento_id, modelo, ejercicio, periodo, estado, tipo_declaracion, resultado_centimos, version_motor, "
                            "version_diseno, bloqueos, creado_por, creado_en) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -588,7 +634,10 @@ def descargar_artefacto(tenant_id: int, usuario_id: int, declaracion_id: int, ti
 def marcar_presentada(tenant_id: int, usuario_id: int, declaracion_id: int, referencia: str = "") -> dict:
     """Anota que el cliente o su colaborador social presentó el fichero (con el justificante o CSV si se tiene). Guilda Work no presenta."""
     _exigir_aprobador(tenant_id, usuario_id)
-    return _cambiar_estado(tenant_id, usuario_id, declaracion_id, "presentada", {"presentada_en": db.now_iso(), "referencia_presentacion": (referencia or "").strip()[:200] or None})
+    d = _cambiar_estado(tenant_id, usuario_id, declaracion_id, "presentada", {"presentada_en": db.now_iso(), "referencia_presentacion": (referencia or "").strip()[:200] or None})
+    if d["vencimiento_id"]:                                                       # el calendario fiscal se entera: el vencimiento queda presentado
+        db.marcar_presentado_vencimiento_fiscal(tenant_id, d["vencimiento_id"], usuario_id)
+    return d
 
 
 def anular_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) -> dict:

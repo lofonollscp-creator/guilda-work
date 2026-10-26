@@ -15847,3 +15847,18 @@ msgstr "Retour au titulaire"
 
 msgid "Última declaración"
 msgstr "Dernière déclaration"
+
+msgid "Facturas revisadas por registrar"
+msgstr "Factures révisées à enregistrer"
+
+msgid "Facturas que ya revisaste en Facturas para contabilizar y aún no son apuntes fiscales. Las automáticas (IVA del 4, 10 o 21 por ciento) se pueden aprobar de golpe; las demás, una a una."
+msgstr "Factures que tu as déjà révisées dans Factures à comptabiliser et qui ne sont pas encore des écritures fiscales. Les automatiques (TVA à 4, 10 ou 21 pour cent) peuvent être approuvées d'un coup ; les autres, une par une."
+
+msgid "Automática"
+msgstr "Automatique"
+
+msgid "Revisar a mano"
+msgstr "Réviser à la main"
+
+msgid "Aprobar las seleccionadas"
+msgstr "Approuver la sélection"

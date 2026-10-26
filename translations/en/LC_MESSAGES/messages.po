@@ -15762,3 +15762,18 @@ msgstr "Back to the taxpayer"
 
 msgid "Última declaración"
 msgstr "Latest return"
+
+msgid "Facturas revisadas por registrar"
+msgstr "Reviewed invoices to record"
+
+msgid "Facturas que ya revisaste en Facturas para contabilizar y aún no son apuntes fiscales. Las automáticas (IVA del 4, 10 o 21 por ciento) se pueden aprobar de golpe; las demás, una a una."
+msgstr "Invoices you have already reviewed in Invoices to post that are not tax entries yet. The automatic ones (VAT at 4, 10 or 21 percent) can be approved in one go; the rest, one by one."
+
+msgid "Automática"
+msgstr "Automatic"
+
+msgid "Revisar a mano"
+msgstr "Review by hand"
+
+msgid "Aprobar las seleccionadas"
+msgstr "Approve the selected ones"

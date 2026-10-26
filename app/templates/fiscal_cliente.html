@@ -29,6 +29,23 @@
 </section>
 {% elif puede_aprobar %}<p class="muted">{{ _('Para calcular un periodo, define antes el perfil fiscal del titular.') }}</p>{% endif %}
 
+{% if por_registrar %}
+<section class="dash-panel">
+  <h2>{{ _('Facturas revisadas por registrar') }}</h2>
+  <p class="muted">{{ _('Facturas que ya revisaste en Facturas para contabilizar y aún no son apuntes fiscales. Las automáticas (IVA del 4, 10 o 21 por ciento) se pueden aprobar de golpe; las demás, una a una.') }}</p>
+  <form method="post" action="{{ url_for('guilda_fiscal.registrar_facturas', cliente_id=c.id) }}">
+    <div class="table-wrap"><table class="historial-table">
+      <thead><tr>{% if puede_aprobar %}<th></th>{% endif %}<th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Contraparte') }}</th><th>{{ _('Total') }}</th><th></th></tr></thead>
+      <tbody>{% for f in por_registrar %}<tr>
+        {% if puede_aprobar %}<td>{% if f.automatica %}<input type="checkbox" name="factura_id" value="{{ f.id }}" checked aria-label="{{ f.numero }}">{% endif %}</td>{% endif %}
+        <td>{{ f.fecha }}</td><td>{{ f.numero }}</td><td>{{ f.tercero_nombre }}</td><td>{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
+        <td>{% if f.automatica %}<span class="chip">{{ _('Automática') }}</span>{% endif %} <a href="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id, factura_id=f.id) }}">{{ _('Revisar a mano') }}</a></td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% if puede_aprobar %}<button type="submit" class="btn btn-primary">{{ _('Aprobar las seleccionadas') }}</button>{% endif %}
+  </form>
+</section>
+{% endif %}
+
 <h2 class="ds-mt-16">{{ _('Declaraciones') }}</h2>
 {% if declaraciones %}
 <div class="table-wrap"><table class="historial-table">

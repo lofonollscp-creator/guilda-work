@@ -15771,3 +15771,18 @@ msgstr "Tornar al titular"
 
 msgid "Última declaración"
 msgstr "Última declaració"
+
+msgid "Facturas revisadas por registrar"
+msgstr "Factures revisades per registrar"
+
+msgid "Facturas que ya revisaste en Facturas para contabilizar y aún no son apuntes fiscales. Las automáticas (IVA del 4, 10 o 21 por ciento) se pueden aprobar de golpe; las demás, una a una."
+msgstr "Factures que ja has revisat a Factures per comptabilitzar i encara no són apunts fiscals. Les automàtiques (IVA del 4, 10 o 21 per cent) es poden aprovar de cop; les altres, una a una."
+
+msgid "Automática"
+msgstr "Automàtica"
+
+msgid "Revisar a mano"
+msgstr "Revisar a mà"
+
+msgid "Aprobar las seleccionadas"
+msgstr "Aprovar les seleccionades"

@@ -226,3 +226,17 @@ def test_uso_para_backoffice():
     uso = dict(fn.uso_para_backoffice(t))
     assert uso["Apuntes aprobados"] == "2" and uso["Periodos congelados"] == "1" and uso["Declaraciones exportadas"] == "1" and uso["Declaraciones presentadas"] == "0" and uso["Titulares con perfil fiscal"] == "1"
     assert verticales.VERTICALES["fiscal"].uso is fn.uso_para_backoffice and verticales.VERTICALES["fiscal"].disponible is True
+
+
+def test_la_declaracion_se_enlaza_con_el_vencimiento_del_calendario_y_lo_marca_presentado():
+    t, u, g, c = _despacho()
+    vid = db.crear_vencimiento_fiscal(t, c, "303", "2T 2026", "2026-07-20")
+    otro = db.crear_vencimiento_fiscal(t, c, "303", "3T 2026", "2026-10-20")
+    _, ej, per = _cargar(t, u, c)
+    dec = fn.calcular_declaracion(t, u, fn.crear_instantanea(t, u, c, ejercicio=ej, periodo=per)["id"])
+    assert dec["vencimiento_id"] == vid
+    fn.revisar_declaracion(t, u, dec["id"])
+    fn.exportar_declaracion(t, u, dec["id"])
+    fn.marcar_presentada(t, u, dec["id"], "CSV 1")
+    estados = {v["id"]: v["estado"] for v in db.listar_vencimientos_fiscales(t, cliente_fiscal_id=c)}
+    assert estados[vid] == "presentado" and estados[otro] != "presentado"

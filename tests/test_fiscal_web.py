@@ -97,3 +97,23 @@ def test_un_titular_con_historial_fiscal_no_se_borra_definitivamente(cliente):
         assert conn.execute("SELECT count(*) FROM clientes_fiscales WHERE id = ?", (c,)).fetchone()[0] == 1
     finally:
         conn.close()
+
+
+def test_registrar_en_bloque_las_facturas_revisadas(cliente):
+    uid, t, c = _web(cliente, "fiscalweb6@ejemplo.com")
+    fc.guardar_configuracion(t, uid, c, {"a3_empresa": "7", "digitos": "8"})
+    ok = fc.crear(t, uid, c, {"tipo": "recibida", "fecha": "2026-05-12", "numero": "F-1", "tercero_nombre": "Papelería Sol", "tercero_nif": "B87654321"}, [{"base": "100", "pct_iva": "21"}])
+    abono = fc.crear(t, uid, c, {"tipo": "recibida", "fecha": "2026-05-20", "numero": "A-1", "tercero_nombre": "Papelería Sol", "tercero_nif": "B87654321", "abono": "1", "rectifica_numero": "F-1",
+                                 "rectifica_fecha": "2026-05-12"}, [{"base": "20", "pct_iva": "21"}])
+    raro = fc.crear(t, uid, c, {"tipo": "recibida", "fecha": "2026-05-22", "numero": "R-1", "tercero_nombre": "Colmado", "tercero_nif": "B87654321"}, [{"base": "50", "pct_iva": "10", "pct_recargo": "1,4"}])
+    for f in (ok, abono, raro):
+        fc.cambiar_estado(t, uid, f, "revisada")
+    pendientes = {f["id"]: f["automatica"] for f in fn.facturas_por_registrar(t, uid, c, 2026)}
+    assert pendientes == {ok: True, abono: True, raro: False}
+    html = cliente.get(f"/guilda-fiscal/{c}?ejercicio=2026").get_data(as_text=True)
+    assert "Facturas revisadas por registrar" in html and "Revisar a mano" in html
+    r = cliente.post(f"/guilda-fiscal/{c}/registrar-facturas", data={"factura_id": [ok, abono]})
+    assert r.status_code == 302 and "error" not in r.headers["Location"]
+    ap = fn.listar_apuntes(t, uid, c)
+    assert [(a["tipo_factura"], a["base_centimos"], a["cuota_centimos"], a["factura_id"]) for a in ap] == [("F1", 10000, 2100, ok), ("R1", -2000, -420, abono)]
+    assert {f["id"] for f in fn.facturas_por_registrar(t, uid, c, 2026)} == {raro}

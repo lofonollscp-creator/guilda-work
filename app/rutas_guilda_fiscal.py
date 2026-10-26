@@ -80,7 +80,7 @@ def cliente(cliente_id: int):
     ejercicio = request.args.get("ejercicio", date.today().year, type=int)
     return render_template("fiscal_cliente.html", c=c, ejercicio=ejercicio, perfil=fp.perfil_en(g.tenant_id, cliente_id, date.today().isoformat()),
                            apuntes=fn.listar_apuntes(g.tenant_id, g.usuario_id, cliente_id, ejercicio=ejercicio), declaraciones=fn.listar_declaraciones(g.tenant_id, g.usuario_id, cliente_id),
-                           periodos=PERIODOS, error=_error())
+                           periodos=PERIODOS, por_registrar=fn.facturas_por_registrar(g.tenant_id, g.usuario_id, cliente_id, ejercicio), error=_error())
 
 
 def _opciones_perfil() -> dict:
@@ -186,6 +186,20 @@ def apunte_anular(cliente_id: int, apunte_id: int):
         fn.anular_apunte(g.tenant_id, g.usuario_id, cliente_id, apunte_id, request.form.get("motivo", ""))
     except ErrorFiscal as e:
         return _atras(url_for("guilda_fiscal.cliente", cliente_id=cliente_id), e)
+    return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id))
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/registrar-facturas", methods=["POST"])
+@login_required
+def registrar_facturas(cliente_id: int):
+    """Aprueba de golpe los apuntes de las facturas revisadas que se marquen (las automáticas); cada una es independiente."""
+    _cliente_o_404(cliente_id)
+    try:
+        r = fn.aprobar_facturas(g.tenant_id, g.usuario_id, cliente_id, request.form.getlist("factura_id", type=int))
+    except ErrorFiscal as e:
+        return _atras(url_for("guilda_fiscal.cliente", cliente_id=cliente_id), e)
+    if r["errores"]:
+        return _atras(url_for("guilda_fiscal.cliente", cliente_id=cliente_id), "; ".join(f"#{x['factura_id']}: {x['motivo']}" for x in r["errores"][:3]))
     return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id))
 
 
