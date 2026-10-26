@@ -237,18 +237,15 @@ def estadisticas_equipo_por_usuario(
             cond_t.append("t.inicio_en < ?"); params_t.append(hasta_excl)
             cond_n.append("n.creada_en < ?"); params_n.append(hasta_excl)
 
+        # (sin subconsultas correlacionadas: Citus no las admite entre `usuarios` —tabla de referencia— y tareas/notas, que están distribuidas; se agrupa por persona antes y se une)
         filas = conn.execute(
-            f"""SELECT u.id, u.email,
-                   COALESCE((SELECT SUM(t.duracion_segundos) FROM tareas t
-                             WHERE t.usuario_id = u.id AND {' AND '.join(cond_t)}), 0) AS segundos_totales,
-                   COALESCE((SELECT COUNT(*) FROM tareas t
-                             WHERE t.usuario_id = u.id AND {' AND '.join(cond_t)}), 0) AS num_tareas,
-                   COALESCE((SELECT COUNT(*) FROM notas n
-                             WHERE n.usuario_id = u.id AND {' AND '.join(cond_n)}), 0) AS num_notas
+            f"""SELECT u.id, u.email, COALESCE(tt.segundos, 0) AS segundos_totales, COALESCE(tt.n, 0) AS num_tareas, COALESCE(nn.n, 0) AS num_notas
                FROM usuarios u
+               LEFT JOIN (SELECT t.usuario_id, SUM(t.duracion_segundos) AS segundos, COUNT(*) AS n FROM tareas t WHERE {' AND '.join(cond_t)} GROUP BY t.usuario_id) tt ON tt.usuario_id = u.id
+               LEFT JOIN (SELECT n.usuario_id, COUNT(*) AS n FROM notas n WHERE {' AND '.join(cond_n)} GROUP BY n.usuario_id) nn ON nn.usuario_id = u.id
                WHERE u.id IN ({marcadores})
                ORDER BY segundos_totales DESC, u.email""",
-            [*params_t, *params_t, *params_n, *ids],
+            [*params_t, *params_n, *ids],
         ).fetchall()
         return [dict(f) for f in filas]
     finally:
