@@ -22,6 +22,17 @@ Lo que **no** soporta se **bloquea** (la declaración no se puede revisar y dice
 ## 4. Datos de prueba y contraste con la AEAT
 `scripts/fiscal/grabar_oraculo.py` sube los libros de `tests/escenarios_303.py` al simulador público de la AEAT y graba su resultado en `tests/fixtures/aeat/oraculo_libros/`; la suite compara el motor con él sin red. Para ampliar: añade un escenario y grábalo.
 
+## 4b. Cómo comprobarlo en producción (≈ 20 minutos, con datos inventados)
+1. **Tras migrar y reiniciar**, ejecuta `scripts/fiscal/verificar_despliegue.py` (comandos en `docs/despliegue-guilda-fiscal.md`): comprueba, solo leyendo, que las siete tablas, el aislamiento por despacho, los triggers de inmutabilidad y la distribución en Citus están. Debe acabar en «TODO CORRECTO».
+2. **Un despacho de prueba** (no uno real): backoffice → activar «Guilda Fiscal». Con una persona de la dirección: menú «Guilda Fiscal».
+3. **Un titular de prueba**: «Empresa de prueba SL», NIF `A12345674`, en el calendario fiscal. En Guilda Fiscal: su **perfil** (sociedad, régimen general, trimestral, desde 2026-01-01).
+4. **Importar un libro de muestra** (`docs/muestras-fiscal/basico.xlsx`) en su ficha → deben entrar 2 apuntes.
+5. **Calcular un periodo** (2026, 2T) → borrador con resultado **10,50 €** y las casillas de `docs/muestras-fiscal/LEEME.md`. Pulsa sobre un apunte para ver de qué casilla forma parte.
+6. **Revisar → Generar el fichero → descargar el `.303`**. Si quieres el contraste final con la AEAT: abre el simulador público del modelo 303 (2T 2026, NIF `A12345674`), «Importar» ese `.303` y comprueba que da el mismo resultado y ningún error.
+7. **Anotar que se presentó** → el vencimiento del 303 de ese titular (si existe en el calendario) pasa a «presentado».
+8. **Lo que NO debe poder hacerse**: aprobar con una cuenta que no sea dirección/revisor fiscal; modificar una instantánea o una declaración exportada (ni por pantalla ni por API); ver apuntes de otro despacho. Los tests lo cubren; el paso 2 con una cuenta de gestor lo confirma a mano.
+9. Repite 3-6 con otras muestras (un titular de prueba por muestra: alquileres, intracomunitarias, rectificativas…): el resultado de cada una está en `LEEME.md`.
+
 ## 5. Despliegue (lo hace Jorge; nada se aplica solo)
 1. No antes del lunes 26-oct 12:34 (cierre de la vuelta atrás B de PostgreSQL).
 2. Mezclar `modulo-fiscal` en `main` (resolver contadores de herramientas y catálogo OpenAPI frente al trabajo de la app móvil).

@@ -24,7 +24,11 @@ no se toca ninguna tabla ni dato existente. El código nuevo no se usa hasta que
    systemctl is-active guilda-work guilda-work-mcp && curl -s http://127.0.0.1:8000/api/v1/health
    journalctl -u guilda-work -u guilda-work-mcp --since "-3min" -p warning --no-pager
    ```
-6. **Probar**: backoffice → un despacho de prueba → activar el módulo «Guilda Fiscal» → menú «Guilda Fiscal» (`/guilda-fiscal/`). Guía: `docs/guia-guilda-fiscal.md`.
+6. **Verificar** (solo lee el catálogo; debe acabar en «TODO CORRECTO»):
+   ```bash
+   sudo bash -c 'set -a; source /etc/guilda-work.env; set +a; runuser -u guilda --preserve-environment -- /home/guilda/guilda-work/.venv/bin/python /home/guilda/guilda-work/scripts/fiscal/verificar_despliegue.py'
+   ```
+7. **Probar con datos inventados**: sigue `docs/guia-guilda-fiscal.md` §4b y los libros de `docs/muestras-fiscal/`. Antes, en el backoffice: un despacho de prueba → activar el módulo «Guilda Fiscal» → menú «Guilda Fiscal» (`/guilda-fiscal/`). Guía: `docs/guia-guilda-fiscal.md`.
 
 ## Marcha atrás
 Mientras las tablas estén vacías (no se ha usado el módulo), se vuelve al estado anterior sin pérdida:

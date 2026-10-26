@@ -1,5 +1,6 @@
 """Guilda Fiscal · núcleo F4 (app/fiscal_nucleo.py): del apunte aprobado a la declaración exportada. SQLite y, con GUILDA_TEST_MOTOR=postgres, PostgreSQL."""
 import json
+from pathlib import Path
 from datetime import date as d
 
 import pytest
@@ -258,3 +259,24 @@ def test_importar_un_libro_aprueba_lo_valido_rechaza_lo_erroneo_y_no_duplica():
     with pytest.raises(ErrorFiscal) as e:
         fn.importar_libro(t, g, c, libro)
     assert e.value.codigo == "prohibido"
+
+
+@pytest.mark.parametrize("nombre", ["basico", "tipos", "rectificativas", "otros_trimestres", "bien_inversion", "adquisicion_intracomunitaria", "inversion_sujeto_pasivo", "alquiler_local_comercial",
+                                    "alquiler_vivienda_exento", "alquiler_turistico_al_10", "resultado_negativo"])
+def test_las_muestras_de_prueba_importadas_dan_el_resultado_de_la_aeat(nombre):
+    """Lo que Jorge probará en producción: el libro de muestra (docs/muestras-fiscal) importado por la pantalla y calculado da las MISMAS casillas que la AEAT."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "fiscal"))
+    import generar_muestras                                                                # noqa: F401
+    from app.fiscal_modelos.libros_lsi import escribir_xlsx
+    t, u, g, c = _despacho(f"Despacho muestra {nombre}"[:40])
+    apuntes, ej, per = ESCENARIOS[nombre]
+    r = fn.importar_libro(t, u, c, escribir_xlsx(apuntes, ejercicio=ej, periodo=per))
+    assert r["rechazados"] == [] and r["importados"] == len(apuntes)
+    dec = fn.calcular_declaracion(t, u, fn.crear_instantanea(t, u, c, ejercicio=ej, periodo=per)["id"])
+    esperado = json.loads((Path(__file__).parent / "fixtures" / "aeat" / "oraculo_libros" / f"{nombre}.json").read_text())["casillas"]
+    for k, v in esperado.items():
+        if k not in ("02", "05", "08", "17", "20", "23", "157", "169"):                       # los «tipo %» los pone el formulario
+            assert dec["casillas"].get(k) == v, (nombre, k, dec["casillas"].get(k), v)
+    assert dec["bloqueos"] == []
