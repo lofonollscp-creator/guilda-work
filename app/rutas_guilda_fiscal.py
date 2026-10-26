@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import date
 from urllib.parse import quote
 
-from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 
 from . import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_perfiles as fp, verticales
 from .auth import login_required
@@ -85,6 +85,18 @@ def cliente(cliente_id: int):
 
 def _opciones_perfil() -> dict:
     return {"formas": fp.FORMAS_JURIDICAS, "residencias": fp.RESIDENCIAS, "territorios": fp.TERRITORIOS_IVA, "regimenes": fp.REGIMENES_IVA, "periodicidades": fp.PERIODICIDADES, "banderas": fp.BANDERAS}
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/contraparte")
+@login_required
+def contraparte(cliente_id: int):
+    """JSON con los datos que ya conocemos de una contraparte por su NIF (para rellenar el formulario del apunte)."""
+    _cliente_o_404(cliente_id)
+    try:
+        encontrada = fn.buscar_contraparte(g.tenant_id, g.usuario_id, cliente_id, request.args.get("nif", ""))
+    except ErrorFiscal:
+        abort(404)
+    return jsonify({"encontrada": encontrada})
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/perfil", methods=["GET", "POST"])

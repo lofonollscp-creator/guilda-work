@@ -10,7 +10,7 @@
 {{ aviso_error(error) }}
 {% if datos.get('anulado_en') %}<p class="ia-error" role="alert">{{ _('Este apunte está anulado: %(m)s', m=datos.get('causa') or '') }}</p>{% endif %}
 <p class="muted">{{ _('Un apunte aprobado es lo que cuenta para el modelo 303. Se comprueba con las mismas reglas que aplica la Agencia Tributaria al importar los libros.') }}</p>
-<form method="post" class="edit-form" data-fiscal-apunte {% if apunte_id %}action="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=apunte_id) }}"{% else %}action="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id) }}"{% endif %}>
+<form method="post" class="edit-form" data-fiscal-apunte data-contraparte-url="{{ url_for('guilda_fiscal.contraparte', cliente_id=c.id) }}" {% if apunte_id %}action="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=apunte_id) }}"{% else %}action="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id) }}"{% endif %}>
   <input type="hidden" name="libro" value="{{ datos.get('libro', 'E') }}">
   {% if datos.get('factura_id') %}<input type="hidden" name="factura_id" value="{{ datos.factura_id }}">{% endif %}
   {% if apunte_id %}<input type="hidden" name="version" value="{{ datos.version }}">{% endif %}
@@ -29,7 +29,7 @@
   </div>
   <div class="fila-campos">
     <label>{{ _('Nombre de la contraparte') }}<input type="text" name="contraparte_nombre" value="{{ datos.get('contraparte_nombre') or '' }}" maxlength="100" required></label>
-    <label>{{ _('NIF') }}<input type="text" name="contraparte_nif" value="{{ datos.get('contraparte_nif') or '' }}" maxlength="20"></label>
+    <label>{{ _('NIF') }}<input type="text" name="contraparte_nif" value="{{ datos.get('contraparte_nif') or '' }}" maxlength="20" autocomplete="off"><small class="muted" data-contraparte-aviso role="status" aria-live="polite" data-texto="{{ _('Reconocida: se han cargado sus datos.') }}"></small></label>
     <label>{{ _('Tipo de NIF extranjero') }}<select name="contraparte_nif_tipo">{% for v, n in (('', _('NIF español')), ('02', _('NIF-IVA intracomunitario')), ('03', _('Pasaporte')), ('04', _('Documento oficial del país')), ('05', _('Certificado de residencia')), ('06', _('Otro'))) %}<option value="{{ v }}" {{ 'selected' if datos.get('contraparte_nif_tipo') == v }}>{{ n }}</option>{% endfor %}</select></label>
     <label>{{ _('País (2 letras)') }}<input type="text" name="contraparte_pais" value="{{ datos.get('contraparte_pais') or '' }}" maxlength="2"></label>
   </div>

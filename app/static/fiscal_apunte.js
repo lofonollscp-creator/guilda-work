@@ -3,6 +3,7 @@
 (function () {
   var f = document.querySelector('form[data-fiscal-apunte]');
   if (!f) return;
+  iniciarContraparte(f);
   var base = f.elements.base, tipo = f.elements.tipo_iva, cuota = f.elements.cuota, total = f.elements.total;
   if (!base || !tipo || !cuota || !total) return;
   var manual = { cuota: !!cuota.value, total: !!total.value };
@@ -46,3 +47,31 @@
   cuota.addEventListener('input', function () { manual.cuota = !!cuota.value; if (!manual.total) desdeBase(); });
   total.addEventListener('input', function () { manual.total = !!total.value; if (manual.total) desdeTotal(); });
 })();
+
+/* Al escribir el NIF de la contraparte, si el titular ya la usó se cargan su nombre, tipo de NIF y país. Nunca pisa lo que la persona ha escrito. */
+function iniciarContraparte(f) {
+  var url = f.getAttribute('data-contraparte-url'), nif = f.elements.contraparte_nif;
+  var campos = { nombre: f.elements.contraparte_nombre, nif_tipo: f.elements.contraparte_nif_tipo, pais: f.elements.contraparte_pais };
+  var aviso = f.querySelector('[data-contraparte-aviso]'), espera = null, ultimo = '', puestos = {};
+  if (!url || !nif) return;
+  function poner(clave, valor) {
+    var c = campos[clave];
+    if (!c || !valor) return;
+    if (!c.value || c.value === puestos[clave]) { c.value = valor; puestos[clave] = valor; }
+  }
+  function buscar() {
+    var v = nif.value.replace(/[\s.-]/g, '').toUpperCase();
+    if (v.length < 5 || v === ultimo) return;
+    ultimo = v;
+    fetch(url + '?nif=' + encodeURIComponent(v), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.encontrada) { if (aviso) aviso.textContent = ''; return; }
+        poner('nombre', d.encontrada.nombre); poner('nif_tipo', d.encontrada.nif_tipo); poner('pais', d.encontrada.pais);
+        if (aviso) aviso.textContent = aviso.getAttribute('data-texto') + ' ' + d.encontrada.nombre;
+      })
+      .catch(function () {});
+  }
+  nif.addEventListener('input', function () { clearTimeout(espera); espera = setTimeout(buscar, 350); });
+  nif.addEventListener('blur', buscar);
+}

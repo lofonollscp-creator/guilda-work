@@ -15867,3 +15867,6 @@ msgstr "Cancelled (%(n)s)"
 
 msgid "¿Anular esta declaración? Quedará en el historial como anulada y podrás calcular el periodo de nuevo."
 msgstr "Cancel this return? It will stay in the history as cancelled and you will be able to calculate the period again."
+
+msgid "Reconocida: se han cargado sus datos."
+msgstr "Recognised: its details have been loaded."

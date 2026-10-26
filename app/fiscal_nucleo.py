@@ -293,6 +293,35 @@ def anular_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apunt
         conn.close()
 
 
+def _nif_limpio(nif) -> str:
+    return "".join(ch for ch in str(nif or "").upper() if ch.isalnum())
+
+
+def buscar_contraparte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, nif: str) -> dict | None:
+    """Los datos de una contraparte que este titular ya usó (apuntes anteriores, terceros de contabilidad, facturas anotadas), para no teclearlos otra vez. Solo lee; None si no la conoce."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    limpio = _nif_limpio(nif)
+    if len(limpio) < 5:
+        return None
+    norma = "UPPER(REPLACE(REPLACE(REPLACE({c}, ' ', ''), '-', ''), '.', ''))"
+    conn = db.get_connection()
+    try:
+        f = conn.execute(f"SELECT contraparte_nombre AS nombre, contraparte_nif AS nif, contraparte_nif_tipo AS nif_tipo, contraparte_pais AS pais FROM fiscal_apuntes "
+                         f"WHERE tenant_id = ? AND cliente_fiscal_id = ? AND {norma.format(c='contraparte_nif')} = ? ORDER BY id DESC LIMIT 1", (tenant_id, cliente_fiscal_id, limpio)).fetchone()
+        if f:
+            return {**dict(f), "origen": "apuntes"}
+        f = conn.execute(f"SELECT nombre, nif FROM contabilidad_terceros WHERE tenant_id = ? AND cliente_fiscal_id = ? AND {norma.format(c='nif')} = ? AND nombre IS NOT NULL AND nombre <> '' LIMIT 1",
+                         (tenant_id, cliente_fiscal_id, limpio)).fetchone()
+        if not f:
+            f = conn.execute(f"SELECT tercero_nombre AS nombre, tercero_nif AS nif FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND estado != 'descartada' "
+                             f"AND {norma.format(c='tercero_nif')} = ? ORDER BY id DESC LIMIT 1", (tenant_id, cliente_fiscal_id, limpio)).fetchone()
+        if f:
+            return {"nombre": f["nombre"], "nif": f["nif"], "nif_tipo": "", "pais": "", "origen": "facturas"}
+    finally:
+        conn.close()
+    return None
+
+
 def listar_apuntes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, ejercicio: int | None = None, incluir_anulados: bool = False) -> list[dict]:
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
     sql = "SELECT * FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ?"

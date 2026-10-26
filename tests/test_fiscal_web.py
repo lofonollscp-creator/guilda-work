@@ -162,3 +162,16 @@ def test_una_declaracion_anulada_sale_de_la_lista_y_el_periodo_se_puede_recalcul
     assert "No hay declaraciones vigentes." in pagina and "Anuladas (1)" in pagina
     assert cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "4T"}).status_code == 302
     assert len([x for x in fn.listar_declaraciones(t, uid, c) if x["estado"] != "anulada"]) == 1
+
+
+def test_reconoce_una_contraparte_ya_usada_por_su_nif(cliente):
+    uid, t, c = _web(cliente, email="contraparte@ejemplo.com")
+    datos = {"tipo_factura": "F1", "clave": "01", "serie": "A", "numero": "7", "libro": "E", "calificacion": "S1", "fecha_expedicion": "2026-05-10", "base": "100,00", "tipo_iva": "21",
+             "contraparte_nif": "B87654321", "contraparte_nombre": "Cliente Recurrente SL"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    r = cliente.get(f"/guilda-fiscal/{c}/contraparte?nif=b-876 54321")
+    assert r.get_json()["encontrada"]["nombre"] == "Cliente Recurrente SL"
+    assert cliente.get(f"/guilda-fiscal/{c}/contraparte?nif=B11111111").get_json()["encontrada"] is None
+    assert cliente.get(f"/guilda-fiscal/{c}/contraparte?nif=B8").get_json()["encontrada"] is None
+    assert cliente.get(f"/guilda-fiscal/{c + 99}/contraparte?nif=B87654321").status_code == 404
+    assert "data-contraparte-url" in cliente.get(f"/guilda-fiscal/{c}/apuntes/nuevo?libro=E").get_data(as_text=True)
