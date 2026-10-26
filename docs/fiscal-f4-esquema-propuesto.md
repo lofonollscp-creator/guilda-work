@@ -1,6 +1,6 @@
 # F4 · Esquema propuesto (apuntes, instantáneas, declaraciones y casillas) — para tu visto bueno 🔒
 
-> **Estado:** propuesta; **no aplicada** (ni en SQLite ni en PostgreSQL). Misma disciplina que F1: antes de escribir una sola tabla, te enseño el esquema exacto y espero tu «sí».
+> **Estado:** **APROBADA por Jorge (26-oct-2026: «Todo sí»)**. Implementada y probada en la rama `modulo-fiscal` (SQLite, PostgreSQL llano y Citus de ensayo) como migración **003**; **NO aplicada a producción** (la aplica Jorge con `scripts/migrar_esquema_pg.py` tras la 002). Cambios respecto a la propuesta: `fiscal_apuntes` lleva también `inmueble_situacion` e `inmueble_referencia` (los pide la AEAT para alquileres), `fiscal_declaraciones` lleva `referencia_presentacion` (CSV/justificante), y los triggers de inmutabilidad en Citus se crean con `citus.enable_unsafe_triggers = on`. Antes: Misma disciplina que F1: antes de escribir una sola tabla, te enseño el esquema exacto y espero tu «sí».
 > **Qué ya existe y no hace falta guardar:** el motor del 303 (`motor_303.py`), el escritor de libros (`libros_lsi.py`), el generador del `.303` (`fichero_303.py`), el validador (`validacion_apuntes.py`) y `preparar_303.py` son **funciones puras**, contrastadas con la AEAT en 23 escenarios. Lo que falta es **dónde viven los datos** que esas funciones consumen y producen.
 > **Cuándo se puede aplicar:** después de F1 (migración 002) y de tu aprobación; sería la migración **003**. Reversible con `DROP TABLE` de tablas nuevas y vacías (mientras estén vacías).
 

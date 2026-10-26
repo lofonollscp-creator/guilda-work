@@ -92,6 +92,11 @@ CREATE INDEX IF NOT EXISTS idx_facturas_contables ON facturas_contables (tenant_
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_lineas ON facturas_contables_lineas (factura_id);
 CREATE INDEX IF NOT EXISTS idx_fichajes_tenant_marca ON fichajes (tenant_id, marca_tiempo);
 CREATE INDEX IF NOT EXISTS idx_fichajes_usuario_marca ON fichajes (usuario_id, marca_tiempo);
+CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_factura ON fiscal_apuntes (tenant_id, factura_id);
+CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_periodo ON fiscal_apuntes (tenant_id, cliente_fiscal_id, libro, fecha_expedicion);
+CREATE INDEX IF NOT EXISTS idx_fiscal_artefactos ON fiscal_artefactos (tenant_id, declaracion_id, tipo);
+CREATE INDEX IF NOT EXISTS idx_fiscal_declaraciones ON fiscal_declaraciones (tenant_id, cliente_fiscal_id, modelo, ejercicio, periodo);
+CREATE INDEX IF NOT EXISTS idx_fiscal_instantaneas ON fiscal_instantaneas (tenant_id, cliente_fiscal_id, modelo, ejercicio, periodo);
 CREATE INDEX IF NOT EXISTS idx_fiscal_perfiles_cliente ON fiscal_perfiles (tenant_id, cliente_fiscal_id, vigente_hasta);
 CREATE INDEX IF NOT EXISTS idx_fiscal_relaciones_hasta ON fiscal_relaciones (tenant_id, hasta_cliente_id);
 CREATE INDEX IF NOT EXISTS idx_ia_atajos_usuario ON ia_atajos (usuario_id);
@@ -188,6 +193,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_cliente_documentos_unico ON cliente_docume
 CREATE UNIQUE INDEX IF NOT EXISTS idx_clientes_fiscales_nif_unico ON clientes_fiscales (tenant_id, pais, nif_normalizado) WHERE papelera_en IS NULL AND nif_normalizado IS NOT NULL AND nif_duplicado_autorizado IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_clientes_fiscales_ref ON clientes_fiscales (tenant_id, referencia_externa) WHERE referencia_externa IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fichajes_cliente_uuid ON fichajes (tenant_id, cliente_uuid) WHERE cliente_uuid IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_fiscal_casillas ON fiscal_casillas (tenant_id, declaracion_id, casilla);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fiscal_perfiles_vigencia ON fiscal_perfiles (tenant_id, cliente_fiscal_id, vigente_desde);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fiscal_relaciones_unica ON fiscal_relaciones (tenant_id, desde_cliente_id, hasta_cliente_id, tipo, vigente_desde);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_cliente_uuid ON notas (tenant_id, cliente_uuid) WHERE cliente_uuid IS NOT NULL;

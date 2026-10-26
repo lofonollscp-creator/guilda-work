@@ -922,7 +922,32 @@
    }
   ]
  },
+ "fiscal_apuntes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "fiscal_artefactos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "fiscal_casillas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "fiscal_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "fiscal_declaraciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "fiscal_instantaneas": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
   "via": []
