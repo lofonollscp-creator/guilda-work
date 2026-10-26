@@ -15,6 +15,8 @@
 {% if d.bloqueos %}
 <div class="ia-error" role="alert"><strong>{{ _('El cálculo está bloqueado: este caso no está soportado todavía y no se inventa un número.') }}</strong><ul>{% for b in d.bloqueos %}<li>{{ b }}</li>{% endfor %}</ul></div>
 {% endif %}
+{% if not d.bloqueos and not inst.datos.apuntes %}<div class="dash-panel" role="note"><strong>{{ _('Esta declaración no tiene ningún apunte.') }}</strong> {{ _('Al importarla en el simulador o en la sede de la AEAT saldrá el aviso 303M030 («no hay contenido en la liquidación del régimen general»): es lógico, porque está a cero. Si el titular tuvo operaciones en el periodo, aprueba sus apuntes y vuelve a calcular.') }}</div>
+{% elif not d.bloqueos and d.estado in ('revisada', 'exportada') %}<p class="muted">{{ _('Al importar el fichero, la AEAT muestra siempre el aviso 31190 («revise las casillas de Información adicional»): es un recordatorio, no un error. Lo que no calcula el fichero (por ejemplo operaciones no sujetas o exentas sin apuntar) se completa a mano en la sede.') }}</p>{% endif %}
 {% if not inst.integra %}<div class="ia-error" role="alert">{{ _('La huella de la instantánea no coincide: no te fíes de esta declaración.') }}</div>{% endif %}
 
 <section class="dash-panel">
