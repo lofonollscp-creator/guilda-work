@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../diseno/componentes.dart';
 import '../l10n/app_localizations.dart';
 import 'paginas.dart';
 import 'sesion.dart';
@@ -65,8 +66,8 @@ class MasScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
         children: [
           if (estado.capacidades.variosDespachos)
-            _TarjetaMas(children: [
-              _FilaMas(
+            GrupoAjustes(children: [
+              FilaAjuste(
                 icono: Icons.business_outlined,
                 titulo: t.despachoActivoTitulo,
                 subtitulo: estado.capacidades.despachoPorId(estado.despacho)?.nombre ?? '',
@@ -74,9 +75,9 @@ class MasScreen extends ConsumerWidget {
                 alPulsar: () => _elegirDespacho(context, ref),
               ),
             ]),
-          _TarjetaMas(children: [
+          GrupoAjustes(children: [
             for (final a in accesos)
-              _FilaMas(
+              FilaAjuste(
                 icono: a.icono,
                 titulo: _etiqueta(t, a.etiqueta),
                 final_: const Icon(Icons.chevron_right),
@@ -107,55 +108,5 @@ class MasScreen extends ConsumerWidget {
       ),
     );
     if (id != null) await ref.read(estadoSesionProvider.notifier).cambiarDespacho(id);
-  }
-}
-
-/// Un grupo de accesos en una tarjeta, con filo entre ellos.
-class _TarjetaMas extends StatelessWidget {
-  final List<Widget> children;
-  const _TarjetaMas({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: tema.colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
-        clipBehavior: Clip.antiAlias,
-        child: Column(children: [
-          for (var i = 0; i < children.length; i++) ...[if (i > 0) Divider(height: 1, indent: 64, color: tema.colorScheme.outlineVariant), children[i]],
-        ]),
-      ),
-    );
-  }
-}
-
-/// Un acceso de «Más»: su icono en un círculo con el tinte del acento, el nombre y, a la derecha, una flecha.
-class _FilaMas extends StatelessWidget {
-  final IconData icono;
-  final String titulo;
-  final String? subtitulo;
-  final Widget? final_;
-  final VoidCallback alPulsar;
-  const _FilaMas({required this.icono, required this.titulo, this.subtitulo, this.final_, required this.alPulsar});
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return ListTile(
-      minTileHeight: 56,
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(color: tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.22 : 0.30), shape: BoxShape.circle),
-        child: ExcludeSemantics(child: Icon(icono, size: 22, color: tema.colorScheme.onSurface)),
-      ),
-      title: Text(titulo, style: tema.textTheme.titleSmall),
-      subtitle: subtitulo == null ? null : Text(subtitulo!),
-      trailing: final_,
-      onTap: alPulsar,
-    );
   }
 }

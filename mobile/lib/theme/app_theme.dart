@@ -232,7 +232,12 @@ class AppTheme {
           (s) => s.contains(WidgetState.selected) ? primary.withValues(alpha: 0.5) : null,
         ),
       ),
+      // Sin sombra: en las capturas y en oscuro se veía como un aro negro alrededor del botón; el color del acento ya lo destaca.
       floatingActionButtonTheme: FloatingActionButtonThemeData(
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
         backgroundColor: primary,
         foregroundColor: onAccent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusLarge)),

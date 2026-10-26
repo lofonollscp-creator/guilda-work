@@ -1066,6 +1066,61 @@ void main() {
     }
   });
 
+  group('accesibilidad de las tareas', () {
+    for (final oscuro in [false, true]) {
+      for (final (nombre, vista) in [('Lista', VistaTareas.lista), ('Mi día', VistaTareas.miDia), ('Tablero', VistaTareas.tablero)]) {
+        testWidgets('$nombre (${oscuro ? 'oscuro' : 'claro'}): zonas táctiles, nombres para el lector de pantalla y contraste', (t) async {
+          final hoy = DateTime.now();
+          final tareas = [
+            TareaOutlook.fromJson({..._t(1, vencida: true, prioridad: 'alta', fecha: '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}'), 'asunto': 'Presentar el 303', 'categoria_nombre': 'IVA', 'n_comentarios': 2, 'checklist_total': 3, 'checklist_hechas': 1}),
+            TareaOutlook.fromJson({..._t(2, estado: 'en_progreso'), 'asunto': 'Conciliar el banco', 'rol': 'asignada'}),
+          ];
+          final repo = _RepoFalso()
+            ..paginas = ((a, e, q, o) => tareas)
+            ..diaFalso = {'vencidas': [tareas[0]], 'asignadas': [tareas[1]]}
+            ..tableroFalso = {'no_iniciada': [tareas[0]], 'en_progreso': [tareas[1]]};
+          await t.pumpWidget(ProviderScope(
+            overrides: _over(repo),
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('es'),
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+              home: const TareasInicio(),
+            ),
+          ));
+          await t.pumpAndSettle();
+          ProviderScope.containerOf(t.element(find.byType(TareasInicio))).read(vistaTareasProvider.notifier).elegir(vista);
+          await t.pumpAndSettle();
+          final semantica = t.ensureSemantics();
+          await expectLater(t, meetsGuideline(androidTapTargetGuideline), reason: 'zonas táctiles');
+          await expectLater(t, meetsGuideline(labeledTapTargetGuideline), reason: 'nombre para el lector de pantalla');
+          await expectLater(t, meetsGuideline(textContrastGuideline), reason: 'contraste del texto');
+          semantica.dispose();
+        });
+      }
+    }
+
+    testWidgets('en una tableta (820 × 1180) ninguna vista de tareas se desborda', (t) async {
+      final repo = _RepoFalso()
+        ..paginas = ((a, e, q, o) => [_tarea(1, fecha: '2026-10-20', vencida: true, prioridad: 'alta'), _tarea(2)])
+        ..diaFalso = {'vencidas': [_tarea(1)]}
+        ..tableroFalso = {'no_iniciada': [_tarea(1)]};
+      t.view.physicalSize = const Size(820, 1180);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      for (final vista in ['Mi día', 'Tablero', 'Calendario', 'Carga', 'Lista']) {
+        await t.tap(find.text(vista));
+        await t.pumpAndSettle();
+        expect(t.takeException(), isNull, reason: vista);
+      }
+    });
+  });
+
   group('Calendario y Carga', () {
     String iso(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 

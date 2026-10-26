@@ -377,6 +377,7 @@ class _AltaRapida extends StatelessWidget {
                   isDense: true,
                   filled: true,
                   fillColor: tema.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  constraints: const BoxConstraints(minHeight: 48), // zona táctil mínima
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),

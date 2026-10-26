@@ -361,3 +361,56 @@ class PildoraMenu<T> extends StatelessWidget {
   }
 }
 
+
+/// Un grupo de filas (accesos o ajustes) en una tarjeta, con un filo entre ellas.
+class GrupoAjustes extends StatelessWidget {
+  final List<Widget> children;
+  const GrupoAjustes({super.key, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: tema.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: [
+          for (var i = 0; i < children.length; i++) ...[if (i > 0) Divider(height: 1, indent: 64, color: tema.colorScheme.outlineVariant), children[i]],
+        ]),
+      ),
+    );
+  }
+}
+
+/// Una fila de «Más» o de Ajustes: su icono en un círculo con el tinte del acento, el nombre y, a la derecha, una flecha.
+class FilaAjuste extends StatelessWidget {
+  final IconData icono;
+  final String titulo;
+  final String? subtitulo;
+  final Widget? final_;
+
+  /// Una acción que cierra o borra algo (cerrar sesión): se pinta con el tono de peligro.
+  final bool peligro;
+  final VoidCallback alPulsar;
+  const FilaAjuste({super.key, required this.icono, required this.titulo, this.subtitulo, this.final_, this.peligro = false, required this.alPulsar});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return ListTile(
+      minTileHeight: 56,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(color: (peligro ? tema.colorScheme.error : tema.colorScheme.primary).withValues(alpha: tema.brightness == Brightness.dark ? 0.22 : 0.30), shape: BoxShape.circle),
+        child: ExcludeSemantics(child: Icon(icono, size: 22, color: peligro ? tema.colorScheme.error : tema.colorScheme.onSurface)),
+      ),
+      title: Text(titulo, style: tema.textTheme.titleSmall?.copyWith(color: peligro ? tema.colorScheme.error : null)),
+      subtitle: subtitulo == null ? null : Text(subtitulo!),
+      trailing: final_,
+      onTap: alPulsar,
+    );
+  }
+}
