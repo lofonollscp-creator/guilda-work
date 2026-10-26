@@ -9,6 +9,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from app import db as plataforma
 from app import comunicados, herramientas, ia_consumo, onboarding_despacho, verticales
+from app import fiscal_nucleo  # noqa: F401  (da de alta el módulo «Guilda Fiscal» en este proceso: el backoffice lo ofrece desde aquí)
 
 from . import aprovisionamiento, auth, cartera, datos, facturacion, metricas, seguimiento
 

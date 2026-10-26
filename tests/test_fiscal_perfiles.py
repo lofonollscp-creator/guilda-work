@@ -130,3 +130,14 @@ def test_borrar_el_despacho_borra_lo_fiscal():
     finally:
         conn.close()
     assert fp.perfiles_de(t, c) == [] and fp.titulares_de(t, c) == []
+
+
+def test_el_proceso_del_backoffice_ofrece_guilda_fiscal():
+    """El backoffice es OTRO proceso y no importa las pantallas de la aplicación: si no da de alta el módulo él mismo, «Guilda Fiscal» no sale en su lista de módulos (pasó en el primer despliegue)."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    raiz = Path(__file__).resolve().parents[1]
+    r = subprocess.run([sys.executable, "-c", "import backoffice.main as m; m.create_app(testing=True); from app import verticales; print(verticales.VERTICALES['fiscal'].disponible)"], cwd=raiz,
+                       capture_output=True, text=True, timeout=120)
+    assert r.stdout.strip().splitlines()[-1] == "True", r.stderr[-400:]
