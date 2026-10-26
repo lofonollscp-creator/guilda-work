@@ -10,7 +10,7 @@
 {{ aviso_error(error) }}
 {% if datos.get('anulado_en') %}<p class="ia-error" role="alert">{{ _('Este apunte está anulado: %(m)s', m=datos.get('causa') or '') }}</p>{% endif %}
 <p class="muted">{{ _('Un apunte aprobado es lo que cuenta para el modelo 303. Se comprueba con las mismas reglas que aplica la Agencia Tributaria al importar los libros.') }}</p>
-<form method="post" class="edit-form" {% if apunte_id %}action="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=apunte_id) }}"{% else %}action="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id) }}"{% endif %}>
+<form method="post" class="edit-form" data-fiscal-apunte {% if apunte_id %}action="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=apunte_id) }}"{% else %}action="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id) }}"{% endif %}>
   <input type="hidden" name="libro" value="{{ datos.get('libro', 'E') }}">
   {% if datos.get('factura_id') %}<input type="hidden" name="factura_id" value="{{ datos.factura_id }}">{% endif %}
   {% if apunte_id %}<input type="hidden" name="version" value="{{ datos.version }}">{% endif %}
