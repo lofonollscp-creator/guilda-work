@@ -88,6 +88,16 @@ enum FacturaContableTipo { emitida('emitida'), recibida('recibida'), sinReconoce
   static FacturaContableTipo desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => FacturaContableTipo.sinReconocer);
 }
 
+enum FiscalApunteLibro { emitidas('emitidas'), recibidas('recibidas'), sinReconocer('');
+  final String valor; const FiscalApunteLibro(this.valor);
+  static FiscalApunteLibro desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => FiscalApunteLibro.sinReconocer);
+}
+
+enum FiscalDeclaracionResumenEstado { borrador('borrador'), revisada('revisada'), exportada('exportada'), presentada('presentada'), anulada('anulada'), sinReconocer('');
+  final String valor; const FiscalDeclaracionResumenEstado(this.valor);
+  static FiscalDeclaracionResumenEstado desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => FiscalDeclaracionResumenEstado.sinReconocer);
+}
+
 enum FlujoObligacionFase { pendiente('pendiente'), enPreparacion('en_preparacion'), enRevision('en_revision'), aprobada('aprobada'), presentada('presentada'), cerrada('cerrada'), noAplica('no_aplica'), anulada('anulada'), sinReconocer('');
   final String valor; const FlujoObligacionFase(this.valor);
   static FlujoObligacionFase desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => FlujoObligacionFase.sinReconocer);
@@ -2583,6 +2593,277 @@ class FichajeDatos {
   FichajeDatos copyWith({int? usuarioId, String? nombreCompleto, String? dniNie, String? numeroAfiliacionSs, String? categoriaProfesional, String? tipoContrato, String? fechaAlta, double? jornadaSemanalHoras, String? convenioColectivo, String? actualizadoEn, }) => FichajeDatos(usuarioId: usuarioId ?? this.usuarioId, nombreCompleto: nombreCompleto ?? this.nombreCompleto, dniNie: dniNie ?? this.dniNie, numeroAfiliacionSs: numeroAfiliacionSs ?? this.numeroAfiliacionSs, categoriaProfesional: categoriaProfesional ?? this.categoriaProfesional, tipoContrato: tipoContrato ?? this.tipoContrato, fechaAlta: fechaAlta ?? this.fechaAlta, jornadaSemanalHoras: jornadaSemanalHoras ?? this.jornadaSemanalHoras, convenioColectivo: convenioColectivo ?? this.convenioColectivo, actualizadoEn: actualizadoEn ?? this.actualizadoEn, );
   @override bool operator ==(Object other) => other is FichajeDatos && other.usuarioId == usuarioId && other.nombreCompleto == nombreCompleto && other.dniNie == dniNie && other.numeroAfiliacionSs == numeroAfiliacionSs && other.categoriaProfesional == categoriaProfesional && other.tipoContrato == tipoContrato && other.fechaAlta == fechaAlta && other.jornadaSemanalHoras == jornadaSemanalHoras && other.convenioColectivo == convenioColectivo && other.actualizadoEn == actualizadoEn;
   @override int get hashCode => Object.hashAll([usuarioId, nombreCompleto, dniNie, numeroAfiliacionSs, categoriaProfesional, tipoContrato, fechaAlta, jornadaSemanalHoras, convenioColectivo, actualizadoEn]);
+}
+
+class FiscalApunte {
+  final int? id;
+  final FiscalApunteLibro? libro;
+  final String? tipoFactura;
+  final String? clave;
+  final String? numero;
+  final String? fechaExpedicion;
+  final String? contraparte;
+  final String? nif;
+  final double? base_;
+  final double? tipoIva;
+  final double? cuota;
+  final double? cuotaDeducible;
+  final int? version;
+  final bool? anulado;
+  const FiscalApunte({this.id, this.libro, this.tipoFactura, this.clave, this.numero, this.fechaExpedicion, this.contraparte, this.nif, this.base_, this.tipoIva, this.cuota, this.cuotaDeducible, this.version, this.anulado, });
+  factory FiscalApunte.fromJson(Map<String, dynamic> j) => FiscalApunte(
+    id: j['id'] == null ? null : (j['id'] as num).toInt(),
+    libro: j['libro'] == null ? null : FiscalApunteLibro.desde(j['libro'] as String),
+    tipoFactura: j['tipo_factura'] == null ? null : j['tipo_factura'] as String,
+    clave: j['clave'] == null ? null : j['clave'] as String,
+    numero: j['numero'] == null ? null : j['numero'] as String,
+    fechaExpedicion: j['fecha_expedicion'] == null ? null : j['fecha_expedicion'] as String,
+    contraparte: j['contraparte'] == null ? null : j['contraparte'] as String,
+    nif: j['nif'] == null ? null : j['nif'] as String,
+    base_: j['base'] == null ? null : (j['base'] as num).toDouble(),
+    tipoIva: j['tipo_iva'] == null ? null : (j['tipo_iva'] as num).toDouble(),
+    cuota: j['cuota'] == null ? null : (j['cuota'] as num).toDouble(),
+    cuotaDeducible: j['cuota_deducible'] == null ? null : (j['cuota_deducible'] as num).toDouble(),
+    version: j['version'] == null ? null : (j['version'] as num).toInt(),
+    anulado: j['anulado'] == null ? null : _aBool(j['anulado']),
+  );
+  Map<String, dynamic> toJson() => {
+    'id': ?id,
+    if (libro != null) 'libro': libro!.valor,
+    'tipo_factura': ?tipoFactura,
+    'clave': ?clave,
+    'numero': ?numero,
+    'fecha_expedicion': ?fechaExpedicion,
+    'contraparte': ?contraparte,
+    'nif': ?nif,
+    'base': ?base_,
+    'tipo_iva': ?tipoIva,
+    'cuota': ?cuota,
+    'cuota_deducible': ?cuotaDeducible,
+    'version': ?version,
+    'anulado': ?anulado,
+  };
+  FiscalApunte copyWith({int? id, FiscalApunteLibro? libro, String? tipoFactura, String? clave, String? numero, String? fechaExpedicion, String? contraparte, String? nif, double? base_, double? tipoIva, double? cuota, double? cuotaDeducible, int? version, bool? anulado, }) => FiscalApunte(id: id ?? this.id, libro: libro ?? this.libro, tipoFactura: tipoFactura ?? this.tipoFactura, clave: clave ?? this.clave, numero: numero ?? this.numero, fechaExpedicion: fechaExpedicion ?? this.fechaExpedicion, contraparte: contraparte ?? this.contraparte, nif: nif ?? this.nif, base_: base_ ?? this.base_, tipoIva: tipoIva ?? this.tipoIva, cuota: cuota ?? this.cuota, cuotaDeducible: cuotaDeducible ?? this.cuotaDeducible, version: version ?? this.version, anulado: anulado ?? this.anulado, );
+  @override bool operator ==(Object other) => other is FiscalApunte && other.id == id && other.libro == libro && other.tipoFactura == tipoFactura && other.clave == clave && other.numero == numero && other.fechaExpedicion == fechaExpedicion && other.contraparte == contraparte && other.nif == nif && other.base_ == base_ && other.tipoIva == tipoIva && other.cuota == cuota && other.cuotaDeducible == cuotaDeducible && other.version == version && other.anulado == anulado;
+  @override int get hashCode => Object.hashAll([id, libro, tipoFactura, clave, numero, fechaExpedicion, contraparte, nif, base_, tipoIva, cuota, cuotaDeducible, version, anulado]);
+}
+
+class FiscalComprobacion {
+  final int? apuntes;
+  final bool? ok;
+  final List<Map<String, dynamic>>? problemas;
+  const FiscalComprobacion({this.apuntes, this.ok, this.problemas, });
+  factory FiscalComprobacion.fromJson(Map<String, dynamic> j) => FiscalComprobacion(
+    apuntes: j['apuntes'] == null ? null : (j['apuntes'] as num).toInt(),
+    ok: j['ok'] == null ? null : _aBool(j['ok']),
+    problemas: j['problemas'] == null ? null : (j['problemas'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+  );
+  Map<String, dynamic> toJson() => {
+    'apuntes': ?apuntes,
+    'ok': ?ok,
+    if (problemas != null) 'problemas': problemas!.map((e) => e).toList(),
+  };
+  FiscalComprobacion copyWith({int? apuntes, bool? ok, List<Map<String, dynamic>>? problemas, }) => FiscalComprobacion(apuntes: apuntes ?? this.apuntes, ok: ok ?? this.ok, problemas: problemas ?? this.problemas, );
+  @override bool operator ==(Object other) => other is FiscalComprobacion && other.apuntes == apuntes && other.ok == ok && other.problemas == problemas;
+  @override int get hashCode => Object.hashAll([apuntes, ok, problemas]);
+}
+
+class FiscalDeclaracion {
+  final int? id;
+  final int? clienteFiscalId;
+  final String? modelo;
+  final int? ejercicio;
+  final String? periodo;
+  final String? estado;
+  final double? resultado;
+  final int? instantaneaId;
+  final List<String>? bloqueos;
+  final Map<String, dynamic>? casillas;
+  final Map<String, dynamic>? origen;
+  final List<String>? ficheros;
+  const FiscalDeclaracion({this.id, this.clienteFiscalId, this.modelo, this.ejercicio, this.periodo, this.estado, this.resultado, this.instantaneaId, this.bloqueos, this.casillas, this.origen, this.ficheros, });
+  factory FiscalDeclaracion.fromJson(Map<String, dynamic> j) => FiscalDeclaracion(
+    id: j['id'] == null ? null : (j['id'] as num).toInt(),
+    clienteFiscalId: j['cliente_fiscal_id'] == null ? null : (j['cliente_fiscal_id'] as num).toInt(),
+    modelo: j['modelo'] == null ? null : j['modelo'] as String,
+    ejercicio: j['ejercicio'] == null ? null : (j['ejercicio'] as num).toInt(),
+    periodo: j['periodo'] == null ? null : j['periodo'] as String,
+    estado: j['estado'] == null ? null : j['estado'] as String,
+    resultado: j['resultado'] == null ? null : (j['resultado'] as num).toDouble(),
+    instantaneaId: j['instantanea_id'] == null ? null : (j['instantanea_id'] as num).toInt(),
+    bloqueos: j['bloqueos'] == null ? null : (j['bloqueos'] as List).map((e) => e as String).toList(),
+    casillas: j['casillas'] == null ? null : Map<String, dynamic>.from(j['casillas'] as Map),
+    origen: j['origen'] == null ? null : Map<String, dynamic>.from(j['origen'] as Map),
+    ficheros: j['ficheros'] == null ? null : (j['ficheros'] as List).map((e) => e as String).toList(),
+  );
+  Map<String, dynamic> toJson() => {
+    'id': ?id,
+    'cliente_fiscal_id': ?clienteFiscalId,
+    'modelo': ?modelo,
+    'ejercicio': ?ejercicio,
+    'periodo': ?periodo,
+    'estado': ?estado,
+    'resultado': ?resultado,
+    'instantanea_id': ?instantaneaId,
+    if (bloqueos != null) 'bloqueos': bloqueos!.map((e) => e).toList(),
+    'casillas': ?casillas,
+    'origen': ?origen,
+    if (ficheros != null) 'ficheros': ficheros!.map((e) => e).toList(),
+  };
+  FiscalDeclaracion copyWith({int? id, int? clienteFiscalId, String? modelo, int? ejercicio, String? periodo, String? estado, double? resultado, int? instantaneaId, List<String>? bloqueos, Map<String, dynamic>? casillas, Map<String, dynamic>? origen, List<String>? ficheros, }) => FiscalDeclaracion(id: id ?? this.id, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, modelo: modelo ?? this.modelo, ejercicio: ejercicio ?? this.ejercicio, periodo: periodo ?? this.periodo, estado: estado ?? this.estado, resultado: resultado ?? this.resultado, instantaneaId: instantaneaId ?? this.instantaneaId, bloqueos: bloqueos ?? this.bloqueos, casillas: casillas ?? this.casillas, origen: origen ?? this.origen, ficheros: ficheros ?? this.ficheros, );
+  @override bool operator ==(Object other) => other is FiscalDeclaracion && other.id == id && other.clienteFiscalId == clienteFiscalId && other.modelo == modelo && other.ejercicio == ejercicio && other.periodo == periodo && other.estado == estado && other.resultado == resultado && other.instantaneaId == instantaneaId && other.bloqueos == bloqueos && other.casillas == casillas && other.origen == origen && other.ficheros == ficheros;
+  @override int get hashCode => Object.hashAll([id, clienteFiscalId, modelo, ejercicio, periodo, estado, resultado, instantaneaId, bloqueos, casillas, origen, ficheros]);
+}
+
+class FiscalDeclaracionResumen {
+  final int? id;
+  final String? modelo;
+  final int? ejercicio;
+  final String? periodo;
+  final FiscalDeclaracionResumenEstado? estado;
+  final String? tipoDeclaracion;
+  final double? resultado;
+  final String? presentadaEn;
+  const FiscalDeclaracionResumen({this.id, this.modelo, this.ejercicio, this.periodo, this.estado, this.tipoDeclaracion, this.resultado, this.presentadaEn, });
+  factory FiscalDeclaracionResumen.fromJson(Map<String, dynamic> j) => FiscalDeclaracionResumen(
+    id: j['id'] == null ? null : (j['id'] as num).toInt(),
+    modelo: j['modelo'] == null ? null : j['modelo'] as String,
+    ejercicio: j['ejercicio'] == null ? null : (j['ejercicio'] as num).toInt(),
+    periodo: j['periodo'] == null ? null : j['periodo'] as String,
+    estado: j['estado'] == null ? null : FiscalDeclaracionResumenEstado.desde(j['estado'] as String),
+    tipoDeclaracion: j['tipo_declaracion'] == null ? null : j['tipo_declaracion'] as String,
+    resultado: j['resultado'] == null ? null : (j['resultado'] as num).toDouble(),
+    presentadaEn: j['presentada_en'] == null ? null : j['presentada_en'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': ?id,
+    'modelo': ?modelo,
+    'ejercicio': ?ejercicio,
+    'periodo': ?periodo,
+    if (estado != null) 'estado': estado!.valor,
+    'tipo_declaracion': ?tipoDeclaracion,
+    'resultado': ?resultado,
+    'presentada_en': ?presentadaEn,
+  };
+  FiscalDeclaracionResumen copyWith({int? id, String? modelo, int? ejercicio, String? periodo, FiscalDeclaracionResumenEstado? estado, String? tipoDeclaracion, double? resultado, String? presentadaEn, }) => FiscalDeclaracionResumen(id: id ?? this.id, modelo: modelo ?? this.modelo, ejercicio: ejercicio ?? this.ejercicio, periodo: periodo ?? this.periodo, estado: estado ?? this.estado, tipoDeclaracion: tipoDeclaracion ?? this.tipoDeclaracion, resultado: resultado ?? this.resultado, presentadaEn: presentadaEn ?? this.presentadaEn, );
+  @override bool operator ==(Object other) => other is FiscalDeclaracionResumen && other.id == id && other.modelo == modelo && other.ejercicio == ejercicio && other.periodo == periodo && other.estado == estado && other.tipoDeclaracion == tipoDeclaracion && other.resultado == resultado && other.presentadaEn == presentadaEn;
+  @override int get hashCode => Object.hashAll([id, modelo, ejercicio, periodo, estado, tipoDeclaracion, resultado, presentadaEn]);
+}
+
+class FiscalPerfil {
+  final Map<String, dynamic>? vigente;
+  final List<Map<String, dynamic>>? historial;
+  const FiscalPerfil({this.vigente, this.historial, });
+  factory FiscalPerfil.fromJson(Map<String, dynamic> j) => FiscalPerfil(
+    vigente: j['vigente'] == null ? null : Map<String, dynamic>.from(j['vigente'] as Map),
+    historial: j['historial'] == null ? null : (j['historial'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+  );
+  Map<String, dynamic> toJson() => {
+    'vigente': ?vigente,
+    if (historial != null) 'historial': historial!.map((e) => e).toList(),
+  };
+  FiscalPerfil copyWith({Map<String, dynamic>? vigente, List<Map<String, dynamic>>? historial, }) => FiscalPerfil(vigente: vigente ?? this.vigente, historial: historial ?? this.historial, );
+  @override bool operator ==(Object other) => other is FiscalPerfil && other.vigente == vigente && other.historial == historial;
+  @override int get hashCode => Object.hashAll([vigente, historial]);
+}
+
+class FiscalPropuestaApunte {
+  final int? facturaId;
+  final String? libro;
+  final String? tipoFactura;
+  final String? numero;
+  final double? base_;
+  final double? tipoIva;
+  final double? cuota;
+  final bool? aprobado;
+  const FiscalPropuestaApunte({this.facturaId, this.libro, this.tipoFactura, this.numero, this.base_, this.tipoIva, this.cuota, this.aprobado, });
+  factory FiscalPropuestaApunte.fromJson(Map<String, dynamic> j) => FiscalPropuestaApunte(
+    facturaId: j['factura_id'] == null ? null : (j['factura_id'] as num).toInt(),
+    libro: j['libro'] == null ? null : j['libro'] as String,
+    tipoFactura: j['tipo_factura'] == null ? null : j['tipo_factura'] as String,
+    numero: j['numero'] == null ? null : j['numero'] as String,
+    base_: j['base'] == null ? null : (j['base'] as num).toDouble(),
+    tipoIva: j['tipo_iva'] == null ? null : (j['tipo_iva'] as num).toDouble(),
+    cuota: j['cuota'] == null ? null : (j['cuota'] as num).toDouble(),
+    aprobado: j['aprobado'] == null ? null : _aBool(j['aprobado']),
+  );
+  Map<String, dynamic> toJson() => {
+    'factura_id': ?facturaId,
+    'libro': ?libro,
+    'tipo_factura': ?tipoFactura,
+    'numero': ?numero,
+    'base': ?base_,
+    'tipo_iva': ?tipoIva,
+    'cuota': ?cuota,
+    'aprobado': ?aprobado,
+  };
+  FiscalPropuestaApunte copyWith({int? facturaId, String? libro, String? tipoFactura, String? numero, double? base_, double? tipoIva, double? cuota, bool? aprobado, }) => FiscalPropuestaApunte(facturaId: facturaId ?? this.facturaId, libro: libro ?? this.libro, tipoFactura: tipoFactura ?? this.tipoFactura, numero: numero ?? this.numero, base_: base_ ?? this.base_, tipoIva: tipoIva ?? this.tipoIva, cuota: cuota ?? this.cuota, aprobado: aprobado ?? this.aprobado, );
+  @override bool operator ==(Object other) => other is FiscalPropuestaApunte && other.facturaId == facturaId && other.libro == libro && other.tipoFactura == tipoFactura && other.numero == numero && other.base_ == base_ && other.tipoIva == tipoIva && other.cuota == cuota && other.aprobado == aprobado;
+  @override int get hashCode => Object.hashAll([facturaId, libro, tipoFactura, numero, base_, tipoIva, cuota, aprobado]);
+}
+
+class FiscalSimulacion {
+  final bool? simulacion;
+  final int? ejercicio;
+  final String? periodo;
+  final List<String>? bloqueos;
+  final String? tipoDeclaracion;
+  final double? resultado;
+  final Map<String, dynamic>? casillas;
+  final String? aviso;
+  const FiscalSimulacion({this.simulacion, this.ejercicio, this.periodo, this.bloqueos, this.tipoDeclaracion, this.resultado, this.casillas, this.aviso, });
+  factory FiscalSimulacion.fromJson(Map<String, dynamic> j) => FiscalSimulacion(
+    simulacion: j['simulacion'] == null ? null : _aBool(j['simulacion']),
+    ejercicio: j['ejercicio'] == null ? null : (j['ejercicio'] as num).toInt(),
+    periodo: j['periodo'] == null ? null : j['periodo'] as String,
+    bloqueos: j['bloqueos'] == null ? null : (j['bloqueos'] as List).map((e) => e as String).toList(),
+    tipoDeclaracion: j['tipo_declaracion'] == null ? null : j['tipo_declaracion'] as String,
+    resultado: j['resultado'] == null ? null : (j['resultado'] as num).toDouble(),
+    casillas: j['casillas'] == null ? null : Map<String, dynamic>.from(j['casillas'] as Map),
+    aviso: j['aviso'] == null ? null : j['aviso'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'simulacion': ?simulacion,
+    'ejercicio': ?ejercicio,
+    'periodo': ?periodo,
+    if (bloqueos != null) 'bloqueos': bloqueos!.map((e) => e).toList(),
+    'tipo_declaracion': ?tipoDeclaracion,
+    'resultado': ?resultado,
+    'casillas': ?casillas,
+    'aviso': ?aviso,
+  };
+  FiscalSimulacion copyWith({bool? simulacion, int? ejercicio, String? periodo, List<String>? bloqueos, String? tipoDeclaracion, double? resultado, Map<String, dynamic>? casillas, String? aviso, }) => FiscalSimulacion(simulacion: simulacion ?? this.simulacion, ejercicio: ejercicio ?? this.ejercicio, periodo: periodo ?? this.periodo, bloqueos: bloqueos ?? this.bloqueos, tipoDeclaracion: tipoDeclaracion ?? this.tipoDeclaracion, resultado: resultado ?? this.resultado, casillas: casillas ?? this.casillas, aviso: aviso ?? this.aviso, );
+  @override bool operator ==(Object other) => other is FiscalSimulacion && other.simulacion == simulacion && other.ejercicio == ejercicio && other.periodo == periodo && other.bloqueos == bloqueos && other.tipoDeclaracion == tipoDeclaracion && other.resultado == resultado && other.casillas == casillas && other.aviso == aviso;
+  @override int get hashCode => Object.hashAll([simulacion, ejercicio, periodo, bloqueos, tipoDeclaracion, resultado, casillas, aviso]);
+}
+
+class FiscalTitular {
+  final int? clienteFiscalId;
+  final String? nombre;
+  final String? nif;
+  final Map<String, dynamic>? perfil;
+  final int? apuntesDelAnio;
+  final Map<String, dynamic>? ultimaDeclaracion;
+  const FiscalTitular({this.clienteFiscalId, this.nombre, this.nif, this.perfil, this.apuntesDelAnio, this.ultimaDeclaracion, });
+  factory FiscalTitular.fromJson(Map<String, dynamic> j) => FiscalTitular(
+    clienteFiscalId: j['cliente_fiscal_id'] == null ? null : (j['cliente_fiscal_id'] as num).toInt(),
+    nombre: j['nombre'] == null ? null : j['nombre'] as String,
+    nif: j['nif'] == null ? null : j['nif'] as String,
+    perfil: j['perfil'] == null ? null : Map<String, dynamic>.from(j['perfil'] as Map),
+    apuntesDelAnio: j['apuntes_del_anio'] == null ? null : (j['apuntes_del_anio'] as num).toInt(),
+    ultimaDeclaracion: j['ultima_declaracion'] == null ? null : Map<String, dynamic>.from(j['ultima_declaracion'] as Map),
+  );
+  Map<String, dynamic> toJson() => {
+    'cliente_fiscal_id': ?clienteFiscalId,
+    'nombre': ?nombre,
+    'nif': ?nif,
+    'perfil': ?perfil,
+    'apuntes_del_anio': ?apuntesDelAnio,
+    'ultima_declaracion': ?ultimaDeclaracion,
+  };
+  FiscalTitular copyWith({int? clienteFiscalId, String? nombre, String? nif, Map<String, dynamic>? perfil, int? apuntesDelAnio, Map<String, dynamic>? ultimaDeclaracion, }) => FiscalTitular(clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, perfil: perfil ?? this.perfil, apuntesDelAnio: apuntesDelAnio ?? this.apuntesDelAnio, ultimaDeclaracion: ultimaDeclaracion ?? this.ultimaDeclaracion, );
+  @override bool operator ==(Object other) => other is FiscalTitular && other.clienteFiscalId == clienteFiscalId && other.nombre == nombre && other.nif == nif && other.perfil == perfil && other.apuntesDelAnio == apuntesDelAnio && other.ultimaDeclaracion == ultimaDeclaracion;
+  @override int get hashCode => Object.hashAll([clienteFiscalId, nombre, nif, perfil, apuntesDelAnio, ultimaDeclaracion]);
 }
 
 class FlujoObligacion {

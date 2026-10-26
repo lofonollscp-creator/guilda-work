@@ -302,7 +302,7 @@ def test_verticales_por_defecto_extras_y_ajuste_manual(usuario_id):
     with pytest.raises(ValueError):
         verticales.fijar_activo(t, "astrologia", True)
     estado = {e["id"]: e for e in verticales.estado_para_backoffice(t)}
-    assert list(estado) == ["gestoria", "abogados", "inmobiliaria", "contabilizacion", "comercial", "juridico"] and estado["gestoria"]["motivo"] == "defecto" and estado["abogados"]["motivo"] is None and not estado["abogados"]["activo"], \
+    assert list(estado) == ["gestoria", "abogados", "inmobiliaria", "contabilizacion", "comercial", "juridico", "fiscal"] and estado["gestoria"]["motivo"] == "defecto" and estado["abogados"]["motivo"] is None and not estado["abogados"]["activo"], \
         "se ofrecen todos los módulos y solo el de serie está activo"
 
 
