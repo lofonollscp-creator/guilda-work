@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/generado/modelos.g.dart';
 import '../../datos/cola.dart';
+import '../../diseno/adaptable.dart';
 import '../../diseno/componentes.dart';
 import '../../diseno/formatos.dart';
 import '../../diseno/estados.dart';
@@ -68,7 +69,29 @@ class TableroScreen extends ConsumerWidget {
           child: tablero.when(
             loading: () => const EsqueletoLista(),
             error: (e, _) => EstadoError(error: e, alReintentar: c.refrescar),
-            data: (columnas) => DefaultTabController(
+            // Tableta: todas las columnas a la vista, una al lado de otra (como en la web), con desplazamiento lateral si no caben.
+            data: (columnas) => esAncha(context)
+                ? ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                    children: [
+                      for (final e in columnasTablero)
+                        SizedBox(
+                          width: 300,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+                                child: Text('${etiquetaEstado(t, e)} (${(columnas[e.valor] ?? const []).length})', style: Theme.of(context).textTheme.titleSmall),
+                              ),
+                              Expanded(child: _Columna(estado: e, tareas: columnas[e.valor] ?? const [])),
+                            ]),
+                          ),
+                        ),
+                    ],
+                  )
+                : DefaultTabController(
               length: columnasTablero.length,
               child: Column(children: [
                 TabBar(

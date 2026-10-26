@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../diseno/adaptable.dart';
 import '../nucleo/pantalla_bloqueo.dart';
 
 import '../diseno/componentes.dart';
@@ -87,7 +88,7 @@ class AjustesScreen extends StatelessWidget {
     final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(t.dashboardAjustesTooltip)),
-      body: ListView(
+      body: AnchoMaximo(child: ListView(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
         children: [
           GrupoAjustes(children: [
@@ -178,7 +179,7 @@ class AjustesScreen extends StatelessWidget {
             FilaAjuste(icono: Icons.logout, titulo: t.dashboardCerrarSesionTooltip, peligro: true, alPulsar: () => _cerrarSesion(context)),
           ]),
         ],
-      ),
+      )),
     );
   }
 }

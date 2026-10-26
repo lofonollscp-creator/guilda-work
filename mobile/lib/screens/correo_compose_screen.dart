@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../diseno/adaptable.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -227,7 +228,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<CuentaCorreo>>(
+      body: AnchoMaximo(child: FutureBuilder<List<CuentaCorreo>>(
         future: _cuentas,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -329,7 +330,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
             ],
           );
         },
-      ),
+      )),
     );
   }
 }

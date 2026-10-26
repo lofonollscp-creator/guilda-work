@@ -460,6 +460,7 @@
   "prioridadAlta": "Alta",
   "tareasNueva": "Nueva tarea",
   "tareasNuevaHint": "Nueva tarea… (mañana 10h · @persona · !alta · #proyecto)",
+  "tareasElegirUna": "Elige una tarea para ver su ficha.",
   "tareasVacio": "No hay tareas aquí.",
   "tareasSinResultados": "Ninguna tarea coincide.",
   "tareasBuscar": "Buscar tareas",

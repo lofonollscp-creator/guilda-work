@@ -325,6 +325,7 @@
   "prioridadAlta": "Haute",
   "tareasNueva": "Nouvelle tâche",
   "tareasNuevaHint": "Nouvelle tâche… (demain 10h · @personne · !haute · #projet)",
+  "tareasElegirUna": "Choisissez une tâche pour voir sa fiche.",
   "tareasVacio": "Aucune tâche ici.",
   "tareasSinResultados": "Aucune tâche ne correspond.",
   "tareasBuscar": "Rechercher des tâches",

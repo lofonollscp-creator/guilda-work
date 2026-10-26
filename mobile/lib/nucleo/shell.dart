@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 import '../l10n/app_localizations.dart';
 import 'paginas.dart';
@@ -18,22 +19,42 @@ class ShellApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final tema = Theme.of(context);
+    final destinos = [
+      (const Icon(Icons.home_outlined), const Icon(Icons.home), t.navInicio),
+      (const Icon(Icons.checklist), null, t.navTareas),
+      (const Icon(Icons.mail_outline), const Icon(Icons.mail), t.navCorreo),
+      (const Icon(Icons.punch_clock_outlined), const Icon(Icons.punch_clock), t.navFichaje),
+      (const Icon(Icons.menu), null, t.navMas),
+    ];
+    // Pulsar la pestaña activa vuelve a su raíz.
+    void elegir(int i) => shell.goBranch(i, initialLocation: i == shell.currentIndex);
+    final filo = BorderSide(color: tema.colorScheme.outlineVariant);
+    if (esAncha(context)) {
+      // Tableta: barra lateral con las etiquetas siempre visibles.
+      return Scaffold(
+        body: Row(children: [
+          DecoratedBox(
+            decoration: BoxDecoration(border: Border(right: filo)),
+            child: NavigationRail(
+              selectedIndex: shell.currentIndex,
+              onDestinationSelected: elegir,
+              labelType: NavigationRailLabelType.all,
+              destinations: [for (final d in destinos) NavigationRailDestination(icon: d.$1, selectedIcon: d.$2, label: Text(d.$3))],
+            ),
+          ),
+          Expanded(child: shell),
+        ]),
+      );
+    }
     return Scaffold(
       body: shell,
       // Un filo arriba separa la barra del contenido (sin sombra: en oscuro no se veía y en claro pesaba).
       bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(border: Border(top: BorderSide(color: tema.colorScheme.outlineVariant))),
+        decoration: BoxDecoration(border: Border(top: filo)),
         child: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        // Pulsar la pestaña activa vuelve a su raíz.
-        onDestinationSelected: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: t.navInicio),
-          NavigationDestination(icon: const Icon(Icons.checklist), label: t.navTareas),
-          NavigationDestination(icon: const Icon(Icons.mail_outline), selectedIcon: const Icon(Icons.mail), label: t.navCorreo),
-          NavigationDestination(icon: const Icon(Icons.punch_clock_outlined), selectedIcon: const Icon(Icons.punch_clock), label: t.navFichaje),
-          NavigationDestination(icon: const Icon(Icons.menu), label: t.navMas),
-        ],
+          selectedIndex: shell.currentIndex,
+          onDestinationSelected: elegir,
+          destinations: [for (final d in destinos) NavigationDestination(icon: d.$1, selectedIcon: d.$2, label: d.$3)],
         ),
       ),
     );

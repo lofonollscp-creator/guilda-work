@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 
 import '../diseno/formatos.dart';
@@ -111,7 +112,7 @@ class _AusenciasScreenState extends State<AusenciasScreen> {
         icon: const Icon(Icons.add),
         label: Text(t.ausenciasPedir),
       ),
-      body: RefreshIndicator(
+      body: AnchoMaximo(child: RefreshIndicator(
         onRefresh: _recargar,
         child: FutureBuilder<_Datos>(
           future: _datos,
@@ -162,7 +163,7 @@ class _AusenciasScreenState extends State<AusenciasScreen> {
             );
           },
         ),
-      ),
+      )),
     );
   }
 }

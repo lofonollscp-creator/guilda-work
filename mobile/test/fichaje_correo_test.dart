@@ -161,6 +161,31 @@ void main() {
           ),
         ]);
 
+    testWidgets('en una tableta la barra pasa a un lateral con las mismas cinco etiquetas', (t) async {
+      t.view.physicalSize = const Size(1000, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(ProviderScope(
+        overrides: [estadoSesionProvider.overrideWith(SesionFija.new)],
+        child: MaterialApp.router(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          theme: AppTheme.light,
+          routerConfig: enrutador(),
+        ),
+      ));
+      await t.pumpAndSettle();
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+      for (final etiqueta in ['Hoy', 'Tareas', 'Correo', 'Fichaje', 'Más']) {
+        expect(find.text(etiqueta), findsOneWidget, reason: etiqueta);
+      }
+      await t.tap(find.text('Correo'));
+      await t.pumpAndSettle();
+      expect(find.text('Pantalla c'), findsOneWidget);
+    });
+
     testWidgets('cinco destinos con su etiqueta siempre visible; tocar uno cambia de pestaña', (t) async {
       final r = enrutador();
       await t.pumpWidget(ProviderScope(

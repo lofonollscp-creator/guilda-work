@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../diseno/adaptable.dart';
 import 'package:intl/intl.dart';
 
 import '../diseno/componentes.dart';
@@ -77,7 +78,7 @@ class _FichajeHistorialScreenState extends State<FichajeHistorialScreen> {
         };
     return Scaffold(
       appBar: AppBar(title: Text(t.fichajeHistorialTitulo)),
-      body: Column(
+      body: AnchoMaximo(child: Column(
         children: [
           // El rango, como dos píldoras (con la fecha escrita como en el resto de la app).
           Padding(
@@ -146,7 +147,7 @@ class _FichajeHistorialScreenState extends State<FichajeHistorialScreen> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

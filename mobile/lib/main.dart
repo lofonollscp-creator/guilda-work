@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'l10n/app_localizations.dart';
 import 'datos/cola.dart';
+import 'diseno/adaptable.dart';
 import 'nucleo/abrir_destino.dart';
 import 'nucleo/bloqueo.dart';
 import 'nucleo/pantalla_bloqueo.dart';
@@ -131,7 +132,11 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
       builder: (context, _) {
         return MaterialApp.router(
           routerConfig: router,
-          builder: (context, hijo) => _ConBloqueo(hijo: hijo ?? const SizedBox()),
+          builder: (context, hijo) => ColoredBox(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            // En una pantalla muy ancha el contenido no se estira (el fondo sí llena).
+            child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: anchoMaximoApp), child: _ConBloqueo(hijo: hijo ?? const SizedBox()))),
+          ),
           title: 'Guilda Work',
           theme: AppTheme.claro(_s.tema.acento),
           darkTheme: AppTheme.oscuro(_s.tema.acento),

@@ -325,6 +325,7 @@
   "prioridadAlta": "High",
   "tareasNueva": "New task",
   "tareasNuevaHint": "New task… (tomorrow 10am · @person · !high · #project)",
+  "tareasElegirUna": "Pick a task to see its details.",
   "tareasVacio": "No tasks here.",
   "tareasSinResultados": "No task matches.",
   "tareasBuscar": "Search tasks",

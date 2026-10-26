@@ -1000,6 +1000,26 @@ void main() {
         ..coments = [ComentarioTarea.fromJson({'id': 1, 'texto': 'Ya tengo los datos del banco', 'creado_en': '2026-10-24T09:30'})];
     }
 
+    for (final (nombre, vista, abrir) in [('tableta_lista', VistaTareas.lista, true), ('tableta_tablero', VistaTareas.tablero, false)]) {
+      testWidgets('captura $nombre', (t) async {
+        if (carpeta == null) return;
+        final clave = GlobalKey();
+        t.view.physicalSize = const Size(1640, 1180);
+        t.view.devicePixelRatio = 1;
+        addTearDown(t.view.reset);
+        await t.pumpWidget(conTema(const TareasInicio(), _over(repoDeEjemplo()), oscuro: false, clave: clave));
+        await t.pumpAndSettle();
+        final ref = ProviderScope.containerOf(t.element(find.byType(TareasInicio)));
+        ref.read(vistaTareasProvider.notifier).elegir(vista);
+        await t.pumpAndSettle();
+        if (abrir) {
+          ref.read(tareaAbiertaProvider.notifier).abrir(1);
+          await t.pumpAndSettle();
+        }
+        await capturar(t, clave, nombre);
+      });
+    }
+
     for (final oscuro in [false, true]) {
       final sufijo = oscuro ? 'oscuro' : 'claro';
       for (final (nombre, vista) in [('lista', VistaTareas.lista), ('mi_dia', VistaTareas.miDia), ('tablero', VistaTareas.tablero)]) {
@@ -1102,6 +1122,38 @@ void main() {
         });
       }
     }
+
+    testWidgets('en una tableta la Lista abre la ficha al lado, sin empujar otra pantalla', (t) async {
+      final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(7), _tarea(8)]);
+      t.view.physicalSize = const Size(1100, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('Elige una tarea para ver su ficha.'), findsOneWidget);
+      await t.tap(find.text('Tarea 7'));
+      await t.pumpAndSettle();
+      expect(find.text('Elige una tarea para ver su ficha.'), findsNothing);
+      expect(find.byType(TareaDetalleScreen), findsOneWidget);
+      // La lista sigue a la vista junto a la ficha.
+      expect(find.text('Tarea 8'), findsOneWidget);
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('en una tableta el Tablero muestra todas las columnas a la vez', (t) async {
+      final repo = _RepoFalso()..tableroFalso = {'no_iniciada': [_tarea(1)], 'en_progreso': [_tarea(2)]};
+      t.view.physicalSize = const Size(1100, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Tablero'));
+      await t.pumpAndSettle();
+      expect(find.byType(TabBar), findsNothing);
+      expect(find.text('Tarea 1'), findsOneWidget);
+      expect(find.text('Tarea 2'), findsOneWidget);
+      expect(t.takeException(), isNull);
+    });
 
     testWidgets('en una tableta (820 × 1180) ninguna vista de tareas se desborda', (t) async {
       final repo = _RepoFalso()

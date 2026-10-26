@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -159,7 +160,7 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<(String, bool)>(
+      body: AnchoMaximo(child: FutureBuilder<(String, bool)>(
         future: _estado,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -219,7 +220,7 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
             ),
           );
         },
-      ),
+      )),
     );
   }
 

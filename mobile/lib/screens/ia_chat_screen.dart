@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../diseno/adaptable.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -447,7 +448,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
           ),
         ],
       ),
-      body: SafeArea(
+      body: AnchoMaximo(child: SafeArea(
         child: Column(
           children: [
             Expanded(child: _cuerpo(context)),
@@ -460,7 +461,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
             _cajaEntrada(context),
           ],
         ),
-      ),
+      )),
     );
   }
 

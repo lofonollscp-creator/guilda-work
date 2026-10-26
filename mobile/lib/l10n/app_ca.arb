@@ -325,6 +325,7 @@
   "prioridadAlta": "Alta",
   "tareasNueva": "Nova tasca",
   "tareasNuevaHint": "Nova tasca… (demà 10h · @persona · !alta · #projecte)",
+  "tareasElegirUna": "Tria una tasca per veure’n la fitxa.",
   "tareasVacio": "No hi ha tasques aquí.",
   "tareasSinResultados": "Cap tasca coincideix.",
   "tareasBuscar": "Cercar tasques",
