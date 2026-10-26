@@ -715,5 +715,9 @@
   "acentoRosa": "Rose",
   "acentoRojo": "Rouge",
   "acentoNaranja": "Orange",
-  "acentoAmbar": "Ambre"
+  "acentoAmbar": "Ambre",
+  "fichajeDesdeLas": "Depuis {hora}",
+  "fichajePausaDesdeLas": "En pause depuis {hora}",
+  "fichajeSalisteALas": "Dernière sortie à {hora}",
+  "fichajeAunNoHoy": "Vous n'avez pas encore pointé aujourd'hui"
 }

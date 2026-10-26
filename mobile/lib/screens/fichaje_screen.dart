@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../diseno/componentes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
@@ -13,7 +14,6 @@ import '../funciones/fichaje/fichaje_acciones.dart';
 import '../funciones/pendientes/pendientes_sheet.dart';
 import '../theme/app_theme.dart';
 import '../theme/brand_colors.dart';
-import '../widgets/status_badge.dart';
 import 'fichaje_datos_screen.dart';
 import 'ausencias_screen.dart';
 import 'fichaje_historial_screen.dart';
@@ -201,71 +201,143 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 const AvisoPendientes(),
-                Center(child: _pillEstado(estado, t)),
-                if (ref.watch(numFichajesPendientesProvider) > 0) ...[
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      t.fichajePendientesSinc(ref.watch(numFichajesPendientesProvider)),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 20),
-                if (_error != null) ...[
-                  Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                  const SizedBox(height: 12),
-                ],
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    _botonFichar(t.fichajeEntradaBoton, BrandColors.success, estado == 'fuera', () => _marcar('entrada')),
-                    _botonFichar(t.fichajeIniciarPausaBoton, _colorAviso(context), estado == 'dentro', () => _marcar('pausa_inicio')),
-                    _botonFichar(t.fichajeFinPausaBoton, _colorAviso(context), estado == 'en_pausa', () => _marcar('pausa_fin')),
-                    _botonFichar(t.fichajeSalidaBoton, _colorPeligro(context), estado != 'fuera', () => _marcar('salida')),
-                  ],
+                FutureBuilder<List<FichajeEvento>>(
+                  future: _hoy,
+                  builder: (context, snap) => _tarjetaEstado(estado, snap.data ?? const [], t),
                 ),
-                const SizedBox(height: 24),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  BannerEstado(tipo: TipoBanner.error, texto: _error!),
+                ],
+                const SizedBox(height: 16),
+                _acciones(estado, t),
+                const SizedBox(height: 16),
                 if (_semana != null) _tarjetaSemana(t),
-                const SizedBox(height: 24),
-                Text(t.fichajeHoyTitulo, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                if (_hoy != null)
-                  FutureBuilder<List<FichajeEvento>>(
-                    future: _hoy,
-                    builder: (context, snap) {
-                      if (snap.connectionState != ConnectionState.done) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
-                      }
-                      final eventos = snap.data ?? [];
-                      if (eventos.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Text(t.fichajeSinFichajesHoy),
-                        );
-                      }
-                      final etiquetas = etiquetasFichaje(t);
-                      return Column(
-                        children: eventos
-                            .map((f) => ListTile(
-                                  dense: true,
-                                  leading: const Icon(Icons.access_time),
-                                  title: Text(etiquetas[f.tipo] ?? f.tipo),
-                                  trailing: Text(f.marcaTiempo.substring(11, 16), style: AppTheme.cifra(fontSize: 15)),
-                                ))
-                            .toList(),
-                      );
-                    },
-                  ),
+                const SizedBox(height: 16),
+                _tarjetaHoy(t),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// El estado de ahora, grande, y desde cuándo (de la última marca de hoy).
+  Widget _tarjetaEstado(String estado, List<FichajeEvento> eventos, AppLocalizations t) {
+    final tema = Theme.of(context);
+    final oscuro = tema.brightness == Brightness.dark;
+    final (titulo, icono, color) = switch (estado) {
+      'dentro' => (t.fichajeEstadoDentro, Icons.work_outline, BrandColors.success),
+      'en_pausa' => (t.fichajeEstadoPausa, Icons.free_breakfast_outlined, oscuro ? BrandColors.warningDark : BrandColors.warningLight),
+      _ => (t.fichajeEstadoFuera, Icons.logout, tema.colorScheme.onSurfaceVariant),
+    };
+    final ultima = eventos.isEmpty ? null : eventos.last;
+    final hora = ultima == null || ultima.marcaTiempo.length < 16 ? '' : ultima.marcaTiempo.substring(11, 16);
+    final detalle = switch (estado) {
+      'dentro' => hora.isEmpty ? '' : t.fichajeDesdeLas(hora),
+      'en_pausa' => hora.isEmpty ? '' : t.fichajePausaDesdeLas(hora),
+      _ => ultima == null ? t.fichajeAunNoHoy : t.fichajeSalisteALas(hora),
+    };
+    final pendientes = ref.watch(numFichajesPendientesProvider);
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.16), shape: BoxShape.circle),
+            child: ExcludeSemantics(child: Icon(icono, size: 32, color: color)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(titulo, style: tema.textTheme.headlineSmall),
+              if (detalle.isNotEmpty) Text(detalle, style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
+              if (pendientes > 0) Padding(padding: const EdgeInsets.only(top: 6), child: Pildora(icono: Icons.cloud_upload_outlined, texto: t.fichajePendientesSinc(pendientes))),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  /// Solo las acciones que valen ahora (antes eran cuatro botones, dos de ellos apagados): entrada si estás fuera; pausa y salida si estás dentro;
+  /// fin de pausa y salida si estás en pausa.
+  Widget _acciones(String estado, AppLocalizations t) {
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    final aviso = oscuro ? BrandColors.warningDark : BrandColors.warningLight;
+    final peligro = oscuro ? BrandColors.dangerDark : BrandColors.dangerLight;
+    Widget boton(String texto, IconData icono, Color color, String tipo) => Expanded(
+          child: SizedBox(
+            height: 64,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: color, foregroundColor: BrandColors.onAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+              onPressed: _marcando ? null : () => _marcar(tipo),
+              icon: Icon(icono),
+              label: Text(texto, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: BrandColors.onAccent)),
+            ),
+          ),
+        );
+    final botones = switch (estado) {
+      'dentro' => [boton(t.fichajeIniciarPausaBoton, Icons.pause_circle_outline, aviso, 'pausa_inicio'), boton(t.fichajeSalidaBoton, Icons.logout, peligro, 'salida')],
+      'en_pausa' => [boton(t.fichajeFinPausaBoton, Icons.play_circle_outline, BrandColors.success, 'pausa_fin'), boton(t.fichajeSalidaBoton, Icons.logout, peligro, 'salida')],
+      _ => [boton(t.fichajeEntradaBoton, Icons.login, BrandColors.success, 'entrada')],
+    };
+    return Row(children: [for (var i = 0; i < botones.length; i++) ...[if (i > 0) const SizedBox(width: 12), botones[i]]]);
+  }
+
+  /// Las marcas de hoy como una línea de tiempo.
+  Widget _tarjetaHoy(AppLocalizations t) {
+    final tema = Theme.of(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(t.fichajeHoyTitulo, style: tema.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          if (_hoy == null)
+            Text(t.fichajeSinFichajesHoy, style: tema.textTheme.bodySmall)
+          else
+            FutureBuilder<List<FichajeEvento>>(
+              future: _hoy,
+              builder: (context, snap) {
+                if (snap.connectionState != ConnectionState.done) {
+                  return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
+                }
+                final eventos = snap.data ?? [];
+                if (eventos.isEmpty) return Text(t.fichajeSinFichajesHoy, style: tema.textTheme.bodySmall);
+                final etiquetas = etiquetasFichaje(t);
+                final oscuro = tema.brightness == Brightness.dark;
+                Color colorDe(String tipo) => switch (tipo) {
+                      'entrada' => BrandColors.success,
+                      'salida' => oscuro ? BrandColors.dangerDark : BrandColors.dangerLight,
+                      _ => oscuro ? BrandColors.warningDark : BrandColors.warningLight,
+                    };
+                return Column(children: [
+                  for (var i = 0; i < eventos.length; i++)
+                    IntrinsicHeight(
+                      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        SizedBox(
+                          width: 24,
+                          child: Column(children: [
+                            Container(width: 2, height: 6, color: i == 0 ? Colors.transparent : tema.colorScheme.outlineVariant),
+                            Container(width: 12, height: 12, decoration: BoxDecoration(color: colorDe(eventos[i].tipo), shape: BoxShape.circle)),
+                            Expanded(child: Container(width: 2, color: i == eventos.length - 1 ? Colors.transparent : tema.colorScheme.outlineVariant)),
+                          ]),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Text(etiquetas[eventos[i].tipo] ?? eventos[i].tipo, style: tema.textTheme.bodyLarge))),
+                        Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Text(eventos[i].marcaTiempo.substring(11, 16), style: AppTheme.cifra(fontSize: 16))),
+                      ]),
+                    ),
+                ]);
+              },
+            ),
+        ]),
       ),
     );
   }
@@ -306,21 +378,29 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
                 ],
                 const SizedBox(height: 12),
                 SizedBox(
-                  height: 56,
+                  height: 84,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       for (final d in r.dias)
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 3),
-                            child: Container(
-                              height: 4 + 52 * (d.segundos / mayor).clamp(0.0, 1.0),
-                              decoration: BoxDecoration(
-                                color: d.hoy ? tema.colorScheme.primary : tema.colorScheme.primary.withValues(alpha: 0.35),
-                                borderRadius: BorderRadius.circular(3),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                              Container(
+                                height: 4 + 52 * (d.segundos / mayor).clamp(0.0, 1.0),
+                                decoration: BoxDecoration(
+                                  color: d.hoy ? tema.colorScheme.primary : tema.colorScheme.primary.withValues(alpha: 0.35),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 6),
+                              // La inicial del día debajo de cada barra; hoy, en negrita.
+                              Text(
+                                DateFormat.EEEEE(Localizations.localeOf(context).languageCode).format(DateTime.parse(d.fecha)).toUpperCase(),
+                                style: tema.textTheme.labelSmall?.copyWith(fontWeight: d.hoy ? FontWeight.w800 : null, color: d.hoy ? tema.colorScheme.onSurface : null),
+                              ),
+                            ]),
                           ),
                         ),
                     ],
@@ -331,33 +411,6 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
           ),
         );
       },
-    );
-  }
-
-  Color _colorAviso(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? BrandColors.warningDark : BrandColors.warningLight;
-
-  Color _colorPeligro(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? BrandColors.dangerDark : BrandColors.dangerLight;
-
-  Widget _pillEstado(String estado, AppLocalizations t) {
-    final (texto, tono) = switch (estado) {
-      'dentro' => (t.fichajeEstadoDentro, BadgeTono.exito),
-      'en_pausa' => (t.fichajeEstadoPausa, BadgeTono.aviso),
-      _ => (t.fichajeEstadoFuera, BadgeTono.neutro),
-    };
-    return StatusBadge(texto: texto, tono: tono);
-  }
-
-  Widget _botonFichar(String texto, Color color, bool habilitado, VoidCallback onPressed) {
-    return SizedBox(
-      width: 150,
-      height: 56,
-      child: FilledButton(
-        style: FilledButton.styleFrom(backgroundColor: habilitado ? color : null),
-        onPressed: (habilitado && !_marcando) ? onPressed : null,
-        child: Text(texto),
-      ),
     );
   }
 }

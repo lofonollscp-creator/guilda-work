@@ -242,7 +242,8 @@ class AppTheme {
         backgroundColor: surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusLarge)),
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
+      // La pista de las barras de progreso es un gris suave: con la de Material (el contenedor del acento) una barra al 54 % parecía llena.
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: primary, linearTrackColor: Color.alphaBlend(border.withValues(alpha: 0.6), surface), linearMinHeight: 6),
     );
   }
 }

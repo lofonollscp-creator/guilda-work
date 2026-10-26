@@ -129,72 +129,69 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
               ),
             );
           }
+          final t = AppLocalizations.of(context);
+          final cuentaActual = cuentas.where((c) => c.id == _cuentaId).firstOrNull;
+          final carpetaActual = _carpetas.where((f) => f.nombre == _carpeta).firstOrNull;
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButton<int>(
-                            isExpanded: true,
-                            value: _cuentaId,
-                            items: cuentas
-                                .map((c) => DropdownMenuItem(value: c.id, child: Text(c.nombre)))
-                                .toList(),
-                            onChanged: (v) {
-                              if (v != null) _seleccionarCuenta(v);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        if (_carpetas.isNotEmpty)
-                          DropdownButton<String>(
-                            value: _carpeta,
-                            items: _carpetas
-                                .map((f) => DropdownMenuItem(
-                                      value: f.nombre,
-                                      child: Text(f.nombreVisible),
-                                    ))
-                                .toList(),
-                            onChanged: (v) {
-                              if (v != null) {
-                                setState(() => _carpeta = v);
-                                _recargarMensajes();
-                              }
-                            },
-                          ),
-                      ],
+              // Una sola fila de píldoras (cuenta, carpeta, no leídos) y el buscador redondeado, en vez de dos desplegables y una casilla.
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+                child: Row(children: [
+                  if (cuentas.length > 1) ...[
+                    PildoraMenu<int>(
+                      icono: Icons.alternate_email,
+                      texto: cuentaActual?.nombre ?? '',
+                      activo: false,
+                      opciones: [for (final c in cuentas) (c.id, c.nombre)],
+                      seleccionado: _cuentaId ?? cuentas.first.id,
+                      alElegir: _seleccionarCuenta,
                     ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _buscarController,
-                      decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context).comunBuscarHint,
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onSubmitted: (_) => _recargarMensajes(),
-                    ),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _soloNoLeidos,
-                          onChanged: (v) {
-                            setState(() => _soloNoLeidos = v ?? false);
-                            _recargarMensajes();
-                          },
-                        ),
-                        Text(AppLocalizations.of(context).correoSoloNoLeidos),
-                      ],
-                    ),
-                    if (_error != null)
-                      Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    const SizedBox(width: 8),
                   ],
+                  if (_carpetas.isNotEmpty) ...[
+                    PildoraMenu<String>(
+                      icono: Icons.folder_outlined,
+                      texto: carpetaActual?.nombreVisible ?? _carpeta,
+                      activo: false,
+                      opciones: [for (final f in _carpetas) (f.nombre, f.nombreVisible)],
+                      seleccionado: _carpeta,
+                      alElegir: (v) {
+                        setState(() => _carpeta = v);
+                        _recargarMensajes();
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  PildoraBoton(
+                    icono: _soloNoLeidos ? Icons.mark_email_unread : Icons.mark_email_unread_outlined,
+                    texto: t.correoSoloNoLeidos,
+                    activo: _soloNoLeidos,
+                    alPulsar: () {
+                      setState(() => _soloNoLeidos = !_soloNoLeidos);
+                      _recargarMensajes();
+                    },
+                  ),
+                ]),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: TextField(
+                  controller: _buscarController,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: t.comunBuscarHint,
+                    prefixIcon: const Icon(Icons.search),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+                  ),
+                  onSubmitted: (_) => _recargarMensajes(),
                 ),
               ),
+              if (_error != null) BannerEstado(tipo: TipoBanner.error, texto: _error!),
               Expanded(
                 child: _mensajes == null
                     ? const SizedBox()
@@ -227,41 +224,69 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
   }
 
   Widget _tarjetaMensaje(Mensaje m) {
-    final vistaPrevia = (m.cuerpoTexto ?? '').trim();
-    return ListTile(
-      // Punto de «no leído» (no solo la negrita) y estrella si es destacado.
-      leading: SizedBox(
-        width: 28,
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Semantics(label: m.leido ? null : AppLocalizations.of(context).correoNoLeido, child: Icon(Icons.circle, size: 10, color: m.leido ? Colors.transparent : Theme.of(context).colorScheme.primary)),
-          const SizedBox(width: 6),
-          Icon(m.destacado ? Icons.star : Icons.mail_outline, size: 18, color: m.destacado ? BrandColors.warningLight : null),
-        ]),
-      ),
-      title: Text(
-        nombreDeRemitente(m.remitente),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontWeight: m.leido ? FontWeight.w400 : FontWeight.w700),
-      ),
-      subtitle: Text(
-        '${m.asunto}${vistaPrevia.isNotEmpty ? ' · $vistaPrevia' : ''}',
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: m.fecha == null ? null : Text(context.formatos.deServidor(m.fecha) ?? '', style: Theme.of(context).textTheme.labelMedium),
+    final tema = Theme.of(context);
+    final t = AppLocalizations.of(context);
+    final vistaPrevia = (m.cuerpoTexto ?? '').trim().replaceAll(RegExp(r'\s+'), ' ');
+    final remitente = nombreDeRemitente(m.remitente);
+    final fecha = m.fecha == null ? null : context.formatos.deServidor(m.fecha);
+    return InkWell(
       onTap: () async {
         await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => CorreoMensajeScreen(
-              api: widget.api,
-              mensajeId: m.id,
-              carpetas: _carpetas,
-            ),
-          ),
+          MaterialPageRoute(builder: (_) => CorreoMensajeScreen(api: widget.api, mensajeId: m.id, carpetas: _carpetas)),
         );
         _recargarMensajes();
       },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 16, 10),
+        decoration: BoxDecoration(
+          color: m.leido ? null : tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.06 : 0.09),
+          border: Border(bottom: BorderSide(color: tema.colorScheme.outlineVariant.withValues(alpha: 0.6))),
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // El avatar con la inicial; el punto de «no leído» va en una esquina (y se dice en voz alta: no solo es color ni negrita).
+          Semantics(
+            label: m.leido ? null : t.correoNoLeido,
+            child: Stack(clipBehavior: Clip.none, children: [
+              _AvatarRemitente(nombre: remitente),
+              if (!m.leido) Positioned(right: -2, top: -2, child: Container(width: 12, height: 12, decoration: BoxDecoration(color: tema.colorScheme.primary, shape: BoxShape.circle, border: Border.all(color: tema.colorScheme.surface, width: 2)))),
+            ]),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(child: Text(remitente, maxLines: 1, overflow: TextOverflow.ellipsis, style: tema.textTheme.titleSmall?.copyWith(fontWeight: m.leido ? FontWeight.w500 : FontWeight.w800))),
+                if (fecha != null) Text(fecha, style: tema.textTheme.labelMedium),
+              ]),
+              const SizedBox(height: 2),
+              Row(children: [
+                Expanded(child: Text(m.asunto, maxLines: 1, overflow: TextOverflow.ellipsis, style: tema.textTheme.bodyMedium?.copyWith(fontWeight: m.leido ? FontWeight.w400 : FontWeight.w700))),
+                if (m.destacado) Padding(padding: const EdgeInsets.only(left: 6), child: Icon(Icons.star, size: 18, color: tema.brightness == Brightness.dark ? BrandColors.warningDark : BrandColors.warningLight)),
+              ]),
+              if (vistaPrevia.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 2), child: Text(vistaPrevia, maxLines: 1, overflow: TextOverflow.ellipsis, style: tema.textTheme.bodySmall)),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Círculo con la inicial del remitente; el color sale de su nombre (siempre el mismo para la misma persona) y el texto se lee sobre él.
+class _AvatarRemitente extends StatelessWidget {
+  final String nombre;
+  const _AvatarRemitente({required this.nombre});
+
+  @override
+  Widget build(BuildContext context) {
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    final limpio = nombre.trim();
+    final inicial = limpio.isEmpty ? '?' : String.fromCharCode(limpio.runes.first).toUpperCase();
+    final tono = limpio.codeUnits.fold<int>(0, (a, c) => (a * 31 + c) % 360).toDouble();
+    final fondo = HSLColor.fromAHSL(1, tono, 0.45, oscuro ? 0.30 : 0.86).toColor();
+    final texto = HSLColor.fromAHSL(1, tono, 0.55, oscuro ? 0.88 : 0.22).toColor();
+    return ExcludeSemantics(
+      child: CircleAvatar(radius: 22, backgroundColor: fondo, child: Text(inicial, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: texto))),
     );
   }
 }
