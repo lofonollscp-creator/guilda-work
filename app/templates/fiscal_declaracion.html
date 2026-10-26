@@ -20,10 +20,10 @@
 <section class="dash-panel">
   <p class="muted">{{ _('Calculado sobre la instantánea %(i)s del %(f)s (%(n)s apuntes). Motor %(m)s, diseño %(d)s.', i=inst.id, f=inst.aprobada_en[:10], n=inst.datos.apuntes|length, m=d.version_motor, d=d.version_diseno) }}</p>
   {% if puede_aprobar %}
-  <div class="ds-fila">
+  <div class="ds-fila ds-envolver">
     {% if d.estado == 'borrador' and not d.bloqueos %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='revisar') }}"><button class="btn btn-primary" type="submit">{{ _('Marcar como revisada') }}</button></form>{% endif %}
     {% if d.estado == 'revisada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='exportar') }}"><button class="btn btn-primary" type="submit">{{ _('Generar el fichero para la AEAT') }}</button></form>{% endif %}
-    {% if d.estado == 'exportada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='presentada') }}" class="ds-fila"><input type="text" name="referencia" placeholder="{{ _('CSV o justificante (opcional)') }}" maxlength="200"><button class="btn btn-primary" type="submit">{{ _('Anotar que se ha presentado') }}</button></form>{% endif %}
+    {% if d.estado == 'exportada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='presentada') }}" class="ds-fila ds-envolver"><input type="text" name="referencia" placeholder="{{ _('CSV o justificante (opcional)') }}" maxlength="200"><button class="btn btn-primary" type="submit">{{ _('Anotar que se ha presentado') }}</button></form>{% endif %}
     {% if d.estado in ('borrador', 'revisada', 'exportada') %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='anular') }}"><button class="btn btn-ghost" type="submit">{{ _('Anular') }}</button></form>{% endif %}
   </div>
   {% endif %}
@@ -35,7 +35,7 @@
 </section>
 
 <h2 class="ds-mt-16">{{ _('Casillas') }}</h2>
-<div class="table-wrap"><table class="historial-table">
+<div class="table-wrap ds-mb-16"><table class="historial-table">
   <thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Valor') }}</th><th>{{ _('De qué apuntes sale') }}</th></tr></thead>
   <tbody>
   {% for k, v in d.casillas.items() | sort(attribute='0') if k not in ('02', '05', '08') %}

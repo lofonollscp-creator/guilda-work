@@ -7,7 +7,7 @@
     <h1>{{ c.nombre }}</h1>
     <p class="subtitle">{{ c.nif or '' }} · {% if perfil %}{{ _('Perfil vigente desde %(d)s', d=perfil.vigente_desde) }} · {{ perfil.regimen_iva }} · {{ perfil.periodicidad }}{% else %}{{ _('Sin perfil fiscal vigente') }}{% endif %}</p>
   </div>
-  <div class="ds-fila">
+  <div class="ds-fila ds-envolver">
     <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cartera') }}">‹ {{ _('Cartera') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.perfil', cliente_id=c.id) }}">{{ _('Perfil fiscal') }}</a>
     {% if puede_aprobar %}<a class="btn btn-primary" href="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id, libro='E') }}">+ {{ _('Factura emitida') }}</a>
@@ -20,7 +20,7 @@
 <section class="dash-panel">
   <h2>{{ _('Calcular un periodo') }}</h2>
   <p class="muted">{{ _('Congela los apuntes aprobados del periodo (la foto no se puede cambiar) y calcula el borrador del modelo 303 sobre ella.') }}</p>
-  <form method="post" action="{{ url_for('guilda_fiscal.periodo', cliente_id=c.id) }}" class="ds-fila">
+  <form method="post" action="{{ url_for('guilda_fiscal.periodo', cliente_id=c.id) }}" class="ds-fila ds-envolver">
     <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100" required></label>
     <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option>{{ p }}</option>{% endfor %}</select></label>
     <label>{{ _('Si sale a favor') }} <select name="destino_negativo"><option value="C">{{ _('Compensar en periodos siguientes') }}</option><option value="D">{{ _('Solicitar la devolución') }}</option></select></label>
@@ -34,7 +34,7 @@
   <h2>{{ _('Facturas revisadas por registrar') }}</h2>
   <p class="muted">{{ _('Facturas que ya revisaste en Facturas para contabilizar y aún no son apuntes fiscales. Las automáticas (IVA del 4, 10 o 21 por ciento) se pueden aprobar de golpe; las demás, una a una.') }}</p>
   <form method="post" action="{{ url_for('guilda_fiscal.registrar_facturas', cliente_id=c.id) }}">
-    <div class="table-wrap"><table class="historial-table">
+    <div class="table-wrap ds-mb-16"><table class="historial-table">
       <thead><tr>{% if puede_aprobar %}<th></th>{% endif %}<th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Contraparte') }}</th><th>{{ _('Total') }}</th><th></th></tr></thead>
       <tbody>{% for f in por_registrar %}<tr>
         {% if puede_aprobar %}<td>{% if f.automatica %}<input type="checkbox" name="factura_id" value="{{ f.id }}" checked aria-label="{{ f.numero }}">{% endif %}</td>{% endif %}
@@ -48,7 +48,7 @@
 
 <h2 class="ds-mt-16">{{ _('Declaraciones') }}</h2>
 {% if declaraciones %}
-<div class="table-wrap"><table class="historial-table">
+<div class="table-wrap ds-mb-16"><table class="historial-table">
   <thead><tr><th>{{ _('Periodo') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Resultado') }}</th><th></th></tr></thead>
   <tbody>{% for d in declaraciones %}<tr><td>{{ d.ejercicio }} {{ d.periodo }}</td>
     <td>{{ {'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada'), 'anulada': _('Anulada')}[d.estado] }}</td>
@@ -60,7 +60,7 @@
 <section class="dash-panel">
   <h2>{{ _('Importar un libro registro') }}</h2>
   <p class="muted">{{ _('Sube el libro de facturas emitidas y recibidas en el formato oficial de la Agencia Tributaria (.xlsx). Las filas válidas se aprueban como apuntes; las que tengan errores no entran y se te dice por qué.') }}</p>
-  <form method="post" action="{{ url_for('guilda_fiscal.importar_libro', cliente_id=c.id) }}" enctype="multipart/form-data" class="ds-fila">
+  <form method="post" action="{{ url_for('guilda_fiscal.importar_libro', cliente_id=c.id) }}" enctype="multipart/form-data" class="ds-fila ds-envolver">
     <input type="file" name="libro" accept=".xlsx" required aria-label="{{ _('Libro registro (.xlsx)') }}"><button type="submit" class="btn btn-ghost">{{ _('Importar') }}</button>
   </form>
 </section>
@@ -69,7 +69,7 @@
 <h2 class="ds-mt-16">{{ _('Apuntes aprobados') }} · {{ ejercicio }}</h2>
 <form method="get" class="filters"><label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100"></label><button class="btn btn-ghost" type="submit">{{ _('Ver') }}</button></form>
 {% if apuntes %}
-<div class="table-wrap"><table class="historial-table">
+<div class="table-wrap ds-mb-16"><table class="historial-table">
   <thead><tr><th>{{ _('Libro') }}</th><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Contraparte') }}</th><th>{{ _('Base') }}</th><th>{{ _('IVA') }}</th><th>{{ _('Cuota') }}</th><th></th></tr></thead>
   <tbody>{% for a in apuntes %}<tr><td>{{ _('Emitida') if a.libro == 'E' else _('Recibida') }} {{ a.tipo_factura }}</td><td>{{ a.fecha_expedicion }}</td><td>{{ a.serie }}{{ a.numero }}</td><td>{{ a.contraparte_nombre }}</td>
     <td>{{ '%.2f'|format(a.base_centimos / 100) }}</td><td>{{ '%g'|format(a.tipo_iva_centesimas / 100) }} %</td><td>{{ '%.2f'|format(a.cuota_centimos / 100) }}</td>

@@ -59,7 +59,7 @@
   {% elif not puede_aprobar %}<p class="muted">{{ _('Solo la dirección o el revisor fiscal pueden aprobar o corregir apuntes.') }}</p>{% endif %}
 </form>
 {% if apunte_id and puede_aprobar and not datos.get('anulado_en') %}
-<form method="post" action="{{ url_for('guilda_fiscal.apunte_anular', cliente_id=c.id, apunte_id=apunte_id) }}" class="ds-fila ds-mt-16">
+<form method="post" action="{{ url_for('guilda_fiscal.apunte_anular', cliente_id=c.id, apunte_id=apunte_id) }}" class="ds-fila ds-envolver ds-mt-16">
   <label>{{ _('Motivo para anular') }}<input type="text" name="motivo" maxlength="300" required></label><button type="submit" class="btn btn-ghost">{{ _('Anular apunte') }}</button>
 </form>
 {% endif %}

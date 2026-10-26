@@ -104,6 +104,7 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
 .formulario { display: grid; gap: 4px; max-width: 520px; } .fila-form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; max-width: 560px; } .fila-form label { margin: 0; }
 .fila-interruptor { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px; margin-bottom: 10px; background: var(--superficie-2); border: 1px solid var(--borde); border-radius: 12px; } .fila-interruptor p { margin: 2px 0 0; }
 .modulo { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px; } .modulo p { margin: 2px 0 0; font-size: .82rem; }
+.modulo > div:first-child { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; } .modulo .acciones { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; white-space: normal; flex: 0 0 auto; }
 .permisos { max-width: 640px; }
 
 /* ---- Avisos, diálogo, login ---- */
