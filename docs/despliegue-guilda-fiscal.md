@@ -12,11 +12,11 @@ no se toca ninguna tabla ni dato existente. El código nuevo no se usa hasta que
    ```
 3. **Estado de las migraciones** (no cambia nada: debe decir «el código espera: 3 · pendientes: 2, 3»):
    ```bash
-   guilda_py scripts/migrar_esquema_pg.py --estado
+   sudo bash -c 'set -a; source /etc/guilda-pg-admin.env; set +a; cd /home/guilda/guilda-work && runuser -u guilda --preserve-environment -- .venv/bin/python scripts/migrar_esquema_pg.py --estado'
    ```
 4. **Aplicar** (superusuario; es idempotente: se puede repetir):
    ```bash
-   guilda_py scripts/migrar_esquema_pg.py
+   sudo bash -c 'set -a; source /etc/guilda-pg-admin.env; set +a; cd /home/guilda/guilda-work && runuser -u guilda --preserve-environment -- .venv/bin/python scripts/migrar_esquema_pg.py'
    ```
 5. **Reiniciar** y comprobar:
    ```bash
