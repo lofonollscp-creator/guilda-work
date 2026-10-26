@@ -87,6 +87,26 @@ def lista():
                            por_leer=lectura_facturas.pendientes_de_leer(g.tenant_id, g.usuario_id, cliente_id), ia_lista=lectura_facturas.configurada(g.usuario_id), max_archivos=fc.MAX_ARCHIVOS_POR_SUBIDA)
 
 
+@contabilidad_bp.context_processor
+def _fiscal_en_el_formulario():
+    """Para la casilla «Incluir en Guilda Fiscal» del formulario de factura (funciones: solo cuestan algo si la plantilla las llama)."""
+    def activo() -> bool:
+        return bool(g.get("tenant_id") and verticales.esta_activo(g.tenant_id, "fiscal"))
+
+    def marcada(f) -> bool:
+        if request.method == "POST" and request.form.get("incluir_en_fiscal_presente"):
+            return bool(request.form.get("incluir_en_fiscal"))
+        return bool(int(f.get("incluir_en_fiscal", 1))) if f else True
+
+    return {"fiscal_activo": activo, "fiscal_marcada": marcada}
+
+
+def _elegir_fiscal(factura_id: int) -> None:
+    """Si el formulario trae la casilla «Incluir en Guilda Fiscal» (solo con el módulo activo), guarda la elección de la persona."""
+    if request.form.get("incluir_en_fiscal_presente"):
+        fc.fijar_incluir_en_fiscal(g.tenant_id, g.usuario_id, factura_id, bool(request.form.get("incluir_en_fiscal")))
+
+
 @contabilidad_bp.route("/nueva", methods=["GET", "POST"])
 @login_required
 def nueva():
@@ -94,6 +114,7 @@ def nueva():
     if request.method == "POST":
         try:
             fid = fc.crear(g.tenant_id, g.usuario_id, cliente_id, _datos_del_formulario(), _lineas_del_formulario(), documento_id=_adjunto_del_formulario(cliente_id))
+            _elegir_fiscal(fid)
         except ValueError as e:
             return render_template("contabilidad_factura.html", f=None, datos=_datos_del_formulario(), lineas=_lineas_del_formulario(), cliente_id=cliente_id, clientes=_clientes(), error=str(e), cfg=None), 400
         return redirect(url_for("contabilidad.ver", factura_id=fid))
@@ -111,6 +132,7 @@ def ver(factura_id: int):
     if request.method == "POST":
         try:
             fc.actualizar(g.tenant_id, g.usuario_id, factura_id, _datos_del_formulario(), _lineas_del_formulario(), documento_id=_adjunto_del_formulario(f["cliente_fiscal_id"]))
+            _elegir_fiscal(factura_id)
         except ValueError as e:
             return render_template("contabilidad_factura.html", f=f, datos=_datos_del_formulario(), lineas=_lineas_del_formulario(), cliente_id=f["cliente_fiscal_id"], clientes=_clientes(),
                                    error=str(e), cfg=cfg), 400

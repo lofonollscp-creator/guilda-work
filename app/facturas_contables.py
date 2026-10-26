@@ -228,6 +228,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "criterio_caja", "INTEGER NOT NULL DEFAULT 0")          # recibida de un proveedor en criterio de caja (posición 177 del enlace)
     db._asegurar_columna(conn, "facturas_contables", "lectura", "TEXT")           # NULL = escrita a mano · pendiente = solo el archivo, por leer · ia = leída por la IA · fallida
     db._asegurar_columna(conn, "facturas_contables", "lectura_error", "TEXT")
+    db._asegurar_columna(conn, "facturas_contables", "incluir_en_fiscal", "INTEGER NOT NULL DEFAULT 1")      # 1 = cuenta para Guilda Fiscal (modelos de impuestos); 0 = solo contabilidad
 
 
 # --- Lectura de lo que se escribe -----------------------------------------------------------------------------------------------------------------------
@@ -923,6 +924,31 @@ def obtener(tenant_id: int, usuario_id: int, factura_id: int) -> dict | None:
     d["trimestre"] = trimestre_de(d["fecha"])
     d["problemas"] = problemas(tenant_id, d)
     return d
+
+
+def fijar_incluir_en_fiscal(tenant_id: int, usuario_id: int, factura_id: int, incluir: bool) -> None:
+    """Elige si la factura cuenta para Guilda Fiscal (los modelos de impuestos). Una factura que ya tiene un apunte fiscal vivo no se puede sacar: primero hay que anular el apunte."""
+    f = obtener(tenant_id, usuario_id, factura_id)
+    if f is None:
+        raise ValueError("Factura no encontrada.")
+    valor = 1 if incluir else 0
+    if int(f.get("incluir_en_fiscal", 1)) == valor:
+        return
+    conn = db.get_connection()
+    try:
+        if not incluir:
+            try:
+                hay = conn.execute("SELECT 1 FROM fiscal_apuntes WHERE tenant_id = ? AND factura_id = ? AND anulado_en IS NULL LIMIT 1", (tenant_id, factura_id)).fetchone()
+            except Exception:                                                     # noqa: BLE001 — el despacho no tiene Guilda Fiscal: no hay apuntes
+                conn.rollback()
+                hay = None
+            if hay:
+                raise ValueError("Esta factura ya tiene un apunte en Guilda Fiscal: anúlalo antes de sacarla.")
+        conn.execute("UPDATE facturas_contables SET incluir_en_fiscal = ? WHERE id = ? AND tenant_id = ?", (valor, factura_id, tenant_id))
+        auditoria.registrar(tenant_id, usuario_id, "factura_contable.incluir_en_fiscal", "factura_contable", factura_id, {"incluir": bool(valor)}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, lineas: list[dict], documento_id: int | None = None) -> None:

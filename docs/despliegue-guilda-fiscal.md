@@ -37,3 +37,7 @@ DROP TABLE fiscal_artefactos, fiscal_casillas, fiscal_declaraciones, fiscal_apun
 DELETE FROM bd_esquema_version WHERE version IN (2, 3);
 ```
 y volver al commit anterior de `main` antes de reiniciar. Si ya hay datos fiscales reales, NO se borra: se restaura desde la copia (`docs/runbooks-postgresql.md`).
+
+
+## Actualización: migración 004 (factura → «Incluir en Guilda Fiscal»)
+Añade la columna `facturas_contables.incluir_en_fiscal` (por defecto 1: todo lo existente sigue contando). Es una sola sentencia, idempotente y rápida. **Orden: primero la migración, luego el reinicio** (con el código nuevo y la base en la versión 3 los servicios no arrancan, por diseño). Revertir: `ALTER TABLE facturas_contables DROP COLUMN incluir_en_fiscal` (y volver al código anterior).

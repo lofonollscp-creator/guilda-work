@@ -423,7 +423,7 @@ def facturas_por_registrar(tenant_id: int, usuario_id: int, cliente_fiscal_id: i
     conn = db.get_connection()
     try:
         facturas = [dict(f) for f in conn.execute(
-            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, abono FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND estado IN ('revisada', 'exportada') "
+            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, abono FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND estado IN ('revisada', 'exportada') AND incluir_en_fiscal = 1 "
             "AND substr(fecha, 1, 4) = ? AND id NOT IN (SELECT factura_id FROM fiscal_apuntes WHERE tenant_id = ? AND factura_id IS NOT NULL AND anulado_en IS NULL) ORDER BY fecha, id",
             (tenant_id, cliente_fiscal_id, str(ejercicio), tenant_id)).fetchall()]
         for f in facturas:
@@ -854,6 +854,35 @@ def _semaforo(c: dict, periodo: tuple[int, str]) -> dict:
             "clave": {"borrador": "borrador", "revisada": "revisada", "exportada": "pendiente_presentar", "presentada": "presentada"}[d["estado"]]}
 
 
+def contadores_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None) -> dict[int, dict]:
+    """Por titular: facturas que cuentan para Guilda Fiscal y aún no tienen apunte, separadas en «sin_revisar» (pendientes en Facturas para contabilizar) y «por_registrar» (ya revisadas).
+    Solo las del ejercicio que se declara y posteriores; las marcadas como «solo contabilidad» no cuentan."""
+    visibles = acceso.clientes_visibles(tenant_id, usuario_id)
+    desde = f"{periodo_por_defecto(date.today())[0]}-01-01"
+    sql = ("SELECT f.cliente_fiscal_id, f.estado, count(*) AS n FROM facturas_contables f LEFT JOIN fiscal_apuntes a ON a.tenant_id = f.tenant_id AND a.factura_id = f.id AND a.anulado_en IS NULL "
+           "WHERE f.tenant_id = ? AND f.incluir_en_fiscal = 1 AND f.estado IN ('pendiente', 'revisada', 'exportada') AND f.fecha >= ? AND a.id IS NULL")
+    args: list = [tenant_id, desde]
+    if cliente_fiscal_id is not None:
+        sql += " AND f.cliente_fiscal_id = ?"
+        args.append(cliente_fiscal_id)
+    sql += " GROUP BY f.cliente_fiscal_id, f.estado"
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(sql, tuple(args)).fetchall()
+    except Exception:                                                              # noqa: BLE001 — sin la columna o sin la tabla de apuntes (despacho sin los dos módulos): no hay nada que contar
+        conn.rollback()
+        return {}
+    finally:
+        conn.close()
+    salida: dict[int, dict] = {}
+    for fila in filas:
+        if visibles is not None and fila["cliente_fiscal_id"] not in visibles:
+            continue
+        c = salida.setdefault(fila["cliente_fiscal_id"], {"sin_revisar": 0, "por_registrar": 0})
+        c["sin_revisar" if fila["estado"] == "pendiente" else "por_registrar"] += fila["n"]
+    return salida
+
+
 def resumen_cartera(tenant_id: int, usuario_id: int) -> list[dict]:
     """Una fila por titular que la persona ve: si tiene perfil fiscal, cuántos apuntes del ejercicio y su última declaración."""
     visibles = acceso.clientes_visibles(tenant_id, usuario_id)
@@ -881,12 +910,13 @@ def resumen_cartera(tenant_id: int, usuario_id: int) -> list[dict]:
     finally:
         conn.close()
     salida = []
+    facturas = contadores_facturas(tenant_id, usuario_id)
     for c in clientes:
         if visibles is not None and c["id"] not in visibles:
             continue
         p = perfiles.get(c["id"])
         fila = {**c, "perfil": dict(p) if p else None, "apuntes": apuntes.get(c["id"], 0), "ultima": ultimas.get(c["id"]), "proximo_303": proximos.get(c["id"]),
-                "declaraciones_periodo": por_periodo.get(c["id"], [])}
+                "declaraciones_periodo": por_periodo.get(c["id"], []), "facturas": facturas.get(c["id"], {"sin_revisar": 0, "por_registrar": 0})}
         fila["semaforo"] = _semaforo(fila, periodo)
         salida.append(fila)
     return salida

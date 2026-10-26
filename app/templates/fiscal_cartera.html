@@ -31,7 +31,7 @@
 {{ estado_vacio(_('Todavía no hay titulares'), _('Da de alta a tus clientes en el calendario fiscal y vuelve aquí.')) }}
 {% else %}
 <div class="table-wrap ds-mb-16"><table class="historial-table">
-  <thead><tr><th>{{ _('Titular') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Estado del periodo') }}</th><th>{{ _('Perfil fiscal') }}</th><th>{{ _('Apuntes del año') }}</th><th>{{ _('Última declaración') }}</th><th>{{ _('Próximo 303') }}</th></tr></thead>
+  <thead><tr><th>{{ _('Titular') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Estado del periodo') }}</th><th>{{ _('Perfil fiscal') }}</th><th>{{ _('Apuntes del año') }}</th><th>{{ _('Facturas pendientes') }}</th><th>{{ _('Última declaración') }}</th><th>{{ _('Próximo 303') }}</th></tr></thead>
   <tbody>
   {% for f in filas %}
     <tr data-buscar="{{ f.nombre }} {{ f.nif or '' }}">
@@ -40,6 +40,7 @@
       <td><span class="pill semaforo semaforo-{{ f.semaforo.nivel }}">{{ estados[f.semaforo.clave] }}</span></td>
       <td>{% if f.perfil %}{{ chip(f.perfil.regimen_iva ~ ' · ' ~ f.perfil.periodicidad) }}{% else %}<span class="pill prioridad-alta">{{ _('Sin perfil') }}</span>{% endif %}</td>
       <td>{{ f.apuntes }}</td>
+      <td>{% if f.facturas.sin_revisar %}<a class="chip" href="{{ url_for('contabilidad.lista', cliente_id=f.id, estado='pendiente') }}">{{ _('%(n)s por revisar', n=f.facturas.sin_revisar) }}</a> {% endif %}{% if f.facturas.por_registrar %}<a class="chip" href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.id) }}">{{ _('%(n)s por registrar', n=f.facturas.por_registrar) }}</a>{% endif %}{% if not f.facturas.sin_revisar and not f.facturas.por_registrar %}—{% endif %}</td>
       <td>{% if f.ultima %}<a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=f.ultima.id) }}">{{ f.ultima.ejercicio }} {{ f.ultima.periodo }}</a> · {{ {'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada')}[f.ultima.estado] }} · {{ '%.2f'|format(f.ultima.resultado_centimos / 100) }} €{% else %}—{% endif %}</td>
       <td>{% if f.proximo_303 %}{{ f.proximo_303.periodo }} · {{ f.proximo_303.fecha_limite[:10] }}{% else %}—{% endif %}</td>
     </tr>

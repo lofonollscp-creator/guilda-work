@@ -64,6 +64,8 @@
   </table></div>
   <datalist id="tipos-iva"><option value="21"><option value="10"><option value="4"><option value="0"></datalist>
   <label>{{ _('Suplidos (importe sin IVA que no forma parte de la base)') }}<input type="text" name="suplidos" value="{{ datos.suplidos }}" inputmode="decimal"></label>
+  {% if fiscal_activo() %}<label class="checkbox-label"><input type="hidden" name="incluir_en_fiscal_presente" value="1"><input type="checkbox" name="incluir_en_fiscal" value="1" {{ 'checked' if fiscal_marcada(f) }}> {{ _('Incluir en Guilda Fiscal (para presentar los modelos de impuestos)') }}</label>
+  <p class="muted">{{ _('Si la dejas marcada, al revisar esta factura aparecerá en la ficha del titular en Guilda Fiscal, lista para registrarla como apunte. Si la desmarcas, queda solo en la contabilidad.') }}</p>{% endif %}
   <label>{{ _('Referencia interna') }}<input type="text" name="referencia" value="{{ datos.referencia }}" maxlength="60"></label>
   <label>{{ _('Notas internas') }}<textarea name="notas" rows="3">{{ datos.notas }}</textarea></label>
   <label>{{ _('Factura escaneada o fotografiada (PDF o imagen)') }}<input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"></label>

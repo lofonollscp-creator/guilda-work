@@ -254,3 +254,46 @@ def test_buscador_de_la_cartera(cliente):
     assert "Empresa Web SL" in cliente.get("/guilda-fiscal/?q=web empresa").get_data(as_text=True)      # palabras en cualquier orden
     vacio = cliente.get("/guilda-fiscal/?q=zzzz").get_data(as_text=True)
     assert "Empresa Web SL" not in vacio and "Ningún titular coincide" in vacio
+
+
+def _factura(t, uid, c, numero="F-1", fecha="2026-05-10"):
+    fc.guardar_configuracion(t, uid, c, {"a3_empresa": "7", "digitos": "8"})
+    return fc.crear(t, uid, c, {"tipo": "recibida", "fecha": fecha, "numero": numero, "tercero_nombre": "Proveedor SL", "tercero_nif": "B87654321"}, [{"base": "100,00", "pct_iva": "21"}])
+
+
+def test_facturas_pendientes_en_ficha_y_cartera_y_eleccion_de_incluir(cliente):
+    uid, t, c = _web(cliente, email="facturas@ejemplo.com")
+    f1, f2 = _factura(t, uid, c, "F-1"), _factura(t, uid, c, "F-2")
+    pagina = cliente.get(f"/guilda-fiscal/{c}").get_data(as_text=True)
+    assert "2 facturas esperan revisión" in pagina and "Ir a revisarlas" in pagina                  # sin revisar: se ven pero aún no se pueden registrar
+    assert "2 por revisar" in cliente.get("/guilda-fiscal/").get_data(as_text=True)
+    fc.cambiar_estado(t, uid, f1, "revisada")
+    pagina = cliente.get(f"/guilda-fiscal/{c}").get_data(as_text=True)
+    assert "1 factura espera revisión" in pagina and "Facturas revisadas por registrar" in pagina
+    assert "1 por registrar" in cliente.get("/guilda-fiscal/").get_data(as_text=True)
+    # elegir que NO cuente para Guilda Fiscal: desaparece de la ficha y de la cartera
+    fc.fijar_incluir_en_fiscal(t, uid, f1, False)
+    assert "Facturas revisadas por registrar" not in cliente.get(f"/guilda-fiscal/{c}").get_data(as_text=True)
+    assert "por registrar" not in cliente.get("/guilda-fiscal/").get_data(as_text=True)
+    fc.fijar_incluir_en_fiscal(t, uid, f1, True)
+    assert "Facturas revisadas por registrar" in cliente.get(f"/guilda-fiscal/{c}").get_data(as_text=True)
+    # ya registrada como apunte: no se puede sacar
+    fn.aprobar_facturas(t, uid, c, [f1])
+    with pytest.raises(ValueError, match="apunte"):
+        fc.fijar_incluir_en_fiscal(t, uid, f1, False)
+
+
+def test_el_formulario_de_factura_ofrece_incluir_en_guilda_fiscal(cliente):
+    uid, t, c = _web(cliente, email="formulario@ejemplo.com")
+    verticales.fijar_activo(t, "contabilizacion", True)
+    f = _factura(t, uid, c)
+    pagina = cliente.get(f"/contabilidad/{f}").get_data(as_text=True)
+    assert 'name="incluir_en_fiscal"' in pagina and "checked" in pagina.split('name="incluir_en_fiscal"')[1][:60]
+    datos = {"tipo": "recibida", "fecha": "2026-05-10", "numero": "F-1", "tercero_nombre": "Proveedor SL", "tercero_nif": "B87654321", "base_0": "100,00", "pct_iva_0": "21", "incluir_en_fiscal_presente": "1"}
+    assert cliente.post(f"/contabilidad/{f}", data=datos).status_code == 302                       # casilla desmarcada: no manda «incluir_en_fiscal»
+    assert fc.obtener(t, uid, f)["incluir_en_fiscal"] == 0
+    assert 'name="incluir_en_fiscal"' in cliente.get(f"/contabilidad/{f}").get_data(as_text=True)
+    assert cliente.post(f"/contabilidad/{f}", data={**datos, "incluir_en_fiscal": "1"}).status_code == 302
+    assert fc.obtener(t, uid, f)["incluir_en_fiscal"] == 1
+    verticales.fijar_activo(t, "fiscal", False)
+    assert 'name="incluir_en_fiscal"' not in cliente.get(f"/contabilidad/{f}").get_data(as_text=True)     # sin el módulo no se ofrece

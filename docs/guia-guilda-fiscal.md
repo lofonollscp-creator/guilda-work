@@ -23,6 +23,7 @@ Lo que **no** soporta se **bloquea** (la declaración no se puede revisar y dice
 - **Calcular un periodo** propone el último trimestre ya terminado y avisa si hay facturas revisadas sin registrar.
 - **Cartera:** semáforo por titular (sin perfil, por calcular, borrador, pendiente de presentar, presentada), filtros «Pendientes» y «Presentados», lo urgente arriba. Importación de varios `.xlsx` a la vez: el NIF del titular va en el nombre del fichero (`A12345674-2T.xlsx`).
 - **Ficha del titular:** mensaje al cliente con lo que falta para cerrar el trimestre (se copia o se abre en el correo; no se envía solo).
+- **Facturas:** en «Facturas para contabilizar», cada factura tiene la casilla «Incluir en Guilda Fiscal» (marcada por defecto): si se desmarca, queda solo en la contabilidad y no sale como pendiente. La ficha del titular avisa de las facturas que esperan revisión (con enlace) y lista las revisadas por registrar; la cartera lo resume por titular.
 - **Declaración:** al recalcular un periodo se ve qué casillas han cambiado respecto al cálculo anterior, y hay un resumen en PDF para el cliente.
 
 ## 3. API, MCP y asistente de IA (solo consulta y simulación)

@@ -16089,3 +16089,29 @@ msgstr "Search"
 
 msgid "Ningún titular coincide con la búsqueda."
 msgstr "No holder matches the search."
+
+msgid "%(n)s factura espera revisión"
+msgid_plural "%(n)s facturas esperan revisión"
+msgstr[0] "%(n)s invoice awaits review"
+msgstr[1] "%(n)s invoices await review"
+
+msgid "Están en «Facturas para contabilizar»: cuando las revises aparecerán aquí para registrarlas como apuntes."
+msgstr "They are in “Invoices to post”: once you review them they will appear here so you can register them as entries."
+
+msgid "Ir a revisarlas"
+msgstr "Go and review them"
+
+msgid "Facturas pendientes"
+msgstr "Pending invoices"
+
+msgid "%(n)s por revisar"
+msgstr "%(n)s to review"
+
+msgid "%(n)s por registrar"
+msgstr "%(n)s to register"
+
+msgid "Incluir en Guilda Fiscal (para presentar los modelos de impuestos)"
+msgstr "Include in Guilda Fiscal (to file the tax returns)"
+
+msgid "Si la dejas marcada, al revisar esta factura aparecerá en la ficha del titular en Guilda Fiscal, lista para registrarla como apunte. Si la desmarcas, queda solo en la contabilidad."
+msgstr "If you leave it ticked, once this invoice is reviewed it will appear on the holder's page in Guilda Fiscal, ready to be registered as an entry. If you untick it, it stays in the accounting only."

@@ -32,6 +32,11 @@
 </section>
 {% elif puede_aprobar %}<p class="muted">{{ _('Para calcular un periodo, define antes el perfil fiscal del titular.') }}</p>{% endif %}
 
+{% if sin_revisar %}
+<p class="aviso-bloque" role="status"><strong>{{ ngettext('%(n)s factura espera revisión', '%(n)s facturas esperan revisión', sin_revisar, n=sin_revisar) }}</strong>
+  {{ _('Están en «Facturas para contabilizar»: cuando las revises aparecerán aquí para registrarlas como apuntes.') }}
+  <a href="{{ url_for('contabilidad.lista', cliente_id=c.id, estado='pendiente') }}">{{ _('Ir a revisarlas') }}</a></p>
+{% endif %}
 {% if por_registrar %}
 <section class="dash-panel">
   <h2>{{ _('Facturas revisadas por registrar') }}</h2>

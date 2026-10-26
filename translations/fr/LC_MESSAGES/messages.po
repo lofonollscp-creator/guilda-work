@@ -16174,3 +16174,29 @@ msgstr "Rechercher"
 
 msgid "Ningún titular coincide con la búsqueda."
 msgstr "Aucun titulaire ne correspond à la recherche."
+
+msgid "%(n)s factura espera revisión"
+msgid_plural "%(n)s facturas esperan revisión"
+msgstr[0] "%(n)s facture attend une vérification"
+msgstr[1] "%(n)s factures attendent une vérification"
+
+msgid "Están en «Facturas para contabilizar»: cuando las revises aparecerán aquí para registrarlas como apuntes."
+msgstr "Elles sont dans « Factures à comptabiliser » : une fois vérifiées, elles apparaîtront ici pour être enregistrées comme écritures."
+
+msgid "Ir a revisarlas"
+msgstr "Aller les vérifier"
+
+msgid "Facturas pendientes"
+msgstr "Factures en attente"
+
+msgid "%(n)s por revisar"
+msgstr "%(n)s à vérifier"
+
+msgid "%(n)s por registrar"
+msgstr "%(n)s à enregistrer"
+
+msgid "Incluir en Guilda Fiscal (para presentar los modelos de impuestos)"
+msgstr "Inclure dans Guilda Fiscal (pour déposer les déclarations d'impôts)"
+
+msgid "Si la dejas marcada, al revisar esta factura aparecerá en la ficha del titular en Guilda Fiscal, lista para registrarla como apunte. Si la desmarcas, queda solo en la contabilidad."
+msgstr "Si vous la laissez cochée, une fois cette facture vérifiée elle apparaîtra sur la fiche du titulaire dans Guilda Fiscal, prête à être enregistrée comme écriture. Si vous la décochez, elle reste uniquement en comptabilité."

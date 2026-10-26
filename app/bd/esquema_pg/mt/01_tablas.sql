@@ -1466,6 +1466,7 @@ CREATE TABLE IF NOT EXISTS facturas_contables (
     criterio_caja bigint NOT NULL DEFAULT 0,
     lectura text,
     lectura_error text,
+    incluir_en_fiscal bigint NOT NULL DEFAULT 1,
     PRIMARY KEY (tenant_id, id),
     CHECK (tipo IN ('emitida', 'recibida')),
     CHECK (estado IN ('pendiente', 'revisada', 'exportada', 'descartada'))

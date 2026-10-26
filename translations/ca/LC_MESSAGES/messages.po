@@ -16098,3 +16098,29 @@ msgstr "Cerca"
 
 msgid "Ningún titular coincide con la búsqueda."
 msgstr "Cap titular coincideix amb la cerca."
+
+msgid "%(n)s factura espera revisión"
+msgid_plural "%(n)s facturas esperan revisión"
+msgstr[0] "%(n)s factura espera revisió"
+msgstr[1] "%(n)s factures esperen revisió"
+
+msgid "Están en «Facturas para contabilizar»: cuando las revises aparecerán aquí para registrarlas como apuntes."
+msgstr "Són a «Factures per comptabilitzar»: quan les revisis apareixeran aquí per registrar-les com a apunts."
+
+msgid "Ir a revisarlas"
+msgstr "Ves a revisar-les"
+
+msgid "Facturas pendientes"
+msgstr "Factures pendents"
+
+msgid "%(n)s por revisar"
+msgstr "%(n)s per revisar"
+
+msgid "%(n)s por registrar"
+msgstr "%(n)s per registrar"
+
+msgid "Incluir en Guilda Fiscal (para presentar los modelos de impuestos)"
+msgstr "Inclou a Guilda Fiscal (per presentar els models d'impostos)"
+
+msgid "Si la dejas marcada, al revisar esta factura aparecerá en la ficha del titular en Guilda Fiscal, lista para registrarla como apunte. Si la desmarcas, queda solo en la contabilidad."
+msgstr "Si la deixes marcada, en revisar aquesta factura apareixerà a la fitxa del titular a Guilda Fiscal, a punt per registrar-la com a apunt. Si la desmarques, queda només a la comptabilitat."
