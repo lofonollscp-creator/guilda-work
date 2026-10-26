@@ -14,7 +14,7 @@
 {{ estado_vacio(_('Todavía no hay titulares'), _('Da de alta a tus clientes en el calendario fiscal y vuelve aquí.')) }}
 {% else %}
 <div class="table-wrap"><table class="historial-table">
-  <thead><tr><th>{{ _('Titular') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Perfil fiscal') }}</th><th>{{ _('Apuntes del año') }}</th><th>{{ _('Última declaración') }}</th></tr></thead>
+  <thead><tr><th>{{ _('Titular') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Perfil fiscal') }}</th><th>{{ _('Apuntes del año') }}</th><th>{{ _('Última declaración') }}</th><th>{{ _('Próximo 303') }}</th></tr></thead>
   <tbody>
   {% for f in filas %}
     <tr>
@@ -23,6 +23,7 @@
       <td>{% if f.perfil %}{{ chip(f.perfil.regimen_iva ~ ' · ' ~ f.perfil.periodicidad) }}{% else %}<span class="pill prioridad-alta">{{ _('Sin perfil') }}</span>{% endif %}</td>
       <td>{{ f.apuntes }}</td>
       <td>{% if f.ultima %}<a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=f.ultima.id) }}">{{ f.ultima.ejercicio }} {{ f.ultima.periodo }}</a> · {{ {'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada')}[f.ultima.estado] }} · {{ '%.2f'|format(f.ultima.resultado_centimos / 100) }} €{% else %}—{% endif %}</td>
+      <td>{% if f.proximo_303 %}{{ f.proximo_303.periodo }} · {{ f.proximo_303.fecha_limite[:10] }}{% else %}—{% endif %}</td>
     </tr>
   {% endfor %}
   </tbody>

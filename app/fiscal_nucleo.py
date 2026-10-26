@@ -736,6 +736,10 @@ def resumen_cartera(tenant_id: int, usuario_id: int) -> list[dict]:
                                                                     "COALESCE(vigente_hasta, '9999-12-31') >= ?", (tenant_id, hoy, hoy)).fetchall()}
         apuntes = {f["cliente_fiscal_id"]: f["n"] for f in conn.execute("SELECT cliente_fiscal_id, count(*) AS n FROM fiscal_apuntes WHERE tenant_id = ? AND anulado_en IS NULL AND substr(fecha_expedicion, 1, 4) = ? "
                                                                        "GROUP BY cliente_fiscal_id", (tenant_id, hoy[:4])).fetchall()}
+        proximos: dict[int, dict] = {}
+        for f in conn.execute("SELECT cliente_fiscal_id, periodo, fecha_limite, estado FROM vencimientos_fiscales WHERE tenant_id = ? AND modelo = '303' AND estado <> 'presentado' AND papelera_en IS NULL "
+                              "ORDER BY fecha_limite", (tenant_id,)).fetchall():
+            proximos.setdefault(f["cliente_fiscal_id"], dict(f))
         ultimas: dict[int, dict] = {}
         for f in conn.execute("SELECT id, cliente_fiscal_id, ejercicio, periodo, estado, resultado_centimos FROM fiscal_declaraciones WHERE tenant_id = ? AND estado <> 'anulada' ORDER BY ejercicio, periodo, id",
                               (tenant_id,)).fetchall():
@@ -747,5 +751,5 @@ def resumen_cartera(tenant_id: int, usuario_id: int) -> list[dict]:
         if visibles is not None and c["id"] not in visibles:
             continue
         p = perfiles.get(c["id"])
-        salida.append({**c, "perfil": dict(p) if p else None, "apuntes": apuntes.get(c["id"], 0), "ultima": ultimas.get(c["id"])})
+        salida.append({**c, "perfil": dict(p) if p else None, "apuntes": apuntes.get(c["id"], 0), "ultima": ultimas.get(c["id"]), "proximo_303": proximos.get(c["id"])})
     return salida

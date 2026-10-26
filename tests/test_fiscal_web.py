@@ -30,7 +30,9 @@ def test_sin_el_modulo_no_existe(cliente):
 
 def test_flujo_completo_desde_la_web(cliente):
     uid, t, c = _web(cliente)
+    db.crear_vencimiento_fiscal(t, c, "303", "2T 2026", "2026-07-20")
     r = cliente.get("/guilda-fiscal/")
+    assert "2T 2026 · 2026-07-20" in r.get_data(as_text=True)
     assert r.status_code == 200 and "Empresa Web SL" in r.get_data(as_text=True) and "Sin perfil" in r.get_data(as_text=True)
     # sin perfil no se puede calcular; se define el perfil
     assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",

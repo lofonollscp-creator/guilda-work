@@ -15804,3 +15804,6 @@ msgstr "Aquestes files no han entrat:"
 
 msgid "fila %(f)s"
 msgstr "fila %(f)s"
+
+msgid "Próximo 303"
+msgstr "Proper 303"

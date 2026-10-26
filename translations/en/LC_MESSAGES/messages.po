@@ -15795,3 +15795,6 @@ msgstr "These rows were not imported:"
 
 msgid "fila %(f)s"
 msgstr "row %(f)s"
+
+msgid "Próximo 303"
+msgstr "Next 303"

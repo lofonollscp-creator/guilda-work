@@ -15880,3 +15880,6 @@ msgstr "Ces lignes n'ont pas été importées :"
 
 msgid "fila %(f)s"
 msgstr "ligne %(f)s"
+
+msgid "Próximo 303"
+msgstr "Prochain 303"
