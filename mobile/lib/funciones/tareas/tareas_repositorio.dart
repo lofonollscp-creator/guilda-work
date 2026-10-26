@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/cliente.dart';
 import '../../api/errores.dart';
+import '../../api/fechas.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../api/generado/operaciones.g.dart';
 import '../../dominio/tarea.dart';
@@ -182,6 +183,37 @@ class TareasRepositorio {
 
   /// `opcion`: `1h`, `manana` (9:00) o `1s` (una semana).
   Future<void> posponerRecordatorio(int recordatorioId, String opcion) => _cliente.enviar('POST', '/tareas-outlook/recordatorios/$recordatorioId/posponer', cuerpo: {'opcion': opcion});
+
+  // --- calendario y carga (Fase 4) ---
+
+  /// El calendario de la web: `vista` (`mes`, `semana`, `semana_laboral`, `dia`) alrededor de `fecha`.
+  Future<CalendarioDeTareas> calendario(String vista, Fecha fecha) async {
+    final j = await _cliente.enviar('GET', '/tareas-outlook/calendario', consulta: {'vista': vista, 'fecha': fecha.toJson()}) as Map<String, dynamic>;
+    return CalendarioDeTareas(
+      vista,
+      fecha.toJson(),
+      [
+        for (final d in (j['dias'] as List? ?? const []))
+          DiaCalendario(
+            (d['fecha'] ?? '').toString(),
+            d['es_hoy'] == true,
+            d['es_mes_actual'] != false,
+            [for (final t in (d['tareas'] as List? ?? const [])) TareaOutlook.fromJson(t as Map<String, dynamic>)],
+            [for (final v in (d['vencimientos'] as List? ?? const [])) VencimientoDelDia.desdeJson(v as Map<String, dynamic>)],
+            [for (final c in (d['citas'] as List? ?? const [])) CitaDelDia.desdeJson(c as Map<String, dynamic>)],
+            (d['fichado_segundos'] as num?)?.toInt() ?? 0,
+          ),
+      ],
+      j['aviso_citas']?.toString(),
+    );
+  }
+
+  /// El plan de carga de la semana (la que contiene `semana`) por persona del despacho.
+  Future<CargaSemanal> carga(Fecha semana) async => CargaSemanal.desdeJson(await _cliente.enviar('GET', '/tareas-outlook/carga', consulta: {'semana': semana.toJson()}) as Map<String, dynamic>);
+
+  /// Reasigna (`cambiarPersona`) y/o cambia el día (`cambiarFecha`; `fecha` null la quita) de una tarea, con los permisos de la ficha.
+  Future<void> mover(int id, {bool cambiarPersona = false, int? personaId, bool cambiarFecha = false, String? fecha}) =>
+      _cliente.enviar('POST', '/tareas-outlook/$id/mover', cuerpo: {if (cambiarPersona) 'persona_id': personaId, if (cambiarFecha) 'fecha': fecha});
 
   /// A la papelera (se recupera con [restaurar]). La respuesta del servidor no trae la tarea: no se interpreta.
   Future<void> eliminar(int id) => _cliente.enviar('DELETE', '/tareas-outlook/$id');

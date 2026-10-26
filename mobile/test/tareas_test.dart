@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guilda_work_mobile/api/cliente.dart';
 import 'package:guilda_work_mobile/api/errores.dart';
+import 'package:guilda_work_mobile/api/fechas.dart';
 import 'package:guilda_work_mobile/api/generado/modelos.g.dart';
 import 'package:guilda_work_mobile/datos/cola.dart';
 import 'package:guilda_work_mobile/datos/local/cola_escritura.dart';
 import 'package:guilda_work_mobile/dominio/tarea.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tarea_detalle_screen.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_lista_controlador.dart';
+import 'package:guilda_work_mobile/funciones/tareas/calendario_screen.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_repositorio.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_vistas.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_screen.dart';
@@ -103,6 +105,26 @@ class _RepoFalso implements TareasRepositorio {
     registro.add('ficha:$id:${[if (asunto != null) 'asunto=$asunto', if (cuerpo != null) 'cuerpo=$cuerpo', if (prioridad != null) 'prio=${prioridad.valor}', if (estimacion != null) 'est=$estimacion', if (categoriaOutlook != null) 'cat=$categoriaOutlook', if (fechaVencimiento != null) 'venc=$fechaVencimiento', if (quitarVencimiento) 'venc=-', if (fechaInicio != null) 'ini=$fechaInicio', if (quitarInicio) 'ini=-'].join(',')}');
     return tareas[id] ?? TareaOutlook.fromJson(_t(id));
   }
+
+  CalendarioDeTareas calendarioFalso = const CalendarioDeTareas('mes', '', [], null);
+  CargaSemanal cargaFalsa = const CargaSemanal('', [], []);
+  final List<String> vistasPedidas = [];
+
+  @override
+  Future<CalendarioDeTareas> calendario(String vista, Fecha fecha) async {
+    vistasPedidas.add('$vista:${fecha.toJson()}');
+    return calendarioFalso;
+  }
+
+  @override
+  Future<CargaSemanal> carga(Fecha semana) async {
+    vistasPedidas.add('carga:${semana.toJson()}');
+    return cargaFalsa;
+  }
+
+  @override
+  Future<void> mover(int id, {bool cambiarPersona = false, int? personaId, bool cambiarFecha = false, String? fecha}) async =>
+      registro.add('mover:$id:${cambiarPersona ? 'p=${personaId ?? '-'}' : ''}:${cambiarFecha ? 'f=${fecha ?? '-'}' : ''}');
 
   RevisionesDeLaTarea revisionesFalsas = const RevisionesDeLaTarea(null, []);
   List<ConversacionConCliente> conversacionesFalsas = [];
@@ -832,6 +854,163 @@ void main() {
       expect(repo.registro, contains('transicionar:1:completada:-:1'));
       expect(find.text('Sin empezar (1)'), findsOneWidget);
       expect(find.text('Completada (1)'), findsOneWidget);
+    });
+  });
+
+  group('Calendario y Carga', () {
+    String iso(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+    /// Siete días que empiezan hoy; hoy lleva una tarea, un vencimiento fiscal, una cita y horas fichadas; mañana, otra tarea.
+    CalendarioDeTareas semanaDeEjemplo(String vista) {
+      final hoy = DateTime.now();
+      return CalendarioDeTareas(vista, iso(hoy), [
+        for (var i = 0; i < 7; i++)
+          DiaCalendario(
+            iso(hoy.add(Duration(days: i))),
+            i == 0,
+            true,
+            i == 0 ? [_tarea(31, fecha: iso(hoy))] : (i == 1 ? [_tarea(32)] : []),
+            i == 0 ? const [VencimientoDelDia(9, '303', 'Acme SL', '3T 2026', false)] : const [],
+            i == 0 ? const [CitaDelDia('2026-10-26T10:30:00', 'Reunión con Acme')] : const [],
+            i == 0 ? 5400 : 0,
+          ),
+      ], null);
+    }
+
+    Future<void> abrirCalendario(WidgetTester t, _RepoFalso repo) async {
+      await t.binding.setSurfaceSize(const Size(800, 2400));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Calendario'));
+      await t.pumpAndSettle();
+    }
+
+    testWidgets('el calendario enseña lo mismo que la web del día de hoy: tarea, vencimiento fiscal, cita y horas fichadas, y las capas se apagan', (t) async {
+      final repo = _RepoFalso()..calendarioFalso = semanaDeEjemplo('mes');
+      await abrirCalendario(t, repo);
+      expect(repo.vistasPedidas.first, startsWith('mes:'));
+      expect(find.text('Tarea 31'), findsOneWidget);
+      expect(find.text('303 · Acme SL'), findsOneWidget);
+      expect(find.text('Reunión con Acme'), findsOneWidget);
+      expect(find.text('10:30'), findsOneWidget);
+      expect(find.text('1 h 30 fichadas'), findsOneWidget);
+      await t.tap(find.widgetWithText(FilterChip, 'Tareas'));
+      await t.pumpAndSettle();
+      expect(find.text('Tarea 31'), findsNothing);
+      expect(find.text('303 · Acme SL'), findsOneWidget);
+      await t.tap(find.widgetWithText(FilterChip, 'Vencimientos fiscales'));
+      await t.pumpAndSettle();
+      expect(find.text('303 · Acme SL'), findsNothing);
+    });
+
+    testWidgets('elegir otro día del mes enseña su agenda; completar una tarea desde ahí pasa por el aviso con «Deshacer»', (t) async {
+      final repo = _RepoFalso()..calendarioFalso = semanaDeEjemplo('mes');
+      await abrirCalendario(t, repo);
+      final manana = DateTime.now().add(const Duration(days: 1));
+      await t.tap(find.text('${manana.day}').first);
+      await t.pumpAndSettle();
+      expect(find.text('Tarea 32'), findsOneWidget);
+      expect(find.text('Tarea 31'), findsNothing);
+      await t.tap(find.byType(Checkbox).first);
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('transicionar:32:completada:-:1'));
+      expect(find.text('Deshacer'), findsOneWidget);
+    });
+
+    testWidgets('navegar y cambiar de vista pide al servidor el rango que toca', (t) async {
+      final repo = _RepoFalso()..calendarioFalso = semanaDeEjemplo('mes');
+      await abrirCalendario(t, repo);
+      await t.tap(find.byTooltip('Siguiente'));
+      await t.pumpAndSettle();
+      expect(repo.vistasPedidas.last, startsWith('mes:'));
+      expect(repo.vistasPedidas.last, isNot(repo.vistasPedidas.first));
+      await t.tap(find.byIcon(Icons.view_agenda_outlined));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Semana laboral'));
+      await t.pumpAndSettle();
+      expect(repo.vistasPedidas.last, startsWith('semana_laboral:'));
+      await t.tap(find.text('Hoy'));
+      await t.pumpAndSettle();
+      expect(repo.vistasPedidas.last, 'semana_laboral:${iso(DateTime.now())}');
+    });
+
+    test('el mes se mueve sin pasarse de día (31 de enero + 1 mes = 28 de febrero)', () async {
+      final repo = _RepoFalso()..calendarioFalso = semanaDeEjemplo('mes');
+      final c = ProviderContainer(overrides: _over(repo));
+      addTearDown(c.dispose);
+      await c.read(calendarioProvider.future);
+      final n = c.read(calendarioProvider.notifier);
+      await n.irA(const Fecha(2027, 1, 31));
+      await n.paso(1);
+      expect(n.ancla, const Fecha(2027, 2, 28));
+      await n.paso(-1);
+      expect(n.ancla.mes, 1);
+    });
+
+    test('el nivel de carga es el de la web: rojo por encima de la jornada, ámbar desde el 70 %, verde por debajo', () {
+      const dia = 480;
+      expect(const CeldaDeCarga(500, 1, 0, 0, []).nivel(dia), NivelCarga.rojo);
+      expect(const CeldaDeCarga(340, 1, 0, 0, []).nivel(dia), NivelCarga.ambar);
+      expect(const CeldaDeCarga(120, 1, 0, 0, []).nivel(dia), NivelCarga.verde);
+      expect(const CeldaDeCarga(500, 1, 0, 0, []).nivel(0), NivelCarga.ninguno, reason: 'fin de semana o atrasadas: sin nivel');
+      expect(CeldaDeCarga.vacia.nivel(dia), NivelCarga.ninguno);
+    });
+
+    CargaSemanal cargaDeEjemplo() {
+      final lunes = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+      final dias = [for (var i = 0; i < 7; i++) iso(lunes.add(Duration(days: i)))];
+      return CargaSemanal(dias.first, dias, [
+        PersonaDeCarga(1, 'Yo', true, 480, 600, 2400, {
+          dias[1]: const CeldaDeCarga(600, 2, 0, 0, [TareaDeCarga(5, 'Cerrar el IVA', 360, 'alta'), TareaDeCarga(6, 'Llamar a Acme', 240, 'normal')]),
+        }, const CeldaDeCarga(60, 1, 0, 0, [TareaDeCarga(7, 'Atrasada de ayer', 60, 'normal')]), CeldaDeCarga.vacia),
+        PersonaDeCarga(8, 'Sol Pérez', false, 480, 0, 2400, const {}, CeldaDeCarga.vacia, const CeldaDeCarga(0, 1, 1, 0, [TareaDeCarga(9, 'Sin fecha ni horas', null, 'baja')])),
+      ]);
+    }
+
+    Future<void> abrirCarga(WidgetTester t, _RepoFalso repo) async {
+      await t.binding.setSurfaceSize(const Size(800, 2000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Carga'));
+      await t.pumpAndSettle();
+    }
+
+    testWidgets('la carga enseña a cada persona con sus horas por día frente a la jornada, atrasadas y sin fecha', (t) async {
+      final repo = _RepoFalso()..cargaFalsa = cargaDeEjemplo();
+      await abrirCarga(t, repo);
+      expect(find.text('Yo (tú)'), findsOneWidget);
+      expect(find.text('Sol Pérez'), findsOneWidget);
+      expect(find.text('Semana: 10 h / 40 h'), findsOneWidget);
+      expect(find.text('10 h'), findsOneWidget, reason: 'el martes: 600 min');
+      expect(find.text('Atrasadas'), findsOneWidget);
+      expect(find.text('Sin fecha'), findsOneWidget);
+      expect(find.text('1 sin estimar'), findsOneWidget);
+      expect(repo.vistasPedidas.last, startsWith('carga:'));
+    });
+
+    testWidgets('una celda lista sus tareas; desde ahí se reasigna a otra persona y se quita la fecha', (t) async {
+      final repo = _RepoFalso()..cargaFalsa = cargaDeEjemplo();
+      await abrirCarga(t, repo);
+      await t.tap(find.text('10 h'));
+      await t.pumpAndSettle();
+      expect(find.text('Cerrar el IVA'), findsOneWidget);
+      await t.tap(find.byIcon(Icons.more_vert).first);
+      await t.pumpAndSettle();
+      await t.tap(find.text('Reasignar a…'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Sol Pérez').last);
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('mover:5:p=8:'));
+      expect(find.text('Tarea movida'), findsOneWidget);
+      await t.tap(find.text('10 h'));
+      await t.pumpAndSettle();
+      await t.tap(find.byIcon(Icons.more_vert).first);
+      await t.pumpAndSettle();
+      await t.tap(find.text('Quitar la fecha'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('mover:5::f=-'));
     });
   });
 

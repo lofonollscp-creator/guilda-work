@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import 'calendario_screen.dart';
+import 'carga_screen.dart';
 import 'mi_dia_screen.dart';
 import 'tablero_screen.dart';
 import 'tareas_screen.dart';
 
-/// Las vistas de tareas, con los mismos nombres y el mismo orden que la web: Mi día · Lista · Tablero.
-enum VistaTareas { miDia, lista, tablero }
+/// Las vistas de tareas, con los mismos nombres y el mismo orden que el submenú de la web: Mi día · Lista · Tablero · Calendario · Carga.
+enum VistaTareas { miDia, lista, tablero, calendario, carga }
 
 class VistaTareasControl extends Notifier<VistaTareas> {
   @override
@@ -18,7 +20,7 @@ class VistaTareasControl extends Notifier<VistaTareas> {
 
 final vistaTareasProvider = NotifierProvider<VistaTareasControl, VistaTareas>(VistaTareasControl.new);
 
-/// La pestaña «Tareas»: según la vista elegida enseña Mi día, la Lista o el Tablero. Cada una lleva su barra de vistas ([SubnavTareas]).
+/// La pestaña «Tareas»: según la vista elegida enseña una u otra. Cada una lleva su barra de vistas ([SubnavTareas]).
 class TareasInicio extends ConsumerWidget {
   const TareasInicio({super.key});
 
@@ -27,10 +29,12 @@ class TareasInicio extends ConsumerWidget {
         VistaTareas.miDia => const MiDiaScreen(),
         VistaTareas.lista => const TareasScreen(),
         VistaTareas.tablero => const TableroScreen(),
+        VistaTareas.calendario => const CalendarioScreen(),
+        VistaTareas.carga => const CargaScreen(),
       };
 }
 
-/// El selector Mi día · Lista · Tablero, igual que el submenú de tareas de la web.
+/// El selector de vistas, igual que el submenú de tareas de la web. Cinco caben mal en un móvil: se desliza.
 class SubnavTareas extends ConsumerWidget {
   const SubnavTareas({super.key});
 
@@ -38,18 +42,28 @@ class SubnavTareas extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final actual = ref.watch(vistaTareasProvider);
-    return Padding(
+    final etiquetas = {
+      VistaTareas.miDia: (t.tareasMiDia, Icons.wb_sunny_outlined),
+      VistaTareas.lista: (t.tareasVistaLista, Icons.view_list_outlined),
+      VistaTareas.tablero: (t.tareasVistaTablero, Icons.view_kanban_outlined),
+      VistaTareas.calendario: (t.tareasCalendario, Icons.calendar_month_outlined),
+      VistaTareas.carga: (t.tareasCarga, Icons.stacked_bar_chart_outlined),
+    };
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: SegmentedButton<VistaTareas>(
-        showSelectedIcon: false,
-        segments: [
-          ButtonSegment(value: VistaTareas.miDia, icon: const Icon(Icons.wb_sunny_outlined, size: 18), label: Text(t.tareasMiDia, maxLines: 1, overflow: TextOverflow.ellipsis)),
-          ButtonSegment(value: VistaTareas.lista, icon: const Icon(Icons.view_list_outlined, size: 18), label: Text(t.tareasVistaLista, maxLines: 1, overflow: TextOverflow.ellipsis)),
-          ButtonSegment(value: VistaTareas.tablero, icon: const Icon(Icons.view_kanban_outlined, size: 18), label: Text(t.tareasVistaTablero, maxLines: 1, overflow: TextOverflow.ellipsis)),
-        ],
-        selected: {actual},
-        onSelectionChanged: (s) => ref.read(vistaTareasProvider.notifier).elegir(s.first),
-      ),
+      child: Row(children: [
+        for (final e in etiquetas.entries)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              avatar: Icon(e.value.$2, size: 18),
+              label: Text(e.value.$1),
+              selected: actual == e.key,
+              onSelected: (_) => ref.read(vistaTareasProvider.notifier).elegir(e.key),
+            ),
+          ),
+      ]),
     );
   }
 }

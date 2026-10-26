@@ -272,6 +272,32 @@ def categorias_outlook():
     return _ok(db.listar_categorias_outlook(g.usuario_id))
 
 
+@api_bp.route("/tareas-outlook/calendario", methods=["GET"])
+@token_required
+def calendario_de_tareas():
+    """El calendario unificado de la web: por cada día del rango de la `vista` (`mes`, `semana`, `semana_laboral` o `dia`; el `mes` trae las semanas completas que lo cubren)
+    alrededor de `fecha` (YYYY-MM-DD, por defecto hoy), sus `tareas` (en el día de su vencimiento o, sin él, el de inicio), los `vencimientos` fiscales del despacho, las `citas` (Cal.diy)
+    y los `fichado_segundos` propios. `aviso_citas` dice por qué faltan las citas si Cal.diy no responde."""
+    from .rutas_tareas import VISTAS_CALENDARIO, datos_calendario
+    vista = request.args.get("vista") or "mes"
+    if vista not in VISTAS_CALENDARIO:
+        return _err("vista debe ser mes, semana, semana_laboral o dia.", 400, "peticion_invalida", "vista")
+    try:
+        ancla = date.fromisoformat(request.args.get("fecha") or date.today().isoformat())
+    except ValueError:
+        return _err("fecha debe ser YYYY-MM-DD.", 400, "peticion_invalida", "fecha")
+    datos = datos_calendario(vista, ancla)
+    dias = []
+    for d in datos["dias"]:
+        dias.append({
+            "fecha": d["iso"], "es_hoy": d["es_hoy"], "es_mes_actual": d["es_mes_actual"],
+            "tareas": _api_filas(d["tareas"], con_rol=True), "vencimientos": _dicts(d["vencimientos"]),
+            "citas": [{"inicio": c.get("start"), "fin": c.get("end"), "titulo": c.get("title")} for c in d["citas"]],
+            "fichado_segundos": int(d["fichado"] or 0),
+        })
+    return _ok({"vista": vista, "fecha": ancla.isoformat(), "inicio": datos["inicio"].isoformat(), "fin": datos["fin"].isoformat(), "dias": dias, "aviso_citas": datos["aviso_citas"]})
+
+
 @api_bp.route("/tareas-outlook/tablero", methods=["GET"])
 @token_required
 def tablero():
@@ -297,7 +323,7 @@ def carga_semanal():
         return _err("semana debe ser una fecha YYYY-MM-DD.", 400, "peticion_invalida", "semana")
     lunes = base - timedelta(days=base.weekday())
     datos = db.carga_semanal(g.usuario_id, lunes)
-    return _ok({"lunes": lunes.isoformat(), "dias": datos["dias"], "personas": datos["personas"]})
+    return _ok({"lunes": lunes.isoformat(), "dias": [d.isoformat() for d in datos["dias"]], "personas": datos["personas"]})
 
 
 @api_bp.route("/tareas-outlook/<int:tarea_id>/mover", methods=["POST"])

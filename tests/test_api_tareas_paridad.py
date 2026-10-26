@@ -103,3 +103,49 @@ def test_el_tiempo_de_una_tarea_trae_mi_cronometro_y_la_hora_del_servidor(client
     assert cliente.post(f"/api/v1/tareas/{cron['id']}/finalizar", headers=h).status_code == 200
     final = cliente.get(f"/api/v1/tareas-outlook/{t}/tiempo", headers=h).get_json()["data"]
     assert final["cronometro"] is None          # ya finalizado (sin segundos no hay persona en la lista)
+
+
+def test_el_calendario_de_la_api_trae_lo_mismo_que_el_de_la_web(cliente):
+    """Mismo día, mismas tareas: la web (vista día) y la API salen de la misma función."""
+    import re
+    from datetime import date, timedelta
+    from tests.conftest import iniciar_sesion_de_prueba
+    web_uid = iniciar_sesion_de_prueba(cliente, "cal-web@ejemplo.com", "contrasena123")
+    h, api_uid, _ = _despacho(cliente, "cal-api@ejemplo.com")
+    hoy = date.today()
+    for uid in (web_uid, api_uid):
+        db.crear_tarea_outlook(uid, asunto="C1 vence hoy", fecha_vencimiento=hoy.isoformat())
+        db.crear_tarea_outlook(uid, asunto="C2 empieza hoy", fecha_inicio=hoy.isoformat())
+        db.crear_tarea_outlook(uid, asunto="C3 mañana", fecha_vencimiento=(hoy + timedelta(days=1)).isoformat())
+        db.crear_tarea_outlook(uid, asunto="C4 sin fecha")
+    api = cliente.application.test_client()
+    for vista in ("dia", "semana", "semana_laboral", "mes"):
+        r = api.get("/api/v1/tareas-outlook/calendario", query_string={"vista": vista, "fecha": hoy.isoformat()}, headers=h)
+        assert r.status_code == 200, r.get_json()
+        d = r.get_json()["data"]
+        por_dia = {x["fecha"]: [t["asunto"] for t in x["tareas"]] for x in d["dias"] if x["tareas"]}
+        assert "C4 sin fecha" not in str(por_dia)
+        assert sorted(por_dia.get(hoy.isoformat(), [])) == ["C1 vence hoy", "C2 empieza hoy"]
+        assert "C3 mañana" in por_dia.get((hoy + timedelta(days=1)).isoformat(), []) or vista in ("dia",) or hoy.weekday() == 6 and vista == "semana_laboral"
+        html = cliente.get("/tareas/calendario", query_string={"vista": vista, "fecha": hoy.isoformat()}).get_data(as_text=True)
+        web = sorted(set(re.findall(r'href="/tareas/\d+(?:/editar)?"[^>]*>\s*(C\d [^<]*?)\s*</a>', html)))
+        api_todas = sorted({t["asunto"] for x in d["dias"] for t in x["tareas"] if t["asunto"].startswith("C")})
+        assert api_todas == web, (vista, api_todas, web)
+    assert api.get("/api/v1/tareas-outlook/calendario", query_string={"vista": "año"}, headers=h).status_code == 400
+    assert api.get("/api/v1/tareas-outlook/calendario", query_string={"fecha": "ayer"}, headers=h).status_code == 400
+
+
+def test_la_carga_de_la_api_trae_fechas_iso_y_los_mismos_numeros_que_la_web(cliente):
+    from datetime import date, timedelta
+    h, uid, _ = _despacho(cliente, "carga-api@ejemplo.com")
+    lunes = date.today() - timedelta(days=date.today().weekday())
+    db.crear_tarea_outlook(uid, asunto="Con horas", fecha_vencimiento=(lunes + timedelta(days=1)).isoformat(), estimacion_min=90)
+    db.crear_tarea_outlook(uid, asunto="Sin horas", fecha_vencimiento=(lunes + timedelta(days=1)).isoformat())
+    db.crear_tarea_outlook(uid, asunto="Atrasada", fecha_vencimiento=(lunes - timedelta(days=2)).isoformat(), estimacion_min=30)
+    d = cliente.get("/api/v1/tareas-outlook/carga", query_string={"semana": date.today().isoformat()}, headers=h).get_json()["data"]
+    assert d["lunes"] == lunes.isoformat()
+    assert [x[:10] for x in d["dias"]] == [(lunes + timedelta(days=i)).isoformat() for i in range(7)]
+    yo = next(p for p in d["personas"] if p["yo"])
+    martes = yo["dias"][(lunes + timedelta(days=1)).isoformat()]
+    assert (martes["min"], martes["n"], martes["sin_estimar"]) == (90, 2, 1)
+    assert yo["atrasadas"]["min"] == 30 and yo["capacidad_semana_min"] == yo["capacidad_dia_min"] * 5

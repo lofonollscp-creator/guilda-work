@@ -327,6 +327,15 @@ RESPUESTAS.update({
 })
 ESQUEMAS["EstadoServicio"] = {"type": "object", "properties": {"estado": {"type": "string", "enum": ["ok"], "description": "`ok` si el servicio atiende peticiones."}, "version_api": {"type": "string", "description": "Versión del contrato (`X-API-Version`)."}, "base_de_datos": {"type": "string", "enum": ["ok"], "description": "La base de datos responde."}}}
 RESPUESTAS["estado_servicio"] = ("EstadoServicio", False)
+ESQUEMAS["DiaDeCalendario"] = {"type": "object", "properties": {
+    "fecha": {"type": "string", "description": "YYYY-MM-DD."}, "es_hoy": {"type": "boolean"}, "es_mes_actual": {"type": "boolean", "description": "En la vista `mes`, si el día es del mes de `fecha` (las semanas completas traen días de los meses vecinos)."},
+    "tareas": {"type": "array", "items": {"$ref": "#/components/schemas/TareaOutlook"}}, "vencimientos": {"type": "array", "items": {"$ref": "#/components/schemas/Vencimiento"}},
+    "citas": {"type": "array", "items": {"type": "object", "properties": {"inicio": {"type": "string", "nullable": True}, "fin": {"type": "string", "nullable": True}, "titulo": {"type": "string", "nullable": True}}}},
+    "fichado_segundos": {"type": "integer", "description": "Segundos fichados por quien consulta ese día."}}}
+ESQUEMAS["CalendarioTareas"] = {"type": "object", "properties": {
+    "vista": {"type": "string", "enum": ["mes", "semana", "semana_laboral", "dia"]}, "fecha": {"type": "string"}, "inicio": {"type": "string"}, "fin": {"type": "string"},
+    "dias": {"type": "array", "items": {"$ref": "#/components/schemas/DiaDeCalendario"}}, "aviso_citas": {"type": "string", "nullable": True}}}
+RESPUESTAS["calendario_de_tareas"] = ("CalendarioTareas", False)
 ESQUEMAS["CategoriaOutlook"] = {"type": "string", "example": "Fiscal"}
 RESPUESTAS["categorias_outlook"] = ("CategoriaOutlook", True)
 ESQUEMAS.update({

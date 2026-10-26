@@ -1,3 +1,5 @@
+import '../api/generado/modelos.g.dart' show TareaOutlook;
+
 /// Estado de una tarea tal como lo manda el servidor. Un estado nuevo que esta
 /// versión de la app no conozca llega como [desconocido] y no rompe nada.
 enum EstadoTarea {
@@ -222,5 +224,126 @@ class ConversacionConCliente {
         (j['cliente'] ?? '').toString(),
         (j['sin_leer'] as num?)?.toInt() ?? 0,
         [for (final m in (j['mensajes'] as List? ?? const [])) MensajeCliente.desdeJson(m as Map<String, dynamic>)],
+      );
+}
+
+// ---- Calendario y carga ----
+
+class VencimientoDelDia {
+  final int id;
+  final String modelo;
+  final String cliente;
+  final String? periodo;
+  final bool presentado;
+  const VencimientoDelDia(this.id, this.modelo, this.cliente, this.periodo, this.presentado);
+
+  factory VencimientoDelDia.desdeJson(Map<String, dynamic> j) =>
+      VencimientoDelDia((j['id'] as num).toInt(), (j['modelo'] ?? '').toString(), (j['cliente_nombre'] ?? '').toString(), j['periodo']?.toString(), j['estado'] == 'presentado');
+}
+
+class CitaDelDia {
+  final String? inicio;
+  final String titulo;
+  const CitaDelDia(this.inicio, this.titulo);
+
+  factory CitaDelDia.desdeJson(Map<String, dynamic> j) => CitaDelDia(j['inicio']?.toString(), (j['titulo'] ?? '').toString());
+}
+
+/// Un día del calendario de tareas: lo mismo que enseña la web (tareas, vencimientos fiscales, citas y horas fichadas).
+class DiaCalendario {
+  final String fecha; // AAAA-MM-DD
+  final bool esHoy;
+  final bool esMesActual;
+  final List<TareaOutlook> tareas;
+  final List<VencimientoDelDia> vencimientos;
+  final List<CitaDelDia> citas;
+  final int fichadoSegundos;
+  const DiaCalendario(this.fecha, this.esHoy, this.esMesActual, this.tareas, this.vencimientos, this.citas, this.fichadoSegundos);
+
+  bool get vacio => tareas.isEmpty && vencimientos.isEmpty && citas.isEmpty && fichadoSegundos == 0;
+}
+
+class CalendarioDeTareas {
+  final String vista;
+  final String fecha;
+  final List<DiaCalendario> dias;
+  final String? avisoCitas;
+  const CalendarioDeTareas(this.vista, this.fecha, this.dias, this.avisoCitas);
+}
+
+class TareaDeCarga {
+  final int id;
+  final String asunto;
+  final int? estimacionMin;
+  final String prioridad;
+  const TareaDeCarga(this.id, this.asunto, this.estimacionMin, this.prioridad);
+}
+
+/// Un día (o «atrasadas» / «sin fecha») de una persona en el plan de carga: minutos estimados y las tareas (las primeras; `mas` son las que no caben).
+class CeldaDeCarga {
+  final int minutos;
+  final int n;
+  final int sinEstimar;
+  final int mas;
+  final List<TareaDeCarga> tareas;
+  const CeldaDeCarga(this.minutos, this.n, this.sinEstimar, this.mas, this.tareas);
+
+  static const vacia = CeldaDeCarga(0, 0, 0, 0, []);
+
+  factory CeldaDeCarga.desdeJson(Map<String, dynamic>? j) => j == null
+      ? vacia
+      : CeldaDeCarga(
+          (j['min'] as num?)?.toInt() ?? 0,
+          (j['n'] as num?)?.toInt() ?? 0,
+          (j['sin_estimar'] as num?)?.toInt() ?? 0,
+          (j['mas'] as num?)?.toInt() ?? 0,
+          [for (final t in (j['tareas'] as List? ?? const [])) TareaDeCarga((t['id'] as num).toInt(), (t['asunto'] ?? '').toString(), (t['estimacion_min'] as num?)?.toInt(), (t['prioridad'] ?? 'normal').toString())],
+        );
+
+  /// Como la web: rojo si pasa de la capacidad, ámbar desde el 70 %, verde por debajo; sin capacidad (fin de semana, atrasadas, sin fecha) no hay nivel.
+  NivelCarga nivel(int capacidadMin) {
+    if (capacidadMin <= 0 || minutos <= 0) return NivelCarga.ninguno;
+    if (minutos > capacidadMin) return NivelCarga.rojo;
+    return minutos >= capacidadMin * 0.7 ? NivelCarga.ambar : NivelCarga.verde;
+  }
+}
+
+enum NivelCarga { ninguno, verde, ambar, rojo }
+
+class PersonaDeCarga {
+  final int id;
+  final String nombre;
+  final bool yo;
+  final int capacidadDiaMin;
+  final int semanaMin;
+  final int capacidadSemanaMin;
+  final Map<String, CeldaDeCarga> dias;
+  final CeldaDeCarga atrasadas;
+  final CeldaDeCarga sinFecha;
+  const PersonaDeCarga(this.id, this.nombre, this.yo, this.capacidadDiaMin, this.semanaMin, this.capacidadSemanaMin, this.dias, this.atrasadas, this.sinFecha);
+
+  factory PersonaDeCarga.desdeJson(Map<String, dynamic> j) => PersonaDeCarga(
+        (j['id'] as num).toInt(),
+        (j['nombre'] ?? '').toString(),
+        j['yo'] == true,
+        (j['capacidad_dia_min'] as num?)?.toInt() ?? 0,
+        (j['semana_min'] as num?)?.toInt() ?? 0,
+        (j['capacidad_semana_min'] as num?)?.toInt() ?? 0,
+        {for (final e in (j['dias'] as Map? ?? const {}).entries) e.key.toString(): CeldaDeCarga.desdeJson(e.value as Map<String, dynamic>?)},
+        CeldaDeCarga.desdeJson(j['atrasadas'] as Map<String, dynamic>?),
+        CeldaDeCarga.desdeJson(j['sin_fecha'] as Map<String, dynamic>?),
+      );
+}
+
+class CargaSemanal {
+  final String lunes;
+  final List<String> dias; // los siete días, AAAA-MM-DD
+  final List<PersonaDeCarga> personas;
+  const CargaSemanal(this.lunes, this.dias, this.personas);
+
+  factory CargaSemanal.desdeJson(Map<String, dynamic> j) => CargaSemanal(
+        (j['lunes'] ?? '').toString(),
+        [for (final d in (j['dias'] as List? ?? const [])) d.toString().substring(0, 10)],
+        [for (final p in (j['personas'] as List? ?? const [])) PersonaDeCarga.desdeJson(p as Map<String, dynamic>)],
       );
 }

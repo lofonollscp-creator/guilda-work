@@ -1062,5 +1062,71 @@
   "tareaClienteRespuestaHint": "Respuesta para el cliente (la verá en su portal y le llegará un correo)",
   "tareaClienteContestar": "Contestar al cliente",
   "tareaClienteRespondida": "Respuesta enviada al cliente.",
-  "tareaPorcentaje": "% completado"
+  "tareaPorcentaje": "% completado",
+  "tareasCalendario": "Calendario",
+  "tareasCarga": "Carga",
+  "calVistaDia": "Día",
+  "calVistaSemanaLaboral": "Semana laboral",
+  "calVistaSemana": "Semana",
+  "calVistaMes": "Mes",
+  "calHoy": "Hoy",
+  "calCapaTareas": "Tareas",
+  "calCapaFiscal": "Vencimientos fiscales",
+  "calCapaCitas": "Citas",
+  "calCapaFichajes": "Fichajes",
+  "calSinNada": "No hay nada este día.",
+  "calNuevaTarea": "Nueva tarea este día",
+  "calAsuntoNueva": "Asunto de la tarea…",
+  "calAvisoCitas": "No se han podido cargar las citas: {motivo}",
+  "@calAvisoCitas": {
+    "placeholders": {
+      "motivo": {
+        "type": "String"
+      }
+    }
+  },
+  "calHorasFichadas": "{tiempo} fichadas",
+  "@calHorasFichadas": {
+    "placeholders": {
+      "tiempo": {
+        "type": "String"
+      }
+    }
+  },
+  "calMasTareas": "+{n} más",
+  "@calMasTareas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cargaEstaSemana": "Esta semana",
+  "cargaAtrasadas": "Atrasadas",
+  "cargaSinFecha": "Sin fecha",
+  "cargaSemanaTotal": "Semana",
+  "cargaSinEstimar": "{n} sin estimar",
+  "@cargaSinEstimar": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "cargaSoloTu": "Aquí verás la carga de tu equipo cuando haya más personas en tu despacho.",
+  "cargaReasignar": "Reasignar a…",
+  "cargaCambiarDia": "Cambiar el día…",
+  "cargaQuitarFecha": "Quitar la fecha",
+  "cargaMovida": "Tarea movida",
+  "cargaTu": "tú",
+  "cargaYMas": "y {n} más",
+  "@cargaYMas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasAnterior": "Anterior",
+  "tareasSiguiente": "Siguiente"
 }
