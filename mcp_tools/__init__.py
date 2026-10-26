@@ -545,6 +545,10 @@ from .herramientas_contabilidad import (  # noqa: E402,F401
     _ctx_conta, _conta,
     contabilidad_listar_facturas, contabilidad_ver_factura, contabilidad_resumen, contabilidad_comprobar_exportacion, contabilidad_anotar_factura, contabilidad_cambiar_estado_factura, contabilidad_leer_factura_con_ia, contabilidad_exportar,
 )
+from .herramientas_guilda_fiscal import (  # noqa: E402,F401
+    _ctx_gfiscal, _gfiscal,
+    fiscal_listar_titulares, fiscal_ver_perfil, fiscal_listar_apuntes, fiscal_comprobar_apuntes, fiscal_proponer_apuntes_de_factura, fiscal_simular_303, fiscal_listar_declaraciones, fiscal_ver_declaracion,
+)
 from .herramientas_comercial import (  # noqa: E402,F401
     _ctx_comercial, _traducir_comercial, _oportunidad_json,
     comercial_listar_oportunidades, comercial_ver_oportunidad, comercial_embudo, comercial_ver_reunion, comercial_crear_oportunidad, comercial_mover_oportunidad, comercial_anotar_actividad, comercial_crear_reunion, comercial_generar_acta,
@@ -698,6 +702,8 @@ TOOLS = [
     listar_certificados, riesgos_de_certificados, registrar_certificado, renovar_certificado, comprobar_certificado, panel_fiscal, listar_traspasos, proponer_traspaso, resolver_traspaso, listar_avisos_fiscales, acusar_aviso_fiscal, listar_expedientes_control, ver_expediente_control, abrir_expediente_control, marcar_punto_expediente, cambiar_estado_expediente_control, comentar_expediente_control,
     # Gabinete de abogados e Inmobiliaria
     abogados_provision_asunto, abogados_partes_asunto, abogados_agenda_vistas, abogados_comprobar_conflicto, inmobiliaria_listar_inmuebles, inmobiliaria_cruces_de_demanda, inmobiliaria_agenda_visitas, inmobiliaria_resumen, mensajes_de_enlace, responder_mensaje_de_enlace,
+    # Guilda Fiscal (consulta y simulación)
+    fiscal_listar_titulares, fiscal_ver_perfil, fiscal_listar_apuntes, fiscal_comprobar_apuntes, fiscal_proponer_apuntes_de_factura, fiscal_simular_303, fiscal_listar_declaraciones, fiscal_ver_declaracion,
     # Facturas para contabilizar
     contabilidad_listar_facturas, contabilidad_ver_factura, contabilidad_resumen, contabilidad_comprobar_exportacion, contabilidad_anotar_factura, contabilidad_cambiar_estado_factura, contabilidad_leer_factura_con_ia, contabilidad_exportar,
     # Trabajo con tareas: estado con motivo, subtareas, clientes, revisiones, informe y automatizaciones

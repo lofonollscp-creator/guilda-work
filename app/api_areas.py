@@ -20,6 +20,7 @@ AREAS: dict[str, tuple[str, tuple[str, ...]]] = {
     "comercial": ("Comercial (oportunidades, embudo, actividades y reuniones con acta)", ("comercial",)),
     "juridico": ("Asistente jurídico (biblioteca, consultas con citas, adjuntos privados e informes)", ("juridico",)),
     "contabilidad": ("Facturas para contabilizar (anotar, revisar, exportar a a3)", ("contabilidad",)),
+    "guilda_fiscal": ("Guilda Fiscal (consulta de perfiles y apuntes, simulación y declaraciones del 303)", ("guilda-fiscal",)),
     "tiquets": ("Tiquets", ("tiquets",)),
     "ia": ("Asistente de IA", ("ia", "chat")),
     "avisos": ("Notificaciones y comunicados", ("notificaciones", "comunicados")),

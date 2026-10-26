@@ -706,3 +706,31 @@ RESPUESTAS.update({"colecciones_juridico_api": ("ColeccionJuridica", True), "bus
                    "consultar_juridico_api": ("RespuestaJuridica", False), "ejecucion_juridico_api": ("RespuestaJuridica", False), "guardar_informe_juridico_api": ("InformeJuridicoDetalle", False),
                    "informes_juridico_api": ("InformeJuridico", True), "informe_juridico_api": ("InformeJuridicoDetalle", False), "revisar_informe_juridico_api": ("InformeJuridico", False), "fuentes_juridico_api": ("FuenteJuridica", True)})
 SIN_DATOS_ESPERADOS.add("borrar_adjunto_juridico_api")
+
+
+# --- Guilda Fiscal (app/rutas_api_guilda_fiscal.py): solo consulta y simulación ------------------------------------------------------------------------
+ETIQUETAS["guilda-fiscal"] = "Guilda Fiscal: perfil fiscal, apuntes aprobados, comprobación con las reglas de la AEAT, simulación y consulta del modelo 303. Solo lectura: aprobar y presentar lo hacen personas."
+_S, _I, _B, _SN, _N = {"type": "string"}, {"type": "integer"}, {"type": "boolean"}, {"type": "string", "nullable": True}, {"type": "number", "nullable": True}
+ESQUEMAS.update({
+    "FiscalTitular": {"type": "object", "properties": {"cliente_fiscal_id": _I, "nombre": _S, "nif": _SN, "perfil": {"type": "object", "nullable": True, "additionalProperties": True}, "apuntes_del_anio": _I,
+                                                       "ultima_declaracion": {"type": "object", "nullable": True, "additionalProperties": True}}},
+    "FiscalPerfil": {"type": "object", "properties": {"vigente": {"type": "object", "nullable": True, "additionalProperties": True}, "historial": {"type": "array", "items": {"type": "object", "additionalProperties": True}}}},
+    "FiscalApunte": {"type": "object", "additionalProperties": True, "properties": {"id": _I, "libro": {"type": "string", "enum": ["emitidas", "recibidas"]}, "tipo_factura": _S, "clave": _S, "numero": _S,
+                                                                                    "fecha_expedicion": _S, "contraparte": _S, "nif": _SN, "base": _N, "tipo_iva": {"type": "number"}, "cuota": _N,
+                                                                                    "cuota_deducible": _N, "version": _I, "anulado": _B}},
+    "FiscalComprobacion": {"type": "object", "properties": {"apuntes": _I, "ok": _B, "problemas": {"type": "array", "items": {"type": "object", "properties": {"nivel": {"type": "string", "enum": ["error", "aviso"]},
+                                                                                                                                                                  "codigo": _S, "mensaje": _S, "apunte_id": {"type": "integer", "nullable": True}}}}}},
+    "FiscalSimulacion": {"type": "object", "properties": {"simulacion": _B, "ejercicio": _I, "periodo": _S, "bloqueos": {"type": "array", "items": _S}, "tipo_declaracion": _S, "resultado": _N,
+                                                          "casillas": {"type": "object", "additionalProperties": {"type": "number"}}, "aviso": _S}},
+    "FiscalDeclaracionResumen": {"type": "object", "properties": {"id": _I, "modelo": _S, "ejercicio": _I, "periodo": _S, "estado": {"type": "string", "enum": ["borrador", "revisada", "exportada", "presentada", "anulada"]},
+                                                                  "tipo_declaracion": _S, "resultado": _N, "presentada_en": _SN}},
+    "FiscalDeclaracion": {"type": "object", "additionalProperties": True, "properties": {"id": _I, "cliente_fiscal_id": _I, "modelo": _S, "ejercicio": _I, "periodo": _S, "estado": _S, "resultado": _N,
+                                                                                         "instantanea_id": _I, "bloqueos": {"type": "array", "items": _S}, "casillas": {"type": "object", "additionalProperties": {"type": "number"}},
+                                                                                         "origen": {"type": "object", "additionalProperties": {"type": "array", "items": _I}}, "ficheros": {"type": "array", "items": _S}}},
+    "FiscalPropuestaApunte": {"type": "object", "additionalProperties": True, "properties": {"factura_id": _I, "libro": _S, "tipo_factura": _S, "numero": _S, "base": _N, "tipo_iva": {"type": "number"}, "cuota": _N,
+                                                                                             "aprobado": _B}},
+})
+RESPUESTAS.update({"titulares_guilda_fiscal_api": ("FiscalTitular", True), "perfil_guilda_fiscal_api": ("FiscalPerfil", False), "apuntes_guilda_fiscal_api": ("FiscalApunte", True),
+                   "comprobacion_guilda_fiscal_api": ("FiscalComprobacion", False), "simulacion_guilda_fiscal_api": ("FiscalSimulacion", False), "declaraciones_guilda_fiscal_api": ("FiscalDeclaracionResumen", True),
+                   "declaracion_guilda_fiscal_api": ("FiscalDeclaracion", False), "propuesta_guilda_fiscal_api": ("FiscalPropuestaApunte", True)})
+

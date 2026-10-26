@@ -33,7 +33,7 @@ def _solo_con_el_modulo():
         abort(403)
 
 
-@guilda_fiscal_bp.app_context_processor
+@guilda_fiscal_bp.context_processor
 def _plantilla():
     return {"puede_aprobar": bool(g.get("usuario_id") and g.get("tenant_id") and acceso.puede_autorizar(g.tenant_id, g.usuario_id)), "etiqueta_casilla": fn.etiqueta_casilla}
 
@@ -240,3 +240,6 @@ def descargar(declaracion_id: int, tipo: str):
         abort(404)
     tipos = {"303": "application/octet-stream", "libro_xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "resumen": "text/plain; charset=utf-8"}
     return Response(datos, mimetype=tipos[tipo], headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
+
+
+from . import rutas_api_guilda_fiscal  # noqa: E402,F401 -- registra las rutas de la API REST de este módulo en api_bp
