@@ -240,3 +240,21 @@ def test_la_declaracion_se_enlaza_con_el_vencimiento_del_calendario_y_lo_marca_p
     fn.marcar_presentada(t, u, dec["id"], "CSV 1")
     estados = {v["id"]: v["estado"] for v in db.listar_vencimientos_fiscales(t, cliente_fiscal_id=c)}
     assert estados[vid] == "presentado" and estados[otro] != "presentado"
+
+
+def test_importar_un_libro_aprueba_lo_valido_rechaza_lo_erroneo_y_no_duplica():
+    from app.fiscal_modelos.libros_lsi import escribir_xlsx
+    t, u, g, c = _despacho()
+    apuntes, ej, per = ESCENARIOS["basico"]
+    malo = venta(10000, 0, numero="9")                                                    # IVA al 0 %: no vigente en 2026
+    libro = escribir_xlsx(apuntes + [malo], ejercicio=ej, periodo=per)
+    r = fn.importar_libro(t, u, c, libro)
+    assert (r["leidos"], r["importados"], r["repetidos"]) == (3, 2, 0) and len(r["rechazados"]) == 1 and "no está vigente" in r["rechazados"][0]["motivo"]
+    again = fn.importar_libro(t, u, c, libro)
+    assert (again["importados"], again["repetidos"]) == (0, 2)
+    assert len(fn.listar_apuntes(t, u, c)) == 2
+    with pytest.raises(ErrorFiscal):
+        fn.importar_libro(t, u, c, b"esto no es un xlsx")
+    with pytest.raises(ErrorFiscal) as e:
+        fn.importar_libro(t, g, c, libro)
+    assert e.value.codigo == "prohibido"

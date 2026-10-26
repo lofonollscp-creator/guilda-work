@@ -85,3 +85,77 @@ def escribir_xlsx(apuntes: list[Apunte], *, ejercicio: int, periodo: str) -> byt
     salida = io.BytesIO()
     wb.save(salida)
     return salida.getvalue()
+
+
+# --- Lectura: de un libro LSI a apuntes --------------------------------------------------------------------------------------------------------------
+def _f(v):
+    """Fecha de una celda (fecha de Excel o «dd/mm/aaaa» / «aaaa-mm-dd»); `None` si no hay."""
+    from datetime import date
+    if v in (None, ""):
+        return None
+    if isinstance(v, datetime):
+        return v.date()
+    if isinstance(v, date):
+        return v
+    texto = str(v).strip()
+    try:
+        if "/" in texto:
+            d, m, a = texto.split("/")
+            return date(int(a), int(m), int(d))
+        return date.fromisoformat(texto[:10])
+    except ValueError:
+        raise ValueError(f"fecha no válida: {texto!r}") from None
+
+
+def _c(v) -> int:
+    """Importe de una celda en céntimos (número o texto con coma)."""
+    from decimal import ROUND_HALF_UP, Decimal
+    if v in (None, ""):
+        return 0
+    if isinstance(v, (int, float)):
+        return int((Decimal(str(v)) * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+    t = str(v).strip().replace(" ", "")
+    if "," in t:
+        t = t.replace(".", "").replace(",", ".")
+    return int((Decimal(t) * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+
+
+def _s(v) -> str:
+    if v is None:
+        return ""
+    if isinstance(v, float) and v.is_integer():
+        return str(int(v))
+    return str(v).strip()
+
+
+def leer_xlsx(contenido: bytes) -> tuple[list[Apunte], list[dict]]:
+    """Los apuntes de un libro LSI (el que escribimos nosotros o el de otro programa en el formato oficial) y las filas que NO se han podido leer (`{hoja, fila, motivo}`). Se saltan las filas de cabecera
+    (las de las plantillas oficiales) y las vacías. No valida las reglas de la AEAT: eso lo hace `validacion_apuntes`."""
+    import openpyxl
+    wb = openpyxl.load_workbook(io.BytesIO(contenido), data_only=True, read_only=True)
+    apuntes: list[Apunte] = []
+    ilegibles: list[dict] = []
+    for nombre, libro in ((HOJAS[0], EXPEDIDAS), (HOJAS[1], RECIBIDAS)):
+        if nombre not in wb.sheetnames:
+            continue
+        for n, fila in enumerate(wb[nombre].iter_rows(values_only=True), 1):
+            c = list(fila) + [None] * 45
+            if not any(x not in (None, "") for x in c[:30]):
+                continue
+            try:
+                if not isinstance(c[0], (int, float)) and not _s(c[0]).isdigit():
+                    continue                                                    # cabecera o texto explicativo de la plantilla
+                if libro == EXPEDIDAS:
+                    apuntes.append(Apunte(EXPEDIDAS, _s(c[5]), _f(c[8]), numero=_s(c[11]), serie=_s(c[10]), clave=_s(c[17]) or "01", base=_c(c[21]), tipo_iva=_c(c[22]), cuota=_c(c[23]),
+                                          total=_c(c[20]) if c[20] not in (None, "") else None, fecha_operacion=_f(c[9]), contraparte_nombre=_s(c[16]), contraparte_nif=_s(c[15]),
+                                          contraparte_nif_tipo=_s(c[13]), contraparte_pais=_s(c[14]), calificacion=_s(c[18]), exenta=_s(c[19]), inmueble_situacion=_s(c[33]), inmueble_referencia=_s(c[34])))
+                else:
+                    ded = (int(float(c[23])), _s(c[24])) if c[23] not in (None, "") and c[24] not in (None, "") else None
+                    apuntes.append(Apunte(RECIBIDAS, _s(c[5]), _f(c[8]), numero=_s(c[10]), clave=_s(c[19]) or "01", base=_c(c[26]), tipo_iva=_c(c[27]), cuota=_c(c[28]),
+                                          total=_c(c[25]) if c[25] not in (None, "") else None, fecha_operacion=_f(c[9]), fecha_recepcion=_f(c[12]), contraparte_nombre=_s(c[18]), contraparte_nif=_s(c[17]),
+                                          contraparte_nif_tipo=_s(c[15]), contraparte_pais=_s(c[16]), bien_inversion=_s(c[20]).upper() == "S", isp=_s(c[21]).upper() == "S",
+                                          cuota_deducible=_c(c[29]) if c[29] not in (None, "") else None, deducible_periodo_posterior=_s(c[22]).upper() == "S", periodo_deduccion=ded,
+                                          inmueble_situacion=_s(c[39]), inmueble_referencia=_s(c[40])))
+            except (ValueError, TypeError, ArithmeticError) as e:
+                ilegibles.append({"hoja": nombre, "fila": n, "motivo": str(e)[:150]})
+    return apuntes, ilegibles

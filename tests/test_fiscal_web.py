@@ -117,3 +117,17 @@ def test_registrar_en_bloque_las_facturas_revisadas(cliente):
     ap = fn.listar_apuntes(t, uid, c)
     assert [(a["tipo_factura"], a["base_centimos"], a["cuota_centimos"], a["factura_id"]) for a in ap] == [("F1", 10000, 2100, ok), ("R1", -2000, -420, abono)]
     assert {f["id"] for f in fn.facturas_por_registrar(t, uid, c, 2026)} == {raro}
+
+
+def test_importar_un_libro_desde_la_web(cliente):
+    import io
+    from app.fiscal_modelos.libros_lsi import escribir_xlsx
+    from tests.escenarios_303 import ESCENARIOS, venta
+    uid, t, c = _web(cliente, "fiscalweb7@ejemplo.com")
+    apuntes, ej, per = ESCENARIOS["basico"]
+    libro = escribir_xlsx(apuntes + [venta(10000, 0, numero="9")], ejercicio=ej, periodo=per)
+    r = cliente.post(f"/guilda-fiscal/{c}/importar-libro", data={"libro": (io.BytesIO(libro), "libro.xlsx")}, content_type="multipart/form-data")
+    html = r.get_data(as_text=True)
+    assert r.status_code == 200 and "Importadas: 2" in html and "Rechazadas: 1" in html and "no está vigente" in html
+    assert len(fn.listar_apuntes(t, uid, c)) == 2
+    assert cliente.post(f"/guilda-fiscal/{c}/importar-libro", data={}).status_code == 302

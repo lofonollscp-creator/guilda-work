@@ -15862,3 +15862,21 @@ msgstr "Réviser à la main"
 
 msgid "Aprobar las seleccionadas"
 msgstr "Approuver la sélection"
+
+msgid "Importar un libro registro"
+msgstr "Importer un livre-journal"
+
+msgid "Sube el libro de facturas emitidas y recibidas en el formato oficial de la Agencia Tributaria (.xlsx). Las filas válidas se aprueban como apuntes; las que tengan errores no entran y se te dice por qué."
+msgstr "Dépose le livre des factures émises et reçues au format officiel de l'administration fiscale (.xlsx). Les lignes valides sont approuvées comme écritures ; celles qui comportent des erreurs ne sont pas importées et on te dit pourquoi."
+
+msgid "Ver los apuntes"
+msgstr "Voir les écritures"
+
+msgid "Filas leídas: %(n)s · Importadas: %(i)s · Ya existían: %(r)s · Rechazadas: %(x)s"
+msgstr "Lignes lues : %(n)s · Importées : %(i)s · Existaient déjà : %(r)s · Rejetées : %(x)s"
+
+msgid "Estas filas no han entrado:"
+msgstr "Ces lignes n'ont pas été importées :"
+
+msgid "fila %(f)s"
+msgstr "ligne %(f)s"

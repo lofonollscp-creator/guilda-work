@@ -203,6 +203,21 @@ def registrar_facturas(cliente_id: int):
     return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id))
 
 
+@guilda_fiscal_bp.route("/<int:cliente_id>/importar-libro", methods=["POST"])
+@login_required
+def importar_libro(cliente_id: int):
+    """Importa un libro registro en formato de la AEAT (.xlsx) como apuntes aprobados; enseña lo importado y lo rechazado."""
+    c = _cliente_o_404(cliente_id)
+    archivo = request.files.get("libro")
+    if archivo is None or not archivo.filename:
+        return _atras(url_for("guilda_fiscal.cliente", cliente_id=cliente_id), "Elige un fichero .xlsx.")
+    try:
+        r = fn.importar_libro(g.tenant_id, g.usuario_id, cliente_id, archivo.read(8_000_001))
+    except ErrorFiscal as e:
+        return _atras(url_for("guilda_fiscal.cliente", cliente_id=cliente_id), e)
+    return render_template("fiscal_importacion.html", c=c, r=r, nombre=archivo.filename)
+
+
 @guilda_fiscal_bp.route("/<int:cliente_id>/periodo", methods=["POST"])
 @login_required
 def periodo(cliente_id: int):

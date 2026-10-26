@@ -56,6 +56,16 @@
 </table></div>
 {% else %}<p class="muted">{{ _('Aún no hay declaraciones de este titular.') }}</p>{% endif %}
 
+{% if puede_aprobar %}
+<section class="dash-panel">
+  <h2>{{ _('Importar un libro registro') }}</h2>
+  <p class="muted">{{ _('Sube el libro de facturas emitidas y recibidas en el formato oficial de la Agencia Tributaria (.xlsx). Las filas válidas se aprueban como apuntes; las que tengan errores no entran y se te dice por qué.') }}</p>
+  <form method="post" action="{{ url_for('guilda_fiscal.importar_libro', cliente_id=c.id) }}" enctype="multipart/form-data" class="ds-fila">
+    <input type="file" name="libro" accept=".xlsx" required aria-label="{{ _('Libro registro (.xlsx)') }}"><button type="submit" class="btn btn-ghost">{{ _('Importar') }}</button>
+  </form>
+</section>
+{% endif %}
+
 <h2 class="ds-mt-16">{{ _('Apuntes aprobados') }} · {{ ejercicio }}</h2>
 <form method="get" class="filters"><label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100"></label><button class="btn btn-ghost" type="submit">{{ _('Ver') }}</button></form>
 {% if apuntes %}

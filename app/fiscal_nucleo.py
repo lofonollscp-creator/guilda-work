@@ -375,6 +375,31 @@ def aprobar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, fa
     return resultado
 
 
+def importar_libro(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, contenido: bytes) -> dict:
+    """Importa un libro registro en formato LSI (el de cualquier programa que exporte el formato oficial de la AEAT) como apuntes APROBADOS por quien lo sube. Cada fila es independiente: las que tienen errores
+    según las reglas de la AEAT, o no se pueden leer, no entran y se devuelven con su motivo para corregirlas. Una fila idéntica a un apunte ya aprobado (mismo libro, número, fecha y contraparte) no se duplica."""
+    _exigir_aprobador(tenant_id, usuario_id)
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    if len(contenido) > 8_000_000:
+        raise ErrorFiscal("El fichero es demasiado grande.")
+    try:
+        apuntes, ilegibles = libros_lsi.leer_xlsx(contenido)
+    except Exception as e:                                                      # noqa: BLE001 — un xlsx que no es xlsx
+        raise ErrorFiscal("No se puede leer el fichero: no es un libro .xlsx válido.") from e
+    existentes = {(a["libro"], a["serie"], a["numero"], a["fecha_expedicion"], a["contraparte_nif"] or "") for a in listar_apuntes(tenant_id, usuario_id, cliente_fiscal_id)}
+    r = {"leidos": len(apuntes) + len(ilegibles), "importados": 0, "repetidos": 0, "rechazados": [{"hoja": i["hoja"], "fila": i["fila"], "motivo": i["motivo"]} for i in ilegibles]}
+    for n, a in enumerate(apuntes, 1):
+        if (a.libro, a.serie, a.numero, a.fecha_expedicion.isoformat(), a.contraparte_nif or "") in existentes:
+            r["repetidos"] += 1
+            continue
+        try:
+            aprobar_apunte(tenant_id, usuario_id, cliente_fiscal_id, a)
+            r["importados"] += 1
+        except ErrorFiscal as e:
+            r["rechazados"].append({"hoja": "EXPEDIDAS_INGRESOS" if a.libro == "E" else "RECIBIDAS_GASTOS", "fila": n, "motivo": str(e)[:200]})
+    return r
+
+
 def _perfil_a_flags(perfil: dict, periodo: str) -> tuple[dict, list[str]]:
     ajustes = {"tributacion_foral": bool(perfil["tributacion_foral"]), "criterio_caja": bool(perfil["criterio_caja"]), "prorrata": bool(perfil["prorrata_especial"] or perfil["prorrata_centesimas"] is not None
                                                                                                                                        or perfil["sectores_diferenciados"]),

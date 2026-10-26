@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Importar un libro registro') }} — {{ c.nombre }}{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Importar un libro registro') }}</h1><p class="subtitle">{{ c.nombre }} · {{ nombre }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">{{ _('Ver los apuntes') }}</a>
+</header>
+<p>{{ _('Filas leídas: %(n)s · Importadas: %(i)s · Ya existían: %(r)s · Rechazadas: %(x)s', n=r.leidos, i=r.importados, r=r.repetidos, x=r.rechazados|length) }}</p>
+{% if r.rechazados %}
+<div class="ia-error" role="alert"><strong>{{ _('Estas filas no han entrado:') }}</strong>
+  <ul>{% for x in r.rechazados %}<li>{{ x.hoja }} · {{ _('fila %(f)s', f=x.fila) }}: {{ x.motivo }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% endblock %}

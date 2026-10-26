@@ -15777,3 +15777,21 @@ msgstr "Review by hand"
 
 msgid "Aprobar las seleccionadas"
 msgstr "Approve the selected ones"
+
+msgid "Importar un libro registro"
+msgstr "Import a register book"
+
+msgid "Sube el libro de facturas emitidas y recibidas en el formato oficial de la Agencia Tributaria (.xlsx). Las filas válidas se aprueban como apuntes; las que tengan errores no entran y se te dice por qué."
+msgstr "Upload the issued and received invoices book in the tax agency's official format (.xlsx). Valid rows are approved as entries; those with errors are not imported and you are told why."
+
+msgid "Ver los apuntes"
+msgstr "View the entries"
+
+msgid "Filas leídas: %(n)s · Importadas: %(i)s · Ya existían: %(r)s · Rechazadas: %(x)s"
+msgstr "Rows read: %(n)s · Imported: %(i)s · Already existed: %(r)s · Rejected: %(x)s"
+
+msgid "Estas filas no han entrado:"
+msgstr "These rows were not imported:"
+
+msgid "fila %(f)s"
+msgstr "row %(f)s"

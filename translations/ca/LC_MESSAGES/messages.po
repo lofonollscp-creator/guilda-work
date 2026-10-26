@@ -15786,3 +15786,21 @@ msgstr "Revisar a mà"
 
 msgid "Aprobar las seleccionadas"
 msgstr "Aprovar les seleccionades"
+
+msgid "Importar un libro registro"
+msgstr "Importar un llibre registre"
+
+msgid "Sube el libro de facturas emitidas y recibidas en el formato oficial de la Agencia Tributaria (.xlsx). Las filas válidas se aprueban como apuntes; las que tengan errores no entran y se te dice por qué."
+msgstr "Puja el llibre de factures emeses i rebudes en el format oficial de l'Agència Tributària (.xlsx). Les files vàlides s'aproven com a apunts; les que tinguin errors no entren i se't diu per què."
+
+msgid "Ver los apuntes"
+msgstr "Veure els apunts"
+
+msgid "Filas leídas: %(n)s · Importadas: %(i)s · Ya existían: %(r)s · Rechazadas: %(x)s"
+msgstr "Files llegides: %(n)s · Importades: %(i)s · Ja existien: %(r)s · Rebutjades: %(x)s"
+
+msgid "Estas filas no han entrado:"
+msgstr "Aquestes files no han entrat:"
+
+msgid "fila %(f)s"
+msgstr "fila %(f)s"

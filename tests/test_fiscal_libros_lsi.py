@@ -67,3 +67,30 @@ def test_el_apunte_es_inmutable_y_con_reemplaza():
     else:
         raise AssertionError("debería ser inmutable")
     assert isinstance(a, Apunte)
+
+
+def test_ida_y_vuelta_de_todos_los_escenarios():
+    """Lo que escribimos, lo leemos igual: cada escenario (los 23 que la AEAT aceptó) vuelve a ser el mismo conjunto de apuntes."""
+    from tests.escenarios_303 import ESCENARIOS
+    for nombre, (apuntes, ejercicio, periodo) in ESCENARIOS.items():
+        leidos, ilegibles = lsi.leer_xlsx(lsi.escribir_xlsx(apuntes, ejercicio=ejercicio, periodo=periodo))
+        assert ilegibles == [], nombre
+        esperados = [a for a in apuntes if a.libro == "E"] + [a for a in apuntes if a.libro == "R"]          # el libro agrupa primero las emitidas
+        assert len(leidos) == len(esperados), nombre
+        for l, e in zip(leidos, esperados):
+            assert (l.libro, l.tipo_factura, l.fecha_expedicion, l.base, l.cuota, l.clave, l.calificacion, l.exenta, l.contraparte_nif, l.isp, l.bien_inversion, l.periodo_deduccion) == \
+                   (e.libro, e.tipo_factura, e.fecha_expedicion, e.base, e.cuota, e.clave, e.calificacion if e.calificacion == "S1" or e.calificacion else "", e.exenta, e.contraparte_nif, e.isp,
+                    e.bien_inversion, e.periodo_deduccion), nombre
+
+
+def test_las_cabeceras_de_las_plantillas_y_las_filas_vacias_se_saltan():
+    import openpyxl
+    wb = openpyxl.Workbook(); wb.remove(wb.active)
+    ws = wb.create_sheet("EXPEDIDAS_INGRESOS")
+    ws.append(["LIBRO REGISTRO FACTURAS EXPEDIDAS"]); ws.append(["Ejercicio", "Periodo"]); ws.append([None] * 5)
+    ws.append([2026, "2T", "B", "01", None, "F1", None, None, "10/05/2026", None, "A", "1", None, None, None, "B87654321", "CLIENTE SL", "01", "S1", None, "121,00", "100,00", "21,00", "21,00"])
+    ws.append([2026, "2T", "B", "01", None, "F1", None, None, "no es fecha", None, "A", "2"])
+    buf = io.BytesIO(); wb.save(buf)
+    apuntes, ilegibles = lsi.leer_xlsx(buf.getvalue())
+    assert [(a.numero, a.base, a.cuota, a.fecha_expedicion) for a in apuntes] == [("1", 10000, 2100, d(2026, 5, 10))]
+    assert len(ilegibles) == 1 and ilegibles[0]["fila"] == 5 and "fecha no válida" in ilegibles[0]["motivo"]
