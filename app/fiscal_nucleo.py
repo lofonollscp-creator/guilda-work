@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import asdict
 from datetime import date
 
@@ -297,7 +298,7 @@ def _nif_limpio(nif) -> str:
     return "".join(ch for ch in str(nif or "").upper() if ch.isalnum())
 
 
-def buscar_contraparte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, nif: str) -> dict | None:
+def buscar_contraparte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, nif: str, libro: str | None = None) -> dict | None:
     """Los datos de una contraparte que este titular ya usó (apuntes anteriores, terceros de contabilidad, facturas anotadas), para no teclearlos otra vez. Solo lee; None si no la conoce."""
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
     limpio = _nif_limpio(nif)
@@ -306,10 +307,17 @@ def buscar_contraparte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, 
     norma = "UPPER(REPLACE(REPLACE(REPLACE({c}, ' ', ''), '-', ''), '.', ''))"
     conn = db.get_connection()
     try:
-        f = conn.execute(f"SELECT contraparte_nombre AS nombre, contraparte_nif AS nif, contraparte_nif_tipo AS nif_tipo, contraparte_pais AS pais FROM fiscal_apuntes "
-                         f"WHERE tenant_id = ? AND cliente_fiscal_id = ? AND {norma.format(c='contraparte_nif')} = ? ORDER BY id DESC LIMIT 1", (tenant_id, cliente_fiscal_id, limpio)).fetchone()
+        f = conn.execute(f"SELECT contraparte_nombre AS nombre, contraparte_nif AS nif, contraparte_nif_tipo AS nif_tipo, contraparte_pais AS pais, tipo_iva_centesimas, clave, calificacion, exenta, "
+                         f"tipo_factura, libro FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND anulado_en IS NULL AND {norma.format(c='contraparte_nif')} = ? "
+                         f"ORDER BY CASE WHEN libro = ? THEN 0 ELSE 1 END, id DESC LIMIT 1", (tenant_id, cliente_fiscal_id, limpio, libro or "")).fetchone()
         if f:
-            return {**dict(f), "origen": "apuntes"}
+            hallada = dict(f)
+            if libro and hallada["libro"] == libro:                       # lo habitual con esta contraparte en este libro: se propone, la persona lo cambia si quiere
+                hallada["habitual"] = {"tipo_iva": f"{hallada['tipo_iva_centesimas'] / 100:g}".replace(".", ","), "clave": hallada["clave"], "calificacion": hallada["calificacion"],
+                                       "exenta": hallada["exenta"], "tipo_factura": hallada["tipo_factura"]}
+            for k in ("tipo_iva_centesimas", "clave", "calificacion", "exenta", "tipo_factura", "libro"):
+                hallada.pop(k)
+            return {**hallada, "origen": "apuntes"}
         f = conn.execute(f"SELECT nombre, nif FROM contabilidad_terceros WHERE tenant_id = ? AND cliente_fiscal_id = ? AND {norma.format(c='nif')} = ? AND nombre IS NOT NULL AND nombre <> '' LIMIT 1",
                          (tenant_id, cliente_fiscal_id, limpio)).fetchone()
         if not f:
@@ -320,6 +328,45 @@ def buscar_contraparte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, 
     finally:
         conn.close()
     return None
+
+
+def _siguiente(texto: str) -> str:
+    """«A-0007» → «A-0008»; sin número al final, vacío."""
+    m = re.search(r"(\d+)$", texto or "")
+    if not m:
+        return ""
+    n = m.group(1)
+    return texto[:m.start()] + str(int(n) + 1).zfill(len(n))
+
+
+def siguiente_numero(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int | None = None) -> dict:
+    """La serie y el número que tocan tras la última factura EMITIDA de este titular (por defecto en el formulario). Vacío si aún no hay ninguna."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT serie, numero FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND libro = 'E' AND anulado_en IS NULL AND tipo_factura NOT LIKE 'R%' "
+                         "ORDER BY fecha_expedicion DESC, id DESC LIMIT 1", (tenant_id, cliente_fiscal_id)).fetchone()
+    finally:
+        conn.close()
+    if not f:
+        return {"serie": "", "numero": ""}
+    siguiente = _siguiente(f["numero"])
+    return {"serie": f["serie"] or "", "numero": siguiente} if siguiente else {"serie": f["serie"] or "", "numero": ""}
+
+
+def existe_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, libro: str, serie: str, numero: str, nif: str, excluir_id: int | None = None) -> dict | None:
+    """El apunte vivo con ese libro, serie, número y contraparte (aviso de duplicado en el formulario)."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    if not (numero or "").strip():
+        return None
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT id, fecha_expedicion, contraparte_nombre FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND anulado_en IS NULL AND libro = ? AND COALESCE(serie, '') = ? "
+                         "AND numero = ? AND UPPER(REPLACE(REPLACE(COALESCE(contraparte_nif, ''), ' ', ''), '-', '')) = ? AND id <> ? ORDER BY id DESC LIMIT 1",
+                         (tenant_id, cliente_fiscal_id, libro, (serie or "").strip(), numero.strip(), _nif_limpio(nif), excluir_id or 0)).fetchone()
+    finally:
+        conn.close()
+    return dict(f) if f else None
 
 
 def listar_apuntes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, ejercicio: int | None = None, incluir_anulados: bool = False) -> list[dict]:
@@ -754,6 +801,59 @@ def etiqueta_casilla(casilla: str) -> str:
     return _ETIQUETAS.get(casilla, "")
 
 
+def periodo_por_defecto(hoy: date) -> tuple[int, str]:
+    """El último trimestre ya terminado (el que se declara ahora): en el 4T de 2026 es el 3T de 2026; en el 1T de 2027, el 4T de 2026."""
+    trimestre = (hoy.month - 1) // 3 + 1
+    return (hoy.year, f"{trimestre - 1}T") if trimestre > 1 else (hoy.year - 1, "4T")
+
+
+def comparar_con_anterior(tenant_id: int, usuario_id: int, declaracion_id: int) -> dict | None:
+    """Qué casillas cambian respecto al cálculo anterior del MISMO periodo y titular (al volver a calcular tras corregir un apunte). None si no hay cálculo anterior."""
+    d = obtener_declaracion(tenant_id, usuario_id, declaracion_id)
+    conn = db.get_connection()
+    try:
+        ant = conn.execute("SELECT id, estado, resultado_centimos FROM fiscal_declaraciones WHERE tenant_id = ? AND cliente_fiscal_id = ? AND ejercicio = ? AND periodo = ? AND id < ? ORDER BY id DESC LIMIT 1",
+                           (tenant_id, d["cliente_fiscal_id"], d["ejercicio"], d["periodo"], declaracion_id)).fetchone()
+        if not ant:
+            return None
+        antes = {c["casilla"]: c["valor"] for c in conn.execute("SELECT casilla, valor FROM fiscal_casillas WHERE declaracion_id = ? AND tenant_id = ?", (ant["id"], tenant_id)).fetchall()}
+    finally:
+        conn.close()
+    ahora = d["casillas"]
+    cambios = [{"casilla": k, "antes": antes.get(k, 0), "ahora": ahora.get(k, 0)} for k in sorted(set(antes) | set(ahora)) if antes.get(k, 0) != ahora.get(k, 0) and k not in ("02", "05", "08")]
+    return {"id": ant["id"], "estado": ant["estado"], "cambios": cambios, "resultado_antes": ant["resultado_centimos"], "resultado_ahora": d["resultado_centimos"]}
+
+
+def pendiente_de_recordar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
+    """Lo que falta para cerrar un periodo de un titular (base del mensaje de recordatorio al cliente): facturas revisadas sin registrar, apuntes por libro y fecha límite del 303."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    apuntes = [a for a in listar_apuntes(tenant_id, usuario_id, cliente_fiscal_id, ejercicio=ejercicio) if motor_303_en_periodo(a["fecha_expedicion"], ejercicio, periodo)]
+    sin_registrar = [f for f in facturas_por_registrar(tenant_id, usuario_id, cliente_fiscal_id, ejercicio) if motor_303_en_periodo(f["fecha"], ejercicio, periodo)]
+    conn = db.get_connection()
+    try:
+        v = conn.execute("SELECT fecha_limite FROM vencimientos_fiscales WHERE tenant_id = ? AND cliente_fiscal_id = ? AND modelo = '303' AND periodo = ? AND papelera_en IS NULL ORDER BY id DESC LIMIT 1",
+                         (tenant_id, cliente_fiscal_id, f"{periodo} {ejercicio}")).fetchone()
+    finally:
+        conn.close()
+    return {"emitidas": sum(1 for a in apuntes if a["libro"] == "E"), "recibidas": sum(1 for a in apuntes if a["libro"] == "R"), "sin_registrar": sin_registrar, "fecha_limite": (v["fecha_limite"][:10] if v else None)}
+
+
+def motor_303_en_periodo(fecha: str, ejercicio: int, periodo: str) -> bool:
+    from .fiscal_modelos.apuntes import en_periodo
+    return en_periodo(date.fromisoformat(fecha[:10]), ejercicio, periodo)
+
+
+def _semaforo(c: dict, periodo: tuple[int, str]) -> dict:
+    """Una frase y un nivel por titular, mirando el periodo que toca declarar ahora: rojo = hay que actuar, ámbar = en curso, verde = hecho, gris = nada que hacer."""
+    if not c["perfil"]:
+        return {"nivel": "rojo", "clave": "sin_perfil"}
+    d = next((x for x in reversed(c["declaraciones_periodo"]) if x["estado"] != "anulada"), None)
+    if d is None:
+        return {"nivel": "rojo" if c["apuntes"] else "gris", "clave": "por_calcular" if c["apuntes"] else "sin_apuntes"}
+    return {"nivel": {"borrador": "ambar", "revisada": "ambar", "exportada": "ambar", "presentada": "verde"}[d["estado"]],
+            "clave": {"borrador": "borrador", "revisada": "revisada", "exportada": "pendiente_presentar", "presentada": "presentada"}[d["estado"]]}
+
+
 def resumen_cartera(tenant_id: int, usuario_id: int) -> list[dict]:
     """Una fila por titular que la persona ve: si tiene perfil fiscal, cuántos apuntes del ejercicio y su última declaración."""
     visibles = acceso.clientes_visibles(tenant_id, usuario_id)
@@ -770,9 +870,14 @@ def resumen_cartera(tenant_id: int, usuario_id: int) -> list[dict]:
                               "ORDER BY fecha_limite", (tenant_id,)).fetchall():
             proximos.setdefault(f["cliente_fiscal_id"], dict(f))
         ultimas: dict[int, dict] = {}
-        for f in conn.execute("SELECT id, cliente_fiscal_id, ejercicio, periodo, estado, resultado_centimos FROM fiscal_declaraciones WHERE tenant_id = ? AND estado <> 'anulada' ORDER BY ejercicio, periodo, id",
+        por_periodo: dict[int, list] = {}
+        periodo = periodo_por_defecto(date.today())
+        for f in conn.execute("SELECT id, cliente_fiscal_id, ejercicio, periodo, estado, resultado_centimos FROM fiscal_declaraciones WHERE tenant_id = ? ORDER BY ejercicio, periodo, id",
                               (tenant_id,)).fetchall():
-            ultimas[f["cliente_fiscal_id"]] = dict(f)
+            if f["estado"] != "anulada":
+                ultimas[f["cliente_fiscal_id"]] = dict(f)
+            if (f["ejercicio"], f["periodo"]) == periodo:
+                por_periodo.setdefault(f["cliente_fiscal_id"], []).append(dict(f))
     finally:
         conn.close()
     salida = []
@@ -780,5 +885,8 @@ def resumen_cartera(tenant_id: int, usuario_id: int) -> list[dict]:
         if visibles is not None and c["id"] not in visibles:
             continue
         p = perfiles.get(c["id"])
-        salida.append({**c, "perfil": dict(p) if p else None, "apuntes": apuntes.get(c["id"], 0), "ultima": ultimas.get(c["id"]), "proximo_303": proximos.get(c["id"])})
+        fila = {**c, "perfil": dict(p) if p else None, "apuntes": apuntes.get(c["id"], 0), "ultima": ultimas.get(c["id"]), "proximo_303": proximos.get(c["id"]),
+                "declaraciones_periodo": por_periodo.get(c["id"], [])}
+        fila["semaforo"] = _semaforo(fila, periodo)
+        salida.append(fila)
     return salida

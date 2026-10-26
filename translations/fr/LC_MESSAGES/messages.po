@@ -15955,3 +15955,210 @@ msgstr "Annuler cette déclaration ? Elle restera dans l'historique comme annul�
 
 msgid "Reconocida: se han cargado sus datos."
 msgstr "Reconnue : ses données ont été chargées."
+
+msgid "Abrir en el correo"
+msgstr "Ouvrir dans la messagerie"
+
+msgid "Ajuste"
+msgstr "Ajustement"
+
+msgid "Antes"
+msgstr "Avant"
+
+msgid "Asiento resumen de facturas"
+msgstr "Écriture récapitulative de factures"
+
+msgid "Borrador por revisar"
+msgstr "Brouillon à vérifier"
+
+msgid "Comparado con el cálculo anterior de este periodo (declaración %(i)s): resultado antes %(a)s €, ahora %(b)s €."
+msgstr "Comparé au calcul précédent de cette période (déclaration %(i)s) : résultat avant %(a)s €, maintenant %(b)s €."
+
+msgid "Copiado"
+msgstr "Copié"
+
+msgid "Documento informativo con el estado «%(e)s» en el momento de generarlo. No sustituye a la presentación en la Agencia Tributaria ni a su justificante."
+msgstr "Document informatif avec le statut « %(e)s » au moment de sa génération. Il ne remplace ni le dépôt auprès de l'administration fiscale ni son justificatif."
+
+msgid "Duplicar"
+msgstr "Dupliquer"
+
+msgid "El borrador solo cuenta los apuntes aprobados: regístralas antes de calcular (más abajo, «Facturas revisadas por registrar»)."
+msgstr "Le brouillon ne compte que les écritures approuvées : enregistrez-les avant de calculer (plus bas, « Factures vérifiées à enregistrer »)."
+
+msgid "El dígito de control de este NIF no es válido. Revísalo."
+msgstr "Le chiffre de contrôle de ce NIF n'est pas valide. Vérifiez-le."
+
+msgid "El nombre del fichero contiene el NIF de varios titulares."
+msgstr "Le nom du fichier contient le NIF de plusieurs titulaires."
+
+msgid "El total debería ser base + cuota: {v} €."
+msgstr "Le total devrait être base + cotisation : {v} €."
+
+msgid "Elige al menos un fichero .xlsx."
+msgstr "Choisissez au moins un fichier .xlsx."
+
+msgid "Estado del periodo"
+msgstr "Statut de la période"
+
+msgid "Factura simplificada"
+msgstr "Facture simplifiée"
+
+msgid "Factura sustitutiva de simplificada"
+msgstr "Facture de remplacement d'une facture simplifiée"
+
+msgid "Facturas pendientes de registrar (%(n)s):"
+msgstr "Factures à enregistrer (%(n)s) :"
+
+msgid "Fecha de operación"
+msgstr "Date d'opération"
+
+msgid "Fecha límite de presentación: %(f)s."
+msgstr "Date limite de dépôt : %(f)s."
+
+msgid "Fichero"
+msgstr "Fichier"
+
+msgid "Filtrar por estado"
+msgstr "Filtrer par statut"
+
+msgid "Gracias."
+msgstr "Merci."
+
+msgid "Hay facturas revisadas sin registrar."
+msgstr "Il y a des factures vérifiées non enregistrées."
+
+msgid "Hola,"
+msgstr "Bonjour,"
+
+msgid "IVA %(p)s %(e)s: documentación pendiente"
+msgstr "TVA %(p)s %(e)s : documents en attente"
+
+msgid "Importación (DUA)"
+msgstr "Importation (DAU)"
+
+msgid "Importar varios libros"
+msgstr "Importer plusieurs livres"
+
+msgid "Importar varios libros registro a la vez"
+msgstr "Importer plusieurs registres à la fois"
+
+msgid "Justificante contable"
+msgstr "Justificatif comptable"
+
+msgid "La AEAT exige que la cuota sea base × tipo: {v} €."
+msgstr "L'AEAT exige que la cotisation soit base × taux : {v} €."
+
+msgid "La operación es de otra fecha"
+msgstr "L'opération date d'un autre jour"
+
+msgid "Las casillas son las mismas."
+msgstr "Les cases sont les mêmes."
+
+msgid "Libros registro (.xlsx)"
+msgstr "Registres (.xlsx)"
+
+msgid "Liquidación complementaria"
+msgstr "Liquidation complémentaire"
+
+msgid "Lista para generar el fichero"
+msgstr "Prête à générer le fichier"
+
+msgid "Mensaje al cliente: lo que falta para cerrar el trimestre"
+msgstr "Message au client : ce qui manque pour clôturer le trimestre"
+
+msgid "No se sabe a qué titular pertenece: el nombre del fichero debe contener su NIF."
+msgstr "On ne sait pas à quel titulaire il appartient : le nom du fichier doit contenir son NIF."
+
+msgid "No tenemos ninguna factura de gastos de este periodo. Envíanos las facturas recibidas (o confírmanos que no hay)."
+msgstr "Nous n'avons aucune facture de dépenses pour cette période. Envoyez-nous les factures reçues (ou confirmez qu'il n'y en a pas)."
+
+msgid "No tenemos ninguna factura emitida de este periodo. Si no ha facturado, avísanos; si ha facturado, envíanos las facturas."
+msgstr "Nous n'avons aucune facture émise pour cette période. Si vous n'avez pas facturé, dites-le-nous ; sinon, envoyez-nous les factures."
+
+msgid "Para presentar el IVA (modelo 303) del %(p)s de %(e)s necesitamos lo siguiente:"
+msgstr "Pour déposer la TVA (modèle 303) du %(p)s %(e)s, nous avons besoin de ce qui suit :"
+
+msgid "Pendiente de presentar"
+msgstr "À déposer"
+
+msgid "Periodo %(p)s de %(e)s"
+msgstr "Période %(p)s de %(e)s"
+
+msgid "Por calcular"
+msgstr "À calculer"
+
+msgid "Presentados"
+msgstr "Déposés"
+
+msgid "Qué ha cambiado respecto al cálculo anterior"
+msgstr "Ce qui a changé par rapport au calcul précédent"
+
+msgid "Rectificativa (concurso de acreedores)"
+msgstr "Rectificative (procédure collective)"
+
+msgid "Rectificativa (deuda incobrable)"
+msgstr "Rectificative (créance irrécouvrable)"
+
+msgid "Rectificativa (error fundado en derecho)"
+msgstr "Rectificative (erreur de droit)"
+
+msgid "Rectificativa (resto)"
+msgstr "Rectificative (autres)"
+
+msgid "Rectificativa de simplificada"
+msgstr "Rectificative de facture simplifiée"
+
+msgid "Resultado fichero a fichero."
+msgstr "Résultat fichier par fichier."
+
+msgid "Resultado: a devolver %(i)s (se ha pedido la devolución)."
+msgstr "Résultat : à rembourser %(i)s (le remboursement a été demandé)."
+
+msgid "Resultado: a favor del contribuyente, %(i)s, que se compensa en los periodos siguientes."
+msgstr "Résultat : en faveur du contribuable, %(i)s, à compenser sur les périodes suivantes."
+
+msgid "Resultado: a ingresar %(i)s."
+msgstr "Résultat : à payer %(i)s."
+
+msgid "Resultado: cero, no hay nada que ingresar."
+msgstr "Résultat : zéro, rien à payer."
+
+msgid "Resumen del modelo 303"
+msgstr "Récapitulatif du modèle 303"
+
+msgid "Resumen del modelo 303 (IVA)"
+msgstr "Récapitulatif du modèle 303 (TVA)"
+
+msgid "Resumen en PDF para el cliente"
+msgstr "Récapitulatif PDF pour le client"
+
+msgid "Sin apuntes"
+msgstr "Aucune écriture"
+
+msgid "Sin perfil fiscal"
+msgstr "Aucun profil fiscal"
+
+msgid "Sube varios ficheros .xlsx en el formato oficial de la AEAT. Cada uno se asigna al titular cuyo NIF aparece en el nombre del fichero (por ejemplo, A12345674-2T.xlsx). Lo que no se pueda asignar se te dice, no se adivina."
+msgstr "Téléversez plusieurs fichiers .xlsx au format officiel de l'AEAT. Chacun est attribué au titulaire dont le NIF figure dans le nom du fichier (par exemple, A12345674-2T.xlsx). Ce qui ne peut pas être attribué vous est signalé, jamais deviné."
+
+msgid "Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes."
+msgstr "Texte prêt à envoyer. Guilda Work ne l'envoie pas : copiez-le ou ouvrez-le dans votre messagerie et relisez-le avant."
+
+msgid "Volver a la cartera"
+msgstr "Retour au portefeuille"
+
+msgid "Ya hay un apunte con este número y esta contraparte (del {f}). ¿Es un duplicado?"
+msgstr "Il existe déjà une écriture avec ce numéro et cette contrepartie (du {f}). Est-ce un doublon ?"
+
+msgid "borrador"
+msgstr "brouillon"
+
+msgid "exportada"
+msgstr "exportée"
+
+msgid "presentada"
+msgstr "déposée"
+
+msgid "revisada"
+msgstr "vérifiée"

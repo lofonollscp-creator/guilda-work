@@ -1,43 +1,49 @@
 {% extends "base.html" %}
 {% from "_nucleo_macros.html" import aviso_error %}
+{% from "_fiscal_etiquetas.html" import tipo_factura %}
 {% block title %}{{ _('Apunte fiscal') }} — {{ c.nombre }}{% endblock %}
+{% block scripts_pagina %}<script src="{{ url_for('static', filename='fiscal_apunte.js') }}"></script>{% endblock %}
 {% block content %}
 {% set e = datos.get('libro', 'E') == 'E' %}
 <header class="page-header">
   <div><h1>{% if apunte_id %}{{ _('Apunte fiscal') }}{% else %}{{ _('Nuevo apunte fiscal') }}{% endif %}</h1><p class="subtitle">{{ c.nombre }} · {{ _('Libro de facturas emitidas') if e else _('Libro de facturas recibidas') }}</p></div>
-  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ _('Volver') }}</a>
+  <div class="ds-fila ds-envolver">
+    {% if apunte_id and puede_aprobar %}<a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id, copiar=apunte_id) }}">{{ _('Duplicar') }}</a>{% endif %}
+    <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ _('Volver') }}</a>
+  </div>
 </header>
 {{ aviso_error(error) }}
 {% if datos.get('anulado_en') %}<p class="ia-error" role="alert">{{ _('Este apunte está anulado: %(m)s', m=datos.get('causa') or '') }}</p>{% endif %}
 <p class="muted">{{ _('Un apunte aprobado es lo que cuenta para el modelo 303. Se comprueba con las mismas reglas que aplica la Agencia Tributaria al importar los libros.') }}</p>
-<form method="post" class="edit-form" data-fiscal-apunte data-contraparte-url="{{ url_for('guilda_fiscal.contraparte', cliente_id=c.id) }}" {% if apunte_id %}action="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=apunte_id) }}"{% else %}action="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id) }}"{% endif %}>
+<form method="post" class="edit-form fiscal-form" data-fiscal-apunte data-libro="{{ datos.get('libro', 'E') }}"{% if apunte_id %} data-edicion data-excluir="{{ apunte_id }}"{% endif %} data-comprobar-url="{{ url_for('guilda_fiscal.comprobar_numero', cliente_id=c.id) }}" data-contraparte-url="{{ url_for('guilda_fiscal.contraparte', cliente_id=c.id) }}" {% if apunte_id %}action="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=apunte_id) }}"{% else %}action="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id) }}"{% endif %}>
   <input type="hidden" name="libro" value="{{ datos.get('libro', 'E') }}">
   {% if datos.get('factura_id') %}<input type="hidden" name="factura_id" value="{{ datos.factura_id }}">{% endif %}
   {% if apunte_id %}<input type="hidden" name="version" value="{{ datos.version }}">{% endif %}
   <div class="fila-campos">
-    <label>{{ _('Tipo de factura') }}<select name="tipo_factura">{% for t in tipos %}<option {{ 'selected' if datos.get('tipo_factura') == t }}>{{ t }}</option>{% endfor %}</select></label>
+    <label>{{ _('Tipo de factura') }}<select name="tipo_factura">{% for t in tipos %}<option value="{{ t }}" {{ 'selected' if datos.get('tipo_factura') == t }}>{{ t }} · {{ tipo_factura(t) }}</option>{% endfor %}</select></label>
     <label>{{ _('Clave de operación') }}<select name="clave">{% for v, n in (claves_e if e else claves_r) %}<option value="{{ v }}" {{ 'selected' if datos.get('clave') == v }}>{{ n }}</option>{% endfor %}</select></label>
     {% if e %}<label>{{ _('Calificación') }}<select name="calificacion">{% for v, n in calificaciones %}<option value="{{ v }}" {{ 'selected' if datos.get('calificacion') == v }}>{{ n }}</option>{% endfor %}</select></label>
     <label>{{ _('Exención') }}<select name="exenta">{% for v, n in exenciones %}<option value="{{ v }}" {{ 'selected' if datos.get('exenta') == v }}>{{ n }}</option>{% endfor %}</select></label>{% endif %}
   </div>
   <div class="fila-campos">
     <label>{{ _('Serie') }}<input type="text" name="serie" value="{{ datos.get('serie') or '' }}" maxlength="20"></label>
-    <label>{{ _('Número') }}<input type="text" name="numero" value="{{ datos.get('numero') or '' }}" maxlength="40" required></label>
+    <label>{{ _('Número') }}<input type="text" name="numero" value="{{ datos.get('numero') or '' }}" maxlength="40" required><small class="fiscal-ayuda" data-duplicado-aviso role="status" aria-live="polite" data-texto="{{ _('Ya hay un apunte con este número y esta contraparte (del {f}). ¿Es un duplicado?') }}"></small></label>
     <label>{{ _('Fecha de expedición') }}<input type="date" name="fecha_expedicion" value="{{ datos.get('fecha_expedicion') or '' }}" required></label>
-    <label>{{ _('Fecha de operación (si es distinta)') }}<input type="date" name="fecha_operacion" value="{{ datos.get('fecha_operacion') or '' }}"></label>
+    <label data-fecha-operacion {% if not datos.get('fecha_operacion') %}hidden{% endif %}>{{ _('Fecha de operación') }}<input type="date" name="fecha_operacion" value="{{ datos.get('fecha_operacion') or '' }}"></label>
+    {% if not datos.get('fecha_operacion') %}<button type="button" class="btn btn-ghost btn-sm fiscal-mas" data-mostrar-operacion>+ {{ _('La operación es de otra fecha') }}</button>{% endif %}
     {% if not e %}<label>{{ _('Fecha de recepción') }}<input type="date" name="fecha_recepcion" value="{{ datos.get('fecha_recepcion') or '' }}"></label>{% endif %}
   </div>
   <div class="fila-campos">
     <label>{{ _('Nombre de la contraparte') }}<input type="text" name="contraparte_nombre" value="{{ datos.get('contraparte_nombre') or '' }}" maxlength="100" required></label>
-    <label>{{ _('NIF') }}<input type="text" name="contraparte_nif" value="{{ datos.get('contraparte_nif') or '' }}" maxlength="20" autocomplete="off"><small class="muted" data-contraparte-aviso role="status" aria-live="polite" data-texto="{{ _('Reconocida: se han cargado sus datos.') }}"></small></label>
+    <label>{{ _('NIF') }}<input type="text" name="contraparte_nif" value="{{ datos.get('contraparte_nif') or '' }}" maxlength="20" autocomplete="off"><small class="muted" data-contraparte-aviso role="status" aria-live="polite" data-texto="{{ _('Reconocida: se han cargado sus datos.') }}"></small><small class="fiscal-ayuda fiscal-ayuda-aviso" data-nif-aviso role="status" aria-live="polite" data-texto="{{ _('El dígito de control de este NIF no es válido. Revísalo.') }}"></small></label>
     <label>{{ _('Tipo de NIF extranjero') }}<select name="contraparte_nif_tipo">{% for v, n in (('', _('NIF español')), ('02', _('NIF-IVA intracomunitario')), ('03', _('Pasaporte')), ('04', _('Documento oficial del país')), ('05', _('Certificado de residencia')), ('06', _('Otro'))) %}<option value="{{ v }}" {{ 'selected' if datos.get('contraparte_nif_tipo') == v }}>{{ n }}</option>{% endfor %}</select></label>
     <label>{{ _('País (2 letras)') }}<input type="text" name="contraparte_pais" value="{{ datos.get('contraparte_pais') or '' }}" maxlength="2"></label>
   </div>
   <div class="fila-campos">
     <label>{{ _('Base imponible (€)') }}<input type="text" name="base" value="{{ datos.get('base') or '' }}" inputmode="decimal" required></label>
     <label>{{ _('Tipo de IVA') }} (%)<input type="text" name="tipo_iva" value="{{ datos.get('tipo_iva') or '' }}" inputmode="decimal"></label>
-    <label>{{ _('Cuota (€; en blanco = base × tipo)') }}<input type="text" name="cuota" value="{{ datos.get('cuota') or '' }}" inputmode="decimal"></label>
-    <label>{{ _('Total de la factura (€, opcional)') }}<input type="text" name="total" value="{{ datos.get('total') or '' }}" inputmode="decimal"></label>
+    <label>{{ _('Cuota (€; en blanco = base × tipo)') }}<input type="text" name="cuota" value="{{ datos.get('cuota') or '' }}" inputmode="decimal"><small class="fiscal-ayuda fiscal-ayuda-aviso" data-cuota-aviso role="status" aria-live="polite" data-texto="{{ _('La AEAT exige que la cuota sea base × tipo: {v} €.') }}"></small></label>
+    <label>{{ _('Total de la factura (€, opcional)') }}<input type="text" name="total" value="{{ datos.get('total') or '' }}" inputmode="decimal"><small class="fiscal-ayuda fiscal-ayuda-aviso" data-total-aviso role="status" aria-live="polite" data-texto="{{ _('El total debería ser base + cuota: {v} €.') }}"></small></label>
   </div>
   {% if not e %}
   <div class="fila-campos">

@@ -175,3 +175,69 @@ def test_reconoce_una_contraparte_ya_usada_por_su_nif(cliente):
     assert cliente.get(f"/guilda-fiscal/{c}/contraparte?nif=B8").get_json()["encontrada"] is None
     assert cliente.get(f"/guilda-fiscal/{c + 99}/contraparte?nif=B87654321").status_code == 404
     assert "data-contraparte-url" in cliente.get(f"/guilda-fiscal/{c}/apuntes/nuevo?libro=E").get_data(as_text=True)
+
+
+def _emitida(cliente, c, numero, fecha="2026-05-10", nif="B87654321", nombre="Cliente SL", base="100,00"):
+    datos = {"tipo_factura": "F1", "clave": "01", "serie": "A", "numero": numero, "libro": "E", "calificacion": "S1", "fecha_expedicion": fecha, "base": base, "tipo_iva": "21",
+             "contraparte_nif": nif, "contraparte_nombre": nombre}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+
+
+def test_numeracion_duplicar_y_aviso_de_duplicado(cliente):
+    uid, t, c = _web(cliente, email="numeracion@ejemplo.com")
+    _emitida(cliente, c, "A-0007", "2026-05-31")
+    nuevo = cliente.get(f"/guilda-fiscal/{c}/apuntes/nuevo?libro=E").get_data(as_text=True)
+    assert 'value="A-0008"' in nuevo                                    # la numeración sigue sola
+    apunte = fn.listar_apuntes(t, uid, c)[0]
+    copia = cliente.get(f"/guilda-fiscal/{c}/apuntes/nuevo?copiar={apunte['id']}").get_data(as_text=True)
+    assert 'value="A-0008"' in copia and 'value="2026-06-30"' in copia and "Cliente SL" in copia and 'value="100,00"' in copia      # 31 de mayo + 1 mes = 30 de junio
+    assert cliente.get(f"/guilda-fiscal/{c}/apuntes/nuevo?copiar=999999").status_code == 404
+    r = cliente.get(f"/guilda-fiscal/{c}/comprobar-numero?libro=E&serie=A&numero=A-0007&nif=b-87654321").get_json()
+    assert r["existe"]["id"] == apunte["id"]
+    assert cliente.get(f"/guilda-fiscal/{c}/comprobar-numero?libro=E&serie=A&numero=A-0007&nif=b-87654321&excluir={apunte['id']}").get_json()["existe"] is None
+    assert cliente.get(f"/guilda-fiscal/{c}/comprobar-numero?libro=E&serie=A&numero=A-0099&nif=B87654321").get_json()["existe"] is None
+
+
+def test_lo_habitual_con_una_contraparte(cliente):
+    uid, t, c = _web(cliente, email="habitual@ejemplo.com")
+    _emitida(cliente, c, "1")
+    r = cliente.get(f"/guilda-fiscal/{c}/contraparte?libro=E&nif=B87654321").get_json()["encontrada"]
+    assert r["habitual"] == {"tipo_iva": "21", "clave": "01", "calificacion": "S1", "exenta": "", "tipo_factura": "F1"}
+    assert "habitual" not in cliente.get(f"/guilda-fiscal/{c}/contraparte?libro=R&nif=B87654321").get_json()["encontrada"]      # en el otro libro no se propone nada
+
+
+def test_cartera_con_semaforo_y_filtros_e_importacion_en_bloque(cliente):
+    uid, t, c = _web(cliente, email="cartera@ejemplo.com")
+    pagina = cliente.get("/guilda-fiscal/").get_data(as_text=True)
+    assert "Sin perfil fiscal" in pagina and "semaforo-rojo" in pagina
+    fp.guardar_perfil(t, uid, c, {"forma_juridica": "sociedad"}, vigente_desde="2026-01-01")
+    assert "Sin apuntes" in cliente.get("/guilda-fiscal/").get_data(as_text=True)
+    assert "Empresa Web SL" not in cliente.get("/guilda-fiscal/?filtro=pendientes").get_data(as_text=True)         # «sin apuntes» es gris: no está entre los pendientes
+    ficha = cliente.get(f"/guilda-fiscal/{c}").get_data(as_text=True)
+    assert "Mensaje al cliente" in ficha and "No tenemos ninguna factura emitida" in ficha                           # sin apuntes en el periodo, el recordatorio pide las facturas
+    import pathlib
+    muestra = pathlib.Path(__file__).resolve().parents[1] / "docs" / "muestras-fiscal" / "basico.xlsx"
+    import io
+    r = cliente.post("/guilda-fiscal/importar-varios", data={"libros": [(io.BytesIO(muestra.read_bytes()), "A12345674-2T.xlsx"), (io.BytesIO(b"x"), "sin-nif.xlsx")]}, content_type="multipart/form-data")
+    texto = r.get_data(as_text=True)
+    assert r.status_code == 200 and "Importadas: 2" in texto and "No se sabe a qué titular" in texto
+    assert len(fn.listar_apuntes(t, uid, c)) == 2
+
+
+def test_resumen_pdf_cambios_y_recordatorio(cliente):
+    uid, t, c = _web(cliente, email="resumen@ejemplo.com")
+    fp.guardar_perfil(t, uid, c, {"forma_juridica": "sociedad"}, vigente_desde="2026-01-01")
+    _emitida(cliente, c, "1")
+    assert cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "2T"}).status_code == 302
+    d1 = max(fn.listar_declaraciones(t, uid, c), key=lambda x: x["id"])
+    pdf = cliente.get(f"/guilda-fiscal/declaracion/{d1['id']}/resumen.pdf")
+    assert pdf.status_code == 200 and pdf.data.startswith(b"%PDF") and pdf.mimetype == "application/pdf"
+    assert "Qué ha cambiado" not in cliente.get(f"/guilda-fiscal/declaracion/{d1['id']}").get_data(as_text=True)      # primer cálculo: nada con lo que comparar
+    _emitida(cliente, c, "2", "2026-05-20", base="200,00")
+    assert cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "2T"}).status_code == 302
+    d2 = max((x for x in fn.listar_declaraciones(t, uid, c)), key=lambda x: x["id"])
+    cambios = fn.comparar_con_anterior(t, uid, d2["id"])
+    assert cambios["id"] == d1["id"] and {x["casilla"] for x in cambios["cambios"]} >= {"07", "09", "71"}
+    assert "Qué ha cambiado" in cliente.get(f"/guilda-fiscal/declaracion/{d2['id']}").get_data(as_text=True)
+    assert cliente.post(f"/guilda-fiscal/declaracion/{d2['id']}/anular").status_code == 302
+    assert cliente.get(f"/guilda-fiscal/declaracion/{d2['id']}/resumen.pdf").status_code == 404

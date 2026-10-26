@@ -33,8 +33,20 @@
   <p>{{ _('Ficheros') }}: <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='303') }}">{{ _('Fichero .303 para importar en la AEAT') }}</a> · <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='libro_xlsx') }}">{{ _('Libro registro (.xlsx)') }}</a> · <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='resumen') }}">{{ _('Resumen') }}</a></p>
   <p class="muted">{{ _('Guilda Work no presenta la declaración: importa el fichero en la sede electrónica (o pásalo a tu colaborador social) y, cuando se presente, anótalo aquí.') }}</p>
   {% endif %}
+  {% if d.estado != 'anulada' %}<p><a href="{{ url_for('guilda_fiscal.declaracion_resumen_pdf', declaracion_id=d.id) }}" target="_blank" rel="noopener">{{ _('Resumen en PDF para el cliente') }}</a></p>{% endif %}
   {% if d.referencia_presentacion %}<p class="muted">{{ _('Presentada: %(r)s', r=d.referencia_presentacion) }}</p>{% endif %}
 </section>
+
+{% if cambios %}
+<section class="dash-panel">
+  <h2>{{ _('Qué ha cambiado respecto al cálculo anterior') }}</h2>
+  <p class="muted">{{ _('Comparado con el cálculo anterior de este periodo (declaración %(i)s): resultado antes %(a)s €, ahora %(b)s €.', i=cambios.id, a='%.2f'|format(cambios.resultado_antes / 100), b='%.2f'|format(cambios.resultado_ahora / 100)) }}</p>
+  {% if cambios.cambios %}<div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Antes') }}</th><th>{{ _('Ahora') }}</th></tr></thead>
+    <tbody>{% for x in cambios.cambios %}<tr><td>{{ x.casilla }}</td><td>{{ etiqueta_casilla(x.casilla) }}</td><td>{{ '%.2f'|format(x.antes / 100) }}</td><td>{{ '%.2f'|format(x.ahora / 100) }}</td></tr>{% endfor %}</tbody>
+  </table></div>{% else %}<p class="muted">{{ _('Las casillas son las mismas.') }}</p>{% endif %}
+</section>
+{% endif %}
 
 <h2 class="ds-mt-16">{{ _('Casillas') }}</h2>
 <div class="table-wrap ds-mb-16"><table class="historial-table">

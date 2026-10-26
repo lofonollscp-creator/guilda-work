@@ -1,0 +1,6 @@
+{# Nombres legibles de los tipos de factura de los libros registro. #}
+{% macro tipo_factura(t) -%}
+{{ {'F1': _('Factura'), 'F2': _('Factura simplificada'), 'F3': _('Factura sustitutiva de simplificada'), 'F4': _('Asiento resumen de facturas'), 'F5': _('Importación (DUA)'), 'F6': _('Justificante contable'),
+    'R1': _('Rectificativa (error fundado en derecho)'), 'R2': _('Rectificativa (concurso de acreedores)'), 'R3': _('Rectificativa (deuda incobrable)'), 'R4': _('Rectificativa (resto)'),
+    'R5': _('Rectificativa de simplificada'), 'AJ': _('Ajuste'), 'LC': _('Liquidación complementaria')}.get(t, t) }}
+{%- endmacro %}

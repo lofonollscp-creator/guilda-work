@@ -72,7 +72,7 @@ def test_la_cuota_repercutida_es_exactamente_base_por_tipo():
 def test_avisos_no_bloquean():
     ap = [venta(10000), venta(10000, numero="1")]
     p = v.validar(ap, hoy=HOY, nif_titular=TITULAR)
-    assert {x.codigo for x in p} == {"posible_duplicado"} and v.errores(p) == []
+    assert {x.codigo for x in p} == {"posible_duplicado", "nif_digito"} and v.errores(p) == []          # el NIF de los escenarios es inventado: su dígito de control no cuadra (solo avisa)
 
 
 def test_preparar_borrador_de_un_paso():
@@ -86,3 +86,12 @@ def test_preparar_borrador_de_un_paso():
     assert bloqueado.fichero is None and "bloqueado" in bloqueado.motivo_sin_fichero
     ultimo = p.preparar([venta(10000, fecha=d(2026, 10, 5))], ejercicio=2026, periodo="4T", nif=TITULAR, nombre="X", hoy=HOY)
     assert ultimo.fichero is None and "4T" in ultimo.motivo_sin_fichero
+
+
+def test_digito_de_control_del_nif_espanol():
+    ok = ["A12345674", "12345678Z", "X1234567L", "00000000T"]
+    mal = ["A12345675", "12345678A", "B87654321", "X1234567A"]
+    assert all(v.nif_espanol_valido(n) is True for n in ok)
+    assert all(v.nif_espanol_valido(n) is False for n in mal)
+    assert v.nif_espanol_valido("FR40303265045") is None and v.nif_espanol_valido("") is None
+    assert v.nif_espanol_valido("a-1234567-4") is True

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% from "_nucleo_macros.html" import aviso_error %}
+{% from "_fiscal_etiquetas.html" import tipo_factura %}
 {% block title %}{{ c.nombre }} — {{ _('Guilda Fiscal') }}{% endblock %}
+{% block scripts_pagina %}<script src="{{ url_for('static', filename='fiscal_cliente.js') }}"></script>{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
@@ -20,9 +22,10 @@
 <section class="dash-panel">
   <h2>{{ _('Calcular un periodo') }}</h2>
   <p class="muted">{{ _('Congela los apuntes aprobados del periodo (la foto no se puede cambiar) y calcula el borrador del modelo 303 sobre ella.') }}</p>
+  {% if por_registrar %}<p class="aviso-bloque" role="status"><strong>{{ _('Hay facturas revisadas sin registrar.') }}</strong> {{ _('El borrador solo cuenta los apuntes aprobados: regístralas antes de calcular (más abajo, «Facturas revisadas por registrar»).') }}</p>{% endif %}
   <form method="post" action="{{ url_for('guilda_fiscal.periodo', cliente_id=c.id) }}" class="ds-fila ds-envolver">
-    <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100" required></label>
-    <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option>{{ p }}</option>{% endfor %}</select></label>
+    <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ periodo_defecto[0] }}" min="2026" max="2100" required></label>
+    <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option {{ 'selected' if p == periodo_defecto[1] }}>{{ p }}</option>{% endfor %}</select></label>
     <label>{{ _('Si sale a favor') }} <select name="destino_negativo"><option value="C">{{ _('Compensar en periodos siguientes') }}</option><option value="D">{{ _('Solicitar la devolución') }}</option></select></label>
     <button type="submit" class="btn btn-primary">{{ _('Calcular borrador') }}</button>
   </form>
@@ -44,6 +47,18 @@
     {% if puede_aprobar %}<button type="submit" class="btn btn-primary">{{ _('Aprobar las seleccionadas') }}</button>{% endif %}
   </form>
 </section>
+{% endif %}
+
+{% if recordatorio %}
+<details class="dash-panel ds-mb-16">
+  <summary><strong>{{ _('Mensaje al cliente: lo que falta para cerrar el trimestre') }}</strong></summary>
+  <p class="muted">{{ _('Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes.') }}</p>
+  <textarea readonly rows="9" class="fiscal-recordatorio" id="recordatorio-texto">{{ recordatorio.texto }}</textarea>
+  <div class="ds-fila ds-envolver ds-mt-16">
+    <button type="button" class="btn btn-ghost" data-copiar="#recordatorio-texto" data-copiado="{{ _('Copiado') }}">{{ _('Copiar') }}</button>
+    <a class="btn btn-ghost" href="mailto:?subject={{ recordatorio.asunto|urlencode }}&body={{ recordatorio.texto|urlencode }}">{{ _('Abrir en el correo') }}</a>
+  </div>
+</details>
 {% endif %}
 
 <h2 class="ds-mt-16">{{ _('Declaraciones') }}</h2>
@@ -74,9 +89,9 @@
 {% if apuntes %}
 <div class="table-wrap ds-mb-16"><table class="historial-table">
   <thead><tr><th>{{ _('Libro') }}</th><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Contraparte') }}</th><th>{{ _('Base') }}</th><th>{{ _('IVA') }}</th><th>{{ _('Cuota') }}</th><th></th></tr></thead>
-  <tbody>{% for a in apuntes %}<tr><td>{{ _('Emitida') if a.libro == 'E' else _('Recibida') }} {{ a.tipo_factura }}</td><td>{{ a.fecha_expedicion }}</td><td>{{ a.serie }}{{ a.numero }}</td><td>{{ a.contraparte_nombre }}</td>
+  <tbody>{% for a in apuntes %}<tr><td>{{ _('Emitida') if a.libro == 'E' else _('Recibida') }} · <span title="{{ a.tipo_factura }}">{{ tipo_factura(a.tipo_factura) }}</span></td><td>{{ a.fecha_expedicion }}</td><td>{{ a.serie }}{{ a.numero }}</td><td>{{ a.contraparte_nombre }}</td>
     <td>{{ '%.2f'|format(a.base_centimos / 100) }}</td><td>{{ '%g'|format(a.tipo_iva_centesimas / 100) }} %</td><td>{{ '%.2f'|format(a.cuota_centimos / 100) }}</td>
-    <td><a href="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=a.id) }}">{{ _('Ver') }}</a></td></tr>{% endfor %}</tbody>
+    <td><a href="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=a.id) }}">{{ _('Ver') }}</a>{% if puede_aprobar %} · <a href="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id, copiar=a.id) }}">{{ _('Duplicar') }}</a>{% endif %}</td></tr>{% endfor %}</tbody>
 </table></div>
 {% else %}<p class="muted">{{ _('No hay apuntes aprobados en este ejercicio.') }}</p>{% endif %}
 {% endblock %}

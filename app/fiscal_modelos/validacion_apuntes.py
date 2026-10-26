@@ -92,12 +92,37 @@ def validar_apunte(a: Apunte, indice: int | None = None, *, hoy: date | None = N
             p.append(_e("nif_iva_invalido", f"{nombre}: el NIF-IVA intracomunitario no tiene un formato válido.", indice))
         elif (a.contraparte_pais or nif[:2]) == "FR" and not _clave_francesa_correcta(nif):
             p.append(_e("nif_iva_invalido", f"{nombre}: el NIF-IVA francés no pasa la comprobación de su clave.", indice))
+    elif a.contraparte_nif and a.contraparte_nif_tipo == "" and nif_espanol_valido(a.contraparte_nif) is False:
+        p.append(_a("nif_digito", f"{nombre}: el dígito de control del NIF de la contraparte no es válido.", indice))
     elif a.contraparte_nif and not re.fullmatch(r"[A-Z0-9]\d{7}[A-Z0-9]", a.contraparte_nif.replace("-", "").upper()) and a.contraparte_nif_tipo == "":
         p.append(_a("nif_dudoso", f"{nombre}: el NIF de la contraparte no tiene la forma de un NIF español (L99999999 / 99999999L).", indice))
     tipos = TIPOS_IVA_VIGENTES.get(a.fecha_expedicion.year)
     if tipos and a.calificacion == "S1" and a.libro != RECIBIDAS and not rectifica and a.tipo_iva not in tipos:
         p.append(_e("tipo_iva_no_vigente", f"{nombre}: el tipo de IVA del {a.tipo_iva / 100:g} % no está vigente en {a.fecha_expedicion.year} (salvo en rectificativas).", indice))
     return p
+
+
+def nif_espanol_valido(nif: str) -> bool | None:
+    """Dígito de control de un NIF español (DNI, NIE o CIF). None si no tiene forma de ninguno (no se juzga); K, L y M no se juzgan."""
+    v = re.sub(r"[\s.-]", "", nif or "").upper()
+    letras = "TRWAGMYFPDXBNJZSQVHLCKE"
+    if re.fullmatch(r"\d{8}[A-Z]", v):
+        return letras[int(v[:8]) % 23] == v[8]
+    if re.fullmatch(r"[XYZ]\d{7}[A-Z]", v):
+        return letras[int(str("XYZ".index(v[0])) + v[1:8]) % 23] == v[8]
+    if re.fullmatch(r"[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]", v):
+        suma = 0
+        for i, ch in enumerate(v[1:8]):
+            d = int(ch) * (2 if i % 2 == 0 else 1)
+            suma += d // 10 + d % 10
+        control = (10 - suma % 10) % 10
+        letra = "JABCDEFGHI"[control]
+        if v[0] in "PQRSNW":
+            return v[8] == letra
+        if v[0] in "ABEH":
+            return v[8] == str(control)
+        return v[8] in (str(control), letra)
+    return None
 
 
 def _clave_francesa_correcta(nif: str) -> bool:

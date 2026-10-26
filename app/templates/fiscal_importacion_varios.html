@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Importar varios libros') }} — Guilda Fiscal{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Importar varios libros') }}</h1><p class="subtitle">{{ _('Resultado fichero a fichero.') }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('guilda_fiscal.cartera') }}">{{ _('Volver a la cartera') }}</a>
+</header>
+<div class="table-wrap ds-mb-16"><table class="historial-table">
+  <thead><tr><th>{{ _('Fichero') }}</th><th>{{ _('Titular') }}</th><th>{{ _('Resultado') }}</th></tr></thead>
+  <tbody>{% for x in resultados %}<tr>
+    <td>{{ x.nombre }}</td>
+    <td>{% if x.titular %}<a href="{{ url_for('guilda_fiscal.cliente', cliente_id=x.titular.id) }}">{{ x.titular.nombre }}</a>{% else %}—{% endif %}</td>
+    <td>{% if x.error %}<span class="pill prioridad-alta">{{ x.error }}</span>
+      {% else %}{{ _('Filas leídas: %(n)s · Importadas: %(i)s · Ya existían: %(r)s · Rechazadas: %(x)s', n=x.r.leidos, i=x.r.importados, r=x.r.repetidos, x=x.r.rechazados|length) }}
+        {% if x.r.rechazados %}<ul>{% for z in x.r.rechazados[:5] %}<li>{{ z.hoja }} · {{ _('fila %(f)s', f=z.fila) }}: {{ z.motivo }}</li>{% endfor %}</ul>{% endif %}{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

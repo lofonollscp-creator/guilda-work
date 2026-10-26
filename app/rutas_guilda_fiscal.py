@@ -4,12 +4,13 @@ fiscal; el resto de la gestoría ve y prepara. Guilda Work no presenta: genera e
 («/fiscal» ya es el calendario fiscal: esto vive en «/guilda-fiscal».)"""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from urllib.parse import quote
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
+from flask_babel import gettext as _
 
-from . import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_perfiles as fp, verticales
+from . import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
 from .fiscal_modelos.apuntes import Apunte
 from .fiscal_perfiles import ErrorFiscal
@@ -70,7 +71,36 @@ def _cliente_o_404(cliente_id: int) -> dict:
 @guilda_fiscal_bp.route("/")
 @login_required
 def cartera():
-    return render_template("fiscal_cartera.html", filas=fn.resumen_cartera(g.tenant_id, g.usuario_id), error=_error())
+    todas = fn.resumen_cartera(g.tenant_id, g.usuario_id)
+    filtro = request.args.get("filtro", "")
+    cuentas = {n: sum(1 for f in todas if f["semaforo"]["nivel"] == n) for n in ("rojo", "ambar", "verde", "gris")}
+    filas = [f for f in todas if filtro in ("", "todos") or (filtro == "pendientes" and f["semaforo"]["nivel"] in ("rojo", "ambar")) or f["semaforo"]["clave"] == filtro]
+    orden = {"rojo": 0, "ambar": 1, "verde": 2, "gris": 3}
+    filas.sort(key=lambda f: (orden[f["semaforo"]["nivel"]], (f["proximo_303"] or {}).get("fecha_limite") or "9999", f["nombre"].lower()))      # lo urgente arriba, y dentro, lo que vence antes
+    return render_template("fiscal_cartera.html", filas=filas, cuentas=cuentas, filtro=filtro, periodo=fn.periodo_por_defecto(date.today()), error=_error())
+
+
+def _recordatorio(c: dict, periodo: tuple[int, str]) -> dict | None:
+    """El mensaje al cliente con lo que falta para cerrar el periodo (se copia o se abre en el correo; Guilda Work no lo envía). None si no falta nada."""
+    ejercicio, trimestre = periodo
+    try:
+        p = fn.pendiente_de_recordar(g.tenant_id, g.usuario_id, c["id"], ejercicio, trimestre)
+    except ErrorFiscal:
+        return None
+    lineas = []
+    if p["sin_registrar"]:
+        lineas.append(_("Facturas pendientes de registrar (%(n)s):", n=len(p["sin_registrar"])))
+        lineas += [f"  · {f['fecha']} · {f['numero'] or '—'} · {f['tercero_nombre']}" for f in p["sin_registrar"][:15]]
+    if not p["emitidas"]:
+        lineas.append(_("No tenemos ninguna factura emitida de este periodo. Si no ha facturado, avísanos; si ha facturado, envíanos las facturas."))
+    if not p["recibidas"]:
+        lineas.append(_("No tenemos ninguna factura de gastos de este periodo. Envíanos las facturas recibidas (o confírmanos que no hay)."))
+    if not lineas:
+        return None
+    cabecera = [_("Hola,"), "", _("Para presentar el IVA (modelo 303) del %(p)s de %(e)s necesitamos lo siguiente:", p=trimestre, e=ejercicio), ""]
+    cierre = ["", _("Fecha límite de presentación: %(f)s.", f=p["fecha_limite"]) if p["fecha_limite"] else "", _("Gracias."), ""]
+    texto = "\n".join(cabecera + lineas + [x for x in cierre if x is not None])
+    return {"asunto": _("IVA %(p)s %(e)s: documentación pendiente", p=trimestre, e=ejercicio), "texto": texto.strip()}
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>")
@@ -80,7 +110,7 @@ def cliente(cliente_id: int):
     ejercicio = request.args.get("ejercicio", date.today().year, type=int)
     return render_template("fiscal_cliente.html", c=c, ejercicio=ejercicio, perfil=fp.perfil_en(g.tenant_id, cliente_id, date.today().isoformat()),
                            apuntes=fn.listar_apuntes(g.tenant_id, g.usuario_id, cliente_id, ejercicio=ejercicio), declaraciones=fn.listar_declaraciones(g.tenant_id, g.usuario_id, cliente_id),
-                           periodos=PERIODOS, por_registrar=fn.facturas_por_registrar(g.tenant_id, g.usuario_id, cliente_id, ejercicio), error=_error())
+                           periodos=PERIODOS, periodo_defecto=fn.periodo_por_defecto(date.today()), recordatorio=_recordatorio(c, fn.periodo_por_defecto(date.today())), por_registrar=fn.facturas_por_registrar(g.tenant_id, g.usuario_id, cliente_id, ejercicio), error=_error())
 
 
 def _opciones_perfil() -> dict:
@@ -93,10 +123,23 @@ def contraparte(cliente_id: int):
     """JSON con los datos que ya conocemos de una contraparte por su NIF (para rellenar el formulario del apunte)."""
     _cliente_o_404(cliente_id)
     try:
-        encontrada = fn.buscar_contraparte(g.tenant_id, g.usuario_id, cliente_id, request.args.get("nif", ""))
+        encontrada = fn.buscar_contraparte(g.tenant_id, g.usuario_id, cliente_id, request.args.get("nif", ""), request.args.get("libro") or None)
     except ErrorFiscal:
         abort(404)
     return jsonify({"encontrada": encontrada})
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/comprobar-numero")
+@login_required
+def comprobar_numero(cliente_id: int):
+    """JSON: ¿ya hay un apunte con esta serie, número y contraparte? (aviso de duplicado mientras se escribe)"""
+    _cliente_o_404(cliente_id)
+    a = request.args
+    try:
+        f = fn.existe_apunte(g.tenant_id, g.usuario_id, cliente_id, a.get("libro", "E"), a.get("serie", ""), a.get("numero", ""), a.get("nif", ""), a.get("excluir", type=int))
+    except ErrorFiscal:
+        abort(404)
+    return jsonify({"existe": f})
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/perfil", methods=["GET", "POST"])
@@ -155,6 +198,20 @@ def _apunte_del_formulario() -> tuple[Apunte, str | None]:
                   periodo_deduccion=deduccion, inmueble_situacion=f.get("inmueble_situacion", ""), inmueble_referencia=f.get("inmueble_referencia", "").strip().upper()), (f.get("causa") or None)
 
 
+def _datos_de_apunte(fila: dict) -> dict:
+    datos = dict(fila)
+    datos.update({"base": _euros_texto(fila["base_centimos"]), "cuota": _euros_texto(fila["cuota_centimos"]), "tipo_iva": f"{fila['tipo_iva_centesimas'] / 100:g}".replace(".", ","),
+                  "total": _euros_texto(fila["total_centimos"]), "cuota_deducible": _euros_texto(fila["cuota_deducible_centimos"])})
+    return datos
+
+
+def _un_mes_despues(texto: str) -> str:
+    d = date.fromisoformat(texto)
+    mes, anio = (1, d.year + 1) if d.month == 12 else (d.month + 1, d.year)
+    primero_del_siguiente = date(anio + 1, 1, 1) if mes == 12 else date(anio, mes + 1, 1)
+    return date(anio, mes, min(d.day, (primero_del_siguiente - timedelta(days=1)).day)).isoformat()
+
+
 def _plantilla_apunte(c: dict, datos: dict, apunte_id: int | None, error: str | None, estado: int = 200):
     return render_template("fiscal_apunte.html", c=c, datos=datos, apunte_id=apunte_id, tipos=TIPOS_FACTURA, claves_e=CLAVES_EXPEDIDAS, claves_r=CLAVES_RECIBIDAS, calificaciones=CALIFICACIONES,
                            exenciones=EXENCIONES, error=error), estado
@@ -176,6 +233,21 @@ def apunte_nuevo(cliente_id: int):
             return _plantilla_apunte(c, request.form.to_dict(), None, str(e), 400)
         return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id, ejercicio=apunte.fecha_expedicion.year))
     datos = {"libro": request.args.get("libro", "E"), "tipo_factura": "F1", "clave": "01", "calificacion": "S1", "tipo_iva": "21"}
+    if datos["libro"] == "E":                                            # la numeración sigue sola: serie y número tras la última emitida
+        datos.update({k: v for k, v in fn.siguiente_numero(g.tenant_id, g.usuario_id, cliente_id).items() if v})
+    copiar = request.args.get("copiar", type=int)
+    if copiar:                                                           # «Duplicar»: misma contraparte, importes y claves; número nuevo y fecha un mes después
+        origen = next((a for a in fn.listar_apuntes(g.tenant_id, g.usuario_id, cliente_id, incluir_anulados=True) if a["id"] == copiar), None)
+        if not origen:
+            abort(404)
+        datos = _datos_de_apunte(origen)
+        for k in ("anulado_en", "causa", "version", "id"):
+            datos.pop(k, None)
+        datos["fecha_expedicion"] = _un_mes_despues(origen["fecha_expedicion"])
+        datos["fecha_recepcion"] = _un_mes_despues(origen["fecha_recepcion"]) if origen.get("fecha_recepcion") else ""
+        datos["fecha_operacion"] = ""
+        datos["numero"] = fn.siguiente_numero(g.tenant_id, g.usuario_id, cliente_id)["numero"] if origen["libro"] == "E" else ""
+        return _plantilla_apunte(c, datos, None, _error())
     factura_id, n = request.args.get("factura_id", type=int), request.args.get("n", 1, type=int)
     if factura_id:                                                       # propuesta a partir de una factura ya anotada: se revisa y se aprueba aquí
         try:
@@ -202,10 +274,7 @@ def apunte_ver(cliente_id: int, apunte_id: int):
         except (ErrorFiscal, ValueError, KeyError) as e:
             return _plantilla_apunte(c, request.form.to_dict(), apunte_id, str(e), 400)
         return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id, ejercicio=apunte.fecha_expedicion.year))
-    datos = dict(fila)
-    datos.update({"base": _euros_texto(fila["base_centimos"]), "cuota": _euros_texto(fila["cuota_centimos"]), "tipo_iva": f"{fila['tipo_iva_centesimas'] / 100:g}".replace(".", ","),
-                  "total": _euros_texto(fila["total_centimos"]), "cuota_deducible": _euros_texto(fila["cuota_deducible_centimos"])})
-    return _plantilla_apunte(c, datos, apunte_id, _error())
+    return _plantilla_apunte(c, _datos_de_apunte(fila), apunte_id, _error())
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/apuntes/<int:apunte_id>/anular", methods=["POST"])
@@ -248,6 +317,32 @@ def importar_libro(cliente_id: int):
     return render_template("fiscal_importacion.html", c=c, r=r, nombre=archivo.filename)
 
 
+@guilda_fiscal_bp.route("/importar-varios", methods=["POST"])
+@login_required
+def importar_varios():
+    """Varios libros .xlsx de una vez: cada uno va al titular cuyo NIF aparece en el nombre del fichero (p. ej. «A12345674-2T.xlsx»). Lo que no se puede asignar se dice, no se adivina."""
+    archivos = [a for a in request.files.getlist("libros") if a and a.filename]
+    if not archivos:
+        return _atras(url_for("guilda_fiscal.cartera"), _("Elige al menos un fichero .xlsx."))
+    por_nif = {}
+    for f in fn.resumen_cartera(g.tenant_id, g.usuario_id):
+        limpio = "".join(ch for ch in (f["nif"] or "").upper() if ch.isalnum())
+        if len(limpio) >= 8:
+            por_nif[limpio] = f
+    resultados = []
+    for a in archivos[:40]:
+        nombre = "".join(ch for ch in a.filename.upper() if ch.isalnum())
+        titulares = [f for nif, f in por_nif.items() if nif in nombre]
+        if len(titulares) != 1:
+            resultados.append({"nombre": a.filename, "titular": None, "error": _("No se sabe a qué titular pertenece: el nombre del fichero debe contener su NIF.") if not titulares else _("El nombre del fichero contiene el NIF de varios titulares."), "r": None})
+            continue
+        try:
+            resultados.append({"nombre": a.filename, "titular": titulares[0], "error": None, "r": fn.importar_libro(g.tenant_id, g.usuario_id, titulares[0]["id"], a.read(8_000_001))})
+        except ErrorFiscal as e:
+            resultados.append({"nombre": a.filename, "titular": titulares[0], "error": str(e), "r": None})
+    return render_template("fiscal_importacion_varios.html", resultados=resultados)
+
+
 @guilda_fiscal_bp.route("/<int:cliente_id>/periodo", methods=["POST"])
 @login_required
 def periodo(cliente_id: int):
@@ -270,7 +365,28 @@ def declaracion(declaracion_id: int):
     except ErrorFiscal:
         abort(404)
     c = _cliente_o_404(d["cliente_fiscal_id"])
-    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, apuntes={a["apunte_id"]: a for a in inst["datos"]["apuntes"]}, error=_error())
+    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, apuntes={a["apunte_id"]: a for a in inst["datos"]["apuntes"]}, cambios=fn.comparar_con_anterior(g.tenant_id, g.usuario_id, declaracion_id),
+                           error=_error())
+
+
+@guilda_fiscal_bp.route("/declaracion/<int:declaracion_id>/resumen.pdf")
+@login_required
+def declaracion_resumen_pdf(declaracion_id: int):
+    """Resumen en PDF para el cliente (informativo, no presenta nada)."""
+    try:
+        d = fn.obtener_declaracion(g.tenant_id, g.usuario_id, declaracion_id)
+    except ErrorFiscal:
+        abort(404)
+    if d["estado"] == "anulada":
+        abort(404)
+    c = _cliente_o_404(d["cliente_fiscal_id"])
+    estados = {"borrador": _("borrador"), "revisada": _("revisada"), "exportada": _("exportada"), "presentada": _("presentada")}
+    pend = fn.pendiente_de_recordar(g.tenant_id, g.usuario_id, d["cliente_fiscal_id"], d["ejercicio"], d["periodo"])
+    fila_despacho = db.obtener_tenant(g.tenant_id)
+    nombre_despacho = fila_despacho["nombre"] if fila_despacho else ""
+    pdf = fiscal_resumen_pdf.generar(titular=c["nombre"], nif=c["nif"], ejercicio=d["ejercicio"], periodo=d["periodo"], estado=estados.get(d["estado"], d["estado"]), casillas=d["casillas"],
+                                     etiqueta=fn.etiqueta_casilla, tipo_declaracion=d["tipo_declaracion"], fecha_limite=pend["fecha_limite"], gestoria=nombre_despacho)
+    return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="303-{d["ejercicio"]}-{d["periodo"]}.pdf"'})
 
 
 @guilda_fiscal_bp.route("/declaracion/<int:declaracion_id>/<accion>", methods=["POST"])

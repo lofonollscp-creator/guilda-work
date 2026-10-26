@@ -15879,3 +15879,210 @@ msgstr "Vols anul·lar aquesta declaració? Quedarà a l'historial com a anul·l
 
 msgid "Reconocida: se han cargado sus datos."
 msgstr "Reconeguda: s'han carregat les seves dades."
+
+msgid "Abrir en el correo"
+msgstr "Obre-ho al correu"
+
+msgid "Ajuste"
+msgstr "Ajust"
+
+msgid "Antes"
+msgstr "Abans"
+
+msgid "Asiento resumen de facturas"
+msgstr "Assentament resum de factures"
+
+msgid "Borrador por revisar"
+msgstr "Esborrany per revisar"
+
+msgid "Comparado con el cálculo anterior de este periodo (declaración %(i)s): resultado antes %(a)s €, ahora %(b)s €."
+msgstr "Comparat amb el càlcul anterior d'aquest període (declaració %(i)s): resultat abans %(a)s €, ara %(b)s €."
+
+msgid "Copiado"
+msgstr "Copiat"
+
+msgid "Documento informativo con el estado «%(e)s» en el momento de generarlo. No sustituye a la presentación en la Agencia Tributaria ni a su justificante."
+msgstr "Document informatiu amb l'estat «%(e)s» en el moment de generar-lo. No substitueix la presentació a l'Agència Tributària ni el seu justificant."
+
+msgid "Duplicar"
+msgstr "Duplica"
+
+msgid "El borrador solo cuenta los apuntes aprobados: regístralas antes de calcular (más abajo, «Facturas revisadas por registrar»)."
+msgstr "L'esborrany només compta els apunts aprovats: registra-les abans de calcular (més avall, «Factures revisades per registrar»)."
+
+msgid "El dígito de control de este NIF no es válido. Revísalo."
+msgstr "El dígit de control d'aquest NIF no és vàlid. Revisa'l."
+
+msgid "El nombre del fichero contiene el NIF de varios titulares."
+msgstr "El nom del fitxer conté el NIF de diversos titulars."
+
+msgid "El total debería ser base + cuota: {v} €."
+msgstr "El total hauria de ser base + quota: {v} €."
+
+msgid "Elige al menos un fichero .xlsx."
+msgstr "Tria almenys un fitxer .xlsx."
+
+msgid "Estado del periodo"
+msgstr "Estat del període"
+
+msgid "Factura simplificada"
+msgstr "Factura simplificada"
+
+msgid "Factura sustitutiva de simplificada"
+msgstr "Factura substitutiva de simplificada"
+
+msgid "Facturas pendientes de registrar (%(n)s):"
+msgstr "Factures pendents de registrar (%(n)s):"
+
+msgid "Fecha de operación"
+msgstr "Data d'operació"
+
+msgid "Fecha límite de presentación: %(f)s."
+msgstr "Data límit de presentació: %(f)s."
+
+msgid "Fichero"
+msgstr "Fitxer"
+
+msgid "Filtrar por estado"
+msgstr "Filtra per estat"
+
+msgid "Gracias."
+msgstr "Gràcies."
+
+msgid "Hay facturas revisadas sin registrar."
+msgstr "Hi ha factures revisades sense registrar."
+
+msgid "Hola,"
+msgstr "Hola,"
+
+msgid "IVA %(p)s %(e)s: documentación pendiente"
+msgstr "IVA %(p)s %(e)s: documentació pendent"
+
+msgid "Importación (DUA)"
+msgstr "Importació (DUA)"
+
+msgid "Importar varios libros"
+msgstr "Importa diversos llibres"
+
+msgid "Importar varios libros registro a la vez"
+msgstr "Importa diversos llibres registre alhora"
+
+msgid "Justificante contable"
+msgstr "Justificant comptable"
+
+msgid "La AEAT exige que la cuota sea base × tipo: {v} €."
+msgstr "L'AEAT exigeix que la quota sigui base × tipus: {v} €."
+
+msgid "La operación es de otra fecha"
+msgstr "L'operació és d'una altra data"
+
+msgid "Las casillas son las mismas."
+msgstr "Les caselles són les mateixes."
+
+msgid "Libros registro (.xlsx)"
+msgstr "Llibres registre (.xlsx)"
+
+msgid "Liquidación complementaria"
+msgstr "Liquidació complementària"
+
+msgid "Lista para generar el fichero"
+msgstr "Llesta per generar el fitxer"
+
+msgid "Mensaje al cliente: lo que falta para cerrar el trimestre"
+msgstr "Missatge al client: allò que falta per tancar el trimestre"
+
+msgid "No se sabe a qué titular pertenece: el nombre del fichero debe contener su NIF."
+msgstr "No se sap a quin titular pertany: el nom del fitxer ha de contenir el seu NIF."
+
+msgid "No tenemos ninguna factura de gastos de este periodo. Envíanos las facturas recibidas (o confírmanos que no hay)."
+msgstr "No tenim cap factura de despeses d'aquest període. Envia'ns les factures rebudes (o confirma'ns que no n'hi ha)."
+
+msgid "No tenemos ninguna factura emitida de este periodo. Si no ha facturado, avísanos; si ha facturado, envíanos las facturas."
+msgstr "No tenim cap factura emesa d'aquest període. Si no ha facturat, avisa'ns; si ha facturat, envia'ns les factures."
+
+msgid "Para presentar el IVA (modelo 303) del %(p)s de %(e)s necesitamos lo siguiente:"
+msgstr "Per presentar l'IVA (model 303) del %(p)s de %(e)s necessitem el següent:"
+
+msgid "Pendiente de presentar"
+msgstr "Pendent de presentar"
+
+msgid "Periodo %(p)s de %(e)s"
+msgstr "Període %(p)s de %(e)s"
+
+msgid "Por calcular"
+msgstr "Per calcular"
+
+msgid "Presentados"
+msgstr "Presentats"
+
+msgid "Qué ha cambiado respecto al cálculo anterior"
+msgstr "Què ha canviat respecte al càlcul anterior"
+
+msgid "Rectificativa (concurso de acreedores)"
+msgstr "Rectificativa (concurs de creditors)"
+
+msgid "Rectificativa (deuda incobrable)"
+msgstr "Rectificativa (deute incobrable)"
+
+msgid "Rectificativa (error fundado en derecho)"
+msgstr "Rectificativa (error fundat en dret)"
+
+msgid "Rectificativa (resto)"
+msgstr "Rectificativa (resta)"
+
+msgid "Rectificativa de simplificada"
+msgstr "Rectificativa de simplificada"
+
+msgid "Resultado fichero a fichero."
+msgstr "Resultat fitxer a fitxer."
+
+msgid "Resultado: a devolver %(i)s (se ha pedido la devolución)."
+msgstr "Resultat: a retornar %(i)s (s'ha demanat la devolució)."
+
+msgid "Resultado: a favor del contribuyente, %(i)s, que se compensa en los periodos siguientes."
+msgstr "Resultat: a favor del contribuent, %(i)s, que es compensa en els períodes següents."
+
+msgid "Resultado: a ingresar %(i)s."
+msgstr "Resultat: a ingressar %(i)s."
+
+msgid "Resultado: cero, no hay nada que ingresar."
+msgstr "Resultat: zero, no hi ha res a ingressar."
+
+msgid "Resumen del modelo 303"
+msgstr "Resum del model 303"
+
+msgid "Resumen del modelo 303 (IVA)"
+msgstr "Resum del model 303 (IVA)"
+
+msgid "Resumen en PDF para el cliente"
+msgstr "Resum en PDF per al client"
+
+msgid "Sin apuntes"
+msgstr "Sense apunts"
+
+msgid "Sin perfil fiscal"
+msgstr "Sense perfil fiscal"
+
+msgid "Sube varios ficheros .xlsx en el formato oficial de la AEAT. Cada uno se asigna al titular cuyo NIF aparece en el nombre del fichero (por ejemplo, A12345674-2T.xlsx). Lo que no se pueda asignar se te dice, no se adivina."
+msgstr "Puja diversos fitxers .xlsx en el format oficial de l'AEAT. Cadascun s'assigna al titular el NIF del qual apareix al nom del fitxer (per exemple, A12345674-2T.xlsx). El que no es pugui assignar se't diu, no s'endevina."
+
+msgid "Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes."
+msgstr "Text a punt per enviar. Guilda Work no l'envia: copia'l o obre'l al teu correu i revisa'l abans."
+
+msgid "Volver a la cartera"
+msgstr "Torna a la cartera"
+
+msgid "Ya hay un apunte con este número y esta contraparte (del {f}). ¿Es un duplicado?"
+msgstr "Ja hi ha un apunt amb aquest número i aquesta contrapart (del {f}). És un duplicat?"
+
+msgid "borrador"
+msgstr "esborrany"
+
+msgid "exportada"
+msgstr "exportada"
+
+msgid "presentada"
+msgstr "presentada"
+
+msgid "revisada"
+msgstr "revisada"

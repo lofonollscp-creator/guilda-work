@@ -15870,3 +15870,210 @@ msgstr "Cancel this return? It will stay in the history as cancelled and you wil
 
 msgid "Reconocida: se han cargado sus datos."
 msgstr "Recognised: its details have been loaded."
+
+msgid "Abrir en el correo"
+msgstr "Open in email"
+
+msgid "Ajuste"
+msgstr "Adjustment"
+
+msgid "Antes"
+msgstr "Before"
+
+msgid "Asiento resumen de facturas"
+msgstr "Summary entry of invoices"
+
+msgid "Borrador por revisar"
+msgstr "Draft to review"
+
+msgid "Comparado con el cálculo anterior de este periodo (declaración %(i)s): resultado antes %(a)s €, ahora %(b)s €."
+msgstr "Compared with the previous calculation for this period (return %(i)s): result before %(a)s €, now %(b)s €."
+
+msgid "Copiado"
+msgstr "Copied"
+
+msgid "Documento informativo con el estado «%(e)s» en el momento de generarlo. No sustituye a la presentación en la Agencia Tributaria ni a su justificante."
+msgstr "Informative document with the status “%(e)s” at the time it was generated. It does not replace the filing with the tax authority or its receipt."
+
+msgid "Duplicar"
+msgstr "Duplicate"
+
+msgid "El borrador solo cuenta los apuntes aprobados: regístralas antes de calcular (más abajo, «Facturas revisadas por registrar»)."
+msgstr "The draft only counts approved entries: register them before calculating (below, “Reviewed invoices to register”)."
+
+msgid "El dígito de control de este NIF no es válido. Revísalo."
+msgstr "The check digit of this tax ID is not valid. Please check it."
+
+msgid "El nombre del fichero contiene el NIF de varios titulares."
+msgstr "The file name contains the tax ID of several holders."
+
+msgid "El total debería ser base + cuota: {v} €."
+msgstr "The total should be base + tax: {v} €."
+
+msgid "Elige al menos un fichero .xlsx."
+msgstr "Choose at least one .xlsx file."
+
+msgid "Estado del periodo"
+msgstr "Period status"
+
+msgid "Factura simplificada"
+msgstr "Simplified invoice"
+
+msgid "Factura sustitutiva de simplificada"
+msgstr "Replacement of a simplified invoice"
+
+msgid "Facturas pendientes de registrar (%(n)s):"
+msgstr "Invoices pending registration (%(n)s):"
+
+msgid "Fecha de operación"
+msgstr "Operation date"
+
+msgid "Fecha límite de presentación: %(f)s."
+msgstr "Filing deadline: %(f)s."
+
+msgid "Fichero"
+msgstr "File"
+
+msgid "Filtrar por estado"
+msgstr "Filter by status"
+
+msgid "Gracias."
+msgstr "Thank you."
+
+msgid "Hay facturas revisadas sin registrar."
+msgstr "There are reviewed invoices not yet registered."
+
+msgid "Hola,"
+msgstr "Hello,"
+
+msgid "IVA %(p)s %(e)s: documentación pendiente"
+msgstr "VAT %(p)s %(e)s: pending documents"
+
+msgid "Importación (DUA)"
+msgstr "Import (DUA)"
+
+msgid "Importar varios libros"
+msgstr "Import several books"
+
+msgid "Importar varios libros registro a la vez"
+msgstr "Import several registers at once"
+
+msgid "Justificante contable"
+msgstr "Accounting voucher"
+
+msgid "La AEAT exige que la cuota sea base × tipo: {v} €."
+msgstr "The AEAT requires the tax to be base × rate: {v} €."
+
+msgid "La operación es de otra fecha"
+msgstr "The operation is from another date"
+
+msgid "Las casillas son las mismas."
+msgstr "The boxes are the same."
+
+msgid "Libros registro (.xlsx)"
+msgstr "Registers (.xlsx)"
+
+msgid "Liquidación complementaria"
+msgstr "Supplementary settlement"
+
+msgid "Lista para generar el fichero"
+msgstr "Ready to generate the file"
+
+msgid "Mensaje al cliente: lo que falta para cerrar el trimestre"
+msgstr "Message to the client: what is missing to close the quarter"
+
+msgid "No se sabe a qué titular pertenece: el nombre del fichero debe contener su NIF."
+msgstr "It is not known which holder this belongs to: the file name must contain their tax ID."
+
+msgid "No tenemos ninguna factura de gastos de este periodo. Envíanos las facturas recibidas (o confírmanos que no hay)."
+msgstr "We have no expense invoices for this period. Please send us the invoices received (or confirm there are none)."
+
+msgid "No tenemos ninguna factura emitida de este periodo. Si no ha facturado, avísanos; si ha facturado, envíanos las facturas."
+msgstr "We have no issued invoices for this period. If you did not invoice, let us know; if you did, please send us the invoices."
+
+msgid "Para presentar el IVA (modelo 303) del %(p)s de %(e)s necesitamos lo siguiente:"
+msgstr "To file the VAT (form 303) for %(p)s %(e)s we need the following:"
+
+msgid "Pendiente de presentar"
+msgstr "Pending filing"
+
+msgid "Periodo %(p)s de %(e)s"
+msgstr "Period %(p)s of %(e)s"
+
+msgid "Por calcular"
+msgstr "To calculate"
+
+msgid "Presentados"
+msgstr "Filed"
+
+msgid "Qué ha cambiado respecto al cálculo anterior"
+msgstr "What changed compared with the previous calculation"
+
+msgid "Rectificativa (concurso de acreedores)"
+msgstr "Corrective invoice (insolvency proceedings)"
+
+msgid "Rectificativa (deuda incobrable)"
+msgstr "Corrective invoice (bad debt)"
+
+msgid "Rectificativa (error fundado en derecho)"
+msgstr "Corrective invoice (error grounded in law)"
+
+msgid "Rectificativa (resto)"
+msgstr "Corrective invoice (other)"
+
+msgid "Rectificativa de simplificada"
+msgstr "Corrective simplified invoice"
+
+msgid "Resultado fichero a fichero."
+msgstr "Result file by file."
+
+msgid "Resultado: a devolver %(i)s (se ha pedido la devolución)."
+msgstr "Result: to be refunded %(i)s (a refund has been requested)."
+
+msgid "Resultado: a favor del contribuyente, %(i)s, que se compensa en los periodos siguientes."
+msgstr "Result: in the taxpayer's favour, %(i)s, to be offset in following periods."
+
+msgid "Resultado: a ingresar %(i)s."
+msgstr "Result: to pay %(i)s."
+
+msgid "Resultado: cero, no hay nada que ingresar."
+msgstr "Result: zero, nothing to pay."
+
+msgid "Resumen del modelo 303"
+msgstr "Form 303 summary"
+
+msgid "Resumen del modelo 303 (IVA)"
+msgstr "Form 303 summary (VAT)"
+
+msgid "Resumen en PDF para el cliente"
+msgstr "PDF summary for the client"
+
+msgid "Sin apuntes"
+msgstr "No entries"
+
+msgid "Sin perfil fiscal"
+msgstr "No tax profile"
+
+msgid "Sube varios ficheros .xlsx en el formato oficial de la AEAT. Cada uno se asigna al titular cuyo NIF aparece en el nombre del fichero (por ejemplo, A12345674-2T.xlsx). Lo que no se pueda asignar se te dice, no se adivina."
+msgstr "Upload several .xlsx files in the official AEAT format. Each one is assigned to the holder whose tax ID appears in the file name (for example, A12345674-2T.xlsx). Anything that cannot be assigned is reported, not guessed."
+
+msgid "Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes."
+msgstr "Text ready to send. Guilda Work does not send it: copy it or open it in your email and review it first."
+
+msgid "Volver a la cartera"
+msgstr "Back to the portfolio"
+
+msgid "Ya hay un apunte con este número y esta contraparte (del {f}). ¿Es un duplicado?"
+msgstr "There is already an entry with this number and counterparty (from {f}). Is it a duplicate?"
+
+msgid "borrador"
+msgstr "draft"
+
+msgid "exportada"
+msgstr "exported"
+
+msgid "presentada"
+msgstr "filed"
+
+msgid "revisada"
+msgstr "reviewed"

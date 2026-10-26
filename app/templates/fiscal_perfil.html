@@ -15,7 +15,7 @@
 {% if editado %}<p class="muted">{{ _('Estás corrigiendo el perfil vigente desde %(d)s. Las declaraciones ya calculadas no cambian: llevan su propia foto de los datos. Si lo que cambia es el régimen o la periodicidad a partir de una fecha, crea un perfil nuevo.', d=editado.vigente_desde) }}
   <a href="{{ url_for('guilda_fiscal.perfil', cliente_id=c.id, nuevo=1) }}">{{ _('Crear un perfil nuevo con otra fecha') }}</a></p>
 {% else %}<p class="muted">{{ _('El perfil tiene vigencia: al guardar uno con fecha posterior, el anterior se cierra el día antes. Lo que el cálculo automático no soporta (criterio de caja, prorrata, régimen simplificado, recargo, tributación foral…) bloquea la declaración en vez de inventar un número.') }}</p>{% endif %}
-<form method="post" class="edit-form">
+<form method="post" class="edit-form fiscal-form">
   {% if editado %}<input type="hidden" name="perfil_id" value="{{ editado.id }}"><input type="hidden" name="version" value="{{ editado.version }}">{% endif %}
   <div class="fila-campos">
     <label>{{ _('Vigente desde') }}<input type="date" name="vigente_desde" value="{{ f.get('vigente_desde') or perfil.get('vigente_desde') or '' }}" required></label>

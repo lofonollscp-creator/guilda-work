@@ -16,6 +16,15 @@ Lo que **no** soporta se **bloquea** (la declaración no se puede revisar y dice
 
 **Quién aprueba:** la dirección del despacho y el revisor fiscal. El resto de la gestoría ve; el rol auditor solo consulta. **La IA y la API no aprueban ni presentan.**
 
+## 2b. Ayudas del día a día
+- **Formulario de apunte:** la numeración de las emitidas sigue sola (A-0007 → A-0008); «Duplicar» copia un apunte con el número siguiente y la fecha un mes después; la fecha de recepción sigue a la de expedición y la de operación solo sale si se pide; base, cuota y total se completan entre sí.
+- **Al escribir el NIF** de la contraparte: se cargan su nombre, tipo de NIF, país y lo habitual con ella (tipo de IVA, clave, calificación); avisa si el dígito de control no es válido y si ya existe un apunte con ese número y contraparte.
+- **Avisos en vivo:** cuota distinta de base × tipo y total distinto de base + cuota (solo en emitidas sujetas, que es donde la AEAT lo exige).
+- **Calcular un periodo** propone el último trimestre ya terminado y avisa si hay facturas revisadas sin registrar.
+- **Cartera:** semáforo por titular (sin perfil, por calcular, borrador, pendiente de presentar, presentada), filtros «Pendientes» y «Presentados», lo urgente arriba. Importación de varios `.xlsx` a la vez: el NIF del titular va en el nombre del fichero (`A12345674-2T.xlsx`).
+- **Ficha del titular:** mensaje al cliente con lo que falta para cerrar el trimestre (se copia o se abre en el correo; no se envía solo).
+- **Declaración:** al recalcular un periodo se ve qué casillas han cambiado respecto al cálculo anterior, y hay un resumen en PDF para el cliente.
+
 ## 3. API, MCP y asistente de IA (solo consulta y simulación)
 Área de token `guilda_fiscal` (`/api/v1/guilda-fiscal/…`): titulares, perfil, apuntes, comprobación con las reglas de la AEAT, simulación del 303 (no guarda nada), declaraciones y propuesta de apuntes de una factura. Las mismas ocho herramientas están en el MCP y en el asistente (`fiscal_*`).
 
