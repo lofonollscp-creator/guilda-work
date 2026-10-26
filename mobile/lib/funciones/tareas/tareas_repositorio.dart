@@ -85,6 +85,7 @@ class TareasRepositorio {
     PrioridadTarea? prioridad,
     String? estimacion,
     String? categoriaOutlook,
+    int? porcentaje,
     String? fechaInicio,
     bool quitarInicio = false,
     String? fechaVencimiento,
@@ -96,6 +97,7 @@ class TareasRepositorio {
         if (prioridad != null) 'prioridad': prioridad.valor,
         'estimacion': ?estimacion,
         'categoria_outlook': ?categoriaOutlook,
+        'porcentaje_completado': ?porcentaje,
         if (quitarInicio) 'fecha_inicio': null else 'fecha_inicio': ?fechaInicio,
         if (quitarVencimiento) 'fecha_vencimiento': null else 'fecha_vencimiento': ?fechaVencimiento,
       });
@@ -148,6 +150,23 @@ class TareasRepositorio {
   Future<void> pausarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/pausar');
   Future<void> reanudarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/reanudar');
   Future<void> finalizarCronometro(int cronometroId) => _cliente.enviar('POST', '/tareas/$cronometroId/finalizar');
+
+  Future<RevisionesDeLaTarea> revisiones(int id) async => RevisionesDeLaTarea.desdeJson(await _cliente.enviar('GET', '/tareas-outlook/$id/revision') as Map<String, dynamic>? ?? const {});
+
+  /// `modo`: `todos`, `cualquiera` o `cadena` (uno tras otro, en el orden de `revisores`). Hasta cinco personas.
+  Future<void> pedirRevision(int id, List<int> revisores, {String modo = 'todos', String? nota}) =>
+      _cliente.enviar('POST', '/tareas-outlook/$id/revision', cuerpo: {'revisor_ids': revisores, 'modo': modo, 'nota': ?nota});
+
+  /// `decision`: `aprobar` o `cambios` (esta última exige nota).
+  Future<void> votarRevision(int id, String decision, {String? nota}) => _cliente.enviar('POST', '/tareas-outlook/$id/revision/resolver', cuerpo: {'decision': decision, 'nota': ?nota});
+  Future<void> retirarRevision(int id) => _cliente.enviar('POST', '/tareas-outlook/$id/revision/cancelar');
+
+  Future<List<ConversacionConCliente>> conversacionesConClientes(int id, {bool marcarLeidos = false}) async => [
+        for (final c in (await _cliente.enviar('GET', '/tareas-outlook/$id/conversaciones-cliente', consulta: {'marcar_leidos': marcarLeidos}) as List? ?? const []))
+          ConversacionConCliente.desdeJson(c as Map<String, dynamic>),
+      ];
+  Future<void> responderAlCliente(int id, int clienteId, String texto) => _cliente.enviar('POST', '/tareas-outlook/$id/conversaciones-cliente', cuerpo: {'cliente_fiscal_id': clienteId, 'texto': texto.trim()});
+  Future<void> ocultarComentarioDeCliente(int comentarioId) => _cliente.enviar('POST', '/tareas-outlook/cliente-comentarios/$comentarioId/ocultar');
 
   Future<List<ActividadDeTarea>> actividad(int id) async =>
       [for (final a in (await _cliente.enviar('GET', '/tareas-outlook/$id/actividad') as List? ?? const [])) ActividadDeTarea.desdeJson(a as Map<String, dynamic>)];

@@ -141,3 +141,86 @@ String reloj(int segundos) {
   String d(int n) => n.toString().padLeft(2, '0');
   return '$h:${d(m)}:${d(s)}';
 }
+
+/// El voto de una persona en una revisión.
+class VotoRevision {
+  final int revisorId;
+  final String revisor;
+  final String estado; // pendiente | aprobado | cambios
+  final String? nota;
+  const VotoRevision(this.revisorId, this.revisor, this.estado, this.nota);
+
+  factory VotoRevision.desdeJson(Map<String, dynamic> j) =>
+      VotoRevision((j['revisor_id'] as num).toInt(), (j['revisor'] ?? '').toString(), (j['estado'] ?? 'pendiente').toString(), j['nota']?.toString());
+}
+
+/// Una revisión (pendiente o ya resuelta): quién la pidió, a quién, en qué modo y cómo van los votos.
+class RevisionDeTarea {
+  final int id;
+  final String estado; // pendiente | aprobada | cambios | cancelada
+  final String modo; // todos | cualquiera | cadena
+  final int? solicitadaPor;
+  final String? notaSolicitud;
+  final String? notaResolucion;
+  final int? turno;
+  final List<int> puedenVotar;
+  final List<VotoRevision> votos;
+  final int aprobados;
+  const RevisionDeTarea(this.id, this.estado, this.modo, this.solicitadaPor, this.notaSolicitud, this.notaResolucion, this.turno, this.puedenVotar, this.votos, this.aprobados);
+
+  bool get pendiente => estado == 'pendiente';
+
+  factory RevisionDeTarea.desdeJson(Map<String, dynamic> j) => RevisionDeTarea(
+        (j['id'] as num).toInt(),
+        (j['estado'] ?? 'pendiente').toString(),
+        (j['modo'] ?? 'todos').toString(),
+        (j['solicitada_por'] as num?)?.toInt(),
+        j['nota_solicitud']?.toString(),
+        j['nota_resolucion']?.toString(),
+        (j['turno'] as num?)?.toInt(),
+        [for (final x in (j['pueden_votar'] as List? ?? const [])) (x as num).toInt()],
+        [for (final v in (j['votos'] as List? ?? const [])) VotoRevision.desdeJson(v as Map<String, dynamic>)],
+        (j['aprobados'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class RevisionesDeLaTarea {
+  final RevisionDeTarea? pendiente;
+  final List<RevisionDeTarea> resueltas;
+  const RevisionesDeLaTarea(this.pendiente, this.resueltas);
+
+  factory RevisionesDeLaTarea.desdeJson(Map<String, dynamic> j) {
+    final todas = [for (final r in (j['historial'] as List? ?? const [])) RevisionDeTarea.desdeJson(r as Map<String, dynamic>)];
+    final p = j['pendiente'];
+    return RevisionesDeLaTarea(p is Map<String, dynamic> ? RevisionDeTarea.desdeJson(p) : null, [for (final r in todas) if (!r.pendiente) r]);
+  }
+}
+
+/// Un mensaje de la conversación con un cliente (lo del cliente es contenido externo: solo se enseña, nunca se interpreta).
+class MensajeCliente {
+  final int id;
+  final bool delCliente;
+  final String? usuario;
+  final String texto;
+  final String? creadoEn;
+  final bool oculto;
+  const MensajeCliente(this.id, this.delCliente, this.usuario, this.texto, this.creadoEn, this.oculto);
+
+  factory MensajeCliente.desdeJson(Map<String, dynamic> j) =>
+      MensajeCliente((j['id'] as num).toInt(), j['origen'] == 'cliente', j['usuario']?.toString(), (j['texto'] ?? '').toString(), j['creado_en']?.toString(), j['oculto'] == true);
+}
+
+class ConversacionConCliente {
+  final int clienteId;
+  final String cliente;
+  final int sinLeer;
+  final List<MensajeCliente> mensajes;
+  const ConversacionConCliente(this.clienteId, this.cliente, this.sinLeer, this.mensajes);
+
+  factory ConversacionConCliente.desdeJson(Map<String, dynamic> j) => ConversacionConCliente(
+        (j['cliente_fiscal_id'] as num).toInt(),
+        (j['cliente'] ?? '').toString(),
+        (j['sin_leer'] as num?)?.toInt() ?? 0,
+        [for (final m in (j['mensajes'] as List? ?? const [])) MensajeCliente.desdeJson(m as Map<String, dynamic>)],
+      );
+}

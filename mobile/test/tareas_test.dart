@@ -98,10 +98,59 @@ class _RepoFalso implements TareasRepositorio {
 
   @override
   Future<TareaOutlook> editarFicha(int id,
-      {String? asunto, String? cuerpo, PrioridadTarea? prioridad, String? estimacion, String? categoriaOutlook, String? fechaInicio, bool quitarInicio = false, String? fechaVencimiento, bool quitarVencimiento = false}) async {
+      {String? asunto, String? cuerpo, PrioridadTarea? prioridad, String? estimacion, String? categoriaOutlook, int? porcentaje, String? fechaInicio, bool quitarInicio = false, String? fechaVencimiento, bool quitarVencimiento = false}) async {
     if (falloAlEditar != null) throw falloAlEditar!;
     registro.add('ficha:$id:${[if (asunto != null) 'asunto=$asunto', if (cuerpo != null) 'cuerpo=$cuerpo', if (prioridad != null) 'prio=${prioridad.valor}', if (estimacion != null) 'est=$estimacion', if (categoriaOutlook != null) 'cat=$categoriaOutlook', if (fechaVencimiento != null) 'venc=$fechaVencimiento', if (quitarVencimiento) 'venc=-', if (fechaInicio != null) 'ini=$fechaInicio', if (quitarInicio) 'ini=-'].join(',')}');
     return tareas[id] ?? TareaOutlook.fromJson(_t(id));
+  }
+
+  RevisionesDeLaTarea revisionesFalsas = const RevisionesDeLaTarea(null, []);
+  List<ConversacionConCliente> conversacionesFalsas = [];
+  List<(int, String)> respuestasCliente = [];
+
+  @override
+  Future<RevisionesDeLaTarea> revisiones(int id) async => revisionesFalsas;
+  @override
+  Future<void> pedirRevision(int id, List<int> revisores, {String modo = 'todos', String? nota}) async {
+    registro.add('revision:$id:${revisores.join(',')}:$modo:${nota ?? '-'}');
+    revisionesFalsas = RevisionesDeLaTarea(
+      RevisionDeTarea(1, 'pendiente', modo, 1, nota, null, null, revisores, [for (final r in revisores) VotoRevision(r, gente.firstWhere((g) => g.id == r).nombre ?? '', 'pendiente', null)], 0),
+      const [],
+    );
+  }
+
+  @override
+  Future<void> votarRevision(int id, String decision, {String? nota}) async {
+    registro.add('voto:$id:$decision:${nota ?? '-'}');
+    revisionesFalsas = const RevisionesDeLaTarea(null, []);
+  }
+
+  @override
+  Future<void> retirarRevision(int id) async {
+    registro.add('retirar:$id');
+    revisionesFalsas = const RevisionesDeLaTarea(null, []);
+  }
+
+  @override
+  Future<List<ConversacionConCliente>> conversacionesConClientes(int id, {bool marcarLeidos = false}) async {
+    if (marcarLeidos) registro.add('leidos:$id');
+    return conversacionesFalsas;
+  }
+
+  @override
+  Future<void> responderAlCliente(int id, int clienteId, String texto) async {
+    registro.add('responder:$id:$clienteId:$texto');
+    conversacionesFalsas = [
+      ConversacionConCliente(clienteId, 'Acme SL', 0, [...conversacionesFalsas.expand((c) => c.mensajes), MensajeCliente(99, false, 'Yo', texto, '2026-10-26T10:00', false)]),
+    ];
+  }
+
+  @override
+  Future<void> ocultarComentarioDeCliente(int comentarioId) async {
+    registro.add('ocultar:$comentarioId');
+    conversacionesFalsas = [
+      for (final c in conversacionesFalsas) ConversacionConCliente(c.clienteId, c.cliente, 0, [for (final m in c.mensajes) m.id == comentarioId ? MensajeCliente(m.id, true, null, '', m.creadoEn, true) : m]),
+    ];
   }
 
   TiempoDeTarea tiempoFalso = const TiempoDeTarea(0, 0, [], null);
@@ -298,9 +347,9 @@ class _SesionFija extends SesionControl {
   EstadoSesion build() => const EstadoSesion(fase: FaseSesion.conSesion);
 }
 
-List<Override> _over(_RepoFalso repo) => [
+List<Override> _over(_RepoFalso repo, {bool conUsuario = false}) => [
       tareasRepositorioProvider.overrideWithValue(repo),
-      estadoSesionProvider.overrideWith(_SesionFija.new),
+      estadoSesionProvider.overrideWith(conUsuario ? _SesionConUsuario.new : _SesionFija.new),
     ];
 
 Widget _app(Widget home, List<Override> overrides) => ProviderScope(
@@ -934,6 +983,84 @@ void main() {
       await t.tap(find.text('Guardar'));
       await t.pumpAndSettle();
       expect(repo.registro, containsAll(['cliente:7:11:12', 'portal:7:true:true']));
+    });
+
+    testWidgets('«Revisión»: se pide a varias personas en cadena, vota quien le toca y se puede retirar', (t) async {
+      final repo = repoConTarea();
+      await t.binding.setSurfaceSize(const Size(800, 3400));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('No hay ninguna revisión pendiente.'), findsOneWidget);
+      await t.ensureVisible(find.text('Pedir revisión'));
+      await t.tap(find.text('Pedir revisión'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Sol Pérez'));
+      await t.tap(find.text('Luis Mora'));
+      await t.tap(find.text('Aprueban uno tras otro, en el orden indicado.'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Pedir revisión').last);
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('revision:7:8,7:cadena:-'));
+      expect(find.text('La revisan 2 personas.'), findsOneWidget);
+      expect(find.text('Mientras esté pendiente, la tarea no se puede completar.'), findsOneWidget);
+      await t.ensureVisible(find.text('Retirar la petición'));
+      await t.tap(find.text('Retirar la petición'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('retirar:7'));
+      expect(find.text('No hay ninguna revisión pendiente.'), findsOneWidget);
+    });
+
+    testWidgets('«Revisión»: quien tiene el voto aprueba o pide cambios con su nota', (t) async {
+      final repo = repoConTarea()
+        ..revisionesFalsas = const RevisionesDeLaTarea(
+          RevisionDeTarea(1, 'pendiente', 'todos', 9, 'Mira el IVA', null, null, [1], [VotoRevision(1, 'Yo', 'pendiente', null)], 0),
+          [RevisionDeTarea(0, 'cambios', 'todos', 9, null, 'Falta el 303', null, [], [VotoRevision(1, 'Yo', 'cambios', 'Falta el 303')], 0)],
+        );
+      await t.binding.setSurfaceSize(const Size(800, 3400));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo, conUsuario: true)));
+      await t.pumpAndSettle();
+      expect(find.text('«Mira el IVA»'), findsOneWidget);
+      expect(find.text('Cambios pedidos'), findsOneWidget);
+      await t.ensureVisible(find.text('Pedir cambios'));
+      await t.enterText(find.widgetWithText(TextField, 'Comentario (obligatorio si pides cambios)'), 'Revisa el modelo');
+      await t.tap(find.text('Pedir cambios'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('voto:7:cambios:Revisa el modelo'));
+    });
+
+    testWidgets('«Conversación con el cliente»: se ve lo del cliente, se contesta y se oculta un comentario', (t) async {
+      final repo = repoConTarea()
+        ..tareas = {
+          7: TareaOutlook.fromJson({
+            ..._t(7, estado: 'en_progreso', version: 4),
+            'visible_cliente': 1,
+            'comentarios_cliente': 1,
+            'clientes': [
+              {'id': 11, 'nombre': 'Acme SL', 'principal': true},
+            ],
+          }),
+        }
+        ..conversacionesFalsas = [
+          ConversacionConCliente(11, 'Acme SL', 1, [MensajeCliente(5, true, null, 'Os mando la factura mañana', '2026-10-25T09:00', false)]),
+        ];
+      await t.binding.setSurfaceSize(const Size(800, 3800));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.textContaining('Conversación con el cliente · 1 nuevo'), findsOneWidget);
+      expect(find.text('Os mando la factura mañana'), findsOneWidget);
+      expect(repo.registro, contains('leidos:7'));
+      await t.ensureVisible(find.byTooltip('Ocultar este comentario al cliente'));
+      await t.enterText(find.widgetWithText(TextField, 'Respuesta para el cliente (la verá en su portal y le llegará un correo)'), 'Perfecto, gracias');
+      await t.tap(find.text('Contestar al cliente'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('responder:7:11:Perfecto, gracias'));
+      await t.tap(find.byTooltip('Ocultar este comentario al cliente'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('ocultar:5'));
+      expect(find.text('Comentario oculto'), findsOneWidget);
     });
 
     testWidgets('«Recordatorios»: uno relativo al vencimiento, con sus canales, y quitarlo', (t) async {

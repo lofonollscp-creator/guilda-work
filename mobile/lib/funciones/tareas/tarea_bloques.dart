@@ -614,3 +614,307 @@ class _BloqueActividadState extends ConsumerState<BloqueActividad> {
     );
   }
 }
+
+// ---------------------------------------------------------------- Revisión ----
+
+/// Pedir que alguien (hasta cinco personas) revise la tarea, votar si te toca (aprobar o pedir cambios) y retirar la petición. Mientras hay una pendiente,
+/// la tarea no se puede completar: es el servidor quien lo impone.
+class BloqueRevision extends ConsumerStatefulWidget {
+  final TareaOutlook tarea;
+  final int? miId;
+  final bool esDueno;
+  final VoidCallback? alCambiar;
+  const BloqueRevision({super.key, required this.tarea, required this.miId, required this.esDueno, this.alCambiar});
+
+  @override
+  ConsumerState<BloqueRevision> createState() => _BloqueRevisionState();
+}
+
+class _BloqueRevisionState extends ConsumerState<BloqueRevision> {
+  RevisionesDeLaTarea? _revisiones;
+  final _nota = TextEditingController();
+
+  TareasRepositorio get _repo => ref.read(tareasRepositorioProvider);
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  @override
+  void dispose() {
+    _nota.dispose();
+    super.dispose();
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final r = await _repo.revisiones(widget.tarea.id);
+      if (mounted) setState(() => _revisiones = r);
+    } catch (_) {
+      // sin red: queda como estaba
+    }
+  }
+
+  Future<void> _hacer(Future<void> Function() f) async {
+    if (await _probar(context, f)) {
+      _nota.clear();
+      await _cargar();
+      widget.alCambiar?.call(); // el estado de la tarea cambia (en revisión, en progreso...)
+    }
+  }
+
+  Future<void> _pedir() async {
+    final peticion = await showModalBottomSheet<_PeticionRevision>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => const _HojaPedirRevision());
+    if (peticion == null || !mounted) return;
+    await _hacer(() => _repo.pedirRevision(widget.tarea.id, peticion.revisores, modo: peticion.modo, nota: peticion.nota));
+  }
+
+  String _estadoVoto(AppLocalizations t, VotoRevision v, RevisionDeTarea r) => switch (v.estado) {
+        'aprobado' => t.tareaRevisionAprobo,
+        'cambios' => t.tareaRevisionPideCambios,
+        _ => r.turno == v.revisorId ? t.tareaRevisionLeToca : t.tareaRevisionSinVotar,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    final rev = _revisiones;
+    if (rev == null) return const SizedBox.shrink();
+    final p = rev.pendiente;
+    final abierta = EstadoTarea.desde(widget.tarea.estado).abierta;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _Cabecera(t.tareaRevision),
+      if (p != null) ...[
+        Text(p.votos.length > 1 ? t.tareaRevisionLaRevisan(p.votos.length) : t.tareaRevisionLaRevisa(p.votos.firstOrNull?.revisor ?? '')),
+        if (p.votos.length > 1) Text(switch (p.modo) { 'cadena' => t.tareaRevisionModoCadena, 'cualquiera' => t.tareaRevisionModoCualquiera, _ => t.tareaRevisionModoTodos }, style: tema.textTheme.bodySmall),
+        if ((p.notaSolicitud ?? '').isNotEmpty) Text('«${p.notaSolicitud}»', style: tema.textTheme.bodySmall),
+        for (final v in p.votos)
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(v.estado == 'aprobado' ? Icons.check_circle_outline : (v.estado == 'cambios' ? Icons.edit_note : Icons.hourglass_empty), size: 20),
+            title: Text('${v.revisor}${(v.nota ?? '').isEmpty ? '' : ': «${v.nota}»'}'),
+            trailing: Text(_estadoVoto(t, v, p), style: tema.textTheme.labelMedium),
+          ),
+        Text(t.tareaRevisionBloquea, style: tema.textTheme.bodySmall),
+        if (widget.miId != null && p.puedenVotar.contains(widget.miId)) ...[
+          const SizedBox(height: 8),
+          TextField(controller: _nota, maxLength: 500, minLines: 1, maxLines: 3, decoration: InputDecoration(hintText: t.tareaRevisionNotaVoto)),
+          Wrap(spacing: 8, children: [
+            FilledButton(onPressed: () => _hacer(() => _repo.votarRevision(widget.tarea.id, 'aprobar', nota: _nota.text.trim())), child: Text(t.tareaRevisionAprobar)),
+            OutlinedButton(onPressed: () => _hacer(() => _repo.votarRevision(widget.tarea.id, 'cambios', nota: _nota.text.trim())), child: Text(t.tareaRevisionCambios)),
+          ]),
+        ],
+        if (p.solicitadaPor == widget.miId || widget.esDueno)
+          Align(alignment: Alignment.centerLeft, child: TextButton(onPressed: () => _hacer(() => _repo.retirarRevision(widget.tarea.id)), child: Text(t.tareaRevisionRetirar))),
+      ] else ...[
+        Text(t.tareaRevisionNinguna, style: tema.textTheme.bodySmall),
+        if (abierta) Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: _pedir, icon: const Icon(Icons.rate_review_outlined), label: Text(t.tareaRevisionPedir))),
+      ],
+      for (final r in rev.resueltas)
+        ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(r.estado == 'aprobada' ? Icons.verified_outlined : (r.estado == 'cambios' ? Icons.edit_note : Icons.undo), size: 20),
+          title: Text(
+            [for (final v in r.votos) '${v.revisor}${(v.nota ?? '').isEmpty ? '' : ': «${v.nota}»'}'].join(' · '),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: Text(switch (r.estado) { 'aprobada' => t.tareaRevisionAprobada, 'cambios' => t.tareaRevisionCambiosPedidos, _ => t.tareaRevisionRetirada }, style: tema.textTheme.labelMedium),
+        ),
+    ]);
+  }
+}
+
+class _PeticionRevision {
+  final List<int> revisores;
+  final String modo;
+  final String? nota;
+  const _PeticionRevision(this.revisores, this.modo, this.nota);
+}
+
+class _HojaPedirRevision extends ConsumerStatefulWidget {
+  const _HojaPedirRevision();
+
+  @override
+  ConsumerState<_HojaPedirRevision> createState() => _HojaPedirRevisionState();
+}
+
+class _HojaPedirRevisionState extends ConsumerState<_HojaPedirRevision> {
+  final List<int> _elegidos = []; // el orden de elección es el orden de la cadena
+  String _modo = 'todos';
+  final _nota = TextEditingController();
+
+  @override
+  void dispose() {
+    _nota.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final gente = ref.watch(companerosProvider).value ?? const <Companero>[];
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(t.tareaRevisionPedirTitulo, style: Theme.of(context).textTheme.titleMedium),
+            for (final c in gente)
+              if (c.id != null)
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(c.nombre ?? c.email ?? ''),
+                  secondary: _elegidos.contains(c.id) && _modo == 'cadena' ? CircleAvatar(radius: 12, child: Text('${_elegidos.indexOf(c.id!) + 1}')) : null,
+                  value: _elegidos.contains(c.id),
+                  onChanged: (v) => setState(() {
+                    if (v == true && _elegidos.length < 5) _elegidos.add(c.id!);
+                    if (v != true) _elegidos.remove(c.id);
+                  }),
+                ),
+            const SizedBox(height: 8),
+            Text(t.tareaRevisionParaDarla, style: Theme.of(context).textTheme.labelLarge),
+            RadioGroup<String>(
+              groupValue: _modo,
+              onChanged: (v) => setState(() => _modo = v ?? 'todos'),
+              child: Column(children: [
+                RadioListTile<String>(contentPadding: EdgeInsets.zero, value: 'todos', title: Text(t.tareaRevisionModoTodos)),
+                RadioListTile<String>(contentPadding: EdgeInsets.zero, value: 'cualquiera', title: Text(t.tareaRevisionModoCualquiera)),
+                RadioListTile<String>(contentPadding: EdgeInsets.zero, value: 'cadena', title: Text(t.tareaRevisionModoCadena)),
+              ]),
+            ),
+            TextField(controller: _nota, maxLength: 500, decoration: InputDecoration(hintText: t.tareaRevisionNotaSolicitud)),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton(
+                onPressed: _elegidos.isEmpty ? null : () => Navigator.pop(context, _PeticionRevision(List.of(_elegidos), _modo, _nota.text.trim().isEmpty ? null : _nota.text.trim())),
+                child: Text(t.tareaRevisionPedir),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------- Conversación con el cliente ----
+
+/// Lo que ha escrito el cliente desde su portal y lo que se le ha contestado, por cliente. Se puede contestar y ocultar un comentario del cliente.
+/// Lo del cliente es contenido externo: aquí solo se muestra.
+class BloqueClienteConversacion extends ConsumerStatefulWidget {
+  final TareaOutlook tarea;
+  const BloqueClienteConversacion({super.key, required this.tarea});
+
+  @override
+  ConsumerState<BloqueClienteConversacion> createState() => _BloqueClienteConversacionState();
+}
+
+class _BloqueClienteConversacionState extends ConsumerState<BloqueClienteConversacion> {
+  List<ConversacionConCliente>? _conversaciones;
+  final _respuesta = TextEditingController();
+  int? _destino;
+
+  TareasRepositorio get _repo => ref.read(tareasRepositorioProvider);
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  @override
+  void dispose() {
+    _respuesta.dispose();
+    super.dispose();
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final r = await _repo.conversacionesConClientes(widget.tarea.id);
+      if (mounted) setState(() => _conversaciones = r);
+      // Verlas es leerlas (como en la web): se marcan tras enseñarlas, para que el aviso de «nuevos» se vea una vez.
+      if (r.any((c) => c.sinLeer > 0)) unawaited(_repo.conversacionesConClientes(widget.tarea.id, marcarLeidos: true).then((_) {}, onError: (_) {}));
+    } catch (_) {
+      if (mounted) setState(() => _conversaciones = const []);
+    }
+  }
+
+  Future<void> _contestar() async {
+    final texto = _respuesta.text.trim();
+    final vinculados = widget.tarea.clientes ?? const <ClienteDeTarea>[];
+    final destino = _destino ?? vinculados.where((c) => c.principal == true).firstOrNull?.id ?? vinculados.firstOrNull?.id;
+    if (texto.isEmpty || destino == null) return;
+    final t = AppLocalizations.of(context);
+    if (await _probar(context, () => _repo.responderAlCliente(widget.tarea.id, destino, texto))) {
+      _respuesta.clear();
+      if (mounted) _aviso(context, t.tareaClienteRespondida);
+      await _cargar();
+    }
+  }
+
+  Future<void> _ocultar(MensajeCliente m) async {
+    if (await _probar(context, () => _repo.ocultarComentarioDeCliente(m.id))) await _cargar();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    final convs = _conversaciones;
+    final visible = (widget.tarea.visibleCliente ?? 0) == 1;
+    if (convs == null || (!visible && convs.isEmpty)) return const SizedBox.shrink();
+    final vinculados = widget.tarea.clientes ?? const <ClienteDeTarea>[];
+    final nuevos = convs.fold<int>(0, (a, c) => a + c.sinLeer);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _Cabecera(nuevos > 0 ? '${t.tareaClienteConversacion} · ${t.tareaClienteNuevos(nuevos)}' : t.tareaClienteConversacion),
+      Text(
+        (widget.tarea.comentariosCliente ?? 0) == 1 && visible ? t.tareaClientePuede : (visible ? t.tareaClienteSoloVe : t.tareaClienteYaNo),
+        style: tema.textTheme.bodySmall,
+      ),
+      for (final c in convs) ...[
+        Padding(padding: const EdgeInsets.only(top: 8), child: Text(c.cliente, style: tema.textTheme.labelLarge)),
+        for (final m in c.mensajes)
+          Align(
+            alignment: m.delCliente ? Alignment.centerLeft : Alignment.centerRight,
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 3),
+              padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+              constraints: const BoxConstraints(maxWidth: 520),
+              decoration: BoxDecoration(color: m.delCliente ? tema.colorScheme.surfaceContainerHighest : tema.colorScheme.primaryContainer, borderRadius: BorderRadius.circular(12)),
+              child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Flexible(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    if (m.oculto) Text(t.tareaClienteOculto, style: const TextStyle(fontStyle: FontStyle.italic)) else Text(m.texto),
+                    Text(
+                      [if (MomentoLocal.intentar(m.creadoEn) != null) context.formatos.momento(MomentoLocal.intentar(m.creadoEn)!), if (!m.delCliente && (m.usuario ?? '').isNotEmpty) m.usuario!].join(' · '),
+                      style: tema.textTheme.labelSmall,
+                    ),
+                  ]),
+                ),
+                if (m.delCliente && !m.oculto) IconButton(icon: const Icon(Icons.visibility_off_outlined, size: 18), tooltip: t.tareaClienteOcultar, onPressed: () => _ocultar(m)),
+              ]),
+            ),
+          ),
+      ],
+      if (vinculados.isNotEmpty && visible) ...[
+        if (vinculados.length > 1)
+          Wrap(spacing: 8, children: [
+            for (final c in vinculados)
+              ChoiceChip(
+                label: Text(c.nombre ?? ''),
+                selected: (_destino ?? vinculados.where((x) => x.principal == true).firstOrNull?.id ?? vinculados.first.id) == c.id,
+                onSelected: (_) => setState(() => _destino = c.id),
+              ),
+          ]),
+        TextField(controller: _respuesta, maxLength: 1000, minLines: 1, maxLines: 4, decoration: InputDecoration(hintText: t.tareaClienteRespuestaHint)),
+        Align(alignment: Alignment.centerRight, child: FilledButton.icon(onPressed: _contestar, icon: const Icon(Icons.send), label: Text(t.tareaClienteContestar))),
+      ],
+    ]);
+  }
+}

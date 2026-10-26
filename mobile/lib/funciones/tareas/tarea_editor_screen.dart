@@ -31,6 +31,8 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
   int? _proyectoId, _clienteId, _asignadaA;
   late Set<int> _otrosClientes;
   late bool _visible, _comentariosCliente;
+  late int _porcentaje;
+  late final int _porcentajeInicial; // el del control (de 10 en 10): solo se manda si la persona lo mueve
   List<Proyecto> _proyectos = const [];
   List<ClienteFiscal> _clientes = const [];
   List<Companero> _companeros = const [];
@@ -52,6 +54,7 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
     _clienteId = _t0.clienteFiscalId;
     _asignadaA = _t0.asignadaA;
     _otrosClientes = {for (final c in _t0.clientes ?? const <ClienteDeTarea>[]) if (c.id != null && c.principal != true) c.id!};
+    _porcentaje = _porcentajeInicial = ((_t0.porcentajeCompletado ?? 0) ~/ 10) * 10;
     _visible = (_t0.visibleCliente ?? 0) == 1;
     _comentariosCliente = (_t0.comentariosCliente ?? 0) == 1;
     _cargarListas();
@@ -178,6 +181,7 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
           _prioridad != PrioridadTarea.desde(_t0.prioridad) ||
           _estimacion.text.trim() != estimacionAntes ||
           _categoria.text.trim() != (_t0.categoriaOutlook ?? '') ||
+          _porcentaje != _porcentajeInicial ||
           _inicio != _t0.fechaInicio ||
           _vencimiento != _t0.fechaVencimiento;
       if (cambioEdicion) {
@@ -188,6 +192,7 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
           prioridad: _prioridad != PrioridadTarea.desde(_t0.prioridad) ? _prioridad : null,
           estimacion: _estimacion.text.trim() != estimacionAntes ? _estimacion.text.trim() : null,
           categoriaOutlook: _categoria.text.trim() != (_t0.categoriaOutlook ?? '') ? _categoria.text.trim() : null,
+          porcentaje: _porcentaje != _porcentajeInicial ? _porcentaje : null,
           fechaInicio: _inicio != _t0.fechaInicio ? _inicio : null,
           quitarInicio: _inicio == null && _t0.fechaInicio != null,
           fechaVencimiento: _vencimiento != _t0.fechaVencimiento ? _vencimiento : null,
@@ -258,7 +263,8 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
           selected: {_prioridad},
           onSelectionChanged: (s) => setState(() => _prioridad = s.first),
         ),
-        const SizedBox(height: 8),
+        Padding(padding: const EdgeInsets.only(top: 8), child: Text('${t.tareaPorcentaje}: $_porcentaje', style: Theme.of(context).textTheme.labelLarge)),
+        Slider(value: _porcentaje.toDouble(), min: 0, max: 100, divisions: 10, label: '$_porcentaje', onChanged: (v) => setState(() => _porcentaje = v.round())),
         _filaFecha(t.tareaInicio, _inicio, (v) => setState(() => _inicio = v)),
         _filaFecha(t.tareaVencimiento, _vencimiento, (v) => setState(() => _vencimiento = v)),
         TextField(

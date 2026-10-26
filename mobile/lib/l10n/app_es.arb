@@ -1006,5 +1006,61 @@
   "tareaVisiblePortal": "Enseñar esta tarea al cliente en su portal",
   "tareaVisiblePortalAyuda": "El cliente verá solo el asunto, el estado y la fecha límite, sin la descripción, los comentarios ni los archivos.",
   "tareaComentariosCliente": "Permitir que el cliente escriba comentarios en esta tarea",
-  "tareaComentariosClienteAyuda": "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda."
+  "tareaComentariosClienteAyuda": "Solo mientras esté abierta. Podrás contestarle y ocultar lo que no proceda.",
+  "tareaRevision": "Revisión",
+  "tareaRevisionNinguna": "No hay ninguna revisión pendiente.",
+  "tareaRevisionLaRevisa": "La revisa {quien}.",
+  "@tareaRevisionLaRevisa": {
+    "placeholders": {
+      "quien": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaRevisionLaRevisan": "La revisan {n} personas.",
+  "@tareaRevisionLaRevisan": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaRevisionModoTodos": "Tienen que aprobarla todos.",
+  "tareaRevisionModoCualquiera": "Basta con que la apruebe uno.",
+  "tareaRevisionModoCadena": "Aprueban uno tras otro, en el orden indicado.",
+  "tareaRevisionBloquea": "Mientras esté pendiente, la tarea no se puede completar.",
+  "tareaRevisionAprobar": "Aprobar",
+  "tareaRevisionCambios": "Pedir cambios",
+  "tareaRevisionNotaVoto": "Comentario (obligatorio si pides cambios)",
+  "tareaRevisionRetirar": "Retirar la petición",
+  "tareaRevisionPedir": "Pedir revisión",
+  "tareaRevisionPedirTitulo": "Pedir que la revise (hasta cinco personas)",
+  "tareaRevisionParaDarla": "Para darla por buena",
+  "tareaRevisionNotaSolicitud": "Nota para quien revisa (opcional)",
+  "tareaRevisionAprobo": "Ha aprobado",
+  "tareaRevisionPideCambios": "Pide cambios",
+  "tareaRevisionLeToca": "Le toca",
+  "tareaRevisionSinVotar": "Sin votar",
+  "tareaRevisionAprobada": "Aprobada",
+  "tareaRevisionCambiosPedidos": "Cambios pedidos",
+  "tareaRevisionRetirada": "Retirada",
+  "tareaClienteConversacion": "Conversación con el cliente",
+  "tareaClienteNuevos": "{n, plural, one{1 nuevo} other{{n} nuevos}}",
+  "@tareaClienteNuevos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaClientePuede": "El cliente ve esta tarea en su portal y puede escribir en ella mientras esté abierta.",
+  "tareaClienteSoloVe": "El cliente ve esta tarea en su portal, pero no puede escribir en ella.",
+  "tareaClienteYaNo": "Esta tarea ya no se enseña al cliente; la conversación se conserva aquí.",
+  "tareaClienteOculto": "Comentario oculto",
+  "tareaClienteOcultar": "Ocultar este comentario al cliente",
+  "tareaClienteContestarA": "Contestar a",
+  "tareaClienteRespuestaHint": "Respuesta para el cliente (la verá en su portal y le llegará un correo)",
+  "tareaClienteContestar": "Contestar al cliente",
+  "tareaClienteRespondida": "Respuesta enviada al cliente.",
+  "tareaPorcentaje": "% completado"
 }
