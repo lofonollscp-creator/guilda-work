@@ -8,7 +8,7 @@ El modelo de datos es el mismo (`tareas_outlook`), así que «corresponderse» e
 | Área | Web | App hoy | Hueco |
 |---|---|---|---|
 | Vistas | Mi día · Lista · Tablero · Calendario · Carga · Informes | Lista + «Hoy» (bandeja general, no es «Mi día») + calendario antiguo | **Mi día** (vencidas / hoy / en progreso / asignadas / compartidas), **Tablero**, calendario nuevo |
-| Filtros de la lista | ámbito (mías, asignadas, compartidas, todas), estado, prioridad, categoría, proyecto, cliente, asignada a, texto, «ver completadas», **vistas guardadas** | ámbito, estado, texto | prioridad, categoría, proyecto, cliente, persona, completadas, vistas guardadas |
+| Filtros de la lista | ámbito (mías, asignadas, compartidas, todas), estado, prioridad, categoría (Outlook), texto, «ver también completadas», **vistas guardadas** (proyecto, cliente y persona están en el alta y en las acciones masivas, no en los filtros de la lista) | ámbito, estado, texto | prioridad, categoría, completadas, vistas guardadas |
 | Alta | texto libre: «viernes 10h pedir extractos @luis !alta #IVA» (`app/quickadd.py`) + formulario completo | asunto + fecha | **mismo texto libre**; formulario con prioridad, proyecto, cliente, asignar |
 | Fila de tarea | estado, prioridad, vencimiento, cliente, proyecto, subtareas, comentarios, cronómetro, «espera a…», solo lectura, compartida | asunto, fecha, estado | indicadores y cronómetro |
 | Ficha | descripción, subtareas, checklist, comentarios, adjuntos, **dependencias, recordatorios, compartir/asignar, tiempo y cronómetro, revisión, clientes vinculados, visible para el cliente, conversaciones con el cliente, actividad, proyecto/sección, estimación** | subtareas, checklist, comentarios, adjuntos, bloqueo | todo lo resaltado |
@@ -22,18 +22,18 @@ El modelo de datos es el mismo (`tareas_outlook`), así que «corresponderse» e
 
 1. **Mismos nombres**: «Mi día», «Lista», «Tablero», «Calendario», «Carga», «Vencidas», «Vencen hoy», «En progreso», «Asignadas a mí», «Compartidas conmigo». Los textos salen de las mismas cadenas (ARB ↔ `messages.pot`).
 2. **Mismas reglas**: la app no replica reglas de negocio; las aplica el servidor (bloqueo por dependencias, subtareas abiertas, revisión pendiente, permisos). La app muestra el motivo que devuelve la API.
-3. **Un endpoint por vista**: si la web calcula algo en el servidor (Mi día, tablero, carga), la app lo pide a la API en una llamada — no lo reconstruye. Falta `GET /tareas-outlook/mi-dia` (hoy solo existe `db.tareas_para_hoy` en la web) → se añade a la API.
+3. **Un endpoint por vista**: si la web calcula algo en el servidor (Mi día, tablero, carga), la app lo pide a la API en una llamada — no lo reconstruye. `GET /mi-dia` ya existe en la API (mismas cinco secciones que la web): la app solo tiene que pintarlo.
 4. **Una prueba de paridad**: `tests/test_paridad_tareas_app.py` compara, para un mismo usuario con datos sembrados, lo que devuelven la pantalla web y el endpoint de la API (mismas tareas, mismo orden, mismas secciones). Si alguien cambia la web y no la API, falla.
 5. **Cada acción nueva** nace con: operación en el SDK generado, cola sin conexión si procede, «Deshacer» si es reversible, y test.
 
 ## 3. Fases
 
-**Fase 0 — «Deshacer» (en curso).**
+**Fase 0 — «Deshacer» (hecha, 2026-10-26).**
 Completar / cambiar de estado, desde la lista y desde la ficha: aviso «Tarea completada · Deshacer» (6 s). Si el cambio aún estaba en la cola sin enviar, se retira de la cola; si ya se envió, se vuelve al estado anterior con la versión actual (si alguien más la tocó, se avisa en vez de pisar).
 Después: eliminar (papelera) con «Deshacer» = `POST /tareas-outlook/{id}/restaurar`.
 
-**Fase 1 — La lista igual que la web.**
-Filtros completos (prioridad, categoría, proyecto, cliente, persona, completadas), vistas guardadas (`/tareas-outlook/vistas`), alta con texto libre (el servidor interpreta el texto: se añade `texto_libre` a `POST /tareas-outlook` reutilizando `quickadd.py`), filas con los mismos indicadores, selección múltiple con acciones masivas (`/lote`).
+**Fase 1 — La lista igual que la web (hecha, 2026-10-26).**
+Filtros de prioridad, categoría y «ver también completadas» (por defecto se ocultan, como la web), vistas guardadas compartidas con la web (`/tareas-outlook/vistas`), alta con texto libre (`texto_libre` en `POST /tareas-outlook`, que reutiliza `quickadd.py`; API 1.6), filas con proyecto, comentarios, checklist, «espera a…» y quién la asignó, selección múltiple con acciones en lote (completar, estado, prioridad, vencimiento) y eliminar a la papelera con «Deshacer». Prueba de paridad: `tests/test_paridad_tareas_app.py` (9 combinaciones de filtros, misma lista y mismo orden que la web). Pendiente de esta fase: llevar al modo sin conexión las acciones en lote y el eliminar (hoy exigen red).
 
 **Fase 2 — Mi día y Tablero.**
 Pantalla «Mi día» (endpoint nuevo `GET /tareas-outlook/mi-dia`, mismas 5 secciones que la web), y «Tablero» por estado (`/tareas-outlook/tablero`) con mover entre columnas. «Hoy» pasa a ser el resumen de todos los módulos y enlaza a «Mi día».

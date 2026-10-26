@@ -5,6 +5,14 @@ Al subir `rutas_api.API_VERSION` hay que añadir aquí su entrada: un test lo ex
 
 # (versión | None, fecha, [(tipo, texto)]). Antes de la 1.3 la API no enviaba la cabecera: esas entradas llevan solo la fecha.
 HISTORIAL = [
+    ("1.6", "2026-10-26", [
+        ("Nuevo", "`GET /tareas-outlook` admite `completadas` (`0` oculta las completadas salvo que se pida un `estado`, `1` las incluye; sin él, todo como siempre) y trae en cada fila "
+                  "`n_comentarios`, `checklist_hechas`, `checklist_total` y `bloqueos`, para pintar la lista como la web sin más llamadas."),
+        ("Nuevo", "`POST /tareas-outlook` admite `texto_libre` (el asunto se interpreta como en el cuadro de alta de la web: «viernes 10h pedir extractos @luis !alta #IVA»; la respuesta "
+                  "trae `sin_resolver` con lo que no se pudo entender) y los campos explícitos `categoria_id` (proyecto), `asignada_a` y `cliente_fiscal_id`."),
+        ("Nuevo", "`GET /tareas-outlook/categorias-outlook`: las categorías (estilo Outlook) que usan tus tareas, para el filtro `categoria`."),
+        ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
+    ]),
     ("1.5", "2026-10-24", [
         ("Nuevo", "`GET /auth/me` amplía su respuesta para la app móvil: `despachos` (los de la persona, con el principal y lo que es en cada uno), "
                   "`despacho_activo`, `modulos` (qué módulos de negocio tiene activos el despacho), `permisos`, `cifrado`, `apariencia` y `app` "

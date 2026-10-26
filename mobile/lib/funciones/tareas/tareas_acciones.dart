@@ -33,14 +33,14 @@ class AccionesTareas {
   Future<ResultadoAccion<TareaOutlook>> crear(String asunto, {String? fechaVencimiento}) async {
     final clave = _uuid.v4();
     try {
-      return ResultadoAccion.enviada(await _repo.crear(asunto: asunto, fechaVencimiento: fechaVencimiento, clave: clave));
+      return ResultadoAccion.enviada(await _repo.crear(asunto: asunto, fechaVencimiento: fechaVencimiento, clave: clave, textoLibre: true));
     } on ApiException catch (e) {
       if (!e.esDeConexion) rethrow;
       final p = await encolarEscritura(
         _ref,
         metodo: 'POST',
         ruta: '/tareas-outlook',
-        cuerpo: {'asunto': asunto.trim(), 'fecha_vencimiento': ?fechaVencimiento},
+        cuerpo: {'asunto': asunto.trim(), 'fecha_vencimiento': ?fechaVencimiento, 'texto_libre': true},
         clave: clave,
         entidad: 'tarea-nueva:$clave',
         tipo: 'tarea.crear',

@@ -77,10 +77,43 @@ class _RepoFalso implements TareasRepositorio {
   List<AdjuntoTarea> adjs = [];
 
   @override
-  Future<List<TareaOutlook>> listar({String ambito = 'propias', String? estado, String? q, int limit = 30, int offset = 0}) async {
+  Future<List<TareaOutlook>> listar({String ambito = 'propias', String? estado, String? q, int limit = 30, int offset = 0, String? prioridad, String? categoria, bool? soloAbiertas}) async {
     registro.add('listar:$ambito:${estado ?? '-'}:${(q == null || q.isEmpty) ? '-' : q}:$offset');
+    filtrosVistos.add('${prioridad ?? '-'}|${categoria ?? '-'}|${soloAbiertas ?? '-'}');
     return paginas(ambito, estado, q, offset);
   }
+
+  final List<String> filtrosVistos = [];
+  List<Vista> vistasGuardadas = [];
+  ({int ok, int fallos}) resultadoLote = (ok: 0, fallos: 0);
+  Set<int> noEliminables = {};
+
+  @override
+  Future<void> eliminar(int id) async {
+    if (noEliminables.contains(id)) throw ApiException('No es tuya', status: 403);
+    registro.add('eliminar:$id');
+  }
+
+  @override
+  Future<void> restaurar(int id) async => registro.add('restaurar:$id');
+  @override
+  Future<({int ok, int fallos})> lote(List<int> ids, String accion, {String? valor}) async {
+    registro.add('lote:$accion:${valor ?? '-'}:${ids.join(',')}');
+    return resultadoLote;
+  }
+
+  @override
+  Future<List<Vista>> vistas() async => vistasGuardadas;
+  @override
+  Future<Vista> guardarVista(String nombre, Map<String, String> filtros) async {
+    registro.add('vista:$nombre:${(filtros.entries.map((e) => '${e.key}=${e.value}').toList()..sort()).join('&')}');
+    return Vista(id: 1, nombre: nombre, filtros: filtros, mia: true);
+  }
+
+  @override
+  Future<void> eliminarVista(int id) async => registro.add('quitarVista:$id');
+  @override
+  Future<List<String>> categoriasOutlook() async => ['Fiscal', 'Laboral'];
 
   @override
   Future<TareaOutlook> obtener(int id) async {
@@ -89,7 +122,7 @@ class _RepoFalso implements TareasRepositorio {
   }
 
   @override
-  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad, String? clave}) async {
+  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad, String? clave, bool textoLibre = false}) async {
     registro.add('crear:$asunto:${fechaVencimiento ?? '-'}');
     return TareaOutlook.fromJson(_t(999, estado: 'no_iniciada')..['asunto'] = asunto);
   }
@@ -334,6 +367,77 @@ void main() {
       expect(c.read(tareasListaProvider).tareas[0].estado, 'no_iniciada');
     });
 
+    test('por defecto oculta las completadas (como la web) y los filtros nuevos viajan al servidor', () async {
+      final repo = _RepoFalso()..paginas = (a, e, q, o) => [_tarea(1)];
+      final c = montar(repo);
+      c.read(tareasListaProvider);
+      await asentar();
+      expect(repo.filtrosVistos.last, '-|-|true');
+      final n = c.read(tareasListaProvider.notifier);
+      await n.cambiarFiltros(prioridad: PrioridadTarea.alta, categoria: 'Fiscal', completadas: true);
+      expect(repo.filtrosVistos.last, 'alta|Fiscal|false');
+      expect(c.read(tareasListaProvider).filtrosActivos, 3);
+      await n.limpiarFiltros();
+      expect(repo.filtrosVistos.last, '-|-|true');
+      expect(c.read(tareasListaProvider).filtrosActivos, 0);
+    });
+
+    test('una vista guardada pone los mismos filtros que en la web, y los filtros actuales se guardan con las mismas claves', () async {
+      final repo = _RepoFalso()..paginas = (a, e, q, o) => [_tarea(1)];
+      final c = montar(repo);
+      c.read(tareasListaProvider);
+      await asentar();
+      final n = c.read(tareasListaProvider.notifier);
+      await n.aplicarVista({'vista': 'mias', 'estado': 'en_progreso', 'prioridad': 'alta', 'q': 'iva', 'completadas': '1'});
+      expect(repo.registro.last, 'listar:propias:en_progreso:iva:0');
+      expect(repo.filtrosVistos.last, 'alta|-|false');
+      expect(c.read(tareasListaProvider).filtrosDeVista, {'vista': 'mias', 'estado': 'en_progreso', 'prioridad': 'alta', 'q': 'iva', 'completadas': '1'});
+      await n.aplicarVista({}); // sin «vista» = mías y asignadas a mí, como en la web
+      expect(c.read(tareasListaProvider).ambito, 'todas');
+      expect(c.read(tareasListaProvider).filtrosDeVista, isEmpty);
+    });
+
+    test('selección múltiple: acción en lote sobre las marcadas, y lo creado sin conexión no se puede marcar', () async {
+      final repo = _RepoFalso()
+        ..paginas = ((a, e, q, o) => [_tarea(1), _tarea(2), _tarea(3)])
+        ..resultadoLote = (ok: 2, fallos: 0);
+      final c = montar(repo);
+      c.read(tareasListaProvider);
+      await asentar();
+      final n = c.read(tareasListaProvider.notifier);
+      n.alternarSeleccion(1);
+      n.alternarSeleccion(3);
+      n.alternarSeleccion(-5);
+      expect(c.read(tareasListaProvider).seleccion, {1, 3});
+      n.alternarSeleccion(3);
+      n.alternarSeleccion(2);
+      final r = await n.accionLote('prioridad', valor: 'alta');
+      expect(r.ok, 2);
+      expect(repo.registro, contains('lote:prioridad:alta:1,2'));
+      expect(c.read(tareasListaProvider).seleccion, isEmpty);
+      expect(repo.registro.last, startsWith('listar:'), reason: 'tras la acción se vuelve a pedir la lista');
+      n.seleccionarTodas();
+      expect(c.read(tareasListaProvider).seleccion, {1, 2, 3});
+      n.limpiarSeleccion();
+      expect(c.read(tareasListaProvider).seleccion, isEmpty);
+    });
+
+    test('eliminar manda a la papelera solo lo que se puede, quita esas filas y se puede restaurar', () async {
+      final repo = _RepoFalso()
+        ..paginas = ((a, e, q, o) => [_tarea(1), _tarea(2)])
+        ..noEliminables = {2};
+      final c = montar(repo);
+      c.read(tareasListaProvider);
+      await asentar();
+      final n = c.read(tareasListaProvider.notifier);
+      final hechas = await n.eliminar([1, 2]);
+      expect(hechas, [1]);
+      expect(c.read(tareasListaProvider).tareas.map((t) => t.id), [2]);
+      await n.restaurar(hechas);
+      expect(repo.registro, containsAllInOrder(['eliminar:1', 'restaurar:1']));
+      expect(c.read(tareasListaProvider).tareas.map((t) => t.id), [1, 2], reason: 'tras restaurar vuelve a pedirse la lista');
+    });
+
     test('una tarea nueva entra la primera, salvo en ámbitos ajenos o con otro filtro de estado', () async {
       final repo = _RepoFalso()..paginas = (a, e, q, o) => [_tarea(1)];
       final c = montar(repo);
@@ -374,6 +478,61 @@ void main() {
       await t.tap(find.byType(Checkbox).first);
       await t.pumpAndSettle();
       expect(repo.registro, contains('transicionar:1:completada:-:1'));
+    });
+
+    testWidgets('cada fila enseña lo mismo que la web: proyecto, comentarios, checklist, espera y quién la asignó', (t) async {
+      final repo = _RepoFalso()
+        ..paginas = (a, e, q, o) => [
+              TareaOutlook.fromJson({..._t(1), 'categoria_nombre': 'IVA', 'n_comentarios': 3, 'checklist_total': 4, 'checklist_hechas': 1, 'bloqueos': 2, 'rol': 'asignada'}),
+            ];
+      await t.pumpWidget(_app(const TareasScreen(), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('IVA'), findsOneWidget);
+      expect(find.text('Lista 1/4'), findsOneWidget);
+      expect(find.text('Espera a 2 tareas'), findsOneWidget);
+      expect(find.text('Asignada a ti'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget); // el número; «3 comentarios» va como etiqueta para el lector de pantalla
+    });
+
+    testWidgets('pulsación larga marca, aparece la barra de selección y «Completar» manda el lote', (t) async {
+      final repo = _RepoFalso()
+        ..paginas = ((a, e, q, o) => [_tarea(1), _tarea(2)])
+        ..resultadoLote = (ok: 2, fallos: 0);
+      await t.pumpWidget(_app(const TareasScreen(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.longPress(find.text('Tarea 1'));
+      await t.pumpAndSettle();
+      expect(find.text('1 seleccionada'), findsOneWidget);
+      await t.tap(find.text('Tarea 2')); // en selección, tocar marca en vez de abrir
+      await t.pumpAndSettle();
+      expect(find.text('2 seleccionadas'), findsOneWidget);
+      await t.tap(find.byTooltip('Completar'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('lote:completar:-:1,2'));
+      expect(find.text('2 tareas actualizadas'), findsOneWidget);
+      expect(find.textContaining('seleccionada'), findsNothing);
+    });
+
+    testWidgets('el panel de filtros aplica prioridad y «ver completadas», y las vistas guardadas se pueden elegir', (t) async {
+      final repo = _RepoFalso()
+        ..paginas = ((a, e, q, o) => [_tarea(1)])
+        ..vistasGuardadas = [const Vista(id: 7, nombre: 'Mis vencidas de IVA', filtros: {'prioridad': 'alta', 'vista': 'mias'}, mia: true)];
+      await t.pumpWidget(_app(const TareasScreen(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Filtros'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Alta'));
+      await t.tap(find.text('Ver también completadas'));
+      await t.tap(find.text('Aplicar'));
+      await t.pumpAndSettle();
+      expect(repo.filtrosVistos.last, 'alta|-|false');
+      expect(find.text('Filtros (2)'), findsOneWidget);
+      await t.tap(find.text('Vistas guardadas'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Mis vencidas de IVA'));
+      await t.pumpAndSettle();
+      expect(repo.filtrosVistos.last, 'alta|-|true');
+      expect(find.text('Filtros (1)'), findsOneWidget, reason: 'la vista solo pedía prioridad alta, sin completadas');
     });
 
     testWidgets('si no se puede completar, enseña el motivo del servidor', (t) async {

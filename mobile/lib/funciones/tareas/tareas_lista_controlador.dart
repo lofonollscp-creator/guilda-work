@@ -14,6 +14,14 @@ class EstadoListaTareas {
   final String ambito;
   final EstadoTarea? estado; // null = cualquiera
   final String busqueda;
+
+  /// Filtros como en la web: prioridad, categoría (estilo Outlook) y «ver también completadas» (por defecto se ocultan, salvo que se pida un estado).
+  final PrioridadTarea? prioridad;
+  final String? categoria;
+  final bool completadas;
+
+  /// Ids de las tareas marcadas para una acción en lote (vacío = no hay selección).
+  final Set<int> seleccion;
   final List<TareaOutlook> tareas;
   final bool cargando;
   final bool hayMas;
@@ -26,6 +34,10 @@ class EstadoListaTareas {
     this.ambito = 'propias',
     this.estado,
     this.busqueda = '',
+    this.prioridad,
+    this.categoria,
+    this.completadas = false,
+    this.seleccion = const {},
     this.tareas = const [],
     this.cargando = false,
     this.hayMas = true,
@@ -38,6 +50,12 @@ class EstadoListaTareas {
     EstadoTarea? estado,
     bool borrarEstado = false,
     String? busqueda,
+    PrioridadTarea? prioridad,
+    bool borrarPrioridad = false,
+    String? categoria,
+    bool borrarCategoria = false,
+    bool? completadas,
+    Set<int>? seleccion,
     List<TareaOutlook>? tareas,
     bool? cargando,
     bool? hayMas,
@@ -49,12 +67,29 @@ class EstadoListaTareas {
         ambito: ambito ?? this.ambito,
         estado: borrarEstado ? null : (estado ?? this.estado),
         busqueda: busqueda ?? this.busqueda,
+        prioridad: borrarPrioridad ? null : (prioridad ?? this.prioridad),
+        categoria: borrarCategoria ? null : (categoria ?? this.categoria),
+        completadas: completadas ?? this.completadas,
+        seleccion: seleccion ?? this.seleccion,
         tareas: tareas ?? this.tareas,
         cargando: cargando ?? this.cargando,
         hayMas: hayMas ?? this.hayMas,
         error: borrarError ? null : (error ?? this.error),
         pendientes: pendientes ?? this.pendientes,
       );
+
+  /// Cuántos filtros (aparte del ámbito, el estado y la búsqueda) hay puestos.
+  int get filtrosActivos => (prioridad != null ? 1 : 0) + (categoria != null ? 1 : 0) + (completadas ? 1 : 0);
+
+  /// Lo que se guarda en una vista, con las mismas claves y valores que la web (`vista`: mias/asignadas/compartidas o vacío = «mías y asignadas»).
+  Map<String, String> get filtrosDeVista => {
+        if (ambito != 'todas') 'vista': ambito == 'propias' ? 'mias' : ambito,
+        if (estado != null) 'estado': estado!.valor,
+        if (prioridad != null) 'prioridad': prioridad!.valor,
+        if (categoria != null) 'categoria': categoria!,
+        if (busqueda.isNotEmpty) 'q': busqueda,
+        if (completadas) 'completadas': '1',
+      };
 }
 
 /// Lista de tareas con filtros, búsqueda y paginación infinita. Al cambiar de despacho se vacía y vuelve a cargar.
@@ -83,7 +118,7 @@ class TareasListaControlador extends Notifier<EstadoListaTareas> {
     final mia = ++_generacion;
     state = state.copiaCon(cargando: true, borrarError: true, hayMas: true);
     try {
-      final pagina = await _repo.listar(ambito: state.ambito, estado: state.estado?.valor, q: state.busqueda, limit: tamanoPagina);
+      final pagina = await _repo.listar(ambito: state.ambito, estado: state.estado?.valor, q: state.busqueda, limit: tamanoPagina, prioridad: state.prioridad?.valor, categoria: state.categoria, soloAbiertas: !state.completadas);
       if (mia != _generacion) return;
       final cola = await _delaCola();
       if (!ref.mounted || mia != _generacion) return;
@@ -134,7 +169,7 @@ class TareasListaControlador extends Notifier<EstadoListaTareas> {
     final mia = _generacion;
     state = state.copiaCon(cargando: true);
     try {
-      final pagina = await _repo.listar(ambito: state.ambito, estado: state.estado?.valor, q: state.busqueda, limit: tamanoPagina, offset: state.tareas.length);
+      final pagina = await _repo.listar(ambito: state.ambito, estado: state.estado?.valor, q: state.busqueda, limit: tamanoPagina, offset: state.tareas.length, prioridad: state.prioridad?.valor, categoria: state.categoria, soloAbiertas: !state.completadas);
       if (mia != _generacion) return;
       final ids = state.tareas.map((t) => t.id).toSet();
       state = state.copiaCon(tareas: [...state.tareas, ...pagina.where((t) => !ids.contains(t.id))], cargando: false, hayMas: pagina.length >= tamanoPagina);
@@ -145,17 +180,45 @@ class TareasListaControlador extends Notifier<EstadoListaTareas> {
   }
 
   Future<void> cambiarAmbito(String ambito) {
-    state = state.copiaCon(ambito: ambito, tareas: const []);
+    state = state.copiaCon(ambito: ambito, tareas: const [], seleccion: const {});
     return recargar();
   }
 
   Future<void> cambiarEstado(EstadoTarea? estado) {
-    state = estado == null ? state.copiaCon(borrarEstado: true, tareas: const []) : state.copiaCon(estado: estado, tareas: const []);
+    state = estado == null ? state.copiaCon(borrarEstado: true, tareas: const [], seleccion: const {}) : state.copiaCon(estado: estado, tareas: const [], seleccion: const {});
+    return recargar();
+  }
+
+  Future<void> cambiarFiltros({PrioridadTarea? prioridad, String? categoria, bool? completadas, bool quitarPrioridad = false, bool quitarCategoria = false}) {
+    state = state.copiaCon(
+      prioridad: prioridad, borrarPrioridad: quitarPrioridad, categoria: categoria, borrarCategoria: quitarCategoria, completadas: completadas, tareas: const [], seleccion: const {},
+    );
+    return recargar();
+  }
+
+  Future<void> limpiarFiltros() => cambiarFiltros(quitarPrioridad: true, quitarCategoria: true, completadas: false);
+
+  /// Pone los filtros de una vista guardada (las mismas claves que la web).
+  Future<void> aplicarVista(Map<String, dynamic> filtros) {
+    final v = (filtros['vista'] ?? '').toString();
+    final ambito = switch (v) { 'mias' => 'propias', 'asignadas' => 'asignadas', 'compartidas' => 'compartidas', _ => 'todas' };
+    final estado = EstadoTarea.desde(filtros['estado']?.toString());
+    final prioridad = (filtros['prioridad'] ?? '').toString();
+    final categoria = (filtros['categoria'] ?? '').toString();
+    state = EstadoListaTareas(
+      ambito: ambito,
+      estado: estado == EstadoTarea.desconocido ? null : estado,
+      busqueda: (filtros['q'] ?? '').toString(),
+      prioridad: prioridad.isEmpty ? null : PrioridadTarea.desde(prioridad),
+      categoria: categoria.isEmpty ? null : categoria,
+      completadas: filtros['completadas']?.toString() == '1',
+      cargando: true,
+    );
     return recargar();
   }
 
   Future<void> buscar(String texto) {
-    state = state.copiaCon(busqueda: texto.trim(), tareas: const []);
+    state = state.copiaCon(busqueda: texto.trim(), tareas: const [], seleccion: const {});
     return recargar();
   }
 
@@ -183,6 +246,49 @@ class TareasListaControlador extends Notifier<EstadoListaTareas> {
       if (e.categoria == CategoriaError.conflicto) await refrescarUna(t.id); // enseña lo que hay ahora
       rethrow;
     }
+  }
+
+  // --- selección y acciones en lote ---
+
+  void alternarSeleccion(int id) {
+    if (id < 0) return; // lo creado sin conexión aún no existe en el servidor
+    final s = {...state.seleccion};
+    s.contains(id) ? s.remove(id) : s.add(id);
+    state = state.copiaCon(seleccion: s);
+  }
+
+  void seleccionarTodas() => state = state.copiaCon(seleccion: {for (final t in state.tareas) if (t.id > 0) t.id});
+  void limpiarSeleccion() => state = state.copiaCon(seleccion: const {});
+
+  /// Una acción sobre las marcadas (`completar`, `estado`, `prioridad`, `fecha`). Cada una con sus permisos en el servidor; al acabar se vuelve a pedir la lista.
+  Future<({int ok, int fallos})> accionLote(String accion, {String? valor}) async {
+    final ids = state.seleccion.toList();
+    final r = await _repo.lote(ids, accion, valor: valor);
+    state = state.copiaCon(seleccion: const {});
+    await recargar();
+    return r;
+  }
+
+  /// A la papelera (varias o una). Devuelve las que de verdad se eliminaron, para ofrecer «Deshacer» con [restaurar].
+  Future<List<int>> eliminar(List<int> ids) async {
+    final hechas = <int>[];
+    for (final id in ids) {
+      try {
+        await _repo.eliminar(id);
+        hechas.add(id);
+      } on ApiException {
+        // sin permiso o ya no existe: se cuenta como no eliminada
+      }
+    }
+    state = state.copiaCon(tareas: [for (final t in state.tareas) if (!hechas.contains(t.id)) t], seleccion: const {});
+    return hechas;
+  }
+
+  Future<void> restaurar(List<int> ids) async {
+    for (final id in ids) {
+      await _repo.restaurar(id);
+    }
+    await recargar();
   }
 
   /// Deshace un cambio de estado hecho desde la lista (p. ej. completar). Si aún estaba en la cola sin enviar, solo se retira de la cola; si ya
@@ -220,3 +326,9 @@ class TareasListaControlador extends Notifier<EstadoListaTareas> {
 }
 
 final tareasListaProvider = NotifierProvider<TareasListaControlador, EstadoListaTareas>(TareasListaControlador.new);
+
+/// Las categorías (estilo Outlook) que ya usan las tareas, para el filtro. Se pide al abrir los filtros.
+final categoriasOutlookProvider = FutureProvider.autoDispose<List<String>>((ref) => ref.read(tareasRepositorioProvider).categoriasOutlook());
+
+/// Las vistas guardadas (las propias y las que comparte el despacho): los mismos filtros con nombre que en la web.
+final vistasTareasProvider = FutureProvider.autoDispose<List<Vista>>((ref) => ref.read(tareasRepositorioProvider).vistas());

@@ -256,6 +256,13 @@ def accion_en_lote():
     return _ok(resultado)
 
 
+@api_bp.route("/tareas-outlook/categorias-outlook", methods=["GET"])
+@token_required
+def categorias_outlook():
+    """Las categorías (estilo Outlook) que ya usan tus tareas: los valores que admite el filtro `categoria` de `GET /tareas-outlook`."""
+    return _ok(db.listar_categorias_outlook(g.usuario_id))
+
+
 @api_bp.route("/tareas-outlook/tablero", methods=["GET"])
 @token_required
 def tablero():

@@ -459,7 +459,7 @@
   "prioridadNormal": "Normal",
   "prioridadAlta": "Alta",
   "tareasNueva": "Nueva tarea",
-  "tareasNuevaHint": "Escribe una tarea y pulsa enviar",
+  "tareasNuevaHint": "Nueva tarea… (mañana 10h · @persona · !alta · #proyecto)",
   "tareasVacio": "No hay tareas aquí.",
   "tareasSinResultados": "Ninguna tarea coincide.",
   "tareasBuscar": "Buscar tareas",
@@ -784,5 +784,99 @@
         "type": "String"
       }
     }
-  }
+  },
+  "tareasFiltros": "Filtros",
+  "tareasFiltrosActivos": "Filtros ({n})",
+  "@tareasFiltrosActivos": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasFiltroPrioridad": "Prioridad",
+  "tareasFiltroCategoria": "Categoría",
+  "tareasFiltroCualquiera": "Cualquiera",
+  "tareasMostrarCompletadas": "Ver también completadas",
+  "tareasLimpiarFiltros": "Limpiar",
+  "tareasAplicar": "Aplicar",
+  "tareasVistas": "Vistas guardadas",
+  "tareasVistasVacio": "Aún no hay vistas guardadas. Pon filtros y pulsa «Guardar como vista».",
+  "tareasGuardarVista": "Guardar como vista",
+  "tareasVistaNombre": "Nombre de la vista",
+  "tareasVistaGuardada": "Vista guardada",
+  "tareasVistaNoSePudo": "No se pudo guardar: pon un nombre y al menos un filtro.",
+  "tareasVistaCompartida": "Compartida por el despacho",
+  "tareasSeleccionadas": "{n, plural, one{1 seleccionada} other{{n} seleccionadas}}",
+  "@tareasSeleccionadas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasSeleccionar": "Seleccionar",
+  "tareasLoteCompletar": "Completar",
+  "tareasLoteEstado": "Cambiar el estado",
+  "tareasLotePrioridad": "Cambiar la prioridad",
+  "tareasLoteVencimiento": "Cambiar el vencimiento",
+  "tareasLoteEliminar": "Eliminar",
+  "tareasLoteResultado": "{ok} hechas, {fallos} no se pudieron cambiar (permisos o reglas de la tarea).",
+  "@tareasLoteResultado": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "fallos": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasLoteExito": "{n, plural, one{1 tarea actualizada} other{{n} tareas actualizadas}}",
+  "@tareasLoteExito": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasEliminadas": "{n, plural, one{Tarea eliminada} other{{n} tareas eliminadas}}",
+  "@tareasEliminadas": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareasNoSePudoEliminar": "No se pudo eliminar (¿no es tuya?).",
+  "tareaIndComentarios": "{n, plural, one{1 comentario} other{{n} comentarios}}",
+  "@tareaIndComentarios": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaIndChecklist": "Lista {hechas}/{total}",
+  "@tareaIndChecklist": {
+    "placeholders": {
+      "hechas": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaIndEspera": "{n, plural, one{Espera a 1 tarea} other{Espera a {n} tareas}}",
+  "@tareaIndEspera": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaRolAsignada": "Asignada a ti",
+  "tareaRolCompartida": "Compartida contigo",
+  "tareasMarcarTodas": "Marcar todas"
 }

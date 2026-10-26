@@ -19,16 +19,55 @@ class TareasRepositorio {
   Operaciones _conClave(String? clave) => clave == null ? _o : Operaciones(_cliente.conClave(clave));
 
   /// Una página. `ambito`: `propias`, `asignadas`, `compartidas` o `todas`.
-  Future<List<TareaOutlook>> listar({String ambito = 'propias', String? estado, String? q, int limit = 30, int offset = 0}) =>
-      _o.listarTareasOutlook(ambito: ambito, estado: estado, q: (q == null || q.trim().isEmpty) ? null : q.trim(), limit: limit, offset: offset);
+  /// `soloAbiertas`: como la web, sin `estado` oculta las completadas (`completadas=0`); `false` las incluye (`completadas=1`); null = lo que decida el servidor.
+  Future<List<TareaOutlook>> listar({
+    String ambito = 'propias',
+    String? estado,
+    String? q,
+    int limit = 30,
+    int offset = 0,
+    String? prioridad,
+    String? categoria,
+    bool? soloAbiertas,
+  }) =>
+      _o.listarTareasOutlook(
+        ambito: ambito,
+        estado: estado,
+        q: (q == null || q.trim().isEmpty) ? null : q.trim(),
+        limit: limit,
+        offset: offset,
+        prioridad: prioridad,
+        categoria: categoria,
+        completadas: soloAbiertas == null ? null : (soloAbiertas ? '0' : '1'),
+      );
 
   Future<TareaOutlook> obtener(int id) => _o.obtenerTareaOutlook(tareaId: id);
 
-  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad, String? clave}) => _conClave(clave).crearTareaOutlook(cuerpo: {
+  /// `textoLibre`: el servidor interpreta el texto como el cuadro de alta de la web («viernes 10h pedir extractos @luis !alta #IVA»).
+  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad, String? clave, bool textoLibre = false}) =>
+      _conClave(clave).crearTareaOutlook(cuerpo: {
         'asunto': asunto.trim(),
         'fecha_vencimiento': ?fechaVencimiento,
         if (prioridad != null) 'prioridad': prioridad.valor,
+        if (textoLibre) 'texto_libre': true,
       });
+
+  /// A la papelera (se recupera con [restaurar]). La respuesta del servidor no trae la tarea: no se interpreta.
+  Future<void> eliminar(int id) => _cliente.enviar('DELETE', '/tareas-outlook/$id');
+  Future<void> restaurar(int id) => _cliente.enviar('POST', '/tareas-outlook/$id/restaurar');
+
+  /// Una acción sobre varias tareas (`completar`, `estado`, `prioridad`, `fecha`...). Cada una con sus permisos: devuelve cuántas se hicieron y cuántas no.
+  Future<({int ok, int fallos})> lote(List<int> ids, String accion, {String? valor}) async {
+    final r = await _o.accionEnLote(cuerpo: {'ids': ids, 'accion': accion, 'valor': ?valor});
+    return (ok: r.ok ?? 0, fallos: r.fallos ?? 0);
+  }
+
+  Future<List<Vista>> vistas() => _o.listarVistas();
+  Future<Vista> guardarVista(String nombre, Map<String, String> filtros) => _o.guardarVista(cuerpo: {'nombre': nombre.trim(), 'filtros': filtros});
+  Future<void> eliminarVista(int id) => _o.eliminarVista(vistaId: id);
+
+  /// Las categorías (estilo Outlook) que ya usan las tareas: lo que admite el filtro de categoría.
+  Future<List<String>> categoriasOutlook() async => [for (final c in (await _o.categoriasOutlook() as List? ?? const [])) c.toString()];
 
   Future<TareaOutlook> editar(int id, {String? asunto, String? cuerpo, PrioridadTarea? prioridad, String? fechaVencimiento}) => _o.editarTareaOutlook(tareaId: id, cuerpo: {
         'asunto': ?asunto,

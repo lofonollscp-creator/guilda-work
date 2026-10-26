@@ -13,6 +13,7 @@ import '../../nucleo/lectura_guardada.dart';
 import '../pendientes/pendientes_sheet.dart';
 import 'tarea_detalle_screen.dart';
 import 'tareas_lista_controlador.dart';
+import 'tareas_repositorio.dart';
 import 'textos.dart';
 
 /// La lista de tareas: ámbitos (mías, asignadas, compartidas, todas), estado, búsqueda,
@@ -95,6 +96,100 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
     }
   }
 
+  PreferredSizeWidget _barraSeleccion(AppLocalizations t, Set<int> seleccion) {
+    final c = ref.read(tareasListaProvider.notifier);
+    return AppBar(
+      leading: IconButton(icon: const Icon(Icons.close), tooltip: t.comunCancelar, onPressed: c.limpiarSeleccion),
+      title: Text(t.tareasSeleccionadas(seleccion.length)),
+      actions: [
+        IconButton(icon: const Icon(Icons.select_all), tooltip: t.tareasMarcarTodas, onPressed: c.seleccionarTodas),
+        IconButton(icon: const Icon(Icons.done_all), tooltip: t.tareasLoteCompletar, onPressed: () => _lote('completar')),
+        PopupMenuButton<String>(
+          onSelected: (v) => switch (v) {
+            'estado' => _loteEstado(),
+            'prioridad' => _lotePrioridad(),
+            'fecha' => _loteFecha(),
+            _ => _eliminarSeleccion(),
+          },
+          itemBuilder: (_) => [
+            PopupMenuItem(value: 'estado', child: Text(t.tareasLoteEstado)),
+            PopupMenuItem(value: 'prioridad', child: Text(t.tareasLotePrioridad)),
+            PopupMenuItem(value: 'fecha', child: Text(t.tareasLoteVencimiento)),
+            PopupMenuItem(value: 'eliminar', child: Text(t.tareasLoteEliminar)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _lote(String accion, {String? valor}) async {
+    final t = AppLocalizations.of(context);
+    final mensajero = ScaffoldMessenger.of(context);
+    try {
+      final r = await ref.read(tareasListaProvider.notifier).accionLote(accion, valor: valor);
+      mensajero.hideCurrentSnackBar();
+      mensajero.showSnackBar(SnackBar(content: Text(r.fallos == 0 ? t.tareasLoteExito(r.ok) : t.tareasLoteResultado(r.ok, r.fallos))));
+    } on ApiException catch (e) {
+      mensajero.showSnackBar(SnackBar(content: Text(e.mensaje)));
+    }
+  }
+
+  Future<T?> _elegir<T>(List<(T, String)> opciones) => showModalBottomSheet<T>(
+        context: context,
+        builder: (_) => SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [for (final (valor, etiqueta) in opciones) ListTile(title: Text(etiqueta), onTap: () => Navigator.pop(context, valor))]),
+        ),
+      );
+
+  Future<void> _loteEstado() async {
+    final t = AppLocalizations.of(context);
+    // «Esperando» pide un motivo: se cambia desde la ficha de cada tarea.
+    final e = await _elegir<EstadoTarea>([for (final e in EstadoTarea.elegibles) if (!e.pideMotivo) (e, etiquetaEstado(t, e))]);
+    if (e != null) await _lote('estado', valor: e.valor);
+  }
+
+  Future<void> _lotePrioridad() async {
+    final t = AppLocalizations.of(context);
+    final p = await _elegir<PrioridadTarea>([for (final p in PrioridadTarea.values) (p, etiquetaPrioridad(t, p))]);
+    if (p != null) await _lote('prioridad', valor: p.valor);
+  }
+
+  Future<void> _loteFecha() async {
+    final t = AppLocalizations.of(context);
+    final ahora = DateTime.now();
+    final f = await showDatePicker(context: context, helpText: t.tareasLoteVencimiento, initialDate: ahora, firstDate: DateTime(ahora.year - 1), lastDate: DateTime(ahora.year + 5));
+    if (f != null) await _lote('fecha', valor: Fecha(f.year, f.month, f.day).toJson());
+  }
+
+  Future<void> _eliminarSeleccion() async {
+    final t = AppLocalizations.of(context);
+    final mensajero = ScaffoldMessenger.of(context);
+    final c = ref.read(tareasListaProvider.notifier);
+    final pedidas = ref.read(tareasListaProvider).seleccion.toList();
+    final hechas = await c.eliminar(pedidas);
+    mensajero.hideCurrentSnackBar();
+    if (hechas.isEmpty) {
+      mensajero.showSnackBar(SnackBar(content: Text(t.tareasNoSePudoEliminar)));
+      return;
+    }
+    mensajero.showSnackBar(SnackBar(
+      content: Text(hechas.length < pedidas.length ? '${t.tareasEliminadas(hechas.length)} · ${t.tareasNoSePudoEliminar}' : t.tareasEliminadas(hechas.length)),
+      duration: const Duration(seconds: 6),
+      action: SnackBarAction(
+        label: t.comunDeshacer,
+        onPressed: () async {
+          try {
+            await c.restaurar(hechas);
+            mensajero.hideCurrentSnackBar();
+            mensajero.showSnackBar(SnackBar(content: Text(t.tareaDeshechaAviso)));
+          } on ApiException catch (e) {
+            mensajero.showSnackBar(SnackBar(content: Text(e.mensaje)));
+          }
+        },
+      ),
+    ));
+  }
+
   Future<void> _deshacer(TareaOutlook antes, bool encolada) async {
     final mensajero = ScaffoldMessenger.of(context);
     final t = AppLocalizations.of(context);
@@ -115,8 +210,9 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
     final estado = ref.watch(tareasListaProvider);
     final controlador = ref.read(tareasListaProvider.notifier);
 
+    final seleccion = estado.seleccion;
     return Scaffold(
-      appBar: AppBar(
+      appBar: seleccion.isNotEmpty ? _barraSeleccion(t, seleccion) : AppBar(
         title: _buscando
             ? TextField(
                 controller: _buscar,
@@ -186,6 +282,21 @@ class _Filtros extends ConsumerWidget {
             ),
         ]),
       ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(children: [
+          TextButton.icon(
+            onPressed: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => const _HojaFiltros()),
+            icon: const Icon(Icons.tune, size: 18),
+            label: Text(estado.filtrosActivos == 0 ? t.tareasFiltros : t.tareasFiltrosActivos(estado.filtrosActivos)),
+          ),
+          TextButton.icon(
+            onPressed: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => const _HojaVistas()),
+            icon: const Icon(Icons.bookmarks_outlined, size: 18),
+            label: Text(t.tareasVistas),
+          ),
+        ]),
+      ),
     ]);
   }
 }
@@ -225,7 +336,15 @@ class _Cuerpo extends ConsumerWidget {
         itemCount: estado.tareas.length + (estado.cargando ? 1 : 0),
         itemBuilder: (context, i) {
           if (i >= estado.tareas.length) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
-          return _FilaTarea(tarea: estado.tareas[i], alCompletar: alCompletar, pendiente: estado.pendientes.contains(estado.tareas[i].id));
+          final tarea = estado.tareas[i];
+          return _FilaTarea(
+            tarea: tarea,
+            alCompletar: alCompletar,
+            pendiente: estado.pendientes.contains(tarea.id),
+            seleccionada: estado.seleccion.contains(tarea.id),
+            enSeleccion: estado.seleccion.isNotEmpty,
+            alSeleccionar: () => c.alternarSeleccion(tarea.id),
+          );
         },
       ),
     );
@@ -236,7 +355,10 @@ class _FilaTarea extends StatelessWidget {
   final TareaOutlook tarea;
   final Future<void> Function(TareaOutlook) alCompletar;
   final bool pendiente; // hecha sin conexión, aún sin enviar
-  const _FilaTarea({required this.tarea, required this.alCompletar, required this.pendiente});
+  final bool seleccionada;
+  final bool enSeleccion;
+  final VoidCallback alSeleccionar;
+  const _FilaTarea({required this.tarea, required this.alCompletar, required this.pendiente, required this.seleccionada, required this.enSeleccion, required this.alSeleccionar});
 
   @override
   Widget build(BuildContext context) {
@@ -249,10 +371,13 @@ class _FilaTarea extends StatelessWidget {
 
     return ListTile(
       minVerticalPadding: 10,
+      selected: seleccionada,
+      selectedTileColor: tema.colorScheme.primaryContainer.withValues(alpha: 0.4),
+      // En selección el cuadro marca la tarea para la acción en lote; fuera de ella, la completa.
       leading: Checkbox(
-        value: hecha,
-        onChanged: (hecha || tarea.id < 0) ? null : (_) => alCompletar(tarea),
-        semanticLabel: t.hoyCompletar,
+        value: enSeleccion ? seleccionada : hecha,
+        onChanged: enSeleccion ? (_) => alSeleccionar() : ((hecha || tarea.id < 0) ? null : (_) => alCompletar(tarea)),
+        semanticLabel: enSeleccion ? t.tareasSeleccionar : t.hoyCompletar,
       ),
       title: Text(
         tarea.asunto ?? '',
@@ -268,13 +393,67 @@ class _FilaTarea extends StatelessWidget {
           if (vencida) ChipEstado(estado: estado, etiqueta: '${t.tareasVencida}${fecha == null ? '' : ' · $fecha'}', vencida: true)
           else if (fecha != null) Text(fecha, style: tema.textTheme.labelMedium),
           if (PrioridadTarea.desde(tarea.prioridad) == PrioridadTarea.alta) Text(etiquetaPrioridad(t, PrioridadTarea.alta), style: tema.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
+          if ((tarea.categoriaNombre ?? '').isNotEmpty) _Proyecto(nombre: tarea.categoriaNombre!, color: tarea.categoriaColor),
+          if (tarea.rol == 'asignada') _Indicador(icono: Icons.person_outline, texto: t.tareaRolAsignada),
+          if (tarea.rol == 'compartida') _Indicador(icono: Icons.group_outlined, texto: t.tareaRolCompartida),
+          if ((tarea.bloqueos ?? 0) > 0) _Indicador(icono: Icons.lock_clock_outlined, texto: t.tareaIndEspera(tarea.bloqueos!)),
+          if ((tarea.checklistTotal ?? 0) > 0) _Indicador(icono: Icons.checklist, texto: t.tareaIndChecklist(tarea.checklistHechas ?? 0, tarea.checklistTotal!)),
+          if ((tarea.nComentarios ?? 0) > 0) _Indicador(icono: Icons.chat_bubble_outline, texto: t.tareaIndComentarios(tarea.nComentarios!), soloNumero: '${tarea.nComentarios}'),
         ]),
       ),
       trailing: pendiente
           ? Tooltip(message: t.colaTareaPendiente, child: const Icon(Icons.cloud_upload_outlined, size: 18))
           : ((tarea.motivoBloqueo ?? '').isNotEmpty ? const Icon(Icons.hourglass_empty, size: 18) : null),
-      onTap: tarea.id < 0 ? null : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id))),
+      onTap: tarea.id < 0
+          ? null
+          : (enSeleccion ? alSeleccionar : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id)))),
+      onLongPress: tarea.id < 0 ? null : alSeleccionar,
     );
+  }
+}
+
+/// Un dato pequeño de la fila (icono + texto). `soloNumero`: se enseña solo ese número, y el texto largo queda para el lector de pantalla.
+class _Indicador extends StatelessWidget {
+  final IconData icono;
+  final String texto;
+  final String? soloNumero;
+  const _Indicador({required this.icono, required this.texto, this.soloNumero});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Semantics(
+      label: texto,
+      excludeSemantics: true,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icono, size: 14, color: tema.colorScheme.outline),
+        const SizedBox(width: 3),
+        Text(soloNumero ?? texto, style: tema.textTheme.labelMedium),
+      ]),
+    );
+  }
+}
+
+/// El proyecto de la tarea, con su color (si lo tiene) en un punto; el nombre va siempre escrito.
+class _Proyecto extends StatelessWidget {
+  final String nombre;
+  final String? color;
+  const _Proyecto({required this.nombre, this.color});
+
+  Color? get _punto {
+    final h = (color ?? '').replaceFirst('#', '');
+    final v = h.length == 6 ? int.tryParse(h, radix: 16) : null;
+    return v == null ? null : Color(0xFF000000 | v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(Icons.folder_outlined, size: 14, color: _punto ?? tema.colorScheme.outline),
+      const SizedBox(width: 3),
+      Flexible(child: Text(nombre, style: tema.textTheme.labelMedium, overflow: TextOverflow.ellipsis)),
+    ]);
   }
 }
 
@@ -307,6 +486,159 @@ class _AltaRapida extends StatelessWidget {
               : InputChip(label: Text(context.formatos.fecha(fecha!)), onPressed: alElegirFecha, onDeleted: alQuitarFecha),
           IconButton(icon: const Icon(Icons.send), tooltip: t.tareasNueva, onPressed: alEnviar),
         ]),
+      ),
+    );
+  }
+}
+
+/// Filtros como los de la web: prioridad, categoría y «ver también completadas». «Guardar como vista» los guarda con nombre (también para la web).
+class _HojaFiltros extends ConsumerStatefulWidget {
+  const _HojaFiltros();
+
+  @override
+  ConsumerState<_HojaFiltros> createState() => _HojaFiltrosState();
+}
+
+class _HojaFiltrosState extends ConsumerState<_HojaFiltros> {
+  late PrioridadTarea? _prioridad;
+  late String? _categoria;
+  late bool _completadas;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = ref.read(tareasListaProvider);
+    _prioridad = e.prioridad;
+    _categoria = e.categoria;
+    _completadas = e.completadas;
+  }
+
+  Future<void> _aplicar() => ref.read(tareasListaProvider.notifier).cambiarFiltros(
+        prioridad: _prioridad,
+        quitarPrioridad: _prioridad == null,
+        categoria: _categoria,
+        quitarCategoria: _categoria == null,
+        completadas: _completadas,
+      );
+
+  Future<void> _guardarVista() async {
+    final t = AppLocalizations.of(context);
+    final mensajero = ScaffoldMessenger.of(context);
+    final navegador = Navigator.of(context);
+    final nombre = TextEditingController();
+    final elegido = await showDialog<String>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(t.tareasGuardarVista),
+        content: TextField(controller: nombre, autofocus: true, decoration: InputDecoration(labelText: t.tareasVistaNombre), maxLength: 60),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(d), child: Text(t.comunCancelar)),
+          FilledButton(onPressed: () => Navigator.pop(d, nombre.text.trim()), child: Text(t.tareaGuardar)),
+        ],
+      ),
+    );
+    if (elegido == null || elegido.isEmpty) return;
+    await _aplicar();
+    try {
+      await ref.read(tareasRepositorioProvider).guardarVista(elegido, ref.read(tareasListaProvider).filtrosDeVista);
+      ref.invalidate(vistasTareasProvider);
+      mensajero.showSnackBar(SnackBar(content: Text(t.tareasVistaGuardada)));
+      navegador.pop();
+    } on ApiException catch (e) {
+      mensajero.showSnackBar(SnackBar(content: Text(e.categoria == CategoriaError.validacion ? t.tareasVistaNoSePudo : e.mensaje)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final categorias = ref.watch(categoriasOutlookProvider).value ?? const <String>[];
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(t.tareasFiltroPrioridad, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, children: [
+              ChoiceChip(label: Text(t.tareasFiltroCualquiera), selected: _prioridad == null, onSelected: (_) => setState(() => _prioridad = null)),
+              for (final p in PrioridadTarea.values) ChoiceChip(label: Text(etiquetaPrioridad(t, p)), selected: _prioridad == p, onSelected: (_) => setState(() => _prioridad = p)),
+            ]),
+            if (categorias.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(t.tareasFiltroCategoria, style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, children: [
+                ChoiceChip(label: Text(t.tareasFiltroCualquiera), selected: _categoria == null, onSelected: (_) => setState(() => _categoria = null)),
+                for (final c in categorias) ChoiceChip(label: Text(c), selected: _categoria == c, onSelected: (_) => setState(() => _categoria = c)),
+              ]),
+            ],
+            const SizedBox(height: 8),
+            SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(t.tareasMostrarCompletadas), value: _completadas, onChanged: (v) => setState(() => _completadas = v)),
+            const SizedBox(height: 8),
+            Row(children: [
+              TextButton(
+                onPressed: () => setState(() {
+                  _prioridad = null;
+                  _categoria = null;
+                  _completadas = false;
+                }),
+                child: Text(t.tareasLimpiarFiltros),
+              ),
+              TextButton(onPressed: _guardarVista, child: Text(t.tareasGuardarVista)),
+              const Spacer(),
+              FilledButton(
+                onPressed: () async {
+                  final navegador = Navigator.of(context);
+                  await _aplicar();
+                  navegador.pop();
+                },
+                child: Text(t.tareasAplicar),
+              ),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Las vistas guardadas (propias y compartidas por el despacho): tocar una pone sus filtros.
+class _HojaVistas extends ConsumerWidget {
+  const _HojaVistas();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final vistas = ref.watch(vistasTareasProvider);
+    return SafeArea(
+      child: vistas.when(
+        loading: () => const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
+        error: (e, _) => Padding(padding: const EdgeInsets.all(16), child: Text(e is ApiException ? e.mensaje : '$e')),
+        data: (lista) => lista.isEmpty
+            ? Padding(padding: const EdgeInsets.fromLTRB(24, 8, 24, 32), child: Text(t.tareasVistasVacio))
+            : ListView(shrinkWrap: true, children: [
+                for (final v in lista)
+                  ListTile(
+                    leading: const Icon(Icons.bookmark_outline),
+                    title: Text(v.nombre ?? ''),
+                    subtitle: v.mia == true ? null : Text('${t.tareasVistaCompartida}${(v.autor ?? '').isEmpty ? '' : ' · ${v.autor}'}'),
+                    trailing: v.mia == true && v.id != null
+                        ? IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            tooltip: t.tareasLoteEliminar,
+                            onPressed: () async {
+                              await ref.read(tareasRepositorioProvider).eliminarVista(v.id!);
+                              ref.invalidate(vistasTareasProvider);
+                            },
+                          )
+                        : null,
+                    onTap: () {
+                      Navigator.pop(context);
+                      ref.read(tareasListaProvider.notifier).aplicarVista(v.filtros ?? const {});
+                    },
+                  ),
+              ]),
       ),
     );
   }

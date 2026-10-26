@@ -297,7 +297,7 @@ void main() {
       expect(r.valor!.asunto, 'Llamar a Acme');
       final p = (await cola.de(1, '3')).single;
       expect((p.metodo, p.ruta, p.tipo), ('POST', '/tareas-outlook', 'tarea.crear'));
-      expect(p.cuerpoMapa, {'asunto': 'Llamar a Acme', 'fecha_vencimiento': '2026-10-30'});
+      expect(p.cuerpoMapa, {'asunto': 'Llamar a Acme', 'fecha_vencimiento': '2026-10-30', 'texto_libre': true});
       expect(p.clave, repo.claves.single); // si la primera petición sí llegó, el reenvío no duplica
       expect(p.localId, startsWith('local:'));
     });
@@ -505,7 +505,7 @@ class _RepoSinRed implements TareasRepositorio {
   }
 
   @override
-  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad, String? clave}) async {
+  Future<TareaOutlook> crear({required String asunto, String? fechaVencimiento, PrioridadTarea? prioridad, String? clave, bool textoLibre = false}) async {
     _falla(clave);
     return TareaOutlook.fromJson({'id': 500, 'asunto': asunto, 'estado': 'no_iniciada', 'version': 1});
   }
@@ -520,7 +520,7 @@ class _RepoSinRed implements TareasRepositorio {
   Future<void> comentar(int id, String texto, {String? clave}) async => _falla(clave);
 
   @override
-  Future<List<TareaOutlook>> listar({String ambito = 'propias', String? estado, String? q, int limit = 30, int offset = 0}) async => paginas;
+  Future<List<TareaOutlook>> listar({String ambito = 'propias', String? estado, String? q, int limit = 30, int offset = 0, String? prioridad, String? categoria, bool? soloAbiertas}) async => paginas;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError('${invocation.memberName}');
