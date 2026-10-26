@@ -294,3 +294,70 @@ class BloqueFicha extends StatelessWidget {
     );
   }
 }
+
+/// Un botón con forma de píldora (icono + texto), para barras de filtros: con `activo` se tiñe del acento.
+class PildoraBoton extends StatelessWidget {
+  final IconData icono;
+  final String texto;
+  final bool activo;
+  final VoidCallback alPulsar;
+  const PildoraBoton({super.key, required this.icono, required this.texto, this.activo = false, required this.alPulsar});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final fondo = activo ? Color.alphaBlend(tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.22 : 0.30), tema.colorScheme.surface) : tema.colorScheme.surface;
+    return Semantics(
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: alPulsar,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(999), border: Border.all(color: activo ? tema.colorScheme.primary : tema.colorScheme.outlineVariant, width: activo ? 1.5 : 1)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icono, size: 18, color: tema.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Text(texto, style: tema.textTheme.labelLarge?.copyWith(color: tema.colorScheme.onSurface)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Un menú desplegable con forma de píldora: enseña la elección actual y abre la lista de opciones.
+class PildoraMenu<T> extends StatelessWidget {
+  final IconData icono;
+  final String texto;
+  final bool activo;
+  final List<(T, String)> opciones;
+  final T seleccionado;
+  final void Function(T) alElegir;
+  const PildoraMenu({super.key, required this.icono, required this.texto, required this.activo, required this.opciones, required this.seleccionado, required this.alElegir});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final fondo = activo ? Color.alphaBlend(tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.22 : 0.30), tema.colorScheme.surface) : tema.colorScheme.surface;
+    return PopupMenuButton<T>(
+      tooltip: texto,
+      position: PopupMenuPosition.under,
+      onSelected: alElegir,
+      itemBuilder: (_) => [for (final (valor, etiqueta) in opciones) CheckedPopupMenuItem<T>(value: valor, checked: valor == seleccionado, child: Text(etiqueta))],
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 40),
+        padding: const EdgeInsets.only(left: 14, right: 8),
+        decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(999), border: Border.all(color: activo ? tema.colorScheme.primary : tema.colorScheme.outlineVariant, width: activo ? 1.5 : 1)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icono, size: 18, color: tema.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(texto, style: tema.textTheme.labelLarge?.copyWith(color: tema.colorScheme.onSurface)),
+          Icon(Icons.arrow_drop_down, color: tema.colorScheme.onSurfaceVariant),
+        ]),
+      ),
+    );
+  }
+}
+

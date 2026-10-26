@@ -1138,5 +1138,30 @@
   "acentoRosa": "Rosa",
   "acentoRojo": "Rojo",
   "acentoNaranja": "Naranja",
-  "acentoAmbar": "Ámbar"
+  "acentoAmbar": "Ámbar",
+  "fichajeDesdeLas": "Desde las {hora}",
+  "@fichajeDesdeLas": {
+    "placeholders": {
+      "hora": {
+        "type": "String"
+      }
+    }
+  },
+  "fichajePausaDesdeLas": "En pausa desde las {hora}",
+  "@fichajePausaDesdeLas": {
+    "placeholders": {
+      "hora": {
+        "type": "String"
+      }
+    }
+  },
+  "fichajeSalisteALas": "Última salida a las {hora}",
+  "@fichajeSalisteALas": {
+    "placeholders": {
+      "hora": {
+        "type": "String"
+      }
+    }
+  },
+  "fichajeAunNoHoy": "Aún no has fichado hoy"
 }

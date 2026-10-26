@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../diseno/componentes.dart';
+import '../diseno/formatos.dart';
 
 import '../l10n/app_localizations.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
@@ -228,63 +229,105 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(m.asunto, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(AppLocalizations.of(context).correoDe(m.remitente)),
-              Text(AppLocalizations.of(context).correoPara(m.destinatarios)),
-              if (m.cc != null && m.cc!.isNotEmpty) Text('Cc: ${m.cc}'),
-              if (m.fecha != null) Text(m.fecha!),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
+              Text(m.asunto, style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 12),
+              // Quién escribe, con su avatar, y cuándo; los destinatarios quedan plegados (casi nunca hacen falta).
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                _AvatarCorreo(nombre: nombreDeRemitente(m.remitente)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(nombreDeRemitente(m.remitente), style: Theme.of(context).textTheme.titleSmall),
+                    Text(_direccionEmail(m.remitente) ?? m.remitente, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ]),
+                ),
+                if (m.fecha != null) Text(context.formatos.deServidor(m.fecha) ?? '', style: Theme.of(context).textTheme.labelMedium),
+              ]),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(AppLocalizations.of(context).correoPara(m.destinatarios), maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+                childrenPadding: EdgeInsets.zero,
+                expandedAlignment: Alignment.centerLeft,
                 children: [
-                  ActionChip(
-                    avatar: Icon(m.leido ? Icons.mark_email_read : Icons.mark_email_unread),
-                    label: Text(m.leido ? AppLocalizations.of(context).correoLeido : AppLocalizations.of(context).correoNoLeido),
-                    onPressed: () => _accion(() => widget.api.marcarLeido(m.id, !m.leido)),
-                  ),
-                  ActionChip(
-                    avatar: Icon(m.destacado ? Icons.star : Icons.star_border),
-                    label: Text(AppLocalizations.of(context).correoDestacar),
-                    onPressed: () => _accion(() => widget.api.destacarMensaje(m.id, !m.destacado)),
-                  ),
-                  if (!m.remitenteConfiable)
-                    ActionChip(
-                      avatar: const Icon(Icons.shield_outlined),
-                      label: Text(AppLocalizations.of(context).correoConfiarRemitente),
-                      onPressed: () => _confiarEnRemitente(m.remitente),
-                    ),
+                  Text(AppLocalizations.of(context).correoDe(m.remitente)),
+                  Text(AppLocalizations.of(context).correoPara(m.destinatarios)),
+                  if (m.cc != null && m.cc!.isNotEmpty) Text('Cc: ${m.cc}'),
+                  const SizedBox(height: 8),
                 ],
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<int?>(
-                      initialValue: m.categoriaId,
-                      decoration: InputDecoration(labelText: AppLocalizations.of(context).correoCategoria),
-                      items: [
-                        DropdownMenuItem(value: null, child: Text(AppLocalizations.of(context).correoSinCategoria)),
-                        ..._categorias.map((c) => DropdownMenuItem(value: c.id, child: Text(c.nombre))),
-                      ],
-                      onChanged: (v) => _accion(() => widget.api.asignarCategoria(m.id, v)),
-                    ),
+              Row(children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => _responder(m),
+                    icon: const Icon(Icons.reply),
+                    label: Text(AppLocalizations.of(context).correoResponder),
                   ),
-                  const SizedBox(width: 12),
-                  if (widget.carpetas.length > 1)
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _reenviar(m),
+                    icon: const Icon(Icons.forward),
+                    label: Text(AppLocalizations.of(context).correoReenviar),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: [
+                  PildoraBoton(
+                    icono: m.leido ? Icons.mark_email_read_outlined : Icons.mark_email_unread_outlined,
+                    texto: m.leido ? AppLocalizations.of(context).correoLeido : AppLocalizations.of(context).correoNoLeido,
+                    alPulsar: () => _accion(() => widget.api.marcarLeido(m.id, !m.leido)),
+                  ),
+                  const SizedBox(width: 8),
+                  PildoraBoton(
+                    icono: m.destacado ? Icons.star : Icons.star_border,
+                    texto: AppLocalizations.of(context).correoDestacar,
+                    activo: m.destacado,
+                    alPulsar: () => _accion(() => widget.api.destacarMensaje(m.id, !m.destacado)),
+                  ),
+                  if (!m.remitenteConfiable) ...[
+                    const SizedBox(width: 8),
+                    PildoraBoton(icono: Icons.shield_outlined, texto: AppLocalizations.of(context).correoConfiarRemitente, alPulsar: () => _confiarEnRemitente(m.remitente)),
+                  ],
+                ]),
+              ),
+              const SizedBox(height: 8),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(AppLocalizations.of(context).correoCategoria, style: Theme.of(context).textTheme.labelLarge),
+                leading: const Icon(Icons.label_outline, size: 20),
+                childrenPadding: const EdgeInsets.only(bottom: 8),
+                children: [
+                  Row(children: [
                     Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: m.carpeta,
-                        decoration: InputDecoration(labelText: AppLocalizations.of(context).correoMoverA),
-                        items: widget.carpetas
-                            .map((f) => DropdownMenuItem(value: f.nombre, child: Text(f.nombreVisible)))
-                            .toList(),
-                        onChanged: (v) {
-                          if (v != null) _accion(() => widget.api.moverMensaje(m.id, v));
-                        },
+                      child: DropdownButtonFormField<int?>(
+                        initialValue: m.categoriaId,
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context).correoCategoria),
+                        items: [
+                          DropdownMenuItem(value: null, child: Text(AppLocalizations.of(context).correoSinCategoria)),
+                          ..._categorias.map((c) => DropdownMenuItem(value: c.id, child: Text(c.nombre))),
+                        ],
+                        onChanged: (v) => _accion(() => widget.api.asignarCategoria(m.id, v)),
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    if (widget.carpetas.length > 1)
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: m.carpeta,
+                          decoration: InputDecoration(labelText: AppLocalizations.of(context).correoMoverA),
+                          items: widget.carpetas.map((f) => DropdownMenuItem(value: f.nombre, child: Text(f.nombreVisible))).toList(),
+                          onChanged: (v) {
+                            if (v != null) _accion(() => widget.api.moverMensaje(m.id, v));
+                          },
+                        ),
+                      ),
+                  ]),
                 ],
               ),
               if (_error != null) ...[
@@ -342,25 +385,30 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  FilledButton.icon(
-                    onPressed: () => _responder(m),
-                    icon: const Icon(Icons.reply),
-                    label: Text(AppLocalizations.of(context).correoResponder),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => _reenviar(m),
-                    icon: const Icon(Icons.forward),
-                    label: Text(AppLocalizations.of(context).correoReenviar),
-                  ),
-                ],
-              ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Círculo con la inicial de quien escribe (el mismo que en la bandeja: el color sale del nombre).
+class _AvatarCorreo extends StatelessWidget {
+  final String nombre;
+  const _AvatarCorreo({required this.nombre});
+
+  @override
+  Widget build(BuildContext context) {
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+    final limpio = nombre.trim();
+    final inicial = limpio.isEmpty ? '?' : String.fromCharCode(limpio.runes.first).toUpperCase();
+    final tono = limpio.codeUnits.fold<int>(0, (a, c) => (a * 31 + c) % 360).toDouble();
+    return ExcludeSemantics(
+      child: CircleAvatar(
+        radius: 22,
+        backgroundColor: HSLColor.fromAHSL(1, tono, 0.45, oscuro ? 0.30 : 0.86).toColor(),
+        child: Text(inicial, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: HSLColor.fromAHSL(1, tono, 0.55, oscuro ? 0.88 : 0.22).toColor())),
       ),
     );
   }

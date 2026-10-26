@@ -715,5 +715,9 @@
   "acentoRosa": "Rosa",
   "acentoRojo": "Vermell",
   "acentoNaranja": "Taronja",
-  "acentoAmbar": "Ambre"
+  "acentoAmbar": "Ambre",
+  "fichajeDesdeLas": "Des de les {hora}",
+  "fichajePausaDesdeLas": "En pausa des de les {hora}",
+  "fichajeSalisteALas": "Última sortida a les {hora}",
+  "fichajeAunNoHoy": "Encara no has fitxat avui"
 }

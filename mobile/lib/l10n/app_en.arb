@@ -715,5 +715,9 @@
   "acentoRosa": "Pink",
   "acentoRojo": "Red",
   "acentoNaranja": "Orange",
-  "acentoAmbar": "Amber"
+  "acentoAmbar": "Amber",
+  "fichajeDesdeLas": "Since {hora}",
+  "fichajePausaDesdeLas": "On break since {hora}",
+  "fichajeSalisteALas": "Last clock-out at {hora}",
+  "fichajeAunNoHoy": "You haven't clocked in today yet"
 }
