@@ -4,6 +4,7 @@ fiscal; el resto de la gestoría ve y prepara. Guilda Work no presenta: genera e
 («/fiscal» ya es el calendario fiscal: esto vive en «/guilda-fiscal».)"""
 from __future__ import annotations
 
+import unicodedata
 from datetime import date, timedelta
 from urllib.parse import quote
 
@@ -37,6 +38,10 @@ def _solo_con_el_modulo():
 @guilda_fiscal_bp.context_processor
 def _plantilla():
     return {"puede_aprobar": bool(g.get("usuario_id") and g.get("tenant_id") and acceso.puede_autorizar(g.tenant_id, g.usuario_id)), "etiqueta_casilla": fn.etiqueta_casilla}
+
+
+def _sin_acentos(texto: str) -> str:
+    return "".join(ch for ch in unicodedata.normalize("NFD", (texto or "").lower()) if unicodedata.category(ch) != "Mn").strip()
 
 
 def _atras(destino: str, error) -> Response:
@@ -75,9 +80,12 @@ def cartera():
     filtro = request.args.get("filtro", "")
     cuentas = {n: sum(1 for f in todas if f["semaforo"]["nivel"] == n) for n in ("rojo", "ambar", "verde", "gris")}
     filas = [f for f in todas if filtro in ("", "todos") or (filtro == "pendientes" and f["semaforo"]["nivel"] in ("rojo", "ambar")) or f["semaforo"]["clave"] == filtro]
+    q = _sin_acentos(request.args.get("q", ""))
+    if q:                                                                # buscador: por nombre o NIF, sin mayúsculas ni acentos y sin importar el orden de las palabras
+        filas = [f for f in filas if all(palabra in _sin_acentos(f"{f['nombre']} {f['nif'] or ''}") for palabra in q.split())]
     orden = {"rojo": 0, "ambar": 1, "verde": 2, "gris": 3}
     filas.sort(key=lambda f: (orden[f["semaforo"]["nivel"]], (f["proximo_303"] or {}).get("fecha_limite") or "9999", f["nombre"].lower()))      # lo urgente arriba, y dentro, lo que vence antes
-    return render_template("fiscal_cartera.html", filas=filas, cuentas=cuentas, filtro=filtro, periodo=fn.periodo_por_defecto(date.today()), error=_error())
+    return render_template("fiscal_cartera.html", filas=filas, cuentas=cuentas, filtro=filtro, q=request.args.get("q", "").strip()[:80], periodo=fn.periodo_por_defecto(date.today()), error=_error())
 
 
 def _recordatorio(c: dict, periodo: tuple[int, str]) -> dict | None:

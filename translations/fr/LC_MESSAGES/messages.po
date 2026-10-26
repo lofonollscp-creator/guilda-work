@@ -16162,3 +16162,15 @@ msgstr "déposée"
 
 msgid "revisada"
 msgstr "vérifiée"
+
+msgid "Buscar por nombre o NIF"
+msgstr "Rechercher par nom ou NIF"
+
+msgid "Buscar titular"
+msgstr "Rechercher un titulaire"
+
+msgid "Buscar"
+msgstr "Rechercher"
+
+msgid "Ningún titular coincide con la búsqueda."
+msgstr "Aucun titulaire ne correspond à la recherche."

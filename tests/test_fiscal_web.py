@@ -241,3 +241,16 @@ def test_resumen_pdf_cambios_y_recordatorio(cliente):
     assert "Qué ha cambiado" in cliente.get(f"/guilda-fiscal/declaracion/{d2['id']}").get_data(as_text=True)
     assert cliente.post(f"/guilda-fiscal/declaracion/{d2['id']}/anular").status_code == 302
     assert cliente.get(f"/guilda-fiscal/declaracion/{d2['id']}/resumen.pdf").status_code == 404
+
+
+def test_buscador_de_la_cartera(cliente):
+    uid, t, c = _web(cliente, email="buscador@ejemplo.com")
+    crear_cliente_fiscal(t, "Assessors Històrics SL", nif="B16406233")
+    todo = cliente.get("/guilda-fiscal/").get_data(as_text=True)
+    assert "Empresa Web SL" in todo and "Assessors Històrics SL" in todo and "data-buscar-campo" in todo
+    r = cliente.get("/guilda-fiscal/?q=historics").get_data(as_text=True)                 # sin acentos ni mayúsculas
+    assert "Assessors Històrics SL" in r and "Empresa Web SL" not in r
+    assert "Empresa Web SL" in cliente.get("/guilda-fiscal/?q=a12345674").get_data(as_text=True)        # por NIF
+    assert "Empresa Web SL" in cliente.get("/guilda-fiscal/?q=web empresa").get_data(as_text=True)      # palabras en cualquier orden
+    vacio = cliente.get("/guilda-fiscal/?q=zzzz").get_data(as_text=True)
+    assert "Empresa Web SL" not in vacio and "Ningún titular coincide" in vacio

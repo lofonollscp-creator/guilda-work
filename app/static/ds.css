@@ -266,3 +266,7 @@ input[type="file"]::file-selector-button:hover { border-color: var(--accent, var
 .pill.semaforo-verde { background: rgba(46, 160, 100, 0.16); color: var(--success, #1e8a55); }
 .pill.semaforo-gris { background: var(--surface-2, rgba(128, 128, 128, 0.14)); color: var(--text-muted); }
 .fiscal-recordatorio { width: 100%; font: inherit; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); padding: 10px 12px; }
+.fiscal-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.fiscal-buscador { display: flex; gap: 8px; align-items: center; flex: 1 1 280px; max-width: 460px; }
+.fiscal-buscador input[type="search"] { flex: 1 1 auto; min-width: 0; }
+tr[hidden] { display: none; }

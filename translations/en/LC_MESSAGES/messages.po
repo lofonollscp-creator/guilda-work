@@ -16077,3 +16077,15 @@ msgstr "filed"
 
 msgid "revisada"
 msgstr "reviewed"
+
+msgid "Buscar por nombre o NIF"
+msgstr "Search by name or tax ID"
+
+msgid "Buscar titular"
+msgstr "Search holder"
+
+msgid "Buscar"
+msgstr "Search"
+
+msgid "Ningún titular coincide con la búsqueda."
+msgstr "No holder matches the search."

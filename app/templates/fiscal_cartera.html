@@ -2,6 +2,7 @@
 {% from "_ds/componentes.html" import estado_vacio, chip %}
 {% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ _('Guilda Fiscal') }} — Guilda Work{% endblock %}
+{% block scripts_pagina %}<script src="{{ url_for('static', filename='fiscal_cartera.js') }}"></script>{% endblock %}
 {% block content %}
 {% set estados = {'sin_perfil': _('Sin perfil fiscal'), 'sin_apuntes': _('Sin apuntes'), 'por_calcular': _('Por calcular'), 'borrador': _('Borrador por revisar'), 'revisada': _('Lista para generar el fichero'),
   'pendiente_presentar': _('Pendiente de presentar'), 'presentada': _('Presentada')} %}
@@ -12,20 +13,28 @@
   </div>
 </header>
 {{ aviso_error(error) }}
-<nav class="ds-fila ds-envolver ds-mb-16" aria-label="{{ _('Filtrar por estado') }}">
-  <span class="muted">{{ _('Periodo %(p)s de %(e)s', p=periodo[1], e=periodo[0]) }}:</span>
-  {% for clave, nombre, n in (('', _('Todos'), cuentas.rojo + cuentas.ambar + cuentas.verde + cuentas.gris), ('pendientes', _('Pendientes'), cuentas.rojo + cuentas.ambar), ('presentada', _('Presentados'), cuentas.verde)) %}
-    <a class="btn {{ 'btn-primary' if filtro == clave else 'btn-ghost' }} btn-sm" href="{{ url_for('guilda_fiscal.cartera', filtro=clave) if clave else url_for('guilda_fiscal.cartera') }}">{{ nombre }} · {{ n }}</a>
-  {% endfor %}
-</nav>
-{% if not filas %}
+<div class="fiscal-barra ds-mb-16">
+  <form method="get" role="search" class="fiscal-buscador" data-buscador>
+    {% if filtro %}<input type="hidden" name="filtro" value="{{ filtro }}">{% endif %}
+    <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar por nombre o NIF') }}" aria-label="{{ _('Buscar titular') }}" autocomplete="off" data-buscar-campo>
+    <button type="submit" class="btn btn-ghost">{{ _('Buscar') }}</button>
+  </form>
+  <nav class="ds-fila ds-envolver" aria-label="{{ _('Filtrar por estado') }}">
+    <span class="muted">{{ _('Periodo %(p)s de %(e)s', p=periodo[1], e=periodo[0]) }}:</span>
+    {% for clave, nombre, n in (('', _('Todos'), cuentas.rojo + cuentas.ambar + cuentas.verde + cuentas.gris), ('pendientes', _('Pendientes'), cuentas.rojo + cuentas.ambar), ('presentada', _('Presentados'), cuentas.verde)) %}
+      <a class="btn {{ 'btn-primary' if filtro == clave else 'btn-ghost' }} btn-sm" href="{{ url_for('guilda_fiscal.cartera', filtro=clave or None, q=q or None) }}">{{ nombre }} · {{ n }}</a>
+    {% endfor %}
+  </nav>
+</div>
+
+{% if not filas and not q %}
 {{ estado_vacio(_('Todavía no hay titulares'), _('Da de alta a tus clientes en el calendario fiscal y vuelve aquí.')) }}
 {% else %}
 <div class="table-wrap ds-mb-16"><table class="historial-table">
   <thead><tr><th>{{ _('Titular') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Estado del periodo') }}</th><th>{{ _('Perfil fiscal') }}</th><th>{{ _('Apuntes del año') }}</th><th>{{ _('Última declaración') }}</th><th>{{ _('Próximo 303') }}</th></tr></thead>
   <tbody>
   {% for f in filas %}
-    <tr>
+    <tr data-buscar="{{ f.nombre }} {{ f.nif or '' }}">
       <td><a href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.id) }}">{{ f.nombre }}</a></td>
       <td>{{ f.nif or '—' }}</td>
       <td><span class="pill semaforo semaforo-{{ f.semaforo.nivel }}">{{ estados[f.semaforo.clave] }}</span></td>
@@ -37,6 +46,7 @@
   {% endfor %}
   </tbody>
 </table></div>
+<p class="muted" data-sin-resultados hidden>{{ _('Ningún titular coincide con la búsqueda.') }}</p>
 {% endif %}
 {% if puede_aprobar and filas is not none %}
 <details class="dash-panel">

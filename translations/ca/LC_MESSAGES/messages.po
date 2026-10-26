@@ -16086,3 +16086,15 @@ msgstr "presentada"
 
 msgid "revisada"
 msgstr "revisada"
+
+msgid "Buscar por nombre o NIF"
+msgstr "Cerca per nom o NIF"
+
+msgid "Buscar titular"
+msgstr "Cerca titular"
+
+msgid "Buscar"
+msgstr "Cerca"
+
+msgid "Ningún titular coincide con la búsqueda."
+msgstr "Cap titular coincideix amb la cerca."
