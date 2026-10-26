@@ -772,5 +772,17 @@
   "bloqueoOfertaTitulo": "¿Proteger la app?",
   "bloqueoOfertaCuerpo": "Puedes pedir tu huella, tu cara o el código del móvil cada vez que abras Guilda Work. Así, si alguien coge tu móvil, no verá los datos de tus clientes.",
   "bloqueoOfertaActivar": "Activar",
-  "bloqueoOfertaAhoraNo": "Ahora no"
+  "bloqueoOfertaAhoraNo": "Ahora no",
+  "comunDeshacer": "Deshacer",
+  "tareaCompletadaAviso": "Tarea completada",
+  "tareaEstadoCambiadoAviso": "Cambiada a «{estado}»",
+  "tareaDeshechaAviso": "Cambio deshecho",
+  "tareaNoSePudoDeshacer": "No se pudo deshacer: la tarea ha cambiado. Revísala.",
+  "@tareaEstadoCambiadoAviso": {
+    "placeholders": {
+      "estado": {
+        "type": "String"
+      }
+    }
+  }
 }

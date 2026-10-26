@@ -526,5 +526,10 @@
   "bloqueoOfertaTitulo": "Vols protegir l'aplicació?",
   "bloqueoOfertaCuerpo": "Pots demanar l'empremta, la cara o el codi del mòbil cada cop que obris Guilda Work. Així, si algú agafa el teu mòbil, no veurà les dades dels teus clients.",
   "bloqueoOfertaActivar": "Activar",
-  "bloqueoOfertaAhoraNo": "Ara no"
+  "bloqueoOfertaAhoraNo": "Ara no",
+  "comunDeshacer": "Desfés",
+  "tareaCompletadaAviso": "Tasca completada",
+  "tareaEstadoCambiadoAviso": "Canviada a «{estado}»",
+  "tareaDeshechaAviso": "Canvi desfet",
+  "tareaNoSePudoDeshacer": "No s'ha pogut desfer: la tasca ha canviat. Revisa-la."
 }

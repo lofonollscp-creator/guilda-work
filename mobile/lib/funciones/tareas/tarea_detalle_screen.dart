@@ -147,16 +147,28 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
     await _transicionar(nuevo, motivo, _datos!.tarea.version);
   }
 
-  Future<void> _transicionar(EstadoTarea nuevo, String? motivo, int? version) async {
+  Future<void> _transicionar(EstadoTarea nuevo, String? motivo, int? version, {bool esDeshacer = false}) async {
     try {
       final t = AppLocalizations.of(context);
       final base = _datos!.tarea.copyWith(version: version);
+      final anterior = EstadoTarea.desde(base.estado);
       final r = await ref.read(accionesTareasProvider).transicionar(base, nuevo, motivo: motivo);
       _publicar(r.valor!);
       if (r.encolada) {
         _aviso(t.colaGuardada);
       } else {
         await _recargarSecundarios();
+        if (!mounted) return;
+        // «Deshacer» vuelve al estado de antes con la versión de ahora; si pedía motivo (bloqueada) no se ofrece.
+        final mensajero = ScaffoldMessenger.of(context);
+        mensajero.hideCurrentSnackBar();
+        mensajero.showSnackBar(SnackBar(
+          content: Text(esDeshacer ? t.tareaDeshechaAviso : t.tareaEstadoCambiadoAviso(etiquetaEstado(t, nuevo))),
+          duration: const Duration(seconds: 6),
+          action: esDeshacer || anterior.pideMotivo || anterior == EstadoTarea.desconocido
+              ? null
+              : SnackBarAction(label: t.comunDeshacer, onPressed: () => _transicionar(anterior, null, _datos?.tarea.version, esDeshacer: true)),
+        ));
       }
     } on ColaLlena {
       if (mounted) _aviso(AppLocalizations.of(context).colaLlena);

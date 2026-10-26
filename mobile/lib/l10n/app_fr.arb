@@ -526,5 +526,10 @@
   "bloqueoOfertaTitulo": "Protéger l'application ?",
   "bloqueoOfertaCuerpo": "Vous pouvez demander votre empreinte, votre visage ou le code du téléphone à chaque ouverture de Guilda Work. Ainsi, si quelqu'un prend votre téléphone, il ne verra pas les données de vos clients.",
   "bloqueoOfertaActivar": "Activer",
-  "bloqueoOfertaAhoraNo": "Pas maintenant"
+  "bloqueoOfertaAhoraNo": "Pas maintenant",
+  "comunDeshacer": "Annuler",
+  "tareaCompletadaAviso": "Tâche terminée",
+  "tareaEstadoCambiadoAviso": "Passée à « {estado} »",
+  "tareaDeshechaAviso": "Modification annulée",
+  "tareaNoSePudoDeshacer": "Impossible d'annuler : la tâche a changé. Vérifiez-la."
 }

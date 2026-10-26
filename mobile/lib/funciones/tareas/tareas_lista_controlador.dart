@@ -185,6 +185,27 @@ class TareasListaControlador extends Notifier<EstadoListaTareas> {
     }
   }
 
+  /// Deshace un cambio de estado hecho desde la lista (p. ej. completar). Si aún estaba en la cola sin enviar, solo se retira de la cola; si ya
+  /// se envió, se vuelve al estado anterior con la versión de ahora (si alguien más la tocó, lanza el conflicto y no pisa nada).
+  Future<void> deshacerEstado(TareaOutlook antes, {required bool encolada}) async {
+    if (encolada) {
+      final e = ref.read(estadoSesionProvider);
+      final cola = ref.read(colaEscrituraProvider);
+      final delaCola = e.usuario == null ? const <Pendiente>[] : await cola.de(e.usuario!.id, despachoDeLaCola(e.despacho));
+      final p = delaCola.where((p) => p.tipo == 'tarea.estado' && p.entidad == 'tarea:${antes.id}' && p.estado == EstadoPendiente.pendiente).lastOrNull;
+      if (p != null) {
+        state = state.copiaCon(pendientes: {...state.pendientes}..remove(antes.id));
+        reemplazar(antes);
+        await cola.eliminar(p.id);
+        return;
+      }
+    }
+    final actual = state.tareas.where((t) => t.id == antes.id).firstOrNull ?? antes;
+    final r = await ref.read(accionesTareasProvider).transicionar(actual, EstadoTarea.desde(antes.estado));
+    reemplazar(r.valor!);
+    if (r.encolada) state = state.copiaCon(pendientes: {...state.pendientes, antes.id});
+  }
+
   void reemplazar(TareaOutlook nueva) {
     state = state.copiaCon(tareas: [for (final t in state.tareas) t.id == nueva.id ? nueva : t]);
   }

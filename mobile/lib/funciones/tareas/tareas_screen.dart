@@ -81,11 +81,31 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
     final t = AppLocalizations.of(context);
     final mensajero = ScaffoldMessenger.of(context);
     try {
-      if (await ref.read(tareasListaProvider.notifier).completar(tarea)) mensajero.showSnackBar(SnackBar(content: Text(t.colaGuardada)));
+      final encolada = await ref.read(tareasListaProvider.notifier).completar(tarea);
+      mensajero.hideCurrentSnackBar();
+      mensajero.showSnackBar(SnackBar(
+        content: Text(encolada ? t.colaGuardada : t.tareaCompletadaAviso),
+        duration: const Duration(seconds: 6),
+        action: SnackBarAction(label: t.comunDeshacer, onPressed: () => _deshacer(tarea, encolada)),
+      ));
     } on ColaLlena {
       mensajero.showSnackBar(SnackBar(content: Text(t.colaLlena)));
     } on ApiException catch (e) {
       mensajero.showSnackBar(SnackBar(content: Text(e.mensaje)));
+    }
+  }
+
+  Future<void> _deshacer(TareaOutlook antes, bool encolada) async {
+    final mensajero = ScaffoldMessenger.of(context);
+    final t = AppLocalizations.of(context);
+    try {
+      await ref.read(tareasListaProvider.notifier).deshacerEstado(antes, encolada: encolada);
+      mensajero.hideCurrentSnackBar();
+      mensajero.showSnackBar(SnackBar(content: Text(t.tareaDeshechaAviso)));
+    } on ColaLlena {
+      mensajero.showSnackBar(SnackBar(content: Text(t.colaLlena)));
+    } on ApiException catch (e) {
+      mensajero.showSnackBar(SnackBar(content: Text(e.categoria == CategoriaError.conflicto ? t.tareaNoSePudoDeshacer : e.mensaje)));
     }
   }
 

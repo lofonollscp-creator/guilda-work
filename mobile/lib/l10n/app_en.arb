@@ -526,5 +526,10 @@
   "bloqueoOfertaTitulo": "Protect the app?",
   "bloqueoOfertaCuerpo": "You can ask for your fingerprint, face or phone passcode every time you open Guilda Work. That way, if someone picks up your phone, they won't see your clients' data.",
   "bloqueoOfertaActivar": "Turn on",
-  "bloqueoOfertaAhoraNo": "Not now"
+  "bloqueoOfertaAhoraNo": "Not now",
+  "comunDeshacer": "Undo",
+  "tareaCompletadaAviso": "Task completed",
+  "tareaEstadoCambiadoAviso": "Changed to “{estado}”",
+  "tareaDeshechaAviso": "Change undone",
+  "tareaNoSePudoDeshacer": "Couldn't undo: the task has changed. Please check it."
 }

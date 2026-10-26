@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guilda_work_mobile/api/cliente.dart';
 import 'package:guilda_work_mobile/api/errores.dart';
 import 'package:guilda_work_mobile/api/generado/modelos.g.dart';
+import 'package:guilda_work_mobile/datos/cola.dart';
+import 'package:guilda_work_mobile/datos/local/cola_escritura.dart';
 import 'package:guilda_work_mobile/dominio/tarea.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tarea_detalle_screen.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_lista_controlador.dart';
@@ -13,6 +15,8 @@ import 'package:guilda_work_mobile/funciones/tareas/tareas_repositorio.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_screen.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
+import 'package:guilda_work_mobile/services/api_client.dart' as sv;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 // ---------- servidor falso para el repositorio ----------
 
@@ -121,6 +125,11 @@ class _RepoFalso implements TareasRepositorio {
   Future<List<int>> descargarAdjunto(int adjuntoId) async => [1, 2, 3];
   @override
   Future<void> eliminarAdjunto(int adjuntoId) async => registro.add('quitar:$adjuntoId');
+}
+
+class _SesionConUsuario extends SesionControl {
+  @override
+  EstadoSesion build() => EstadoSesion(fase: FaseSesion.conSesion, usuario: sv.Usuario(id: 1, email: 'a@b.c'));
 }
 
 class _SesionFija extends SesionControl {
@@ -276,6 +285,53 @@ void main() {
       repo.alTransicionar = (id, e, m, v) async => throw _conflicto(6);
       await expectLater(n.completar(c.read(tareasListaProvider).tareas[1]), throwsA(isA<ApiException>()));
       expect(c.read(tareasListaProvider).tareas[1].estado, 'en_progreso'); // se enseña lo que hay ahora
+    });
+
+    test('deshacer una finalización ya enviada vuelve al estado anterior con la versión de ahora', () async {
+      final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(1, estado: 'en_progreso', version: 3)]);
+      final c = montar(repo);
+      c.read(tareasListaProvider);
+      await asentar();
+      final n = c.read(tareasListaProvider.notifier);
+      final antes = c.read(tareasListaProvider).tareas[0];
+      await n.completar(antes);
+      expect(c.read(tareasListaProvider).tareas[0].estado, 'completada');
+      await n.deshacerEstado(antes, encolada: false);
+      expect(repo.registro, containsAllInOrder(['transicionar:1:completada:-:3', 'transicionar:1:en_progreso:-:4']));
+      expect(c.read(tareasListaProvider).tareas[0].estado, 'en_progreso');
+    });
+
+    test('deshacer un conflicto no pisa nada: relanza y deja lo que hay', () async {
+      final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(1, version: 3)]);
+      final c = montar(repo);
+      c.read(tareasListaProvider);
+      await asentar();
+      final n = c.read(tareasListaProvider.notifier);
+      final antes = c.read(tareasListaProvider).tareas[0];
+      await n.completar(antes);
+      repo.alTransicionar = (id, e, m, v) async => throw _conflicto(9);
+      await expectLater(n.deshacerEstado(antes, encolada: false), throwsA(isA<ApiException>()));
+      expect(c.read(tareasListaProvider).tareas[0].estado, 'completada');
+    });
+
+    test('deshacer algo que sigue en la cola solo lo retira de la cola, sin hablar con el servidor', () async {
+      sqfliteFfiInit();
+      final cola = ColaEscritura(abrir: () => databaseFactoryFfi.openDatabase(inMemoryDatabasePath, options: OpenDatabaseOptions(version: 1, onCreate: ColaEscritura.crearEsquema, singleInstance: false)));
+      await cola.encolar(metodo: 'POST', ruta: '/tareas-outlook/1/transiciones', cuerpo: {'estado': 'completada', 'version': 3}, clave: 'k1', usuarioId: 1, despachoId: '0', entidad: 'tarea:1', tipo: 'tarea.estado', descripcion: 'Completar');
+      final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(1, version: 3)]);
+      final c = ProviderContainer(overrides: [tareasRepositorioProvider.overrideWithValue(repo), estadoSesionProvider.overrideWith(_SesionConUsuario.new), colaEscrituraProvider.overrideWithValue(cola)]);
+      addTearDown(c.dispose);
+      c.read(tareasListaProvider);
+      while (c.read(tareasListaProvider).cargando || c.read(tareasListaProvider).tareas.isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 10)); // la lista lee también la cola (SQLite de verdad)
+      }
+      expect(c.read(tareasListaProvider).tareas[0].estado, 'completada', reason: 'la lista enseña lo pendiente como hecho');
+      final antes = _tarea(1, version: 3);
+      expect(await cola.contar(1, '0'), 1);
+      await c.read(tareasListaProvider.notifier).deshacerEstado(antes, encolada: true);
+      expect(await cola.contar(1, '0'), 0);
+      expect(repo.registro.where((r) => r.startsWith('transicionar')), isEmpty);
+      expect(c.read(tareasListaProvider).tareas[0].estado, 'no_iniciada');
     });
 
     test('una tarea nueva entra la primera, salvo en ámbitos ajenos o con otro filtro de estado', () async {
