@@ -24,7 +24,7 @@ from flask import Blueprint, Response, abort, g, jsonify, make_response, request
 from werkzeug.exceptions import HTTPException
 
 from .bd.errores import ErrorIntegridad
-from . import alta_cliente, api_contexto, correo, db, estado_herramientas, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi
+from . import alta_cliente, api_contexto, correo, db, estado_herramientas, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi, quickadd
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -771,6 +771,12 @@ def editar_tarea_outlook(tarea_id: int):
         )
         if campo in datos
     }
+    if "estimacion" in datos:       # texto libre como en la web («1h30», «45 min», «2» = horas): lo interpreta el servidor
+        texto = str(datos.get("estimacion") or "").strip()
+        minutos = quickadd.duracion_a_minutos(texto)
+        if texto and minutos is None:
+            return _err("No entiendo esa estimación: prueba «1h30», «45 min» o «2» (horas).", 400, "estimacion_invalida", "estimacion")
+        campos["estimacion_min"] = minutos
     error = _error_referencia("tareas_outlook", g.usuario_id, datos, excepto_id=tarea_id)
     if error:
         return error

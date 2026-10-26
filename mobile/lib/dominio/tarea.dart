@@ -43,3 +43,34 @@ class Subtarea {
 
   factory Subtarea.desdeJson(Map<String, dynamic> j) => Subtarea((j['id'] as num).toInt(), (j['asunto'] ?? '').toString(), EstadoTarea.desde(j['estado']?.toString()));
 }
+
+/// Una persona con la que se comparte una tarea (`GET /tareas-outlook/{id}/compartir`): `colabora` la edita y completa, `observa` solo la ve.
+class ParticipanteTarea {
+  final int usuarioId;
+  final String nombre;
+  final String rol;
+  const ParticipanteTarea(this.usuarioId, this.nombre, this.rol);
+
+  bool get colabora => rol == 'colabora';
+
+  factory ParticipanteTarea.desdeJson(Map<String, dynamic> j) =>
+      ParticipanteTarea((j['usuario_id'] as num).toInt(), (j['nombre'] ?? '').toString(), (j['rol'] ?? 'colabora').toString());
+}
+
+/// Una tarea de la que depende otra («Espera a…»).
+class DependenciaTarea {
+  final int id;
+  final String asunto;
+  final EstadoTarea estado;
+  const DependenciaTarea(this.id, this.asunto, this.estado);
+
+  factory DependenciaTarea.desdeJson(Map<String, dynamic> j) =>
+      DependenciaTarea((j['id'] as num).toInt(), (j['asunto'] ?? '').toString(), EstadoTarea.desde(j['estado']?.toString()));
+}
+
+/// 90 → «1 h 30», 120 → «2 h», 45 → «45 min» (como la web).
+String duracionCorta(int minutos) {
+  final h = minutos ~/ 60, m = minutos % 60;
+  if (h > 0 && m > 0) return '$h h ${m.toString().padLeft(2, '0')}';
+  return h > 0 ? '$h h' : '$m min';
+}

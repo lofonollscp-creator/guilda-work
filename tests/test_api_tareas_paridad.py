@@ -73,3 +73,15 @@ def test_categorias_outlook_para_el_filtro(cliente):
     _crear(cliente, h, asunto="c", categoria_outlook="Fiscal")
     r = cliente.get("/api/v1/tareas-outlook/categorias-outlook", headers=h)
     assert r.status_code == 200 and r.get_json()["data"] == ["Fiscal", "Laboral"]
+
+
+def test_la_estimacion_se_escribe_como_en_la_web_y_la_interpreta_el_servidor(cliente):
+    h, uid, _ = _despacho(cliente, "paridad7@ejemplo.com")
+    t = _crear(cliente, h, asunto="estimar")["id"]
+    put = lambda texto: cliente.put(f"/api/v1/tareas-outlook/{t}", json={"estimacion": texto}, headers=h)
+    assert put("1h30").get_json()["data"]["estimacion_min"] == 90
+    assert put("2").get_json()["data"]["estimacion_min"] == 120      # un número solo son horas
+    assert put("45 min").get_json()["data"]["estimacion_min"] == 45
+    r = put("mucho")
+    assert r.status_code == 400 and r.get_json()["codigo"] == "estimacion_invalida"
+    assert put("").get_json()["data"]["estimacion_min"] is None      # vacío la quita

@@ -18,6 +18,9 @@ import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
 import '../../nucleo/lectura_guardada.dart';
 import '../../datos/local/cola_escritura.dart' show ColaLlena;
+import '../../nucleo/sesion.dart';
+import 'tarea_bloques.dart';
+import 'tarea_editor_screen.dart';
 import 'tareas_acciones.dart';
 import 'tareas_lista_controlador.dart';
 import 'tareas_repositorio.dart';
@@ -230,50 +233,12 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
   // --- edición ---
 
   Future<void> _editar() async {
-    final t = AppLocalizations.of(context);
+    final yo = ref.read(estadoSesionProvider).usuario?.id;
     final tarea = _datos!.tarea;
-    final asunto = TextEditingController(text: tarea.asunto ?? '');
-    final notas = TextEditingController(text: tarea.cuerpo ?? '');
-    var prioridad = PrioridadTarea.desde(tarea.prioridad);
-    Fecha? fecha = Fecha.intentar(tarea.fechaVencimiento);
-    final guardar = await showDialog<bool>(
-      context: context,
-      builder: (d) => StatefulBuilder(
-        builder: (d, setD) => AlertDialog(
-          title: Text(t.tareaEditar),
-          content: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: asunto, decoration: InputDecoration(labelText: t.tareaAsunto)),
-              TextField(controller: notas, decoration: InputDecoration(labelText: t.tareaNotas), maxLines: null),
-              const SizedBox(height: 12),
-              SegmentedButton<PrioridadTarea>(
-                segments: [for (final p in PrioridadTarea.values) ButtonSegment(value: p, label: Text(etiquetaPrioridad(t, p)))],
-                selected: {prioridad},
-                onSelectionChanged: (s) => setD(() => prioridad = s.first),
-              ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.event_outlined),
-                title: Text(fecha == null ? t.tareaSinFecha : context.formatos.fecha(fecha!)),
-                onTap: () async {
-                  final ahora = DateTime.now();
-                  final e = await showDatePicker(context: d, initialDate: ahora, firstDate: DateTime(ahora.year - 1), lastDate: DateTime(ahora.year + 5));
-                  if (e != null) setD(() => fecha = Fecha(e.year, e.month, e.day));
-                },
-              ),
-            ]),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(d, false), child: Text(t.comunCancelar)),
-            FilledButton(onPressed: () => Navigator.pop(d, true), child: Text(t.tareaGuardar)),
-          ],
-        ),
-      ),
+    final nueva = await Navigator.of(context).push<TareaOutlook>(
+      MaterialPageRoute(builder: (_) => TareaEditorScreen(tarea: tarea, esDueno: yo == null || tarea.usuarioId == null || tarea.usuarioId == yo)),
     );
-    if (guardar != true || asunto.text.trim().isEmpty) return;
-    await _intentar(() async {
-      _publicar(await _repo.editar(widget.tareaId, asunto: asunto.text.trim(), cuerpo: notas.text, prioridad: prioridad, fechaVencimiento: fecha?.toJson()));
-    });
+    if (nueva != null) _publicar(nueva);
   }
 
   // --- subtareas, comprobación, comentarios ---
@@ -435,6 +400,8 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
           label: Text(fecha == null ? t.tareaSinFecha : '${t.tareaVence}: ${context.formatos.fecha(fecha)}${vencida ? ' · ${t.tareasVencida}' : ''}'),
         ),
       ]),
+      const SizedBox(height: 4),
+      _Contexto(tarea: tarea),
       if (estado == EstadoTarea.esperando && (tarea.motivoBloqueo ?? '').isNotEmpty) ...[
         const SizedBox(height: 12),
         Card(color: tema.colorScheme.secondaryContainer, child: ListTile(leading: const Icon(Icons.hourglass_empty), title: Text(t.tareaMotivoBloqueo), subtitle: Text(tarea.motivoBloqueo!))),
@@ -443,6 +410,8 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
         _Titulo(t.tareaNotas),
         Text(tarea.cuerpo!),
       ],
+      BloqueEspera(tareaId: tarea.id, puedeEditar: true, alCambiar: _cargar),
+      BloqueCompartida(tareaId: tarea.id, esDueno: tarea.usuarioId == null || tarea.usuarioId == ref.read(estadoSesionProvider).usuario?.id, miId: ref.read(estadoSesionProvider).usuario?.id),
       _Titulo(d.subtareas.isEmpty ? t.tareaSubtareas : '${t.tareaSubtareas} · $hechas/${d.subtareas.length}'),
       for (final s in d.subtareas)
         CheckboxListTile(
@@ -477,6 +446,7 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
           onTap: () => _abrirAdjunto(a),
         ),
       Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: _adjuntar, icon: const Icon(Icons.add), label: Text(t.tareaAdjuntar))),
+      BloqueRecordatorios(tarea: tarea),
       _Titulo(t.tareaComentarios),
       for (final c in d.comentarios)
         ListTile(
@@ -495,6 +465,29 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
   String _cuando(String? iso) {
     final m = MomentoLocal.intentar(iso);
     return m == null ? '' : context.formatos.momento(m);
+  }
+}
+
+/// Lo que cuelga de la tarea y la web enseña en su cabecera: quién la tiene, el cliente, el proyecto y cuánto se calcula que lleva.
+class _Contexto extends ConsumerWidget {
+  final TareaOutlook tarea;
+  const _Contexto({required this.tarea});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final companeros = ref.watch(companerosProvider).value ?? const <Companero>[];
+    final persona = tarea.asignadaA == null ? null : companeros.where((c) => c.id == tarea.asignadaA).firstOrNull;
+    final principal = (tarea.clientes ?? const <ClienteDeTarea>[]).where((c) => c.principal == true).firstOrNull;
+    final otros = (tarea.clientes ?? const <ClienteDeTarea>[]).length - (principal == null ? 0 : 1);
+    final chips = <Widget>[
+      if ((tarea.categoriaNombre ?? '').isNotEmpty) Chip(avatar: const Icon(Icons.folder_outlined, size: 18), label: Text(tarea.categoriaNombre!)),
+      if (principal != null) Chip(avatar: const Icon(Icons.business_outlined, size: 18), label: Text(otros > 0 ? '${principal.nombre ?? ''} +$otros' : (principal.nombre ?? ''))),
+      if (persona != null) Chip(avatar: const Icon(Icons.person_outline, size: 18), label: Text(t.tareaAsignadaA(persona.nombre ?? persona.email ?? ''))),
+      if (tarea.estimacionMin != null) Chip(avatar: const Icon(Icons.timer_outlined, size: 18), label: Text(t.tareaEstimadaEn(duracionCorta(tarea.estimacionMin!)))),
+      if ((tarea.categoriaOutlook ?? '').isNotEmpty) Chip(avatar: const Icon(Icons.label_outline, size: 18), label: Text(tarea.categoriaOutlook!)),
+    ];
+    return chips.isEmpty ? const SizedBox.shrink() : Wrap(spacing: 8, runSpacing: 4, children: chips);
   }
 }
 

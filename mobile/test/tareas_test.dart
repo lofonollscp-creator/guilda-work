@@ -85,6 +85,90 @@ class _RepoFalso implements TareasRepositorio {
   }
 
   final List<String> filtrosVistos = [];
+
+  // --- ficha completa ---
+  List<Companero> gente = const [Companero(id: 7, nombre: 'Luis Mora'), Companero(id: 8, nombre: 'Sol Pérez')];
+  List<Proyecto> misProyectos = const [Proyecto(id: 3, nombre: 'IVA'), Proyecto(id: 4, nombre: 'Laboral')];
+  List<ClienteFiscal> misClientes = const [ClienteFiscal(id: 11, nombre: 'Acme SL'), ClienteFiscal(id: 12, nombre: 'Beta SA')];
+  List<ParticipanteTarea> participantesFalsos = [];
+  List<DependenciaTarea> esperas = [];
+  List<RecordatorioTarea> recordatoriosFalsos = [];
+  Object? falloAlAsignar;
+  Object? falloAlEditar;
+
+  @override
+  Future<TareaOutlook> editarFicha(int id,
+      {String? asunto, String? cuerpo, PrioridadTarea? prioridad, String? estimacion, String? categoriaOutlook, String? fechaInicio, bool quitarInicio = false, String? fechaVencimiento, bool quitarVencimiento = false}) async {
+    if (falloAlEditar != null) throw falloAlEditar!;
+    registro.add('ficha:$id:${[if (asunto != null) 'asunto=$asunto', if (cuerpo != null) 'cuerpo=$cuerpo', if (prioridad != null) 'prio=${prioridad.valor}', if (estimacion != null) 'est=$estimacion', if (categoriaOutlook != null) 'cat=$categoriaOutlook', if (fechaVencimiento != null) 'venc=$fechaVencimiento', if (quitarVencimiento) 'venc=-', if (fechaInicio != null) 'ini=$fechaInicio', if (quitarInicio) 'ini=-'].join(',')}');
+    return tareas[id] ?? TareaOutlook.fromJson(_t(id));
+  }
+
+  @override
+  Future<List<Companero>> companeros() async => gente;
+  @override
+  Future<List<Proyecto>> proyectos() async => misProyectos;
+  @override
+  Future<List<ClienteFiscal>> clientesFiscales() async => misClientes;
+  @override
+  Future<void> asignar(int id, int? companeroId) async {
+    if (falloAlAsignar != null) throw falloAlAsignar!;
+    registro.add('asignar:$id:${companeroId ?? '-'}');
+  }
+
+  @override
+  Future<({int ok, int fallos})> moverAProyecto(int id, int? proyectoId) async {
+    registro.add('proyecto:$id:${proyectoId ?? '-'}');
+    return (ok: 1, fallos: 0);
+  }
+
+  @override
+  Future<void> fijarCliente(int id, int? clienteId, {List<int> otros = const []}) async => registro.add('cliente:$id:${clienteId ?? '-'}:${otros.join(',')}');
+  @override
+  Future<List<ParticipanteTarea>> participantes(int id) async => participantesFalsos;
+  @override
+  Future<void> compartir(int id, int usuarioId, String rol) async {
+    registro.add('compartir:$id:$usuarioId:$rol');
+    participantesFalsos = [...participantesFalsos, ParticipanteTarea(usuarioId, gente.firstWhere((g) => g.id == usuarioId).nombre ?? '', rol)];
+  }
+
+  @override
+  Future<void> dejarDeCompartir(int id, int usuarioId) async {
+    registro.add('descompartir:$id:$usuarioId');
+    participantesFalsos = [for (final p in participantesFalsos) if (p.usuarioId != usuarioId) p];
+  }
+
+  @override
+  Future<({bool bloqueada, List<DependenciaTarea> esperaA})> dependencias(int id) async => (bloqueada: esperas.any((d) => d.estado.abierta), esperaA: esperas);
+  @override
+  Future<void> esperaA(int id, int dependeDeId) async {
+    registro.add('espera:$id:$dependeDeId');
+    esperas = [...esperas, DependenciaTarea(dependeDeId, 'Tarea $dependeDeId', EstadoTarea.noIniciada)];
+  }
+
+  @override
+  Future<void> quitarEspera(int id, int dependeDeId) async {
+    registro.add('quitarEspera:$id:$dependeDeId');
+    esperas = [for (final d in esperas) if (d.id != dependeDeId) d];
+  }
+
+  @override
+  Future<List<RecordatorioTarea>> recordatorios(int id) async => recordatoriosFalsos;
+  @override
+  Future<void> anadirRecordatorio(int id, {String? avisarEn, String? atajo, List<String> canales = const ['app']}) async {
+    registro.add('recordar:$id:${atajo ?? avisarEn}:${canales.join('+')}');
+    recordatoriosFalsos = [...recordatoriosFalsos, RecordatorioTarea(id: 50, avisarEn: avisarEn ?? '2026-10-30T09:00', canales: canales.join(','))];
+  }
+
+  @override
+  Future<void> quitarRecordatorio(int recordatorioId) async {
+    registro.add('quitarRecordatorio:$recordatorioId');
+    recordatoriosFalsos = [];
+  }
+
+  @override
+  Future<void> posponerRecordatorio(int recordatorioId, String opcion) async => registro.add('posponer:$recordatorioId:$opcion');
+
   Map<String, List<TareaOutlook>> diaFalso = {};
   Map<String, List<TareaOutlook>> tableroFalso = {};
 
@@ -201,6 +285,10 @@ ApiException _conflicto(int actual) => ApiException('Otra persona la ha cambiado
 
 void main() {
   group('dominio', () {
+    test('duracionCorta como la web', () {
+      expect([duracionCorta(90), duracionCorta(120), duracionCorta(45), duracionCorta(65)], ['1 h 30', '2 h', '45 min', '1 h 05']);
+    });
+
     test('un estado nuevo del servidor no rompe a una app antigua', () {
       expect(EstadoTarea.desde('en_progreso'), EstadoTarea.enProgreso);
       expect(EstadoTarea.desde('algo_nuevo'), EstadoTarea.desconocido);
@@ -675,6 +763,140 @@ void main() {
       expect(find.textContaining('09:30'), findsOneWidget); // la fecha sale con el formateo único («hoy 09:30», «sáb 24 oct 09:30»...)
       expect(find.text('factura.pdf'), findsOneWidget);
       expect(find.text('2 KB'), findsOneWidget);
+    });
+
+    testWidgets('la cabecera enseña proyecto, cliente, quién la tiene y la estimación como la web', (t) async {
+      final repo = repoConTarea()
+        ..tareas = {
+          7: TareaOutlook.fromJson({
+            ..._t(7, estado: 'en_progreso', version: 4),
+            'categoria_nombre': 'IVA',
+            'asignada_a': 7,
+            'estimacion_min': 90,
+            'clientes': [
+              {'id': 11, 'nombre': 'Acme SL', 'principal': true},
+              {'id': 12, 'nombre': 'Beta SA', 'principal': false},
+            ],
+          }),
+        };
+      await t.binding.setSurfaceSize(const Size(800, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('IVA'), findsOneWidget);
+      expect(find.text('Acme SL +1'), findsOneWidget);
+      expect(find.text('Asignada a Luis Mora'), findsOneWidget);
+      expect(find.text('Estimada: 1 h 30'), findsOneWidget);
+    });
+
+    testWidgets('«Espera a»: se añade otra tarea (con el aviso del servidor si crea un ciclo) y se quita', (t) async {
+      final repo = repoConTarea()..paginas = ((a, e, q, o) => [_tarea(21), _tarea(22), _tarea(7)]);
+      await t.binding.setSurfaceSize(const Size(800, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('No espera a ninguna tarea.'), findsOneWidget);
+      await t.tap(find.text('Esperar a otra tarea'));
+      await t.pumpAndSettle();
+      expect(find.text('Tarea 7'), findsOneWidget, reason: 'solo el título de la ficha: la propia tarea no se ofrece como espera');
+      await t.tap(find.text('Tarea 21'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('espera:7:21'));
+      expect(find.text('Tarea 21'), findsOneWidget);
+      await t.tap(find.byTooltip('Quitar').first);
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('quitarEspera:7:21'));
+    });
+
+    testWidgets('«Compartida con»: se comparte con un rol y se deja de compartir', (t) async {
+      final repo = repoConTarea();
+      await t.binding.setSurfaceSize(const Size(800, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('No está compartida con nadie.'), findsOneWidget);
+      await t.tap(find.text('Compartir con…'));
+      await t.pumpAndSettle();
+      await t.tap(find.byTooltip('Compartir con…').last);
+      await t.pumpAndSettle();
+      await t.tap(find.text('Solo lectura'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('compartir:7:8:observa'));
+      expect(find.text('Sol Pérez'), findsOneWidget);
+      await t.tap(find.byTooltip('Quitar').first);
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('descompartir:7:8'));
+    });
+
+    testWidgets('«Recordatorios»: uno relativo al vencimiento, con sus canales, y quitarlo', (t) async {
+      final repo = repoConTarea();
+      await t.binding.setSurfaceSize(const Size(800, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('No tienes recordatorios en esta tarea.'), findsOneWidget);
+      await t.ensureVisible(find.text('Añadir recordatorio'));
+      await t.tap(find.text('Añadir recordatorio'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('1 día antes del vencimiento'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Correo'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Añadir recordatorio').last);
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('recordar:7:1d_antes:app+correo'));
+      expect(find.textContaining('Pendiente'), findsOneWidget);
+    });
+
+    testWidgets('el editor manda solo lo que cambia, cada cosa a su operación, y avisa de lo que no se pudo', (t) async {
+      final repo = repoConTarea()..falloAlAsignar = ApiException('No puedes asignar a esa persona', status: 403);
+      await t.binding.setSurfaceSize(const Size(800, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.byIcon(Icons.edit_outlined));
+      await t.pumpAndSettle();
+      await t.enterText(find.widgetWithText(TextField, 'Estimación'), '1h30');
+      await t.tap(find.text('Alta'));
+      await t.tap(find.text('Sin proyecto'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Laboral'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Sin cliente'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Beta SA'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Sin asignar'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Sol Pérez'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Guardar'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('ficha:7:prio=alta,est=1h30'));
+      expect(repo.registro, containsAll(['proyecto:7:4', 'cliente:7:12:']));
+      expect(find.textContaining('Se guardó lo demás'), findsOneWidget);
+      expect(find.textContaining('No puedes asignar a esa persona'), findsOneWidget);
+    });
+
+    testWidgets('cerrar el selector sin elegir no borra el proyecto, y quitar una fecha manda el borrado', (t) async {
+      final repo = repoConTarea()..tareas = {7: TareaOutlook.fromJson({..._t(7, estado: 'en_progreso', version: 4, fecha: '2026-10-30'), 'categoria_id': 3})};
+      await t.binding.setSurfaceSize(const Size(800, 3000));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(_app(const TareaDetalleScreen(tareaId: 7), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.byIcon(Icons.edit_outlined));
+      await t.pumpAndSettle();
+      await t.tap(find.text('IVA')); // proyecto actual
+      await t.pumpAndSettle();
+      await t.tapAt(const Offset(10, 10)); // cierra el panel sin elegir
+      await t.pumpAndSettle();
+      expect(find.text('IVA'), findsOneWidget);
+      await t.tap(find.byTooltip('Quitar').first);
+      await t.pumpAndSettle();
+      await t.tap(find.text('Guardar'));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('ficha:7:venc=-'));
+      expect(repo.registro.where((r) => r.startsWith('proyecto')), isEmpty);
     });
 
     testWidgets('cambiar el estado manda la versión que se leyó', (t) async {

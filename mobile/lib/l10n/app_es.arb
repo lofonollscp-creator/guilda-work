@@ -917,5 +917,68 @@
         "type": "String"
       }
     }
+  },
+  "tareaEsperaA": "Espera a",
+  "tareaEsperaVacio": "No espera a ninguna tarea.",
+  "tareaEsperaAnadir": "Esperar a otra tarea",
+  "tareaEsperaBuscar": "Busca una tarea…",
+  "tareaEsperaInvalida": "No se puede enlazar: crearía un ciclo o no tienes acceso a esa tarea.",
+  "tareaCompartidaCon": "Compartida con",
+  "tareaCompartirVacio": "No está compartida con nadie.",
+  "tareaCompartirAnadir": "Compartir con…",
+  "tareaRolColabora": "Puede editarla",
+  "tareaRolObserva": "Solo lectura",
+  "tareaQuitar": "Quitar",
+  "tareaRecordatorios": "Recordatorios",
+  "tareaRecordatoriosVacio": "No tienes recordatorios en esta tarea.",
+  "tareaRecordatorioAnadir": "Añadir recordatorio",
+  "tareaRecordatorioEnviado": "Enviado",
+  "tareaRecordatorioPendiente": "Pendiente",
+  "tareaRecordatorioPosponer": "Posponer",
+  "tareaPospUnaHora": "1 hora",
+  "tareaPospManana": "Mañana a las 9:00",
+  "tareaPospSemana": "1 semana",
+  "tareaAtajoDia": "1 día antes del vencimiento",
+  "tareaAtajoHora": "1 hora antes del vencimiento",
+  "tareaAtajoAlVencer": "Al vencer",
+  "tareaAtajoConcreta": "A una hora concreta…",
+  "tareaCanalApp": "App y móvil",
+  "tareaCanalCorreo": "Correo",
+  "tareaEstimacion": "Estimación",
+  "tareaEstimacionHint": "ej. 1h30, 45 min, 2",
+  "tareaInicio": "Inicio",
+  "tareaVencimiento": "Vencimiento",
+  "tareaQuitarFecha": "Quitar",
+  "tareaHora": "Hora",
+  "tareaProyecto": "Proyecto",
+  "tareaSinProyecto": "Sin proyecto",
+  "tareaCategoriaOutlook": "Categoría (Outlook)",
+  "tareaCliente": "Cliente",
+  "tareaSinCliente": "Sin cliente",
+  "tareaAsignarA": "Asignar a",
+  "tareaSinAsignar": "Sin asignar",
+  "tareaAsignadaA": "Asignada a {nombre}",
+  "@tareaAsignadaA": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaEstimadaEn": "Estimada: {tiempo}",
+  "@tareaEstimadaEn": {
+    "placeholders": {
+      "tiempo": {
+        "type": "String"
+      }
+    }
+  },
+  "tareaGuardadoParcial": "Se guardó lo demás, pero esto no se pudo cambiar: {motivo}",
+  "@tareaGuardadoParcial": {
+    "placeholders": {
+      "motivo": {
+        "type": "String"
+      }
+    }
   }
 }

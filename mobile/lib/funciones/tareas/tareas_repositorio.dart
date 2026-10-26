@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/cliente.dart';
+import '../../api/errores.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../api/generado/operaciones.g.dart';
 import '../../dominio/tarea.dart';
@@ -74,6 +75,76 @@ class TareasRepositorio {
     };
   }
 
+  // --- la ficha completa (Fase 3): personas, dependencias, recordatorios, proyecto y cliente ---
+
+  /// Edición como la web. `estimacion` es texto libre («1h30», «45 min», «2» = horas) y lo interpreta el servidor; vacío la quita.
+  Future<TareaOutlook> editarFicha(
+    int id, {
+    String? asunto,
+    String? cuerpo,
+    PrioridadTarea? prioridad,
+    String? estimacion,
+    String? categoriaOutlook,
+    String? fechaInicio,
+    bool quitarInicio = false,
+    String? fechaVencimiento,
+    bool quitarVencimiento = false,
+  }) =>
+      _o.editarTareaOutlook(tareaId: id, cuerpo: {
+        'asunto': ?asunto,
+        'cuerpo': ?cuerpo,
+        if (prioridad != null) 'prioridad': prioridad.valor,
+        'estimacion': ?estimacion,
+        'categoria_outlook': ?categoriaOutlook,
+        if (quitarInicio) 'fecha_inicio': null else 'fecha_inicio': ?fechaInicio,
+        if (quitarVencimiento) 'fecha_vencimiento': null else 'fecha_vencimiento': ?fechaVencimiento,
+      });
+
+  Future<List<Companero>> companeros() => _o.listarCompaneros();
+
+  /// Proyectos (los tuyos) y clientes fiscales del despacho, para los selectores. Sin el módulo fiscal, los clientes vienen vacíos.
+  Future<List<Proyecto>> proyectos() => _o.listarProyectos();
+  Future<List<ClienteFiscal>> clientesFiscales() async {
+    try {
+      return await _o.listarClientesFiscales(limit: 200);
+    } on ApiException {
+      return const [];
+    }
+  }
+
+  /// Asigna (o quita con `null`) a una persona del despacho. Solo la dueña de la tarea.
+  Future<void> asignar(int id, int? companeroId) => _cliente.enviar('POST', '/tareas-outlook/$id/asignar', cuerpo: {'companero_id': companeroId});
+
+  /// Cambia de proyecto (`null` = sin proyecto): la misma acción en lote de la web, sobre una tarea.
+  Future<({int ok, int fallos})> moverAProyecto(int id, int? proyectoId) => lote([id], 'proyecto', valor: proyectoId?.toString());
+
+  /// Cliente principal (`null` = tarea interna). Conserva los demás clientes vinculados.
+  Future<void> fijarCliente(int id, int? clienteId, {List<int> otros = const []}) =>
+      _cliente.enviar('PUT', '/tareas-outlook/$id/clientes', cuerpo: {'cliente_ids': [?clienteId, ...otros.where((o) => o != clienteId)], 'principal_id': clienteId});
+
+  Future<List<ParticipanteTarea>> participantes(int id) async =>
+      [for (final p in (await _cliente.enviar('GET', '/tareas-outlook/$id/compartir') as List? ?? const [])) ParticipanteTarea.desdeJson(p as Map<String, dynamic>)];
+  Future<void> compartir(int id, int usuarioId, String rol) => _cliente.enviar('POST', '/tareas-outlook/$id/compartir', cuerpo: {'usuario_id': usuarioId, 'rol': rol});
+  Future<void> dejarDeCompartir(int id, int usuarioId) => _cliente.enviar('DELETE', '/tareas-outlook/$id/compartir/$usuarioId');
+
+  Future<({bool bloqueada, List<DependenciaTarea> esperaA})> dependencias(int id) async {
+    final r = await _cliente.enviar('GET', '/tareas-outlook/$id/dependencias') as Map<String, dynamic>? ?? const {};
+    return (bloqueada: r['bloqueada'] == true, esperaA: [for (final d in (r['depende_de'] as List? ?? const [])) DependenciaTarea.desdeJson(d as Map<String, dynamic>)]);
+  }
+
+  Future<void> esperaA(int id, int dependeDeId) => _cliente.enviar('POST', '/tareas-outlook/$id/dependencias', cuerpo: {'depende_de_id': dependeDeId});
+  Future<void> quitarEspera(int id, int dependeDeId) => _cliente.enviar('DELETE', '/tareas-outlook/$id/dependencias/$dependeDeId');
+
+  Future<List<RecordatorioTarea>> recordatorios(int id) => _o.listarRecordatorios(tareaId: id);
+
+  /// `avisarEn` (`YYYY-MM-DDTHH:MM`) o un `atajo` relativo al vencimiento (`1d_antes`, `1h_antes`, `al_vencer`).
+  Future<void> anadirRecordatorio(int id, {String? avisarEn, String? atajo, List<String> canales = const ['app']}) =>
+      _cliente.enviar('POST', '/tareas-outlook/$id/recordatorios', cuerpo: {'avisar_en': ?avisarEn, 'atajo': ?atajo, 'canales': canales});
+  Future<void> quitarRecordatorio(int recordatorioId) => _cliente.enviar('DELETE', '/tareas-outlook/recordatorios/$recordatorioId');
+
+  /// `opcion`: `1h`, `manana` (9:00) o `1s` (una semana).
+  Future<void> posponerRecordatorio(int recordatorioId, String opcion) => _cliente.enviar('POST', '/tareas-outlook/recordatorios/$recordatorioId/posponer', cuerpo: {'opcion': opcion});
+
   /// A la papelera (se recupera con [restaurar]). La respuesta del servidor no trae la tarea: no se interpreta.
   Future<void> eliminar(int id) => _cliente.enviar('DELETE', '/tareas-outlook/$id');
   Future<void> restaurar(int id) => _cliente.enviar('POST', '/tareas-outlook/$id/restaurar');
@@ -130,3 +201,6 @@ class TareasRepositorio {
 }
 
 final tareasRepositorioProvider = Provider<TareasRepositorio>((ref) => TareasRepositorio(ref.read(clienteApiProvider)));
+
+/// Las personas del despacho a las que se puede asignar o compartir (para nombres y selectores). Se pide una vez.
+final companerosProvider = FutureProvider.autoDispose<List<Companero>>((ref) => ref.read(tareasRepositorioProvider).companeros());

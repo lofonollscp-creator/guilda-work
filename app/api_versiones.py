@@ -9,6 +9,7 @@ HISTORIAL = [
         ("Mejora", "`GET /mi-dia` y `GET /tareas-outlook/tablero` traen en cada tarea los mismos indicadores que la lista (`vencida`, `n_comentarios`, `checklist_hechas`, `checklist_total`, "
                    "`bloqueos`, `rol`, `asignada_nombre`, `creador_nombre`). `/mi-dia` documenta sus cinco secciones (`vencidas`, `hoy`, `en_progreso`, `asignadas`, `compartidas`)."),
         ("Nuevo", "`GET /tareas-outlook/tablero?recientes=15`: de las completadas, solo las N más recientes, como el tablero de la web. Sin el parámetro, todo como siempre."),
+        ("Nuevo", "`PUT /tareas-outlook/{id}` admite `estimacion` (texto como en la web: «1h30», «45 min», «2» = horas; vacío la quita) y el servidor lo interpreta (`400 estimacion_invalida`)."),
         ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
     ]),
     ("1.6", "2026-10-26", [
