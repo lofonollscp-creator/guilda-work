@@ -8,7 +8,7 @@ from flask import abort, g, request
 
 from . import db, quickadd, tareas_trabajo
 from .auth import token_required
-from .rutas_api import _body, _dict, _dicts, _err, _ok, _ok_paginado, api_bp
+from .rutas_api import _body, _dict, _dicts, _err, _filas_de_tarea as _api_filas, _ok, _ok_paginado, api_bp
 from .rutas_tareas import (
     MENSAJE_BLOQUEADA, _avisar_desbloqueos, _notificar_asignacion, _notificar_comentario, _notificar_compartida,
 )
@@ -266,11 +266,15 @@ def categorias_outlook():
 @api_bp.route("/tareas-outlook/tablero", methods=["GET"])
 @token_required
 def tablero():
-    """Tareas pendientes y recientes agrupadas por estado (propias y asignadas)."""
-    filas = db.listar_tareas_outlook(g.usuario_id, incluir_asignadas=True, limite=500)
+    """Tareas agrupadas por estado (propias y asignadas), con los mismos indicadores que la lista. `recientes` (opcional): de las completadas, solo las N más
+    recientes, como el tablero de la web (que enseña 15)."""
+    filas = _api_filas(db.listar_tareas_outlook(g.usuario_id, incluir_asignadas=True, limite=500), con_rol=True)
     columnas = {e: [] for e in ESTADOS}
     for f in filas:
-        columnas.setdefault(f["estado"], []).append(dict(f))
+        columnas.setdefault(f["estado"], []).append(f)
+    recientes = request.args.get("recientes", type=int)
+    if recientes is not None and "completada" in columnas:
+        columnas["completada"] = sorted(columnas["completada"], key=lambda t: t.get("fecha_completada") or "", reverse=True)[:max(recientes, 0)]
     return _ok(columnas)
 
 

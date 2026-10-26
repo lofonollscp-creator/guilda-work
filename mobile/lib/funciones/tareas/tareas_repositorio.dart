@@ -7,6 +7,12 @@ import '../../api/generado/operaciones.g.dart';
 import '../../dominio/tarea.dart';
 import '../../nucleo/servicios.dart';
 
+/// Las secciones de «Mi día», en el orden de la web.
+const seccionesMiDia = ['vencidas', 'hoy', 'en_progreso', 'asignadas', 'compartidas'];
+
+/// Las columnas del tablero, en el orden de la web.
+const columnasTablero = [EstadoTarea.noIniciada, EstadoTarea.enProgreso, EstadoTarea.completada, EstadoTarea.esperando, EstadoTarea.aplazada, EstadoTarea.enRevision];
+
 /// Todo lo que la app hace con tareas contra la API (`/tareas-outlook/...`).
 /// Sobre el SDK generado; las pantallas no conocen rutas ni cuerpos.
 class TareasRepositorio {
@@ -51,6 +57,22 @@ class TareasRepositorio {
         if (prioridad != null) 'prioridad': prioridad.valor,
         if (textoLibre) 'texto_libre': true,
       });
+
+  /// «Mi día»: las mismas cinco secciones que la web (`vencidas`, `hoy`, `en_progreso`, `asignadas`, `compartidas`), siempre todas, aunque vengan vacías.
+  Future<Map<String, List<TareaOutlook>>> miDia() async {
+    final crudo = await _cliente.enviar('GET', '/mi-dia') as Map<String, dynamic>? ?? const {};
+    return {
+      for (final s in seccionesMiDia) s: [for (final t in (crudo[s] as List? ?? const [])) TareaOutlook.fromJson(t as Map<String, dynamic>)],
+    };
+  }
+
+  /// El tablero: una columna por estado, con las completadas más recientes (15, como la web).
+  Future<Map<String, List<TareaOutlook>>> tablero({int recientes = 15}) async {
+    final crudo = await _cliente.enviar('GET', '/tareas-outlook/tablero', consulta: {'recientes': recientes}) as Map<String, dynamic>? ?? const {};
+    return {
+      for (final e in columnasTablero) e.valor: [for (final t in (crudo[e.valor] as List? ?? const [])) TareaOutlook.fromJson(t as Map<String, dynamic>)],
+    };
+  }
 
   /// A la papelera (se recupera con [restaurar]). La respuesta del servidor no trae la tarea: no se interpreta.
   Future<void> eliminar(int id) => _cliente.enviar('DELETE', '/tareas-outlook/$id');

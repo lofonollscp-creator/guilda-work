@@ -878,5 +878,44 @@
   },
   "tareaRolAsignada": "Asignada a ti",
   "tareaRolCompartida": "Compartida contigo",
-  "tareasMarcarTodas": "Marcar todas"
+  "tareasMarcarTodas": "Marcar todas",
+  "tareasMiDia": "Mi día",
+  "tareasVistaLista": "Lista",
+  "tareasVistaTablero": "Tablero",
+  "tareasDiaVencidas": "Vencidas",
+  "tareasDiaHoy": "Vencen hoy",
+  "tareasDiaEnProgreso": "En progreso",
+  "tareasDiaAsignadas": "Asignadas a mí",
+  "tareasDiaCompartidas": "Compartidas conmigo",
+  "tareasDiaVacio": "No tienes nada pendiente para hoy. Buen momento para adelantar trabajo.",
+  "tareasVerRestantes": "{n, plural, one{Ver la {n} restante} other{Ver las {n} restantes}}",
+  "@tareasVerRestantes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "tableroMoverA": "Mover a",
+  "tableroNadaAqui": "Nada aquí",
+  "tableroMostrarMas": "Mostrar más",
+  "tableroPasos": "{hechas} de {total} pasos",
+  "@tableroPasos": {
+    "placeholders": {
+      "hechas": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "tareaMovidaA": "Movida a «{estado}»",
+  "@tareaMovidaA": {
+    "placeholders": {
+      "estado": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -563,5 +563,20 @@
   "tareaIndEspera": "{n, plural, one{Attend 1 tâche} other{Attend {n} tâches}}",
   "tareaRolAsignada": "Vous est assignée",
   "tareaRolCompartida": "Partagée avec vous",
-  "tareasMarcarTodas": "Tout sélectionner"
+  "tareasMarcarTodas": "Tout sélectionner",
+  "tareasMiDia": "Ma journée",
+  "tareasVistaLista": "Liste",
+  "tareasVistaTablero": "Tableau",
+  "tareasDiaVencidas": "En retard",
+  "tareasDiaHoy": "Échéance aujourd'hui",
+  "tareasDiaEnProgreso": "En cours",
+  "tareasDiaAsignadas": "Assignées à moi",
+  "tareasDiaCompartidas": "Partagées avec moi",
+  "tareasDiaVacio": "Rien de prévu aujourd'hui. Bon moment pour prendre de l'avance.",
+  "tareasVerRestantes": "{n, plural, one{Voir la {n} restante} other{Voir les {n} restantes}}",
+  "tableroMoverA": "Déplacer vers",
+  "tableroNadaAqui": "Rien ici",
+  "tableroMostrarMas": "Afficher plus",
+  "tableroPasos": "{hechas} sur {total} étapes",
+  "tareaMovidaA": "Déplacée vers « {estado} »"
 }

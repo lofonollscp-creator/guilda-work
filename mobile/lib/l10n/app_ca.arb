@@ -563,5 +563,20 @@
   "tareaIndEspera": "{n, plural, one{Espera 1 tasca} other{Espera {n} tasques}}",
   "tareaRolAsignada": "Assignada a tu",
   "tareaRolCompartida": "Compartida amb tu",
-  "tareasMarcarTodas": "Marca-les totes"
+  "tareasMarcarTodas": "Marca-les totes",
+  "tareasMiDia": "El meu dia",
+  "tareasVistaLista": "Llista",
+  "tareasVistaTablero": "Tauler",
+  "tareasDiaVencidas": "Vençudes",
+  "tareasDiaHoy": "Venceixen avui",
+  "tareasDiaEnProgreso": "En curs",
+  "tareasDiaAsignadas": "Assignades a mi",
+  "tareasDiaCompartidas": "Compartides amb mi",
+  "tareasDiaVacio": "No tens res pendent per avui. Bon moment per avançar feina.",
+  "tareasVerRestantes": "{n, plural, one{Veure la {n} restant} other{Veure les {n} restants}}",
+  "tableroMoverA": "Mou a",
+  "tableroNadaAqui": "Res aquí",
+  "tableroMostrarMas": "Mostra'n més",
+  "tableroPasos": "{hechas} de {total} passos",
+  "tareaMovidaA": "Moguda a «{estado}»"
 }

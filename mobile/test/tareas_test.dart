@@ -12,6 +12,7 @@ import 'package:guilda_work_mobile/dominio/tarea.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tarea_detalle_screen.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_lista_controlador.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_repositorio.dart';
+import 'package:guilda_work_mobile/funciones/tareas/tareas_vistas.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_screen.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
@@ -84,6 +85,14 @@ class _RepoFalso implements TareasRepositorio {
   }
 
   final List<String> filtrosVistos = [];
+  Map<String, List<TareaOutlook>> diaFalso = {};
+  Map<String, List<TareaOutlook>> tableroFalso = {};
+
+  @override
+  Future<Map<String, List<TareaOutlook>>> miDia() async => {for (final s in seccionesMiDia) s: diaFalso[s] ?? []};
+
+  @override
+  Future<Map<String, List<TareaOutlook>>> tablero({int recientes = 15}) async => {for (final e in columnasTablero) e.valor: tableroFalso[e.valor] ?? []};
   List<Vista> vistasGuardadas = [];
   ({int ok, int fallos}) resultadoLote = (ok: 0, fallos: 0);
   Set<int> noEliminables = {};
@@ -560,6 +569,87 @@ void main() {
       await t.tap(find.byTooltip('Nueva tarea'));
       await t.pumpAndSettle();
       expect(repo.registro.last, 'crear:Preparar el 303:-');
+    });
+  });
+
+  group('Mi día y tablero', () {
+    testWidgets('la pestaña abre en la lista y el selector cambia entre Mi día, Lista y Tablero', (t) async {
+      final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(1)]);
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.text('Tarea 1'), findsOneWidget);
+      await t.tap(find.text('Mi día'));
+      await t.pumpAndSettle();
+      expect(find.text('No tienes nada pendiente para hoy. Buen momento para adelantar trabajo.'), findsOneWidget);
+      await t.tap(find.text('Tablero'));
+      await t.pumpAndSettle();
+      expect(find.text('Nada aquí'), findsOneWidget);
+      await t.tap(find.text('Lista'));
+      await t.pumpAndSettle();
+      expect(find.text('Tarea 1'), findsOneWidget);
+    });
+
+    testWidgets('«Mi día» enseña las secciones de la web con su cuenta; completar saca la tarea y se puede deshacer', (t) async {
+      final repo = _RepoFalso()
+        ..diaFalso = {
+          'vencidas': [_tarea(1, fecha: '2026-10-20', vencida: true)],
+          'hoy': [_tarea(2, fecha: '2026-10-26')],
+          'asignadas': [for (var i = 3; i < 36; i++) _tarea(i)],
+        };
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Mi día'));
+      await t.pumpAndSettle();
+      expect(find.text('Vencidas'), findsOneWidget);
+      expect(find.text('Vencen hoy'), findsOneWidget);
+      expect(find.text('Asignadas a mí'), findsOneWidget);
+      expect(find.text('En progreso'), findsNothing, reason: 'las secciones vacías no salen');
+      expect(find.text('Compartidas conmigo'), findsNothing);
+      expect(find.text('Tarea 1'), findsOneWidget);
+      await t.tap(find.byType(Checkbox).first);
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('transicionar:1:completada:-:1'));
+      expect(find.text('Tarea 1'), findsNothing);
+      expect(find.text('Tarea completada'), findsOneWidget);
+      await t.tap(find.text('Deshacer'));
+      await t.pumpAndSettle();
+      expect(repo.registro.last, startsWith('transicionar:1:no_iniciada'));
+    });
+
+    testWidgets('«Mi día» corta cada sección en 30 y ofrece ver las restantes', (t) async {
+      final repo = _RepoFalso()..diaFalso = {'asignadas': [for (var i = 1; i <= 35; i++) _tarea(i)]};
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Mi día'));
+      await t.pumpAndSettle();
+      expect(find.text('Ver las 5 restantes'), findsOneWidget);
+      await t.ensureVisible(find.text('Ver las 5 restantes'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Ver las 5 restantes'));
+      await t.pumpAndSettle();
+      expect(find.text('Ver las 5 restantes'), findsNothing);
+    });
+
+    testWidgets('el tablero tiene una columna por estado con su cuenta; mover una tarjeta la pasa a otra columna y no ofrece «En revisión»', (t) async {
+      final repo = _RepoFalso()
+        ..tableroFalso = {
+          'no_iniciada': [_tarea(1), _tarea(2)],
+          'en_progreso': [_tarea(3, estado: 'en_progreso')],
+        };
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Tablero'));
+      await t.pumpAndSettle();
+      expect(find.text('Sin empezar (2)'), findsOneWidget);
+      expect(find.text('En curso (1)'), findsOneWidget);
+      await t.tap(find.byTooltip('Mover a').first);
+      await t.pumpAndSettle();
+      expect(find.text('En revisión'), findsNothing);
+      await t.tap(find.text('Completada').last);
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('transicionar:1:completada:-:1'));
+      expect(find.text('Sin empezar (1)'), findsOneWidget);
+      expect(find.text('Completada (1)'), findsOneWidget);
     });
   });
 

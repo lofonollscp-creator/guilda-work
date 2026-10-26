@@ -308,7 +308,7 @@ class Operaciones {
   Future<TareaOutlook> upsertTareaOutlook({required String referencia, Map<String, dynamic>? cuerpo}) async { final r = await _t.enviar('PUT', '/tareas-outlook/por-referencia/$referencia', consulta: null, cuerpo: cuerpo); return TareaOutlook.fromJson(r as Map<String, dynamic>); }
   Future<void> eliminarRecordatorio({required int recordatorioId}) async { await _t.enviar('DELETE', '/tareas-outlook/recordatorios/$recordatorioId', consulta: null); }
   Future<void> posponerRecordatorio({required int recordatorioId, Map<String, dynamic>? cuerpo}) async { await _t.enviar('POST', '/tareas-outlook/recordatorios/$recordatorioId/posponer', consulta: null, cuerpo: cuerpo); }
-  Future<dynamic> tablero({String? campos}) async { final r = await _t.enviar('GET', '/tareas-outlook/tablero', consulta: {'campos': ?campos}); return r; }
+  Future<dynamic> tablero({String? campos, int? recientes}) async { final r = await _t.enviar('GET', '/tareas-outlook/tablero', consulta: {'campos': ?campos, 'recientes': ?recientes}); return r; }
   Future<List<Vista>> listarVistas({String? campos}) async { final r = await _t.enviar('GET', '/tareas-outlook/vistas', consulta: {'campos': ?campos}); return (r as List).map((e) => Vista.fromJson(e as Map<String, dynamic>)).toList(); }
   Future<Vista> guardarVista({Map<String, dynamic>? cuerpo}) async { final r = await _t.enviar('POST', '/tareas-outlook/vistas', consulta: null, cuerpo: cuerpo); return Vista.fromJson(r as Map<String, dynamic>); }
   Future<void> eliminarVista({required int vistaId}) async { await _t.enviar('DELETE', '/tareas-outlook/vistas/$vistaId', consulta: null); }

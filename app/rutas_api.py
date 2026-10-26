@@ -33,7 +33,7 @@ logger = logging.getLogger("guilda")
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
 # Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
-API_VERSION = "1.6"
+API_VERSION = "1.7"
 
 
 _CODIGOS_HTTP = {
@@ -659,6 +659,25 @@ def eliminar_definitivamente_de_papelera(tipo: str, item_id: int):
 
 # --- Tareas Outlook (estilo To-Do de Outlook) ---------------------------------
 
+def _filas_de_tarea(filas, con_rol: bool = False) -> list[dict]:
+    """Las filas de tareas como las pinta la web en lista, «Mi día» y tablero: `vencida` (derivada), `n_comentarios`, `checklist_hechas`/`checklist_total` y `bloqueos`;
+    con `con_rol`, también `rol` (dueno, asignada o compartida). Lista, `/mi-dia` y `/tareas-outlook/tablero` comparten esto para que la app vea lo mismo que la web."""
+    from . import tareas_trabajo as _tt
+    filas = list(filas)
+    ids = [f["id"] for f in filas]
+    comentarios, checklists, bloqueos = db.contar_comentarios_tareas(ids), db.resumen_checklist(ids), db.bloqueos_de_tareas(ids)
+    resultado = []
+    for f in filas:
+        fila = dict(f)
+        fila["vencida"] = _tt.esta_vencida(fila.get("fecha_vencimiento"), fila.get("estado"))      # derivada, como en el detalle (API 1.5: la lista también la trae)
+        hechas, total = checklists.get(f["id"], (0, 0))
+        fila.update(n_comentarios=comentarios.get(f["id"], 0), checklist_hechas=int(hechas or 0), checklist_total=int(total or 0), bloqueos=bloqueos.get(f["id"], 0))
+        if con_rol:
+            fila["rol"] = "dueno" if f["usuario_id"] == g.usuario_id else ("asignada" if f["asignada_a"] == g.usuario_id else "compartida")
+        resultado.append(fila)
+    return resultado
+
+
 @api_bp.route("/tareas-outlook", methods=["GET"])
 @token_required
 def listar_tareas_outlook():
@@ -687,19 +706,7 @@ def listar_tareas_outlook():
         solo_compartidas=ambito == "compartidas",
         excluir_completadas=request.args.get("completadas") == "0" and not request.args.get("estado"),
     )
-    from . import tareas_trabajo as _tt
-    ids = [f["id"] for f in filas]
-    comentarios, checklists, bloqueos = db.contar_comentarios_tareas(ids), db.resumen_checklist(ids), db.bloqueos_de_tareas(ids)
-    resultado = []
-    for f in filas:
-        fila = dict(f)
-        hechas, total = checklists.get(f["id"], (0, 0))
-        fila.update(n_comentarios=comentarios.get(f["id"], 0), checklist_hechas=int(hechas or 0), checklist_total=int(total or 0), bloqueos=bloqueos.get(f["id"], 0))
-        fila["vencida"] = _tt.esta_vencida(fila.get("fecha_vencimiento"), fila.get("estado"))      # derivada, como en el detalle (API 1.5: la lista también la trae)
-        if ambito != "propias":
-            fila["rol"] = "dueno" if f["usuario_id"] == g.usuario_id else ("asignada" if f["asignada_a"] == g.usuario_id else "compartida")
-        resultado.append(fila)
-    return _ok_paginado(resultado)
+    return _ok_paginado(_filas_de_tarea(filas, con_rol=ambito != "propias"))
 
 
 @api_bp.route("/tareas-outlook", methods=["POST"])

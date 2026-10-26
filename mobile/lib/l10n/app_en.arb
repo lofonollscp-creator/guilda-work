@@ -563,5 +563,20 @@
   "tareaIndEspera": "{n, plural, one{Waiting on 1 task} other{Waiting on {n} tasks}}",
   "tareaRolAsignada": "Assigned to you",
   "tareaRolCompartida": "Shared with you",
-  "tareasMarcarTodas": "Select all"
+  "tareasMarcarTodas": "Select all",
+  "tareasMiDia": "My day",
+  "tareasVistaLista": "List",
+  "tareasVistaTablero": "Board",
+  "tareasDiaVencidas": "Overdue",
+  "tareasDiaHoy": "Due today",
+  "tareasDiaEnProgreso": "In progress",
+  "tareasDiaAsignadas": "Assigned to me",
+  "tareasDiaCompartidas": "Shared with me",
+  "tareasDiaVacio": "Nothing pending for today. A good moment to get ahead.",
+  "tareasVerRestantes": "{n, plural, one{Show the {n} remaining} other{Show the {n} remaining}}",
+  "tableroMoverA": "Move to",
+  "tableroNadaAqui": "Nothing here",
+  "tableroMostrarMas": "Show more",
+  "tableroPasos": "{hechas} of {total} steps",
+  "tareaMovidaA": "Moved to “{estado}”"
 }

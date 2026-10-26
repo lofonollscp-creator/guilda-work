@@ -35,8 +35,8 @@ Después: eliminar (papelera) con «Deshacer» = `POST /tareas-outlook/{id}/rest
 **Fase 1 — La lista igual que la web (hecha, 2026-10-26).**
 Filtros de prioridad, categoría y «ver también completadas» (por defecto se ocultan, como la web), vistas guardadas compartidas con la web (`/tareas-outlook/vistas`), alta con texto libre (`texto_libre` en `POST /tareas-outlook`, que reutiliza `quickadd.py`; API 1.6), filas con proyecto, comentarios, checklist, «espera a…» y quién la asignó, selección múltiple con acciones en lote (completar, estado, prioridad, vencimiento) y eliminar a la papelera con «Deshacer». Prueba de paridad: `tests/test_paridad_tareas_app.py` (9 combinaciones de filtros, misma lista y mismo orden que la web). Pendiente de esta fase: llevar al modo sin conexión las acciones en lote y el eliminar (hoy exigen red).
 
-**Fase 2 — Mi día y Tablero.**
-Pantalla «Mi día» (endpoint nuevo `GET /tareas-outlook/mi-dia`, mismas 5 secciones que la web), y «Tablero» por estado (`/tareas-outlook/tablero`) con mover entre columnas. «Hoy» pasa a ser el resumen de todos los módulos y enlaza a «Mi día».
+**Fase 2 — Mi día y Tablero (hecha, 2026-10-26).**
+La pestaña Tareas abre en la Lista y tiene el selector **Mi día · Lista · Tablero** (como el submenú de la web). «Mi día» pinta las mismas cinco secciones que la web (30 por sección y «Ver las N restantes») y completa con «Deshacer»; el Tablero tiene una columna por estado (en el orden de la web, completadas recientes 15, 25 tarjetas y «Mostrar más»), con barra de pasos, y mover una tarjeta con «Deshacer» (sin «En revisión» como destino). API 1.7: indicadores en `/mi-dia` y tablero, `?recientes=`. Pruebas de paridad: sección a sección y columna a columna contra la web. «Hoy» sigue siendo el resumen de todos los módulos (su enlace a «Mi día» queda para la Fase 5).
 
 **Fase 3 — La ficha completa.**
 Asignar y compartir, dependencias, recordatorios, cronómetro y tiempo, proyecto/sección/estimación, clientes vinculados, revisión (pedir/resolver), actividad. Cada bloque plegable.
