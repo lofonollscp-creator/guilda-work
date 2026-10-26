@@ -64,7 +64,7 @@ void main() {
     });
 
     test('lo que aún no tiene pantalla se ofrece en la web', () {
-      for (final tipo in ['plazo', 'expediente', 'visita', 'traspaso', 'factura', 'contabilizacion', 'certificado', 'aviso_fiscal', 'nota', 'algo_nuevo']) {
+      for (final tipo in ['plazo', 'expediente', 'visita', 'traspaso', 'factura', 'contabilizacion', 'certificado', 'aviso_fiscal', 'algo_nuevo']) {
         expect(resolverDestino(Destino(tipo, 1)), isA<SoloWeb>(), reason: tipo);
       }
     });

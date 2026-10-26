@@ -5,6 +5,12 @@ Al subir `rutas_api.API_VERSION` hay que añadir aquí su entrada: un test lo ex
 
 # (versión | None, fecha, [(tipo, texto)]). Antes de la 1.3 la API no enviaba la cabecera: esas entradas llevan solo la fecha.
 HISTORIAL = [
+    ("1.9", "2026-10-27", [
+        ("Nuevo", "Notas compartidas: `GET /notas/{id}/participantes`, `POST /notas/{id}/compartir` (`usuario_id`, `rol`) y `DELETE /notas/{id}/compartir/{usuario_id}`."),
+        ("Mejora", "Notas: `GET /notas?compartidas=incluir|solo` y `rol`, `n_participantes` y `n_adjuntos` en cada una; `GET /notas/{id}` también para quien la tiene compartida, "
+                   "con `participantes` y los asuntos vinculados; `POST`/`PUT /notas` aceptan `titulo`, `fijada` y `cliente_fiscal_id`, y un colaborador puede editar texto y título."),
+        ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
+    ]),
     ("1.8", "2026-10-27", [
         ("Nuevo", "`POST /notificaciones/{id}/leida`: marca como leída una sola notificación."),
         ("Mejora", "`GET /buscar`: filtro `tipo`, hasta 40 resultados y los campos `titulo`, `fragmento` y `fecha`; sin el servicio de vectores busca por palabra clave en vez de no devolver nada."),

@@ -9,6 +9,8 @@ import '../screens/ausencias_screen.dart';
 import '../screens/correo_mensaje_screen.dart';
 import '../screens/fiscal_vencimiento_edit_screen.dart';
 import '../screens/ia_chat_screen.dart';
+import '../funciones/notas/nota_screen.dart';
+import '../funciones/notas/notas_screen.dart';
 import '../funciones/tareas/tarea_detalle_screen.dart';
 import '../screens/tiquets_screen.dart';
 import 'avisos.dart';
@@ -46,6 +48,8 @@ Future<void> abrirDestino(Ref ref, Destino destino, {String? urlWeb}) async {
       router.go(ruta);
     case AbrirTarea(:final id):
       await Navigator.of(contexto).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: id)));
+    case AbrirNota(:final id):
+      await Navigator.of(contexto).push(MaterialPageRoute(builder: (_) => NotaScreen(notaId: id)));
     case AbrirCorreo(:final id):
       if (id == null) {
         router.go(rutaCorreo);
@@ -62,6 +66,7 @@ Future<void> abrirDestino(Ref ref, Destino destino, {String? urlWeb}) async {
       final pantalla = switch (clave) {
         'ausencias' => AusenciasScreen(api: s.api),
         'ia' => IaChatScreen(api: s.api, locale: s.locale),
+        'notas' => const NotasScreen(),
         'tiquets' when usuario != null => TiquetsScreen(api: s.api, usuario: usuario),
         _ => null,
       };

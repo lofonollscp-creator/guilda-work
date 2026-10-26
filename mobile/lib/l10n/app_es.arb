@@ -430,6 +430,63 @@
   "busquedaFiltroFiscal": "Fiscal",
   "busquedaRecientes": "Búsquedas recientes",
   "busquedaBorrarRecientes": "Borrar",
+  "notasTitulo": "Notas",
+  "notasBuscar": "Buscar notas",
+  "notasVacio": "Todavía no tienes notas.",
+  "notasVacioDetalle": "Toca «Nueva nota» para escribir la primera.",
+  "notasSinResultados": "Ninguna nota coincide.",
+  "notasNueva": "Nueva nota",
+  "notasAmbitoTodas": "Todas",
+  "notasAmbitoMias": "Mías",
+  "notasAmbitoCompartidas": "Compartidas conmigo",
+  "notasTodosProyectos": "Todos los proyectos",
+  "notasFijar": "Fijar arriba",
+  "notasDesfijar": "Quitar de las fijadas",
+  "notasFijada": "Fijada",
+  "notasEliminar": "Eliminar nota",
+  "notasEliminada": "Nota eliminada",
+  "notasRestaurada": "Nota recuperada",
+  "notasDeNombre": "De {nombre}",
+  "@notasDeNombre": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "notasCompartida": "Compartida",
+  "notasTituloHint": "Título (opcional)",
+  "notasTextoHint": "Escribe aquí… admite **negrita**, *cursiva*, listas y enlaces",
+  "notasGuardar": "Guardar",
+  "notasGuardada": "Nota guardada",
+  "notasGuardadaSinConexion": "Sin conexión: la nota se enviará al volver la red.",
+  "notasDescartarTitulo": "¿Descartar los cambios?",
+  "notasDescartar": "Descartar",
+  "notasSeguirEditando": "Seguir editando",
+  "notasEditar": "Editar nota",
+  "notasNegrita": "Negrita",
+  "notasCursiva": "Cursiva",
+  "notasLista": "Lista",
+  "notasEnlace": "Enlace",
+  "notasEnlaceDireccion": "Dirección del enlace",
+  "notasVacia": "Esta nota está vacía.",
+  "notasVinculos": "Vinculada a",
+  "notasRolColabora": "Puede editar",
+  "notasRolObserva": "Solo lectura",
+  "notasElegirRol": "¿Qué podrá hacer?",
+  "notasDejarDeCompartir": "Dejar de compartir",
+  "notasSalir": "Salir de la nota",
+  "notasSalirPregunta": "¿Salir de esta nota? Dejarás de verla.",
+  "notasCompartidaPor": "Compartida por {nombre}",
+  "@notasCompartidaPor": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "notasNoDisponible": "No se ha podido abrir la nota.",
+  "masNotas": "Notas",
   "busquedaTitulo": "Buscar",
   "busquedaHint": "Buscar en notas, tareas y correo",
   "busquedaMinimo": "Escribe al menos dos letras.",

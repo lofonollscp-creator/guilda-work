@@ -73,7 +73,7 @@ class ClienteApi implements Transporte {
   final void Function(String ruta, DateTime? guardadaEn)? alLeer;
 
   /// Qué lecturas se guardan para verlas sin conexión: «Hoy» y las tareas (no adjuntos).
-  static const rutasConCache = ['/hoy', '/mi-dia', '/tareas-outlook'];
+  static const rutasConCache = ['/hoy', '/mi-dia', '/tareas-outlook', '/notas'];
 
   /// Peticiones hechas (incluidos reintentos), para vigilar el límite de 600/min.
   int peticiones = 0;

@@ -33,7 +33,7 @@ logger = logging.getLogger("guilda")
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
 # Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
-API_VERSION = "1.8"
+API_VERSION = "1.9"
 
 
 _CODIGOS_HTTP = {
@@ -465,11 +465,12 @@ def reordenar_categorias():
 @api_bp.route("/notas", methods=["POST"])
 @token_required
 def crear_nota():
-    """`creada_en`/`cliente_uuid` opcionales: igual que en /fichaje/marcar,
+    """`titulo` y `fijada` opcionales (una nota puede llevar solo título). `creada_en`/`cliente_uuid` opcionales: igual que en /fichaje/marcar,
     para la cola offline de la app móvil."""
     datos = _body()
     texto = (datos.get("texto") or "").strip()
-    if not texto:
+    titulo = (datos.get("titulo") or "").strip() or None
+    if not texto and not titulo:
         return _err("El texto no puede estar vacío.")
     error = _error_referencia("notas", g.usuario_id, datos)
     if error:
@@ -478,6 +479,7 @@ def crear_nota():
         nota_id = db.crear_nota(
             g.usuario_id, texto, categoria_id=datos.get("categoria_id"),
             creada_en=datos.get("creada_en"), cliente_uuid=datos.get("cliente_uuid"),
+            titulo=titulo, fijada=bool(datos.get("fijada")), cliente_fiscal_id=datos.get("cliente_fiscal_id"),
         )
     except ValueError as e:
         return _err(str(e))
@@ -488,23 +490,41 @@ def crear_nota():
 @api_bp.route("/notas/<int:nota_id>", methods=["PUT"])
 @token_required
 def editar_nota(nota_id: int):
-    if db.obtener_nota(g.usuario_id, nota_id) is None:
+    """Su dueño o quien la tiene compartida como «colabora». Cuerpo: `texto` y/o `titulo` (vacío lo quita); solo el dueño puede cambiar `fijada` y `cliente_fiscal_id`.
+    Lo que no se manda no se toca."""
+    rol = db.rol_en_nota(g.usuario_id, nota_id)
+    if rol not in ("dueno", "colabora"):
         abort(404, "Nota no encontrada.")
     datos = _body()
-    texto = (datos.get("texto") or "").strip()
-    if not texto:
+    actual = db.obtener_nota_visible(g.usuario_id, nota_id)
+    texto = (datos.get("texto") or "").strip() if "texto" in datos else actual["texto"]
+    cambios = {}
+    if "titulo" in datos:
+        cambios["titulo"] = (datos.get("titulo") or "").strip() or None
+    if rol == "dueno":
+        if "fijada" in datos:
+            cambios["fijada"] = bool(datos.get("fijada"))
+        if "cliente_fiscal_id" in datos:
+            cambios["cliente_fiscal_id"] = datos.get("cliente_fiscal_id")
+    titulo_resultante = cambios["titulo"] if "titulo" in cambios else actual["titulo"]
+    if not texto and not titulo_resultante:
         return _err("El texto no puede estar vacío.")
-    error = _error_referencia("notas", g.usuario_id, datos, excepto_id=nota_id)
-    if error:
-        return error
-    db.editar_nota(g.usuario_id, nota_id, texto)
-    _guardar_referencia("notas", g.usuario_id, nota_id, datos)
-    return _ok(_dict(db.obtener_nota(g.usuario_id, nota_id)))
+    if "texto" not in datos and not cambios:
+        return _err("El texto no puede estar vacío.")
+    if rol == "dueno":
+        error = _error_referencia("notas", g.usuario_id, datos, excepto_id=nota_id)
+        if error:
+            return error
+    db.editar_nota(g.usuario_id, nota_id, texto, **cambios)
+    if rol == "dueno":
+        _guardar_referencia("notas", g.usuario_id, nota_id, datos)
+    return _ok(_dict(db.obtener_nota_visible(g.usuario_id, nota_id)))
 
 
 @api_bp.route("/notas/<int:nota_id>", methods=["DELETE"])
 @token_required
 def eliminar_nota(nota_id: int):
+    """A la papelera (se recupera con `POST /papelera/nota/{id}/restaurar`)."""
     if db.obtener_nota(g.usuario_id, nota_id) is None:
         abort(404, "Nota no encontrada.")
     db.eliminar_nota(g.usuario_id, nota_id)

@@ -22,32 +22,69 @@ def _tarea_visible_o_404(tarea_id: int):
 
 # --- Notas y tareas con cronómetro: listados ----------------------------------------------------------
 
+def _notas_enriquecidas(filas, usuario_id: int) -> list[dict]:
+    """Las notas como las pinta la lista de la web: con `rol` (dueno, colabora u observa), cuántas personas la comparten y cuántos adjuntos lleva."""
+    filas = _dicts(filas)
+    ids = [f["id"] for f in filas]
+    participantes, adjuntos = db.contar_participantes_notas(ids), db.contar_adjuntos_notas(ids)
+    for f in filas:
+        f["rol"] = "dueno" if f["usuario_id"] == usuario_id else (db.rol_en_nota(usuario_id, f["id"]) or "observa")
+        f["n_participantes"], f["n_adjuntos"] = participantes.get(f["id"], 0), adjuntos.get(f["id"], 0)
+    return filas
+
+
 @api_bp.route("/notas", methods=["GET"])
 @token_required
 def listar_notas():
-    """Notas propias, fijadas primero. Filtros: `proyecto_id`, `q`. Paginación `limit`/`offset` hecha en la base de datos
-    (sin `limit` devuelve hasta 1000); total en `X-Total-Count`. `campos=id,titulo` limita los campos devueltos."""
+    """Notas propias, fijadas primero. Filtros: `proyecto_id`, `q` y `compartidas` (`incluir`: también las que te han compartido; `solo`: solo esas). Paginación
+    `limit`/`offset` hecha en la base de datos (sin `limit` devuelve hasta 1000); total en `X-Total-Count`. `campos=id,titulo` limita los campos devueltos.
+    Cada nota lleva `rol`, `n_participantes` y `n_adjuntos`."""
     ref = request.args.get("referencia_externa")
     if ref:
         encontrado = db.id_por_referencia_externa("notas", g.usuario_id, ref)
-        return _ok_paginado([db.obtener_nota(g.usuario_id, encontrado)] if encontrado else [])
+        return _ok_paginado(_notas_enriquecidas([db.obtener_nota(g.usuario_id, encontrado)] if encontrado else [], g.usuario_id))
     proyecto, q = request.args.get("proyecto_id", type=int), request.args.get("q") or None
+    modo = request.args.get("compartidas")
+    incluir, solo = modo in ("incluir", "solo"), modo == "solo"
     limit = request.args.get("limit", type=int)
     offset = max(0, request.args.get("offset", default=0, type=int) or 0)
     limite = 1000 if limit is None else max(1, min(limit, 1000))
-    filas = db.listar_notas(g.usuario_id, categoria_id=proyecto, texto=q, limite=limite, offset=offset)
-    respuesta, status = _ok(_dicts(filas))
-    respuesta.headers["X-Total-Count"] = str(db.contar_notas(g.usuario_id, proyecto, q))
+    filas = db.listar_notas(g.usuario_id, categoria_id=proyecto, texto=q, limite=limite, offset=offset, incluir_compartidas=incluir, solo_compartidas=solo)
+    respuesta, status = _ok(_notas_enriquecidas(filas, g.usuario_id))
+    respuesta.headers["X-Total-Count"] = str(db.contar_notas(g.usuario_id, proyecto, q, incluir_compartidas=incluir, solo_compartidas=solo))
     return respuesta, status
+
+
+def _nota_visible_o_404(nota_id: int, roles=("dueno", "colabora", "observa")):
+    rol = db.rol_en_nota(g.usuario_id, nota_id)
+    if rol not in roles:
+        abort(404, "Nota no encontrada.")
+    return db.obtener_nota_visible(g.usuario_id, nota_id), rol
+
+
+def _nota_completa(nota_id: int) -> dict:
+    """Una nota con su `rol`, sus `participantes` y los nombres de lo que tiene vinculado (la tarea y el correo, solo para su dueño)."""
+    nota, rol = _nota_visible_o_404(nota_id)
+    d = _dict(nota)
+    d["rol"] = rol
+    d["participantes"] = _dicts(db.participantes_de_nota(nota_id))
+    d["n_participantes"] = len(d["participantes"])
+    d["tarea_outlook_asunto"] = d["mensaje_correo_asunto"] = None
+    if rol == "dueno":
+        if d.get("tarea_outlook_id"):
+            tarea = db.obtener_tarea_outlook(g.usuario_id, d["tarea_outlook_id"])
+            d["tarea_outlook_asunto"] = tarea["asunto"] if tarea else None
+        if d.get("mensaje_correo_id") and db.mensaje_correo_pertenece_a_usuario(g.usuario_id, d["mensaje_correo_id"]):
+            mensaje = db.obtener_mensaje_correo(d["mensaje_correo_id"])
+            d["mensaje_correo_asunto"] = mensaje["asunto"] if mensaje else None
+    return d
 
 
 @api_bp.route("/notas/<int:nota_id>", methods=["GET"])
 @token_required
 def obtener_nota(nota_id: int):
-    nota = db.obtener_nota(g.usuario_id, nota_id)
-    if nota is None:
-        abort(404, "Nota no encontrada.")
-    return _ok(_dict(nota))
+    """Una nota, también si te la han compartido. Lleva `rol` (dueno, colabora u observa), `participantes` y, para su dueño, el asunto de la tarea y del correo vinculados."""
+    return _ok(_nota_completa(nota_id))
 
 
 @api_bp.route("/notas/<int:nota_id>/fijar", methods=["POST"])
@@ -61,6 +98,52 @@ def fijar_nota(nota_id: int):
     if bool(nota["fijada"]) != fijada:
         db.alternar_fijada_nota(g.usuario_id, nota_id)
     return _ok(_dict(db.obtener_nota(g.usuario_id, nota_id)))
+
+
+@api_bp.route("/notas/<int:nota_id>/participantes", methods=["GET"])
+@token_required
+def listar_participantes_nota(nota_id: int):
+    """Con quién está compartida la nota (`usuario_id`, `nombre`, `rol`: colabora u observa)."""
+    _nota_visible_o_404(nota_id)
+    return _ok(_dicts(db.participantes_de_nota(nota_id)))
+
+
+@api_bp.route("/notas/<int:nota_id>/compartir", methods=["POST"])
+@token_required
+def compartir_nota_con(nota_id: int):
+    """Solo su dueño. Cuerpo: `{"usuario_id": N, "rol": "colabora"|"observa"}` (por defecto colabora; si ya la tenía, cambia el rol). Solo con compañeros del despacho."""
+    datos = _body()
+    try:
+        otro = int(datos.get("usuario_id"))
+    except (TypeError, ValueError):
+        return _err("Indica con quién compartirla (`usuario_id`).", 400, "usuario_invalido", "usuario_id")
+    rol = datos.get("rol") or "colabora"
+    if rol not in db.ROLES_PARTICIPANTE:
+        return _err("El rol debe ser «colabora» u «observa».", 400, "rol_invalido", "rol")
+    if not db.compartir_nota(g.usuario_id, nota_id, otro, rol):
+        abort(404, "No se puede compartir esa nota con esa persona.")
+    try:
+        if db.notificacion_tipo_activa(otro, "tarea_asignada"):
+            nota = db.obtener_nota_visible(otro, nota_id)
+            quien = db.nombre_mostrado_usuario(g.usuario_id) or db.obtener_usuario(g.usuario_id)["email"]
+            titulo = (nota["titulo"] or nota["texto"].split("\n")[0])[:60]
+            from . import notificaciones
+            notificaciones.crear_y_enviar(
+                otro, "tarea_asignada", "Nota compartida", f"{quien} ha compartido contigo la nota: {titulo}",
+                url=f"/notas?nota={nota_id}&compartidas=1", datos={"tipo": "nota_compartida", "nota_id": nota_id},
+            )
+    except Exception:  # noqa: BLE001 -- el aviso es un extra: compartir ya está hecho
+        pass
+    return _ok(_dicts(db.participantes_de_nota(nota_id)))
+
+
+@api_bp.route("/notas/<int:nota_id>/compartir/<int:otro_id>", methods=["DELETE"])
+@token_required
+def dejar_de_compartir_nota(nota_id: int, otro_id: int):
+    """El dueño quita a una persona; cualquiera puede salirse de una nota que le han compartido (`otro_id` = su propio id)."""
+    if not db.dejar_de_compartir_nota(g.usuario_id, nota_id, otro_id):
+        abort(404, "Esa persona no tiene la nota compartida.")
+    return _ok()
 
 
 @api_bp.route("/tareas", methods=["GET"])

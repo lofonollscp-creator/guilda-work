@@ -53,6 +53,12 @@ class AbrirCorreo extends Apertura {
   const AbrirCorreo([this.id]);
 }
 
+/// Abre una nota (también una compartida).
+class AbrirNota extends Apertura {
+  final int id;
+  const AbrirNota(this.id);
+}
+
 class AbrirVencimiento extends Apertura {
   final int id;
   const AbrirVencimiento(this.id);
@@ -81,6 +87,8 @@ Apertura resolverDestino(Destino d) {
       return d.id == null ? const IrAPestana('/tareas') : AbrirTarea(d.id!);
     case 'correo':
       return AbrirCorreo(d.id ?? (d.extra['mensaje_id'] as num?)?.toInt());
+    case 'nota':
+      return d.id == null ? const AbrirPantalla('notas') : AbrirNota(d.id!);
     case 'vencimiento':
       return d.id == null ? const SoloWeb() : AbrirVencimiento(d.id!);
     case 'ausencias':
@@ -98,7 +106,7 @@ Apertura resolverDestino(Destino d) {
     case 'tiquet':
       return const AbrirPantalla('tiquets');
     default:
-      // plazo, expediente, visita, traspaso(s), factura, contabilizacion, certificado, aviso_fiscal, nota...
+      // plazo, expediente, visita, traspaso(s), factura, contabilizacion, certificado, aviso_fiscal...
       return const SoloWeb();
   }
 }

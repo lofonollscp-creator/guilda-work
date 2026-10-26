@@ -342,9 +342,15 @@ def listar_notas(
         conn.close()
 
 
-def contar_notas(usuario_id: int, categoria_id: int | None = None, texto: str | None = None) -> int:
-    """Total de notas propias con esos filtros (para paginar en SQL sin traerlas todas)."""
-    cond, params = ["usuario_id = ?", "papelera_en IS NULL"], [usuario_id]
+def contar_notas(usuario_id: int, categoria_id: int | None = None, texto: str | None = None, incluir_compartidas: bool = False, solo_compartidas: bool = False) -> int:
+    """Total de notas con esos filtros (para paginar en SQL sin traerlas todas); los mismos que `listar_notas`."""
+    compartida = "id IN (SELECT nota_id FROM notas_participantes WHERE usuario_id = ?)"
+    if solo_compartidas:
+        cond, params = [compartida, "papelera_en IS NULL"], [usuario_id]
+    elif incluir_compartidas:
+        cond, params = [f"(usuario_id = ? OR {compartida})", "papelera_en IS NULL"], [usuario_id, usuario_id]
+    else:
+        cond, params = ["usuario_id = ?", "papelera_en IS NULL"], [usuario_id]
     if categoria_id is not None:
         cond.append("categoria_id = ?"); params.append(categoria_id)
     if texto:
