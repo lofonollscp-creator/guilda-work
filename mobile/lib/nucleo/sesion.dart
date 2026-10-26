@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_client.dart';
 import 'capacidades.dart';
+import 'lectura_guardada.dart';
 import 'servicios.dart';
 import 'version.dart';
 
@@ -112,6 +113,12 @@ class SesionControl extends Notifier<EstadoSesion> {
 
   Future<void> cerrar() async {
     ref.read(clienteApiProvider).vaciarCache();
+    ref.read(lecturasGuardadasProvider.notifier).limpiar();
+    try {
+      await ref.read(cacheLecturaProvider).vaciar(); // lo guardado para leer sin conexión no se queda en un móvil sin sesión
+    } catch (_) {
+      // sin base o sin permisos: no debe impedir cerrar sesión
+    }
     _s.api.despacho = null;
     state = const EstadoSesion(fase: FaseSesion.sinSesion);
   }

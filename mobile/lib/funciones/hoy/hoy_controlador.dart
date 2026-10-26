@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/generado/modelos.g.dart';
+import '../../nucleo/lectura_guardada.dart';
 import '../../nucleo/servicios.dart';
 import '../../nucleo/sesion.dart';
 
@@ -26,7 +27,10 @@ class HoyControlador extends AsyncNotifier<EstadoHoy> {
 
   Future<EstadoHoy> _pedir() async {
     final crudo = await ref.read(clienteApiProvider).enviar('GET', '/hoy');
-    return EstadoHoy(BandejaHoy.fromJson(crudo as Map<String, dynamic>), DateTime.now());
+    final bandeja = BandejaHoy.fromJson(crudo as Map<String, dynamic>);
+    // Sin red, el cliente contesta con lo último guardado: se enseña con su hora y el aviso de «sin conexión».
+    final guardada = ref.read(lecturasGuardadasProvider)['/hoy'];
+    return guardada == null ? EstadoHoy(bandeja, DateTime.now()) : EstadoHoy(bandeja, guardada, desactualizado: true);
   }
 
   /// Pull-to-refresh o reintento.

@@ -7,6 +7,7 @@ import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/sync_service.dart';
 import '../services/theme_service.dart';
+import 'lectura_guardada.dart';
 import 'sesion.dart';
 import 'version.dart' as v;
 
@@ -52,6 +53,8 @@ class _ContextoSesion implements ContextoApi {
   @override
   String? get despacho => _ref.read(estadoSesionProvider).despacho;
   @override
+  int? get usuarioId => _ref.read(estadoSesionProvider).usuario?.id;
+  @override
   String get idioma => _ref.read(serviciosProvider).locale.locale.languageCode;
   @override
   String get versionApp => v.versionApp;
@@ -65,4 +68,8 @@ class _ContextoSesion implements ContextoApi {
 }
 
 /// Cliente v2 de la API. Convive con el `ApiClient` antiguo hasta que cada área migre.
-final clienteApiProvider = Provider<ClienteApi>((ref) => ClienteApi(_ContextoSesion(ref)));
+final clienteApiProvider = Provider<ClienteApi>((ref) => ClienteApi(
+      _ContextoSesion(ref),
+      almacen: ref.read(cacheLecturaProvider),
+      alLeer: (ruta, guardadaEn) => ref.read(lecturasGuardadasProvider.notifier).fijar(ruta, guardadaEn),
+    ));

@@ -9,6 +9,7 @@ import '../../api/generado/modelos.g.dart';
 import '../../datos/local/cola_escritura.dart' show ColaLlena;
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
+import '../../nucleo/lectura_guardada.dart';
 import '../pendientes/pendientes_sheet.dart';
 import 'tarea_detalle_screen.dart';
 import 'tareas_lista_controlador.dart';
@@ -120,6 +121,7 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
         ],
       ),
       body: Column(children: [
+        const AvisoDatosGuardados(prefijo: '/tareas-outlook'),
         const AvisoPendientes(),
         _Filtros(estado: estado),
         Expanded(child: _Cuerpo(estado: estado, scroll: _scroll, alCompletar: _completar)),

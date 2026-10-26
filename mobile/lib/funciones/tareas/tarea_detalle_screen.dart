@@ -16,6 +16,7 @@ import '../../diseno/estados.dart';
 import '../../diseno/formatos.dart';
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
+import '../../nucleo/lectura_guardada.dart';
 import '../../datos/local/cola_escritura.dart' show ColaLlena;
 import 'tareas_acciones.dart';
 import 'tareas_lista_controlador.dart';
@@ -387,9 +388,14 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
         title: Text(t.tareaDetalleTitulo),
         actions: [if (d != null) IconButton(icon: const Icon(Icons.edit_outlined), tooltip: t.tareaEditar, onPressed: _editar)],
       ),
-      body: d == null
-          ? (_cargando ? const EsqueletoLista(filas: 5) : EstadoError(error: _error ?? Object(), alReintentar: _cargar))
-          : RefreshIndicator(onRefresh: _cargar, child: _contenido(context, d)),
+      body: Column(children: [
+        const AvisoDatosGuardados(prefijo: '/tareas-outlook'),
+        Expanded(
+          child: d == null
+              ? (_cargando ? const EsqueletoLista(filas: 5) : EstadoError(error: _error ?? Object(), alReintentar: _cargar))
+              : RefreshIndicator(onRefresh: _cargar, child: _contenido(context, d)),
+        ),
+      ]),
     );
   }
 

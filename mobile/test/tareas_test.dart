@@ -18,6 +18,8 @@ import 'package:guilda_work_mobile/nucleo/sesion.dart';
 
 class _Ctx implements ContextoApi {
   @override
+  int? get usuarioId => 1;
+  @override
   Future<String> servidor() async => 'https://s.test';
   @override
   Future<String?> token() async => 't';
