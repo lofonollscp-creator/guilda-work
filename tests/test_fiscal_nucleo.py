@@ -4,7 +4,7 @@ from datetime import date as d
 
 import pytest
 
-from app import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_perfiles as fp
+from app import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_perfiles as fp, verticales
 from app.db_fiscal import crear_cliente_fiscal
 from app.fiscal_modelos import exportador_303 as ex, fichero_303, motor_303
 from app.fiscal_perfiles import ErrorFiscal
@@ -215,3 +215,14 @@ def test_borrar_el_despacho_se_lleva_tambien_lo_inmutable():
             assert conn.execute(f"SELECT count(*) FROM {tabla} WHERE tenant_id = ?", (t,)).fetchone()[0] == 0
     finally:
         conn.close()
+
+
+def test_uso_para_backoffice():
+    t, u, g, c = _despacho()
+    _cargar(t, u, c)
+    dec = fn.calcular_declaracion(t, u, fn.crear_instantanea(t, u, c, ejercicio=2026, periodo="2T")["id"])
+    fn.revisar_declaracion(t, u, dec["id"])
+    fn.exportar_declaracion(t, u, dec["id"])
+    uso = dict(fn.uso_para_backoffice(t))
+    assert uso["Apuntes aprobados"] == "2" and uso["Periodos congelados"] == "1" and uso["Declaraciones exportadas"] == "1" and uso["Declaraciones presentadas"] == "0" and uso["Titulares con perfil fiscal"] == "1"
+    assert verticales.VERTICALES["fiscal"].uso is fn.uso_para_backoffice and verticales.VERTICALES["fiscal"].disponible is True

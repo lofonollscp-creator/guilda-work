@@ -17,8 +17,9 @@ def _titular(t, nombre="Titular SL", nif="B12345678"):
     return crear_cliente_fiscal(t, nombre, nif=nif)
 
 
-def test_los_verticales_fiscales_estan_reservados():
-    assert verticales.VERTICALES["fiscal"].disponible is False
+def test_los_verticales_fiscales_estan_dados_de_alta():
+    assert verticales.VERTICALES["fiscal"].disponible is True               # con pantallas (F4); se activa por despacho
+    assert verticales.VERTICALES["fiscal"].entradas_menu[0].endpoint == "guilda_fiscal.cartera"
     assert verticales.VERTICALES["alquileres"].disponible is False
 
 

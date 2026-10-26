@@ -596,6 +596,22 @@ def anular_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) -> 
     return _cambiar_estado(tenant_id, usuario_id, declaracion_id, "anulada")
 
 
+def uso_para_backoffice(tenant_id: int) -> list[tuple[str, str]]:
+    """Lo que ha hecho este despacho este mes en Guilda Fiscal (el backoffice lo enseña y es la base del cobro por uso)."""
+    mes = date.today().isoformat()[:7]
+    conn = db.get_connection()
+    try:
+        apuntes = conn.execute("SELECT count(*) FROM fiscal_apuntes WHERE tenant_id = ? AND substr(aprobado_en, 1, 7) = ?", (tenant_id, mes)).fetchone()[0]
+        instantaneas = conn.execute("SELECT count(*) FROM fiscal_instantaneas WHERE tenant_id = ? AND substr(aprobada_en, 1, 7) = ?", (tenant_id, mes)).fetchone()[0]
+        exportadas = conn.execute("SELECT count(*) FROM fiscal_declaraciones WHERE tenant_id = ? AND substr(exportada_en, 1, 7) = ?", (tenant_id, mes)).fetchone()[0]
+        presentadas = conn.execute("SELECT count(*) FROM fiscal_declaraciones WHERE tenant_id = ? AND substr(presentada_en, 1, 7) = ?", (tenant_id, mes)).fetchone()[0]
+        titulares = conn.execute("SELECT count(DISTINCT cliente_fiscal_id) FROM fiscal_perfiles WHERE tenant_id = ?", (tenant_id,)).fetchone()[0]
+    finally:
+        conn.close()
+    return [("Mes", mes), ("Titulares con perfil fiscal", str(titulares)), ("Apuntes aprobados", str(apuntes)), ("Periodos congelados", str(instantaneas)), ("Declaraciones exportadas", str(exportadas)),
+            ("Declaraciones presentadas", str(presentadas))]
+
+
 def _registrar() -> None:
     """El vertical «fiscal» (alta en fiscal_perfiles) pasa a crear y borrar también las tablas del núcleo."""
     from dataclasses import replace
@@ -611,7 +627,7 @@ def _registrar() -> None:
         borrar_datos_de_tenant(conn, tenant_id)               # primero lo inmutable y lo que cuelga de los perfiles, luego los perfiles
         previo_borrar(conn, tenant_id)
 
-    verticales.registrar(replace(base, esquema=esquema, borrar_datos=borrar))
+    verticales.registrar(replace(base, esquema=esquema, borrar_datos=borrar, uso=uso_para_backoffice, disponible=True))
 
 
 _registrar()
