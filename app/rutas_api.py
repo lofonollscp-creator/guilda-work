@@ -33,7 +33,7 @@ logger = logging.getLogger("guilda")
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
 # Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
-API_VERSION = "1.7"
+API_VERSION = "1.8"
 
 
 _CODIGOS_HTTP = {

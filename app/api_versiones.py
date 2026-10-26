@@ -5,6 +5,11 @@ Al subir `rutas_api.API_VERSION` hay que añadir aquí su entrada: un test lo ex
 
 # (versión | None, fecha, [(tipo, texto)]). Antes de la 1.3 la API no enviaba la cabecera: esas entradas llevan solo la fecha.
 HISTORIAL = [
+    ("1.8", "2026-10-27", [
+        ("Nuevo", "`POST /notificaciones/{id}/leida`: marca como leída una sola notificación."),
+        ("Mejora", "`GET /buscar`: filtro `tipo`, hasta 40 resultados y los campos `titulo`, `fragmento` y `fecha`; sin el servicio de vectores busca por palabra clave en vez de no devolver nada."),
+        ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
+    ]),
     ("1.7", "2026-10-26", [
         ("Mejora", "`GET /mi-dia` y `GET /tareas-outlook/tablero` traen en cada tarea los mismos indicadores que la lista (`vencida`, `n_comentarios`, `checklist_hechas`, `checklist_total`, "
                    "`bloqueos`, `rol`, `asignada_nombre`, `creador_nombre`). `/mi-dia` documenta sus cinco secciones (`vencidas`, `hoy`, `en_progreso`, `asignadas`, `compartidas`)."),

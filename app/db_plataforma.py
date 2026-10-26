@@ -1661,6 +1661,18 @@ def marcar_notificaciones_leidas(usuario_id: int) -> None:
         conn.close()
 
 
+def marcar_notificacion_leida(usuario_id: int, notificacion_id: int) -> None:
+    conn = _db.get_connection()
+    try:
+        conn.execute(
+            "UPDATE notificaciones SET leido_en = ? WHERE id = ? AND usuario_id = ? AND leido_en IS NULL",
+            (_db.now_iso(), notificacion_id, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def eliminar_notificacion(usuario_id: int, notificacion_id: int) -> None:
     conn = _db.get_connection()
     try:

@@ -95,4 +95,45 @@ def test_la_busqueda_trae_destino_y_quita_vectores(cliente, monkeypatch):
     h = _auth(_registrar(cliente, "busca@ejemplo.com")["token"])
     monkeypatch.setattr(busqueda, "buscar_hibrido", lambda *a, **k: [{"id": "tarea-5", "tipo": "tarea", "texto": "Llamar a Acme", "_vectors": {"default": [0.1]}, "_rankingScore": 0.9}])
     r = cliente.get("/api/v1/buscar?q=acme", headers=h).get_json()["data"]
-    assert r == [{"id": "tarea-5", "tipo": "tarea", "texto": "Llamar a Acme", "destino": {"tipo": "tarea", "id": 5}}]
+    assert r == [{"id": "tarea-5", "tipo": "tarea", "texto": "Llamar a Acme", "titulo": "Llamar a Acme", "fragmento": "", "fecha": None, "destino": {"tipo": "tarea", "id": 5}}]
+
+
+def test_la_busqueda_pide_respaldo_sin_vectores_y_filtra_por_tipo(cliente, monkeypatch):
+    from app import busqueda
+    h = _auth(_registrar(cliente, "busca2@ejemplo.com")["token"])
+    visto = {}
+    monkeypatch.setattr(busqueda, "buscar_hibrido", lambda *a, **k: visto.update(a=a, k=k) or [])
+    assert cliente.get("/api/v1/buscar?q=acme&tipo=tarea,nota,inventado&limit=99", headers=h).get_json()["data"] == []
+    assert visto["k"]["con_respaldo"] is True and visto["k"]["tipos"] == {"tarea", "nota"} and visto["a"][2] == 40
+
+
+def test_presentar_resultado_separa_titulo_y_fragmento():
+    from app import busqueda
+    largo = "Declaración trimestral del IVA de Acme " + "con muchos datos de la cuenta bancaria " * 12
+    r = busqueda.presentar_resultado({"texto": largo, "creada_en": "2026-10-01"})
+    assert len(r["titulo"]) <= 90 and r["fragmento"].endswith("…") and r["fecha"] == "2026-10-01"
+    assert busqueda.presentar_resultado({"texto": "Llamar a Acme"}) == {"titulo": "Llamar a Acme", "fragmento": "", "fecha": None}
+
+
+def test_buscar_hibrido_con_respaldo_busca_por_palabra_clave_sin_ollama(monkeypatch):
+    from app import busqueda as b
+    monkeypatch.setattr(b, "MEILISEARCH_MASTER_KEY", "k")
+    monkeypatch.setattr(b.embeddings, "generar_embedding", lambda texto: None)
+    monkeypatch.setattr(b, "generar_token_busqueda", lambda *a, **k: "tok")
+    visto = {}
+    monkeypatch.setattr(b, "_peticion", lambda e, *, clave, metodo="GET", cuerpo=None: visto.update(cuerpo=cuerpo) or {"hits": [{"id": "nota-1"}]})
+    assert b.buscar_hibrido(1, "algo", 5, tipos={"nota"}, con_respaldo=True) == [{"id": "nota-1"}]
+    assert "vector" not in visto["cuerpo"] and "hybrid" not in visto["cuerpo"] and visto["cuerpo"]["filter"] == 'tipo = "nota"'
+
+
+def test_marcar_una_notificacion_leida(cliente):
+    from app import db
+    reg = _registrar(cliente, "avisa@ejemplo.com")
+    h = _auth(reg["token"])
+    for n in (1, 2):
+        db.crear_notificacion(db.obtener_usuario_por_email("avisa@ejemplo.com")["id"], "aviso", f"A{n}", "c", None)
+    lista = cliente.get("/api/v1/notificaciones", headers=h).get_json()["data"]
+    assert lista["no_leidas"] == 2
+    assert cliente.post(f"/api/v1/notificaciones/{lista['notificaciones'][0]['id']}/leida", headers=h).status_code == 200
+    despues = cliente.get("/api/v1/notificaciones", headers=h).get_json()["data"]
+    assert despues["no_leidas"] == 1

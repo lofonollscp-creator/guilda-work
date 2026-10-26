@@ -148,7 +148,8 @@ ESQUEMAS: dict[str, dict] = {
     "NotificacionesRespuesta": {"type": "object", "properties": {"no_leidas": {"type": "integer"}, "notificaciones": {"type": "array", "items": {"$ref": "#/components/schemas/Notificacion"}}}},
     "ResultadoBusqueda": {"type": "array", "items": {"type": "object", "properties": {
         "tipo": {"type": "string", "description": "`nota`, `tarea`, `mensaje`, `vencimiento_fiscal` o `cliente_fiscal`."}, "id": {"type": "string", "description": "Id en el índice: «tipo-N» (p. ej. `tarea-12`)."},
-        "texto": {"type": "string"}, "url": {"type": "string"}, "destino": {"$ref": "#/components/schemas/DestinoAviso"}}}},
+        "texto": {"type": "string"}, "url": {"type": "string"}, "destino": {"$ref": "#/components/schemas/DestinoAviso"},
+        "titulo": {"type": "string", "description": "Primera parte del texto, corta."}, "fragmento": {"type": "string", "description": "El resto del texto, recortado."}, "fecha": {"type": "string", "nullable": True}}}},
     "Documento": {"type": "string", "format": "binary"},
     "Companero": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "email": {"type": "string"}}},
     "Vista": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "filtros": {"type": "object", "additionalProperties": {"type": "string"}},
@@ -353,7 +354,7 @@ SIN_DATOS_ESPERADOS = {
     "logout", "eliminar_categoria", "eliminar_nota", "eliminar_tarea", "eliminar_tarea_outlook", "eliminar_proyecto", "eliminar_item_checklist", "alternar_item_checklist",
     "eliminar_comentario", "dejar_de_compartir", "quitar_dependencia", "eliminar_recordatorio", "posponer_recordatorio", "eliminar_vista", "eliminar_plantilla",
     "eliminar_plantilla_tareas", "eliminar_recurrente", "eliminar_regla_vencimiento", "borrar_webhook", "revocar_token", "eliminar_adjunto_nota", "eliminar_documento_cliente",
-    "eliminar_notificacion", "marcar_notificaciones_leidas", "cerrar_comunicado", "eliminar_vencimiento_fiscal", "eliminar_cliente_fiscal", "restaurar_papelera_fiscal",
+    "eliminar_notificacion", "marcar_notificaciones_leidas", "marcar_notificacion_leida", "cerrar_comunicado", "eliminar_vencimiento_fiscal", "eliminar_cliente_fiscal", "restaurar_papelera_fiscal",
     "eliminar_definitivamente_de_papelera", "restaurar_de_papelera", "reintentar_entrega", "cancelar_programado", "cancelar_seguimiento", "ocultar_onboarding",
     "eliminar_dispositivo_push", "registrar_dispositivo_push", "eliminar_cuenta_correo", "eliminar_mensaje_correo", "eliminar_categoria_correo", "eliminar_regla_categoria",
     "eliminar_remitente_confiable", "eliminar_atajo_ia", "eliminar_conversacion_ia", "activar_conversacion_ia", "renombrar_conversacion_ia", "vaciar_ia", "eliminar_avatar_api",

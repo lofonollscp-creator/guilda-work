@@ -20,7 +20,7 @@ class Operaciones {
   Future<Usuario> me({String? campos}) async { final r = await _t.enviar('GET', '/auth/me', consulta: {'campos': ?campos}); return Usuario.fromJson(r as Map<String, dynamic>); }
   Future<Sesion> registro({Map<String, dynamic>? cuerpo}) async { final r = await _t.enviar('POST', '/auth/registro', consulta: null, cuerpo: cuerpo); return Sesion.fromJson(r as Map<String, dynamic>); }
   Future<List<int>> avatarApi({required int usuarioId, String? campos}) async { final r = await _t.enviar('GET', '/avatar/$usuarioId', consulta: {'campos': ?campos}, binario: true); return (r as List).cast<int>(); }
-  Future<dynamic> buscar({String? campos, int? limit, String? q}) async { final r = await _t.enviar('GET', '/buscar', consulta: {'campos': ?campos, 'limit': ?limit, 'q': ?q}); return r; }
+  Future<dynamic> buscar({String? campos, int? limit, String? q, String? tipo}) async { final r = await _t.enviar('GET', '/buscar', consulta: {'campos': ?campos, 'limit': ?limit, 'q': ?q, 'tipo': ?tipo}); return r; }
   Future<List<Proyecto>> listarCategorias({String? campos}) async { final r = await _t.enviar('GET', '/categorias', consulta: {'campos': ?campos}); return (r as List).map((e) => Proyecto.fromJson(e as Map<String, dynamic>)).toList(); }
   Future<Proyecto> crearCategoria({Map<String, dynamic>? cuerpo}) async { final r = await _t.enviar('POST', '/categorias', consulta: null, cuerpo: cuerpo); return Proyecto.fromJson(r as Map<String, dynamic>); }
   Future<void> reordenarCategorias({Map<String, dynamic>? cuerpo}) async { await _t.enviar('POST', '/categorias/reordenar', consulta: null, cuerpo: cuerpo); }
@@ -287,6 +287,7 @@ class Operaciones {
   Future<NotificacionesRespuesta> listarNotificaciones({String? campos, String? desde, int? limit, String? noLeidas, String? tipo}) async { final r = await _t.enviar('GET', '/notificaciones', consulta: {'campos': ?campos, 'desde': ?desde, 'limit': ?limit, 'no_leidas': ?noLeidas, 'tipo': ?tipo}); return NotificacionesRespuesta.fromJson(r as Map<String, dynamic>); }
   Future<void> marcarNotificacionesLeidas() async { await _t.enviar('POST', '/notificaciones/leidas', consulta: null); }
   Future<void> eliminarNotificacion({required int notificacionId}) async { await _t.enviar('DELETE', '/notificaciones/$notificacionId', consulta: null); }
+  Future<void> marcarNotificacionLeida({required int notificacionId}) async { await _t.enviar('POST', '/notificaciones/$notificacionId/leida', consulta: null); }
   Future<void> ocultarOnboarding() async { await _t.enviar('POST', '/onboarding/ocultar', consulta: null); }
   Future<void> openapiJson({String? campos}) async { await _t.enviar('GET', '/openapi.json', consulta: {'campos': ?campos}); }
   Future<List<Papelera>> papelera({String? campos}) async { final r = await _t.enviar('GET', '/papelera', consulta: {'campos': ?campos}); return (r as List).map((e) => Papelera.fromJson(e as Map<String, dynamic>)).toList(); }

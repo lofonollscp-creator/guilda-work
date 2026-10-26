@@ -267,6 +267,14 @@ def marcar_notificaciones_leidas():
     return _ok()
 
 
+@api_bp.route("/notificaciones/<int:notificacion_id>/leida", methods=["POST"])
+@token_required
+def marcar_notificacion_leida(notificacion_id: int):
+    """Marca como leída una sola notificación (la `POST /notificaciones/leidas` marca todas)."""
+    db.marcar_notificacion_leida(g.usuario_id, notificacion_id)
+    return _ok()
+
+
 @api_bp.route("/notificaciones/<int:notificacion_id>", methods=["DELETE"])
 @token_required
 def eliminar_notificacion(notificacion_id: int):
@@ -277,14 +285,17 @@ def eliminar_notificacion(notificacion_id: int):
 @api_bp.route("/buscar", methods=["GET"])
 @token_required
 def buscar():
-    """Búsqueda en notas, tareas y correo. Parámetros: `q` (obligatorio), `limit` (1-20, por defecto 8)."""
+    """Búsqueda en notas, tareas, correo y calendario fiscal. Parámetros: `q` (obligatorio), `limit` (1-40, por defecto 8) y `tipo` (uno o varios separados por comas:
+    `nota`, `tarea`, `mensaje`, `vencimiento_fiscal`, `cliente_fiscal`). Sin el servicio de vectores busca solo por palabra clave en vez de no devolver nada.
+    Cada resultado lleva `titulo`, `fragmento` y `fecha` listos para pintar."""
     q = (request.args.get("q") or "").strip()
     if not q:
         return _err("Indica qué buscar con ?q=.")
-    limite = max(1, min(request.args.get("limit", default=8, type=int) or 8, 20))
-    resultados = busqueda.buscar_hibrido(g.usuario_id, q, limite, tenant_id=g.get("tenant_id"))
+    limite = max(1, min(request.args.get("limit", default=8, type=int) or 8, 40))
+    tipos = {t.strip() for t in (request.args.get("tipo") or "").split(",") if t.strip()} & set(aviso_destino._DESTINO_DE_RESULTADO)
+    resultados = busqueda.buscar_hibrido(g.usuario_id, q, limite, tenant_id=g.get("tenant_id"), tipos=tipos or None, con_respaldo=True)
     # `destino`: a dónde lleva cada resultado en la app móvil (el `id` del índice es «tipo-N»); fuera los vectores, que no sirven a quien consulta.
-    return _ok([{**{k: v for k, v in r.items() if not k.startswith("_")}, "destino": aviso_destino.destino_de_resultado(r)} for r in resultados])
+    return _ok([{**{k: v for k, v in r.items() if not k.startswith("_")}, **busqueda.presentar_resultado(r), "destino": aviso_destino.destino_de_resultado(r)} for r in resultados])
 
 
 @api_bp.route("/ia/consumo", methods=["GET"])
