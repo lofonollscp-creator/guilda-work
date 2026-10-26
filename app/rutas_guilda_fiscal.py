@@ -90,19 +90,37 @@ def _opciones_perfil() -> dict:
 @guilda_fiscal_bp.route("/<int:cliente_id>/perfil", methods=["GET", "POST"])
 @login_required
 def perfil(cliente_id: int):
+    """Alta de un perfil nuevo (`?nuevo=1`, o si no hay ninguno) o edición de uno existente (`?editar=<id>`; por defecto, el vigente)."""
     c = _cliente_o_404(cliente_id)
-    actual = fp.perfil_en(g.tenant_id, cliente_id, date.today().isoformat())
+    hoy = date.today().isoformat()
+    todos = fp.perfiles_de(g.tenant_id, cliente_id)
+    vigente = fp.perfil_en(g.tenant_id, cliente_id, hoy)
+    pid = request.form.get("perfil_id", type=int) if request.method == "POST" else request.args.get("editar", type=int)
+    if pid is None and request.method == "GET" and not request.args.get("nuevo") and vigente:
+        pid = vigente["id"]
+    editado = next((x for x in todos if x["id"] == pid), None) if pid else None
+    if pid and not editado:
+        abort(404)
+
+    def pantalla(perfil_datos, f, error=None, estado=200):
+        return render_template("fiscal_perfil.html", c=c, perfil=perfil_datos, f=f, opciones=_opciones_perfil(), error=error, editado=editado, perfiles=todos), estado
+
     if request.method == "POST":
         datos = {k: request.form.get(k, "") for k in ("forma_juridica", "residencia", "pais", "territorio_iva", "regimen_iva", "periodicidad", "notas")}
         datos.update({k: request.form.get(k) for k in fp.BANDERAS})
         try:
             datos["prorrata_centesimas"] = fc.porcentaje_a_centesimas(request.form["prorrata"]) if request.form.get("prorrata", "").strip() else None
             datos["saldo_a_compensar_centimos"] = fc.importe_a_centimos(request.form.get("saldo_a_compensar", "0") or "0")
-            fp.guardar_perfil(g.tenant_id, g.usuario_id, cliente_id, datos, vigente_desde=request.form.get("vigente_desde"))
+            fp.guardar_perfil(g.tenant_id, g.usuario_id, cliente_id, datos, vigente_desde=request.form.get("vigente_desde"), vigente_hasta=request.form.get("vigente_hasta") or None,
+                              perfil_id=editado["id"] if editado else None, version=request.form.get("version", type=int))
         except (ErrorFiscal, ValueError) as e:
-            return render_template("fiscal_perfil.html", c=c, perfil=datos, f=request.form, opciones=_opciones_perfil(), error=str(e)), 400
+            return pantalla(datos, request.form, str(e), 400)
         return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id))
-    return render_template("fiscal_perfil.html", c=c, perfil=actual or {}, f={}, opciones=_opciones_perfil(), error=_error())
+    base = dict(editado or vigente or {})
+    if request.args.get("nuevo"):
+        base.pop("vigente_desde", None)
+        base.pop("vigente_hasta", None)
+    return pantalla(base, {}, _error())
 
 
 def _apunte_del_formulario() -> tuple[Apunte, str | None]:

@@ -2,23 +2,32 @@
 {% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ _('Perfil fiscal') }} — {{ c.nombre }}{% endblock %}
 {% block content %}
+{% set et = {'persona_fisica': _('Persona física'), 'sociedad': _('Sociedad'), 'comunidad_bienes': _('Comunidad de bienes'), 'otra': _('Otra'),
+  'ES': _('España'), 'UE': _('Unión Europea'), 'otro': _('Otro'),
+  'peninsula_baleares': _('Península y Baleares'), 'canarias': _('Canarias'), 'ceuta_melilla': _('Ceuta y Melilla'),
+  'general': _('General'), 'simplificado': _('Simplificado'), 'general_y_simplificado': _('General y simplificado'), 'recargo': _('Recargo de equivalencia'), 'exento': _('Exento'),
+  'trimestral': _('Trimestral'), 'mensual': _('Mensual')} %}
 <header class="page-header">
   <div><h1>{{ _('Perfil fiscal') }}</h1><p class="subtitle">{{ c.nombre }} · {{ c.nif or '' }}</p></div>
   <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ _('Volver') }}</a>
 </header>
 {{ aviso_error(error) }}
-<p class="muted">{{ _('El perfil tiene vigencia: al guardar uno con fecha posterior, el anterior se cierra el día antes. Lo que el cálculo automático no soporta (criterio de caja, prorrata, régimen simplificado, recargo, tributación foral…) bloquea la declaración en vez de inventar un número.') }}</p>
+{% if editado %}<p class="muted">{{ _('Estás corrigiendo el perfil vigente desde %(d)s. Las declaraciones ya calculadas no cambian: llevan su propia foto de los datos. Si lo que cambia es el régimen o la periodicidad a partir de una fecha, crea un perfil nuevo.', d=editado.vigente_desde) }}
+  <a href="{{ url_for('guilda_fiscal.perfil', cliente_id=c.id, nuevo=1) }}">{{ _('Crear un perfil nuevo con otra fecha') }}</a></p>
+{% else %}<p class="muted">{{ _('El perfil tiene vigencia: al guardar uno con fecha posterior, el anterior se cierra el día antes. Lo que el cálculo automático no soporta (criterio de caja, prorrata, régimen simplificado, recargo, tributación foral…) bloquea la declaración en vez de inventar un número.') }}</p>{% endif %}
 <form method="post" class="edit-form">
+  {% if editado %}<input type="hidden" name="perfil_id" value="{{ editado.id }}"><input type="hidden" name="version" value="{{ editado.version }}">{% endif %}
   <div class="fila-campos">
     <label>{{ _('Vigente desde') }}<input type="date" name="vigente_desde" value="{{ f.get('vigente_desde') or perfil.get('vigente_desde') or '' }}" required></label>
-    <label>{{ _('Forma jurídica') }}<select name="forma_juridica">{% for v in opciones.formas %}<option value="{{ v }}" {{ 'selected' if perfil.get('forma_juridica') == v }}>{{ v }}</option>{% endfor %}</select></label>
-    <label>{{ _('Régimen de IVA') }}<select name="regimen_iva">{% for v in opciones.regimenes %}<option value="{{ v }}" {{ 'selected' if perfil.get('regimen_iva', 'general') == v }}>{{ v }}</option>{% endfor %}</select></label>
-    <label>{{ _('Periodicidad') }}<select name="periodicidad">{% for v in opciones.periodicidades %}<option value="{{ v }}" {{ 'selected' if perfil.get('periodicidad', 'trimestral') == v }}>{{ v }}</option>{% endfor %}</select></label>
+    {% if editado %}<label>{{ _('Vigente hasta (vacío = sin fin)') }}<input type="date" name="vigente_hasta" value="{{ f.get('vigente_hasta') if f else (editado.vigente_hasta or '') }}"></label>{% endif %}
+    <label>{{ _('Forma jurídica') }}<select name="forma_juridica">{% for v in opciones.formas %}<option value="{{ v }}" {{ 'selected' if perfil.get('forma_juridica') == v }}>{{ et.get(v, v) }}</option>{% endfor %}</select></label>
+    <label>{{ _('Régimen de IVA') }}<select name="regimen_iva">{% for v in opciones.regimenes %}<option value="{{ v }}" {{ 'selected' if perfil.get('regimen_iva', 'general') == v }}>{{ et.get(v, v) }}</option>{% endfor %}</select></label>
+    <label>{{ _('Periodicidad') }}<select name="periodicidad">{% for v in opciones.periodicidades %}<option value="{{ v }}" {{ 'selected' if perfil.get('periodicidad', 'trimestral') == v }}>{{ et.get(v, v) }}</option>{% endfor %}</select></label>
   </div>
   <div class="fila-campos">
-    <label>{{ _('Residencia') }}<select name="residencia">{% for v in opciones.residencias %}<option value="{{ v }}" {{ 'selected' if perfil.get('residencia', 'ES') == v }}>{{ v }}</option>{% endfor %}</select></label>
+    <label>{{ _('Residencia') }}<select name="residencia">{% for v in opciones.residencias %}<option value="{{ v }}" {{ 'selected' if perfil.get('residencia', 'ES') == v }}>{{ et.get(v, v) }}</option>{% endfor %}</select></label>
     <label>{{ _('País (si no reside en España)') }}<input type="text" name="pais" value="{{ perfil.get('pais') or '' }}" maxlength="2"></label>
-    <label>{{ _('Territorio de IVA') }}<select name="territorio_iva">{% for v in opciones.territorios %}<option value="{{ v }}" {{ 'selected' if perfil.get('territorio_iva', 'peninsula_baleares') == v }}>{{ v }}</option>{% endfor %}</select></label>
+    <label>{{ _('Territorio de IVA') }}<select name="territorio_iva">{% for v in opciones.territorios %}<option value="{{ v }}" {{ 'selected' if perfil.get('territorio_iva', 'peninsula_baleares') == v }}>{{ et.get(v, v) }}</option>{% endfor %}</select></label>
   </div>
   <div class="fila-campos">
     <label>{{ _('Prorrata general') }} (%)<input type="text" name="prorrata" value="{{ f.get('prorrata') or ('%g'|format(perfil.prorrata_centesimas / 100) if perfil.get('prorrata_centesimas') is not none else '') }}" inputmode="decimal"></label>
@@ -28,6 +37,14 @@
     'autoliquidacion_conjunta': _('Autoliquidación conjunta'), 'exonerado_390': _('Exonerado del modelo 390'), 'deduce_pago_cuenta_carburantes': _('Deduce pago a cuenta de carburantes'), 'prorrata_especial': _('Prorrata especial'),
     'sectores_diferenciados': _('Sectores diferenciados')}[b] }}</label>{% endfor %}
   <label>{{ _('Notas') }}<textarea name="notas" rows="2" maxlength="500">{{ perfil.get('notas') or '' }}</textarea></label>
-  <button type="submit" class="btn btn-primary">{{ _('Guardar perfil') }}</button>
+  <button type="submit" class="btn btn-primary">{{ _('Guardar cambios') if editado else _('Guardar perfil') }}</button>
 </form>
+{% if perfiles|length > 1 or (perfiles and not editado) %}
+<h2 class="ds-mt-24">{{ _('Perfiles del titular') }}</h2>
+<div class="table-wrap ds-mb-16"><table class="historial-table">
+  <thead><tr><th>{{ _('Desde') }}</th><th>{{ _('Hasta') }}</th><th>{{ _('Régimen') }}</th><th>{{ _('Periodicidad') }}</th><th></th></tr></thead>
+  <tbody>{% for x in perfiles|reverse %}<tr><td>{{ x.vigente_desde }}</td><td>{{ x.vigente_hasta or '—' }}</td><td>{{ et.get(x.regimen_iva, x.regimen_iva) }}</td><td>{{ et.get(x.periodicidad, x.periodicidad) }}</td>
+    <td>{% if editado and editado.id == x.id %}<span class="chip">{{ _('Editando') }}</span>{% else %}<a href="{{ url_for('guilda_fiscal.perfil', cliente_id=c.id, editar=x.id) }}">{{ _('Editar') }}</a>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
 {% endblock %}

@@ -15807,3 +15807,63 @@ msgstr "fila %(f)s"
 
 msgid "Próximo 303"
 msgstr "Proper 303"
+
+msgid "Al importar el fichero, la AEAT muestra siempre el aviso 31190 («revise las casillas de Información adicional»): es un recordatorio, no un error. Lo que no calcula el fichero (por ejemplo operaciones no sujetas o exentas sin apuntar) se completa a mano en la sede."
+msgstr "En importar el fitxer, l'AEAT mostra sempre l'avís 31190 («revisi les caselles d'Informació addicional»): és un recordatori, no un error. Allò que el fitxer no calcula (per exemple, operacions no subjectes o exemptes sense apuntar) es completa a mà a la seu."
+
+msgid "Al importarla en el simulador o en la sede de la AEAT saldrá el aviso 303M030 («no hay contenido en la liquidación del régimen general»): es lógico, porque está a cero. Si el titular tuvo operaciones en el periodo, aprueba sus apuntes y vuelve a calcular."
+msgstr "En importar-la al simulador o a la seu de l'AEAT sortirà l'avís 303M030 («no hi ha contingut a la liquidació del règim general»): és lògic, perquè està a zero. Si el titular va tenir operacions en el període, aprova'n els apunts i torna a calcular."
+
+msgid "Canarias"
+msgstr "Canàries"
+
+msgid "Ceuta y Melilla"
+msgstr "Ceuta i Melilla"
+
+msgid "Comunidad de bienes"
+msgstr "Comunitat de béns"
+
+msgid "Crear un perfil nuevo con otra fecha"
+msgstr "Crear un perfil nou amb una altra data"
+
+msgid "Editando"
+msgstr "Editant"
+
+msgid "Esta declaración no tiene ningún apunte."
+msgstr "Aquesta declaració no té cap apunt."
+
+msgid "Estás corrigiendo el perfil vigente desde %(d)s. Las declaraciones ya calculadas no cambian: llevan su propia foto de los datos. Si lo que cambia es el régimen o la periodicidad a partir de una fecha, crea un perfil nuevo."
+msgstr "Estàs corregint el perfil vigent des de %(d)s. Les declaracions ja calculades no canvien: porten la seva pròpia foto de les dades. Si allò que canvia és el règim o la periodicitat a partir d'una data, crea un perfil nou."
+
+msgid "Exento"
+msgstr "Exempt"
+
+msgid "General y simplificado"
+msgstr "General i simplificat"
+
+msgid "Mensual"
+msgstr "Mensual"
+
+msgid "Península y Baleares"
+msgstr "Península i Balears"
+
+msgid "Perfiles del titular"
+msgstr "Perfils del titular"
+
+msgid "Recargo de equivalencia"
+msgstr "Recàrrec d'equivalència"
+
+msgid "Régimen"
+msgstr "Règim"
+
+msgid "Simplificado"
+msgstr "Simplificat"
+
+msgid "Trimestral"
+msgstr "Trimestral"
+
+msgid "Unión Europea"
+msgstr "Unió Europea"
+
+msgid "Vigente hasta (vacío = sin fin)"
+msgstr "Vigent fins (buit = sense final)"

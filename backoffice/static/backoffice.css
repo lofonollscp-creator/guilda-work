@@ -103,8 +103,11 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
 .datos-lista { margin: 0 0 14px; display: grid; gap: 12px; }
 .formulario { display: grid; gap: 4px; max-width: 520px; } .fila-form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; max-width: 560px; } .fila-form label { margin: 0; }
 .fila-interruptor { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px; margin-bottom: 10px; background: var(--superficie-2); border: 1px solid var(--borde); border-radius: 12px; } .fila-interruptor p { margin: 2px 0 0; }
-.modulo { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px; } .modulo p { margin: 2px 0 0; font-size: .82rem; }
-.modulo > div:first-child { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; } .modulo .acciones .interruptor { flex: 0 0 auto; } .modulo .acciones { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; white-space: normal; flex: 0 0 auto; }
+.modulo { display: flex; flex-direction: column; gap: 6px; padding: 16px; }
+.modulo p { margin: 0; font-size: .82rem; line-height: 1.45; }
+.modulo-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 2px; } .modulo-cab strong { min-width: 0; overflow-wrap: anywhere; }
+.modulo-estado { color: var(--texto); font-weight: 600; margin-top: 4px !important; } .modulo-uso { margin-top: 2px !important; }
+.modulo-pie { margin-top: auto; padding-top: 10px; } .modulo-pie .boton { width: 100%; justify-content: center; }
 .permisos { max-width: 640px; }
 
 /* ---- Avisos, diálogo, login ---- */

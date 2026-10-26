@@ -38,6 +38,21 @@ def test_flujo_completo_desde_la_web(cliente):
     assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
                                                            "periodicidad": "trimestral"}).status_code == 302
     assert fp.perfil_en(t, c, "2026-05-01")["forma_juridica"] == "sociedad"
+    # la ficha se puede corregir: el formulario sale relleno y guardar con la misma fecha no choca consigo mismo
+    pagina = cliente.get(f"/guilda-fiscal/{c}/perfil").get_data(as_text=True)
+    assert 'name="perfil_id"' in pagina and "Guardar cambios" in pagina
+    existente = fp.perfil_en(t, c, "2026-05-01")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"perfil_id": existente["id"], "version": existente["version"], "vigente_desde": "2026-01-01", "forma_juridica": "persona_fisica", "residencia": "ES",
+                                                           "territorio_iva": "peninsula_baleares", "regimen_iva": "general", "periodicidad": "trimestral"}).status_code == 302
+    assert fp.perfil_en(t, c, "2026-05-01")["forma_juridica"] == "persona_fisica" and len(fp.perfiles_de(t, c)) == 1
+    # con una versión vieja se rechaza y se explica
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"perfil_id": existente["id"], "version": existente["version"], "vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES",
+                                                           "territorio_iva": "peninsula_baleares", "regimen_iva": "general", "periodicidad": "trimestral"}).status_code == 400
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"perfil_id": 999999, "version": 1, "vigente_desde": "2026-01-01"}).status_code == 404
+    existente = fp.perfil_en(t, c, "2026-05-01")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"perfil_id": existente["id"], "version": existente["version"], "vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES",
+                                                           "territorio_iva": "peninsula_baleares", "regimen_iva": "general", "periodicidad": "trimestral"}).status_code == 302
+    assert fp.perfil_en(t, c, "2026-05-01")["forma_juridica"] == "sociedad"
     # dos apuntes aprobados desde formularios
     base = {"tipo_factura": "F1", "clave": "01", "serie": "A", "contraparte_nif": "B87654321", "contraparte_nombre": "Cliente SL"}
     assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data={**base, "libro": "E", "calificacion": "S1", "numero": "1", "fecha_expedicion": "2026-05-10", "base": "100,00", "tipo_iva": "21"}).status_code == 302

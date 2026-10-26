@@ -15798,3 +15798,63 @@ msgstr "row %(f)s"
 
 msgid "Próximo 303"
 msgstr "Next 303"
+
+msgid "Al importar el fichero, la AEAT muestra siempre el aviso 31190 («revise las casillas de Información adicional»): es un recordatorio, no un error. Lo que no calcula el fichero (por ejemplo operaciones no sujetas o exentas sin apuntar) se completa a mano en la sede."
+msgstr "When you import the file, the AEAT always shows warning 31190 (“review the Additional information boxes”): it is a reminder, not an error. What the file does not calculate (for example, non-subject or exempt operations that were not entered) is completed by hand on the AEAT portal."
+
+msgid "Al importarla en el simulador o en la sede de la AEAT saldrá el aviso 303M030 («no hay contenido en la liquidación del régimen general»): es lógico, porque está a cero. Si el titular tuvo operaciones en el periodo, aprueba sus apuntes y vuelve a calcular."
+msgstr "When you import it into the simulator or the AEAT portal, warning 303M030 (“no content in the general regime settlement”) will appear: that makes sense, because it is at zero. If the holder had operations in the period, approve their entries and calculate again."
+
+msgid "Canarias"
+msgstr "Canary Islands"
+
+msgid "Ceuta y Melilla"
+msgstr "Ceuta and Melilla"
+
+msgid "Comunidad de bienes"
+msgstr "Joint ownership (comunidad de bienes)"
+
+msgid "Crear un perfil nuevo con otra fecha"
+msgstr "Create a new profile with another date"
+
+msgid "Editando"
+msgstr "Editing"
+
+msgid "Esta declaración no tiene ningún apunte."
+msgstr "This return has no entries."
+
+msgid "Estás corrigiendo el perfil vigente desde %(d)s. Las declaraciones ya calculadas no cambian: llevan su propia foto de los datos. Si lo que cambia es el régimen o la periodicidad a partir de una fecha, crea un perfil nuevo."
+msgstr "You are correcting the profile in force since %(d)s. Returns already calculated do not change: they carry their own snapshot of the data. If what changes is the regime or the periodicity from a given date, create a new profile."
+
+msgid "Exento"
+msgstr "Exempt"
+
+msgid "General y simplificado"
+msgstr "General and simplified"
+
+msgid "Mensual"
+msgstr "Monthly"
+
+msgid "Península y Baleares"
+msgstr "Peninsula and Balearic Islands"
+
+msgid "Perfiles del titular"
+msgstr "Holder's profiles"
+
+msgid "Recargo de equivalencia"
+msgstr "Equivalence surcharge"
+
+msgid "Régimen"
+msgstr "Regime"
+
+msgid "Simplificado"
+msgstr "Simplified"
+
+msgid "Trimestral"
+msgstr "Quarterly"
+
+msgid "Unión Europea"
+msgstr "European Union"
+
+msgid "Vigente hasta (vacío = sin fin)"
+msgstr "In force until (empty = no end)"

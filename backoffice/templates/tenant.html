@@ -129,13 +129,12 @@
       {% for v in verticales %}
       <form method="post" action="{{ url_for('rutas.alternar_vertical', tenant_id=t.id, vertical_id=v.id) }}" class="tarjeta modulo">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-        <div><strong>{{ v.nombre }}</strong><p class="muted">{{ v.descripcion }}</p>
-          <p class="muted">{% if v.motivo == 'manual' %}Ajuste manual{% if v.hasta %} hasta {{ v.hasta[:10] }}{% endif %}{% elif v.motivo == 'extra' %}Por su extra de pago{% elif v.motivo == 'defecto' %}Incluido por defecto{% else %}No incluido{% endif %}</p>
-          {% if v.uso %}<p class="muted">Uso este mes: {% for etiqueta, valor in v.uso %}{{ etiqueta }}: <strong>{{ valor }}</strong>{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}</div>
-        <div class="acciones">
-          <button type="submit" class="interruptor {{ 'on' if v.activo }}" role="switch" aria-checked="{{ 'true' if v.activo else 'false' }}" aria-label="{{ v.nombre }}"></button>
-          {% if v.motivo == 'manual' %}<button type="submit" class="boton" name="accion" value="auto">Volver a automático</button>{% endif %}
-        </div>
+        <div class="modulo-cab"><strong>{{ v.nombre }}</strong>
+          <button type="submit" class="interruptor {{ 'on' if v.activo }}" role="switch" aria-checked="{{ 'true' if v.activo else 'false' }}" aria-label="{{ v.nombre }}"></button></div>
+        <p class="muted">{{ v.descripcion }}</p>
+        <p class="modulo-estado">{% if v.motivo == 'manual' %}Ajuste manual{% if v.hasta %} hasta {{ v.hasta[:10] }}{% endif %}{% elif v.motivo == 'extra' %}Por su extra de pago{% elif v.motivo == 'defecto' %}Incluido por defecto{% else %}No incluido{% endif %}</p>
+        {% if v.uso %}<p class="muted modulo-uso">Uso este mes: {% for etiqueta, valor in v.uso %}{{ etiqueta }}: <strong>{{ valor }}</strong>{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}
+        {% if v.motivo == 'manual' %}<div class="modulo-pie"><button type="submit" class="boton" name="accion" value="auto">Volver a automático</button></div>{% endif %}
       </form>
       {% endfor %}
     </div>
@@ -145,8 +144,9 @@
       {% for m in d.modulos %}
       <form method="post" action="{{ url_for('rutas.alternar_modulo', tenant_id=t.id, modulo_id=m.id) }}" class="tarjeta modulo">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="seccion" value="modulos">
-        <div><strong>{{ m.nombre }}</strong><p class="muted">{{ m.descripcion }}</p></div>
-        <button type="submit" class="interruptor {{ 'on' if m.activo }}" role="switch" aria-checked="{{ 'true' if m.activo else 'false' }}" aria-label="{{ m.nombre }}"></button>
+        <div class="modulo-cab"><strong>{{ m.nombre }}</strong>
+          <button type="submit" class="interruptor {{ 'on' if m.activo }}" role="switch" aria-checked="{{ 'true' if m.activo else 'false' }}" aria-label="{{ m.nombre }}"></button></div>
+        <p class="muted">{{ m.descripcion }}</p>
       </form>
       {% endfor %}
     </div>

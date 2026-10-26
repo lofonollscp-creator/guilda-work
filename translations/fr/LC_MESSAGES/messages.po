@@ -15883,3 +15883,63 @@ msgstr "ligne %(f)s"
 
 msgid "Próximo 303"
 msgstr "Prochain 303"
+
+msgid "Al importar el fichero, la AEAT muestra siempre el aviso 31190 («revise las casillas de Información adicional»): es un recordatorio, no un error. Lo que no calcula el fichero (por ejemplo operaciones no sujetas o exentas sin apuntar) se completa a mano en la sede."
+msgstr "À l'import du fichier, l'AEAT affiche toujours l'avertissement 31190 (« vérifiez les cases d'Informations complémentaires ») : c'est un rappel, pas une erreur. Ce que le fichier ne calcule pas (par exemple, des opérations non soumises ou exonérées non saisies) se complète à la main sur le portail de l'AEAT."
+
+msgid "Al importarla en el simulador o en la sede de la AEAT saldrá el aviso 303M030 («no hay contenido en la liquidación del régimen general»): es lógico, porque está a cero. Si el titular tuvo operaciones en el periodo, aprueba sus apuntes y vuelve a calcular."
+msgstr "À l'import dans le simulateur ou sur le portail de l'AEAT, l'avertissement 303M030 (« aucun contenu dans la liquidation du régime général ») apparaîtra : c'est logique, car elle est à zéro. Si le titulaire a eu des opérations sur la période, approuvez ses écritures et recalculez."
+
+msgid "Canarias"
+msgstr "Îles Canaries"
+
+msgid "Ceuta y Melilla"
+msgstr "Ceuta et Melilla"
+
+msgid "Comunidad de bienes"
+msgstr "Communauté de biens"
+
+msgid "Crear un perfil nuevo con otra fecha"
+msgstr "Créer un nouveau profil avec une autre date"
+
+msgid "Editando"
+msgstr "En cours de modification"
+
+msgid "Esta declaración no tiene ningún apunte."
+msgstr "Cette déclaration n'a aucune écriture."
+
+msgid "Estás corrigiendo el perfil vigente desde %(d)s. Las declaraciones ya calculadas no cambian: llevan su propia foto de los datos. Si lo que cambia es el régimen o la periodicidad a partir de una fecha, crea un perfil nuevo."
+msgstr "Vous corrigez le profil en vigueur depuis le %(d)s. Les déclarations déjà calculées ne changent pas : elles conservent leur propre instantané des données. Si ce qui change est le régime ou la périodicité à partir d'une date, créez un nouveau profil."
+
+msgid "Exento"
+msgstr "Exonéré"
+
+msgid "General y simplificado"
+msgstr "Général et simplifié"
+
+msgid "Mensual"
+msgstr "Mensuel"
+
+msgid "Península y Baleares"
+msgstr "Péninsule et Baléares"
+
+msgid "Perfiles del titular"
+msgstr "Profils du titulaire"
+
+msgid "Recargo de equivalencia"
+msgstr "Surtaxe d'équivalence"
+
+msgid "Régimen"
+msgstr "Régime"
+
+msgid "Simplificado"
+msgstr "Simplifié"
+
+msgid "Trimestral"
+msgstr "Trimestriel"
+
+msgid "Unión Europea"
+msgstr "Union européenne"
+
+msgid "Vigente hasta (vacío = sin fin)"
+msgstr "En vigueur jusqu'au (vide = sans fin)"
