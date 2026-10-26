@@ -126,10 +126,11 @@ def listar_tenants(q: str = "", estado: str = "", plan: str = "", orden: str = "
         total = conn.execute(f"SELECT COUNT(*) FROM tenants t WHERE {' AND '.join(donde)}", params).fetchone()[0]
         pag = paginar(total, pagina, por_pagina)
         filas = conn.execute(
-            f"""SELECT t.id, t.nombre, t.activo, t.creado_en, t.suscripcion_estado, p.nombre AS plan,
-                       (SELECT COUNT(*) FROM usuarios u WHERE u.tenant_id = t.id) AS n_usuarios,
-                       (SELECT COUNT(*) FROM clientes_fiscales c WHERE c.tenant_id = t.id AND c.papelera_en IS NULL) AS n_clientes
+            # (sin subconsultas correlacionadas: Citus no las admite cuando en el FROM hay una tabla de referencia —`tenants`—; los recuentos se agrupan antes y se unen)
+            f"""SELECT t.id, t.nombre, t.activo, t.creado_en, t.suscripcion_estado, p.nombre AS plan, COALESCE(u.n, 0) AS n_usuarios, COALESCE(c.n, 0) AS n_clientes
                 FROM tenants t LEFT JOIN planes_guilda p ON p.id = t.plan_id
+                LEFT JOIN (SELECT tenant_id, COUNT(*) AS n FROM usuarios GROUP BY tenant_id) u ON u.tenant_id = t.id
+                LEFT JOIN (SELECT tenant_id, COUNT(*) AS n FROM clientes_fiscales WHERE papelera_en IS NULL GROUP BY tenant_id) c ON c.tenant_id = t.id
                 WHERE {' AND '.join(donde)} ORDER BY {ordenes.get(orden, ordenes['nombre'])} LIMIT ? OFFSET ?""",
             [*params, pag["por_pagina"], pag["offset"]],
         ).fetchall()
