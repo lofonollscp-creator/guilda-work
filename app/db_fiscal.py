@@ -266,8 +266,11 @@ def restaurar_cliente_fiscal(tenant_id: int, cliente_id: int) -> None:
 
 
 def eliminar_cliente_fiscal_definitivamente(tenant_id: int, cliente_id: int) -> None:
+    """Un titular con instantáneas o declaraciones de Guilda Fiscal NO se borra (son registros fiscales de solo anexado, de conservación obligatoria): se queda en la papelera. Lo demás, sí."""
     conn = _db.get_connection()
     try:
+        if conn.execute("SELECT 1 FROM fiscal_instantaneas WHERE tenant_id = ? AND cliente_fiscal_id = ? LIMIT 1", (tenant_id, cliente_id)).fetchone():
+            return
         # Los certificados conservan su historial sin el cliente; las concesiones de acceso se van con él.
         conn.execute("UPDATE certificados SET cliente_titular_id = NULL WHERE cliente_titular_id = ? AND tenant_id = ?", (cliente_id, tenant_id))
         conn.execute("UPDATE certificados_vinculos SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_id, tenant_id))

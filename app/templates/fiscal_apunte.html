@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Apunte fiscal') }} — {{ c.nombre }}{% endblock %}
+{% block content %}
+{% set e = datos.get('libro', 'E') == 'E' %}
+<header class="page-header">
+  <div><h1>{% if apunte_id %}{{ _('Apunte fiscal') }}{% else %}{{ _('Nuevo apunte fiscal') }}{% endif %}</h1><p class="subtitle">{{ c.nombre }} · {{ _('Libro de facturas emitidas') if e else _('Libro de facturas recibidas') }}</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ _('Volver') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if datos.get('anulado_en') %}<p class="ia-error" role="alert">{{ _('Este apunte está anulado: %(m)s', m=datos.get('causa') or '') }}</p>{% endif %}
+<p class="muted">{{ _('Un apunte aprobado es lo que cuenta para el modelo 303. Se comprueba con las mismas reglas que aplica la Agencia Tributaria al importar los libros.') }}</p>
+<form method="post" class="edit-form" {% if apunte_id %}action="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=apunte_id) }}"{% else %}action="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id) }}"{% endif %}>
+  <input type="hidden" name="libro" value="{{ datos.get('libro', 'E') }}">
+  {% if datos.get('factura_id') %}<input type="hidden" name="factura_id" value="{{ datos.factura_id }}">{% endif %}
+  {% if apunte_id %}<input type="hidden" name="version" value="{{ datos.version }}">{% endif %}
+  <div class="fila-campos">
+    <label>{{ _('Tipo de factura') }}<select name="tipo_factura">{% for t in tipos %}<option {{ 'selected' if datos.get('tipo_factura') == t }}>{{ t }}</option>{% endfor %}</select></label>
+    <label>{{ _('Clave de operación') }}<select name="clave">{% for v, n in (claves_e if e else claves_r) %}<option value="{{ v }}" {{ 'selected' if datos.get('clave') == v }}>{{ n }}</option>{% endfor %}</select></label>
+    {% if e %}<label>{{ _('Calificación') }}<select name="calificacion">{% for v, n in calificaciones %}<option value="{{ v }}" {{ 'selected' if datos.get('calificacion') == v }}>{{ n }}</option>{% endfor %}</select></label>
+    <label>{{ _('Exención') }}<select name="exenta">{% for v, n in exenciones %}<option value="{{ v }}" {{ 'selected' if datos.get('exenta') == v }}>{{ n }}</option>{% endfor %}</select></label>{% endif %}
+  </div>
+  <div class="fila-campos">
+    <label>{{ _('Serie') }}<input type="text" name="serie" value="{{ datos.get('serie') or '' }}" maxlength="20"></label>
+    <label>{{ _('Número') }}<input type="text" name="numero" value="{{ datos.get('numero') or '' }}" maxlength="40" required></label>
+    <label>{{ _('Fecha de expedición') }}<input type="date" name="fecha_expedicion" value="{{ datos.get('fecha_expedicion') or '' }}" required></label>
+    <label>{{ _('Fecha de operación (si es distinta)') }}<input type="date" name="fecha_operacion" value="{{ datos.get('fecha_operacion') or '' }}"></label>
+    {% if not e %}<label>{{ _('Fecha de recepción') }}<input type="date" name="fecha_recepcion" value="{{ datos.get('fecha_recepcion') or '' }}"></label>{% endif %}
+  </div>
+  <div class="fila-campos">
+    <label>{{ _('Nombre de la contraparte') }}<input type="text" name="contraparte_nombre" value="{{ datos.get('contraparte_nombre') or '' }}" maxlength="100" required></label>
+    <label>{{ _('NIF') }}<input type="text" name="contraparte_nif" value="{{ datos.get('contraparte_nif') or '' }}" maxlength="20"></label>
+    <label>{{ _('Tipo de NIF extranjero') }}<select name="contraparte_nif_tipo">{% for v, n in (('', _('NIF español')), ('02', _('NIF-IVA intracomunitario')), ('03', _('Pasaporte')), ('04', _('Documento oficial del país')), ('05', _('Certificado de residencia')), ('06', _('Otro'))) %}<option value="{{ v }}" {{ 'selected' if datos.get('contraparte_nif_tipo') == v }}>{{ n }}</option>{% endfor %}</select></label>
+    <label>{{ _('País (2 letras)') }}<input type="text" name="contraparte_pais" value="{{ datos.get('contraparte_pais') or '' }}" maxlength="2"></label>
+  </div>
+  <div class="fila-campos">
+    <label>{{ _('Base imponible (€)') }}<input type="text" name="base" value="{{ datos.get('base') or '' }}" inputmode="decimal" required></label>
+    <label>{{ _('Tipo de IVA') }} (%)<input type="text" name="tipo_iva" value="{{ datos.get('tipo_iva') or '' }}" inputmode="decimal"></label>
+    <label>{{ _('Cuota (€; en blanco = base × tipo)') }}<input type="text" name="cuota" value="{{ datos.get('cuota') or '' }}" inputmode="decimal"></label>
+    <label>{{ _('Total de la factura (€, opcional)') }}<input type="text" name="total" value="{{ datos.get('total') or '' }}" inputmode="decimal"></label>
+  </div>
+  {% if not e %}
+  <div class="fila-campos">
+    <label class="checkbox-label"><input type="checkbox" name="isp" value="1" {{ 'checked' if datos.get('isp') in (1, '1', 'on') }}> {{ _('Inversión del sujeto pasivo') }}</label>
+    <label class="checkbox-label"><input type="checkbox" name="bien_inversion" value="1" {{ 'checked' if datos.get('bien_inversion') in (1, '1', 'on') }}> {{ _('Bien de inversión') }}</label>
+    <label>{{ _('Cuota deducible (€; en blanco = toda)') }}<input type="text" name="cuota_deducible" value="{{ datos.get('cuota_deducible') or '' }}" inputmode="decimal"></label>
+  </div>
+  <div class="fila-campos">
+    <label class="checkbox-label"><input type="checkbox" name="deducible_periodo_posterior" value="1" {{ 'checked' if datos.get('deducible_periodo_posterior') in (1, '1', 'on') }}> {{ _('Se deduce en un periodo posterior') }}</label>
+    <label>{{ _('Periodo de deducción (2026-3T)') }}<input type="text" name="periodo_deduccion" value="{{ datos.get('periodo_deduccion') or '' }}" maxlength="7"></label>
+  </div>
+  {% endif %}
+  <div class="fila-campos">
+    <label>{{ _('Situación del inmueble (alquileres)') }}<select name="inmueble_situacion">{% for v, n in (('', '—'), ('1', _('1 · Resto de España')), ('2', _('2 · Foral')), ('3', _('3 · Sin referencia catastral')), ('4', _('4 · Extranjero')), ('5', _('5 · No aplica'))) %}<option value="{{ v }}" {{ 'selected' if datos.get('inmueble_situacion') == v }}>{{ n }}</option>{% endfor %}</select></label>
+    <label>{{ _('Referencia catastral') }}<input type="text" name="inmueble_referencia" value="{{ datos.get('inmueble_referencia') or '' }}" maxlength="20"></label>
+  </div>
+  <label>{{ _('Por qué (si la cuota deducible no es toda la soportada, o algo no es lo habitual)') }}<input type="text" name="causa" value="{{ datos.get('causa') or '' }}" maxlength="300"></label>
+  {% if puede_aprobar and not datos.get('anulado_en') %}<button type="submit" class="btn btn-primary">{% if apunte_id %}{{ _('Guardar cambios') }}{% else %}{{ _('Aprobar apunte') }}{% endif %}</button>
+  {% elif not puede_aprobar %}<p class="muted">{{ _('Solo la dirección o el revisor fiscal pueden aprobar o corregir apuntes.') }}</p>{% endif %}
+</form>
+{% if apunte_id and puede_aprobar and not datos.get('anulado_en') %}
+<form method="post" action="{{ url_for('guilda_fiscal.apunte_anular', cliente_id=c.id, apunte_id=apunte_id) }}" class="ds-fila ds-mt-16">
+  <label>{{ _('Motivo para anular') }}<input type="text" name="motivo" maxlength="300" required></label><button type="submit" class="btn btn-ghost">{{ _('Anular apunte') }}</button>
+</form>
+{% endif %}
+{% endblock %}

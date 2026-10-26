@@ -15547,3 +15547,303 @@ msgstr "Guilda Fiscal Locations"
 
 msgid "Fiscalidad de alquileres de larga y corta duración, también a través de plataformas."
 msgstr "Fiscalité des locations de longue et courte durée, y compris via des plateformes."
+
+msgid "1 · Resto de España"
+msgstr "1 · Reste de l'Espagne"
+
+msgid "2 · Foral"
+msgstr "2 · Territoire foral"
+
+msgid "3 · Sin referencia catastral"
+msgstr "3 · Sans référence cadastrale"
+
+msgid "4 · Extranjero"
+msgstr "4 · Étranger"
+
+msgid "5 · No aplica"
+msgstr "5 · Sans objet"
+
+msgid "Anotar que se ha presentado"
+msgstr "Noter qu'elle a été déposée"
+
+msgid "Anular"
+msgstr "Annuler"
+
+msgid "Anular apunte"
+msgstr "Annuler l'écriture"
+
+msgid "Aprobar apunte"
+msgstr "Approuver l'écriture"
+
+msgid "Apunte fiscal"
+msgstr "Écriture fiscale"
+
+msgid "Apuntes aprobados"
+msgstr "Écritures approuvées"
+
+msgid "Apuntes del año"
+msgstr "Écritures de l'année"
+
+msgid "Autoliquidación conjunta"
+msgstr "Autoliquidation conjointe"
+
+msgid "Aún no hay declaraciones de este titular."
+msgstr "Il n'y a pas encore de déclarations pour ce titulaire."
+
+msgid "Base"
+msgstr "Base"
+
+msgid "Base imponible (€)"
+msgstr "Base imposable (€)"
+
+msgid "Bien de inversión"
+msgstr "Bien d'investissement"
+
+msgid "CSV o justificante (opcional)"
+msgstr "CSV ou justificatif (facultatif)"
+
+msgid "Calculado sobre la instantánea %(i)s del %(f)s (%(n)s apuntes). Motor %(m)s, diseño %(d)s."
+msgstr "Calculé sur l'instantané %(i)s du %(f)s (%(n)s écritures). Moteur %(m)s, format %(d)s."
+
+msgid "Calcular borrador"
+msgstr "Calculer le brouillon"
+
+msgid "Calcular un periodo"
+msgstr "Calculer une période"
+
+msgid "Calificación"
+msgstr "Qualification"
+
+msgid "Cartera"
+msgstr "Portefeuille"
+
+msgid "Casilla"
+msgstr "Case"
+
+msgid "Casillas"
+msgstr "Cases"
+
+msgid "Certificado de residencia"
+msgstr "Certificat de résidence"
+
+msgid "Clave de operación"
+msgstr "Clé d'opération"
+
+msgid "Compensar en periodos siguientes"
+msgstr "Compenser sur les périodes suivantes"
+
+msgid "Congela los apuntes aprobados del periodo (la foto no se puede cambiar) y calcula el borrador del modelo 303 sobre ella."
+msgstr "Fige les écritures approuvées de la période (l'instantané ne peut plus être modifié) et calcule dessus le brouillon du modèle 303."
+
+msgid "Cuota"
+msgstr "Taxe"
+
+msgid "Cuota (€; en blanco = base × tipo)"
+msgstr "Taxe (€ ; vide = base × taux)"
+
+msgid "Cuota deducible (€; en blanco = toda)"
+msgstr "Taxe déductible (€ ; vide = totalité)"
+
+msgid "Cuotas a compensar de periodos anteriores (€)"
+msgstr "Taxes à compenser des périodes antérieures (€)"
+
+msgid "Da de alta a tus clientes en el calendario fiscal y vuelve aquí."
+msgstr "Ajoute tes clients dans le calendrier fiscal et reviens ici."
+
+msgid "De qué apuntes sale"
+msgstr "De quelles écritures elle provient"
+
+msgid "Declaraciones"
+msgstr "Déclarations"
+
+msgid "Deduce pago a cuenta de carburantes"
+msgstr "Déduit l'acompte sur carburants"
+
+msgid "Documento oficial del país"
+msgstr "Document officiel du pays"
+
+msgid "Ejercicio"
+msgstr "Exercice"
+
+msgid "El cálculo está bloqueado: este caso no está soportado todavía y no se inventa un número."
+msgstr "Le calcul est bloqué : ce cas n'est pas encore pris en charge et aucun chiffre n'est inventé."
+
+msgid "El perfil tiene vigencia: al guardar uno con fecha posterior, el anterior se cierra el día antes. Lo que el cálculo automático no soporta (criterio de caja, prorrata, régimen simplificado, recargo, tributación foral…) bloquea la declaración en vez de inventar un número."
+msgstr "Le profil a une période de validité : en en enregistrant un avec une date postérieure, le précédent est clos la veille. Ce que le calcul automatique ne prend pas en charge (TVA d'encaissement, prorata, régime simplifié, majoration, imposition forale…) bloque la déclaration au lieu d'inventer un chiffre."
+
+msgid "Este apunte está anulado: %(m)s"
+msgstr "Cette écriture est annulée : %(m)s"
+
+msgid "Exención"
+msgstr "Exonération"
+
+msgid "Exonerado del modelo 390"
+msgstr "Dispensé du modèle 390"
+
+msgid "Fecha de expedición"
+msgstr "Date d'émission"
+
+msgid "Fecha de recepción"
+msgstr "Date de réception"
+
+msgid "Fichero .303 para importar en la AEAT"
+msgstr "Fichier .303 à importer dans l'AEAT"
+
+msgid "Ficheros"
+msgstr "Fichiers"
+
+msgid "Forma jurídica"
+msgstr "Forme juridique"
+
+msgid "Generar el fichero para la AEAT"
+msgstr "Générer le fichier pour l'AEAT"
+
+msgid "Guardar perfil"
+msgstr "Enregistrer le profil"
+
+msgid "Guilda Work no presenta la declaración: importa el fichero en la sede electrónica (o pásalo a tu colaborador social) y, cuando se presente, anótalo aquí."
+msgstr "Guilda Work ne dépose pas la déclaration : importe le fichier sur le site de l'administration (ou transmets-le à ton collaborateur social) et, une fois déposée, note-le ici."
+
+msgid "La huella de la instantánea no coincide: no te fíes de esta declaración."
+msgstr "L'empreinte de l'instantané ne correspond pas : ne te fie pas à cette déclaration."
+
+msgid "Libro"
+msgstr "Livre"
+
+msgid "Libro de facturas emitidas"
+msgstr "Livre des factures émises"
+
+msgid "Libro de facturas recibidas"
+msgstr "Livre des factures reçues"
+
+msgid "Libro registro (.xlsx)"
+msgstr "Livre-journal (.xlsx)"
+
+msgid "Modelo 303"
+msgstr "Modèle 303"
+
+msgid "Motivo para anular"
+msgstr "Motif de l'annulation"
+
+msgid "NIF español"
+msgstr "NIF espagnol"
+
+msgid "NIF-IVA intracomunitario"
+msgstr "N° de TVA intracommunautaire"
+
+msgid "No hay apuntes aprobados en este ejercicio."
+msgstr "Il n'y a pas d'écritures approuvées pour cet exercice."
+
+msgid "Nombre de la contraparte"
+msgstr "Nom de la contrepartie"
+
+msgid "Nuevo apunte fiscal"
+msgstr "Nouvelle écriture fiscale"
+
+msgid "Para calcular un periodo, define antes el perfil fiscal del titular."
+msgstr "Pour calculer une période, définis d'abord le profil fiscal du titulaire."
+
+msgid "Pasaporte"
+msgstr "Passeport"
+
+msgid "País (2 letras)"
+msgstr "Pays (2 lettres)"
+
+msgid "País (si no reside en España)"
+msgstr "Pays (si non-résident en Espagne)"
+
+msgid "Perfil fiscal, facturas aprobadas y borrador del modelo 303 de cada titular. Tú decides lo que se aprueba; Guilda Work calcula y genera el fichero, pero no presenta."
+msgstr "Profil fiscal, factures approuvées et brouillon du modèle 303 de chaque titulaire. Tu décides ce qui est approuvé ; Guilda Work calcule et génère le fichier, mais ne dépose pas."
+
+msgid "Perfil vigente desde %(d)s"
+msgstr "Profil en vigueur depuis le %(d)s"
+
+msgid "Periodo de deducción (2026-3T)"
+msgstr "Période de déduction (2026-3T)"
+
+msgid "Por qué (si la cuota deducible no es toda la soportada, o algo no es lo habitual)"
+msgstr "Pourquoi (si la taxe déductible n'est pas toute la taxe supportée, ou si quelque chose sort de l'ordinaire)"
+
+msgid "Presentada: %(r)s"
+msgstr "Déposée : %(r)s"
+
+msgid "Prorrata especial"
+msgstr "Prorata spécial"
+
+msgid "Prorrata general"
+msgstr "Prorata général"
+
+msgid "REDEME"
+msgstr "REDEME"
+
+msgid "Residencia"
+msgstr "Résidence"
+
+msgid "Resultado (casilla 71): %(r)s €"
+msgstr "Résultat (case 71) : %(r)s €"
+
+msgid "Régimen de IVA"
+msgstr "Régime de TVA"
+
+msgid "SII"
+msgstr "SII"
+
+msgid "Se deduce en un periodo posterior"
+msgstr "Déduite sur une période ultérieure"
+
+msgid "Sectores diferenciados"
+msgstr "Secteurs distincts"
+
+msgid "Serie"
+msgstr "Série"
+
+msgid "Si sale a favor"
+msgstr "Si le résultat est en ta faveur"
+
+msgid "Sin perfil"
+msgstr "Sans profil"
+
+msgid "Sin perfil fiscal vigente"
+msgstr "Aucun profil fiscal en vigueur"
+
+msgid "Situación del inmueble (alquileres)"
+msgstr "Situation de l'immeuble (locations)"
+
+msgid "Solicitar la devolución"
+msgstr "Demander le remboursement"
+
+msgid "Solo la dirección o el revisor fiscal pueden aprobar o corregir apuntes."
+msgstr "Seuls la direction ou le réviseur fiscal peuvent approuver ou corriger des écritures."
+
+msgid "Territorio de IVA"
+msgstr "Territoire de TVA"
+
+msgid "Tipo de NIF extranjero"
+msgstr "Type d'identifiant étranger"
+
+msgid "Tipo de factura"
+msgstr "Type de facture"
+
+msgid "Todavía no hay titulares"
+msgstr "Il n'y a pas encore de titulaires"
+
+msgid "Total de la factura (€, opcional)"
+msgstr "Total de la facture (€, facultatif)"
+
+msgid "Tributación foral"
+msgstr "Imposition forale"
+
+msgid "Un apunte aprobado es lo que cuenta para el modelo 303. Se comprueba con las mismas reglas que aplica la Agencia Tributaria al importar los libros."
+msgstr "Une écriture approuvée est ce qui compte pour le modèle 303. Elle est vérifiée avec les mêmes règles que l'administration fiscale applique à l'import des livres."
+
+msgid "Valor"
+msgstr "Valeur"
+
+msgid "Vigente desde"
+msgstr "En vigueur depuis"
+
+msgid "Volver al titular"
+msgstr "Retour au titulaire"
+
+msgid "Última declaración"
+msgstr "Dernière déclaration"

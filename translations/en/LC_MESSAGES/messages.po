@@ -15462,3 +15462,303 @@ msgstr "Guilda Fiscal Rentals"
 
 msgid "Fiscalidad de alquileres de larga y corta duración, también a través de plataformas."
 msgstr "Taxation of long- and short-term rentals, including through platforms."
+
+msgid "1 · Resto de España"
+msgstr "1 · Rest of Spain"
+
+msgid "2 · Foral"
+msgstr "2 · Foral territory"
+
+msgid "3 · Sin referencia catastral"
+msgstr "3 · No cadastral reference"
+
+msgid "4 · Extranjero"
+msgstr "4 · Abroad"
+
+msgid "5 · No aplica"
+msgstr "5 · Not applicable"
+
+msgid "Anotar que se ha presentado"
+msgstr "Record that it has been filed"
+
+msgid "Anular"
+msgstr "Cancel"
+
+msgid "Anular apunte"
+msgstr "Cancel entry"
+
+msgid "Aprobar apunte"
+msgstr "Approve entry"
+
+msgid "Apunte fiscal"
+msgstr "Tax entry"
+
+msgid "Apuntes aprobados"
+msgstr "Approved entries"
+
+msgid "Apuntes del año"
+msgstr "Entries this year"
+
+msgid "Autoliquidación conjunta"
+msgstr "Joint self-assessment"
+
+msgid "Aún no hay declaraciones de este titular."
+msgstr "There are no returns for this taxpayer yet."
+
+msgid "Base"
+msgstr "Base"
+
+msgid "Base imponible (€)"
+msgstr "Taxable base (€)"
+
+msgid "Bien de inversión"
+msgstr "Capital good"
+
+msgid "CSV o justificante (opcional)"
+msgstr "CSV or receipt (optional)"
+
+msgid "Calculado sobre la instantánea %(i)s del %(f)s (%(n)s apuntes). Motor %(m)s, diseño %(d)s."
+msgstr "Calculated on snapshot %(i)s of %(f)s (%(n)s entries). Engine %(m)s, layout %(d)s."
+
+msgid "Calcular borrador"
+msgstr "Calculate draft"
+
+msgid "Calcular un periodo"
+msgstr "Calculate a period"
+
+msgid "Calificación"
+msgstr "Classification"
+
+msgid "Cartera"
+msgstr "Portfolio"
+
+msgid "Casilla"
+msgstr "Box"
+
+msgid "Casillas"
+msgstr "Boxes"
+
+msgid "Certificado de residencia"
+msgstr "Certificate of residence"
+
+msgid "Clave de operación"
+msgstr "Transaction key"
+
+msgid "Compensar en periodos siguientes"
+msgstr "Offset in later periods"
+
+msgid "Congela los apuntes aprobados del periodo (la foto no se puede cambiar) y calcula el borrador del modelo 303 sobre ella."
+msgstr "Freezes the period's approved entries (the snapshot cannot be changed) and calculates the form 303 draft on it."
+
+msgid "Cuota"
+msgstr "Tax"
+
+msgid "Cuota (€; en blanco = base × tipo)"
+msgstr "Tax (€; blank = base × rate)"
+
+msgid "Cuota deducible (€; en blanco = toda)"
+msgstr "Deductible tax (€; blank = all)"
+
+msgid "Cuotas a compensar de periodos anteriores (€)"
+msgstr "Tax to offset from earlier periods (€)"
+
+msgid "Da de alta a tus clientes en el calendario fiscal y vuelve aquí."
+msgstr "Add your clients in the tax calendar and come back here."
+
+msgid "De qué apuntes sale"
+msgstr "Which entries it comes from"
+
+msgid "Declaraciones"
+msgstr "Returns"
+
+msgid "Deduce pago a cuenta de carburantes"
+msgstr "Deducts fuel payment on account"
+
+msgid "Documento oficial del país"
+msgstr "Official document of the country"
+
+msgid "Ejercicio"
+msgstr "Year"
+
+msgid "El cálculo está bloqueado: este caso no está soportado todavía y no se inventa un número."
+msgstr "The calculation is blocked: this case is not supported yet and no figure is made up."
+
+msgid "El perfil tiene vigencia: al guardar uno con fecha posterior, el anterior se cierra el día antes. Lo que el cálculo automático no soporta (criterio de caja, prorrata, régimen simplificado, recargo, tributación foral…) bloquea la declaración en vez de inventar un número."
+msgstr "The profile has a validity period: saving one with a later date closes the previous one the day before. Anything automatic calculation does not support (cash basis, pro rata, simplified regime, surcharge, foral taxation…) blocks the return instead of making up a figure."
+
+msgid "Este apunte está anulado: %(m)s"
+msgstr "This entry has been cancelled: %(m)s"
+
+msgid "Exención"
+msgstr "Exemption"
+
+msgid "Exonerado del modelo 390"
+msgstr "Exempt from form 390"
+
+msgid "Fecha de expedición"
+msgstr "Issue date"
+
+msgid "Fecha de recepción"
+msgstr "Receipt date"
+
+msgid "Fichero .303 para importar en la AEAT"
+msgstr "File .303 to import into the tax agency (AEAT)"
+
+msgid "Ficheros"
+msgstr "Files"
+
+msgid "Forma jurídica"
+msgstr "Legal form"
+
+msgid "Generar el fichero para la AEAT"
+msgstr "Generate the file for the tax agency (AEAT)"
+
+msgid "Guardar perfil"
+msgstr "Save profile"
+
+msgid "Guilda Work no presenta la declaración: importa el fichero en la sede electrónica (o pásalo a tu colaborador social) y, cuando se presente, anótalo aquí."
+msgstr "Guilda Work does not file the return: import the file in the tax agency's online office (or pass it to your authorised agent) and, once it is filed, record it here."
+
+msgid "La huella de la instantánea no coincide: no te fíes de esta declaración."
+msgstr "The snapshot fingerprint does not match: do not trust this return."
+
+msgid "Libro"
+msgstr "Book"
+
+msgid "Libro de facturas emitidas"
+msgstr "Issued invoices book"
+
+msgid "Libro de facturas recibidas"
+msgstr "Received invoices book"
+
+msgid "Libro registro (.xlsx)"
+msgstr "Register book (.xlsx)"
+
+msgid "Modelo 303"
+msgstr "Form 303"
+
+msgid "Motivo para anular"
+msgstr "Reason for cancelling"
+
+msgid "NIF español"
+msgstr "Spanish tax ID"
+
+msgid "NIF-IVA intracomunitario"
+msgstr "EU VAT number"
+
+msgid "No hay apuntes aprobados en este ejercicio."
+msgstr "There are no approved entries for this year."
+
+msgid "Nombre de la contraparte"
+msgstr "Counterparty name"
+
+msgid "Nuevo apunte fiscal"
+msgstr "New tax entry"
+
+msgid "Para calcular un periodo, define antes el perfil fiscal del titular."
+msgstr "To calculate a period, first define the taxpayer's tax profile."
+
+msgid "Pasaporte"
+msgstr "Passport"
+
+msgid "País (2 letras)"
+msgstr "Country (2 letters)"
+
+msgid "País (si no reside en España)"
+msgstr "Country (if not resident in Spain)"
+
+msgid "Perfil fiscal, facturas aprobadas y borrador del modelo 303 de cada titular. Tú decides lo que se aprueba; Guilda Work calcula y genera el fichero, pero no presenta."
+msgstr "Tax profile, approved invoices and form 303 draft for each taxpayer. You decide what gets approved; Guilda Work calculates and generates the file, but does not file it."
+
+msgid "Perfil vigente desde %(d)s"
+msgstr "Profile valid since %(d)s"
+
+msgid "Periodo de deducción (2026-3T)"
+msgstr "Deduction period (2026-3T)"
+
+msgid "Por qué (si la cuota deducible no es toda la soportada, o algo no es lo habitual)"
+msgstr "Why (if the deductible tax is not all the input tax, or something is unusual)"
+
+msgid "Presentada: %(r)s"
+msgstr "Filed: %(r)s"
+
+msgid "Prorrata especial"
+msgstr "Special pro rata"
+
+msgid "Prorrata general"
+msgstr "General pro rata"
+
+msgid "REDEME"
+msgstr "REDEME (monthly refund register)"
+
+msgid "Residencia"
+msgstr "Residence"
+
+msgid "Resultado (casilla 71): %(r)s €"
+msgstr "Result (box 71): %(r)s €"
+
+msgid "Régimen de IVA"
+msgstr "VAT regime"
+
+msgid "SII"
+msgstr "SII (immediate supply of information)"
+
+msgid "Se deduce en un periodo posterior"
+msgstr "Deducted in a later period"
+
+msgid "Sectores diferenciados"
+msgstr "Separate business sectors"
+
+msgid "Serie"
+msgstr "Series"
+
+msgid "Si sale a favor"
+msgstr "If the result is in your favour"
+
+msgid "Sin perfil"
+msgstr "No profile"
+
+msgid "Sin perfil fiscal vigente"
+msgstr "No valid tax profile"
+
+msgid "Situación del inmueble (alquileres)"
+msgstr "Property location (rentals)"
+
+msgid "Solicitar la devolución"
+msgstr "Request the refund"
+
+msgid "Solo la dirección o el revisor fiscal pueden aprobar o corregir apuntes."
+msgstr "Only management or the tax reviewer can approve or correct entries."
+
+msgid "Territorio de IVA"
+msgstr "VAT territory"
+
+msgid "Tipo de NIF extranjero"
+msgstr "Foreign tax ID type"
+
+msgid "Tipo de factura"
+msgstr "Invoice type"
+
+msgid "Todavía no hay titulares"
+msgstr "There are no taxpayers yet"
+
+msgid "Total de la factura (€, opcional)"
+msgstr "Invoice total (€, optional)"
+
+msgid "Tributación foral"
+msgstr "Foral taxation"
+
+msgid "Un apunte aprobado es lo que cuenta para el modelo 303. Se comprueba con las mismas reglas que aplica la Agencia Tributaria al importar los libros."
+msgstr "An approved entry is what counts for form 303. It is checked with the same rules the tax agency applies when importing the books."
+
+msgid "Valor"
+msgstr "Value"
+
+msgid "Vigente desde"
+msgstr "Valid from"
+
+msgid "Volver al titular"
+msgstr "Back to the taxpayer"
+
+msgid "Última declaración"
+msgstr "Latest return"

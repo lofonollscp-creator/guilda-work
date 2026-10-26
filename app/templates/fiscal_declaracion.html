@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Modelo 303') }} {{ d.ejercicio }} {{ d.periodo }} — {{ c.nombre }}{% endblock %}
+{% block content %}
+{% set estados = {'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada'), 'anulada': _('Anulada')} %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Modelo 303') }} · {{ d.ejercicio }} {{ d.periodo }}</h1>
+    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '' }} · <span class="pill">{{ estados[d.estado] }}</span> · {{ _('Resultado (casilla 71): %(r)s €', r='%.2f'|format(d.resultado_centimos / 100)) }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id, ejercicio=d.ejercicio) }}">‹ {{ _('Volver al titular') }}</a>
+</header>
+{{ aviso_error(error) }}
+
+{% if d.bloqueos %}
+<div class="ia-error" role="alert"><strong>{{ _('El cálculo está bloqueado: este caso no está soportado todavía y no se inventa un número.') }}</strong><ul>{% for b in d.bloqueos %}<li>{{ b }}</li>{% endfor %}</ul></div>
+{% endif %}
+{% if not inst.integra %}<div class="ia-error" role="alert">{{ _('La huella de la instantánea no coincide: no te fíes de esta declaración.') }}</div>{% endif %}
+
+<section class="dash-panel">
+  <p class="muted">{{ _('Calculado sobre la instantánea %(i)s del %(f)s (%(n)s apuntes). Motor %(m)s, diseño %(d)s.', i=inst.id, f=inst.aprobada_en[:10], n=inst.datos.apuntes|length, m=d.version_motor, d=d.version_diseno) }}</p>
+  {% if puede_aprobar %}
+  <div class="ds-fila">
+    {% if d.estado == 'borrador' and not d.bloqueos %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='revisar') }}"><button class="btn btn-primary" type="submit">{{ _('Marcar como revisada') }}</button></form>{% endif %}
+    {% if d.estado == 'revisada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='exportar') }}"><button class="btn btn-primary" type="submit">{{ _('Generar el fichero para la AEAT') }}</button></form>{% endif %}
+    {% if d.estado == 'exportada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='presentada') }}" class="ds-fila"><input type="text" name="referencia" placeholder="{{ _('CSV o justificante (opcional)') }}" maxlength="200"><button class="btn btn-primary" type="submit">{{ _('Anotar que se ha presentado') }}</button></form>{% endif %}
+    {% if d.estado in ('borrador', 'revisada', 'exportada') %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='anular') }}"><button class="btn btn-ghost" type="submit">{{ _('Anular') }}</button></form>{% endif %}
+  </div>
+  {% endif %}
+  {% if d.artefactos %}
+  <p>{{ _('Ficheros') }}: <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='303') }}">{{ _('Fichero .303 para importar en la AEAT') }}</a> · <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='libro_xlsx') }}">{{ _('Libro registro (.xlsx)') }}</a> · <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='resumen') }}">{{ _('Resumen') }}</a></p>
+  <p class="muted">{{ _('Guilda Work no presenta la declaración: importa el fichero en la sede electrónica (o pásalo a tu colaborador social) y, cuando se presente, anótalo aquí.') }}</p>
+  {% endif %}
+  {% if d.referencia_presentacion %}<p class="muted">{{ _('Presentada: %(r)s', r=d.referencia_presentacion) }}</p>{% endif %}
+</section>
+
+<h2 class="ds-mt-16">{{ _('Casillas') }}</h2>
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Valor') }}</th><th>{{ _('De qué apuntes sale') }}</th></tr></thead>
+  <tbody>
+  {% for k, v in d.casillas.items() | sort(attribute='0') if k not in ('02', '05', '08') %}
+    <tr><td>{{ k }}</td><td>{{ etiqueta_casilla(k) }}</td><td>{% if k == '65' %}{{ '%.2f'|format(v / 100) }} %{% else %}{{ '%.2f'|format(v / 100) }} €{% endif %}</td>
+      <td>{% for aid in d.origen.get(k, []) %}{% set a = apuntes.get(aid) %}{% if a %}<span class="chip">{{ a.serie }}{{ a.numero }}</span> {% endif %}{% endfor %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

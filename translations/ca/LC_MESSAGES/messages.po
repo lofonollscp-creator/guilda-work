@@ -15471,3 +15471,303 @@ msgstr "Guilda Fiscal Lloguers"
 
 msgid "Fiscalidad de alquileres de larga y corta duración, también a través de plataformas."
 msgstr "Fiscalitat de lloguers de llarga i curta durada, també a través de plataformes."
+
+msgid "1 · Resto de España"
+msgstr "1 · Resta d'Espanya"
+
+msgid "2 · Foral"
+msgstr "2 · Foral"
+
+msgid "3 · Sin referencia catastral"
+msgstr "3 · Sense referència cadastral"
+
+msgid "4 · Extranjero"
+msgstr "4 · Estranger"
+
+msgid "5 · No aplica"
+msgstr "5 · No s'aplica"
+
+msgid "Anotar que se ha presentado"
+msgstr "Anotar que s'ha presentat"
+
+msgid "Anular"
+msgstr "Anul·lar"
+
+msgid "Anular apunte"
+msgstr "Anul·lar l'apunt"
+
+msgid "Aprobar apunte"
+msgstr "Aprovar l'apunt"
+
+msgid "Apunte fiscal"
+msgstr "Apunt fiscal"
+
+msgid "Apuntes aprobados"
+msgstr "Apunts aprovats"
+
+msgid "Apuntes del año"
+msgstr "Apunts de l'any"
+
+msgid "Autoliquidación conjunta"
+msgstr "Autoliquidació conjunta"
+
+msgid "Aún no hay declaraciones de este titular."
+msgstr "Encara no hi ha declaracions d'aquest titular."
+
+msgid "Base"
+msgstr "Base"
+
+msgid "Base imponible (€)"
+msgstr "Base imposable (€)"
+
+msgid "Bien de inversión"
+msgstr "Bé d'inversió"
+
+msgid "CSV o justificante (opcional)"
+msgstr "CSV o justificant (opcional)"
+
+msgid "Calculado sobre la instantánea %(i)s del %(f)s (%(n)s apuntes). Motor %(m)s, diseño %(d)s."
+msgstr "Calculat sobre la instantània %(i)s del %(f)s (%(n)s apunts). Motor %(m)s, disseny %(d)s."
+
+msgid "Calcular borrador"
+msgstr "Calcular l'esborrany"
+
+msgid "Calcular un periodo"
+msgstr "Calcular un període"
+
+msgid "Calificación"
+msgstr "Qualificació"
+
+msgid "Cartera"
+msgstr "Cartera"
+
+msgid "Casilla"
+msgstr "Casella"
+
+msgid "Casillas"
+msgstr "Caselles"
+
+msgid "Certificado de residencia"
+msgstr "Certificat de residència"
+
+msgid "Clave de operación"
+msgstr "Clau d'operació"
+
+msgid "Compensar en periodos siguientes"
+msgstr "Compensar en períodes següents"
+
+msgid "Congela los apuntes aprobados del periodo (la foto no se puede cambiar) y calcula el borrador del modelo 303 sobre ella."
+msgstr "Congela els apunts aprovats del període (la foto no es pot canviar) i calcula l'esborrany del model 303 sobre aquesta."
+
+msgid "Cuota"
+msgstr "Quota"
+
+msgid "Cuota (€; en blanco = base × tipo)"
+msgstr "Quota (€; en blanc = base × tipus)"
+
+msgid "Cuota deducible (€; en blanco = toda)"
+msgstr "Quota deduïble (€; en blanc = tota)"
+
+msgid "Cuotas a compensar de periodos anteriores (€)"
+msgstr "Quotes a compensar de períodes anteriors (€)"
+
+msgid "Da de alta a tus clientes en el calendario fiscal y vuelve aquí."
+msgstr "Dona d'alta els teus clients al calendari fiscal i torna aquí."
+
+msgid "De qué apuntes sale"
+msgstr "De quins apunts surt"
+
+msgid "Declaraciones"
+msgstr "Declaracions"
+
+msgid "Deduce pago a cuenta de carburantes"
+msgstr "Dedueix pagament a compte de carburants"
+
+msgid "Documento oficial del país"
+msgstr "Document oficial del país"
+
+msgid "Ejercicio"
+msgstr "Exercici"
+
+msgid "El cálculo está bloqueado: este caso no está soportado todavía y no se inventa un número."
+msgstr "El càlcul està bloquejat: aquest cas encara no està suportat i no s'inventa cap xifra."
+
+msgid "El perfil tiene vigencia: al guardar uno con fecha posterior, el anterior se cierra el día antes. Lo que el cálculo automático no soporta (criterio de caja, prorrata, régimen simplificado, recargo, tributación foral…) bloquea la declaración en vez de inventar un número."
+msgstr "El perfil té vigència: en desar-ne un amb data posterior, l'anterior es tanca el dia abans. El que el càlcul automàtic no suporta (criteri de caixa, prorrata, règim simplificat, recàrrec, tributació foral…) bloqueja la declaració en lloc d'inventar una xifra."
+
+msgid "Este apunte está anulado: %(m)s"
+msgstr "Aquest apunt està anul·lat: %(m)s"
+
+msgid "Exención"
+msgstr "Exempció"
+
+msgid "Exonerado del modelo 390"
+msgstr "Exonerat del model 390"
+
+msgid "Fecha de expedición"
+msgstr "Data d'expedició"
+
+msgid "Fecha de recepción"
+msgstr "Data de recepció"
+
+msgid "Fichero .303 para importar en la AEAT"
+msgstr "Fitxer .303 per importar a l'AEAT"
+
+msgid "Ficheros"
+msgstr "Fitxers"
+
+msgid "Forma jurídica"
+msgstr "Forma jurídica"
+
+msgid "Generar el fichero para la AEAT"
+msgstr "Generar el fitxer per a l'AEAT"
+
+msgid "Guardar perfil"
+msgstr "Desar el perfil"
+
+msgid "Guilda Work no presenta la declaración: importa el fichero en la sede electrónica (o pásalo a tu colaborador social) y, cuando se presente, anótalo aquí."
+msgstr "Guilda Work no presenta la declaració: importa el fitxer a la seu electrònica (o passa'l al teu col·laborador social) i, quan es presenti, anota-ho aquí."
+
+msgid "La huella de la instantánea no coincide: no te fíes de esta declaración."
+msgstr "L'empremta de la instantània no coincideix: no et fiïs d'aquesta declaració."
+
+msgid "Libro"
+msgstr "Llibre"
+
+msgid "Libro de facturas emitidas"
+msgstr "Llibre de factures emeses"
+
+msgid "Libro de facturas recibidas"
+msgstr "Llibre de factures rebudes"
+
+msgid "Libro registro (.xlsx)"
+msgstr "Llibre registre (.xlsx)"
+
+msgid "Modelo 303"
+msgstr "Model 303"
+
+msgid "Motivo para anular"
+msgstr "Motiu per anul·lar"
+
+msgid "NIF español"
+msgstr "NIF espanyol"
+
+msgid "NIF-IVA intracomunitario"
+msgstr "NIF-IVA intracomunitari"
+
+msgid "No hay apuntes aprobados en este ejercicio."
+msgstr "No hi ha apunts aprovats en aquest exercici."
+
+msgid "Nombre de la contraparte"
+msgstr "Nom de la contrapart"
+
+msgid "Nuevo apunte fiscal"
+msgstr "Nou apunt fiscal"
+
+msgid "Para calcular un periodo, define antes el perfil fiscal del titular."
+msgstr "Per calcular un període, defineix abans el perfil fiscal del titular."
+
+msgid "Pasaporte"
+msgstr "Passaport"
+
+msgid "País (2 letras)"
+msgstr "País (2 lletres)"
+
+msgid "País (si no reside en España)"
+msgstr "País (si no resideix a Espanya)"
+
+msgid "Perfil fiscal, facturas aprobadas y borrador del modelo 303 de cada titular. Tú decides lo que se aprueba; Guilda Work calcula y genera el fichero, pero no presenta."
+msgstr "Perfil fiscal, factures aprovades i esborrany del model 303 de cada titular. Tu decideixes què s'aprova; Guilda Work calcula i genera el fitxer, però no presenta."
+
+msgid "Perfil vigente desde %(d)s"
+msgstr "Perfil vigent des de %(d)s"
+
+msgid "Periodo de deducción (2026-3T)"
+msgstr "Període de deducció (2026-3T)"
+
+msgid "Por qué (si la cuota deducible no es toda la soportada, o algo no es lo habitual)"
+msgstr "Per què (si la quota deduïble no és tota la suportada, o alguna cosa no és l'habitual)"
+
+msgid "Presentada: %(r)s"
+msgstr "Presentada: %(r)s"
+
+msgid "Prorrata especial"
+msgstr "Prorrata especial"
+
+msgid "Prorrata general"
+msgstr "Prorrata general"
+
+msgid "REDEME"
+msgstr "REDEME"
+
+msgid "Residencia"
+msgstr "Residència"
+
+msgid "Resultado (casilla 71): %(r)s €"
+msgstr "Resultat (casella 71): %(r)s €"
+
+msgid "Régimen de IVA"
+msgstr "Règim d'IVA"
+
+msgid "SII"
+msgstr "SII"
+
+msgid "Se deduce en un periodo posterior"
+msgstr "Es dedueix en un període posterior"
+
+msgid "Sectores diferenciados"
+msgstr "Sectors diferenciats"
+
+msgid "Serie"
+msgstr "Sèrie"
+
+msgid "Si sale a favor"
+msgstr "Si surt a favor"
+
+msgid "Sin perfil"
+msgstr "Sense perfil"
+
+msgid "Sin perfil fiscal vigente"
+msgstr "Sense perfil fiscal vigent"
+
+msgid "Situación del inmueble (alquileres)"
+msgstr "Situació de l'immoble (lloguers)"
+
+msgid "Solicitar la devolución"
+msgstr "Sol·licitar la devolució"
+
+msgid "Solo la dirección o el revisor fiscal pueden aprobar o corregir apuntes."
+msgstr "Només la direcció o el revisor fiscal poden aprovar o corregir apunts."
+
+msgid "Territorio de IVA"
+msgstr "Territori d'IVA"
+
+msgid "Tipo de NIF extranjero"
+msgstr "Tipus de NIF estranger"
+
+msgid "Tipo de factura"
+msgstr "Tipus de factura"
+
+msgid "Todavía no hay titulares"
+msgstr "Encara no hi ha titulars"
+
+msgid "Total de la factura (€, opcional)"
+msgstr "Total de la factura (€, opcional)"
+
+msgid "Tributación foral"
+msgstr "Tributació foral"
+
+msgid "Un apunte aprobado es lo que cuenta para el modelo 303. Se comprueba con las mismas reglas que aplica la Agencia Tributaria al importar los libros."
+msgstr "Un apunt aprovat és el que compta per al model 303. Es comprova amb les mateixes regles que aplica l'Agència Tributària en importar els llibres."
+
+msgid "Valor"
+msgstr "Valor"
+
+msgid "Vigente desde"
+msgstr "Vigent des de"
+
+msgid "Volver al titular"
+msgstr "Tornar al titular"
+
+msgid "Última declaración"
+msgstr "Última declaració"

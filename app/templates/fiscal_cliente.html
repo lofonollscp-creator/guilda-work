@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ c.nombre }} — {{ _('Guilda Fiscal') }}{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ c.nombre }}</h1>
+    <p class="subtitle">{{ c.nif or '' }} · {% if perfil %}{{ _('Perfil vigente desde %(d)s', d=perfil.vigente_desde) }} · {{ perfil.regimen_iva }} · {{ perfil.periodicidad }}{% else %}{{ _('Sin perfil fiscal vigente') }}{% endif %}</p>
+  </div>
+  <div class="ds-fila">
+    <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cartera') }}">‹ {{ _('Cartera') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.perfil', cliente_id=c.id) }}">{{ _('Perfil fiscal') }}</a>
+    {% if puede_aprobar %}<a class="btn btn-primary" href="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id, libro='E') }}">+ {{ _('Factura emitida') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.apunte_nuevo', cliente_id=c.id, libro='R') }}">+ {{ _('Factura recibida') }}</a>{% endif %}
+  </div>
+</header>
+{{ aviso_error(error) }}
+
+{% if puede_aprobar and perfil %}
+<section class="dash-panel">
+  <h2>{{ _('Calcular un periodo') }}</h2>
+  <p class="muted">{{ _('Congela los apuntes aprobados del periodo (la foto no se puede cambiar) y calcula el borrador del modelo 303 sobre ella.') }}</p>
+  <form method="post" action="{{ url_for('guilda_fiscal.periodo', cliente_id=c.id) }}" class="ds-fila">
+    <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100" required></label>
+    <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option>{{ p }}</option>{% endfor %}</select></label>
+    <label>{{ _('Si sale a favor') }} <select name="destino_negativo"><option value="C">{{ _('Compensar en periodos siguientes') }}</option><option value="D">{{ _('Solicitar la devolución') }}</option></select></label>
+    <button type="submit" class="btn btn-primary">{{ _('Calcular borrador') }}</button>
+  </form>
+</section>
+{% elif puede_aprobar %}<p class="muted">{{ _('Para calcular un periodo, define antes el perfil fiscal del titular.') }}</p>{% endif %}
+
+<h2 class="ds-mt-16">{{ _('Declaraciones') }}</h2>
+{% if declaraciones %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Periodo') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Resultado') }}</th><th></th></tr></thead>
+  <tbody>{% for d in declaraciones %}<tr><td>{{ d.ejercicio }} {{ d.periodo }}</td>
+    <td>{{ {'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada'), 'anulada': _('Anulada')}[d.estado] }}</td>
+    <td>{{ '%.2f'|format(d.resultado_centimos / 100) }} €</td><td><a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=d.id) }}">{{ _('Abrir') }}</a></td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p class="muted">{{ _('Aún no hay declaraciones de este titular.') }}</p>{% endif %}
+
+<h2 class="ds-mt-16">{{ _('Apuntes aprobados') }} · {{ ejercicio }}</h2>
+<form method="get" class="filters"><label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100"></label><button class="btn btn-ghost" type="submit">{{ _('Ver') }}</button></form>
+{% if apuntes %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Libro') }}</th><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Contraparte') }}</th><th>{{ _('Base') }}</th><th>{{ _('IVA') }}</th><th>{{ _('Cuota') }}</th><th></th></tr></thead>
+  <tbody>{% for a in apuntes %}<tr><td>{{ _('Emitida') if a.libro == 'E' else _('Recibida') }} {{ a.tipo_factura }}</td><td>{{ a.fecha_expedicion }}</td><td>{{ a.serie }}{{ a.numero }}</td><td>{{ a.contraparte_nombre }}</td>
+    <td>{{ '%.2f'|format(a.base_centimos / 100) }}</td><td>{{ '%g'|format(a.tipo_iva_centesimas / 100) }} %</td><td>{{ '%.2f'|format(a.cuota_centimos / 100) }}</td>
+    <td><a href="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=a.id) }}">{{ _('Ver') }}</a></td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p class="muted">{{ _('No hay apuntes aprobados en este ejercicio.') }}</p>{% endif %}
+{% endblock %}

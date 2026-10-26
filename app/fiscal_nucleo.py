@@ -615,3 +615,47 @@ def _registrar() -> None:
 
 
 _registrar()
+
+
+# --- Para las pantallas -------------------------------------------------------------------------------------------------------------------------
+_ETIQUETAS: dict[str, str] = {}
+
+
+def etiqueta_casilla(casilla: str) -> str:
+    """Nombre legible de una casilla, sacado del diseño oficial («IVA Devengado · Régimen general · Base imponible»)."""
+    if not _ETIQUETAS:
+        import re
+        diseno = json.loads(exportador_303.DISENO_303_2026.read_text(encoding="utf-8"))
+        from .fiscal_modelos.disenos_oficiales import indice_casillas
+        for k, apariciones in indice_casillas(diseno).items():
+            texto = re.sub(r"\s*\[\d+\]\s*\.?\s*$", "", apariciones[0]["descripcion"])
+            texto = re.sub(r"\(\s*\[.*$", "", texto).strip()
+            partes = [p.strip() for p in texto.split(" - ") if p.strip() and not p.strip().startswith("Liquidación")]
+            _ETIQUETAS[k] = " · ".join(partes[-3:]) if partes else texto
+    return _ETIQUETAS.get(casilla, "")
+
+
+def resumen_cartera(tenant_id: int, usuario_id: int) -> list[dict]:
+    """Una fila por titular que la persona ve: si tiene perfil fiscal, cuántos apuntes del ejercicio y su última declaración."""
+    visibles = acceso.clientes_visibles(tenant_id, usuario_id)
+    hoy = date.today().isoformat()
+    conn = db.get_connection()
+    try:
+        clientes = [dict(f) for f in conn.execute("SELECT id, nombre, nif FROM clientes_fiscales WHERE tenant_id = ? AND papelera_en IS NULL ORDER BY nombre", (tenant_id,)).fetchall()]
+        perfiles = {f["cliente_fiscal_id"]: f for f in conn.execute("SELECT cliente_fiscal_id, regimen_iva, periodicidad FROM fiscal_perfiles WHERE tenant_id = ? AND vigente_desde <= ? AND "
+                                                                    "COALESCE(vigente_hasta, '9999-12-31') >= ?", (tenant_id, hoy, hoy)).fetchall()}
+        apuntes = {f["cliente_fiscal_id"]: f["n"] for f in conn.execute("SELECT cliente_fiscal_id, count(*) AS n FROM fiscal_apuntes WHERE tenant_id = ? AND anulado_en IS NULL AND substr(fecha_expedicion, 1, 4) = ? "
+                                                                       "GROUP BY cliente_fiscal_id", (tenant_id, hoy[:4])).fetchall()}
+        ultimas: dict[int, dict] = {}
+        for f in conn.execute("SELECT id, cliente_fiscal_id, ejercicio, periodo, estado, resultado_centimos FROM fiscal_declaraciones WHERE tenant_id = ? AND estado <> 'anulada' ORDER BY ejercicio, periodo, id",
+                              (tenant_id,)).fetchall():
+            ultimas[f["cliente_fiscal_id"]] = dict(f)
+    finally:
+        conn.close()
+    salida = []
+    for c in clientes:
+        if visibles is not None and c["id"] not in visibles:
+            continue
+        p = perfiles.get(c["id"])
+        salida.append({**c, "perfil": dict(p) if p else None, "apuntes": apuntes.get(c["id"], 0), "ultima": ultimas.get(c["id"])})
+    return salida

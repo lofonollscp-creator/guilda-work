@@ -302,7 +302,8 @@ def gestoras_de(tenant_id: int, titular_id: int, fecha=None, tipo: str = "gestor
 # --- Alta de los verticales (reservados hasta que tengan pantallas) --------------------------------------------------------------------------------
 def _registrar() -> None:
     verticales.registrar(verticales.Vertical(ID, _l("Guilda Fiscal"), _l("Facturas, libros de IVA, cálculo del modelo 303 y fichero para presentar en la AEAT."), "calculator",
-                                             disponible=False, esquema=crear_esquema, borrar_datos=borrar_datos_de_tenant))
+                                             disponible=False, esquema=crear_esquema, borrar_datos=borrar_datos_de_tenant,
+                                             entradas_menu=(verticales.EntradaMenu("guilda_fiscal", _l("Guilda Fiscal"), "guilda_fiscal.cartera", "calculator"),)))
     if "alquileres" not in verticales.VERTICALES:
         verticales.registrar(verticales.Vertical("alquileres", _l("Guilda Fiscal Alquileres"), _l("Fiscalidad de alquileres de larga y corta duración, también a través de plataformas."), "key-round",
                                                  disponible=False))
