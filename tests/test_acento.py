@@ -10,8 +10,9 @@ def test_todo_acento_ofrecido_se_lee_en_claro_y_en_oscuro(clave):
     d = marca.colores_derivados(acento.ACENTOS[clave][1])
     lum = marca._luminancia
     assert marca._contraste(lum(d["primary"]), lum(d["on_accent"])) >= 4.5       # texto del botón sobre el acento
-    assert marca._contraste(lum(d["texto_claro"]), 1.0) >= 4.5                    # enlaces sobre fondo claro
-    assert marca._contraste(lum(d["texto_oscuro"]), lum("#0a0a0c")) >= 4.5        # enlaces sobre fondo oscuro
+    assert marca._contraste(lum(d["texto_claro"]), lum("#f7f8fa")) >= 4.5         # enlaces sobre el fondo real de la página (gris claro, no blanco)
+    assert marca._contraste(lum(d["texto_claro"]), 1.0) >= 4.5                    # y sobre las tarjetas blancas
+    assert marca._contraste(lum(d["texto_oscuro"]), lum("#101113")) >= 4.5        # enlaces sobre las tarjetas oscuras
 
 
 def test_el_acento_por_defecto_no_sobrescribe_nada():

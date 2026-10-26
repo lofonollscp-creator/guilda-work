@@ -44,15 +44,6 @@ La pestaña Tareas abre en la Lista y tiene el selector **Mi día · Lista · Ta
 **Fase 4 — Calendario y Carga (hecha, 2026-10-26).**
 El selector de vistas es ya el de la web: Mi día · Lista · Tablero · Calendario · Carga. **Calendario:** mismas cuatro vistas (día, semana laboral, semana, mes), mismas capas que se encienden y apagan (tareas, vencimientos fiscales, citas, fichajes) y mismo reparto de tareas por día (vencimiento o, si no hay, inicio); sale de la misma función que la web (`GET /tareas-outlook/calendario`, API 1.7). Se crea una tarea en un día desde el «+» del día. **Carga:** una tarjeta por persona con sus horas por día frente a la jornada (verde/ámbar/rojo con los umbrales de la web), atrasadas y sin fecha; tocar una celda lista sus tareas y desde ahí se reasigna a otra persona o se cambia/quita el día (lo que en la web es arrastrar). Pruebas de paridad: calendario y carga contra la web. Se corrigió además el formato de `dias` en `GET /tareas-outlook/carga` (salía como fecha HTTP).
 
-**Fase 5 — Rediseño visual de toda la app** (en paralelo a las fases 1–4, pantalla por pantalla):
-- Navegación inferior: Inicio · Tareas · Correo · Fichaje · Más (ya existe); dentro de Tareas, pestañas superiores Mi día · Lista · Tablero · Calendario (como el subnav de la web).
-- Tarjetas con jerarquía clara (título, metadatos en chips, acción principal a un toque), espaciado de 8/12/16, tipografía y colores de los tokens generados desde `style.css` (ya hechos) — y **el color de acento elegido por la persona** (hoy solo en la web) llevado a la app.
-- Estados vacíos, esqueletos de carga y errores con el mismo componente en todas las pantallas.
-- Gestos: deslizar para completar / posponer (con «Deshacer»), mantener pulsado para seleccionar.
-- Modo oscuro y accesibilidad (tamaños de letra grandes, contraste ≥ 4,5:1, lector de pantalla).
-- Revisión pantalla por pantalla de Correo, Fichaje, Asistente y Ajustes con el mismo criterio (fase posterior, ya listada en el plan de la app).
-
-## 4. Orden y criterio de «hecho»
-
-Cada fase se entrega con tests (Dart y, si toca la API, Python), commit y push. Una fase está hecha cuando la prueba de paridad correspondiente pasa y la pantalla se ha mirado en iPhone.
-Dependencias de servidor: `GET /tareas-outlook/mi-dia` y `texto_libre` en el alta (los dos son aditivos y no tocan el esquema; el esquema sigue congelado hasta el 2026-10-26 12:34).
+**Fase 5 — Rediseño visual de toda la app (en curso, 2026-10-26).**
+*Hecho:* se mira cómo se ve de verdad con capturas del tema y las fuentes reales (`CAPTURAS=<carpeta> flutter test test/tareas_test.dart --plain-name captura`). Tema: chips y botones segmentados con selección tonal (el texto claro sobre lima sólido no se leía en oscuro), casillas redondas, tarjetas de 16 px. Tareas (Lista, Mi día, Tablero, Calendario, Carga y Ficha) y «Hoy»: pestañas con subrayado, una sola fila de filtros, tarjetas con barra de prioridad y píldoras de estado/vencimiento/proyecto, deslizar para completar con «Deshacer», columnas del tablero en píldoras, ficha en tarjetas, urgencia de «Hoy» escrita (no solo en color). **Color de acento por persona** en Ajustes (los ocho de la web; cálculo de contraste idéntico al del servidor, con test de paridad) y corrección del contraste del acento como texto sobre el fondo gris real (también en la web). Prueba con la letra al 160 % sin desbordes.
+*Pendiente:* Correo, Fichaje, Asistente IA, Login, Ajustes y la barra inferior: se benefician del tema nuevo pero no se han rehecho pantalla a pantalla; revisión con lector de pantalla y en tableta.

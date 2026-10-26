@@ -705,5 +705,15 @@
   "cargaTu": "tu",
   "cargaYMas": "i {n} més",
   "tareasAnterior": "Anterior",
-  "tareasSiguiente": "Següent"
+  "tareasSiguiente": "Següent",
+  "ajustesColorBotones": "Color dels botons",
+  "ajustesColorAyuda": "Només canvia en aquest mòbil. Tots els colors es llegeixen bé amb el tema clar i el fosc.",
+  "acentoLima": "Llima",
+  "acentoAzul": "Blau",
+  "acentoTurquesa": "Turquesa",
+  "acentoVioleta": "Violeta",
+  "acentoRosa": "Rosa",
+  "acentoRojo": "Vermell",
+  "acentoNaranja": "Taronja",
+  "acentoAmbar": "Ambre"
 }
