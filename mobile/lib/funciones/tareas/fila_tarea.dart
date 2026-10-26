@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../api/generado/modelos.g.dart';
 import '../../diseno/componentes.dart';
+import '../../diseno/estados.dart';
 import '../../diseno/formatos.dart';
+import '../../theme/brand_colors.dart';
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
 import 'tarea_detalle_screen.dart';
 import 'textos.dart';
 
-/// Una tarea en una lista (Lista y «Mi día»): casilla para completarla, asunto, estado, vencimiento y los mismos indicadores que la web
-/// (proyecto, comentarios, checklist, «espera a…», quién la asignó). Con [alSeleccionar] admite pulsación larga para marcar varias.
+/// Una tarea en una lista (Lista, «Mi día», calendario): una tarjeta con la casilla redonda para completarla, el asunto, el estado y el vencimiento en píldoras,
+/// y los indicadores de la web (proyecto, comentarios, checklist, «espera a…», quién la asignó). La barra de color de la izquierda marca la prioridad alta
+/// (y siempre va acompañada de la palabra «Alta»). Deslizar hacia la derecha la completa (con «Deshacer»); con [alSeleccionar], la pulsación larga marca varias.
 class FilaTarea extends StatelessWidget {
   final TareaOutlook tarea;
   final Future<void> Function(TareaOutlook) alCompletar;
@@ -25,50 +28,98 @@ class FilaTarea extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final tema = Theme.of(context);
+    final oscuro = tema.brightness == Brightness.dark;
     final estado = EstadoTarea.desde(tarea.estado);
     final hecha = !estado.abierta;
     final vencida = tarea.vencida == true && !hecha;
     final fecha = context.formatos.deServidor(tarea.fechaVencimiento);
+    final alta = PrioridadTarea.desde(tarea.prioridad) == PrioridadTarea.alta && !hecha;
+    final aspecto = vencida ? aspectoVencida : aspectoDe(estado);
+    final colorAlta = oscuro ? BrandColors.warningTextDark : BrandColors.warningTextLight;
+    final puedeDeslizar = !hecha && tarea.id > 0 && !enSeleccion && !pendiente;
 
-    return ListTile(
-      minVerticalPadding: 10,
-      selected: seleccionada,
-      selectedTileColor: tema.colorScheme.primaryContainer.withValues(alpha: 0.4),
-      // En selección el cuadro marca la tarea para la acción en lote; fuera de ella, la completa.
-      leading: Checkbox(
-        value: enSeleccion ? seleccionada : hecha,
-        onChanged: enSeleccion && alSeleccionar != null ? (_) => alSeleccionar!() : ((hecha || tarea.id < 0) ? null : (_) => alCompletar(tarea)),
-        semanticLabel: enSeleccion ? t.tareasSeleccionar : t.hoyCompletar,
+    final tarjeta = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Material(
+      color: seleccionada ? Color.alphaBlend(tema.colorScheme.primary.withValues(alpha: 0.18), tema.colorScheme.surface) : tema.colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: seleccionada ? tema.colorScheme.primary : tema.colorScheme.outlineVariant, width: seleccionada ? 1.5 : 1)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: tarea.id < 0
+            ? null
+            : (enSeleccion && alSeleccionar != null ? alSeleccionar : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id)))),
+        onLongPress: tarea.id < 0 ? null : alSeleccionar,
+        child: IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Container(width: 4, color: alta ? colorAlta : Colors.transparent),
+            // En selección la casilla marca la tarea para la acción en lote; fuera de ella, la completa.
+            Padding(
+              padding: const EdgeInsets.only(left: 4, top: 2),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Checkbox(
+                  value: enSeleccion ? seleccionada : hecha,
+                  onChanged: enSeleccion && alSeleccionar != null ? (_) => alSeleccionar!() : ((hecha || tarea.id < 0) ? null : (_) => alCompletar(tarea)),
+                  semanticLabel: enSeleccion ? t.tareasSeleccionar : t.hoyCompletar,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(2, 12, 12, 12),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                    tarea.asunto ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: tema.textTheme.titleMedium?.copyWith(decoration: hecha ? TextDecoration.lineThrough : null, color: hecha ? tema.colorScheme.outline : null),
+                  ),
+                  const SizedBox(height: 8),
+                  // Estado = icono + etiqueta + color; lo vencido en rojo con su palabra («Vencida»): nunca solo color.
+                  Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                    Pildora(icono: aspecto.icono, texto: etiquetaEstado(t, estado), color: aspectoDe(estado).color(tema.brightness)),
+                    if (vencida) Pildora(icono: Icons.error_outline, texto: '${t.tareasVencida}${fecha == null ? '' : ' · $fecha'}', color: aspectoVencida.color(tema.brightness), fuerte: true)
+                    else if (fecha != null) Pildora(icono: Icons.event_outlined, texto: fecha),
+                    if (alta) Pildora(icono: Icons.flag_outlined, texto: etiquetaPrioridad(t, PrioridadTarea.alta), color: colorAlta, fuerte: true),
+                    if ((tarea.categoriaNombre ?? '').isNotEmpty) Pildora(icono: Icons.folder_outlined, texto: tarea.categoriaNombre!),
+                    if (tarea.rol == 'asignada') Pildora(icono: Icons.person_outline, texto: t.tareaRolAsignada),
+                    if (tarea.rol == 'compartida') Pildora(icono: Icons.group_outlined, texto: t.tareaRolCompartida),
+                    if ((tarea.bloqueos ?? 0) > 0) Pildora(icono: Icons.lock_clock_outlined, texto: t.tareaIndEspera(tarea.bloqueos!), color: oscuro ? BrandColors.warningTextDark : BrandColors.warningTextLight),
+                    if ((tarea.checklistTotal ?? 0) > 0) Indicador(icono: Icons.checklist, texto: t.tareaIndChecklist(tarea.checklistHechas ?? 0, tarea.checklistTotal!)),
+                    if ((tarea.nComentarios ?? 0) > 0) Indicador(icono: Icons.chat_bubble_outline, texto: t.tareaIndComentarios(tarea.nComentarios!), soloNumero: '${tarea.nComentarios}'),
+                  ]),
+                ]),
+              ),
+            ),
+            if (pendiente) Padding(padding: const EdgeInsets.only(right: 12, top: 12), child: Align(alignment: Alignment.topCenter, child: Tooltip(message: t.colaTareaPendiente, child: const Icon(Icons.cloud_upload_outlined, size: 18)))),
+          ]),
+        ),
       ),
-      title: Text(
-        tarea.asunto ?? '',
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: hecha ? TextStyle(decoration: TextDecoration.lineThrough, color: tema.colorScheme.outline) : null,
       ),
-      // Estado = icono + etiqueta + color; lo vencido en rojo con su palabra («Vencida»): nunca solo color.
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Wrap(spacing: 12, runSpacing: 2, crossAxisAlignment: WrapCrossAlignment.center, children: [
-          ChipEstado(estado: estado, etiqueta: etiquetaEstado(t, estado), vencida: false),
-          if (vencida) ChipEstado(estado: estado, etiqueta: '${t.tareasVencida}${fecha == null ? '' : ' · $fecha'}', vencida: true)
-          else if (fecha != null) Text(fecha, style: tema.textTheme.labelMedium),
-          if (PrioridadTarea.desde(tarea.prioridad) == PrioridadTarea.alta) Text(etiquetaPrioridad(t, PrioridadTarea.alta), style: tema.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
-          if ((tarea.categoriaNombre ?? '').isNotEmpty) Proyecto(nombre: tarea.categoriaNombre!, color: tarea.categoriaColor),
-          if (tarea.rol == 'asignada') Indicador(icono: Icons.person_outline, texto: t.tareaRolAsignada),
-          if (tarea.rol == 'compartida') Indicador(icono: Icons.group_outlined, texto: t.tareaRolCompartida),
-          if ((tarea.bloqueos ?? 0) > 0) Indicador(icono: Icons.lock_clock_outlined, texto: t.tareaIndEspera(tarea.bloqueos!)),
-          if ((tarea.checklistTotal ?? 0) > 0) Indicador(icono: Icons.checklist, texto: t.tareaIndChecklist(tarea.checklistHechas ?? 0, tarea.checklistTotal!)),
-          if ((tarea.nComentarios ?? 0) > 0) Indicador(icono: Icons.chat_bubble_outline, texto: t.tareaIndComentarios(tarea.nComentarios!), soloNumero: '${tarea.nComentarios}'),
+    );
+
+    if (!puedeDeslizar) return tarjeta;
+    return Dismissible(
+      key: ValueKey('desliza_${tarea.id}'),
+      direction: DismissDirection.startToEnd,
+      dismissThresholds: const {DismissDirection.startToEnd: 0.4},
+      // La tarea no se «quita» aquí: se completa y la pantalla ya la saca (o la deja, si el servidor lo rechaza), así que la tarjeta vuelve a su sitio.
+      confirmDismiss: (_) async {
+        await alCompletar(tarea);
+        return false;
+      },
+      background: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.only(left: 20),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(color: tema.colorScheme.primary, borderRadius: BorderRadius.circular(16)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.check, color: BrandColors.onAccent),
+          const SizedBox(width: 8),
+          Text(t.hoyCompletar, style: tema.textTheme.labelLarge?.copyWith(color: BrandColors.onAccent)),
         ]),
       ),
-      trailing: pendiente
-          ? Tooltip(message: t.colaTareaPendiente, child: const Icon(Icons.cloud_upload_outlined, size: 18))
-          : ((tarea.motivoBloqueo ?? '').isNotEmpty ? const Icon(Icons.hourglass_empty, size: 18) : null),
-      onTap: tarea.id < 0
-          ? null
-          : (enSeleccion && alSeleccionar != null ? alSeleccionar : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id)))),
-      onLongPress: tarea.id < 0 ? null : alSeleccionar,
+      child: tarjeta,
     );
   }
 }

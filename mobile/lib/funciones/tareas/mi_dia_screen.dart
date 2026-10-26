@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../datos/cola.dart';
 import '../../diseno/componentes.dart';
+import '../../diseno/estados.dart';
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
 import '../../nucleo/lectura_guardada.dart';
@@ -128,7 +129,7 @@ class _Seccion extends ConsumerWidget {
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
         child: Row(children: [
-          Text(titulo, style: tema.textTheme.titleMedium?.copyWith(color: clave == 'vencidas' ? tema.colorScheme.error : null)),
+          Text(titulo, style: tema.textTheme.titleMedium?.copyWith(color: clave == 'vencidas' ? aspectoVencida.color(tema.brightness) : null)),
           const SizedBox(width: 8),
           Badge(label: Text('${tareas.length}'), backgroundColor: tema.colorScheme.secondaryContainer, textColor: tema.colorScheme.onSecondaryContainer),
         ]),

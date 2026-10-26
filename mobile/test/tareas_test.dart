@@ -1,5 +1,11 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +24,7 @@ import 'package:guilda_work_mobile/funciones/tareas/tareas_vistas.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_screen.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
+import 'package:guilda_work_mobile/theme/app_theme.dart';
 import 'package:guilda_work_mobile/services/api_client.dart' as sv;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -764,9 +771,13 @@ void main() {
       await t.pumpWidget(_app(const TareasScreen(), _over(repo)));
       await t.pumpAndSettle();
       expect(find.text('No hay tareas aquí.'), findsOneWidget);
-      await t.tap(find.text('Asignadas'));
+      await t.tap(find.text('Mías')); // el ámbito y el estado son menús desplegables en forma de píldora
       await t.pumpAndSettle();
-      await t.tap(find.text('Esperando'));
+      await t.tap(find.text('Asignadas').last);
+      await t.pumpAndSettle();
+      await t.tap(find.text('Estado'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Esperando').last);
       await t.pumpAndSettle();
       expect(repo.registro.last, 'listar:asignadas:esperando:-:0');
       await t.enterText(find.byType(TextField), 'Preparar el 303');
@@ -855,6 +866,106 @@ void main() {
       expect(find.text('Sin empezar (1)'), findsOneWidget);
       expect(find.text('Completada (1)'), findsOneWidget);
     });
+  });
+
+  // Capturas de las pantallas con el tema y las fuentes reales (para mirar el diseño sin un móvil): solo con CAPTURAS=<carpeta>.
+  group('capturas del diseño', () {
+    final carpeta = Platform.environment['CAPTURAS'];
+
+    setUpAll(() async {
+      if (carpeta == null) return;
+      Directory(carpeta).createSync(recursive: true);
+      Future<void> fuente(String familia, List<String> rutas) async {
+        final f = FontLoader(familia);
+        for (final r in rutas) {
+          f.addFont(Future.value(ByteData.sublistView(File(r).readAsBytesSync())));
+        }
+        await f.load();
+      }
+
+      await fuente('Manrope', ['assets/fonts/Manrope-Regular.ttf', 'assets/fonts/Manrope-Medium.ttf', 'assets/fonts/Manrope-SemiBold.ttf', 'assets/fonts/Manrope-Bold.ttf']);
+      await fuente('Inter', ['assets/fonts/Inter-Regular.ttf', 'assets/fonts/Inter-SemiBold.ttf']);
+      final sdk = Platform.environment['FLUTTER_ROOT'] ?? '/home/guilda/flutter';
+      await fuente('MaterialIcons', ['$sdk/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf']);
+    });
+
+    Widget conTema(Widget home, List<Override> overrides, {required bool oscuro, required GlobalKey clave}) => ProviderScope(
+          overrides: overrides,
+          child: RepaintBoundary(
+            key: clave,
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('es'),
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+              home: home,
+            ),
+          ),
+        );
+
+    Future<void> capturar(WidgetTester t, GlobalKey clave, String nombre) async {
+      final limite = t.renderObject<RenderRepaintBoundary>(find.byKey(clave));
+      final bytes = await t.runAsync(() async {
+        final img = await limite.toImage(pixelRatio: 2);
+        return (await img.toByteData(format: ui.ImageByteFormat.png))!;
+      });
+      File('$carpeta/$nombre.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+    }
+
+    String iso(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+    _RepoFalso repoDeEjemplo() {
+      final hoy = DateTime.now();
+      final ayer = iso(hoy.subtract(const Duration(days: 1)));
+      final tareas = [
+        TareaOutlook.fromJson({..._t(1, fecha: ayer, vencida: true, prioridad: 'alta'), 'asunto': 'Presentar el 303 de Acme SL', 'categoria_nombre': 'IVA', 'n_comentarios': 3, 'checklist_total': 4, 'checklist_hechas': 2}),
+        TareaOutlook.fromJson({..._t(2, estado: 'en_progreso', fecha: iso(hoy)), 'asunto': 'Conciliar el banco de octubre', 'categoria_nombre': 'Contabilidad', 'rol': 'asignada'}),
+        TareaOutlook.fromJson({..._t(3, estado: 'esperando', motivo: 'Falta la factura'), 'asunto': 'Declaración de la renta de Beta SA', 'bloqueos': 1}),
+        TareaOutlook.fromJson({..._t(4, fecha: iso(hoy.add(const Duration(days: 3)))), 'asunto': 'Llamar a la gestoría laboral'}),
+        TareaOutlook.fromJson({..._t(5, estado: 'completada'), 'asunto': 'Enviar el modelo 130'}),
+      ];
+      return _RepoFalso()
+        ..paginas = ((a, e, q, o) => tareas)
+        ..diaFalso = {'vencidas': [tareas[0]], 'hoy': [tareas[1]], 'en_progreso': [], 'asignadas': [tareas[3]], 'compartidas': []}
+        ..tableroFalso = {'no_iniciada': [tareas[0], tareas[3]], 'en_progreso': [tareas[1]], 'esperando': [tareas[2]], 'completada': [tareas[4]]}
+        ..tareas = {1: tareas[0]}
+        ..subs = const [Subtarea(8, 'Pedir certificado', EstadoTarea.completada), Subtarea(9, 'Revisar el IVA', EstadoTarea.noIniciada)]
+        ..check = [ChecklistItem.fromJson({'id': 3, 'texto': 'Comprobar el NIF', 'hecha': 1}), ChecklistItem.fromJson({'id': 4, 'texto': 'Cuadrar con contabilidad', 'hecha': 0})]
+        ..coments = [ComentarioTarea.fromJson({'id': 1, 'texto': 'Ya tengo los datos del banco', 'creado_en': '2026-10-24T09:30'})];
+    }
+
+    for (final oscuro in [false, true]) {
+      final sufijo = oscuro ? 'oscuro' : 'claro';
+      for (final (nombre, vista) in [('lista', VistaTareas.lista), ('mi_dia', VistaTareas.miDia), ('tablero', VistaTareas.tablero)]) {
+        testWidgets('captura $nombre $sufijo', (t) async {
+          if (carpeta == null) return;
+          final clave = GlobalKey();
+          t.view.physicalSize = const Size(1170, 2532);
+          t.view.devicePixelRatio = 3;
+          addTearDown(t.view.reset);
+          final repo = repoDeEjemplo();
+          await t.pumpWidget(conTema(const TareasInicio(), _over(repo), oscuro: oscuro, clave: clave));
+          await t.pumpAndSettle();
+          final ref = ProviderScope.containerOf(t.element(find.byType(TareasInicio)));
+          ref.read(vistaTareasProvider.notifier).elegir(vista);
+          await t.pumpAndSettle();
+          await capturar(t, clave, '${nombre}_$sufijo');
+        });
+      }
+      testWidgets('captura ficha $sufijo', (t) async {
+        if (carpeta == null) return;
+        final clave = GlobalKey();
+        t.view.physicalSize = const Size(1170, 3400);
+        t.view.devicePixelRatio = 3;
+        addTearDown(t.view.reset);
+        await t.pumpWidget(conTema(const TareaDetalleScreen(tareaId: 1), _over(repoDeEjemplo()), oscuro: oscuro, clave: clave));
+        await t.pumpAndSettle();
+        await capturar(t, clave, 'ficha_$sufijo');
+      });
+    }
   });
 
   group('Calendario y Carga', () {

@@ -105,7 +105,6 @@ class AppTheme {
 
     final base = brightness == Brightness.light ? ThemeData.light() : ThemeData.dark();
     final textTheme = _construirTextTheme(base.textTheme, text, textMuted);
-    final radius = BorderRadius.circular(BrandColors.radius);
 
     return base.copyWith(
       brightness: brightness,
@@ -124,7 +123,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: radius, side: BorderSide(color: border)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: border)),
         margin: const EdgeInsets.symmetric(vertical: 4),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -156,23 +155,36 @@ class AppTheme {
         iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(color: s.contains(WidgetState.selected) ? BrandColors.onAccent : textMuted)),
         labelTextStyle: WidgetStateProperty.resolveWith((s) => textTheme.labelMedium?.copyWith(color: s.contains(WidgetState.selected) ? text : textMuted)),
       ),
+      // Selección «tonal»: un tinte del acento con el texto de siempre, y borde del acento. Un lima sólido con texto claro (el de los chips antiguos en oscuro)
+      // no se leía; así el contraste es el del texto normal sobre un fondo casi neutro, en los dos temas.
       chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall), side: BorderSide(color: border)),
-        side: BorderSide(color: border),
-        selectedColor: primary,
-        secondarySelectedColor: primary,
-        labelStyle: textTheme.labelLarge,
-        secondaryLabelStyle: textTheme.labelLarge?.copyWith(color: BrandColors.onAccent),
-        checkmarkColor: BrandColors.onAccent,
+        backgroundColor: surface,
+        selectedColor: Color.alphaBlend(primary.withValues(alpha: brightness == Brightness.dark ? 0.22 : 0.30), surface),
+        disabledColor: surface,
+        shape: const StadiumBorder(),
+        side: WidgetStateBorderSide.resolveWith((s) => BorderSide(color: s.contains(WidgetState.selected) ? primaryText : border, width: s.contains(WidgetState.selected) ? 1.5 : 1)),
+        labelStyle: textTheme.labelLarge?.copyWith(color: text),
+        secondaryLabelStyle: textTheme.labelLarge?.copyWith(color: text),
+        checkmarkColor: text,
+        iconTheme: IconThemeData(color: textMuted, size: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall))),
           side: WidgetStatePropertyAll(BorderSide(color: border)),
-          backgroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? primary : null),
-          foregroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? BrandColors.onAccent : text),
+          backgroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? Color.alphaBlend(primary.withValues(alpha: brightness == Brightness.dark ? 0.22 : 0.30), surface) : surface),
+          foregroundColor: WidgetStatePropertyAll(text),
+          textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
           minimumSize: const WidgetStatePropertyAll(Size(48, 44)),
         ),
+      ),
+      // Casillas redondas (completar una tarea se parece a marcar un círculo, no a rellenar un formulario).
+      checkboxTheme: CheckboxThemeData(
+        shape: const CircleBorder(),
+        side: BorderSide(color: textMuted, width: 1.6),
+        fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? primary : Colors.transparent),
+        checkColor: const WidgetStatePropertyAll(BrandColors.onAccent),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: surface,

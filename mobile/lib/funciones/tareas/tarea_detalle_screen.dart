@@ -21,6 +21,7 @@ import '../../datos/local/cola_escritura.dart' show ColaLlena;
 import '../../nucleo/sesion.dart';
 import 'tarea_bloques.dart';
 import 'tarea_editor_screen.dart';
+import '../../theme/brand_colors.dart';
 import 'tareas_acciones.dart';
 import 'tareas_lista_controlador.dart';
 import 'tareas_repositorio.dart';
@@ -385,82 +386,101 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
     final vencida = tarea.vencida == true && estado.abierta;
     final hechas = d.subtareas.where((s) => !s.estado.abierta).length;
 
+    final yo = ref.read(estadoSesionProvider).usuario?.id;
+    final esDueno = tarea.usuarioId == null || tarea.usuarioId == yo;
+    final colorVencida = aspectoVencida.color(tema.brightness);
+
     return ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: [
-      Text(tarea.asunto ?? '', style: tema.textTheme.titleLarge),
+      Text(tarea.asunto ?? '', style: tema.textTheme.headlineSmall),
       const SizedBox(height: 12),
-      Wrap(spacing: 8, runSpacing: 4, children: [
-        ActionChip(
-          avatar: Icon(aspectoDe(estado).icono, size: 18, color: aspectoDe(estado).color(tema.brightness)),
-          label: Text('${t.tareaEstado}: ${etiquetaEstado(t, estado)}'),
-          onPressed: _elegirEstado,
-        ),
-        Chip(label: Text('${t.tareaPrioridad}: ${etiquetaPrioridad(t, PrioridadTarea.desde(tarea.prioridad))}')),
-        Chip(
-          avatar: Icon(Icons.event_outlined, size: 18, color: vencida ? tema.colorScheme.error : null),
-          label: Text(fecha == null ? t.tareaSinFecha : '${t.tareaVence}: ${context.formatos.fecha(fecha)}${vencida ? ' · ${t.tareasVencida}' : ''}'),
+      // Lo esencial de un vistazo: estado (se toca para cambiarlo), prioridad y vencimiento, y debajo lo que cuelga de la tarea.
+      Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        Pildora(icono: aspectoDe(estado).icono, texto: '${t.tareaEstado}: ${etiquetaEstado(t, estado)}', color: aspectoDe(estado).color(tema.brightness), fuerte: true, alPulsar: _elegirEstado),
+        Pildora(icono: Icons.flag_outlined, texto: '${t.tareaPrioridad}: ${etiquetaPrioridad(t, PrioridadTarea.desde(tarea.prioridad))}', color: PrioridadTarea.desde(tarea.prioridad) == PrioridadTarea.alta ? (tema.brightness == Brightness.dark ? BrandColors.warningTextDark : BrandColors.warningTextLight) : null),
+        Pildora(
+          icono: Icons.event_outlined,
+          texto: fecha == null ? t.tareaSinFecha : '${t.tareaVence}: ${context.formatos.fecha(fecha)}${vencida ? ' · ${t.tareasVencida}' : ''}',
+          color: vencida ? colorVencida : null,
+          fuerte: vencida,
         ),
       ]),
-      const SizedBox(height: 4),
+      const SizedBox(height: 8),
       _Contexto(tarea: tarea),
-      if (estado == EstadoTarea.esperando && (tarea.motivoBloqueo ?? '').isNotEmpty) ...[
-        const SizedBox(height: 12),
-        Card(color: tema.colorScheme.secondaryContainer, child: ListTile(leading: const Icon(Icons.hourglass_empty), title: Text(t.tareaMotivoBloqueo), subtitle: Text(tarea.motivoBloqueo!))),
-      ],
-      if ((tarea.cuerpo ?? '').isNotEmpty) ...[
-        _Titulo(t.tareaNotas),
-        Text(tarea.cuerpo!),
-      ],
-      BloqueEspera(tareaId: tarea.id, puedeEditar: true, alCambiar: _cargar),
-      BloqueCompartida(tareaId: tarea.id, esDueno: tarea.usuarioId == null || tarea.usuarioId == ref.read(estadoSesionProvider).usuario?.id, miId: ref.read(estadoSesionProvider).usuario?.id),
-      _Titulo(d.subtareas.isEmpty ? t.tareaSubtareas : '${t.tareaSubtareas} · $hechas/${d.subtareas.length}'),
-      for (final s in d.subtareas)
-        CheckboxListTile(
-          dense: true,
-          controlAffinity: ListTileControlAffinity.leading,
-          contentPadding: EdgeInsets.zero,
-          value: !s.estado.abierta,
-          title: Text(s.asunto, style: s.estado.abierta ? null : const TextStyle(decoration: TextDecoration.lineThrough)),
-          onChanged: (_) => _alternarSubtarea(s),
-        ),
-      _Entrada(controlador: _subtarea, hint: t.tareaSubtareaNueva, alEnviar: _anadirSubtarea),
-      _Titulo(t.tareaChecklist),
-      for (final p in d.checklist)
-        CheckboxListTile(
-          dense: true,
-          controlAffinity: ListTileControlAffinity.leading,
-          contentPadding: EdgeInsets.zero,
-          value: p.hecha == 1,
-          title: Text(p.texto ?? '', style: p.hecha == 1 ? const TextStyle(decoration: TextDecoration.lineThrough) : null),
-          onChanged: (_) => _alternarPunto(p),
-        ),
-      _Entrada(controlador: _punto, hint: t.tareaChecklistNuevo, alEnviar: _anadirPunto),
-      _Titulo(t.tareaAdjuntos),
-      for (final a in d.adjuntos)
-        ListTile(
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.attach_file),
-          title: Text(a.nombreArchivo ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: a.tamanoBytes == null ? null : Text(_tamano(a.tamanoBytes!)),
-          trailing: IconButton(icon: const Icon(Icons.delete_outline), tooltip: t.tareaEliminar, onPressed: () => _quitarAdjunto(a)),
-          onTap: () => _abrirAdjunto(a),
-        ),
-      Align(alignment: Alignment.centerLeft, child: TextButton.icon(onPressed: _adjuntar, icon: const Icon(Icons.add), label: Text(t.tareaAdjuntar))),
-      BloqueRevision(tarea: tarea, miId: ref.read(estadoSesionProvider).usuario?.id, esDueno: tarea.usuarioId == null || tarea.usuarioId == ref.read(estadoSesionProvider).usuario?.id, alCambiar: _cargar),
-      BloqueTiempo(tarea: tarea, alCambiar: null),
-      BloqueRecordatorios(tarea: tarea),
-      _Titulo(t.tareaComentarios),
-      for (final c in d.comentarios)
-        ListTile(
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(c.id < 0 ? Icons.cloud_upload_outlined : Icons.chat_bubble_outline, size: 20),
-          title: Text(c.texto ?? ''),
-          subtitle: Text(_cuando(c.creadoEn)),
-        ),
-      _Entrada(controlador: _comentario, hint: t.tareaComentarioNuevo, alEnviar: _comentar),
-      BloqueClienteConversacion(tarea: tarea),
-      BloqueActividad(tareaId: tarea.id),
+      if (estado == EstadoTarea.esperando && (tarea.motivoBloqueo ?? '').isNotEmpty)
+        BloqueFicha(titulo: t.tareaMotivoBloqueo, hijo: Text(tarea.motivoBloqueo!)),
+      if ((tarea.cuerpo ?? '').isNotEmpty) BloqueFicha(titulo: t.tareaNotas, hijo: Text(tarea.cuerpo!)),
+      BloqueFicha(
+        hijo: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          BloqueEspera(tareaId: tarea.id, puedeEditar: true, alCambiar: _cargar),
+          const Divider(height: 20),
+          BloqueCompartida(tareaId: tarea.id, esDueno: esDueno, miId: yo),
+        ]),
+      ),
+      BloqueFicha(
+        titulo: d.subtareas.isEmpty ? t.tareaSubtareas : '${t.tareaSubtareas} · $hechas/${d.subtareas.length}',
+        hijo: Column(children: [
+          for (final s in d.subtareas)
+            CheckboxListTile(
+              dense: true,
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              value: !s.estado.abierta,
+              title: Text(s.asunto, style: s.estado.abierta ? null : const TextStyle(decoration: TextDecoration.lineThrough)),
+              onChanged: (_) => _alternarSubtarea(s),
+            ),
+          _Entrada(controlador: _subtarea, hint: t.tareaSubtareaNueva, alEnviar: _anadirSubtarea),
+        ]),
+      ),
+      BloqueFicha(
+        titulo: t.tareaChecklist,
+        hijo: Column(children: [
+          for (final p in d.checklist)
+            CheckboxListTile(
+              dense: true,
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
+              value: p.hecha == 1,
+              title: Text(p.texto ?? '', style: p.hecha == 1 ? const TextStyle(decoration: TextDecoration.lineThrough) : null),
+              onChanged: (_) => _alternarPunto(p),
+            ),
+          _Entrada(controlador: _punto, hint: t.tareaChecklistNuevo, alEnviar: _anadirPunto),
+        ]),
+      ),
+      BloqueFicha(
+        titulo: t.tareaAdjuntos,
+        hijo: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          for (final a in d.adjuntos)
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.attach_file),
+              title: Text(a.nombreArchivo ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+              subtitle: a.tamanoBytes == null ? null : Text(_tamano(a.tamanoBytes!)),
+              trailing: IconButton(icon: const Icon(Icons.delete_outline), tooltip: t.tareaEliminar, onPressed: () => _quitarAdjunto(a)),
+              onTap: () => _abrirAdjunto(a),
+            ),
+          TextButton.icon(onPressed: _adjuntar, icon: const Icon(Icons.add), label: Text(t.tareaAdjuntar)),
+        ]),
+      ),
+      BloqueFicha(hijo: BloqueRevision(tarea: tarea, miId: yo, esDueno: esDueno, alCambiar: _cargar)),
+      BloqueFicha(hijo: BloqueTiempo(tarea: tarea, alCambiar: null)),
+      BloqueFicha(hijo: BloqueRecordatorios(tarea: tarea)),
+      BloqueFicha(
+        titulo: t.tareaComentarios,
+        hijo: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          for (final c in d.comentarios)
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(c.id < 0 ? Icons.cloud_upload_outlined : Icons.chat_bubble_outline, size: 20),
+              title: Text(c.texto ?? ''),
+              subtitle: Text(_cuando(c.creadoEn)),
+            ),
+          _Entrada(controlador: _comentario, hint: t.tareaComentarioNuevo, alEnviar: _comentar),
+        ]),
+      ),
+      BloqueFicha(hijo: BloqueClienteConversacion(tarea: tarea)),
+      BloqueFicha(hijo: BloqueActividad(tareaId: tarea.id)),
     ]);
   }
 
@@ -485,21 +505,14 @@ class _Contexto extends ConsumerWidget {
     final principal = (tarea.clientes ?? const <ClienteDeTarea>[]).where((c) => c.principal == true).firstOrNull;
     final otros = (tarea.clientes ?? const <ClienteDeTarea>[]).length - (principal == null ? 0 : 1);
     final chips = <Widget>[
-      if ((tarea.categoriaNombre ?? '').isNotEmpty) Chip(avatar: const Icon(Icons.folder_outlined, size: 18), label: Text(tarea.categoriaNombre!)),
-      if (principal != null) Chip(avatar: const Icon(Icons.business_outlined, size: 18), label: Text(otros > 0 ? '${principal.nombre ?? ''} +$otros' : (principal.nombre ?? ''))),
-      if (persona != null) Chip(avatar: const Icon(Icons.person_outline, size: 18), label: Text(t.tareaAsignadaA(persona.nombre ?? persona.email ?? ''))),
-      if (tarea.estimacionMin != null) Chip(avatar: const Icon(Icons.timer_outlined, size: 18), label: Text(t.tareaEstimadaEn(duracionCorta(tarea.estimacionMin!)))),
-      if ((tarea.categoriaOutlook ?? '').isNotEmpty) Chip(avatar: const Icon(Icons.label_outline, size: 18), label: Text(tarea.categoriaOutlook!)),
+      if ((tarea.categoriaNombre ?? '').isNotEmpty) Pildora(icono: Icons.folder_outlined, texto: tarea.categoriaNombre!),
+      if (principal != null) Pildora(icono: Icons.business_outlined, texto: otros > 0 ? '${principal.nombre ?? ''} +$otros' : (principal.nombre ?? '')),
+      if (persona != null) Pildora(icono: Icons.person_outline, texto: t.tareaAsignadaA(persona.nombre ?? persona.email ?? '')),
+      if (tarea.estimacionMin != null) Pildora(icono: Icons.timer_outlined, texto: t.tareaEstimadaEn(duracionCorta(tarea.estimacionMin!))),
+      if ((tarea.categoriaOutlook ?? '').isNotEmpty) Pildora(icono: Icons.label_outline, texto: tarea.categoriaOutlook!),
     ];
-    return chips.isEmpty ? const SizedBox.shrink() : Wrap(spacing: 8, runSpacing: 4, children: chips);
+    return chips.isEmpty ? const SizedBox.shrink() : Wrap(spacing: 8, runSpacing: 8, children: chips);
   }
-}
-
-class _Titulo extends StatelessWidget {
-  final String texto;
-  const _Titulo(this.texto);
-  @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.only(top: 20, bottom: 4), child: Text(texto, style: Theme.of(context).textTheme.titleSmall));
 }
 
 class _Entrada extends StatelessWidget {

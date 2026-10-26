@@ -34,7 +34,7 @@ class _Cabecera extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 20, bottom: 4),
+        padding: const EdgeInsets.only(bottom: 4),
         child: Text(titulo, style: Theme.of(context).textTheme.titleSmall),
       );
 }
