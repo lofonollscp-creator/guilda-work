@@ -9,6 +9,7 @@ import '../services/push_service.dart';
 import '../services/session_service.dart';
 import '../services/sync_service.dart';
 import '../services/theme_service.dart';
+import '../theme/acento.dart';
 import 'ajustes_servidor_dialog.dart';
 import 'correo_ajustes_screen.dart';
 import 'ia_ajustes_screen.dart';
@@ -22,6 +23,17 @@ import 'selector_idioma_dialog.dart';
 /// antes eran iconos sueltos en la barra superior del dashboard (llegó a
 /// haber 10 a la vez -- ver dashboard_screen.dart) para que esa barra se
 /// quede solo con lo de uso diario.
+String _nombreAcento(AppLocalizations t, String clave) => switch (clave) {
+      'azul' => t.acentoAzul,
+      'turquesa' => t.acentoTurquesa,
+      'violeta' => t.acentoVioleta,
+      'rosa' => t.acentoRosa,
+      'rojo' => t.acentoRojo,
+      'naranja' => t.acentoNaranja,
+      'ambar' => t.acentoAmbar,
+      _ => t.acentoLima,
+    };
+
 class AjustesScreen extends StatelessWidget {
   final ApiClient api;
   final Usuario usuario;
@@ -105,6 +117,26 @@ class AjustesScreen extends StatelessWidget {
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Text(t.ajustesColorBotones, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          AnimatedBuilder(
+            animation: tema,
+            builder: (context, _) => Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Wrap(spacing: 8, runSpacing: 8, children: [
+                for (final e in acentos.entries)
+                  ChoiceChip(
+                    avatar: CircleAvatar(backgroundColor: Color(e.value), radius: 9),
+                    label: Text(_nombreAcento(t, e.key)),
+                    selected: tema.acento == e.key,
+                    onSelected: (_) => tema.cambiarAcento(e.key),
+                  ),
+              ]),
+            ),
+          ),
+          Padding(padding: const EdgeInsets.fromLTRB(16, 6, 16, 0), child: Text(t.ajustesColorAyuda, style: Theme.of(context).textTheme.bodySmall)),
           const SizedBox(height: 8),
           ListTile(
             leading: const Icon(Icons.language),

@@ -193,7 +193,8 @@ void main() {
       await t.pumpWidget(app(() async => EstadoHoy(bandeja(), ahora), []));
       await t.pumpAndSettle();
       expect(find.text('3 pendientes · 2 urgentes'), findsOneWidget);
-      expect(find.text('Tareas  ·  2'), findsOneWidget);
+      expect(find.text('Tareas'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget, reason: 'la cuenta de la sección va en su píldora');
       expect(find.text('Llamar a Acme'), findsOneWidget);
       expect(find.text('ayer'), findsOneWidget); // fecha relativa, una sola forma de escribirla en toda la app
       expect(find.text('hoy 10:30'), findsOneWidget);

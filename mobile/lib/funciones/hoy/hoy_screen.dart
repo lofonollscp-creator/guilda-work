@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
 import '../../diseno/componentes.dart';
+import '../../diseno/estados.dart';
 import '../../diseno/formatos.dart';
+import '../../theme/brand_colors.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../l10n/app_localizations.dart';
 import '../../nucleo/abrir_destino.dart';
@@ -124,20 +126,41 @@ class _Bandeja extends StatelessWidget {
   }
 }
 
+IconData _iconoDeSeccion(String? clave) => switch (clave) {
+      'tareas' => Icons.checklist,
+      'correo' => Icons.mail_outline,
+      'plazos' => Icons.gavel,
+      'vencimientos' => Icons.account_balance_outlined,
+      'mensajes' => Icons.forum_outlined,
+      'visitas' => Icons.home_work_outlined,
+      'traspasos' => Icons.swap_horiz,
+      'ausencias' => Icons.beach_access_outlined,
+      'facturas' || 'contabilizacion' => Icons.receipt_long_outlined,
+      'certificados' => Icons.verified_outlined,
+      _ => Icons.inbox_outlined,
+    };
+
 class _Seccion extends StatelessWidget {
   final SeccionHoy seccion;
   const _Seccion({required this.seccion});
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
     final elementos = seccion.elementos ?? const [];
     final hay = seccion.total ?? elementos.length;
     return Card(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      clipBehavior: Clip.antiAlias,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Text('${seccion.titulo ?? ''}  ·  $hay', style: Theme.of(context).textTheme.titleSmall),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+          child: Row(children: [
+            Icon(_iconoDeSeccion(seccion.clave), size: 20, color: tema.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 8),
+            Expanded(child: Text(seccion.titulo ?? '', style: tema.textTheme.titleSmall)),
+            Pildora(texto: '$hay'),
+          ]),
         ),
         for (final e in elementos) _Elemento(elemento: e),
       ]),
@@ -153,12 +176,14 @@ class _Elemento extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final tema = Theme.of(context);
+    final oscuro = tema.brightness == Brightness.dark;
     final urgencia = elemento.urgencia ?? ElementoHoyUrgencia.info;
-    final (color, etiqueta) = switch (urgencia) {
-      ElementoHoyUrgencia.vencido => (tema.colorScheme.error, t.hoyUrgenciaVencido),
-      ElementoHoyUrgencia.hoy => (tema.colorScheme.tertiary, t.hoyUrgenciaHoy),
-      ElementoHoyUrgencia.proximo => (tema.colorScheme.primary, t.hoyUrgenciaProximo),
-      _ => (tema.colorScheme.outline, ''),
+    // La urgencia va escrita en una píldora (y no solo en el color de una barra): quien no distingue colores también la lee.
+    final (color, etiqueta, icono) = switch (urgencia) {
+      ElementoHoyUrgencia.vencido => (aspectoVencida.color(tema.brightness), t.hoyUrgenciaVencido, Icons.error_outline),
+      ElementoHoyUrgencia.hoy => (oscuro ? BrandColors.warningTextDark : BrandColors.warningTextLight, t.hoyUrgenciaHoy, Icons.today_outlined),
+      ElementoHoyUrgencia.proximo => (null, t.hoyUrgenciaProximo, Icons.date_range_outlined),
+      _ => (null, '', Icons.circle),
     };
     final destino = elemento.destino;
     final fecha = context.formatos.deServidor(elemento.fecha);
@@ -169,9 +194,16 @@ class _Elemento extends ConsumerWidget {
       label: etiqueta.isEmpty ? null : '$etiqueta. ${elemento.titulo ?? ''}',
       child: ListTile(
         minVerticalPadding: 8,
-        leading: Container(width: 6, height: 40, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
-        title: Text(elemento.titulo ?? '', maxLines: 2, overflow: TextOverflow.ellipsis),
-        subtitle: detalle.isEmpty ? null : Text(detalle, maxLines: 2, overflow: TextOverflow.ellipsis),
+        title: Text(elemento.titulo ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: tema.textTheme.titleMedium),
+        subtitle: (etiqueta.isEmpty && detalle.isEmpty)
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                  if (etiqueta.isNotEmpty) Pildora(icono: icono, texto: etiqueta, color: color, fuerte: color != null),
+                  if (detalle.isNotEmpty) Text(detalle, style: tema.textTheme.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                ]),
+              ),
         trailing: puedeCompletar
             ? IconButton(
                 icon: const Icon(Icons.check_circle_outline),

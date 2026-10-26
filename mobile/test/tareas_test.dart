@@ -18,6 +18,8 @@ import 'package:guilda_work_mobile/datos/local/cola_escritura.dart';
 import 'package:guilda_work_mobile/dominio/tarea.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tarea_detalle_screen.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_lista_controlador.dart';
+import 'package:guilda_work_mobile/funciones/hoy/hoy_controlador.dart';
+import 'package:guilda_work_mobile/funciones/hoy/hoy_screen.dart';
 import 'package:guilda_work_mobile/funciones/tareas/calendario_screen.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_repositorio.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_vistas.dart';
@@ -371,6 +373,40 @@ class _SesionConUsuario extends SesionControl {
   EstadoSesion build() => EstadoSesion(fase: FaseSesion.conSesion, usuario: sv.Usuario(id: 1, email: 'a@b.c'));
 }
 
+class _HoyFalso extends HoyControlador {
+  @override
+  Future<EstadoHoy> build() async => EstadoHoy(
+        BandejaHoy.fromJson({
+          'total': 5,
+          'urgentes': 2,
+          'secciones': [
+            {
+              'clave': 'tareas', 'titulo': 'Tareas', 'total': 2, 'urgentes': 1,
+              'elementos': [
+                {'titulo': 'Presentar el 303 de Acme SL', 'detalle': null, 'url': '/tareas/1', 'urgencia': 'vencido', 'fecha': '2026-10-25', 'destino': {'tipo': 'tarea', 'id': 1}, 'acciones': ['abrir', 'completar']},
+                {'titulo': 'Llamar a la gestoría laboral', 'detalle': 'Asignada a ti', 'url': '/tareas/4', 'urgencia': 'info', 'fecha': null, 'destino': {'tipo': 'tarea', 'id': 4}, 'acciones': ['abrir', 'completar']},
+              ],
+            },
+            {
+              'clave': 'vencimientos', 'titulo': 'Vencimientos fiscales', 'total': 2, 'urgentes': 1,
+              'elementos': [
+                {'titulo': '303 · Acme SL', 'detalle': null, 'url': '/fiscal', 'urgencia': 'hoy', 'fecha': '2026-10-26', 'destino': {'tipo': 'vencimiento', 'id': 9}, 'acciones': ['abrir', 'presentar']},
+                {'titulo': '111 · Beta SA', 'detalle': null, 'url': '/fiscal', 'urgencia': 'proximo', 'fecha': '2026-10-30', 'destino': {'tipo': 'vencimiento', 'id': 10}, 'acciones': ['abrir']},
+              ],
+            },
+            {
+              'clave': 'correo', 'titulo': 'Correos sin contestar', 'total': 1, 'urgentes': 0,
+              'elementos': [
+                {'titulo': 'Consulta sobre la renta', 'detalle': 'Marta Ruiz', 'url': '/correo/1', 'urgencia': 'info', 'fecha': '2026-10-24', 'destino': {'tipo': 'correo', 'id': 3}, 'acciones': ['abrir']},
+              ],
+            },
+          ],
+          'destacados': [],
+        }),
+        DateTime.now(),
+      );
+}
+
 class _SesionFija extends SesionControl {
   @override
   EstadoSesion build() => const EstadoSesion(fase: FaseSesion.conSesion);
@@ -700,6 +736,33 @@ void main() {
       expect(repo.registro, contains('transicionar:1:completada:-:1'));
     });
 
+    testWidgets('con la letra al 160 % (accesibilidad) las pantallas de tareas no se desbordan', (t) async {
+      final repo = _RepoFalso()
+        ..paginas = ((a, e, q, o) => [TareaOutlook.fromJson({..._t(1, fecha: '2026-10-20', vencida: true, prioridad: 'alta'), 'asunto': 'Presentar el modelo 303 trimestral de Acme Sociedad Limitada', 'categoria_nombre': 'IVA y otros impuestos indirectos', 'n_comentarios': 3, 'checklist_total': 4, 'checklist_hechas': 2, 'rol': 'asignada'})])
+        ..diaFalso = {'vencidas': [TareaOutlook.fromJson({..._t(1, vencida: true), 'asunto': 'Presentar el modelo 303 trimestral de Acme Sociedad Limitada'})]};
+      await t.binding.setSurfaceSize(const Size(360, 780)); // un móvil pequeño
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      await t.pumpWidget(ProviderScope(
+        overrides: _over(repo),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          theme: AppTheme.light,
+          builder: (c, h) => MediaQuery(data: MediaQuery.of(c).copyWith(textScaler: const TextScaler.linear(1.6)), child: h!),
+          home: const TareasInicio(),
+        ),
+      ));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull, reason: 'Lista');
+      await t.tap(find.text('Mi día'));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull, reason: 'Mi día');
+      await t.tap(find.text('Tablero'));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull, reason: 'Tablero');
+    });
+
     testWidgets('cada fila enseña lo mismo que la web: proyecto, comentarios, checklist, espera y quién la asignó', (t) async {
       final repo = _RepoFalso()
         ..paginas = (a, e, q, o) => [
@@ -955,6 +1018,41 @@ void main() {
           await capturar(t, clave, '${nombre}_$sufijo');
         });
       }
+      testWidgets('captura lista violeta $sufijo', (t) async {
+        if (carpeta == null) return;
+        final clave = GlobalKey();
+        t.view.physicalSize = const Size(1170, 2532);
+        t.view.devicePixelRatio = 3;
+        addTearDown(t.view.reset);
+        await t.pumpWidget(ProviderScope(
+          overrides: _over(repoDeEjemplo()),
+          child: RepaintBoundary(
+            key: clave,
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('es'),
+              theme: AppTheme.claro('violeta'),
+              darkTheme: AppTheme.oscuro('violeta'),
+              themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+              home: const TareasInicio(),
+            ),
+          ),
+        ));
+        await t.pumpAndSettle();
+        await capturar(t, clave, 'lista_violeta_$sufijo');
+      });
+      testWidgets('captura hoy $sufijo', (t) async {
+        if (carpeta == null) return;
+        final clave = GlobalKey();
+        t.view.physicalSize = const Size(1170, 2532);
+        t.view.devicePixelRatio = 3;
+        addTearDown(t.view.reset);
+        await t.pumpWidget(conTema(const HoyScreen(), [..._over(_RepoFalso()), hoyProvider.overrideWith(_HoyFalso.new)], oscuro: oscuro, clave: clave));
+        await t.pumpAndSettle();
+        await capturar(t, clave, 'hoy_$sufijo');
+      });
       testWidgets('captura ficha $sufijo', (t) async {
         if (carpeta == null) return;
         final clave = GlobalKey();

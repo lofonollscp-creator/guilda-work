@@ -705,5 +705,15 @@
   "cargaTu": "you",
   "cargaYMas": "and {n} more",
   "tareasAnterior": "Previous",
-  "tareasSiguiente": "Next"
+  "tareasSiguiente": "Next",
+  "ajustesColorBotones": "Button colour",
+  "ajustesColorAyuda": "Only changes on this phone. Every colour reads well in light and dark themes.",
+  "acentoLima": "Lime",
+  "acentoAzul": "Blue",
+  "acentoTurquesa": "Teal",
+  "acentoVioleta": "Violet",
+  "acentoRosa": "Pink",
+  "acentoRojo": "Red",
+  "acentoNaranja": "Orange",
+  "acentoAmbar": "Amber"
 }

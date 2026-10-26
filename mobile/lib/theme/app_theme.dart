@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'acento.dart';
 import 'brand_colors.dart';
 
 /// Sistema de diseño de la app móvil — construye ThemeData explícitamente a
@@ -45,10 +46,14 @@ class AppTheme {
         fontFeatures: const [FontFeature.tabularFigures()],
       );
 
-  static ThemeData get light => _construir(
+  /// Tema claro. `acento`: la clave del color que la persona ha elegido (ver `acento.dart`); `lima` es el de Guilda Work.
+  static ThemeData claro([String acento = 'lima']) {
+    final c = acento == 'lima' ? null : coloresDeAcento(acento);
+    return _construir(
         brightness: Brightness.light,
-        primary: BrandColors.primaryLight,
-        primaryText: BrandColors.primaryTextLight,
+        primary: c?.primary ?? BrandColors.primaryLight,
+        primaryText: c?.textoClaro ?? BrandColors.primaryTextLight,
+        onAccent: c?.onAccent ?? BrandColors.onAccent,
         bg: BrandColors.bgLight,
         surface: BrandColors.surfaceLight,
         border: BrandColors.borderLight,
@@ -57,11 +62,15 @@ class AppTheme {
         danger: BrandColors.dangerLight,
         warning: BrandColors.warningLight,
       );
+  }
 
-  static ThemeData get dark => _construir(
+  static ThemeData oscuro([String acento = 'lima']) {
+    final c = acento == 'lima' ? null : coloresDeAcento(acento);
+    return _construir(
         brightness: Brightness.dark,
-        primary: BrandColors.primaryDark,
-        primaryText: BrandColors.primaryTextDark,
+        primary: c?.primary ?? BrandColors.primaryDark,
+        primaryText: c?.textoOscuro ?? BrandColors.primaryTextDark,
+        onAccent: c?.onAccent ?? BrandColors.onAccent,
         bg: BrandColors.bgDark,
         surface: BrandColors.surfaceDark,
         border: BrandColors.borderDark,
@@ -70,11 +79,16 @@ class AppTheme {
         danger: BrandColors.dangerDark,
         warning: BrandColors.warningDark,
       );
+  }
+
+  static ThemeData get light => claro();
+  static ThemeData get dark => oscuro();
 
   static ThemeData _construir({
     required Brightness brightness,
     required Color primary,
     required Color primaryText,
+    required Color onAccent,
     required Color bg,
     required Color surface,
     required Color border,
@@ -86,11 +100,11 @@ class AppTheme {
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: primary,
-      onPrimary: BrandColors.onAccent,
+      onPrimary: onAccent,
       primaryContainer: primary,
-      onPrimaryContainer: BrandColors.onAccent,
+      onPrimaryContainer: onAccent,
       secondary: primary,
-      onSecondary: BrandColors.onAccent,
+      onSecondary: onAccent,
       error: danger,
       onError: Colors.white,
       surface: surface,
@@ -100,7 +114,7 @@ class AppTheme {
       outline: border,
       outlineVariant: border.withValues(alpha: 0.6),
       tertiary: warning,
-      onTertiary: BrandColors.onAccent,
+      onTertiary: onAccent,
     );
 
     final base = brightness == Brightness.light ? ThemeData.light() : ThemeData.dark();
@@ -129,7 +143,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: BrandColors.onAccent,
+          foregroundColor: onAccent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall)),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           minimumSize: const Size(48, 48),
@@ -152,7 +166,7 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
         indicatorColor: primary,
-        iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(color: s.contains(WidgetState.selected) ? BrandColors.onAccent : textMuted)),
+        iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(color: s.contains(WidgetState.selected) ? onAccent : textMuted)),
         labelTextStyle: WidgetStateProperty.resolveWith((s) => textTheme.labelMedium?.copyWith(color: s.contains(WidgetState.selected) ? text : textMuted)),
       ),
       // Selección «tonal»: un tinte del acento con el texto de siempre, y borde del acento. Un lima sólido con texto claro (el de los chips antiguos en oscuro)
@@ -184,7 +198,7 @@ class AppTheme {
         shape: const CircleBorder(),
         side: BorderSide(color: textMuted, width: 1.6),
         fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? primary : Colors.transparent),
-        checkColor: const WidgetStatePropertyAll(BrandColors.onAccent),
+        checkColor: WidgetStatePropertyAll(onAccent),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: surface,
@@ -197,7 +211,7 @@ class AppTheme {
       // lima brillante): salía un icono casi blanco sobre lima, contraste
       // roto (bug encontrado en vivo). Sin este override, Material 3 ya
       // resuelve bien cada variante a partir de colorScheme (onSurface para
-      // el icono normal, onPrimary/BrandColors.onAccent para `.filled`).
+      // el icono normal, onPrimary/onAccent para `.filled`).
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
@@ -214,7 +228,7 @@ class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: primary,
-        foregroundColor: BrandColors.onAccent,
+        foregroundColor: onAccent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusLarge)),
       ),
       dividerTheme: DividerThemeData(color: border, space: 1),

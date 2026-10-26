@@ -1128,5 +1128,15 @@
     }
   },
   "tareasAnterior": "Anterior",
-  "tareasSiguiente": "Siguiente"
+  "tareasSiguiente": "Siguiente",
+  "ajustesColorBotones": "Color de los botones",
+  "ajustesColorAyuda": "Solo cambia en este móvil. Todos los colores se leen bien con el tema claro y el oscuro.",
+  "acentoLima": "Lima",
+  "acentoAzul": "Azul",
+  "acentoTurquesa": "Turquesa",
+  "acentoVioleta": "Violeta",
+  "acentoRosa": "Rosa",
+  "acentoRojo": "Rojo",
+  "acentoNaranja": "Naranja",
+  "acentoAmbar": "Ámbar"
 }

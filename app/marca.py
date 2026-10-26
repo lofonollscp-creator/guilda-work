@@ -46,20 +46,26 @@ def _mezclar(color: str, con: str, peso: float) -> str:
     return "#" + "".join(f"{round(x * (1 - peso) + y * peso):02x}" for x, y in zip(c, o))
 
 
+# Los fondos reales de la interfaz (--bg claro y --surface oscuro): el acento como texto tiene que leerse sobre ellos, no sobre blanco o negro puros
+# (sobre el gris claro de la página un turquesa «de 4,5:1 sobre blanco» se quedaba en 4,25:1).
+_LUM_FONDO_CLARO = 0.9355      # #f7f8fa
+_LUM_FONDO_OSCURO = 0.0056     # #101113
+
+
 def colores_derivados(color: str) -> dict:
     """Las variables de color que usa la interfaz a partir del acento: texto sobre el acento (negro o blanco, el que más contraste dé), versión oscura para hover y el acento como texto en
-    tema claro (oscurecido hasta tener al menos 4,5:1 sobre blanco) y en tema oscuro (aclarado hasta tener al menos 4,5:1 sobre casi negro)."""
+    tema claro (oscurecido hasta tener al menos 4,5:1 sobre el fondo gris claro de la página) y en tema oscuro (aclarado hasta tener al menos 4,5:1 sobre las tarjetas oscuras)."""
     color = color.lower()
     lum = _luminancia(color)
     sobre = "#0a0a0a" if _contraste(lum, _luminancia("#0a0a0a")) >= _contraste(lum, 1.0) else "#ffffff"
     texto_claro = color
     for _ in range(12):
-        if _contraste(_luminancia(texto_claro), 1.0) >= 4.5:
+        if _contraste(_luminancia(texto_claro), _LUM_FONDO_CLARO) >= 4.5:
             break
         texto_claro = _mezclar(texto_claro, "#000000", 0.15)
     texto_oscuro = color
     for _ in range(12):
-        if _contraste(_luminancia(texto_oscuro), 0.004) >= 4.5:
+        if _contraste(_luminancia(texto_oscuro), _LUM_FONDO_OSCURO) >= 4.5:
             break
         texto_oscuro = _mezclar(texto_oscuro, "#ffffff", 0.15)
     return {"primary": color, "primary_dark": _mezclar(color, "#000000", 0.15), "on_accent": sobre, "texto_claro": texto_claro, "texto_oscuro": texto_oscuro}

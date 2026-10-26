@@ -133,8 +133,8 @@ class _GuildaWorkAppState extends ConsumerState<GuildaWorkApp> with WidgetsBindi
           routerConfig: router,
           builder: (context, hijo) => _ConBloqueo(hijo: hijo ?? const SizedBox()),
           title: 'Guilda Work',
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppTheme.claro(_s.tema.acento),
+          darkTheme: AppTheme.oscuro(_s.tema.acento),
           themeMode: _s.tema.modo,
           locale: _s.locale.locale,
           localizationsDelegates: const [
