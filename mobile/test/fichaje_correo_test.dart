@@ -15,6 +15,11 @@ import 'package:guilda_work_mobile/models/models.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
 import 'package:guilda_work_mobile/screens/correo_bandeja_screen.dart';
 import 'package:guilda_work_mobile/screens/correo_mensaje_screen.dart';
+import 'package:guilda_work_mobile/screens/ia_chat_screen.dart';
+import 'package:guilda_work_mobile/services/locale_service.dart';
+import 'package:guilda_work_mobile/nucleo/paginas.dart';
+import 'package:guilda_work_mobile/nucleo/shell.dart';
+import 'package:go_router/go_router.dart';
 import 'package:guilda_work_mobile/screens/fichaje_screen.dart';
 import 'package:guilda_work_mobile/services/api_client.dart';
 import 'package:guilda_work_mobile/services/session_service.dart';
@@ -49,6 +54,16 @@ class _ApiFalsa extends ApiClient {
 
   final List<String> acciones = [];
   Mensaje? abierto;
+  List<IaMensaje> chat = [];
+  final List<String> enviadosIa = [];
+
+  @override
+  Future<List<IaMensaje>> listarMensajesIa() async => chat;
+  @override
+  Stream<IaEventoStream> enviarMensajeIaStream(String texto) {
+    enviadosIa.add(texto);
+    return const Stream.empty();
+  }
 
   @override
   Future<Mensaje> obtenerMensaje(int id) async => abierto!;
@@ -81,6 +96,11 @@ class _AccionesFalsas extends AccionesFichaje {
     marcas.add(tipo);
     return ResultadoAccion.enviada({'entrada': 'dentro', 'pausa_inicio': 'en_pausa', 'pausa_fin': 'dentro', 'salida': 'fuera'}[tipo]!);
   }
+}
+
+class _SesionConUsuario extends SesionControl {
+  @override
+  EstadoSesion build() => EstadoSesion(fase: FaseSesion.conSesion, usuario: Usuario(id: 1, email: 'a@b.c'));
 }
 
 class _SesionFija extends SesionControl {
@@ -217,6 +237,195 @@ void main() {
       await t.pumpAndSettle();
       expect(api.acciones, ['destacar:5:true']);
     });
+  });
+
+  // La voz usa plugins nativos que en un test no existen: se contestan en blanco (el chat tiene que seguir funcionando sin voz).
+  void sinVoz() {
+    final m = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    for (final canal in ['flutter_tts', 'plugin.csdcorp.com/speech_to_text']) {
+      m.setMockMethodCallHandler(MethodChannel(canal), (_) async => null);
+    }
+  }
+
+  IaMensaje iaMsg(int id, String rol, String? contenido, {String? calls, String? callId, String? herramienta}) =>
+      IaMensaje(id: id, rol: rol, contenido: contenido, toolCallsJson: calls, toolCallId: callId, nombreHerramienta: herramienta, creadoEn: '2026-10-26T09:00');
+
+  group('Asistente IA', () {
+    testWidgets('vacío: sugerencias como tarjetas y un toque envía', (t) async {
+      sinVoz();
+      final api = _ApiFalsa();
+      await t.pumpWidget(_app(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(_SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.byIcon(Icons.lightbulb_outline), findsNWidgets(4));
+      await t.tap(find.byIcon(Icons.lightbulb_outline).first);
+      await t.pumpAndSettle();
+      expect(api.enviadosIa.length, 1);
+    });
+
+    testWidgets('con historial: lo tuyo a la derecha con el acento, lo del asistente en tarjeta, lo que hizo por detrás en píldora, y la acción pendiente pide confirmar', (t) async {
+      sinVoz();
+      final api = _ApiFalsa()
+        ..chat = [
+          iaMsg(1, 'user', 'Crea una tarea para llamar a Acme mañana'),
+          iaMsg(2, 'assistant', 'Voy a **crear** la tarea.', calls: '[{"id":"c1","function":{"name":"crear_tarea","arguments":"{\\"asunto\\":\\"Llamar a Acme\\",\\"fecha\\":\\"2026-10-27\\"}"}}]'),
+        ];
+      await t.pumpWidget(_app(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(_SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('Crea una tarea para llamar a Acme mañana'), findsOneWidget);
+      expect(find.textContaining('crear la tarea'), findsOneWidget);
+      expect(find.textContaining('crear_tarea'), findsWidgets);
+      expect(find.text('asunto'), findsOneWidget);
+      expect(find.text('Llamar a Acme'), findsOneWidget);
+      expect(find.text('No'), findsOneWidget);
+      expect(find.text('Sí, hazlo'), findsOneWidget);
+    });
+
+    testWidgets('lo que hizo el asistente por detrás sale como píldora, y un fallo lleva su icono', (t) async {
+      sinVoz();
+      final api = _ApiFalsa()
+        ..chat = [
+          iaMsg(1, 'tool', '{"ok": true}', callId: 'c1', herramienta: 'crear_tarea'),
+          iaMsg(2, 'tool', '{"error": "sin permiso"}', callId: 'c2', herramienta: 'borrar_tarea'),
+        ];
+      await t.pumpWidget(_app(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(_SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.byIcon(Icons.build_circle_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    });
+  });
+
+  group('Barra inferior y «Más»', () {
+    GoRouter enrutador() => GoRouter(initialLocation: '/a', routes: [
+          StatefulShellRoute.indexedStack(
+            builder: (c, e, shell) => ShellApp(shell: shell),
+            branches: [
+              for (final r in ['a', 'b', 'c', 'd', 'e'])
+                StatefulShellBranch(routes: [GoRoute(path: '/$r', builder: (c, e) => Center(child: Text('Pantalla $r')))]),
+            ],
+          ),
+        ]);
+
+    testWidgets('cinco destinos con su etiqueta siempre visible; tocar uno cambia de pestaña', (t) async {
+      final r = enrutador();
+      await t.pumpWidget(ProviderScope(
+        overrides: [estadoSesionProvider.overrideWith(_SesionFija.new)],
+        child: MaterialApp.router(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('es'),
+          theme: AppTheme.light,
+          routerConfig: r,
+        ),
+      ));
+      await t.pumpAndSettle();
+      for (final etiqueta in ['Hoy', 'Tareas', 'Correo', 'Fichaje', 'Más']) {
+        expect(find.text(etiqueta), findsOneWidget, reason: etiqueta);
+      }
+      expect(find.text('Pantalla a'), findsOneWidget);
+      await t.tap(find.text('Correo'));
+      await t.pumpAndSettle();
+      expect(find.text('Pantalla c'), findsOneWidget);
+    });
+
+    testWidgets('«Más» agrupa los accesos en tarjetas con su icono', (t) async {
+      final paginas = PaginasApp(
+        login: (_) => const SizedBox(),
+        inicio: (_, _) => const SizedBox(),
+        tareas: (_) => const SizedBox(),
+        correo: (_) => const SizedBox(),
+        fichaje: (_, _) => const SizedBox(),
+        accesosMas: (_, _) => const [AccesoMas(Icons.apps, ClaveEtiqueta.herramientas, null), AccesoMas(Icons.settings_outlined, ClaveEtiqueta.ajustes, null)],
+      );
+      await t.pumpWidget(_app(const MasScreen(), [estadoSesionProvider.overrideWith(_SesionConUsuario.new), paginasProvider.overrideWithValue(paginas)]));
+      await t.pumpAndSettle();
+      expect(find.text('Ajustes'), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsWidgets);
+    });
+  });
+
+  group('capturas del diseño (Asistente y barra)', () {
+    for (final oscuro in [false, true]) {
+      final sufijo = oscuro ? 'oscuro' : 'claro';
+      testWidgets('captura chat $sufijo', (t) async {
+        if (carpeta == null) return;
+        sinVoz();
+        final clave = GlobalKey();
+        t.view.physicalSize = const Size(1170, 2532);
+        t.view.devicePixelRatio = 3;
+        addTearDown(t.view.reset);
+        final api = _ApiFalsa()
+          ..chat = [
+            iaMsg(1, 'user', '¿Qué tengo pendiente hoy?'),
+            iaMsg(2, 'assistant', 'Tienes **2 vencimientos** y una tarea vencida: el 303 de Acme SL. ¿Quieres que la pase a mañana?'),
+            iaMsg(3, 'user', 'Sí, y crea una tarea para llamar a Acme'),
+            iaMsg(4, 'tool', '{"ok": true}', callId: 'c0', herramienta: 'mover_tarea'),
+            iaMsg(5, 'assistant', 'Hecho. Voy a crear la tarea.', calls: '[{"id":"c1","function":{"name":"crear_tarea","arguments":"{\\"asunto\\":\\"Llamar a Acme\\",\\"fecha_vencimiento\\":\\"2026-10-27\\"}"}}]'),
+          ];
+        await t.pumpWidget(_app(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(_SesionFija.new)], oscuro: oscuro, clave: clave));
+        await t.pumpAndSettle();
+        await capturar(t, clave, 'chat_$sufijo');
+      });
+      testWidgets('captura chat vacío $sufijo', (t) async {
+        if (carpeta == null) return;
+        sinVoz();
+        final clave = GlobalKey();
+        t.view.physicalSize = const Size(1170, 2532);
+        t.view.devicePixelRatio = 3;
+        addTearDown(t.view.reset);
+        await t.pumpWidget(_app(IaChatScreen(api: _ApiFalsa(), locale: LocaleService()), [estadoSesionProvider.overrideWith(_SesionFija.new)], oscuro: oscuro, clave: clave));
+        await t.pumpAndSettle();
+        await capturar(t, clave, 'chat_vacio_$sufijo');
+      });
+      testWidgets('captura más $sufijo', (t) async {
+        if (carpeta == null) return;
+        final clave = GlobalKey();
+        t.view.physicalSize = const Size(1170, 2532);
+        t.view.devicePixelRatio = 3;
+        addTearDown(t.view.reset);
+        final paginas = PaginasApp(
+          login: (_) => const SizedBox(),
+          inicio: (_, _) => const SizedBox(),
+          tareas: (_) => const SizedBox(),
+          correo: (_) => const SizedBox(),
+          fichaje: (_, _) => const SizedBox(),
+          accesosMas: (_, _) => const [
+            AccesoMas(Icons.folder_open_outlined, ClaveEtiqueta.panel, null),
+            AccesoMas(Icons.apps, ClaveEtiqueta.herramientas, null),
+            AccesoMas(Icons.confirmation_number_outlined, ClaveEtiqueta.tiquets, null),
+            AccesoMas(Icons.smart_toy_outlined, ClaveEtiqueta.asistenteIa, null),
+            AccesoMas(Icons.calendar_month_outlined, ClaveEtiqueta.fiscal, null),
+            AccesoMas(Icons.settings_outlined, ClaveEtiqueta.ajustes, null),
+          ],
+        );
+        final r = GoRouter(initialLocation: '/e', routes: [
+          StatefulShellRoute.indexedStack(
+            builder: (c, e, shell) => ShellApp(shell: shell),
+            branches: [
+              for (final x in ['a', 'b', 'c', 'd']) StatefulShellBranch(routes: [GoRoute(path: '/$x', builder: (c, e) => const SizedBox())]),
+              StatefulShellBranch(routes: [GoRoute(path: '/e', builder: (c, e) => const MasScreen())]),
+            ],
+          ),
+        ]);
+        await t.pumpWidget(ProviderScope(
+          overrides: [estadoSesionProvider.overrideWith(_SesionConUsuario.new), paginasProvider.overrideWithValue(paginas)],
+          child: RepaintBoundary(
+            key: clave,
+            child: MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('es'),
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+              routerConfig: r,
+            ),
+          ),
+        ));
+        await t.pumpAndSettle();
+        await capturar(t, clave, 'mas_$sufijo');
+      });
+    }
   });
 
   group('capturas del diseño (Fichaje y Correo)', () {

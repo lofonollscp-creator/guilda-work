@@ -691,7 +691,7 @@
   "iaDictar": "Dictar mensaje",
   "iaResponderConfirmacion": "Responde a la confirmación de arriba primero…",
   "iaEscribeMensaje": "Escribe un mensaje…",
-  "iaToolUso": "🔧 usó {herramienta}",
+  "iaToolUso": "usó {herramienta}",
   "@iaToolUso": {
     "placeholders": {
       "herramienta": {
@@ -699,7 +699,7 @@
       }
     }
   },
-  "iaToolError": "⚠️ {herramienta}: {error}",
+  "iaToolError": "{herramienta}: {error}",
   "@iaToolError": {
     "placeholders": {
       "herramienta": {
@@ -710,7 +710,7 @@
       }
     }
   },
-  "iaToolRechazada": "❌ {herramienta} (rechazada)",
+  "iaToolRechazada": "{herramienta} (rechazada)",
   "@iaToolRechazada": {
     "placeholders": {
       "herramienta": {

@@ -16,9 +16,13 @@ class ShellApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
     return Scaffold(
       body: shell,
-      bottomNavigationBar: NavigationBar(
+      // Un filo arriba separa la barra del contenido (sin sombra: en oscuro no se veía y en claro pesaba).
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(border: Border(top: BorderSide(color: tema.colorScheme.outlineVariant))),
+        child: NavigationBar(
         selectedIndex: shell.currentIndex,
         // Pulsar la pestaña activa vuelve a su raíz.
         onDestinationSelected: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
@@ -29,6 +33,7 @@ class ShellApp extends StatelessWidget {
           NavigationDestination(icon: const Icon(Icons.punch_clock_outlined), selectedIcon: const Icon(Icons.punch_clock), label: t.navFichaje),
           NavigationDestination(icon: const Icon(Icons.menu), label: t.navMas),
         ],
+        ),
       ),
     );
   }
@@ -57,23 +62,27 @@ class MasScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(t.masTitulo)),
       body: ListView(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
         children: [
           if (estado.capacidades.variosDespachos)
-            ListTile(
-              leading: const Icon(Icons.business_outlined),
-              title: Text(t.despachoActivoTitulo),
-              subtitle: Text(estado.capacidades.despachoPorId(estado.despacho)?.nombre ?? ''),
-              trailing: const Icon(Icons.unfold_more),
-              onTap: () => _elegirDespacho(context, ref),
-            ),
-          for (final a in accesos)
-            ListTile(
-              leading: Icon(a.icono),
-              title: Text(_etiqueta(t, a.etiqueta)),
-              onTap: () => a.construir != null
-                  ? Navigator.of(context).push(MaterialPageRoute(builder: a.construir!))
-                  : a.alPulsar?.call(),
-            ),
+            _TarjetaMas(children: [
+              _FilaMas(
+                icono: Icons.business_outlined,
+                titulo: t.despachoActivoTitulo,
+                subtitulo: estado.capacidades.despachoPorId(estado.despacho)?.nombre ?? '',
+                final_: const Icon(Icons.unfold_more),
+                alPulsar: () => _elegirDespacho(context, ref),
+              ),
+            ]),
+          _TarjetaMas(children: [
+            for (final a in accesos)
+              _FilaMas(
+                icono: a.icono,
+                titulo: _etiqueta(t, a.etiqueta),
+                final_: const Icon(Icons.chevron_right),
+                alPulsar: () => a.construir != null ? Navigator.of(context).push(MaterialPageRoute(builder: a.construir!)) : a.alPulsar?.call(),
+              ),
+          ]),
         ],
       ),
     );
@@ -98,5 +107,55 @@ class MasScreen extends ConsumerWidget {
       ),
     );
     if (id != null) await ref.read(estadoSesionProvider.notifier).cambiarDespacho(id);
+  }
+}
+
+/// Un grupo de accesos en una tarjeta, con filo entre ellos.
+class _TarjetaMas extends StatelessWidget {
+  final List<Widget> children;
+  const _TarjetaMas({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: tema.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: [
+          for (var i = 0; i < children.length; i++) ...[if (i > 0) Divider(height: 1, indent: 64, color: tema.colorScheme.outlineVariant), children[i]],
+        ]),
+      ),
+    );
+  }
+}
+
+/// Un acceso de «Más»: su icono en un círculo con el tinte del acento, el nombre y, a la derecha, una flecha.
+class _FilaMas extends StatelessWidget {
+  final IconData icono;
+  final String titulo;
+  final String? subtitulo;
+  final Widget? final_;
+  final VoidCallback alPulsar;
+  const _FilaMas({required this.icono, required this.titulo, this.subtitulo, this.final_, required this.alPulsar});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return ListTile(
+      minTileHeight: 56,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(color: tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.22 : 0.30), shape: BoxShape.circle),
+        child: ExcludeSemantics(child: Icon(icono, size: 22, color: tema.colorScheme.onSurface)),
+      ),
+      title: Text(titulo, style: tema.textTheme.titleSmall),
+      subtitle: subtitulo == null ? null : Text(subtitulo!),
+      trailing: final_,
+      onTap: alPulsar,
+    );
   }
 }

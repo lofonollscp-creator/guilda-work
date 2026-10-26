@@ -69,7 +69,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
   void initState() {
     super.initState();
     _cargarHistorial();
-    _inicializarVoz();
+    _inicializarVoz().catchError((_) {}); // la voz es un extra: si el móvil no la tiene o falla al arrancar, el chat sigue
   }
 
   @override
@@ -483,41 +483,43 @@ class _IaChatScreenState extends State<IaChatScreen> {
     }
     final huboBurbujaViva = _textoVivo != null;
     if (_mensajes.isEmpty && !_enviando) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.smart_toy_outlined, size: 48, color: Theme.of(context).colorScheme.outline),
-              const SizedBox(height: 12),
-              Text(
-                AppLocalizations.of(context).iaVacioTexto,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Text(AppLocalizations.of(context).iaSugerenciasTitulo, style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 8),
-              // Sugerencias como chips: un toque y se envía (no hay que saber qué se le puede pedir).
-              Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
-                for (final s in [
-                  AppLocalizations.of(context).iaSugerencia1,
-                  AppLocalizations.of(context).iaSugerencia2,
-                  AppLocalizations.of(context).iaSugerencia3,
-                  AppLocalizations.of(context).iaSugerencia4,
-                ])
-                  ActionChip(
-                    label: Text(s),
-                    onPressed: (_enviando || _pendiente != null) ? null : () {
-                      _controller.text = s;
-                      _enviarTexto();
-                    },
-                  ),
-              ]),
-            ],
+      final t = AppLocalizations.of(context);
+      final tema = Theme.of(context);
+      return ListView(padding: const EdgeInsets.fromLTRB(16, 32, 16, 16), children: [
+        Center(
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(color: tema.colorScheme.primary.withValues(alpha: 0.18), shape: BoxShape.circle),
+            child: ExcludeSemantics(child: Icon(Icons.auto_awesome, size: 34, color: tema.colorScheme.onSurface)),
           ),
         ),
-      );
+        const SizedBox(height: 16),
+        Text(t.iaVacioTexto, textAlign: TextAlign.center, style: tema.textTheme.titleMedium),
+        const SizedBox(height: 24),
+        Text(t.iaSugerenciasTitulo, style: tema.textTheme.labelLarge),
+        const SizedBox(height: 8),
+        // Las sugerencias son tarjetas de ancho completo: un toque y se envía (no hay que saber qué se le puede pedir).
+        for (final sugerencia in [t.iaSugerencia1, t.iaSugerencia2, t.iaSugerencia3, t.iaSugerencia4])
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Material(
+              color: tema.colorScheme.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                leading: const Icon(Icons.lightbulb_outline),
+                title: Text(sugerencia),
+                trailing: const Icon(Icons.arrow_upward, size: 18),
+                enabled: !(_enviando || _pendiente != null),
+                onTap: () {
+                  _controller.text = sugerencia;
+                  _enviarTexto();
+                },
+              ),
+            ),
+          ),
+      ]);
     }
     return ListView.builder(
       controller: _scroll,
@@ -532,41 +534,46 @@ class _IaChatScreenState extends State<IaChatScreen> {
     );
   }
 
-  Widget _burbujaPensando(BuildContext context) {
+  /// La burbuja del asistente: una tarjeta con su icono, a la izquierda; la de quien escribe va rellena con el acento y a la derecha.
+  Widget _burbujaAsistente(BuildContext context, Widget contenido) {
+    final tema = Theme.of(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.88),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
+          color: tema.colorScheme.surface,
+          border: Border.all(color: tema.colorScheme.outlineVariant),
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(4), topRight: Radius.circular(18), bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18)),
         ),
-        child: Text(AppLocalizations.of(context).iaPensando, style: TextStyle(fontStyle: FontStyle.italic)),
+        child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(padding: const EdgeInsets.only(top: 2, right: 8), child: ExcludeSemantics(child: Icon(Icons.auto_awesome, size: 18, color: tema.colorScheme.onSurfaceVariant))),
+          Flexible(child: contenido),
+        ]),
       ),
+    );
+  }
+
+  Widget _burbujaPensando(BuildContext context) {
+    return _burbujaAsistente(
+      context,
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+        const SizedBox(width: 10),
+        Text(AppLocalizations.of(context).iaPensando, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+      ]),
     );
   }
 
   /// La respuesta del asistente pintándose en directo mientras llega en
   /// streaming -- texto plano (sin markdown) hasta que el evento "mensaje"
   /// la sustituya por la burbuja final ya formateada (ver _burbuja).
-  Widget _burbujaViva(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(_textoVivo ?? ''),
-      ),
-    );
-  }
+  Widget _burbujaViva(BuildContext context) => _burbujaAsistente(context, Text(_textoVivo ?? ''));
 
   Widget _burbuja(BuildContext context, IaMensaje m) {
+    final tema = Theme.of(context);
     switch (m.rol) {
       case 'user':
         return Align(
@@ -576,118 +583,101 @@ class _IaChatScreenState extends State<IaChatScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              color: tema.colorScheme.primary,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(18), topRight: Radius.circular(4), bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18)),
             ),
-            // Color de texto explícito: primaryContainer es el lima brillante
-            // de marca en los dos temas, el texto por defecto (heredado del
-            // tema, casi blanco en oscuro) quedaba casi ilegible encima
-            // (bug encontrado en vivo) -- BrandColors.onAccent es el mismo
-            // "negro sobre lima" que ya usan los botones primarios.
-            child: Text(m.contenido ?? '', style: const TextStyle(color: BrandColors.onAccent)),
+            // El texto va con el color que toca sobre el acento elegido (negro o blanco según contraste), no con el del tema.
+            child: Text(m.contenido ?? '', style: TextStyle(color: tema.colorScheme.onPrimary)),
           ),
         );
       case 'tool':
+        // Lo que hizo el asistente por detrás, como una píldora discreta (con icono: un fallo no se distingue solo por el color).
+        final texto = _textoMensajeTool(AppLocalizations.of(context), m);
+        final fallo = (m.contenido ?? '').contains('"error"');
         return Align(
           alignment: Alignment.center,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text(
-              _textoMensajeTool(AppLocalizations.of(context), m),
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.outline,
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            child: Pildora(icono: fallo ? Icons.error_outline : Icons.build_circle_outlined, texto: texto, color: fallo ? (tema.brightness == Brightness.dark ? BrandColors.dangerTextDark : BrandColors.dangerTextLight) : null),
           ),
         );
       case 'assistant':
       default:
         if ((m.contenido ?? '').isEmpty) return const SizedBox.shrink();
-        return Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: SelectableText.rich(TextSpan(children: _spansMarkdownLite(context, m.contenido ?? ''))),
-          ),
-        );
+        return _burbujaAsistente(context, SelectableText.rich(TextSpan(children: _spansMarkdownLite(context, m.contenido ?? ''))));
     }
   }
 
   Widget _tarjetaPendiente(BuildContext context) {
     final pendiente = _pendiente!;
-    return Card(
+    final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    final aviso = tema.brightness == Brightness.dark ? BrandColors.warningDark : BrandColors.warningLight;
+    return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(AppLocalizations.of(context).iaEjecutarPregunta(pendiente.herramienta), style: const TextStyle(fontWeight: FontWeight.bold)),
-            if (pendiente.argumentos.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
+      decoration: BoxDecoration(
+        color: tema.colorScheme.surface,
+        border: Border.all(color: aviso, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            ExcludeSemantics(child: Icon(Icons.help_outline, color: aviso)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(t.iaEjecutarPregunta(pendiente.herramienta), style: tema.textTheme.titleSmall)),
+          ]),
+          if (pendiente.argumentos.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            // Lo que va a hacer, como lista de «campo: valor» (antes, un volcado en letra de máquina).
+            for (final e in pendiente.argumentos.entries)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(e.key, style: tema.textTheme.labelSmall),
+                  Text('${e.value}', style: tema.textTheme.bodyMedium),
+                ]),
+              ),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _confirmando ? null : () => _confirmarStream(false),
+                  child: const Text('No'),
                 ),
-                child: Text(
-                  pendiente.argumentos.entries.map((e) => '${e.key}: ${e.value}').join('\n'),
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppButton(
+                  texto: t.iaSiHazlo,
+                  cargando: _confirmando,
+                  onPressed: () => _confirmarStream(true),
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _confirmando ? null : () => _confirmarStream(false),
-                    child: const Text('No'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppButton(
-                    texto: AppLocalizations.of(context).iaSiHazlo,
-                    cargando: _confirmando,
-                    onPressed: () => _confirmarStream(true),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _cajaEntrada(BuildContext context) {
     final bloqueado = _pendiente != null;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+    final tema = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(color: tema.colorScheme.surface, border: Border(top: BorderSide(color: tema.colorScheme.outlineVariant))),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
       child: Row(
         children: [
           if (_vozDisponible) ...[
             IconButton.outlined(
               icon: Icon(_escuchando ? Icons.mic : Icons.mic_none),
               tooltip: AppLocalizations.of(context).iaDictar,
-              style: _escuchando
-                  ? IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                      foregroundColor: Colors.white,
-                    )
-                  : null,
+              style: _escuchando ? IconButton.styleFrom(backgroundColor: tema.colorScheme.error, foregroundColor: Colors.white) : null,
               onPressed: (bloqueado || _enviando) ? null : _alPulsarMic,
             ),
             const SizedBox(width: 8),
@@ -698,18 +688,23 @@ class _IaChatScreenState extends State<IaChatScreen> {
               enabled: !bloqueado && !_enviando,
               minLines: 1,
               maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _enviarTexto(),
               decoration: InputDecoration(
                 hintText: bloqueado ? AppLocalizations.of(context).iaResponderConfirmacion : AppLocalizations.of(context).iaEscribeMensaje,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                filled: true,
+                fillColor: tema.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
+                disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           IconButton.filled(
-            icon: const Icon(Icons.send),
+            icon: const Icon(Icons.arrow_upward),
             tooltip: AppLocalizations.of(context).comunEnviar,
             onPressed: (bloqueado || _enviando) ? null : () => _enviarTexto(),
           ),
