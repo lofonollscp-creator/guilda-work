@@ -36,4 +36,11 @@ ESCENARIOS = {
                            compra(3000, numero="P-2", fecha=d(2026, 2, 1), deducible_periodo_posterior=True, periodo_deduccion=(2026, "2T"))], 2026, "2T"),
     "resultado_negativo": ([venta(1000), compra(50000)], 2026, "2T"),
     "cuota_con_decimales": ([venta(3333, 2100, cuota=700), venta(3333, 1000, numero="2", cuota=333), compra(1234, 2100, cuota=259)], 2026, "2T"),
+    # --- más casos reales de despacho
+    "simplificadas_y_resumen": ([venta(10000, 2100, cuota=2100, tipo_factura="F2", numero="10", contraparte_nif="", contraparte_nombre="VENTAS A CONSUMIDOR FINAL", total=12100),
+                                 venta(5000, 1000, tipo_factura="F4", numero="11", contraparte_nif="", contraparte_nombre="VENTAS A CONSUMIDOR FINAL"), compra(2000, tipo_factura="F6", numero="P-9")], 2026, "2T"),
+    "rectificativa_de_adquisicion_intracomunitaria": ([venta(10000), compra(20000, clave="09", numero="P-1", **dict(contraparte_nif="FR40303265045", contraparte_nif_tipo="02", contraparte_pais="FR")),
+                                                       compra(-5000, clave="09", numero="P-2", tipo_factura="R1", **dict(contraparte_nif="FR40303265045", contraparte_nif_tipo="02", contraparte_pais="FR"))], 2026, "2T"),
+    "rectificativa_de_inversion_sujeto_pasivo": ([venta(10000), compra(15000, isp=True), compra(-3000, isp=True, numero="P-2", tipo_factura="R1")], 2026, "2T"),
+    "abono_recibido_y_emitido_en_otro_periodo": ([venta(10000), venta(-4000, numero="2", tipo_factura="R2", fecha=d(2026, 5, 20)), compra(8000, fecha=d(2026, 2, 2)), compra(-8000, numero="P-2", tipo_factura="R1", fecha=d(2026, 6, 2))], 2026, "2T"),
 }

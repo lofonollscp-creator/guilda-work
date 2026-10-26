@@ -79,10 +79,12 @@ def validar_apunte(a: Apunte, indice: int | None = None, *, hoy: date | None = N
             p.append(_e("e5_sin_nif_iva", f"{nombre}: una entrega intracomunitaria exenta (E5) exige que el cliente tenga NIF-IVA.", indice))
         if a.calificacion == "" and not a.exenta:
             p.append(_e("sin_calificacion", f"{nombre}: falta la calificación de la operación o la causa de exención.", indice))
-        if a.calificacion == "S1" and not a.exenta and a.libro != RECIBIDAS:
-            esperado = a.base * a.tipo_iva
-            if abs(a.cuota * 10000 - esperado) > 10000 and not rectifica:         # más de un céntimo de diferencia
-                p.append(_a("cuota_no_cuadra", f"{nombre}: la cuota no coincide con base × tipo.", indice))
+        if a.calificacion == "S1" and not a.exenta and not rectifica:
+            esperada = (1 if a.base >= 0 else -1) * ((abs(a.base) * a.tipo_iva + 5000) // 10000)          # redondeo al céntimo, mitad hacia arriba (en valor absoluto)
+            if a.cuota != esperada:
+                p.append(_e("cuota_no_cuadra", f"{nombre}: la cuota repercutida debe ser exactamente base × tipo ({esperada / 100:.2f} €), y es {a.cuota / 100:.2f} €.", indice))
+            if a.total is not None and a.clave not in ("03", "05", "09") and a.total != a.base + a.cuota:
+                p.append(_e("total_no_cuadra", f"{nombre}: el total debe ser base + cuota.", indice))
     if a.contraparte_nif_tipo == "02":
         nif = a.contraparte_nif.replace(" ", "").upper()
         formato = FORMATOS_NIF_IVA.get(a.contraparte_pais or nif[:2])

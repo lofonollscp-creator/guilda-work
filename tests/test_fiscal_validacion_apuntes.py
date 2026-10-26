@@ -61,10 +61,18 @@ def test_deduccion_diferida():
     assert _codigos([compra(100, fecha=d(2026, 5, 12), deducible_periodo_posterior=True, periodo_deduccion=(2026, "3T"))]) == set()
 
 
+def test_la_cuota_repercutida_es_exactamente_base_por_tipo():
+    assert _codigos([venta(10000, cuota=999)]) == {"cuota_no_cuadra"}                      # la AEAT: «igual a (base imponible x tipo IVA)»
+    assert _codigos([venta(10000, 2100, cuota=2100, total=12100)]) == set()
+    assert _codigos([venta(12100, 2100, cuota=2100, total=14000)]) == {"cuota_no_cuadra", "total_no_cuadra"}
+    assert _codigos([venta(10000, 2100, total=9000)]) == {"total_no_cuadra"}
+    assert _codigos([venta(3333, 2100, cuota=700)]) == set() and _codigos([venta(-3333, 2100, cuota=-700, tipo_factura="R1")]) == set()
+
+
 def test_avisos_no_bloquean():
-    ap = [venta(10000, cuota=999), venta(10000, numero="1")]
+    ap = [venta(10000), venta(10000, numero="1")]
     p = v.validar(ap, hoy=HOY, nif_titular=TITULAR)
-    assert {x.codigo for x in p} == {"cuota_no_cuadra", "posible_duplicado"} and v.errores(p) == []
+    assert {x.codigo for x in p} == {"posible_duplicado"} and v.errores(p) == []
 
 
 def test_preparar_borrador_de_un_paso():
