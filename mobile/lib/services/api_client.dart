@@ -1262,6 +1262,20 @@ class ApiClient {
     }
   }
 
+  /// Sube un archivo de texto o CSV (UTF-8, hasta 1 MB) para que el asistente lo lea.
+  Future<IaAdjunto> subirAdjuntoIa(Uint8List bytes, String nombreArchivo) async {
+    try {
+      final resp = await _dio.post(
+        '/ia/adjuntos',
+        data: FormData.fromMap({'adjunto': MultipartFile.fromBytes(bytes, filename: nombreArchivo)}),
+      );
+      final d = resp.data['data'] as Map<String, dynamic>;
+      return IaAdjunto(id: d['id'] as int, nombre: d['nombre_archivo'] as String? ?? nombreArchivo);
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
   Future<void> vaciarIa() async {
     try {
       await _dio.post('/ia/vaciar');

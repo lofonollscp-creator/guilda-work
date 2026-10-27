@@ -5,6 +5,11 @@ Al subir `rutas_api.API_VERSION` hay que añadir aquí su entrada: un test lo ex
 
 # (versión | None, fecha, [(tipo, texto)]). Antes de la 1.3 la API no enviaba la cabecera: esas entradas llevan solo la fecha.
 HISTORIAL = [
+    ("1.11", "2026-10-27", [
+        ("Nuevo", "`POST /ia/adjuntos`: sube un archivo de texto o CSV (UTF-8, hasta 1 MB) para que el asistente lo lea; el mensaje empieza por `[Adjunto #id: nombre]`."),
+        ("Mejora", "Los mensajes del asistente (`GET /ia/mensajes` y el flujo en directo) traen `fuentes_json`: las tareas, notas, correos y clientes de donde salen sus datos."),
+        ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
+    ]),
     ("1.10", "2026-10-27", [
         ("Nuevo", "`/papelera/tarea_outlook/{id}/restaurar` y `.../eliminar-definitivamente`: las tareas de la lista también se recuperan o se eliminan para siempre desde la papelera."),
         ("Mejora", "`GET /papelera` trae el título de las notas que lo tienen y describe todos sus campos. Restaurar o eliminar para siempre solo actúa sobre lo que está en tu papelera (`404` si no)."),

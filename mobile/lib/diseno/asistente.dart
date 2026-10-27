@@ -144,3 +144,23 @@ class TarjetaAsistente extends StatelessWidget {
     );
   }
 }
+
+/// «Esto es una IA y puede equivocarse»: una línea discreta con la chispa del asistente, para ponerla junto al campo de escritura.
+class AvisoIa extends StatelessWidget {
+  final String texto;
+  const AvisoIa({super.key, required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ColoresIa.de(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(color: c.fondo.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(10)),
+      child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(top: 1), child: ExcludeSemantics(child: Icon(Icons.auto_awesome, size: 13, color: c.sobreFondo))),
+        const SizedBox(width: 6),
+        Flexible(child: Text(texto, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: c.sobreFondo))),
+      ]),
+    );
+  }
+}

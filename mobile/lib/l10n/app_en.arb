@@ -806,5 +806,12 @@
   "iaInicioTitulo": "How can I help?",
   "iaBarraHint": "Ask or request something…",
   "iaBarraTareasHint": "Ask about your tasks",
-  "iaTarjetaTitulo": "Your assistant"
+  "iaTarjetaTitulo": "Your assistant",
+  "iaAviso": "This is an AI assistant and may contain errors. Check anything important before acting on it.",
+  "iaFuentes": "Sources",
+  "iaAdjuntar": "Attach text or CSV (up to 1 MB)",
+  "iaAdjuntoSubiendo": "Uploading file…",
+  "iaAdjuntoQuitar": "Remove file",
+  "iaAdjuntoError": "The file could not be uploaded.",
+  "iaAdjuntoPregunta": "Read the attached file and tell me what it contains."
 }

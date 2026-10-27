@@ -3,7 +3,9 @@ import '../../diseno/adaptable.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../diseno/asistente.dart';
 import '../diseno/componentes.dart';
@@ -13,6 +15,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../models/models.dart';
+import '../nucleo/abrir_destino.dart';
+import '../nucleo/destinos.dart';
 import '../services/api_client.dart';
 import '../services/locale_service.dart';
 import '../theme/brand_colors.dart';
@@ -32,7 +36,7 @@ const Map<String, String> _bcp47PorIdioma = {'es': 'es-ES', 'ca': 'ca-ES', 'en':
 /// añade dictado (speech_to_text) + lectura en voz alta (flutter_tts) con
 /// un modo "Live" manoslibres, mismo comportamiento que su equivalente en
 /// app/static/ia_asistente.js.
-class IaChatScreen extends StatefulWidget {
+class IaChatScreen extends ConsumerStatefulWidget {
   final ApiClient api;
   final LocaleService locale;
 
@@ -45,10 +49,10 @@ class IaChatScreen extends StatefulWidget {
   const IaChatScreen({super.key, required this.api, required this.locale, this.consultaInicial, this.contexto});
 
   @override
-  State<IaChatScreen> createState() => _IaChatScreenState();
+  ConsumerState<IaChatScreen> createState() => _IaChatScreenState();
 }
 
-class _IaChatScreenState extends State<IaChatScreen> {
+class _IaChatScreenState extends ConsumerState<IaChatScreen> {
   final _controller = TextEditingController();
   final _scroll = ScrollController();
 
@@ -59,6 +63,8 @@ class _IaChatScreenState extends State<IaChatScreen> {
   bool _confirmando = false;
   String? _errorCarga;
   String? _errorTurno;
+  IaAdjunto? _adjunto; // el archivo subido que irá con el próximo mensaje
+  bool _subiendo = false;
   String? _textoVivo; // respuesta del asistente pintándose en directo (streaming)
   int _idLocal = -1; // ids negativos para las burbujas de usuario optimistas (nunca chocan con ids reales del servidor)
 
@@ -198,10 +204,16 @@ class _IaChatScreenState extends State<IaChatScreen> {
   // --- Envío/confirmación en streaming -------------------------------------
 
   Future<void> _enviarTexto([String? textoDictado]) async {
-    final texto = (textoDictado ?? _controller.text).trim();
-    if (texto.isEmpty || _enviando) return;
+    var texto = (textoDictado ?? _controller.text).trim();
+    final adjunto = _adjunto;
+    // Con un archivo y sin nada escrito, se le pide lo obvio: que lo lea.
+    if (texto.isEmpty && adjunto != null) texto = AppLocalizations.of(context).iaAdjuntoPregunta;
+    if (texto.isEmpty || _enviando || _subiendo) return;
+    // Así lo reconoce el asistente (y la web): el archivo va nombrado en la primera línea.
+    if (adjunto != null) texto = '[Adjunto #${adjunto.id}: ${adjunto.nombre}]\n$texto';
     _controller.clear();
     setState(() {
+      _adjunto = null;
       _idLocal -= 1;
       _mensajes = [
         ..._mensajes,
@@ -211,6 +223,31 @@ class _IaChatScreenState extends State<IaChatScreen> {
     _scrollAlFinal();
     await _procesarStream(widget.api.enviarMensajeIaStream(texto));
   }
+
+  static const _extensionesAdjunto = ['txt', 'csv', 'tsv', 'md', 'json', 'xml', 'log'];
+
+  Future<void> _adjuntar() async {
+    final t = AppLocalizations.of(context);
+    final mensajero = ScaffoldMessenger.of(context);
+    final r = await FilePicker.pickFiles(withData: true, type: FileType.custom, allowedExtensions: _extensionesAdjunto);
+    final archivo = r?.files.firstOrNull;
+    final bytes = archivo?.bytes;
+    if (archivo == null || bytes == null) return;
+    setState(() => _subiendo = true);
+    try {
+      final subido = await widget.api.subirAdjuntoIa(bytes, archivo.name);
+      if (mounted) setState(() => _adjunto = subido);
+    } on ApiException catch (e) {
+      mensajero.showSnackBar(SnackBar(content: Text(e.mensaje)));
+    } catch (_) {
+      mensajero.showSnackBar(SnackBar(content: Text(t.iaAdjuntoError)));
+    } finally {
+      if (mounted) setState(() => _subiendo = false);
+    }
+  }
+
+  Future<void> _abrirFuente(IaFuente f) =>
+      ref.read(abridorDeDestinosProvider)(destinoDeFuenteIa(f.tipo, f.url), urlWeb: f.url);
 
   Future<void> _confirmarStream(bool aceptar) async {
     setState(() => _confirmando = true);
@@ -635,6 +672,63 @@ class _IaChatScreenState extends State<IaChatScreen> {
   /// la sustituya por la burbuja final ya formateada (ver _burbuja).
   Widget _burbujaViva(BuildContext context) => _burbujaAsistente(context, Text(_textoVivo ?? ''));
 
+  /// Lo que escribiste; si iba con un archivo, su nombre sale arriba como una píldora y no la línea técnica `[Adjunto #…]`.
+  Widget _contenidoUsuario(BuildContext context, String contenido) {
+    final color = Theme.of(context).colorScheme.onPrimary;
+    final partes = separarAdjuntoDelTexto(contenido);
+    if (partes == null) return Text(contenido, style: TextStyle(color: color));
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        ExcludeSemantics(child: Icon(Icons.attach_file, size: 16, color: color)),
+        const SizedBox(width: 4),
+        Flexible(child: Text(partes.nombre, style: TextStyle(color: color, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+      ]),
+      if (partes.texto.trim().isNotEmpty) ...[const SizedBox(height: 4), Text(partes.texto.trim(), style: TextStyle(color: color))],
+    ]);
+  }
+
+  /// «Fuentes»: de dónde salen los datos de la respuesta; cada una se abre con un toque.
+  Widget _fuentes(BuildContext context, List<IaFuente> fuentes) {
+    final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    IconData icono(String tipo) => switch (tipo) {
+          'tarea' => Icons.task_alt,
+          'nota' => Icons.sticky_note_2_outlined,
+          'correo' => Icons.mail_outline,
+          'vencimiento' => Icons.event_note_outlined,
+          _ => Icons.folder_open_outlined,
+        };
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(spacing: 6, runSpacing: 0, crossAxisAlignment: WrapCrossAlignment.center, children: [
+        Text(t.iaFuentes, style: tema.textTheme.labelSmall?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
+        for (final f in fuentes)
+          Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () => _abrirFuente(f),
+              borderRadius: BorderRadius.circular(10),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48, maxWidth: 240),
+                child: Center(
+                  widthFactor: 1,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                    decoration: BoxDecoration(border: Border.all(color: tema.colorScheme.outlineVariant), borderRadius: BorderRadius.circular(10)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      ExcludeSemantics(child: Icon(icono(f.tipo), size: 14, color: ColoresIa.de(context).acento)),
+                      const SizedBox(width: 5),
+                      Flexible(child: Text(f.titulo, style: tema.textTheme.labelMedium, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ]),
+    );
+  }
+
   Widget _burbuja(BuildContext context, IaMensaje m) {
     final tema = Theme.of(context);
     switch (m.rol) {
@@ -650,7 +744,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
               borderRadius: const BorderRadius.only(topLeft: Radius.circular(18), topRight: Radius.circular(4), bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18)),
             ),
             // El texto va con el color que toca sobre el acento elegido (negro o blanco según contraste), no con el del tema.
-            child: Text(m.contenido ?? '', style: TextStyle(color: tema.colorScheme.onPrimary)),
+            child: _contenidoUsuario(context, m.contenido ?? ''),
           ),
         );
       case 'tool':
@@ -667,7 +761,9 @@ class _IaChatScreenState extends State<IaChatScreen> {
       case 'assistant':
       default:
         if ((m.contenido ?? '').isEmpty) return const SizedBox.shrink();
-        return _burbujaAsistente(context, SelectableText.rich(TextSpan(children: _spansMarkdownLite(context, m.contenido ?? ''))));
+        final fuentes = m.fuentes;
+        final texto = SelectableText.rich(TextSpan(children: _spansMarkdownLite(context, m.contenido ?? '')));
+        return _burbujaAsistente(context, fuentes.isEmpty ? texto : Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [texto, _fuentes(context, fuentes)]));
     }
   }
 
@@ -734,8 +830,16 @@ class _IaChatScreenState extends State<IaChatScreen> {
     return Container(
       decoration: BoxDecoration(color: tema.colorScheme.surface, border: Border(top: BorderSide(color: tema.colorScheme.outlineVariant))),
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-      child: Row(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (_subiendo || _adjunto != null) _adjuntoPendiente(context),
+        Row(
         children: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: AppLocalizations.of(context).iaAdjuntar,
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            onPressed: (bloqueado || _enviando || _subiendo) ? null : _adjuntar,
+          ),
           if (_vozDisponible) ...[
             IconButton.outlined(
               icon: Icon(_escuchando ? Icons.mic : Icons.mic_none),
@@ -770,9 +874,43 @@ class _IaChatScreenState extends State<IaChatScreen> {
             style: IconButton.styleFrom(backgroundColor: ColoresIa.de(context).acento, foregroundColor: ColoresIa.de(context).sobreAcento),
             icon: const Icon(Icons.arrow_upward),
             tooltip: AppLocalizations.of(context).comunEnviar,
-            onPressed: (bloqueado || _enviando) ? null : () => _enviarTexto(),
+            onPressed: (bloqueado || _enviando || _subiendo) ? null : () => _enviarTexto(),
           ),
         ],
+        ),
+        Padding(padding: const EdgeInsets.only(top: 6, right: 4), child: AvisoIa(texto: AppLocalizations.of(context).iaAviso)),
+      ]),
+    );
+  }
+
+  /// El archivo que irá con el próximo mensaje: subiéndose o ya listo, con su aspa para quitarlo.
+  Widget _adjuntoPendiente(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final c = ColoresIa.de(context);
+    final nombre = _adjunto?.nombre;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6, right: 4),
+        padding: const EdgeInsets.only(left: 12),
+        decoration: BoxDecoration(color: c.fondo, border: Border.all(color: c.borde), borderRadius: BorderRadius.circular(999)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (nombre == null)
+            const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+          else
+            ExcludeSemantics(child: Icon(Icons.attach_file, size: 16, color: c.sobreFondo)),
+          const SizedBox(width: 6),
+          Flexible(child: Text(nombre ?? t.iaAdjuntoSubiendo, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: c.sobreFondo))),
+          if (nombre != null)
+            IconButton(
+              icon: Icon(Icons.close, size: 18, color: c.sobreFondo),
+              tooltip: t.iaAdjuntoQuitar,
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+              onPressed: () => setState(() => _adjunto = null),
+            )
+          else
+            const SizedBox(width: 12),
+        ]),
       ),
     );
   }

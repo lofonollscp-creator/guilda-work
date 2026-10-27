@@ -246,6 +246,23 @@ class ActividadTarea {
   @override int get hashCode => Object.hashAll([creadoEn, usuario, accion, detalle]);
 }
 
+class AdjuntoIA {
+  final int? id;
+  final String? nombreArchivo;
+  const AdjuntoIA({this.id, this.nombreArchivo, });
+  factory AdjuntoIA.fromJson(Map<String, dynamic> j) => AdjuntoIA(
+    id: j['id'] == null ? null : (j['id'] as num).toInt(),
+    nombreArchivo: j['nombre_archivo'] == null ? null : j['nombre_archivo'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': ?id,
+    'nombre_archivo': ?nombreArchivo,
+  };
+  AdjuntoIA copyWith({int? id, String? nombreArchivo, }) => AdjuntoIA(id: id ?? this.id, nombreArchivo: nombreArchivo ?? this.nombreArchivo, );
+  @override bool operator ==(Object other) => other is AdjuntoIA && other.id == id && other.nombreArchivo == nombreArchivo;
+  @override int get hashCode => Object.hashAll([id, nombreArchivo]);
+}
+
 class AdjuntoJuridico {
   final int? id;
   final String? nombre;

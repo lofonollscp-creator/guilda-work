@@ -17537,3 +17537,15 @@ msgstr "Descarregar el fitxer de prova del model %(m)s"
 
 msgid "impórtalo en el simulador de la AEAT antes de presentar; este modelo no tiene borrador ni estados en Guilda Fiscal."
 msgstr "importa'l al simulador de l'AEAT abans de presentar; aquest model no té esborrany ni estats a Guilda Fiscal."
+
+#: app/rutas_api.py
+msgid "Falta el archivo (campo `adjunto`)."
+msgstr "Falta el fitxer (camp `adjunto`)."
+
+#: app/rutas_api.py
+msgid "El archivo pesa demasiado (máximo 1 MB)."
+msgstr "El fitxer pesa massa (màxim 1 MB)."
+
+#: app/rutas_api.py
+msgid "Solo se admiten archivos de texto o CSV (UTF-8)."
+msgstr "Només s'admeten fitxers de text o CSV (UTF-8)."

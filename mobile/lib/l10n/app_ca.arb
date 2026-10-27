@@ -806,5 +806,12 @@
   "iaInicioTitulo": "En què et puc ajudar?",
   "iaBarraHint": "Pregunta o demana alguna cosa…",
   "iaBarraTareasHint": "Pregunta sobre les teves tasques",
-  "iaTarjetaTitulo": "El teu assistent"
+  "iaTarjetaTitulo": "El teu assistent",
+  "iaAviso": "És un assistent d'IA i pot contenir errors. Revisa el que sigui important abans d'actuar.",
+  "iaFuentes": "Fonts",
+  "iaAdjuntar": "Adjunta text o CSV (fins a 1 MB)",
+  "iaAdjuntoSubiendo": "Pujant el fitxer…",
+  "iaAdjuntoQuitar": "Treu el fitxer",
+  "iaAdjuntoError": "No s'ha pogut pujar el fitxer.",
+  "iaAdjuntoPregunta": "Llegeix el fitxer adjunt i digues-me què conté."
 }

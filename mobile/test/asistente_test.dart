@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guilda_work_mobile/diseno/asistente.dart';
+import 'package:guilda_work_mobile/models/models.dart';
+import 'package:guilda_work_mobile/nucleo/destinos.dart';
 
 import 'ayudas/pantallas.dart';
 
@@ -25,5 +27,26 @@ void main() {
     await expectLater(t, meetsGuideline(androidTapTargetGuideline));
     await expectLater(t, meetsGuideline(textContrastGuideline));
     guia.dispose();
+  });
+
+  test('el archivo que va al principio del mensaje se separa del texto', () {
+    final r = separarAdjuntoDelTexto('[Adjunto #12: datos.csv]\n¿Qué suman?');
+    expect((r!.nombre, r.texto), ('datos.csv', '¿Qué suman?'));
+    expect(separarAdjuntoDelTexto('Hola [Adjunto #1: a.txt]'), isNull);
+  });
+
+  test('las fuentes llegan como lista, y un JSON roto no rompe el mensaje', () {
+    final m = IaMensaje(id: 1, rol: 'assistant', creadoEn: '', fuentesJson: '[{"tipo":"nota","titulo":"N","url":"/nota/3/editar"}]');
+    expect(m.fuentes.single.titulo, 'N');
+    expect(IaMensaje(id: 2, rol: 'assistant', creadoEn: '', fuentesJson: '{roto').fuentes, isEmpty);
+    expect(IaMensaje(id: 3, rol: 'assistant', creadoEn: '').fuentes, isEmpty);
+  });
+
+  test('cada fuente lleva a su pantalla: tarea, nota y correo; el resto, a la web con su id', () {
+    expect(destinoDeFuenteIa('tarea', '/tareas/7/editar').id, 7);
+    expect(destinoDeFuenteIa('nota', '/nota/3/editar').tipo, 'nota');
+    expect(destinoDeFuenteIa('correo', '/correo/?cuenta_id=1&mensaje_id=9').id, 9);
+    final cliente = destinoDeFuenteIa('cliente', '/fiscal/clientes/12');
+    expect((cliente.tipo, cliente.id), ('cliente', 12));
   });
 }

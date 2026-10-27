@@ -1292,5 +1292,12 @@
   "iaInicioTitulo": "¿En qué te ayudo?",
   "iaBarraHint": "Pregunta o pide algo…",
   "iaBarraTareasHint": "Pregunta sobre tus tareas",
-  "iaTarjetaTitulo": "Tu asistente"
+  "iaTarjetaTitulo": "Tu asistente",
+  "iaAviso": "Es un asistente de IA y puede contener errores. Revisa lo importante antes de actuar.",
+  "iaFuentes": "Fuentes",
+  "iaAdjuntar": "Adjuntar texto o CSV (hasta 1 MB)",
+  "iaAdjuntoSubiendo": "Subiendo archivo…",
+  "iaAdjuntoQuitar": "Quitar archivo",
+  "iaAdjuntoError": "No se ha podido subir el archivo.",
+  "iaAdjuntoPregunta": "Lee el archivo adjunto y dime qué contiene."
 }

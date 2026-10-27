@@ -806,5 +806,12 @@
   "iaInicioTitulo": "Comment puis-je vous aider ?",
   "iaBarraHint": "Posez une question ou demandez quelque chose…",
   "iaBarraTareasHint": "Posez une question sur vos tâches",
-  "iaTarjetaTitulo": "Votre assistant"
+  "iaTarjetaTitulo": "Votre assistant",
+  "iaAviso": "Ceci est un assistant IA et il peut contenir des erreurs. Vérifiez ce qui est important avant d'agir.",
+  "iaFuentes": "Sources",
+  "iaAdjuntar": "Joindre du texte ou un CSV (jusqu'à 1 Mo)",
+  "iaAdjuntoSubiendo": "Envoi du fichier…",
+  "iaAdjuntoQuitar": "Retirer le fichier",
+  "iaAdjuntoError": "Le fichier n'a pas pu être envoyé.",
+  "iaAdjuntoPregunta": "Lisez le fichier joint et dites-moi ce qu'il contient."
 }

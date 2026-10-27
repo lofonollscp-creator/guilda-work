@@ -114,6 +114,9 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('¿Qué tengo pendiente hoy?'), findsOneWidget);
       expect(find.text('Crea una nota con lo que te dicte'), findsOneWidget);
+      // En una pantalla baja la lista de tarjetas se desplaza por debajo del campo de escritura.
+      await t.ensureVisible(find.text('¿Qué tengo pendiente hoy?'));
+      await t.pumpAndSettle();
       await t.tap(find.text('¿Qué tengo pendiente hoy?'));
       await t.pumpAndSettle();
       expect(api.enviadosIa, ['¿Qué tengo pendiente hoy?']);
@@ -136,6 +139,31 @@ void main() {
       await t.tap(find.text('Resume mis correos sin contestar'));
       await t.pumpAndSettle();
       expect(api.enviadosIa, ['Resume mis correos sin contestar']);
+    });
+
+    testWidgets('el aviso de que es una IA acompaña al campo de escritura', (t) async {
+      sinVoz();
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: ApiFalsa(), locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.textContaining('puede contener errores'), findsOneWidget);
+      expect(find.byTooltip('Adjuntar texto o CSV (hasta 1 MB)'), findsOneWidget);
+    });
+
+    testWidgets('las respuestas citan sus fuentes y lo tuyo con un archivo lo muestra como píldora, sin la línea técnica', (t) async {
+      sinVoz();
+      final api = ApiFalsa()
+        ..chat = [
+          iaMsg(1, 'user', '[Adjunto #4: gastos.csv]\n¿Cuánto suman?'),
+          iaMsg(2, 'assistant', 'Suman 120 €.', fuentes: '[{"tipo":"tarea","titulo":"Pagar a Acme","url":"/tareas/7/editar"},{"tipo":"nota","titulo":"Gastos de octubre","url":"/nota/3/editar"}]'),
+        ];
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('gastos.csv'), findsOneWidget);
+      expect(find.text('¿Cuánto suman?'), findsOneWidget);
+      expect(find.textContaining('[Adjunto'), findsNothing);
+      expect(find.text('Fuentes'), findsOneWidget);
+      expect(find.text('Pagar a Acme'), findsOneWidget);
+      expect(find.text('Gastos de octubre'), findsOneWidget);
     });
 
     testWidgets('con historial: lo tuyo a la derecha con el acento, lo del asistente en tarjeta, lo que hizo por detrás en píldora, y la acción pendiente pide confirmar', (t) async {
@@ -256,8 +284,8 @@ void main() {
         addTearDown(t.view.reset);
         final api = ApiFalsa()
           ..chat = [
-            iaMsg(1, 'user', '¿Qué tengo pendiente hoy?'),
-            iaMsg(2, 'assistant', 'Tienes **2 vencimientos** y una tarea vencida: el 303 de Acme SL. ¿Quieres que la pase a mañana?'),
+            iaMsg(1, 'user', '[Adjunto #4: gastos-octubre.csv]\n¿Qué tengo pendiente hoy?'),
+            iaMsg(2, 'assistant', 'Tienes **2 vencimientos** y una tarea vencida: el 303 de Acme SL. ¿Quieres que la pase a mañana?', fuentes: '[{"tipo":"tarea","titulo":"Presentar modelo 303 · Acme SL","url":"/tareas/7/editar"},{"tipo":"nota","titulo":"Gastos de octubre","url":"/nota/3/editar"}]'),
             iaMsg(3, 'user', 'Sí, y crea una tarea para llamar a Acme'),
             iaMsg(4, 'tool', '{"ok": true}', callId: 'c0', herramienta: 'mover_tarea'),
             iaMsg(5, 'assistant', 'Hecho. Voy a crear la tarea.', calls: '[{"id":"c1","function":{"name":"crear_tarea","arguments":"{\\"asunto\\":\\"Llamar a Acme\\",\\"fecha_vencimiento\\":\\"2026-10-27\\"}"}}]'),

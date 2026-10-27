@@ -170,5 +170,5 @@ void sinVoz() {
   }
 }
 
-IaMensaje iaMsg(int id, String rol, String? contenido, {String? calls, String? callId, String? herramienta}) =>
-    IaMensaje(id: id, rol: rol, contenido: contenido, toolCallsJson: calls, toolCallId: callId, nombreHerramienta: herramienta, creadoEn: '2026-10-26T09:00');
+IaMensaje iaMsg(int id, String rol, String? contenido, {String? calls, String? callId, String? herramienta, String? fuentes}) =>
+    IaMensaje(id: id, rol: rol, contenido: contenido, toolCallsJson: calls, toolCallId: callId, nombreHerramienta: herramienta, creadoEn: '2026-10-26T09:00', fuentesJson: fuentes);

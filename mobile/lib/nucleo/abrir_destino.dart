@@ -127,3 +127,8 @@ final navegadorDeAvisosProvider = Provider<NavegadorDeAvisos>((ref) {
     abrir: (destino, {urlWeb}) => abrirDestino(ref, destino, urlWeb: urlWeb),
   );
 });
+
+/// «Abre este destino» como función: para las pantallas que no son de Riverpod (el chat del asistente abre sus fuentes con él).
+final abridorDeDestinosProvider = Provider<Future<void> Function(Destino destino, {String? urlWeb})>(
+  (ref) => (destino, {urlWeb}) => abrirDestino(ref, destino, urlWeb: urlWeb),
+);
