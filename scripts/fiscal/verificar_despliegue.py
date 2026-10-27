@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 TABLAS = ("fiscal_perfiles", "fiscal_relaciones", "fiscal_apuntes", "fiscal_instantaneas", "fiscal_declaraciones", "fiscal_casillas", "fiscal_artefactos")
 TRIGGERS = ("fiscal_instantaneas_inmutable", "fiscal_artefactos_inmutable", "fiscal_casillas_solo_borrador", "fiscal_declaraciones_reglas")
-VERSION_MINIMA = 4
+VERSION_MINIMA = 5
 
 
 def comprobar(conn) -> list[tuple[bool, str]]:
@@ -43,6 +43,8 @@ def comprobar(conn) -> list[tuple[bool, str]]:
         r.append((t in triggers, f"trigger {t}"))
     r.append((bool(uno("SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'facturas_contables' AND column_name = 'incluir_en_fiscal'")),
               "columna facturas_contables.incluir_en_fiscal (migración 004: casilla «Incluir en Guilda Fiscal»)"))
+    r.append((bool(uno("SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'fiscal_apuntes' AND column_name = 'retencion_centimos'")),
+              "columna fiscal_apuntes.retencion_centimos (migración 005: retenciones de IRPF de los modelos 111 y 115)"))
     r.append((bool(uno("SELECT count(*) FROM pg_proc WHERE proname = 'fiscal_dia'")), "función fiscal_dia (inmutable) para la restricción de no solape"))
     r.append((bool(uno("SELECT count(*) FROM pg_constraint WHERE conname = 'fiscal_perfiles_sin_solape'")), "restricción de no solape de vigencias de los perfiles"))
     if uno("SELECT count(*) FROM pg_extension WHERE extname = 'citus'"):
@@ -76,7 +78,7 @@ def main(argv=None) -> int:
     for ok, texto in resultados:
         print(("  ✓ " if ok else "  ✗ ") + texto)
     fallos = [t for ok, t in resultados if not ok]
-    print("\nTODO CORRECTO" if not fallos else f"\nFALTAN {len(fallos)} COSA(S): revisa las marcadas con ✗ (¿se aplicaron las migraciones 002, 003 y 004?)")
+    print("\nTODO CORRECTO" if not fallos else f"\nFALTAN {len(fallos)} COSA(S): revisa las marcadas con ✗ (¿se aplicaron las migraciones 002, 003, 004 y 005?)")
     return 0 if not fallos else 1
 
 

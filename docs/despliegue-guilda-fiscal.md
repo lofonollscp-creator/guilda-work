@@ -41,3 +41,6 @@ y volver al commit anterior de `main` antes de reiniciar. Si ya hay datos fiscal
 
 ## Actualización: migración 004 (factura → «Incluir en Guilda Fiscal»)
 Añade la columna `facturas_contables.incluir_en_fiscal` (por defecto 1: todo lo existente sigue contando). Es una sola sentencia, idempotente y rápida. **Orden: primero la migración, luego el reinicio** (con el código nuevo y la base en la versión 3 los servicios no arrancan, por diseño). Revertir: `ALTER TABLE facturas_contables DROP COLUMN incluir_en_fiscal` (y volver al código anterior).
+
+## Actualización: migración 005 (retenciones de IRPF en el apunte, base de los modelos 111 y 115)
+Añade cinco columnas a `fiscal_apuntes` (`retencion_modelo`, `retencion_clave`, `retencion_base_centimos`, `retencion_pct_centesimas`, `retencion_centimos`); todo lo existente queda «sin retención». Son sentencias idempotentes y rápidas. **Orden: primero la migración, luego el reinicio.** Revertir: `ALTER TABLE fiscal_apuntes DROP COLUMN retencion_modelo, DROP COLUMN retencion_clave, DROP COLUMN retencion_base_centimos, DROP COLUMN retencion_pct_centesimas, DROP COLUMN retencion_centimos` (y volver al código anterior). Después, `scripts/fiscal/verificar_despliegue.py` comprueba que la columna existe.

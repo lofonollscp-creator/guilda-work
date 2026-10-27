@@ -57,6 +57,11 @@ CREATE TABLE IF NOT EXISTS fiscal_apuntes (
     contraparte_nif TEXT,
     contraparte_nif_tipo TEXT NOT NULL DEFAULT '',
     contraparte_pais TEXT NOT NULL DEFAULT '',
+    retencion_modelo TEXT NOT NULL DEFAULT '',
+    retencion_clave TEXT NOT NULL DEFAULT '',
+    retencion_base_centimos INTEGER,
+    retencion_pct_centesimas INTEGER,
+    retencion_centimos INTEGER,
     causa TEXT,
     version INTEGER NOT NULL DEFAULT 1,
     aprobado_por INTEGER NOT NULL REFERENCES usuarios(id),
@@ -166,6 +171,9 @@ BEGIN SELECT RAISE(ABORT, 'Una declaración revisada, exportada o presentada no 
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
+    for columna, tipo in (("retencion_modelo", "TEXT NOT NULL DEFAULT ''"), ("retencion_clave", "TEXT NOT NULL DEFAULT ''"), ("retencion_base_centimos", "INTEGER"),
+                          ("retencion_pct_centesimas", "INTEGER"), ("retencion_centimos", "INTEGER")):
+        db._asegurar_columna(conn, "fiscal_apuntes", columna, tipo)          # bases anteriores a la migración 005
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
@@ -201,6 +209,39 @@ def _titular(conn, tenant_id: int, cliente_fiscal_id: int):
 CAMPOS_APUNTE = ("libro", "tipo_factura", "clave", "calificacion", "exenta", "serie", "numero", "fecha_expedicion", "fecha_operacion", "fecha_recepcion", "base_centimos", "tipo_iva_centesimas",
                  "cuota_centimos", "total_centimos", "cuota_deducible_centimos", "isp", "bien_inversion", "deducible_periodo_posterior", "periodo_deduccion", "inmueble_situacion",
                  "inmueble_referencia", "contraparte_nombre", "contraparte_nif", "contraparte_nif_tipo", "contraparte_pais", "causa")
+CAMPOS_RETENCION = ("retencion_modelo", "retencion_clave", "retencion_base_centimos", "retencion_pct_centesimas", "retencion_centimos")
+CAMPOS_GUARDADOS = CAMPOS_APUNTE + CAMPOS_RETENCION
+CLAVES_RETENCION_111 = ("G", "A")            # G: actividades profesionales · A: rendimientos del trabajo (claves de percepción del 190)
+SIN_RETENCION = {"retencion_modelo": "", "retencion_clave": "", "retencion_base_centimos": None, "retencion_pct_centesimas": None, "retencion_centimos": None}
+
+
+def normalizar_retencion(apunte: Apunte, retencion: dict | None) -> dict:
+    """Las columnas de retención del apunte. `retencion`: `{"modelo": "111"|"115", "clave": "G"|"A", "base": céntimos, "pct": centésimas, "importe": céntimos | None (= base × %)}`.
+    Solo las facturas recibidas la llevan (la practica el cliente); una emitida con retención la soporta él y no va en el 111. Base e importe llevan el signo del apunte (un abono resta)."""
+    if not retencion or not retencion.get("modelo"):
+        return dict(SIN_RETENCION)
+    modelo = str(retencion["modelo"])
+    if modelo not in ("111", "115"):
+        raise ErrorFiscal("La retención solo puede ir en el modelo 111 o en el 115.")
+    if apunte.libro != "R":
+        raise ErrorFiscal("La retención la practica quien recibe la factura: solo va en facturas recibidas.")
+    base, pct = retencion.get("base"), retencion.get("pct")
+    if base is None or pct is None or not (0 < pct <= 10000):
+        raise ErrorFiscal("Indica la base y el porcentaje de la retención (entre 0 y 100 %).")
+    esperado = (1 if base >= 0 else -1) * ((abs(base) * pct + 5000) // 10000)
+    importe = esperado if retencion.get("importe") is None else retencion["importe"]
+    if (importe < 0) != (base < 0) and importe != 0:
+        raise ErrorFiscal("La retención y su base deben tener el mismo signo.")
+    if abs(importe - esperado) > 1:
+        raise ErrorFiscal(f"La retención no cuadra: {pct / 100:g} % de la base son {esperado / 100:.2f} €.".replace(".", ","))
+    clave = (retencion.get("clave") or "").upper()
+    if modelo == "111":
+        clave = clave or "G"
+        if clave not in CLAVES_RETENCION_111:
+            raise ErrorFiscal("Clave de percepción no válida para el modelo 111.")
+    else:
+        clave = ""
+    return {"retencion_modelo": modelo, "retencion_clave": clave, "retencion_base_centimos": base, "retencion_pct_centesimas": pct, "retencion_centimos": importe}
 
 
 def a_apunte(f) -> Apunte:
@@ -231,8 +272,9 @@ def _datos_de_apunte(a: Apunte) -> dict:
 
 
 def aprobar_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apunte: Apunte, *, factura_id: int | None = None, causa: str | None = None, apunte_id: int | None = None,
-                   version: int | None = None) -> dict:
-    """Aprueba (alta) o corrige (con `apunte_id` y la `version` leída) un apunte. Se valida con las reglas de la AEAT: un apunte con ERRORES no se aprueba."""
+                   version: int | None = None, retencion: dict | None = None) -> dict:
+    """Aprueba (alta) o corrige (con `apunte_id` y la `version` leída) un apunte. Se valida con las reglas de la AEAT: un apunte con ERRORES no se aprueba.
+    `retencion` (ver `normalizar_retencion`) es la retención de IRPF que el cliente practica en esa factura recibida; al corregir, si no se pasa, el apunte queda sin retención."""
     _exigir_aprobador(tenant_id, usuario_id)
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
     conn = db.get_connection()
@@ -244,12 +286,13 @@ def aprobar_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apun
         if factura_id is not None and not conn.execute("SELECT 1 FROM facturas_contables WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?", (factura_id, tenant_id, cliente_fiscal_id)).fetchone():
             raise ErrorFiscal("La factura no es de este titular.", "no_encontrado")
         d = _datos_de_apunte(apunte)
+        d.update(normalizar_retencion(apunte, retencion))
         d["causa"] = (causa or "").strip() or None
         ahora = db.now_iso()
         if apunte_id is None:
-            cols = ("tenant_id", "cliente_fiscal_id", "factura_id", *CAMPOS_APUNTE, "aprobado_por", "aprobado_en", "creado_en")
+            cols = ("tenant_id", "cliente_fiscal_id", "factura_id", *CAMPOS_GUARDADOS, "aprobado_por", "aprobado_en", "creado_en")
             cur = conn.execute(f"INSERT INTO fiscal_apuntes ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
-                               (tenant_id, cliente_fiscal_id, factura_id, *(d[c] for c in CAMPOS_APUNTE), usuario_id, ahora, ahora))
+                               (tenant_id, cliente_fiscal_id, factura_id, *(d[c] for c in CAMPOS_GUARDADOS), usuario_id, ahora, ahora))
             apunte_id, accion = cur.lastrowid, "fiscal.apunte.aprobar"
         else:
             actual = conn.execute("SELECT * FROM fiscal_apuntes WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?", (apunte_id, tenant_id, cliente_fiscal_id)).fetchone()
@@ -259,11 +302,11 @@ def aprobar_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apun
                 raise ErrorFiscal("El apunte está anulado.", "invalido")
             if version is None or int(version) != actual["version"]:
                 raise ErrorFiscal("Alguien ha cambiado este apunte mientras lo editabas.", "version_obsoleta", version_actual=actual["version"])
-            sets = ", ".join(f"{c} = ?" for c in CAMPOS_APUNTE)
+            sets = ", ".join(f"{c} = ?" for c in CAMPOS_GUARDADOS)
             conn.execute(f"UPDATE fiscal_apuntes SET {sets}, version = version + 1, aprobado_por = ?, aprobado_en = ?, actualizado_en = ? WHERE id = ? AND tenant_id = ? AND version = ?",
-                         (*(d[c] for c in CAMPOS_APUNTE), usuario_id, ahora, ahora, apunte_id, tenant_id, actual["version"]))
+                         (*(d[c] for c in CAMPOS_GUARDADOS), usuario_id, ahora, ahora, apunte_id, tenant_id, actual["version"]))
             accion = "fiscal.apunte.corregir"
-            cambios = {c: [str(actual[c] if actual[c] is not None else "")[:40], str(d[c] if d[c] is not None else "")[:40]] for c in CAMPOS_APUNTE
+            cambios = {c: [str(actual[c] if actual[c] is not None else "")[:40], str(d[c] if d[c] is not None else "")[:40]] for c in CAMPOS_GUARDADOS
                        if c != "causa" and (actual[c] if actual[c] is not None else "") != (d[c] if d[c] is not None else "")}
         detalle = {"apunte_id": apunte_id, "numero": apunte.numero, "libro": apunte.libro}
         if accion == "fiscal.apunte.corregir":
@@ -436,7 +479,7 @@ def proponer_desde_factura(tenant_id: int, usuario_id: int, factura_id: int) -> 
         if not f:
             raise ErrorFiscal("La factura no existe.", "no_encontrado")
         _exigir_acceso(tenant_id, usuario_id, f["cliente_fiscal_id"])
-        lineas = conn.execute("SELECT base_centimos, pct_iva, cuota_iva, sujeta_iva FROM facturas_contables_lineas WHERE factura_id = ? ORDER BY id", (factura_id,)).fetchall()
+        lineas = conn.execute("SELECT base_centimos, pct_iva, cuota_iva, sujeta_iva, pct_retencion, cuota_retencion FROM facturas_contables_lineas WHERE factura_id = ? ORDER BY id", (factura_id,)).fetchall()
     finally:
         conn.close()
     agrupadas: dict[int, list[int]] = {}
@@ -444,16 +487,23 @@ def proponer_desde_factura(tenant_id: int, usuario_id: int, factura_id: int) -> 
         g = agrupadas.setdefault(ln["pct_iva"] if ln["sujeta_iva"] else -1, [0, 0])
         g[0] += ln["base_centimos"]
         g[1] += ln["cuota_iva"]
+    ret_base = sum(ln["base_centimos"] for ln in lineas if (ln["pct_retencion"] or 0) > 0)             # retención de IRPF de la factura: solo la practica quien la recibe (111 por defecto; el 115 lo decide la revisión)
+    ret_importe = sum(ln["cuota_retencion"] or 0 for ln in lineas)
+    ret_pct = max([ln["pct_retencion"] or 0 for ln in lineas] + [0])
     propuestas = []
     for n, (pct, (base, cuota)) in enumerate(sorted(agrupadas.items()), 1):
         emitida = f["tipo"] == "emitida"
         if f["abono"] and base > 0:                                    # un abono/rectificativa va en negativo en los libros
             base, cuota = -base, -cuota
+        retencion = None
+        if n == 1 and not emitida and ret_importe and ret_pct:                  # una sola vez por factura, aunque se reparta en varios apuntes por tipo de IVA
+            s = -1 if f["abono"] else 1
+            retencion = {"modelo": "111", "clave": "G", "base": s * ret_base, "pct": int(round(ret_pct)), "importe": s * ret_importe}
         propuestas.append({
             "factura_id": factura_id, "libro": "E" if emitida else "R", "tipo_factura": ("R1" if f["abono"] else "F1"), "clave": "01", "calificacion": "S1" if pct >= 0 else "N1", "exenta": "",
             "serie": "", "numero": f["numero"] if len(agrupadas) == 1 else f"{f['numero']}/{n}", "fecha_expedicion": f["fecha"], "fecha_operacion": f["fecha_operacion"],
             "fecha_recepcion": None if emitida else f["fecha"], "base_centimos": base, "tipo_iva_centesimas": max(pct, 0), "cuota_centimos": cuota, "total_centimos": None,
-            "contraparte_nombre": f["tercero_nombre"], "contraparte_nif": f["tercero_nif"] or "", "aprobado": False,
+            "contraparte_nombre": f["tercero_nombre"], "contraparte_nif": f["tercero_nif"] or "", "aprobado": False, "retencion": retencion,
         })
     return propuestas
 
@@ -502,12 +552,14 @@ def facturas_del_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
             "GROUP BY f.id, f.tipo, f.estado, f.fecha, f.numero, f.tercero_nombre, f.abono, f.total_centimos, f.incluir_en_fiscal ORDER BY f.fecha, f.id",
             (tenant_id, cliente_fiscal_id, desde, hasta)).fetchall()]
         apuntes = {}
-        for a in conn.execute("SELECT id, factura_id, clave, base_centimos, cuota_centimos FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND factura_id IS NOT NULL AND anulado_en IS NULL "
-                              "ORDER BY id", (tenant_id, cliente_fiscal_id)).fetchall():
+        for a in conn.execute("SELECT id, factura_id, clave, base_centimos, cuota_centimos, retencion_modelo, retencion_centimos FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND factura_id IS NOT NULL "
+                              "AND anulado_en IS NULL ORDER BY id", (tenant_id, cliente_fiscal_id)).fetchall():
             previo = apuntes.get(a["factura_id"])
             if previo:
                 previo["base_centimos"] += a["base_centimos"]
                 previo["cuota_centimos"] += a["cuota_centimos"]
+                previo["retencion_centimos"] = (previo["retencion_centimos"] or 0) + (a["retencion_centimos"] or 0)
+                previo["retencion_modelo"] = previo["retencion_modelo"] or a["retencion_modelo"]
             else:
                 apuntes[a["factura_id"]] = dict(a)
     finally:
@@ -533,9 +585,14 @@ def facturas_del_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
         if f["retencion"]:
             if f["tipo"] == "emitida":
                 f["m_retencion"], f["retencion_estado"] = "soportada", "computa" if f["incluir_en_fiscal"] else "excluida"
+            elif ap and ap["retencion_modelo"]:                                   # la retención ya está en el apunte aprobado: eso es lo que cuenta
+                f["m_retencion"], f["retencion_estado"], f["retencion"] = ap["retencion_modelo"], "computa" if f["incluir_en_fiscal"] else "excluida", ap["retencion_centimos"] or 0
             else:
                 f["m_retencion"] = "115" if (ap and ap["clave"] in ("11", "12", "13")) else "111"
-                f["retencion_estado"] = "excluida" if not f["incluir_en_fiscal"] else ("computa" if revisada else "por_revisar")
+                if not f["incluir_en_fiscal"]:
+                    f["retencion_estado"] = "excluida"
+                else:                                                             # apunte aprobado sin la retención: hay que corregirlo para que cuente
+                    f["retencion_estado"] = "por_revisar" if ap or not revisada else "por_registrar"
         if f["m303"] == "computa":
             totales["iva_repercutido" if f["tipo"] == "emitida" else "iva_soportado"] += f["cuota_iva"]
         if f["retencion_estado"] == "computa":
@@ -556,7 +613,7 @@ def aprobar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, fa
             if not propuestas or any(p["calificacion"] != "S1" for p in propuestas):
                 raise ErrorFiscal("Tiene operaciones no sujetas: revísala a mano.")
             for p in propuestas:
-                aprobar_apunte(tenant_id, usuario_id, cliente_fiscal_id, a_apunte(p), factura_id=int(fid))
+                aprobar_apunte(tenant_id, usuario_id, cliente_fiscal_id, a_apunte(p), factura_id=int(fid), retencion=p.get("retencion"))
             resultado["aprobadas"] += len(propuestas)
         except ErrorFiscal as e:
             resultado["errores"].append({"factura_id": int(fid), "motivo": str(e)})

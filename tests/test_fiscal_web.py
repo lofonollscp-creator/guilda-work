@@ -353,3 +353,20 @@ def test_aviso_cuando_el_apunte_ya_no_coincide_con_su_factura(cliente):
     r = fn.facturas_del_periodo(t, uid, c, 2026, "2T")
     assert r["totales"]["descuadres"] == 1 and r["facturas"][0]["descuadre"]
     assert "1 apunte no coincide con su factura" in cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
+
+
+def test_retencion_irpf_en_el_apunte_recibido(cliente):
+    uid, t, c = _web(cliente, email="retencion@ejemplo.com")
+    datos = {"libro": "R", "tipo_factura": "F1", "clave": "01", "numero": "P-1", "fecha_expedicion": "2026-05-10", "fecha_recepcion": "2026-05-10", "base": "1.000,00", "tipo_iva": "21",
+             "contraparte_nif": "B87654321", "contraparte_nombre": "Profesional SL"}
+    mal = cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data={**datos, "ret_modelo": "111", "ret_pct": "15", "ret_importe": "100,00"})                   # 15 % de 1.000 son 150
+    assert mal.status_code == 400 and "no cuadra" in mal.get_data(as_text=True)
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data={**datos, "ret_modelo": "111", "ret_pct": "15"}).status_code == 302
+    ap = fn.listar_apuntes(t, uid, c)[0]
+    assert (ap["retencion_modelo"], ap["retencion_clave"], ap["retencion_base_centimos"], ap["retencion_pct_centesimas"], ap["retencion_centimos"]) == ("111", "G", 100000, 1500, 15000)
+    assert 'value="15"' in cliente.get(f"/guilda-fiscal/{c}/apuntes/{ap['id']}").get_data(as_text=True)
+    emitida = cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data={**datos, "libro": "E", "numero": "E-9", "ret_modelo": "111", "ret_pct": "15", "calificacion": "S1"})
+    assert emitida.status_code == 302 and fn.listar_apuntes(t, uid, c)[1]["retencion_modelo"] == ""                                                         # en una emitida se ignora
+    corregido = cliente.post(f"/guilda-fiscal/{c}/apuntes/{ap['id']}", data={**datos, "version": str(ap["version"]), "causa": "no llevaba retención"})
+    assert corregido.status_code == 302 and fn.listar_apuntes(t, uid, c)[0]["retencion_centimos"] is None
+    assert "retencion_centimos" in fn.historial_apunte(t, uid, c, ap["id"])[0]["cambios"]

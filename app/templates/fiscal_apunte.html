@@ -57,6 +57,15 @@
     <label>{{ _('Periodo de deducción (2026-3T)') }}<input type="text" name="periodo_deduccion" value="{{ datos.get('periodo_deduccion') or '' }}" maxlength="7"></label>
   </div>
   {% endif %}
+  {% if not e %}
+  <div class="fila-campos">
+    <label>{{ _('Retención de IRPF que practica el cliente') }}<select name="ret_modelo">{% for v, n in (('', _('Sin retención')), ('111', _('Modelo 111 · profesionales y trabajo')), ('115', _('Modelo 115 · alquileres'))) %}<option value="{{ v }}" {{ 'selected' if datos.get('ret_modelo') == v }}>{{ n }}</option>{% endfor %}</select></label>
+    <label>{{ _('Clave (modelo 111)') }}<select name="ret_clave">{% for v, n in (('G', _('G · Actividades profesionales')), ('A', _('A · Rendimientos del trabajo'))) %}<option value="{{ v }}" {{ 'selected' if datos.get('ret_clave') == v }}>{{ n }}</option>{% endfor %}</select></label>
+    <label>{{ _('Base de la retención (€; en blanco = la base)') }}<input type="text" name="ret_base" value="{{ datos.get('ret_base') or '' }}" inputmode="decimal"></label>
+    <label>{{ _('Retención') }} (%)<input type="text" name="ret_pct" value="{{ datos.get('ret_pct') or '' }}" inputmode="decimal"></label>
+    <label>{{ _('Importe retenido (€; en blanco = base × porcentaje)') }}<input type="text" name="ret_importe" value="{{ datos.get('ret_importe') or '' }}" inputmode="decimal"></label>
+  </div>
+  {% endif %}
   <div class="fila-campos">
     <label>{{ _('Situación del inmueble (alquileres)') }}<select name="inmueble_situacion">{% for v, n in (('', '—'), ('1', _('1 · Resto de España')), ('2', _('2 · Foral')), ('3', _('3 · Sin referencia catastral')), ('4', _('4 · Extranjero')), ('5', _('5 · No aplica'))) %}<option value="{{ v }}" {{ 'selected' if datos.get('inmueble_situacion') == v }}>{{ n }}</option>{% endfor %}</select></label>
     <label>{{ _('Referencia catastral') }}<input type="text" name="inmueble_referencia" value="{{ datos.get('inmueble_referencia') or '' }}" maxlength="20"></label>

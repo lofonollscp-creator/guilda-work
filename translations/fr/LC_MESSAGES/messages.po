@@ -17284,3 +17284,30 @@ msgid "%(n)s apunte no coincide con su factura"
 msgid_plural "%(n)s apuntes no coinciden con su factura"
 msgstr[0] "%(n)s écriture ne correspond pas à sa facture"
 msgstr[1] "%(n)s écritures ne correspondent pas à leur facture"
+
+msgid "Retención de IRPF que practica el cliente"
+msgstr "Retenue d'IRPF que pratique le client"
+
+msgid "Sin retención"
+msgstr "Sans retenue"
+
+msgid "Modelo 111 · profesionales y trabajo"
+msgstr "Modèle 111 · professionnels et salaires"
+
+msgid "Modelo 115 · alquileres"
+msgstr "Modèle 115 · loyers"
+
+msgid "Clave (modelo 111)"
+msgstr "Clé (modèle 111)"
+
+msgid "G · Actividades profesionales"
+msgstr "G · Activités professionnelles"
+
+msgid "A · Rendimientos del trabajo"
+msgstr "A · Revenus du travail"
+
+msgid "Base de la retención (€; en blanco = la base)"
+msgstr "Base de la retenue (€ ; vide = la base)"
+
+msgid "Importe retenido (€; en blanco = base × porcentaje)"
+msgstr "Montant retenu (€ ; vide = base × pourcentage)"

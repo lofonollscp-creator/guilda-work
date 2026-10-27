@@ -51,7 +51,7 @@ fi
 DESTINO="$(mktemp -d "$BASE/guilda-probar.XXXXXX")"
 trap 'rm -rf "$DESTINO"' EXIT INT TERM
 cd "$REPO"
-git ls-files -z --cached --others --exclude-standard | grep -zv -e '^data/' -e '^mobile/build/' | rsync -a --files-from=- --from0 ./ "$DESTINO/"
+git ls-files -z --cached --others --exclude-standard | grep -zv -e '^data/' -e '^mobile/build/' -e '^\.venv$' | rsync -a --files-from=- --from0 ./ "$DESTINO/"
 ln -s "$REPO/.venv" "$DESTINO/.venv"
 cd "$DESTINO"
 

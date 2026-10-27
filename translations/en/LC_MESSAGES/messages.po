@@ -17199,3 +17199,30 @@ msgid "%(n)s apunte no coincide con su factura"
 msgid_plural "%(n)s apuntes no coinciden con su factura"
 msgstr[0] "%(n)s entry does not match its invoice"
 msgstr[1] "%(n)s entries do not match their invoice"
+
+msgid "Retención de IRPF que practica el cliente"
+msgstr "Income tax withholding the client applies"
+
+msgid "Sin retención"
+msgstr "No withholding"
+
+msgid "Modelo 111 · profesionales y trabajo"
+msgstr "Form 111 · professionals and employment"
+
+msgid "Modelo 115 · alquileres"
+msgstr "Form 115 · rentals"
+
+msgid "Clave (modelo 111)"
+msgstr "Key (form 111)"
+
+msgid "G · Actividades profesionales"
+msgstr "G · Professional activities"
+
+msgid "A · Rendimientos del trabajo"
+msgstr "A · Employment income"
+
+msgid "Base de la retención (€; en blanco = la base)"
+msgstr "Withholding base (€; blank = the base)"
+
+msgid "Importe retenido (€; en blanco = base × porcentaje)"
+msgstr "Amount withheld (€; blank = base × percentage)"

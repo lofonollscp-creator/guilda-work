@@ -214,10 +214,25 @@ def _apunte_del_formulario() -> tuple[Apunte, str | None]:
                   periodo_deduccion=deduccion, inmueble_situacion=f.get("inmueble_situacion", ""), inmueble_referencia=f.get("inmueble_referencia", "").strip().upper()), (f.get("causa") or None)
 
 
+def _retencion_del_formulario(apunte: Apunte) -> dict | None:
+    """La retención de IRPF del formulario (solo facturas recibidas). Base en blanco = la del apunte; importe en blanco = base × porcentaje."""
+    f = request.form
+    modelo = f.get("ret_modelo", "")
+    if not modelo or apunte.libro != "R":
+        return None
+    if not f.get("ret_pct", "").strip():
+        raise ErrorFiscal("Indica el porcentaje de la retención.")
+    return {"modelo": modelo, "clave": f.get("ret_clave", ""), "base": _euros(f["ret_base"]) if f.get("ret_base", "").strip() else apunte.base,
+            "pct": fc.porcentaje_a_centesimas(f["ret_pct"]), "importe": _euros(f["ret_importe"]) if f.get("ret_importe", "").strip() else None}
+
+
 def _datos_de_apunte(fila: dict) -> dict:
     datos = dict(fila)
     datos.update({"base": _euros_texto(fila["base_centimos"]), "cuota": _euros_texto(fila["cuota_centimos"]), "tipo_iva": f"{fila['tipo_iva_centesimas'] / 100:g}".replace(".", ","),
-                  "total": _euros_texto(fila["total_centimos"]), "cuota_deducible": _euros_texto(fila["cuota_deducible_centimos"])})
+                  "total": _euros_texto(fila["total_centimos"]), "cuota_deducible": _euros_texto(fila["cuota_deducible_centimos"]),
+                  "ret_modelo": fila.get("retencion_modelo") or "", "ret_clave": fila.get("retencion_clave") or "", "ret_base": _euros_texto(fila.get("retencion_base_centimos")),
+                  "ret_pct": "" if fila.get("retencion_pct_centesimas") is None else f"{fila['retencion_pct_centesimas'] / 100:g}".replace(".", ","),
+                  "ret_importe": _euros_texto(fila.get("retencion_centimos"))})
     return datos
 
 
@@ -245,7 +260,7 @@ def apunte_nuevo(cliente_id: int):
     if request.method == "POST":
         try:
             apunte, causa = _apunte_del_formulario()
-            fn.aprobar_apunte(g.tenant_id, g.usuario_id, cliente_id, apunte, causa=causa, factura_id=request.form.get("factura_id", type=int))
+            fn.aprobar_apunte(g.tenant_id, g.usuario_id, cliente_id, apunte, causa=causa, factura_id=request.form.get("factura_id", type=int), retencion=_retencion_del_formulario(apunte))
         except (ErrorFiscal, ValueError, KeyError) as e:
             return _plantilla_apunte(c, request.form.to_dict(), None, str(e), 400)
         return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id, ejercicio=apunte.fecha_expedicion.year))
@@ -274,6 +289,9 @@ def apunte_nuevo(cliente_id: int):
         datos.update({"libro": p["libro"], "tipo_factura": p["tipo_factura"], "numero": p["numero"], "fecha_expedicion": p["fecha_expedicion"], "fecha_recepcion": p["fecha_recepcion"] or "",
                       "base": _euros_texto(p["base_centimos"]), "tipo_iva": f"{p['tipo_iva_centesimas'] / 100:g}".replace(".", ","), "contraparte_nombre": p["contraparte_nombre"],
                       "contraparte_nif": p["contraparte_nif"], "factura_id": factura_id, "calificacion": p["calificacion"] if p["libro"] == "E" else ""})
+        r = p.get("retencion")
+        if r:
+            datos.update({"ret_modelo": r["modelo"], "ret_clave": r["clave"], "ret_base": _euros_texto(r["base"]), "ret_pct": f"{r['pct'] / 100:g}".replace(".", ","), "ret_importe": _euros_texto(r["importe"])})
     return _plantilla_apunte(c, datos, None, _error())
 
 
@@ -287,7 +305,7 @@ def apunte_ver(cliente_id: int, apunte_id: int):
     if request.method == "POST":
         try:
             apunte, causa = _apunte_del_formulario()
-            fn.aprobar_apunte(g.tenant_id, g.usuario_id, cliente_id, apunte, causa=causa, apunte_id=apunte_id, version=request.form.get("version", type=int))
+            fn.aprobar_apunte(g.tenant_id, g.usuario_id, cliente_id, apunte, causa=causa, apunte_id=apunte_id, version=request.form.get("version", type=int), retencion=_retencion_del_formulario(apunte))
         except (ErrorFiscal, ValueError, KeyError) as e:
             return _plantilla_apunte(c, request.form.to_dict(), apunte_id, str(e), 400)
         return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id, ejercicio=apunte.fecha_expedicion.year))
