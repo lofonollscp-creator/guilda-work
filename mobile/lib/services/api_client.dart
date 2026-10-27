@@ -1262,6 +1262,23 @@ class ApiClient {
     }
   }
 
+  Future<List<IaConversacion>> listarConversacionesIa() async {
+    try {
+      final resp = await _dio.get('/ia/conversaciones');
+      return [for (final c in (resp.data['data']['conversaciones'] as List)) IaConversacion.fromJson(c as Map<String, dynamic>)];
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
+  Future<void> activarConversacionIa(int id) async {
+    try {
+      await _dio.post('/ia/conversaciones/$id/activar');
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
   /// Sube un archivo de texto o CSV (UTF-8, hasta 1 MB) para que el asistente lo lea.
   Future<IaAdjunto> subirAdjuntoIa(Uint8List bytes, String nombreArchivo) async {
     try {

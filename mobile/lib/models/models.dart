@@ -841,6 +841,22 @@ class IaMensaje {
   );
 }
 
+/// Una conversación con el asistente (la activa y las anteriores).
+class IaConversacion {
+  final int id;
+  final String? titulo;
+  final bool activa;
+  final String? actualizadaEn;
+  const IaConversacion({required this.id, this.titulo, required this.activa, this.actualizadaEn});
+
+  factory IaConversacion.fromJson(Map<String, dynamic> j) => IaConversacion(
+        id: (j['id'] as num).toInt(),
+        titulo: j['titulo'] as String?,
+        activa: j['activa'] == 1 || j['activa'] == true,
+        actualizadaEn: j['actualizada_en'] as String?,
+      );
+}
+
 /// Un dato citado por el asistente: `tipo` (tarea, nota, correo, cliente, expediente, vencimiento), su título y su dirección en la web.
 class IaFuente {
   final String tipo;

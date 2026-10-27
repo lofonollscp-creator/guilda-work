@@ -191,7 +191,10 @@ void main() {
       sinVoz();
       await t.pumpWidget(appDePantalla(IaChatScreen(api: ApiFalsa(), locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
       await t.pumpAndSettle();
-      expect(find.textContaining('puede contener errores'), findsOneWidget);
+      // El aviso ya no es un banner fijo: va en el subtítulo, con su «i» a un toque de «Cómo funciona».
+      expect(find.text('IA · puede equivocarse'), findsOneWidget);
+      expect(find.textContaining('puede contener errores'), findsNothing);
+      expect(find.byTooltip('Cómo funciona'), findsOneWidget);
       expect(find.byTooltip('Adjuntar texto o CSV (hasta 1 MB)'), findsOneWidget);
     });
 
@@ -207,7 +210,11 @@ void main() {
       expect(find.text('gastos.csv'), findsOneWidget);
       expect(find.text('¿Cuánto suman?'), findsOneWidget);
       expect(find.textContaining('[Adjunto'), findsNothing);
-      expect(find.text('Fuentes'), findsOneWidget);
+      // Las fuentes van plegadas («2 fuentes») y al tocarlas se despliegan.
+      expect(find.text('2 fuentes'), findsOneWidget);
+      expect(find.text('Pagar a Acme'), findsNothing);
+      await t.tap(find.text('2 fuentes'));
+      await t.pumpAndSettle();
       expect(find.text('Pagar a Acme'), findsOneWidget);
       expect(find.text('Gastos de octubre'), findsOneWidget);
     });
@@ -223,8 +230,8 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('Crea una tarea para llamar a Acme mañana'), findsOneWidget);
       expect(find.textContaining('crear la tarea'), findsOneWidget);
-      expect(find.textContaining('crear_tarea'), findsWidgets);
-      expect(find.text('asunto'), findsOneWidget);
+      expect(find.text('Nueva tarea'.toUpperCase()), findsOneWidget); // lo que va a hacer, con nombre humano
+      expect(find.text('Asunto'), findsOneWidget);
       expect(find.text('Llamar a Acme'), findsOneWidget);
       expect(find.text('No'), findsOneWidget);
       expect(find.text('Sí, hazlo'), findsOneWidget);

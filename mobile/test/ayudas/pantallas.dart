@@ -65,6 +65,11 @@ class ApiFalsa extends ApiClient {
 
   final List<String> acciones = [];
   Mensaje? abierto;
+  List<IaConversacion> conversaciones = [];
+  @override
+  Future<List<IaConversacion>> listarConversacionesIa() async => conversaciones;
+  @override
+  Future<void> activarConversacionIa(int id) async {}
   List<IaMensaje> chat = [];
   final List<String> enviadosIa = [];
 
