@@ -16,6 +16,7 @@ import 'package:guilda_work_mobile/services/locale_service.dart';
 import 'package:guilda_work_mobile/theme/app_theme.dart';
 
 import 'ayudas/pantallas.dart';
+import 'package:guilda_work_mobile/nucleo/servicios.dart';
 
 void main() {
   final carpeta = carpetaCapturas;
@@ -64,6 +65,19 @@ void main() {
   });
 
   group('Correo', () {
+    testWidgets('en una tableta el asistente va en un panel junto a la bandeja', (t) async {
+      t.view.physicalSize = const Size(1200, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      sinVoz();
+      final api = ApiFalsa()..mensajes = [msg(1, 'Marta Ruiz <marta@ejemplo.com>', 'Consulta sobre la renta', 'Hola', leido: false)];
+      await t.pumpWidget(appDePantalla(CorreoBandejaScreen(api: api), [estadoSesionProvider.overrideWith(SesionFija.new), serviciosProvider.overrideWithValue(serviciosFalsos())]));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsOneWidget);
+      expect(find.text('Contexto: Correo'), findsOneWidget);
+      expect(find.text('Consulta sobre la renta'), findsOneWidget);
+    });
+
     testWidgets('la bandeja tiene una fila de filtros, y cada correo enseña quién, el asunto y el principio; lo no leído se marca con palabras', (t) async {
       final api = ApiFalsa()
         ..mensajes = [

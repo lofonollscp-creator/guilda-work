@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -86,7 +88,7 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(t.tiquetEditarTitulo(widget.tiquet.id))),
+      appBar: AppBar(title: Text(t.tiquetEditarTitulo(widget.tiquet.id)), actions: [AccionAsistente(contexto: t.tiquetsTitulo, contextoIa: 'tiquet #${widget.tiquet.id}')]),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

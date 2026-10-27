@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../nucleo/panel_asistente.dart';
+
 import '../../nucleo/abrir_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,7 +66,9 @@ class _NotasScreenState extends ConsumerState<NotasScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ConAsistenteLateral(contexto: AppLocalizations.of(context).notasTitulo, hijo: _pantalla(context));
+
+  Widget _pantalla(BuildContext context) {
     final t = AppLocalizations.of(context);
     final estado = ref.watch(notasListaProvider);
     final c = ref.read(notasListaProvider.notifier);
@@ -80,7 +84,7 @@ class _NotasScreenState extends ConsumerState<NotasScreen> {
               )
             : Text(t.notasTitulo),
         actions: [
-          AccionAsistente(contexto: t.notasTitulo),
+          AccionAsistente(contexto: t.notasTitulo, anchoMinimoPanel: 900),
           IconButton(
             icon: Icon(_buscando ? Icons.close : Icons.search),
             tooltip: t.notasBuscar,

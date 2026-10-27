@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../nucleo/abrir_asistente.dart';
+import '../../nucleo/panel_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/generado/modelos.g.dart';
@@ -64,7 +67,9 @@ class _MiDiaScreenState extends ConsumerState<MiDiaScreen> {
   final Set<String> _expandidas = {};
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ConAsistenteLateral(contexto: AppLocalizations.of(context).tareasTitulo, anchoMinimo: anchoConAsistente, hijo: _pantalla(context));
+
+  Widget _pantalla(BuildContext context) {
     final t = AppLocalizations.of(context);
     final dia = ref.watch(miDiaProvider);
     final c = ref.read(miDiaProvider.notifier);
@@ -76,7 +81,7 @@ class _MiDiaScreenState extends ConsumerState<MiDiaScreen> {
       'compartidas': t.tareasDiaCompartidas,
     };
     return Scaffold(
-      appBar: AppBar(title: Text(t.tareasTitulo)),
+      appBar: AppBar(title: Text(t.tareasTitulo), actions: [AccionAsistente(contexto: t.tareasTitulo, anchoMinimoPanel: anchoConAsistente)]),
       body: Column(children: [
         const AvisoDatosGuardados(prefijo: '/mi-dia'),
         const AvisoPendientes(),

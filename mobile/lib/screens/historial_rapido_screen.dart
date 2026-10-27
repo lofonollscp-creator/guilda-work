@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -56,7 +58,7 @@ class _HistorialRapidoScreenState extends State<HistorialRapidoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.titulo)),
+      appBar: AppBar(title: Text(widget.titulo), actions: [AccionAsistente(contexto: widget.titulo)]),
       body: FutureBuilder<List<EntradaHistorial>>(
         future: _entradas,
         builder: (context, snapshot) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -102,7 +104,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.categoria.nombre)),
+      appBar: AppBar(title: Text(widget.categoria.nombre), actions: [AccionAsistente(contexto: widget.categoria.nombre)]),
       body: FutureBuilder<void>(
         future: _carga,
         builder: (context, snapshot) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/panel_asistente.dart';
+
 import '../nucleo/abrir_asistente.dart';
 
 import '../diseno/componentes.dart';
@@ -80,12 +82,14 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ConAsistenteLateral(contexto: AppLocalizations.of(context).dashboardCorreoTooltip, hijo: _pantalla(context));
+
+  Widget _pantalla(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).dashboardCorreoTooltip),
         actions: [
-          AccionAsistente(contexto: AppLocalizations.of(context).dashboardCorreoTooltip),
+          AccionAsistente(contexto: AppLocalizations.of(context).dashboardCorreoTooltip, anchoMinimoPanel: 900),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: AppLocalizations.of(context).correoAjustesTitulo,

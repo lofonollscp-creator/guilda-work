@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'panel_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../diseno/asistente.dart';
@@ -17,13 +19,20 @@ Future<void> abrirAsistente(BuildContext context, {String? consulta, String? con
 }
 
 /// El botón del asistente para la barra de una pantalla: la chispa violeta, que abre el chat sabiendo de qué pantalla (o elemento) viene.
-class AccionAsistente extends StatelessWidget {
+class AccionAsistente extends ConsumerWidget {
   final String contexto;
   final String? contextoIa;
-  const AccionAsistente({super.key, required this.contexto, this.contextoIa});
+
+  /// Si la pantalla tiene panel lateral del asistente (a partir de este ancho), la chispa lo reabre en vez de abrir el chat a pantalla completa, y no se pinta con el panel abierto.
+  final double? anchoMinimoPanel;
+  const AccionAsistente({super.key, required this.contexto, this.contextoIa, this.anchoMinimoPanel});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final minimo = anchoMinimoPanel;
+    if (minimo != null && cabePanelAsistente(context, minimo)) {
+      return ReabrirAsistente(anchoMinimo: minimo);
+    }
     return IconButton(
       icon: Icon(Icons.auto_awesome, color: ColoresIa.de(context).acento),
       tooltip: AppLocalizations.of(context).iaPreguntarAlAsistente,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -108,7 +110,7 @@ class _FiscalVencimientoEditScreenState
     final t = AppLocalizations.of(context);
     final v = widget.vencimiento;
     return Scaffold(
-      appBar: AppBar(title: Text('${v.modelo} — ${v.clienteNombre}')),
+      appBar: AppBar(title: Text('${v.modelo} — ${v.clienteNombre}'), actions: [AccionAsistente(contexto: AppLocalizations.of(context).fiscalTitulo, contextoIa: 'vencimiento fiscal #${v.id} (${v.modelo}, ${v.clienteNombre})')]),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

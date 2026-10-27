@@ -4,6 +4,8 @@ import '../../diseno/adaptable.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -220,6 +222,7 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
         leading: IconButton(icon: const Icon(Icons.close), tooltip: AppLocalizations.of(context).comunDescartar, onPressed: () => Navigator.pop(context)),
         title: Text(AppLocalizations.of(context).correoRedactar),
         actions: [
+          AccionAsistente(contexto: AppLocalizations.of(context).correoRedactar, contextoIa: 'estoy redactando un correo nuevo'),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: _enviando

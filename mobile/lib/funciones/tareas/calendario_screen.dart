@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../nucleo/abrir_asistente.dart';
+import '../../nucleo/panel_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -152,7 +155,9 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ConAsistenteLateral(contexto: AppLocalizations.of(context).tareasTitulo, anchoMinimo: anchoConAsistente, hijo: _pantalla(context));
+
+  Widget _pantalla(BuildContext context) {
     final t = AppLocalizations.of(context);
     final calendario = ref.watch(calendarioProvider);
     final c = ref.read(calendarioProvider.notifier);
@@ -164,7 +169,7 @@ class _CalendarioScreenState extends ConsumerState<CalendarioScreen> {
       VistaCalendario.mes: t.calVistaMes,
     };
     return Scaffold(
-      appBar: AppBar(title: Text(t.tareasTitulo)),
+      appBar: AppBar(title: Text(t.tareasTitulo), actions: [AccionAsistente(contexto: t.tareasTitulo, anchoMinimoPanel: anchoConAsistente)]),
       body: Column(children: [
         const AvisoDatosGuardados(prefijo: '/tareas-outlook'),
         const AvisoPendientes(),

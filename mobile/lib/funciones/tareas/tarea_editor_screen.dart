@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../nucleo/abrir_asistente.dart';
 import '../../diseno/adaptable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -250,7 +252,7 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(t.tareaEditar),
-        actions: [TextButton(onPressed: _guardando ? null : _guardar, child: Text(t.tareaGuardar))],
+        actions: [AccionAsistente(contexto: t.tareaEditar), TextButton(onPressed: _guardando ? null : _guardar, child: Text(t.tareaGuardar))],
       ),
       body: AnchoMaximo(child: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: [
         TextField(controller: _asunto, decoration: InputDecoration(labelText: t.tareaAsunto), textCapitalization: TextCapitalization.sentences),
