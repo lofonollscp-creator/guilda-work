@@ -18,7 +18,7 @@ TIPOS_RECIBIDAS_NORMALES = {"F1", "F3", "F4", "F6"}
 # tipo de IVA (centésimas) -> (casilla de base, casilla de cuota) del régimen general
 CASILLAS_TIPO = {0: ("150", "152"), 400: ("01", "03"), 500: ("154", "155"), 1000: ("04", "06"), 2100: ("07", "09")}
 CUOTAS_DEVENGADAS = ("152", "03", "155", "06", "09", "11", "13", "15")                 # casilla 27 (las demás del diseño —recargo, 167, 170— están bloqueadas)
-CUOTAS_DEDUCIBLES = ("29", "31", "33", "35", "37", "39", "41")                         # casilla 45 (42, 43 y 44 están bloqueadas)
+CUOTAS_DEDUCIBLES = ("29", "31", "33", "35", "37", "39", "41", "44")                   # casilla 45 (42 y 43 no se calculan; la 44 es la regularización de la prorrata en el último periodo)
 
 
 class ErrorDeCalculo(ValueError):
@@ -34,6 +34,7 @@ class Resultado303:
     bloqueos: list[str] = field(default_factory=list)
     avisos: list[str] = field(default_factory=list)
     tipo_declaracion: str = "N"
+    prorrata_pct: int | None = None                                    # prorrata general provisional aplicada a las cuotas soportadas (porcentaje entero)
 
     @property
     def calculable(self) -> bool:
@@ -134,6 +135,9 @@ def _recibidas(a: Apunte, i: int, r: Resultado303) -> None:
     if a.cuota_deducible is not None and a.cuota_deducible not in (0, a.cuota):
         r.bloqueos.append(f"{nombre}: deducción parcial (prorrata o afectación) no soportada.")
         return
+    if r.prorrata_pct is not None and r.prorrata_pct < 100:
+        if a.cuota_deducible != 0:                                         # una cuota que el apunte ya excluye por completo no se prorratea
+            a = a.con(cuota_deducible=_redondear(a.cuota * r.prorrata_pct, 100))
     rectifica = a.tipo_factura in RECTIFICATIVAS or a.cuota < 0
     if a.clave == "09":                                              # adquisición intracomunitaria: se devenga y se deduce
         if rectifica:
@@ -167,10 +171,50 @@ def _recibidas(a: Apunte, i: int, r: Resultado303) -> None:
     r.sumar(cuota, a.deducible, i)
 
 
+def porcentaje_de_prorrata(centesimas: int) -> int:
+    """Prorrata general: el porcentaje se redondea a la unidad superior (art. 104.Tres LIVA). 7234 (72,34 %) -> 73."""
+    return min(100, -(-int(centesimas) // 100))
+
+
+def _deducciones_del_ejercicio(apuntes: list[Apunte], ejercicio: int, periodos: tuple[str, ...], pct: int, bloqueos: list[str]) -> int:
+    """Suma de las cuotas soportadas deducibles de todos los periodos del ejercicio con una prorrata dada (la misma lógica que en cada autoliquidación)."""
+    total = 0
+    for p in periodos:
+        sub = Resultado303(ejercicio, p, prorrata_pct=pct)
+        for i, a in enumerate(apuntes):
+            if a.libro == RECIBIDAS:
+                _recibidas(a, i, sub)
+        total += sum(sub.casillas.get(k, 0) for k in CUOTAS_DEDUCIBLES)
+        bloqueos.extend(b for b in sub.bloqueos if b not in bloqueos)
+    return total
+
+
+def _regularizar_prorrata(apuntes: list[Apunte], r: Resultado303) -> None:
+    """Casilla 44 (último periodo): deducciones con el porcentaje DEFINITIVO del año menos las practicadas con el provisional. El definitivo sale del volumen de operaciones del año (con derecho a
+    deducción sobre el total, redondeado a la unidad superior). No se aplican las exclusiones del art. 104.Tres (operaciones financieras accesorias, entregas de bienes de inversión…)."""
+    from .motor_390 import volumen_anual
+    v = volumen_anual(apuntes, r.ejercicio)
+    r.bloqueos.extend(b for b in v.bloqueos if b not in r.bloqueos)
+    total, sin_derecho = v.casillas.get("108", 0), v.casillas.get("105", 0)
+    if total <= 0:
+        r.bloqueos.append("Prorrata general: sin operaciones en el año no se puede fijar el porcentaje definitivo.")
+        return
+    definitivo = min(100, -(-100 * (total - sin_derecho) // total))
+    periodos = tuple(f"{m:02d}" for m in range(1, 13)) if r.periodo == "12" else ("1T", "2T", "3T", "4T")
+    provisional = _deducciones_del_ejercicio(apuntes, r.ejercicio, periodos, r.prorrata_pct, r.bloqueos)
+    definitiva = _deducciones_del_ejercicio(apuntes, r.ejercicio, periodos, definitivo, r.bloqueos)
+    if definitiva != provisional:
+        r.casillas["44"] = definitiva - provisional
+    r.avisos.append(f"Prorrata general: provisional {r.prorrata_pct} %, definitiva {definitivo} % según el volumen de operaciones del año. No se aplican las exclusiones del art. 104.Tres ni se regularizan "
+                    "los bienes de inversión de años anteriores (casilla 43).")
+
+
 def calcular(apuntes: list[Apunte], *, ejercicio: int, periodo: str, cuotas_a_compensar_anteriores: int = 0, tributacion_foral: bool = False, criterio_caja: bool = False,
-             prorrata: bool = False, regimen_simplificado: bool = False, recargo_equivalencia: bool = False, destino_negativo: str = "C") -> Resultado303:
+             prorrata: bool = False, regimen_simplificado: bool = False, recargo_equivalencia: bool = False, destino_negativo: str = "C", prorrata_general: int | None = None) -> Resultado303:
     """Las casillas del 303 de `periodo` («1T»…«4T» o «01»…«12») de `ejercicio` a partir de los apuntes. `cuotas_a_compensar_anteriores` (casilla 110) son las cuotas pendientes de periodos anteriores."""
     r = Resultado303(ejercicio, periodo)
+    if prorrata_general is not None:
+        r.prorrata_pct = porcentaje_de_prorrata(prorrata_general)
     if periodo not in tuple(f"{m:02d}" for m in range(1, 13)) + ("1T", "2T", "3T", "4T"):
         raise ErrorDeCalculo(f"periodo no válido: {periodo!r}")
     for activo, motivo in ((tributacion_foral, "tributación foral"), (criterio_caja, "criterio de caja"), (prorrata, "prorrata"), (regimen_simplificado, "régimen simplificado o agrario"),
@@ -179,6 +223,8 @@ def calcular(apuntes: list[Apunte], *, ejercicio: int, periodo: str, cuotas_a_co
             r.bloqueos.append(f"El titular tiene {motivo}: el cálculo automático de ese caso no está soportado todavía.")
     for i, a in enumerate(apuntes):
         (_recibidas if a.libro == RECIBIDAS else _devengado_expedidas)(a, i, r)
+    if prorrata_general is not None and periodo in ("4T", "12"):
+        _regularizar_prorrata(apuntes, r)
     c = r.casillas
     c["27"] = sum(c.get(k, 0) for k in CUOTAS_DEVENGADAS)
     c["45"] = sum(c.get(k, 0) for k in CUOTAS_DEDUCIBLES)

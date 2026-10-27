@@ -199,11 +199,12 @@ def _resultados_303(apuntes: list[Apunte], ejercicio: int, saldo_inicial: int, d
 
 
 def calcular(apuntes: list[Apunte], *, ejercicio: int, saldo_compensar_inicial: int = 0, declaraciones_303: dict[str, dict] | None = None, tributacion_foral: bool = False, criterio_caja: bool = False,
-             prorrata: bool = False, regimen_simplificado: bool = False, recargo_equivalencia: bool = False) -> Resultado390:
+             prorrata: bool = False, regimen_simplificado: bool = False, recargo_equivalencia: bool = False,
+             prorrata_general: int | None = None) -> Resultado390:
     """Las casillas del 390 de `ejercicio`. `declaraciones_303`: `{"1T": {"casillas": {...}, "tipo_declaracion": "I"}, …}` con los 303 ya revisados (si falta un trimestre se calcula ahora)."""
     r = Resultado390(ejercicio)
     ajustes = {"tributacion_foral": tributacion_foral, "criterio_caja": criterio_caja, "prorrata": prorrata, "regimen_simplificado": regimen_simplificado, "recargo_equivalencia": recargo_equivalencia}
-    for activo, motivo in ((tributacion_foral, "tributación foral"), (criterio_caja, "criterio de caja"), (prorrata, "prorrata o sectores diferenciados"), (regimen_simplificado, "régimen simplificado o agrario"),
+    for activo, motivo in ((tributacion_foral, "tributación foral"), (criterio_caja, "criterio de caja"), (prorrata or prorrata_general is not None, "prorrata o sectores diferenciados"), (regimen_simplificado, "régimen simplificado o agrario"),
                            (recargo_equivalencia, "recargo de equivalencia")):
         if activo:
             r.bloqueos.append(f"El titular tiene {motivo}: el cálculo automático del 390 en ese caso no está soportado todavía.")

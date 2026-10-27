@@ -917,8 +917,8 @@ def importar_libro(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, cont
 
 
 def _perfil_a_flags(perfil: dict, periodo: str) -> tuple[dict, list[str]]:
-    ajustes = {"tributacion_foral": bool(perfil["tributacion_foral"]), "criterio_caja": bool(perfil["criterio_caja"]), "prorrata": bool(perfil["prorrata_especial"] or perfil["prorrata_centesimas"] is not None
-                                                                                                                                       or perfil["sectores_diferenciados"]),
+    ajustes = {"tributacion_foral": bool(perfil["tributacion_foral"]), "criterio_caja": bool(perfil["criterio_caja"]), "prorrata": bool(perfil["prorrata_especial"] or perfil["sectores_diferenciados"]),
+               "prorrata_general": perfil["prorrata_centesimas"] if not (perfil["prorrata_especial"] or perfil["sectores_diferenciados"]) else None,
                "regimen_simplificado": perfil["regimen_iva"] in ("simplificado", "general_y_simplificado"), "recargo_equivalencia": perfil["regimen_iva"] == "recargo"}
     extra = []
     if perfil["regimen_iva"] in ("exento", "otro"):
@@ -1165,6 +1165,8 @@ def exportar_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) -
     apuntes = [a_apunte(a) for a in datos["apuntes"]]
     exonerado = bool(datos["perfil"].get("exonerado_390")) and d["periodo"] in exportador_303.ULTIMOS
     volumen = motor_390.volumen_anual(apuntes, d["ejercicio"]) if exonerado else None
+    if exonerado and datos["perfil"].get("prorrata_centesimas") is not None:
+        raise ErrorFiscal("El titular está exonerado del 390 y aplica prorrata: el último periodo lleva la página de prorrata (CNAE, importe y porcentaje por actividad) y todavía no se genera.", "no_soportado")
     problemas = validacion_apuntes.validar(apuntes, hoy=date.today(), nif_titular=datos["titular"]["nif"] or "")
     resultado = motor_303.Resultado303(d["ejercicio"], d["periodo"], casillas=dict(d["casillas"]), tipo_declaracion=d["tipo_declaracion"])
     try:

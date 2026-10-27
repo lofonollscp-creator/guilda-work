@@ -146,7 +146,7 @@ def test_sin_perfil_o_con_bloqueos_no_hay_declaracion_revisable():
     with pytest.raises(ErrorFiscal) as e:
         fn.crear_instantanea(t, u, c, ejercicio=ej, periodo=per)
     assert e.value.codigo == "sin_perfil"
-    fp.guardar_perfil(t, u, c, {"forma_juridica": "sociedad", "prorrata_centesimas": 8000}, vigente_desde="2026-04-01")
+    fp.guardar_perfil(t, u, c, {"forma_juridica": "sociedad", "prorrata_especial": 1}, vigente_desde="2026-04-01")
     dec = fn.calcular_declaracion(t, u, fn.crear_instantanea(t, u, c, ejercicio=ej, periodo=per)["id"])
     assert dec["bloqueos"] and "prorrata" in dec["bloqueos"][0]
     with pytest.raises(ErrorFiscal) as e:
