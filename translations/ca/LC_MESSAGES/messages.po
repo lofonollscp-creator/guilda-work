@@ -17399,3 +17399,36 @@ msgstr "Document informatiu, elaborat amb les dades de què disposa el despatx e
 
 msgid "Informe trimestral %(p)s %(e)s"
 msgstr "Informe trimestral %(p)s %(e)s"
+
+msgid "Resumen anual del IVA (modelo 390)"
+msgstr "Resum anual de l'IVA (model 390)"
+
+msgid "Se calcula ahora con los apuntes aprobados del año y se cuadra con los cuatro 303. No se guarda nada: si corriges un apunte, vuelve a calcularse."
+msgstr "Es calcula ara amb els apunts aprovats de l'any i es quadra amb els quatre 303. No es desa res: si corregeixes un apunt, es torna a calcular."
+
+msgid "Este titular está exonerado del 390: la información anual va en el 303 del último periodo."
+msgstr "Aquest titular està exonerat del 390: la informació anual va al 303 de l'últim període."
+
+msgid "Los cuatro 303 del año"
+msgstr "Els quatre 303 de l'any"
+
+msgid "Sin declaración revisada: se ha calculado ahora"
+msgstr "Sense declaració revisada: s'ha calculat ara"
+
+msgid "Lo que impide calcular el 390"
+msgstr "El que impedeix calcular el 390"
+
+msgid "Fichero para la AEAT"
+msgstr "Fitxer per a l'AEAT"
+
+msgid "No procede: el titular no presenta el 390."
+msgstr "No escau: el titular no presenta el 390."
+
+msgid "Fichero de PRUEBA: impórtalo en el simulador o en el formulario de la AEAT y compara las casillas antes de presentar. Faltan por completar a mano los datos estadísticos (actividad, clave y epígrafe del IAE) y la marca de operaciones con terceras personas."
+msgstr "Fitxer de PROVA: importa'l al simulador o al formulari de l'AEAT i compara les caselles abans de presentar. Falten per completar a mà les dades estadístiques (activitat, clau i epígraf de l'IAE) i la marca d'operacions amb tercers."
+
+msgid "Descargar fichero .390 de prueba"
+msgstr "Descarrega el fitxer .390 de prova"
+
+msgid "No se puede generar mientras el cálculo tenga bloqueos."
+msgstr "No es pot generar mentre el càlcul tingui bloquejos."

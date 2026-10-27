@@ -452,3 +452,21 @@ def test_recordatorios_sugeridos_se_envian_solo_con_confirmacion(cliente, monkey
     assert fn.recordatorios_sugeridos(t, uid)[0]["reciente"]
     otra = cliente.post("/guilda-fiscal/recordatorios", data={"envio": k, "confirmo": "1", f"asunto_{k}": "x", f"texto_{k}": "y"}).get_data(as_text=True)
     assert len(enviados) == 1                                                                                          # no se repite por el mismo periodo
+
+
+def test_resumen_anual_del_390_y_su_fichero_de_prueba(cliente):
+    uid, t, c = _web(cliente, email="iva390@ejemplo.com")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2025-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
+                                                           "periodicidad": "trimestral"}).status_code == 302
+    for libro, num, fecha, base, cp in (("E", "F-1", "2026-02-10", "1.000,00", "B11111111"), ("R", "P-1", "2026-03-05", "400,00", "B87654321")):
+        datos = {"libro": libro, "tipo_factura": "F1", "clave": "01", "numero": num, "fecha_expedicion": fecha, "fecha_recepcion": fecha, "base": base, "tipo_iva": "21", "contraparte_nif": cp, "contraparte_nombre": "Tercero SL"}
+        assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    r = fn.resumen_390(t, uid, c, 2026)
+    casillas = r["resultado"].casillas
+    assert r["resultado"].calculable and casillas["05"] == 100000 and casillas["606"] == 8400 and casillas["65"] == 21000 - 8400
+    pagina = cliente.get(f"/guilda-fiscal/{c}/390?ejercicio=2026").get_data(as_text=True)
+    assert "Resumen anual del IVA" in pagina and "casillas-390" in pagina and "Descargar fichero .390 de prueba" in pagina
+    assert f"/guilda-fiscal/{c}/390?ejercicio=2026" in cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
+    f = cliente.get(f"/guilda-fiscal/{c}/390/fichero?ejercicio=2026")
+    assert f.status_code == 200 and f.data.startswith(b"<T390020260A0000>") and b"EMPRESA WEB SL" in f.data
+    assert cliente.get(f"/guilda-fiscal/{c}/390/fichero").status_code == 404

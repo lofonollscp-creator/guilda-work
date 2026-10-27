@@ -17475,3 +17475,36 @@ msgstr "Document informatif, établi avec les données dont dispose le cabinet a
 
 msgid "Informe trimestral %(p)s %(e)s"
 msgstr "Rapport trimestriel %(p)s %(e)s"
+
+msgid "Resumen anual del IVA (modelo 390)"
+msgstr "Récapitulatif annuel de TVA (modèle 390)"
+
+msgid "Se calcula ahora con los apuntes aprobados del año y se cuadra con los cuatro 303. No se guarda nada: si corriges un apunte, vuelve a calcularse."
+msgstr "Il est calculé maintenant avec les écritures approuvées de l'année et rapproché des quatre 303. Rien n'est enregistré : si vous corrigez une écriture, il est recalculé."
+
+msgid "Este titular está exonerado del 390: la información anual va en el 303 del último periodo."
+msgstr "Ce titulaire est dispensé du 390 : l'information annuelle figure dans le 303 de la dernière période."
+
+msgid "Los cuatro 303 del año"
+msgstr "Les quatre 303 de l'année"
+
+msgid "Sin declaración revisada: se ha calculado ahora"
+msgstr "Pas de déclaration vérifiée : calculé maintenant"
+
+msgid "Lo que impide calcular el 390"
+msgstr "Ce qui empêche de calculer le 390"
+
+msgid "Fichero para la AEAT"
+msgstr "Fichier pour l'administration fiscale"
+
+msgid "No procede: el titular no presenta el 390."
+msgstr "Sans objet : le titulaire ne dépose pas le 390."
+
+msgid "Fichero de PRUEBA: impórtalo en el simulador o en el formulario de la AEAT y compara las casillas antes de presentar. Faltan por completar a mano los datos estadísticos (actividad, clave y epígrafe del IAE) y la marca de operaciones con terceras personas."
+msgstr "Fichier de TEST : importez-le dans le simulateur ou le formulaire de l'administration et comparez les cases avant de déposer. Les données statistiques (activité, clé et rubrique IAE) et l'indicateur d'opérations avec des tiers restent à compléter à la main."
+
+msgid "Descargar fichero .390 de prueba"
+msgstr "Télécharger le fichier .390 de test"
+
+msgid "No se puede generar mientras el cálculo tenga bloqueos."
+msgstr "Impossible à générer tant que le calcul comporte des blocages."

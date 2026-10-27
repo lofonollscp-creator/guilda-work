@@ -4,6 +4,7 @@ fiscal; el resto de la gestoría ve y prepara. Guilda Work no presenta: genera e
 («/fiscal» ya es el calendario fiscal: esto vive en «/guilda-fiscal».)"""
 from __future__ import annotations
 
+import re
 import unicodedata
 from datetime import date, timedelta
 from urllib.parse import quote
@@ -13,6 +14,7 @@ from flask_babel import gettext as _
 
 from . import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
+from .fiscal_modelos import motor_390
 from .fiscal_modelos.apuntes import Apunte
 from .fiscal_perfiles import ErrorFiscal
 
@@ -195,6 +197,39 @@ def informe_trimestral_pdf(cliente_id: int):
     fila_despacho = db.obtener_tenant(g.tenant_id)
     pdf = fiscal_informe_trimestral.generar(datos, titular=c["nombre"], nif=c["nif"], gestoria=fila_despacho["nombre"] if fila_despacho else "", estados=estados)
     return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="informe-{ejercicio}-{periodo}.pdf"'})
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/390")
+@login_required
+def resumen_anual_390(cliente_id: int):
+    """Resumen anual del IVA (modelo 390): se recalcula en cada visita con los apuntes aprobados y se cuadra con los 303 ya revisados."""
+    c = _cliente_o_404(cliente_id)
+    ejercicio = request.args.get("ejercicio", fn.periodo_por_defecto(date.today())[0], type=int)
+    try:
+        resumen, error = fn.resumen_390(g.tenant_id, g.usuario_id, cliente_id, ejercicio), None
+    except (ErrorFiscal, ValueError) as e:
+        resumen, error = None, str(e)
+    filas, vistas = [], set()
+    if resumen:
+        for hoja, k, texto in motor_390._descripciones():                     # en el orden del diseño oficial, una vez por casilla
+            if k in resumen["resultado"].casillas and k not in vistas:
+                vistas.add(k)
+                filas.append({"hoja": hoja, "casilla": k, "concepto": re.sub(r"^.*? - ", "", texto), "valor": resumen["resultado"].casillas[k], "porcentaje": k == motor_390.casilla("Pág. 6", "Territorio común")})
+    return render_template("fiscal_390.html", c=c, ejercicio=ejercicio, resumen=resumen, filas=filas, error=error or _error())
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/390/fichero")
+@login_required
+def fichero_390_prueba(cliente_id: int):
+    _cliente_o_404(cliente_id)
+    ejercicio = request.args.get("ejercicio", type=int)
+    if not ejercicio:
+        abort(404)
+    try:
+        datos, nombre = fn.descargar_fichero_390(g.tenant_id, g.usuario_id, cliente_id, ejercicio)
+    except ErrorFiscal as e:
+        return redirect(url_for("guilda_fiscal.resumen_anual_390", cliente_id=cliente_id, ejercicio=ejercicio, error=str(e)[:300]))
+    return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/contraparte")

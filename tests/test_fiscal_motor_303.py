@@ -122,10 +122,11 @@ def test_nuestro_fichero_es_el_que_exporta_la_aeat_salvo_identificacion_y_progra
     assert distintos <= {("DP30300", 8), ("DP30300", 9), ("DP30300", 11), ("DP30303", 37)}, distintos
 
 
-def test_el_ultimo_periodo_aun_no_se_genera():
+def test_el_ultimo_periodo_se_genera_salvo_que_este_exonerado_del_390_sin_volumen():
     r = m.calcular([venta(10000, fecha=d(2026, 11, 2))], ejercicio=2026, periodo="4T")
-    with pytest.raises(f3.FicheroNoGenerable):
-        f3.generar(r, nif="A12345674", nombre="X")
+    assert f3.generar(r, nif="A12345674", nombre="X").startswith(b"<T303020264T0000>")
+    with pytest.raises(f3.FicheroNoGenerable):                                  # exonerado del 390: necesita el volumen de operaciones del año
+        f3.generar(r, nif="A12345674", nombre="X", exonerado_390=True)
     with pytest.raises(f3.FicheroNoGenerable):
         f3.generar(m.calcular([venta(10000, 700)], ejercicio=2026, periodo="2T"), nif="A12345674", nombre="X")
 

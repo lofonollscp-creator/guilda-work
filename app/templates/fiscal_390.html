@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Resumen anual del IVA (modelo 390)') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Resumen anual del IVA (modelo 390)') }}</h1>
+    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '—' }} · {{ ejercicio }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ c.nombre }}</a>
+</header>
+{{ aviso_error(error) }}
+<form method="get" class="filters ds-fila ds-envolver">
+  <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2025" max="2100"></label>
+  <button class="btn btn-ghost" type="submit">{{ _('Ver') }}</button>
+</form>
+{% if resumen %}
+{% set r = resumen.resultado %}
+<section class="dash-panel ds-mt-16">
+  <p class="muted">{{ _('Se calcula ahora con los apuntes aprobados del año y se cuadra con los cuatro 303. No se guarda nada: si corriges un apunte, vuelve a calcularse.') }}</p>
+  {% if resumen.exonerado %}<p class="pill semaforo-gris">{{ _('Este titular está exonerado del 390: la información anual va en el 303 del último periodo.') }}</p>{% endif %}
+  <h2>{{ _('Los cuatro 303 del año') }}</h2>
+  <div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Periodo') }}</th><th>{{ _('Declaración') }}</th></tr></thead><tbody>
+    {% for t in resumen.trimestres %}<tr><td>{{ t.periodo }}</td><td>{% if t.declaracion %}<a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=t.declaracion.id) }}">{{ t.declaracion.estado }}</a>{% else %}<span class="muted">{{ _('Sin declaración revisada: se ha calculado ahora') }}</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% if r.bloqueos %}
+<section class="dash-panel ds-mt-16"><h2>{{ _('Lo que impide calcular el 390') }}</h2><ul>{% for b in r.bloqueos %}<li>{{ b }}</li>{% endfor %}</ul></section>
+{% endif %}
+{% if r.avisos %}
+<section class="dash-panel ds-mt-16"><h2>{{ _('Avisos') }}</h2><ul>{% for a in r.avisos %}<li>{{ a }}</li>{% endfor %}</ul></section>
+{% endif %}
+{% if filas %}
+<section class="dash-panel ds-mt-16" id="casillas-390">
+  <h2>{{ _('Casillas') }}</h2>
+  <div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th></tr></thead><tbody>
+    {% for f in filas %}<tr><td>{{ f.casilla }}</td><td>{{ f.concepto }}</td><td>{% if f.porcentaje %}{{ '%.2f'|format(f.valor / 100) }} %{% else %}{{ '%.2f'|format(f.valor / 100) }} €{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Fichero para la AEAT') }}</h2>
+  {% if resumen.exonerado %}<p class="muted">{{ _('No procede: el titular no presenta el 390.') }}</p>
+  {% elif r.calculable %}
+  <p class="muted">{{ _('Fichero de PRUEBA: impórtalo en el simulador o en el formulario de la AEAT y compara las casillas antes de presentar. Faltan por completar a mano los datos estadísticos (actividad, clave y epígrafe del IAE) y la marca de operaciones con terceras personas.') }}</p>
+  <a class="btn btn-primary" href="{{ url_for('guilda_fiscal.fichero_390_prueba', cliente_id=c.id, ejercicio=ejercicio) }}">{{ _('Descargar fichero .390 de prueba') }}</a>
+  {% else %}<p class="muted">{{ _('No se puede generar mientras el cálculo tenga bloqueos.') }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -17390,3 +17390,36 @@ msgstr "Informational document, prepared with the data the firm holds when it is
 
 msgid "Informe trimestral %(p)s %(e)s"
 msgstr "Quarterly report %(p)s %(e)s"
+
+msgid "Resumen anual del IVA (modelo 390)"
+msgstr "Annual VAT summary (form 390)"
+
+msgid "Se calcula ahora con los apuntes aprobados del año y se cuadra con los cuatro 303. No se guarda nada: si corriges un apunte, vuelve a calcularse."
+msgstr "It is calculated now from the year's approved entries and reconciled with the four 303 returns. Nothing is stored: if you correct an entry, it is recalculated."
+
+msgid "Este titular está exonerado del 390: la información anual va en el 303 del último periodo."
+msgstr "This holder is exempt from form 390: the annual information goes in the last-period form 303."
+
+msgid "Los cuatro 303 del año"
+msgstr "The year's four 303 returns"
+
+msgid "Sin declaración revisada: se ha calculado ahora"
+msgstr "No reviewed return: calculated now"
+
+msgid "Lo que impide calcular el 390"
+msgstr "What prevents calculating form 390"
+
+msgid "Fichero para la AEAT"
+msgstr "File for the tax agency"
+
+msgid "No procede: el titular no presenta el 390."
+msgstr "Not applicable: the holder does not file form 390."
+
+msgid "Fichero de PRUEBA: impórtalo en el simulador o en el formulario de la AEAT y compara las casillas antes de presentar. Faltan por completar a mano los datos estadísticos (actividad, clave y epígrafe del IAE) y la marca de operaciones con terceras personas."
+msgstr "TEST file: import it into the tax agency's simulator or form and compare the boxes before filing. The statistical data (activity, key and IAE heading) and the third-party operations flag still have to be completed by hand."
+
+msgid "Descargar fichero .390 de prueba"
+msgstr "Download test .390 file"
+
+msgid "No se puede generar mientras el cálculo tenga bloqueos."
+msgstr "It cannot be generated while the calculation has blocks."

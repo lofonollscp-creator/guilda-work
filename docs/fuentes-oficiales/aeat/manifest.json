@@ -68,5 +68,40 @@
   "bytes": 292511,
   "sha256": "1011b811d71e5074dea08b946d2be2189343e419bcb668441d6e74fd1f639008",
   "descargado": "2026-10-24T22:59:59"
+ },
+ {
+  "fichero": "dr390e2025.xlsx",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Disenyo_registro/DR_300_399/archivos_25/dr390e2025.xlsx",
+  "bytes": 556062,
+  "sha256": "6d33d8a4245976e55dc31ff85065b420f76d1588110dc1eb541a8039c5e3f252",
+  "descargado": "2026-10-27T15:18:55"
+ },
+ {
+  "fichero": "Instrucciones_modelo_390-2025.pdf",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Procedimiento_ayuda/G412/Instrucciones_modelo_390-2025.pdf",
+  "bytes": 355432,
+  "sha256": "26028dcb993675bf91cdf9b9fb50742c473c5fe6680735e29acdc3c560d3301d",
+  "descargado": "2026-10-27T15:18:55"
+ },
+ {
+  "fichero": "disenos_100_199.html",
+  "url": "https://sede.agenciatributaria.gob.es/Sede/ayuda/disenos-registro/modelos-100-199.html",
+  "bytes": 31695,
+  "sha256": "90800ed7e0d3c9a5f762aef34505e17f01800335010f2a8cf5976fa588ba1255",
+  "descargado": "2026-10-27T15:18:55"
+ },
+ {
+  "fichero": "dr111e16v18.xls",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Disenyo_registro/DR_100_199/archivos/dr111e16v18.xls",
+  "bytes": 182784,
+  "sha256": "5f65e85078360f576b3a80a8b4dda54eaa752b410f1e2ea00b52ec5a84d5edff",
+  "descargado": "2026-10-27T15:18:55"
+ },
+ {
+  "fichero": "DR115e15v13.xls",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Disenyo_registro/DR_100_199/archivos/DR115e15v13.xls",
+  "bytes": 176640,
+  "sha256": "d0b4c2cb344fe2d4b91a082bc85cc7906e383be792134504ddaedd0dc8bb2694",
+  "descargado": "2026-10-27T15:18:55"
  }
 ]

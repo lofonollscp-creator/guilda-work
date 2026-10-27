@@ -34,7 +34,7 @@ def cargar_diseno(ruta: str | Path = DISENO_303_2026) -> dict:
 
 
 _CONSTANTE = re.compile(r'^\s*(?:Constante\s*"([^"]*)"|"([^"]*)"\s*\.?\s*(?:Nota\s*\d+\.?\s*)*$)')   # «Constante "00400". Nota 7» · «"0000>"» · «"00050". Nota 7.» (pero NO «"1" SI, "2" NO»)
-_DECIMALES = re.compile(r"(\d+)\s+enteros?\s+y\s+(\d+)\s+decimales?", re.I)
+_DECIMALES = re.compile(r"(\d+)\s+enteros?\s+(?:y\s+)?(\d+)\s+decimales?", re.I)
 
 
 def _constante(campo: dict) -> str | None:
@@ -121,7 +121,7 @@ def _pagina(pagina: dict, valores: dict) -> str:
     return texto
 
 
-def indicadores_pagina1(periodo: str, *, prorrata_especial: str | None = None, revocacion_prorrata: str | None = None) -> dict:
+def indicadores_pagina1(periodo: str, *, prorrata_especial: str | None = None, revocacion_prorrata: str | None = None, exonerado_390: bool = False, volumen_distinto_de_cero: bool = True) -> dict:
     """Los valores que el diseño fija según el PERIODO en la identificación de la página 1 (Notas 3, 4, 6 y 8), para un titular que NO tributa a una Administración foral, en régimen general
     (solo RG), sin autoliquidación conjunta, sin criterio de caja, fuera del SII y no exonerado del 390. Lo demás (perfil real del titular) lo aporta el motor. Los valores se han
     contrastado con el simulador de la AEAT (docs/fiscal-vias-aeat.md §4d)."""
@@ -138,8 +138,8 @@ def indicadores_pagina1(periodo: str, *, prorrata_especial: str | None = None, r
         19: "2",                        # concurso: NO
         20: "00000000",                 # fecha del auto de concurso: la AEAT escribe ceros, no blancos, cuando no hay concurso (comparado con su propio «Exportar»)
         22: "2",                        # SII: NO
-        23: "2" if ultimo else "0",     # exonerado del 390 (Nota 4)
-        24: "2" if ultimo else "0",     # volumen de operaciones distinto de cero (Nota 3) ↯ en el último periodo hay que declararlo
+        23: ("1" if exonerado_390 else "2") if ultimo else "0",     # exonerado del 390 (Nota 4): «0» salvo en el último periodo
+        24: (("1" if volumen_distinto_de_cero else "2") if exonerado_390 else "0") if ultimo else "0",     # volumen anual distinto de cero (Nota 3): «0» salvo para quien está exonerado del 390 en el último periodo
         25: "0" if periodo in ("1T", "2T", "3T", "4T", "01") else "2",   # pago a cuenta de carburantes (Nota 8)
     }
 

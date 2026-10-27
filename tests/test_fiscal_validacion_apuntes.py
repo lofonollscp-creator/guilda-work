@@ -85,7 +85,7 @@ def test_preparar_borrador_de_un_paso():
     bloqueado = p.preparar(ap, ejercicio=ej, periodo=per, nif=TITULAR, nombre="X", hoy=HOY, prorrata=True)
     assert bloqueado.fichero is None and "bloqueado" in bloqueado.motivo_sin_fichero
     ultimo = p.preparar([venta(10000, fecha=d(2026, 10, 5))], ejercicio=2026, periodo="4T", nif=TITULAR, nombre="X", hoy=HOY)
-    assert ultimo.fichero is None and "4T" in ultimo.motivo_sin_fichero
+    assert ultimo.fichero is not None and ultimo.fichero.startswith(b"<T303020264T0000>")
 
 
 def test_digito_de_control_del_nif_espanol():
