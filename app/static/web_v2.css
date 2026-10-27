@@ -629,3 +629,6 @@ html, body { max-width: 100%; overflow-x: clip; }
 .icon-rail-buscar .icon-rail-atajo { flex: none; margin-left: 0; padding: 1px 5px; }
 :root:not([data-rail-expandido="1"]) .icon-rail-buscar { padding: 0 !important; }
 .icon-rail-buscar { gap: 6px; font-size: 0.86rem; padding: 0 8px !important; } .icon-rail-buscar .icon-rail-atajo { font-size: 9.5px; padding: 0 4px; }
+.ia-v2-centro .ia-chat-form textarea, .ia-v2-centro .ia-chat-form textarea:focus, .ia-v2-centro .ia-chat-form textarea:focus-visible { outline: none !important; box-shadow: none !important; border: 0 !important; background: transparent !important; }
+.ia-v2-centro .ia-chat-form:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ia) 28%, transparent); }
+.ia-lateral-form input:focus, .ia-lateral-form input:focus-visible { outline: none; box-shadow: none; }

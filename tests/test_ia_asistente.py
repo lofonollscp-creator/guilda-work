@@ -450,3 +450,33 @@ def test_listar_modelos_gratuitos_si_falla_devuelve_respaldo_sin_lanzar(monkeypa
     modelos = a.listar_modelos_gratuitos()
 
     assert modelos == a.MODELOS_GRATUITOS_RESPALDO
+
+
+def test_una_herramienta_de_lectura_que_falla_no_deja_una_confirmacion_pendiente(monkeypatch, usuario_id):
+    _preparar(usuario_id, modo_autonomo=False)
+    _encolar(monkeypatch, _respuesta_tool_calls(("call_1", "resumen_del_dia", {})), _respuesta_texto("No he podido consultarlo."))
+
+    def rota(uid, nombre, args):
+        raise RuntimeError("complex joins are only supported when all distributed tables are co-located")
+
+    monkeypatch.setattr(a.herramientas, "ejecutar", rota)
+    resultado = a.procesar_turno(usuario_id, "¿qué tengo pendiente hoy?")
+
+    assert resultado["pendiente"] is None
+    herramienta = [m for m in db.listar_mensajes_ia(usuario_id) if m["rol"] == "tool"][0]
+    assert "complex joins" not in herramienta["contenido"]
+    assert "error" in json.loads(herramienta["contenido"])
+
+
+def test_una_lectura_huerfana_se_cierra_en_vez_de_pedir_confirmacion(usuario_id):
+    db.agregar_mensaje_ia(usuario_id, "user", "¿qué tengo hoy?")
+    db.agregar_mensaje_ia(usuario_id, "assistant", contenido=None, tool_calls_json=json.dumps(
+        [{"id": "call_9", "type": "function", "function": {"name": "resumen_del_dia", "arguments": "{}"}}]))
+
+    assert a.pendiente_actual(usuario_id) is None
+    assert [m["tool_call_id"] for m in db.listar_mensajes_ia(usuario_id) if m["rol"] == "tool"] == ["call_9"]
+
+
+def test_los_errores_internos_no_se_enseñan_en_bruto():
+    assert a.mensaje_de_error(RuntimeError("complex joins are only supported")) == a.MENSAJE_ERROR_INTERNO
+    assert a.mensaje_de_error(a.ErrorIA("Falta la clave de API.")) == "Falta la clave de API."

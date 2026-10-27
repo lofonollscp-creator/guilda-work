@@ -1690,7 +1690,7 @@ def enviar_mensaje_ia_stream():
             for evento in ia_asistente.procesar_turno_stream(usuario_id, texto):
                 yield _sse(evento)
         except Exception as e:  # noqa: BLE001 -- el stream ya está abierto, no se puede devolver un error HTTP normal
-            yield _sse({"tipo": "error", "mensaje": str(e)})
+            yield _sse({"tipo": "error", "mensaje": ia_asistente.mensaje_de_error(e)})
 
     return Response(stream_with_context(generar()), mimetype="text/event-stream")
 
@@ -1706,7 +1706,7 @@ def confirmar_ia_stream():
             for evento in ia_asistente.confirmar_pendiente_stream(usuario_id, aceptar):
                 yield _sse(evento)
         except Exception as e:  # noqa: BLE001
-            yield _sse({"tipo": "error", "mensaje": str(e)})
+            yield _sse({"tipo": "error", "mensaje": ia_asistente.mensaje_de_error(e)})
 
     return Response(stream_with_context(generar()), mimetype="text/event-stream")
 

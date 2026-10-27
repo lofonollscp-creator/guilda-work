@@ -16,6 +16,7 @@ excepción dura de enviar_borrador_correo (envío real de correo, acción
 externa irreversible), que siempre pide confirmación pase lo que pase.
 """
 import json
+import logging
 import time
 from datetime import datetime
 import urllib.error
@@ -156,6 +157,17 @@ def _ventana_historial(filas: list) -> list:
             fila["contenido"] = contenido[:TOOL_RESULTADO_MAX_CARACTERES_ANTIGUO] + "… [resultado recortado]"
         ventana.append(fila)
     return ventana
+
+
+MENSAJE_ERROR_INTERNO = "Algo ha fallado por nuestra parte. Inténtalo de nuevo en un momento."
+
+
+def mensaje_de_error(e: Exception) -> str:
+    """Lo que se enseña de un fallo: el texto de un ErrorIA (pensado para la persona) o un aviso genérico (el detalle va al registro, nunca a pantalla)."""
+    if isinstance(e, ErrorIA):
+        return str(e)
+    logging.getLogger(__name__).exception("Fallo interno en el asistente", exc_info=e)
+    return MENSAJE_ERROR_INTERNO
 
 
 class ErrorIA(Exception):
@@ -376,6 +388,7 @@ def listar_modelos_gratuitos(*, forzar_recarga: bool = False) -> list[dict]:
         return _cache_modelos_gratuitos if _cache_modelos_gratuitos is not None else list(MODELOS_GRATUITOS_RESPALDO)
 
 
+_ERROR_LECTURA_FALLIDA = "No he podido consultar esos datos ahora mismo. Inténtalo de nuevo en un momento."
 _ERROR_SOLO_LECTURA = json.dumps(
     {"error": "Modo solo lectura activo: esta acción no está permitida. Solo puedes consultar datos."},
     ensure_ascii=False,
@@ -422,11 +435,27 @@ def _mensajes_para_openrouter(usuario_id: int) -> list[dict]:
     return mensajes
 
 
+def _cerrar_lecturas_huerfanas(usuario_id: int) -> None:
+    mensajes = db.listar_mensajes_ia(usuario_id)
+    if not mensajes or mensajes[-1]["rol"] != "assistant" or not mensajes[-1]["tool_calls_json"]:
+        return
+    respondidos = {m["tool_call_id"] for m in mensajes if m["rol"] == "tool"}
+    for tc in json.loads(mensajes[-1]["tool_calls_json"]):
+        nombre = tc["function"]["name"]
+        if tc["id"] not in respondidos and nombre in herramientas.LECTURA:
+            db.agregar_mensaje_ia(usuario_id, "tool", contenido=json.dumps({"error": _ERROR_LECTURA_FALLIDA}, ensure_ascii=False),
+                                  tool_call_id=tc["id"], nombre_herramienta=nombre)
+
+
 def _tool_call_id_pendiente(usuario_id: int) -> str | None:
     """Si el último mensaje `assistant` pidió herramientas y a alguna todavía
     le falta su fila `tool` de respuesta, devuelve el primer tool_call_id sin
     resolver (en el orden en que el modelo los pidió). Si no hay nada
-    pendiente, devuelve None."""
+    pendiente, devuelve None.
+
+    Las herramientas de solo lectura nunca esperan confirmación: si alguna quedó sin respuesta (p. ej. porque falló a
+    medias), se cierra con un error en vez de enseñarla como una acción por confirmar."""
+    _cerrar_lecturas_huerfanas(usuario_id)
     mensajes = db.listar_mensajes_ia(usuario_id)
     if not mensajes or mensajes[-1]["rol"] != "assistant" or not mensajes[-1]["tool_calls_json"]:
         return None
@@ -463,6 +492,9 @@ def _ejecutar_tool_call(usuario_id: int, tool_call: dict) -> str:
         return json.dumps(resultado, ensure_ascii=False, default=str)
     except herramientas.ErrorHerramientaIA as e:
         return json.dumps({"error": str(e)}, ensure_ascii=False)
+    except Exception:                                   # un fallo interno no debe dejar la conversación a medias
+        logging.getLogger(__name__).exception("La herramienta %s del asistente falló", nombre)
+        return json.dumps({"error": _ERROR_LECTURA_FALLIDA}, ensure_ascii=False)
 
 
 def _pendiente_dict(tool_call: dict) -> dict:

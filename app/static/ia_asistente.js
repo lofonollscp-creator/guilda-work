@@ -145,8 +145,11 @@
         var dd = document.createElement("dd"); dd.textContent = valorLegible(argumentos[k]);
         lista.appendChild(dt); lista.appendChild(dd);
       });
-    } else {
-      var dd0 = document.createElement("dd"); dd0.textContent = typeof argumentos === "string" ? argumentos : "—"; lista.appendChild(dd0);
+    } else if (typeof argumentos === "string" && argumentos.trim() && argumentos.trim() !== "{}") {
+      var dd0 = document.createElement("dd"); dd0.textContent = argumentos; lista.appendChild(dd0);
+    } else {                                              // sin parámetros: no hay nada que enseñar
+      antiguo.remove();
+      return;
     }
     antiguo.replaceWith(lista);
   }

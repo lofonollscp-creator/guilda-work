@@ -580,8 +580,8 @@ def _visible_sql(usuario_id: int, supervisor: bool, alias: str = "x") -> tuple[s
     """Condición SQL de los expedientes que una persona puede ver: los no confidenciales y, de los confidenciales, los suyos."""
     if supervisor:
         return "1=1", []
-    return (f"({alias}.confidencial = 0 OR {alias}.responsable_id = ? OR {alias}.creado_por = ? OR EXISTS "
-            f"(SELECT 1 FROM expediente_miembros m WHERE m.expediente_id = {alias}.id AND m.usuario_id = ?))"), [usuario_id] * 3
+    return (f"({alias}.confidencial = 0 OR {alias}.responsable_id = ? OR {alias}.creado_por = ? OR {alias}.id IN "
+            f"(SELECT m.expediente_id FROM expediente_miembros m WHERE m.usuario_id = ?))"), [usuario_id] * 3
 
 
 def puede_ver_expediente(exp, usuario_id: int, supervisor: bool = False) -> bool:
