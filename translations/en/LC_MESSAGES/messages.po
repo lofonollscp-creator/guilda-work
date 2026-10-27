@@ -16057,8 +16057,8 @@ msgstr "No tax profile"
 msgid "Sube varios ficheros .xlsx en el formato oficial de la AEAT. Cada uno se asigna al titular cuyo NIF aparece en el nombre del fichero (por ejemplo, A12345674-2T.xlsx). Lo que no se pueda asignar se te dice, no se adivina."
 msgstr "Upload several .xlsx files in the official AEAT format. Each one is assigned to the holder whose tax ID appears in the file name (for example, A12345674-2T.xlsx). Anything that cannot be assigned is reported, not guessed."
 
-msgid "Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes."
-msgstr "Text ready to send. Guilda Work does not send it: copy it or open it in your email and review it first."
+msgid "Texto listo para enviar. Guilda Work no lo envía solo: ábrelo en el redactor de correo, revísalo y envíalo tú."
+msgstr "Text ready to send. Guilda Work doesn't send it by itself: open it in the mail composer, check it and send it yourself."
 
 msgid "Volver a la cartera"
 msgstr "Back to the portfolio"

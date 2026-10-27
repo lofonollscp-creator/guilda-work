@@ -25,7 +25,7 @@
     <li class="log-item"><span class="log-text">{{ _('Previsión ponderada') }}</span><strong>{{ (o.ponderado * 100)|round|int|importe }}</strong></li>
     <li class="log-item"><span class="log-text">{{ _('Cierre previsto') }}</span><strong>{{ o.cierre_previsto|fecha_dia if o.cierre_previsto else '—' }}</strong></li>
     <li class="log-item"><span class="log-text">{{ _('Responsable') }}</span><strong>{{ o.responsable or '—' }}</strong></li>
-    {% if o.contacto_email %}<li class="log-item"><span class="log-text">{{ _('Correo') }}</span><a href="mailto:{{ o.contacto_email }}">{{ o.contacto_email }}</a></li>{% endif %}
+    {% if o.contacto_email %}<li class="log-item"><span class="log-text">{{ _('Correo') }}</span><a href="{{ url_for('correo.redactar', para=o.contacto_email) }}">{{ o.contacto_email }}</a></li>{% endif %}
     {% if o.contacto_telefono %}<li class="log-item"><span class="log-text">{{ _('Teléfono') }}</span><strong>{{ o.contacto_telefono }}</strong></li>{% endif %}
     {% if o.origen %}<li class="log-item"><span class="log-text">{{ _('Cómo llegó') }}</span><strong>{{ o.origen }}</strong></li>{% endif %}
     {% if o.motivo_perdida %}<li class="log-item"><span class="log-text">{{ _('Motivo de la pérdida') }}</span><strong>{{ o.motivo_perdida }}</strong></li>{% endif %}

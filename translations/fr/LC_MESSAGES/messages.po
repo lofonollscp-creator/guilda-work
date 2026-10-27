@@ -16142,8 +16142,8 @@ msgstr "Aucun profil fiscal"
 msgid "Sube varios ficheros .xlsx en el formato oficial de la AEAT. Cada uno se asigna al titular cuyo NIF aparece en el nombre del fichero (por ejemplo, A12345674-2T.xlsx). Lo que no se pueda asignar se te dice, no se adivina."
 msgstr "Téléversez plusieurs fichiers .xlsx au format officiel de l'AEAT. Chacun est attribué au titulaire dont le NIF figure dans le nom du fichier (par exemple, A12345674-2T.xlsx). Ce qui ne peut pas être attribué vous est signalé, jamais deviné."
 
-msgid "Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes."
-msgstr "Texte prêt à envoyer. Guilda Work ne l'envoie pas : copiez-le ou ouvrez-le dans votre messagerie et relisez-le avant."
+msgid "Texto listo para enviar. Guilda Work no lo envía solo: ábrelo en el redactor de correo, revísalo y envíalo tú."
+msgstr "Texte prêt à envoyer. Guilda Work ne l'envoie pas tout seul : ouvrez-le dans le rédacteur d'e-mail, relisez-le et envoyez-le vous-même."
 
 msgid "Volver a la cartera"
 msgstr "Retour au portefeuille"

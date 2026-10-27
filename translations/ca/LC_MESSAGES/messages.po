@@ -16066,8 +16066,8 @@ msgstr "Sense perfil fiscal"
 msgid "Sube varios ficheros .xlsx en el formato oficial de la AEAT. Cada uno se asigna al titular cuyo NIF aparece en el nombre del fichero (por ejemplo, A12345674-2T.xlsx). Lo que no se pueda asignar se te dice, no se adivina."
 msgstr "Puja diversos fitxers .xlsx en el format oficial de l'AEAT. Cadascun s'assigna al titular el NIF del qual apareix al nom del fitxer (per exemple, A12345674-2T.xlsx). El que no es pugui assignar se't diu, no s'endevina."
 
-msgid "Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes."
-msgstr "Text a punt per enviar. Guilda Work no l'envia: copia'l o obre'l al teu correu i revisa'l abans."
+msgid "Texto listo para enviar. Guilda Work no lo envía solo: ábrelo en el redactor de correo, revísalo y envíalo tú."
+msgstr "Text a punt per enviar. Guilda Work no l'envia sol: obre'l al redactor de correu, revisa'l i envia'l tu."
 
 msgid "Volver a la cartera"
 msgstr "Torna a la cartera"
