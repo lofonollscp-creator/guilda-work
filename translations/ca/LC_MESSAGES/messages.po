@@ -17123,3 +17123,77 @@ msgstr "Vols marcar com a fets tots els d'aquesta secció?"
 #: app/ausencias.py
 msgid "Ámbar"
 msgstr "Ambre"
+
+msgid "Facturas que computan en el periodo"
+msgstr "Factures que computen al període"
+
+msgid "Cada factura cuenta en el modelo que le corresponde. Una misma factura puede ir en varios: el IVA, en el 303 (cuando ya es un apunte aprobado), y su retención de IRPF, en el 111 o el 115 si la practica el cliente; si es una factura emitida con retención, la retención la soporta él y no va en el 111."
+msgstr "Cada factura compta en el model que li correspon. Una mateixa factura pot anar en diversos: l'IVA, al 303 (quan ja és un apunt aprovat), i la seva retenció d'IRPF, al 111 o al 115 si la practica el client; si és una factura emesa amb retenció, la retenció la suporta ell i no va al 111."
+
+msgid "Computa"
+msgstr "Computa"
+
+msgid "Por registrar"
+msgstr "Per registrar"
+
+msgid "Por revisar"
+msgstr "Per revisar"
+
+msgid "Excluida"
+msgstr "Exclosa"
+
+msgid "IVA repercutido (303)"
+msgstr "IVA repercutit (303)"
+
+msgid "IVA soportado (303)"
+msgstr "IVA suportat (303)"
+
+msgid "Retenciones modelo 111"
+msgstr "Retencions model 111"
+
+msgid "Retenciones modelo 115"
+msgstr "Retencions model 115"
+
+msgid "Retenciones soportadas"
+msgstr "Retencions suportades"
+
+msgid "Están sin revisar, sin registrar o excluidas de Guilda Fiscal."
+msgstr "Estan sense revisar, sense registrar o excloses de Guilda Fiscal."
+
+msgid "Retención IRPF"
+msgstr "Retenció IRPF"
+
+msgid "soportada (no va en el 111)"
+msgstr "suportada (no va al 111)"
+
+msgid "Ver apunte"
+msgstr "Veure apunt"
+
+msgid "Ver factura"
+msgstr "Veure factura"
+
+msgid "El cálculo automático de los modelos 111 y 115 aún no está en Guilda Fiscal: aquí ves qué retenciones entrarán en ellos."
+msgstr "El càlcul automàtic dels models 111 i 115 encara no és a Guilda Fiscal: aquí veus quines retencions hi entraran."
+
+msgid "No hay facturas de este titular en el periodo."
+msgstr "No hi ha factures d'aquest titular al període."
+
+msgid "Historial de cambios"
+msgstr "Historial de canvis"
+
+msgid "Aprobado"
+msgstr "Aprovat"
+
+msgid "Anulado"
+msgstr "Anul·lat"
+
+msgid "Corregido"
+msgstr "Corregit"
+
+msgid "Esta factura ya consta en otro titular: {n}. ¿Se ha subido al cliente equivocado?"
+msgstr "Aquesta factura ja consta en un altre titular: {n}. S'ha pujat al client equivocat?"
+
+msgid "%(n)s factura aún no computa"
+msgid_plural "%(n)s facturas aún no computan"
+msgstr[0] "%(n)s factura encara no computa"
+msgstr[1] "%(n)s factures encara no computen"

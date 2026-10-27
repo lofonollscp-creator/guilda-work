@@ -17199,3 +17199,77 @@ msgstr "Marquer comme fait tout ce qui se trouve dans cette section ?"
 #: app/ausencias.py
 msgid "Ámbar"
 msgstr "Ambre"
+
+msgid "Facturas que computan en el periodo"
+msgstr "Factures prises en compte sur la période"
+
+msgid "Cada factura cuenta en el modelo que le corresponde. Una misma factura puede ir en varios: el IVA, en el 303 (cuando ya es un apunte aprobado), y su retención de IRPF, en el 111 o el 115 si la practica el cliente; si es una factura emitida con retención, la retención la soporta él y no va en el 111."
+msgstr "Chaque facture compte dans le modèle qui lui correspond. Une même facture peut figurer dans plusieurs : la TVA dans le 303 (une fois écriture approuvée) et sa retenue d'IRPF dans le 111 ou le 115 si le client l'applique ; pour une facture émise avec retenue, c'est lui qui la supporte et elle ne va pas dans le 111."
+
+msgid "Computa"
+msgstr "Compte"
+
+msgid "Por registrar"
+msgstr "À enregistrer"
+
+msgid "Por revisar"
+msgstr "À vérifier"
+
+msgid "Excluida"
+msgstr "Exclue"
+
+msgid "IVA repercutido (303)"
+msgstr "TVA collectée (303)"
+
+msgid "IVA soportado (303)"
+msgstr "TVA déductible (303)"
+
+msgid "Retenciones modelo 111"
+msgstr "Retenues modèle 111"
+
+msgid "Retenciones modelo 115"
+msgstr "Retenues modèle 115"
+
+msgid "Retenciones soportadas"
+msgstr "Retenues subies"
+
+msgid "Están sin revisar, sin registrar o excluidas de Guilda Fiscal."
+msgstr "Elles ne sont pas vérifiées, pas enregistrées ou sont exclues de Guilda Fiscal."
+
+msgid "Retención IRPF"
+msgstr "Retenue d'IRPF"
+
+msgid "soportada (no va en el 111)"
+msgstr "subie (pas dans le 111)"
+
+msgid "Ver apunte"
+msgstr "Voir l'écriture"
+
+msgid "Ver factura"
+msgstr "Voir la facture"
+
+msgid "El cálculo automático de los modelos 111 y 115 aún no está en Guilda Fiscal: aquí ves qué retenciones entrarán en ellos."
+msgstr "Le calcul automatique des modèles 111 et 115 n'est pas encore dans Guilda Fiscal : vous voyez ici les retenues qui y entreront."
+
+msgid "No hay facturas de este titular en el periodo."
+msgstr "Il n'y a aucune facture de ce titulaire sur la période."
+
+msgid "Historial de cambios"
+msgstr "Historique des modifications"
+
+msgid "Aprobado"
+msgstr "Approuvé"
+
+msgid "Anulado"
+msgstr "Annulé"
+
+msgid "Corregido"
+msgstr "Corrigé"
+
+msgid "Esta factura ya consta en otro titular: {n}. ¿Se ha subido al cliente equivocado?"
+msgstr "Cette facture existe déjà chez un autre titulaire : {n}. A-t-elle été déposée chez le mauvais client ?"
+
+msgid "%(n)s factura aún no computa"
+msgid_plural "%(n)s facturas aún no computan"
+msgstr[0] "%(n)s facture n'est pas encore prise en compte"
+msgstr[1] "%(n)s factures ne sont pas encore prises en compte"

@@ -297,3 +297,45 @@ def test_el_formulario_de_factura_ofrece_incluir_en_guilda_fiscal(cliente):
     assert fc.obtener(t, uid, f)["incluir_en_fiscal"] == 1
     verticales.fijar_activo(t, "fiscal", False)
     assert 'name="incluir_en_fiscal"' not in cliente.get(f"/contabilidad/{f}").get_data(as_text=True)     # sin el módulo no se ofrece
+
+
+def test_facturas_que_computan_en_303_y_con_retencion_irpf(cliente):
+    uid, t, c = _web(cliente, email="computan@ejemplo.com")
+    fc.guardar_configuracion(t, uid, c, {"a3_empresa": "7", "digitos": "8"})
+    base = {"tercero_nombre": "Profesional SL", "tercero_nif": "B87654321", "fecha": "2026-05-10"}
+    f_ret = fc.crear(t, uid, c, {**base, "tipo": "recibida", "numero": "R-1"}, [{"base": "1.000,00", "pct_iva": "21", "pct_retencion": "15"}])          # IVA al 303 y retención al 111
+    f_emi = fc.crear(t, uid, c, {**base, "tipo": "emitida", "numero": "E-1"}, [{"base": "500,00", "pct_iva": "21", "pct_retencion": "15"}])              # retención soportada
+    f_pen = fc.crear(t, uid, c, {**base, "tipo": "recibida", "numero": "R-2"}, [{"base": "100,00", "pct_iva": "21"}])                                      # sin revisar
+    f_fuera = fc.crear(t, uid, c, {**base, "tipo": "recibida", "numero": "R-3", "fecha": "2026-08-10"}, [{"base": "100,00", "pct_iva": "21"}])             # otro trimestre
+    for f in (f_ret, f_emi):
+        fc.cambiar_estado(t, uid, f, "revisada")
+    fn.aprobar_facturas(t, uid, c, [f_ret])
+    r = fn.facturas_del_periodo(t, uid, c, 2026, "2T")
+    por_numero = {f["numero"]: f for f in r["facturas"]}
+    assert set(por_numero) == {"R-1", "E-1", "R-2"}                                                      # R-3 es del 3T
+    assert por_numero["R-1"]["m303"] == "computa" and por_numero["R-1"]["m_retencion"] == "111" and por_numero["R-1"]["retencion"] == 15000
+    assert por_numero["E-1"]["m303"] == "por_registrar" and por_numero["E-1"]["m_retencion"] == "soportada"
+    assert por_numero["R-2"]["m303"] == "por_revisar" and por_numero["R-2"]["m_retencion"] is None
+    assert r["totales"]["iva_soportado"] == 21000 and r["totales"]["retenciones_111"] == 15000 and r["totales"]["retenciones_soportadas"] == 7500 and r["totales"]["no_computan"] == 1
+    fc.fijar_incluir_en_fiscal(t, uid, f_pen, False)
+    assert {f["numero"]: f for f in fn.facturas_del_periodo(t, uid, c, 2026, "2T")["facturas"]}["R-2"]["m303"] == "excluida"
+    pagina = cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
+    assert "Facturas que computan en el periodo" in pagina and "Retenciones modelo 111" in pagina and "R-1" in pagina
+    assert "R-3" not in pagina.split('id="computan"')[1].split("</section>")[0]
+
+
+def test_historial_de_cambios_del_apunte_y_duplicada_en_otro_titular(cliente):
+    uid, t, c = _web(cliente, email="historial@ejemplo.com")
+    _emitida(cliente, c, "A-0001")
+    apunte = fn.listar_apuntes(t, uid, c)[0]
+    datos = {"tipo_factura": "F1", "clave": "01", "serie": "A", "numero": "A-0001", "libro": "E", "calificacion": "S1", "fecha_expedicion": "2026-05-10", "base": "200,00", "tipo_iva": "21",
+             "contraparte_nif": "B87654321", "contraparte_nombre": "Cliente SL", "version": str(apunte["version"]), "causa": "importe corregido"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/{apunte['id']}", data=datos).status_code == 302
+    h = fn.historial_apunte(t, uid, c, apunte["id"])
+    assert [x["accion"] for x in h] == ["corregir", "aprobar"] and h[0]["cambios"]["base_centimos"] == ["10000", "20000"] and h[0]["motivo"] == "importe corregido"
+    pagina = cliente.get(f"/guilda-fiscal/{c}/apuntes/{apunte['id']}").get_data(as_text=True)
+    assert "Historial de cambios" in pagina and "base_centimos: 10000 → 20000" in pagina
+    otro = crear_cliente_fiscal(t, "Otra Empresa SL", nif="B12345674")
+    r = cliente.get(f"/guilda-fiscal/{otro}/comprobar-numero?libro=E&serie=A&numero=A-0001&nif=B87654321").get_json()
+    assert r["otros"] == "Empresa Web SL" and r["existe"] is None
+    assert cliente.get(f"/guilda-fiscal/{c}/comprobar-numero?libro=E&serie=A&numero=A-0001&nif=B87654321&excluir={apunte['id']}").get_json()["otros"] == ""

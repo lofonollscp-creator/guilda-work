@@ -3,7 +3,7 @@
 
   sudo bash -c 'set -a; source /etc/guilda-work.env; set +a; runuser -u guilda --preserve-environment -- /home/guilda/guilda-work/.venv/bin/python /home/guilda/guilda-work/scripts/fiscal/verificar_despliegue.py'
 
-Usa la URL de la plataforma (`GUILDA_DATABASE_URL_PLATAFORMA`) o `--url`. Comprueba: versión del esquema (≥ 3), las siete tablas, sus claves primarias con `tenant_id`, el aislamiento por despacho (RLS), los triggers de
+Usa la URL de la plataforma (`GUILDA_DATABASE_URL_PLATAFORMA`) o `--url`. Comprueba: versión del esquema (≥ 4), la columna de la casilla «Incluir en Guilda Fiscal», las siete tablas, sus claves primarias con `tenant_id`, el aislamiento por despacho (RLS), los triggers de
 inmutabilidad, la distribución en Citus (si lo hay), que las tablas están vacías o con datos de uso normal, y que el módulo está dado de alta en la aplicación. Código de salida 0 = todo bien · 1 = algo falta."""
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 TABLAS = ("fiscal_perfiles", "fiscal_relaciones", "fiscal_apuntes", "fiscal_instantaneas", "fiscal_declaraciones", "fiscal_casillas", "fiscal_artefactos")
 TRIGGERS = ("fiscal_instantaneas_inmutable", "fiscal_artefactos_inmutable", "fiscal_casillas_solo_borrador", "fiscal_declaraciones_reglas")
-VERSION_MINIMA = 3
+VERSION_MINIMA = 4
 
 
 def comprobar(conn) -> list[tuple[bool, str]]:
@@ -41,6 +41,8 @@ def comprobar(conn) -> list[tuple[bool, str]]:
     triggers = {f[0] for f in conn.execute("SELECT tgname FROM pg_trigger WHERE NOT tgisinternal AND tgname LIKE 'fiscal\\_%'").fetchall()}
     for t in TRIGGERS:
         r.append((t in triggers, f"trigger {t}"))
+    r.append((bool(uno("SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'facturas_contables' AND column_name = 'incluir_en_fiscal'")),
+              "columna facturas_contables.incluir_en_fiscal (migración 004: casilla «Incluir en Guilda Fiscal»)"))
     r.append((bool(uno("SELECT count(*) FROM pg_proc WHERE proname = 'fiscal_dia'")), "función fiscal_dia (inmutable) para la restricción de no solape"))
     r.append((bool(uno("SELECT count(*) FROM pg_constraint WHERE conname = 'fiscal_perfiles_sin_solape'")), "restricción de no solape de vigencias de los perfiles"))
     if uno("SELECT count(*) FROM pg_extension WHERE extname = 'citus'"):
@@ -74,7 +76,7 @@ def main(argv=None) -> int:
     for ok, texto in resultados:
         print(("  ✓ " if ok else "  ✗ ") + texto)
     fallos = [t for ok, t in resultados if not ok]
-    print("\nTODO CORRECTO" if not fallos else f"\nFALTAN {len(fallos)} COSA(S): revisa las marcadas con ✗ (¿se aplicaron las migraciones 002 y 003?)")
+    print("\nTODO CORRECTO" if not fallos else f"\nFALTAN {len(fallos)} COSA(S): revisa las marcadas con ✗ (¿se aplicaron las migraciones 002, 003 y 004?)")
     return 0 if not fallos else 1
 
 

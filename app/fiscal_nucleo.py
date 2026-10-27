@@ -252,7 +252,7 @@ def aprobar_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apun
                                (tenant_id, cliente_fiscal_id, factura_id, *(d[c] for c in CAMPOS_APUNTE), usuario_id, ahora, ahora))
             apunte_id, accion = cur.lastrowid, "fiscal.apunte.aprobar"
         else:
-            actual = conn.execute("SELECT version, anulado_en FROM fiscal_apuntes WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?", (apunte_id, tenant_id, cliente_fiscal_id)).fetchone()
+            actual = conn.execute("SELECT * FROM fiscal_apuntes WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?", (apunte_id, tenant_id, cliente_fiscal_id)).fetchone()
             if not actual:
                 raise ErrorFiscal("El apunte no existe.", "no_encontrado")
             if actual["anulado_en"]:
@@ -263,7 +263,14 @@ def aprobar_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apun
             conn.execute(f"UPDATE fiscal_apuntes SET {sets}, version = version + 1, aprobado_por = ?, aprobado_en = ?, actualizado_en = ? WHERE id = ? AND tenant_id = ? AND version = ?",
                          (*(d[c] for c in CAMPOS_APUNTE), usuario_id, ahora, ahora, apunte_id, tenant_id, actual["version"]))
             accion = "fiscal.apunte.corregir"
-        auditoria.registrar(tenant_id, usuario_id, accion, "cliente_fiscal", cliente_fiscal_id, {"apunte_id": apunte_id, "numero": apunte.numero, "libro": apunte.libro}, conn=conn)
+            cambios = {c: [str(actual[c] if actual[c] is not None else "")[:40], str(d[c] if d[c] is not None else "")[:40]] for c in CAMPOS_APUNTE
+                       if c != "causa" and (actual[c] if actual[c] is not None else "") != (d[c] if d[c] is not None else "")}
+        detalle = {"apunte_id": apunte_id, "numero": apunte.numero, "libro": apunte.libro}
+        if accion == "fiscal.apunte.corregir":
+            detalle["cambios"] = dict(list(cambios.items())[:12])
+            if d["causa"]:
+                detalle["causa"] = d["causa"][:200]
+        auditoria.registrar(tenant_id, usuario_id, accion, "cliente_fiscal", cliente_fiscal_id, detalle, conn=conn)
         fila = conn.execute("SELECT * FROM fiscal_apuntes WHERE id = ? AND tenant_id = ?", (apunte_id, tenant_id)).fetchone()
         conn.commit()
         return dict(fila)
@@ -369,6 +376,33 @@ def existe_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, libro
     return dict(f) if f else None
 
 
+def duplicada_en_otros_titulares(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, libro: str, serie: str, numero: str, nif: str) -> list[str]:
+    """Los OTROS titulares del despacho (que esta persona puede ver) que ya tienen una factura con el mismo número y contraparte, ya sea apunte o factura de «Facturas para contabilizar» (portal, subida
+    del cliente…). Una recibida repetida en dos titulares suele ser una factura subida al cliente equivocado. Solo avisa; no impide nada."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    limpio = _nif_limpio(nif)
+    if not (numero or "").strip() or len(limpio) < 5:
+        return []
+    norma = "UPPER(REPLACE(REPLACE(REPLACE({c}, ' ', ''), '-', ''), '.', ''))"
+    conn = db.get_connection()
+    try:
+        ids = {f["cliente_fiscal_id"] for f in conn.execute(
+            f"SELECT DISTINCT cliente_fiscal_id FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id <> ? AND anulado_en IS NULL AND libro = ? AND COALESCE(serie, '') = ? AND numero = ? "
+            f"AND {norma.format(c='contraparte_nif')} = ?", (tenant_id, cliente_fiscal_id, libro, (serie or "").strip(), numero.strip(), limpio)).fetchall()}
+        ids |= {f["cliente_fiscal_id"] for f in conn.execute(
+            f"SELECT DISTINCT cliente_fiscal_id FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id <> ? AND estado != 'descartada' AND tipo = ? AND numero = ? "
+            f"AND {norma.format(c='tercero_nif')} = ?", (tenant_id, cliente_fiscal_id, "emitida" if libro == "E" else "recibida", f"{(serie or '').strip()}{numero.strip()}", limpio)).fetchall()}
+        nombres = []
+        for cid in sorted(ids):
+            if acceso.puede_ver_cliente(tenant_id, usuario_id, cid):
+                f = conn.execute("SELECT nombre FROM clientes_fiscales WHERE id = ? AND tenant_id = ?", (cid, tenant_id)).fetchone()
+                if f:
+                    nombres.append(f["nombre"])
+    finally:
+        conn.close()
+    return nombres[:5]
+
+
 def listar_apuntes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, ejercicio: int | None = None, incluir_anulados: bool = False) -> list[dict]:
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
     sql = "SELECT * FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ?"
@@ -383,6 +417,15 @@ def listar_apuntes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, e
         return [dict(f) for f in conn.execute(sql + " ORDER BY fecha_expedicion, id", args).fetchall()]
     finally:
         conn.close()
+
+
+def historial_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apunte_id: int) -> list[dict]:
+    """Quién aprobó, corrigió o anuló un apunte y qué cambió (valor anterior → nuevo), del más reciente al más antiguo. Sale de la auditoría, que no se puede alterar."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    eventos = auditoria.listar(tenant_id, entidad="cliente_fiscal", entidad_id=cliente_fiscal_id, limite=500)
+    return [{"cuando": e["creado_en"], "quien": e.get("actor") or "—", "accion": e["accion"].rsplit(".", 1)[-1], "cambios": e["detalle"].get("cambios") or {},
+             "motivo": e["detalle"].get("causa") or e["detalle"].get("motivo") or ""}
+            for e in eventos if e["accion"].startswith("fiscal.apunte.") and isinstance(e.get("detalle"), dict) and e["detalle"].get("apunte_id") == apunte_id]
 
 
 def proponer_desde_factura(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
@@ -432,6 +475,68 @@ def facturas_por_registrar(tenant_id: int, usuario_id: int, cliente_fiscal_id: i
     finally:
         conn.close()
     return facturas
+
+
+def _limites_periodo(ejercicio: int, periodo: str) -> tuple[str, str]:
+    mes_fin = int(periodo[0]) * 3 if periodo.endswith("T") else int(periodo)
+    mes_ini = mes_fin - 2 if periodo.endswith("T") else mes_fin
+    return date(ejercicio, mes_ini, 1).isoformat(), _fecha_fin_periodo(ejercicio, periodo).isoformat()
+
+
+def facturas_del_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
+    """Qué facturas del periodo computan y en qué modelo. Una misma factura puede ir en varios: el **303** (IVA, cuando ya es un apunte aprobado) y las **retenciones de IRPF** que lleve en sus líneas:
+    si es recibida las practica el cliente (modelo 111, o 115 si es un alquiler), si es emitida las soporta él (no van en el 111). Para cada modelo: `computa` (ya cuenta), `por_registrar` / `por_revisar`
+    (aún no cuenta) o `excluida` (se sacó de Guilda Fiscal). El cálculo automático del 111 todavía no existe: aquí se ve qué entrará en él. Importes en céntimos; los abonos restan."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    if periodo not in tuple(f"{m:02d}" for m in range(1, 13)) + ("1T", "2T", "3T", "4T"):
+        raise ErrorFiscal("Periodo no válido.")
+    desde, hasta = _limites_periodo(ejercicio, periodo)
+    conn = db.get_connection()
+    try:
+        facturas = [dict(f) for f in conn.execute(
+            "SELECT f.id, f.tipo, f.estado, f.fecha, f.numero, f.tercero_nombre, f.abono, f.total_centimos, f.incluir_en_fiscal, "
+            "COALESCE(SUM(l.base_centimos), 0) AS base, COALESCE(SUM(l.cuota_iva), 0) AS cuota_iva, COALESCE(SUM(l.cuota_retencion), 0) AS retencion, "
+            "COALESCE(SUM(CASE WHEN l.pct_retencion > 0 THEN l.base_centimos ELSE 0 END), 0) AS base_retencion, COALESCE(MAX(l.pct_retencion), 0) AS pct_retencion "
+            "FROM facturas_contables f LEFT JOIN facturas_contables_lineas l ON l.factura_id = f.id "
+            "WHERE f.tenant_id = ? AND f.cliente_fiscal_id = ? AND f.estado != 'descartada' AND f.fecha >= ? AND f.fecha <= ? "
+            "GROUP BY f.id, f.tipo, f.estado, f.fecha, f.numero, f.tercero_nombre, f.abono, f.total_centimos, f.incluir_en_fiscal ORDER BY f.fecha, f.id",
+            (tenant_id, cliente_fiscal_id, desde, hasta)).fetchall()]
+        apuntes = {}
+        for a in conn.execute("SELECT id, factura_id, clave FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND factura_id IS NOT NULL AND anulado_en IS NULL",
+                              (tenant_id, cliente_fiscal_id)).fetchall():
+            apuntes.setdefault(a["factura_id"], a)
+    finally:
+        conn.close()
+    totales = {"iva_repercutido": 0, "iva_soportado": 0, "retenciones_111": 0, "retenciones_115": 0, "retenciones_soportadas": 0, "no_computan": 0}
+    for f in facturas:
+        signo = -1 if f["abono"] else 1
+        for k in ("base", "cuota_iva", "retencion", "base_retencion"):
+            f[k] *= signo
+        ap = apuntes.get(f["id"])
+        f["apunte_id"] = ap["id"] if ap else None
+        revisada = f["estado"] in ("revisada", "exportada")
+        if not f["incluir_en_fiscal"]:
+            f["m303"] = "excluida"
+        elif ap:
+            f["m303"] = "computa"
+        elif revisada:
+            f["m303"] = "por_registrar"
+        else:
+            f["m303"] = "por_revisar"
+        f["m_retencion"], f["retencion_estado"] = None, None
+        if f["retencion"]:
+            if f["tipo"] == "emitida":
+                f["m_retencion"], f["retencion_estado"] = "soportada", "computa" if f["incluir_en_fiscal"] else "excluida"
+            else:
+                f["m_retencion"] = "115" if (ap and ap["clave"] in ("11", "12", "13")) else "111"
+                f["retencion_estado"] = "excluida" if not f["incluir_en_fiscal"] else ("computa" if revisada else "por_revisar")
+        if f["m303"] == "computa":
+            totales["iva_repercutido" if f["tipo"] == "emitida" else "iva_soportado"] += f["cuota_iva"]
+        if f["retencion_estado"] == "computa":
+            totales[{"111": "retenciones_111", "115": "retenciones_115", "soportada": "retenciones_soportadas"}[f["m_retencion"]]] += f["retencion"]
+        if f["m303"] != "computa" and f["retencion_estado"] != "computa":
+            totales["no_computan"] += 1
+    return {"ejercicio": ejercicio, "periodo": periodo, "desde": desde, "hasta": hasta, "facturas": facturas, "totales": totales}
 
 
 def aprobar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, factura_ids: list[int]) -> dict:

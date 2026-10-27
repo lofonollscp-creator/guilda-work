@@ -27,7 +27,8 @@
   </div>
   <div class="fila-campos">
     <label>{{ _('Serie') }}<input type="text" name="serie" value="{{ datos.get('serie') or '' }}" maxlength="20"></label>
-    <label>{{ _('Número') }}<input type="text" name="numero" value="{{ datos.get('numero') or '' }}" maxlength="40" required><small class="fiscal-ayuda" data-duplicado-aviso role="status" aria-live="polite" data-texto="{{ _('Ya hay un apunte con este número y esta contraparte (del {f}). ¿Es un duplicado?') }}"></small></label>
+    <label>{{ _('Número') }}<input type="text" name="numero" value="{{ datos.get('numero') or '' }}" maxlength="40" required><small class="fiscal-ayuda" data-duplicado-aviso role="status" aria-live="polite" data-texto="{{ _('Ya hay un apunte con este número y esta contraparte (del {f}). ¿Es un duplicado?') }}"></small>
+      <small class="fiscal-ayuda" data-duplicado-otros role="status" aria-live="polite" data-texto="{{ _('Esta factura ya consta en otro titular: {n}. ¿Se ha subido al cliente equivocado?') }}"></small></label>
     <label>{{ _('Fecha de expedición') }}<input type="date" name="fecha_expedicion" value="{{ datos.get('fecha_expedicion') or '' }}" required></label>
     <label data-fecha-operacion {% if not datos.get('fecha_operacion') %}hidden{% endif %}>{{ _('Fecha de operación') }}<input type="date" name="fecha_operacion" value="{{ datos.get('fecha_operacion') or '' }}"></label>
     {% if not datos.get('fecha_operacion') %}<button type="button" class="btn btn-ghost btn-sm fiscal-mas" data-mostrar-operacion>+ {{ _('La operación es de otra fecha') }}</button>{% endif %}
@@ -68,5 +69,17 @@
 <form method="post" action="{{ url_for('guilda_fiscal.apunte_anular', cliente_id=c.id, apunte_id=apunte_id) }}" class="ds-fila ds-envolver ds-mt-16">
   <label>{{ _('Motivo para anular') }}<input type="text" name="motivo" maxlength="300" required></label><button type="submit" class="btn btn-ghost">{{ _('Anular apunte') }}</button>
 </form>
+{% endif %}
+{% if apunte_id and historial %}
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Historial de cambios') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cuándo') }}</th><th>{{ _('Quién') }}</th><th>{{ _('Qué') }}</th></tr></thead>
+    <tbody>{% for h in historial %}<tr><td>{{ h.cuando }}</td><td>{{ h.quien }}</td>
+      <td>{% if h.accion == 'aprobar' %}{{ _('Aprobado') }}{% elif h.accion == 'anular' %}{{ _('Anulado') }}{% else %}{{ _('Corregido') }}{% endif %}
+        {% for campo, v in h.cambios.items() %}<div class="muted">{{ campo }}: {{ v[0] or '—' }} → {{ v[1] or '—' }}</div>{% endfor %}
+        {% if h.motivo %}<div class="muted">{{ h.motivo }}</div>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
 {% endif %}
 {% endblock %}

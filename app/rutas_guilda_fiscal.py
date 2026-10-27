@@ -116,7 +116,14 @@ def _recordatorio(c: dict, periodo: tuple[int, str]) -> dict | None:
 def cliente(cliente_id: int):
     c = _cliente_o_404(cliente_id)
     ejercicio = request.args.get("ejercicio", date.today().year, type=int)
-    return render_template("fiscal_cliente.html", c=c, ejercicio=ejercicio, perfil=fp.perfil_en(g.tenant_id, cliente_id, date.today().isoformat()),
+    p_ejercicio, p_periodo = fn.periodo_por_defecto(date.today())
+    p_ejercicio = request.args.get("p_ejercicio", p_ejercicio, type=int)
+    p_periodo = request.args.get("p_periodo", p_periodo) if request.args.get("p_periodo") in PERIODOS else p_periodo
+    try:
+        computan = fn.facturas_del_periodo(g.tenant_id, g.usuario_id, cliente_id, p_ejercicio, p_periodo)
+    except (ErrorFiscal, ValueError):
+        computan = None
+    return render_template("fiscal_cliente.html", c=c, ejercicio=ejercicio, computan=computan, perfil=fp.perfil_en(g.tenant_id, cliente_id, date.today().isoformat()),
                            apuntes=fn.listar_apuntes(g.tenant_id, g.usuario_id, cliente_id, ejercicio=ejercicio), declaraciones=fn.listar_declaraciones(g.tenant_id, g.usuario_id, cliente_id),
                            periodos=PERIODOS, periodo_defecto=fn.periodo_por_defecto(date.today()), recordatorio=_recordatorio(c, fn.periodo_por_defecto(date.today())), sin_revisar=fn.contadores_facturas(g.tenant_id, g.usuario_id, cliente_id).get(cliente_id, {}).get("sin_revisar", 0), por_registrar=fn.facturas_por_registrar(g.tenant_id, g.usuario_id, cliente_id, ejercicio), error=_error())
 
@@ -145,9 +152,10 @@ def comprobar_numero(cliente_id: int):
     a = request.args
     try:
         f = fn.existe_apunte(g.tenant_id, g.usuario_id, cliente_id, a.get("libro", "E"), a.get("serie", ""), a.get("numero", ""), a.get("nif", ""), a.get("excluir", type=int))
+        otros = fn.duplicada_en_otros_titulares(g.tenant_id, g.usuario_id, cliente_id, a.get("libro", "E"), a.get("serie", ""), a.get("numero", ""), a.get("nif", ""))
     except ErrorFiscal:
         abort(404)
-    return jsonify({"existe": f})
+    return jsonify({"existe": f, "otros": ", ".join(otros)})
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/perfil", methods=["GET", "POST"])
@@ -221,7 +229,8 @@ def _un_mes_despues(texto: str) -> str:
 
 
 def _plantilla_apunte(c: dict, datos: dict, apunte_id: int | None, error: str | None, estado: int = 200):
-    return render_template("fiscal_apunte.html", c=c, datos=datos, apunte_id=apunte_id, tipos=TIPOS_FACTURA, claves_e=CLAVES_EXPEDIDAS, claves_r=CLAVES_RECIBIDAS, calificaciones=CALIFICACIONES,
+    historial = fn.historial_apunte(g.tenant_id, g.usuario_id, c["id"], apunte_id) if apunte_id else []
+    return render_template("fiscal_apunte.html", c=c, datos=datos, apunte_id=apunte_id, historial=historial, tipos=TIPOS_FACTURA, claves_e=CLAVES_EXPEDIDAS, claves_r=CLAVES_RECIBIDAS, calificaciones=CALIFICACIONES,
                            exenciones=EXENCIONES, error=error), estado
 
 

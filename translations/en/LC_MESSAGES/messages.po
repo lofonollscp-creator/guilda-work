@@ -17114,3 +17114,77 @@ msgstr "Mark everything in this section as done?"
 #: app/ausencias.py
 msgid "Ámbar"
 msgstr "Amber"
+
+msgid "Facturas que computan en el periodo"
+msgstr "Invoices counted in the period"
+
+msgid "Cada factura cuenta en el modelo que le corresponde. Una misma factura puede ir en varios: el IVA, en el 303 (cuando ya es un apunte aprobado), y su retención de IRPF, en el 111 o el 115 si la practica el cliente; si es una factura emitida con retención, la retención la soporta él y no va en el 111."
+msgstr "Each invoice counts in the form it belongs to. One invoice can go in several: its VAT in form 303 (once it is an approved entry) and its income tax withholding in form 111 or 115 if the client withholds it; for an issued invoice with withholding, the client bears it and it does not go in form 111."
+
+msgid "Computa"
+msgstr "Counts"
+
+msgid "Por registrar"
+msgstr "To record"
+
+msgid "Por revisar"
+msgstr "To review"
+
+msgid "Excluida"
+msgstr "Excluded"
+
+msgid "IVA repercutido (303)"
+msgstr "Output VAT (303)"
+
+msgid "IVA soportado (303)"
+msgstr "Input VAT (303)"
+
+msgid "Retenciones modelo 111"
+msgstr "Withholdings form 111"
+
+msgid "Retenciones modelo 115"
+msgstr "Withholdings form 115"
+
+msgid "Retenciones soportadas"
+msgstr "Withholdings suffered"
+
+msgid "Están sin revisar, sin registrar o excluidas de Guilda Fiscal."
+msgstr "They are unreviewed, unrecorded or excluded from Guilda Fiscal."
+
+msgid "Retención IRPF"
+msgstr "Income tax withholding"
+
+msgid "soportada (no va en el 111)"
+msgstr "suffered (not in form 111)"
+
+msgid "Ver apunte"
+msgstr "View entry"
+
+msgid "Ver factura"
+msgstr "View invoice"
+
+msgid "El cálculo automático de los modelos 111 y 115 aún no está en Guilda Fiscal: aquí ves qué retenciones entrarán en ellos."
+msgstr "Automatic calculation of forms 111 and 115 is not in Guilda Fiscal yet: here you can see which withholdings will go into them."
+
+msgid "No hay facturas de este titular en el periodo."
+msgstr "There are no invoices for this holder in the period."
+
+msgid "Historial de cambios"
+msgstr "Change history"
+
+msgid "Aprobado"
+msgstr "Approved"
+
+msgid "Anulado"
+msgstr "Cancelled"
+
+msgid "Corregido"
+msgstr "Corrected"
+
+msgid "Esta factura ya consta en otro titular: {n}. ¿Se ha subido al cliente equivocado?"
+msgstr "This invoice already exists for another holder: {n}. Was it uploaded to the wrong client?"
+
+msgid "%(n)s factura aún no computa"
+msgid_plural "%(n)s facturas aún no computan"
+msgstr[0] "%(n)s invoice is not counted yet"
+msgstr[1] "%(n)s invoices are not counted yet"

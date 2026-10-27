@@ -112,7 +112,10 @@
     if (f.getAttribute('data-excluir')) q.set('excluir', f.getAttribute('data-excluir'));
     fetch(urlNumero + '?' + q.toString(), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { mostrar('[data-duplicado-aviso]', d && d.existe ? { f: d.existe.fecha_expedicion } : null); })
+      .then(function (d) {
+        mostrar('[data-duplicado-aviso]', d && d.existe ? { f: d.existe.fecha_expedicion } : null);
+        mostrar('[data-duplicado-otros]', d && d.otros ? { n: d.otros } : null);
+      })
       .catch(function () {});
   }
 
