@@ -814,5 +814,6 @@
   "iaAdjuntoQuitar": "Retirer le fichier",
   "iaAdjuntoError": "Le fichier n'a pas pu être envoyé.",
   "iaAdjuntoPregunta": "Lisez le fichier joint et dites-moi ce qu'il contient.",
-  "iaPreguntarAlAsistente": "Demander à l'assistant"
+  "iaPreguntarAlAsistente": "Demander à l'assistant",
+  "iaOcultarAsistente": "Masquer l'assistant"
 }

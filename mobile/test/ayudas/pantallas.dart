@@ -12,7 +12,12 @@ import 'package:guilda_work_mobile/funciones/fichaje/fichaje_acciones.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_acciones.dart' show ResultadoAccion;
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
 import 'package:guilda_work_mobile/models/models.dart';
+import 'package:guilda_work_mobile/nucleo/servicios.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
+import 'package:guilda_work_mobile/services/locale_service.dart';
+import 'package:guilda_work_mobile/services/push_service.dart';
+import 'package:guilda_work_mobile/services/sync_service.dart';
+import 'package:guilda_work_mobile/services/theme_service.dart';
 import 'package:guilda_work_mobile/services/api_client.dart';
 import 'package:guilda_work_mobile/services/session_service.dart';
 import 'package:guilda_work_mobile/theme/app_theme.dart';
@@ -172,3 +177,10 @@ void sinVoz() {
 
 IaMensaje iaMsg(int id, String rol, String? contenido, {String? calls, String? callId, String? herramienta, String? fuentes}) =>
     IaMensaje(id: id, rol: rol, contenido: contenido, toolCallsJson: calls, toolCallId: callId, nombreHerramienta: herramienta, creadoEn: '2026-10-26T09:00', fuentesJson: fuentes);
+
+
+/// Los servicios de la app con el servidor simulado: para las pantallas de Riverpod que sacan de ahí el cliente (el panel del asistente en la tableta).
+Servicios serviciosFalsos([ApiClient? api]) {
+  final cliente = api ?? ApiFalsa();
+  return Servicios(sesion: SessionService(), api: cliente, sync: SyncService(), push: PushService(cliente), tema: ThemeService(), locale: LocaleService());
+}

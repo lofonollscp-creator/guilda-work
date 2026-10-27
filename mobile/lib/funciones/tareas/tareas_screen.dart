@@ -12,6 +12,8 @@ import '../../datos/local/cola_escritura.dart' show ColaLlena;
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
 import '../../nucleo/abrir_asistente.dart';
+import '../../nucleo/servicios.dart';
+import '../../screens/ia_chat_screen.dart';
 import '../../nucleo/lectura_guardada.dart';
 import '../pendientes/pendientes_sheet.dart';
 import 'fila_tarea.dart';
@@ -29,6 +31,18 @@ class TareaAbierta extends Notifier<int?> {
 }
 
 final tareaAbiertaProvider = NotifierProvider<TareaAbierta, int?>(TareaAbierta.new);
+
+/// ¿Está abierto el panel del asistente junto a la tarea? Solo cabe en una tableta ancha (tres paneles); se cierra con su aspa y se reabre con la chispa de la barra.
+class PanelAsistenteAbierto extends Notifier<bool> {
+  @override
+  bool build() => true;
+  void poner(bool abierto) => state = abierto;
+}
+
+final panelAsistenteAbiertoProvider = NotifierProvider<PanelAsistenteAbierto, bool>(PanelAsistenteAbierto.new);
+
+/// Ancho mínimo para tener lista, ficha y asistente a la vez.
+const anchoConAsistente = 1280.0;
 
 /// La lista de tareas: ámbitos (mías, asignadas, compartidas, todas), estado, búsqueda,
 /// paginación infinita y alta rápida con un campo al pie.
@@ -227,6 +241,8 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
     final seleccion = estado.seleccion;
     final ancha = esAncha(context);
     final abierta = ref.watch(tareaAbiertaProvider);
+    final cabePanel = ancha && MediaQuery.sizeOf(context).width >= anchoConAsistente;
+    final panelAbierto = cabePanel && ref.watch(panelAsistenteAbiertoProvider);
     final barra = seleccion.isNotEmpty
         ? _barraSeleccion(t, seleccion)
         : AppBar(
@@ -240,6 +256,12 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
                   )
                 : Text(t.tareasTitulo),
             actions: [
+              if (cabePanel && !panelAbierto)
+                IconButton(
+                  icon: Icon(Icons.auto_awesome, color: ColoresIa.de(context).acento),
+                  tooltip: t.iaPreguntarAlAsistente,
+                  onPressed: () => ref.read(panelAsistenteAbiertoProvider.notifier).poner(true),
+                ),
               IconButton(
                 icon: Icon(_buscando ? Icons.close : Icons.search),
                 tooltip: t.tareasBuscar,
@@ -261,7 +283,8 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
         const SubnavTareas(),
         _Filtros(estado: estado),
         Expanded(child: _Cuerpo(estado: estado, scroll: _scroll, alCompletar: _completar, abierta: ancha ? abierta : null, alAbrir: ancha ? ref.read(tareaAbiertaProvider.notifier).abrir : null)),
-        Padding(
+        if (!panelAbierto)
+          Padding(
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
           child: BarraAsistente(
             pista: t.iaBarraTareasHint,
@@ -281,6 +304,22 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
             ? Scaffold(body: EstadoVacio(icono: Icons.task_alt, titulo: t.tareasElegirUna))
             : TareaDetalleScreen(key: ValueKey(abierta), tareaId: abierta),
       ),
+      if (panelAbierto) ...[
+        VerticalDivider(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
+        SizedBox(
+          width: 340,
+          child: Builder(builder: (context) {
+            final s = ref.read(serviciosProvider);
+            return IaChatScreen(
+              api: s.api,
+              locale: s.locale,
+              contexto: abierta == null ? t.tareasTitulo : t.tareaDetalleTitulo,
+              contextoIa: abierta == null ? null : 'tarea #$abierta',
+              alCerrar: () => ref.read(panelAsistenteAbiertoProvider.notifier).poner(false),
+            );
+          }),
+        ),
+      ],
     ]);
   }
 }

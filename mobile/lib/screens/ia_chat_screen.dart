@@ -49,7 +49,10 @@ class IaChatScreen extends ConsumerStatefulWidget {
   /// Lo que se le cuenta al asistente (con el primer mensaje) sobre el elemento desde el que se abrió: `tarea #7 «Presentar el 303»`.
   final String? contextoIa;
 
-  const IaChatScreen({super.key, required this.api, required this.locale, this.consultaInicial, this.contexto, this.contextoIa});
+  /// Si se pasa, el chat va incrustado en un panel (tableta) en vez de a pantalla completa, y este es el aspa que lo cierra.
+  final VoidCallback? alCerrar;
+
+  const IaChatScreen({super.key, required this.api, required this.locale, this.consultaInicial, this.contexto, this.contextoIa, this.alCerrar});
 
   @override
   ConsumerState<IaChatScreen> createState() => _IaChatScreenState();
@@ -69,6 +72,7 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
   IaAdjunto? _adjunto; // el archivo subido que irá con el próximo mensaje
   bool _subiendo = false;
   bool _contextoEnviado = false;
+  double _ancho = 400; // lo que mide el chat (pantalla o panel): las burbujas se limitan a un tanto de él
   String? _textoVivo; // respuesta del asistente pintándose en directo (streaming)
   int _idLocal = -1; // ids negativos para las burbujas de usuario optimistas (nunca chocan con ids reales del servidor)
 
@@ -76,6 +80,7 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
   late final stt.SpeechToText _speech;
   late final FlutterTts _tts;
   bool _vozDisponible = false;
+  bool _vozIniciada = false;
   bool _escuchando = false;
   bool _liveActivo = false;
   bool _hablando = false;
@@ -94,17 +99,28 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
   }
 
   @override
+  void didUpdateWidget(IaChatScreen anterior) {
+    super.didUpdateWidget(anterior);
+    // En el panel de la tableta, al abrir otra tarea el asistente vuelve a recibir de cuál hablas.
+    if (anterior.contextoIa != widget.contextoIa) _contextoEnviado = false;
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _scroll.dispose();
-    _speech.cancel();
-    _tts.stop();
+    // La voz es un extra: si el móvil no la tiene (o aún no arrancó), cerrar el chat no debe fallar.
+    if (_vozIniciada) {
+      _speech.cancel().catchError((_) {});
+      _tts.stop().catchError((_) {});
+    }
     super.dispose();
   }
 
   Future<void> _inicializarVoz() async {
     _speech = stt.SpeechToText();
     _tts = FlutterTts();
+    _vozIniciada = true;
     await _tts.awaitSpeakCompletion(true);
     // Sin esto, en iOS el TTS se quedaba mudo (bug real: "no me lee los
     // mensajes") -- flutter_tts y speech_to_text compiten por la misma
@@ -475,23 +491,8 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(children: [
-          const InsigniaIa(tamano: 34),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(AppLocalizations.of(context).dashboardAsistenteIaTooltip, style: Theme.of(context).textTheme.titleMedium),
-              Text(AppLocalizations.of(context).iaSubtitulo, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-            ]),
-          ),
-        ]),
-        // Antes tres iconos sueltos; ahora un menú con nombre (la acción destructiva, «Vaciar», ya no está a un toque por error).
-        actions: [
-          PopupMenuButton<String>(
+  /// El menú «⋮» del chat: modo Live, ajustes del asistente y vaciar la conversación.
+  Widget _menuOpciones(BuildContext context) => PopupMenuButton<String>(
             tooltip: AppLocalizations.of(context).menuMasOpciones,
             onSelected: (v) {
               switch (v) {
@@ -511,11 +512,12 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
                 PopupMenuItem(value: 'vaciar', enabled: _mensajes.isNotEmpty, child: ListTile(leading: const Icon(Icons.delete_outline), title: Text(t.iaMenuVaciar), contentPadding: EdgeInsets.zero)),
               ];
             },
-          ),
-        ],
-      ),
-      body: AnchoMaximo(child: SafeArea(
-        child: Column(
+          );
+
+  /// Lo de dentro del chat (contexto, mensajes, confirmación, atajos y campo de escritura): igual en pantalla completa y en el panel de la tableta.
+  Widget _contenido(BuildContext context) => LayoutBuilder(builder: (context, k) {
+        _ancho = k.maxWidth;
+        return Column(
           children: [
             if (widget.contexto != null) _etiquetaContexto(context, widget.contexto!),
             Expanded(child: _cuerpo(context)),
@@ -528,8 +530,51 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
             _sugerenciasRapidas(context),
             _cajaEntrada(context),
           ],
+        );
+      });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    // En la tableta el chat vive en un panel junto a la tarea abierta: sin barra de aplicación, con su cabecera y su aspa.
+    if (widget.alCerrar != null) {
+      return Material(
+        color: tema.colorScheme.surface,
+        child: SafeArea(
+          child: Column(children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 4, 8),
+              child: Row(children: [
+                const InsigniaIa(tamano: 34),
+                const SizedBox(width: 10),
+                Expanded(child: Text(t.dashboardAsistenteIaTooltip, style: tema.textTheme.titleMedium)),
+                _menuOpciones(context),
+                IconButton(icon: const Icon(Icons.close), tooltip: t.iaOcultarAsistente, onPressed: widget.alCerrar),
+              ]),
+            ),
+            Divider(height: 1, color: tema.colorScheme.outlineVariant),
+            Expanded(child: _contenido(context)),
+          ]),
         ),
-      )),
+      );
+    }
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(children: [
+          const InsigniaIa(tamano: 34),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(t.dashboardAsistenteIaTooltip, style: tema.textTheme.titleMedium),
+              Text(t.iaSubtitulo, style: tema.textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ]),
+          ),
+        ]),
+        // Antes tres iconos sueltos; ahora un menú con nombre (la acción destructiva, «Vaciar», ya no está a un toque por error).
+        actions: [_menuOpciones(context)],
+      ),
+      body: AnchoMaximo(child: SafeArea(child: _contenido(context))),
     );
   }
 
@@ -602,11 +647,9 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
         Text(t.iaSugerenciasTitulo, style: tema.textTheme.labelLarge),
         const SizedBox(height: 8),
         // Cuatro tarjetas: un toque y se envía (no hay que saber qué se le puede pedir).
-        GridView.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.35,
+        GridView(
+          // Dos columnas en el móvil; en el panel estrecho de la tableta, una. Alto fijo: el texto cabe en tres líneas.
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: _ancho < 420 ? 1 : 2, mainAxisSpacing: 10, crossAxisSpacing: 10, mainAxisExtent: _ancho < 420 ? 112 : 124),
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
@@ -652,7 +695,7 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.88),
+        constraints: BoxConstraints(maxWidth: _ancho * 0.88),
         decoration: BoxDecoration(
           color: tema.colorScheme.surface,
           border: Border.all(color: tema.colorScheme.outlineVariant),
@@ -749,7 +792,7 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 4),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+            constraints: BoxConstraints(maxWidth: _ancho * 0.8),
             decoration: BoxDecoration(
               color: tema.colorScheme.primary,
               borderRadius: const BorderRadius.only(topLeft: Radius.circular(18), topRight: Radius.circular(4), bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18)),

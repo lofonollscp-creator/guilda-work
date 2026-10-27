@@ -25,10 +25,14 @@ import 'package:guilda_work_mobile/funciones/tareas/tareas_repositorio.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_vistas.dart';
 import 'package:guilda_work_mobile/funciones/tareas/tareas_screen.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
+import 'package:guilda_work_mobile/nucleo/servicios.dart';
+import 'package:guilda_work_mobile/screens/ia_chat_screen.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
 import 'package:guilda_work_mobile/theme/app_theme.dart';
 import 'package:guilda_work_mobile/services/api_client.dart' as sv;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'ayudas/pantallas.dart' show serviciosFalsos;
 
 // ---------- servidor falso para el repositorio ----------
 
@@ -415,6 +419,7 @@ class _SesionFija extends SesionControl {
 List<Override> _over(_RepoFalso repo, {bool conUsuario = false}) => [
       tareasRepositorioProvider.overrideWithValue(repo),
       estadoSesionProvider.overrideWith(conUsuario ? _SesionConUsuario.new : _SesionFija.new),
+      serviciosProvider.overrideWithValue(serviciosFalsos()),
     ];
 
 Widget _app(Widget home, List<Override> overrides) => ProviderScope(
@@ -1004,7 +1009,7 @@ void main() {
       testWidgets('captura $nombre', (t) async {
         if (carpeta == null) return;
         final clave = GlobalKey();
-        t.view.physicalSize = const Size(1640, 1180);
+        t.view.physicalSize = const Size(1640, 1180); // ancho: con lista, ficha y el panel del asistente
         t.view.devicePixelRatio = 1;
         addTearDown(t.view.reset);
         await t.pumpWidget(conTema(const TareasInicio(), _over(repoDeEjemplo()), oscuro: false, clave: clave));
@@ -1138,6 +1143,38 @@ void main() {
       // La lista sigue a la vista junto a la ficha.
       expect(find.text('Tarea 8'), findsOneWidget);
       expect(t.takeException(), isNull);
+    });
+
+    testWidgets('en una tableta ancha el asistente va en un tercer panel, sabe qué tarea hay abierta y se cierra y reabre', (t) async {
+      final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(7), _tarea(8)]);
+      t.view.physicalSize = const Size(1400, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsOneWidget);
+      expect(find.text('Contexto: Tareas'), findsOneWidget);
+      await t.tap(find.text('Tarea 7'));
+      await t.pumpAndSettle();
+      expect(find.text('Contexto: Tarea'), findsOneWidget);
+      await t.tap(find.byTooltip('Ocultar el asistente'));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsNothing);
+      await t.tap(find.byTooltip('Preguntar al asistente').first);
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsOneWidget);
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('en una tableta de menos de 1280 no cabe el panel y la barra del asistente sigue en la lista', (t) async {
+      final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(7)]);
+      t.view.physicalSize = const Size(1000, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsNothing);
+      expect(find.text('Pregunta sobre tus tareas'), findsOneWidget);
     });
 
     testWidgets('en una tableta el Tablero muestra todas las columnas a la vez', (t) async {
