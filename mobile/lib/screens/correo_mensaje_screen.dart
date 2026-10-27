@@ -3,6 +3,8 @@ import 'dart:io';
 import '../../diseno/adaptable.dart';
 import 'package:flutter/material.dart';
 
+import '../diseno/asistente.dart';
+
 import '../nucleo/abrir_asistente.dart';
 
 import '../diseno/componentes.dart';
@@ -225,6 +227,28 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
           IconButton(icon: Icon(Icons.delete_outline), tooltip: AppLocalizations.of(context).comunEliminar, onPressed: _eliminar),
         ],
       ),
+      // Atajos del asistente sobre este correo (en la tableta, el panel de al lado ya los ofrece).
+      bottomNavigationBar: widget.alTerminar != null
+          ? null
+          : SafeArea(
+              child: SizedBox(
+                height: 56,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: [
+                    for (final texto in [AppLocalizations.of(context).iaSugCorreoResumir, AppLocalizations.of(context).iaSugCorreoResponder, AppLocalizations.of(context).iaSugCorreoTarea])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChipIa(
+                          texto: texto,
+                          alPulsar: () => abrirAsistente(context, consulta: texto, contexto: AppLocalizations.of(context).comunMensaje, contextoIa: 'correo, mensaje #${widget.mensajeId}'),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
       body: AnchoMaximo(child: FutureBuilder<Mensaje>(
         future: _mensaje,
         builder: (context, snapshot) {

@@ -864,5 +864,9 @@
   "iaSugNotaResumir": "Resumeix aquesta nota",
   "iaSugNotaTareas": "Treu tasques d'aquesta nota",
   "iaHoyResumen": "Demana-li un resum del teu dia",
-  "iaHoyResumenConsulta": "Resumeix el meu dia: tasques, correus sense contestar, venciments i reunions"
+  "iaHoyResumenConsulta": "Resumeix el meu dia: tasques, correus sense contestar, venciments i reunions",
+  "hoyLoSiguiente": "El següent",
+  "hoyAbrir": "Obre",
+  "hoyContadorPendientes": "Pendents",
+  "hoyContadorUrgentes": "Urgents"
 }

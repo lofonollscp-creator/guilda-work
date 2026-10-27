@@ -864,5 +864,9 @@
   "iaSugNotaResumir": "Summarise this note",
   "iaSugNotaTareas": "Pull tasks out of this note",
   "iaHoyResumen": "Ask for a summary of your day",
-  "iaHoyResumenConsulta": "Summarise my day: tasks, unanswered emails, deadlines and meetings"
+  "iaHoyResumenConsulta": "Summarise my day: tasks, unanswered emails, deadlines and meetings",
+  "hoyLoSiguiente": "Up next",
+  "hoyAbrir": "Open",
+  "hoyContadorPendientes": "Pending",
+  "hoyContadorUrgentes": "Urgent"
 }

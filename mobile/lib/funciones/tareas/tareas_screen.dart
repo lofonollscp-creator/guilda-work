@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../api/errores.dart';
 import '../../api/fechas.dart';
 import '../../diseno/adaptable.dart';
-import '../../diseno/asistente.dart';
 import '../../diseno/componentes.dart';
 import '../../diseno/formatos.dart';
 import '../../api/generado/modelos.g.dart';
@@ -244,12 +243,8 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
                   )
                 : Text(t.tareasTitulo),
             actions: [
-              if (cabePanel && !panelAbierto)
-                IconButton(
-                  icon: Icon(Icons.auto_awesome, color: ColoresIa.de(context).acento),
-                  tooltip: t.iaPreguntarAlAsistente,
-                  onPressed: () => ref.read(panelAsistenteAbiertoProvider.notifier).poner(true),
-                ),
+              // El asistente: en la tableta, reabre su panel; en el móvil, abre el chat sabiendo que vienes de Tareas.
+              AccionAsistente(contexto: t.tareasTitulo, anchoMinimoPanel: anchoConAsistente),
               IconButton(
                 icon: Icon(_buscando ? Icons.close : Icons.search),
                 tooltip: t.tareasBuscar,
@@ -271,14 +266,6 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
         const SubnavTareas(),
         _Filtros(estado: estado),
         Expanded(child: _Cuerpo(estado: estado, scroll: _scroll, alCompletar: _completar, abierta: ancha ? abierta : null, alAbrir: ancha ? ref.read(tareaAbiertaProvider.notifier).abrir : null)),
-        if (!panelAbierto)
-          Padding(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-          child: BarraAsistente(
-            pista: t.iaBarraTareasHint,
-            alPulsar: () => abrirAsistente(context, contexto: t.tareasTitulo),
-          ),
-        ),
         _AltaRapida(controlador: _nueva, fecha: _fecha, alElegirFecha: _elegirFecha, alQuitarFecha: () => setState(() => _fecha = null), alEnviar: _crear),
       ]),
     );

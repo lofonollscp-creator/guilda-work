@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guilda_work_mobile/funciones/fichaje/fichaje_acciones.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
+import 'package:guilda_work_mobile/models/models.dart';
 import 'package:guilda_work_mobile/nucleo/paginas.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
 import 'package:guilda_work_mobile/nucleo/shell.dart';
@@ -185,6 +187,45 @@ void main() {
       expect(api.enviadosIa, ['[Contexto: tarea #7 «Presentar el 303»]\n¿Cuándo vence?', 'Gracias']);
       expect(find.text('¿Cuándo vence?'), findsOneWidget);
       expect(find.textContaining('[Contexto'), findsNothing);
+    });
+
+    testWidgets('«Cómo funciona» se abre desde la «i» y deja silenciar la etiqueta de cautela', (t) async {
+      sinVoz();
+      SharedPreferences.setMockInitialValues({});
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: ApiFalsa(), locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      await t.tap(find.byTooltip('Cómo funciona'));
+      await t.pumpAndSettle();
+      expect(find.text('Cómo funciona el asistente'), findsOneWidget);
+      expect(find.text('Puede equivocarse'), findsOneWidget);
+      expect(find.text('Recordarme revisar las cifras fiscales'), findsOneWidget);
+    });
+
+    testWidgets('sobre un correo, las sugerencias son las de un correo; y «Continúa» enseña conversaciones anteriores', (t) async {
+      sinVoz();
+      final api = ApiFalsa()..conversaciones = [IaConversacion(id: 1, titulo: 'Vencimientos de noviembre', activa: false), IaConversacion(id: 2, titulo: 'Esta', activa: true)];
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService(), contexto: 'Mensaje', contextoIa: 'correo, mensaje #3'), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('Resume este correo'), findsWidgets);
+      expect(find.text('Redacta una respuesta'), findsOneWidget);
+      expect(find.text('Ahora mismo · Mensaje'), findsOneWidget);
+      await t.scrollUntilVisible(find.text('Vencimientos de noviembre'), 200, scrollable: find.byType(Scrollable).first);
+      expect(find.text('Vencimientos de noviembre'), findsOneWidget);
+      expect(find.text('Esta'), findsNothing); // la activa no se ofrece como «continúa»
+    });
+
+    testWidgets('con cifras fiscales sale la cautela; sin ellas, no', (t) async {
+      sinVoz();
+      final api = ApiFalsa()
+        ..chat = [
+          iaMsg(1, 'user', 'Cuánto IVA'),
+          iaMsg(2, 'assistant', 'El 303 sale a 1.284,50 € a ingresar.'),
+          iaMsg(3, 'user', 'Gracias'),
+          iaMsg(4, 'assistant', 'De nada, aquí estoy.'),
+        ];
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('Cifra estimada: compruébala antes de presentar'), findsOneWidget);
     });
 
     testWidgets('el aviso de que es una IA acompaña al campo de escritura', (t) async {

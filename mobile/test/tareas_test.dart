@@ -1166,7 +1166,7 @@ void main() {
       expect(t.takeException(), isNull);
     });
 
-    testWidgets('en una tableta de menos de 1280 no cabe el panel y la barra del asistente sigue en la lista', (t) async {
+    testWidgets('en una tableta de menos de 1280 no cabe el panel: la chispa de la barra abre el chat aparte', (t) async {
       final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(7)]);
       t.view.physicalSize = const Size(1000, 800);
       t.view.devicePixelRatio = 1;
@@ -1174,7 +1174,7 @@ void main() {
       await t.pumpWidget(_app(const TareasInicio(), _over(repo)));
       await t.pumpAndSettle();
       expect(find.byType(IaChatScreen), findsNothing);
-      expect(find.text('Pregunta sobre tus tareas'), findsOneWidget);
+      expect(find.byTooltip('Preguntar al asistente'), findsOneWidget);
     });
 
     testWidgets('en una tableta el Tablero muestra todas las columnas a la vez', (t) async {

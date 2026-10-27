@@ -1364,5 +1364,9 @@
   "iaSugNotaResumir": "Resume esta nota",
   "iaSugNotaTareas": "Saca tareas de esta nota",
   "iaHoyResumen": "Pídele un resumen de tu día",
-  "iaHoyResumenConsulta": "Resume mi día: tareas, correos sin contestar, vencimientos y reuniones"
+  "iaHoyResumenConsulta": "Resume mi día: tareas, correos sin contestar, vencimientos y reuniones",
+  "hoyLoSiguiente": "Lo siguiente",
+  "hoyAbrir": "Abrir",
+  "hoyContadorPendientes": "Pendientes",
+  "hoyContadorUrgentes": "Urgentes"
 }

@@ -864,5 +864,9 @@
   "iaSugNotaResumir": "Résume cette note",
   "iaSugNotaTareas": "Tire des tâches de cette note",
   "iaHoyResumen": "Demandez un résumé de votre journée",
-  "iaHoyResumenConsulta": "Résume ma journée : tâches, e-mails sans réponse, échéances et réunions"
+  "iaHoyResumenConsulta": "Résume ma journée : tâches, e-mails sans réponse, échéances et réunions",
+  "hoyLoSiguiente": "La suite",
+  "hoyAbrir": "Ouvrir",
+  "hoyContadorPendientes": "En attente",
+  "hoyContadorUrgentes": "Urgent"
 }
