@@ -88,6 +88,17 @@ def cartera():
     return render_template("fiscal_cartera.html", filas=filas, cuentas=cuentas, filtro=filtro, q=request.args.get("q", "").strip()[:80], periodo=fn.periodo_por_defecto(date.today()), error=_error())
 
 
+@guilda_fiscal_bp.route("/vencimientos")
+@login_required
+def vencimientos():
+    dias = request.args.get("dias", 60, type=int)
+    panel = fn.panel_vencimientos(g.tenant_id, g.usuario_id, dias=dias if dias in (30, 60, 90, 180) else 60)
+    solo = request.args.get("responsable")
+    if solo is not None:
+        panel["filas"] = [f for f in panel["filas"] if f["responsable"] == solo]
+    return render_template("fiscal_vencimientos.html", panel=panel, dias=dias if dias in (30, 60, 90, 180) else 60, responsable=solo, error=_error())
+
+
 def _recordatorio(c: dict, periodo: tuple[int, str]) -> dict | None:
     """El mensaje al cliente con lo que falta para cerrar el periodo (se copia o se abre en el correo; Guilda Work no lo envía). None si no falta nada."""
     ejercicio, trimestre = periodo

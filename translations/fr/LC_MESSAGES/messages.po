@@ -17347,3 +17347,41 @@ msgstr "Revenus du travail"
 
 msgid "No hay retenciones en apuntes aprobados de este periodo."
 msgstr "Il n'y a aucune retenue dans les écritures approuvées de cette période."
+
+msgid "Lo que vence y el trabajo que hay detrás. La carga se mide en puntos de trabajo (1 por vencimiento, más cada factura sin revisar o sin registrar y lo que falta del 303), no en horas."
+msgstr "Ce qui arrive à échéance et le travail derrière. La charge se mesure en points de travail (1 par échéance, plus chaque facture non vérifiée ou non enregistrée et ce qu'il reste du 303), pas en heures."
+
+msgid "Horizonte"
+msgstr "Horizon"
+
+msgid "%(n)s días"
+msgstr "%(n)s jours"
+
+msgid "Quitar filtro de responsable"
+msgstr "Retirer le filtre de responsable"
+
+msgid "No hay vencimientos pendientes"
+msgstr "Aucune échéance en attente"
+
+msgid "Cuando generes vencimientos en el calendario fiscal aparecerán aquí."
+msgstr "Lorsque vous générerez des échéances dans le calendrier fiscal, elles apparaîtront ici."
+
+msgid "Carga por semana"
+msgstr "Charge par semaine"
+
+msgid "Del %(d)s"
+msgstr "Du %(d)s"
+
+msgid "Carga por responsable"
+msgstr "Charge par responsable"
+
+msgid "Sin crear"
+msgstr "Non créée"
+
+msgid "Vencimientos y carga de trabajo"
+msgstr "Échéances et charge de travail"
+
+msgid "%(n)s vencimiento ya ha vencido sin presentarse."
+msgid_plural "%(n)s vencimientos ya han vencido sin presentarse."
+msgstr[0] "%(n)s échéance est dépassée sans dépôt."
+msgstr[1] "%(n)s échéances sont dépassées sans dépôt."

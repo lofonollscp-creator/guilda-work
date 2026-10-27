@@ -1,4 +1,5 @@
 """Guilda Fiscal (web): app/rutas_guilda_fiscal.py. Con Kratos real (como el resto de pantallas)."""
+from datetime import date
 import json
 
 import pytest
@@ -389,3 +390,21 @@ def test_simulacion_de_los_modelos_111_y_115(cliente):
     assert fn.simular_retenciones(t, uid, c_id, 2026, "3T")["111"].casillas.get("09", 0) == 0
     pagina = cliente.get(f"/guilda-fiscal/{c_id}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
     assert "Simulación de retenciones" in pagina and "150.00" in pagina.split('id="simulacion-retenciones"')[1]
+
+
+def test_panel_de_vencimientos_con_carga_de_trabajo(cliente):
+    uid, t, c = _web(cliente, email="venc@ejemplo.com")
+    conn = db.get_connection()
+    for modelo, periodo, limite in (("303", "1T 2026", "2026-04-20"), ("303", "2T 2026", "2026-07-20"), ("111", "2T 2026", "2026-07-20"), ("303", "3T 2026", "2026-10-20")):
+        conn.execute("INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, usuario_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, ?, ?, ?, ?, 'pendiente', '2026-01-01')",
+                     (t, c, uid, modelo, periodo, limite))
+    conn.commit()
+    conn.close()
+    p = fn.panel_vencimientos(t, uid, dias=60, hoy=date(2026, 7, 1))
+    assert [(f["modelo"], f["periodo"], f["nivel"]) for f in p["filas"]] == [("303", "1T 2026", "vencido"), ("303", "2T 2026", "proximo"), ("111", "2T 2026", "proximo")]       # el 3T queda fuera de 60 días
+    assert p["vencidos"] == 1 and [f["carga"] for f in p["filas"]] == [4, 4, 1] and p["filas"][0]["declaracion"] is None
+    assert p["semanas"][0]["inicio"] is None and p["semanas"][1]["vencimientos"] == 2 and p["semanas"][1]["carga"] == 5
+    assert p["responsables"][0]["responsable"] == "venc" and p["responsables"][0]["carga"] == 9
+    pagina = cliente.get("/guilda-fiscal/vencimientos?dias=180").get_data(as_text=True)
+    assert "Vencimientos fiscales" in pagina and "Empresa Web SL" in pagina and "Carga por responsable" in pagina
+    assert "Vencimientos y carga de trabajo" in cliente.get("/guilda-fiscal/").get_data(as_text=True)

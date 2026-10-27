@@ -1,162 +1,54 @@
 {% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ _('Vencimientos fiscales') }} — Guilda Work{% endblock %}
 {% block content %}
+{% set estados = {None: _('Sin crear'), 'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada')} %}
 <header class="page-header">
   <div>
-    <h1>{{ _('Calendario fiscal') }}</h1>
-    <p class="subtitle">{{ _('Vencimientos de todos los clientes de la gestoría.') }}</p>
+    <h1>{{ _('Vencimientos fiscales') }}</h1>
+    <p class="subtitle">{{ _('Lo que vence y el trabajo que hay detrás. La carga se mide en puntos de trabajo (1 por vencimiento, más cada factura sin revisar o sin registrar y lo que falta del 303), no en horas.') }}</p>
   </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cartera') }}">‹ {{ _('Cartera') }}</a>
 </header>
-
-<nav class="tareas-subnav">
-  <a href="{{ url_for('fiscal.clientes') }}">{{ _('Clientes') }}</a>
-  <a class="active" href="{{ url_for('fiscal.vencimientos') }}">{{ _('Vencimientos') }}</a>
-  <a href="{{ url_for('fiscal.recordatorios') }}">{{ _('Recordatorios') }}</a>
-  <a href="{{ url_for('fiscal.papelera') }}">{{ _('Papelera') }}</a>
+{{ aviso_error(error) }}
+<nav class="ds-fila ds-envolver ds-mb-16" aria-label="{{ _('Horizonte') }}">
+  {% for d in (30, 60, 90, 180) %}<a class="btn {{ 'btn-primary' if dias == d else 'btn-ghost' }} btn-sm" href="{{ url_for('guilda_fiscal.vencimientos', dias=d, responsable=responsable) }}">{{ _('%(n)s días', n=d) }}</a>{% endfor %}
+  {% if responsable is not none %}<a class="btn btn-ghost btn-sm" href="{{ url_for('guilda_fiscal.vencimientos', dias=dias) }}">{{ _('Quitar filtro de responsable') }}</a>{% endif %}
 </nav>
-
-<nav class="tareas-subnav">
-  <a class="active" href="{{ url_for('fiscal.vencimientos', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Lista') }}</a>
-  <a href="{{ url_for('fiscal.vencimientos_calendario', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Calendario') }}</a>
-</nav>
-
-<form class="filters" method="get">
-  <label>{{ _('Estado') }}
-    <select name="estado">
-      <option value="">{{ _('Todos') }}</option>
-      {% for valor, etiqueta in estados %}
-      <option value="{{ valor }}" {% if filtro_estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
-      {% endfor %}
-    </select>
-  </label>
-  <label>{{ _('Cliente') }}
-    <select name="cliente_id">
-      <option value="">{{ _('Todos') }}</option>
-      {% for c in clientes %}
-      <option value="{{ c.id }}" {% if filtro_cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
-      {% endfor %}
-    </select>
-  </label>
-  {% if paises_en_uso|length > 1 %}
-  <label>{{ _('País') }}
-    <select name="pais">
-      <option value="">{{ _('Todos') }}</option>
-      {% for p in paises_en_uso %}
-      <option value="{{ p }}" {% if filtro_pais == p %}selected{% endif %}>{{ _('España') if p == 'ES' else p }}</option>
-      {% endfor %}
-    </select>
-  </label>
-  {% endif %}
-  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
-  <span class="action-group">
-    <a class="btn btn-ghost" href="{{ url_for('fiscal.export_csv', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">CSV</a>
-    <a class="btn btn-ghost" href="{{ url_for('fiscal.export_json', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">JSON</a>
-  </span>
-</form>
-
-{% if not vencimientos %}
-<p class="empty-lane">{{ _('No hay vencimientos para este filtro.') }}</p>
+{% if not panel.filas %}
+{{ estado_vacio(_('No hay vencimientos pendientes'), _('Cuando generes vencimientos en el calendario fiscal aparecerán aquí.')) }}
 {% else %}
-<div class="fiscal-layout">
-<div class="fiscal-lista">
-  {% for cliente_nombre, grupo in vencimientos|groupby('cliente_nombre') %}
-  <details class="fiscal-grupo" open>
-    <summary class="fiscal-grupo-resumen">
-      <span class="fiscal-grupo-nombre">{{ cliente_nombre }}</span>
-      <span class="pill">{{ _('%(n)s vencimiento(s)', n=grupo|length) }}</span>
-    </summary>
-    <ul class="log-list">
-      {% for v in grupo %}
-      <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}" data-cliente-id="{{ v.cliente_fiscal_id }}">
-        <form action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=v.id) }}" method="post">
-          <button type="submit" class="tarea-check" title="{{ _('Marcar como presentado') }}" {{ 'disabled' if v.estado == 'presentado' }}>
-            {% if v.estado == 'presentado' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
-          </button>
-        </form>
-        <span class="log-text">
-          <button type="button" class="fiscal-cliente-btn" data-cliente-id="{{ v.cliente_fiscal_id }}">{{ v.modelo }} — {{ v.cliente_nombre }}</button>
-        </span>
-        <span class="pill">{{ v.periodo }}</span>
-        <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
-        {% set vencido = v.estado == 'pendiente' and v.fecha_limite[:10] < hoy %}
-        {% set proximo = v.estado == 'pendiente' and not vencido and v.fecha_limite[:10] <= limite_proximo %}
-        <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if vencido or v.estado == 'fuera_plazo' else ('instantanea' if proximo else 'nota')) }}">
-          {{ _('Vencido') if vencido else estados|selectattr('0', 'equalto', v.estado)|map(attribute='1')|first }}
-        </span>
-        <a class="log-edit" href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
-        <form action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=v.id) }}" method="post"
-              data-confirmar-envio="{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}">
-          <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
-        </form>
-      </li>
-      {% endfor %}
-    </ul>
-  </details>
+{% if panel.vencidos %}<p class="ia-error" role="alert">{{ ngettext('%(n)s vencimiento ya ha vencido sin presentarse.', '%(n)s vencimientos ya han vencido sin presentarse.', panel.vencidos, n=panel.vencidos) }}</p>{% endif %}
+<section class="dash-panel ds-mb-16">
+  <h2>{{ _('Carga por semana') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Semana') }}</th><th>{{ _('Vencimientos') }}</th><th>{{ _('Carga') }}</th></tr></thead>
+    <tbody>{% for s in panel.semanas %}<tr><td>{% if s.inicio %}{{ _('Del %(d)s', d=s.inicio) }}{% else %}{{ _('Vencidos') }}{% endif %}</td><td>{{ s.vencimientos }}</td>
+      <td><meter min="0" max="{{ panel.carga_maxima }}" value="{{ s.carga }}" aria-label="{{ s.carga }}"></meter> {{ s.carga }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+<section class="dash-panel ds-mb-16">
+  <h2>{{ _('Carga por responsable') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Responsable') }}</th><th>{{ _('Vencimientos') }}</th><th>{{ _('Carga') }}</th></tr></thead>
+    <tbody>{% for r in panel.responsables %}<tr><td><a href="{{ url_for('guilda_fiscal.vencimientos', dias=dias, responsable=r.responsable) }}">{{ r.responsable or _('Sin asignar') }}</a></td><td>{{ r.vencimientos }}</td><td>{{ r.carga }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Vence') }}</th><th>{{ _('Titular') }}</th><th>{{ _('Modelo') }}</th><th>{{ _('Periodo') }}</th><th>{{ _('Responsable') }}</th><th>{{ _('Pendiente') }}</th><th>{{ _('Carga') }}</th></tr></thead>
+  <tbody>
+  {% for f in panel.filas %}
+    <tr>
+      <td><span class="pill semaforo semaforo-{{ 'rojo' if f.nivel == 'vencido' else ('ambar' if f.nivel == 'semana' else 'gris') }}">{{ f.fecha_limite[:10] }}</span>
+        <small class="muted">{% if f.dias < 0 %}{{ _('hace %(n)s días', n=-f.dias) }}{% elif f.dias == 0 %}{{ _('hoy') }}{% else %}{{ _('en %(n)s días', n=f.dias) }}{% endif %}</small></td>
+      <td><a href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.cliente_fiscal_id) }}">{{ f.cliente }}</a></td>
+      <td>{{ f.modelo }}</td><td>{{ f.periodo }}</td><td>{{ f.responsable or '—' }}</td>
+      <td>{% if f.modelo == '303' %}{{ estados[f.declaracion] }}{% endif %}{% if f.sin_revisar %} · <a class="chip" href="{{ url_for('contabilidad.lista', cliente_id=f.cliente_fiscal_id, estado='pendiente') }}">{{ _('%(n)s por revisar', n=f.sin_revisar) }}</a>{% endif %}{% if f.por_registrar %} <a class="chip" href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.cliente_fiscal_id) }}">{{ _('%(n)s por registrar', n=f.por_registrar) }}</a>{% endif %}</td>
+      <td>{{ f.carga }}</td>
+    </tr>
   {% endfor %}
-</div>
-
-<aside class="fiscal-detalle" id="fiscal-detalle">
-  <p class="fiscal-detalle-vacio empty-lane">{{ _('Pulsa un vencimiento para ver la ficha rápida del cliente.') }}</p>
-</aside>
-</div>
-{% if hay_pagina_anterior or hay_pagina_siguiente %}
-<nav class="paginacion" aria-label="{{ _('Paginación de vencimientos') }}">
-  {% if hay_pagina_anterior %}
-  <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais, desde=filtro_desde, hasta=filtro_hasta, pagina=pagina - 1) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</a>
-  {% else %}
-  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-left"></use></svg> {{ _('Anterior') }}</span>
-  {% endif %}
-  <span class="paginacion-actual">{{ _('Página %(num)s', num=pagina) }}</span>
-  {% if hay_pagina_siguiente %}
-  <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais, desde=filtro_desde, hasta=filtro_hasta, pagina=pagina + 1) }}">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></a>
-  {% else %}
-  <span class="btn btn-ghost is-deshabilitado" aria-disabled="true">{{ _('Siguiente') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-right"></use></svg></span>
-  {% endif %}
-</nav>
+  </tbody>
+</table></div>
 {% endif %}
-{% endif %}
-
-<script nonce="{{ g.csp_nonce }}">
-  // Master-detail: clic en el nombre del cliente pide el resumen por
-  // AJAX (app/rutas_fiscal.py:resumen_cliente_json -- sin llamadas a
-  // APIs externas, solo BD, para que abrir el panel sea instantáneo) y
-  // lo pinta en el lateral, sin navegar. "Ver ficha completa" sigue
-  // yendo a la página de siempre (con facturas/EspoCRM/documentos...).
-  (function () {
-    var panel = document.getElementById("fiscal-detalle");
-    if (!panel) return;
-    var botones = document.querySelectorAll(".fiscal-cliente-btn");
-    var urlBase = "/fiscal/clientes/";
-
-    function pintar(datos) {
-      var modelos = (datos.modelos || []).join(", ") || "{{ _('sin modelos asignados') }}";
-      panel.innerHTML =
-        '<p class="fiscal-detalle-nombre">' + datos.nombre + '</p>' +
-        (datos.nif ? '<p class="fiscal-detalle-nif mono">' + datos.nif + '</p>' : '') +
-        '<div class="fiscal-detalle-filas">' +
-        '<div class="fiscal-detalle-fila"><span>{{ _("Modelos") }}</span><span>' + modelos + '</span></div>' +
-        '<div class="fiscal-detalle-fila"><span>{{ _("Vencimientos pendientes") }}</span><span>' + datos.vencimientos_pendientes + '</span></div>' +
-        '<div class="fiscal-detalle-fila"><span>{{ _("Generación automática") }}</span><span>' + (datos.generacion_automatica ? '{{ _("Activa") }}' : '{{ _("Inactiva") }}') + '</span></div>' +
-        (datos.espocrm_url ? '<div class="fiscal-detalle-fila"><span>EspoCRM</span><span><a href="' + datos.espocrm_url + '" target="_blank" rel="noopener">{{ _("Ver cuenta") }} ↗</a></span></div>' : '') +
-        '</div>' +
-        '<div class="fiscal-detalle-acciones">' +
-        '<a class="btn btn-ghost" href="' + datos.url_ficha + '">{{ _("Ver ficha completa") }}</a>' +
-        '<a class="btn btn-primary" href="' + datos.url_generar_vencimientos + '">{{ _("Generar vencimientos") }}</a>' +
-        '</div>';
-    }
-
-    botones.forEach(function (boton) {
-      boton.addEventListener("click", function () {
-        var clienteId = boton.dataset.clienteId;
-        panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("Cargando…") }}</p>';
-        fetch(urlBase + clienteId + "/resumen.json")
-          .then(function (r) { return r.json(); })
-          .then(pintar)
-          .catch(function () {
-            panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("No se ha podido cargar.") }}</p>';
-          });
-      });
-    });
-  })();
-</script>
 {% endblock %}

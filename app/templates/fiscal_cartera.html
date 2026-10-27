@@ -11,6 +11,7 @@
     <h1>{{ _('Guilda Fiscal') }}</h1>
     <p class="subtitle">{{ _('Perfil fiscal, facturas aprobadas y borrador del modelo 303 de cada titular. Tú decides lo que se aprueba; Guilda Work calcula y genera el fichero, pero no presenta.') }}</p>
   </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.vencimientos') }}">{{ _('Vencimientos y carga de trabajo') }}</a>
 </header>
 {{ aviso_error(error) }}
 <div class="fiscal-barra ds-mb-16">

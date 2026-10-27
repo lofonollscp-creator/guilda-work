@@ -17271,3 +17271,41 @@ msgstr "Rendiments del treball"
 
 msgid "No hay retenciones en apuntes aprobados de este periodo."
 msgstr "No hi ha retencions en apunts aprovats d'aquest període."
+
+msgid "Lo que vence y el trabajo que hay detrás. La carga se mide en puntos de trabajo (1 por vencimiento, más cada factura sin revisar o sin registrar y lo que falta del 303), no en horas."
+msgstr "El que venç i la feina que hi ha al darrere. La càrrega es mesura en punts de treball (1 per venciment, més cada factura sense revisar o sense registrar i el que falta del 303), no en hores."
+
+msgid "Horizonte"
+msgstr "Horitzó"
+
+msgid "%(n)s días"
+msgstr "%(n)s dies"
+
+msgid "Quitar filtro de responsable"
+msgstr "Treu el filtre de responsable"
+
+msgid "No hay vencimientos pendientes"
+msgstr "No hi ha venciments pendents"
+
+msgid "Cuando generes vencimientos en el calendario fiscal aparecerán aquí."
+msgstr "Quan generis venciments al calendari fiscal apareixeran aquí."
+
+msgid "Carga por semana"
+msgstr "Càrrega per setmana"
+
+msgid "Del %(d)s"
+msgstr "Del %(d)s"
+
+msgid "Carga por responsable"
+msgstr "Càrrega per responsable"
+
+msgid "Sin crear"
+msgstr "Sense crear"
+
+msgid "Vencimientos y carga de trabajo"
+msgstr "Venciments i càrrega de treball"
+
+msgid "%(n)s vencimiento ya ha vencido sin presentarse."
+msgid_plural "%(n)s vencimientos ya han vencido sin presentarse."
+msgstr[0] "%(n)s venciment ja ha vençut sense presentar-se."
+msgstr[1] "%(n)s venciments ja han vençut sense presentar-se."

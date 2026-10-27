@@ -17262,3 +17262,41 @@ msgstr "Employment income"
 
 msgid "No hay retenciones en apuntes aprobados de este periodo."
 msgstr "There are no withholdings in approved entries for this period."
+
+msgid "Lo que vence y el trabajo que hay detrás. La carga se mide en puntos de trabajo (1 por vencimiento, más cada factura sin revisar o sin registrar y lo que falta del 303), no en horas."
+msgstr "What is due and the work behind it. Workload is measured in work points (1 per deadline, plus each unreviewed or unrecorded invoice and what is left of the 303), not in hours."
+
+msgid "Horizonte"
+msgstr "Horizon"
+
+msgid "%(n)s días"
+msgstr "%(n)s days"
+
+msgid "Quitar filtro de responsable"
+msgstr "Clear owner filter"
+
+msgid "No hay vencimientos pendientes"
+msgstr "No pending deadlines"
+
+msgid "Cuando generes vencimientos en el calendario fiscal aparecerán aquí."
+msgstr "When you generate deadlines in the tax calendar they will appear here."
+
+msgid "Carga por semana"
+msgstr "Workload by week"
+
+msgid "Del %(d)s"
+msgstr "From %(d)s"
+
+msgid "Carga por responsable"
+msgstr "Workload by owner"
+
+msgid "Sin crear"
+msgstr "Not created"
+
+msgid "Vencimientos y carga de trabajo"
+msgstr "Deadlines and workload"
+
+msgid "%(n)s vencimiento ya ha vencido sin presentarse."
+msgid_plural "%(n)s vencimientos ya han vencido sin presentarse."
+msgstr[0] "%(n)s deadline has passed without being filed."
+msgstr[1] "%(n)s deadlines have passed without being filed."

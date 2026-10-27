@@ -12,7 +12,7 @@ import hashlib
 import json
 import re
 from dataclasses import asdict
-from datetime import date
+from datetime import date, timedelta
 
 from flask_babel import lazy_gettext as _l  # noqa: F401  (los textos de pantalla se traducen en las rutas)
 
@@ -616,6 +616,65 @@ def simular_retenciones(tenant_id: int, usuario_id: int, cliente_fiscal_id: int,
         conn.close()
     retenciones = [motor_retenciones.Retencion(f["retencion_modelo"], f["retencion_clave"], f["retencion_base_centimos"] or 0, f["retencion_centimos"] or 0, f["contraparte_nif"] or "") for f in filas]
     return {m: motor_retenciones.calcular(retenciones, modelo=m, ejercicio=ejercicio, periodo=periodo) for m in ("111", "115")}
+
+
+def _periodo_de_vencimiento(texto: str) -> tuple[int, str] | None:
+    """«2T 2026» o «2026-T2» -> (2026, «2T»); los demás formatos (anual, mensual) no corresponden a una declaración trimestral del 303."""
+    m = re.fullmatch(r"([1-4])T (\d{4})", texto or "") or None
+    if m:
+        return int(m.group(2)), f"{m.group(1)}T"
+    m = re.fullmatch(r"(\d{4})-T([1-4])", texto or "")
+    return (int(m.group(1)), f"{m.group(2)}T") if m else None
+
+
+PESO_DECLARACION = {None: 3, "borrador": 2, "revisada": 1, "exportada": 1, "presentada": 0}          # lo que falta de un 303 según el estado de su declaración
+
+
+def panel_vencimientos(tenant_id: int, usuario_id: int, *, dias: int = 60, hoy: date | None = None) -> dict:
+    """Vencimientos pendientes de los titulares que la persona ve, con la carga de trabajo que cada uno lleva detrás. La carga se mide en «puntos de trabajo», no en horas: 1 por vencimiento, más 1 por
+    cada factura aún sin revisar o sin registrar (en los modelos de IVA) y lo que falta de la declaración del 303 (3 sin crear, 2 en borrador, 1 revisada o exportada). Los vencidos van primero; se agrupan por
+    semana (lunes) y por responsable. Devuelve `{"filas", "semanas", "responsables", "vencidos"}`."""
+    hoy = hoy or date.today()
+    limite = (hoy + timedelta(days=dias)).isoformat()
+    visibles = acceso.clientes_visibles(tenant_id, usuario_id)
+    facturas = contadores_facturas(tenant_id, usuario_id)
+    conn = db.get_connection()
+    try:
+        filas = [dict(f) for f in conn.execute(
+            "SELECT v.id, v.cliente_fiscal_id, v.modelo, v.periodo, v.fecha_limite, v.usuario_id AS responsable_id, c.nombre AS cliente, u.email AS responsable_email "
+            "FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id AND c.tenant_id = v.tenant_id LEFT JOIN usuarios u ON u.id = v.usuario_id "
+            "WHERE v.tenant_id = ? AND v.estado <> 'presentado' AND v.papelera_en IS NULL AND c.papelera_en IS NULL AND substr(v.fecha_limite, 1, 10) <= ? ORDER BY v.fecha_limite, c.nombre",
+            (tenant_id, limite)).fetchall()]
+        estado_decl = {(f["cliente_fiscal_id"], f["ejercicio"], f["periodo"]): f["estado"] for f in conn.execute(
+            "SELECT cliente_fiscal_id, ejercicio, periodo, estado FROM fiscal_declaraciones WHERE tenant_id = ? AND modelo = '303' AND estado <> 'anulada' ORDER BY id", (tenant_id,)).fetchall()}
+    finally:
+        conn.close()
+    salida, semanas, responsables = [], {}, {}
+    for f in filas:
+        if visibles is not None and f["cliente_fiscal_id"] not in visibles:
+            continue
+        dia = date.fromisoformat(f["fecha_limite"][:10])
+        f["dias"] = (dia - hoy).days
+        f["nivel"] = "vencido" if f["dias"] < 0 else ("semana" if f["dias"] <= 7 else "proximo")
+        pend = facturas.get(f["cliente_fiscal_id"], {"sin_revisar": 0, "por_registrar": 0}) if f["modelo"] in ("303", "390") else {"sin_revisar": 0, "por_registrar": 0}
+        per = _periodo_de_vencimiento(f["periodo"]) if f["modelo"] == "303" else None
+        f["declaracion"] = estado_decl.get((f["cliente_fiscal_id"], *per)) if per else None
+        f["sin_revisar"], f["por_registrar"] = pend["sin_revisar"], pend["por_registrar"]
+        f["carga"] = 1 + pend["sin_revisar"] + pend["por_registrar"] + (PESO_DECLARACION.get(f["declaracion"], 1) if per else 0)
+        f["responsable"] = (f.pop("responsable_email") or "").split("@")[0]
+        lunes = dia - timedelta(days=dia.weekday()) if f["dias"] >= 0 else None
+        f["semana"] = lunes.isoformat() if lunes else None
+        clave_semana = f["semana"] or "vencidos"
+        s = semanas.setdefault(clave_semana, {"inicio": f["semana"], "vencimientos": 0, "carga": 0})
+        s["vencimientos"] += 1
+        s["carga"] += f["carga"]
+        r = responsables.setdefault(f["responsable"] or "", {"responsable": f["responsable"], "vencimientos": 0, "carga": 0})
+        r["vencimientos"] += 1
+        r["carga"] += f["carga"]
+        salida.append(f)
+    orden_semanas = sorted(semanas.values(), key=lambda s: s["inicio"] or "")
+    return {"filas": salida, "semanas": orden_semanas, "responsables": sorted(responsables.values(), key=lambda r: -r["carga"]), "vencidos": sum(1 for f in salida if f["nivel"] == "vencido"),
+            "carga_maxima": max([s["carga"] for s in orden_semanas] + [1])}
 
 
 def aprobar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, factura_ids: list[int]) -> dict:
