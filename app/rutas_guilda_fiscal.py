@@ -12,7 +12,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
+from . import acceso, db, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
 from .fiscal_modelos import motor_390
 from .fiscal_modelos.apuntes import Apunte
@@ -234,6 +234,27 @@ def fichero_390_prueba(cliente_id: int):
     except ErrorFiscal as e:
         return redirect(url_for("guilda_fiscal.resumen_anual_390", cliente_id=cliente_id, ejercicio=ejercicio, error=str(e)[:300]))
     return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/conciliacion", methods=["GET", "POST"])
+@login_required
+def conciliacion(cliente_id: int):
+    """Sube un extracto bancario (CSV o Excel) y lo cruza con las facturas del titular. No guarda el extracto."""
+    c = _cliente_o_404(cliente_id)
+    ejercicio, periodo = fn.periodo_por_defecto(date.today())
+    ejercicio = request.values.get("ejercicio", ejercicio, type=int)
+    periodo = request.values.get("periodo", periodo) if request.values.get("periodo") in PERIODOS else periodo
+    resultado, error = None, _error()
+    if request.method == "POST":
+        archivo = request.files.get("extracto")
+        if archivo is None or not archivo.filename:
+            error = _("Elige el extracto del banco (CSV o Excel).")
+        else:
+            try:
+                resultado = fiscal_conciliacion.conciliar_extracto(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, archivo.filename, archivo.read(fiscal_conciliacion.MAX_BYTES + 1))
+            except ErrorFiscal as e:
+                error = str(e)
+    return render_template("fiscal_conciliacion.html", c=c, ejercicio=ejercicio, periodo=periodo, periodos=PERIODOS, resultado=resultado, error=error)
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/retenciones/<modelo>/fichero")

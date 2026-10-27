@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Conciliación con el banco') }} — Guilda Work{% endblock %}
+{% block content %}
+{% macro euros(c) %}{{ ('%.2f'|format(c / 100)).replace('.', ',') }} €{% endmacro %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Conciliación con el banco') }}</h1>
+    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '—' }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ c.nombre }}</a>
+</header>
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  <p class="muted">{{ _('Sube el extracto del banco del titular (CSV o Excel con fecha, concepto e importe) y se cruza con sus facturas por importe exacto. El extracto no se guarda: para volver a ver el resultado hay que subirlo otra vez. Nada se aprueba ni se registra desde aquí.') }}</p>
+  <form method="post" enctype="multipart/form-data" class="ds-fila ds-envolver">
+    <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100"></label>
+    <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option {{ 'selected' if p == periodo }}>{{ p }}</option>{% endfor %}</select></label>
+    <label>{{ _('Extracto') }} <input type="file" name="extracto" accept=".csv,.xlsx,.txt" required></label>
+    <button class="btn btn-primary" type="submit">{{ _('Conciliar') }}</button>
+  </form>
+</section>
+{% if resultado %}
+{% set r = resultado %}
+<section class="dash-panel ds-mt-16" id="resultado-conciliacion">
+  <p>{{ _('%(n)s movimientos leídos (del %(d)s al %(h)s): %(a)s casan con una factura, %(b)s facturas del periodo sin movimiento y %(c)s movimientos sin factura.', n=r.movimientos, d=r.desde.strftime('%d/%m/%Y'), h=r.hasta.strftime('%d/%m/%Y'), a=r.conciliados|length, b=r.facturas_sin_movimiento|length, c=r.movimientos_sin_factura|length) }}</p>
+  {% for a in r.avisos %}<p class="muted">{{ a }}</p>{% endfor %}
+</section>
+
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Facturas del periodo sin movimiento en el banco') }}</h2>
+  {% if r.facturas_sin_movimiento %}<div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Factura') }}</th><th>{{ _('Tercero') }}</th><th>{{ _('Se esperaba') }}</th></tr></thead><tbody>
+    {% for f in r.facturas_sin_movimiento %}<tr><td>{{ f.fecha.strftime('%d/%m/%Y') }}</td><td>{{ f.numero }}</td><td>{{ f.tercero_nombre }}</td><td>{{ euros(f.esperado) }} · {{ _('cobro') if f.esperado > 0 else _('pago') }}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="muted">{{ _('Todas las facturas del periodo tienen su movimiento.') }}</p>{% endif %}
+</section>
+
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Movimientos del banco sin factura') }}</h2>
+  {% if r.movimientos_sin_factura %}<div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th><th></th></tr></thead><tbody>
+    {% for s in r.movimientos_sin_factura %}{% set m = s.movimiento %}<tr><td>{{ m.fecha.strftime('%d/%m/%Y') }}</td><td>{{ m.concepto }}</td><td>{{ euros(m.importe) }}</td>
+      <td>{% if s.sin_factura_esperable %}<span class="pill semaforo-gris">{{ _('Normalmente no lleva factura') }}</span>{% else %}<span class="pill semaforo-ambar">{{ _('Pedir la factura') }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="muted">{{ _('Todos los movimientos tienen factura.') }}</p>{% endif %}
+</section>
+
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Movimientos que casan con una factura') }}</h2>
+  {% if r.conciliados %}<div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Concepto del banco') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Factura') }}</th><th>{{ _('Confianza') }}</th></tr></thead><tbody>
+    {% for x in r.conciliados %}{% set m = x.movimiento %}{% set f = x.factura %}<tr><td>{{ m.fecha.strftime('%d/%m/%Y') }}</td><td>{{ m.concepto }}</td><td>{{ euros(m.importe) }}</td>
+      <td>{{ f.numero }} · {{ f.tercero_nombre }} · {{ f.fecha.strftime('%d/%m/%Y') }}</td>
+      <td><span class="pill {{ {'seguro': 'semaforo-verde', 'probable': 'semaforo-ambar', 'posible': 'semaforo-gris'}[x.confianza] }}">{{ {'seguro': _('Seguro'), 'probable': _('Probable'), 'posible': _('Posible')}[x.confianza] }}</span> <span class="muted">{{ x.motivos|join(' · ') }}</span></td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="muted">{{ _('Ningún movimiento casa con una factura.') }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

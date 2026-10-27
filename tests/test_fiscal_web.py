@@ -551,3 +551,22 @@ def test_fichero_de_prueba_del_111_desde_la_ficha(cliente):
     assert r.status_code == 200 and "2026_2T_111_prueba.txt" in r.headers["Content-Disposition"] and int(fr.leer_campos("111", r.data)[20]) == 15000
     assert cliente.get(f"/guilda-fiscal/{c}/retenciones/190/fichero?ejercicio=2026&periodo=2T").status_code == 404
     assert cliente.get(f"/guilda-fiscal/{c}/retenciones/115/fichero?ejercicio=2026&periodo=2T", follow_redirects=True).status_code in (200, 400)
+
+
+def test_conciliar_un_extracto_desde_la_ficha(cliente):
+    import io
+    from app import facturas_contables as fcont
+    uid, t, c = _web(cliente, email="concilia@ejemplo.com")
+    fcont.crear(t, uid, c, {"tipo": "emitida", "fecha": "2026-05-02", "numero": "F-1", "tercero_nombre": "Cliente SL"}, [{"base": "1000,00", "pct_iva": 21}])
+    fcont.crear(t, uid, c, {"tipo": "recibida", "fecha": "2026-05-05", "numero": "P-77", "tercero_nombre": "Proveedor Sur SA"}, [{"base": "300,00", "pct_iva": 21}])
+    assert "Conciliar con el banco" in cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
+    assert "Conciliación con el banco" in cliente.get(f"/guilda-fiscal/{c}/conciliacion?ejercicio=2026&periodo=2T").get_data(as_text=True)
+    csv = "Fecha;Concepto;Importe\n03/05/2026;COBRO FRA F-1;1.210,00\n12/05/2026;COMISION MANTENIMIENTO;-6,00\n14/05/2026;PAGO MISTERIOSO;-77,70\n"
+    r = cliente.post(f"/guilda-fiscal/{c}/conciliacion", data={"ejercicio": "2026", "periodo": "2T", "extracto": (io.BytesIO(csv.encode()), "extracto.csv")}, content_type="multipart/form-data")
+    html = r.get_data(as_text=True)
+    assert r.status_code == 200 and 'id="resultado-conciliacion"' in html
+    assert "3 movimientos leídos" in html and "1 casan con una factura" in html and "1 facturas del periodo sin movimiento" in html and "2 movimientos sin factura" in html
+    assert "P-77" in html and "Pedir la factura" in html and "Normalmente no lleva factura" in html
+    malo = cliente.post(f"/guilda-fiscal/{c}/conciliacion", data={"ejercicio": "2026", "periodo": "2T", "extracto": (io.BytesIO(b"hola"), "x.csv")}, content_type="multipart/form-data")
+    assert "No encuentro las columnas" in malo.get_data(as_text=True)
+    assert "Elige el extracto" in cliente.post(f"/guilda-fiscal/{c}/conciliacion", data={"ejercicio": "2026", "periodo": "2T"}).get_data(as_text=True)

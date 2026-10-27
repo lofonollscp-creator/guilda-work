@@ -17537,3 +17537,72 @@ msgstr "Descarregar el fitxer de prova del model %(m)s"
 
 msgid "impórtalo en el simulador de la AEAT antes de presentar; este modelo no tiene borrador ni estados en Guilda Fiscal."
 msgstr "importa'l al simulador de l'AEAT abans de presentar; aquest model no té esborrany ni estats a Guilda Fiscal."
+
+msgid "Conciliación con el banco"
+msgstr "Conciliació amb el banc"
+
+msgid "Sube el extracto del banco del titular (CSV o Excel con fecha, concepto e importe) y se cruza con sus facturas por importe exacto. El extracto no se guarda: para volver a ver el resultado hay que subirlo otra vez. Nada se aprueba ni se registra desde aquí."
+msgstr "Puja l'extracte del banc del titular (CSV o Excel amb data, concepte i import) i es creua amb les seves factures per import exacte. L'extracte no es desa: per tornar a veure el resultat cal pujar-lo un altre cop. Res s'aprova ni es registra des d'aquí."
+
+msgid "Extracto"
+msgstr "Extracte"
+
+msgid "Conciliar"
+msgstr "Conciliar"
+
+msgid "Conciliar con el banco"
+msgstr "Conciliar amb el banc"
+
+msgid "Elige el extracto del banco (CSV o Excel)."
+msgstr "Tria l'extracte del banc (CSV o Excel)."
+
+msgid "%(n)s movimientos leídos (del %(d)s al %(h)s): %(a)s casan con una factura, %(b)s facturas del periodo sin movimiento y %(c)s movimientos sin factura."
+msgstr "%(n)s moviments llegits (del %(d)s al %(h)s): %(a)s casen amb una factura, %(b)s factures del període sense moviment i %(c)s moviments sense factura."
+
+msgid "Facturas del periodo sin movimiento en el banco"
+msgstr "Factures del període sense moviment al banc"
+
+msgid "Se esperaba"
+msgstr "S'esperava"
+
+msgid "cobro"
+msgstr "cobrament"
+
+msgid "pago"
+msgstr "pagament"
+
+msgid "Todas las facturas del periodo tienen su movimiento."
+msgstr "Totes les factures del període tenen el seu moviment."
+
+msgid "Movimientos del banco sin factura"
+msgstr "Moviments del banc sense factura"
+
+msgid "Normalmente no lleva factura"
+msgstr "Normalment no porta factura"
+
+msgid "Pedir la factura"
+msgstr "Demanar la factura"
+
+msgid "Todos los movimientos tienen factura."
+msgstr "Tots els moviments tenen factura."
+
+msgid "Movimientos que casan con una factura"
+msgstr "Moviments que casen amb una factura"
+
+msgid "Concepto del banco"
+msgstr "Concepte del banc"
+
+msgid "Confianza"
+msgstr "Confiança"
+
+msgid "Seguro"
+msgstr "Segur"
+
+msgid "Probable"
+msgstr "Probable"
+
+msgid "Posible"
+msgstr "Possible"
+
+msgid "Ningún movimiento casa con una factura."
+msgstr "Cap moviment casa amb una factura."

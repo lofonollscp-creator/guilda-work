@@ -17528,3 +17528,72 @@ msgstr "Download the test file for form %(m)s"
 
 msgid "impórtalo en el simulador de la AEAT antes de presentar; este modelo no tiene borrador ni estados en Guilda Fiscal."
 msgstr "import it in the tax agency's simulator before filing; this form has no draft or statuses in Guilda Fiscal."
+
+msgid "Conciliación con el banco"
+msgstr "Bank reconciliation"
+
+msgid "Sube el extracto del banco del titular (CSV o Excel con fecha, concepto e importe) y se cruza con sus facturas por importe exacto. El extracto no se guarda: para volver a ver el resultado hay que subirlo otra vez. Nada se aprueba ni se registra desde aquí."
+msgstr "Upload the holder's bank statement (CSV or Excel with date, description and amount); it is matched with their invoices by exact amount. The statement is not stored: to see the result again you have to upload it again. Nothing is approved or recorded from here."
+
+msgid "Extracto"
+msgstr "Statement"
+
+msgid "Conciliar"
+msgstr "Reconcile"
+
+msgid "Conciliar con el banco"
+msgstr "Reconcile with the bank"
+
+msgid "Elige el extracto del banco (CSV o Excel)."
+msgstr "Choose the bank statement (CSV or Excel)."
+
+msgid "%(n)s movimientos leídos (del %(d)s al %(h)s): %(a)s casan con una factura, %(b)s facturas del periodo sin movimiento y %(c)s movimientos sin factura."
+msgstr "%(n)s transactions read (from %(d)s to %(h)s): %(a)s match an invoice, %(b)s invoices of the period without a transaction and %(c)s transactions without an invoice."
+
+msgid "Facturas del periodo sin movimiento en el banco"
+msgstr "Invoices of the period with no bank transaction"
+
+msgid "Se esperaba"
+msgstr "Expected"
+
+msgid "cobro"
+msgstr "receipt"
+
+msgid "pago"
+msgstr "payment"
+
+msgid "Todas las facturas del periodo tienen su movimiento."
+msgstr "All invoices of the period have their transaction."
+
+msgid "Movimientos del banco sin factura"
+msgstr "Bank transactions without an invoice"
+
+msgid "Normalmente no lleva factura"
+msgstr "Usually has no invoice"
+
+msgid "Pedir la factura"
+msgstr "Ask for the invoice"
+
+msgid "Todos los movimientos tienen factura."
+msgstr "All transactions have an invoice."
+
+msgid "Movimientos que casan con una factura"
+msgstr "Transactions that match an invoice"
+
+msgid "Concepto del banco"
+msgstr "Bank description"
+
+msgid "Confianza"
+msgstr "Confidence"
+
+msgid "Seguro"
+msgstr "Certain"
+
+msgid "Probable"
+msgstr "Likely"
+
+msgid "Posible"
+msgstr "Possible"
+
+msgid "Ningún movimiento casa con una factura."
+msgstr "No transaction matches an invoice."

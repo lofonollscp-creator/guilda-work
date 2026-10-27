@@ -94,6 +94,7 @@
     <button class="btn btn-ghost" type="submit">{{ _('Ver') }}</button>
     <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.informe_trimestral_pdf', cliente_id=c.id, ejercicio=computan.ejercicio, periodo=computan.periodo) }}" target="_blank" rel="noopener">{{ _('Informe trimestral en PDF para el cliente') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.resumen_anual_390', cliente_id=c.id, ejercicio=computan.ejercicio) }}">{{ _('Resumen anual del IVA (modelo 390)') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.conciliacion', cliente_id=c.id, ejercicio=computan.ejercicio, periodo=computan.periodo) }}">{{ _('Conciliar con el banco') }}</a>
   </form>
   {% if computan.facturas %}
   <ul class="ds-fila ds-envolver ds-mb-16">
