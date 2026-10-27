@@ -30,6 +30,11 @@ DESBORDES = """() => {
 }"""
 
 
+def _extra():
+    """Rutas adicionales: GUILDA_RUTAS=/clientes,/tiquets (el nombre del fichero sale de la ruta)."""
+    return [(r.strip("/").replace("/", "_") or "raiz", r) for r in os.environ.get("GUILDA_RUTAS", "").split(",") if r]
+
+
 def _dia(n: int) -> str:
     return (date.today() + timedelta(days=n)).isoformat()
 
@@ -88,7 +93,7 @@ def test_capturas(servidor, abrir, entrar_como_equipo):
     for ancho in anchos:
         pagina.set_viewport_size({"width": ancho, "height": 900})
         for tema in temas:
-            for nombre, ruta in PAGINAS + [("notas", "/notas"), ("tareas_tablero", "/tareas/tablero")]:
+            for nombre, ruta in PAGINAS + [("notas", "/notas"), ("tareas_tablero", "/tareas/tablero")] + _extra():
                 pagina.goto(f"{servidor.url}{ruta.format(**ids)}")
                 pagina.wait_for_load_state("networkidle")
                 pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)

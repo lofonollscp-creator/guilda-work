@@ -595,3 +595,23 @@ html, body { max-width: 100%; overflow-x: clip; }
 @media (max-width: 820px) { .top-bar-secundaria, .fichaje-chip, .atajos-ayuda-boton, .top-bar-icono { display: none; } .top-bar { gap: 8px; } .top-bar-titulo { min-width: 0; } .top-bar-acciones { flex: 1 1 auto; min-width: 0; } .top-bar-accion, .top-bar-nuevo-btn { padding: 0 12px; white-space: nowrap; } .top-bar:has(.barra-vistas) { flex-wrap: wrap; height: auto; min-height: 68px; padding-top: 8px; padding-bottom: 8px; } .top-bar:has(.barra-vistas) .top-bar-centro, .top-bar .barra-vistas { order: 3; flex: 1 0 100%; max-width: 100%; } }
 .top-bar:has(.barra-vistas) .barra-vistas { flex: 0 1 auto; min-width: 0; }
 @media (max-width: 1280px) { .top-bar:has(.barra-vistas) .fichaje-chip, .top-bar:has(.barra-vistas) .atajos-ayuda-boton { display: none; } }
+
+/* ======================================================================================================================== */
+/* Pantallas con cabecera propia: el título pasa a la barra (pagina_v2.js)                                                  */
+/* ======================================================================================================================== */
+.page-header.titulo-en-barra { margin-bottom: 16px; min-height: 0; }
+.page-header.titulo-en-barra > div:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.page-header.titulo-en-barra > .ds-fila, .page-header.titulo-en-barra > .btn { margin-top: 0 !important; }
+.page-header.titulo-en-barra.sin-acciones { display: none; }
+.page-header.titulo-en-barra .ds-fila { flex-wrap: wrap; gap: 8px; }
+.top-bar-titulo { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.top-bar-titulo .top-bar-subtitulo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch; min-width: 0; }
+.page-header.h1-en-barra h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.page-header.h1-en-barra { margin-bottom: 12px; }
+@media (max-width: 640px) {
+  .log-item { flex-wrap: wrap; row-gap: 8px; }
+  .log-item .log-text { flex: 1 1 100%; min-width: 0; overflow-wrap: anywhere; }
+  .log-item .btn, .log-item form, .content .btn { max-width: 100%; white-space: normal; }
+  .content form[style*="inline"], .content .ds-fila { flex-wrap: wrap; }
+}
+@media (max-width: 640px) { .inline-form { flex-wrap: wrap; } .inline-form input[type="text"] { flex: 1 1 100%; min-width: 0; } }
