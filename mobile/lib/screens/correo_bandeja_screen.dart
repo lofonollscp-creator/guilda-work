@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
 import '../nucleo/panel_asistente.dart';
 
 import '../nucleo/abrir_asistente.dart';
@@ -30,6 +32,8 @@ class CorreoBandejaScreen extends StatefulWidget {
 }
 
 class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
+  int? _abierto; // el mensaje abierto en el panel de la derecha (solo en tableta)
+
   late Future<List<CuentaCorreo>> _cuentas;
   List<Carpeta> _carpetas = [];
   int? _cuentaId;
@@ -82,14 +86,42 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => ConAsistenteLateral(contexto: AppLocalizations.of(context).dashboardCorreoTooltip, hijo: _pantalla(context));
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final lista = _pantalla(context);
+    if (!esAncha(context)) return lista;
+    // Tableta: la bandeja a la izquierda y el correo elegido a la derecha (y, si cabe, el asistente).
+    return ConAsistenteLateral(
+      contexto: t.dashboardCorreoTooltip,
+      contextoIa: _abierto == null ? null : 'correo, mensaje #$_abierto',
+      anchoMinimo: anchoConAsistente,
+      hijo: Row(children: [
+        SizedBox(width: 420, child: lista),
+        VerticalDivider(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
+        Expanded(
+          child: _abierto == null
+              ? Scaffold(body: EstadoVacio(icono: Icons.mail_outline, titulo: t.correoElegirUno))
+              : CorreoMensajeScreen(
+                  key: ValueKey(_abierto),
+                  api: widget.api,
+                  mensajeId: _abierto!,
+                  carpetas: _carpetas,
+                  alTerminar: () {
+                    setState(() => _abierto = null);
+                    _recargarMensajes();
+                  },
+                ),
+        ),
+      ]),
+    );
+  }
 
   Widget _pantalla(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).dashboardCorreoTooltip),
         actions: [
-          AccionAsistente(contexto: AppLocalizations.of(context).dashboardCorreoTooltip, anchoMinimoPanel: 900),
+          AccionAsistente(contexto: AppLocalizations.of(context).dashboardCorreoTooltip, anchoMinimoPanel: anchoConAsistente),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: AppLocalizations.of(context).correoAjustesTitulo,
@@ -238,6 +270,14 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
     final fecha = m.fecha == null ? null : context.formatos.deServidor(m.fecha);
     return InkWell(
       onTap: () async {
+        if (esAncha(context)) {
+          setState(() => _abierto = m.id);
+          // Al abrirlo queda leído: la lista se actualiza un instante después.
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) _recargarMensajes();
+          });
+          return;
+        }
         await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => CorreoMensajeScreen(api: widget.api, mensajeId: m.id, carpetas: _carpetas)),
         );
@@ -246,7 +286,7 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 16, 10),
         decoration: BoxDecoration(
-          color: m.leido ? null : tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.06 : 0.09),
+          color: m.id == _abierto && esAncha(context) ? tema.colorScheme.primary.withValues(alpha: 0.18) : (m.leido ? null : tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.06 : 0.09)),
           border: Border(bottom: BorderSide(color: tema.colorScheme.outlineVariant.withValues(alpha: 0.6))),
         ),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

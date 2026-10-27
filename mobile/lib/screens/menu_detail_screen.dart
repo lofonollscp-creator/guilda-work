@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
 import '../nucleo/abrir_asistente.dart';
 
 import '../diseno/componentes.dart';
@@ -105,7 +107,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.categoria.nombre), actions: [AccionAsistente(contexto: widget.categoria.nombre)]),
-      body: FutureBuilder<void>(
+      body: AnchoMaximo(child: FutureBuilder<void>(
         future: _carga,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -175,7 +177,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
             ),
           );
         },
-      ),
+      )),
     );
   }
 

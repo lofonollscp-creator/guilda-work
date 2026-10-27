@@ -54,11 +54,15 @@ class CorreoMensajeScreen extends StatefulWidget {
   final int mensajeId;
   final List<Carpeta> carpetas;
 
+  /// Si el mensaje va en el panel de la derecha (tableta), eliminarlo no cierra una pantalla: avisa a la bandeja para que vuelva a la vista vacía.
+  final VoidCallback? alTerminar;
+
   const CorreoMensajeScreen({
     super.key,
     required this.api,
     required this.mensajeId,
     required this.carpetas,
+    this.alTerminar,
   });
 
   @override
@@ -129,7 +133,12 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
     try {
       await widget.api.eliminarMensaje(widget.mensajeId);
       if (!mounted) return;
-      Navigator.of(context).pop();
+      final alTerminar = widget.alTerminar;
+      if (alTerminar != null) {
+        alTerminar();
+      } else {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }

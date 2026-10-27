@@ -185,7 +185,7 @@ void main() {
       ..proy = [Proyecto.fromJson({'id': 5, 'nombre': 'Acme'})];
 
     testWidgets('en una tableta el asistente va en un panel junto a la lista; se cierra y la chispa lo reabre', (t) async {
-      t.view.physicalSize = const Size(1200, 800);
+      t.view.physicalSize = const Size(1400, 800);
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.reset);
       await t.pumpWidget(_app(const NotasScreen(), [..._over(repo()), serviciosProvider.overrideWithValue(aux.serviciosFalsos())]));
@@ -199,6 +199,35 @@ void main() {
       await t.tap(find.byTooltip('Preguntar al asistente'));
       await t.pumpAndSettle();
       expect(find.byType(IaChatScreen), findsOneWidget);
+    });
+
+    testWidgets('en una tableta la nota se abre al lado de la lista, sin empujar otra pantalla', (t) async {
+      t.view.physicalSize = const Size(1000, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_app(const NotasScreen(), _over(repo())));
+      await t.pumpAndSettle();
+      expect(find.text('Elige una nota para verla.'), findsOneWidget);
+      await t.tap(find.text('Reunión del lunes'));
+      await t.pumpAndSettle();
+      expect(find.text('Elige una nota para verla.'), findsNothing);
+      expect(find.byType(NotaScreen), findsOneWidget);
+      expect(find.text('Reunión del lunes'), findsWidgets); // la lista sigue a la vista
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('captura tableta_notas', (t) async {
+      if (aux.carpetaCapturas == null) return;
+      await aux.cargarFuentesParaCapturas();
+      final clave = GlobalKey();
+      t.view.physicalSize = const Size(1640, 1180);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(RepaintBoundary(key: clave, child: _app(const NotasScreen(), [..._over(repo()), serviciosProvider.overrideWithValue(aux.serviciosFalsos())])));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Reunión del lunes'));
+      await t.pumpAndSettle();
+      await aux.capturar(t, clave, 'tableta_notas');
     });
 
     testWidgets('en el móvil no hay panel: la chispa abre el chat aparte', (t) async {

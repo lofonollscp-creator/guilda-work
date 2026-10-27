@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -60,7 +62,7 @@ class _FiscalVencimientosScreenState extends State<FiscalVencimientosScreen> {
     final t = AppLocalizations.of(context);
     final estados = estadosVencimientoFiscal(t);
     return Scaffold(
-      body: Column(
+      body: AnchoMaximo(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -124,7 +126,7 @@ class _FiscalVencimientosScreenState extends State<FiscalVencimientosScreen> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 

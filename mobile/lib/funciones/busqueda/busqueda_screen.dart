@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../../diseno/adaptable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -223,7 +225,7 @@ class _BusquedaScreenState extends ConsumerState<BusquedaScreen> {
           ),
         ),
       ),
-      body: _cuerpo(t),
+      body: AnchoMaximo(child: _cuerpo(t)),
     );
   }
 

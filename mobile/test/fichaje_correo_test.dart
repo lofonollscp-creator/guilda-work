@@ -65,8 +65,24 @@ void main() {
   });
 
   group('Correo', () {
+    testWidgets('en una tableta el correo se lee al lado de la bandeja', (t) async {
+      t.view.physicalSize = const Size(1000, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      final api = ApiFalsa()..mensajes = [msg(1, 'Marta Ruiz <marta@ejemplo.com>', 'Consulta sobre la renta', 'Hola', leido: false)];
+      await t.pumpWidget(appDePantalla(CorreoBandejaScreen(api: api), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('Elige un correo para leerlo.'), findsOneWidget);
+      await t.tap(find.text('Consulta sobre la renta'));
+      await t.pumpAndSettle();
+      expect(find.text('Elige un correo para leerlo.'), findsNothing);
+      expect(find.byType(CorreoMensajeScreen), findsOneWidget);
+      expect(find.text('Consulta sobre la renta'), findsWidgets);
+      await t.pump(const Duration(seconds: 2)); // la bandeja se refresca (ya leído) un segundo después
+    });
+
     testWidgets('en una tableta el asistente va en un panel junto a la bandeja', (t) async {
-      t.view.physicalSize = const Size(1200, 800);
+      t.view.physicalSize = const Size(1400, 800);
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.reset);
       sinVoz();

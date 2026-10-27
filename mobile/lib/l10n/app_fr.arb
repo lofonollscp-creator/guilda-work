@@ -815,5 +815,7 @@
   "iaAdjuntoError": "Le fichier n'a pas pu être envoyé.",
   "iaAdjuntoPregunta": "Lisez le fichier joint et dites-moi ce qu'il contient.",
   "iaPreguntarAlAsistente": "Demander à l'assistant",
-  "iaOcultarAsistente": "Masquer l'assistant"
+  "iaOcultarAsistente": "Masquer l'assistant",
+  "notasElegirUna": "Choisissez une note pour l'afficher.",
+  "correoElegirUno": "Choisissez un e-mail pour le lire."
 }

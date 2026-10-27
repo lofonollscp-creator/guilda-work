@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
 import '../nucleo/abrir_asistente.dart';
 
 import '../diseno/componentes.dart';
@@ -89,7 +91,7 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
     final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(t.tiquetEditarTitulo(widget.tiquet.id)), actions: [AccionAsistente(contexto: t.tiquetsTitulo, contextoIa: 'tiquet #${widget.tiquet.id}')]),
-      body: ListView(
+      body: AnchoMaximo(child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<String>(
@@ -124,7 +126,7 @@ class _TiquetEditScreenState extends State<TiquetEditScreen> {
           const SizedBox(height: 24),
           OutlinedButton(onPressed: _eliminar, child: Text(t.tiquetEliminarBoton)),
         ],
-      ),
+      )),
     );
   }
 }

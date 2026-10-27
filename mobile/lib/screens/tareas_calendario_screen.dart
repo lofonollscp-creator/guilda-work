@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -68,7 +69,7 @@ class _TareasCalendarioScreenState extends State<TareasCalendarioScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return FutureBuilder<List<VencimientoFiscal>>(
+    return AnchoMaximo(ancho: 900, child: FutureBuilder<List<VencimientoFiscal>>(
       future: _vencimientos,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -137,7 +138,7 @@ class _TareasCalendarioScreenState extends State<TareasCalendarioScreen> {
           ],
         );
       },
-    );
+    ));
   }
 
   Widget _tarjetaVencimiento(VencimientoFiscal v, AppLocalizations t) {

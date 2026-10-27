@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
 import '../nucleo/abrir_asistente.dart';
 
 import '../diseno/componentes.dart';
@@ -93,7 +95,7 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context).correoReglasTitulo), actions: [AccionAsistente(contexto: AppLocalizations.of(context).correoReglasTitulo)]),
-      body: Column(
+      body: AnchoMaximo(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -174,7 +176,7 @@ class _CorreoReglasCategoriaScreenState extends State<CorreoReglasCategoriaScree
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

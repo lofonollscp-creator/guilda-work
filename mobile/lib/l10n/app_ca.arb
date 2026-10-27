@@ -815,5 +815,7 @@
   "iaAdjuntoError": "No s'ha pogut pujar el fitxer.",
   "iaAdjuntoPregunta": "Llegeix el fitxer adjunt i digues-me què conté.",
   "iaPreguntarAlAsistente": "Pregunta a l'assistent",
-  "iaOcultarAsistente": "Amaga l'assistent"
+  "iaOcultarAsistente": "Amaga l'assistent",
+  "notasElegirUna": "Tria una nota per veure-la.",
+  "correoElegirUno": "Tria un correu per llegir-lo."
 }

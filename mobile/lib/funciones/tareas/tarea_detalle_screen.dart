@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../diseno/adaptable.dart';
+
 import '../../nucleo/abrir_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -371,14 +373,14 @@ class _TareaDetalleScreenState extends ConsumerState<TareaDetalleScreen> {
           if (d != null) IconButton(icon: const Icon(Icons.edit_outlined), tooltip: t.tareaEditar, onPressed: _editar),
         ],
       ),
-      body: Column(children: [
+      body: AnchoMaximo(child: Column(children: [
         const AvisoDatosGuardados(prefijo: '/tareas-outlook'),
         Expanded(
           child: d == null
               ? (_cargando ? const EsqueletoLista(filas: 5) : EstadoError(error: _error ?? Object(), alReintentar: _cargar))
               : RefreshIndicator(onRefresh: _cargar, child: _contenido(context, d)),
         ),
-      ]),
+      ])),
     );
   }
 

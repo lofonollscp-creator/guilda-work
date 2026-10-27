@@ -28,7 +28,10 @@ import 'texto_nota.dart';
 /// le adjunta archivos y la borra; quien la tiene compartida como «colabora» edita texto y título; con «observa» solo la lee.
 class NotaScreen extends ConsumerStatefulWidget {
   final int? notaId;
-  const NotaScreen({super.key, this.notaId});
+
+  /// Si la nota va en el panel de la derecha (tableta), "terminar" no cierra una pantalla: avisa a la lista para que vuelva a la vista vacía.
+  final VoidCallback? alTerminar;
+  const NotaScreen({super.key, this.notaId, this.alTerminar});
 
   @override
   ConsumerState<NotaScreen> createState() => _NotaScreenState();
@@ -121,12 +124,12 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
         if (!mounted) return;
         if (creada.encolada) {
           _aviso(t.notasGuardadaSinConexion);
-          Navigator.of(context).pop();
+          _cerrar();
           return;
         }
         lista.recargar();
         _aviso(t.notasGuardada);
-        Navigator.of(context).pop();
+        _cerrar();
         return;
       }
       await _repo.editar(_nota!.id, texto: texto, titulo: titulo);
@@ -161,7 +164,7 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
     if (_sinGuardar && !await _confirmarDescartar()) return;
     if (!mounted) return;
     if (_nueva) {
-      Navigator.of(context).pop();
+      _cerrar();
     } else {
       setState(() {
         _editando = false;
@@ -236,8 +239,18 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
     }
   }
 
+  /// Terminar con la nota: volver atrás, o en el panel de la tableta, dejar la vista vacía.
+  void _cerrar() {
+    final alTerminar = widget.alTerminar;
+    if (alTerminar != null) {
+      alTerminar();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _eliminar() async {
-    if (await eliminarNotaConDeshacer(context, ref, _nota!) && mounted) Navigator.of(context).pop();
+    if (await eliminarNotaConDeshacer(context, ref, _nota!) && mounted) _cerrar();
   }
 
   Future<void> _compartir() async {
@@ -304,7 +317,7 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
     try {
       await _repo.dejarDeCompartir(_nota!.id, yo);
       ref.read(notasListaProvider.notifier).quitar(_nota!.id);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) _cerrar();
     } on ApiException catch (e) {
       if (mounted) _aviso(e.mensaje);
     }
@@ -380,7 +393,7 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
       canPop: !_sinGuardar,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (await _confirmarDescartar() && context.mounted) Navigator.of(context).pop();
+        if (await _confirmarDescartar() && context.mounted) _cerrar();
       },
       child: Scaffold(
         appBar: _editando ? _barraEdicion(t) : _barraLectura(t),

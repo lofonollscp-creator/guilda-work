@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
 import '../nucleo/abrir_asistente.dart';
 
 import '../diseno/componentes.dart';
@@ -43,7 +45,7 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
     final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(t.herramientasTitulo), actions: [AccionAsistente(contexto: t.herramientasTitulo)]),
-      body: FutureBuilder<(List<Herramienta>, String)>(
+      body: AnchoMaximo(child: FutureBuilder<(List<Herramienta>, String)>(
         future: _carga,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -86,7 +88,7 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
               ),
           ]);
         },
-      ),
+      )),
     );
   }
 

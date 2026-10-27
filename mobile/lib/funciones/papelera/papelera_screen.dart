@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../diseno/adaptable.dart';
+
 import '../../nucleo/abrir_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -115,7 +117,7 @@ class _PapeleraScreenState extends ConsumerState<PapeleraScreen> {
     final visibles = [for (final e in todo ?? const <ElementoPapelera>[]) if (grupo.admite(e)) e];
     return Scaffold(
       appBar: AppBar(title: Text(t.papeleraTitulo), actions: [AccionAsistente(contexto: t.papeleraTitulo)]),
-      body: RefreshIndicator(
+      body: AnchoMaximo(child: RefreshIndicator(
         onRefresh: () => ref.read(papeleraProvider.notifier).refrescar(),
         child: todo == null
             ? (papelera.hasError ? EstadoError(error: papelera.error!, alReintentar: () => ref.read(papeleraProvider.notifier).refrescar()) : const EsqueletoLista())
@@ -140,7 +142,7 @@ class _PapeleraScreenState extends ConsumerState<PapeleraScreen> {
                       ),
                     for (final e in visibles) _Fila(key: ValueKey(e.clave), elemento: e, alRestaurar: () => _restaurar(e), alEliminar: () => _eliminar(e)),
                   ]),
-      ),
+      )),
     );
   }
 }

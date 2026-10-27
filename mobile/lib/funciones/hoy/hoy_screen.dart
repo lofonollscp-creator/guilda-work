@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
+import '../../diseno/adaptable.dart';
 import '../../diseno/asistente.dart';
 import '../../diseno/componentes.dart';
 import '../../diseno/estados.dart';
@@ -135,7 +136,17 @@ class _Bandeja extends ConsumerWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
       ),
-      for (final s in secciones) _Seccion(seccion: s),
+      if (esAncha(context))
+        // Tableta: las secciones en dos columnas (la 1.ª, la 3.ª… a la izquierda; la 2.ª, la 4.ª… a la derecha).
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            for (final columna in [0, 1])
+              Expanded(child: Column(children: [for (var i = columna; i < secciones.length; i += 2) _Seccion(seccion: secciones[i])])),
+          ]),
+        )
+      else
+        for (final s in secciones) _Seccion(seccion: s),
     ]);
   }
 }

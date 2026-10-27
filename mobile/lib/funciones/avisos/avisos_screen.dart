@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../diseno/adaptable.dart';
+
 import '../../nucleo/abrir_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show toBeginningOfSentenceCase;
@@ -81,7 +83,7 @@ class _AvisosScreenState extends ConsumerState<AvisosScreen> {
             ),
         ],
       ),
-      body: Column(children: [
+      body: AnchoMaximo(child: Column(children: [
         const AvisoDatosGuardados(prefijo: '/notificaciones'),
         const BannerComunicados(),
         if (todos.isNotEmpty) _Filtros(filtro: filtro, noLeidas: datos?.noLeidas ?? 0, canales: canales, alElegir: (f) => setState(() => _filtro = f)),
@@ -95,7 +97,7 @@ class _AvisosScreenState extends ConsumerState<AvisosScreen> {
                     : ListView(padding: const EdgeInsets.only(bottom: 24), children: _agrupar(context, lista)),
           ),
         ),
-      ]),
+      ])),
     );
   }
 

@@ -815,5 +815,7 @@
   "iaAdjuntoError": "The file could not be uploaded.",
   "iaAdjuntoPregunta": "Read the attached file and tell me what it contains.",
   "iaPreguntarAlAsistente": "Ask the assistant",
-  "iaOcultarAsistente": "Hide the assistant"
+  "iaOcultarAsistente": "Hide the assistant",
+  "notasElegirUna": "Choose a note to view it.",
+  "correoElegirUno": "Choose an email to read it."
 }

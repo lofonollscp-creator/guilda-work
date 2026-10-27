@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
 import '../nucleo/abrir_asistente.dart';
 
 import '../diseno/componentes.dart';
@@ -72,7 +74,7 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context).correoRemitentesTitulo), actions: [AccionAsistente(contexto: AppLocalizations.of(context).correoRemitentesTitulo)]),
-      body: Column(
+      body: AnchoMaximo(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -138,7 +140,7 @@ class _CorreoRemitentesConfiablesScreenState extends State<CorreoRemitentesConfi
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

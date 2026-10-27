@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+
+import '../diseno/adaptable.dart';
 import 'package:flutter/services.dart';
 
 import '../diseno/componentes.dart';
@@ -163,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
         ],
       ),
-      body: SafeArea(
+      body: AnchoMaximo(ancho: 440, child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -208,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 
