@@ -17486,3 +17486,45 @@ msgstr "Es calcula ara amb el que hi ha: no es desa."
 
 msgid "Ver la declaración"
 msgstr "Veure la declaració"
+
+msgid "Rectificativa"
+msgstr "Rectificativa"
+
+msgid "Autoliquidación rectificativa"
+msgstr "Autoliquidació rectificativa"
+
+msgid "Rectifica la declaración %(i)s, presentada con el justificante %(j)s. Es un 303 completo del periodo, calculado con los apuntes tal como están ahora: la casilla 70 recoge el resultado a ingresar de la anterior, la 109 la devolución ya acordada y la 111 la parte del resultado negativo que corresponde a lo que ya constaba como a ingresar."
+msgstr "Rectifica la declaració %(i)s, presentada amb el justificant %(j)s. És un 303 complet del període, calculat amb els apunts tal com estan ara: la casella 70 recull el resultat a ingressar de l'anterior, la 109 la devolució ja acordada i la 111 la part del resultat negatiu que correspon al que ja constava com a ingressar."
+
+msgid "Ver la declaración rectificada"
+msgstr "Veure la declaració rectificada"
+
+msgid "Si los periodos siguientes de este ejercicio dependen de las cuotas a compensar de este, vuelve a calcularlos."
+msgstr "Si els períodes següents d'aquest exercici depenen de les quotes a compensar d'aquest, torna a calcular-los."
+
+msgid "Este 303 tiene una rectificativa en curso:"
+msgstr "Aquest 303 té una rectificativa en curs:"
+
+msgid "abrir la rectificativa"
+msgstr "obrir la rectificativa"
+
+msgid "Rectificar este 303"
+msgstr "Rectificar aquest 303"
+
+msgid "Se calcula un 303 nuevo del periodo con los apuntes tal como están ahora, que sustituye al presentado. Hace falta el número de justificante que dio la AEAT al presentarlo."
+msgstr "Es calcula un 303 nou del període amb els apunts tal com estan ara, que substitueix el presentat. Cal el número de justificant que va donar l'AEAT en presentar-lo."
+
+msgid "Justificante de la declaración presentada (13 cifras)"
+msgstr "Justificant de la declaració presentada (13 xifres)"
+
+msgid "La AEAT ya acordó la devolución que se pidió"
+msgstr "L'AEAT ja va acordar la devolució que es va demanar"
+
+msgid "Si sale a favor del titular"
+msgstr "Si surt a favor del titular"
+
+msgid "Compensar en los periodos siguientes"
+msgstr "Compensar en els períodes següents"
+
+msgid "Calcular la rectificativa"
+msgstr "Calcular la rectificativa"

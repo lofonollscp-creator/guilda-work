@@ -202,3 +202,29 @@ def calcular(apuntes: list[Apunte], *, ejercicio: int, periodo: str, cuotas_a_co
             raise ErrorDeCalculo("el destino de un resultado negativo es «C» (compensar) o «D» (devolución)")
         r.tipo_declaracion = destino_negativo
     return r
+
+
+def aplicar_rectificativa(r: Resultado303, anterior: dict[str, int], *, devolucion_acordada: bool = False, destino_negativo: str = "C") -> None:
+    """Convierte el cálculo de `r` en el de una autoliquidación RECTIFICATIVA, que es un 303 completo del periodo y no una diferencia. Las instrucciones oficiales del 303 dicen:
+    casilla 70 = la 69 de la autoliquidación rectificada si es positiva (esté ingresada o no); casilla 109 = esa 69 sin signo si era negativa y la devolución ya se acordó;
+    casilla 71 = 69 - 70 + 109; y la casilla 111 es la parte del resultado negativo que corresponde al resultado positivo de la rectificada.
+    Solo se admite la PRIMERA rectificativa: en las segundas y siguientes las instrucciones remiten a ejemplos anexos que no se han incorporado."""
+    c = r.casillas
+    anterior_69 = int(anterior.get("69", 0))
+    c70 = max(0, anterior_69)
+    c109 = -anterior_69 if (anterior_69 < 0 and devolucion_acordada) else 0
+    c["71"] = c["69"] - c70 + c109
+    c111 = min(c70, -c["71"]) if c["71"] < 0 else 0
+    for casilla, valor in (("70", c70), ("109", c109), ("111", c111)):
+        if valor:
+            c[casilla] = valor
+        else:
+            c.pop(casilla, None)
+    if c["71"] > 0:
+        r.tipo_declaracion = "I"
+    elif c["71"] == 0:
+        r.tipo_declaracion = "N"
+    else:
+        if destino_negativo not in ("C", "D"):
+            raise ErrorDeCalculo("el destino de un resultado negativo es «C» (compensar) o «D» (devolución)")
+        r.tipo_declaracion = destino_negativo

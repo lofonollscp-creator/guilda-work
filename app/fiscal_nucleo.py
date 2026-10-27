@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS fiscal_declaraciones (
     version_motor TEXT NOT NULL,
     version_diseno TEXT NOT NULL,
     rectifica_a_id INTEGER REFERENCES fiscal_declaraciones(id),
+    justificante_anterior TEXT,
     bloqueos TEXT,
     revisada_por INTEGER REFERENCES usuarios(id),
     revisada_en TEXT,
@@ -174,6 +175,7 @@ def crear_esquema(conn) -> None:
     for columna, tipo in (("retencion_modelo", "TEXT NOT NULL DEFAULT ''"), ("retencion_clave", "TEXT NOT NULL DEFAULT ''"), ("retencion_base_centimos", "INTEGER"),
                           ("retencion_pct_centesimas", "INTEGER"), ("retencion_centimos", "INTEGER")):
         db._asegurar_columna(conn, "fiscal_apuntes", columna, tipo)          # bases anteriores a la migración 005
+    db._asegurar_columna(conn, "fiscal_declaraciones", "justificante_anterior", "TEXT")      # bases anteriores a la migración 006
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
@@ -946,7 +948,10 @@ def _pendientes_anteriores(conn, tenant_id: int, cliente_fiscal_id: int, ejercic
     if not previas:
         return max(0, int(perfil["saldo_a_compensar_centimos"] or 0))
     pendiente = int(perfil["saldo_a_compensar_centimos"] or 0)
-    for f in sorted(previas, key=lambda x: ordenar(x["periodo"])):
+    ultimas: dict[str, dict] = {}
+    for f in sorted(previas, key=lambda x: x["id"]):                         # si un periodo tiene original y rectificativa, vale la última
+        ultimas[f["periodo"]] = f
+    for f in sorted(ultimas.values(), key=lambda x: ordenar(x["periodo"])):
         casillas = {c["casilla"]: c["valor"] for c in conn.execute("SELECT casilla, valor FROM fiscal_casillas WHERE declaracion_id = ? AND tenant_id = ?", (f["id"], tenant_id)).fetchall()}
         pendiente -= casillas.get("78", 0)
         if f["tipo_declaracion"] == "C" and f["resultado_centimos"] < 0:
@@ -954,8 +959,9 @@ def _pendientes_anteriores(conn, tenant_id: int, cliente_fiscal_id: int, ejercic
     return max(0, pendiente)
 
 
-def crear_instantanea(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, ejercicio: int, periodo: str, modelo: str = "303") -> dict:
-    """Congela el periodo: perfil vigente, apuntes aprobados y reglas. Si ya había una instantánea de ese periodo, la nueva la SUSTITUYE (la anterior queda). Con errores en los datos, no se crea."""
+def crear_instantanea(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, ejercicio: int, periodo: str, modelo: str = "303", para_rectificar: bool = False) -> dict:
+    """Congela el periodo: perfil vigente, apuntes aprobados y reglas. Si ya había una instantánea de ese periodo, la nueva la SUSTITUYE (la anterior queda). Con errores en los datos, no se crea.
+    Un periodo cuyo 303 ya se presentó no se vuelve a calcular como si fuera el primero: se rectifica (`para_rectificar`, que solo usa `rectificar_declaracion`)."""
     if modelo != "303":
         raise ErrorFiscal("Solo está soportado el modelo 303.")
     if periodo not in tuple(f"{m:02d}" for m in range(1, 13)) + ("1T", "2T", "3T", "4T"):
@@ -968,6 +974,9 @@ def crear_instantanea(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *
     filas = listar_apuntes(tenant_id, usuario_id, cliente_fiscal_id, ejercicio=ejercicio)
     conn = db.get_connection()
     try:
+        if not para_rectificar and conn.execute("SELECT 1 FROM fiscal_declaraciones WHERE tenant_id = ? AND cliente_fiscal_id = ? AND modelo = '303' AND ejercicio = ? AND periodo = ? AND estado = 'presentada'",
+                                                (tenant_id, cliente_fiscal_id, ejercicio, periodo)).fetchone():
+            raise ErrorFiscal("Este periodo ya tiene un 303 presentado: si hay que corregirlo se abre una rectificativa desde esa declaración, no se calcula de nuevo.", "periodo_presentado")
         titular = _titular(conn, tenant_id, cliente_fiscal_id)
         apuntes = [a_apunte(f) for f in filas]
         errores = validacion_apuntes.errores(validacion_apuntes.validar(apuntes, hoy=date.today(), nif_titular=titular["nif"] or ""))
@@ -1021,8 +1030,9 @@ def _vencimiento_del_periodo(conn, tenant_id: int, cliente_fiscal_id: int, ejerc
     return f["id"] if f else None
 
 
-def calcular_declaracion(tenant_id: int, usuario_id: int, instantanea_id: int, *, destino_negativo: str = "C", vencimiento_id: int | None = None) -> dict:
-    """Calcula el borrador del 303 SOLO con lo congelado en la instantánea. Un borrador anterior de la misma instantánea se anula (queda en el historial)."""
+def calcular_declaracion(tenant_id: int, usuario_id: int, instantanea_id: int, *, destino_negativo: str = "C", vencimiento_id: int | None = None, rectifica: dict | None = None) -> dict:
+    """Calcula el borrador del 303 SOLO con lo congelado en la instantánea. Un borrador anterior de la misma instantánea se anula (queda en el historial).
+    `rectifica` (solo lo pasa `rectificar_declaracion`): `{"original": declaración presentada, "justificante": 13 cifras, "devolucion_acordada": bool}`; el resultado es una autoliquidación rectificativa."""
     _exigir_aprobador(tenant_id, usuario_id)
     inst = obtener_instantanea(tenant_id, usuario_id, instantanea_id)
     if not inst["integra"]:
@@ -1033,21 +1043,24 @@ def calcular_declaracion(tenant_id: int, usuario_id: int, instantanea_id: int, *
     ajustes, extra = _perfil_a_flags(perfil, d["periodo"])
     r = motor_303.calcular(apuntes, ejercicio=d["ejercicio"], periodo=d["periodo"], cuotas_a_compensar_anteriores=d["cuotas_a_compensar_anteriores"], destino_negativo=destino_negativo, **ajustes)
     r.bloqueos.extend(extra)
+    if rectifica:
+        motor_303.aplicar_rectificativa(r, rectifica["original"]["casillas"], devolucion_acordada=rectifica["devolucion_acordada"], destino_negativo=destino_negativo)
     conn = db.get_connection()
     try:
-        if vencimiento_id is None:
+        if vencimiento_id is None and not rectifica:                          # la rectificativa no toca el calendario: el vencimiento ya quedó presentado con la original
             vencimiento_id = _vencimiento_del_periodo(conn, tenant_id, inst["cliente_fiscal_id"], d["ejercicio"], d["periodo"])
         conn.execute("UPDATE fiscal_declaraciones SET estado = 'anulada' WHERE tenant_id = ? AND instantanea_id = ? AND estado = 'borrador'", (tenant_id, instantanea_id))
         cur = conn.execute("INSERT INTO fiscal_declaraciones (tenant_id, cliente_fiscal_id, instantanea_id, vencimiento_id, modelo, ejercicio, periodo, estado, tipo_declaracion, resultado_centimos, version_motor, "
-                           "version_diseno, bloqueos, creado_por, creado_en) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                           "version_diseno, bloqueos, rectifica_a_id, justificante_anterior, creado_por, creado_en) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                            (tenant_id, inst["cliente_fiscal_id"], instantanea_id, vencimiento_id, "303", d["ejercicio"], d["periodo"], "borrador", r.tipo_declaracion, r.casillas.get("71", 0), VERSION_MOTOR,
-                            VERSION_DISENO, json.dumps(r.bloqueos, ensure_ascii=False) if r.bloqueos else None, usuario_id, db.now_iso()))
+                            VERSION_DISENO, json.dumps(r.bloqueos, ensure_ascii=False) if r.bloqueos else None, rectifica["original"]["id"] if rectifica else None,
+                            rectifica["justificante"] if rectifica else None, usuario_id, db.now_iso()))
         did = cur.lastrowid
         for casilla, valor in sorted(r.casillas.items()):
             conn.execute("INSERT INTO fiscal_casillas (tenant_id, declaracion_id, casilla, valor, origen) VALUES (?,?,?,?,?)",
                          (tenant_id, did, casilla, valor, json.dumps([d["apuntes"][i]["apunte_id"] for i in r.origen.get(casilla, [])]) if casilla in r.origen else None))
         auditoria.registrar(tenant_id, usuario_id, "fiscal.declaracion.calcular", "cliente_fiscal", inst["cliente_fiscal_id"], {"declaracion_id": did, "instantanea_id": instantanea_id, "resultado": r.casillas.get("71", 0),
-                                                                                                                     "bloqueos": len(r.bloqueos)}, conn=conn)
+                                                                                                                     "bloqueos": len(r.bloqueos), "rectifica_a": rectifica["original"]["id"] if rectifica else None}, conn=conn)
         conn.commit()
     except Exception:
         conn.rollback()
@@ -1074,6 +1087,30 @@ def obtener_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) ->
         return d
     finally:
         conn.close()
+
+
+def rectificar_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int, *, justificante: str, devolucion_acordada: bool = False, destino_negativo: str = "C") -> dict:
+    """Abre la autoliquidación RECTIFICATIVA de un 303 ya presentado: congela el periodo otra vez (con los apuntes tal como están ahora) y calcula un 303 completo con las casillas 70, 109 y 111 que piden las
+    instrucciones oficiales. Queda en borrador y sigue el mismo camino que cualquier otro (revisar, generar el fichero, anotar que se presentó). Solo la primera rectificativa de cada declaración."""
+    _exigir_aprobador(tenant_id, usuario_id)
+    original = obtener_declaracion(tenant_id, usuario_id, declaracion_id)
+    if original["estado"] != "presentada":
+        raise ErrorFiscal("Solo se rectifica un 303 que ya se presentó. Si todavía no lo has presentado, anúlalo y calcula el periodo de nuevo.", "estado_invalido")
+    if original["rectifica_a_id"]:
+        raise ErrorFiscal("Esta declaración ya es una rectificativa: las segundas rectificativas no están soportadas (las instrucciones de la AEAT las tratan con ejemplos aparte).", "no_soportado")
+    justificante = (justificante or "").strip()
+    if not re.fullmatch(r"\d{13}", justificante):
+        raise ErrorFiscal("El número de justificante de la declaración presentada tiene 13 cifras: es el que da la AEAT al presentarla.", "invalido")
+    conn = db.get_connection()
+    try:
+        viva = conn.execute("SELECT id FROM fiscal_declaraciones WHERE tenant_id = ? AND rectifica_a_id = ? AND estado != 'anulada'", (tenant_id, declaracion_id)).fetchone()
+    finally:
+        conn.close()
+    if viva:
+        raise ErrorFiscal(f"Esta declaración ya tiene una rectificativa (la {viva['id']}): sigue con esa o anúlala antes de abrir otra.", "ya_rectificada")
+    inst = crear_instantanea(tenant_id, usuario_id, original["cliente_fiscal_id"], ejercicio=original["ejercicio"], periodo=original["periodo"], para_rectificar=True)
+    return calcular_declaracion(tenant_id, usuario_id, inst["id"], destino_negativo=destino_negativo,
+                                rectifica={"original": original, "justificante": justificante, "devolucion_acordada": bool(devolucion_acordada)})
 
 
 def listar_declaraciones(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> list[dict]:
@@ -1131,7 +1168,8 @@ def exportar_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) -
     problemas = validacion_apuntes.validar(apuntes, hoy=date.today(), nif_titular=datos["titular"]["nif"] or "")
     resultado = motor_303.Resultado303(d["ejercicio"], d["periodo"], casillas=dict(d["casillas"]), tipo_declaracion=d["tipo_declaracion"])
     try:
-        fichero = fichero_303.generar(resultado, nif=(datos["titular"]["nif"] or "").upper(), nombre=datos["titular"]["nombre"], exonerado_390=exonerado, volumen=volumen)
+        fichero = fichero_303.generar(resultado, nif=(datos["titular"]["nif"] or "").upper(), nombre=datos["titular"]["nombre"], exonerado_390=exonerado, volumen=volumen,
+                                      justificante_anterior=d["justificante_anterior"] if d["rectifica_a_id"] else None)
     except fichero_303.FicheroNoGenerable as e:
         raise ErrorFiscal(str(e), "no_soportado")
     libro = libros_lsi.escribir_xlsx(apuntes, ejercicio=d["ejercicio"], periodo=d["periodo"])
@@ -1152,7 +1190,8 @@ def exportar_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) -
 
 
 def _resumen(d: dict, datos: dict) -> str:
-    lineas = [f"Modelo 303 · {datos['titular']['nombre']} ({datos['titular']['nif']}) · {d['ejercicio']} {d['periodo']}", f"Tipo de declaración: {d['tipo_declaracion']} · Resultado (casilla 71): {d['resultado_centimos'] / 100:.2f} €",
+    lineas = [f"Modelo 303 · {datos['titular']['nombre']} ({datos['titular']['nif']}) · {d['ejercicio']} {d['periodo']}" + (f" · RECTIFICATIVA de la declaración {d['justificante_anterior']}" if d["rectifica_a_id"] else ""),
+              f"Tipo de declaración: {d['tipo_declaracion']} · Resultado (casilla 71): {d['resultado_centimos'] / 100:.2f} €",
               f"Motor {d['version_motor']} · diseño {d['version_diseno']} · instantánea {d['instantanea_id']}", ""]
     for casilla, valor in sorted(d["casillas"].items(), key=lambda x: int(x[0])):
         lineas.append(f"[{casilla}] {valor / 100:.2f}" + (f"  ← apuntes {d['origen'][casilla]}" if casilla in d["origen"] else ""))
@@ -1253,8 +1292,11 @@ def comparar_con_anterior(tenant_id: int, usuario_id: int, declaracion_id: int) 
     d = obtener_declaracion(tenant_id, usuario_id, declaracion_id)
     conn = db.get_connection()
     try:
-        ant = conn.execute("SELECT id, estado, resultado_centimos FROM fiscal_declaraciones WHERE tenant_id = ? AND cliente_fiscal_id = ? AND ejercicio = ? AND periodo = ? AND id < ? ORDER BY id DESC LIMIT 1",
-                           (tenant_id, d["cliente_fiscal_id"], d["ejercicio"], d["periodo"], declaracion_id)).fetchone()
+        if d["rectifica_a_id"]:                                               # una rectificativa se compara con la declaración que rectifica, no con borradores intermedios
+            ant = conn.execute("SELECT id, estado, resultado_centimos FROM fiscal_declaraciones WHERE id = ? AND tenant_id = ?", (d["rectifica_a_id"], tenant_id)).fetchone()
+        else:
+            ant = conn.execute("SELECT id, estado, resultado_centimos FROM fiscal_declaraciones WHERE tenant_id = ? AND cliente_fiscal_id = ? AND ejercicio = ? AND periodo = ? AND id < ? ORDER BY id DESC LIMIT 1",
+                               (tenant_id, d["cliente_fiscal_id"], d["ejercicio"], d["periodo"], declaracion_id)).fetchone()
         if not ant:
             return None
         antes = {c["casilla"]: c["valor"] for c in conn.execute("SELECT casilla, valor FROM fiscal_casillas WHERE declaracion_id = ? AND tenant_id = ?", (ant["id"], tenant_id)).fetchall()}

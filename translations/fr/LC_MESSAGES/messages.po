@@ -17562,3 +17562,45 @@ msgstr "Calculé maintenant avec l'existant : rien n'est enregistré."
 
 msgid "Ver la declaración"
 msgstr "Voir la déclaration"
+
+msgid "Rectificativa"
+msgstr "Rectificative"
+
+msgid "Autoliquidación rectificativa"
+msgstr "Autoliquidation rectificative"
+
+msgid "Rectifica la declaración %(i)s, presentada con el justificante %(j)s. Es un 303 completo del periodo, calculado con los apuntes tal como están ahora: la casilla 70 recoge el resultado a ingresar de la anterior, la 109 la devolución ya acordada y la 111 la parte del resultado negativo que corresponde a lo que ya constaba como a ingresar."
+msgstr "Elle rectifie la déclaration %(i)s, déposée avec le justificatif %(j)s. C'est un 303 complet de la période, calculé avec les écritures telles qu'elles sont maintenant : la case 70 reprend le résultat à payer de la précédente, la 109 le remboursement déjà accordé et la 111 la part du résultat négatif qui correspond à ce qui figurait déjà à payer."
+
+msgid "Ver la declaración rectificada"
+msgstr "Voir la déclaration rectifiée"
+
+msgid "Si los periodos siguientes de este ejercicio dependen de las cuotas a compensar de este, vuelve a calcularlos."
+msgstr "Si les périodes suivantes de cet exercice dépendent des cotisations à reporter de celle-ci, recalculez-les."
+
+msgid "Este 303 tiene una rectificativa en curso:"
+msgstr "Ce 303 a une rectificative en cours :"
+
+msgid "abrir la rectificativa"
+msgstr "ouvrir la rectificative"
+
+msgid "Rectificar este 303"
+msgstr "Rectifier ce 303"
+
+msgid "Se calcula un 303 nuevo del periodo con los apuntes tal como están ahora, que sustituye al presentado. Hace falta el número de justificante que dio la AEAT al presentarlo."
+msgstr "Un nouveau 303 de la période est calculé avec les écritures telles qu'elles sont maintenant, et remplace celui déposé. Il faut le numéro de justificatif donné par l'AEAT lors du dépôt."
+
+msgid "Justificante de la declaración presentada (13 cifras)"
+msgstr "Justificatif de la déclaration déposée (13 chiffres)"
+
+msgid "La AEAT ya acordó la devolución que se pidió"
+msgstr "L'AEAT a déjà accordé le remboursement demandé"
+
+msgid "Si sale a favor del titular"
+msgstr "Si le résultat est en faveur du titulaire"
+
+msgid "Compensar en los periodos siguientes"
+msgstr "Reporter sur les périodes suivantes"
+
+msgid "Calcular la rectificativa"
+msgstr "Calculer la rectificative"

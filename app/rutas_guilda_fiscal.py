@@ -504,7 +504,10 @@ def declaracion(declaracion_id: int):
     except ErrorFiscal:
         abort(404)
     c = _cliente_o_404(d["cliente_fiscal_id"])
-    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, apuntes={a["apunte_id"]: a for a in inst["datos"]["apuntes"]}, cambios=fn.comparar_con_anterior(g.tenant_id, g.usuario_id, declaracion_id),
+    todas = fn.listar_declaraciones(g.tenant_id, g.usuario_id, d["cliente_fiscal_id"])
+    rectificativa = next((x for x in todas if x["rectifica_a_id"] == d["id"] and x["estado"] != "anulada"), None)
+    original = next((x for x in todas if x["id"] == d["rectifica_a_id"]), None)
+    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, rectificativa=rectificativa, original=original, apuntes={a["apunte_id"]: a for a in inst["datos"]["apuntes"]}, cambios=fn.comparar_con_anterior(g.tenant_id, g.usuario_id, declaracion_id),
                            error=_error())
 
 
@@ -526,6 +529,18 @@ def declaracion_resumen_pdf(declaracion_id: int):
     pdf = fiscal_resumen_pdf.generar(titular=c["nombre"], nif=c["nif"], ejercicio=d["ejercicio"], periodo=d["periodo"], estado=estados.get(d["estado"], d["estado"]), casillas=d["casillas"],
                                      etiqueta=fn.etiqueta_casilla, tipo_declaracion=d["tipo_declaracion"], fecha_limite=pend["fecha_limite"], gestoria=nombre_despacho)
     return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="303-{d["ejercicio"]}-{d["periodo"]}.pdf"'})
+
+
+@guilda_fiscal_bp.route("/declaracion/<int:declaracion_id>/rectificar", methods=["POST"])
+@login_required
+def declaracion_rectificar(declaracion_id: int):
+    """Abre la autoliquidación rectificativa de un 303 ya presentado (un borrador nuevo, que sigue el camino de siempre)."""
+    try:
+        nueva = fn.rectificar_declaracion(g.tenant_id, g.usuario_id, declaracion_id, justificante=request.form.get("justificante", ""), devolucion_acordada=bool(request.form.get("devolucion_acordada")),
+                                          destino_negativo=request.form.get("destino_negativo", "C"))
+    except ErrorFiscal as e:
+        return _atras(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id), e)
+    return redirect(url_for("guilda_fiscal.declaracion", declaracion_id=nueva["id"]))
 
 
 @guilda_fiscal_bp.route("/declaracion/<int:declaracion_id>/<accion>", methods=["POST"])

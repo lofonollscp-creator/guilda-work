@@ -6,7 +6,7 @@
 <header class="page-header">
   <div>
     <h1>{{ _('Modelo 303') }} · {{ d.ejercicio }} {{ d.periodo }}</h1>
-    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '' }} · <span class="pill">{{ estados[d.estado] }}</span> · {{ _('Resultado (casilla 71): %(r)s €', r='%.2f'|format(d.resultado_centimos / 100)) }}</p>
+    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '' }} · <span class="pill">{{ estados[d.estado] }}</span>{% if d.rectifica_a_id %} <span class="pill">{{ _('Rectificativa') }}</span>{% endif %} · {{ _('Resultado (casilla 71): %(r)s €', r='%.2f'|format(d.resultado_centimos / 100)) }}</p>
   </div>
   <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id, ejercicio=d.ejercicio) }}">‹ {{ _('Volver al titular') }}</a>
 </header>
@@ -17,6 +17,13 @@
 {% endif %}
 {% if not d.bloqueos and not inst.datos.apuntes %}<div class="dash-panel" role="note"><strong>{{ _('Esta declaración no tiene ningún apunte.') }}</strong> {{ _('Al importarla en el simulador o en la sede de la AEAT saldrá el aviso 303M030 («no hay contenido en la liquidación del régimen general»): es lógico, porque está a cero. Si el titular tuvo operaciones en el periodo, aprueba sus apuntes y vuelve a calcular.') }}</div>
 {% elif not d.bloqueos and d.estado in ('revisada', 'exportada') %}<p class="muted">{{ _('Al importar el fichero, la AEAT muestra siempre el aviso 31190 («revise las casillas de Información adicional»): es un recordatorio, no un error. Lo que no calcula el fichero (por ejemplo operaciones no sujetas o exentas sin apuntar) se completa a mano en la sede.') }}</p>{% endif %}
+{% if d.rectifica_a_id %}
+<div class="dash-panel" role="note"><strong>{{ _('Autoliquidación rectificativa') }}</strong>
+  <p>{{ _('Rectifica la declaración %(i)s, presentada con el justificante %(j)s. Es un 303 completo del periodo, calculado con los apuntes tal como están ahora: la casilla 70 recoge el resultado a ingresar de la anterior, la 109 la devolución ya acordada y la 111 la parte del resultado negativo que corresponde a lo que ya constaba como a ingresar.', i=d.rectifica_a_id, j=d.justificante_anterior) }}</p>
+  {% if original %}<p><a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=original.id) }}">{{ _('Ver la declaración rectificada') }}</a></p>{% endif %}
+  <p class="muted">{{ _('Si los periodos siguientes de este ejercicio dependen de las cuotas a compensar de este, vuelve a calcularlos.') }}</p>
+</div>
+{% endif %}
 {% if not inst.integra %}<div class="ia-error" role="alert">{{ _('La huella de la instantánea no coincide: no te fíes de esta declaración.') }}</div>{% endif %}
 
 <section class="dash-panel">
@@ -28,6 +35,20 @@
     {% if d.estado == 'exportada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='presentada') }}" class="ds-fila ds-envolver"><input type="text" name="referencia" placeholder="{{ _('CSV o justificante (opcional)') }}" maxlength="200"><button class="btn btn-primary" type="submit">{{ _('Anotar que se ha presentado') }}</button></form>{% endif %}
     {% if d.estado in ('borrador', 'revisada', 'exportada') %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='anular') }}"><button class="btn btn-ghost" type="submit" data-confirmar-clic="{{ _('¿Anular esta declaración? Quedará en el historial como anulada y podrás calcular el periodo de nuevo.') }}">{{ _('Anular') }}</button></form>{% endif %}
   </div>
+  {% endif %}
+  {% if d.estado == 'presentada' and not d.rectifica_a_id %}
+    {% if rectificativa %}<p>{{ _('Este 303 tiene una rectificativa en curso:') }} <a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=rectificativa.id) }}">{{ _('abrir la rectificativa') }}</a></p>
+    {% elif puede_aprobar %}
+    <details class="ds-mb-16"><summary>{{ _('Rectificar este 303') }}</summary>
+      <form method="post" action="{{ url_for('guilda_fiscal.declaracion_rectificar', declaracion_id=d.id) }}" class="ds-fila ds-envolver">
+        <p class="muted">{{ _('Se calcula un 303 nuevo del periodo con los apuntes tal como están ahora, que sustituye al presentado. Hace falta el número de justificante que dio la AEAT al presentarlo.') }}</p>
+        <label>{{ _('Justificante de la declaración presentada (13 cifras)') }} <input type="text" name="justificante" inputmode="numeric" pattern="[0-9]{13}" maxlength="13" required></label>
+        {% if d.casillas.get('69', 0) < 0 and d.tipo_declaracion == 'D' %}<label><input type="checkbox" name="devolucion_acordada" value="1"> {{ _('La AEAT ya acordó la devolución que se pidió') }}</label>{% endif %}
+        <label>{{ _('Si sale a favor del titular') }} <select name="destino_negativo"><option value="C">{{ _('Compensar en los periodos siguientes') }}</option><option value="D">{{ _('Solicitar la devolución') }}</option></select></label>
+        <button class="btn btn-primary" type="submit">{{ _('Calcular la rectificativa') }}</button>
+      </form>
+    </details>
+    {% endif %}
   {% endif %}
   {% if d.artefactos %}
   <p>{{ _('Ficheros') }}: <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='303') }}">{{ _('Fichero .303 para importar en la AEAT') }}</a> · <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='libro_xlsx') }}">{{ _('Libro registro (.xlsx)') }}</a> · <a href="{{ url_for('guilda_fiscal.descargar', declaracion_id=d.id, tipo='resumen') }}">{{ _('Resumen') }}</a></p>

@@ -490,3 +490,35 @@ def test_checklist_de_cierre_del_periodo(cliente):
     assert 'id="cierre-periodo"' in pagina and "Quedan puntos pendientes" in pagina
     with pytest.raises(fn.ErrorFiscal):
         fn.checklist_cierre(t, uid, c, 2026, "05")
+
+
+def test_rectificar_un_303_presentado_desde_la_web(cliente):
+    uid, t, c = _web(cliente, email="rectifica@ejemplo.com")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
+                                                           "periodicidad": "trimestral"}).status_code == 302
+    datos = {"libro": "E", "tipo_factura": "F1", "clave": "01", "numero": "F-1", "fecha_expedicion": "2026-05-10", "fecha_recepcion": "2026-05-10", "base": "100,00", "tipo_iva": "21",
+             "contraparte_nif": "B11111111", "contraparte_nombre": "Cliente SL"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    did = int(cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "2T"}).headers["Location"].rsplit("/", 1)[1])
+    assert "Rectificar este 303" not in cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
+    for accion in ("revisar", "exportar"):
+        assert cliente.post(f"/guilda-fiscal/declaracion/{did}/{accion}").status_code == 302
+    assert cliente.post(f"/guilda-fiscal/declaracion/{did}/presentada", data={"referencia": "3030000000123"}).status_code == 302
+    assert "Rectificar este 303" in cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
+    # el periodo presentado no se recalcula como si fuera nuevo
+    r = cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "2T"}, follow_redirects=True)
+    assert "ya tiene un 303 presentado" in r.get_data(as_text=True)
+    # un justificante mal escrito se rechaza y se explica
+    r = cliente.post(f"/guilda-fiscal/declaracion/{did}/rectificar", data={"justificante": "12345"}, follow_redirects=True)
+    assert "13 cifras" in r.get_data(as_text=True)
+    datos.update({"numero": "F-2", "base": "200,00"})
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    r = cliente.post(f"/guilda-fiscal/declaracion/{did}/rectificar", data={"justificante": "3030000000123"})
+    assert r.status_code == 302
+    nuevo = int(r.headers["Location"].rsplit("/", 1)[1])
+    assert nuevo != did
+    html = cliente.get(f"/guilda-fiscal/declaracion/{nuevo}").get_data(as_text=True)
+    assert "Autoliquidación rectificativa" in html and "3030000000123" in html and "Marcar como revisada" in html and "Qué ha cambiado respecto al cálculo anterior" in html
+    assert "63.00" in html and "21.00" in html                                # casilla 69 de 63 € y casilla 70 de 21 €; el resultado, 42 €
+    assert "tiene una rectificativa en curso" in cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
+    assert "Rectificativa" in cliente.get(f"/guilda-fiscal/{c}?ejercicio=2026").get_data(as_text=True)

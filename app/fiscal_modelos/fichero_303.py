@@ -18,6 +18,8 @@ class FicheroNoGenerable(ValueError):
 # descripciones de los dos diseños oficiales en tests/test_fiscal_390.py.
 VOLUMEN_PAGINA_4 = {24: "99", 26: "103", 27: "104", 28: "105", 29: "110", 30: "125", 41: "108"}
 TERRITORIO_COMUN = 23                                                      # [107], 100,00 %
+# Página 3, bloque «Rectificativa»: nº de campo -> qué lleva. El motivo es siempre «Rectificaciones (excepto discrepancia de criterio administrativo)», el único que se genera.
+RECTIFICATIVA_MARCA, RECTIFICATIVA_JUSTIFICANTE, RECTIFICATIVA_MOTIVO = 31, 32, 35
 
 
 def pagina_4(volumen) -> dict:
@@ -27,9 +29,9 @@ def pagina_4(volumen) -> dict:
     return valores
 
 
-def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, exonerado_390: bool = False, volumen=None) -> dict[str, dict]:
+def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, exonerado_390: bool = False, volumen=None, justificante_anterior: str | None = None) -> dict[str, dict]:
     """`{hoja: {casilla|nº de campo: valor}}` listo para `exportador_303.construir`. En el último periodo (4T/12): quien NO está exonerado del 390 no lleva nada más; quien lo está necesita el volumen
-    de operaciones del año (`volumen`) y lleva la página 4."""
+    de operaciones del año (`volumen`) y lleva la página 4. Con `justificante_anterior` (13 cifras) es una autoliquidación rectificativa y lleva el bloque «Rectificativa» de la página 3."""
     if not r.calculable:
         raise FicheroNoGenerable("El cálculo está bloqueado: " + " · ".join(r.bloqueos[:3]))
     ultimo = r.periodo in ex.ULTIMOS
@@ -43,6 +45,8 @@ def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_
                                             **ex.indicadores_pagina1(r.periodo, exonerado_390=exonerado_390, volumen_distinto_de_cero=distinto_de_cero)}}
     if ultimo and exonerado_390:
         paginas["DP30304"] = pagina_4(volumen)
+    if justificante_anterior is not None and not (len(justificante_anterior) == 13 and justificante_anterior.isdigit()):
+        raise FicheroNoGenerable("El número de justificante de la autoliquidación rectificada debe tener 13 cifras.")
     for casilla, valor in r.casillas.items():
         if casilla not in indice:
             raise FicheroNoGenerable(f"La casilla {casilla} no existe en el diseño oficial.")
@@ -51,9 +55,13 @@ def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_
             paginas.setdefault(campo["hoja"], {})[casilla] = Decimal(valor) / 100
         else:
             paginas.setdefault(campo["hoja"], {})[casilla] = Decimal(valor) / 100
+    if justificante_anterior is not None:
+        paginas.setdefault(indice["71"][0]["hoja"], {}).update({RECTIFICATIVA_MARCA: "X", RECTIFICATIVA_JUSTIFICANTE: justificante_anterior, RECTIFICATIVA_MOTIVO: "X"})
     return paginas
 
 
-def generar(r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, diseno: dict | None = None, exonerado_390: bool = False, volumen=None) -> bytes:
+def generar(r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, diseno: dict | None = None, exonerado_390: bool = False, volumen=None,
+            justificante_anterior: str | None = None) -> bytes:
     diseno = diseno or json.loads(ex.DISENO_303_2026.read_text(encoding="utf-8"))
-    return ex.construir(diseno, ejercicio=r.ejercicio, periodo=r.periodo, paginas=paginas_desde(diseno, r, nif=nif, nombre=nombre, tipo_declaracion=tipo_declaracion, exonerado_390=exonerado_390, volumen=volumen))
+    return ex.construir(diseno, ejercicio=r.ejercicio, periodo=r.periodo, paginas=paginas_desde(diseno, r, nif=nif, nombre=nombre, tipo_declaracion=tipo_declaracion, exonerado_390=exonerado_390, volumen=volumen,
+                                                                                  justificante_anterior=justificante_anterior))

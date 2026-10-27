@@ -17477,3 +17477,45 @@ msgstr "Calculated now from what exists: it is not stored."
 
 msgid "Ver la declaración"
 msgstr "View the return"
+
+msgid "Rectificativa"
+msgstr "Amended return"
+
+msgid "Autoliquidación rectificativa"
+msgstr "Amended self-assessment"
+
+msgid "Rectifica la declaración %(i)s, presentada con el justificante %(j)s. Es un 303 completo del periodo, calculado con los apuntes tal como están ahora: la casilla 70 recoge el resultado a ingresar de la anterior, la 109 la devolución ya acordada y la 111 la parte del resultado negativo que corresponde a lo que ya constaba como a ingresar."
+msgstr "It amends return %(i)s, filed with receipt number %(j)s. It is a full form 303 for the period, calculated with the entries as they are now: box 70 holds the amount payable on the previous one, box 109 the refund already granted and box 111 the part of the negative result that corresponds to what was already due."
+
+msgid "Ver la declaración rectificada"
+msgstr "View the amended return"
+
+msgid "Si los periodos siguientes de este ejercicio dependen de las cuotas a compensar de este, vuelve a calcularlos."
+msgstr "If the following periods of this year depend on the amounts to carry forward from this one, calculate them again."
+
+msgid "Este 303 tiene una rectificativa en curso:"
+msgstr "This form 303 has an amendment in progress:"
+
+msgid "abrir la rectificativa"
+msgstr "open the amendment"
+
+msgid "Rectificar este 303"
+msgstr "Amend this form 303"
+
+msgid "Se calcula un 303 nuevo del periodo con los apuntes tal como están ahora, que sustituye al presentado. Hace falta el número de justificante que dio la AEAT al presentarlo."
+msgstr "A new form 303 for the period is calculated with the entries as they are now, replacing the one filed. You need the receipt number the tax agency gave when it was filed."
+
+msgid "Justificante de la declaración presentada (13 cifras)"
+msgstr "Receipt number of the filed return (13 digits)"
+
+msgid "La AEAT ya acordó la devolución que se pidió"
+msgstr "The tax agency already granted the refund requested"
+
+msgid "Si sale a favor del titular"
+msgstr "If the result is in the holder's favour"
+
+msgid "Compensar en los periodos siguientes"
+msgstr "Carry forward to the following periods"
+
+msgid "Calcular la rectificativa"
+msgstr "Calculate the amendment"
