@@ -66,6 +66,22 @@
 </details>
 {% endif %}
 
+{% if cierre %}
+{% set textos = {'perfil': _('El titular tiene perfil fiscal vigente en el periodo'), 'revisar': _('Facturas del periodo revisadas'), 'registrar': _('Facturas revisadas ya registradas como apuntes'),
+                 'descuadres': _('Apuntes que coinciden con su factura'), 'retenciones': _('Retenciones de IRPF recogidas en los apuntes'), 'libros': _('Hay apuntes en el periodo (si no hubo actividad, confírmalo con el cliente)'),
+                 'errores': _('Apuntes sin errores de validación'), 'calculada': _('Declaración del 303 calculada'), 'bloqueos': _('Cálculo sin bloqueos'), 'revisada': _('Declaración revisada'),
+                 'exportada': _('Fichero exportado'), 'presentada': _('Declaración presentada'), 'vencimiento': _('Vencimiento del calendario marcado como presentado')} %}
+<section class="dash-panel ds-mt-16" id="cierre-periodo">
+  <h2>{{ _('Cierre del periodo') }} · {{ cierre.periodo }} {{ cierre.ejercicio }}</h2>
+  <p class="muted">{% if cierre.listo %}{{ _('No queda nada pendiente.') }}{% else %}{{ _('Quedan puntos pendientes antes de dar el periodo por cerrado.') }}{% endif %} {{ _('Se calcula ahora con lo que hay: no se guarda.') }}</p>
+  <ul class="checklist-cierre">
+    {% for p in cierre.puntos %}<li data-estado="{{ p.estado }}"><span class="pill {{ 'semaforo-verde' if p.estado == 'ok' else ('semaforo-rojo' if p.estado == 'pendiente' else 'semaforo-ambar') }}">{{ _('Hecho') if p.estado == 'ok' else (_('Pendiente') if p.estado == 'pendiente' else _('Revisar')) }}</span>
+      {{ textos[p.clave] }}{% if p.cuantos and p.estado != 'ok' %} ({{ p.cuantos }}){% endif %}{% if p.clave == 'vencimiento' and p.detalle %} · {{ p.detalle }}{% endif %}</li>{% endfor %}
+  </ul>
+  {% if cierre.declaracion_id %}<p><a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=cierre.declaracion_id) }}">{{ _('Ver la declaración') }}</a></p>{% endif %}
+</section>
+{% endif %}
+
 {% if computan %}
 {% set t = computan.totales %}
 {% macro estado_modelo(e) %}{% if e == 'computa' %}<span class="pill semaforo-verde">{{ _('Computa') }}</span>{% elif e == 'por_registrar' %}<span class="pill semaforo-ambar">{{ _('Por registrar') }}</span>{% elif e == 'por_revisar' %}<span class="pill semaforo-ambar">{{ _('Por revisar') }}</span>{% elif e == 'excluida' %}<span class="pill semaforo-gris">{{ _('Excluida') }}</span>{% endif %}{% endmacro %}

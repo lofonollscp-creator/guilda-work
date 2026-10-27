@@ -667,6 +667,62 @@ def descargar_fichero_390(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     return contenido, f"{ejercicio}_390_prueba.390"
 
 
+def checklist_cierre(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str, *, hoy: date | None = None) -> dict:
+    """Lista de comprobaciones para cerrar un trimestre del 303, calculada AHORA con lo que hay (no se guarda: no puede quedar desfasada). Cada punto es `ok`, `pendiente` (hay que hacer algo) o `aviso` (conviene
+    mirarlo). `listo` es verdadero cuando no queda ningún `pendiente`. Orden: datos → apuntes → declaración → presentación."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    if periodo not in ("1T", "2T", "3T", "4T"):
+        raise ErrorFiscal("Periodo no válido.")
+    hoy = hoy or date.today()
+    perfil = fiscal_perfiles.perfil_en(tenant_id, cliente_fiscal_id, _fecha_fin_periodo(ejercicio, periodo).isoformat())
+    puntos: list[dict] = []
+
+    def punto(clave: str, estado: str, detalle: str = "", cuantos: int = 0) -> None:
+        puntos.append({"clave": clave, "estado": estado, "detalle": detalle, "cuantos": cuantos})
+
+    punto("perfil", "ok" if perfil else "pendiente")
+    computan = facturas_del_periodo(tenant_id, usuario_id, cliente_fiscal_id, ejercicio, periodo)
+    por_revisar = sum(1 for f in computan["facturas"] if f["incluir_en_fiscal"] and f["m303"] == "por_revisar")
+    por_registrar = sum(1 for f in computan["facturas"] if f["incluir_en_fiscal"] and f["m303"] == "por_registrar")
+    retenciones = sum(1 for f in computan["facturas"] if f["retencion_estado"] in ("por_revisar", "por_registrar"))
+    punto("revisar", "ok" if not por_revisar else "pendiente", cuantos=por_revisar)
+    punto("registrar", "ok" if not por_registrar else "pendiente", cuantos=por_registrar)
+    punto("descuadres", "ok" if not computan["totales"]["descuadres"] else "pendiente", cuantos=computan["totales"]["descuadres"])
+    punto("retenciones", "ok" if not retenciones else "aviso", cuantos=retenciones)
+    apuntes = [a for a in listar_apuntes(tenant_id, usuario_id, cliente_fiscal_id, ejercicio=ejercicio) if motor_303_en_periodo(a["fecha_expedicion"], ejercicio, periodo)]
+    punto("libros", "ok" if apuntes else "aviso", cuantos=len(apuntes))
+    if apuntes:
+        titular = None
+        conn = db.get_connection()
+        try:
+            titular = _titular(conn, tenant_id, cliente_fiscal_id)
+        finally:
+            conn.close()
+        errores = validacion_apuntes.errores(validacion_apuntes.validar([a_apunte(a) for a in apuntes], hoy=hoy, nif_titular=titular["nif"] or ""))
+        punto("errores", "ok" if not errores else "pendiente", cuantos=len(errores))
+    declaraciones = [d for d in listar_declaraciones(tenant_id, usuario_id, cliente_fiscal_id) if d["ejercicio"] == ejercicio and d["periodo"] == periodo and d["estado"] != "anulada"]
+    d = declaraciones[0] if declaraciones else None
+    nivel = {"borrador": 1, "revisada": 2, "exportada": 3, "presentada": 4}.get(d["estado"], 0) if d else 0
+    punto("calculada", "ok" if d else "pendiente")
+    punto("bloqueos", "ok" if not (d and d["bloqueos"]) else "pendiente", cuantos=len(json.loads(d["bloqueos"])) if d and d["bloqueos"] else 0)
+    punto("revisada", "ok" if nivel >= 2 else "pendiente")
+    punto("exportada", "ok" if nivel >= 3 else "pendiente")
+    punto("presentada", "ok" if nivel >= 4 else "pendiente")
+    conn = db.get_connection()
+    try:
+        v = conn.execute("SELECT estado, fecha_limite FROM vencimientos_fiscales WHERE tenant_id = ? AND cliente_fiscal_id = ? AND modelo = '303' AND periodo = ? AND papelera_en IS NULL ORDER BY id DESC LIMIT 1",
+                         (tenant_id, cliente_fiscal_id, f"{periodo} {ejercicio}")).fetchone()
+    finally:
+        conn.close()
+    if not v:
+        punto("vencimiento", "aviso")
+    else:
+        vencido = (v["fecha_limite"] or "")[:10] < hoy.isoformat() and v["estado"] != "presentado"
+        punto("vencimiento", "ok" if v["estado"] == "presentado" else ("pendiente" if vencido else "aviso"), detalle=(v["fecha_limite"] or "")[:10])
+    return {"ejercicio": ejercicio, "periodo": periodo, "puntos": puntos, "listo": not any(p["estado"] == "pendiente" for p in puntos), "hechos": sum(1 for p in puntos if p["estado"] == "ok"),
+            "declaracion_id": d["id"] if d else None}
+
+
 def simular_retenciones(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
     """Simulación (NO se guarda ni se presenta) de los modelos 111 y 115 del periodo con las retenciones de los apuntes aprobados. Devuelve `{"111": Resultado, "115": Resultado}`."""
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)

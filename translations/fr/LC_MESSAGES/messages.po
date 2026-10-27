@@ -17508,3 +17508,57 @@ msgstr "Télécharger le fichier .390 de test"
 
 msgid "No se puede generar mientras el cálculo tenga bloqueos."
 msgstr "Impossible à générer tant que le calcul comporte des blocages."
+
+msgid "El titular tiene perfil fiscal vigente en el periodo"
+msgstr "Le titulaire a un profil fiscal en vigueur sur la période"
+
+msgid "Facturas del periodo revisadas"
+msgstr "Factures de la période vérifiées"
+
+msgid "Facturas revisadas ya registradas como apuntes"
+msgstr "Factures vérifiées déjà enregistrées comme écritures"
+
+msgid "Apuntes que coinciden con su factura"
+msgstr "Écritures conformes à leur facture"
+
+msgid "Retenciones de IRPF recogidas en los apuntes"
+msgstr "Retenues d'IRPF saisies dans les écritures"
+
+msgid "Hay apuntes en el periodo (si no hubo actividad, confírmalo con el cliente)"
+msgstr "Il y a des écritures sur la période (s'il n'y a pas eu d'activité, confirmez-le avec le client)"
+
+msgid "Apuntes sin errores de validación"
+msgstr "Écritures sans erreur de validation"
+
+msgid "Declaración del 303 calculada"
+msgstr "Déclaration 303 calculée"
+
+msgid "Cálculo sin bloqueos"
+msgstr "Calcul sans blocage"
+
+msgid "Declaración revisada"
+msgstr "Déclaration vérifiée"
+
+msgid "Fichero exportado"
+msgstr "Fichier exporté"
+
+msgid "Declaración presentada"
+msgstr "Déclaration déposée"
+
+msgid "Vencimiento del calendario marcado como presentado"
+msgstr "Échéance du calendrier marquée comme déposée"
+
+msgid "Cierre del periodo"
+msgstr "Clôture de la période"
+
+msgid "No queda nada pendiente."
+msgstr "Plus rien n'est en attente."
+
+msgid "Quedan puntos pendientes antes de dar el periodo por cerrado."
+msgstr "Il reste des points en attente avant de considérer la période comme clôturée."
+
+msgid "Se calcula ahora con lo que hay: no se guarda."
+msgstr "Calculé maintenant avec l'existant : rien n'est enregistré."
+
+msgid "Ver la declaración"
+msgstr "Voir la déclaration"

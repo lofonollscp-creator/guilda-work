@@ -17423,3 +17423,57 @@ msgstr "Download test .390 file"
 
 msgid "No se puede generar mientras el cálculo tenga bloqueos."
 msgstr "It cannot be generated while the calculation has blocks."
+
+msgid "El titular tiene perfil fiscal vigente en el periodo"
+msgstr "The holder has a valid tax profile for the period"
+
+msgid "Facturas del periodo revisadas"
+msgstr "Invoices of the period reviewed"
+
+msgid "Facturas revisadas ya registradas como apuntes"
+msgstr "Reviewed invoices already recorded as entries"
+
+msgid "Apuntes que coinciden con su factura"
+msgstr "Entries that match their invoice"
+
+msgid "Retenciones de IRPF recogidas en los apuntes"
+msgstr "Income tax withholdings captured in the entries"
+
+msgid "Hay apuntes en el periodo (si no hubo actividad, confírmalo con el cliente)"
+msgstr "There are entries in the period (if there was no activity, confirm it with the client)"
+
+msgid "Apuntes sin errores de validación"
+msgstr "Entries without validation errors"
+
+msgid "Declaración del 303 calculada"
+msgstr "Form 303 return calculated"
+
+msgid "Cálculo sin bloqueos"
+msgstr "Calculation without blocks"
+
+msgid "Declaración revisada"
+msgstr "Return reviewed"
+
+msgid "Fichero exportado"
+msgstr "File exported"
+
+msgid "Declaración presentada"
+msgstr "Return filed"
+
+msgid "Vencimiento del calendario marcado como presentado"
+msgstr "Calendar deadline marked as filed"
+
+msgid "Cierre del periodo"
+msgstr "Period close"
+
+msgid "No queda nada pendiente."
+msgstr "Nothing is pending."
+
+msgid "Quedan puntos pendientes antes de dar el periodo por cerrado."
+msgstr "Items remain pending before the period can be considered closed."
+
+msgid "Se calcula ahora con lo que hay: no se guarda."
+msgstr "Calculated now from what exists: it is not stored."
+
+msgid "Ver la declaración"
+msgstr "View the return"

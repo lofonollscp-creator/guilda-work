@@ -470,3 +470,23 @@ def test_resumen_anual_del_390_y_su_fichero_de_prueba(cliente):
     f = cliente.get(f"/guilda-fiscal/{c}/390/fichero?ejercicio=2026")
     assert f.status_code == 200 and f.data.startswith(b"<T390020260A0000>") and b"EMPRESA WEB SL" in f.data
     assert cliente.get(f"/guilda-fiscal/{c}/390/fichero").status_code == 404
+
+
+def test_checklist_de_cierre_del_periodo(cliente):
+    from datetime import date
+    uid, t, c = _web(cliente, email="cierre@ejemplo.com")
+    ini = fn.checklist_cierre(t, uid, c, 2026, "2T", hoy=date(2026, 7, 1))
+    estados = {p["clave"]: p["estado"] for p in ini["puntos"]}
+    assert not ini["listo"] and estados["perfil"] == "pendiente" and estados["calculada"] == "pendiente" and estados["libros"] == "aviso" and estados["vencimiento"] == "aviso"
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
+                                                           "periodicidad": "trimestral"}).status_code == 302
+    datos = {"libro": "E", "tipo_factura": "F1", "clave": "01", "numero": "F-1", "fecha_expedicion": "2026-05-10", "fecha_recepcion": "2026-05-10", "base": "1.000,00", "tipo_iva": "21",
+             "contraparte_nif": "B11111111", "contraparte_nombre": "Cliente SL"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    db.crear_vencimiento_fiscal(t, c, "303", "2T 2026", "2026-07-20")
+    paso = {p["clave"]: p["estado"] for p in fn.checklist_cierre(t, uid, c, 2026, "2T", hoy=date(2026, 7, 25))["puntos"]}
+    assert paso["perfil"] == "ok" and paso["libros"] == "ok" and paso["errores"] == "ok" and paso["vencimiento"] == "pendiente" and paso["revisada"] == "pendiente"
+    pagina = cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
+    assert 'id="cierre-periodo"' in pagina and "Quedan puntos pendientes" in pagina
+    with pytest.raises(fn.ErrorFiscal):
+        fn.checklist_cierre(t, uid, c, 2026, "05")

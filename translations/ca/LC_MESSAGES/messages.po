@@ -17432,3 +17432,57 @@ msgstr "Descarrega el fitxer .390 de prova"
 
 msgid "No se puede generar mientras el cálculo tenga bloqueos."
 msgstr "No es pot generar mentre el càlcul tingui bloquejos."
+
+msgid "El titular tiene perfil fiscal vigente en el periodo"
+msgstr "El titular té perfil fiscal vigent al període"
+
+msgid "Facturas del periodo revisadas"
+msgstr "Factures del període revisades"
+
+msgid "Facturas revisadas ya registradas como apuntes"
+msgstr "Factures revisades ja registrades com a apunts"
+
+msgid "Apuntes que coinciden con su factura"
+msgstr "Apunts que coincideixen amb la seva factura"
+
+msgid "Retenciones de IRPF recogidas en los apuntes"
+msgstr "Retencions d'IRPF recollides als apunts"
+
+msgid "Hay apuntes en el periodo (si no hubo actividad, confírmalo con el cliente)"
+msgstr "Hi ha apunts al període (si no hi va haver activitat, confirma-ho amb el client)"
+
+msgid "Apuntes sin errores de validación"
+msgstr "Apunts sense errors de validació"
+
+msgid "Declaración del 303 calculada"
+msgstr "Declaració del 303 calculada"
+
+msgid "Cálculo sin bloqueos"
+msgstr "Càlcul sense bloquejos"
+
+msgid "Declaración revisada"
+msgstr "Declaració revisada"
+
+msgid "Fichero exportado"
+msgstr "Fitxer exportat"
+
+msgid "Declaración presentada"
+msgstr "Declaració presentada"
+
+msgid "Vencimiento del calendario marcado como presentado"
+msgstr "Venciment del calendari marcat com a presentat"
+
+msgid "Cierre del periodo"
+msgstr "Tancament del període"
+
+msgid "No queda nada pendiente."
+msgstr "No queda res pendent."
+
+msgid "Quedan puntos pendientes antes de dar el periodo por cerrado."
+msgstr "Queden punts pendents abans de donar el període per tancat."
+
+msgid "Se calcula ahora con lo que hay: no se guarda."
+msgstr "Es calcula ara amb el que hi ha: no es desa."
+
+msgid "Ver la declaración"
+msgstr "Veure la declaració"
