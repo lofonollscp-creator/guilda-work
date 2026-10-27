@@ -34,7 +34,7 @@
       if (densidad !== "normal") {
         document.documentElement.dataset.densidad = densidad;
       }
-      var railExpandido = localStorage.getItem("guilda-work-rail-expandido") === "1";
+      var railExpandido = localStorage.getItem("guilda-work-rail-compacto") !== "1";
       if (railExpandido) {
         document.documentElement.dataset.railExpandido = "1";
       }
@@ -43,6 +43,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='superficies.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='ds.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='web_v2.css') }}">
   {% if marca_despacho and marca_despacho.color %}<link rel="stylesheet" href="{{ url_for('marca.estilo', v=marca_despacho.version) }}">{% endif %}
   {% if acento_css %}<style nonce="{{ g.csp_nonce }}">{{ acento_css|safe }}</style>{% endif %}
 </head>
@@ -61,22 +62,6 @@
         <span class="icon-rail-etiqueta">{{ marca_despacho.nombre if marca_despacho and marca_despacho.nombre else 'Guilda Work' }}</span>
       </a>
 
-      <div class="notificaciones-menu">
-        <button type="button" id="notificaciones-toggle" class="icon-rail-link" title="{{ _('Notificaciones') }}" aria-label="{{ _('Notificaciones') }}">
-          <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
-          <span class="icon-rail-etiqueta">{{ _('Notificaciones') }}</span>
-          {% if notificaciones_no_leidas %}<span class="icon-rail-badge notificaciones-badge">{{ notificaciones_no_leidas }}</span>{% endif %}
-        </button>
-        <div class="ajustes-panel notificaciones-panel" id="notificaciones-panel" hidden>
-          <div class="notificaciones-panel-cabecera">
-            <span class="ajustes-panel-grupo-etiqueta">{{ _('Notificaciones') }}</span>
-            <button type="button" id="notificaciones-vaciar" class="notificaciones-vaciar-btn" hidden>{{ _('Vaciar todas') }}</button>
-          </div>
-          <div id="notificaciones-lista"></div>
-          <p id="notificaciones-vacio" class="empty-lane" hidden>{{ _('No tienes notificaciones.') }}</p>
-        </div>
-      </div>
-
       </div>
 
       <button type="button" class="icon-rail-link icon-rail-buscar" id="rail-buscar" title="{{ _('Buscar') }} (Ctrl K)" aria-label="{{ _('Buscar') }}">
@@ -88,10 +73,6 @@
       <div class="icon-rail-separador" role="separator"></div>
 
       <div class="icon-rail-nav">
-      <a href="{{ url_for('inicio') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}" title="{{ _('Proyectos / Dashboard') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-house"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Proyectos') }}</span>
-      </a>
 
       {% set nav_fijados = nav.accesos(g.tenant_id is not none, 'gestoria' in verticales_activos) %}
       {% if nav_fijados %}
@@ -135,16 +116,22 @@
           <a href="{{ url_for('correo.ajustes') }}" class="icon-rail-sublink {{ 'active' if request.endpoint == 'correo.ajustes' else '' }}">{{ _('Ajustes') }}</a>
         </div>
       </div>
-      {% if nav.visible('tiquets') %}
-      <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="{{ _('Tiquets') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-ticket"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Tiquets') }}</span>
-      </a>
-      {% endif %}
       {% if nav.visible('fichaje') %}
       <a href="{{ url_for('fichaje.panel') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('fichaje.') else '' }}" title="{{ _('Fichaje') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Fichaje') }}</span>
+      </a>
+      {% endif %}
+      <div class="icon-rail-separador" role="separator"></div>
+      <span class="icon-rail-grupo-etiqueta">{{ _('Despacho') }}</span>
+      <a href="{{ url_for('inicio') }}" class="icon-rail-link {{ 'active' if request.endpoint in ('inicio', 'ver_menu') else '' }}" title="{{ _('Proyectos / Dashboard') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-house"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Proyectos') }}</span>
+      </a>
+      {% if nav.visible('tiquets') %}
+      <a href="{{ url_for('tiquets.tarjetas') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('tiquets.') else '' }}" title="{{ _('Tiquets') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-ticket"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Tiquets') }}</span>
       </a>
       {% endif %}
       {% if g.tenant_id %}
@@ -200,16 +187,16 @@
 
       <div class="icon-rail-separador" role="separator"></div>
       {% if nav.visible('herramientas') or nav.visible('asistente') %}<span class="icon-rail-grupo-etiqueta">{{ _('Herramientas y asistencia') }}</span>{% endif %}
+      {% if nav.visible('asistente') %}
+      <a href="{{ url_for('ia.asistente_vista') }}" class="icon-rail-link icon-rail-ia {{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}" title="{{ _('Asistente IA') }}">
+        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
+        <span class="icon-rail-etiqueta">{{ _('Asistente IA') }}</span>
+      </a>
+      {% endif %}
       {% if nav.visible('herramientas') %}
       <a href="{{ url_for('herramientas') }}" class="icon-rail-link {{ 'active' if request.endpoint == 'herramientas' else '' }}" title="{{ _('Herramientas') }}">
         <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-wrench"></use></svg>
         <span class="icon-rail-etiqueta">{{ _('Herramientas') }}</span>
-      </a>
-      {% endif %}
-      {% if nav.visible('asistente') %}
-      <a href="{{ url_for('ia.asistente_vista') }}" class="icon-rail-link {{ 'active' if request.endpoint and request.endpoint.startswith('ia.') else '' }}" title="{{ _('Asistente IA') }}">
-        <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg>
-        <span class="icon-rail-etiqueta">{{ _('Asistente IA') }}</span>
       </a>
       {% endif %}
 
@@ -361,16 +348,61 @@
                 data-url-historial="{{ url_for('historial') }}" data-url-correo="{{ url_for('correo.bandeja') }}"
                 data-url-fiscal-vencimiento="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=0) }}"
                 data-url-fiscal-cliente="{{ url_for('fiscal.ficha_cliente', cliente_id=0) }}"></button>
-        <p class="top-bar-fecha" data-zona="{{ barra_zona }}" title="{{ barra_zona }}"><span class="top-bar-fecha-dia">{{ barra_fecha }}</span> <span class="top-bar-fecha-hora">{{ barra_hora }}</span></p>
-        <div class="top-bar-acciones">
-          <details class="top-bar-nuevo">
-            <summary class="btn btn-primary top-bar-nuevo-btn">+ {{ _('Nuevo') }}</summary>
+        {% set _ep = request.endpoint or '' %}
+        <div class="top-bar-titulo" {% if not barra_titulo_interactivo %}aria-hidden="true"{% endif %}>{% block barra_titulo %}{% if _ep.startswith('tareas.') %}{{ _('Tareas') }}{% elif _ep.startswith('correo.') %}{{ _('Correo') }}{% elif _ep.startswith('ia.') %}{{ _('Asistente') }}{% elif _ep.startswith('fiscal.') %}{{ _('Fiscal') }}{% endif %}{% endblock %}</div>
+        {% block barra_centro %}
+        {% if _ep.startswith('tareas.') %}
+        <nav class="control-segmentado barra-vistas" aria-label="{{ _('Vistas de tareas') }}">
+          {% for ep, etiqueta in [('tareas.hoy', _('Mi día')), ('tareas.listar', _('Lista')), ('tareas.tablero', _('Tablero')), ('tareas.calendario', _('Calendario')), ('tareas.carga', _('Carga'))] %}
+          <a href="{{ url_for(ep) }}" {% if _ep == ep %}class="activo" aria-current="page"{% endif %}>{{ etiqueta }}</a>
+          {% endfor %}
+          <details class="barra-vistas-mas">
+            <summary aria-label="{{ _('Más vistas') }}">{{ _('Más') }}</summary>
             <div class="top-bar-menu">
-              <a href="{{ url_for('lista_notas', nueva=1) }}">{{ _('Nota') }}</a>
-              <a href="{{ url_for('tareas.listar') }}">{{ _('Tarea') }}</a>
-              <a href="{{ url_for('correo.bandeja') }}">{{ _('Correo') }}</a>
+              {% for ep, etiqueta in [('tareas.sincronizar', _('Sincronizar')), ('tareas.plantillas', _('Plantillas')), ('tareas.recurrentes', _('Recurrentes')), ('tareas.informes', _('Informes'))] %}
+              <a href="{{ url_for(ep) }}" {% if _ep == ep %}aria-current="page"{% endif %}>{{ etiqueta }}</a>
+              {% endfor %}
+              {% if puede_automatizar() %}<a href="{{ url_for('tareas.automatizaciones_lista') }}" {% if _ep.startswith('tareas.automatizacion') %}aria-current="page"{% endif %}>{{ _('Automatizaciones') }}</a>{% endif %}
             </div>
           </details>
+        </nav>
+        {% elif _ep.startswith('fiscal.') %}
+        <nav class="control-segmentado barra-vistas" aria-label="{{ _('Secciones de fiscal') }}">
+          {% for ep, etiqueta in [('fiscal.clientes', _('Clientes')), ('fiscal.vencimientos', _('Vencimientos')), ('fiscal.vencimientos_calendario', _('Calendario'))] %}
+          <a href="{{ url_for(ep) }}" {% if _ep == ep %}class="activo" aria-current="page"{% endif %}>{{ etiqueta }}</a>
+          {% endfor %}
+          <details class="barra-vistas-mas">
+            <summary aria-label="{{ _('Más secciones') }}">{{ _('Más') }}</summary>
+            <div class="top-bar-menu">
+              <a href="{{ url_for('fiscal.recordatorios') }}" {% if _ep == 'fiscal.recordatorios' %}aria-current="page"{% endif %}>{{ _('Recordatorios') }}</a>
+              <a href="{{ url_for('fiscal.papelera') }}" {% if _ep == 'fiscal.papelera' %}aria-current="page"{% endif %}>{{ _('Papelera') }}</a>
+            </div>
+          </details>
+        </nav>
+        {% endif %}
+        {% endblock %}
+        <p class="top-bar-fecha" data-zona="{{ barra_zona }}" title="{{ barra_zona }}"><span class="top-bar-fecha-dia">{{ barra_fecha }}</span> <span class="top-bar-fecha-hora">{{ barra_hora }}</span></p>
+        <div class="top-bar-acciones">
+          <button type="button" class="top-bar-buscar js-abrir-busqueda" title="{{ _('Buscar') }} (Ctrl K)" aria-label="{{ _('Buscar') }}">
+            <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg>
+            <span class="top-bar-buscar-texto">{{ _('Buscar o preguntar…') }}</span>
+            <kbd aria-hidden="true">Ctrl K</kbd>
+          </button>
+        <div class="notificaciones-menu">
+          <button type="button" id="notificaciones-toggle" class="icon-rail-link" title="{{ _('Notificaciones') }}" aria-label="{{ _('Notificaciones') }}">
+            <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
+            <span class="icon-rail-etiqueta">{{ _('Notificaciones') }}</span>
+            {% if notificaciones_no_leidas %}<span class="icon-rail-badge notificaciones-badge">{{ notificaciones_no_leidas }}</span>{% endif %}
+          </button>
+          <div class="ajustes-panel notificaciones-panel" id="notificaciones-panel" hidden>
+            <div class="notificaciones-panel-cabecera">
+              <span class="ajustes-panel-grupo-etiqueta">{{ _('Notificaciones') }}</span>
+              <button type="button" id="notificaciones-vaciar" class="notificaciones-vaciar-btn" hidden>{{ _('Vaciar todas') }}</button>
+            </div>
+            <div id="notificaciones-lista"></div>
+            <p id="notificaciones-vacio" class="empty-lane" hidden>{{ _('No tienes notificaciones.') }}</p>
+          </div>
+        </div>
           {% if barra_cronometro %}
           <a class="top-bar-pildora top-bar-crono" href="{{ url_for('tareas.hoy') }}" title="{{ barra_cronometro.nombre }}">
             <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-clock"></use></svg>
@@ -379,13 +411,13 @@
           </a>
           {% endif %}
           {% if barra_mi_dia %}
-          <a class="top-bar-pildora {{ 'is-alerta' if barra_mi_dia_vencidas }}" href="{{ url_for('tareas.hoy') }}" title="{{ _('Tareas vencidas o que vencen hoy') }}">
+          <a class="top-bar-pildora top-bar-secundaria {{ 'is-alerta' if barra_mi_dia_vencidas }}" href="{{ url_for('tareas.hoy') }}" title="{{ _('Tareas vencidas o que vencen hoy') }}">
             <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sun"></use></svg>
             {{ ngettext('%(n)s para hoy', '%(n)s para hoy', barra_mi_dia, n=barra_mi_dia) }}
           </a>
           {% endif %}
           {% if correo_no_leidos_sidebar or barra_correo %}
-          <a class="top-bar-pildora {{ 'is-alerta' if barra_correo and (barra_correo.error or barra_correo.sin_enviar) }}" href="{{ url_for('correo.bandeja') }}"
+          <a class="top-bar-pildora top-bar-secundaria {{ 'is-alerta' if barra_correo and (barra_correo.error or barra_correo.sin_enviar) }}" href="{{ url_for('correo.bandeja') }}"
              title="{% if barra_correo and barra_correo.error %}{{ _('Error de sincronización') }}: {{ barra_correo.error }}{% elif barra_correo and barra_correo.sin_enviar %}{{ ngettext('%(n)s cambio no ha llegado al servidor de correo', '%(n)s cambios no han llegado al servidor de correo', barra_correo.sin_enviar, n=barra_correo.sin_enviar) }}{% else %}{{ _('Correo sincronizado') }}{% endif %}">
             <svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg>
             {% if correo_no_leidos_sidebar %}{{ ngettext('%(n)s sin leer', '%(n)s sin leer', correo_no_leidos_sidebar, n=correo_no_leidos_sidebar) }}{% else %}{{ _('Correo') }}{% endif %}
@@ -408,6 +440,16 @@
           {% endif %}
           <button type="button" id="atajos-ayuda-abrir" class="atajos-ayuda-boton" title="{{ _('Atajos de teclado (?)') }}" aria-label="{{ _('Ver atajos de teclado') }}">?</button>
           {% if ayuda_especifica %}<a href="{{ ayuda_url }}" target="_blank" rel="noopener" class="atajos-ayuda-boton" title="{{ _('Ayuda sobre esta pantalla') }}" aria-label="{{ _('Ayuda sobre esta pantalla') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg></a>{% endif %}
+          {% block barra_accion %}
+          <details class="top-bar-nuevo">
+            <summary class="btn btn-primary top-bar-nuevo-btn">+ {{ _('Nuevo') }}</summary>
+            <div class="top-bar-menu">
+              <a href="{{ url_for('lista_notas', nueva=1) }}">{{ _('Nota') }}</a>
+              <a href="{{ url_for('tareas.listar') }}">{{ _('Tarea') }}</a>
+              <a href="{{ url_for('correo.bandeja') }}">{{ _('Correo') }}</a>
+            </div>
+          </details>
+          {% endblock %}
         </div>
       </header>
       <main class="content" id="contenido-principal">
@@ -443,11 +485,20 @@
         <input type="text" id="busqueda-input" placeholder="{{ _('Buscar en notas, tareas y correo...') }}" autocomplete="off">
         <button type="button" id="busqueda-cerrar" class="busqueda-cerrar-btn" title="{{ _('Cerrar (Esc)') }}" aria-label="{{ _('Cerrar búsqueda') }}"><kbd>Esc</kbd></button>
       </div>
+      <div class="busqueda-filtros" role="group" aria-label="{{ _('Filtrar por tipo') }}">
+        <button type="button" class="busqueda-filtro on" data-tipo="" aria-pressed="true">{{ _('Todo') }}</button>
+        <button type="button" class="busqueda-filtro" data-tipo="tarea" aria-pressed="false">{{ _('Tareas') }}</button>
+        <button type="button" class="busqueda-filtro" data-tipo="nota" aria-pressed="false">{{ _('Notas') }}</button>
+        <button type="button" class="busqueda-filtro" data-tipo="mensaje" aria-pressed="false">{{ _('Correo') }}</button>
+        <button type="button" class="busqueda-filtro" data-tipo="vencimiento_fiscal" aria-pressed="false">{{ _('Fiscal') }}</button>
+        <button type="button" class="busqueda-filtro" data-tipo="cliente_fiscal" aria-pressed="false">{{ _('Clientes') }}</button>
+      </div>
       <ul id="busqueda-resultados" class="busqueda-resultados"></ul>
       <p id="busqueda-cargando" class="busqueda-cargando" hidden>{{ _('Buscando…') }}</p>
       <p id="busqueda-vacio" class="busqueda-vacio" hidden>{{ _('Sin resultados.') }}</p>
       <p id="busqueda-error" class="busqueda-error" hidden></p>
       <p id="busqueda-pie" class="busqueda-pie" hidden></p>
+      <p class="busqueda-atajos" aria-hidden="true"><span>↑↓ {{ _('moverse') }}</span><span>{{ _('Intro') }} {{ _('abrir') }}</span><span>Esc {{ _('cerrar') }}</span></p>
     </div>
   </div>
 

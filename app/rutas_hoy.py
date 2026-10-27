@@ -13,7 +13,8 @@ hoy_bp = Blueprint("hoy", __name__, url_prefix="/hoy")
 @login_required
 def bandeja():
     supervisor = bool(g.get("supervisor_tenant") or g.get("es_admin"))
-    return render_template("hoy.html", bandeja=bandeja_hoy.reunir(g.usuario_id, supervisor), hechos=request.args.get("hechos", type=int), fallos=request.args.get("fallos", type=int))
+    datos = bandeja_hoy.reunir(g.usuario_id, supervisor)
+    return render_template("hoy.html", bandeja=datos, resumen=bandeja_hoy.resumen_en_breve(datos), hechos=request.args.get("hechos", type=int), fallos=request.args.get("fallos", type=int))
 
 
 @hoy_bp.route("/destacados")

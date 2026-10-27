@@ -17540,3 +17540,293 @@ msgstr "The file is too large (maximum 1 MB)."
 #: app/rutas_api.py
 msgid "Solo se admiten archivos de texto o CSV (UTF-8)."
 msgstr "Only text or CSV files (UTF-8) are supported."
+
+#: app/templates (web v2)
+msgid "%(n)s cosa urgente"
+msgid_plural "%(n)s cosas urgentes"
+msgstr[0] "%(n)s urgent item"
+msgstr[1] "%(n)s urgent items"
+
+#: app/templates (web v2)
+msgid "%(n)s correo por contestar"
+msgid_plural "%(n)s correos por contestar"
+msgstr[0] "%(n)s email to answer"
+msgstr[1] "%(n)s emails to answer"
+
+#: app/templates (web v2)
+msgid "%(n)s vencimiento fiscal"
+msgid_plural "%(n)s vencimientos fiscales"
+msgstr[0] "%(n)s tax deadline"
+msgstr[1] "%(n)s tax deadlines"
+
+#: app/templates (web v2)
+msgid "Todo al día: no tienes nada pendiente."
+msgstr "All caught up: nothing pending."
+
+#: app/templates (web v2)
+msgid "Hoy tienes"
+msgstr "Today you have"
+
+#: app/templates (web v2)
+msgid "Hace %(n)s día"
+msgid_plural "Hace %(n)s días"
+msgstr[0] "%(n)s day ago"
+msgstr[1] "%(n)s days ago"
+
+#: app/templates (web v2)
+msgid "Mañana"
+msgstr "Tomorrow"
+
+#: app/templates (web v2)
+msgid "Voy a hacer esto. ¿Lo confirmo?"
+msgstr "I'm about to do this. Shall I go ahead?"
+
+#: app/templates (web v2)
+msgid "IA · puede equivocarse"
+msgstr "AI · can make mistakes"
+
+#: app/templates (web v2)
+msgid "Resume la tarea «%(t)s» y dime qué falta"
+msgstr "Summarise the task «%(t)s» and tell me what is missing"
+
+#: app/templates (web v2)
+msgid "Preguntar al asistente sobre esta tarea"
+msgstr "Ask the assistant about this task"
+
+#: app/templates (web v2)
+msgid "Marcar hecha"
+msgstr "Mark done"
+
+#: app/templates (web v2)
+msgid "Abrir completa"
+msgstr "Open in full"
+
+#: app/templates (web v2)
+msgid "Asistente"
+msgstr "Assistant"
+
+#: app/templates (web v2)
+msgid "Vistas de tareas"
+msgstr "Task views"
+
+#: app/templates (web v2)
+msgid "Más vistas"
+msgstr "More views"
+
+#: app/templates (web v2)
+msgid "Más"
+msgstr "More"
+
+#: app/templates (web v2)
+msgid "Secciones de fiscal"
+msgstr "Tax sections"
+
+#: app/templates (web v2)
+msgid "Más secciones"
+msgstr "More sections"
+
+#: app/templates (web v2)
+msgid "Buscar o preguntar…"
+msgstr "Search or ask…"
+
+#: app/templates (web v2)
+msgid "Filtrar por tipo"
+msgstr "Filter by type"
+
+#: app/templates (web v2)
+msgid "moverse"
+msgstr "move"
+
+#: app/templates (web v2)
+msgid "Intro"
+msgstr "Enter"
+
+#: app/templates (web v2)
+msgid "abrir"
+msgstr "open"
+
+#: app/templates (web v2)
+msgid "cerrar"
+msgstr "close"
+
+#: app/templates (web v2)
+msgid "Asistente sobre este correo"
+msgstr "Assistant for this email"
+
+#: app/templates (web v2)
+msgid "Redactar respuesta"
+msgstr "Draft a reply"
+
+#: app/templates (web v2)
+msgid "Nuevo vencimiento"
+msgstr "New deadline"
+
+#: app/templates (web v2)
+msgid "Vencen esta semana"
+msgstr "Due this week"
+
+#: app/templates (web v2)
+msgid "Vencidos sin presentar"
+msgstr "Overdue, not filed"
+
+#: app/templates (web v2)
+msgid "Próximos 30 días"
+msgstr "Next 30 days"
+
+#: app/templates (web v2)
+msgid "Prepara el borrador del modelo que vence esta semana."
+msgid_plural "Prepara los borradores de los %(n)s modelos que vencen esta semana."
+msgstr[0] "Prepare the draft of the form due this week."
+msgstr[1] "Prepare the drafts of the %(n)s forms due this week."
+
+#: app/templates (web v2)
+msgid "Pregúntale qué vence en los próximos días."
+msgstr "Ask what is due in the coming days."
+
+#: app/templates (web v2)
+msgid "¿Qué modelos vencen esta semana y qué me falta para presentarlos?"
+msgstr "Which forms are due this week and what do I still need to file them?"
+
+#: app/templates (web v2)
+msgid "Preguntar"
+msgstr "Ask"
+
+#: app/templates (web v2)
+msgid "Cliente: todos"
+msgstr "Client: all"
+
+#: app/templates (web v2)
+msgid "País: todos"
+msgstr "Country: all"
+
+#: app/templates (web v2)
+msgid "Ver en calendario"
+msgstr "View on calendar"
+
+#: app/templates (web v2)
+msgid "Lo siguiente"
+msgstr "Up next"
+
+#: app/templates (web v2)
+msgid "Urgentes"
+msgstr "Urgent"
+
+#: app/templates (web v2)
+msgid "Sin contestar"
+msgstr "Unanswered"
+
+#: app/templates (web v2)
+msgid "Abrir a pantalla completa"
+msgstr "Open full screen"
+
+#: app/templates (web v2)
+msgid "Tu día en breve"
+msgstr "Your day at a glance"
+
+#: app/templates (web v2)
+msgid "Prueba a pedir"
+msgstr "Try asking"
+
+#: app/templates (web v2)
+msgid "Resume mi día"
+msgstr "Summarise my day"
+
+#: app/templates (web v2)
+msgid "Pregunta al asistente"
+msgstr "Ask the assistant"
+
+#: app/templates (web v2)
+msgid "Pregunta o pide algo…"
+msgstr "Ask or request something…"
+
+#: app/templates (web v2)
+msgid "Conversaciones"
+msgstr "Conversations"
+
+#: app/templates (web v2)
+msgid "Fuentes y ayuda"
+msgstr "Sources and help"
+
+#: app/templates (web v2)
+msgid "Fuentes de esta respuesta"
+msgstr "Sources for this answer"
+
+#: app/templates (web v2)
+msgid "Lee y resume con libertad; para crear, cambiar o borrar te enseña antes lo que hará."
+msgstr "It reads and summarises freely; before creating, changing or deleting it shows you what it will do."
+
+#: app/templates (web v2)
+msgid "Saber más"
+msgstr "Learn more"
+
+#: app/templates (web v2)
+msgid "Cómo funciona el asistente"
+msgstr "How the assistant works"
+
+#: app/templates (web v2)
+msgid "Lo que ve"
+msgstr "What it sees"
+
+#: app/templates (web v2)
+msgid "Tus tareas, notas y correo, y lo del despacho que tu usuario ya puede ver. Nada más."
+msgstr "Your tasks, notes and email, plus whatever in the office your user can already see. Nothing else."
+
+#: app/templates (web v2)
+msgid "Lo que hace con tu permiso"
+msgstr "What it does with your permission"
+
+#: app/templates (web v2)
+msgid "Leer y resumir es libre. Crear, cambiar o borrar algo siempre te lo enseña antes. Enviar un correo, siempre lo confirmas tú."
+msgstr "Reading and summarising is free. Creating, changing or deleting something always shows you first. Sending an email is always confirmed by you."
+
+#: app/templates (web v2)
+msgid "Puede equivocarse"
+msgstr "It can make mistakes"
+
+#: app/templates (web v2)
+msgid "Sobre todo con cifras, fechas y plazos fiscales. Cada respuesta indica de dónde sale: ábrela y compruébalo antes de actuar."
+msgstr "Especially with figures, dates and tax deadlines. Every answer says where it comes from: open it and check before acting."
+
+#: app/templates (web v2)
+msgid "Recordarme revisar las cifras fiscales"
+msgstr "Remind me to check tax figures"
+
+#: app/templates (web v2)
+msgid "Muestra una etiqueta de cautela junto a importes y plazos"
+msgstr "Shows a caution label next to amounts and deadlines"
+
+#: app/templates (web v2)
+msgid "Ajustes del asistente"
+msgstr "Assistant settings"
+
+#: app/templates (web v2)
+msgid "Entendido"
+msgstr "Got it"
+
+#: app/templates (web v2)
+msgid "Estado: todos (sin completadas)"
+msgstr "Status: all (not completed)"
+
+#: app/templates (web v2)
+msgid "Prioridad: todas"
+msgstr "Priority: all"
+
+#: app/templates (web v2)
+msgid "Categoría: todas"
+msgstr "Category: all"
+
+#: app/templates (web v2)
+msgid "Añadir tarea… («mañana 10h llamar a Vidal», «@luis», «!alta», «#proyecto»)"
+msgstr "Add a task… («tomorrow 10am call Vidal», «@luis», «!high», «#project»)"
+
+#: app/templates (web v2)
+msgid "Más opciones"
+msgstr "More options"
+
+#: app/templates (web v2)
+msgid "Ficha de la tarea"
+msgstr "Task details"
+
+#: app/templates (web v2)
+msgid "Elige una tarea para ver su ficha."
+msgstr "Choose a task to see its details."

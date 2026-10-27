@@ -46,10 +46,16 @@
     return html;
   }
 
-  var ETIQUETAS_TIPO = {
-    nota: "Nota", tarea: "Tarea", mensaje: "Correo",
-    vencimiento_fiscal: "Vencimiento fiscal", cliente_fiscal: "Cliente fiscal",
+  var ETIQUETAS_POR_IDIOMA = {
+    es: { nota: "Notas", tarea: "Tareas", mensaje: "Correo", vencimiento_fiscal: "Fiscal", cliente_fiscal: "Clientes", preguntar: "Preguntar al asistente" },
+    ca: { nota: "Notes", tarea: "Tasques", mensaje: "Correu", vencimiento_fiscal: "Fiscal", cliente_fiscal: "Clients", preguntar: "Pregunta a l'assistent" },
+    en: { nota: "Notes", tarea: "Tasks", mensaje: "Email", vencimiento_fiscal: "Tax", cliente_fiscal: "Clients", preguntar: "Ask the assistant" },
+    fr: { nota: "Notes", tarea: "Tâches", mensaje: "E-mail", vencimiento_fiscal: "Fiscal", cliente_fiscal: "Clients", preguntar: "Demander à l'assistant" },
   };
+  var ETIQUETAS_TIPO = ETIQUETAS_POR_IDIOMA[document.documentElement.lang] || ETIQUETAS_POR_IDIOMA.es;
+  var ICONO_TIPO = { nota: "notebook-pen", tarea: "list-checks", mensaje: "mail", vencimiento_fiscal: "calendar-days", cliente_fiscal: "briefcase" };
+  var filtroTipo = "";                 // "" = todo
+  var hitsCrudos = [];
   var URL_HISTORIAL = boton.dataset.urlHistorial;
   var URL_CORREO = boton.dataset.urlCorreo;
   var URL_FISCAL_VENCIMIENTO = boton.dataset.urlFiscalVencimiento;
@@ -96,29 +102,55 @@
     activo = -1;
   }
 
+  function resaltar(formateado) { return resaltarSeguro(formateado); }
+
   function pintar(hits, meta) {
-    resultadosActuales = hits;
-    activo = hits.length ? 0 : -1;
+    hitsCrudos = hits;
+    var visibles = filtroTipo ? hits.filter(function (h) { return h.tipo === filtroTipo; }) : hits;
+    resultadosActuales = visibles;
     lista.innerHTML = "";
-    vacio.hidden = hits.length !== 0 || !input.value.trim();
-    hits.forEach(function (hit, i) {
+    var texto = input.value.trim();
+    vacio.hidden = visibles.length !== 0 || !texto;
+    // «Preguntar al asistente» es siempre la primera acción cuando hay texto.
+    if (texto) {
+      var li0 = document.createElement("li");
+      var ia = document.createElement("a");
+      ia.href = "/ia/?q=" + encodeURIComponent(texto);
+      ia.className = "busqueda-fila-ia is-activo";
+      ia.innerHTML = '<span class="busqueda-icono-tipo busqueda-icono-ia"><svg aria-hidden="true"><use href="' + URL_ICONOS + '#icono-sparkles"></use></svg></span>' +
+        '<span class="busqueda-resultado-texto">' + escapeHtml(ETIQUETAS_TIPO.preguntar) + ': «' + escapeHtml(texto) + '»</span><kbd>Intro</kbd>';
+      li0.appendChild(ia);
+      lista.appendChild(li0);
+    }
+    activo = texto ? 0 : (visibles.length ? 0 : -1);
+    var grupoActual = null;
+    visibles.forEach(function (hit, i) {
+      if (hit.tipo !== grupoActual) {
+        grupoActual = hit.tipo;
+        var cab = document.createElement("li");
+        cab.className = "busqueda-grupo";
+        cab.setAttribute("role", "presentation");
+        cab.textContent = ETIQUETAS_TIPO[hit.tipo] || hit.tipo;
+        lista.appendChild(cab);
+      }
       var li = document.createElement("li");
       var a = document.createElement("a");
       a.href = urlDestino(hit);
-      a.className = i === 0 ? "is-activo" : "";
       var formateado = (hit._formatted && hit._formatted.texto) || hit.texto || "";
       a.innerHTML =
-        '<span class="busqueda-resultado-tipo">' + escapeHtml(ETIQUETAS_TIPO[hit.tipo] || hit.tipo) + "</span>" +
-        '<span class="busqueda-resultado-texto">' + resaltarSeguro(formateado) + "</span>";
+        '<span class="busqueda-icono-tipo"><svg aria-hidden="true"><use href="' + URL_ICONOS + '#icono-' + (ICONO_TIPO[hit.tipo] || "search") + '"></use></svg></span>' +
+        '<span class="busqueda-resultado-texto">' + resaltar(formateado) + "</span>";
       li.appendChild(a);
       lista.appendChild(li);
     });
-    if (meta && hits.length) {
+    // la lista de enlaces incluye ahora la fila de la IA: se navega sobre todos
+    resultadosActuales = Array.prototype.slice.call(lista.querySelectorAll("a"));
+    if (meta && visibles.length) {
       var total = meta.estimatedTotalHits;
-      var texto = total > hits.length
-        ? (total + " resultados (mostrando " + hits.length + ") · " + meta.processingTimeMs + " ms")
-        : (hits.length + (hits.length === 1 ? " resultado · " : " resultados · ") + meta.processingTimeMs + " ms");
-      pie.textContent = texto;
+      var txt = total > visibles.length
+        ? (total + " resultados (mostrando " + visibles.length + ") · " + meta.processingTimeMs + " ms")
+        : (visibles.length + (visibles.length === 1 ? " resultado · " : " resultados · ") + meta.processingTimeMs + " ms");
+      pie.textContent = txt;
       pie.hidden = false;
     } else {
       pie.hidden = true;
@@ -132,7 +164,8 @@
   }
 
   function mostrarError(mensaje) {
-    limpiar();
+    pintar([], null);                      // sin buscador, «Preguntar al asistente» sigue ahí
+    vacio.hidden = true;
     error.hidden = false;
     error.textContent = mensaje;
   }
@@ -209,6 +242,16 @@
   }
 
   boton.addEventListener("click", abrir);
+
+  // Chips de tipo (Todo, Tareas, Notas…): filtran lo ya buscado.
+  overlay.querySelectorAll(".busqueda-filtro").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      filtroTipo = chip.dataset.tipo || "";
+      overlay.querySelectorAll(".busqueda-filtro").forEach(function (c) { c.classList.toggle("on", c === chip); c.setAttribute("aria-pressed", c === chip ? "true" : "false"); });
+      if (input.value.trim()) pintar(hitsCrudos, null);
+      input.focus();
+    });
+  });
 
   document.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {

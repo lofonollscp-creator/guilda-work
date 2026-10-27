@@ -1,98 +1,86 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Vencimientos fiscales') }} — Guilda Work{% endblock %}
+{% block barra_accion %}<a class="top-bar-accion" href="{{ url_for('fiscal.generar_vencimientos_masivo') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-plus"></use></svg> {{ _('Nuevo vencimiento') }}</a>{% endblock %}
 {% block content %}
-<header class="page-header">
+<header class="page-header sr-only">
   <div>
     <h1>{{ _('Calendario fiscal') }}</h1>
     <p class="subtitle">{{ _('Vencimientos de todos los clientes de la gestoría.') }}</p>
   </div>
 </header>
 
-<nav class="tareas-subnav">
-  <a href="{{ url_for('fiscal.clientes') }}">{{ _('Clientes') }}</a>
-  <a class="active" href="{{ url_for('fiscal.vencimientos') }}">{{ _('Vencimientos') }}</a>
-  <a href="{{ url_for('fiscal.recordatorios') }}">{{ _('Recordatorios') }}</a>
-  <a href="{{ url_for('fiscal.papelera') }}">{{ _('Papelera') }}</a>
-</nav>
+<div class="fiscal-resumen">
+  <div class="fiscal-cifra"><span class="muted">{{ _('Vencen esta semana') }}</span><span class="fiscal-cifra-num">{{ resumen.semana }}</span></div>
+  <div class="fiscal-cifra"><span class="muted">{{ _('Vencidos sin presentar') }}</span><span class="fiscal-cifra-num {{ 'es-rojo' if resumen.vencidos }}">{{ resumen.vencidos }}</span>{% if resumen.primer_vencido %}<span class="muted fiscal-cifra-pie">{{ resumen.primer_vencido }}</span>{% endif %}</div>
+  <div class="fiscal-cifra"><span class="muted">{{ _('Próximos 30 días') }}</span><span class="fiscal-cifra-num">{{ resumen.proximos }}</span></div>
+  <div class="fiscal-cifra fiscal-cifra-ia">
+    <span class="fiscal-cifra-ia-etiqueta"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg> {{ _('Asistente') }}</span>
+    <p>{{ ngettext('Prepara el borrador del modelo que vence esta semana.', 'Prepara los borradores de los %(n)s modelos que vencen esta semana.', resumen.semana, n=resumen.semana) if resumen.semana else _('Pregúntale qué vence en los próximos días.') }}</p>
+    <a href="{{ url_for('ia.asistente_vista', q=_('¿Qué modelos vencen esta semana y qué me falta para presentarlos?')) }}">{{ _('Preguntar') }} →</a>
+  </div>
+</div>
 
-<nav class="tareas-subnav">
-  <a class="active" href="{{ url_for('fiscal.vencimientos', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Lista') }}</a>
-  <a href="{{ url_for('fiscal.vencimientos_calendario', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Calendario') }}</a>
-</nav>
-
-<form class="filters" method="get">
-  <label>{{ _('Estado') }}
-    <select name="estado">
-      <option value="">{{ _('Todos') }}</option>
-      {% for valor, etiqueta in estados %}
-      <option value="{{ valor }}" {% if filtro_estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
-      {% endfor %}
-    </select>
-  </label>
-  <label>{{ _('Cliente') }}
-    <select name="cliente_id">
-      <option value="">{{ _('Todos') }}</option>
-      {% for c in clientes %}
-      <option value="{{ c.id }}" {% if filtro_cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
-      {% endfor %}
-    </select>
-  </label>
+<form class="tareas-filtros" method="get">
+  <div class="tareas-ambito" role="group" aria-label="{{ _('Estado') }}">
+    <a class="chip-v2 {{ 'on' if not filtro_estado }}" href="{{ url_for('fiscal.vencimientos', cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Todos') }}</a>
+    {% for valor, etiqueta in estados %}
+    <a class="chip-v2 {{ 'on' if filtro_estado == valor }}" href="{{ url_for('fiscal.vencimientos', estado=valor, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ etiqueta }}</a>
+    {% endfor %}
+  </div>
+  <span class="tareas-filtros-sep" aria-hidden="true"></span>
+  {% if filtro_estado %}<input type="hidden" name="estado" value="{{ filtro_estado }}">{% endif %}
+  <label class="sr-only" for="fv-cliente">{{ _('Cliente') }}</label>
+  <select id="fv-cliente" class="chip-v2 chip-campo" name="cliente_id" data-autoenviar>
+    <option value="">{{ _('Cliente: todos') }}</option>
+    {% for c in clientes %}<option value="{{ c.id }}" {% if filtro_cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+  </select>
   {% if paises_en_uso|length > 1 %}
-  <label>{{ _('País') }}
-    <select name="pais">
-      <option value="">{{ _('Todos') }}</option>
-      {% for p in paises_en_uso %}
-      <option value="{{ p }}" {% if filtro_pais == p %}selected{% endif %}>{{ _('España') if p == 'ES' else p }}</option>
-      {% endfor %}
-    </select>
-  </label>
+  <label class="sr-only" for="fv-pais">{{ _('País') }}</label>
+  <select id="fv-pais" class="chip-v2 chip-campo" name="pais" data-autoenviar>
+    <option value="">{{ _('País: todos') }}</option>
+    {% for p in paises_en_uso %}<option value="{{ p }}" {% if filtro_pais == p %}selected{% endif %}>{{ _('España') if p == 'ES' else p }}</option>{% endfor %}
+  </select>
   {% endif %}
-  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
-  <span class="action-group">
-    <a class="btn btn-ghost" href="{{ url_for('fiscal.export_csv', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">CSV</a>
-    <a class="btn btn-ghost" href="{{ url_for('fiscal.export_json', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">JSON</a>
-  </span>
+  <button type="submit" class="chip-v2 on">{{ _('Filtrar') }}</button>
+  <span class="tareas-filtros-sep" aria-hidden="true"></span>
+  <a class="chip-v2" href="{{ url_for('fiscal.vencimientos_calendario', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">{{ _('Ver en calendario') }}</a>
+  <a class="chip-v2" href="{{ url_for('fiscal.export_csv', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">CSV</a>
+  <a class="chip-v2" href="{{ url_for('fiscal.export_json', estado=filtro_estado, cliente_id=filtro_cliente_id, pais=filtro_pais) }}">JSON</a>
 </form>
 
 {% if not vencimientos %}
 <p class="empty-lane">{{ _('No hay vencimientos para este filtro.') }}</p>
 {% else %}
 <div class="fiscal-layout">
-<div class="fiscal-lista">
-  {% for cliente_nombre, grupo in vencimientos|groupby('cliente_nombre') %}
-  <details class="fiscal-grupo" open>
-    <summary class="fiscal-grupo-resumen">
-      <span class="fiscal-grupo-nombre">{{ cliente_nombre }}</span>
-      <span class="pill">{{ _('%(n)s vencimiento(s)', n=grupo|length) }}</span>
-    </summary>
-    <ul class="log-list">
-      {% for v in grupo %}
-      <li class="log-item vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }}" data-cliente-id="{{ v.cliente_fiscal_id }}">
+<div class="fiscal-lista fiscal-tabla">
+  <div class="fiscal-fila fiscal-fila-cab" aria-hidden="true"><span>{{ _('Modelo') }}</span><span>{{ _('Cliente') }}</span><span>{{ _('Periodo') }}</span><span>{{ _('Vence') }}</span><span>{{ _('Estado') }}</span><span></span></div>
+  <ul class="fiscal-filas">
+    {% for v in vencimientos %}
+    {% set vencido = v.estado == 'pendiente' and v.fecha_limite[:10] < hoy %}
+    {% set proximo = v.estado == 'pendiente' and not vencido and v.fecha_limite[:10] <= limite_proximo %}
+    {% set vtxt, vclase = v.fecha_limite|vence(v.estado == 'presentado') %}
+    <li class="fiscal-fila vencimiento-fiscal-item {{ 'is-completada' if v.estado == 'presentado' }} {{ 'es-vencido' if vencido }}" data-cliente-id="{{ v.cliente_fiscal_id }}">
+      <span class="fiscal-modelo">{{ v.modelo }}</span>
+      <span class="fiscal-fila-cliente log-text">
+        <button type="button" class="fiscal-cliente-btn" data-cliente-id="{{ v.cliente_fiscal_id }}">{{ v.cliente_nombre }}</button>
+      </span>
+      <span class="fiscal-fila-periodo">{{ v.periodo }}</span>
+      <span><span class="pildora-v2 {{ 'rojo' if vencido or vclase == 'rojo' else ('ambar' if proximo else '') }}" title="{{ v.fecha_limite[:10] }}">{{ vtxt }}</span></span>
+      <span><span class="pildora-v2 {{ 'verde' if v.estado == 'presentado' else ('rojo' if vencido or v.estado == 'fuera_plazo' else ('azul' if proximo else '')) }}">{{ _('Vencido') if vencido else estados|selectattr('0', 'equalto', v.estado)|map(attribute='1')|first }}</span></span>
+      <span class="fiscal-fila-acciones">
         <form action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=v.id) }}" method="post">
           <button type="submit" class="tarea-check" title="{{ _('Marcar como presentado') }}" {{ 'disabled' if v.estado == 'presentado' }}>
             {% if v.estado == 'presentado' %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}
           </button>
         </form>
-        <span class="log-text">
-          <button type="button" class="fiscal-cliente-btn" data-cliente-id="{{ v.cliente_fiscal_id }}">{{ v.modelo }} — {{ v.cliente_nombre }}</button>
-        </span>
-        <span class="pill">{{ v.periodo }}</span>
-        <span class="log-duration">{{ _('Vence %(fecha)s', fecha=v.fecha_limite[:10]) }}</span>
-        {% set vencido = v.estado == 'pendiente' and v.fecha_limite[:10] < hoy %}
-        {% set proximo = v.estado == 'pendiente' and not vencido and v.fecha_limite[:10] <= limite_proximo %}
-        <span class="log-badge log-badge-{{ 'duracion' if v.estado == 'presentado' else ('error' if vencido or v.estado == 'fuera_plazo' else ('instantanea' if proximo else 'nota')) }}">
-          {{ _('Vencido') if vencido else estados|selectattr('0', 'equalto', v.estado)|map(attribute='1')|first }}
-        </span>
         <a class="log-edit" href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
-        <form action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=v.id) }}" method="post"
-              data-confirmar-envio="{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}">
+        <form action="{{ url_for('fiscal.eliminar_vencimiento', vencimiento_id=v.id) }}" method="post" data-confirmar-envio="{{ _('¿Eliminar este vencimiento? Se moverá a la papelera.') }}">
           <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>
         </form>
-      </li>
-      {% endfor %}
-    </ul>
-  </details>
-  {% endfor %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
 </div>
 
 <aside class="fiscal-detalle" id="fiscal-detalle">
@@ -148,6 +136,7 @@
     botones.forEach(function (boton) {
       boton.addEventListener("click", function () {
         var clienteId = boton.dataset.clienteId;
+        panel.classList.add("abierto");
         panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("Cargando…") }}</p>';
         fetch(urlBase + clienteId + "/resumen.json")
           .then(function (r) { return r.json(); })

@@ -154,3 +154,21 @@ def reunir(usuario_id: int, supervisor: bool = False, hoy: date | None = None, t
     secciones = [s for s in secciones if s]
     todos = sorted((dict(i, seccion=s["titulo"], clave=s["clave"]) for s in secciones for i in s["elementos"]), key=lambda i: (ORDEN_URGENCIA[i["urgencia"]], i["fecha"] or "9999"))
     return {"secciones": secciones, "total": sum(s["total"] for s in secciones), "urgentes": sum(s["urgentes"] for s in secciones), "destacados": todos[:30]}
+
+
+def resumen_en_breve(bandeja: dict) -> str:
+    """«Tu día en breve»: una frase armada con las cuentas de la bandeja (no es texto generado por IA: sale de los mismos datos que la lista)."""
+    por_clave = {s["clave"]: s for s in bandeja.get("secciones", [])}
+    partes = []
+    urgentes = bandeja.get("urgentes") or 0
+    if urgentes:
+        partes.append(ngettext("%(n)s cosa urgente", "%(n)s cosas urgentes", urgentes, n=urgentes))
+    correos = (por_clave.get("correo") or {}).get("total") or 0
+    if correos:
+        partes.append(ngettext("%(n)s correo por contestar", "%(n)s correos por contestar", correos, n=correos))
+    venc = (por_clave.get("vencimientos") or {}).get("total") or 0
+    if venc:
+        partes.append(ngettext("%(n)s vencimiento fiscal", "%(n)s vencimientos fiscales", venc, n=venc))
+    if not partes:
+        return _("Todo al día: no tienes nada pendiente.")
+    return _("Hoy tienes") + " " + ", ".join(partes) + "."

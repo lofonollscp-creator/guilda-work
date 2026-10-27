@@ -614,7 +614,24 @@ def vencimientos():
         # fecha ya no se pinta en ámbar (más de 7 días vista, color neutro).
         hoy=date.today().isoformat(),
         limite_proximo=(date.today() + timedelta(days=7)).isoformat(),
+        resumen=_resumen_vencimientos(),
     )
+
+
+def _resumen_vencimientos() -> dict:
+    """Las cuatro cifras de la cabecera (sobre todo lo pendiente del despacho, no solo la página): lo que vence esta semana, lo vencido sin presentar,
+    lo de los próximos 30 días y el primer vencido (para nombrarlo)."""
+    hoy = date.today()
+    pendientes = db.listar_vencimientos_fiscales(g.tenant_id, estado="pendiente", limite=2000)
+    iso = hoy.isoformat()
+    semana = (hoy + timedelta(days=7)).isoformat()
+    mes = (hoy + timedelta(days=30)).isoformat()
+    vencidos = [v for v in pendientes if v["fecha_limite"][:10] < iso]
+    esta_semana = [v for v in pendientes if iso <= v["fecha_limite"][:10] <= semana]
+    proximos = [v for v in pendientes if iso <= v["fecha_limite"][:10] <= mes]
+    return {"semana": len(esta_semana), "vencidos": len(vencidos), "proximos": len(proximos),
+            "primer_vencido": f"{vencidos[0]['modelo']} · {vencidos[0]['cliente_nombre']}" if vencidos else None,
+            "mayor_dia": None}
 
 
 @fiscal_bp.route("/vencimientos/calendario")

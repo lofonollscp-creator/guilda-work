@@ -746,6 +746,21 @@ def _notificar_comentario(autor_id: int, tarea_id: int, resultado: dict) -> None
         pass
 
 
+@tareas_bp.route("/<int:tarea_id>/ficha")
+@login_required
+def ficha(tarea_id: int):
+    """La ficha de una tarea como fragmento (para el panel de la derecha de la lista: static/tareas_ficha.js)."""
+    tarea = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    if tarea is None:
+        abort(404)
+    comentarios = db.listar_comentarios_tarea(g.usuario_id, tarea_id)
+    return render_template(
+        "_tarea_ficha.html", tarea=tarea, estados=ESTADOS, checklist=db.listar_checklist(tarea_id),
+        dueno_nombre=db.nombre_mostrado_usuario(tarea["usuario_id"]) or (db.obtener_usuario(tarea["usuario_id"]) or {"email": ""})["email"], puede_editar=db.puede_editar_tarea(g.usuario_id, tarea_id),
+        ultimo_comentario=comentarios[-1] if comentarios else None,
+    )
+
+
 @tareas_bp.route("/<int:tarea_id>")
 @login_required
 def ver(tarea_id: int):

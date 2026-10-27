@@ -1,29 +1,62 @@
 {% extends "base.html" %}
 {% from "_ia_chat_macro.html" import chat %}
+{% set barra_titulo_interactivo = true %}
 {% block title %}{{ _('Asistente IA') }} · Guilda Work{% endblock %}
+{% block barra_titulo %}
+<span class="ia-insignia" aria-hidden="true"><svg class="icono-inline"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></span>
+<span class="ia-barra-texto"><strong>{{ _('Asistente') }}</strong><button type="button" class="ia-enlace js-ia-info">{{ _('IA · puede equivocarse') }} <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-info"></use></svg><span class="sr-only"> {{ _('Cómo funciona') }}</span></button></span>
+{% endblock %}
+{% block barra_accion %}
+<button type="button" class="top-bar-accion top-bar-accion-sec" id="ia-nueva-conversacion"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg> {{ _('Nueva conversación') }}</button>
+<a class="top-bar-icono" href="{{ url_for('ia.ajustes') }}" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg></a>
+{% endblock %}
 {% block content %}
-<div class="ia-pagina ia-pagina-chat">
-  <div class="ia-pagina-cabecera">
-    <h1>{{ _('Asistente IA') }}</h1>
-    <a class="btn btn-ghost" href="{{ url_for('ia.ajustes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg> {{ _('Ajustes') }}</a>
-  </div>
+<h1 class="sr-only">{{ _('Asistente IA') }}</h1>
+<div class="ia-pagina ia-pagina-chat ia-v2">
   {% if not preferencias.modelo %}
   <p class="ia-aviso">{{ _('No hay ningún modelo configurado todavía. Ve a') }} <a href="{{ url_for('ia.ajustes') }}">{{ _('Ajustes') }}</a> {{ _('para elegir un modelo y añadir tu clave de OpenRouter.') }}</p>
   {% endif %}
-  {% if conversaciones %}
-  <div class="ia-conversaciones"
-       data-prompt-renombrar="{{ _('Nuevo título de la conversación') }}"
-       data-confirmar-eliminar="{{ _('¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer.') }}">
-    <label class="sr-only" for="ia-conv-select">{{ _('Conversación') }}</label>
-    <select id="ia-conv-select">
+  <div class="ia-v2-columnas">
+    <aside class="ia-v2-lista ia-conversaciones" aria-label="{{ _('Conversaciones') }}"
+           data-prompt-renombrar="{{ _('Nuevo título de la conversación') }}"
+           data-confirmar-eliminar="{{ _('¿Eliminar esta conversación y todos sus mensajes? No se puede deshacer.') }}">
+      <p class="etiqueta-seccion">{{ _('Conversaciones') }}</p>
       {% for c in conversaciones %}
-      <option value="{{ c.id }}" data-titulo="{{ c.titulo or '' }}" {{ 'selected' if c.id == conversacion_activa_id }}>{{ c.titulo or _('Nueva conversación') }} · {{ c.actualizada_en[:10] }}</option>
+      <button type="button" class="ia-conv-item {{ 'on' if c.id == conversacion_activa_id }}" data-conv-id="{{ c.id }}" data-titulo="{{ c.titulo or '' }}" {% if c.id == conversacion_activa_id %}aria-current="true"{% endif %}>
+        <b>{{ c.titulo or _('Nueva conversación') }}</b><span>{{ c.actualizada_en|fecha_dia }}</span>
+      </button>
       {% endfor %}
-    </select>
-    <button type="button" class="btn btn-ghost" id="ia-conv-renombrar">{{ _('Renombrar') }}</button>
-    <button type="button" class="btn btn-ghost" id="ia-conv-eliminar">{{ _('Eliminar') }}</button>
+      {% if conversaciones %}
+      <div class="ia-v2-lista-pie">
+        <button type="button" class="ia-enlace" id="ia-conv-renombrar">{{ _('Renombrar') }}</button>
+        <button type="button" class="ia-enlace" id="ia-conv-eliminar">{{ _('Eliminar') }}</button>
+      </div>
+      {% endif %}
+    </aside>
+    <section class="ia-v2-centro">
+      {{ chat(mensajes, pendiente, 'ia-chat-pagina', ia_atajos, con_info=True) }}
+    </section>
+    <aside class="ia-v2-lado" aria-label="{{ _('Fuentes y ayuda') }}">
+      <div id="ia-lado-fuentes" hidden>
+        <p class="etiqueta-seccion">{{ _('Fuentes de esta respuesta') }}</p>
+        <ul class="ia-lado-fuentes-lista"></ul>
+      </div>
+      <div class="ia-lado-ayuda">
+        <p class="etiqueta-seccion">{{ _('Cómo funciona') }}</p>
+        <p>{{ _('Lee y resume con libertad; para crear, cambiar o borrar te enseña antes lo que hará.') }} <button type="button" class="ia-enlace js-ia-info">{{ _('Saber más') }}</button></p>
+      </div>
+    </aside>
   </div>
-  {% endif %}
-  {{ chat(mensajes, pendiente, 'ia-chat-pagina', ia_atajos) }}
 </div>
+
+<dialog id="ia-info" class="ia-info" aria-labelledby="ia-info-t">
+  <div class="ia-info-cab"><span class="ia-insignia" aria-hidden="true"><svg class="icono-inline"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></span><h2 id="ia-info-t">{{ _('Cómo funciona el asistente') }}</h2><button type="button" class="ia-info-x js-ia-info-cerrar" aria-label="{{ _('Cerrar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button></div>
+  <dl class="ia-info-puntos">
+    <div><dt>{{ _('Lo que ve') }}</dt><dd>{{ _('Tus tareas, notas y correo, y lo del despacho que tu usuario ya puede ver. Nada más.') }}</dd></div>
+    <div><dt>{{ _('Lo que hace con tu permiso') }}</dt><dd>{{ _('Leer y resumir es libre. Crear, cambiar o borrar algo siempre te lo enseña antes. Enviar un correo, siempre lo confirmas tú.') }}</dd></div>
+    <div><dt>{{ _('Puede equivocarse') }}</dt><dd>{{ _('Sobre todo con cifras, fechas y plazos fiscales. Cada respuesta indica de dónde sale: ábrela y compruébalo antes de actuar.') }}</dd></div>
+  </dl>
+  <label class="ia-info-interruptor"><input type="checkbox" id="ia-info-cautela"> <span><strong>{{ _('Recordarme revisar las cifras fiscales') }}</strong><br><span class="muted">{{ _('Muestra una etiqueta de cautela junto a importes y plazos') }}</span></span></label>
+  <div class="ia-info-pie"><a class="btn btn-secondary" href="{{ url_for('ia.ajustes') }}">{{ _('Ajustes del asistente') }}</a><button type="button" class="btn btn-primary js-ia-info-cerrar">{{ _('Entendido') }}</button></div>
+</dialog>
 {% endblock %}
