@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../../api/generado/modelos.g.dart';
 import '../../diseno/componentes.dart';
@@ -113,6 +114,7 @@ class FilaTarea extends StatelessWidget {
       dismissThresholds: const {DismissDirection.startToEnd: 0.4},
       // La tarea no se «quita» aquí: se completa y la pantalla ya la saca (o la deja, si el servidor lo rechaza), así que la tarjeta vuelve a su sitio.
       confirmDismiss: (_) async {
+        HapticFeedback.mediumImpact(); // un toque en la mano: «hecho»
         await alCompletar(tarea);
         return false;
       },

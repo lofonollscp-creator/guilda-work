@@ -741,6 +741,24 @@ void main() {
       expect(repo.registro, contains('transicionar:1:completada:-:1'));
     });
 
+    testWidgets('deslizar una tarea hacia la derecha la completa, enseña «Deshacer» y la fila vuelve a su sitio', (t) async {
+      final repo = _RepoFalso()..paginas = (a, e, q, o) => [_tarea(1, fecha: '2026-10-28'), _tarea(2)];
+      await t.pumpWidget(_app(const TareasScreen(), _over(repo)));
+      await t.pumpAndSettle();
+      await t.drag(find.text('Tarea 1'), const Offset(500, 0));
+      await t.pumpAndSettle();
+      expect(repo.registro, contains('transicionar:1:completada:-:1'));
+      expect(find.text('Deshacer'), findsOneWidget);
+      expect(find.text('Tarea 2'), findsOneWidget);
+    });
+
+    testWidgets('una tarea ya hecha no se desliza', (t) async {
+      final repo = _RepoFalso()..paginas = (a, e, q, o) => [_tarea(3, estado: 'completada')];
+      await t.pumpWidget(_app(const TareasScreen(), _over(repo)));
+      await t.pumpAndSettle();
+      expect(find.byType(Dismissible), findsNothing);
+    });
+
     testWidgets('con la letra al 160 % (accesibilidad) las pantallas de tareas no se desbordan', (t) async {
       final repo = _RepoFalso()
         ..paginas = ((a, e, q, o) => [TareaOutlook.fromJson({..._t(1, fecha: '2026-10-20', vencida: true, prioridad: 'alta'), 'asunto': 'Presentar el modelo 303 trimestral de Acme Sociedad Limitada', 'categoria_nombre': 'IVA y otros impuestos indirectos', 'n_comentarios': 3, 'checklist_total': 4, 'checklist_hechas': 2, 'rol': 'asignada'})])
