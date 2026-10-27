@@ -4,7 +4,7 @@
 (function () {
   var panel = document.getElementById("tareas-ficha");
   if (!panel) return;
-  var ancha = window.matchMedia("(min-width: 1100px)");
+  var ancha = window.matchMedia("(min-width: 1400px)");
   var actual = null;
 
   function marcar(fila) {
