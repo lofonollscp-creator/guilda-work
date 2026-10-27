@@ -813,5 +813,6 @@
   "iaAdjuntoSubiendo": "Pujant el fitxer…",
   "iaAdjuntoQuitar": "Treu el fitxer",
   "iaAdjuntoError": "No s'ha pogut pujar el fitxer.",
-  "iaAdjuntoPregunta": "Llegeix el fitxer adjunt i digues-me què conté."
+  "iaAdjuntoPregunta": "Llegeix el fitxer adjunt i digues-me què conté.",
+  "iaPreguntarAlAsistente": "Pregunta a l'assistent"
 }

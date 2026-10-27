@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../nucleo/abrir_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show toBeginningOfSentenceCase;
 
@@ -70,6 +72,7 @@ class _AvisosScreenState extends ConsumerState<AvisosScreen> {
       appBar: AppBar(
         title: Text(t.avisosTitulo),
         actions: [
+          AccionAsistente(contexto: t.avisosTitulo),
           if ((datos?.noLeidas ?? 0) > 0)
             IconButton(
               icon: const Icon(Icons.done_all),
@@ -107,7 +110,7 @@ class _AvisosScreenState extends ConsumerState<AvisosScreen> {
     for (final n in lista) {
       final d = dia(n);
       if (d != ultimo) {
-        salida.add(Padding(padding: const EdgeInsets.fromLTRB(16, 16, 16, 4), child: Text(d, style: Theme.of(context).textTheme.labelLarge)));
+        salida.add(EtiquetaSeccion(d));
         ultimo = d;
       }
       salida.add(_Aviso(key: ValueKey('aviso-${n.id}'), aviso: n));

@@ -3,6 +3,8 @@ import 'dart:io';
 import '../../diseno/adaptable.dart';
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 import '../diseno/formatos.dart';
 
@@ -210,6 +212,7 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).comunMensaje),
         actions: [
+          AccionAsistente(contexto: AppLocalizations.of(context).comunMensaje, contextoIa: 'correo, mensaje #${widget.mensajeId}'),
           IconButton(icon: Icon(Icons.delete_outline), tooltip: AppLocalizations.of(context).comunEliminar, onPressed: _eliminar),
         ],
       ),

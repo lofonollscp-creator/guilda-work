@@ -363,6 +363,22 @@ class PildoraMenu<T> extends StatelessWidget {
 
 
 /// Un grupo de filas (accesos o ajustes) en una tarjeta, con un filo entre ellas.
+/// El rótulo de una sección («Hoy», «Apariencia»…): pequeño, atenuado y con aire, sobre las tarjetas que agrupa.
+class EtiquetaSeccion extends StatelessWidget {
+  final String texto;
+  final EdgeInsetsGeometry padding;
+  const EtiquetaSeccion(this.texto, {super.key, this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 6)});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Padding(
+      padding: padding,
+      child: Semantics(header: true, child: Text(texto, style: tema.textTheme.labelMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant, fontWeight: FontWeight.w700, letterSpacing: 0.4))),
+    );
+  }
+}
+
 class GrupoAjustes extends StatelessWidget {
   final List<Widget> children;
   const GrupoAjustes({super.key, required this.children});

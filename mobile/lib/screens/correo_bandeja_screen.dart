@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -83,6 +85,7 @@ class _CorreoBandejaScreenState extends State<CorreoBandejaScreen> {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).dashboardCorreoTooltip),
         actions: [
+          AccionAsistente(contexto: AppLocalizations.of(context).dashboardCorreoTooltip),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: AppLocalizations.of(context).correoAjustesTitulo,

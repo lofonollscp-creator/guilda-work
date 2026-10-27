@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../../nucleo/abrir_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:open_filex/open_filex.dart';
@@ -404,6 +406,7 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
   AppBar _barraLectura(AppLocalizations t) => AppBar(
         title: Text(t.notasTitulo),
         actions: [
+          if (_nota != null) AccionAsistente(contexto: t.notasTitulo, contextoIa: 'nota #${_nota!.id}'),
           if (_nota != null && _puedeEditar) IconButton(icon: const Icon(Icons.edit_outlined), tooltip: t.notasEditar, onPressed: () => setState(() => _editando = true)),
           if (_nota != null && _esDueno)
             PopupMenuButton<String>(

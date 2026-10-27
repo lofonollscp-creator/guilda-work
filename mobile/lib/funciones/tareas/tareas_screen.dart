@@ -265,7 +265,7 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
           child: BarraAsistente(
             pista: t.iaBarraTareasHint,
-            alPulsar: () => abrirAsistente(context, ref, contexto: t.tareasTitulo),
+            alPulsar: () => abrirAsistente(context, contexto: t.tareasTitulo),
           ),
         ),
         _AltaRapida(controlador: _nueva, fecha: _fecha, alElegirFecha: _elegirFecha, alQuitarFecha: () => setState(() => _fecha = null), alEnviar: _crear),

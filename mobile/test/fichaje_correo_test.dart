@@ -141,6 +141,22 @@ void main() {
       expect(api.enviadosIa, ['Resume mis correos sin contestar']);
     });
 
+    testWidgets('desde un elemento: el asistente recibe de qué hablas con el primer mensaje, y a ti no se te enseña esa línea', (t) async {
+      sinVoz();
+      final api = ApiFalsa();
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService(), contextoIa: 'tarea #7 «Presentar el 303»', contexto: 'Tarea'), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextField), '¿Cuándo vence?');
+      await t.tap(find.byTooltip('Enviar'));
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextField), 'Gracias');
+      await t.tap(find.byTooltip('Enviar'));
+      await t.pumpAndSettle();
+      expect(api.enviadosIa, ['[Contexto: tarea #7 «Presentar el 303»]\n¿Cuándo vence?', 'Gracias']);
+      expect(find.text('¿Cuándo vence?'), findsOneWidget);
+      expect(find.textContaining('[Contexto'), findsNothing);
+    });
+
     testWidgets('el aviso de que es una IA acompaña al campo de escritura', (t) async {
       sinVoz();
       await t.pumpWidget(appDePantalla(IaChatScreen(api: ApiFalsa(), locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));

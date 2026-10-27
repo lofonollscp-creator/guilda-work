@@ -862,6 +862,9 @@ class IaAdjunto {
   const IaAdjunto({required this.id, required this.nombre});
 }
 
+/// La línea `[Contexto: …]` que la app pone al principio del primer mensaje para decirle al asistente de qué elemento hablas: a ti no se te enseña.
+String quitarContextoDelTexto(String texto) => texto.replaceFirst(RegExp(r'^\[Contexto: [^\]\n]*\]\n?'), '');
+
 /// Los mensajes que empiezan por `[Adjunto #12: datos.csv]` y una línea nueva llevan un archivo: el nombre y el resto del texto.
 ({String nombre, String texto})? separarAdjuntoDelTexto(String texto) {
   final m = RegExp(r'^\[Adjunto #\d+: ([^\]\n]+)\]\n?').firstMatch(texto);

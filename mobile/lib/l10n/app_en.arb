@@ -813,5 +813,6 @@
   "iaAdjuntoSubiendo": "Uploading file…",
   "iaAdjuntoQuitar": "Remove file",
   "iaAdjuntoError": "The file could not be uploaded.",
-  "iaAdjuntoPregunta": "Read the attached file and tell me what it contains."
+  "iaAdjuntoPregunta": "Read the attached file and tell me what it contains.",
+  "iaPreguntarAlAsistente": "Ask the assistant"
 }

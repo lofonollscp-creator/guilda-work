@@ -46,7 +46,10 @@ class IaChatScreen extends ConsumerStatefulWidget {
   /// De qué trata la conversación («Tareas»…): se muestra bajo la barra para que se sepa qué está mirando.
   final String? contexto;
 
-  const IaChatScreen({super.key, required this.api, required this.locale, this.consultaInicial, this.contexto});
+  /// Lo que se le cuenta al asistente (con el primer mensaje) sobre el elemento desde el que se abrió: `tarea #7 «Presentar el 303»`.
+  final String? contextoIa;
+
+  const IaChatScreen({super.key, required this.api, required this.locale, this.consultaInicial, this.contexto, this.contextoIa});
 
   @override
   ConsumerState<IaChatScreen> createState() => _IaChatScreenState();
@@ -65,6 +68,7 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
   String? _errorTurno;
   IaAdjunto? _adjunto; // el archivo subido que irá con el próximo mensaje
   bool _subiendo = false;
+  bool _contextoEnviado = false;
   String? _textoVivo; // respuesta del asistente pintándose en directo (streaming)
   int _idLocal = -1; // ids negativos para las burbujas de usuario optimistas (nunca chocan con ids reales del servidor)
 
@@ -211,6 +215,12 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
     if (texto.isEmpty || _enviando || _subiendo) return;
     // Así lo reconoce el asistente (y la web): el archivo va nombrado en la primera línea.
     if (adjunto != null) texto = '[Adjunto #${adjunto.id}: ${adjunto.nombre}]\n$texto';
+    // Con el primer mensaje va, en una línea que aquí no se pinta, de qué elemento hablas.
+    final contextoIa = widget.contextoIa;
+    if (contextoIa != null && !_contextoEnviado) {
+      texto = '[Contexto: $contextoIa]\n$texto';
+      _contextoEnviado = true;
+    }
     _controller.clear();
     setState(() {
       _adjunto = null;
@@ -675,6 +685,7 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
   /// Lo que escribiste; si iba con un archivo, su nombre sale arriba como una píldora y no la línea técnica `[Adjunto #…]`.
   Widget _contenidoUsuario(BuildContext context, String contenido) {
     final color = Theme.of(context).colorScheme.onPrimary;
+    contenido = quitarContextoDelTexto(contenido);
     final partes = separarAdjuntoDelTexto(contenido);
     if (partes == null) return Text(contenido, style: TextStyle(color: color));
     return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [

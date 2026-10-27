@@ -132,7 +132,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: false,
-        titleTextStyle: textTheme.titleLarge,
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 22, letterSpacing: -0.3),
       ),
       cardTheme: CardThemeData(
         color: surface,

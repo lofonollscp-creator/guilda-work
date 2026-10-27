@@ -1299,5 +1299,6 @@
   "iaAdjuntoSubiendo": "Subiendo archivo…",
   "iaAdjuntoQuitar": "Quitar archivo",
   "iaAdjuntoError": "No se ha podido subir el archivo.",
-  "iaAdjuntoPregunta": "Lee el archivo adjunto y dime qué contiene."
+  "iaAdjuntoPregunta": "Lee el archivo adjunto y dime qué contiene.",
+  "iaPreguntarAlAsistente": "Preguntar al asistente"
 }

@@ -112,8 +112,8 @@ class _Bandeja extends ConsumerWidget {
       titulo: t.iaTarjetaTitulo,
       pista: t.iaBarraHint,
       sugerencias: [t.iaSugerencia1, t.iaSugerencia2],
-      alElegir: (consulta) => abrirAsistente(context, ref, consulta: consulta, contexto: t.navInicio),
-      alAbrir: () => abrirAsistente(context, ref, contexto: t.navInicio),
+      alElegir: (consulta) => abrirAsistente(context, consulta: consulta, contexto: t.navInicio),
+      alAbrir: () => abrirAsistente(context, contexto: t.navInicio),
     );
     final aviso = desactualizado ? t.hoySinConexionDatosDe(context.formatos.hora(obtenidoEn.hour, obtenidoEn.minute)) : null;
 

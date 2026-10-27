@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../nucleo/abrir_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
@@ -78,6 +80,7 @@ class _NotasScreenState extends ConsumerState<NotasScreen> {
               )
             : Text(t.notasTitulo),
         actions: [
+          AccionAsistente(contexto: t.notasTitulo),
           IconButton(
             icon: Icon(_buscando ? Icons.close : Icons.search),
             tooltip: t.notasBuscar,
