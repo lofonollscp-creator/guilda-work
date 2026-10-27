@@ -1279,5 +1279,18 @@
       }
     }
   },
-  "fichajeAunNoHoy": "Aún no has fichado hoy"
+  "fichajeAunNoHoy": "Aún no has fichado hoy",
+  "iaSubtitulo": "Conoce tus tareas, notas y correo",
+  "iaContexto": "Contexto: {contexto}",
+  "@iaContexto": {
+    "placeholders": {
+      "contexto": {
+        "type": "String"
+      }
+    }
+  },
+  "iaInicioTitulo": "¿En qué te ayudo?",
+  "iaBarraHint": "Pregunta o pide algo…",
+  "iaBarraTareasHint": "Pregunta sobre tus tareas",
+  "iaTarjetaTitulo": "Tu asistente"
 }

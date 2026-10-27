@@ -800,5 +800,11 @@
   "fichajeDesdeLas": "Depuis {hora}",
   "fichajePausaDesdeLas": "En pause depuis {hora}",
   "fichajeSalisteALas": "Dernière sortie à {hora}",
-  "fichajeAunNoHoy": "Vous n'avez pas encore pointé aujourd'hui"
+  "fichajeAunNoHoy": "Vous n'avez pas encore pointé aujourd'hui",
+  "iaSubtitulo": "Connaît vos tâches, notes et e-mails",
+  "iaContexto": "Contexte : {contexto}",
+  "iaInicioTitulo": "Comment puis-je vous aider ?",
+  "iaBarraHint": "Posez une question ou demandez quelque chose…",
+  "iaBarraTareasHint": "Posez une question sur vos tâches",
+  "iaTarjetaTitulo": "Votre assistant"
 }

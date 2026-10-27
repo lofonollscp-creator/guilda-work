@@ -800,5 +800,11 @@
   "fichajeDesdeLas": "Since {hora}",
   "fichajePausaDesdeLas": "On break since {hora}",
   "fichajeSalisteALas": "Last clock-out at {hora}",
-  "fichajeAunNoHoy": "You haven't clocked in today yet"
+  "fichajeAunNoHoy": "You haven't clocked in today yet",
+  "iaSubtitulo": "Knows your tasks, notes and email",
+  "iaContexto": "Context: {contexto}",
+  "iaInicioTitulo": "How can I help?",
+  "iaBarraHint": "Ask or request something…",
+  "iaBarraTareasHint": "Ask about your tasks",
+  "iaTarjetaTitulo": "Your assistant"
 }

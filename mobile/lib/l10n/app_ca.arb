@@ -800,5 +800,11 @@
   "fichajeDesdeLas": "Des de les {hora}",
   "fichajePausaDesdeLas": "En pausa des de les {hora}",
   "fichajeSalisteALas": "Última sortida a les {hora}",
-  "fichajeAunNoHoy": "Encara no has fitxat avui"
+  "fichajeAunNoHoy": "Encara no has fitxat avui",
+  "iaSubtitulo": "Coneix les teves tasques, notes i correu",
+  "iaContexto": "Context: {contexto}",
+  "iaInicioTitulo": "En què et puc ajudar?",
+  "iaBarraHint": "Pregunta o demana alguna cosa…",
+  "iaBarraTareasHint": "Pregunta sobre les teves tasques",
+  "iaTarjetaTitulo": "El teu assistent"
 }

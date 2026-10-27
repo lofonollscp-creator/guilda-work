@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../api/errores.dart';
 import '../../api/fechas.dart';
 import '../../diseno/adaptable.dart';
+import '../../diseno/asistente.dart';
 import '../../diseno/componentes.dart';
 import '../../diseno/formatos.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../datos/local/cola_escritura.dart' show ColaLlena;
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
+import '../../nucleo/abrir_asistente.dart';
 import '../../nucleo/lectura_guardada.dart';
 import '../pendientes/pendientes_sheet.dart';
 import 'fila_tarea.dart';
@@ -259,6 +261,13 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
         const SubnavTareas(),
         _Filtros(estado: estado),
         Expanded(child: _Cuerpo(estado: estado, scroll: _scroll, alCompletar: _completar, abierta: ancha ? abierta : null, alAbrir: ancha ? ref.read(tareaAbiertaProvider.notifier).abrir : null)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+          child: BarraAsistente(
+            pista: t.iaBarraTareasHint,
+            alPulsar: () => abrirAsistente(context, ref, contexto: t.tareasTitulo),
+          ),
+        ),
         _AltaRapida(controlador: _nueva, fecha: _fecha, alElegirFecha: _elegirFecha, alQuitarFecha: () => setState(() => _fecha = null), alEnviar: _crear),
       ]),
     );

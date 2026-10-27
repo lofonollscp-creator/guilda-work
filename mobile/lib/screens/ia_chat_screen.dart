@@ -5,6 +5,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
+import '../diseno/asistente.dart';
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -35,7 +36,13 @@ class IaChatScreen extends StatefulWidget {
   final ApiClient api;
   final LocaleService locale;
 
-  const IaChatScreen({super.key, required this.api, required this.locale});
+  /// Lo que se le pide al asistente nada más abrir el chat (las sugerencias de un toque desde otras pantallas).
+  final String? consultaInicial;
+
+  /// De qué trata la conversación («Tareas»…): se muestra bajo la barra para que se sepa qué está mirando.
+  final String? contexto;
+
+  const IaChatScreen({super.key, required this.api, required this.locale, this.consultaInicial, this.contexto});
 
   @override
   State<IaChatScreen> createState() => _IaChatScreenState();
@@ -69,7 +76,10 @@ class _IaChatScreenState extends State<IaChatScreen> {
   @override
   void initState() {
     super.initState();
-    _cargarHistorial();
+    _cargarHistorial().then((_) {
+      final consulta = widget.consultaInicial?.trim() ?? '';
+      if (mounted && consulta.isNotEmpty && _errorCarga == null) _enviarTexto(consulta);
+    });
     _inicializarVoz().catchError((_) {}); // la voz es un extra: si el móvil no la tiene o falla al arrancar, el chat sigue
   }
 
@@ -422,7 +432,16 @@ class _IaChatScreenState extends State<IaChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).dashboardAsistenteIaTooltip),
+        title: Row(children: [
+          const InsigniaIa(tamano: 34),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(AppLocalizations.of(context).dashboardAsistenteIaTooltip, style: Theme.of(context).textTheme.titleMedium),
+              Text(AppLocalizations.of(context).iaSubtitulo, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ]),
+          ),
+        ]),
         // Antes tres iconos sueltos; ahora un menú con nombre (la acción destructiva, «Vaciar», ya no está a un toque por error).
         actions: [
           PopupMenuButton<String>(
@@ -451,6 +470,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
       body: AnchoMaximo(child: SafeArea(
         child: Column(
           children: [
+            if (widget.contexto != null) _etiquetaContexto(context, widget.contexto!),
             Expanded(child: _cuerpo(context)),
             if (_pendiente != null) _tarjetaPendiente(context),
             if (_errorTurno != null)
@@ -458,10 +478,41 @@ class _IaChatScreenState extends State<IaChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: Text(_errorTurno!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ),
+            _sugerenciasRapidas(context),
             _cajaEntrada(context),
           ],
         ),
       )),
+    );
+  }
+
+  /// «Contexto: Tareas»: de qué trata esta conversación, en la píldora violeta del asistente.
+  Widget _etiquetaContexto(BuildContext context, String contexto) {
+    final c = ColoresIa.de(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(color: c.fondo, borderRadius: BorderRadius.circular(12)),
+        child: Text(AppLocalizations.of(context).iaContexto(contexto), style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c.sobreFondo, fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
+  /// Con la conversación empezada, tres atajos encima del campo de texto (vacía, ya salen como tarjetas).
+  Widget _sugerenciasRapidas(BuildContext context) {
+    if (_mensajes.isEmpty || _pendiente != null || _enviando || _cargando) return const SizedBox.shrink();
+    final t = AppLocalizations.of(context);
+    return SizedBox(
+      height: 52,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          for (final s in [t.iaSugerencia1, t.iaSugerencia2, t.iaSugerencia3])
+            Padding(padding: const EdgeInsets.only(right: 8), child: ChipIa(texto: s, alPulsar: () => _enviarTexto(s))),
+        ],
+      ),
     );
   }
 
@@ -486,40 +537,51 @@ class _IaChatScreenState extends State<IaChatScreen> {
     if (_mensajes.isEmpty && !_enviando) {
       final t = AppLocalizations.of(context);
       final tema = Theme.of(context);
-      return ListView(padding: const EdgeInsets.fromLTRB(16, 32, 16, 16), children: [
-        Center(
-          child: Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(color: tema.colorScheme.primary.withValues(alpha: 0.18), shape: BoxShape.circle),
-            child: ExcludeSemantics(child: Icon(Icons.auto_awesome, size: 34, color: tema.colorScheme.onSurface)),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(t.iaVacioTexto, textAlign: TextAlign.center, style: tema.textTheme.titleMedium),
-        const SizedBox(height: 24),
+      final c = ColoresIa.de(context);
+      final bloqueado = _enviando || _pendiente != null;
+      final acciones = [
+        (Icons.today_outlined, t.iaSugerencia1),
+        (Icons.mail_outline, t.iaSugerencia2),
+        (Icons.event_note_outlined, t.iaSugerencia3),
+        (Icons.edit_note, t.iaSugerencia4),
+      ];
+      return ListView(padding: const EdgeInsets.fromLTRB(16, 28, 16, 16), children: [
+        const Align(alignment: Alignment.centerLeft, child: InsigniaIa(tamano: 52)),
+        const SizedBox(height: 14),
+        Text(t.iaInicioTitulo, style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        Text(t.iaVacioTexto, style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 22),
         Text(t.iaSugerenciasTitulo, style: tema.textTheme.labelLarge),
         const SizedBox(height: 8),
-        // Las sugerencias son tarjetas de ancho completo: un toque y se envía (no hay que saber qué se le puede pedir).
-        for (final sugerencia in [t.iaSugerencia1, t.iaSugerencia2, t.iaSugerencia3, t.iaSugerencia4])
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Material(
-              color: tema.colorScheme.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
-              clipBehavior: Clip.antiAlias,
-              child: ListTile(
-                leading: const Icon(Icons.lightbulb_outline),
-                title: Text(sugerencia),
-                trailing: const Icon(Icons.arrow_upward, size: 18),
-                enabled: !(_enviando || _pendiente != null),
-                onTap: () {
-                  _controller.text = sugerencia;
-                  _enviarTexto();
-                },
+        // Cuatro tarjetas: un toque y se envía (no hay que saber qué se le puede pedir).
+        GridView.count(
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.35,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            for (final (icono, texto) in acciones)
+              Material(
+                color: tema.colorScheme.surface,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: bloqueado ? null : () => _enviarTexto(texto),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      ExcludeSemantics(child: Icon(icono, color: c.acento)),
+                      const Spacer(),
+                      Text(texto, style: tema.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600), maxLines: 3, overflow: TextOverflow.ellipsis),
+                    ]),
+                  ),
+                ),
               ),
-            ),
-          ),
+          ],
+        ),
       ]);
     }
     return ListView.builder(
@@ -550,7 +612,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
           borderRadius: const BorderRadius.only(topLeft: Radius.circular(4), topRight: Radius.circular(18), bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.only(top: 2, right: 8), child: ExcludeSemantics(child: Icon(Icons.auto_awesome, size: 18, color: tema.colorScheme.onSurfaceVariant))),
+          const Padding(padding: EdgeInsets.only(right: 8), child: InsigniaIa(tamano: 24)),
           Flexible(child: contenido),
         ]),
       ),
@@ -613,12 +675,12 @@ class _IaChatScreenState extends State<IaChatScreen> {
     final pendiente = _pendiente!;
     final t = AppLocalizations.of(context);
     final tema = Theme.of(context);
-    final aviso = tema.brightness == Brightness.dark ? BrandColors.warningDark : BrandColors.warningLight;
+    final c = ColoresIa.de(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       decoration: BoxDecoration(
-        color: tema.colorScheme.surface,
-        border: Border.all(color: aviso, width: 1.5),
+        color: c.fondo,
+        border: Border.all(color: c.borde, width: 1.5),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(14),
@@ -626,9 +688,9 @@ class _IaChatScreenState extends State<IaChatScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            ExcludeSemantics(child: Icon(Icons.help_outline, color: aviso)),
+            ExcludeSemantics(child: Icon(Icons.help_outline, color: c.acento)),
             const SizedBox(width: 8),
-            Expanded(child: Text(t.iaEjecutarPregunta(pendiente.herramienta), style: tema.textTheme.titleSmall)),
+            Expanded(child: Text(t.iaEjecutarPregunta(pendiente.herramienta), style: tema.textTheme.titleSmall?.copyWith(color: c.sobreFondo, fontWeight: FontWeight.w600))),
           ]),
           if (pendiente.argumentos.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -637,8 +699,8 @@ class _IaChatScreenState extends State<IaChatScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(e.key, style: tema.textTheme.labelSmall),
-                  Text('${e.value}', style: tema.textTheme.bodyMedium),
+                  Text(e.key, style: tema.textTheme.labelSmall?.copyWith(color: c.sobreFondo)),
+                  Text('${e.value}', style: tema.textTheme.bodyMedium?.copyWith(color: c.sobreFondo)),
                 ]),
               ),
           ],
@@ -705,6 +767,7 @@ class _IaChatScreenState extends State<IaChatScreen> {
           ),
           const SizedBox(width: 4),
           IconButton.filled(
+            style: IconButton.styleFrom(backgroundColor: ColoresIa.de(context).acento, foregroundColor: ColoresIa.de(context).sobreAcento),
             icon: const Icon(Icons.arrow_upward),
             tooltip: AppLocalizations.of(context).comunEnviar,
             onPressed: (bloqueado || _enviando) ? null : () => _enviarTexto(),

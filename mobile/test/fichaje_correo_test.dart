@@ -112,10 +112,30 @@ void main() {
       final api = ApiFalsa();
       await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
       await t.pumpAndSettle();
-      expect(find.byIcon(Icons.lightbulb_outline), findsNWidgets(4));
-      await t.tap(find.byIcon(Icons.lightbulb_outline).first);
+      expect(find.text('¿Qué tengo pendiente hoy?'), findsOneWidget);
+      expect(find.text('Crea una nota con lo que te dicte'), findsOneWidget);
+      await t.tap(find.text('¿Qué tengo pendiente hoy?'));
       await t.pumpAndSettle();
-      expect(api.enviadosIa.length, 1);
+      expect(api.enviadosIa, ['¿Qué tengo pendiente hoy?']);
+    });
+
+    testWidgets('abierto desde otra pantalla: manda la consulta sola y dice de qué trata', (t) async {
+      sinVoz();
+      final api = ApiFalsa();
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService(), consultaInicial: 'Resume mi día', contexto: 'Hoy'), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(api.enviadosIa, ['Resume mi día']);
+      expect(find.text('Contexto: Hoy'), findsOneWidget);
+    });
+
+    testWidgets('con la conversación empezada salen atajos encima del campo, y uno envía', (t) async {
+      sinVoz();
+      final api = ApiFalsa()..chat = [iaMsg(1, 'user', 'Hola'), iaMsg(2, 'assistant', 'Hola, ¿en qué te ayudo?')];
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Resume mis correos sin contestar'));
+      await t.pumpAndSettle();
+      expect(api.enviadosIa, ['Resume mis correos sin contestar']);
     });
 
     testWidgets('con historial: lo tuyo a la derecha con el acento, lo del asistente en tarjeta, lo que hizo por detrás en píldora, y la acción pendiente pide confirmar', (t) async {

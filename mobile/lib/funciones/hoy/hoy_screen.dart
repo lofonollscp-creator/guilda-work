@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
+import '../../diseno/asistente.dart';
 import '../../diseno/componentes.dart';
 import '../../diseno/estados.dart';
 import '../../diseno/formatos.dart';
 import '../../theme/brand_colors.dart';
 import '../../api/generado/modelos.g.dart';
 import '../../l10n/app_localizations.dart';
+import '../../nucleo/abrir_asistente.dart';
 import '../../nucleo/abrir_destino.dart';
 import '../../nucleo/destinos.dart';
 import '../../nucleo/servicios.dart';
@@ -96,27 +98,36 @@ class _Error extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => EstadoError(error: error, alReintentar: () => ref.read(hoyProvider.notifier).refrescar());
 }
 
-class _Bandeja extends StatelessWidget {
+class _Bandeja extends ConsumerWidget {
   final BandejaHoy bandeja;
   final bool desactualizado;
   final DateTime obtenidoEn;
   const _Bandeja({required this.bandeja, required this.desactualizado, required this.obtenidoEn});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final secciones = bandeja.secciones ?? const [];
+    final asistente = TarjetaAsistente(
+      titulo: t.iaTarjetaTitulo,
+      pista: t.iaBarraHint,
+      sugerencias: [t.iaSugerencia1, t.iaSugerencia2],
+      alElegir: (consulta) => abrirAsistente(context, ref, consulta: consulta, contexto: t.navInicio),
+      alAbrir: () => abrirAsistente(context, ref, contexto: t.navInicio),
+    );
     final aviso = desactualizado ? t.hoySinConexionDatosDe(context.formatos.hora(obtenidoEn.hour, obtenidoEn.minute)) : null;
 
     if (secciones.isEmpty) {
       return ListView(physics: const AlwaysScrollableScrollPhysics(), children: [
         if (aviso != null) BannerEstado(tipo: TipoBanner.sinConexion, texto: aviso),
+        asistente,
         SizedBox(height: 420, child: EstadoVacio(icono: Icons.check_circle_outline, titulo: t.hoyTodoAlDia, detalle: t.hoyTodoAlDiaDetalle)),
       ]);
     }
 
     return ListView(padding: const EdgeInsets.only(bottom: 24), children: [
       if (aviso != null) BannerEstado(tipo: TipoBanner.sinConexion, texto: aviso),
+      asistente,
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         child: Text(
