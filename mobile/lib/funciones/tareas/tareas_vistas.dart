@@ -35,22 +35,22 @@ class TareasInicio extends ConsumerWidget {
       };
 }
 
-/// El selector de vistas, igual que el submenú de tareas de la web: pestañas de texto con el subrayado del acento. Cinco caben mal en un móvil: se deslizan.
+/// El selector de vistas: un control segmentado (Mi día, Lista, Tablero, Calendario, Carga). Si no caben, se desliza y deja la vista activa a la vista.
 class SubnavTareas extends ConsumerWidget {
   const SubnavTareas({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
-    return PestanasSubnav<VistaTareas>(
+    return ControlSegmentado<VistaTareas>(
       actual: ref.watch(vistaTareasProvider),
       alElegir: ref.read(vistaTareasProvider.notifier).elegir,
       opciones: [
-        (VistaTareas.miDia, t.tareasMiDia, Icons.wb_sunny_outlined),
-        (VistaTareas.lista, t.tareasVistaLista, Icons.view_list_outlined),
-        (VistaTareas.tablero, t.tareasVistaTablero, Icons.view_kanban_outlined),
-        (VistaTareas.calendario, t.tareasCalendario, Icons.calendar_month_outlined),
-        (VistaTareas.carga, t.tareasCarga, Icons.stacked_bar_chart_outlined),
+        (VistaTareas.miDia, t.tareasMiDia),
+        (VistaTareas.lista, t.tareasVistaLista),
+        (VistaTareas.tablero, t.tareasVistaTablero),
+        (VistaTareas.calendario, t.tareasCalendario),
+        (VistaTareas.carga, t.tareasCarga),
       ],
     );
   }
