@@ -4,6 +4,7 @@ La transcripción de una reunión se puede guardar y borrar pero NUNCA se devuel
 from __future__ import annotations
 
 from flask import g, request
+from flask_babel import gettext
 
 from . import comercial, reuniones, verticales
 from .auth import token_required
@@ -31,7 +32,7 @@ def _preparar():
     if error:
         return error
     if not verticales.esta_activo(g.tenant_id, "comercial"):
-        return _err("Tu despacho no tiene el módulo Comercial.", 404, "no_encontrado")
+        return _err(gettext("Tu despacho no tiene el módulo Comercial."), 404, "no_encontrado")
     return None
 
 
@@ -61,7 +62,7 @@ def _oportunidad_o_404(oportunidad_id: int):
 
 
 def _no_existe(que: str, identificador: int):
-    return _err(f"No existe {que} {identificador} (o no puedes verla).", 404, "no_encontrado")
+    return _err(gettext("No existe %(que)s %(identificador)s (o no puedes verla).", que=que, identificador=identificador), 404, "no_encontrado")
 
 
 # --- Embudo y etapas ----------------------------------------------------------------------------------------------------------------------------------
@@ -103,7 +104,7 @@ def crear_oportunidad_comercial_api():
     def _crear():
         d = _body()
         if not (d.get("titulo") or "").strip():
-            return _err("Indica de qué es la oportunidad.", 400, "peticion_invalida", "titulo")
+            return _err(gettext("Indica de qué es la oportunidad."), 400, "peticion_invalida", "titulo")
         oid = comercial.crear_oportunidad(g.tenant_id, g.usuario_id, d["titulo"], **{k: d[k] for k in _CREAR_OPORTUNIDAD if k in d})
         return _ok(_oportunidad(comercial.obtener_oportunidad(g.tenant_id, g.usuario_id, oid)), 201)
     return _con_modulo(_crear)
@@ -144,7 +145,7 @@ def mover_oportunidad_comercial_api(oportunidad_id: int):
             return _no_existe("la oportunidad", oportunidad_id)
         d = _body()
         if not (d.get("etapa") or "").strip():
-            return _err("Indica la etapa de destino.", 400, "peticion_invalida", "etapa")
+            return _err(gettext("Indica la etapa de destino."), 400, "peticion_invalida", "etapa")
         return _ok(_oportunidad(comercial.mover_oportunidad(g.tenant_id, g.usuario_id, oportunidad_id, d["etapa"], d.get("motivo") or None)))
     return _con_modulo(_mover)
 
@@ -160,7 +161,7 @@ def anotar_actividad_comercial_api(oportunidad_id: int):
         d = _body()
         for campo in ("tipo", "asunto"):
             if not (d.get(campo) or "").strip():
-                return _err(f"Falta «{campo}».", 400, "peticion_invalida", campo)
+                return _err(gettext("Falta «%(campo)s».", campo=campo), 400, "peticion_invalida", campo)
         aid = comercial.registrar_actividad(g.tenant_id, g.usuario_id, tipo=d["tipo"], asunto=d["asunto"], oportunidad_id=oportunidad_id, texto=d.get("texto") or None, fecha=d.get("fecha") or None,
                                             proxima_accion=d.get("proxima_accion") or None, proxima_fecha=d.get("proxima_fecha") or None)
         return _ok({"id": aid}, 201)
@@ -216,7 +217,7 @@ def crear_reunion_comercial_api():
     def _crear():
         d = _body()
         if not (d.get("titulo") or "").strip():
-            return _err("Ponle un título a la reunión.", 400, "peticion_invalida", "titulo")
+            return _err(gettext("Ponle un título a la reunión."), 400, "peticion_invalida", "titulo")
         rid = reuniones.crear(g.tenant_id, g.usuario_id, d["titulo"], fecha=d.get("fecha") or None, plantilla=d.get("plantilla") or "cliente", cliente_id=d.get("cliente_id"),
                               oportunidad_id=d.get("oportunidad_id"), participantes=d.get("participantes"), notas=d.get("notas"))
         return _ok(_reunion(reuniones.obtener(g.tenant_id, g.usuario_id, rid)), 201)
@@ -280,7 +281,7 @@ def generar_acta_comercial_api(reunion_id: int):
         if _reunion_o_404(reunion_id) is None:
             return _no_existe("la reunión", reunion_id)
         if not reuniones.configurada(g.usuario_id):
-            return _err("Para generar actas hace falta un modelo y tu clave de OpenRouter, en los ajustes del Asistente IA.", 409, "ia_no_configurada")
+            return _err(gettext("Para generar actas hace falta un modelo y tu clave de OpenRouter, en los ajustes del Asistente IA."), 409, "ia_no_configurada")
         return _ok(_reunion(reuniones.generar_acta(g.tenant_id, g.usuario_id, reunion_id)))
     return _con_modulo(_generar)
 
@@ -306,7 +307,7 @@ def crear_tareas_reunion_comercial_api(reunion_id: int):
             return _no_existe("la reunión", reunion_id)
         elegidas = _body().get("tareas")
         if not isinstance(elegidas, list) or not elegidas:
-            return _err("Indica las tareas que quieres crear.", 400, "peticion_invalida", "tareas")
+            return _err(gettext("Indica las tareas que quieres crear."), 400, "peticion_invalida", "tareas")
         return _ok({"tarea_ids": reuniones.crear_tareas(g.tenant_id, g.usuario_id, reunion_id, elegidas)}, 201)
     return _con_modulo(_crear)
 

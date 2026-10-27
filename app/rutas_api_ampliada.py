@@ -5,6 +5,7 @@ mismo blueprint `api_bp`, así que comparten autenticación por token, formato d
 import json
 
 from flask import abort, g, jsonify, request
+from flask_babel import gettext
 
 from . import aviso_destino, busqueda, comunicados, correo, db, eventos, ia_consumo
 from . import rutas_api as _api
@@ -16,7 +17,7 @@ from .rutas_correo import _mensaje_de_usuario_o_404
 def _tarea_visible_o_404(tarea_id: int):
     tarea = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
     if tarea is None:
-        abort(404, "Tarea no encontrada.")
+        abort(404, gettext("Tarea no encontrada."))
     return tarea
 
 
@@ -58,7 +59,7 @@ def listar_notas():
 def _nota_visible_o_404(nota_id: int, roles=("dueno", "colabora", "observa")):
     rol = db.rol_en_nota(g.usuario_id, nota_id)
     if rol not in roles:
-        abort(404, "Nota no encontrada.")
+        abort(404, gettext("Nota no encontrada."))
     return db.obtener_nota_visible(g.usuario_id, nota_id), rol
 
 
@@ -93,7 +94,7 @@ def fijar_nota(nota_id: int):
     """Cuerpo: `{"fijada": true|false}` (por defecto true)."""
     nota = db.obtener_nota(g.usuario_id, nota_id)
     if nota is None:
-        abort(404, "Nota no encontrada.")
+        abort(404, gettext("Nota no encontrada."))
     fijada = bool(_body().get("fijada", True))
     if bool(nota["fijada"]) != fijada:
         db.alternar_fijada_nota(g.usuario_id, nota_id)
@@ -116,12 +117,12 @@ def compartir_nota_con(nota_id: int):
     try:
         otro = int(datos.get("usuario_id"))
     except (TypeError, ValueError):
-        return _err("Indica con quién compartirla (`usuario_id`).", 400, "usuario_invalido", "usuario_id")
+        return _err(gettext("Indica con quién compartirla (`usuario_id`)."), 400, "usuario_invalido", "usuario_id")
     rol = datos.get("rol") or "colabora"
     if rol not in db.ROLES_PARTICIPANTE:
-        return _err("El rol debe ser «colabora» u «observa».", 400, "rol_invalido", "rol")
+        return _err(gettext("El rol debe ser «colabora» u «observa»."), 400, "rol_invalido", "rol")
     if not db.compartir_nota(g.usuario_id, nota_id, otro, rol):
-        abort(404, "No se puede compartir esa nota con esa persona.")
+        abort(404, gettext("No se puede compartir esa nota con esa persona."))
     try:
         if db.notificacion_tipo_activa(otro, "tarea_asignada"):
             nota = db.obtener_nota_visible(otro, nota_id)
@@ -142,7 +143,7 @@ def compartir_nota_con(nota_id: int):
 def dejar_de_compartir_nota(nota_id: int, otro_id: int):
     """El dueño quita a una persona; cualquiera puede salirse de una nota que le han compartido (`otro_id` = su propio id)."""
     if not db.dejar_de_compartir_nota(g.usuario_id, nota_id, otro_id):
-        abort(404, "Esa persona no tiene la nota compartida.")
+        abort(404, gettext("Esa persona no tiene la nota compartida."))
     return _ok()
 
 
@@ -168,7 +169,7 @@ def crear_proyecto():
     datos = _body()
     nombre = (datos.get("nombre") or "").strip()
     if not nombre:
-        return _err("El proyecto necesita un nombre.")
+        return _err(gettext("El proyecto necesita un nombre."))
     proyecto_id = db.crear_categoria(g.usuario_id, nombre, datos.get("color"))
     return _ok(_dict(db.obtener_categoria(g.usuario_id, proyecto_id)), 201)
 
@@ -177,11 +178,11 @@ def crear_proyecto():
 @token_required
 def renombrar_proyecto(proyecto_id: int):
     if db.obtener_categoria(g.usuario_id, proyecto_id) is None:
-        abort(404, "Proyecto no encontrado.")
+        abort(404, gettext("Proyecto no encontrado."))
     datos = _body()
     nombre = (datos.get("nombre") or "").strip()
     if not nombre:
-        return _err("El proyecto necesita un nombre.")
+        return _err(gettext("El proyecto necesita un nombre."))
     db.renombrar_categoria(g.usuario_id, proyecto_id, nombre, datos.get("color"))
     return _ok(_dict(db.obtener_categoria(g.usuario_id, proyecto_id)))
 
@@ -191,7 +192,7 @@ def renombrar_proyecto(proyecto_id: int):
 def eliminar_proyecto(proyecto_id: int):
     """Lo manda a la papelera (recuperable), no lo borra."""
     if db.obtener_categoria(g.usuario_id, proyecto_id) is None:
-        abort(404, "Proyecto no encontrado.")
+        abort(404, gettext("Proyecto no encontrado."))
     db.eliminar_categoria(g.usuario_id, proyecto_id)
     return _ok()
 
@@ -219,7 +220,7 @@ def listar_checklist(tarea_id: int):
 def agregar_item_checklist(tarea_id: int):
     item_id = db.agregar_item_checklist(g.usuario_id, tarea_id, (_body().get("texto") or "").strip())
     if item_id is None:
-        return _err("No se ha podido añadir: la tarea no es tuya, el texto está vacío o el checklist está lleno (máx. 50).")
+        return _err(gettext("No se ha podido añadir: la tarea no es tuya, el texto está vacío o el checklist está lleno (máx. 50)."))
     return _ok({"id": item_id, "checklist": _dicts(db.listar_checklist(tarea_id))}, 201)
 
 
@@ -227,7 +228,7 @@ def agregar_item_checklist(tarea_id: int):
 @token_required
 def alternar_item_checklist(item_id: int):
     if not db.alternar_item_checklist(g.usuario_id, item_id):
-        abort(404, "Subtarea no encontrada.")
+        abort(404, gettext("Subtarea no encontrada."))
     return _ok()
 
 
@@ -236,7 +237,7 @@ def alternar_item_checklist(item_id: int):
 def asignar_tarea_outlook(tarea_id: int):
     """Cuerpo: `{"companero_id": 5}`; sin él (o `null`) la desasigna. Solo compañeros del mismo despacho."""
     if not db.asignar_tarea_outlook(g.usuario_id, tarea_id, _body().get("companero_id")):
-        return _err("No se puede asignar: la tarea no es tuya o el compañero no es de tu despacho.", 403)
+        return _err(gettext("No se puede asignar: la tarea no es tuya o el compañero no es de tu despacho."), 403)
     from .rutas_tareas import _notificar_asignacion
     _notificar_asignacion(g.usuario_id, tarea_id, _body().get("companero_id"))
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)))
@@ -297,7 +298,7 @@ def listar_programados():
 def cancelar_programado(envio_id: int):
     """Cancela y descarta un envío programado (con sus adjuntos). Para conservarlo como borrador: `POST /correo/envios/{id}/cancelar`."""
     if db.obtener_envio_correo(g.usuario_id, envio_id) is None or not db.cancelar_envio_correo(g.usuario_id, envio_id):
-        abort(404, "Envío no encontrado o ya enviado.")
+        abort(404, gettext("Envío no encontrado o ya enviado."))
     db.cerrar_envio_correo(envio_id, "cancelado", borrar_adjuntos=True)
     return _ok()
 
@@ -313,7 +314,7 @@ def listar_seguimientos():
 @token_required
 def cancelar_seguimiento(seguimiento_id: int):
     if not db.cancelar_seguimiento_correo(g.usuario_id, seguimiento_id):
-        abort(404, "Seguimiento no encontrado.")
+        abort(404, gettext("Seguimiento no encontrado."))
     return _ok()
 
 
@@ -373,7 +374,7 @@ def buscar():
     Cada resultado lleva `titulo`, `fragmento` y `fecha` listos para pintar."""
     q = (request.args.get("q") or "").strip()
     if not q:
-        return _err("Indica qué buscar con ?q=.")
+        return _err(gettext("Indica qué buscar con ?q=."))
     limite = max(1, min(request.args.get("limit", default=8, type=int) or 8, 40))
     tipos = {t.strip() for t in (request.args.get("tipo") or "").split(",") if t.strip()} & set(aviso_destino._DESTINO_DE_RESULTADO)
     resultados = busqueda.buscar_hibrido(g.usuario_id, q, limite, tenant_id=g.get("tenant_id"), tipos=tipos or None, con_respaldo=True)
@@ -400,7 +401,7 @@ def listar_comunicados():
 @token_required
 def cerrar_comunicado(comunicado_id: int):
     if not comunicados.cerrar(g.usuario_id, comunicado_id):
-        return _err("Este comunicado no se puede cerrar.", 403)
+        return _err(gettext("Este comunicado no se puede cerrar."), 403)
     return _ok()
 
 
@@ -430,7 +431,7 @@ def sincronizar():
     if cursor is None:
         return _ok({"cursor": db.cursor_cambios_actual(), "hay_mas": False, "reiniciar": False, "cambios": {}, "eliminados": {}})
     if cursor < 0:
-        return _err("cursor no válido.", 400, "cursor_invalido", "cursor")
+        return _err(gettext("cursor no válido."), 400, "cursor_invalido", "cursor")
     resultado = db.cambios_desde(g.usuario_id, cursor, limite=max(1, min(request.args.get("limit", default=500, type=int) or 500, 1000)))
     cambios: dict[str, list] = {}
     eliminados: dict[str, list] = {}
@@ -451,18 +452,18 @@ MAX_WEBHOOKS_POR_DESPACHO = 20
 def _exigir_gestion_webhooks():
     """Un webhook saca datos del despacho hacia fuera: solo lo gestiona quien supervisa el despacho o administra."""
     if getattr(g, "tenant_id", None) is None:
-        abort(403, "Los webhooks pertenecen a un despacho y tu usuario no tiene ninguno.")
+        abort(403, gettext("Los webhooks pertenecen a un despacho y tu usuario no tiene ninguno."))
     if not (g.get("supervisor_tenant") or g.get("es_admin")):
-        abort(403, "Solo un supervisor del despacho o un administrador puede gestionar webhooks.")
+        abort(403, gettext("Solo un supervisor del despacho o un administrador puede gestionar webhooks."))
 
 
 def _webhook_del_despacho_o_404(webhook_id: int, *, modificar: bool = False) -> dict:
     _exigir_gestion_webhooks()
     w = db.obtener_webhook(webhook_id)
     if w is None or w["tenant_id"] != g.tenant_id:
-        abort(404, "Webhook no encontrado.")
+        abort(404, gettext("Webhook no encontrado."))
     if modificar and w["origen"] == "backoffice":
-        abort(403, "Este webhook lo gestiona Guilda Work (backoffice): pide el cambio a soporte.")
+        abort(403, gettext("Este webhook lo gestiona Guilda Work (backoffice): pide el cambio a soporte."))
     return dict(w)
 
 
@@ -479,7 +480,7 @@ def _validar_cuerpo_webhook(datos: dict, *, parcial: bool):
             return _err(motivo, 400, "url_invalida", "url")
     if not parcial or "eventos" in datos:
         if not isinstance(lista, list) or not lista or any(e not in eventos.EVENTOS for e in lista):
-            return _err(f"eventos debe ser una lista no vacía de entre: {', '.join(eventos.EVENTOS)}.", 400, "eventos_invalidos", "eventos")
+            return _err(gettext("eventos debe ser una lista no vacía de entre: %(valores)s.", valores=", ".join(eventos.EVENTOS)), 400, "eventos_invalidos", "eventos")
     return None
 
 
@@ -508,7 +509,7 @@ def crear_webhook():
     if error:
         return error
     if len(db.listar_webhooks(g.tenant_id)) >= MAX_WEBHOOKS_POR_DESPACHO:
-        return _err(f"Tu despacho ya tiene {MAX_WEBHOOKS_POR_DESPACHO} webhooks (el máximo).", 409, "limite_de_webhooks")
+        return _err(gettext("Tu despacho ya tiene %(n)s webhooks (el máximo).", n=MAX_WEBHOOKS_POR_DESPACHO), 409, "limite_de_webhooks")
     w = db.crear_webhook(g.usuario_id, g.tenant_id, datos["url"], list(dict.fromkeys(datos["eventos"])), origen="api")
     return _ok({**_publico(w), "secreto": w["secreto"]}, 201)
 
@@ -574,10 +575,10 @@ def entregas_webhook(webhook_id: int):
 def reintentar_entrega(cola_id: int):
     fila = db.cola_webhook_obtener(cola_id)
     if fila is None:
-        abort(404, "Entrega no encontrada.")
+        abort(404, gettext("Entrega no encontrada."))
     _webhook_del_despacho_o_404(fila["webhook_id"], modificar=True)
     if not db.cola_webhook_reintentar(cola_id):
-        return _err("Solo se pueden reintentar entregas fallidas.", 409, "entrega_no_fallida")
+        return _err(gettext("Solo se pueden reintentar entregas fallidas."), 409, "entrega_no_fallida")
     return _ok()
 
 
@@ -591,7 +592,7 @@ def _upsert(tabla: str, dueno_id: int, referencia: str, vista_crear, vista_edita
     except ValueError as e:
         return _err(str(e), 400, "referencia_invalida", "referencia_externa")
     if not ref:
-        return _err("La referencia no puede estar vacía.", 400, "referencia_invalida", "referencia_externa")
+        return _err(gettext("La referencia no puede estar vacía."), 400, "referencia_invalida", "referencia_externa")
     g.referencia_forzada = ref
     existente = db.id_por_referencia_externa(tabla, dueno_id, ref)
     resultado = vista_editar.__wrapped__(existente) if existente else vista_crear.__wrapped__()
@@ -608,7 +609,7 @@ def _upsert(tabla: str, dueno_id: int, referencia: str, vista_crear, vista_edita
 def nota_por_referencia(referencia: str):
     nota_id = db.id_por_referencia_externa("notas", g.usuario_id, referencia)
     if nota_id is None:
-        abort(404, "No hay ninguna nota con esa referencia.")
+        abort(404, gettext("No hay ninguna nota con esa referencia."))
     return _ok(_dict(db.obtener_nota(g.usuario_id, nota_id)))
 
 
@@ -624,7 +625,7 @@ def upsert_nota(referencia: str):
 def tarea_por_referencia(referencia: str):
     tarea_id = db.id_por_referencia_externa("tareas_outlook", g.usuario_id, referencia)
     if tarea_id is None:
-        abort(404, "No hay ninguna tarea con esa referencia.")
+        abort(404, gettext("No hay ninguna tarea con esa referencia."))
     return _ok(_dict(db.obtener_tarea_outlook(g.usuario_id, tarea_id)))
 
 
@@ -643,7 +644,7 @@ def cliente_fiscal_por_referencia(referencia: str):
         return error
     cliente_id = db.id_por_referencia_externa("clientes_fiscales", g.tenant_id, referencia)
     if cliente_id is None:
-        abort(404, "No hay ningún cliente fiscal con esa referencia.")
+        abort(404, gettext("No hay ningún cliente fiscal con esa referencia."))
     return _ok(_dict(db.obtener_cliente_fiscal(g.tenant_id, cliente_id)))
 
 
@@ -716,7 +717,7 @@ def cancelar_ausencia_api(ausencia_id: int):
     try:
         ausencias.cancelar(g.tenant_id, g.usuario_id, ausencia_id)
     except ValueError as e:
-        return _err(str(e), 404 if "No existe" in str(e) else 400, "ausencia_no_cancelable")
+        return _err(str(e), 404 if isinstance(e, ausencias.AusenciaNoEncontrada) else 400, "ausencia_no_cancelable")
     return _ok(_ausencia_propia_publica(ausencias.obtener(g.tenant_id, ausencia_id)))
 
 
@@ -729,7 +730,7 @@ def ausencias_del_equipo():
         return error
     from . import ausencias
     if not ausencias.puede_gestionar(g.usuario_id, g.tenant_id):
-        abort(403, "Solo quien gestiona el fichaje del despacho puede ver las ausencias del equipo.")
+        abort(403, gettext("Solo quien gestiona el fichaje del despacho puede ver las ausencias del equipo."))
     return _ok_paginado(_ausencia_propia_publica(a) | {"persona": a["persona"]} for a in ausencias.listar(g.tenant_id, estado=request.args.get("estado") or "pendiente"))
 
 
@@ -742,14 +743,14 @@ def resolver_ausencia_api(ausencia_id: int):
         return error
     from . import ausencias
     if not ausencias.puede_gestionar(g.usuario_id, g.tenant_id):
-        abort(403, "Solo quien gestiona el fichaje del despacho puede aprobar o rechazar ausencias.")
+        abort(403, gettext("Solo quien gestiona el fichaje del despacho puede aprobar o rechazar ausencias."))
     datos = _body()
     if datos.get("decision") not in ("aprobar", "rechazar"):
-        return _err("`decision` debe ser «aprobar» o «rechazar».", 400, "decision_invalida", "decision")
+        return _err(gettext("`decision` debe ser «aprobar» o «rechazar»."), 400, "decision_invalida", "decision")
     try:
         ausencias.resolver(g.tenant_id, g.usuario_id, ausencia_id, datos["decision"] == "aprobar", datos.get("comentario"))
     except ValueError as e:
-        return _err(str(e), 404 if "No existe" in str(e) else 409, "ausencia_no_resoluble")
+        return _err(str(e), 404 if isinstance(e, ausencias.AusenciaNoEncontrada) else 409, "ausencia_no_resoluble")
     return _ok(_ausencia_propia_publica(ausencias.obtener(g.tenant_id, ausencia_id)))
 
 
@@ -758,7 +759,7 @@ def resolver_ausencia_api(ausencia_id: int):
 def _exigir_gestion_fichaje() -> None:
     from . import ausencias
     if not ausencias.puede_gestionar(g.usuario_id, g.tenant_id):
-        abort(403, "Solo quien gestiona el fichaje del despacho puede hacer esto.")
+        abort(403, gettext("Solo quien gestiona el fichaje del despacho puede hacer esto."))
 
 
 @api_bp.route("/fichaje/turnos", methods=["GET"])
@@ -891,7 +892,7 @@ def ajustar_bolsa_api():
 def _exigir_certificados() -> None:
     from . import certificados
     if not certificados.puede_gestionar(g.usuario_id, g.tenant_id):
-        abort(403, "Solo los custodios de certificados y los supervisores del despacho pueden usar esto.")
+        abort(403, gettext("Solo los custodios de certificados y los supervisores del despacho pueden usar esto."))
 
 
 def _certificado_publico(c: dict) -> dict:
@@ -935,7 +936,7 @@ def obtener_certificado_api(certificado_id: int):
     from . import certificados
     c = certificados.obtener(g.tenant_id, certificado_id)
     if c is None:
-        abort(404, "Certificado no encontrado.")
+        abort(404, gettext("Certificado no encontrado."))
     return _ok(_certificado_publico(c))
 
 
@@ -950,7 +951,7 @@ def comprobar_certificado_api(certificado_id: int):
     _exigir_certificados()
     from . import certificados
     if certificados.obtener(g.tenant_id, certificado_id) is None:
-        abort(404, "Certificado no encontrado.")
+        abort(404, gettext("Certificado no encontrado."))
     try:
         certificados.comprobar_ahora(g.tenant_id, g.usuario_id, certificado_id)
     except ValueError as e:
@@ -974,7 +975,7 @@ def importar_certificado_api():
     try:
         datos = base64.b64decode(d.get("contenido_base64") or "", validate=True)
     except ValueError:
-        return _err("`contenido_base64` no es base64 válido.", 400, "certificado_no_valido", "contenido_base64")
+        return _err(gettext("`contenido_base64` no es base64 válido."), 400, "certificado_no_valido", "contenido_base64")
     try:
         r = certificados.importar(g.tenant_id, g.usuario_id, datos, huella=d.get("huella") or None, ubicacion_externa=d.get("ubicacion"), notas=d.get("notas"), custodio_id=d.get("custodio_id"))
     except certificados.EleccionRequerida as e:
@@ -1036,7 +1037,7 @@ def editar_certificado_api(certificado_id: int):
     d = _body()
     campos = {k: d[k] for k in ("titular", "tipo", "caduca", "emitido", "serie", "nif", "cliente_fiscal_id", "custodio_id", "ubicacion", "notas", "avisar_cliente") if k in d}
     if certificados.obtener(g.tenant_id, certificado_id) is None:
-        abort(404, "Certificado no encontrado.")
+        abort(404, gettext("Certificado no encontrado."))
     try:
         certificados.editar(g.tenant_id, g.usuario_id, certificado_id, **campos)
     except ValueError as e:

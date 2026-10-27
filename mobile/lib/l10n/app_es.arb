@@ -508,6 +508,32 @@
       }
     }
   },
+  "apiErrorDesconocido": "Error desconocido",
+  "apiRespuestaInesperada": "Respuesta inesperada del servidor.",
+  "apiErrorHttp": "Error {status}",
+  "@apiErrorHttp": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "apiPeticionCancelada": "Petición cancelada.",
+  "apiSinConexion": "No se ha podido conectar con el servidor. Comprueba la URL en Ajustes.",
+  "apiErrorRed": "Error de red: {detalle}",
+  "@apiErrorRed": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "fiscalModelo303": "IVA - Declaración trimestral",
+  "fiscalModelo130": "IRPF - Pago fraccionado (estimación directa)",
+  "fiscalModelo111": "Retenciones IRPF trabajadores/profesionales",
+  "fiscalModelo115": "Retenciones alquileres",
+  "fiscalModelo390": "IVA - Resumen anual",
+  "fiscalModelo200": "Impuesto sobre Sociedades",
   "busquedaTitulo": "Buscar",
   "busquedaHint": "Buscar en notas, tareas y correo",
   "busquedaMinimo": "Escribe al menos dos letras.",

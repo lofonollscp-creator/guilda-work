@@ -2,6 +2,7 @@
 
 Parte de la antigua `db.py`, dividida por dominios sin cambiar su comportamiento: todo lo que no está aquí (la conexión, las constantes y las funciones de otros
 dominios) se usa a través de `_db`, que sigue siendo el único espacio de nombres (`_db.nombre` funciona igual que antes y se puede parchear en los tests)."""
+from .textos import gettext
 import hashlib
 import json
 import time
@@ -88,7 +89,7 @@ def fichar(
     fichado algo más reciente puede quedar fuera de secuencia y rechazarse,
     algo inherente a fichar con retraso, no un bug de esta función."""
     if tipo not in ("entrada", "pausa_inicio", "pausa_fin", "salida"):
-        raise ValueError(f"Tipo de fichaje no válido: {tipo!r}.")
+        raise ValueError(gettext("Tipo de fichaje no válido: %(tipo)s.", tipo=repr(tipo)))
     conn = _db.get_connection()
     try:
         if cliente_uuid is not None:
@@ -99,7 +100,7 @@ def fichar(
         if marca_tiempo is not None:
             limite_pasado = (_db.datetime.now() - _db.timedelta(days=7)).isoformat(timespec="seconds")
             if marca_tiempo > ahora or marca_tiempo < limite_pasado:
-                raise ValueError("La hora del fichaje enviado no es válida (demasiado futura o de hace más de 7 días).")
+                raise ValueError(gettext("La hora del fichaje enviado no es válida (demasiado futura o de hace más de 7 días)."))
         # A partir de aquí, todo el bloque (validación de secuencia +
         # lectura del último hash + INSERT) tiene que ser una sola sección
         # crítica: dos fichajes casi simultáneos (de cualquier usuario,
@@ -115,14 +116,14 @@ def fichar(
         if corrige_a is not None:
             original = conn.execute("SELECT id FROM fichajes WHERE id = ? AND usuario_id = ?", (corrige_a, usuario_id)).fetchone()
             if original is None:
-                raise ValueError(f"El fichaje {corrige_a} a corregir no existe o no es de este trabajador.")
+                raise ValueError(gettext("El fichaje %(id)s a corregir no existe o no es de este trabajador.", id=corrige_a))
         else:
             ultimo = conn.execute(
                 "SELECT tipo FROM fichajes WHERE usuario_id = ? ORDER BY id DESC LIMIT 1", (usuario_id,)
             ).fetchone()
             ultimo_tipo = ultimo["tipo"] if ultimo else "salida"  # sin fichajes previos = como si estuviera fuera
             if tipo not in _db._FICHAJE_TRANSICIONES_VALIDAS.get(ultimo_tipo, set()):
-                raise ValueError(f"No se puede fichar '{tipo}' viniendo de '{ultimo_tipo}' — revisa tu último fichaje.")
+                raise ValueError(gettext("No se puede fichar '%(tipo)s' viniendo de '%(anterior)s' — revisa tu último fichaje.", tipo=tipo, anterior=ultimo_tipo))
         marca_tiempo_final = marca_tiempo or ahora
         creado_por_final = creado_por or usuario_id
         ultimo_hash = conn.execute("SELECT hash FROM fichajes ORDER BY id DESC LIMIT 1").fetchone()

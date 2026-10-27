@@ -6,6 +6,8 @@ import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
 import '../datos/local/cache_lectura.dart';
+import '../l10n/app_localizations.dart';
+import 'textos_idioma.dart';
 import 'errores.dart';
 import 'generado/operaciones.g.dart' show Transporte;
 
@@ -232,10 +234,13 @@ class ClienteApi implements Transporte {
       ultimo = e;
       await _espera(espera ?? _pausa(intento));
     }
-    throw ultimo ?? ApiException('Error desconocido');
+    throw ultimo ?? ApiException(_t.apiErrorDesconocido);
   }
 
   // --- internos ---
+
+  /// Los textos de error en el idioma de la app (sin contexto de pantalla: se leen del idioma que manda el núcleo en `Accept-Language`).
+  AppLocalizations get _t => textosEnIdioma(contexto.idioma);
 
   Duration _pausa(int intento) =>
       Duration(milliseconds: 500 * (1 << (intento - 1)) + _azar.nextInt(250));
@@ -255,7 +260,7 @@ class ClienteApi implements Transporte {
     if (cuerpo is Map && cuerpo['ok'] == true) return cuerpo['data'];
     if (cuerpo is Map && cuerpo['ok'] == false) throw _deCuerpo(cuerpo, status, null);
     if (cuerpo == null || cuerpo == '') return null; // 204
-    throw ApiException('Respuesta inesperada del servidor.', status: status);
+    throw ApiException(_t.apiRespuestaInesperada, status: status);
   }
 
   ApiException _deRespuesta(Response<dynamic> r, int status) {
@@ -272,7 +277,7 @@ class ClienteApi implements Transporte {
   }
 
   ApiException _deCuerpo(Map cuerpo, int status, Duration? retryAfter) => ApiException(
-        cuerpo['error']?.toString() ?? 'Error $status',
+        cuerpo['error']?.toString() ?? _t.apiErrorHttp(status),
         codigo: cuerpo['codigo']?.toString(),
         status: status,
         requestId: cuerpo['request_id']?.toString(),
@@ -283,11 +288,11 @@ class ClienteApi implements Transporte {
       );
 
   ApiException _deRed(DioException e) {
-    if (e.type == DioExceptionType.cancel) return ApiException('Petición cancelada.', codigo: 'cancelada');
+    if (e.type == DioExceptionType.cancel) return ApiException(_t.apiPeticionCancelada, codigo: 'cancelada');
     if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.connectionError) {
-      return ApiException('No se ha podido conectar con el servidor. Comprueba la URL en Ajustes.', esDeConexion: true);
+      return ApiException(_t.apiSinConexion, esDeConexion: true);
     }
-    return ApiException('Error de red: ${e.message}', esDeConexion: true);
+    return ApiException(_t.apiErrorRed('${e.message}'), esDeConexion: true);
   }
 }
 

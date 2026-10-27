@@ -21,6 +21,7 @@ import json
 from datetime import datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, jsonify, make_response, request, stream_with_context, url_for
+from flask_babel import gettext
 from werkzeug.exceptions import HTTPException
 
 from .bd.errores import ErrorIntegridad
@@ -64,8 +65,8 @@ def _integridad(e):
     """Un valor que la base de datos rechaza (estado o prioridad inexistentes, duplicados...) es un error del cliente,
     no un fallo del servidor."""
     if "UNIQUE" in str(e).upper():
-        return _err("Ya existe un registro con esos datos.", 409, "conflicto")
-    return _err("Alguno de los valores enviados no es válido (revisa campos como estado o prioridad).", 400, "valor_invalido")
+        return _err(gettext("Ya existe un registro con esos datos."), 409, "conflicto")
+    return _err(gettext("Alguno de los valores enviados no es válido (revisa campos como estado o prioridad)."), 400, "valor_invalido")
 
 
 for _clase in ErrorIntegridad:
@@ -108,7 +109,7 @@ def _version_minima_de_app():
     if not version or request.method == "OPTIONS" or request.path.endswith(("/health", "/openapi.json")) or not api_contexto.app_obsoleta(version):
         return None
     cfg = api_contexto.config_app()
-    respuesta = jsonify({"ok": False, "error": "Esta versión de la app ya no se admite: actualízala para seguir trabajando.", "codigo": "actualiza_app",
+    respuesta = jsonify({"ok": False, "error": gettext("Esta versión de la app ya no se admite: actualízala para seguir trabajando."), "codigo": "actualiza_app",
                          "request_id": peticion.id_actual(), "version_minima": cfg["version_minima"], "url_tienda": cfg["url_tienda"]})
     return respuesta, 426
 
@@ -220,7 +221,7 @@ def _error_referencia(tabla: str, dueno_id: int, datos: dict, excepto_id: int | 
     if hay and ref:
         otro = db.id_por_referencia_externa(tabla, dueno_id, ref)
         if otro is not None and otro != excepto_id:
-            return _err(f"Ya existe un registro con referencia_externa «{ref}» (id {otro}).", 409, "referencia_duplicada", "referencia_externa")
+            return _err(gettext("Ya existe un registro con referencia_externa «%(ref)s» (id %(otro)s).", ref=ref, otro=otro), 409, "referencia_duplicada", "referencia_externa")
     return None
 
 
@@ -237,16 +238,16 @@ def _campos_cliente_fiscal(datos: dict):
     if "email" in datos:
         email = (datos["email"] or "").strip() or None
         if email and ("@" not in email or len(email) > 200 or " " in email):
-            return None, _err("email no es válido.", 400, "email_invalido", "email")
+            return None, _err(gettext("email no es válido."), 400, "email_invalido", "email")
         campos["email"] = email
     if "pais" in datos:
         pais = str(datos["pais"] or "ES").strip().upper()
         if len(pais) != 2 or not pais.isalpha():
-            return None, _err("pais debe ser un código de 2 letras (p. ej. ES).", 400, "pais_invalido", "pais")
+            return None, _err(gettext("pais debe ser un código de 2 letras (p. ej. ES)."), 400, "pais_invalido", "pais")
         campos["pais"] = pais
     if "idioma" in datos:
         if datos["idioma"] not in ("es", "ca", "en", "fr"):
-            return None, _err("idioma debe ser es, ca, en o fr.", 400, "idioma_invalido", "idioma")
+            return None, _err(gettext("idioma debe ser es, ca, en o fr."), 400, "idioma_invalido", "idioma")
         campos["idioma"] = datos["idioma"]
     if "recordatorios_portal" in datos:
         campos["recordatorios_portal"] = 1 if datos["recordatorios_portal"] else 0
@@ -276,11 +277,11 @@ def registro():
     email = (datos.get("email") or "").strip()
     contrasena = datos.get("contrasena") or ""
     if not email or "@" not in email:
-        return _err("Indica un email válido.")
+        return _err(gettext("Indica un email válido."))
     if len(contrasena) < 8:
-        return _err("La contraseña debe tener al menos 8 caracteres.")
+        return _err(gettext("La contraseña debe tener al menos 8 caracteres."))
     if db.obtener_usuario_por_email(email) is not None:
-        return _err("Ya existe una cuenta con ese email.", 409)
+        return _err(gettext("Ya existe una cuenta con ese email."), 409)
     try:
         identity_id = kratos.crear_identidad(email, contrasena)
     except kratos.ErrorKratos as e:
@@ -300,11 +301,11 @@ def login():
     try:
         identity_id = kratos.verificar_credenciales_admin(email, contrasena, codigo_2fa or None)
     except kratos.Requiere2FA:
-        return _err("Esta cuenta tiene la verificación en dos pasos: vuelve a llamar con `codigo_2fa` (el de tu app de autenticación o uno de recuperación).", 401, "requiere_2fa", "codigo_2fa")
+        return _err(gettext("Esta cuenta tiene la verificación en dos pasos: vuelve a llamar con `codigo_2fa` (el de tu app de autenticación o uno de recuperación)."), 401, "requiere_2fa", "codigo_2fa")
     if identity_id is None:
         if codigo_2fa:
-            return _err("Email, contraseña o código incorrectos.", 401, "credenciales_o_codigo_incorrectos")
-        return _err("Email o contraseña incorrectos.", 401)
+            return _err(gettext("Email, contraseña o código incorrectos."), 401, "credenciales_o_codigo_incorrectos")
+        return _err(gettext("Email o contraseña incorrectos."), 401)
     usuario = db.usuario_por_kratos_id(identity_id)
     if usuario is None:
         # Identidad ya existente en Kratos (p.ej. migrada por
@@ -346,13 +347,13 @@ def crear_token():
     datos = _body()
     permisos = datos.get("permisos") or "completo"
     if permisos not in db.PERMISOS_TOKEN_API:
-        return _err("permisos debe ser 'completo' o 'solo_lectura'.", 400, "permisos_invalidos", "permisos")
+        return _err(gettext("permisos debe ser 'completo' o 'solo_lectura'."), 400, "permisos_invalidos", "permisos")
     nombre = (datos.get("nombre") or "").strip()[:80] or None
     caduca_en = datos.get("caduca_en")
     if datos.get("caduca_dias") not in (None, ""):
         dias = datos.get("caduca_dias")
         if not isinstance(dias, int) or isinstance(dias, bool) or not 1 <= dias <= 3650:
-            return _err("caduca_dias debe ser un entero entre 1 y 3650.", 400, "caducidad_invalida", "caduca_dias")
+            return _err(gettext("caduca_dias debe ser un entero entre 1 y 3650."), 400, "caducidad_invalida", "caduca_dias")
         caduca_en = (datetime.now() + timedelta(days=dias)).isoformat(timespec="seconds")
     try:
         token = db.crear_token_api(g.usuario_id, nombre, permisos, areas=datos.get("areas"), caduca_en=caduca_en,
@@ -378,7 +379,7 @@ def crear_token():
 def uso_de_token(token_id: int):
     """Llamadas y errores por día de uno de tus tokens (`dias`, 1-90, por defecto 30)."""
     if not any(t["id"] == token_id for t in db.listar_tokens_api(g.usuario_id)):
-        abort(404, "Token no encontrado.")
+        abort(404, gettext("Token no encontrado."))
     dias = max(1, min(request.args.get("dias", default=30, type=int) or 30, 90))
     return _ok(db.uso_de_token(token_id, dias))
 
@@ -387,7 +388,7 @@ def uso_de_token(token_id: int):
 @token_required
 def revocar_token(token_id: int):
     if not db.revocar_token_api_por_id(g.usuario_id, token_id):
-        abort(404, "Token no encontrado.")
+        abort(404, gettext("Token no encontrado."))
     return _ok()
 
 
@@ -428,7 +429,7 @@ def crear_categoria():
     datos = _body()
     nombre = (datos.get("nombre") or "").strip()
     if not nombre:
-        return _err("El nombre no puede estar vacío.")
+        return _err(gettext("El nombre no puede estar vacío."))
     categoria_id = db.crear_categoria(g.usuario_id, nombre, datos.get("color"))
     return _ok(_dict(db.obtener_categoria(g.usuario_id, categoria_id)), 201)
 
@@ -437,7 +438,7 @@ def crear_categoria():
 @token_required
 def eliminar_categoria(categoria_id: int):
     if db.obtener_categoria(g.usuario_id, categoria_id) is None:
-        abort(404, "Proyecto no encontrado.")
+        abort(404, gettext("Proyecto no encontrado."))
     db.eliminar_categoria(g.usuario_id, categoria_id)
     return _ok()
 
@@ -446,7 +447,7 @@ def eliminar_categoria(categoria_id: int):
 @token_required
 def alternar_favorito_categoria(categoria_id: int):
     if db.obtener_categoria(g.usuario_id, categoria_id) is None:
-        abort(404, "Proyecto no encontrado.")
+        abort(404, gettext("Proyecto no encontrado."))
     db.alternar_favorito_categoria(g.usuario_id, categoria_id)
     return _ok(_dict(db.obtener_categoria(g.usuario_id, categoria_id)))
 
@@ -471,7 +472,7 @@ def crear_nota():
     texto = (datos.get("texto") or "").strip()
     titulo = (datos.get("titulo") or "").strip() or None
     if not texto and not titulo:
-        return _err("El texto no puede estar vacío.")
+        return _err(gettext("El texto no puede estar vacío."))
     error = _error_referencia("notas", g.usuario_id, datos)
     if error:
         return error
@@ -494,7 +495,7 @@ def editar_nota(nota_id: int):
     Lo que no se manda no se toca."""
     rol = db.rol_en_nota(g.usuario_id, nota_id)
     if rol not in ("dueno", "colabora"):
-        abort(404, "Nota no encontrada.")
+        abort(404, gettext("Nota no encontrada."))
     datos = _body()
     actual = db.obtener_nota_visible(g.usuario_id, nota_id)
     texto = (datos.get("texto") or "").strip() if "texto" in datos else actual["texto"]
@@ -508,9 +509,9 @@ def editar_nota(nota_id: int):
             cambios["cliente_fiscal_id"] = datos.get("cliente_fiscal_id")
     titulo_resultante = cambios["titulo"] if "titulo" in cambios else actual["titulo"]
     if not texto and not titulo_resultante:
-        return _err("El texto no puede estar vacío.")
+        return _err(gettext("El texto no puede estar vacío."))
     if "texto" not in datos and not cambios:
-        return _err("El texto no puede estar vacío.")
+        return _err(gettext("El texto no puede estar vacío."))
     if rol == "dueno":
         error = _error_referencia("notas", g.usuario_id, datos, excepto_id=nota_id)
         if error:
@@ -526,7 +527,7 @@ def editar_nota(nota_id: int):
 def eliminar_nota(nota_id: int):
     """A la papelera (se recupera con `POST /papelera/nota/{id}/restaurar`)."""
     if db.obtener_nota(g.usuario_id, nota_id) is None:
-        abort(404, "Nota no encontrada.")
+        abort(404, gettext("Nota no encontrada."))
     db.eliminar_nota(g.usuario_id, nota_id)
     return _ok()
 
@@ -540,9 +541,9 @@ def crear_tarea():
     nombre = (datos.get("nombre") or "").strip()
     categoria_id = datos.get("categoria_id")
     if not nombre or not categoria_id:
-        return _err("nombre y categoria_id son obligatorios.")
+        return _err(gettext("nombre y categoria_id son obligatorios."))
     if db.obtener_categoria(g.usuario_id, int(categoria_id)) is None:
-        abort(404, "Proyecto no encontrado.")
+        abort(404, gettext("Proyecto no encontrado."))
     tarea_id = db.crear_tarea(g.usuario_id, nombre, int(categoria_id), datos.get("tipo", "duracion"))
     return _ok(_dict(db.obtener_tarea(g.usuario_id, tarea_id)), 201)
 
@@ -551,7 +552,7 @@ def crear_tarea():
 @token_required
 def editar_tarea(tarea_id: int):
     if db.obtener_tarea(g.usuario_id, tarea_id) is None:
-        abort(404, "Tarea no encontrada.")
+        abort(404, gettext("Tarea no encontrada."))
     nombre = (_body().get("nombre") or "").strip()
     if nombre:
         db.editar_tarea(g.usuario_id, tarea_id, nombre)
@@ -562,7 +563,7 @@ def editar_tarea(tarea_id: int):
 @token_required
 def eliminar_tarea(tarea_id: int):
     if db.obtener_tarea(g.usuario_id, tarea_id) is None:
-        abort(404, "Tarea no encontrada.")
+        abort(404, gettext("Tarea no encontrada."))
     db.eliminar_tarea(g.usuario_id, tarea_id)
     return _ok()
 
@@ -664,9 +665,9 @@ _ACCIONES_PAPELERA = {
 def _en_la_papelera_o_404(tipo: str, item_id: int) -> None:
     """Solo se actúa sobre lo que de verdad está en tu papelera: si no, un id ajeno o de algo vivo borraría datos que nadie quería borrar."""
     if tipo not in _ACCIONES_PAPELERA:
-        abort(404, "Tipo de elemento desconocido.")
+        abort(404, gettext("Tipo de elemento desconocido."))
     if not any(f["origen"] == tipo and f["id"] == item_id for f in db.papelera(g.usuario_id)):
-        abort(404, "Ese elemento no está en la papelera.")
+        abort(404, gettext("Ese elemento no está en la papelera."))
 
 
 @api_bp.route("/papelera/<tipo>/<int:item_id>/restaurar", methods=["POST"])
@@ -721,7 +722,7 @@ def listar_tareas_outlook():
         return _ok_paginado([db.obtener_tarea_outlook(g.usuario_id, encontrado)] if encontrado else [])
     ambito = request.args.get("ambito") or "propias"
     if ambito not in ("propias", "asignadas", "compartidas", "todas"):
-        return _err("ambito debe ser propias, asignadas, compartidas o todas.")
+        return _err(gettext("ambito debe ser propias, asignadas, compartidas o todas."))
     filas = db.listar_tareas_outlook(
         g.usuario_id,
         estado=request.args.get("estado") or None,
@@ -743,7 +744,7 @@ def crear_tarea_outlook():
     datos = _body()
     asunto = (datos.get("asunto") or "").strip()
     if not asunto:
-        return _err("El asunto no puede estar vacío.")
+        return _err(gettext("El asunto no puede estar vacío."))
     error = _error_referencia("tareas_outlook", g.usuario_id, datos)
     if error:
         return error
@@ -761,9 +762,9 @@ def crear_tarea_outlook():
     asignada_a = datos.get("asignada_a") or (entendido.persona_id if entendido else None)
     cliente_id = datos.get("cliente_fiscal_id")
     if categoria_id is not None and categoria_id not in {m["id"] for m in proyectos}:
-        return _err("Ese proyecto no existe o no puedes poner tareas en él.", 400, "proyecto_invalido", "categoria_id")
+        return _err(gettext("Ese proyecto no existe o no puedes poner tareas en él."), 400, "proyecto_invalido", "categoria_id")
     if asignada_a is not None and asignada_a not in {c["id"] for c in companeros}:
-        return _err("Solo puedes asignar a personas de tu despacho.", 400, "asignada_invalida", "asignada_a")
+        return _err(gettext("Solo puedes asignar a personas de tu despacho."), 400, "asignada_invalida", "asignada_a")
     if cliente_id is not None:
         try:
             tareas_trabajo.validar_clientes(g.usuario_id, [cliente_id], cliente_id)
@@ -789,7 +790,7 @@ def crear_tarea_outlook():
 @token_required
 def editar_tarea_outlook(tarea_id: int):
     if db.obtener_tarea_outlook(g.usuario_id, tarea_id) is None:
-        abort(404, "Tarea no encontrada.")
+        abort(404, gettext("Tarea no encontrada."))
     datos = _body()
     campos = {
         campo: datos[campo]
@@ -803,7 +804,7 @@ def editar_tarea_outlook(tarea_id: int):
         texto = str(datos.get("estimacion") or "").strip()
         minutos = quickadd.duracion_a_minutos(texto)
         if texto and minutos is None:
-            return _err("No entiendo esa estimación: prueba «1h30», «45 min» o «2» (horas).", 400, "estimacion_invalida", "estimacion")
+            return _err(gettext("No entiendo esa estimación: prueba «1h30», «45 min» o «2» (horas)."), 400, "estimacion_invalida", "estimacion")
         campos["estimacion_min"] = minutos
     error = _error_referencia("tareas_outlook", g.usuario_id, datos, excepto_id=tarea_id)
     if error:
@@ -821,7 +822,7 @@ def editar_tarea_outlook(tarea_id: int):
 @token_required
 def eliminar_tarea_outlook(tarea_id: int):
     if db.obtener_tarea_outlook(g.usuario_id, tarea_id) is None:
-        abort(404, "Tarea no encontrada.")
+        abort(404, gettext("Tarea no encontrada."))
     db.eliminar_tarea_outlook(g.usuario_id, tarea_id)
     return _ok()
 
@@ -831,9 +832,9 @@ def eliminar_tarea_outlook(tarea_id: int):
 def completar_tarea_outlook(tarea_id: int):
     previa = db.obtener_tarea_outlook(g.usuario_id, tarea_id)
     if previa is None:
-        abort(404, "Tarea no encontrada.")
+        abort(404, gettext("Tarea no encontrada."))
     if db.tarea_bloqueada(tarea_id):
-        return _err("Esta tarea espera a otras que todavía no están completadas.", 409, "tarea_bloqueada")
+        return _err(gettext("Esta tarea espera a otras que todavía no están completadas."), 409, "tarea_bloqueada")
     from . import tareas_trabajo
     impedimento = tareas_trabajo.impedimento_de_cierre(tarea_id)
     if impedimento:
@@ -876,7 +877,7 @@ def crear_tiquet():
     tipo = datos.get("tipo", "")
     titulo = (datos.get("titulo") or "").strip()
     if not titulo or tipo not in ("error", "sugerencia"):
-        return _err("Faltan datos: título y tipo (error/sugerencia) son obligatorios.")
+        return _err(gettext("Faltan datos: título y tipo (error/sugerencia) son obligatorios."))
     tiquet_id = db.crear_tiquet(g.usuario_id, tipo=tipo, titulo=titulo, descripcion=datos.get("descripcion") or None)
     return _ok(_dict(db.obtener_tiquet(tiquet_id)), 201)
 
@@ -886,14 +887,14 @@ def crear_tiquet():
 def editar_tiquet(tiquet_id: int):
     tiquet = db.obtener_tiquet(tiquet_id)
     if tiquet is None:
-        abort(404, "Tiquet no encontrado.")
+        abort(404, gettext("Tiquet no encontrado."))
     if not _puede_editar_tiquet(tiquet):
-        return _err("Este tiquet no es tuyo, o ya no está 'sin revisar'.", 403)
+        return _err(gettext("Este tiquet no es tuyo, o ya no está 'sin revisar'."), 403)
     datos = _body()
     titulo = (datos.get("titulo") or tiquet["titulo"]).strip()
     tipo = datos.get("tipo") or tiquet["tipo"]
     if not titulo or tipo not in ("error", "sugerencia"):
-        return _err("Faltan datos: título y tipo (error/sugerencia) son obligatorios.")
+        return _err(gettext("Faltan datos: título y tipo (error/sugerencia) son obligatorios."))
     db.editar_tiquet(
         g.usuario_id, tiquet_id, titulo=titulo,
         descripcion=datos.get("descripcion", tiquet["descripcion"]), tipo=tipo,
@@ -906,9 +907,9 @@ def editar_tiquet(tiquet_id: int):
 def eliminar_tiquet(tiquet_id: int):
     tiquet = db.obtener_tiquet(tiquet_id)
     if tiquet is None:
-        abort(404, "Tiquet no encontrado.")
+        abort(404, gettext("Tiquet no encontrado."))
     if not _puede_borrar_tiquet(tiquet):
-        return _err("Este tiquet no es tuyo.", 403)
+        return _err(gettext("Este tiquet no es tuyo."), 403)
     db.eliminar_tiquet(tiquet_id)
     return _ok()
 
@@ -917,12 +918,12 @@ def eliminar_tiquet(tiquet_id: int):
 @token_required
 def cambiar_estado_tiquet(tiquet_id: int):
     if not db.es_admin(g.usuario_id):
-        return _err("Solo un administrador puede mover tiquets de estado.", 403)
+        return _err(gettext("Solo un administrador puede mover tiquets de estado."), 403)
     if db.obtener_tiquet(tiquet_id) is None:
-        abort(404, "Tiquet no encontrado.")
+        abort(404, gettext("Tiquet no encontrado."))
     estado = _body().get("estado", "")
     if estado not in ("sin_revisar", "en_revision", "finalizado"):
-        return _err("Estado no válido.")
+        return _err(gettext("Estado no válido."))
     db.cambiar_estado_tiquet(tiquet_id, estado)
     return _ok(_dict(db.obtener_tiquet(tiquet_id)))
 
@@ -949,11 +950,11 @@ def _version_if_match() -> int | None:
 
 def _exigir_tenant_api():
     if g.tenant_id is None:
-        return _err("Esta cuenta no tiene un tenant asignado -- pide a un admin que te asigne uno.", 403)
+        return _err(gettext("Esta cuenta no tiene un tenant asignado -- pide a un admin que te asigne uno."), 403)
     if request.method not in ("GET", "HEAD", "OPTIONS") and request.path.startswith("/api/v1/fiscal"):
         from . import acceso
         if acceso.es_solo_auditor(g.tenant_id, g.usuario_id):
-            return _err("Con el rol de auditor solo puedes leer.", 403, "solo_lectura")
+            return _err(gettext("Con el rol de auditor solo puedes leer."), 403, "solo_lectura")
     return None
 
 
@@ -979,7 +980,7 @@ def crear_cliente_fiscal():
     datos = _body()
     nombre = (datos.get("nombre") or "").strip()
     if not nombre:
-        return _err("El nombre es obligatorio.")
+        return _err(gettext("El nombre es obligatorio."))
     error = _error_referencia("clientes_fiscales", g.tenant_id, datos)
     if error:
         return error
@@ -1005,7 +1006,7 @@ def obtener_cliente_fiscal(cliente_id: int):
         return error
     cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
     if cliente is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     datos = dict(cliente)
     datos["modelos_fiscales"] = db.modelos_fiscales_de_cliente(cliente)
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "ficha_vista", "vía API")
@@ -1020,10 +1021,10 @@ def editar_cliente_fiscal(cliente_id: int):
         return error
     actual = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
     if actual is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     esperada = _version_if_match()
     if esperada is not None and esperada != actual["version"]:
-        return _err_version("Otra persona ha cambiado este cliente: recárgalo y revisa los cambios.", actual["version"])
+        return _err_version(gettext("Otra persona ha cambiado este cliente: recárgalo y revisa los cambios."), actual["version"])
     datos = _body()
     campos = {}
     if "nombre" in datos:
@@ -1056,7 +1057,7 @@ def eliminar_cliente_fiscal(cliente_id: int):
     if error:
         return error
     if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     db.eliminar_cliente_fiscal(g.tenant_id, cliente_id)
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "cliente_eliminado", "vía API")
     return _ok()
@@ -1072,14 +1073,14 @@ def generar_vencimientos_fiscales(cliente_id: int):
         return error
     cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
     if cliente is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     datos = _body()
     modelos = datos.get("modelos") or db.modelos_fiscales_de_cliente(cliente)
     anio = datos.get("anio") or datetime.now().year
     if not modelos:
-        return _err("Indica al menos un modelo.")
+        return _err(gettext("Indica al menos un modelo."))
     if not isinstance(anio, int) or not 2000 <= anio <= 2100:
-        return _err("anio debe ser un año válido.", 400, "peticion_invalida", "anio")
+        return _err(gettext("anio debe ser un año válido."), 400, "peticion_invalida", "anio")
     from . import nucleo
     creados, omitidos = [], 0
     for p in nucleo.propuestas_vencimientos_ajustadas(g.tenant_id, modelos, anio, cliente["pais"]):
@@ -1118,11 +1119,11 @@ def editar_vencimiento_fiscal(vencimiento_id: int):
         return error
     vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
     if vencimiento is None:
-        abort(404, "Vencimiento no encontrado.")
+        abort(404, gettext("Vencimiento no encontrado."))
     datos = _body()
     esperada = _version_if_match()
     if esperada is not None and esperada != vencimiento["version"]:
-        return _err_version("Otra persona ha cambiado este vencimiento: recárgalo y revisa los cambios.", vencimiento["version"])
+        return _err_version(gettext("Otra persona ha cambiado este vencimiento: recárgalo y revisa los cambios."), vencimiento["version"])
     campos = {k: datos[k] for k in db.CAMPOS_VENCIMIENTO_FISCAL if k in datos}
     if "estado" in campos:
         from . import obligaciones
@@ -1155,7 +1156,7 @@ def marcar_presentado_vencimiento_fiscal(vencimiento_id: int):
         return error
     vencimiento = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
     if vencimiento is None:
-        abort(404, "Vencimiento no encontrado.")
+        abort(404, gettext("Vencimiento no encontrado."))
     from .rutas_fiscal import _generar_constancia, _guardar_justificante
     from . import obligaciones
     try:
@@ -1165,7 +1166,7 @@ def marcar_presentado_vencimiento_fiscal(vencimiento_id: int):
     db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id, g.usuario_id)
     justificante = request.files.get("justificante")
     if justificante is not None and justificante.filename and not _guardar_justificante(vencimiento_id, justificante):
-        return _err("Justificante no válido: solo imágenes o PDF, hasta 8 MB (el vencimiento ya queda presentado).", 400, "justificante_invalido", "justificante")
+        return _err(gettext("Justificante no válido: solo imágenes o PDF, hasta 8 MB (el vencimiento ya queda presentado)."), 400, "justificante_invalido", "justificante")
     try:
         _generar_constancia(vencimiento)
     except Exception:  # noqa: BLE001 -- un fallo al generar la constancia nunca deshace el «presentado»
@@ -1184,7 +1185,7 @@ def eliminar_vencimiento_fiscal(vencimiento_id: int):
     if error:
         return error
     if db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id) is None:
-        abort(404, "Vencimiento no encontrado.")
+        abort(404, gettext("Vencimiento no encontrado."))
     db.eliminar_vencimiento_fiscal(g.tenant_id, vencimiento_id)
     return _ok()
 
@@ -1214,9 +1215,9 @@ def marcar_fichaje():
     datos = _body()
     tipo = datos.get("tipo", "")
     if tipo not in ("entrada", "pausa_inicio", "pausa_fin", "salida"):
-        return _err("Tipo de fichaje no válido.")
+        return _err(gettext("Tipo de fichaje no válido."))
     if not db.fichaje_datos_completos(g.usuario_id):
-        return _err("Antes de fichar hace falta rellenar nombre completo y DNI/NIE en Mis datos.")
+        return _err(gettext("Antes de fichar hace falta rellenar nombre completo y DNI/NIE en Mis datos."))
     tenant = db.tenant_de_usuario(g.usuario_id)
     # Geolocalización (Fase G3): igual que la web, el servidor solo la
     # guarda si el tenant la tiene activada -- no se fía de que el móvil
@@ -1273,7 +1274,7 @@ def guardar_mis_datos_fichaje():
     nombre_completo = (datos.get("nombre_completo") or "").strip()
     dni_nie = (datos.get("dni_nie") or "").strip()
     if not nombre_completo or not dni_nie:
-        return _err("Nombre completo y DNI/NIE son obligatorios.")
+        return _err(gettext("Nombre completo y DNI/NIE son obligatorios."))
     jornada = datos.get("jornada_semanal_horas")
     db.guardar_fichaje_datos(
         g.usuario_id, nombre_completo, dni_nie,
@@ -1317,7 +1318,7 @@ def crear_cuenta_correo():
 @token_required
 def eliminar_cuenta_correo(cuenta_id: int):
     if db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
-        abort(404, "Cuenta no encontrada.")
+        abort(404, gettext("Cuenta no encontrada."))
     correo.eliminar_cuenta(g.usuario_id, cuenta_id)
     return _ok()
 
@@ -1326,7 +1327,7 @@ def eliminar_cuenta_correo(cuenta_id: int):
 @token_required
 def sincronizar_cuenta_correo(cuenta_id: int):
     if db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
-        abort(404, "Cuenta no encontrada.")
+        abort(404, gettext("Cuenta no encontrada."))
     try:
         resumen = correo.sincronizar_bandeja(g.usuario_id, cuenta_id)
     except correo.ErrorCorreo as e:
@@ -1339,7 +1340,7 @@ def sincronizar_cuenta_correo(cuenta_id: int):
 def listar_carpetas_correo():
     cuenta_id = request.args.get("cuenta_id", type=int)
     if cuenta_id is None or db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
-        abort(404, "Cuenta no encontrada.")
+        abort(404, gettext("Cuenta no encontrada."))
     return _ok(correo.listar_carpetas(g.usuario_id, cuenta_id))
 
 
@@ -1348,7 +1349,7 @@ def listar_carpetas_correo():
 def listar_mensajes_correo():
     cuenta_id = request.args.get("cuenta_id", type=int)
     if cuenta_id is None or db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
-        abort(404, "Cuenta no encontrada.")
+        abort(404, gettext("Cuenta no encontrada."))
     preferencias = db.obtener_preferencias_correo(g.usuario_id)
     consulta = correo.consulta_de_busqueda(g.usuario_id, getattr(g, "tenant_id", None), request.args.get("q"))
     mensajes = correo.listar_mensajes(
@@ -1378,10 +1379,10 @@ def obtener_mensaje_correo(mensaje_id: int):
 @token_required
 def descargar_adjunto_correo(mensaje_id: int, adjunto_id: int):
     if not db.adjunto_correo_pertenece_a_usuario(g.usuario_id, adjunto_id):
-        abort(404, "Adjunto no encontrado.")
+        abort(404, gettext("Adjunto no encontrado."))
     adjunto = db.obtener_adjunto_correo(adjunto_id)
     if adjunto is None or adjunto["mensaje_id"] != mensaje_id:
-        abort(404, "Adjunto no encontrado.")
+        abort(404, gettext("Adjunto no encontrado."))
     respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
     respuesta.headers.set("Content-Disposition", "attachment", filename=adjunto["nombre_archivo"])
     return respuesta
@@ -1461,7 +1462,7 @@ def accion_en_lote_correo(accion: str):
             except correo.ErrorCorreo as e:
                 errores.append(str(e))
         else:
-            abort(404, "Acción desconocida.")
+            abort(404, gettext("Acción desconocida."))
     return _ok({"procesados": len(ids) - len(errores), "errores": errores})
 
 
@@ -1491,10 +1492,10 @@ def enviar_correo():
             try:
                 contenido = base64.b64decode(a["contenido_base64"], validate=True)
             except (ValueError, TypeError):
-                return _err(f"El adjunto «{a.get('nombre', 'adjunto')}» no es base64 válido.", 400, "adjunto_invalido", "adjuntos")
+                return _err(gettext("El adjunto «%(nombre)s» no es base64 válido.", nombre=a.get("nombre", "adjunto")), 400, "adjunto_invalido", "adjuntos")
             adjuntos.append({"nombre": a.get("nombre") or "adjunto", "tipo": a.get("tipo") or "application/octet-stream", "bytes": contenido})
     if len(adjuntos) > MAX_ADJUNTOS_ENVIO:
-        return _err(f"Máximo {MAX_ADJUNTOS_ENVIO} adjuntos por correo.", 400, "demasiados_adjuntos", "adjuntos")
+        return _err(gettext("Máximo %(n)s adjuntos por correo.", n=MAX_ADJUNTOS_ENVIO), 400, "demasiados_adjuntos", "adjuntos")
     try:
         cuenta_id = int(datos.get("cuenta_id")) if str(datos.get("cuenta_id") or "").lstrip("-").isdigit() else None
         seguimiento = db.seguimiento_dias_valido(datos.get("seguimiento_dias")) if datos.get("seguimiento_dias") not in (None, "") else None
@@ -1507,9 +1508,9 @@ def enviar_correo():
             try:
                 momento = datetime.fromisoformat(programar)
             except ValueError:
-                return _err("programar_para debe ser YYYY-MM-DDTHH:MM.", 400, "peticion_invalida", "programar_para")
+                return _err(gettext("programar_para debe ser YYYY-MM-DDTHH:MM."), 400, "peticion_invalida", "programar_para")
             if momento <= datetime.now() + timedelta(minutes=1) or momento > datetime.now() + timedelta(days=366):
-                return _err("programar_para tiene que ser futuro (y dentro de un año).", 400, "peticion_invalida", "programar_para")
+                return _err(gettext("programar_para tiene que ser futuro (y dentro de un año)."), 400, "peticion_invalida", "programar_para")
             enviar_en = momento.isoformat(timespec="seconds")
             envio_id = correo.encolar_envio(
                 g.usuario_id, cuenta_id, datos.get("destinatarios", ""), datos.get("asunto", ""), datos.get("cuerpo_html", ""),
@@ -1631,7 +1632,7 @@ def guardar_firma_correo():
     datos = _body()
     cuenta_id = datos.get("cuenta_id")
     if db.obtener_cuenta_correo(g.usuario_id, cuenta_id) is None:
-        abort(404, "Cuenta no encontrada.")
+        abort(404, gettext("Cuenta no encontrada."))
     correo.guardar_firma(
         g.usuario_id, cuenta_id, datos.get("firma_html", ""),
         en_nuevos=bool(datos.get("firma_en_nuevos", True)),
@@ -1737,7 +1738,7 @@ def crear_conversacion_ia():
 @token_required
 def activar_conversacion_ia(conversacion_id: int):
     if not db.activar_conversacion_ia(g.usuario_id, conversacion_id):
-        abort(404, "Conversación no encontrada.")
+        abort(404, gettext("Conversación no encontrada."))
     return _ok()
 
 
@@ -1749,7 +1750,7 @@ def renombrar_conversacion_ia(conversacion_id: int):
     except ValueError as e:
         return _err(str(e))
     if not encontrada:
-        abort(404, "Conversación no encontrada.")
+        abort(404, gettext("Conversación no encontrada."))
     return _ok()
 
 
@@ -1757,7 +1758,7 @@ def renombrar_conversacion_ia(conversacion_id: int):
 @token_required
 def eliminar_conversacion_ia(conversacion_id: int):
     if not db.eliminar_conversacion_ia(g.usuario_id, conversacion_id):
-        abort(404, "Conversación no encontrada.")
+        abort(404, gettext("Conversación no encontrada."))
     return _ok()
 
 
@@ -1789,7 +1790,7 @@ def crear_atajo_ia():
 @token_required
 def eliminar_atajo_ia(atajo_id: int):
     if not db.eliminar_atajo_ia(g.usuario_id, atajo_id):
-        abort(404, "Atajo no encontrado.")
+        abort(404, gettext("Atajo no encontrado."))
     return _ok()
 
 
@@ -1875,7 +1876,7 @@ def registrar_dispositivo_push():
     fcm_token = (datos.get("fcm_token") or "").strip()
     plataforma = datos.get("plataforma") or ""
     if not fcm_token or plataforma not in ("android", "ios"):
-        return _err("Faltan datos: fcm_token y plataforma (android/ios) son obligatorios.")
+        return _err(gettext("Faltan datos: fcm_token y plataforma (android/ios) son obligatorios."))
     db.registrar_dispositivo_push(g.usuario_id, fcm_token, plataforma)
     return _ok()
 
@@ -1887,7 +1888,7 @@ def eliminar_dispositivo_push():
     que se ha cerrado sesión."""
     fcm_token = (_body().get("fcm_token") or "").strip()
     if not fcm_token:
-        return _err("Falta fcm_token.")
+        return _err(gettext("Falta fcm_token."))
     db.eliminar_dispositivo_push(g.usuario_id, fcm_token)
     return _ok()
 
@@ -1923,7 +1924,7 @@ def editar_perfil():
     # API 1.5: apariencia en la cuenta (se aplica en la web y en cualquier dispositivo). Un valor no válido es un 400, no se ignora.
     for campo, validos in (("tema", db.TEMAS_VALIDOS), ("densidad", db.DENSIDADES_VALIDAS), ("idioma", api_contexto.IDIOMAS)):
         if campo in datos and datos.get(campo) not in validos:
-            return _err(f"Valor no válido para «{campo}»: usa {', '.join(validos)}.", 400, "valor_invalido", campo)
+            return _err(gettext("Valor no válido para «%(campo)s»: usa %(validos)s.", campo=campo, validos=", ".join(validos)), 400, "valor_invalido", campo)
     db.guardar_apariencia_usuario(g.usuario_id, tema=datos.get("tema"), densidad=datos.get("densidad"))
     if datos.get("idioma"):
         db.cambiar_idioma_usuario(g.usuario_id, datos.get("idioma"))
@@ -1951,12 +1952,12 @@ def subir_avatar_api():
     query param vs {"ok": false})."""
     fichero = request.files.get("avatar")
     if not fichero or not fichero.filename:
-        return _err("Falta el archivo 'avatar'.")
+        return _err(gettext("Falta el archivo 'avatar'."))
     if fichero.mimetype not in _AVATAR_TIPOS_PERMITIDOS_API:
-        return _err("Formato de imagen no soportado (usa JPEG, PNG o WEBP).")
+        return _err(gettext("Formato de imagen no soportado (usa JPEG, PNG o WEBP)."))
     datos = fichero.read(_AVATAR_TAMANO_MAXIMO_BYTES_API + 1)
     if len(datos) > _AVATAR_TAMANO_MAXIMO_BYTES_API:
-        return _err("La imagen pesa demasiado (máximo 5 MB).")
+        return _err(gettext("La imagen pesa demasiado (máximo 5 MB)."))
     try:
         from io import BytesIO
 
@@ -1972,7 +1973,7 @@ def subir_avatar_api():
         imagen.save(buffer, format="JPEG", quality=88)
         db.guardar_avatar_usuario(g.usuario_id, buffer.getvalue(), "image/jpeg")
     except Exception:
-        return _err("No se ha podido procesar la imagen -- prueba con otra.")
+        return _err(gettext("No se ha podido procesar la imagen -- prueba con otra."))
     return _ok(_perfil_json(db.obtener_perfil_usuario(g.usuario_id)), 201)
 
 
@@ -1994,10 +1995,10 @@ def avatar_api(usuario_id: int):
     if usuario_id != g.usuario_id:
         tenant_objetivo = db.tenant_de_usuario(usuario_id)
         if tenant_objetivo is None or tenant_objetivo["id"] != g.tenant_id:
-            abort(404, "Este usuario no tiene avatar.")
+            abort(404, gettext("Este usuario no tiene avatar."))
     perfil = db.obtener_perfil_usuario(usuario_id)
     if not perfil["avatar_contenido"]:
-        abort(404, "Este usuario no tiene avatar.")
+        abort(404, gettext("Este usuario no tiene avatar."))
     return Response(perfil["avatar_contenido"], mimetype=perfil["avatar_tipo_mime"])
 
 
@@ -2015,7 +2016,7 @@ def estado_servicio():
             conn.close()
     except Exception:  # noqa: BLE001 -- cualquier fallo de la base de datos es "no disponible"
         logger.exception("health: la base de datos no responde")
-        return _err("La base de datos no responde.", 503, "servicio_no_disponible")
+        return _err(gettext("La base de datos no responde."), 503, "servicio_no_disponible")
     return _ok({"estado": "ok", "version_api": API_VERSION, "base_de_datos": "ok"})
 
 

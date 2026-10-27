@@ -16089,3 +16089,1003 @@ msgstr "Search"
 
 msgid "Ningún titular coincide con la búsqueda."
 msgstr "No holder matches the search."
+
+#: app/rutas_api.py
+msgid "Alguno de los valores enviados no es válido (revisa campos como estado o prioridad)."
+msgstr "One of the submitted values is not valid (check fields such as status or priority)."
+
+#: app/rutas_api.py
+msgid "Ya existe un registro con esos datos."
+msgstr "A record with these details already exists."
+
+#: app/rutas_api.py
+msgid "Indica un email válido."
+msgstr "Enter a valid email address."
+
+#: app/rutas_api.py
+msgid "La contraseña debe tener al menos 8 caracteres."
+msgstr "The password must be at least 8 characters long."
+
+#: app/rutas_api.py
+msgid "Ya existe una cuenta con ese email."
+msgstr "An account with that email already exists."
+
+#: app/rutas_api.py
+msgid "Email o contraseña incorrectos."
+msgstr "Incorrect email or password."
+
+#: app/rutas_api.py
+msgid "permisos debe ser 'completo' o 'solo_lectura'."
+msgstr "permisos must be 'completo' or 'solo_lectura'."
+
+#: app/rutas_api.py
+msgid "Token no encontrado."
+msgstr "Token not found."
+
+#: app/rutas_api.py
+msgid "El nombre no puede estar vacío."
+msgstr "The name cannot be empty."
+
+#: app/rutas_api.py
+msgid "Proyecto no encontrado."
+msgstr "Project not found."
+
+#: app/rutas_api.py
+msgid "El texto no puede estar vacío."
+msgstr "The text cannot be empty."
+
+#: app/rutas_api.py
+msgid "Nota no encontrada."
+msgstr "Note not found."
+
+#: app/rutas_api.py
+msgid "nombre y categoria_id son obligatorios."
+msgstr "nombre and categoria_id are required."
+
+#: app/rutas_api.py
+msgid "Tarea no encontrada."
+msgstr "Task not found."
+
+#: app/rutas_api.py
+msgid "Tipo de elemento desconocido."
+msgstr "Unknown item type."
+
+#: app/rutas_api.py
+msgid "Ese elemento no está en la papelera."
+msgstr "That item is not in the trash."
+
+#: app/rutas_api.py
+msgid "ambito debe ser propias, asignadas, compartidas o todas."
+msgstr "ambito must be propias, asignadas, compartidas or todas."
+
+#: app/rutas_api.py
+msgid "El asunto no puede estar vacío."
+msgstr "The subject cannot be empty."
+
+#: app/rutas_api.py
+msgid "Ese proyecto no existe o no puedes poner tareas en él."
+msgstr "That project does not exist or you cannot add tasks to it."
+
+#: app/rutas_api.py
+msgid "Solo puedes asignar a personas de tu despacho."
+msgstr "You can only assign to people in your office."
+
+#: app/rutas_api.py
+msgid "Esta tarea espera a otras que todavía no están completadas."
+msgstr "This task is waiting on others that are not completed yet."
+
+#: app/rutas_api.py
+msgid "Faltan datos: título y tipo (error/sugerencia) son obligatorios."
+msgstr "Missing data: title and type (error/suggestion) are required."
+
+#: app/rutas_api.py
+msgid "Tiquet no encontrado."
+msgstr "Ticket not found."
+
+#: app/rutas_api.py
+msgid "Este tiquet no es tuyo, o ya no está 'sin revisar'."
+msgstr "This ticket is not yours, or it is no longer 'unreviewed'."
+
+#: app/rutas_api.py
+msgid "Este tiquet no es tuyo."
+msgstr "This ticket is not yours."
+
+#: app/rutas_api.py
+msgid "Solo un administrador puede mover tiquets de estado."
+msgstr "Only an administrator can change a ticket's status."
+
+#: app/rutas_api.py
+msgid "Esta cuenta no tiene un tenant asignado -- pide a un admin que te asigne uno."
+msgstr "This account has no tenant assigned -- ask an admin to assign one."
+
+#: app/rutas_api.py
+msgid "El nombre es obligatorio."
+msgstr "The name is required."
+
+#: app/rutas_api.py
+msgid "Cliente fiscal no encontrado."
+msgstr "Tax client not found."
+
+#: app/rutas_api.py
+msgid "Otra persona ha cambiado este cliente: recárgalo y revisa los cambios."
+msgstr "Someone else has changed this client: reload it and review the changes."
+
+#: app/rutas_api.py
+msgid "Indica al menos un modelo."
+msgstr "Specify at least one form."
+
+#: app/rutas_api.py
+msgid "anio debe ser un año válido."
+msgstr "anio must be a valid year."
+
+#: app/rutas_api.py
+msgid "Vencimiento no encontrado."
+msgstr "Deadline not found."
+
+#: app/rutas_api.py
+msgid "Otra persona ha cambiado este vencimiento: recárgalo y revisa los cambios."
+msgstr "Someone else has changed this deadline: reload it and review the changes."
+
+#: app/rutas_api.py
+msgid "Justificante no válido: solo imágenes o PDF, hasta 8 MB (el vencimiento ya queda presentado)."
+msgstr "Invalid proof of filing: images or PDF only, up to 8 MB (the deadline is already marked as filed)."
+
+#: app/rutas_api.py
+msgid "Tipo de fichaje no válido."
+msgstr "Invalid clock-in type."
+
+#: app/rutas_api.py
+msgid "Antes de fichar hace falta rellenar nombre completo y DNI/NIE en Mis datos."
+msgstr "Before clocking in you must fill in your full name and ID number in My details."
+
+#: app/rutas_api.py
+msgid "Nombre completo y DNI/NIE son obligatorios."
+msgstr "Full name and ID number are required."
+
+#: app/rutas_api.py
+msgid "Cuenta no encontrada."
+msgstr "Account not found."
+
+#: app/rutas_api.py
+msgid "Adjunto no encontrado."
+msgstr "Attachment not found."
+
+#: app/rutas_api.py
+msgid "Conversación no encontrada."
+msgstr "Conversation not found."
+
+#: app/rutas_api.py
+msgid "Atajo no encontrado."
+msgstr "Shortcut not found."
+
+#: app/rutas_api.py
+msgid "Faltan datos: fcm_token y plataforma (android/ios) son obligatorios."
+msgstr "Missing data: fcm_token and plataforma (android/ios) are required."
+
+#: app/rutas_api.py
+msgid "Falta fcm_token."
+msgstr "fcm_token is missing."
+
+#: app/rutas_api.py
+msgid "Falta el archivo 'avatar'."
+msgstr "The 'avatar' file is missing."
+
+#: app/rutas_api.py
+msgid "Formato de imagen no soportado (usa JPEG, PNG o WEBP)."
+msgstr "Unsupported image format (use JPEG, PNG or WEBP)."
+
+#: app/rutas_api.py
+msgid "Este usuario no tiene avatar."
+msgstr "This user has no avatar."
+
+#: app/rutas_api.py
+msgid "Esta cuenta tiene la verificación en dos pasos: vuelve a llamar con `codigo_2fa` (el de tu app de autenticación o uno de recuperación)."
+msgstr "This account has two-step verification: call again with `codigo_2fa` (from your authenticator app or a recovery code)."
+
+#: app/rutas_api.py
+msgid "Email, contraseña o código incorrectos."
+msgstr "Incorrect email, password or code."
+
+#: app/rutas_api.py
+msgid "caduca_dias debe ser un entero entre 1 y 3650."
+msgstr "caduca_dias must be an integer between 1 and 3650."
+
+#: app/rutas_api.py
+msgid "No entiendo esa estimación: prueba «1h30», «45 min» o «2» (horas)."
+msgstr "I don't understand that estimate: try “1h30”, “45 min” or “2” (hours)."
+
+#: app/rutas_api.py
+msgid "Con el rol de auditor solo puedes leer."
+msgstr "With the auditor role you can only read."
+
+#: app/rutas_api.py
+msgid "No se ha podido procesar la imagen -- prueba con otra."
+msgstr "The image could not be processed -- try another one."
+
+#: app/rutas_api.py
+msgid "La base de datos no responde."
+msgstr "The database is not responding."
+
+#: app/rutas_api.py
+msgid "email no es válido."
+msgstr "email is not valid."
+
+#: app/rutas_api.py
+msgid "pais debe ser un código de 2 letras (p. ej. ES)."
+msgstr "pais must be a 2-letter code (e.g. ES)."
+
+#: app/rutas_api.py
+msgid "idioma debe ser es, ca, en o fr."
+msgstr "idioma must be es, ca, en or fr."
+
+#: app/rutas_api.py
+msgid "programar_para tiene que ser futuro (y dentro de un año)."
+msgstr "programar_para must be in the future (and within one year)."
+
+#: app/rutas_api.py
+msgid "programar_para debe ser YYYY-MM-DDTHH:MM."
+msgstr "programar_para must be YYYY-MM-DDTHH:MM."
+
+#: app/rutas_api.py
+msgid "Acción desconocida."
+msgstr "Unknown action."
+
+#: app/rutas_api.py
+msgid "El rol debe ser «colabora» u «observa»."
+msgstr "The role must be “colabora” or “observa”."
+
+#: app/rutas_api.py
+msgid "No se puede compartir esa nota con esa persona."
+msgstr "That note cannot be shared with that person."
+
+#: app/rutas_api.py
+msgid "Esa persona no tiene la nota compartida."
+msgstr "That person does not have the note shared."
+
+#: app/rutas_api.py
+msgid "El proyecto necesita un nombre."
+msgstr "The project needs a name."
+
+#: app/rutas_api.py
+msgid "No se ha podido añadir: la tarea no es tuya, el texto está vacío o el checklist está lleno (máx. 50)."
+msgstr "Could not add it: the task is not yours, the text is empty or the checklist is full (max. 50)."
+
+#: app/rutas_api.py
+msgid "Subtarea no encontrada."
+msgstr "Subtask not found."
+
+#: app/rutas_api.py
+msgid "No se puede asignar: la tarea no es tuya o el compañero no es de tu despacho."
+msgstr "Cannot assign: the task is not yours or the colleague is not in your office."
+
+#: app/rutas_api.py
+msgid "Envío no encontrado o ya enviado."
+msgstr "Message not found or already sent."
+
+#: app/rutas_api.py
+msgid "Seguimiento no encontrado."
+msgstr "Follow-up not found."
+
+#: app/rutas_api.py
+msgid "Indica qué buscar con ?q=."
+msgstr "Say what to search for with ?q=."
+
+#: app/rutas_api.py
+msgid "Este comunicado no se puede cerrar."
+msgstr "This announcement cannot be dismissed."
+
+#: app/rutas_api.py
+msgid "cursor no válido."
+msgstr "invalid cursor."
+
+#: app/rutas_api.py
+msgid "Los webhooks pertenecen a un despacho y tu usuario no tiene ninguno."
+msgstr "Webhooks belong to an office and your user has none."
+
+#: app/rutas_api.py
+msgid "Solo un supervisor del despacho o un administrador puede gestionar webhooks."
+msgstr "Only an office supervisor or an administrator can manage webhooks."
+
+#: app/rutas_api.py
+msgid "Webhook no encontrado."
+msgstr "Webhook not found."
+
+#: app/rutas_api.py
+msgid "Este webhook lo gestiona Guilda Work (backoffice): pide el cambio a soporte."
+msgstr "This webhook is managed by Guilda Work (backoffice): ask support for the change."
+
+#: app/rutas_api.py
+msgid "Entrega no encontrada."
+msgstr "Delivery not found."
+
+#: app/rutas_api.py
+msgid "Solo se pueden reintentar entregas fallidas."
+msgstr "Only failed deliveries can be retried."
+
+#: app/rutas_api.py
+msgid "La referencia no puede estar vacía."
+msgstr "The reference cannot be empty."
+
+#: app/rutas_api.py
+msgid "No hay ninguna nota con esa referencia."
+msgstr "There is no note with that reference."
+
+#: app/rutas_api.py
+msgid "No hay ninguna tarea con esa referencia."
+msgstr "There is no task with that reference."
+
+#: app/rutas_api.py
+msgid "No hay ningún cliente fiscal con esa referencia."
+msgstr "There is no tax client with that reference."
+
+#: app/rutas_api.py
+msgid "Solo quien gestiona el fichaje del despacho puede ver las ausencias del equipo."
+msgstr "Only the person who manages time tracking for the office can see the team's absences."
+
+#: app/rutas_api.py
+msgid "Solo quien gestiona el fichaje del despacho puede aprobar o rechazar ausencias."
+msgstr "Only the person who manages time tracking for the office can approve or reject absences."
+
+#: app/rutas_api.py
+msgid "`decision` debe ser «aprobar» o «rechazar»."
+msgstr "`decision` must be “aprobar” or “rechazar”."
+
+#: app/rutas_api.py
+msgid "Solo quien gestiona el fichaje del despacho puede hacer esto."
+msgstr "Only the person who manages time tracking for the office can do this."
+
+#: app/rutas_api.py
+msgid "Solo los custodios de certificados y los supervisores del despacho pueden usar esto."
+msgstr "Only certificate custodians and office supervisors can use this."
+
+#: app/rutas_api.py
+msgid "Certificado no encontrado."
+msgstr "Certificate not found."
+
+#: app/rutas_api.py
+msgid "Indica con quién compartirla (`usuario_id`)."
+msgstr "Say who to share it with (`usuario_id`)."
+
+#: app/rutas_api.py
+msgid "`contenido_base64` no es base64 válido."
+msgstr "`contenido_base64` is not valid base64."
+
+#: app/rutas_api.py
+msgid "Tu despacho no tiene el módulo Comercial."
+msgstr "Your office does not have the Sales module."
+
+#: app/rutas_api.py
+msgid "Indica de qué es la oportunidad."
+msgstr "Say what the opportunity is about."
+
+#: app/rutas_api.py
+msgid "Indica la etapa de destino."
+msgstr "Specify the target stage."
+
+#: app/rutas_api.py
+msgid "Ponle un título a la reunión."
+msgstr "Give the meeting a title."
+
+#: app/rutas_api.py
+msgid "Para generar actas hace falta un modelo y tu clave de OpenRouter, en los ajustes del Asistente IA."
+msgstr "To generate minutes you need a model and your OpenRouter key, in the AI Assistant settings."
+
+#: app/rutas_api.py
+msgid "Indica las tareas que quieres crear."
+msgstr "Specify the tasks you want to create."
+
+#: app/rutas_api.py
+msgid "Solo la dirección del despacho (supervisores) puede hacer esto."
+msgstr "Only the office management (supervisors) can do this."
+
+#: app/rutas_api.py
+msgid "Solo la dirección, los auditores y los revisores fiscales pueden consultar la auditoría."
+msgstr "Only management, auditors and tax reviewers can view the audit log."
+
+#: app/rutas_api.py
+msgid "Solo la dirección y los coordinadores pueden ver los roles del despacho."
+msgstr "Only management and coordinators can see the office's roles."
+
+#: app/rutas_api.py
+msgid "Traspaso no encontrado."
+msgstr "Handover not found."
+
+#: app/rutas_api.py
+msgid "Tipo no válido."
+msgstr "Invalid type."
+
+#: app/rutas_api.py
+msgid "No existe ese cliente."
+msgstr "That client does not exist."
+
+#: app/rutas_api.py
+msgid "Indica cliente_id o expediente_id."
+msgstr "Specify cliente_id or expediente_id."
+
+#: app/rutas_api.py
+msgid "Documento no encontrado."
+msgstr "Document not found."
+
+#: app/rutas_api.py
+msgid "Adjunta al menos un archivo en el campo «adjunto» (multipart)."
+msgstr "Attach at least one file in the “adjunto” field (multipart)."
+
+#: app/rutas_api.py
+msgid "Envío no encontrado."
+msgstr "Message not found."
+
+#: app/rutas_api.py
+msgid "Ya no se puede cancelar: el correo ya se ha enviado o se está enviando."
+msgstr "It can no longer be cancelled: the email has already been sent or is being sent."
+
+#: app/rutas_api.py
+msgid "Plantilla no encontrada."
+msgstr "Template not found."
+
+#: app/rutas_api.py
+msgid "No eres gestor de fichajes de ningún despacho."
+msgstr "You are not a time-tracking manager of any office."
+
+#: app/rutas_api.py
+msgid "No tienes permiso para administrar el fichaje de ese despacho."
+msgstr "You do not have permission to manage time tracking for that office."
+
+#: app/rutas_api.py
+msgid "Despacho no encontrado."
+msgstr "Office not found."
+
+#: app/rutas_api.py
+msgid "Trabajador no encontrado."
+msgstr "Employee not found."
+
+#: app/rutas_api.py
+msgid "Solo gestores de fichajes y administradores."
+msgstr "Time-tracking managers and administrators only."
+
+#: app/rutas_api.py
+msgid "Indica tenant_id: qué despacho quieres administrar."
+msgstr "Specify tenant_id: which office you want to manage."
+
+#: app/rutas_api.py
+msgid "marca_tiempo debe ser la fecha y hora real, YYYY-MM-DDTHH:MM."
+msgstr "marca_tiempo must be the actual date and time, YYYY-MM-DDTHH:MM."
+
+#: app/rutas_api.py
+msgid "Solo un supervisor del despacho puede ver el registro de accesos."
+msgstr "Only an office supervisor can view the access log."
+
+#: app/rutas_api.py
+msgid "Adjunta al menos un archivo en el campo «archivo» (multipart)."
+msgstr "Attach at least one file in the “archivo” field (multipart)."
+
+#: app/rutas_api.py
+msgid "modelo y periodo son obligatorios."
+msgstr "modelo and periodo are required."
+
+#: app/rutas_api.py
+msgid "El responsable no es de tu despacho."
+msgstr "The person in charge is not in your office."
+
+#: app/rutas_api.py
+msgid "Archivo no válido: solo imágenes o PDF, hasta 8 MB."
+msgstr "Invalid file: images or PDF only, up to 8 MB."
+
+#: app/rutas_api.py
+msgid "El mensaje no puede estar vacío."
+msgstr "The message cannot be empty."
+
+#: app/rutas_api.py
+msgid "fecha_limite debe ser YYYY-MM-DD."
+msgstr "fecha_limite must be YYYY-MM-DD."
+
+#: app/rutas_api.py
+msgid "El almacén de documentos no responde ahora mismo. Inténtalo en unos minutos."
+msgstr "The document store is not responding right now. Try again in a few minutes."
+
+#: app/rutas_api.py
+msgid "Tu despacho no tiene el Asistente jurídico."
+msgstr "Your office does not have the Legal Assistant."
+
+#: app/rutas_api.py
+msgid "Colecciones no válidas."
+msgstr "Invalid collections."
+
+#: app/rutas_api.py
+msgid "No existe ese documento."
+msgstr "That document does not exist."
+
+#: app/rutas_api.py
+msgid "No existe esa versión."
+msgstr "That version does not exist."
+
+#: app/rutas_api.py
+msgid "Falta el archivo (campo `archivo`)."
+msgstr "The file is missing (field `archivo`)."
+
+#: app/rutas_api.py
+msgid "No existe ese adjunto."
+msgstr "That attachment does not exist."
+
+#: app/rutas_api.py
+msgid "`adjunto_ids` debe ser una lista de enteros."
+msgstr "`adjunto_ids` must be a list of integers."
+
+#: app/rutas_api.py
+msgid "No existe ese informe."
+msgstr "That report does not exist."
+
+#: app/rutas_api.py
+msgid "Solo el administrador de la plataforma puede ver el diagnóstico de fuentes."
+msgstr "Only the platform administrator can see the sources diagnostics."
+
+#: app/rutas_api.py
+msgid "El comentario no puede estar vacío."
+msgstr "The comment cannot be empty."
+
+#: app/rutas_api.py
+msgid "Comentario no encontrado."
+msgstr "Comment not found."
+
+#: app/rutas_api.py
+msgid "Indica depende_de_id."
+msgstr "Specify depende_de_id."
+
+#: app/rutas_api.py
+msgid "No se puede enlazar: crearía un ciclo o no tienes acceso a esa tarea."
+msgstr "Cannot link: it would create a cycle or you do not have access to that task."
+
+#: app/rutas_api.py
+msgid "Dependencia no encontrada."
+msgstr "Dependency not found."
+
+#: app/rutas_api.py
+msgid "No se pudo crear el recordatorio: indica una fecha y hora válidas (o pon antes un vencimiento a la tarea)."
+msgstr "The reminder could not be created: give a valid date and time (or set a due date on the task first)."
+
+#: app/rutas_api.py
+msgid "Recordatorio no encontrado."
+msgstr "Reminder not found."
+
+#: app/rutas_api.py
+msgid "Recordatorio no encontrado o la opción no es válida."
+msgstr "Reminder not found or the option is not valid."
+
+#: app/rutas_api.py
+msgid "No se puede compartir: la tarea no es tuya, el compañero no es de tu despacho o el rol no es válido."
+msgstr "Cannot share: the task is not yours, the colleague is not in your office or the role is not valid."
+
+#: app/rutas_api.py
+msgid "Participante no encontrado."
+msgstr "Participant not found."
+
+#: app/rutas_api.py
+msgid "ids debe ser una lista no vacía."
+msgstr "ids must be a non-empty list."
+
+#: app/rutas_api.py
+msgid "vista debe ser mes, semana, semana_laboral o dia."
+msgstr "vista must be mes, semana, semana_laboral or dia."
+
+#: app/rutas_api.py
+msgid "Indica persona_id y/o fecha."
+msgstr "Specify persona_id and/or fecha."
+
+#: app/rutas_api.py
+msgid "Para guardar una vista pon un nombre y al menos un filtro válido (y no superes el máximo de vistas)."
+msgstr "To save a view give it a name and at least one valid filter (and stay within the maximum number of views)."
+
+#: app/rutas_api.py
+msgid "Vista no encontrada."
+msgstr "View not found."
+
+#: app/rutas_api.py
+msgid "Pon un nombre y al menos una tarea."
+msgstr "Give it a name and at least one task."
+
+#: app/rutas_api.py
+msgid "El asunto es obligatorio."
+msgstr "The subject is required."
+
+#: app/rutas_api.py
+msgid "dia no válido para esa periodicidad."
+msgstr "dia is not valid for that frequency."
+
+#: app/rutas_api.py
+msgid "Las anuales necesitan mes (1-12)."
+msgstr "Yearly ones need a month (1-12)."
+
+#: app/rutas_api.py
+msgid "Regla no encontrada."
+msgstr "Rule not found."
+
+#: app/rutas_api.py
+msgid "fecha debe ser YYYY-MM-DD."
+msgstr "fecha must be YYYY-MM-DD."
+
+#: app/rutas_api.py
+msgid "semana debe ser una fecha YYYY-MM-DD."
+msgstr "semana must be a date in YYYY-MM-DD format."
+
+#: app/rutas_api.py
+msgid "cliente_ids debe ser una lista."
+msgstr "cliente_ids must be a list."
+
+#: app/rutas_api.py
+msgid "No hay una revisión pendiente que puedas cancelar."
+msgstr "There is no pending review that you can cancel."
+
+#: app/rutas_api.py
+msgid "visible tiene que ser true o false."
+msgstr "visible must be true or false."
+
+#: app/rutas_api.py
+msgid "comentarios tiene que ser true o false."
+msgstr "comentarios must be true or false."
+
+#: app/rutas_api.py
+msgid "cliente_fiscal_id tiene que ser un número."
+msgstr "cliente_fiscal_id must be a number."
+
+#: app/rutas_api.py
+msgid "version debe ser un número entero."
+msgstr "version must be an integer."
+
+#: app/rutas_api.py
+msgid "Indica el nombre."
+msgstr "Enter the name."
+
+#: app/rutas_api.py
+#, python-format
+msgid "No existe %(que)s %(identificador)s (o no puedes verla)."
+msgstr "There is no %(que)s %(identificador)s (or you cannot see it)."
+
+#: app/rutas_api.py
+#, python-format
+msgid "Falta «%(campo)s»."
+msgstr "“%(campo)s” is missing."
+
+#: app/rutas_api.py
+#, python-format
+msgid "estado debe ser uno de: %(valores)s."
+msgstr "estado must be one of: %(valores)s."
+
+#: app/rutas_api.py
+#, python-format
+msgid "periodicidad debe ser una de: %(valores)s."
+msgstr "periodicidad must be one of: %(valores)s."
+
+#: app/rutas_api.py
+#, python-format
+msgid "tipo debe ser uno de: %(valores)s."
+msgstr "tipo must be one of: %(valores)s."
+
+#: app/rutas_api.py
+#, python-format
+msgid "Ese cliente ya tiene el modelo %(modelo)s del periodo %(periodo)s (id %(existente)s)."
+msgstr "That client already has form %(modelo)s for period %(periodo)s (id %(existente)s)."
+
+#: app/rutas_api.py
+#, python-format
+msgid "eventos debe ser una lista no vacía de entre: %(valores)s."
+msgstr "eventos must be a non-empty list of: %(valores)s."
+
+#: app/rutas_api.py
+#, python-format
+msgid "Tu despacho ya tiene %(n)s webhooks (el máximo)."
+msgstr "Your office already has %(n)s webhooks (the maximum)."
+
+#: app/rutas_api.py
+#, python-format
+msgid "Ya existe un registro con referencia_externa «%(ref)s» (id %(otro)s)."
+msgstr "A record with referencia_externa “%(ref)s” already exists (id %(otro)s)."
+
+#: app/rutas_api.py
+#, python-format
+msgid "El adjunto «%(nombre)s» no es base64 válido."
+msgstr "The attachment “%(nombre)s” is not valid base64."
+
+#: app/rutas_api.py
+#, python-format
+msgid "Máximo %(n)s adjuntos por correo."
+msgstr "Maximum %(n)s attachments per email."
+
+#: app/rutas_api.py
+#, python-format
+msgid "Valor no válido para «%(campo)s»: usa %(validos)s."
+msgstr "Invalid value for “%(campo)s”: use %(validos)s."
+
+#: app/rutas_api.py
+msgid "Esta versión de la app ya no se admite: actualízala para seguir trabajando."
+msgstr "This version of the app is no longer supported: update it to keep working."
+
+#: app/ausencias.py
+#, python-format
+msgid "%(campo)s: indica una fecha válida (AAAA-MM-DD)."
+msgstr "%(campo)s: enter a valid date (YYYY-MM-DD)."
+
+#: app/ausencias.py
+#, python-format
+msgid "%(n)s elemento marcado como hecho."
+msgstr "%(n)s item marked as done."
+
+#: app/ausencias.py
+#, python-format
+msgid "%(n)s no se ha podido marcar: está bloqueado, tiene pasos pendientes o no tienes permiso. Ábrelo para ver por qué."
+msgstr "%(n)s could not be marked: it is blocked, has pending steps or you lack permission. Open it to see why."
+
+#: app/ausencias.py
+msgid "Acción en lote desconocida."
+msgstr "Unknown bulk action."
+
+#: app/ausencias.py
+msgid "Azul"
+msgstr "Blue"
+
+#: app/ausencias.py
+msgid "Color de los botones"
+msgstr "Button colour"
+
+#: app/ausencias.py
+msgid "Con los días que ya tiene aprobados, esta persona se quedaría sin saldo. Ajusta sus días anuales o recházala."
+msgstr "With the days already approved, this person would run out of balance. Adjust their annual days or reject it."
+
+#: app/ausencias.py
+msgid "El archivo está vacío."
+msgstr "The file is empty."
+
+#: app/ausencias.py
+msgid "El archivo pesa demasiado (máximo 5 MB)."
+msgstr "The file is too large (maximum 5 MB)."
+
+#: app/ausencias.py
+msgid "El cliente principal tiene que estar entre los vinculados."
+msgstr "The main client must be among the linked ones."
+
+#: app/ausencias.py
+msgid "El estado no es válido."
+msgstr "The status is not valid."
+
+#: app/ausencias.py
+#, python-format
+msgid "El fichaje %(id)s a corregir no existe o no es de este trabajador."
+msgstr "Clock-in %(id)s to correct does not exist or is not this employee's."
+
+#: app/ausencias.py
+msgid "El modo tiene que ser «todos», «cualquiera» o «cadena»."
+msgstr "The mode must be “todos”, “cualquiera” or “cadena”."
+
+#: app/ausencias.py
+msgid "Elige un proyecto para registrar el tiempo de esta tarea."
+msgstr "Choose a project to log this task's time."
+
+#: app/ausencias.py
+msgid "Elige un tipo de ausencia válido."
+msgstr "Choose a valid absence type."
+
+#: app/ausencias.py
+msgid "Esa ausencia ya está resuelta."
+msgstr "That absence has already been resolved."
+
+#: app/ausencias.py
+msgid "Esa ausencia ya ha pasado."
+msgstr "That absence is already over."
+
+#: app/ausencias.py
+msgid "Esa ausencia ya no está activa."
+msgstr "That absence is no longer active."
+
+#: app/ausencias.py
+msgid "Ese archivo ya está adjunto a la tarea."
+msgstr "That file is already attached to the task."
+
+#: app/ausencias.py
+msgid "Ese periodo no incluye ningún día laborable."
+msgstr "That period includes no working days."
+
+#: app/ausencias.py
+msgid "Esta tarea ya tiene el cronómetro en marcha."
+msgstr "This task already has its timer running."
+
+#: app/ausencias.py
+msgid "Has llegado al máximo de reglas."
+msgstr "You have reached the maximum number of rules."
+
+#: app/ausencias.py
+msgid "Hay un cliente que no es válido."
+msgstr "One of the clients is not valid."
+
+#: app/ausencias.py
+msgid "Indica el modelo (por ejemplo 303) y el asunto de la tarea."
+msgstr "Enter the form (for example 303) and the task subject."
+
+#: app/ausencias.py
+msgid "Indica un número de días."
+msgstr "Enter a number of days."
+
+#: app/ausencias.py
+#, python-format
+msgid "La categoría/proyecto %(id)s no existe o no es tuya."
+msgstr "Category/project %(id)s does not exist or is not yours."
+
+#: app/ausencias.py
+msgid "La fecha de creación de la nota no puede ser futura."
+msgstr "The note's creation date cannot be in the future."
+
+#: app/ausencias.py
+msgid "La fecha de fin no puede ser anterior a la de inicio."
+msgstr "The end date cannot be before the start date."
+
+#: app/ausencias.py
+msgid "La hora del fichaje enviado no es válida (demasiado futura o de hace más de 7 días)."
+msgstr "The submitted clock-in time is not valid (too far in the future or more than 7 days old)."
+
+#: app/ausencias.py
+msgid "La nota no existe."
+msgstr "The note does not exist."
+
+#: app/ausencias.py
+msgid "La tarea no existe."
+msgstr "The task does not exist."
+
+#: app/ausencias.py
+msgid "La tarea no puede vencer antes de crearse: «vence» debe ser menos días antes que «crear»."
+msgstr "The task cannot be due before it is created: “vence” must be fewer days before than “crear”."
+
+#: app/ausencias.py
+msgid "Lima"
+msgstr "Lime"
+
+#: app/ausencias.py
+msgid "Los certificados con clave privada no se adjuntan nunca."
+msgstr "Certificates with a private key are never attached."
+
+#: app/ausencias.py
+msgid "Los días deben estar entre 0 y 366."
+msgstr "Days must be between 0 and 366."
+
+#: app/ausencias.py
+msgid "Los días van de 0 a 120."
+msgstr "Days range from 0 to 120."
+
+#: app/ausencias.py
+msgid "Marcar como hecho"
+msgstr "Mark as done"
+
+#: app/ausencias.py
+#, python-format
+msgid "Marcar como hecho: %(t)s"
+msgstr "Mark as done: %(t)s"
+
+#: app/ausencias.py
+msgid "Marcar la sección como hecha"
+msgstr "Mark the section as done"
+
+#: app/ausencias.py
+msgid "Marcar todo como hecho"
+msgstr "Mark all as done"
+
+#: app/ausencias.py
+msgid "Naranja"
+msgstr "Orange"
+
+#: app/ausencias.py
+msgid "No existe esa ausencia."
+msgstr "That absence does not exist."
+
+#: app/ausencias.py
+msgid "No puedes cancelar la ausencia de otra persona."
+msgstr "You cannot cancel someone else's absence."
+
+#: app/ausencias.py
+#, python-format
+msgid "No se puede fichar '%(tipo)s' viniendo de '%(anterior)s' — revisa tu último fichaje."
+msgstr "You cannot clock '%(tipo)s' after '%(anterior)s' — check your last clock-in."
+
+#: app/ausencias.py
+#, python-format
+msgid "No te quedan días suficientes: pides %(pides)s y tienes %(tienes)s disponibles en %(anio)s."
+msgstr "You don't have enough days left: you ask for %(pides)s and have %(tienes)s available in %(anio)s."
+
+#: app/ausencias.py
+msgid "No tienes permiso para adjuntar archivos a esta tarea."
+msgstr "You do not have permission to attach files to this task."
+
+#: app/ausencias.py
+msgid "No tienes permiso para añadir subtareas a esta tarea."
+msgstr "You do not have permission to add subtasks to this task."
+
+#: app/ausencias.py
+msgid "No tienes permiso para cambiar los clientes de esta tarea."
+msgstr "You do not have permission to change this task's clients."
+
+#: app/ausencias.py
+msgid "No tienes permiso para hacer esto con esta tarea."
+msgstr "You do not have permission to do this with this task."
+
+#: app/ausencias.py
+#, python-format
+msgid "Periodicidad no válida: %(valor)s"
+msgstr "Invalid frequency: %(valor)s"
+
+#: app/ausencias.py
+msgid "Reabre la tarea antes de añadirle subtareas."
+msgstr "Reopen the task before adding subtasks."
+
+#: app/ausencias.py
+msgid "Rosa"
+msgstr "Pink"
+
+#: app/ausencias.py
+msgid "Solo quien gestiona el fichaje puede aprobar o rechazar ausencias."
+msgstr "Only the person who manages time tracking can approve or reject absences."
+
+#: app/ausencias.py
+msgid "Solo quien gestiona el fichaje puede registrar la ausencia de otra persona."
+msgstr "Only the person who manages time tracking can record someone else's absence."
+
+#: app/ausencias.py
+msgid "Solo se puede pedir medio día para un único día."
+msgstr "A half day can only be requested for a single day."
+
+#: app/ausencias.py
+msgid "Tipo de archivo no admitido (PDF, imágenes, texto, CSV y documentos de Office o LibreOffice)."
+msgstr "File type not supported (PDF, images, text, CSV and Office or LibreOffice documents)."
+
+#: app/ausencias.py
+msgid "Tipo de archivo no permitido: solo imágenes, PDF o texto."
+msgstr "File type not allowed: images, PDF or text only."
+
+#: app/ausencias.py
+#, python-format
+msgid "Tipo de fichaje no válido: %(tipo)s."
+msgstr "Invalid clock-in type: %(tipo)s."
+
+#: app/ausencias.py
+msgid "Tu usuario no pertenece a ningún despacho."
+msgstr "Your user does not belong to any office."
+
+#: app/ausencias.py
+msgid "Turquesa"
+msgstr "Teal"
+
+#: app/ausencias.py
+msgid "Una ausencia no puede cruzar de año: pídela en dos tramos."
+msgstr "An absence cannot span two years: request it in two parts."
+
+#: app/ausencias.py
+msgid "Una ausencia no puede durar más de un año."
+msgstr "An absence cannot last more than a year."
+
+#: app/ausencias.py
+#, python-format
+msgid "Una nota admite como máximo %(n)s adjuntos."
+msgstr "A note can have at most %(n)s attachments."
+
+#: app/ausencias.py
+msgid "Una subtarea no puede tener subtareas: solo se permite un nivel."
+msgstr "A subtask cannot have subtasks: only one level is allowed."
+
+#: app/ausencias.py
+msgid "Uno de los clientes no existe o no es de tu despacho."
+msgstr "One of the clients does not exist or is not in your office."
+
+#: app/ausencias.py
+msgid "Violeta"
+msgstr "Violet"
+
+#: app/ausencias.py
+#, python-format
+msgid "Ya hay una ausencia del %(desde)s al %(hasta)s que se solapa con estas fechas."
+msgstr "There is already an absence from %(desde)s to %(hasta)s that overlaps these dates."
+
+#: app/ausencias.py
+msgid "¿Marcar como hechas todas las tareas y plazos de esta lista?"
+msgstr "Mark all the tasks and deadlines in this list as done?"
+
+#: app/ausencias.py
+msgid "¿Marcar como hechos todos los de esta sección?"
+msgstr "Mark everything in this section as done?"
+
+#: app/ausencias.py
+msgid "Ámbar"
+msgstr "Amber"

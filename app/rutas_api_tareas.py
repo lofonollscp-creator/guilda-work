@@ -5,6 +5,7 @@ sus rutas en `api_bp` (mismo token, áreas, formato de error y OpenAPI). Todo ad
 from datetime import date, timedelta
 
 from flask import abort, g, request
+from flask_babel import gettext
 
 from . import db, quickadd, tareas_trabajo
 from .auth import token_required
@@ -19,7 +20,7 @@ ESTADOS = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada")
 def _visible_o_404(tarea_id: int):
     tarea = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
     if tarea is None:
-        abort(404, "Tarea no encontrada.")
+        abort(404, gettext("Tarea no encontrada."))
     return tarea
 
 
@@ -47,7 +48,7 @@ def cambiar_estado_tarea(tarea_id: int):
     if previa["estado"] == "en_revision" and estado != "en_revision":
         return _err(tareas_trabajo.MENSAJE_EN_REVISION, 409, "revision_pendiente", "estado")
     if estado not in ESTADOS:
-        return _err(f"estado debe ser uno de: {', '.join(ESTADOS)}.", 400, "estado_invalido", "estado")
+        return _err(gettext("estado debe ser uno de: %(valores)s.", valores=", ".join(ESTADOS)), 400, "estado_invalido", "estado")
     if estado in ("en_progreso", "completada") and db.tarea_bloqueada(tarea_id):
         return _err(MENSAJE_BLOQUEADA, 409, "tarea_bloqueada")
     impedimento = tareas_trabajo.impedimento_de_cierre(tarea_id) if estado == "completada" else None
@@ -107,7 +108,7 @@ def restaurar_tarea_outlook(tarea_id: int):
 @token_required
 def eliminar_item_checklist(item_id: int):
     if not db.eliminar_item_checklist(g.usuario_id, item_id):
-        abort(404, "Subtarea no encontrada.")
+        abort(404, gettext("Subtarea no encontrada."))
     return _ok()
 
 
@@ -127,7 +128,7 @@ def comentar_tarea(tarea_id: int):
     _visible_o_404(tarea_id)
     resultado = db.comentar_tarea_outlook(g.usuario_id, tarea_id, _body().get("texto") or "")
     if resultado is None:
-        return _err("El comentario no puede estar vacío.", 400, "comentario_vacio", "texto")
+        return _err(gettext("El comentario no puede estar vacío."), 400, "comentario_vacio", "texto")
     _notificar_comentario(g.usuario_id, tarea_id, resultado)
     comentarios = db.listar_comentarios_tarea(g.usuario_id, tarea_id)
     return _ok(next((c for c in comentarios if c["id"] == resultado["id"]), {"id": resultado["id"]}), 201)
@@ -137,7 +138,7 @@ def comentar_tarea(tarea_id: int):
 @token_required
 def eliminar_comentario(tarea_id: int, comentario_id: int):
     if not db.eliminar_comentario_tarea(g.usuario_id, tarea_id, comentario_id):
-        abort(404, "Comentario no encontrado.")
+        abort(404, gettext("Comentario no encontrado."))
     return _ok()
 
 
@@ -158,11 +159,11 @@ def anadir_dependencia(tarea_id: int):
     _visible_o_404(tarea_id)
     espera_a = _int(_body().get("depende_de_id"))
     if espera_a is None:
-        return _err("Indica depende_de_id.", 400, "peticion_invalida", "depende_de_id")
+        return _err(gettext("Indica depende_de_id."), 400, "peticion_invalida", "depende_de_id")
     if not db.puede_editar_tarea(g.usuario_id, tarea_id):
         return _sin_permiso()
     if not db.anadir_dependencia_tarea(g.usuario_id, tarea_id, espera_a):
-        return _err("No se puede enlazar: crearía un ciclo o no tienes acceso a esa tarea.", 409, "dependencia_invalida", "depende_de_id")
+        return _err(gettext("No se puede enlazar: crearía un ciclo o no tienes acceso a esa tarea."), 409, "dependencia_invalida", "depende_de_id")
     return _ok({"bloqueada": db.tarea_bloqueada(tarea_id), "depende_de": db.dependencias_de_tarea(tarea_id)}, 201)
 
 
@@ -170,7 +171,7 @@ def anadir_dependencia(tarea_id: int):
 @token_required
 def quitar_dependencia(tarea_id: int, depende_de_id: int):
     if not db.quitar_dependencia_tarea(g.usuario_id, tarea_id, depende_de_id):
-        abort(404, "Dependencia no encontrada.")
+        abort(404, gettext("Dependencia no encontrada."))
     return _ok()
 
 
@@ -195,7 +196,7 @@ def anadir_recordatorio(tarea_id: int):
     else:
         nuevo = db.anadir_recordatorio_tarea(g.usuario_id, tarea_id, str(datos.get("avisar_en") or ""), canales)
     if nuevo is None:
-        return _err("No se pudo crear el recordatorio: indica una fecha y hora válidas (o pon antes un vencimiento a la tarea).", 400, "recordatorio_invalido", "avisar_en")
+        return _err(gettext("No se pudo crear el recordatorio: indica una fecha y hora válidas (o pon antes un vencimiento a la tarea)."), 400, "recordatorio_invalido", "avisar_en")
     return _ok(db.listar_recordatorios_tarea(g.usuario_id, tarea_id), 201)
 
 
@@ -203,7 +204,7 @@ def anadir_recordatorio(tarea_id: int):
 @token_required
 def eliminar_recordatorio(recordatorio_id: int):
     if not db.eliminar_recordatorio_tarea(g.usuario_id, recordatorio_id):
-        abort(404, "Recordatorio no encontrado.")
+        abort(404, gettext("Recordatorio no encontrado."))
     return _ok()
 
 
@@ -212,7 +213,7 @@ def eliminar_recordatorio(recordatorio_id: int):
 def posponer_recordatorio(recordatorio_id: int):
     """Cuerpo: `{"opcion": "..."}` (las mismas que ofrece la web al posponer)."""
     if not db.posponer_recordatorio_tarea(g.usuario_id, recordatorio_id, str(_body().get("opcion") or "")):
-        abort(404, "Recordatorio no encontrado o la opción no es válida.")
+        abort(404, gettext("Recordatorio no encontrado o la opción no es válida."))
     return _ok()
 
 
@@ -231,7 +232,7 @@ def compartir_tarea(tarea_id: int):
     """Solo el dueño. Cuerpo: `{"usuario_id": n, "rol": "colabora"|"observa"}` (compañeros del mismo despacho)."""
     otro, rol = _int(_body().get("usuario_id")), _body().get("rol") or "colabora"
     if otro is None or not db.compartir_tarea_outlook(g.usuario_id, tarea_id, otro, rol):
-        return _err("No se puede compartir: la tarea no es tuya, el compañero no es de tu despacho o el rol no es válido.", 403, "sin_permiso")
+        return _err(gettext("No se puede compartir: la tarea no es tuya, el compañero no es de tu despacho o el rol no es válido."), 403, "sin_permiso")
     _notificar_compartida(g.usuario_id, tarea_id, otro, rol)
     return _ok(_dicts(db.participantes_de_tarea(tarea_id)), 201)
 
@@ -241,7 +242,7 @@ def compartir_tarea(tarea_id: int):
 def dejar_de_compartir(tarea_id: int, usuario_id: int):
     """El dueño quita a un participante; un participante puede salirse él mismo."""
     if not db.dejar_de_compartir_tarea_outlook(g.usuario_id, tarea_id, usuario_id):
-        abort(404, "Participante no encontrado.")
+        abort(404, gettext("Participante no encontrado."))
     return _ok()
 
 
@@ -254,7 +255,7 @@ def accion_en_lote():
     Devuelve `{"ok": n, "fallos": m}`."""
     datos = _body()
     if not isinstance(datos.get("ids"), list) or not datos["ids"]:
-        return _err("ids debe ser una lista no vacía.", 400, "peticion_invalida", "ids")
+        return _err(gettext("ids debe ser una lista no vacía."), 400, "peticion_invalida", "ids")
     try:
         resultado = db.accion_en_lote(g.usuario_id, datos["ids"], str(datos.get("accion") or ""), None if datos.get("valor") is None else str(datos["valor"]))
     except ValueError as e:
@@ -281,11 +282,11 @@ def calendario_de_tareas():
     from .rutas_tareas import VISTAS_CALENDARIO, datos_calendario
     vista = request.args.get("vista") or "mes"
     if vista not in VISTAS_CALENDARIO:
-        return _err("vista debe ser mes, semana, semana_laboral o dia.", 400, "peticion_invalida", "vista")
+        return _err(gettext("vista debe ser mes, semana, semana_laboral o dia."), 400, "peticion_invalida", "vista")
     try:
         ancla = date.fromisoformat(request.args.get("fecha") or date.today().isoformat())
     except ValueError:
-        return _err("fecha debe ser YYYY-MM-DD.", 400, "peticion_invalida", "fecha")
+        return _err(gettext("fecha debe ser YYYY-MM-DD."), 400, "peticion_invalida", "fecha")
     datos = datos_calendario(vista, ancla)
     dias = []
     for d in datos["dias"]:
@@ -320,7 +321,7 @@ def carga_semanal():
     try:
         base = date.fromisoformat(request.args.get("semana") or date.today().isoformat())
     except ValueError:
-        return _err("semana debe ser una fecha YYYY-MM-DD.", 400, "peticion_invalida", "semana")
+        return _err(gettext("semana debe ser una fecha YYYY-MM-DD."), 400, "peticion_invalida", "semana")
     lunes = base - timedelta(days=base.weekday())
     datos = db.carga_semanal(g.usuario_id, lunes)
     return _ok({"lunes": lunes.isoformat(), "dias": [d.isoformat() for d in datos["dias"]], "personas": datos["personas"]})
@@ -333,7 +334,7 @@ def mover_tarea(tarea_id: int):
     _visible_o_404(tarea_id)
     datos = _body()
     if "persona_id" not in datos and "fecha" not in datos:
-        return _err("Indica persona_id y/o fecha.", 400, "peticion_invalida")
+        return _err(gettext("Indica persona_id y/o fecha."), 400, "peticion_invalida")
     if "persona_id" in datos:
         destino = _int(datos["persona_id"])
         if not db.reasignar_tarea_outlook(g.usuario_id, tarea_id, destino):
@@ -361,7 +362,7 @@ def guardar_vista():
     filtros = datos.get("filtros") if isinstance(datos.get("filtros"), dict) else {}
     vista_id = db.crear_vista_tareas(g.usuario_id, datos.get("nombre") or "", filtros, bool(datos.get("compartida")))
     if vista_id is None:
-        return _err("Para guardar una vista pon un nombre y al menos un filtro válido (y no superes el máximo de vistas).", 400, "vista_invalida")
+        return _err(gettext("Para guardar una vista pon un nombre y al menos un filtro válido (y no superes el máximo de vistas)."), 400, "vista_invalida")
     return _ok(next(v for v in db.listar_vistas_tareas(g.usuario_id) if v["id"] == vista_id), 201)
 
 
@@ -369,7 +370,7 @@ def guardar_vista():
 @token_required
 def eliminar_vista(vista_id: int):
     if not db.eliminar_vista_tareas(g.usuario_id, vista_id):
-        abort(404, "Vista no encontrada.")
+        abort(404, gettext("Vista no encontrada."))
     return _ok()
 
 
@@ -392,7 +393,7 @@ def crear_plantilla_tareas():
     d = _body()
     plantilla_id = db.crear_plantilla_tareas(g.usuario_id, d.get("nombre") or "", d.get("descripcion"), _items_texto(d.get("items")), compartida=bool(d.get("compartida")))
     if plantilla_id is None:
-        return _err("Pon un nombre y al menos una tarea.", 400, "plantilla_invalida")
+        return _err(gettext("Pon un nombre y al menos una tarea."), 400, "plantilla_invalida")
     return _ok(db.obtener_plantilla_tareas(g.usuario_id, plantilla_id), 201)
 
 
@@ -401,14 +402,14 @@ def crear_plantilla_tareas():
 def editar_plantilla_tareas(plantilla_id: int):
     p = db.obtener_plantilla_tareas(g.usuario_id, plantilla_id)
     if p is None or p["usuario_id"] != g.usuario_id:
-        abort(404, "Plantilla no encontrada.")
+        abort(404, gettext("Plantilla no encontrada."))
     d = _body()
     ok = db.editar_plantilla_tareas(
         g.usuario_id, plantilla_id, d.get("nombre", p["nombre"]), d.get("descripcion", p.get("descripcion")),
         _items_texto(d["items"]) if "items" in d else db.items_a_texto(p["items"]), bool(d.get("compartida", p.get("compartida"))),
     )
     if not ok:
-        return _err("Pon un nombre y al menos una tarea.", 400, "plantilla_invalida")
+        return _err(gettext("Pon un nombre y al menos una tarea."), 400, "plantilla_invalida")
     return _ok(db.obtener_plantilla_tareas(g.usuario_id, plantilla_id))
 
 
@@ -416,7 +417,7 @@ def editar_plantilla_tareas(plantilla_id: int):
 @token_required
 def eliminar_plantilla_tareas(plantilla_id: int):
     if not db.eliminar_plantilla_tareas(g.usuario_id, plantilla_id):
-        abort(404, "Plantilla no encontrada.")
+        abort(404, gettext("Plantilla no encontrada."))
     return _ok()
 
 
@@ -431,7 +432,7 @@ def aplicar_plantilla_tareas(plantilla_id: int):
         encadenar=bool(d.get("encadenar")),
     )
     if not ids:
-        abort(404, "Plantilla no encontrada.")
+        abort(404, gettext("Plantilla no encontrada."))
     if _int(d.get("asignada_a")):
         for tarea_id in ids:
             _notificar_asignacion(g.usuario_id, tarea_id, _int(d["asignada_a"]))
@@ -453,14 +454,14 @@ def crear_recurrente():
     d = _body()
     asunto, periodicidad = (d.get("asunto") or "").strip(), d.get("periodicidad")
     if not asunto:
-        return _err("El asunto es obligatorio.", 400, "peticion_invalida", "asunto")
+        return _err(gettext("El asunto es obligatorio."), 400, "peticion_invalida", "asunto")
     if periodicidad not in db.PERIODICIDADES_RECURRENTES:
-        return _err(f"periodicidad debe ser una de: {', '.join(db.PERIODICIDADES_RECURRENTES)}.", 400, "peticion_invalida", "periodicidad")
+        return _err(gettext("periodicidad debe ser una de: %(valores)s.", valores=", ".join(db.PERIODICIDADES_RECURRENTES)), 400, "peticion_invalida", "periodicidad")
     dia, mes = (0 if periodicidad in ("diaria", "laborables") else _int(d.get("dia"))), _int(d.get("mes"))
     if dia is None or (periodicidad == "semanal" and not 0 <= dia <= 6) or (periodicidad in ("mensual", "trimestral", "anual") and not 1 <= dia <= 31):
-        return _err("dia no válido para esa periodicidad.", 400, "peticion_invalida", "dia")
+        return _err(gettext("dia no válido para esa periodicidad."), 400, "peticion_invalida", "dia")
     if periodicidad == "anual" and not (mes and 1 <= mes <= 12):
-        return _err("Las anuales necesitan mes (1-12).", 400, "peticion_invalida", "mes")
+        return _err(gettext("Las anuales necesitan mes (1-12)."), 400, "peticion_invalida", "mes")
     regla_id = db.crear_tarea_recurrente(g.usuario_id, asunto, periodicidad, dia, categoria_id=_int(d.get("proyecto_id")), mes=mes if periodicidad == "anual" else None)
     return _ok(next(dict(r) for r in db.listar_tareas_recurrentes(g.usuario_id) if r["id"] == regla_id), 201)
 
@@ -469,7 +470,7 @@ def crear_recurrente():
 @token_required
 def alternar_recurrente(regla_id: int):
     if not any(r["id"] == regla_id for r in db.listar_tareas_recurrentes(g.usuario_id)):
-        abort(404, "Regla no encontrada.")
+        abort(404, gettext("Regla no encontrada."))
     db.alternar_activa_tarea_recurrente(g.usuario_id, regla_id)
     return _ok(next(dict(r) for r in db.listar_tareas_recurrentes(g.usuario_id) if r["id"] == regla_id))
 
@@ -478,7 +479,7 @@ def alternar_recurrente(regla_id: int):
 @token_required
 def eliminar_recurrente(regla_id: int):
     if not any(r["id"] == regla_id for r in db.listar_tareas_recurrentes(g.usuario_id)):
-        abort(404, "Regla no encontrada.")
+        abort(404, gettext("Regla no encontrada."))
     db.eliminar_tarea_recurrente(g.usuario_id, regla_id)
     return _ok()
 
@@ -513,7 +514,7 @@ def crear_regla_vencimiento():
 @token_required
 def alternar_regla_vencimiento(regla_id: int):
     if not any(r["id"] == regla_id for r in db.listar_reglas_por_vencimiento(g.usuario_id)):
-        abort(404, "Regla no encontrada.")
+        abort(404, gettext("Regla no encontrada."))
     db.alternar_regla_por_vencimiento(g.usuario_id, regla_id)
     return _ok(next(r for r in db.listar_reglas_por_vencimiento(g.usuario_id) if r["id"] == regla_id))
 
@@ -522,7 +523,7 @@ def alternar_regla_vencimiento(regla_id: int):
 @token_required
 def eliminar_regla_vencimiento(regla_id: int):
     if not any(r["id"] == regla_id for r in db.listar_reglas_por_vencimiento(g.usuario_id)):
-        abort(404, "Regla no encontrada.")
+        abort(404, gettext("Regla no encontrada."))
     db.eliminar_regla_por_vencimiento(g.usuario_id, regla_id)
     return _ok()
 

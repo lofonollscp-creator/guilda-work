@@ -5,6 +5,7 @@ registro de accesos al expediente y los mismos avisos por correo. Área de token
 from datetime import date
 
 from flask import Response, abort, g, request
+from flask_babel import gettext
 
 from . import almacen_documentos, db, nextcloud, notificaciones_email, nucleo
 from .auth import token_required
@@ -30,14 +31,14 @@ def _con_despacho(vista):
 def _cliente_o_404(cliente_id: int):
     cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
     if cliente is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     return cliente
 
 
 def _vencimiento_o_404(vencimiento_id: int):
     v = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
     if v is None:
-        abort(404, "Vencimiento no encontrado.")
+        abort(404, gettext("Vencimiento no encontrado."))
     return v
 
 
@@ -72,7 +73,7 @@ def accesos_cliente(cliente_id: int):
     """Registro de quién ha visto o tocado el expediente (auditoría y RGPD). Solo supervisores del despacho. `limit` hasta 5000."""
     _cliente_o_404(cliente_id)
     if not db.es_supervisor_tenant(g.usuario_id):
-        abort(403, "Solo un supervisor del despacho puede ver el registro de accesos.")
+        abort(403, gettext("Solo un supervisor del despacho puede ver el registro de accesos."))
     limite = max(1, min(request.args.get("limit", default=200, type=int) or 200, 5000))
     return _ok(db.listar_accesos_cliente(g.tenant_id, cliente_id, limite))
 
@@ -96,7 +97,7 @@ def subir_documentos_cliente(cliente_id: int):
     _cliente_o_404(cliente_id)
     archivos = [a for a in request.files.getlist("archivo")[:10] if a and a.filename]
     if not archivos:
-        return _err("Adjunta al menos un archivo en el campo «archivo» (multipart).", 400, "sin_archivos", "archivo")
+        return _err(gettext("Adjunta al menos un archivo en el campo «archivo» (multipart)."), 400, "sin_archivos", "archivo")
     resultados = []
     for archivo in archivos:
         resultado, documento_id = almacen_documentos.guardar_de_cliente_fiscal(
@@ -114,7 +115,7 @@ def subir_documentos_cliente(cliente_id: int):
 def descargar_documento_cliente(cliente_id: int, documento_id: int):
     documento = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id, g.usuario_id)
     if documento is None:
-        abort(404, "Documento no encontrado.")
+        abort(404, gettext("Documento no encontrado."))
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_descargado", f"{documento['nombre_archivo']} (vía API)")
     return _descarga(documento["contenido"], documento["tipo_mime"], documento["nombre_archivo"])
 
@@ -125,7 +126,7 @@ def descargar_documento_cliente(cliente_id: int, documento_id: int):
 def eliminar_documento_cliente(cliente_id: int, documento_id: int):
     previo = almacen_documentos.datos_de_cliente_fiscal(g.tenant_id, cliente_id, documento_id)      # solo el nombre: no se abre el contenido (cifrado)
     if not almacen_documentos.eliminar_de_cliente_fiscal(g.usuario_id, cliente_id, documento_id):
-        abort(404, "Documento no encontrado.")
+        abort(404, gettext("Documento no encontrado."))
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_eliminado", f"{previo['nombre_archivo'] if previo else ''} (vía API)")
     return _ok()
 
@@ -159,7 +160,7 @@ def generar_vencimientos_masivo():
     """Genera los vencimientos del año (`anio`, por defecto el actual) de TODOS los clientes que tienen modelos definidos, sin duplicar."""
     anio = _body().get("anio") or date.today().year
     if not isinstance(anio, int) or not 2000 <= anio <= 2100:
-        return _err("anio debe ser un año válido.", 400, "peticion_invalida", "anio")
+        return _err(gettext("anio debe ser un año válido."), 400, "peticion_invalida", "anio")
     creados = omitidos = 0
     for cliente in db.listar_clientes_fiscales(g.tenant_id):
         modelos = db.modelos_fiscales_de_cliente(cliente)
@@ -182,17 +183,17 @@ def crear_vencimiento():
     cliente = _cliente_o_404(int(d["cliente_id"]) if str(d.get("cliente_id") or "").isdigit() else 0)
     modelo, periodo, fecha = (str(d.get(k) or "").strip() for k in ("modelo", "periodo", "fecha_limite"))
     if not modelo or not periodo:
-        return _err("modelo y periodo son obligatorios.", 400, "peticion_invalida", "modelo")
+        return _err(gettext("modelo y periodo son obligatorios."), 400, "peticion_invalida", "modelo")
     try:
         date.fromisoformat(fecha[:10])
     except ValueError:
-        return _err("fecha_limite debe ser YYYY-MM-DD.", 400, "peticion_invalida", "fecha_limite")
+        return _err(gettext("fecha_limite debe ser YYYY-MM-DD."), 400, "peticion_invalida", "fecha_limite")
     responsable = d.get("usuario_id")
     if responsable is not None and responsable not in db.usuarios_de_tenant(g.tenant_id):
-        return _err("El responsable no es de tu despacho.", 400, "peticion_invalida", "usuario_id")
+        return _err(gettext("El responsable no es de tu despacho."), 400, "peticion_invalida", "usuario_id")
     existente = db.vencimiento_fiscal_existente(g.tenant_id, cliente["id"], modelo, periodo)
     if existente is not None:
-        return _err(f"Ese cliente ya tiene el modelo {modelo} del periodo {periodo} (id {existente}).", 409, "vencimiento_duplicado")
+        return _err(gettext("Ese cliente ya tiene el modelo %(modelo)s del periodo %(periodo)s (id %(existente)s).", modelo=modelo, periodo=periodo, existente=existente), 409, "vencimiento_duplicado")
     vencimiento_id = db.crear_vencimiento_fiscal(g.tenant_id, cliente["id"], modelo, periodo, fecha[:10], usuario_id=responsable, notas=d.get("notas"))
     return _ok(_dict(db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)), 201)
 
@@ -229,11 +230,11 @@ def descargar_documento_vencimiento(vencimiento_id: int, documento_id: int):
     v = _vencimiento_o_404(vencimiento_id)
     documento = db.obtener_documento_vencimiento(documento_id)
     if documento is None or documento["vencimiento_id"] != vencimiento_id:
-        abort(404, "Documento no encontrado.")
+        abort(404, gettext("Documento no encontrado."))
     try:
         contenido = db.contenido_documento_vencimiento(documento)
     except nextcloud.ErrorNextcloud:
-        return _err("El almacén de documentos no responde ahora mismo. Inténtalo en unos minutos.", 503, "almacen_no_disponible")
+        return _err(gettext("El almacén de documentos no responde ahora mismo. Inténtalo en unos minutos."), 503, "almacen_no_disponible")
     db.registrar_acceso_cliente(g.tenant_id, v["cliente_fiscal_id"], g.usuario_id, "vencimiento_documento_descargado", f"{documento['nombre_archivo']} (vía API)")
     return _descarga(contenido, documento["tipo_mime"], documento["nombre_archivo"])
 
@@ -246,7 +247,7 @@ def subir_justificante(vencimiento_id: int):
     v = _vencimiento_o_404(vencimiento_id)
     from .rutas_fiscal import _generar_constancia, _guardar_justificante
     if not _guardar_justificante(vencimiento_id, request.files.get("justificante")):
-        return _err("Archivo no válido: solo imágenes o PDF, hasta 8 MB.", 400, "justificante_invalido", "justificante")
+        return _err(gettext("Archivo no válido: solo imágenes o PDF, hasta 8 MB."), 400, "justificante_invalido", "justificante")
     if v["estado"] == "presentado" and db.listar_documentos_vencimiento(vencimiento_id, origen="constancia"):
         _generar_constancia(v)
     return _ok({"subido": True}, 201)
@@ -282,7 +283,7 @@ def responder_mensaje_vencimiento(vencimiento_id: int):
     v = _vencimiento_o_404(vencimiento_id)
     texto = (_body().get("texto") or "").strip()
     if not texto:
-        return _err("El mensaje no puede estar vacío.", 400, "mensaje_vacio", "texto")
+        return _err(gettext("El mensaje no puede estar vacío."), 400, "mensaje_vacio", "texto")
     db.crear_mensaje_vencimiento(vencimiento_id, "empleado", texto, usuario_id=g.usuario_id)
     db.marcar_mensajes_leidos(vencimiento_id, "empleado")
     cliente = db.obtener_cliente_fiscal(g.tenant_id, v["cliente_fiscal_id"])
@@ -347,5 +348,5 @@ def restaurar_papelera_fiscal(tipo: str, item_id: int):
     elif tipo == "vencimiento_fiscal":
         db.restaurar_vencimiento_fiscal(g.tenant_id, item_id)
     else:
-        abort(404, "Tipo de elemento desconocido.")
+        abort(404, gettext("Tipo de elemento desconocido."))
     return _ok()

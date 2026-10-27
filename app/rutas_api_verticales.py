@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from flask import g, request
+from flask_babel import gettext
 
 from . import consultas_verticales as cv
 from . import db
@@ -56,7 +57,7 @@ def comprobar_conflicto_api():
     """Conflicto de intereses de una persona o empresa (`nombre`, `nif` opcional). `como=cliente` (por defecto): ¿fue contraparte, letrado o procurador en algún asunto? `como=contraparte`: ¿ya es cliente?
     De un asunto confidencial que no puedes ver solo se avisa de que existe."""
     if not (request.args.get("nombre") or "").strip():
-        return _err("Indica el nombre.", 400, "peticion_invalida", "nombre")
+        return _err(gettext("Indica el nombre."), 400, "peticion_invalida", "nombre")
     return _consulta(cv.comprobar_conflicto, request.args["nombre"], request.args.get("nif") or None, request.args.get("como") or "cliente")
 
 
