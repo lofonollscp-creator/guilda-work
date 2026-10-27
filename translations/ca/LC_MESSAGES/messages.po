@@ -17345,3 +17345,57 @@ msgstr "Envia els recordatoris marcats"
 
 msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente."
 msgstr "El correu porta la marca del teu despatx i un botó al portal del client."
+
+msgid "Informe trimestral en PDF para el cliente"
+msgstr "Informe trimestral en PDF per al client"
+
+msgid "Fecha límite del 303"
+msgstr "Data límit del 303"
+
+msgid "IVA del periodo (modelo 303)"
+msgstr "IVA del període (model 303)"
+
+msgid "IVA repercutido (ventas)"
+msgstr "IVA repercutit (vendes)"
+
+msgid "IVA soportado (compras)"
+msgstr "IVA suportat (compres)"
+
+msgid "Diferencia (a ingresar si es positiva)"
+msgstr "Diferència (a ingressar si és positiva)"
+
+msgid "Todavía no hay una declaración calculada para este periodo; las cifras de arriba son las de los apuntes ya aprobados."
+msgstr "Encara no hi ha cap declaració calculada per a aquest període; les xifres de dalt són les dels apunts ja aprovats."
+
+msgid "Retenciones de IRPF"
+msgstr "Retencions d'IRPF"
+
+msgid "Modelo 111 (profesionales y trabajadores)"
+msgstr "Model 111 (professionals i treballadors)"
+
+msgid "Modelo 115 (alquileres)"
+msgstr "Model 115 (lloguers)"
+
+msgid "Retenciones que le han practicado a usted"
+msgstr "Retencions que us han practicat"
+
+msgid "Lo que falta por su parte"
+msgstr "El que falta per la vostra part"
+
+msgid "Hay %(n)s facturas del periodo que todavía no cuentan en las cifras. Puede ser que estén pendientes de revisar o de registrar."
+msgstr "Hi ha %(n)s factures del període que encara no compten a les xifres. Poden estar pendents de revisar o de registrar."
+
+msgid "No hay facturas pendientes: todo lo recibido en el periodo ya cuenta."
+msgstr "No hi ha factures pendents: tot el rebut al període ja compta."
+
+msgid "Si no tuvo ventas o compras en el periodo, indíquenoslo; si las tuvo, envíenos las facturas que falten."
+msgstr "Si no heu tingut vendes o compres al període, indiqueu-nos-ho; si n'heu tingut, envieu-nos les factures que falten."
+
+msgid "Facturas del periodo"
+msgstr "Factures del període"
+
+msgid "Documento informativo, elaborado con los datos de que dispone el despacho en el momento de generarlo. No sustituye a la presentación en la Agencia Tributaria ni a su justificante."
+msgstr "Document informatiu, elaborat amb les dades de què disposa el despatx en el moment de generar-lo. No substitueix la presentació a l'Agència Tributària ni el seu justificant."
+
+msgid "Informe trimestral %(p)s %(e)s"
+msgstr "Informe trimestral %(p)s %(e)s"

@@ -17336,3 +17336,57 @@ msgstr "Send the ticked reminders"
 
 msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente."
 msgstr "The email carries your firm's branding and a button to the client portal."
+
+msgid "Informe trimestral en PDF para el cliente"
+msgstr "Quarterly report in PDF for the client"
+
+msgid "Fecha límite del 303"
+msgstr "Form 303 deadline"
+
+msgid "IVA del periodo (modelo 303)"
+msgstr "VAT for the period (form 303)"
+
+msgid "IVA repercutido (ventas)"
+msgstr "Output VAT (sales)"
+
+msgid "IVA soportado (compras)"
+msgstr "Input VAT (purchases)"
+
+msgid "Diferencia (a ingresar si es positiva)"
+msgstr "Difference (payable if positive)"
+
+msgid "Todavía no hay una declaración calculada para este periodo; las cifras de arriba son las de los apuntes ya aprobados."
+msgstr "There is no calculated return for this period yet; the figures above come from the entries already approved."
+
+msgid "Retenciones de IRPF"
+msgstr "Income tax withholdings"
+
+msgid "Modelo 111 (profesionales y trabajadores)"
+msgstr "Form 111 (professionals and employees)"
+
+msgid "Modelo 115 (alquileres)"
+msgstr "Form 115 (rentals)"
+
+msgid "Retenciones que le han practicado a usted"
+msgstr "Withholdings applied to you"
+
+msgid "Lo que falta por su parte"
+msgstr "What is still needed from you"
+
+msgid "Hay %(n)s facturas del periodo que todavía no cuentan en las cifras. Puede ser que estén pendientes de revisar o de registrar."
+msgstr "%(n)s invoices of the period are not counted in the figures yet. They may be waiting to be reviewed or recorded."
+
+msgid "No hay facturas pendientes: todo lo recibido en el periodo ya cuenta."
+msgstr "No pending invoices: everything received in the period is already counted."
+
+msgid "Si no tuvo ventas o compras en el periodo, indíquenoslo; si las tuvo, envíenos las facturas que falten."
+msgstr "If you had no sales or purchases in the period, let us know; if you did, send us the missing invoices."
+
+msgid "Facturas del periodo"
+msgstr "Invoices of the period"
+
+msgid "Documento informativo, elaborado con los datos de que dispone el despacho en el momento de generarlo. No sustituye a la presentación en la Agencia Tributaria ni a su justificante."
+msgstr "Informational document, prepared with the data the firm holds when it is generated. It does not replace filing with the tax agency or its receipt."
+
+msgid "Informe trimestral %(p)s %(e)s"
+msgstr "Quarterly report %(p)s %(e)s"

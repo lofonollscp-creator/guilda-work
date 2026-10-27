@@ -17421,3 +17421,57 @@ msgstr "Envoyer les rappels cochés"
 
 msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente."
 msgstr "L'e-mail porte la marque de votre cabinet et un bouton vers le portail client."
+
+msgid "Informe trimestral en PDF para el cliente"
+msgstr "Rapport trimestriel en PDF pour le client"
+
+msgid "Fecha límite del 303"
+msgstr "Date limite du 303"
+
+msgid "IVA del periodo (modelo 303)"
+msgstr "TVA de la période (modèle 303)"
+
+msgid "IVA repercutido (ventas)"
+msgstr "TVA collectée (ventes)"
+
+msgid "IVA soportado (compras)"
+msgstr "TVA déductible (achats)"
+
+msgid "Diferencia (a ingresar si es positiva)"
+msgstr "Différence (à payer si positive)"
+
+msgid "Todavía no hay una declaración calculada para este periodo; las cifras de arriba son las de los apuntes ya aprobados."
+msgstr "Aucune déclaration n'est encore calculée pour cette période ; les chiffres ci-dessus proviennent des écritures déjà approuvées."
+
+msgid "Retenciones de IRPF"
+msgstr "Retenues d'IRPF"
+
+msgid "Modelo 111 (profesionales y trabajadores)"
+msgstr "Modèle 111 (professionnels et salariés)"
+
+msgid "Modelo 115 (alquileres)"
+msgstr "Modèle 115 (loyers)"
+
+msgid "Retenciones que le han practicado a usted"
+msgstr "Retenues qui vous ont été appliquées"
+
+msgid "Lo que falta por su parte"
+msgstr "Ce qu'il reste à faire de votre côté"
+
+msgid "Hay %(n)s facturas del periodo que todavía no cuentan en las cifras. Puede ser que estén pendientes de revisar o de registrar."
+msgstr "%(n)s factures de la période ne sont pas encore prises en compte dans les chiffres. Elles peuvent être en attente de vérification ou d'enregistrement."
+
+msgid "No hay facturas pendientes: todo lo recibido en el periodo ya cuenta."
+msgstr "Aucune facture en attente : tout ce qui a été reçu sur la période est déjà pris en compte."
+
+msgid "Si no tuvo ventas o compras en el periodo, indíquenoslo; si las tuvo, envíenos las facturas que falten."
+msgstr "Si vous n'avez eu ni ventes ni achats sur la période, dites-le-nous ; sinon, envoyez-nous les factures manquantes."
+
+msgid "Facturas del periodo"
+msgstr "Factures de la période"
+
+msgid "Documento informativo, elaborado con los datos de que dispone el despacho en el momento de generarlo. No sustituye a la presentación en la Agencia Tributaria ni a su justificante."
+msgstr "Document informatif, établi avec les données dont dispose le cabinet au moment de sa génération. Il ne remplace ni le dépôt auprès de l'administration fiscale ni son justificatif."
+
+msgid "Informe trimestral %(p)s %(e)s"
+msgstr "Rapport trimestriel %(p)s %(e)s"

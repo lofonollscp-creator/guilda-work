@@ -76,6 +76,7 @@
     <label>{{ _('Ejercicio') }} <input type="number" name="p_ejercicio" value="{{ computan.ejercicio }}" min="2026" max="2100"></label>
     <label>{{ _('Periodo') }} <select name="p_periodo">{% for p in periodos %}<option {{ 'selected' if p == computan.periodo }}>{{ p }}</option>{% endfor %}</select></label>
     <button class="btn btn-ghost" type="submit">{{ _('Ver') }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.informe_trimestral_pdf', cliente_id=c.id, ejercicio=computan.ejercicio, periodo=computan.periodo) }}" target="_blank" rel="noopener">{{ _('Informe trimestral en PDF para el cliente') }}</a>
   </form>
   {% if computan.facturas %}
   <ul class="ds-fila ds-envolver ds-mb-16">

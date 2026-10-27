@@ -392,6 +392,19 @@ def test_simulacion_de_los_modelos_111_y_115(cliente):
     assert "Simulación de retenciones" in pagina and "150.00" in pagina.split('id="simulacion-retenciones"')[1]
 
 
+def test_informe_trimestral_en_pdf_para_el_cliente(cliente):
+    uid, t, c_id = _web(cliente, email="informe@ejemplo.com")
+    datos = {"libro": "R", "tipo_factura": "F1", "clave": "01", "numero": "P-1", "fecha_expedicion": "2026-05-10", "fecha_recepcion": "2026-05-10", "base": "1.000,00", "tipo_iva": "21",
+             "contraparte_nif": "B87654321", "contraparte_nombre": "Profesional SL", "ret_modelo": "111", "ret_pct": "15"}
+    assert cliente.post(f"/guilda-fiscal/{c_id}/apuntes/nuevo", data=datos).status_code == 302
+    d = fn.informe_trimestral(t, uid, c_id, 2026, "2T")
+    assert d["declaracion"] is None and d["recibidas"] == 1 and d["emitidas"] == 0 and d["totales"]["no_computan"] == 0
+    r = cliente.get(f"/guilda-fiscal/{c_id}/informe.pdf?ejercicio=2026&periodo=2T")
+    assert r.status_code == 200 and r.mimetype == "application/pdf" and r.data.startswith(b"%PDF")
+    assert cliente.get(f"/guilda-fiscal/{c_id}/informe.pdf?periodo=13T").status_code == 404
+    assert "informe.pdf" in cliente.get(f"/guilda-fiscal/{c_id}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
+
+
 def test_panel_de_vencimientos_con_carga_de_trabajo(cliente):
     uid, t, c = _web(cliente, email="venc@ejemplo.com")
     conn = db.get_connection()

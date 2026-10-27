@@ -11,7 +11,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
+from . import acceso, db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
 from .fiscal_modelos.apuntes import Apunte
 from .fiscal_perfiles import ErrorFiscal
@@ -96,7 +96,7 @@ def vencimientos():
     solo = request.args.get("responsable")
     if solo is not None:
         panel["filas"] = [f for f in panel["filas"] if f["responsable"] == solo]
-    return render_template("fiscal_vencimientos.html", panel=panel, dias=dias if dias in (30, 60, 90, 180) else 60, responsable=solo, error=_error())
+    return render_template("fiscal_panel_vencimientos.html", panel=panel, dias=dias if dias in (30, 60, 90, 180) else 60, responsable=solo, error=_error())
 
 
 def _mensaje_recordatorio(p: dict, ejercicio: int, trimestre: str) -> dict | None:
@@ -175,6 +175,26 @@ def cliente(cliente_id: int):
 
 def _opciones_perfil() -> dict:
     return {"formas": fp.FORMAS_JURIDICAS, "residencias": fp.RESIDENCIAS, "territorios": fp.TERRITORIOS_IVA, "regimenes": fp.REGIMENES_IVA, "periodicidades": fp.PERIODICIDADES, "banderas": fp.BANDERAS}
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/informe.pdf")
+@login_required
+def informe_trimestral_pdf(cliente_id: int):
+    """Informe trimestral en PDF para el cliente (informativo, no presenta nada)."""
+    c = _cliente_o_404(cliente_id)
+    ejercicio, periodo = fn.periodo_por_defecto(date.today())
+    ejercicio = request.args.get("ejercicio", ejercicio, type=int)
+    periodo = request.args.get("periodo", periodo)
+    if periodo not in PERIODOS:
+        abort(404)
+    try:
+        datos = fn.informe_trimestral(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo)
+    except (ErrorFiscal, ValueError):
+        abort(404)
+    estados = {"borrador": _("borrador"), "revisada": _("revisada"), "exportada": _("exportada"), "presentada": _("presentada")}
+    fila_despacho = db.obtener_tenant(g.tenant_id)
+    pdf = fiscal_informe_trimestral.generar(datos, titular=c["nombre"], nif=c["nif"], gestoria=fila_despacho["nombre"] if fila_despacho else "", estados=estados)
+    return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="informe-{ejercicio}-{periodo}.pdf"'})
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/contraparte")

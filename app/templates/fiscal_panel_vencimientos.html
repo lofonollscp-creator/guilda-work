@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Vencimientos fiscales') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set estados = {None: _('Sin crear'), 'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada')} %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Vencimientos fiscales') }}</h1>
+    <p class="subtitle">{{ _('Lo que vence y el trabajo que hay detrás. La carga se mide en puntos de trabajo (1 por vencimiento, más cada factura sin revisar o sin registrar y lo que falta del 303), no en horas.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cartera') }}">‹ {{ _('Cartera') }}</a>
+</header>
+{{ aviso_error(error) }}
+<nav class="ds-fila ds-envolver ds-mb-16" aria-label="{{ _('Horizonte') }}">
+  {% for d in (30, 60, 90, 180) %}<a class="btn {{ 'btn-primary' if dias == d else 'btn-ghost' }} btn-sm" href="{{ url_for('guilda_fiscal.vencimientos', dias=d, responsable=responsable) }}">{{ _('%(n)s días', n=d) }}</a>{% endfor %}
+  {% if responsable is not none %}<a class="btn btn-ghost btn-sm" href="{{ url_for('guilda_fiscal.vencimientos', dias=dias) }}">{{ _('Quitar filtro de responsable') }}</a>{% endif %}
+</nav>
+{% if not panel.filas %}
+{{ estado_vacio(_('No hay vencimientos pendientes'), _('Cuando generes vencimientos en el calendario fiscal aparecerán aquí.')) }}
+{% else %}
+{% if panel.vencidos %}<p class="ia-error" role="alert">{{ ngettext('%(n)s vencimiento ya ha vencido sin presentarse.', '%(n)s vencimientos ya han vencido sin presentarse.', panel.vencidos, n=panel.vencidos) }}</p>{% endif %}
+<section class="dash-panel ds-mb-16">
+  <h2>{{ _('Carga por semana') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Semana') }}</th><th>{{ _('Vencimientos') }}</th><th>{{ _('Carga') }}</th></tr></thead>
+    <tbody>{% for s in panel.semanas %}<tr><td>{% if s.inicio %}{{ _('Del %(d)s', d=s.inicio) }}{% else %}{{ _('Vencidos') }}{% endif %}</td><td>{{ s.vencimientos }}</td>
+      <td><meter min="0" max="{{ panel.carga_maxima }}" value="{{ s.carga }}" aria-label="{{ s.carga }}"></meter> {{ s.carga }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+<section class="dash-panel ds-mb-16">
+  <h2>{{ _('Carga por responsable') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Responsable') }}</th><th>{{ _('Vencimientos') }}</th><th>{{ _('Carga') }}</th></tr></thead>
+    <tbody>{% for r in panel.responsables %}<tr><td><a href="{{ url_for('guilda_fiscal.vencimientos', dias=dias, responsable=r.responsable) }}">{{ r.responsable or _('Sin asignar') }}</a></td><td>{{ r.vencimientos }}</td><td>{{ r.carga }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Vence') }}</th><th>{{ _('Titular') }}</th><th>{{ _('Modelo') }}</th><th>{{ _('Periodo') }}</th><th>{{ _('Responsable') }}</th><th>{{ _('Pendiente') }}</th><th>{{ _('Carga') }}</th></tr></thead>
+  <tbody>
+  {% for f in panel.filas %}
+    <tr>
+      <td><span class="pill semaforo semaforo-{{ 'rojo' if f.nivel == 'vencido' else ('ambar' if f.nivel == 'semana' else 'gris') }}">{{ f.fecha_limite[:10] }}</span>
+        <small class="muted">{% if f.dias < 0 %}{{ _('hace %(n)s días', n=-f.dias) }}{% elif f.dias == 0 %}{{ _('hoy') }}{% else %}{{ _('en %(n)s días', n=f.dias) }}{% endif %}</small></td>
+      <td><a href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.cliente_fiscal_id) }}">{{ f.cliente }}</a></td>
+      <td>{{ f.modelo }}</td><td>{{ f.periodo }}</td><td>{{ f.responsable or '—' }}</td>
+      <td>{% if f.modelo == '303' %}{{ estados[f.declaracion] }}{% endif %}{% if f.sin_revisar %} · <a class="chip" href="{{ url_for('contabilidad.lista', cliente_id=f.cliente_fiscal_id, estado='pendiente') }}">{{ _('%(n)s por revisar', n=f.sin_revisar) }}</a>{% endif %}{% if f.por_registrar %} <a class="chip" href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.cliente_fiscal_id) }}">{{ _('%(n)s por registrar', n=f.por_registrar) }}</a>{% endif %}</td>
+      <td>{{ f.carga }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

@@ -603,6 +603,16 @@ def facturas_del_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
     return {"ejercicio": ejercicio, "periodo": periodo, "desde": desde, "hasta": hasta, "facturas": facturas, "totales": totales}
 
 
+def informe_trimestral(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
+    """Datos del informe trimestral para el cliente: lo que computa en el periodo, la última declaración viva del 303 y lo que falta. Solo lee."""
+    datos = facturas_del_periodo(tenant_id, usuario_id, cliente_fiscal_id, ejercicio, periodo)
+    pend = pendiente_de_recordar(tenant_id, usuario_id, cliente_fiscal_id, ejercicio, periodo)
+    declaracion = next((d for d in listar_declaraciones(tenant_id, usuario_id, cliente_fiscal_id) if d["ejercicio"] == ejercicio and d["periodo"] == periodo and d["estado"] != "anulada"), None)
+    datos.update({"declaracion": declaracion, "fecha_limite": pend["fecha_limite"], "emitidas": pend["emitidas"], "recibidas": pend["recibidas"], "sin_registrar": len(pend["sin_registrar"]),
+                  "no_computan": datos["totales"]["no_computan"]})
+    return datos
+
+
 def simular_retenciones(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
     """Simulación (NO se guarda ni se presenta) de los modelos 111 y 115 del periodo con las retenciones de los apuntes aprobados. Devuelve `{"111": Resultado, "115": Resultado}`."""
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
