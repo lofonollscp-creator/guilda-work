@@ -47,6 +47,8 @@ def validar_apunte(a: Apunte, indice: int | None = None, *, hoy: date | None = N
     if a.fecha_operacion and a.fecha_operacion > hoy:
         p.append(_e("fecha_futura", f"{nombre}: la fecha de operación es posterior a hoy.", indice))
     if a.libro == RECIBIDAS:
+        if a.recargo_pct or a.recargo_cuota:
+            p.append(_e("recargo_en_recibida", f"{nombre}: el recargo de equivalencia solo se anota en facturas emitidas (el que lo soporta es un minorista en ese régimen).", indice))
         recepcion = a.fecha_recepcion or a.fecha_expedicion
         if recepcion < a.fecha_expedicion:
             p.append(_e("recepcion_anterior", f"{nombre}: la recepción es anterior a la expedición.", indice))
@@ -83,8 +85,16 @@ def validar_apunte(a: Apunte, indice: int | None = None, *, hoy: date | None = N
             esperada = (1 if a.base >= 0 else -1) * ((abs(a.base) * a.tipo_iva + 5000) // 10000)          # redondeo al céntimo, mitad hacia arriba (en valor absoluto)
             if a.cuota != esperada:
                 p.append(_e("cuota_no_cuadra", f"{nombre}: la cuota repercutida debe ser exactamente base × tipo ({esperada / 100:.2f} €), y es {a.cuota / 100:.2f} €.", indice))
-            if a.total is not None and a.clave not in ("03", "05", "09") and a.total != a.base + a.cuota:
-                p.append(_e("total_no_cuadra", f"{nombre}: el total debe ser base + cuota.", indice))
+            if a.total is not None and a.clave not in ("03", "05", "09") and a.total != a.base + a.cuota + a.recargo_cuota:
+                p.append(_e("total_no_cuadra", f"{nombre}: el total debe ser base + cuota" + (" + recargo." if a.recargo_cuota else "."), indice))
+            if a.recargo_pct or a.recargo_cuota:
+                esperado_re = (1 if a.base >= 0 else -1) * ((abs(a.base) * a.recargo_pct + 5000) // 10000)
+                if not a.recargo_pct:
+                    p.append(_e("recargo_sin_tipo", f"{nombre}: hay cuota de recargo de equivalencia pero no su tipo.", indice))
+                elif abs(a.recargo_cuota - esperado_re) > 1:
+                    p.append(_e("recargo_no_cuadra", f"{nombre}: el recargo debe ser base × tipo ({esperado_re / 100:.2f} €), y es {a.recargo_cuota / 100:.2f} €.", indice))
+        if (a.recargo_pct or a.recargo_cuota) and (a.calificacion != "S1" or a.exenta):
+            p.append(_e("recargo_sin_sujecion", f"{nombre}: el recargo de equivalencia solo se repercute en operaciones sujetas y no exentas.", indice))
     if a.contraparte_nif_tipo == "02":
         nif = a.contraparte_nif.replace(" ", "").upper()
         formato = FORMATOS_NIF_IVA.get(a.contraparte_pais or nif[:2])

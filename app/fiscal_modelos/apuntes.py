@@ -50,6 +50,9 @@ class Apunte:
     periodo_deduccion: tuple[int, str] | None = None     # (ejercicio, "2T") cuando se deduce en otro periodo
     inmueble_situacion: str = ""                # situación del inmueble: 1 (resto de España) · 2 (foral) · 3 (sin referencia catastral) · 4 (extranjero) · 5 (no aplica)
     inmueble_referencia: str = ""                # referencia catastral (20 caracteres)
+    # --- expedidas a comerciantes minoristas en recargo de equivalencia: el cliente (mayorista) repercute IVA y recargo
+    recargo_pct: int = 0                         # tipo del recargo en centésimas: 520 = 5,2 %
+    recargo_cuota: int = 0                       # céntimos
 
     @property
     def total_efectivo(self) -> int:
@@ -58,7 +61,7 @@ class Apunte:
             return self.total
         if self.calificacion == "S2" or self.isp or (self.libro == RECIBIDAS and self.clave == "09"):
             return self.base
-        return self.base + self.cuota
+        return self.base + self.cuota + self.recargo_cuota
 
     @property
     def deducible(self) -> int:

@@ -44,6 +44,8 @@
     <label>{{ _('Base imponible (€)') }}<input type="text" name="base" value="{{ datos.get('base') or '' }}" inputmode="decimal" required></label>
     <label>{{ _('Tipo de IVA') }} (%)<input type="text" name="tipo_iva" value="{{ datos.get('tipo_iva') or '' }}" inputmode="decimal"></label>
     <label>{{ _('Cuota (€; en blanco = base × tipo)') }}<input type="text" name="cuota" value="{{ datos.get('cuota') or '' }}" inputmode="decimal"><small class="fiscal-ayuda fiscal-ayuda-aviso" data-cuota-aviso role="status" aria-live="polite" data-texto="{{ _('La AEAT exige que la cuota sea base × tipo: {v} €.') }}"></small></label>
+    {% if e %}<label>{{ _('Recargo de equivalencia') }} (%)<select name="recargo_pct">{% for v in ('', '0,5', '1,4', '5,2', '1,75') %}<option value="{{ v }}" {{ 'selected' if (datos.get('recargo_pct') or '') == v }}>{{ v or '—' }}</option>{% endfor %}</select></label>
+    <label>{{ _('Cuota del recargo (€; en blanco = base × tipo)') }}<input type="text" name="recargo_cuota" value="{{ datos.get('recargo_cuota') or '' }}" inputmode="decimal"></label>{% endif %}
     <label>{{ _('Total de la factura (€, opcional)') }}<input type="text" name="total" value="{{ datos.get('total') or '' }}" inputmode="decimal"><small class="fiscal-ayuda fiscal-ayuda-aviso" data-total-aviso role="status" aria-live="polite" data-texto="{{ _('El total debería ser base + cuota: {v} €.') }}"></small></label>
   </div>
   {% if not e %}

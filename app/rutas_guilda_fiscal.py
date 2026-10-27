@@ -309,13 +309,17 @@ def _apunte_del_formulario() -> tuple[Apunte, str | None]:
         ej, per = f["periodo_deduccion"].split("-")
         deduccion = (int(ej), per)
     e = f["libro"] == "E"
+    recargo_pct = fc.porcentaje_a_centesimas(f.get("recargo_pct", "") or "0") if e else 0
+    recargo_cuota = 0
+    if recargo_pct:
+        recargo_cuota = _euros(f["recargo_cuota"]) if f.get("recargo_cuota", "").strip() else (1 if base >= 0 else -1) * ((abs(base) * recargo_pct + 5000) // 10000)
     return Apunte(libro=f["libro"], tipo_factura=f.get("tipo_factura", "F1"), fecha_expedicion=date.fromisoformat(f["fecha_expedicion"]), numero=f.get("numero", "").strip(), serie=f.get("serie", "").strip(),
                   clave=f.get("clave", "01"), base=base, tipo_iva=tipo, cuota=cuota, total=_euros(f["total"]) if f.get("total", "").strip() else None, fecha_operacion=fecha("fecha_operacion"),
                   contraparte_nombre=f.get("contraparte_nombre", "").strip(), contraparte_nif=f.get("contraparte_nif", "").strip().upper().replace(" ", ""),
                   contraparte_nif_tipo=f.get("contraparte_nif_tipo", ""), contraparte_pais=f.get("contraparte_pais", "").strip().upper(), calificacion=f.get("calificacion", "S1") if e else "",
                   exenta=f.get("exenta", "") if e else "", fecha_recepcion=None if e else fecha("fecha_recepcion"), isp=bool(f.get("isp")), bien_inversion=bool(f.get("bien_inversion")),
                   cuota_deducible=_euros(f["cuota_deducible"]) if f.get("cuota_deducible", "").strip() else None, deducible_periodo_posterior=bool(f.get("deducible_periodo_posterior")),
-                  periodo_deduccion=deduccion, inmueble_situacion=f.get("inmueble_situacion", ""), inmueble_referencia=f.get("inmueble_referencia", "").strip().upper()), (f.get("causa") or None)
+                  periodo_deduccion=deduccion, inmueble_situacion=f.get("inmueble_situacion", ""), inmueble_referencia=f.get("inmueble_referencia", "").strip().upper(), recargo_pct=recargo_pct, recargo_cuota=recargo_cuota), (f.get("causa") or None)
 
 
 def _retencion_del_formulario(apunte: Apunte) -> dict | None:
@@ -334,6 +338,8 @@ def _datos_de_apunte(fila: dict) -> dict:
     datos = dict(fila)
     datos.update({"base": _euros_texto(fila["base_centimos"]), "cuota": _euros_texto(fila["cuota_centimos"]), "tipo_iva": f"{fila['tipo_iva_centesimas'] / 100:g}".replace(".", ","),
                   "total": _euros_texto(fila["total_centimos"]), "cuota_deducible": _euros_texto(fila["cuota_deducible_centimos"]),
+                  "recargo_pct": f"{(fila.get('recargo_pct_centesimas') or 0) / 100:g}".replace(".", ",") if fila.get("recargo_pct_centesimas") else "",
+                  "recargo_cuota": _euros_texto(fila.get("recargo_cuota_centimos")) if fila.get("recargo_cuota_centimos") else "",
                   "ret_modelo": fila.get("retencion_modelo") or "", "ret_clave": fila.get("retencion_clave") or "", "ret_base": _euros_texto(fila.get("retencion_base_centimos")),
                   "ret_pct": "" if fila.get("retencion_pct_centesimas") is None else f"{fila['retencion_pct_centesimas'] / 100:g}".replace(".", ","),
                   "ret_importe": _euros_texto(fila.get("retencion_centimos"))})
@@ -393,6 +399,8 @@ def apunte_nuevo(cliente_id: int):
         datos.update({"libro": p["libro"], "tipo_factura": p["tipo_factura"], "numero": p["numero"], "fecha_expedicion": p["fecha_expedicion"], "fecha_recepcion": p["fecha_recepcion"] or "",
                       "base": _euros_texto(p["base_centimos"]), "tipo_iva": f"{p['tipo_iva_centesimas'] / 100:g}".replace(".", ","), "contraparte_nombre": p["contraparte_nombre"],
                       "contraparte_nif": p["contraparte_nif"], "factura_id": factura_id, "calificacion": p["calificacion"] if p["libro"] == "E" else ""})
+        if p.get("recargo_pct_centesimas"):
+            datos.update({"recargo_pct": f"{p['recargo_pct_centesimas'] / 100:g}".replace(".", ","), "recargo_cuota": _euros_texto(p["recargo_cuota_centimos"])})
         r = p.get("retencion")
         if r:
             datos.update({"ret_modelo": r["modelo"], "ret_clave": r["clave"], "ret_base": _euros_texto(r["base"]), "ret_pct": f"{r['pct'] / 100:g}".replace(".", ","), "ret_importe": _euros_texto(r["importe"])})

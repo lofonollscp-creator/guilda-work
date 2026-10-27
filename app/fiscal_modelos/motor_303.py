@@ -17,7 +17,9 @@ TIPOS_EMITIDAS_NORMALES = {"F1", "F2", "F4"}
 TIPOS_RECIBIDAS_NORMALES = {"F1", "F3", "F4", "F6"}
 # tipo de IVA (centésimas) -> (casilla de base, casilla de cuota) del régimen general
 CASILLAS_TIPO = {0: ("150", "152"), 400: ("01", "03"), 500: ("154", "155"), 1000: ("04", "06"), 2100: ("07", "09")}
-CUOTAS_DEVENGADAS = ("152", "03", "155", "06", "09", "11", "13", "15")                 # casilla 27 (las demás del diseño —recargo, 167, 170— están bloqueadas)
+CUOTAS_DEVENGADAS = ("152", "03", "155", "06", "09", "11", "13", "15", "18", "21", "24", "26", "158", "170")      # casilla 27 (la 167 no se usa)
+# recargo de equivalencia repercutido: (tipo de IVA, tipo de recargo) -> (casilla de base, casilla de cuota). Tipos de recargo del art. 161 LIVA: 0,5 % sobre el 4 %, 1,4 % sobre el 10 %, 5,2 % sobre el 21 % y 1,75 % (tabaco) sobre el 21 %
+CASILLAS_RECARGO = {(400, 50): ("168", "170"), (1000, 140): ("19", "21"), (2100, 520): ("22", "24"), (2100, 175): ("156", "158")}
 CUOTAS_DEDUCIBLES = ("29", "31", "33", "35", "37", "39", "41", "44")                   # casilla 45 (42 y 43 no se calculan; la 44 es la regularización de la prorrata en el último periodo)
 
 
@@ -96,11 +98,22 @@ def _devengado_expedidas(a: Apunte, i: int, r: Resultado303) -> None:
     if rectifica:
         r.sumar("14", a.base, i)
         r.sumar("15", a.cuota, i)
+        if a.recargo_cuota or a.recargo_pct:                                  # modificación de bases y cuotas del recargo de equivalencia
+            r.sumar("25", a.base, i)
+            r.sumar("26", a.recargo_cuota, i)
         return
     if a.tipo_iva not in CASILLAS_TIPO:
         r.bloqueos.append(f"Expedida {a.serie}{a.numero}: el tipo de IVA {a.tipo_iva / 100:g} % no está soportado (solo 0, 4, 5, 10 y 21).")
         return
     base, cuota = CASILLAS_TIPO[a.tipo_iva]
+    if a.recargo_cuota or a.recargo_pct:
+        if (a.tipo_iva, a.recargo_pct) not in CASILLAS_RECARGO:
+            r.bloqueos.append(f"Expedida {a.serie}{a.numero}: el recargo de equivalencia del {a.recargo_pct / 100:g} % sobre el IVA del {a.tipo_iva / 100:g} % no tiene casilla en el 303 (solo 0,5 % sobre 4 %, 1,4 % sobre 10 %, "
+                              "5,2 % y 1,75 % sobre 21 %).")
+            return
+        base_re, cuota_re = CASILLAS_RECARGO[(a.tipo_iva, a.recargo_pct)]
+        r.sumar(base_re, a.base, i)                                           # la base se repite en el bloque del recargo
+        r.sumar(cuota_re, a.recargo_cuota, i)
     r.sumar(base, a.base, i)
     r.sumar(cuota, a.cuota, i)
 

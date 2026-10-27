@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS fiscal_apuntes (
     periodo_deduccion TEXT,
     inmueble_situacion TEXT NOT NULL DEFAULT '',
     inmueble_referencia TEXT NOT NULL DEFAULT '',
+    recargo_pct_centesimas INTEGER NOT NULL DEFAULT 0,
+    recargo_cuota_centimos INTEGER NOT NULL DEFAULT 0,
     contraparte_nombre TEXT NOT NULL,
     contraparte_nif TEXT,
     contraparte_nif_tipo TEXT NOT NULL DEFAULT '',
@@ -175,6 +177,8 @@ def crear_esquema(conn) -> None:
     for columna, tipo in (("retencion_modelo", "TEXT NOT NULL DEFAULT ''"), ("retencion_clave", "TEXT NOT NULL DEFAULT ''"), ("retencion_base_centimos", "INTEGER"),
                           ("retencion_pct_centesimas", "INTEGER"), ("retencion_centimos", "INTEGER")):
         db._asegurar_columna(conn, "fiscal_apuntes", columna, tipo)          # bases anteriores a la migración 005
+    for columna in ("recargo_pct_centesimas", "recargo_cuota_centimos"):
+        db._asegurar_columna(conn, "fiscal_apuntes", columna, "INTEGER NOT NULL DEFAULT 0")                  # bases anteriores a la migración 007
     db._asegurar_columna(conn, "fiscal_declaraciones", "justificante_anterior", "TEXT")      # bases anteriores a la migración 006
 
 
@@ -210,7 +214,7 @@ def _titular(conn, tenant_id: int, cliente_fiscal_id: int):
 # --- Apuntes ------------------------------------------------------------------------------------------------------------------------------------
 CAMPOS_APUNTE = ("libro", "tipo_factura", "clave", "calificacion", "exenta", "serie", "numero", "fecha_expedicion", "fecha_operacion", "fecha_recepcion", "base_centimos", "tipo_iva_centesimas",
                  "cuota_centimos", "total_centimos", "cuota_deducible_centimos", "isp", "bien_inversion", "deducible_periodo_posterior", "periodo_deduccion", "inmueble_situacion",
-                 "inmueble_referencia", "contraparte_nombre", "contraparte_nif", "contraparte_nif_tipo", "contraparte_pais", "causa")
+                 "inmueble_referencia", "recargo_pct_centesimas", "recargo_cuota_centimos", "contraparte_nombre", "contraparte_nif", "contraparte_nif_tipo", "contraparte_pais", "causa")
 CAMPOS_RETENCION = ("retencion_modelo", "retencion_clave", "retencion_base_centimos", "retencion_pct_centesimas", "retencion_centimos")
 CAMPOS_GUARDADOS = CAMPOS_APUNTE + CAMPOS_RETENCION
 CLAVES_RETENCION_111 = ("G", "A")            # G: actividades profesionales · A: rendimientos del trabajo (claves de percepción del 190)
@@ -260,7 +264,7 @@ def a_apunte(f) -> Apunte:
                   contraparte_pais=d.get("contraparte_pais") or "", calificacion=d.get("calificacion") or "", exenta=d.get("exenta") or "", fecha_recepcion=fecha(d.get("fecha_recepcion")),
                   isp=bool(d.get("isp")), bien_inversion=bool(d.get("bien_inversion")), cuota_deducible=d.get("cuota_deducible_centimos"),
                   deducible_periodo_posterior=bool(d.get("deducible_periodo_posterior")), periodo_deduccion=ded, inmueble_situacion=d.get("inmueble_situacion") or "",
-                  inmueble_referencia=d.get("inmueble_referencia") or "")
+                  inmueble_referencia=d.get("inmueble_referencia") or "", recargo_pct=d.get("recargo_pct_centesimas") or 0, recargo_cuota=d.get("recargo_cuota_centimos") or 0)
 
 
 def _datos_de_apunte(a: Apunte) -> dict:
@@ -269,7 +273,8 @@ def _datos_de_apunte(a: Apunte) -> dict:
             "fecha_recepcion": a.fecha_recepcion.isoformat() if a.fecha_recepcion else None, "base_centimos": a.base, "tipo_iva_centesimas": a.tipo_iva, "cuota_centimos": a.cuota,
             "total_centimos": a.total, "cuota_deducible_centimos": a.cuota_deducible, "isp": int(a.isp), "bien_inversion": int(a.bien_inversion),
             "deducible_periodo_posterior": int(a.deducible_periodo_posterior), "periodo_deduccion": f"{a.periodo_deduccion[0]}-{a.periodo_deduccion[1]}" if a.periodo_deduccion else None,
-            "inmueble_situacion": a.inmueble_situacion, "inmueble_referencia": a.inmueble_referencia, "contraparte_nombre": a.contraparte_nombre, "contraparte_nif": a.contraparte_nif or None,
+            "inmueble_situacion": a.inmueble_situacion, "inmueble_referencia": a.inmueble_referencia, "recargo_pct_centesimas": a.recargo_pct, "recargo_cuota_centimos": a.recargo_cuota,
+            "contraparte_nombre": a.contraparte_nombre, "contraparte_nif": a.contraparte_nif or None,
             "contraparte_nif_tipo": a.contraparte_nif_tipo, "contraparte_pais": a.contraparte_pais}
 
 
@@ -481,22 +486,23 @@ def proponer_desde_factura(tenant_id: int, usuario_id: int, factura_id: int) -> 
         if not f:
             raise ErrorFiscal("La factura no existe.", "no_encontrado")
         _exigir_acceso(tenant_id, usuario_id, f["cliente_fiscal_id"])
-        lineas = conn.execute("SELECT base_centimos, pct_iva, cuota_iva, sujeta_iva, pct_retencion, cuota_retencion FROM facturas_contables_lineas WHERE factura_id = ? ORDER BY id", (factura_id,)).fetchall()
+        lineas = conn.execute("SELECT base_centimos, pct_iva, cuota_iva, pct_recargo, cuota_recargo, sujeta_iva, pct_retencion, cuota_retencion FROM facturas_contables_lineas WHERE factura_id = ? ORDER BY id", (factura_id,)).fetchall()
     finally:
         conn.close()
-    agrupadas: dict[int, list[int]] = {}
+    agrupadas: dict[tuple[int, int], list[int]] = {}
     for ln in lineas:
-        g = agrupadas.setdefault(ln["pct_iva"] if ln["sujeta_iva"] else -1, [0, 0])
+        g = agrupadas.setdefault((ln["pct_iva"] if ln["sujeta_iva"] else -1, (ln["pct_recargo"] or 0) if ln["sujeta_iva"] else 0), [0, 0, 0])
         g[0] += ln["base_centimos"]
         g[1] += ln["cuota_iva"]
+        g[2] += ln["cuota_recargo"] or 0
     ret_base = sum(ln["base_centimos"] for ln in lineas if (ln["pct_retencion"] or 0) > 0)             # retención de IRPF de la factura: solo la practica quien la recibe (111 por defecto; el 115 lo decide la revisión)
     ret_importe = sum(ln["cuota_retencion"] or 0 for ln in lineas)
     ret_pct = max([ln["pct_retencion"] or 0 for ln in lineas] + [0])
     propuestas = []
-    for n, (pct, (base, cuota)) in enumerate(sorted(agrupadas.items()), 1):
+    for n, ((pct, pct_recargo), (base, cuota, cuota_recargo)) in enumerate(sorted(agrupadas.items()), 1):
         emitida = f["tipo"] == "emitida"
         if f["abono"] and base > 0:                                    # un abono/rectificativa va en negativo en los libros
-            base, cuota = -base, -cuota
+            base, cuota, cuota_recargo = -base, -cuota, -cuota_recargo
         retencion = None
         if n == 1 and not emitida and ret_importe and ret_pct:                  # una sola vez por factura, aunque se reparta en varios apuntes por tipo de IVA
             s = -1 if f["abono"] else 1
@@ -506,6 +512,7 @@ def proponer_desde_factura(tenant_id: int, usuario_id: int, factura_id: int) -> 
             "serie": "", "numero": f["numero"] if len(agrupadas) == 1 else f"{f['numero']}/{n}", "fecha_expedicion": f["fecha"], "fecha_operacion": f["fecha_operacion"],
             "fecha_recepcion": None if emitida else f["fecha"], "base_centimos": base, "tipo_iva_centesimas": max(pct, 0), "cuota_centimos": cuota, "total_centimos": None,
             "contraparte_nombre": f["tercero_nombre"], "contraparte_nif": f["tercero_nif"] or "", "aprobado": False, "retencion": retencion,
+            "recargo_pct_centesimas": pct_recargo if emitida else 0, "recargo_cuota_centimos": cuota_recargo if emitida else 0,
         })
     return propuestas
 

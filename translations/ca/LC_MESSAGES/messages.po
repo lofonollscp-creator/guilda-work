@@ -17528,3 +17528,6 @@ msgstr "Compensar en els períodes següents"
 
 msgid "Calcular la rectificativa"
 msgstr "Calcular la rectificativa"
+
+msgid "Cuota del recargo (€; en blanco = base × tipo)"
+msgstr "Quota del recàrrec (€; en blanc = base × tipus)"

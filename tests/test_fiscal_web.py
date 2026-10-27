@@ -522,3 +522,19 @@ def test_rectificar_un_303_presentado_desde_la_web(cliente):
     assert "63.00" in html and "21.00" in html                                # casilla 69 de 63 € y casilla 70 de 21 €; el resultado, 42 €
     assert "tiene una rectificativa en curso" in cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
     assert "Rectificativa" in cliente.get(f"/guilda-fiscal/{c}?ejercicio=2026").get_data(as_text=True)
+
+
+def test_apunte_con_recargo_de_equivalencia_desde_el_formulario(cliente):
+    uid, t, c = _web(cliente, email="recargo@ejemplo.com")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
+                                                           "periodicidad": "trimestral"}).status_code == 302
+    assert "Recargo de equivalencia" in cliente.get(f"/guilda-fiscal/{c}/apuntes/nuevo").get_data(as_text=True)
+    datos = {"libro": "E", "tipo_factura": "F1", "clave": "01", "numero": "F-1", "fecha_expedicion": "2026-05-10", "base": "1.000,00", "tipo_iva": "21", "recargo_pct": "5,2",
+             "contraparte_nif": "B11111111", "contraparte_nombre": "Minorista SL"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    fila = fn.listar_apuntes(t, uid, c, ejercicio=2026)[0]
+    assert fila["recargo_pct_centesimas"] == 520 and fila["recargo_cuota_centimos"] == 5200
+    pagina = cliente.get(f"/guilda-fiscal/{c}/apuntes/{fila['id']}").get_data(as_text=True)
+    assert '<option value="5,2" selected>' in pagina and "52,00" in pagina
+    malo = {**datos, "numero": "F-2", "recargo_cuota": "9,99"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=malo).status_code == 400

@@ -17604,3 +17604,6 @@ msgstr "Reporter sur les périodes suivantes"
 
 msgid "Calcular la rectificativa"
 msgstr "Calculer la rectificative"
+
+msgid "Cuota del recargo (€; en blanco = base × tipo)"
+msgstr "Montant de la majoration (€ ; vide = base × taux)"

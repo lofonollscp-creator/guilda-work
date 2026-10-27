@@ -41,6 +41,8 @@ def fila_expedida(a: Apunte, ejercicio: int, periodo: str) -> dict[int, object]:
     if a.contraparte_nif_tipo:
         f[13], f[14] = a.contraparte_nif_tipo, a.contraparte_pais or None
     f[22], f[23] = (_pct(a.tipo_iva), _euros(a.cuota)) if a.calificacion == "S1" else (0.0, 0.0)       # S2/N/exentas: tipo y cuota a cero, no vacíos
+    if a.recargo_pct or a.recargo_cuota:
+        f[24], f[25] = _pct(a.recargo_pct), _euros(a.recargo_cuota)
     if a.inmueble_situacion:
         f[33], f[34] = a.inmueble_situacion, a.inmueble_referencia or None
     return f
@@ -148,7 +150,8 @@ def leer_xlsx(contenido: bytes) -> tuple[list[Apunte], list[dict]]:
                 if libro == EXPEDIDAS:
                     apuntes.append(Apunte(EXPEDIDAS, _s(c[5]), _f(c[8]), numero=_s(c[11]), serie=_s(c[10]), clave=_s(c[17]) or "01", base=_c(c[21]), tipo_iva=_c(c[22]), cuota=_c(c[23]),
                                           total=_c(c[20]) if c[20] not in (None, "") else None, fecha_operacion=_f(c[9]), contraparte_nombre=_s(c[16]), contraparte_nif=_s(c[15]),
-                                          contraparte_nif_tipo=_s(c[13]), contraparte_pais=_s(c[14]), calificacion=_s(c[18]), exenta=_s(c[19]), inmueble_situacion=_s(c[33]), inmueble_referencia=_s(c[34])))
+                                          contraparte_nif_tipo=_s(c[13]), contraparte_pais=_s(c[14]), calificacion=_s(c[18]), exenta=_s(c[19]), inmueble_situacion=_s(c[33]), inmueble_referencia=_s(c[34]),
+                                          recargo_pct=_c(c[24]) if c[24] not in (None, "") else 0, recargo_cuota=_c(c[25]) if c[25] not in (None, "") else 0))
                 else:
                     ded = (int(float(c[23])), _s(c[24])) if c[23] not in (None, "") and c[24] not in (None, "") else None
                     apuntes.append(Apunte(RECIBIDAS, _s(c[5]), _f(c[8]), numero=_s(c[10]), clave=_s(c[19]) or "01", base=_c(c[26]), tipo_iva=_c(c[27]), cuota=_c(c[28]),

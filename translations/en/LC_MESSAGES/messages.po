@@ -17519,3 +17519,6 @@ msgstr "Carry forward to the following periods"
 
 msgid "Calcular la rectificativa"
 msgstr "Calculate the amendment"
+
+msgid "Cuota del recargo (€; en blanco = base × tipo)"
+msgstr "Surcharge amount (€; blank = base × rate)"
