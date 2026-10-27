@@ -339,3 +339,17 @@ def test_historial_de_cambios_del_apunte_y_duplicada_en_otro_titular(cliente):
     r = cliente.get(f"/guilda-fiscal/{otro}/comprobar-numero?libro=E&serie=A&numero=A-0001&nif=B87654321").get_json()
     assert r["otros"] == "Empresa Web SL" and r["existe"] is None
     assert cliente.get(f"/guilda-fiscal/{c}/comprobar-numero?libro=E&serie=A&numero=A-0001&nif=B87654321&excluir={apunte['id']}").get_json()["otros"] == ""
+
+
+def test_aviso_cuando_el_apunte_ya_no_coincide_con_su_factura(cliente):
+    uid, t, c = _web(cliente, email="cuadre@ejemplo.com")
+    f = _factura(t, uid, c, "F-9")
+    fc.cambiar_estado(t, uid, f, "revisada")
+    fn.aprobar_facturas(t, uid, c, [f])
+    assert fn.facturas_del_periodo(t, uid, c, 2026, "2T")["totales"]["descuadres"] == 0
+    ap = fn.listar_apuntes(t, uid, c)[0]
+    corregido = fn.a_apunte(ap).con(base=20000, cuota=4200)
+    fn.aprobar_apunte(t, uid, c, corregido, factura_id=f, apunte_id=ap["id"], version=ap["version"], causa="importe distinto en el original")
+    r = fn.facturas_del_periodo(t, uid, c, 2026, "2T")
+    assert r["totales"]["descuadres"] == 1 and r["facturas"][0]["descuadre"]
+    assert "1 apunte no coincide con su factura" in cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)

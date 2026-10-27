@@ -502,18 +502,24 @@ def facturas_del_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
             "GROUP BY f.id, f.tipo, f.estado, f.fecha, f.numero, f.tercero_nombre, f.abono, f.total_centimos, f.incluir_en_fiscal ORDER BY f.fecha, f.id",
             (tenant_id, cliente_fiscal_id, desde, hasta)).fetchall()]
         apuntes = {}
-        for a in conn.execute("SELECT id, factura_id, clave FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND factura_id IS NOT NULL AND anulado_en IS NULL",
-                              (tenant_id, cliente_fiscal_id)).fetchall():
-            apuntes.setdefault(a["factura_id"], a)
+        for a in conn.execute("SELECT id, factura_id, clave, base_centimos, cuota_centimos FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND factura_id IS NOT NULL AND anulado_en IS NULL "
+                              "ORDER BY id", (tenant_id, cliente_fiscal_id)).fetchall():
+            previo = apuntes.get(a["factura_id"])
+            if previo:
+                previo["base_centimos"] += a["base_centimos"]
+                previo["cuota_centimos"] += a["cuota_centimos"]
+            else:
+                apuntes[a["factura_id"]] = dict(a)
     finally:
         conn.close()
-    totales = {"iva_repercutido": 0, "iva_soportado": 0, "retenciones_111": 0, "retenciones_115": 0, "retenciones_soportadas": 0, "no_computan": 0}
+    totales = {"iva_repercutido": 0, "iva_soportado": 0, "retenciones_111": 0, "retenciones_115": 0, "retenciones_soportadas": 0, "no_computan": 0, "descuadres": 0}
     for f in facturas:
         signo = -1 if f["abono"] else 1
         for k in ("base", "cuota_iva", "retencion", "base_retencion"):
             f[k] *= signo
         ap = apuntes.get(f["id"])
         f["apunte_id"] = ap["id"] if ap else None
+        f["descuadre"] = bool(ap) and (ap["base_centimos"] != f["base"] or ap["cuota_centimos"] != f["cuota_iva"])         # el apunte aprobado ya no coincide con la factura de la que salió
         revisada = f["estado"] in ("revisada", "exportada")
         if not f["incluir_en_fiscal"]:
             f["m303"] = "excluida"
@@ -536,6 +542,7 @@ def facturas_del_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
             totales[{"111": "retenciones_111", "115": "retenciones_115", "soportada": "retenciones_soportadas"}[f["m_retencion"]]] += f["retencion"]
         if f["m303"] != "computa" and f["retencion_estado"] != "computa":
             totales["no_computan"] += 1
+        totales["descuadres"] += 1 if f["descuadre"] else 0
     return {"ejercicio": ejercicio, "periodo": periodo, "desde": desde, "hasta": hasta, "facturas": facturas, "totales": totales}
 
 

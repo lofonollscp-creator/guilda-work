@@ -17188,3 +17188,14 @@ msgid "%(n)s factura aún no computa"
 msgid_plural "%(n)s facturas aún no computan"
 msgstr[0] "%(n)s invoice is not counted yet"
 msgstr[1] "%(n)s invoices are not counted yet"
+
+msgid "La base o la cuota del apunte aprobado es distinta de la de la factura de «Facturas para contabilizar». Puede ser una corrección legítima; revísalo antes de presentar."
+msgstr "The base or tax amount of the approved entry differs from that of the invoice in «Invoices to post». It may be a legitimate correction; check it before filing."
+
+msgid "No coincide con la factura"
+msgstr "Does not match the invoice"
+
+msgid "%(n)s apunte no coincide con su factura"
+msgid_plural "%(n)s apuntes no coinciden con su factura"
+msgstr[0] "%(n)s entry does not match its invoice"
+msgstr[1] "%(n)s entries do not match their invoice"

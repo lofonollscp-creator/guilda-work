@@ -86,11 +86,12 @@
     {% if t.retenciones_soportadas %}<li><strong>{{ _('Retenciones soportadas') }}</strong> {{ '%.2f'|format(t.retenciones_soportadas / 100) }} €</li>{% endif %}
   </ul>
   {% if t.no_computan %}<p class="aviso-bloque" role="status"><strong>{{ ngettext('%(n)s factura aún no computa', '%(n)s facturas aún no computan', t.no_computan, n=t.no_computan) }}</strong> {{ _('Están sin revisar, sin registrar o excluidas de Guilda Fiscal.') }}</p>{% endif %}
+  {% if t.descuadres %}<p class="aviso-bloque" role="status"><strong>{{ ngettext('%(n)s apunte no coincide con su factura', '%(n)s apuntes no coinciden con su factura', t.descuadres, n=t.descuadres) }}</strong> {{ _('La base o la cuota del apunte aprobado es distinta de la de la factura de «Facturas para contabilizar». Puede ser una corrección legítima; revísalo antes de presentar.') }}</p>{% endif %}
   <div class="table-wrap ds-mb-16"><table class="historial-table">
-    <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Contraparte') }}</th><th>{{ _('Base') }}</th><th>{{ _('Cuota IVA') }}</th><th>{{ _('Modelo 303') }}</th><th>{{ _('Retención IRPF') }}</th><th></th></tr></thead>
+    <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Contraparte') }}</th><th>{{ _('Base') }}</th><th>{{ _('Cuota IVA') }}</th><th>{{ _('Modelo 303') }}<th>{{ _('Retención IRPF') }}</th><th></th></tr></thead>
     <tbody>{% for f in computan.facturas %}<tr>
       <td>{{ f.fecha }}</td><td>{{ f.numero }}</td><td>{{ _('Emitida') if f.tipo == 'emitida' else _('Recibida') }} · {{ f.tercero_nombre }}</td>
-      <td>{{ '%.2f'|format(f.base / 100) }}</td><td>{{ '%.2f'|format(f.cuota_iva / 100) }}</td><td>{{ estado_modelo(f.m303) }}</td>
+      <td>{{ '%.2f'|format(f.base / 100) }}</td><td>{{ '%.2f'|format(f.cuota_iva / 100) }}</td><td>{{ estado_modelo(f.m303) }}{% if f.descuadre %} <span class="pill semaforo-rojo">{{ _('No coincide con la factura') }}</span>{% endif %}</td>
       <td>{% if f.m_retencion %}{{ '%.2f'|format(f.retencion / 100) }} € · {% if f.m_retencion == 'soportada' %}{{ _('soportada (no va en el 111)') }}{% else %}{{ _('Modelo') }} {{ f.m_retencion }}{% endif %} {{ estado_modelo(f.retencion_estado) }}{% else %}—{% endif %}</td>
       <td>{% if f.apunte_id %}<a href="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=f.apunte_id) }}">{{ _('Ver apunte') }}</a>{% else %}<a href="{{ url_for('contabilidad.lista', cliente_id=c.id) }}">{{ _('Ver factura') }}</a>{% endif %}</td></tr>{% endfor %}</tbody>
   </table></div>

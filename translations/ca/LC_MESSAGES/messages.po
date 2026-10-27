@@ -17197,3 +17197,14 @@ msgid "%(n)s factura aún no computa"
 msgid_plural "%(n)s facturas aún no computan"
 msgstr[0] "%(n)s factura encara no computa"
 msgstr[1] "%(n)s factures encara no computen"
+
+msgid "La base o la cuota del apunte aprobado es distinta de la de la factura de «Facturas para contabilizar». Puede ser una corrección legítima; revísalo antes de presentar."
+msgstr "La base o la quota de l'apunt aprovat és diferent de la de la factura de «Factures per comptabilitzar». Pot ser una correcció legítima; revisa-ho abans de presentar."
+
+msgid "No coincide con la factura"
+msgstr "No coincideix amb la factura"
+
+msgid "%(n)s apunte no coincide con su factura"
+msgid_plural "%(n)s apuntes no coinciden con su factura"
+msgstr[0] "%(n)s apunt no coincideix amb la seva factura"
+msgstr[1] "%(n)s apunts no coincideixen amb la seva factura"

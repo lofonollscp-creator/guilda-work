@@ -17273,3 +17273,14 @@ msgid "%(n)s factura aún no computa"
 msgid_plural "%(n)s facturas aún no computan"
 msgstr[0] "%(n)s facture n'est pas encore prise en compte"
 msgstr[1] "%(n)s factures ne sont pas encore prises en compte"
+
+msgid "La base o la cuota del apunte aprobado es distinta de la de la factura de «Facturas para contabilizar». Puede ser una corrección legítima; revísalo antes de presentar."
+msgstr "La base ou la taxe de l'écriture approuvée diffère de celle de la facture de « Factures à comptabiliser ». Ce peut être une correction légitime ; vérifiez avant de déposer."
+
+msgid "No coincide con la factura"
+msgstr "Ne correspond pas à la facture"
+
+msgid "%(n)s apunte no coincide con su factura"
+msgid_plural "%(n)s apuntes no coinciden con su factura"
+msgstr[0] "%(n)s écriture ne correspond pas à sa facture"
+msgstr[1] "%(n)s écritures ne correspondent pas à leur facture"
