@@ -538,3 +538,16 @@ def test_apunte_con_recargo_de_equivalencia_desde_el_formulario(cliente):
     assert '<option value="5,2" selected>' in pagina and "52,00" in pagina
     malo = {**datos, "numero": "F-2", "recargo_cuota": "9,99"}
     assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=malo).status_code == 400
+
+
+def test_fichero_de_prueba_del_111_desde_la_ficha(cliente):
+    from app.fiscal_modelos import fichero_retenciones as fr
+    from tests.escenarios_303 import compra
+    uid, t, c = _web(cliente, email="fichero111@ejemplo.com")
+    fn.aprobar_apunte(t, uid, c, compra(100000, 2100, numero="P-1"), retencion={"modelo": "111", "clave": "G", "base": 100000, "pct": 1500})
+    pagina = cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
+    assert "Descargar el fichero de prueba del modelo 111" in pagina
+    r = cliente.get(f"/guilda-fiscal/{c}/retenciones/111/fichero?ejercicio=2026&periodo=2T")
+    assert r.status_code == 200 and "2026_2T_111_prueba.txt" in r.headers["Content-Disposition"] and int(fr.leer_campos("111", r.data)[20]) == 15000
+    assert cliente.get(f"/guilda-fiscal/{c}/retenciones/190/fichero?ejercicio=2026&periodo=2T").status_code == 404
+    assert cliente.get(f"/guilda-fiscal/{c}/retenciones/115/fichero?ejercicio=2026&periodo=2T", follow_redirects=True).status_code in (200, 400)

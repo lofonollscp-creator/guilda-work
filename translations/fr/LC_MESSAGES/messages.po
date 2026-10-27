@@ -17607,3 +17607,9 @@ msgstr "Calculer la rectificative"
 
 msgid "Cuota del recargo (€; en blanco = base × tipo)"
 msgstr "Montant de la majoration (€ ; vide = base × taux)"
+
+msgid "Descargar el fichero de prueba del modelo %(m)s"
+msgstr "Télécharger le fichier de test du modèle %(m)s"
+
+msgid "impórtalo en el simulador de la AEAT antes de presentar; este modelo no tiene borrador ni estados en Guilda Fiscal."
+msgstr "importez-le dans le simulateur de l'AEAT avant de déposer ; ce modèle n'a ni brouillon ni statuts dans Guilda Fiscal."

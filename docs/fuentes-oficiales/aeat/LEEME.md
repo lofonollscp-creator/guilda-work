@@ -22,4 +22,4 @@ Descargados el 27-oct-2026 (con permiso expreso de Jorge) para el 390 y los mode
 | `dr390e2025.xlsx` | **Diseño de registro del modelo 390**, ejercicio 2025 (actualizado 05/12/2025). De él sale `app/fiscal_modelos/disenos/390_2025.json` con `scripts/fiscal/extraer_diseno.py` |
 | `Instrucciones_modelo_390-2025.pdf` | Instrucciones oficiales del 390 (cómo se rellena cada casilla; p. ej. la 108 = 99+653+103+104+105+110+100+101+102+125+126+127+128+227+228 − 106 − 107) |
 | `disenos_100_199.html` | Página de diseños de registro de los modelos 100–199 (para vigilar revisiones del 111, 115, 130 y 131) |
-| `dr111e16v18.xls`, `DR115e15v13.xls` | Diseños de registro del 111 y del 115, **aún sin usar** (formato `.xls` antiguo; hace falta `xlrd` para leerlos): base del fichero de retenciones |
+| `dr111e16v18.xls`, `DR115e15v13.xls` | Diseños de registro del 111 y del 115, formato `.xls` antiguo (`xlrd` solo hace falta para extraerlos). De ellos salen `app/fiscal_modelos/disenos/111_v18.json` y `115_v13.json` con `scripts/fiscal/extraer_diseno.py`: base del fichero de retenciones |

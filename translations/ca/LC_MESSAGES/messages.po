@@ -17531,3 +17531,9 @@ msgstr "Calcular la rectificativa"
 
 msgid "Cuota del recargo (€; en blanco = base × tipo)"
 msgstr "Quota del recàrrec (€; en blanc = base × tipus)"
+
+msgid "Descargar el fichero de prueba del modelo %(m)s"
+msgstr "Descarregar el fitxer de prova del model %(m)s"
+
+msgid "impórtalo en el simulador de la AEAT antes de presentar; este modelo no tiene borrador ni estados en Guilda Fiscal."
+msgstr "importa'l al simulador de l'AEAT abans de presentar; aquest model no té esborrany ni estats a Guilda Fiscal."

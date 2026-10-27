@@ -3,6 +3,8 @@
 
     python scripts/fiscal/extraer_diseno.py docs/fuentes-oficiales/aeat/DR303e26v101.xlsx app/fiscal_modelos/disenos/303_2026_v101.json
 
+Los diseños .xls antiguos (111 y 115) se leen igual, con `xlrd` instalado (solo hace falta para extraer, no para ejecutar la aplicación).
+
 Código de salida: 0 coherente · 1 incoherencias en el propio diseño. No escribe nada si el diseño es incoherente."""
 import json
 import sys
@@ -19,7 +21,7 @@ def main(argv=None) -> int:
     if len(a) != 2:
         print(__doc__)
         return 2
-    diseno = d.leer_diseno(a[0])
+    diseno = d.leer_diseno_xls(a[0]) if a[0].lower().endswith(".xls") else d.leer_diseno(a[0])        # los .xls (111 y 115) necesitan xlrd
     problemas = d.comprobar(diseno)
     if problemas:
         print("El diseño oficial no es coherente consigo mismo:\n  " + "\n  ".join(problemas), file=sys.stderr)

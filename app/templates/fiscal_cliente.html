@@ -129,6 +129,8 @@
       <td>{% if cas in ('01', '07') or (m == '115' and cas == '01') %}{{ v }}{% else %}{{ '%.2f'|format(v / 100) }} €{% endif %}</td></tr>{% endfor %}</tbody></table></div>
   {% for b in r.bloqueos %}<p class="ia-error" role="alert">{{ b }}</p>{% endfor %}
   {% for a in r.avisos %}<p class="muted">{{ a }}</p>{% endfor %}
+  {% if puede_aprobar and r.calculable %}<p><a href="{{ url_for('guilda_fiscal.fichero_retenciones_prueba', cliente_id=c.id, modelo=m, ejercicio=r.ejercicio, periodo=r.periodo) }}">{{ _('Descargar el fichero de prueba del modelo %(m)s', m=m) }}</a>
+    <span class="muted">· {{ _('impórtalo en el simulador de la AEAT antes de presentar; este modelo no tiene borrador ni estados en Guilda Fiscal.') }}</span></p>{% endif %}
   {% endif %}{% endfor %}
   {% if not (retenciones['111'].casillas.get('03', 0) or retenciones['111'].casillas.get('09', 0) or retenciones['115'].casillas.get('03', 0)) %}<p class="muted">{{ _('No hay retenciones en apuntes aprobados de este periodo.') }}</p>{% endif %}
 </section>

@@ -29,6 +29,7 @@ def _entero(valor):
 
 def _cabecera(fila) -> dict[str, int] | None:
     nombres = [_texto(c).lower() for c in fila]
+    nombres = ["lon" if n == "lon." else n for n in nombres]                # el diseño del 115 escribe «Lon.»
     if not nombres or nombres[0] not in ("nº", "n°", "no", "n.º") or "lon" not in nombres:
         return None
     mapa = {}
@@ -38,6 +39,17 @@ def _cabecera(fila) -> dict[str, int] | None:
         if clave and clave not in mapa:
             mapa[clave] = i
     return mapa
+
+
+_NUMEROS = {"quince": 15, "trece": 13, "once": 11, "diez": 10, "nueve": 9, "ocho": 8, "siete": 7, "seis": 6, "cinco": 5, "cuatro": 4, "tres": 3, "dos": 2, "uno": 1}
+
+
+def _normalizar_contenido(texto: str) -> str:
+    """Los diseños antiguos (.xls) escriben «[quince enteros + dos decimales]»; los nuevos, «15 enteros y 2 decimales». Se deja la forma nueva para que el exportador lea los dos igual."""
+    m = re.fullmatch(r"\[?\s*(\w+) enteros? \+ (\w+) decimales?\s*\]?", texto, re.I)
+    if m and m.group(1).lower() in _NUMEROS and m.group(2).lower() in _NUMEROS:
+        return f"{_NUMEROS[m.group(1).lower()]} enteros y {_NUMEROS[m.group(2).lower()]} decimales"
+    return texto
 
 
 def leer_hoja(ws) -> dict:
@@ -56,7 +68,7 @@ def leer_hoja(ws) -> dict:
         if not any(_texto(c) for c in f):
             continue
         primera = _texto(f[0])
-        if en_tabla and primera.upper() == "TOTAL":
+        if en_tabla and (primera.upper() == "TOTAL" or _texto(f[1]).upper().startswith("TOTAL")):       # en los .xls antiguos la palabra TOTAL va en la 2.ª columna
             total = _entero(f[mapa["lon"]])
             en_tabla = False
             continue
@@ -71,8 +83,8 @@ def leer_hoja(ws) -> dict:
             "tipo": _texto(f[mapa["tipo"]]),
             "comp": _texto(f[mapa["comp"]]) if "comp" in mapa else "",
             "descripcion": _texto(f[mapa["descripcion"]]),
-            "validacion": _texto(f[mapa["validacion"]]),
-            "contenido": _texto(f[mapa["contenido"]]),
+            "validacion": _texto(f[mapa["validacion"]]) if "validacion" in mapa else "",
+            "contenido": _normalizar_contenido(_texto(f[mapa["contenido"]])),
         })
     return {"hoja": ws.title, "campos": campos, "total_posiciones": total, "notas": notas}
 
@@ -86,6 +98,27 @@ def leer_diseno(ruta_xlsx: str | Path) -> dict:
     paginas = [leer_hoja(ws) for ws in wb.worksheets]
     cabecera = paginas[0]["hoja"]
     return {"esquema": ESQUEMA, "origen": {"fichero": ruta.name, "sha256": huella, "bytes": ruta.stat().st_size}, "envoltura": cabecera, "paginas": paginas}
+
+
+class _HojaXls:
+    """Una hoja de xlrd con la interfaz mínima de openpyxl que usa `leer_hoja`."""
+
+    def __init__(self, hoja):
+        self._hoja, self.title = hoja, hoja.name.strip()
+
+    def iter_rows(self, values_only=True, max_col=10):
+        for r in range(self._hoja.nrows):
+            yield tuple(self._hoja.row_values(r)[:max_col])
+
+
+def leer_diseno_xls(ruta_xls: str | Path) -> dict:
+    """Como `leer_diseno`, para los diseños de registro en formato antiguo `.xls` (modelos 111 y 115). Hace falta `xlrd`, que solo se usa al extraer el diseño: el resultado queda en un JSON."""
+    import xlrd
+
+    ruta = Path(ruta_xls)
+    wb = xlrd.open_workbook(ruta)
+    paginas = [leer_hoja(_HojaXls(s)) for s in wb.sheets()]
+    return {"esquema": ESQUEMA, "origen": {"fichero": ruta.name, "sha256": hashlib.sha256(ruta.read_bytes()).hexdigest(), "bytes": ruta.stat().st_size}, "envoltura": paginas[0]["hoja"], "paginas": paginas}
 
 
 def comprobar(diseno: dict) -> list[str]:

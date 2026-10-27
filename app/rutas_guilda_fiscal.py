@@ -236,6 +236,20 @@ def fichero_390_prueba(cliente_id: int):
     return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
 
 
+@guilda_fiscal_bp.route("/<int:cliente_id>/retenciones/<modelo>/fichero")
+@login_required
+def fichero_retenciones_prueba(cliente_id: int, modelo: str):
+    _cliente_o_404(cliente_id)
+    ejercicio, periodo = request.args.get("ejercicio", type=int), request.args.get("periodo", "")
+    if modelo not in ("111", "115") or not ejercicio or periodo not in PERIODOS:
+        abort(404)
+    try:
+        datos, nombre = fn.descargar_fichero_retenciones(g.tenant_id, g.usuario_id, cliente_id, modelo, ejercicio, periodo)
+    except ErrorFiscal as e:
+        return _atras(url_for("guilda_fiscal.cliente", cliente_id=cliente_id, p_ejercicio=ejercicio, p_periodo=periodo), e)
+    return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
+
+
 @guilda_fiscal_bp.route("/<int:cliente_id>/contraparte")
 @login_required
 def contraparte(cliente_id: int):

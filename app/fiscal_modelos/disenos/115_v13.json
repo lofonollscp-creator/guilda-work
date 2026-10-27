@@ -1,0 +1,409 @@
+{
+ "esquema": 1,
+ "origen": {
+  "fichero": "DR115e15v13.xls",
+  "sha256": "d0b4c2cb344fe2d4b91a082bc85cc7906e383be792134504ddaedd0dc8bb2694",
+  "bytes": 176640
+ },
+ "envoltura": "DR 11500",
+ "paginas": [
+  {
+   "hoja": "DR 11500",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante.",
+     "validacion": "",
+     "contenido": "\"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Modelo",
+     "validacion": "",
+     "contenido": "\"115\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante.",
+     "validacion": "",
+     "contenido": "\"0\""
+    },
+    {
+     "n": 4,
+     "pos": 7,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Ejercicio devengo. (AAAA)",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 5,
+     "pos": 11,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Período. (PP)",
+     "validacion": "",
+     "contenido": "\"01\" ... \"12\" o \"1T\" … \"4T\""
+    },
+    {
+     "n": 6,
+     "pos": 13,
+     "lon": 5,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante.",
+     "validacion": "",
+     "contenido": "\"0000>\""
+    },
+    {
+     "n": 7,
+     "pos": 18,
+     "lon": 5,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante",
+     "validacion": "",
+     "contenido": "\"<AUX>\""
+    },
+    {
+     "n": 8,
+     "pos": 23,
+     "lon": 70,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la Administración. Rellenar con blancos",
+     "validacion": "",
+     "contenido": "BLANCOS"
+    },
+    {
+     "n": 9,
+     "pos": 93,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Versión del Programa (Nota 1)",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 10,
+     "pos": 97,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la Administración. Rellenar con blancos",
+     "validacion": "",
+     "contenido": "BLANCOS"
+    },
+    {
+     "n": 11,
+     "pos": 101,
+     "lon": 9,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "NIF Empresa Desarrollo (Nota 1)",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 12,
+     "pos": 110,
+     "lon": 213,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la Administración. Rellenar con blancos",
+     "validacion": "",
+     "contenido": "BLANCOS"
+    },
+    {
+     "n": 13,
+     "pos": 323,
+     "lon": 6,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante",
+     "validacion": "",
+     "contenido": "\"</AUX>\""
+    },
+    {
+     "n": 14,
+     "pos": 329,
+     "lon": "Variable",
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Contenido del fichero. Aquí se debe incluir el contenido de las páginas correspondientes a la declaración según el formato descrito para cada página en este mismo documento",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 15,
+     "pos": "***",
+     "lon": 18,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Constante. </T1150+Ejercicio+periodo+0000>",
+     "validacion": "",
+     "contenido": "\"</T1150AAAAPP0000>\""
+    }
+   ],
+   "total_posiciones": null,
+   "notas": [
+    "Nota 1 | A cumplimentar por las entidades desarrolladoras (EEDD)",
+    "Versión del programa: Debe consignarse el identificador de la versión del SW desarrollado por la ED",
+    "NIF Empresa Desarrollo: Debe consignarse el NIF de la ED del SW",
+    "Nota 2",
+    "El número máximo de ocurrencias de la página 2 son 6 para las actividades del régimen agrícolas, ganaderas y forestales; y 6 para las actividades del régimen simplificado(excepto agrícolas, ganaderas y forestales). Por lo que el número máximo de páginas 2 será 3."
+   ]
+  },
+  {
+   "hoja": "DR 11501",
+   "campos": [
+    {
+     "n": 1,
+     "pos": 1,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Inicio del identificador de modelo y página",
+     "validacion": "",
+     "contenido": "Constante \"<T\""
+    },
+    {
+     "n": 2,
+     "pos": 3,
+     "lon": 3,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Modelo",
+     "validacion": "",
+     "contenido": "Constante \"115\""
+    },
+    {
+     "n": 3,
+     "pos": 6,
+     "lon": 2,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Página",
+     "validacion": "",
+     "contenido": "Constante \"01\""
+    },
+    {
+     "n": 4,
+     "pos": 8,
+     "lon": 4,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Fin de identificador de modelo",
+     "validacion": "",
+     "contenido": "Constante \"000>\""
+    },
+    {
+     "n": 5,
+     "pos": 12,
+     "lon": 1,
+     "tipo": "A",
+     "comp": "",
+     "descripcion": "Reservado página complementaria",
+     "validacion": "",
+     "contenido": "Blanco o C"
+    },
+    {
+     "n": 6,
+     "pos": 13,
+     "lon": 1,
+     "tipo": "A",
+     "comp": "",
+     "descripcion": "Tipo de declaración",
+     "validacion": "",
+     "contenido": "Ver nota 1"
+    },
+    {
+     "n": 7,
+     "pos": 14,
+     "lon": 9,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificación. Sujeto pasivo. NIF",
+     "validacion": "obligatorio",
+     "contenido": ""
+    },
+    {
+     "n": 8,
+     "pos": 23,
+     "lon": 60,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificación. Sujeto pasivo. Razón o denominación social/Apellidos",
+     "validacion": "obligatorio",
+     "contenido": ""
+    },
+    {
+     "n": 9,
+     "pos": 83,
+     "lon": 20,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificación. Sujeto pasivo. Nombre",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 10,
+     "pos": 103,
+     "lon": 4,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Identificación. Ejercicio",
+     "validacion": "obligatorio",
+     "contenido": ""
+    },
+    {
+     "n": 11,
+     "pos": 107,
+     "lon": 2,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificación. Periodo",
+     "validacion": "obligatorio",
+     "contenido": "\"01\" ... \"12\" o \"1T\" … \"4T\""
+    },
+    {
+     "n": 12,
+     "pos": 109,
+     "lon": 15,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Retenciones e ingresos a cuenta. Número perceptores [01]",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 13,
+     "pos": 124,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Retenciones e ingresos a cuenta. Base retenciones e ingresos a cuenta [02]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 14,
+     "pos": 141,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Retenciones e ingresos a cuenta. Retenciones e ingresos a cuenta [03]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 15,
+     "pos": 158,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Retenciones e ingresos a cuenta. Resultado anteriores declaraciones [04]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 16,
+     "pos": 175,
+     "lon": 17,
+     "tipo": "Num",
+     "comp": "",
+     "descripcion": "Retenciones e ingresos a cuenta. Resultado a ingresar [03] - [04]",
+     "validacion": "",
+     "contenido": "15 enteros y 2 decimales"
+    },
+    {
+     "n": 17,
+     "pos": 192,
+     "lon": 1,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Declaración complementaria.",
+     "validacion": "",
+     "contenido": "blanco o \"X\""
+    },
+    {
+     "n": 18,
+     "pos": 193,
+     "lon": 13,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Número de justificante de la declaración anterior",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 19,
+     "pos": 206,
+     "lon": 34,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Domiciliación IBAN",
+     "validacion": "",
+     "contenido": ""
+    },
+    {
+     "n": 20,
+     "pos": 240,
+     "lon": 236,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado AEAT",
+     "validacion": "",
+     "contenido": "En blanco"
+    },
+    {
+     "n": 21,
+     "pos": 476,
+     "lon": 13,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Reservado para la Administración. Sello electronico",
+     "validacion": "",
+     "contenido": "En blanco"
+    },
+    {
+     "n": 22,
+     "pos": 489,
+     "lon": 12,
+     "tipo": "An",
+     "comp": "",
+     "descripcion": "Identificador de fin de registro.",
+     "validacion": "obligatorio",
+     "contenido": "Constante \"</T11501000>\""
+    }
+   ],
+   "total_posiciones": 500,
+   "notas": [
+    "1. El tipo de declaración para la presentación por lotes puede ser: I (ingreso), U (domiciliación), G (ingreso a anotar en CCT) y N (negativa)",
+    "2. Para facilitar la incorporación de datos al formulario se espera que el fichero esté localizado en C:\\AEAT\\ y que su nombre sea 115.txt",
+    "3. Los campos alfanuméricos (An) sólo admiten letras, números y blancos. Deberán estar alineados a la izquierda, rellenando con blancos por la derecha.",
+    "4. Los campos numéricos (Num) sólo admiten números. Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izquierda.",
+    "5. Los campos numéricos con signo (N) admiten números más el carácter N . Los datos numéricos deberán estar alineados a la derecha rellenando con ceros por la izquierda.",
+    "6. Los datos numéricos negativos llevarán una N en la primera posición del campo.",
+    "TOTAL: | -1 | POSICIONES"
+   ]
+  }
+ ]
+}

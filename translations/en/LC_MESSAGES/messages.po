@@ -17522,3 +17522,9 @@ msgstr "Calculate the amendment"
 
 msgid "Cuota del recargo (€; en blanco = base × tipo)"
 msgstr "Surcharge amount (€; blank = base × rate)"
+
+msgid "Descargar el fichero de prueba del modelo %(m)s"
+msgstr "Download the test file for form %(m)s"
+
+msgid "impórtalo en el simulador de la AEAT antes de presentar; este modelo no tiene borrador ni estados en Guilda Fiscal."
+msgstr "import it in the tax agency's simulator before filing; this form has no draft or statuses in Guilda Fiscal."
