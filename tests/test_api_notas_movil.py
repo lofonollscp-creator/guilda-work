@@ -71,3 +71,23 @@ def test_borrar_nota_y_restaurar_de_la_papelera(cliente):
     assert cliente.get(f"/api/v1/notas/{n}", headers=h).status_code == 404
     assert cliente.post(f"/api/v1/papelera/nota/{n}/restaurar", headers=h).status_code == 200
     assert cliente.get(f"/api/v1/notas/{n}", headers=h).status_code == 200
+
+
+def test_papelera_con_tareas_de_la_lista_y_solo_lo_que_esta_en_ella(cliente):
+    (h, _), (h2, _) = _dos_companeros(cliente)
+    t = cliente.post("/api/v1/tareas-outlook", json={"asunto": "Para borrar"}, headers=h).get_json()["data"]["id"]
+    viva = cliente.post("/api/v1/tareas-outlook", json={"asunto": "Sigue viva"}, headers=h).get_json()["data"]["id"]
+    n = cliente.post("/api/v1/notas", json={"texto": "cuerpo", "titulo": "Con título"}, headers=h).get_json()["data"]["id"]
+    cliente.delete(f"/api/v1/tareas-outlook/{t}", headers=h)
+    cliente.delete(f"/api/v1/notas/{n}", headers=h)
+    items = {(x["origen"], x["id"]): x for x in cliente.get("/api/v1/papelera", headers=h).get_json()["data"]}
+    assert ("tarea_outlook", t) in items and items[("nota", n)]["texto"] == "Con título"
+    # lo vivo y lo ajeno no se tocan: 404, no se borra nada
+    assert cliente.post(f"/api/v1/papelera/tarea_outlook/{viva}/eliminar-definitivamente", headers=h).status_code == 404
+    assert cliente.post(f"/api/v1/papelera/tarea_outlook/{t}/eliminar-definitivamente", headers=h2).status_code == 404
+    assert cliente.get(f"/api/v1/tareas-outlook/{viva}", headers=h).status_code == 200
+    # restaurar una y eliminar la otra para siempre
+    assert cliente.post(f"/api/v1/papelera/tarea_outlook/{t}/restaurar", headers=h).status_code == 200
+    assert cliente.get(f"/api/v1/tareas-outlook/{t}", headers=h).status_code == 200
+    assert cliente.post(f"/api/v1/papelera/nota/{n}/eliminar-definitivamente", headers=h).status_code == 200
+    assert [x for x in cliente.get("/api/v1/papelera", headers=h).get_json()["data"] if x["origen"] == "nota"] == []

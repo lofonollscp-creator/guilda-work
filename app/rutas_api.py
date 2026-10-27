@@ -33,7 +33,7 @@ logger = logging.getLogger("guilda")
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
 # Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
-API_VERSION = "1.9"
+API_VERSION = "1.10"
 
 
 _CODIGOS_HTTP = {
@@ -649,21 +649,30 @@ def exportar():
 @api_bp.route("/papelera", methods=["GET"])
 @token_required
 def papelera():
+    """Lo que has borrado y aún se puede recuperar (30 días): `origen` es `nota`, `tarea_outlook` (tarea de la lista), `tarea` (con cronómetro o evento) o `menu` (proyecto)."""
     return _ok(_dicts(db.papelera(g.usuario_id)))
 
 
 _ACCIONES_PAPELERA = {
     "nota": (db.restaurar_nota, db.eliminar_nota_definitivamente),
     "tarea": (db.restaurar_tarea, db.eliminar_tarea_definitivamente),
+    "tarea_outlook": (db.restaurar_tarea_outlook, db.eliminar_tarea_outlook_definitivamente),
     "menu": (db.restaurar_categoria, db.eliminar_categoria_definitivamente),
 }
+
+
+def _en_la_papelera_o_404(tipo: str, item_id: int) -> None:
+    """Solo se actúa sobre lo que de verdad está en tu papelera: si no, un id ajeno o de algo vivo borraría datos que nadie quería borrar."""
+    if tipo not in _ACCIONES_PAPELERA:
+        abort(404, "Tipo de elemento desconocido.")
+    if not any(f["origen"] == tipo and f["id"] == item_id for f in db.papelera(g.usuario_id)):
+        abort(404, "Ese elemento no está en la papelera.")
 
 
 @api_bp.route("/papelera/<tipo>/<int:item_id>/restaurar", methods=["POST"])
 @token_required
 def restaurar_de_papelera(tipo: str, item_id: int):
-    if tipo not in _ACCIONES_PAPELERA:
-        abort(404, "Tipo de elemento desconocido.")
+    _en_la_papelera_o_404(tipo, item_id)
     _ACCIONES_PAPELERA[tipo][0](g.usuario_id, item_id)
     return _ok()
 
@@ -671,8 +680,7 @@ def restaurar_de_papelera(tipo: str, item_id: int):
 @api_bp.route("/papelera/<tipo>/<int:item_id>/eliminar-definitivamente", methods=["POST"])
 @token_required
 def eliminar_definitivamente_de_papelera(tipo: str, item_id: int):
-    if tipo not in _ACCIONES_PAPELERA:
-        abort(404, "Tipo de elemento desconocido.")
+    _en_la_papelera_o_404(tipo, item_id)
     _ACCIONES_PAPELERA[tipo][1](g.usuario_id, item_id)
     return _ok()
 

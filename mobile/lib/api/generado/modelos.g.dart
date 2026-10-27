@@ -4058,22 +4058,34 @@ class Papelera {
   final int? id;
   final String? texto;
   final String? papeleraEn;
-  const Papelera({this.origen, this.id, this.texto, this.papeleraEn, });
+  final String? tipo;
+  final String? categoriaNombre;
+  final String? categoriaColor;
+  final String? clienteNombre;
+  const Papelera({this.origen, this.id, this.texto, this.papeleraEn, this.tipo, this.categoriaNombre, this.categoriaColor, this.clienteNombre, });
   factory Papelera.fromJson(Map<String, dynamic> j) => Papelera(
     origen: j['origen'] == null ? null : j['origen'] as String,
     id: j['id'] == null ? null : (j['id'] as num).toInt(),
     texto: j['texto'] == null ? null : j['texto'] as String,
     papeleraEn: j['papelera_en'] == null ? null : j['papelera_en'] as String,
+    tipo: j['tipo'] == null ? null : j['tipo'] as String,
+    categoriaNombre: j['categoria_nombre'] == null ? null : j['categoria_nombre'] as String,
+    categoriaColor: j['categoria_color'] == null ? null : j['categoria_color'] as String,
+    clienteNombre: j['cliente_nombre'] == null ? null : j['cliente_nombre'] as String,
   );
   Map<String, dynamic> toJson() => {
     'origen': ?origen,
     'id': ?id,
     'texto': ?texto,
     'papelera_en': ?papeleraEn,
+    'tipo': ?tipo,
+    'categoria_nombre': ?categoriaNombre,
+    'categoria_color': ?categoriaColor,
+    'cliente_nombre': ?clienteNombre,
   };
-  Papelera copyWith({String? origen, int? id, String? texto, String? papeleraEn, }) => Papelera(origen: origen ?? this.origen, id: id ?? this.id, texto: texto ?? this.texto, papeleraEn: papeleraEn ?? this.papeleraEn, );
-  @override bool operator ==(Object other) => other is Papelera && other.origen == origen && other.id == id && other.texto == texto && other.papeleraEn == papeleraEn;
-  @override int get hashCode => Object.hashAll([origen, id, texto, papeleraEn]);
+  Papelera copyWith({String? origen, int? id, String? texto, String? papeleraEn, String? tipo, String? categoriaNombre, String? categoriaColor, String? clienteNombre, }) => Papelera(origen: origen ?? this.origen, id: id ?? this.id, texto: texto ?? this.texto, papeleraEn: papeleraEn ?? this.papeleraEn, tipo: tipo ?? this.tipo, categoriaNombre: categoriaNombre ?? this.categoriaNombre, categoriaColor: categoriaColor ?? this.categoriaColor, clienteNombre: clienteNombre ?? this.clienteNombre, );
+  @override bool operator ==(Object other) => other is Papelera && other.origen == origen && other.id == id && other.texto == texto && other.papeleraEn == papeleraEn && other.tipo == tipo && other.categoriaNombre == categoriaNombre && other.categoriaColor == categoriaColor && other.clienteNombre == clienteNombre;
+  @override int get hashCode => Object.hashAll([origen, id, texto, papeleraEn, tipo, categoriaNombre, categoriaColor, clienteNombre]);
 }
 
 class ParteAsunto {

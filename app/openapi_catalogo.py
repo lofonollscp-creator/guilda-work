@@ -315,7 +315,11 @@ ESQUEMAS["DestinoAviso"] = {"type": "object", "properties": {"tipo": {"type": "s
                             "description": "A dónde lleva el aviso en la app móvil. Igual que el `destino` del push (`data.destino`, JSON) y que el de `GET /hoy`."}
 ESQUEMAS["ConversacionesIA"] = {"type": "object", "properties": {"activa": {"type": "integer", "nullable": True, "description": "Id de la conversación activa (`null` si aún no hay ninguna)."},
                                   "conversaciones": {"type": "array", "items": {"$ref": "#/components/schemas/ConversacionIA"}}}}
-ESQUEMAS["Papelera"] = {"type": "object", "properties": {"origen": {"type": "string"}, "id": {"type": "integer"}, "texto": {"type": "string"}, "papelera_en": {"type": "string"}}}
+ESQUEMAS["Papelera"] = {"type": "object", "properties": {"origen": {"type": "string", "description": "`nota`, `tarea_outlook`, `tarea`, `menu` (proyecto), y en la papelera fiscal `cliente_fiscal` o `vencimiento_fiscal`."},
+                                                    "id": {"type": "integer"}, "texto": {"type": "string", "description": "Título de la nota si lo tiene; si no, su texto."}, "papelera_en": {"type": "string"},
+                                                    "tipo": {"type": "string", "nullable": True, "description": "De `tarea`: `duracion` o `instantanea` (evento)."},
+                                                    "categoria_nombre": {"type": "string", "nullable": True}, "categoria_color": {"type": "string", "nullable": True},
+                                                    "cliente_nombre": {"type": "string", "nullable": True, "description": "Solo en vencimientos fiscales."}}}
 
 # Operaciones que devuelven un fichero (no el sobre JSON): operación -> tipo MIME.
 BINARIAS: dict[str, str] = {

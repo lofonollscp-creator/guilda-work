@@ -2447,7 +2447,7 @@ def papelera(usuario_id: int) -> list[dict]:
 
                 UNION ALL
 
-                SELECT 'nota' AS origen, n.id AS id, n.texto AS texto, NULL AS tipo,
+                SELECT 'nota' AS origen, n.id AS id, COALESCE(NULLIF(n.titulo, ''), n.texto) AS texto, NULL AS tipo,
                        c.nombre AS categoria_nombre, c.color AS categoria_color, n.papelera_en AS papelera_en
                 FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
                 WHERE n.usuario_id = ? AND n.papelera_en IS NOT NULL

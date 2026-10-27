@@ -12,6 +12,7 @@ import '../screens/login_screen.dart';
 import '../screens/tiquets_screen.dart';
 import '../funciones/hoy/hoy_screen.dart';
 import '../funciones/notas/notas_screen.dart';
+import '../funciones/papelera/papelera_screen.dart';
 import '../funciones/pendientes/cerrar_sesion.dart';
 import '../funciones/tareas/tareas_vistas.dart';
 import '../services/api_client.dart';
@@ -82,6 +83,7 @@ class PaginasApp {
               ),
             ),
             AccesoMas(Icons.sticky_note_2_outlined, ClaveEtiqueta.notas, (_) => const NotasScreen()),
+            AccesoMas(Icons.delete_outline, ClaveEtiqueta.papelera, (_) => const PapeleraScreen()),
             AccesoMas(Icons.apps, ClaveEtiqueta.herramientas, (_) => HerramientasScreen(api: s.api)),
             AccesoMas(Icons.confirmation_number_outlined, ClaveEtiqueta.tiquets, (_) => TiquetsScreen(api: s.api, usuario: usuario)),
             AccesoMas(Icons.smart_toy_outlined, ClaveEtiqueta.asistenteIa, (_) => IaChatScreen(api: s.api, locale: s.locale)),
@@ -107,7 +109,7 @@ class PaginasApp {
       );
 }
 
-enum ClaveEtiqueta { panel, notas, herramientas, tiquets, asistenteIa, chat, fiscal, ajustes }
+enum ClaveEtiqueta { panel, notas, papelera, herramientas, tiquets, asistenteIa, chat, fiscal, ajustes }
 
 class AccesoMas {
   final IconData icono;

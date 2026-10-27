@@ -487,6 +487,27 @@
   },
   "notasNoDisponible": "No se ha podido abrir la nota.",
   "masNotas": "Notas",
+  "masPapelera": "Papelera",
+  "papeleraTitulo": "Papelera",
+  "papeleraAyuda": "Lo que borras se queda aquí 30 días antes de purgarse solo. Puedes recuperarlo cuando quieras.",
+  "papeleraVacia": "La papelera está vacía.",
+  "papeleraFiltroProyectos": "Proyectos",
+  "papeleraTipoProyecto": "Proyecto",
+  "papeleraTipoEvento": "Evento",
+  "papeleraRestaurar": "Restaurar",
+  "papeleraRestaurada": "Recuperado",
+  "papeleraEliminarSiempre": "Eliminar para siempre",
+  "papeleraEliminarPregunta": "¿Eliminar esto para siempre? No se puede deshacer.",
+  "papeleraEliminarProyectoPregunta": "¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede deshacer.",
+  "papeleraEliminado": "Eliminado para siempre",
+  "papeleraQuedan": "{n, plural, =0{Se purga hoy} =1{Queda 1 día} other{Quedan {n} días}}",
+  "@papeleraQuedan": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "busquedaTitulo": "Buscar",
   "busquedaHint": "Buscar en notas, tareas y correo",
   "busquedaMinimo": "Escribe al menos dos letras.",
