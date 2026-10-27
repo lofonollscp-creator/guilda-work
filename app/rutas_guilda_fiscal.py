@@ -99,13 +99,8 @@ def vencimientos():
     return render_template("fiscal_vencimientos.html", panel=panel, dias=dias if dias in (30, 60, 90, 180) else 60, responsable=solo, error=_error())
 
 
-def _recordatorio(c: dict, periodo: tuple[int, str]) -> dict | None:
-    """El mensaje al cliente con lo que falta para cerrar el periodo (se copia o se abre en el correo; Guilda Work no lo envía). None si no falta nada."""
-    ejercicio, trimestre = periodo
-    try:
-        p = fn.pendiente_de_recordar(g.tenant_id, g.usuario_id, c["id"], ejercicio, trimestre)
-    except ErrorFiscal:
-        return None
+def _mensaje_recordatorio(p: dict, ejercicio: int, trimestre: str) -> dict | None:
+    """El mensaje al cliente con lo que falta para cerrar el periodo, a partir de `fn.pendiente_de_recordar`. None si no falta nada."""
     lineas = []
     if p["sin_registrar"]:
         lineas.append(_("Facturas pendientes de registrar (%(n)s):", n=len(p["sin_registrar"])))
@@ -120,6 +115,41 @@ def _recordatorio(c: dict, periodo: tuple[int, str]) -> dict | None:
     cierre = ["", _("Fecha límite de presentación: %(f)s.", f=p["fecha_limite"]) if p["fecha_limite"] else "", _("Gracias."), ""]
     texto = "\n".join(cabecera + lineas + [x for x in cierre if x is not None])
     return {"asunto": _("IVA %(p)s %(e)s: documentación pendiente", p=trimestre, e=ejercicio), "texto": texto.strip()}
+
+
+def _recordatorio(c: dict, periodo: tuple[int, str]) -> dict | None:
+    """El mensaje al cliente con lo que falta para cerrar el periodo (se copia o se abre en el correo). None si no falta nada."""
+    ejercicio, trimestre = periodo
+    try:
+        p = fn.pendiente_de_recordar(g.tenant_id, g.usuario_id, c["id"], ejercicio, trimestre)
+    except ErrorFiscal:
+        return None
+    return _mensaje_recordatorio(p, ejercicio, trimestre)
+
+
+@guilda_fiscal_bp.route("/recordatorios", methods=["GET", "POST"])
+@login_required
+def recordatorios():
+    """Recordatorios sugeridos a los clientes con lo que falta para su 303. Nada sale solo: se revisa el texto (editable), se marcan los que se quieren y se confirma."""
+    error = resultado = None
+    sugeridos = fn.recordatorios_sugeridos(g.tenant_id, g.usuario_id)
+    if request.method == "POST":
+        elegidos = set(request.form.getlist("envio"))
+        if not elegidos:
+            error = _("Marca al menos un recordatorio.")
+        elif request.form.get("confirmo") != "1":
+            error = _("Marca la casilla para confirmar que quieres escribir a estos clientes.")
+        else:
+            envios = [{"cliente_id": s["cliente_id"], "ejercicio": s["ejercicio"], "trimestre": s["trimestre"], "asunto": request.form.get(f"asunto_{s['clave']}_{s['cliente_id']}", ""),
+                       "texto": request.form.get(f"texto_{s['clave']}_{s['cliente_id']}", "")} for s in sugeridos if f"{s['clave']}_{s['cliente_id']}" in elegidos]
+            try:
+                resultado = fn.enviar_recordatorios(g.tenant_id, g.usuario_id, envios, url_for("portal_cliente.entrar", _external=True))
+            except ErrorFiscal as e:
+                error = str(e)
+            sugeridos = fn.recordatorios_sugeridos(g.tenant_id, g.usuario_id)
+    for s in sugeridos:
+        s["mensaje"] = _mensaje_recordatorio(s["pendiente"], s["ejercicio"], s["trimestre"])
+    return render_template("fiscal_recordatorios.html", sugeridos=[s for s in sugeridos if s["mensaje"]], resultado=resultado, error=error, dias=fc.DIAS_ENTRE_RECORDATORIOS), (400 if error else 200)
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>")

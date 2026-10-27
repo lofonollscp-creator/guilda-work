@@ -408,3 +408,34 @@ def test_panel_de_vencimientos_con_carga_de_trabajo(cliente):
     pagina = cliente.get("/guilda-fiscal/vencimientos?dias=180").get_data(as_text=True)
     assert "Vencimientos fiscales" in pagina and "Empresa Web SL" in pagina and "Carga por responsable" in pagina
     assert "Vencimientos y carga de trabajo" in cliente.get("/guilda-fiscal/").get_data(as_text=True)
+
+
+def test_recordatorios_sugeridos_se_envian_solo_con_confirmacion(cliente, monkeypatch):
+    from datetime import timedelta
+    from app import notificaciones_email as ne
+    uid, t, c = _web(cliente, email="record@ejemplo.com")
+    sin_email = crear_cliente_fiscal(t, "Sin Correo SL", nif="B12345674")
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes_fiscales SET email = 'cliente@ejemplo.com' WHERE id = ?", (c,))
+    limite = (date.today() + timedelta(days=5)).isoformat()
+    for cid in (c, sin_email):
+        conn.execute("INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, usuario_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, ?, '303', '2T 2026', ?, 'pendiente', '2026-01-01')",
+                     (t, cid, uid, limite))
+    conn.commit()
+    conn.close()
+    enviados = []
+    monkeypatch.setattr(ne, "configurado", lambda: True)
+    monkeypatch.setattr(ne, "enviar_recordatorio_fiscal", lambda *a, **k: enviados.append((a, k)))
+    sug = {s["nombre"]: s for s in fn.recordatorios_sugeridos(t, uid)}
+    assert sug["Empresa Web SL"]["puede"] and not sug["Sin Correo SL"]["puede"] and not enviados
+    pagina = cliente.get("/guilda-fiscal/recordatorios").get_data(as_text=True)
+    assert "Recordatorios a los clientes" in pagina and "Empresa Web SL" in pagina and "no tiene email" in pagina and not enviados
+    k = f"{sug['Empresa Web SL']['clave']}_{c}"
+    sin_confirmar = cliente.post("/guilda-fiscal/recordatorios", data={"envio": k})
+    assert sin_confirmar.status_code == 400 and not enviados
+    ok = cliente.post("/guilda-fiscal/recordatorios", data={"envio": k, "confirmo": "1", f"asunto_{k}": "Faltan facturas", f"texto_{k}": "Hola, nos faltan tus facturas."})
+    assert ok.status_code == 200 and "Recordatorios enviados: 1" in ok.get_data(as_text=True)
+    assert enviados[0][0][:3] == ("cliente@ejemplo.com", "Faltan facturas", "Hola, nos faltan tus facturas.")
+    assert fn.recordatorios_sugeridos(t, uid)[0]["reciente"]
+    otra = cliente.post("/guilda-fiscal/recordatorios", data={"envio": k, "confirmo": "1", f"asunto_{k}": "x", f"texto_{k}": "y"}).get_data(as_text=True)
+    assert len(enviados) == 1                                                                                          # no se repite por el mismo periodo

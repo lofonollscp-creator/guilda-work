@@ -17385,3 +17385,39 @@ msgid "%(n)s vencimiento ya ha vencido sin presentarse."
 msgid_plural "%(n)s vencimientos ya han vencido sin presentarse."
 msgstr[0] "%(n)s échéance est dépassée sans dépôt."
 msgstr[1] "%(n)s échéances sont dépassées sans dépôt."
+
+msgid "Recordatorios a los clientes"
+msgstr "Rappels aux clients"
+
+msgid "Clientes a los que les faltan facturas para su 303 y cuyo vencimiento se acerca. Guilda Work propone el mensaje; tú lo revisas, lo editas si quieres y confirmas. Nada sale solo."
+msgstr "Clients à qui il manque des factures pour leur 303 et dont l'échéance approche. Guilda Work propose le message ; vous le relisez, le modifiez si vous le souhaitez et confirmez. Rien ne part tout seul."
+
+msgid "Marca al menos un recordatorio."
+msgstr "Cochez au moins un rappel."
+
+msgid "No hay recordatorios que enviar"
+msgstr "Aucun rappel à envoyer"
+
+msgid "Ningún vencimiento del 303 próximo tiene facturas pendientes de pedir al cliente."
+msgstr "Aucune échéance proche du 303 n'a de factures à demander au client."
+
+msgid "vence el %(f)s"
+msgstr "échéance le %(f)s"
+
+msgid "Este cliente no tiene email en su ficha: no se puede avisar."
+msgstr "Ce client n'a pas d'e-mail dans sa fiche : impossible de l'avertir."
+
+msgid "Ya se le recordó el %(f)s (hace menos de %(n)s días)."
+msgstr "Déjà relancé le %(f)s (il y a moins de %(n)s jours)."
+
+msgid "Se enviará a %(e)s"
+msgstr "Sera envoyé à %(e)s"
+
+msgid "Confirmo que quiero enviar un correo a los clientes marcados con el texto de arriba."
+msgstr "Je confirme vouloir envoyer un e-mail aux clients cochés avec le texte ci-dessus."
+
+msgid "Enviar los recordatorios marcados"
+msgstr "Envoyer les rappels cochés"
+
+msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente."
+msgstr "L'e-mail porte la marque de votre cabinet et un bouton vers le portail client."

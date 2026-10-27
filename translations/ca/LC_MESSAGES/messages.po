@@ -17309,3 +17309,39 @@ msgid "%(n)s vencimiento ya ha vencido sin presentarse."
 msgid_plural "%(n)s vencimientos ya han vencido sin presentarse."
 msgstr[0] "%(n)s venciment ja ha vençut sense presentar-se."
 msgstr[1] "%(n)s venciments ja han vençut sense presentar-se."
+
+msgid "Recordatorios a los clientes"
+msgstr "Recordatoris als clients"
+
+msgid "Clientes a los que les faltan facturas para su 303 y cuyo vencimiento se acerca. Guilda Work propone el mensaje; tú lo revisas, lo editas si quieres y confirmas. Nada sale solo."
+msgstr "Clients als quals els falten factures per al seu 303 i el venciment del qual s'acosta. Guilda Work proposa el missatge; tu el revises, l'edites si vols i confirmes. Res surt sol."
+
+msgid "Marca al menos un recordatorio."
+msgstr "Marca almenys un recordatori."
+
+msgid "No hay recordatorios que enviar"
+msgstr "No hi ha recordatoris per enviar"
+
+msgid "Ningún vencimiento del 303 próximo tiene facturas pendientes de pedir al cliente."
+msgstr "Cap venciment del 303 proper té factures pendents de demanar al client."
+
+msgid "vence el %(f)s"
+msgstr "venç el %(f)s"
+
+msgid "Este cliente no tiene email en su ficha: no se puede avisar."
+msgstr "Aquest client no té correu a la fitxa: no es pot avisar."
+
+msgid "Ya se le recordó el %(f)s (hace menos de %(n)s días)."
+msgstr "Ja se li va recordar el %(f)s (fa menys de %(n)s dies)."
+
+msgid "Se enviará a %(e)s"
+msgstr "S'enviarà a %(e)s"
+
+msgid "Confirmo que quiero enviar un correo a los clientes marcados con el texto de arriba."
+msgstr "Confirmo que vull enviar un correu als clients marcats amb el text de dalt."
+
+msgid "Enviar los recordatorios marcados"
+msgstr "Envia els recordatoris marcats"
+
+msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente."
+msgstr "El correu porta la marca del teu despatx i un botó al portal del client."

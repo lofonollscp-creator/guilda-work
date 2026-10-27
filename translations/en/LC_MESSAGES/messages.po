@@ -17300,3 +17300,39 @@ msgid "%(n)s vencimiento ya ha vencido sin presentarse."
 msgid_plural "%(n)s vencimientos ya han vencido sin presentarse."
 msgstr[0] "%(n)s deadline has passed without being filed."
 msgstr[1] "%(n)s deadlines have passed without being filed."
+
+msgid "Recordatorios a los clientes"
+msgstr "Client reminders"
+
+msgid "Clientes a los que les faltan facturas para su 303 y cuyo vencimiento se acerca. Guilda Work propone el mensaje; tú lo revisas, lo editas si quieres y confirmas. Nada sale solo."
+msgstr "Clients missing invoices for their 303 whose deadline is near. Guilda Work proposes the message; you review it, edit it if you like and confirm. Nothing is sent automatically."
+
+msgid "Marca al menos un recordatorio."
+msgstr "Tick at least one reminder."
+
+msgid "No hay recordatorios que enviar"
+msgstr "No reminders to send"
+
+msgid "Ningún vencimiento del 303 próximo tiene facturas pendientes de pedir al cliente."
+msgstr "No upcoming 303 deadline has invoices left to ask the client for."
+
+msgid "vence el %(f)s"
+msgstr "due %(f)s"
+
+msgid "Este cliente no tiene email en su ficha: no se puede avisar."
+msgstr "This client has no email on file: they cannot be notified."
+
+msgid "Ya se le recordó el %(f)s (hace menos de %(n)s días)."
+msgstr "Already reminded on %(f)s (less than %(n)s days ago)."
+
+msgid "Se enviará a %(e)s"
+msgstr "Will be sent to %(e)s"
+
+msgid "Confirmo que quiero enviar un correo a los clientes marcados con el texto de arriba."
+msgstr "I confirm I want to send an email to the ticked clients with the text above."
+
+msgid "Enviar los recordatorios marcados"
+msgstr "Send the ticked reminders"
+
+msgid "El correo lleva la marca de tu despacho y un botón al portal del cliente."
+msgstr "The email carries your firm's branding and a button to the client portal."

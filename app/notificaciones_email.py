@@ -125,6 +125,18 @@ def enviar_recordatorio_facturas(email_destino: str, cliente_nombre: str, trimes
     _enviar(email_destino, _asunto(_("Facturas del trimestre %(trimestre)s", trimestre=trimestre), tenant_id), plano, html)
 
 
+def enviar_recordatorio_fiscal(email_destino: str, asunto: str, texto: str, url_portal: str, tenant_id: int | None = None) -> None:
+    """Recordatorio de lo que falta para cerrar un periodo fiscal, con el texto que la persona del despacho ha revisado (y quizá editado) antes de confirmar. Lleva el botón al portal del cliente."""
+    lineas = [ln.strip() for ln in texto.splitlines() if ln.strip()]
+    plano, html = _construir(tenant_id,
+        asunto, lineas,
+        boton=(_("Subir mis facturas"), url_portal),
+        aviso=_("Entra al portal de cliente con tu email: te mandaremos un enlace de acceso."),
+        preencabezado=asunto,
+    )
+    _enviar(email_destino, _asunto(asunto, tenant_id), plano, html)
+
+
 def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str, tenant_id: int | None = None) -> None:
     """Aviso de que hay un enlace de pago de Stripe Checkout disponible
     para un vencimiento (app/rutas_fiscal.py:cobrar_stripe_vencimiento).

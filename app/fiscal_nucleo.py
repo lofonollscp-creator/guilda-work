@@ -12,7 +12,7 @@ import hashlib
 import json
 import re
 from dataclasses import asdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from flask_babel import lazy_gettext as _l  # noqa: F401  (los textos de pantalla se traducen en las rutas)
 
@@ -675,6 +675,81 @@ def panel_vencimientos(tenant_id: int, usuario_id: int, *, dias: int = 60, hoy: 
     orden_semanas = sorted(semanas.values(), key=lambda s: s["inicio"] or "")
     return {"filas": salida, "semanas": orden_semanas, "responsables": sorted(responsables.values(), key=lambda r: -r["carga"]), "vencidos": sum(1 for f in salida if f["nivel"] == "vencido"),
             "carga_maxima": max([s["carga"] for s in orden_semanas] + [1])}
+
+
+def recordatorios_sugeridos(tenant_id: int, usuario_id: int, *, dias: int = 21, hoy: date | None = None) -> list[dict]:
+    """Los clientes a quienes conviene recordar ya lo que falta para su 303: el vencimiento está pendiente y cae en los próximos `dias` días (o ya pasó), y aún faltan facturas (por registrar, o ningún libro).
+    Solo propone: no escribe a nadie. `puede` = tiene email y no se le ha escrito por este periodo en los últimos `DIAS_ENTRE_RECORDATORIOS` días (los mismos que los recordatorios de facturas)."""
+    from . import facturas_contables as fc
+    hoy = hoy or date.today()
+    limite = (hoy + timedelta(days=dias)).isoformat()
+    visibles = acceso.clientes_visibles(tenant_id, usuario_id)
+    conn = db.get_connection()
+    try:
+        venc = [dict(f) for f in conn.execute(
+            "SELECT v.cliente_fiscal_id, v.periodo, v.fecha_limite, c.nombre, c.email FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id AND c.tenant_id = v.tenant_id "
+            "WHERE v.tenant_id = ? AND v.modelo = '303' AND v.estado <> 'presentado' AND v.papelera_en IS NULL AND c.papelera_en IS NULL AND substr(v.fecha_limite, 1, 10) <= ? "
+            "ORDER BY v.fecha_limite, c.nombre", (tenant_id, limite)).fetchall()]
+        ultimos = {(f["cliente_fiscal_id"], f["trimestre"]): f["ultimo"] for f in conn.execute(
+            "SELECT cliente_fiscal_id, trimestre, MAX(enviado_en) AS ultimo FROM contabilidad_recordatorios WHERE tenant_id = ? GROUP BY cliente_fiscal_id, trimestre", (tenant_id,)).fetchall()}
+    finally:
+        conn.close()
+    desde = (datetime.now() - timedelta(days=fc.DIAS_ENTRE_RECORDATORIOS)).isoformat(timespec="seconds")
+    salida = []
+    for v in venc:
+        per = _periodo_de_vencimiento(v["periodo"])
+        if not per or (visibles is not None and v["cliente_fiscal_id"] not in visibles):
+            continue
+        try:
+            p = pendiente_de_recordar(tenant_id, usuario_id, v["cliente_fiscal_id"], per[0], per[1])
+        except ErrorFiscal:
+            continue
+        if not (p["sin_registrar"] or not p["emitidas"] or not p["recibidas"]):
+            continue
+        clave = f"{per[0]}-T{per[1][0]}"
+        ultimo = ultimos.get((v["cliente_fiscal_id"], clave))
+        email = (v["email"] or "").strip()
+        salida.append({"cliente_id": v["cliente_fiscal_id"], "nombre": v["nombre"], "email": email, "ejercicio": per[0], "trimestre": per[1], "clave": clave, "fecha_limite": v["fecha_limite"][:10],
+                       "dias": (date.fromisoformat(v["fecha_limite"][:10]) - hoy).days, "pendiente": p, "ultimo": ultimo, "reciente": bool(ultimo and ultimo > desde),
+                       "puede": bool(email) and not (ultimo and ultimo > desde)})
+    return salida
+
+
+def enviar_recordatorios(tenant_id: int, usuario_id: int, envios: list[dict], url_portal: str, *, dias: int = 21) -> dict:
+    """Envía los recordatorios CONFIRMADOS: cada envío es `{cliente_id, ejercicio, trimestre, asunto, texto}` con el texto que la persona ha revisado. Solo se escribe a quien sigue siendo una sugerencia válida
+    (visible, con email, sin recordatorio reciente): el destinatario sale siempre de la ficha, nunca de lo enviado. Devuelve `{enviados, omitidos: [(nombre, motivo)]}`."""
+    from . import facturas_contables as fc, notificaciones_email as ne
+    if not ne.configurado():
+        raise ErrorFiscal("El correo saliente de la plataforma no está configurado: no se puede avisar a los clientes.")
+    validas = {(s["cliente_id"], s["ejercicio"], s["trimestre"]): s for s in recordatorios_sugeridos(tenant_id, usuario_id, dias=dias)}
+    enviados, omitidos = 0, []
+    for e in envios:
+        s = validas.get((int(e["cliente_id"]), int(e["ejercicio"]), e["trimestre"]))
+        asunto, texto = (e.get("asunto") or "").strip()[:200], (e.get("texto") or "").strip()[:4000]
+        if s is None:
+            omitidos.append((f"#{e['cliente_id']}", "ya no es una sugerencia válida"))
+        elif not s["email"]:
+            omitidos.append((s["nombre"], "no tiene email"))
+        elif s["reciente"]:
+            omitidos.append((s["nombre"], f"ya se le recordó hace menos de {fc.DIAS_ENTRE_RECORDATORIOS} días"))
+        elif not asunto or not texto:
+            omitidos.append((s["nombre"], "falta el asunto o el texto"))
+        else:
+            try:
+                ne.enviar_recordatorio_fiscal(s["email"], asunto, texto, url_portal, tenant_id=tenant_id)
+            except ne.ErrorNotificacionesEmail as err:
+                omitidos.append((s["nombre"], str(err)[:120]))
+                continue
+            conn = db.get_connection()
+            try:
+                conn.execute("INSERT INTO contabilidad_recordatorios (tenant_id, cliente_fiscal_id, trimestre, enviado_por, enviado_en) VALUES (?, ?, ?, ?, ?)",
+                             (tenant_id, s["cliente_id"], s["clave"], usuario_id, db.now_iso()))
+                auditoria.registrar(tenant_id, usuario_id, "fiscal.recordatorio.enviar", "cliente_fiscal", s["cliente_id"], {"periodo": s["clave"], "asunto": asunto}, conn=conn)
+                conn.commit()
+            finally:
+                conn.close()
+            enviados += 1
+    return {"enviados": enviados, "omitidos": omitidos}
 
 
 def aprobar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, factura_ids: list[int]) -> dict:
