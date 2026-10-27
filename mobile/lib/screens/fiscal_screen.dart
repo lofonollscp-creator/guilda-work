@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../l10n/app_localizations.dart';
 import '../services/api_client.dart';
 import 'fiscal_clientes_screen.dart';
@@ -27,6 +29,7 @@ class FiscalScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(t.fiscalTitulo),
+          actions: [AccionAsistente(contexto: t.fiscalTitulo)],
           bottom: TabBar(
             tabs: [
               Tab(text: t.fiscalTabClientes),

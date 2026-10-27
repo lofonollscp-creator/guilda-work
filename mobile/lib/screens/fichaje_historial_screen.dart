@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../nucleo/abrir_asistente.dart';
 import '../../diseno/adaptable.dart';
 import 'package:intl/intl.dart';
 
@@ -77,7 +79,7 @@ class _FichajeHistorialScreenState extends State<FichajeHistorialScreen> {
           _ => oscuro ? BrandColors.warningDark : BrandColors.warningLight,
         };
     return Scaffold(
-      appBar: AppBar(title: Text(t.fichajeHistorialTitulo)),
+      appBar: AppBar(title: Text(t.fichajeHistorialTitulo), actions: [AccionAsistente(contexto: t.fichajeHistorialTitulo)]),
       body: AnchoMaximo(child: Column(
         children: [
           // El rango, como dos píldoras (con la fecha escrita como en el resto de la app).

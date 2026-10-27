@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -40,7 +42,7 @@ class _HerramientasScreenState extends State<HerramientasScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(t.herramientasTitulo)),
+      appBar: AppBar(title: Text(t.herramientasTitulo), actions: [AccionAsistente(contexto: t.herramientasTitulo)]),
       body: FutureBuilder<(List<Herramienta>, String)>(
         future: _carga,
         builder: (context, snapshot) {
