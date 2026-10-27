@@ -254,22 +254,6 @@ String formatoHoras(double segundos) {
   return '${minutos ~/ 60} h ${(minutos % 60).toString().padLeft(2, '0')} min';
 }
 
-const estadosTareaOutlook = [
-  ('no_iniciada', 'No iniciada'),
-  ('en_progreso', 'En progreso'),
-  ('completada', 'Completada'),
-  ('esperando', 'Esperando a otros'),
-  ('aplazada', 'Aplazada'),
-  // Solo se entra y se sale pidiendo/resolviendo/retirando la revisión (el servidor rechaza cambiarlo a mano); está en la lista para poder MOSTRARLO.
-  ('en_revision', 'En revisión'),
-];
-
-const prioridadesTareaOutlook = [
-  ('baja', 'Baja'),
-  ('normal', 'Normal'),
-  ('alta', 'Alta'),
-];
-
 /// Cuenta de correo IMAP/POP3+SMTP (db.listar_cuentas_correo), Fase 4e —
 /// solo se lee desde el móvil, no se crean/editan cuentas en esta fase.
 class CuentaCorreo {
@@ -699,18 +683,19 @@ class VencimientoFiscal {
       );
 }
 
-/// Los 6 modelos fiscales soportados hoy (calcado de
-/// app/vencimientos_fiscales.py:MODELOS_TRIMESTRALES/MODELOS_ANUALES) --
-/// no localizado a propósito, son códigos oficiales de la AEAT, iguales
-/// en cualquier idioma.
-const modelosFiscalesDisponibles = {
-  '303': 'IVA - Declaración trimestral',
-  '130': 'IRPF - Pago fraccionado (estimación directa)',
-  '111': 'Retenciones IRPF trabajadores/profesionales',
-  '115': 'Retenciones alquileres',
-  '390': 'IVA - Resumen anual',
-  '200': 'Impuesto sobre Sociedades',
-};
+/// Los 6 modelos fiscales soportados hoy (calcado de app/vencimientos_fiscales.py:MODELOS_TRIMESTRALES/MODELOS_ANUALES): el código es el oficial de la AEAT,
+/// igual en cualquier idioma; la descripción va en el idioma de la app (ver [descripcionModeloFiscal]).
+const modelosFiscalesDisponibles = ['303', '130', '111', '115', '390', '200'];
+
+String descripcionModeloFiscal(AppLocalizations t, String modelo) => switch (modelo) {
+      '303' => t.fiscalModelo303,
+      '130' => t.fiscalModelo130,
+      '111' => t.fiscalModelo111,
+      '115' => t.fiscalModelo115,
+      '390' => t.fiscalModelo390,
+      '200' => t.fiscalModelo200,
+      _ => '',
+    };
 
 List<(String, String)> estadosVencimientoFiscal(AppLocalizations t) => [
   ('pendiente', t.vencimientoFiscalEstadoPendiente),

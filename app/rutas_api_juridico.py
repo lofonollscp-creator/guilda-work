@@ -6,6 +6,7 @@ Capa fina sobre `app/juridico/`: mismas reglas que la web. Sin `LEGAL_AI_ENABLED
 from __future__ import annotations
 
 from flask import g, request
+from flask_babel import gettext
 
 from . import acceso, db, verticales
 from .auth import token_required
@@ -23,7 +24,7 @@ def _preparar():
     if error:
         return error
     if not modulo.habilitado() or not verticales.esta_activo(g.tenant_id, "juridico"):
-        return _err("Tu despacho no tiene el Asistente jurídico.", 404, "no_encontrado")
+        return _err(gettext("Tu despacho no tiene el Asistente jurídico."), 404, "no_encontrado")
     return None
 
 
@@ -80,7 +81,7 @@ def buscar_juridico_api():
         d = _body()
         cols = d.get("colecciones")
         if cols is not None and (not isinstance(cols, list) or any(c not in COLECCIONES for c in cols)):
-            return _err("Colecciones no válidas.", 400, "peticion_invalida", "colecciones")
+            return _err(gettext("Colecciones no válidas."), 400, "peticion_invalida", "colecciones")
         r = busqueda.buscar(g.tenant_id, d.get("consulta") or "", colecciones=cols, materia=d.get("materia"), territorio=d.get("territorio"), emisor=d.get("emisor"), tipo=d.get("tipo"),
                             desde=d.get("desde"), hasta=d.get("hasta"), fecha_juridica=d.get("fecha_juridica"), limite=_int(d.get("limite")) or 20, cursor=d.get("cursor"))
         return _ok(r)
@@ -93,7 +94,7 @@ def documento_juridico_api(documento_id: int):
     """Metadatos de un documento, sus versiones y sus relaciones documentadas. 404 si su fuente no está disponible para tu despacho."""
     def _ver():
         d = busqueda.documento(g.tenant_id, documento_id)
-        return _err("No existe ese documento.", 404, "no_encontrado") if d is None else _ok(d)
+        return _err(gettext("No existe ese documento."), 404, "no_encontrado") if d is None else _ok(d)
     return _protegido(_ver)
 
 
@@ -103,7 +104,7 @@ def version_juridico_api(documento_id: int, version_id: int):
     """Texto de una versión con sus localizadores. `fecha_juridica` (AAAA-MM-DD) limita los fragmentos a los vigentes en esa fecha según la fuente."""
     def _ver():
         t = busqueda.texto_de_version(g.tenant_id, documento_id, version_id, request.args.get("fecha_juridica") or None)
-        return _err("No existe esa versión.", 404, "no_encontrado") if t is None else _ok(t)
+        return _err(gettext("No existe esa versión."), 404, "no_encontrado") if t is None else _ok(t)
     return _protegido(_ver)
 
 
@@ -117,7 +118,7 @@ def subir_adjunto_juridico_api():
     def _subir():
         a = request.files.get("archivo")
         if a is None or not a.filename:
-            return _err("Falta el archivo (campo `archivo`).", 400, "peticion_invalida", "archivo")
+            return _err(gettext("Falta el archivo (campo `archivo`)."), 400, "peticion_invalida", "archivo")
         r = adjuntos.subir(g.tenant_id, g.usuario_id, a.filename, a.read(adjuntos.MAX_BYTES + 1), cliente_id=_int(request.form.get("cliente_id")), expediente_id=_int(request.form.get("expediente_id")))
         return _ok(r, 201)
     return _protegido(_subir)
@@ -129,7 +130,7 @@ def estado_adjunto_juridico_api(adjunto_id: int):
     """Estado de la extracción (`pendiente`, `lista`, `fallida`) y su retención. No devuelve el texto."""
     def _ver():
         a = adjuntos.obtener(g.tenant_id, g.usuario_id, adjunto_id)
-        return _err("No existe ese adjunto.", 404, "no_encontrado") if a is None else _ok(a)
+        return _err(gettext("No existe ese adjunto."), 404, "no_encontrado") if a is None else _ok(a)
     return _protegido(_ver)
 
 
@@ -138,7 +139,7 @@ def estado_adjunto_juridico_api(adjunto_id: int):
 def borrar_adjunto_juridico_api(adjunto_id: int):
     """Borra el adjunto con su texto extraído e índice."""
     def _borrar():
-        return _ok() if adjuntos.borrar(g.tenant_id, g.usuario_id, adjunto_id) else _err("No existe ese adjunto.", 404, "no_encontrado")
+        return _ok() if adjuntos.borrar(g.tenant_id, g.usuario_id, adjunto_id) else _err(gettext("No existe ese adjunto."), 404, "no_encontrado")
     return _protegido(_borrar)
 
 
@@ -166,10 +167,10 @@ def consultar_juridico_api(conversacion_id: int):
         d = _body()
         cols = d.get("colecciones")
         if cols is not None and (not isinstance(cols, list) or any(c not in COLECCIONES for c in cols)):
-            return _err("Colecciones no válidas.", 400, "peticion_invalida", "colecciones")
+            return _err(gettext("Colecciones no válidas."), 400, "peticion_invalida", "colecciones")
         ids = d.get("adjunto_ids") or []
         if not isinstance(ids, list) or any(not isinstance(i, int) for i in ids):
-            return _err("`adjunto_ids` debe ser una lista de enteros.", 400, "peticion_invalida", "adjunto_ids")
+            return _err(gettext("`adjunto_ids` debe ser una lista de enteros."), 400, "peticion_invalida", "adjunto_ids")
         r = asistente.consultar(g.tenant_id, g.usuario_id, conversacion_id, d.get("pregunta") or "", colecciones=cols, materia=d.get("materia"), territorio=d.get("territorio"),
                                 fecha_juridica=d.get("fecha_juridica"), modo_temporal=d.get("modo_temporal") or "actual", objetivo=d.get("objetivo") or "consulta", adjunto_ids=ids,
                                 clave_idempotencia=(request.headers.get("Idempotency-Key") or "").strip()[:100] or None)
@@ -213,7 +214,7 @@ def informe_juridico_api(informe_id: int):
     """Un informe con su instantánea (consulta, respuesta y citas con su versión y fecha de captura)."""
     def _ver():
         i = informes.obtener(g.tenant_id, g.usuario_id, informe_id)
-        return _err("No existe ese informe.", 404, "no_encontrado") if i is None else _ok(_informe_json(i) | {"instantanea": i["instantanea"]})
+        return _err(gettext("No existe ese informe."), 404, "no_encontrado") if i is None else _ok(_informe_json(i) | {"instantanea": i["instantanea"]})
     return _protegido(_ver)
 
 
@@ -236,7 +237,7 @@ def fuentes_juridico_api():
     """Diagnóstico de cada fuente: estado, habilitación, política vigente, cobertura, últimas ejecuciones y registros con problemas. Solo el administrador de la plataforma."""
     def _ver():
         if not db.es_admin(g.usuario_id):
-            return _err("Solo el administrador de la plataforma puede ver el diagnóstico de fuentes.", 403, "permiso")
+            return _err(gettext("Solo el administrador de la plataforma puede ver el diagnóstico de fuentes."), 403, "permiso")
         from .juridico import catalogo, ingesta
         cob = {c["fuente_id"]: c for c in corpus.cobertura()}
         return _ok([{**f, "habilitada": bool(f["habilitada"]), "cobertura": cob[f["id"]], "politica": corpus.politica_vigente(f["id"]), "verificacion": catalogo.VERIFICACION.get(f["id"]), "ejecuciones": ingesta.ultimas_ejecuciones(f["id"], 5),

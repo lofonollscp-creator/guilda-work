@@ -301,7 +301,7 @@ def eliminar_del_indice(tipo: str, id_: int) -> None:
     _peticion(f"/indexes/{INDICE}/documents/{tipo}-{id_}", clave=MEILISEARCH_MASTER_KEY, metodo="DELETE")
 
 
-def buscar_hibrido(usuario_id: int, texto: str, limite: int = 5, tenant_id: int | None = None) -> list[dict]:
+def buscar_hibrido(usuario_id: int, texto: str, limite: int = 5, tenant_id: int | None = None, tipos: set[str] | None = None, con_respaldo: bool = False) -> list[dict]:
     """Búsqueda híbrida (palabra clave + semántica) — a diferencia de
     `generar_token_busqueda()`, esto se ejecuta del lado del servidor
     (necesita calcular el embedding de `texto` con Ollama, solo
@@ -314,18 +314,43 @@ def buscar_hibrido(usuario_id: int, texto: str, limite: int = 5, tenant_id: int 
 
     Devuelve [] (no lanza) si Meilisearch u Ollama no están disponibles
     — es una mejora sobre la búsqueda por palabra clave existente,
-    nunca debe romper nada más."""
+    nunca debe romper nada más.
+
+    `tipos`: solo esos tipos de documento (`nota`, `tarea`…); Meilisearch lo une en AND al filtro del token.
+    `con_respaldo`: sin Ollama (o si falla), busca solo por palabra clave en vez de devolver nada (lo usa la API de la app)."""
     if not MEILISEARCH_MASTER_KEY:
         return []
     vector = embeddings.generar_embedding(texto)
-    if vector is None:
+    if vector is None and not con_respaldo:
         return []
     token = generar_token_busqueda(usuario_id, tenant_id=tenant_id, minutos_validez=2)
-    cuerpo = {
-        "q": texto,
-        "hybrid": {"embedder": "default", "semanticRatio": 0.5},
-        "vector": vector,
-        "limit": limite,
-    }
-    resultado = _peticion(f"/indexes/{INDICE}/search", clave=token, metodo="POST", cuerpo=cuerpo)
+    cuerpo = {"q": texto, "limit": limite}
+    if vector is not None:
+        cuerpo["hybrid"] = {"embedder": "default", "semanticRatio": 0.5}
+        cuerpo["vector"] = vector
+    if tipos:
+        cuerpo["filter"] = " OR ".join(f'tipo = "{t}"' for t in sorted(tipos))
+    try:
+        resultado = _peticion(f"/indexes/{INDICE}/search", clave=token, metodo="POST", cuerpo=cuerpo)
+    except ErrorBusqueda:
+        if not con_respaldo:
+            raise
+        return []
     return resultado.get("hits", []) if resultado else []
+
+
+def presentar_resultado(hit: dict) -> dict:
+    """Lo que enseña una lista de resultados: `titulo` (corto), `fragmento` (el resto del texto, recortado) y `fecha`. El índice guarda un único `texto`
+    (título y cuerpo juntos), así que se separa por el primer salto de línea o, si no hay, en el límite de palabra más cercano a 90 caracteres."""
+    limpio = " ".join(str(hit.get("texto") or "").split())
+    titulo = str(hit.get("titulo") or "").strip()
+    if titulo and limpio.startswith(titulo):
+        resto = limpio[len(titulo):].strip()
+    elif len(limpio) <= 90:
+        titulo, resto = limpio, ""
+    else:
+        corte = limpio.rfind(" ", 40, 90)
+        corte = corte if corte > 0 else 90
+        titulo, resto = limpio[:corte].rstrip(" ,;:.-"), limpio[corte:].strip()
+    fragmento = resto if len(resto) <= 220 else resto[:220].rsplit(" ", 1)[0] + "…"
+    return {"titulo": titulo, "fragmento": fragmento, "fecha": hit.get("creada_en")}

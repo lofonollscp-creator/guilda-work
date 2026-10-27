@@ -13,6 +13,7 @@ Reglas:
 Todo avisa por la campana y el móvil a quien corresponda."""
 from __future__ import annotations
 
+from .textos import gettext
 from datetime import date, timedelta
 
 from flask_babel import lazy_gettext as _l
@@ -52,6 +53,10 @@ CREATE TABLE IF NOT EXISTS ausencias_config (
 );
 """
 
+
+class AusenciaNoEncontrada(ValueError):
+    """La ausencia no existe (o no es de este despacho): las rutas la distinguen del resto de errores de validación sin leer el texto, que va traducido."""
+
 TIPOS = (("vacaciones", _l("Vacaciones")), ("asuntos_propios", _l("Asuntos propios")), ("permiso", _l("Permiso retribuido")),
          ("baja", _l("Baja médica")), ("otro", _l("Otro")))
 ESTADOS = (("pendiente", _l("Pendiente")), ("aprobada", _l("Aprobada")), ("rechazada", _l("Rechazada")), ("cancelada", _l("Cancelada")))
@@ -68,7 +73,7 @@ def _fecha(valor, campo: str) -> date:
     try:
         return date.fromisoformat((valor or "").strip()[:10])
     except ValueError:
-        raise ValueError(f"{campo}: indica una fecha válida (AAAA-MM-DD).") from None
+        raise ValueError(gettext("%(campo)s: indica una fecha válida (AAAA-MM-DD).", campo=campo)) from None
 
 
 def dias_laborables(tenant_id: int, desde: date, hasta: date, medio_dia: bool = False) -> float:
@@ -126,9 +131,9 @@ def _dias_validos(dias) -> float:
     try:
         v = float(str(dias).replace(",", "."))
     except (TypeError, ValueError):
-        raise ValueError("Indica un número de días.") from None
+        raise ValueError(gettext("Indica un número de días.")) from None
     if not 0 <= v <= 366:
-        raise ValueError("Los días deben estar entre 0 y 366.")
+        raise ValueError(gettext("Los días deben estar entre 0 y 366."))
     return round(v * 2) / 2
 
 
@@ -197,34 +202,34 @@ def _rango(a) -> str:
 def solicitar(tenant_id: int, usuario_id: int, tipo: str, desde, hasta=None, *, motivo: str | None = None, medio_dia: bool = False, por: int | None = None) -> int:
     """Pide (o, si `por` es quien gestiona y no la propia persona, registra ya aprobada) una ausencia. Devuelve su id."""
     if tipo not in dict(TIPOS):
-        raise ValueError("Elige un tipo de ausencia válido.")
+        raise ValueError(gettext("Elige un tipo de ausencia válido."))
     d, h = _fecha(desde, "Desde"), _fecha(hasta or desde, "Hasta")
     if h < d:
-        raise ValueError("La fecha de fin no puede ser anterior a la de inicio.")
+        raise ValueError(gettext("La fecha de fin no puede ser anterior a la de inicio."))
     if (h - d).days > 365:
-        raise ValueError("Una ausencia no puede durar más de un año.")
+        raise ValueError(gettext("Una ausencia no puede durar más de un año."))
     if d.year != h.year:
-        raise ValueError("Una ausencia no puede cruzar de año: pídela en dos tramos.")
+        raise ValueError(gettext("Una ausencia no puede cruzar de año: pídela en dos tramos."))
     if medio_dia and d != h:
-        raise ValueError("Solo se puede pedir medio día para un único día.")
+        raise ValueError(gettext("Solo se puede pedir medio día para un único día."))
     n = dias_laborables(tenant_id, d, h, medio_dia)
     if n <= 0:
-        raise ValueError("Ese periodo no incluye ningún día laborable.")
+        raise ValueError(gettext("Ese periodo no incluye ningún día laborable."))
     registra_otro = por is not None and por != usuario_id
     if registra_otro and not puede_gestionar(por, tenant_id):
-        raise ValueError("Solo quien gestiona el fichaje puede registrar la ausencia de otra persona.")
+        raise ValueError(gettext("Solo quien gestiona el fichaje puede registrar la ausencia de otra persona."))
     conn = db.get_connection()
     try:
         nucleo._usuario_de_tenant(conn, usuario_id, tenant_id)
         solapa = conn.execute(
             "SELECT desde, hasta FROM ausencias WHERE usuario_id = ? AND estado IN ('pendiente', 'aprobada') AND desde <= ? AND hasta >= ? LIMIT 1", (usuario_id, h.isoformat(), d.isoformat())).fetchone()
         if solapa:
-            raise ValueError(f"Ya hay una ausencia del {solapa['desde']} al {solapa['hasta']} que se solapa con estas fechas.")
+            raise ValueError(gettext("Ya hay una ausencia del %(desde)s al %(hasta)s que se solapa con estas fechas.", desde=solapa["desde"], hasta=solapa["hasta"]))
         if tipo in CONSUMEN_SALDO:
             total = dias_anuales(tenant_id, usuario_id, d.year)
             gastados = _consumidos(conn, tenant_id, usuario_id, d.year, "aprobada") + _consumidos(conn, tenant_id, usuario_id, d.year, "pendiente")
             if gastados + n > total:
-                raise ValueError(f"No te quedan días suficientes: pides {n:g} y tienes {max(total - gastados, 0):g} disponibles en {d.year}.")
+                raise ValueError(gettext("No te quedan días suficientes: pides %(pides)s y tienes %(tienes)s disponibles en %(anio)s.", pides=f"{n:g}", tienes=f"{max(total - gastados, 0):g}", anio=d.year))
         estado = "aprobada" if registra_otro else "pendiente"
         cur = conn.execute(
             "INSERT INTO ausencias (tenant_id, usuario_id, tipo, desde, hasta, medio_dia, dias, motivo, estado, creada_por, resuelta_por, resuelta_en, creada_en) "
@@ -259,24 +264,24 @@ def obtener(tenant_id: int, ausencia_id: int):
 
 def resolver(tenant_id: int, gestor_id: int, ausencia_id: int, aprobar: bool, comentario: str | None = None) -> None:
     if not puede_gestionar(gestor_id, tenant_id):
-        raise ValueError("Solo quien gestiona el fichaje puede aprobar o rechazar ausencias.")
+        raise ValueError(gettext("Solo quien gestiona el fichaje puede aprobar o rechazar ausencias."))
     a = obtener(tenant_id, ausencia_id)
     if a is None:
-        raise ValueError("No existe esa ausencia.")
+        raise AusenciaNoEncontrada(gettext("No existe esa ausencia."))
     if a["estado"] != "pendiente":
-        raise ValueError("Esa ausencia ya está resuelta.")
+        raise ValueError(gettext("Esa ausencia ya está resuelta."))
     conn = db.get_connection()
     try:
         if aprobar and a["tipo"] in CONSUMEN_SALDO:
             anio = int(a["desde"][:4])
             gastados = _consumidos(conn, tenant_id, a["usuario_id"], anio, "aprobada")
             if gastados + a["dias"] > dias_anuales(tenant_id, a["usuario_id"], anio):
-                raise ValueError("Con los días que ya tiene aprobados, esta persona se quedaría sin saldo. Ajusta sus días anuales o recházala.")
+                raise ValueError(gettext("Con los días que ya tiene aprobados, esta persona se quedaría sin saldo. Ajusta sus días anuales o recházala."))
         cur = conn.execute("UPDATE ausencias SET estado = ?, resuelta_por = ?, resuelta_en = ?, comentario = ? WHERE id = ? AND tenant_id = ? AND estado = 'pendiente'",
                            ("aprobada" if aprobar else "rechazada", gestor_id, db.now_iso(), (comentario or "").strip()[:500] or None, ausencia_id, tenant_id))
         conn.commit()
         if cur.rowcount == 0:
-            raise ValueError("Esa ausencia ya está resuelta.")
+            raise ValueError(gettext("Esa ausencia ya está resuelta."))
     finally:
         conn.close()
     if aprobar:
@@ -289,14 +294,14 @@ def cancelar(tenant_id: int, usuario_id: int, ausencia_id: int) -> None:
     """La persona cancela la suya (si no ha terminado ya); quien gestiona, cualquiera del despacho."""
     a = obtener(tenant_id, ausencia_id)
     if a is None:
-        raise ValueError("No existe esa ausencia.")
+        raise AusenciaNoEncontrada(gettext("No existe esa ausencia."))
     gestor = puede_gestionar(usuario_id, tenant_id)
     if a["usuario_id"] != usuario_id and not gestor:
-        raise ValueError("No puedes cancelar la ausencia de otra persona.")
+        raise ValueError(gettext("No puedes cancelar la ausencia de otra persona."))
     if a["estado"] not in VIVAS:
-        raise ValueError("Esa ausencia ya no está activa.")
+        raise ValueError(gettext("Esa ausencia ya no está activa."))
     if a["hasta"] < date.today().isoformat() and not gestor:
-        raise ValueError("Esa ausencia ya ha pasado.")
+        raise ValueError(gettext("Esa ausencia ya ha pasado."))
     conn = db.get_connection()
     try:
         conn.execute("UPDATE ausencias SET estado = 'cancelada', resuelta_por = ?, resuelta_en = ? WHERE id = ? AND tenant_id = ?", (usuario_id, db.now_iso(), ausencia_id, tenant_id))

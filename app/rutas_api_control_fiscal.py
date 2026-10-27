@@ -1,6 +1,7 @@
 """API del control fiscal (fase A): flujo de trabajo de las obligaciones, indicadores, evidencias, auditoría, oficinas, roles y concesiones. Área de token: `fiscal`.
 Capa fina sobre `obligaciones.py`, `acceso.py` y `auditoria.py`: mismas reglas que la web. Concurrencia: `If-Match: "<version>"` (o `version` en el cuerpo) → 412 si cambió."""
 from flask import abort, g, request
+from flask_babel import gettext
 
 from . import acceso, auditoria, db, obligaciones
 from .auth import token_required
@@ -26,13 +27,13 @@ def _conflicto(e: Exception):
 def _vencimiento_o_404(vencimiento_id: int):
     v = db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)
     if v is None:
-        abort(404, "Vencimiento no encontrado.")
+        abort(404, gettext("Vencimiento no encontrado."))
     return v
 
 
 def _exigir_direccion() -> None:
     if not acceso.es_directivo(g.usuario_id):
-        abort(403, "Solo la dirección del despacho (supervisores) puede hacer esto.")
+        abort(403, gettext("Solo la dirección del despacho (supervisores) puede hacer esto."))
 
 
 # --- Flujo de trabajo -----------------------------------------------------------------------------------------------------------------------
@@ -120,7 +121,7 @@ def eventos_de_auditoria():
     if error:
         return error
     if not (acceso.roles_de(g.tenant_id, g.usuario_id) & {"director", "auditor", "revisor_fiscal"}):
-        abort(403, "Solo la dirección, los auditores y los revisores fiscales pueden consultar la auditoría.")
+        abort(403, gettext("Solo la dirección, los auditores y los revisores fiscales pueden consultar la auditoría."))
     a = request.args
     return _ok_paginado(auditoria.listar(g.tenant_id, entidad=a.get("entidad"), entidad_id=a.get("entidad_id"), usuario_id=a.get("usuario_id", type=int), accion=a.get("accion"),
                                          desde=a.get("desde"), hasta=a.get("hasta"), antes_de_id=a.get("antes_de_id", type=int), limite=a.get("limite", 100, type=int)))
@@ -174,7 +175,7 @@ def asignar_oficina_api(cliente_id: int):
     if error:
         return error
     if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     try:
         acceso.asignar_cliente_a_oficina(g.tenant_id, g.usuario_id, cliente_id, _body().get("oficina_id"))
     except ValueError as e:
@@ -189,7 +190,7 @@ def listar_concesiones_api(cliente_id: int):
     if error:
         return error
     if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     return _ok_paginado(acceso.concesiones_de(g.tenant_id, cliente_id))
 
 
@@ -201,7 +202,7 @@ def conceder_cliente_api(cliente_id: int):
     if error:
         return error
     if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     d = _body()
     try:
         kid = acceso.conceder_cliente(g.tenant_id, g.usuario_id, cliente_id, oficina_id=d.get("oficina_id"), para_usuario_id=d.get("usuario_id"), nivel=d.get("nivel", "gestion"), hasta=d.get("hasta"))
@@ -231,7 +232,7 @@ def listar_membresias_api():
     if error:
         return error
     if not (acceso.roles_de(g.tenant_id, g.usuario_id) & {"director", "coordinador"}):
-        abort(403, "Solo la dirección y los coordinadores pueden ver los roles del despacho.")
+        abort(403, gettext("Solo la dirección y los coordinadores pueden ver los roles del despacho."))
     return _ok_paginado(acceso.membresias_del_despacho(g.tenant_id))
 
 
@@ -288,7 +289,7 @@ def listar_traspasos_api():
     from . import traspasos
     estado = request.args.get("estado")
     if estado and estado not in traspasos.ESTADOS:
-        return _err("Estado no válido.", 400, "traspaso_no_valido")
+        return _err(gettext("Estado no válido."), 400, "traspaso_no_valido")
     return _ok_paginado(traspasos.listar(g.tenant_id, g.usuario_id, estado=estado or None))
 
 
@@ -312,7 +313,7 @@ def proponer_traspaso_api():
 def _resolver_traspaso(traspaso_id: int, funcion, *a):
     from . import traspasos
     if traspasos.obtener(g.tenant_id, traspaso_id) is None:
-        abort(404, "Traspaso no encontrado.")
+        abort(404, gettext("Traspaso no encontrado."))
     try:
         funcion(g.tenant_id, g.usuario_id, traspaso_id, *a, version=_version_esperada(_body()))
     except traspasos.ConflictoDeVersion as e:
@@ -383,7 +384,7 @@ def listar_avisos_api():
     from . import avisos
     estado = request.args.get("estado", "abierta")
     if estado not in avisos.ESTADOS:
-        return _err("Estado no válido.", 400, "aviso_no_valido")
+        return _err(gettext("Estado no válido."), 400, "aviso_no_valido")
     return _ok_paginado([avisos.publico(a) for a in avisos.listar(g.tenant_id, g.usuario_id, estado=estado, mios=request.args.get("mios") == "1")])
 
 
@@ -465,7 +466,7 @@ def listar_expedientes_control_api():
     from . import control_expedientes as ce
     tipo = request.args.get("tipo") or None
     if tipo and tipo not in ce.IDS_TIPOS:
-        return _err("Tipo no válido.", 400, "expediente_no_valido")
+        return _err(gettext("Tipo no válido."), 400, "expediente_no_valido")
     return _ok_paginado(ce.listar(g.tenant_id, g.usuario_id, estado=request.args.get("estado") or None, tipo=tipo, solo_abiertos=request.args.get("todos") != "1"))
 
 
@@ -482,7 +483,7 @@ def crear_expediente_control_api():
     try:
         cliente = nucleo.vincular_cliente_fiscal(g.tenant_id, int(d.get("cliente_fiscal_id") or 0)) if acceso.puede_modificar_cliente(g.tenant_id, g.usuario_id, int(d.get("cliente_fiscal_id") or 0)) else None
         if cliente is None:
-            raise ValueError("No existe ese cliente.")
+            raise ValueError(gettext("No existe ese cliente."))
         nuevo = ce.crear(g.tenant_id, g.usuario_id, cliente, d.get("tipo", ""), d.get("titulo", ""), prioridad=d.get("prioridad") or "normal", fecha_objetivo=d.get("fecha_objetivo"),
                          revisor_id=int(d["revisor_id"]) if d.get("revisor_id") else None, responsable_id=int(d["responsable_id"]) if d.get("responsable_id") else None, descripcion=d.get("descripcion"))
     except (ValueError, TypeError) as e:

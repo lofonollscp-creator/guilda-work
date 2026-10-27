@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 
+import '../diseno/formatos.dart';
+import '../api/fechas.dart';
+import '../theme/brand_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
@@ -108,7 +112,7 @@ class _AusenciasScreenState extends State<AusenciasScreen> {
         icon: const Icon(Icons.add),
         label: Text(t.ausenciasPedir),
       ),
-      body: RefreshIndicator(
+      body: AnchoMaximo(child: RefreshIndicator(
         onRefresh: _recargar,
         child: FutureBuilder<_Datos>(
           future: _datos,
@@ -159,7 +163,7 @@ class _AusenciasScreenState extends State<AusenciasScreen> {
             );
           },
         ),
-      ),
+      )),
     );
   }
 }
@@ -197,16 +201,20 @@ class _TarjetaSaldo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    final usado = saldo.total <= 0 ? 0.0 : ((saldo.aprobadas + saldo.pendientes) / saldo.total).clamp(0.0, 1.0);
     return Card(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(t.ausenciasDisponibles(formatoDias(saldo.disponibles), saldo.anio), style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 6),
-            Text(t.ausenciasResumen(formatoDias(saldo.aprobadas), formatoDias(saldo.pendientes), formatoDias(saldo.total))),
+            Text(t.ausenciasDisponibles(formatoDias(saldo.disponibles), saldo.anio), style: tema.textTheme.titleLarge),
+            const SizedBox(height: 10),
+            ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: usado, minHeight: 8)),
+            const SizedBox(height: 8),
+            Text(t.ausenciasResumen(formatoDias(saldo.aprobadas), formatoDias(saldo.pendientes), formatoDias(saldo.total)), style: tema.textTheme.bodySmall),
           ],
         ),
       ),
@@ -224,18 +232,34 @@ class _FilaAusencia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final fechas = a.desde == a.hasta ? a.desde : '${a.desde} → ${a.hasta}';
-    return ListTile(
-      leading: const Icon(Icons.beach_access_outlined),
-      title: Text(titulo),
-      subtitle: Text([
-        '$fechas · ${t.ausenciasDias(formatoDias(a.dias))}',
-        _nombreEstado(t, a.estado),
-        if (a.motivo != null && a.motivo!.isNotEmpty) a.motivo!,
-        if (a.comentario != null && a.comentario!.isNotEmpty) a.comentario!,
-      ].join('\n')),
-      isThreeLine: true,
-      trailing: acciones.isEmpty ? null : Row(mainAxisSize: MainAxisSize.min, children: acciones),
+    final tema = Theme.of(context);
+    final oscuro = tema.brightness == Brightness.dark;
+    final f = context.formatos;
+    final desde = Fecha.intentar(a.desde), hasta = Fecha.intentar(a.hasta);
+    final fechas = desde == null ? a.desde : (a.desde == a.hasta || hasta == null ? f.fecha(desde) : '${f.fecha(desde)} → ${f.fecha(hasta)}');
+    // El estado va escrito en una píldora (con icono), y el color solo lo refuerza.
+    final (colorEstado, iconoEstado) = switch (a.estado) {
+      'aprobada' => (oscuro ? BrandColors.successTextDark : BrandColors.successTextLight, Icons.check_circle_outline),
+      'pendiente' => (oscuro ? BrandColors.warningTextDark : BrandColors.warningTextLight, Icons.schedule),
+      'rechazada' => (oscuro ? BrandColors.dangerTextDark : BrandColors.dangerTextLight, Icons.cancel_outlined),
+      _ => (null, Icons.block),
+    };
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Expanded(child: Text(titulo, style: tema.textTheme.titleMedium)),
+            Pildora(icono: iconoEstado, texto: _nombreEstado(t, a.estado), color: colorEstado, fuerte: colorEstado != null),
+          ]),
+          const SizedBox(height: 4),
+          Text('$fechas · ${t.ausenciasDias(formatoDias(a.dias))}', style: tema.textTheme.bodyMedium),
+          if (a.motivo != null && a.motivo!.isNotEmpty) Text(a.motivo!, style: tema.textTheme.bodySmall),
+          if (a.comentario != null && a.comentario!.isNotEmpty) Text(a.comentario!, style: tema.textTheme.bodySmall),
+          if (acciones.isNotEmpty) Align(alignment: Alignment.centerRight, child: Wrap(spacing: 8, children: acciones)),
+        ]),
+      ),
     );
   }
 }

@@ -22,7 +22,13 @@ class FilaTarea extends StatelessWidget {
 
   /// Marcar para una acción en lote (null = esta pantalla no tiene selección: «Mi día»).
   final VoidCallback? alSeleccionar;
-  const FilaTarea({super.key, required this.tarea, required this.alCompletar, this.pendiente = false, this.seleccionada = false, this.enSeleccion = false, this.alSeleccionar});
+
+  /// En tableta la ficha se abre al lado: quien lo pasa recibe el id en vez de empujar una pantalla.
+  final void Function(int id)? alAbrir;
+
+  /// La que está abierta en el panel de al lado (se rodea con el color de acento).
+  final bool abierta;
+  const FilaTarea({super.key, required this.tarea, required this.alCompletar, this.pendiente = false, this.seleccionada = false, this.enSeleccion = false, this.alSeleccionar, this.alAbrir, this.abierta = false});
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +48,14 @@ class FilaTarea extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(
       color: seleccionada ? Color.alphaBlend(tema.colorScheme.primary.withValues(alpha: 0.18), tema.colorScheme.surface) : tema.colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: seleccionada ? tema.colorScheme.primary : tema.colorScheme.outlineVariant, width: seleccionada ? 1.5 : 1)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: seleccionada || abierta ? tema.colorScheme.primary : tema.colorScheme.outlineVariant, width: seleccionada || abierta ? 1.5 : 1)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: tarea.id < 0
             ? null
-            : (enSeleccion && alSeleccionar != null ? alSeleccionar : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id)))),
+            : (enSeleccion && alSeleccionar != null
+                ? alSeleccionar
+                : () => alAbrir != null ? alAbrir!(tarea.id) : Navigator.of(context).push(MaterialPageRoute(builder: (_) => TareaDetalleScreen(tareaId: tarea.id)))),
         onLongPress: tarea.id < 0 ? null : alSeleccionar,
         child: IntrinsicHeight(
           child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

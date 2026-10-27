@@ -419,6 +419,121 @@
   "avisosAyer": "Ayer",
   "avisosEliminado": "Aviso eliminado",
   "avisosNoLeidas": "{n, plural, =1{1 aviso sin leer} other{{n} avisos sin leer}}",
+  "avisosFiltroTodos": "Todos",
+  "avisosFiltroSinLeer": "Sin leer",
+  "avisosNuevo": "Nuevo",
+  "comunicadoCerrar": "Cerrar",
+  "busquedaFiltroTodo": "Todo",
+  "busquedaFiltroTareas": "Tareas",
+  "busquedaFiltroNotas": "Notas",
+  "busquedaFiltroCorreo": "Correo",
+  "busquedaFiltroFiscal": "Fiscal",
+  "busquedaRecientes": "Búsquedas recientes",
+  "busquedaBorrarRecientes": "Borrar",
+  "notasTitulo": "Notas",
+  "notasBuscar": "Buscar notas",
+  "notasVacio": "Todavía no tienes notas.",
+  "notasVacioDetalle": "Toca «Nueva nota» para escribir la primera.",
+  "notasSinResultados": "Ninguna nota coincide.",
+  "notasNueva": "Nueva nota",
+  "notasAmbitoTodas": "Todas",
+  "notasAmbitoMias": "Mías",
+  "notasAmbitoCompartidas": "Compartidas conmigo",
+  "notasTodosProyectos": "Todos los proyectos",
+  "notasFijar": "Fijar arriba",
+  "notasDesfijar": "Quitar de las fijadas",
+  "notasFijada": "Fijada",
+  "notasEliminar": "Eliminar nota",
+  "notasEliminada": "Nota eliminada",
+  "notasRestaurada": "Nota recuperada",
+  "notasDeNombre": "De {nombre}",
+  "@notasDeNombre": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "notasCompartida": "Compartida",
+  "notasTituloHint": "Título (opcional)",
+  "notasTextoHint": "Escribe aquí… admite **negrita**, *cursiva*, listas y enlaces",
+  "notasGuardar": "Guardar",
+  "notasGuardada": "Nota guardada",
+  "notasGuardadaSinConexion": "Sin conexión: la nota se enviará al volver la red.",
+  "notasDescartarTitulo": "¿Descartar los cambios?",
+  "notasDescartar": "Descartar",
+  "notasSeguirEditando": "Seguir editando",
+  "notasEditar": "Editar nota",
+  "notasNegrita": "Negrita",
+  "notasCursiva": "Cursiva",
+  "notasLista": "Lista",
+  "notasEnlace": "Enlace",
+  "notasEnlaceDireccion": "Dirección del enlace",
+  "notasVacia": "Esta nota está vacía.",
+  "notasVinculos": "Vinculada a",
+  "notasRolColabora": "Puede editar",
+  "notasRolObserva": "Solo lectura",
+  "notasElegirRol": "¿Qué podrá hacer?",
+  "notasDejarDeCompartir": "Dejar de compartir",
+  "notasSalir": "Salir de la nota",
+  "notasSalirPregunta": "¿Salir de esta nota? Dejarás de verla.",
+  "notasCompartidaPor": "Compartida por {nombre}",
+  "@notasCompartidaPor": {
+    "placeholders": {
+      "nombre": {
+        "type": "String"
+      }
+    }
+  },
+  "notasNoDisponible": "No se ha podido abrir la nota.",
+  "masNotas": "Notas",
+  "masPapelera": "Papelera",
+  "papeleraTitulo": "Papelera",
+  "papeleraAyuda": "Lo que borras se queda aquí 30 días antes de purgarse solo. Puedes recuperarlo cuando quieras.",
+  "papeleraVacia": "La papelera está vacía.",
+  "papeleraFiltroProyectos": "Proyectos",
+  "papeleraTipoProyecto": "Proyecto",
+  "papeleraTipoEvento": "Evento",
+  "papeleraRestaurar": "Restaurar",
+  "papeleraRestaurada": "Recuperado",
+  "papeleraEliminarSiempre": "Eliminar para siempre",
+  "papeleraEliminarPregunta": "¿Eliminar esto para siempre? No se puede deshacer.",
+  "papeleraEliminarProyectoPregunta": "¿Eliminar este proyecto y todo lo que contiene para siempre? No se puede deshacer.",
+  "papeleraEliminado": "Eliminado para siempre",
+  "papeleraQuedan": "{n, plural, =0{Se purga hoy} =1{Queda 1 día} other{Quedan {n} días}}",
+  "@papeleraQuedan": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "apiErrorDesconocido": "Error desconocido",
+  "apiRespuestaInesperada": "Respuesta inesperada del servidor.",
+  "apiErrorHttp": "Error {status}",
+  "@apiErrorHttp": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "apiPeticionCancelada": "Petición cancelada.",
+  "apiSinConexion": "No se ha podido conectar con el servidor. Comprueba la URL en Ajustes.",
+  "apiErrorRed": "Error de red: {detalle}",
+  "@apiErrorRed": {
+    "placeholders": {
+      "detalle": {
+        "type": "String"
+      }
+    }
+  },
+  "fiscalModelo303": "IVA - Declaración trimestral",
+  "fiscalModelo130": "IRPF - Pago fraccionado (estimación directa)",
+  "fiscalModelo111": "Retenciones IRPF trabajadores/profesionales",
+  "fiscalModelo115": "Retenciones alquileres",
+  "fiscalModelo390": "IVA - Resumen anual",
+  "fiscalModelo200": "Impuesto sobre Sociedades",
   "busquedaTitulo": "Buscar",
   "busquedaHint": "Buscar en notas, tareas y correo",
   "busquedaMinimo": "Escribe al menos dos letras.",
@@ -460,6 +575,7 @@
   "prioridadAlta": "Alta",
   "tareasNueva": "Nueva tarea",
   "tareasNuevaHint": "Nueva tarea… (mañana 10h · @persona · !alta · #proyecto)",
+  "tareasElegirUna": "Elige una tarea para ver su ficha.",
   "tareasVacio": "No hay tareas aquí.",
   "tareasSinResultados": "Ninguna tarea coincide.",
   "tareasBuscar": "Buscar tareas",
@@ -691,7 +807,7 @@
   "iaDictar": "Dictar mensaje",
   "iaResponderConfirmacion": "Responde a la confirmación de arriba primero…",
   "iaEscribeMensaje": "Escribe un mensaje…",
-  "iaToolUso": "🔧 usó {herramienta}",
+  "iaToolUso": "usó {herramienta}",
   "@iaToolUso": {
     "placeholders": {
       "herramienta": {
@@ -699,7 +815,7 @@
       }
     }
   },
-  "iaToolError": "⚠️ {herramienta}: {error}",
+  "iaToolError": "{herramienta}: {error}",
   "@iaToolError": {
     "placeholders": {
       "herramienta": {
@@ -710,7 +826,7 @@
       }
     }
   },
-  "iaToolRechazada": "❌ {herramienta} (rechazada)",
+  "iaToolRechazada": "{herramienta} (rechazada)",
   "@iaToolRechazada": {
     "placeholders": {
       "herramienta": {

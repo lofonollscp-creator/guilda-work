@@ -3,6 +3,7 @@ cliente con contadores. Capa fina sobre `app/tareas_trabajo.py`; mismo token, mi
 from __future__ import annotations
 
 from flask import Response, abort, g, jsonify, request, url_for
+from flask_babel import gettext
 
 from . import db, tareas_trabajo as tt
 from .auth import token_required
@@ -15,7 +16,7 @@ _STATUS = {"no_encontrada": 404, "sin_permiso": 403, "tarea_bloqueada": 409, "su
 def _tarea_o_404(tarea_id: int):
     tarea = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
     if tarea is None:
-        abort(404, "Tarea no encontrada.")
+        abort(404, gettext("Tarea no encontrada."))
     return tarea
 
 
@@ -25,7 +26,7 @@ def _version_del_cuerpo(datos: dict):
     try:
         return tt.version_pedida(str(bruto).strip('"') if bruto not in (None, "") else None), None
     except ValueError:
-        return None, _err("version debe ser un número entero.", 400, "version_invalida", "version")
+        return None, _err(gettext("version debe ser un número entero."), 400, "version_invalida", "version")
 
 
 def _conflicto(e: tt.ConflictoDeVersion):
@@ -76,7 +77,7 @@ def fijar_clientes_de_la_tarea(tarea_id: int):
     _tarea_o_404(tarea_id)
     datos = _body()
     if not isinstance(datos.get("cliente_ids"), list):
-        return _err("cliente_ids debe ser una lista.", 400, "cliente_ids_invalido", "cliente_ids")
+        return _err(gettext("cliente_ids debe ser una lista."), 400, "cliente_ids_invalido", "cliente_ids")
     version, error = _version_del_cuerpo(datos)
     if error:
         return error
@@ -98,7 +99,7 @@ def tareas_del_cliente(cliente_id: int):
     if error:
         return error
     if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
-        abort(404, "Cliente fiscal no encontrado.")
+        abort(404, gettext("Cliente fiscal no encontrado."))
     todas = [dict(t) for t in db.listar_tareas_outlook(g.usuario_id, incluir_asignadas=True, cliente_fiscal_id=cliente_id)]
     contadores = tt.contadores_de_cliente(todas)
     estado = request.args.get("estado") or None
@@ -167,7 +168,7 @@ def subir_adjuntos_de_la_tarea(tarea_id: int):
     _tarea_o_404(tarea_id)
     archivos = [f for f in request.files.getlist("adjunto") if f and f.filename]
     if not archivos:
-        return _err("Adjunta al menos un archivo en el campo «adjunto» (multipart).", 400, "sin_archivos", "adjunto")
+        return _err(gettext("Adjunta al menos un archivo en el campo «adjunto» (multipart)."), 400, "sin_archivos", "adjunto")
     resultados = []
     for f in archivos:
         try:
@@ -188,14 +189,14 @@ def descargar_adjunto_de_tarea(adjunto_id: int):
 @token_required
 def eliminar_adjunto_de_tarea(adjunto_id: int):
     if not tt.eliminar_adjunto(g.usuario_id, adjunto_id):
-        abort(404, "Adjunto no encontrado.")
+        abort(404, gettext("Adjunto no encontrado."))
     return _ok()
 
 
 def respuesta_de_adjunto(adjunto, en_linea: bool = False):
     """La respuesta de descarga, igual para la web y la API: el tipo lo fija el servidor, `nosniff` y una CSP que impide ejecutar nada del archivo."""
     if adjunto is None:
-        abort(404, "Adjunto no encontrado.")
+        abort(404, gettext("Adjunto no encontrado."))
     en_linea = en_linea and adjunto["imagen"]
     r = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
     nombre = adjunto["nombre_archivo"].replace('"', "").replace("\r", "").replace("\n", "")
@@ -268,7 +269,7 @@ def resolver_revision_de_la_tarea(tarea_id: int):
 def cancelar_revision_de_la_tarea(tarea_id: int):
     _tarea_o_404(tarea_id)
     if not tt.cancelar_revision(g.usuario_id, tarea_id):
-        return _err("No hay una revisión pendiente que puedas cancelar.", 404, "no_encontrada")
+        return _err(gettext("No hay una revisión pendiente que puedas cancelar."), 404, "no_encontrada")
     return _ok(_revision_json(tarea_id))
 
 
@@ -304,7 +305,7 @@ def responder_al_cliente_de_la_tarea(tarea_id: int):
     try:
         cliente_id = int(datos.get("cliente_fiscal_id") or 0)
     except (TypeError, ValueError):
-        return _err("cliente_fiscal_id tiene que ser un número.", 400, "cliente_invalido", "cliente_fiscal_id")
+        return _err(gettext("cliente_fiscal_id tiene que ser un número."), 400, "cliente_invalido", "cliente_fiscal_id")
     try:
         r = tt.responder_al_cliente(g.usuario_id, tarea_id, cliente_id, datos.get("texto"))
     except tt.TransicionInvalida as e:
@@ -319,7 +320,7 @@ def ocultar_comentario_del_cliente(comentario_id: int):
     """Moderación: oculta un comentario del cliente (no se borra: queda en la base y en la auditoría, pero deja de verse en el portal). Quien trabaja la tarea."""
     tarea_id = tt.ocultar_comentario_de_cliente(g.usuario_id, comentario_id)
     if tarea_id is None:
-        return _err("Comentario no encontrado.", 404, "no_encontrado")
+        return _err(gettext("Comentario no encontrado."), 404, "no_encontrado")
     return _ok({"id": comentario_id, "tarea_id": tarea_id, "oculto": True})
 
 
@@ -334,9 +335,9 @@ def fijar_visible_cliente_de_la_tarea(tarea_id: int):
     _tarea_o_404(tarea_id)
     datos = _body()
     if not isinstance(datos.get("visible"), bool):
-        return _err("visible tiene que ser true o false.", 400, "visible_invalido", "visible")
+        return _err(gettext("visible tiene que ser true o false."), 400, "visible_invalido", "visible")
     if "comentarios" in datos and not isinstance(datos["comentarios"], bool):
-        return _err("comentarios tiene que ser true o false.", 400, "comentarios_invalido", "comentarios")
+        return _err(gettext("comentarios tiene que ser true o false."), 400, "comentarios_invalido", "comentarios")
     try:
         tt.fijar_visible_cliente(g.usuario_id, tarea_id, datos["visible"], datos.get("comentarios"))
     except tt.TransicionInvalida as e:

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../diseno/adaptable.dart';
+import '../diseno/componentes.dart';
 import '../l10n/app_localizations.dart';
 import 'paginas.dart';
 import 'sesion.dart';
@@ -16,19 +18,44 @@ class ShellApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    final destinos = [
+      (const Icon(Icons.home_outlined), const Icon(Icons.home), t.navInicio),
+      (const Icon(Icons.checklist), null, t.navTareas),
+      (const Icon(Icons.mail_outline), const Icon(Icons.mail), t.navCorreo),
+      (const Icon(Icons.punch_clock_outlined), const Icon(Icons.punch_clock), t.navFichaje),
+      (const Icon(Icons.menu), null, t.navMas),
+    ];
+    // Pulsar la pestaña activa vuelve a su raíz.
+    void elegir(int i) => shell.goBranch(i, initialLocation: i == shell.currentIndex);
+    final filo = BorderSide(color: tema.colorScheme.outlineVariant);
+    if (esAncha(context)) {
+      // Tableta: barra lateral con las etiquetas siempre visibles.
+      return Scaffold(
+        body: Row(children: [
+          DecoratedBox(
+            decoration: BoxDecoration(border: Border(right: filo)),
+            child: NavigationRail(
+              selectedIndex: shell.currentIndex,
+              onDestinationSelected: elegir,
+              labelType: NavigationRailLabelType.all,
+              destinations: [for (final d in destinos) NavigationRailDestination(icon: d.$1, selectedIcon: d.$2, label: Text(d.$3))],
+            ),
+          ),
+          Expanded(child: shell),
+        ]),
+      );
+    }
     return Scaffold(
       body: shell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        // Pulsar la pestaña activa vuelve a su raíz.
-        onDestinationSelected: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: t.navInicio),
-          NavigationDestination(icon: const Icon(Icons.checklist), label: t.navTareas),
-          NavigationDestination(icon: const Icon(Icons.mail_outline), selectedIcon: const Icon(Icons.mail), label: t.navCorreo),
-          NavigationDestination(icon: const Icon(Icons.punch_clock_outlined), selectedIcon: const Icon(Icons.punch_clock), label: t.navFichaje),
-          NavigationDestination(icon: const Icon(Icons.menu), label: t.navMas),
-        ],
+      // Un filo arriba separa la barra del contenido (sin sombra: en oscuro no se veía y en claro pesaba).
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(border: Border(top: filo)),
+        child: NavigationBar(
+          selectedIndex: shell.currentIndex,
+          onDestinationSelected: elegir,
+          destinations: [for (final d in destinos) NavigationDestination(icon: d.$1, selectedIcon: d.$2, label: d.$3)],
+        ),
       ),
     );
   }
@@ -40,6 +67,8 @@ class MasScreen extends ConsumerWidget {
 
   String _etiqueta(AppLocalizations t, ClaveEtiqueta c) => switch (c) {
         ClaveEtiqueta.panel => t.masPanelClasico,
+        ClaveEtiqueta.notas => t.masNotas,
+        ClaveEtiqueta.papelera => t.masPapelera,
         ClaveEtiqueta.herramientas => t.dashboardHerramientasTooltip,
         ClaveEtiqueta.tiquets => t.dashboardTiquetsTooltip,
         ClaveEtiqueta.asistenteIa => t.dashboardAsistenteIaTooltip,
@@ -57,23 +86,27 @@ class MasScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(t.masTitulo)),
       body: ListView(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
         children: [
           if (estado.capacidades.variosDespachos)
-            ListTile(
-              leading: const Icon(Icons.business_outlined),
-              title: Text(t.despachoActivoTitulo),
-              subtitle: Text(estado.capacidades.despachoPorId(estado.despacho)?.nombre ?? ''),
-              trailing: const Icon(Icons.unfold_more),
-              onTap: () => _elegirDespacho(context, ref),
-            ),
-          for (final a in accesos)
-            ListTile(
-              leading: Icon(a.icono),
-              title: Text(_etiqueta(t, a.etiqueta)),
-              onTap: () => a.construir != null
-                  ? Navigator.of(context).push(MaterialPageRoute(builder: a.construir!))
-                  : a.alPulsar?.call(),
-            ),
+            GrupoAjustes(children: [
+              FilaAjuste(
+                icono: Icons.business_outlined,
+                titulo: t.despachoActivoTitulo,
+                subtitulo: estado.capacidades.despachoPorId(estado.despacho)?.nombre ?? '',
+                final_: const Icon(Icons.unfold_more),
+                alPulsar: () => _elegirDespacho(context, ref),
+              ),
+            ]),
+          GrupoAjustes(children: [
+            for (final a in accesos)
+              FilaAjuste(
+                icono: a.icono,
+                titulo: _etiqueta(t, a.etiqueta),
+                final_: const Icon(Icons.chevron_right),
+                alPulsar: () => a.construir != null ? Navigator.of(context).push(MaterialPageRoute(builder: a.construir!)) : a.alPulsar?.call(),
+              ),
+          ]),
         ],
       ),
     );

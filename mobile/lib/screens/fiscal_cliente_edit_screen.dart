@@ -175,17 +175,17 @@ class _FiscalClienteEditScreenState extends State<FiscalClienteEditScreen> {
             t.fiscalModelosSubtitulo,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          for (final entry in modelosFiscalesDisponibles.entries)
+          for (final modelo in modelosFiscalesDisponibles)
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               dense: true,
-              value: _modelosSeleccionados.contains(entry.key),
-              title: Text('${entry.key} — ${entry.value}'),
+              value: _modelosSeleccionados.contains(modelo),
+              title: Text('$modelo — ${descripcionModeloFiscal(t, modelo)}'),
               onChanged: (marcado) => setState(() {
                 if (marcado ?? false) {
-                  _modelosSeleccionados.add(entry.key);
+                  _modelosSeleccionados.add(modelo);
                 } else {
-                  _modelosSeleccionados.remove(entry.key);
+                  _modelosSeleccionados.remove(modelo);
                 }
               }),
             ),

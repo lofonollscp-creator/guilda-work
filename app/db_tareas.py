@@ -2,6 +2,7 @@
 
 Parte de la antigua `db.py`, dividida por dominios sin cambiar su comportamiento: todo lo que no está aquí (la conexión, las constantes y las funciones de otros
 dominios) se usa a través de `_db`, que sigue siendo el único espacio de nombres (`_db.nombre` funciona igual que antes y se puede parchear en los tests)."""
+from .textos import gettext
 import hashlib
 import json
 import time
@@ -288,7 +289,7 @@ def crear_tarea(usuario_id: int, nombre: str, categoria_id: int, tipo: str, tare
         # que rechazar la petición entera (defensa en profundidad: en uso
         # normal el <select> del formulario ya solo ofrece proyectos propios).
         if _db._categoria_id_propio(conn, usuario_id, categoria_id) is None:
-            raise ValueError(f"La categoría/proyecto {categoria_id} no existe o no es tuya.")
+            raise ValueError(gettext("La categoría/proyecto %(id)s no existe o no es tuya.", id=categoria_id))
         ahora = _db.now_iso()
         if tipo == "instantanea":
             cur = conn.execute(
@@ -833,7 +834,7 @@ def crear_tarea_recurrente(
     (primer mes de cada trimestre) o anual; sin uso (0) en diaria/laborables.
     `mes` (1-12) solo se usa en anual."""
     if periodicidad not in _db.PERIODICIDADES_RECURRENTES:
-        raise ValueError(f"Periodicidad no válida: {periodicidad}")
+        raise ValueError(gettext("Periodicidad no válida: %(valor)s", valor=periodicidad))
     conn = _db.get_connection()
     try:
         categoria_id = _db._categoria_id_propio(conn, usuario_id, categoria_id)
@@ -855,18 +856,18 @@ def crear_regla_por_vencimiento(
     """Lanza ValueError con un mensaje legible si algo no vale. El asunto admite {cliente}, {modelo} y {periodo}."""
     modelo, asunto = (modelo or "").strip()[:20], " ".join((asunto or "").split())[:200]
     if not modelo or not asunto:
-        raise ValueError("Indica el modelo (por ejemplo 303) y el asunto de la tarea.")
+        raise ValueError(gettext("Indica el modelo (por ejemplo 303) y el asunto de la tarea."))
     if not 0 <= int(crear_dias_antes) <= 120 or not 0 <= int(vence_dias_antes) <= 120:
-        raise ValueError("Los días van de 0 a 120.")
+        raise ValueError(gettext("Los días van de 0 a 120."))
     if int(vence_dias_antes) > int(crear_dias_antes):
-        raise ValueError("La tarea no puede vencer antes de crearse: «vence» debe ser menos días antes que «crear».")
+        raise ValueError(gettext("La tarea no puede vencer antes de crearse: «vence» debe ser menos días antes que «crear»."))
     conn = _db.get_connection()
     try:
         u = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
         if u is None or u["tenant_id"] is None:
-            raise ValueError("Tu usuario no pertenece a ningún despacho.")
+            raise ValueError(gettext("Tu usuario no pertenece a ningún despacho."))
         if conn.execute("SELECT COUNT(*) FROM tareas_por_vencimiento WHERE usuario_id = ?", (usuario_id,)).fetchone()[0] >= _db.MAX_REGLAS_POR_VENCIMIENTO:
-            raise ValueError("Has llegado al máximo de reglas.")
+            raise ValueError(gettext("Has llegado al máximo de reglas."))
         cur = conn.execute(
             """INSERT INTO tareas_por_vencimiento
                (usuario_id, tenant_id, modelo, asunto, crear_dias_antes, vence_dias_antes, categoria_id, asignar_responsable, estimacion_min, prioridad, creada_en)
@@ -2273,7 +2274,7 @@ def accion_en_lote(usuario_id: int, ids: list, accion: str, valor: str | None = 
     proyecto). Nada se da por hecho: se vuelve a leer la tarea y solo cuenta como hecha la que ha cambiado de verdad.
     Devuelve {'ok': n, 'fallos': m}."""
     if accion not in _db.ACCIONES_LOTE:
-        raise ValueError("Acción en lote desconocida.")
+        raise ValueError(gettext("Acción en lote desconocida."))
     limpios = []
     for i in ids or []:
         try:
@@ -2394,9 +2395,9 @@ def iniciar_cronometro_tarea_outlook(usuario_id: int, tarea_id: int, categoria_i
     proyecto: el de la tarea o el indicado."""
     tarea = _db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
     if tarea is None or not _db.puede_trabajar_tarea(usuario_id, tarea_id):
-        raise ValueError("La tarea no existe.")
+        raise ValueError(gettext("La tarea no existe."))
     if _db.tarea_bloqueada(tarea_id):
-        raise ValueError("Esta tarea espera a otras que todavía no están completadas.")
+        raise ValueError(gettext("Esta tarea espera a otras que todavía no están completadas."))
     conn = _db.get_connection()
     try:
         en_marcha = conn.execute(
@@ -2407,10 +2408,10 @@ def iniciar_cronometro_tarea_outlook(usuario_id: int, tarea_id: int, categoria_i
     finally:
         conn.close()
     if en_marcha:
-        raise ValueError("Esta tarea ya tiene el cronómetro en marcha.")
+        raise ValueError(gettext("Esta tarea ya tiene el cronómetro en marcha."))
     proyecto = categoria_id or tarea["categoria_id"]
     if proyecto is None:
-        raise ValueError("Elige un proyecto para registrar el tiempo de esta tarea.")
+        raise ValueError(gettext("Elige un proyecto para registrar el tiempo de esta tarea."))
     nuevo = _db.crear_tarea(usuario_id, tarea["asunto"], proyecto, "duracion", tarea_outlook_id=tarea_id)
     _db.registrar_actividad_tarea(usuario_id, tarea_id, "cronometro")
     if tarea["estado"] == "no_iniciada":

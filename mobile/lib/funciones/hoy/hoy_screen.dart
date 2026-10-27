@@ -16,6 +16,7 @@ import '../../nucleo/servicios.dart';
 import '../../nucleo/sesion.dart';
 import '../avisos/avisos_controlador.dart';
 import '../avisos/avisos_screen.dart';
+import '../avisos/comunicados.dart';
 import '../busqueda/busqueda_screen.dart';
 import '../pendientes/pendientes_sheet.dart';
 import 'hoy_controlador.dart';
@@ -49,9 +50,11 @@ class HoyScreen extends ConsumerWidget {
       ),
       body: Column(children: [
         const AvisoPendientes(),
+        const BannerComunicados(),
         Expanded(child: RefreshIndicator(
         onRefresh: () async {
           unawaited(ref.read(avisosProvider.notifier).refrescar()); // la insignia de la campana
+          ref.invalidate(comunicadosProvider);
           await ref.read(hoyProvider.notifier).refrescar();
         },
         child: estado == null

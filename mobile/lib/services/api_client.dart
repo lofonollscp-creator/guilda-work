@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../api/errores.dart';
 import '../models/models.dart';
 import 'session_service.dart';
+import '../api/textos_idioma.dart';
 
 // ApiException vive ahora en api/errores.dart (ampliada); se reexporta para que
 // las pantallas actuales sigan importándola desde aquí.
@@ -112,11 +113,11 @@ class ApiClient {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.connectionError) {
       return ApiException(
-        'No se ha podido conectar con el servidor. Comprueba la URL en Ajustes.',
+        textosEnIdioma(idioma).apiSinConexion,
         esDeConexion: true,
       );
     }
-    return ApiException('Error de red: ${e.message}', esDeConexion: true);
+    return ApiException(textosEnIdioma(idioma).apiErrorRed('${e.message}'), esDeConexion: true);
   }
 
   /// `codigo2fa`: el de la app de autenticación (o uno de recuperación) si la

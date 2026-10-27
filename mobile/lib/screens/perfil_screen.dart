@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../diseno/adaptable.dart';
 import 'package:flutter/material.dart';
 
 import '../diseno/componentes.dart';
@@ -143,7 +144,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(t.perfilTitulo)),
-      body: FutureBuilder<PerfilUsuario>(
+      body: AnchoMaximo(child: FutureBuilder<PerfilUsuario>(
         future: _perfil,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -235,7 +236,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ],
           );
         },
-      ),
+      )),
     );
   }
 }

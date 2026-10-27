@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../diseno/adaptable.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,6 @@ import '../l10n/app_localizations.dart';
 
 import '../models/models.dart';
 import '../services/api_client.dart';
-import '../widgets/app_button.dart';
 
 /// Redactar correo (equivalente móvil de app/templates/correo_redactar.html):
 /// cuerpo en texto plano (sin editor enriquecido), enviado como cuerpo_html
@@ -215,8 +215,20 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).correoRedactar)),
-      body: FutureBuilder<List<CuentaCorreo>>(
+      // Enviar y descartar en la barra: no hay que bajar hasta el final de un mensaje largo para encontrarlos.
+      appBar: AppBar(
+        leading: IconButton(icon: const Icon(Icons.close), tooltip: AppLocalizations.of(context).comunDescartar, onPressed: () => Navigator.pop(context)),
+        title: Text(AppLocalizations.of(context).correoRedactar),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: _enviando
+                ? const Padding(padding: EdgeInsets.all(14), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                : FilledButton.icon(onPressed: _enviar, icon: const Icon(Icons.send, size: 18), label: Text(AppLocalizations.of(context).comunEnviar)),
+          ),
+        ],
+      ),
+      body: AnchoMaximo(child: FutureBuilder<List<CuentaCorreo>>(
         future: _cuentas,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -313,23 +325,12 @@ class _CorreoComposeScreenState extends State<CorreoComposeScreen> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                BannerEstado(tipo: TipoBanner.error, texto: _error!),
               ],
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  AppButton(texto: AppLocalizations.of(context).comunEnviar, cargando: _enviando, onPressed: _enviar),
-                  const SizedBox(width: 12),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(AppLocalizations.of(context).comunDescartar),
-                  ),
-                ],
-              ),
             ],
           );
         },
-      ),
+      )),
     );
   }
 }

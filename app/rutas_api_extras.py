@@ -3,6 +3,7 @@ Misma capa fina sobre `db.py`/`correo.py`/`fichaje_export.py` que la web, con su
 from datetime import datetime
 
 from flask import Response, abort, g, request
+from flask_babel import gettext
 
 from . import correo, db, fichaje_export
 from .auth import token_required
@@ -15,7 +16,7 @@ from . import rutas_api_hoy  # noqa: F401 -- registra GET /hoy en api_bp
 def _nota_o_404(nota_id: int):
     nota = db.obtener_nota(g.usuario_id, nota_id)
     if nota is None:
-        abort(404, "Nota no encontrada.")
+        abort(404, gettext("Nota no encontrada."))
     return nota
 
 
@@ -35,7 +36,7 @@ def subir_adjuntos_nota(nota_id: int):
     _nota_o_404(nota_id)
     archivos = [f for f in request.files.getlist("adjunto") if f and f.filename]
     if not archivos:
-        return _err("Adjunta al menos un archivo en el campo «adjunto» (multipart).", 400, "sin_archivos", "adjunto")
+        return _err(gettext("Adjunta al menos un archivo en el campo «adjunto» (multipart)."), 400, "sin_archivos", "adjunto")
     resultados = []
     for f in archivos:
         try:
@@ -52,7 +53,7 @@ def descargar_adjunto_nota(adjunto_id: int):
     """Descarga el archivo (`?ver=1` lo muestra en línea si es una imagen)."""
     adjunto = db.obtener_adjunto_nota(g.usuario_id, adjunto_id)
     if adjunto is None:
-        abort(404, "Adjunto no encontrado.")
+        abort(404, gettext("Adjunto no encontrado."))
     en_linea = request.args.get("ver") == "1" and adjunto["tipo_mime"].startswith("image/")
     r = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
     r.headers["Content-Disposition"] = f'{"inline" if en_linea else "attachment"}; filename="{adjunto["nombre"].replace(chr(34), "")}"'
@@ -64,7 +65,7 @@ def descargar_adjunto_nota(adjunto_id: int):
 @token_required
 def eliminar_adjunto_nota(adjunto_id: int):
     if not db.eliminar_adjunto_nota(g.usuario_id, adjunto_id):
-        abort(404, "Adjunto no encontrado.")
+        abort(404, gettext("Adjunto no encontrado."))
     return _ok()
 
 
@@ -80,7 +81,7 @@ def estado_envio(envio_id: int):
     """Estado de un envío (`pendiente`, `enviado`, `cancelado`, `error`...)."""
     envio = db.obtener_envio_correo(g.usuario_id, envio_id)
     if envio is None:
-        abort(404, "Envío no encontrado.")
+        abort(404, gettext("Envío no encontrado."))
     return _ok(_envio_publico(envio))
 
 
@@ -91,9 +92,9 @@ def cancelar_envio(envio_id: int):
     como borrador en la web (devuelve `borrador_id`); si no, se descarta con sus adjuntos."""
     envio = db.obtener_envio_correo(g.usuario_id, envio_id)
     if envio is None:
-        abort(404, "Envío no encontrado.")
+        abort(404, gettext("Envío no encontrado."))
     if not db.cancelar_envio_correo(g.usuario_id, envio_id):
-        return _err("Ya no se puede cancelar: el correo ya se ha enviado o se está enviando.", 409, "envio_no_cancelable")
+        return _err(gettext("Ya no se puede cancelar: el correo ya se ha enviado o se está enviando."), 409, "envio_no_cancelable")
     borrador_id = correo.borrador_desde_envio(envio) if _body().get("como_borrador") else None
     db.cerrar_envio_correo(envio_id, "cancelado", borrar_adjuntos=True)
     return _ok({"cancelado": True, "borrador_id": borrador_id})
@@ -111,7 +112,7 @@ def variables_plantilla():
 def _plantilla_o_404(plantilla_id: int):
     p = correo.obtener_plantilla(g.usuario_id, plantilla_id)
     if p is None:
-        abort(404, "Plantilla no encontrada.")
+        abort(404, gettext("Plantilla no encontrada."))
     return p
 
 
@@ -181,19 +182,19 @@ def _tenant_admin() -> int:
     tenant_id = request.args.get("tenant_id", type=int) if g.es_admin else g.tenant_id
     if tenant_id is None:
         if g.es_admin:
-            abort(400, "Indica tenant_id: qué despacho quieres administrar.")
-        abort(403, "No eres gestor de fichajes de ningún despacho.")
+            abort(400, gettext("Indica tenant_id: qué despacho quieres administrar."))
+        abort(403, gettext("No eres gestor de fichajes de ningún despacho."))
     if not _puede_administrar(tenant_id):
-        abort(403, "No tienes permiso para administrar el fichaje de ese despacho.")
+        abort(403, gettext("No tienes permiso para administrar el fichaje de ese despacho."))
     if db.obtener_tenant(tenant_id) is None:
-        abort(404, "Despacho no encontrado.")
+        abort(404, gettext("Despacho no encontrado."))
     return tenant_id
 
 
 def _trabajador_administrable(usuario_id: int):
     t = db.obtener_usuario(usuario_id)
     if t is None or not _puede_administrar(t["tenant_id"]):
-        abort(404, "Trabajador no encontrado.")   # no se distingue «no existe» de «no es tuyo»
+        abort(404, gettext("Trabajador no encontrado."))   # no se distingue «no existe» de «no es tuyo»
     return t
 
 
@@ -227,11 +228,11 @@ def fichaje_admin_corregir(usuario_id: int):
     t = _trabajador_administrable(usuario_id)
     d = _body()
     if d.get("tipo") not in TIPOS_FICHAJE:
-        return _err(f"tipo debe ser uno de: {', '.join(TIPOS_FICHAJE)}.", 400, "tipo_invalido", "tipo")
+        return _err(gettext("tipo debe ser uno de: %(valores)s.", valores=", ".join(TIPOS_FICHAJE)), 400, "tipo_invalido", "tipo")
     try:
         marca = datetime.fromisoformat(str(d.get("marca_tiempo") or "")).isoformat(timespec="seconds")
     except ValueError:
-        return _err("marca_tiempo debe ser la fecha y hora real, YYYY-MM-DDTHH:MM.", 400, "marca_invalida", "marca_tiempo")
+        return _err(gettext("marca_tiempo debe ser la fecha y hora real, YYYY-MM-DDTHH:MM."), 400, "marca_invalida", "marca_tiempo")
     corrige_a = d.get("corrige_a") if isinstance(d.get("corrige_a"), int) and not isinstance(d.get("corrige_a"), bool) else None
     try:
         fichaje_id = db.fichar(
@@ -281,5 +282,5 @@ def fichaje_admin_json():
 def fichaje_admin_integridad():
     """Comprueba la cadena de hashes del registro horario y dice si está íntegra o en qué fila se rompió."""
     if not (g.es_admin or g.gestor_fichajes):
-        abort(403, "Solo gestores de fichajes y administradores.")
+        abort(403, gettext("Solo gestores de fichajes y administradores."))
     return _ok(db.verificar_integridad_fichajes())

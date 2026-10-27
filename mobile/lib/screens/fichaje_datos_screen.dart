@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -106,7 +107,7 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
     final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(t.fichajeDatosTitulo)),
-      body: _cargando
+      body: AnchoMaximo(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(16),
@@ -160,7 +161,7 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
                 const SizedBox(height: 24),
                 AppButton(texto: t.comunGuardar, cargando: _guardando, onPressed: _guardar),
               ],
-            ),
+            )),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
 import '../../api/fechas.dart';
+import '../../diseno/adaptable.dart';
 import '../../diseno/componentes.dart';
 import '../../diseno/formatos.dart';
 import '../../api/generado/modelos.g.dart';
@@ -14,8 +15,18 @@ import '../pendientes/pendientes_sheet.dart';
 import 'fila_tarea.dart';
 import 'tareas_lista_controlador.dart';
 import 'tareas_repositorio.dart';
+import 'tarea_detalle_screen.dart';
 import 'tareas_vistas.dart';
 import 'textos.dart';
+
+/// La tarea abierta en el panel de la derecha (solo en tableta; en el móvil la ficha es otra pantalla).
+class TareaAbierta extends Notifier<int?> {
+  @override
+  int? build() => null;
+  void abrir(int? id) => state = id;
+}
+
+final tareaAbiertaProvider = NotifierProvider<TareaAbierta, int?>(TareaAbierta.new);
 
 /// La lista de tareas: ámbitos (mías, asignadas, compartidas, todas), estado, búsqueda,
 /// paginación infinita y alta rápida con un campo al pie.
@@ -212,40 +223,56 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
     final controlador = ref.read(tareasListaProvider.notifier);
 
     final seleccion = estado.seleccion;
-    return Scaffold(
-      appBar: seleccion.isNotEmpty ? _barraSeleccion(t, seleccion) : AppBar(
-        title: _buscando
-            ? TextField(
-                controller: _buscar,
-                autofocus: true,
-                decoration: InputDecoration(hintText: t.tareasBuscar, border: InputBorder.none),
-                textInputAction: TextInputAction.search,
-                onSubmitted: controlador.buscar,
-              )
-            : Text(t.tareasTitulo),
-        actions: [
-          IconButton(
-            icon: Icon(_buscando ? Icons.close : Icons.search),
-            tooltip: t.tareasBuscar,
-            onPressed: () {
-              if (_buscando) {
-                _buscar.clear();
-                controlador.buscar('');
-              }
-              setState(() => _buscando = !_buscando);
-            },
-          ),
-        ],
-      ),
+    final ancha = esAncha(context);
+    final abierta = ref.watch(tareaAbiertaProvider);
+    final barra = seleccion.isNotEmpty
+        ? _barraSeleccion(t, seleccion)
+        : AppBar(
+            title: _buscando
+                ? TextField(
+                    controller: _buscar,
+                    autofocus: true,
+                    decoration: InputDecoration(hintText: t.tareasBuscar, border: InputBorder.none),
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: controlador.buscar,
+                  )
+                : Text(t.tareasTitulo),
+            actions: [
+              IconButton(
+                icon: Icon(_buscando ? Icons.close : Icons.search),
+                tooltip: t.tareasBuscar,
+                onPressed: () {
+                  if (_buscando) {
+                    _buscar.clear();
+                    controlador.buscar('');
+                  }
+                  setState(() => _buscando = !_buscando);
+                },
+              ),
+            ],
+          );
+    final lista = Scaffold(
+      appBar: barra,
       body: Column(children: [
         const AvisoDatosGuardados(prefijo: '/tareas-outlook'),
         const AvisoPendientes(),
         const SubnavTareas(),
         _Filtros(estado: estado),
-        Expanded(child: _Cuerpo(estado: estado, scroll: _scroll, alCompletar: _completar)),
+        Expanded(child: _Cuerpo(estado: estado, scroll: _scroll, alCompletar: _completar, abierta: ancha ? abierta : null, alAbrir: ancha ? ref.read(tareaAbiertaProvider.notifier).abrir : null)),
         _AltaRapida(controlador: _nueva, fecha: _fecha, alElegirFecha: _elegirFecha, alQuitarFecha: () => setState(() => _fecha = null), alEnviar: _crear),
       ]),
     );
+    if (!ancha) return lista;
+    // Tableta: la lista a la izquierda y la ficha de la tarea elegida a la derecha.
+    return Row(children: [
+      SizedBox(width: 400, child: lista),
+      VerticalDivider(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
+      Expanded(
+        child: abierta == null
+            ? Scaffold(body: EstadoVacio(icono: Icons.task_alt, titulo: t.tareasElegirUna))
+            : TareaDetalleScreen(key: ValueKey(abierta), tareaId: abierta),
+      ),
+    ]);
   }
 }
 
@@ -302,7 +329,9 @@ class _Cuerpo extends ConsumerWidget {
   final EstadoListaTareas estado;
   final ScrollController scroll;
   final Future<void> Function(TareaOutlook) alCompletar;
-  const _Cuerpo({required this.estado, required this.scroll, required this.alCompletar});
+  final int? abierta;
+  final void Function(int?)? alAbrir;
+  const _Cuerpo({required this.estado, required this.scroll, required this.alCompletar, this.abierta, this.alAbrir});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -341,6 +370,8 @@ class _Cuerpo extends ConsumerWidget {
             seleccionada: estado.seleccion.contains(tarea.id),
             enSeleccion: estado.seleccion.isNotEmpty,
             alSeleccionar: () => c.alternarSeleccion(tarea.id),
+            alAbrir: alAbrir,
+            abierta: abierta == tarea.id,
           );
         },
       ),
@@ -377,6 +408,7 @@ class _AltaRapida extends StatelessWidget {
                   isDense: true,
                   filled: true,
                   fillColor: tema.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  constraints: const BoxConstraints(minHeight: 48), // zona táctil mínima
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),

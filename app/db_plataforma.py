@@ -1661,6 +1661,18 @@ def marcar_notificaciones_leidas(usuario_id: int) -> None:
         conn.close()
 
 
+def marcar_notificacion_leida(usuario_id: int, notificacion_id: int) -> None:
+    conn = _db.get_connection()
+    try:
+        conn.execute(
+            "UPDATE notificaciones SET leido_en = ? WHERE id = ? AND usuario_id = ? AND leido_en IS NULL",
+            (_db.now_iso(), notificacion_id, usuario_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def eliminar_notificacion(usuario_id: int, notificacion_id: int) -> None:
     conn = _db.get_connection()
     try:
@@ -2435,7 +2447,7 @@ def papelera(usuario_id: int) -> list[dict]:
 
                 UNION ALL
 
-                SELECT 'nota' AS origen, n.id AS id, n.texto AS texto, NULL AS tipo,
+                SELECT 'nota' AS origen, n.id AS id, COALESCE(NULLIF(n.titulo, ''), n.texto) AS texto, NULL AS tipo,
                        c.nombre AS categoria_nombre, c.color AS categoria_color, n.papelera_en AS papelera_en
                 FROM notas n LEFT JOIN categorias c ON c.id = n.categoria_id
                 WHERE n.usuario_id = ? AND n.papelera_en IS NOT NULL

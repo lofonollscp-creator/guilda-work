@@ -163,11 +163,17 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(foregroundColor: primaryText, minimumSize: const Size(48, 48), textStyle: textTheme.labelLarge),
       ),
+      // Barra inferior: el destino activo lleva un tinte del acento (no un bloque sólido), icono y etiqueta con el color del texto y el resto atenuado; las etiquetas siempre
+      // visibles. Texto e icono mantienen el contraste del texto normal en los dos temas.
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor: primary,
-        iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(color: s.contains(WidgetState.selected) ? onAccent : textMuted)),
-        labelTextStyle: WidgetStateProperty.resolveWith((s) => textTheme.labelMedium?.copyWith(color: s.contains(WidgetState.selected) ? text : textMuted)),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        height: 68,
+        indicatorColor: Color.alphaBlend(primary.withValues(alpha: brightness == Brightness.dark ? 0.28 : 0.38), surface),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(size: 26, color: s.contains(WidgetState.selected) ? text : textMuted)),
+        labelTextStyle: WidgetStateProperty.resolveWith((s) => textTheme.labelMedium?.copyWith(color: s.contains(WidgetState.selected) ? text : textMuted, fontWeight: s.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500)),
       ),
       // Selección «tonal»: un tinte del acento con el texto de siempre, y borde del acento. Un lima sólido con texto claro (el de los chips antiguos en oscuro)
       // no se leía; así el contraste es el del texto normal sobre un fondo casi neutro, en los dos temas.
@@ -226,7 +232,12 @@ class AppTheme {
           (s) => s.contains(WidgetState.selected) ? primary.withValues(alpha: 0.5) : null,
         ),
       ),
+      // Sin sombra: en las capturas y en oscuro se veía como un aro negro alrededor del botón; el color del acento ya lo destaca.
       floatingActionButtonTheme: FloatingActionButtonThemeData(
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
         backgroundColor: primary,
         foregroundColor: onAccent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusLarge)),

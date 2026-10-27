@@ -516,7 +516,7 @@ PAGINAS = [
                 ["GET/DELETE", "/correo/seguimientos[/{id}]", "«Avísame si no responde» (<code>todos=1</code> incluye cerrados) / cancela."],
                 ["GET", "/correo/plantillas", "Plantillas de correo."],
                 ["GET", "/notificaciones", "Últimas (<code>limit</code>, máx. 100) y <code>no_leidas</code>."],
-                ["POST/DELETE", "/notificaciones/leidas, /notificaciones/{id}", "Marca todas como leídas / elimina una."],
+                ["POST/DELETE", "/notificaciones/leidas, /notificaciones/{id}/leida, /notificaciones/{id}", "Marca todas como leídas / marca una / elimina una."],
                 ["GET", "/buscar?q=", "Búsqueda en notas, tareas y correo (<code>limit</code> 1-20)."],
                 ["GET", "/ia/consumo", "Consultas de IA del mes del despacho y su tope (<code>ilimitado</code> si no hay)."],
                 ["GET", "/comunicados", "Avisos de Guilda vigentes para el usuario."],

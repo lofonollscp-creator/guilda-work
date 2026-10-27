@@ -5,6 +5,22 @@ Al subir `rutas_api.API_VERSION` hay que añadir aquí su entrada: un test lo ex
 
 # (versión | None, fecha, [(tipo, texto)]). Antes de la 1.3 la API no enviaba la cabecera: esas entradas llevan solo la fecha.
 HISTORIAL = [
+    ("1.10", "2026-10-27", [
+        ("Nuevo", "`/papelera/tarea_outlook/{id}/restaurar` y `.../eliminar-definitivamente`: las tareas de la lista también se recuperan o se eliminan para siempre desde la papelera."),
+        ("Mejora", "`GET /papelera` trae el título de las notas que lo tienen y describe todos sus campos. Restaurar o eliminar para siempre solo actúa sobre lo que está en tu papelera (`404` si no)."),
+        ("Compatibilidad", "Ningún campo ni ruta existente cambia."),
+    ]),
+    ("1.9", "2026-10-27", [
+        ("Nuevo", "Notas compartidas: `GET /notas/{id}/participantes`, `POST /notas/{id}/compartir` (`usuario_id`, `rol`) y `DELETE /notas/{id}/compartir/{usuario_id}`."),
+        ("Mejora", "Notas: `GET /notas?compartidas=incluir|solo` y `rol`, `n_participantes` y `n_adjuntos` en cada una; `GET /notas/{id}` también para quien la tiene compartida, "
+                   "con `participantes` y los asuntos vinculados; `POST`/`PUT /notas` aceptan `titulo`, `fijada` y `cliente_fiscal_id`, y un colaborador puede editar texto y título."),
+        ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
+    ]),
+    ("1.8", "2026-10-27", [
+        ("Nuevo", "`POST /notificaciones/{id}/leida`: marca como leída una sola notificación."),
+        ("Mejora", "`GET /buscar`: filtro `tipo`, hasta 40 resultados y los campos `titulo`, `fragmento` y `fecha`; sin el servicio de vectores busca por palabra clave en vez de no devolver nada."),
+        ("Compatibilidad", "Todo aditivo: ningún campo ni ruta existente cambia."),
+    ]),
     ("1.7", "2026-10-26", [
         ("Mejora", "`GET /mi-dia` y `GET /tareas-outlook/tablero` traen en cada tarea los mismos indicadores que la lista (`vencida`, `n_comentarios`, `checklist_hechas`, `checklist_total`, "
                    "`bloqueos`, `rol`, `asignada_nombre`, `creador_nombre`). `/mi-dia` documenta sus cinco secciones (`vencidas`, `hoy`, `en_progreso`, `asignadas`, `compartidas`)."),

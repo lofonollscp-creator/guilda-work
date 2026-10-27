@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Guilda Work'),
+        // El nombre ya va grande bajo el logotipo: la barra solo lleva los accesos (idioma y, en desarrollo, servidor).
         actions: [
           IconButton(
             icon: const Icon(Icons.language),
@@ -188,7 +188,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (_pide2fa) ..._pasoDosPasos(t) else ..._pasoCredenciales(t),
                     if (_error != null) ...[
                       const SizedBox(height: 12),
-                      Semantics(liveRegion: true, child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
+                      Semantics(
+                        liveRegion: true,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+                          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            ExcludeSemantics(child: Icon(Icons.error_outline, size: 20, color: Theme.of(context).colorScheme.error)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(_error!)),
+                          ]),
+                        ),
+                      ),
                     ],
                   ],
                 ),

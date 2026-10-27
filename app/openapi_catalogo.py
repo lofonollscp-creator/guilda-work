@@ -6,7 +6,12 @@ from __future__ import annotations
 
 # --- Entidades: componente -> (tabla, columnas que NUNCA se exponen, propiedades extra) ----------------------------------------
 TABLAS: dict[str, tuple[str, tuple[str, ...], dict]] = {
-    "Nota": ("notas", (), {"categoria_nombre": {"type": "string", "nullable": True}, "dueno_nombre": {"type": "string", "nullable": True}}),
+    "Nota": ("notas", (), {"categoria_nombre": {"type": "string", "nullable": True}, "dueno_nombre": {"type": "string", "nullable": True},
+                           "rol": {"type": "string", "enum": ["dueno", "colabora", "observa"], "description": "Tu papel en la nota."},
+                           "n_participantes": {"type": "integer", "description": "Con cuántas personas está compartida."}, "n_adjuntos": {"type": "integer"},
+                           "participantes": {"type": "array", "items": {"$ref": "#/components/schemas/ParticipanteNota"}, "description": "Solo en el detalle (`GET /notas/{id}`)."},
+                           "tarea_outlook_asunto": {"type": "string", "nullable": True}, "mensaje_correo_asunto": {"type": "string", "nullable": True},
+                           "categoria_color": {"type": "string", "nullable": True}, "cliente_fiscal_nombre": {"type": "string", "nullable": True}}),
     "TareaConDuracion": ("tareas", (), {}),
     "TareaOutlook": ("tareas_outlook", (), {"categoria_nombre": {"type": "string", "nullable": True}, "categoria_color": {"type": "string", "nullable": True}, "vencida": {"type": "boolean", "description": "Derivada: tiene fecha, ya pasó el día y no está completada (solo en las respuestas de transiciones y tareas de un cliente)."}, "clientes": {"type": "array", "items": {"$ref": "#/components/schemas/ClienteDeTarea"}}, "n_comentarios": {"type": "integer", "description": "Solo en lista, «Mi día» y tablero: comentarios de la tarea."}, "checklist_hechas": {"type": "integer", "description": "Solo en lista, «Mi día» y tablero: puntos de la checklist hechos."}, "checklist_total": {"type": "integer", "description": "Solo en lista, «Mi día» y tablero: puntos de la checklist."}, "asignada_nombre": {"type": "string", "nullable": True, "description": "Solo en lista y tablero: nombre de a quién está asignada."}, "creador_nombre": {"type": "string", "nullable": True, "description": "Solo en lista y tablero: nombre de quien la creó."}, "bloqueos": {"type": "integer", "description": "Solo en lista, «Mi día» y tablero: tareas previas sin completar de las que depende."}, "rol": {"type": "string", "nullable": True, "description": "Solo en la lista con ámbito distinto de `propias`: dueno, asignada o compartida."}}),
     "Proyecto": ("categorias", (), {}),
@@ -148,8 +153,10 @@ ESQUEMAS: dict[str, dict] = {
     "NotificacionesRespuesta": {"type": "object", "properties": {"no_leidas": {"type": "integer"}, "notificaciones": {"type": "array", "items": {"$ref": "#/components/schemas/Notificacion"}}}},
     "ResultadoBusqueda": {"type": "array", "items": {"type": "object", "properties": {
         "tipo": {"type": "string", "description": "`nota`, `tarea`, `mensaje`, `vencimiento_fiscal` o `cliente_fiscal`."}, "id": {"type": "string", "description": "Id en el índice: «tipo-N» (p. ej. `tarea-12`)."},
-        "texto": {"type": "string"}, "url": {"type": "string"}, "destino": {"$ref": "#/components/schemas/DestinoAviso"}}}},
+        "texto": {"type": "string"}, "url": {"type": "string"}, "destino": {"$ref": "#/components/schemas/DestinoAviso"},
+        "titulo": {"type": "string", "description": "Primera parte del texto, corta."}, "fragmento": {"type": "string", "description": "El resto del texto, recortado."}, "fecha": {"type": "string", "nullable": True}}}},
     "Documento": {"type": "string", "format": "binary"},
+    "ParticipanteNota": {"type": "object", "properties": {"usuario_id": {"type": "integer"}, "nombre": {"type": "string"}, "rol": {"type": "string", "enum": ["colabora", "observa"]}}},
     "Companero": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "email": {"type": "string"}}},
     "Vista": {"type": "object", "properties": {"id": {"type": "integer"}, "nombre": {"type": "string"}, "filtros": {"type": "object", "additionalProperties": {"type": "string"}},
               "compartida": {"type": "boolean"}, "mia": {"type": "boolean"}, "autor": {"type": "string"}}},
@@ -254,7 +261,7 @@ RESPUESTAS: dict[str, tuple[str, bool]] = {
     "enviar_correo": ("EnvioResultado", False), "consumo_ia": ("ConsumoIA", False), "listar_comunicados": ("Comunicado", True),
     "listar_notificaciones": ("NotificacionesRespuesta", False), "buscar": ("ResultadoBusqueda", False),
     "listar_proyectos": ("Proyecto", True), "crear_proyecto": ("Proyecto", False), "renombrar_proyecto": ("Proyecto", False),
-    "crear_categoria": ("Proyecto", False), "crear_tarea": ("TareaConDuracion", False), "crear_nota": ("Nota", False),
+    "crear_categoria": ("Proyecto", False), "listar_participantes_nota": ("ParticipanteNota", True), "compartir_nota_con": ("ParticipanteNota", True), "crear_tarea": ("TareaConDuracion", False), "crear_nota": ("Nota", False),
     "listar_tareas_cronometro": ("TareaConDuracion", True), "obtener_vencimiento": ("Vencimiento", False), "crear_vencimiento": ("Vencimiento", False),
     "estado_envio": ("EnvioCorreo", False), "listar_programados": ("EnvioCorreo", True), "listar_checklist": ("ChecklistItem", True),
     "listar_comentarios": ("ComentarioTarea", True), "listar_recordatorios": ("RecordatorioTarea", True), "listar_recurrentes": ("ReglaRecurrente", True),
@@ -308,7 +315,11 @@ ESQUEMAS["DestinoAviso"] = {"type": "object", "properties": {"tipo": {"type": "s
                             "description": "A dónde lleva el aviso en la app móvil. Igual que el `destino` del push (`data.destino`, JSON) y que el de `GET /hoy`."}
 ESQUEMAS["ConversacionesIA"] = {"type": "object", "properties": {"activa": {"type": "integer", "nullable": True, "description": "Id de la conversación activa (`null` si aún no hay ninguna)."},
                                   "conversaciones": {"type": "array", "items": {"$ref": "#/components/schemas/ConversacionIA"}}}}
-ESQUEMAS["Papelera"] = {"type": "object", "properties": {"origen": {"type": "string"}, "id": {"type": "integer"}, "texto": {"type": "string"}, "papelera_en": {"type": "string"}}}
+ESQUEMAS["Papelera"] = {"type": "object", "properties": {"origen": {"type": "string", "description": "`nota`, `tarea_outlook`, `tarea`, `menu` (proyecto), y en la papelera fiscal `cliente_fiscal` o `vencimiento_fiscal`."},
+                                                    "id": {"type": "integer"}, "texto": {"type": "string", "description": "Título de la nota si lo tiene; si no, su texto."}, "papelera_en": {"type": "string"},
+                                                    "tipo": {"type": "string", "nullable": True, "description": "De `tarea`: `duracion` o `instantanea` (evento)."},
+                                                    "categoria_nombre": {"type": "string", "nullable": True}, "categoria_color": {"type": "string", "nullable": True},
+                                                    "cliente_nombre": {"type": "string", "nullable": True, "description": "Solo en vencimientos fiscales."}}}
 
 # Operaciones que devuelven un fichero (no el sobre JSON): operación -> tipo MIME.
 BINARIAS: dict[str, str] = {
@@ -353,7 +364,7 @@ SIN_DATOS_ESPERADOS = {
     "logout", "eliminar_categoria", "eliminar_nota", "eliminar_tarea", "eliminar_tarea_outlook", "eliminar_proyecto", "eliminar_item_checklist", "alternar_item_checklist",
     "eliminar_comentario", "dejar_de_compartir", "quitar_dependencia", "eliminar_recordatorio", "posponer_recordatorio", "eliminar_vista", "eliminar_plantilla",
     "eliminar_plantilla_tareas", "eliminar_recurrente", "eliminar_regla_vencimiento", "borrar_webhook", "revocar_token", "eliminar_adjunto_nota", "eliminar_documento_cliente",
-    "eliminar_notificacion", "marcar_notificaciones_leidas", "cerrar_comunicado", "eliminar_vencimiento_fiscal", "eliminar_cliente_fiscal", "restaurar_papelera_fiscal",
+    "eliminar_notificacion", "dejar_de_compartir_nota", "marcar_notificaciones_leidas", "marcar_notificacion_leida", "cerrar_comunicado", "eliminar_vencimiento_fiscal", "eliminar_cliente_fiscal", "restaurar_papelera_fiscal",
     "eliminar_definitivamente_de_papelera", "restaurar_de_papelera", "reintentar_entrega", "cancelar_programado", "cancelar_seguimiento", "ocultar_onboarding",
     "eliminar_dispositivo_push", "registrar_dispositivo_push", "eliminar_cuenta_correo", "eliminar_mensaje_correo", "eliminar_categoria_correo", "eliminar_regla_categoria",
     "eliminar_remitente_confiable", "eliminar_atajo_ia", "eliminar_conversacion_ia", "activar_conversacion_ia", "renombrar_conversacion_ia", "vaciar_ia", "eliminar_avatar_api",

@@ -2,6 +2,7 @@
 
 Parte de la antigua `db.py`, dividida por dominios sin cambiar su comportamiento: todo lo que no está aquí (la conexión, las constantes y las funciones de otros
 dominios) se usa a través de `_db`, que sigue siendo el único espacio de nombres (`_db.nombre` funciona igual que antes y se puede parchear en los tests)."""
+from .textos import gettext
 import hashlib
 import json
 import time
@@ -41,7 +42,7 @@ def crear_nota(
         categoria_id = _db._categoria_id_propio(conn, usuario_id, categoria_id)
         ahora = _db.now_iso()
         if creada_en is not None and creada_en > ahora:
-            raise ValueError("La fecha de creación de la nota no puede ser futura.")
+            raise ValueError(gettext("La fecha de creación de la nota no puede ser futura."))
         cur = conn.execute(
             """INSERT INTO notas (usuario_id, texto, categoria_id, tarea_id, creada_en, cliente_uuid,
                                   titulo, fijada, cliente_fiscal_id, tarea_outlook_id, mensaje_correo_id)
@@ -342,9 +343,15 @@ def listar_notas(
         conn.close()
 
 
-def contar_notas(usuario_id: int, categoria_id: int | None = None, texto: str | None = None) -> int:
-    """Total de notas propias con esos filtros (para paginar en SQL sin traerlas todas)."""
-    cond, params = ["usuario_id = ?", "papelera_en IS NULL"], [usuario_id]
+def contar_notas(usuario_id: int, categoria_id: int | None = None, texto: str | None = None, incluir_compartidas: bool = False, solo_compartidas: bool = False) -> int:
+    """Total de notas con esos filtros (para paginar en SQL sin traerlas todas); los mismos que `listar_notas`."""
+    compartida = "id IN (SELECT nota_id FROM notas_participantes WHERE usuario_id = ?)"
+    if solo_compartidas:
+        cond, params = [compartida, "papelera_en IS NULL"], [usuario_id]
+    elif incluir_compartidas:
+        cond, params = [f"(usuario_id = ? OR {compartida})", "papelera_en IS NULL"], [usuario_id, usuario_id]
+    else:
+        cond, params = ["usuario_id = ?", "papelera_en IS NULL"], [usuario_id]
     if categoria_id is not None:
         cond.append("categoria_id = ?"); params.append(categoria_id)
     if texto:
@@ -362,19 +369,19 @@ def agregar_adjunto_nota(usuario_id: int, nota_id: int, nombre: str, tipo_mime: 
     para la persona usuaria si no procede (tipo, tamaño, límite, nota ajena)."""
     nombre = (nombre or "").replace("\\", "/").split("/")[-1].strip()[:200] or "adjunto"
     if tipo_mime not in _db.NOTAS_ADJUNTOS_MIME:
-        raise ValueError("Tipo de archivo no permitido: solo imágenes, PDF o texto.")
+        raise ValueError(gettext("Tipo de archivo no permitido: solo imágenes, PDF o texto."))
     if len(contenido) > _db.NOTAS_ADJUNTOS_TAMANO_MAXIMO:
-        raise ValueError("El archivo pesa demasiado (máximo 5 MB).")
+        raise ValueError(gettext("El archivo pesa demasiado (máximo 5 MB)."))
     if not contenido:
-        raise ValueError("El archivo está vacío.")
+        raise ValueError(gettext("El archivo está vacío."))
     conn = _db.get_connection()
     try:
         if conn.execute(
             "SELECT 1 FROM notas WHERE id = ? AND usuario_id = ? AND papelera_en IS NULL", (nota_id, usuario_id)
         ).fetchone() is None:
-            raise ValueError("La nota no existe.")
+            raise ValueError(gettext("La nota no existe."))
         if conn.execute("SELECT COUNT(*) FROM notas_adjuntos WHERE nota_id = ?", (nota_id,)).fetchone()[0] >= _db.NOTAS_ADJUNTOS_MAXIMO_POR_NOTA:
-            raise ValueError(f"Una nota admite como máximo {_db.NOTAS_ADJUNTOS_MAXIMO_POR_NOTA} adjuntos.")
+            raise ValueError(gettext("Una nota admite como máximo %(n)s adjuntos.", n=_db.NOTAS_ADJUNTOS_MAXIMO_POR_NOTA))
         cur = conn.execute(
             "INSERT INTO notas_adjuntos (nota_id, nombre, tipo_mime, tamano, contenido, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
             (nota_id, nombre, tipo_mime, len(contenido), contenido, _db.now_iso()),

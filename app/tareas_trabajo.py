@@ -9,6 +9,7 @@
 - **Vencida** es siempre derivada (`esta_vencida`), nunca un estado guardado."""
 from __future__ import annotations
 
+from .textos import gettext, lazy_gettext
 import sqlite3
 from datetime import date, datetime, timedelta
 
@@ -18,8 +19,8 @@ from . import antivirus, auditoria, db
 
 ESTADOS = ("no_iniciada", "en_progreso", "completada", "esperando", "aplazada", "en_revision")
 ESTADOS_CERRADOS = ("completada",)
-MENSAJE_EN_REVISION = "La tarea está en revisión: resuélvela o retira la petición antes de cambiar su estado."
-MENSAJE_SOLO_POR_REVISION = "El estado «en revisión» se pone pidiendo la revisión de la tarea, no a mano."
+MENSAJE_EN_REVISION = lazy_gettext("La tarea está en revisión: resuélvela o retira la petición antes de cambiar su estado.")
+MENSAJE_SOLO_POR_REVISION = lazy_gettext("El estado «en revisión» se pone pidiendo la revisión de la tarea, no a mano.")
 MAX_CLIENTES_POR_TAREA = 50
 
 ESQUEMA = """
@@ -277,26 +278,26 @@ def transicionar(usuario_id: int, tarea_id: int, estado: str, motivo: str | None
     """Cambia el estado con las reglas de siempre (permisos, dependencias, completar con cronómetros) más: «esperando» exige un motivo, que se guarda; al salir de
     «esperando» el motivo se borra; y si se manda `version`, solo vale si nadie ha tocado la tarea."""
     if estado not in ESTADOS:
-        raise TransicionInvalida("estado_invalido", "El estado no es válido.", "estado")
+        raise TransicionInvalida("estado_invalido", gettext("El estado no es válido."), "estado")
     actual = db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
     if actual is None:
-        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+        raise TransicionInvalida("no_encontrada", gettext("Tarea no encontrada."))
     if estado == "en_revision" and actual["estado"] != "en_revision":
         raise TransicionInvalida("solo_por_revision", MENSAJE_SOLO_POR_REVISION, "estado")
     if actual["estado"] == "en_revision" and estado not in ("en_revision", "completada"):          # completar tiene su propio aviso (comprobar_completable: revisión pendiente)
         raise TransicionInvalida("revision_pendiente", MENSAJE_EN_REVISION, "estado")
     if not db.puede_trabajar_tarea(usuario_id, tarea_id):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para hacer esto con esta tarea.")
+        raise TransicionInvalida("sin_permiso", gettext("No tienes permiso para hacer esto con esta tarea."))
     motivo = (motivo or "").strip()[:500]
     if estado == "esperando" and not motivo:
-        raise TransicionInvalida("motivo_obligatorio", "Indica por qué la tarea queda bloqueada.", "motivo")
+        raise TransicionInvalida("motivo_obligatorio", gettext("Indica por qué la tarea queda bloqueada."), "motivo")
     if estado in ("en_progreso", "completada") and db.tarea_bloqueada(tarea_id):
-        raise TransicionInvalida("tarea_bloqueada", "Esta tarea espera a otras que todavía no están completadas.")
+        raise TransicionInvalida("tarea_bloqueada", gettext("Esta tarea espera a otras que todavía no están completadas."))
     if estado == "completada":
         comprobar_completable(tarea_id)
     reclamar_version(tarea_id, version)
     if not db.cambiar_estado_tarea_outlook(usuario_id, tarea_id, estado):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para hacer esto con esta tarea.")
+        raise TransicionInvalida("sin_permiso", gettext("No tienes permiso para hacer esto con esta tarea."))
     conn = db.get_connection()
     try:
         conn.execute("UPDATE tareas_outlook SET motivo_bloqueo = ? WHERE id = ?", (motivo if estado == "esperando" else None, tarea_id))
@@ -349,20 +350,20 @@ def validar_clientes(usuario_id: int, cliente_ids: list, principal_id: int | Non
         try:
             i = int(bruto)
         except (TypeError, ValueError):
-            raise TransicionInvalida("cliente_invalido", "Hay un cliente que no es válido.", "cliente_ids") from None
+            raise TransicionInvalida("cliente_invalido", gettext("Hay un cliente que no es válido."), "cliente_ids") from None
         if i not in ids:
             ids.append(i)
     if len(ids) > MAX_CLIENTES_POR_TAREA:
         raise TransicionInvalida("demasiados_clientes", f"Una tarea admite hasta {MAX_CLIENTES_POR_TAREA} clientes.", "cliente_ids")
     if principal_id is not None and int(principal_id) not in ids:
-        raise TransicionInvalida("principal_invalido", "El cliente principal tiene que estar entre los vinculados.", "principal_id")
+        raise TransicionInvalida("principal_invalido", gettext("El cliente principal tiene que estar entre los vinculados."), "principal_id")
     principal = int(principal_id) if principal_id is not None else (ids[0] if ids else None)
     conn = db.get_connection()
     try:
         tenant = _tenant_de_usuario(conn, usuario_id)
         for i in ids:
             if tenant is None or conn.execute("SELECT 1 FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (i, tenant)).fetchone() is None:
-                raise TransicionInvalida("cliente_invalido", "Uno de los clientes no existe o no es de tu despacho.", "cliente_ids")
+                raise TransicionInvalida("cliente_invalido", gettext("Uno de los clientes no existe o no es de tu despacho."), "cliente_ids")
     finally:
         conn.close()
     return ids, principal, tenant
@@ -372,7 +373,7 @@ def fijar_clientes(usuario_id: int, tarea_id: int, cliente_ids: list[int], princ
     """Sustituye los clientes de la tarea. Reglas: quien edita la tarea; todos los clientes del mismo despacho que la persona (los demás se rechazan, no se ignoran);
     sin repetidos; un solo principal (el indicado o, si no, el primero); `tareas_outlook.cliente_fiscal_id` queda igual al principal. Lista vacía = tarea sin cliente."""
     if not db.puede_editar_tarea(usuario_id, tarea_id):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para cambiar los clientes de esta tarea.")
+        raise TransicionInvalida("sin_permiso", gettext("No tienes permiso para cambiar los clientes de esta tarea."))
     ids, principal, tenant = validar_clientes(usuario_id, cliente_ids, principal_id)
     reclamar_version(tarea_id, version)
     conn = db.get_connection()
@@ -405,7 +406,7 @@ def contadores_de_cliente(tareas: list, hoy: date | None = None) -> dict:
 #   - si se reabre una subtarea de un padre ya completado, el padre vuelve a «en progreso» (no puede estar completo con trabajo abierto);
 #   - mandar el padre a la papelera manda con él las subtareas, y restaurarlo restaura las que se fueron con él.
 
-MENSAJE_SUBTAREAS = "Esta tarea tiene subtareas sin completar."
+MENSAJE_SUBTAREAS = lazy_gettext("Esta tarea tiene subtareas sin completar.")
 
 
 def subtareas_de(tarea_id: int) -> list[dict]:
@@ -444,16 +445,16 @@ def crear_subtarea(usuario_id: int, padre_id: int, asunto: str, fecha_vencimient
     """Quien puede editar la tarea padre añade subtareas. Hereda el cliente principal y el proyecto del padre. Solo un nivel; no sobre una tarea completada."""
     padre = db.obtener_tarea_outlook_visible(usuario_id, padre_id)
     if padre is None:
-        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+        raise TransicionInvalida("no_encontrada", gettext("Tarea no encontrada."))
     if not db.puede_editar_tarea(usuario_id, padre_id):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para añadir subtareas a esta tarea.")
+        raise TransicionInvalida("sin_permiso", gettext("No tienes permiso para añadir subtareas a esta tarea."))
     asunto = (asunto or "").strip()[:300]
     if not asunto:
-        raise TransicionInvalida("asunto_vacio", "El asunto no puede estar vacío.", "asunto")
+        raise TransicionInvalida("asunto_vacio", gettext("El asunto no puede estar vacío."), "asunto")
     if padre["tarea_padre_id"] is not None:
-        raise TransicionInvalida("subtarea_de_subtarea", "Una subtarea no puede tener subtareas: solo se permite un nivel.")
+        raise TransicionInvalida("subtarea_de_subtarea", gettext("Una subtarea no puede tener subtareas: solo se permite un nivel."))
     if padre["estado"] == "completada":
-        raise TransicionInvalida("padre_completada", "Reabre la tarea antes de añadirle subtareas.")
+        raise TransicionInvalida("padre_completada", gettext("Reabre la tarea antes de añadirle subtareas."))
     nueva = db.crear_tarea_outlook(usuario_id, asunto=asunto, fecha_vencimiento=fecha_vencimiento or None, cliente_fiscal_id=padre["cliente_fiscal_id"],
                                    categoria_id=padre["categoria_id"])
     conn = db.get_connection()
@@ -468,7 +469,7 @@ def crear_subtarea(usuario_id: int, padre_id: int, asunto: str, fecha_vencimient
     return nueva
 
 
-MENSAJE_REVISION = "Esta tarea tiene una revisión pendiente: primero tiene que resolverla quien revisa."
+MENSAJE_REVISION = lazy_gettext("Esta tarea tiene una revisión pendiente: primero tiene que resolverla quien revisa.")
 
 
 def impedimento_de_cierre(tarea_id: int) -> tuple[str, str] | None:
@@ -530,25 +531,25 @@ def subir_adjunto(usuario_id: int, tarea_id: int, nombre: str, contenido: bytes)
     """Quien trabaja la tarea (dueño, asignado o colaborador) adjunta archivos. Devuelve el id; lanza TransicionInvalida con un código estable si no se puede."""
     import hashlib
     if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
-        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+        raise TransicionInvalida("no_encontrada", gettext("Tarea no encontrada."))
     if not db.puede_trabajar_tarea(usuario_id, tarea_id):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para adjuntar archivos a esta tarea.")
+        raise TransicionInvalida("sin_permiso", gettext("No tienes permiso para adjuntar archivos a esta tarea."))
     nombre = db._nombre_de_archivo_seguro(nombre or "")[:150]
     ext = _extension(nombre)
     if ext not in TIPOS_ADJUNTO:
-        raise TransicionInvalida("tipo_no_admitido", "Tipo de archivo no admitido (PDF, imágenes, texto, CSV y documentos de Office o LibreOffice).", "adjunto")
+        raise TransicionInvalida("tipo_no_admitido", gettext("Tipo de archivo no admitido (PDF, imágenes, texto, CSV y documentos de Office o LibreOffice)."), "adjunto")
     if not contenido:
-        raise TransicionInvalida("archivo_vacio", "El archivo está vacío.", "adjunto")
+        raise TransicionInvalida("archivo_vacio", gettext("El archivo está vacío."), "adjunto")
     if len(contenido) > MAX_ADJUNTO_BYTES:
         raise TransicionInvalida("archivo_grande", f"El archivo supera los {MAX_ADJUNTO_BYTES // (1024 * 1024)} MB.", "adjunto")
     from . import certificados
     if certificados.contiene_clave_privada(contenido):
-        raise TransicionInvalida("clave_privada", "Los certificados con clave privada no se adjuntan nunca.", "adjunto")
+        raise TransicionInvalida("clave_privada", gettext("Los certificados con clave privada no se adjuntan nunca."), "adjunto")
     huella = hashlib.sha256(contenido).hexdigest()
     conn = db.get_connection()
     try:
         if conn.execute("SELECT 1 FROM tarea_adjuntos WHERE tarea_id = ? AND hash_sha256 = ? AND papelera_en IS NULL", (tarea_id, huella)).fetchone():
-            raise TransicionInvalida("duplicado", "Ese archivo ya está adjunto a la tarea.", "adjunto")
+            raise TransicionInvalida("duplicado", gettext("Ese archivo ya está adjunto a la tarea."), "adjunto")
         if conn.execute("SELECT COUNT(*) FROM tarea_adjuntos WHERE tarea_id = ? AND papelera_en IS NULL", (tarea_id,)).fetchone()[0] >= MAX_ADJUNTOS_POR_TAREA:
             raise TransicionInvalida("limite", f"Una tarea admite hasta {MAX_ADJUNTOS_POR_TAREA} archivos.", "adjunto")
         cur = conn.execute(
@@ -687,18 +688,18 @@ def _avisar(usuario_id: int, titulo: str, cuerpo: str, tarea_id: int) -> None:
 
 def _lista_de_revisores(revisores) -> list[int]:
     if revisores in (None, ""):
-        raise TransicionInvalida("revisor_invalido", "Elige a quien la revisa.", "revisor_ids")
+        raise TransicionInvalida("revisor_invalido", gettext("Elige a quien la revisa."), "revisor_ids")
     bruto = list(revisores) if isinstance(revisores, (list, tuple, set)) else [revisores]
     ids: list[int] = []
     for x in bruto:
         try:
             i = int(x)
         except (TypeError, ValueError):
-            raise TransicionInvalida("revisor_invalido", "Elige a quien la revisa.", "revisor_ids") from None
+            raise TransicionInvalida("revisor_invalido", gettext("Elige a quien la revisa."), "revisor_ids") from None
         if i not in ids:
             ids.append(i)
     if not ids:
-        raise TransicionInvalida("revisor_invalido", "Elige a quien la revisa.", "revisor_ids")
+        raise TransicionInvalida("revisor_invalido", gettext("Elige a quien la revisa."), "revisor_ids")
     if len(ids) > MAX_REVISORES:
         raise TransicionInvalida("demasiados_revisores", f"Una revisión admite hasta {MAX_REVISORES} revisores.", "revisor_ids")
     return ids
@@ -708,28 +709,28 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
     """`revisores`: una persona (un entero, como siempre) o una lista de hasta cinco. `modo`: «todos», «cualquiera» o «cadena» (uno tras otro, en el orden de la lista)."""
     tarea = db.obtener_tarea_outlook_visible(usuario_id, tarea_id)
     if tarea is None:
-        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+        raise TransicionInvalida("no_encontrada", gettext("Tarea no encontrada."))
     if not db.puede_trabajar_tarea(usuario_id, tarea_id):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para pedir la revisión de esta tarea.")
+        raise TransicionInvalida("sin_permiso", gettext("No tienes permiso para pedir la revisión de esta tarea."))
     if tarea["estado"] == "completada":
-        raise TransicionInvalida("tarea_completada", "La tarea ya está completada.")
+        raise TransicionInvalida("tarea_completada", gettext("La tarea ya está completada."))
     if (modo or "todos") not in MODOS_REVISION:
-        raise TransicionInvalida("modo_invalido", "El modo tiene que ser «todos», «cualquiera» o «cadena».", "modo")
+        raise TransicionInvalida("modo_invalido", gettext("El modo tiene que ser «todos», «cualquiera» o «cadena»."), "modo")
     modo = modo or "todos"
     ids = _lista_de_revisores(revisores)
     if usuario_id in ids:
-        raise TransicionInvalida("revisor_invalido", "La revisión tiene que hacerla otra persona.", "revisor_ids")
+        raise TransicionInvalida("revisor_invalido", gettext("La revisión tiene que hacerla otra persona."), "revisor_ids")
     conn = db.get_connection()
     try:
         tenant = _tenant_de_usuario(conn, usuario_id)
         for r in ids:
             if tenant is None or conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (r, tenant)).fetchone() is None:
-                raise TransicionInvalida("revisor_invalido", "Quien revisa tiene que ser de tu despacho.", "revisor_ids")
+                raise TransicionInvalida("revisor_invalido", gettext("Quien revisa tiene que ser de tu despacho."), "revisor_ids")
         try:
             cur = conn.execute("INSERT INTO tarea_revisiones (tenant_id, tarea_id, solicitada_por, revisor_id, nota_solicitud, solicitada_en, modo) VALUES (?, ?, ?, ?, ?, ?, ?)",
                                (tenant, tarea_id, usuario_id, ids[0], (nota or "").strip()[:500] or None, db.now_iso(), modo))
         except ErrorIntegridad:
-            raise TransicionInvalida("revision_pendiente", "Esta tarea ya tiene una revisión pendiente.") from None
+            raise TransicionInvalida("revision_pendiente", gettext("Esta tarea ya tiene una revisión pendiente.")) from None
         revision_id = cur.lastrowid
         previo = tarea["estado"]
         conn.execute("UPDATE tarea_revisiones SET estado_previo = ? WHERE id = ?", (previo, revision_id))
@@ -752,17 +753,17 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
 def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str | None = None) -> dict:
     """El voto de un revisor. Devuelve la revisión: si ese voto la cierra, con su estado final; si faltan votos, sigue `pendiente` con quién falta."""
     if decision not in DECISIONES:
-        raise TransicionInvalida("decision_invalida", "La decisión tiene que ser aprobar o pedir cambios.", "decision")
+        raise TransicionInvalida("decision_invalida", gettext("La decisión tiene que ser aprobar o pedir cambios."), "decision")
     nota = (nota or "").strip()[:500]
     if decision == "cambios" and not nota:
-        raise TransicionInvalida("nota_obligatoria", "Explica qué hay que cambiar.", "nota")
+        raise TransicionInvalida("nota_obligatoria", gettext("Explica qué hay que cambiar."), "nota")
     rev = revision_pendiente(tarea_id)
     if rev is None or db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
-        raise TransicionInvalida("no_encontrada", "No hay ninguna revisión pendiente en esta tarea.")
+        raise TransicionInvalida("no_encontrada", gettext("No hay ninguna revisión pendiente en esta tarea."))
     if usuario_id not in rev["revisores"]:
-        raise TransicionInvalida("sin_permiso", "Solo puede resolverla la persona designada para revisar.")
+        raise TransicionInvalida("sin_permiso", gettext("Solo puede resolverla la persona designada para revisar."))
     if usuario_id not in rev["pendientes"]:
-        raise TransicionInvalida("ya_has_votado", "Ya has votado en esta revisión.")
+        raise TransicionInvalida("ya_has_votado", gettext("Ya has votado en esta revisión."))
     if usuario_id not in rev["pueden_votar"]:
         raise TransicionInvalida("no_es_tu_turno", f"Todavía no es tu turno: revisa antes {db.nombre_mostrado_usuario(rev['turno']) or 'la persona anterior'}.")
     voto = "aprobado" if decision == "aprobar" else "cambios"
@@ -773,7 +774,7 @@ def resolver_revision(usuario_id: int, tarea_id: int, decision: str, nota: str |
         cur = conn.execute("UPDATE tarea_revision_votos SET estado = ?, nota = ?, votado_en = ? WHERE revision_id = ? AND revisor_id = ? AND estado = 'pendiente'",
                            (voto, nota or None, db.now_iso(), rev["id"], usuario_id))
         if cur.rowcount == 0:                                  # otra petición se adelantó
-            raise TransicionInvalida("ya_has_votado", "Ya has votado en esta revisión.")
+            raise TransicionInvalida("ya_has_votado", gettext("Ya has votado en esta revisión."))
         restantes = conn.execute("SELECT COUNT(*) FROM tarea_revision_votos WHERE revision_id = ? AND estado = 'pendiente'", (rev["id"],)).fetchone()[0]
         final = None
         if decision == "cambios":
@@ -868,13 +869,13 @@ class ComentarioInvalido(Exception):
 def fijar_visible_cliente(usuario_id: int, tarea_id: int, visible: bool, comentarios: bool | None = None) -> None:
     """`visible`: enseñar la tarea al cliente. `comentarios`: dejar que además escriba en ella (solo con `visible`; si se deja de enseñar, se apaga también). None = no cambia."""
     if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
-        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+        raise TransicionInvalida("no_encontrada", gettext("Tarea no encontrada."))
     if not db.puede_editar_tarea(usuario_id, tarea_id):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para cambiar lo que ve el cliente.")
+        raise TransicionInvalida("sin_permiso", gettext("No tienes permiso para cambiar lo que ve el cliente."))
     if visible and not clientes_de_tarea(tarea_id):
-        raise TransicionInvalida("sin_cliente", "La tarea no está vinculada a ningún cliente.")
+        raise TransicionInvalida("sin_cliente", gettext("La tarea no está vinculada a ningún cliente."))
     if comentarios and not visible:
-        raise TransicionInvalida("comentarios_sin_visible", "Para que el cliente pueda comentar, primero hay que enseñarle la tarea.")
+        raise TransicionInvalida("comentarios_sin_visible", gettext("Para que el cliente pueda comentar, primero hay que enseñarle la tarea."))
     if not visible:
         comentarios = False
     conn = db.get_connection()
@@ -957,13 +958,13 @@ def _validar_adjuntos_cliente(archivos, tenant_id: int | None = None, cliente_fi
         nombre = db._nombre_de_archivo_seguro(nombre or "")[:150]
         ext = _extension(nombre)
         if ext not in TIPOS_ADJUNTO_CLIENTE:
-            raise ComentarioInvalido("tipo_no_admitido", "Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF).")
+            raise ComentarioInvalido("tipo_no_admitido", gettext("Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF)."))
         if not contenido:
-            raise ComentarioInvalido("archivo_vacio", "Uno de los archivos está vacío.")
+            raise ComentarioInvalido("archivo_vacio", gettext("Uno de los archivos está vacío."))
         if len(contenido) > MAX_ADJUNTO_CLIENTE_BYTES:
             raise ComentarioInvalido("archivo_grande", f"Cada archivo puede pesar como máximo {MAX_ADJUNTO_CLIENTE_BYTES // (1024 * 1024)} MB.")
         if not _firma_valida(ext, contenido) or certificados.contiene_clave_privada(contenido):
-            raise ComentarioInvalido("tipo_no_admitido", "Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF).")
+            raise ComentarioInvalido("tipo_no_admitido", gettext("Solo se admiten PDF e imágenes (PNG, JPG, WEBP o GIF)."))
         huella = hashlib.sha256(contenido).hexdigest()
         if huella in vistos:
             continue
@@ -981,7 +982,7 @@ def comentar_como_cliente(tenant_id: int, cliente_fiscal_id: int, tarea_id: int,
     Devuelve {"id", "tarea", "destinatarios", "adjuntos"} (a quién avisar). Lanza ComentarioInvalido con un código estable."""
     texto = (texto or "").strip()
     if not texto:
-        raise ComentarioInvalido("vacio", "Escribe algo antes de enviar.")
+        raise ComentarioInvalido("vacio", gettext("Escribe algo antes de enviar."))
     if len(texto) > MAX_CARACTERES_COMENTARIO:
         raise ComentarioInvalido("largo", f"El comentario admite como máximo {MAX_CARACTERES_COMENTARIO} caracteres.")
     texto = "".join(c for c in texto if c == "\n" or c >= " ")                       # fuera caracteres de control
@@ -992,20 +993,20 @@ def comentar_como_cliente(tenant_id: int, cliente_fiscal_id: int, tarea_id: int,
             f"""SELECT t.id, t.asunto, t.estado, t.comentarios_cliente, t.usuario_id, t.asignada_a FROM tareas_outlook t JOIN usuarios u ON u.id = t.usuario_id
                 WHERE t.id = ? AND {_VISIBLE_PARA_CLIENTE}""", (tarea_id, tenant_id, cliente_fiscal_id, cliente_fiscal_id, tenant_id)).fetchone()
         if t is None or not t["comentarios_cliente"]:
-            raise ComentarioInvalido("no_encontrada", "No se puede comentar en esta tarea.")
+            raise ComentarioInvalido("no_encontrada", gettext("No se puede comentar en esta tarea."))
         if t["estado"] == "completada":
-            raise ComentarioInvalido("cerrada", "Esta tarea ya está completada.")
+            raise ComentarioInvalido("cerrada", gettext("Esta tarea ya está completada."))
         ahora = datetime.now()
         hace_una_hora = (ahora - timedelta(hours=1)).isoformat(timespec="seconds")
         hace_un_dia = (ahora - timedelta(days=1)).isoformat(timespec="seconds")
         if conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente WHERE tarea_id = ? AND cliente_fiscal_id = ? AND autor = 'cliente' AND creado_en >= ?", (tarea_id, cliente_fiscal_id, hace_una_hora)).fetchone()[0] >= MAX_COMENTARIOS_POR_HORA_Y_TAREA \
                 or conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente WHERE cliente_fiscal_id = ? AND autor = 'cliente' AND creado_en >= ?", (cliente_fiscal_id, hace_un_dia)).fetchone()[0] >= MAX_COMENTARIOS_POR_DIA:
-            raise ComentarioInvalido("limite", "Has enviado muchos comentarios seguidos. Espera un rato y vuelve a intentarlo.")
+            raise ComentarioInvalido("limite", gettext("Has enviado muchos comentarios seguidos. Espera un rato y vuelve a intentarlo."))
         if adjuntos:
             if conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente_adjuntos WHERE tarea_id = ? AND cliente_fiscal_id = ?", (tarea_id, cliente_fiscal_id)).fetchone()[0] + len(adjuntos) > MAX_ADJUNTOS_CLIENTE_POR_TAREA:
                 raise ComentarioInvalido("limite_archivos", f"Esta tarea ya tiene muchos archivos tuyos (máximo {MAX_ADJUNTOS_CLIENTE_POR_TAREA}).")
             if conn.execute("SELECT COUNT(*) FROM tarea_comentarios_cliente_adjuntos WHERE cliente_fiscal_id = ? AND creado_en >= ?", (cliente_fiscal_id, hace_un_dia)).fetchone()[0] + len(adjuntos) > MAX_ADJUNTOS_CLIENTE_POR_DIA:
-                raise ComentarioInvalido("limite_archivos", "Has subido muchos archivos hoy. Vuelve a intentarlo mañana.")
+                raise ComentarioInvalido("limite_archivos", gettext("Has subido muchos archivos hoy. Vuelve a intentarlo mañana."))
         cur = conn.execute("INSERT INTO tarea_comentarios_cliente (tenant_id, tarea_id, cliente_fiscal_id, autor, texto, creado_en) VALUES (?, ?, ?, 'cliente', ?, ?)",
                            (tenant_id, tarea_id, cliente_fiscal_id, texto, ahora.isoformat(timespec="seconds")))
         import hashlib
@@ -1103,16 +1104,16 @@ def sin_leer_de_clientes(tarea_id: int) -> int:
 def responder_al_cliente(usuario_id: int, tarea_id: int, cliente_fiscal_id: int, texto: str) -> dict:
     """El equipo contesta a un cliente en la conversación de esa tarea. Quien trabaja la tarea; el cliente tiene que estar vinculado a ella. Devuelve {"id", "cliente_fiscal_id"}."""
     if db.obtener_tarea_outlook_visible(usuario_id, tarea_id) is None:
-        raise TransicionInvalida("no_encontrada", "Tarea no encontrada.")
+        raise TransicionInvalida("no_encontrada", gettext("Tarea no encontrada."))
     if not db.puede_trabajar_tarea(usuario_id, tarea_id):
-        raise TransicionInvalida("sin_permiso", "No tienes permiso para contestar al cliente en esta tarea.")
+        raise TransicionInvalida("sin_permiso", gettext("No tienes permiso para contestar al cliente en esta tarea."))
     texto = (texto or "").strip()
     if not texto:
-        raise TransicionInvalida("vacio", "Escribe la respuesta.", "texto")
+        raise TransicionInvalida("vacio", gettext("Escribe la respuesta."), "texto")
     if len(texto) > MAX_CARACTERES_COMENTARIO:
         raise TransicionInvalida("largo", f"La respuesta admite como máximo {MAX_CARACTERES_COMENTARIO} caracteres.", "texto")
     if int(cliente_fiscal_id or 0) not in {c["id"] for c in clientes_de_tarea(tarea_id)}:
-        raise TransicionInvalida("cliente_invalido", "Ese cliente no está vinculado a la tarea.", "cliente_fiscal_id")
+        raise TransicionInvalida("cliente_invalido", gettext("Ese cliente no está vinculado a la tarea."), "cliente_fiscal_id")
     conn = db.get_connection()
     try:
         tenant = _tenant_de_usuario(conn, usuario_id)

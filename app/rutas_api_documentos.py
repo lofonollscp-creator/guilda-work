@@ -4,6 +4,7 @@ tenga concesión (ver app/cifrado_despacho.py); si no, responde 423 `despacho_bl
 from __future__ import annotations
 
 from flask import g, request
+from flask_babel import gettext
 
 from . import almacen_documentos, cifrado_despacho
 from .auth import token_required
@@ -20,7 +21,7 @@ def listar_documentos():
         return error
     cliente_id, expediente_id = request.args.get("cliente_id", type=int), request.args.get("expediente_id", type=int)
     if cliente_id is None and expediente_id is None:
-        return _err("Indica cliente_id o expediente_id.", 400, "peticion_invalida")
+        return _err(gettext("Indica cliente_id o expediente_id."), 400, "peticion_invalida")
     e = cifrado_despacho.estado(g.tenant_id)
     disponible = not e["activo"] or e["desbloqueado"] or cifrado_despacho.tiene_concesion(g.tenant_id)
     docs = almacen_documentos.listar(g.tenant_id, g.usuario_id, cliente_id=cliente_id, expediente_id=expediente_id, limite=200)
@@ -37,5 +38,5 @@ def descargar_documento(documento_id: int):
         return error
     d = almacen_documentos.leer(g.tenant_id, g.usuario_id, documento_id)         # DespachoBloqueado -> 423 (manejador global)
     if d is None:
-        return _err("Documento no encontrado.", 404, "no_encontrado")
+        return _err(gettext("Documento no encontrado."), 404, "no_encontrado")
     return _descarga(d["contenido"], d["tipo_mime"], d["nombre_archivo"])

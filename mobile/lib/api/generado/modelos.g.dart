@@ -123,6 +123,11 @@ enum InformeJuridicoEstado { borrador('borrador'), revisado('revisado'), archiva
   static InformeJuridicoEstado desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => InformeJuridicoEstado.sinReconocer);
 }
 
+enum NotaRol { dueno('dueno'), colabora('colabora'), observa('observa'), sinReconocer('');
+  final String valor; const NotaRol(this.valor);
+  static NotaRol desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => NotaRol.sinReconocer);
+}
+
 enum NotificacionCanal { tareas('tareas'), correo('correo'), fiscal('fiscal'), equipo('equipo'), resumenes('resumenes'), general('general'), sinReconocer('');
   final String valor; const NotificacionCanal(this.valor);
   static NotificacionCanal desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => NotificacionCanal.sinReconocer);
@@ -141,6 +146,11 @@ enum OportunidadComercialEstado { abierta('abierta'), ganada('ganada'), perdida(
 enum PanelFiscalAmbito { todo('todo'), parcial('parcial'), sinReconocer('');
   final String valor; const PanelFiscalAmbito(this.valor);
   static PanelFiscalAmbito desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => PanelFiscalAmbito.sinReconocer);
+}
+
+enum ParticipanteNotaRol { colabora('colabora'), observa('observa'), sinReconocer('');
+  final String valor; const ParticipanteNotaRol(this.valor);
+  static ParticipanteNotaRol desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => ParticipanteNotaRol.sinReconocer);
 }
 
 enum PresentacionEstado { pendiente('pendiente'), presentado('presentado'), fueraPlazo('fuera_plazo'), sinReconocer('');
@@ -3683,7 +3693,15 @@ class Nota {
   final String? clienteUuid;
   final String? categoriaNombre;
   final String? duenoNombre;
-  const Nota({required this.id, this.usuarioId, this.texto, this.categoriaId, this.tareaId, this.creadaEn, this.papeleraEn, this.referenciaExterna, this.titulo, this.fijada, this.clienteFiscalId, this.tareaOutlookId, this.mensajeCorreoId, this.clienteUuid, this.categoriaNombre, this.duenoNombre, });
+  final NotaRol? rol;
+  final int? nParticipantes;
+  final int? nAdjuntos;
+  final List<ParticipanteNota>? participantes;
+  final String? tareaOutlookAsunto;
+  final String? mensajeCorreoAsunto;
+  final String? categoriaColor;
+  final String? clienteFiscalNombre;
+  const Nota({required this.id, this.usuarioId, this.texto, this.categoriaId, this.tareaId, this.creadaEn, this.papeleraEn, this.referenciaExterna, this.titulo, this.fijada, this.clienteFiscalId, this.tareaOutlookId, this.mensajeCorreoId, this.clienteUuid, this.categoriaNombre, this.duenoNombre, this.rol, this.nParticipantes, this.nAdjuntos, this.participantes, this.tareaOutlookAsunto, this.mensajeCorreoAsunto, this.categoriaColor, this.clienteFiscalNombre, });
   factory Nota.fromJson(Map<String, dynamic> j) => Nota(
     id: (j['id'] as num).toInt(),
     usuarioId: j['usuario_id'] == null ? null : (j['usuario_id'] as num).toInt(),
@@ -3701,6 +3719,14 @@ class Nota {
     clienteUuid: j['cliente_uuid'] == null ? null : j['cliente_uuid'] as String,
     categoriaNombre: j['categoria_nombre'] == null ? null : j['categoria_nombre'] as String,
     duenoNombre: j['dueno_nombre'] == null ? null : j['dueno_nombre'] as String,
+    rol: j['rol'] == null ? null : NotaRol.desde(j['rol'] as String),
+    nParticipantes: j['n_participantes'] == null ? null : (j['n_participantes'] as num).toInt(),
+    nAdjuntos: j['n_adjuntos'] == null ? null : (j['n_adjuntos'] as num).toInt(),
+    participantes: j['participantes'] == null ? null : (j['participantes'] as List).map((e) => ParticipanteNota.fromJson(e as Map<String, dynamic>)).toList(),
+    tareaOutlookAsunto: j['tarea_outlook_asunto'] == null ? null : j['tarea_outlook_asunto'] as String,
+    mensajeCorreoAsunto: j['mensaje_correo_asunto'] == null ? null : j['mensaje_correo_asunto'] as String,
+    categoriaColor: j['categoria_color'] == null ? null : j['categoria_color'] as String,
+    clienteFiscalNombre: j['cliente_fiscal_nombre'] == null ? null : j['cliente_fiscal_nombre'] as String,
   );
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -3719,10 +3745,18 @@ class Nota {
     'cliente_uuid': ?clienteUuid,
     'categoria_nombre': ?categoriaNombre,
     'dueno_nombre': ?duenoNombre,
+    if (rol != null) 'rol': rol!.valor,
+    'n_participantes': ?nParticipantes,
+    'n_adjuntos': ?nAdjuntos,
+    if (participantes != null) 'participantes': participantes!.map((e) => e.toJson()).toList(),
+    'tarea_outlook_asunto': ?tareaOutlookAsunto,
+    'mensaje_correo_asunto': ?mensajeCorreoAsunto,
+    'categoria_color': ?categoriaColor,
+    'cliente_fiscal_nombre': ?clienteFiscalNombre,
   };
-  Nota copyWith({int? id, int? usuarioId, String? texto, int? categoriaId, int? tareaId, String? creadaEn, String? papeleraEn, String? referenciaExterna, String? titulo, int? fijada, int? clienteFiscalId, int? tareaOutlookId, int? mensajeCorreoId, String? clienteUuid, String? categoriaNombre, String? duenoNombre, }) => Nota(id: id ?? this.id, usuarioId: usuarioId ?? this.usuarioId, texto: texto ?? this.texto, categoriaId: categoriaId ?? this.categoriaId, tareaId: tareaId ?? this.tareaId, creadaEn: creadaEn ?? this.creadaEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, titulo: titulo ?? this.titulo, fijada: fijada ?? this.fijada, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, tareaOutlookId: tareaOutlookId ?? this.tareaOutlookId, mensajeCorreoId: mensajeCorreoId ?? this.mensajeCorreoId, clienteUuid: clienteUuid ?? this.clienteUuid, categoriaNombre: categoriaNombre ?? this.categoriaNombre, duenoNombre: duenoNombre ?? this.duenoNombre, );
-  @override bool operator ==(Object other) => other is Nota && other.id == id && other.usuarioId == usuarioId && other.texto == texto && other.categoriaId == categoriaId && other.tareaId == tareaId && other.creadaEn == creadaEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.titulo == titulo && other.fijada == fijada && other.clienteFiscalId == clienteFiscalId && other.tareaOutlookId == tareaOutlookId && other.mensajeCorreoId == mensajeCorreoId && other.clienteUuid == clienteUuid && other.categoriaNombre == categoriaNombre && other.duenoNombre == duenoNombre;
-  @override int get hashCode => Object.hashAll([id, usuarioId, texto, categoriaId, tareaId, creadaEn, papeleraEn, referenciaExterna, titulo, fijada, clienteFiscalId, tareaOutlookId, mensajeCorreoId, clienteUuid, categoriaNombre, duenoNombre]);
+  Nota copyWith({int? id, int? usuarioId, String? texto, int? categoriaId, int? tareaId, String? creadaEn, String? papeleraEn, String? referenciaExterna, String? titulo, int? fijada, int? clienteFiscalId, int? tareaOutlookId, int? mensajeCorreoId, String? clienteUuid, String? categoriaNombre, String? duenoNombre, NotaRol? rol, int? nParticipantes, int? nAdjuntos, List<ParticipanteNota>? participantes, String? tareaOutlookAsunto, String? mensajeCorreoAsunto, String? categoriaColor, String? clienteFiscalNombre, }) => Nota(id: id ?? this.id, usuarioId: usuarioId ?? this.usuarioId, texto: texto ?? this.texto, categoriaId: categoriaId ?? this.categoriaId, tareaId: tareaId ?? this.tareaId, creadaEn: creadaEn ?? this.creadaEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, titulo: titulo ?? this.titulo, fijada: fijada ?? this.fijada, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, tareaOutlookId: tareaOutlookId ?? this.tareaOutlookId, mensajeCorreoId: mensajeCorreoId ?? this.mensajeCorreoId, clienteUuid: clienteUuid ?? this.clienteUuid, categoriaNombre: categoriaNombre ?? this.categoriaNombre, duenoNombre: duenoNombre ?? this.duenoNombre, rol: rol ?? this.rol, nParticipantes: nParticipantes ?? this.nParticipantes, nAdjuntos: nAdjuntos ?? this.nAdjuntos, participantes: participantes ?? this.participantes, tareaOutlookAsunto: tareaOutlookAsunto ?? this.tareaOutlookAsunto, mensajeCorreoAsunto: mensajeCorreoAsunto ?? this.mensajeCorreoAsunto, categoriaColor: categoriaColor ?? this.categoriaColor, clienteFiscalNombre: clienteFiscalNombre ?? this.clienteFiscalNombre, );
+  @override bool operator ==(Object other) => other is Nota && other.id == id && other.usuarioId == usuarioId && other.texto == texto && other.categoriaId == categoriaId && other.tareaId == tareaId && other.creadaEn == creadaEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.titulo == titulo && other.fijada == fijada && other.clienteFiscalId == clienteFiscalId && other.tareaOutlookId == tareaOutlookId && other.mensajeCorreoId == mensajeCorreoId && other.clienteUuid == clienteUuid && other.categoriaNombre == categoriaNombre && other.duenoNombre == duenoNombre && other.rol == rol && other.nParticipantes == nParticipantes && other.nAdjuntos == nAdjuntos && other.participantes == participantes && other.tareaOutlookAsunto == tareaOutlookAsunto && other.mensajeCorreoAsunto == mensajeCorreoAsunto && other.categoriaColor == categoriaColor && other.clienteFiscalNombre == clienteFiscalNombre;
+  @override int get hashCode => Object.hashAll([id, usuarioId, texto, categoriaId, tareaId, creadaEn, papeleraEn, referenciaExterna, titulo, fijada, clienteFiscalId, tareaOutlookId, mensajeCorreoId, clienteUuid, categoriaNombre, duenoNombre, rol, nParticipantes, nAdjuntos, participantes, tareaOutlookAsunto, mensajeCorreoAsunto, categoriaColor, clienteFiscalNombre]);
 }
 
 class Notificacion {
@@ -4024,22 +4058,34 @@ class Papelera {
   final int? id;
   final String? texto;
   final String? papeleraEn;
-  const Papelera({this.origen, this.id, this.texto, this.papeleraEn, });
+  final String? tipo;
+  final String? categoriaNombre;
+  final String? categoriaColor;
+  final String? clienteNombre;
+  const Papelera({this.origen, this.id, this.texto, this.papeleraEn, this.tipo, this.categoriaNombre, this.categoriaColor, this.clienteNombre, });
   factory Papelera.fromJson(Map<String, dynamic> j) => Papelera(
     origen: j['origen'] == null ? null : j['origen'] as String,
     id: j['id'] == null ? null : (j['id'] as num).toInt(),
     texto: j['texto'] == null ? null : j['texto'] as String,
     papeleraEn: j['papelera_en'] == null ? null : j['papelera_en'] as String,
+    tipo: j['tipo'] == null ? null : j['tipo'] as String,
+    categoriaNombre: j['categoria_nombre'] == null ? null : j['categoria_nombre'] as String,
+    categoriaColor: j['categoria_color'] == null ? null : j['categoria_color'] as String,
+    clienteNombre: j['cliente_nombre'] == null ? null : j['cliente_nombre'] as String,
   );
   Map<String, dynamic> toJson() => {
     'origen': ?origen,
     'id': ?id,
     'texto': ?texto,
     'papelera_en': ?papeleraEn,
+    'tipo': ?tipo,
+    'categoria_nombre': ?categoriaNombre,
+    'categoria_color': ?categoriaColor,
+    'cliente_nombre': ?clienteNombre,
   };
-  Papelera copyWith({String? origen, int? id, String? texto, String? papeleraEn, }) => Papelera(origen: origen ?? this.origen, id: id ?? this.id, texto: texto ?? this.texto, papeleraEn: papeleraEn ?? this.papeleraEn, );
-  @override bool operator ==(Object other) => other is Papelera && other.origen == origen && other.id == id && other.texto == texto && other.papeleraEn == papeleraEn;
-  @override int get hashCode => Object.hashAll([origen, id, texto, papeleraEn]);
+  Papelera copyWith({String? origen, int? id, String? texto, String? papeleraEn, String? tipo, String? categoriaNombre, String? categoriaColor, String? clienteNombre, }) => Papelera(origen: origen ?? this.origen, id: id ?? this.id, texto: texto ?? this.texto, papeleraEn: papeleraEn ?? this.papeleraEn, tipo: tipo ?? this.tipo, categoriaNombre: categoriaNombre ?? this.categoriaNombre, categoriaColor: categoriaColor ?? this.categoriaColor, clienteNombre: clienteNombre ?? this.clienteNombre, );
+  @override bool operator ==(Object other) => other is Papelera && other.origen == origen && other.id == id && other.texto == texto && other.papeleraEn == papeleraEn && other.tipo == tipo && other.categoriaNombre == categoriaNombre && other.categoriaColor == categoriaColor && other.clienteNombre == clienteNombre;
+  @override int get hashCode => Object.hashAll([origen, id, texto, papeleraEn, tipo, categoriaNombre, categoriaColor, clienteNombre]);
 }
 
 class ParteAsunto {
@@ -4066,6 +4112,26 @@ class ParteAsunto {
   ParteAsunto copyWith({int? id, String? rol, String? nombre, String? nif, String? notas, }) => ParteAsunto(id: id ?? this.id, rol: rol ?? this.rol, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, );
   @override bool operator ==(Object other) => other is ParteAsunto && other.id == id && other.rol == rol && other.nombre == nombre && other.nif == nif && other.notas == notas;
   @override int get hashCode => Object.hashAll([id, rol, nombre, nif, notas]);
+}
+
+class ParticipanteNota {
+  final int? usuarioId;
+  final String? nombre;
+  final ParticipanteNotaRol? rol;
+  const ParticipanteNota({this.usuarioId, this.nombre, this.rol, });
+  factory ParticipanteNota.fromJson(Map<String, dynamic> j) => ParticipanteNota(
+    usuarioId: j['usuario_id'] == null ? null : (j['usuario_id'] as num).toInt(),
+    nombre: j['nombre'] == null ? null : j['nombre'] as String,
+    rol: j['rol'] == null ? null : ParticipanteNotaRol.desde(j['rol'] as String),
+  );
+  Map<String, dynamic> toJson() => {
+    'usuario_id': ?usuarioId,
+    'nombre': ?nombre,
+    if (rol != null) 'rol': rol!.valor,
+  };
+  ParticipanteNota copyWith({int? usuarioId, String? nombre, ParticipanteNotaRol? rol, }) => ParticipanteNota(usuarioId: usuarioId ?? this.usuarioId, nombre: nombre ?? this.nombre, rol: rol ?? this.rol, );
+  @override bool operator ==(Object other) => other is ParticipanteNota && other.usuarioId == usuarioId && other.nombre == nombre && other.rol == rol;
+  @override int get hashCode => Object.hashAll([usuarioId, nombre, rol]);
 }
 
 class Perfil {

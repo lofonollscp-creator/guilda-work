@@ -2891,6 +2891,7 @@ from .db_plataforma import (  # noqa: E402,F401
     listar_notificaciones,
     contar_notificaciones_no_leidas,
     marcar_notificaciones_leidas,
+    marcar_notificacion_leida,
     eliminar_notificacion,
     eliminar_todas_notificaciones,
     _crear_triggers_cambios,

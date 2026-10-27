@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../diseno/adaptable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
@@ -251,7 +252,7 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
         title: Text(t.tareaEditar),
         actions: [TextButton(onPressed: _guardando ? null : _guardar, child: Text(t.tareaGuardar))],
       ),
-      body: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: [
+      body: AnchoMaximo(child: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: [
         TextField(controller: _asunto, decoration: InputDecoration(labelText: t.tareaAsunto), textCapitalization: TextCapitalization.sentences),
         const SizedBox(height: 8),
         TextField(controller: _notas, decoration: InputDecoration(labelText: t.tareaNotas), minLines: 2, maxLines: 8),
@@ -332,7 +333,7 @@ class _TareaEditorScreenState extends ConsumerState<TareaEditorScreen> {
               if (mounted && r != null) setState(() => _asignadaA = r.$1);
             },
           ),
-      ]),
+      ])),
     );
   }
 }

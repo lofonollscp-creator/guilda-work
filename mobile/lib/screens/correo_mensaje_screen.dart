@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../../diseno/adaptable.dart';
 import 'package:flutter/material.dart';
 
 import '../diseno/componentes.dart';
@@ -212,7 +213,7 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
           IconButton(icon: Icon(Icons.delete_outline), tooltip: AppLocalizations.of(context).comunEliminar, onPressed: _eliminar),
         ],
       ),
-      body: FutureBuilder<Mensaje>(
+      body: AnchoMaximo(child: FutureBuilder<Mensaje>(
         future: _mensaje,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -388,7 +389,7 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
             ],
           );
         },
-      ),
+      )),
     );
   }
 }
