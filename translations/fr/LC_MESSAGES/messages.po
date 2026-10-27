@@ -17311,3 +17311,39 @@ msgstr "Base de la retenue (€ ; vide = la base)"
 
 msgid "Importe retenido (€; en blanco = base × porcentaje)"
 msgstr "Montant retenu (€ ; vide = base × pourcentage)"
+
+msgid "Debajo tienes una simulación de los modelos 111 y 115 con las retenciones de los apuntes aprobados; todavía no se pueden presentar desde Guilda Fiscal."
+msgstr "Ci-dessous, une simulation des modèles 111 et 115 avec les retenues des écritures approuvées ; ils ne peuvent pas encore être déposés depuis Guilda Fiscal."
+
+msgid "Perceptores"
+msgstr "Bénéficiaires"
+
+msgid "Importe de las percepciones"
+msgstr "Montant des versements"
+
+msgid "A deducir (declaraciones anteriores)"
+msgstr "À déduire (déclarations précédentes)"
+
+msgid "Resultado de la liquidación"
+msgstr "Résultat de la liquidation"
+
+msgid "Actividades económicas: perceptores"
+msgstr "Activités économiques : bénéficiaires"
+
+msgid "Actividades económicas: importe de las percepciones"
+msgstr "Activités économiques : montant des versements"
+
+msgid "Actividades económicas: retenciones"
+msgstr "Activités économiques : retenues"
+
+msgid "Total de retenciones e ingresos a cuenta"
+msgstr "Total des retenues et acomptes"
+
+msgid "Simulación de retenciones (modelos 111 y 115)"
+msgstr "Simulation des retenues (modèles 111 et 115)"
+
+msgid "Rendimientos del trabajo"
+msgstr "Revenus du travail"
+
+msgid "No hay retenciones en apuntes aprobados de este periodo."
+msgstr "Il n'y a aucune retenue dans les écritures approuvées de cette période."

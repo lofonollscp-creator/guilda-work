@@ -17226,3 +17226,39 @@ msgstr "Withholding base (€; blank = the base)"
 
 msgid "Importe retenido (€; en blanco = base × porcentaje)"
 msgstr "Amount withheld (€; blank = base × percentage)"
+
+msgid "Debajo tienes una simulación de los modelos 111 y 115 con las retenciones de los apuntes aprobados; todavía no se pueden presentar desde Guilda Fiscal."
+msgstr "Below is a simulation of forms 111 and 115 from the withholdings of approved entries; they cannot be filed from Guilda Fiscal yet."
+
+msgid "Perceptores"
+msgstr "Payees"
+
+msgid "Importe de las percepciones"
+msgstr "Amount of payments"
+
+msgid "A deducir (declaraciones anteriores)"
+msgstr "To deduct (previous returns)"
+
+msgid "Resultado de la liquidación"
+msgstr "Result of the settlement"
+
+msgid "Actividades económicas: perceptores"
+msgstr "Business activities: payees"
+
+msgid "Actividades económicas: importe de las percepciones"
+msgstr "Business activities: amount of payments"
+
+msgid "Actividades económicas: retenciones"
+msgstr "Business activities: withholdings"
+
+msgid "Total de retenciones e ingresos a cuenta"
+msgstr "Total withholdings and payments on account"
+
+msgid "Simulación de retenciones (modelos 111 y 115)"
+msgstr "Withholding simulation (forms 111 and 115)"
+
+msgid "Rendimientos del trabajo"
+msgstr "Employment income"
+
+msgid "No hay retenciones en apuntes aprobados de este periodo."
+msgstr "There are no withholdings in approved entries for this period."

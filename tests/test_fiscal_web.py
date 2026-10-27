@@ -370,3 +370,22 @@ def test_retencion_irpf_en_el_apunte_recibido(cliente):
     corregido = cliente.post(f"/guilda-fiscal/{c}/apuntes/{ap['id']}", data={**datos, "version": str(ap["version"]), "causa": "no llevaba retención"})
     assert corregido.status_code == 302 and fn.listar_apuntes(t, uid, c)[0]["retencion_centimos"] is None
     assert "retencion_centimos" in fn.historial_apunte(t, uid, c, ap["id"])[0]["cambios"]
+
+
+def test_simulacion_de_los_modelos_111_y_115(cliente):
+    from app.fiscal_modelos import motor_retenciones as mr
+    r = mr.calcular([mr.Retencion("111", "G", 100000, 15000, "B87654321"), mr.Retencion("111", "G", 50000, 7500, "B87654321"), mr.Retencion("111", "A", 200000, 20000, "12345678Z"),
+                     mr.Retencion("115", "", 80000, 15200, "B11111111")], modelo="111", ejercicio=2026, periodo="2T")
+    c = r.casillas
+    assert (c["07"], c["08"], c["09"]) == (1, 150000, 22500) and (c["01"], c["02"], c["03"]) == (1, 200000, 20000) and c["28"] == 42500 and c["30"] == 42500 and r.tipo_declaracion == "I"
+    assert mr.calcular([mr.Retencion("115", "", 80000, 15200, "B11111111")], modelo="115", ejercicio=2026, periodo="2T").casillas == {"01": 1, "02": 80000, "03": 15200, "04": 0, "05": 15200}
+    assert mr.calcular([mr.Retencion("111", "G", 100000, 15000, "B87654321")], modelo="111", ejercicio=2026, periodo="2T", a_deducir=20000).bloqueos
+    uid, t, c_id = _web(cliente, email="sim111@ejemplo.com")
+    datos = {"libro": "R", "tipo_factura": "F1", "clave": "01", "numero": "P-1", "fecha_expedicion": "2026-05-10", "fecha_recepcion": "2026-05-10", "base": "1.000,00", "tipo_iva": "21",
+             "contraparte_nif": "B87654321", "contraparte_nombre": "Profesional SL", "ret_modelo": "111", "ret_pct": "15"}
+    assert cliente.post(f"/guilda-fiscal/{c_id}/apuntes/nuevo", data=datos).status_code == 302
+    sim = fn.simular_retenciones(t, uid, c_id, 2026, "2T")
+    assert sim["111"].casillas["09"] == 15000 and sim["115"].casillas.get("03", 0) == 0
+    assert fn.simular_retenciones(t, uid, c_id, 2026, "3T")["111"].casillas.get("09", 0) == 0
+    pagina = cliente.get(f"/guilda-fiscal/{c_id}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
+    assert "Simulación de retenciones" in pagina and "150.00" in pagina.split('id="simulacion-retenciones"')[1]

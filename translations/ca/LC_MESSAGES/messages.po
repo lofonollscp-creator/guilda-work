@@ -17235,3 +17235,39 @@ msgstr "Base de la retenció (€; en blanc = la base)"
 
 msgid "Importe retenido (€; en blanco = base × porcentaje)"
 msgstr "Import retingut (€; en blanc = base × percentatge)"
+
+msgid "Debajo tienes una simulación de los modelos 111 y 115 con las retenciones de los apuntes aprobados; todavía no se pueden presentar desde Guilda Fiscal."
+msgstr "A sota tens una simulació dels models 111 i 115 amb les retencions dels apunts aprovats; encara no es poden presentar des de Guilda Fiscal."
+
+msgid "Perceptores"
+msgstr "Perceptors"
+
+msgid "Importe de las percepciones"
+msgstr "Import de les percepcions"
+
+msgid "A deducir (declaraciones anteriores)"
+msgstr "A deduir (declaracions anteriors)"
+
+msgid "Resultado de la liquidación"
+msgstr "Resultat de la liquidació"
+
+msgid "Actividades económicas: perceptores"
+msgstr "Activitats econòmiques: perceptors"
+
+msgid "Actividades económicas: importe de las percepciones"
+msgstr "Activitats econòmiques: import de les percepcions"
+
+msgid "Actividades económicas: retenciones"
+msgstr "Activitats econòmiques: retencions"
+
+msgid "Total de retenciones e ingresos a cuenta"
+msgstr "Total de retencions i ingressos a compte"
+
+msgid "Simulación de retenciones (modelos 111 y 115)"
+msgstr "Simulació de retencions (models 111 i 115)"
+
+msgid "Rendimientos del trabajo"
+msgstr "Rendiments del treball"
+
+msgid "No hay retenciones en apuntes aprobados de este periodo."
+msgstr "No hi ha retencions en apunts aprovats d'aquest període."

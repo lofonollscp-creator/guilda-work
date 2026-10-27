@@ -17,7 +17,7 @@ from datetime import date
 from flask_babel import lazy_gettext as _l  # noqa: F401  (los textos de pantalla se traducen en las rutas)
 
 from . import acceso, auditoria, db, fiscal_perfiles
-from .fiscal_modelos import exportador_303, fichero_303, libros_lsi, motor_303, validacion_apuntes
+from .fiscal_modelos import exportador_303, fichero_303, libros_lsi, motor_303, motor_retenciones, validacion_apuntes
 from .fiscal_modelos.apuntes import Apunte
 from .fiscal_perfiles import ErrorFiscal
 
@@ -601,6 +601,21 @@ def facturas_del_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
             totales["no_computan"] += 1
         totales["descuadres"] += 1 if f["descuadre"] else 0
     return {"ejercicio": ejercicio, "periodo": periodo, "desde": desde, "hasta": hasta, "facturas": facturas, "totales": totales}
+
+
+def simular_retenciones(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
+    """Simulación (NO se guarda ni se presenta) de los modelos 111 y 115 del periodo con las retenciones de los apuntes aprobados. Devuelve `{"111": Resultado, "115": Resultado}`."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    desde, hasta = _limites_periodo(ejercicio, periodo)
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT retencion_modelo, retencion_clave, retencion_base_centimos, retencion_centimos, contraparte_nif FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? "
+                             "AND libro = 'R' AND anulado_en IS NULL AND retencion_modelo != '' AND fecha_expedicion >= ? AND fecha_expedicion <= ? ORDER BY fecha_expedicion, id",
+                             (tenant_id, cliente_fiscal_id, desde, hasta)).fetchall()
+    finally:
+        conn.close()
+    retenciones = [motor_retenciones.Retencion(f["retencion_modelo"], f["retencion_clave"], f["retencion_base_centimos"] or 0, f["retencion_centimos"] or 0, f["contraparte_nif"] or "") for f in filas]
+    return {m: motor_retenciones.calcular(retenciones, modelo=m, ejercicio=ejercicio, periodo=periodo) for m in ("111", "115")}
 
 
 def aprobar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, factura_ids: list[int]) -> dict:

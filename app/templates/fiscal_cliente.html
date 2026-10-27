@@ -95,9 +95,26 @@
       <td>{% if f.m_retencion %}{{ '%.2f'|format(f.retencion / 100) }} € · {% if f.m_retencion == 'soportada' %}{{ _('soportada (no va en el 111)') }}{% else %}{{ _('Modelo') }} {{ f.m_retencion }}{% endif %} {{ estado_modelo(f.retencion_estado) }}{% else %}—{% endif %}</td>
       <td>{% if f.apunte_id %}<a href="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=f.apunte_id) }}">{{ _('Ver apunte') }}</a>{% else %}<a href="{{ url_for('contabilidad.lista', cliente_id=c.id) }}">{{ _('Ver factura') }}</a>{% endif %}</td></tr>{% endfor %}</tbody>
   </table></div>
-  <p class="muted">{{ _('El cálculo automático de los modelos 111 y 115 aún no está en Guilda Fiscal: aquí ves qué retenciones entrarán en ellos.') }}</p>
+  <p class="muted">{{ _('Debajo tienes una simulación de los modelos 111 y 115 con las retenciones de los apuntes aprobados; todavía no se pueden presentar desde Guilda Fiscal.') }}</p>
   {% else %}<p class="muted">{{ _('No hay facturas de este titular en el periodo.') }}</p>{% endif %}
 </section>
+{% if retenciones %}
+{% set conceptos = {'01': _('Perceptores'), '02': _('Importe de las percepciones'), '03': _('Retenciones'), '04': _('A deducir (declaraciones anteriores)'), '05': _('Resultado de la liquidación'),
+                    '07': _('Actividades económicas: perceptores'), '08': _('Actividades económicas: importe de las percepciones'), '09': _('Actividades económicas: retenciones'),
+                    '28': _('Total de retenciones e ingresos a cuenta'), '29': _('A deducir (declaraciones anteriores)'), '30': _('Resultado de la liquidación')} %}
+<section class="dash-panel ds-mt-16" id="simulacion-retenciones">
+  <h2>{{ _('Simulación de retenciones (modelos 111 y 115)') }}</h2>
+  {% for m, r in retenciones.items() %}{% if r.casillas.get('03', 0) or r.casillas.get('09', 0) %}
+  <h3>{{ _('Modelo') }} {{ m }} · {{ r.periodo }} {{ r.ejercicio }}</h3>
+  <div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th></tr></thead><tbody>
+    {% for cas, v in r.casillas.items()|sort %}<tr><td>{{ cas }}</td><td>{% if m == '111' and cas in ('01', '02', '03') %}{{ _('Rendimientos del trabajo') }}: {% endif %}{{ conceptos.get(cas, '') }}</td>
+      <td>{% if cas in ('01', '07') or (m == '115' and cas == '01') %}{{ v }}{% else %}{{ '%.2f'|format(v / 100) }} €{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  {% for b in r.bloqueos %}<p class="ia-error" role="alert">{{ b }}</p>{% endfor %}
+  {% for a in r.avisos %}<p class="muted">{{ a }}</p>{% endfor %}
+  {% endif %}{% endfor %}
+  {% if not (retenciones['111'].casillas.get('03', 0) or retenciones['111'].casillas.get('09', 0) or retenciones['115'].casillas.get('03', 0)) %}<p class="muted">{{ _('No hay retenciones en apuntes aprobados de este periodo.') }}</p>{% endif %}
+</section>
+{% endif %}
 {% endif %}
 
 <h2 class="ds-mt-16">{{ _('Declaraciones') }}</h2>

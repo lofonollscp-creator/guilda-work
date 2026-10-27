@@ -123,7 +123,11 @@ def cliente(cliente_id: int):
         computan = fn.facturas_del_periodo(g.tenant_id, g.usuario_id, cliente_id, p_ejercicio, p_periodo)
     except (ErrorFiscal, ValueError):
         computan = None
-    return render_template("fiscal_cliente.html", c=c, ejercicio=ejercicio, computan=computan, perfil=fp.perfil_en(g.tenant_id, cliente_id, date.today().isoformat()),
+    try:
+        retenciones = fn.simular_retenciones(g.tenant_id, g.usuario_id, cliente_id, p_ejercicio, p_periodo)
+    except (ErrorFiscal, ValueError):
+        retenciones = None
+    return render_template("fiscal_cliente.html", c=c, ejercicio=ejercicio, computan=computan, retenciones=retenciones, perfil=fp.perfil_en(g.tenant_id, cliente_id, date.today().isoformat()),
                            apuntes=fn.listar_apuntes(g.tenant_id, g.usuario_id, cliente_id, ejercicio=ejercicio), declaraciones=fn.listar_declaraciones(g.tenant_id, g.usuario_id, cliente_id),
                            periodos=PERIODOS, periodo_defecto=fn.periodo_por_defecto(date.today()), recordatorio=_recordatorio(c, fn.periodo_por_defecto(date.today())), sin_revisar=fn.contadores_facturas(g.tenant_id, g.usuario_id, cliente_id).get(cliente_id, {}).get("sin_revisar", 0), por_registrar=fn.facturas_por_registrar(g.tenant_id, g.usuario_id, cliente_id, ejercicio), error=_error())
 
