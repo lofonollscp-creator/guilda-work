@@ -12,6 +12,24 @@ CARPETA = os.environ.get("GUILDA_CAPTURAS_WEB")
 pytestmark = pytest.mark.skipif(not CARPETA, reason="GUILDA_CAPTURAS_WEB sin definir")
 
 
+DESBORDES = """() => {
+  const W = document.documentElement.clientWidth, out = [];
+  if (document.documentElement.scrollWidth > W + 1) out.push('PAGINA ' + document.documentElement.scrollWidth);
+  for (const e of document.querySelectorAll('body *')) {
+    const r = e.getBoundingClientRect();
+    if (!r.width || !r.height) continue;
+    const cs = getComputedStyle(e);
+    if (cs.position === 'fixed' || cs.visibility === 'hidden') continue;
+    let a = e.parentElement, recortado = false;
+    while (a && a !== document.body) { const o = getComputedStyle(a).overflowX; if (o !== 'visible') { recortado = true; break; } a = a.parentElement; }
+    if (recortado) continue;
+    if (r.right > W + 1 && !e.closest('[hidden],dialog:not([open]),details:not([open])>*:not(summary)')) out.push((e.className || e.tagName).toString().slice(0, 40) + '@' + Math.round(r.right));
+    else if (e.scrollWidth > e.clientWidth + 2 && false) out.push('TXT ' + (e.className || e.tagName).toString().slice(0, 40));
+  }
+  return out.slice(0, 8);
+}"""
+
+
 def _dia(n: int) -> str:
     return (date.today() + timedelta(days=n)).isoformat()
 
@@ -65,10 +83,20 @@ def test_capturas(servidor, abrir, entrar_como_equipo):
     ids = _sembrar(uid, t)
     os.makedirs(CARPETA, exist_ok=True)
     pagina.set_viewport_size({"width": 1440, "height": 900})
-    for nombre, ruta in PAGINAS:
-        pagina.goto(f"{servidor.url}{ruta.format(**ids)}")
-        pagina.wait_for_load_state("networkidle")
-        pagina.screenshot(path=os.path.join(CARPETA, f"{nombre}.png"))
+    anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "1440").split(",")]
+    temas = os.environ.get("GUILDA_TEMAS", "light").split(",")
+    for ancho in anchos:
+        pagina.set_viewport_size({"width": ancho, "height": 900})
+        for tema in temas:
+            for nombre, ruta in PAGINAS + [("notas", "/notas"), ("tareas_tablero", "/tareas/tablero")]:
+                pagina.goto(f"{servidor.url}{ruta.format(**ids)}")
+                pagina.wait_for_load_state("networkidle")
+                pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)
+                pagina.wait_for_timeout(150)
+                pagina.screenshot(path=os.path.join(CARPETA, f"{nombre}_{ancho}_{tema}.png"))
+                bordes = pagina.evaluate(DESBORDES)
+                if bordes:
+                    print(f"DESBORDE {nombre} {ancho}: {bordes}")
     if os.environ.get("GUILDA_DEPURAR_JS"):
         pagina.goto(f"{servidor.url}/correo/")
         print("DEPURAR", pagina.evaluate(os.environ["GUILDA_DEPURAR_JS"]))
