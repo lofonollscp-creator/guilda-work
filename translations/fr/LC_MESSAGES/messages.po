@@ -18246,3 +18246,9 @@ msgid "expediente"
 msgid_plural "expedientes"
 msgstr[0] "dossier"
 msgstr[1] "dossiers"
+
+msgid "Resultado estimado"
+msgstr "Résultat estimé"
+
+msgid "Opciones avanzadas"
+msgstr "Options avancées"

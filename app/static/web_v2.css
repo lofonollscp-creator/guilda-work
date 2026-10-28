@@ -879,3 +879,83 @@ form.edit-form-delete .btn-stop { background: none; color: var(--danger-text); b
 .cal-chip-fiscal { color: color-mix(in srgb, #d98c1f 40%, var(--text)); background: color-mix(in srgb, #d98c1f 20%, var(--surface)); }
 .cal-chip-cita { color: var(--text); }
 .cal-grid-mes, .fiscal-calendario-semana { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+
+/* ======================================================================================================================== */
+/* Guilda Fiscal · ficha de un titular                                                                                      */
+/* ======================================================================================================================== */
+.fiscal-ficha-cabecera { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 20px 24px; margin: 0 0 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; }
+.fiscal-ficha-titulo { flex: 1 1 280px; min-width: 0; }
+.fiscal-ficha-titulo .subtitle { margin: 4px 0 0; color: var(--text-muted); font-weight: 600; overflow-wrap: anywhere; }
+.fiscal-ficha-acciones { margin: 0 !important; gap: 8px; justify-content: flex-end; }
+.fiscal-ficha-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fiscal-ficha-kpis .fiscal-cifra-num { font-size: 28px; white-space: nowrap; }
+a.fiscal-cifra-cierre { text-decoration: none; color: inherit; }
+a.fiscal-cifra-cierre:hover { border-color: var(--text); }
+.fiscal-progreso { display: block; height: 8px; margin-top: 10px; border-radius: 99px; background: var(--panel-2-hover); overflow: hidden; }
+.fiscal-progreso > span { display: block; height: 100%; background: var(--primary); border-radius: 99px; }
+.fiscal-ficha-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+.fiscal-ficha-main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.fiscal-ficha-main > * { margin: 0 !important; }
+.fiscal-ficha-lado { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.fiscal-ficha-lado > * { margin: 0 !important; }
+.fiscal-ficha-main .dash-panel, .fiscal-ficha-lado .dash-panel, .fiscal-ficha-lado details.dash-panel { padding: 20px 22px; }
+.fiscal-ficha-main h2, .fiscal-ficha-lado h2 { font-size: 15px; font-weight: 800; margin: 0 0 6px; }
+.fiscal-ficha-main h3 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 18px 0 8px; }
+.fiscal-ficha-main .muted { font-size: 13.5px; }
+.fiscal-ficha-filtro { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; margin: 12px 0; }
+.fiscal-ficha-filtro input[type="number"] { width: 96px; }
+.fiscal-ficha-mas { position: relative; }
+.fiscal-ficha-mas > summary { list-style: none; cursor: pointer; }
+.fiscal-ficha-mas > summary::-webkit-details-marker { display: none; }
+.fiscal-ficha-mas .top-bar-menu { left: 0; right: auto; min-width: 280px; }
+.fiscal-ficha-retenciones { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; padding: 0; }
+.fiscal-ficha-retenciones li { background: var(--panel-2); border-radius: 10px; padding: 6px 12px; font-size: 13px; }
+/* Cierre del periodo como pasos */
+.fiscal-pasos { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; }
+.fiscal-pasos li { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 8px 0 8px 0; font-size: 13.5px; line-height: 1.35; border-bottom: 1px solid var(--linea); }
+.fiscal-pasos li:last-child { border-bottom: 0; }
+.fiscal-pasos li > .pill { flex: none; width: 88px; box-sizing: border-box; text-align: center; font-size: 11px; font-weight: 800; padding: 2px 8px; margin-top: 1px; }
+.fiscal-pasos li[data-estado="ok"] { color: var(--text-muted); }
+/* Semáforos con la paleta v2 */
+.pill.semaforo-verde { background: color-mix(in srgb, var(--success-text) 14%, var(--surface)); color: var(--success-text); border-color: transparent; }
+.pill.semaforo-ambar { background: color-mix(in srgb, var(--warning-text) 16%, var(--surface)); color: var(--warning-text); border-color: transparent; }
+.pill.semaforo-rojo { background: color-mix(in srgb, var(--danger-text) 12%, var(--surface)); color: var(--danger-text); border-color: transparent; }
+td.num, th.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.aviso-bloque { background: color-mix(in srgb, var(--warning-text) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warning-text) 30%, var(--border)); border-radius: 14px; padding: 12px 16px; margin: 0; font-size: 14px; }
+@media (max-width: 1180px) { .fiscal-ficha-layout { grid-template-columns: minmax(0, 1fr); } .fiscal-ficha-lado { position: static; } .fiscal-ficha-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .fiscal-ficha-kpis { grid-template-columns: minmax(0, 1fr); } .fiscal-ficha-acciones { justify-content: flex-start; } }
+.fiscal-banderas { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px 16px; margin: 6px 0 16px; }
+.fiscal-banderas .checkbox-label { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-weight: 600; margin: 0; }
+@media (max-width: 640px) { .fiscal-ficha-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fiscal-ficha-kpis .fiscal-cifra-num { font-size: 22px; } }
+
+/* ======================================================================================================================== */
+/* Asistente jurídico                                                                                                       */
+/* ======================================================================================================================== */
+.aviso { display: flex; align-items: flex-start; gap: 10px; background: color-mix(in srgb, var(--warning-text) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warning-text) 28%, var(--border)); border-radius: 14px; padding: 12px 16px; margin: 0 0 12px; font-size: 14px; line-height: 1.45; }
+.aviso::before { content: "!"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--warning-text); color: var(--surface); font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+.juridico-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+.juridico-main, .juridico-lado { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.juridico-lado > *, .juridico-main > * { margin: 0 !important; }
+.juridico-form { display: flex; flex-direction: column; gap: 14px; }
+.juridico-form textarea { width: 100%; min-height: 150px; font-size: 16px; line-height: 1.5; border-radius: 14px; padding: 14px 16px; resize: vertical; box-sizing: border-box; }
+.juridico-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-muted); min-width: 0; }
+.juridico-form input, .juridico-form select { min-height: 42px; border-radius: 12px; max-width: 100%; box-sizing: border-box; }
+.juridico-fila { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.juridico-avanzado-cuerpo { padding: 4px 20px 18px; display: flex; flex-direction: column; gap: 14px; }
+.juridico-colecciones { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.juridico-colecciones legend { font-size: 13px; font-weight: 700; color: var(--text-muted); padding: 0; margin: 0 0 8px; width: 100%; float: left; }
+.juridico-coleccion { flex-direction: row !important; align-items: center; gap: 8px; color: var(--text) !important; cursor: pointer; }
+.juridico-envio { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.juridico-envio .btn { min-height: 46px; padding: 0 28px; }
+.juridico-lista { list-style: none; margin: 0; padding: 0; }
+.juridico-lista li { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--linea); }
+.juridico-lista li:last-child { border-bottom: 0; }
+.juridico-lista-titulo { font-weight: 700; overflow-wrap: anywhere; }
+.juridico-lista .muted { font-size: 12.5px; }
+@media (max-width: 1100px) { .juridico-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .juridico-fila { grid-template-columns: minmax(0, 1fr); } }
+form.filters input[type="checkbox"], form.filters input[type="radio"] { min-height: 0; width: 18px; height: 18px; padding: 0; border-radius: 5px; accent-color: var(--primary); flex: none; }
+form.filters fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+form.filters fieldset legend { font-size: 12px; font-weight: 700; color: var(--text-muted); padding: 0; margin: 0 0 4px; width: 100%; }
+form.filters fieldset label { flex-direction: row; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface); color: var(--text); font-size: 13.5px; cursor: pointer; }
+.juridico-form input[type="checkbox"] { min-height: 0; width: 18px; height: 18px; border-radius: 5px; accent-color: var(--primary); }

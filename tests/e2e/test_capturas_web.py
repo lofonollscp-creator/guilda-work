@@ -100,13 +100,22 @@ def _sembrar(uid: int, tenant: int) -> dict:
     try:
         from app import facturas_contables as fc, verticales
         verticales.fijar_activo(tenant, "contabilizacion", True)
+        verticales.fijar_activo(tenant, "juridico", True)
+        verticales.fijar_activo(tenant, "fiscal", True)
+        from app import fiscal_nucleo as fn, fiscal_perfiles as fp
+        from app.fiscal_modelos.apuntes import Apunte
+        from datetime import date as _d
+        fp.guardar_perfil(tenant, uid, c1, {"forma_juridica": "sociedad"}, vigente_desde=f"{_d.today().year}-01-01")
+        hoy = _d.today()
+        for libro, num, base, cuota, quien in (("E", "A-0031", 340000, 71400, "Hotel Mirador SL"), ("E", "A-0032", 120000, 25200, "Beta SA"), ("R", "F-2026-114", 120000, 25200, "Suministros Ríos SL")):
+            fn.aprobar_apunte(tenant, uid, c1, Apunte(libro=libro, tipo_factura="F1", fecha_expedicion=_d(2026, 8, 20), numero=num, base=base, tipo_iva=2100, cuota=cuota, contraparte_nombre=quien))
         for tipo, n, quien, base in (("recibida", "F-2026-114", "Suministros Ríos SL", "1200"), ("emitida", "A-0031", "Construcciones Vidal", "3400"), ("recibida", "F-2026-121", "Gráficas Norte SA", "260,50")):
             fc.crear(tenant, uid, c1, {"tipo": tipo, "fecha": _dia(-3), "numero": n, "tercero_nombre": quien, "tercero_nif": "B12345678"}, [{"base": base, "pct_iva": "21"}])
     except Exception as e:                                            # solo es decorado de la captura
         print("SIN FACTURAS", e)
     db.guardar_fichaje_datos(uid, "Jorge Capturas", "12345678Z")
     db.fichar(uid, tenant, "entrada")
-    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1}
+    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1, "cliente": c1}
 
 
 PAGINAS = [

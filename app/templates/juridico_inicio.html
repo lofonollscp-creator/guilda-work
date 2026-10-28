@@ -14,38 +14,55 @@
 {% if not ia_configurada %}
 <div class="aviso" role="status">{{ _('Para consultar hace falta un modelo y tu clave de OpenRouter, en Ajustes del Asistente IA.') }}</div>
 {% endif %}
+<div class="juridico-layout">
+<div class="juridico-main">
 {% if puede_escribir %}
-<section class="dash-panel" aria-label="{{ _('Nueva consulta') }}">
+<section class="dash-panel juridico-consulta" aria-label="{{ _('Nueva consulta') }}">
   <h2>{{ _('Nueva consulta') }}</h2>
-  <form method="post" action="{{ url_for('juridico.consultar') }}" enctype="multipart/form-data" class="form-grid">
-    <label class="span-2">{{ _('Tu consulta') }}
-      <textarea name="pregunta" rows="4" maxlength="4000" required placeholder="{{ _('Por ejemplo: ¿Es deducible el gasto descrito en el adjunto para un autónomo en estimación directa?') }}"></textarea></label>
-    <label>{{ _('Cliente (opcional)') }}
-      <select name="cliente_id"><option value="">{{ _('— Sin cliente —') }}</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></label>
-    <label>{{ _('Fecha jurídica de referencia') }}<input type="date" name="fecha_juridica" value="{{ hoy }}"></label>
-    <label>{{ _('Modo temporal') }}
-      <select name="modo_temporal"><option value="actual">{{ _('Análisis actual de hechos de esa fecha') }}</option><option value="historico">{{ _('Estado del conocimiento en esa fecha') }}</option></select></label>
-    <label>{{ _('Objetivo') }}
-      <select name="objetivo"><option value="consulta">{{ _('Consulta') }}</option><option value="busqueda">{{ _('Búsqueda') }}</option><option value="resumen">{{ _('Resumen') }}</option><option value="borrador">{{ _('Borrador') }}</option></select></label>
-    <label>{{ _('Materia (opcional)') }}<input name="materia" maxlength="80" placeholder="{{ _('fiscal, laboral…') }}"></label>
-    <label>{{ _('Territorio (opcional)') }}<input name="territorio" maxlength="80" placeholder="ES"></label>
-    <fieldset class="span-2"><legend>{{ _('Dónde buscar') }}</legend>
-      {% for k, nombre in colecciones.items() %}<label class="inline"><input type="checkbox" name="coleccion" value="{{ k }}" checked> {{ _(nombre) }}</label> {% endfor %}</fieldset>
-    <label class="span-2">{{ _('Adjuntos (hasta 5; Word, PDF con texto o texto plano)') }}<input type="file" name="archivos" multiple accept=".txt,.docx,.pdf"></label>
-    <p class="muted span-2">{{ _('Un adjunto aporta hechos, no autoridad jurídica. Su texto se envía solo a tu modelo de IA y se borra a los 90 días. No se guarda el archivo original.') }}</p>
-    <div class="span-2"><button type="submit" class="btn btn-primary">{{ _('Consultar') }}</button> <span class="muted">{{ _('Puede tardar hasta un minuto.') }}</span></div>
+  <form method="post" action="{{ url_for('juridico.consultar') }}" enctype="multipart/form-data" class="juridico-form">
+    <label class="sr-only" for="jur-pregunta">{{ _('Tu consulta') }}</label>
+    <textarea id="jur-pregunta" name="pregunta" rows="5" maxlength="4000" required placeholder="{{ _('Por ejemplo: ¿Es deducible el gasto descrito en el adjunto para un autónomo en estimación directa?') }}"></textarea>
+    <div class="juridico-fila">
+      <label>{{ _('Cliente (opcional)') }}
+        <select name="cliente_id"><option value="">{{ _('— Sin cliente —') }}</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></label>
+      <label>{{ _('Objetivo') }}
+        <select name="objetivo"><option value="consulta">{{ _('Consulta') }}</option><option value="busqueda">{{ _('Búsqueda') }}</option><option value="resumen">{{ _('Resumen') }}</option><option value="borrador">{{ _('Borrador') }}</option></select></label>
+    </div>
+    <details class="notas-acordeon juridico-avanzado">
+      <summary>{{ _('Opciones avanzadas') }}</summary>
+      <div class="juridico-avanzado-cuerpo">
+        <div class="juridico-fila">
+          <label>{{ _('Fecha jurídica de referencia') }}<input type="date" name="fecha_juridica" value="{{ hoy }}"></label>
+          <label>{{ _('Modo temporal') }}
+            <select name="modo_temporal"><option value="actual">{{ _('Análisis actual de hechos de esa fecha') }}</option><option value="historico">{{ _('Estado del conocimiento en esa fecha') }}</option></select></label>
+        </div>
+        <div class="juridico-fila">
+          <label>{{ _('Materia (opcional)') }}<input name="materia" maxlength="80" placeholder="{{ _('fiscal, laboral…') }}"></label>
+          <label>{{ _('Territorio (opcional)') }}<input name="territorio" maxlength="80" placeholder="ES"></label>
+        </div>
+        <fieldset class="juridico-colecciones"><legend>{{ _('Dónde buscar') }}</legend>
+          {% for k, nombre in colecciones.items() %}<label class="chip-v2 juridico-coleccion"><input type="checkbox" name="coleccion" value="{{ k }}" checked> {{ _(nombre) }}</label>{% endfor %}</fieldset>
+        <label>{{ _('Adjuntos (hasta 5; Word, PDF con texto o texto plano)') }}<input type="file" name="archivos" multiple accept=".txt,.docx,.pdf"></label>
+        <p class="muted">{{ _('Un adjunto aporta hechos, no autoridad jurídica. Su texto se envía solo a tu modelo de IA y se borra a los 90 días. No se guarda el archivo original.') }}</p>
+      </div>
+    </details>
+    <div class="juridico-envio"><button type="submit" class="btn btn-primary">{{ _('Consultar') }}</button> <span class="muted">{{ _('Puede tardar hasta un minuto.') }}</span></div>
   </form>
 </section>
 {% endif %}
+</div>
+<aside class="juridico-lado">
 <section class="dash-panel" aria-label="{{ _('Mis consultas') }}">
   <h2>{{ _('Mis consultas') }}</h2>
-  {% if conversaciones %}<ul class="log-list">{% for c in conversaciones %}<li class="log-item"><span class="log-text">{{ c.titulo or c.ultima or '—' }}</span><span class="muted">{{ c.creada_en[:10] }} · {{ c.consultas }}</span></li>{% endfor %}</ul>
+  {% if conversaciones %}<ul class="juridico-lista">{% for c in conversaciones %}<li><span class="juridico-lista-titulo">{{ c.titulo or c.ultima or '—' }}</span><span class="muted">{{ c.creada_en[:10] }} · {{ c.consultas }}</span></li>{% endfor %}</ul>
   {% else %}<p class="muted">{{ _('Todavía no has hecho ninguna consulta.') }}</p>{% endif %}
 </section>
 {% if cobertura %}
 <section class="dash-panel" aria-label="{{ _('Cobertura') }}">
   <h2>{{ _('Qué hay en la biblioteca') }}</h2>
-  <ul class="log-list">{% for c in cobertura %}<li class="log-item"><span class="log-text">{{ c.nombre }}</span><span class="muted">{{ c.documentos }} {{ _('documentos') }}{% if c.hasta %} · {{ c.desde }} → {{ c.hasta }}{% endif %}</span></li>{% endfor %}</ul>
+  <ul class="juridico-lista">{% for c in cobertura %}<li><span class="juridico-lista-titulo">{{ c.nombre }}</span><span class="muted">{{ c.documentos }} {{ _('documentos') }}{% if c.hasta %} · {{ c.desde }} → {{ c.hasta }}{% endif %}</span></li>{% endfor %}</ul>
 </section>
 {% endif %}
+</aside>
+</div>
 {% endblock %}

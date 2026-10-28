@@ -33,9 +33,9 @@
     <label>{{ _('Prorrata general') }} (%)<input type="text" name="prorrata" value="{{ f.get('prorrata') or ('%g'|format(perfil.prorrata_centesimas / 100) if perfil.get('prorrata_centesimas') is not none else '') }}" inputmode="decimal"></label>
     <label>{{ _('Cuotas a compensar de periodos anteriores (€)') }}<input type="text" name="saldo_a_compensar" value="{{ f.get('saldo_a_compensar') or ('%.2f'|format(perfil.saldo_a_compensar_centimos / 100) if perfil.get('saldo_a_compensar_centimos') else '') }}" inputmode="decimal"></label>
   </div>
-  {% for b in opciones.banderas %}<label class="checkbox-label"><input type="checkbox" name="{{ b }}" value="1" {{ 'checked' if perfil.get(b) in (1, '1', True) }}> {{ {'criterio_caja': _('Criterio de caja'), 'sii': _('SII'), 'redeme': _('REDEME'), 'tributacion_foral': _('Tributación foral'),
+  <div class="fiscal-banderas">{% for b in opciones.banderas %}<label class="checkbox-label"><input type="checkbox" name="{{ b }}" value="1" {{ 'checked' if perfil.get(b) in (1, '1', True) }}> {{ {'criterio_caja': _('Criterio de caja'), 'sii': _('SII'), 'redeme': _('REDEME'), 'tributacion_foral': _('Tributación foral'),
     'autoliquidacion_conjunta': _('Autoliquidación conjunta'), 'exonerado_390': _('Exonerado del modelo 390'), 'deduce_pago_cuenta_carburantes': _('Deduce pago a cuenta de carburantes'), 'prorrata_especial': _('Prorrata especial'),
-    'sectores_diferenciados': _('Sectores diferenciados')}[b] }}</label>{% endfor %}
+    'sectores_diferenciados': _('Sectores diferenciados')}[b] }}</label>{% endfor %}</div>
   <label>{{ _('Notas') }}<textarea name="notas" rows="2" maxlength="500">{{ perfil.get('notas') or '' }}</textarea></label>
   <button type="submit" class="btn btn-primary">{{ _('Guardar cambios') if editado else _('Guardar perfil') }}</button>
 </form>

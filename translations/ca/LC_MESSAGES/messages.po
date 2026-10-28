@@ -18170,3 +18170,9 @@ msgid "expediente"
 msgid_plural "expedientes"
 msgstr[0] "expedient"
 msgstr[1] "expedients"
+
+msgid "Resultado estimado"
+msgstr "Resultat estimat"
+
+msgid "Opciones avanzadas"
+msgstr "Opcions avançades"
