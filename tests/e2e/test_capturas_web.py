@@ -75,7 +75,18 @@ def _sembrar(uid: int, tenant: int) -> dict:
     db.crear_nota(uid, "Ideas para la reunión del lunes: plantillas de recordatorio, calendario compartido y avisos por WhatsApp.", titulo="Reunión del lunes")
     db.crear_tiquet(uid, "error", "El calendario fiscal no muestra el 115", "Al filtrar por cliente desaparece.")
     db.crear_tiquet(uid, "sugerencia", "Poder duplicar un vencimiento", None)
-    return {"mensaje": primero, "cuenta": cuenta}
+    for asunto, estado in (("Recoger extractos bancarios", "completada"), ("Conciliar IVA soportado", "en_progreso"), ("Preparar el 303", "no_iniciada"), ("Enviar borrador al cliente", "no_iniciada")):
+        db.crear_tarea_outlook(uid, asunto=asunto, estado=estado, categoria_id=p1, fecha_vencimiento=_dia(2))
+    try:
+        from app import facturas_contables as fc, verticales
+        verticales.fijar_activo(tenant, "contabilizacion", True)
+        for tipo, n, quien, base in (("recibida", "F-2026-114", "Suministros Ríos SL", "1200"), ("emitida", "A-0031", "Construcciones Vidal", "3400"), ("recibida", "F-2026-121", "Gráficas Norte SA", "260,50")):
+            fc.crear(tenant, uid, c1, {"tipo": tipo, "fecha": _dia(-3), "numero": n, "tercero_nombre": quien, "tercero_nif": "B12345678"}, [{"base": base, "pct_iva": "21"}])
+    except Exception as e:                                            # solo es decorado de la captura
+        print("SIN FACTURAS", e)
+    db.guardar_fichaje_datos(uid, "Jorge Capturas", "12345678Z")
+    db.fichar(uid, tenant, "entrada")
+    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1}
 
 
 PAGINAS = [

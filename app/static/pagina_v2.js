@@ -8,6 +8,14 @@
   if (!titulo || !cabecera) return;
   var h1 = cabecera.querySelector("h1");
   if (!h1 || !h1.textContent.trim()) return;
+  if (cabecera.classList.contains("proyecto-cabecera") && !titulo.textContent.trim()) {   // proyecto: nombre + estado en la barra; icono y subtítulo se quedan
+    var nombre = (h1.firstChild && h1.firstChild.textContent || h1.textContent).trim();
+    titulo.textContent = nombre;
+    var estado = h1.querySelector(".proyecto-estado");
+    if (estado) { var e = estado.cloneNode(true); e.setAttribute("aria-hidden", "true"); titulo.appendChild(e); }
+    cabecera.classList.add("h1-en-barra");
+    return;
+  }
   if (titulo.textContent.trim()) {        // la barra ya trae su título (Tareas, Correo…): el h1 repetido solo queda para lectores de pantalla
     if (titulo.textContent.trim().indexOf(h1.textContent.trim()) === 0) cabecera.classList.add("h1-en-barra");
     return;
