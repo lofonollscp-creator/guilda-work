@@ -18,7 +18,7 @@
   --lima-suave: #eaf8b8;
   --rail-ancho: 232px;
 }
-:root:not([data-theme="dark"]) {
+:root[data-theme="light"] {
   --bg: #f5f6f8;
   --border: #e3e6eb;
   --text-muted: #5f6672;
@@ -29,6 +29,20 @@
   --linea: #eef0f3;
   --shadow-md: 0 1px 2px rgba(16, 24, 40, 0.05);
   --shadow-lg: 0 12px 32px -12px rgba(16, 24, 40, 0.22), 0 2px 6px rgba(16, 24, 40, 0.06);
+}
+@media not all and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+  --bg: #f5f6f8;
+  --border: #e3e6eb;
+  --text-muted: #5f6672;
+  --glass-bg: #ffffff;
+  --glass-border: #e3e6eb;
+  --panel-2: #f1f3f6;
+  --panel-2-hover: #e8ebf0;
+  --linea: #eef0f3;
+  --shadow-md: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-lg: 0 12px 32px -12px rgba(16, 24, 40, 0.22), 0 2px 6px rgba(16, 24, 40, 0.06);
+  }
 }
 :root[data-theme="dark"] { --ia: #b9b3ff; --ia-suave: #2a2755; --ia-linea: #4a4590; --ia-texto: #e4e1ff; --lima-suave: #2c3a0c; }
 @media (prefers-color-scheme: dark) {
@@ -859,3 +873,9 @@ form.edit-form-delete { margin-top: 4px; }
 @media (max-width: 640px) { .dash-grid .dash-panel form.edit-form { grid-template-columns: minmax(0, 1fr); } }
 form.edit-form-delete { border: 0; padding: 0; background: none; max-width: none; }
 form.edit-form-delete .btn-stop { background: none; color: var(--danger-text); border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border)); }
+
+/* Contraste: los chips del calendario usaban el color de la categoría como texto (2,7:1 en claro); ahora el texto es el color mezclado con el del tema */
+.cal-chip { color: color-mix(in srgb, var(--chip-color, var(--text)) 45%, var(--text)); font-weight: 600; font-size: 12px; background: color-mix(in srgb, var(--chip-color, var(--text-muted)) 18%, var(--surface)); }
+.cal-chip-fiscal { color: color-mix(in srgb, #d98c1f 40%, var(--text)); background: color-mix(in srgb, #d98c1f 20%, var(--surface)); }
+.cal-chip-cita { color: var(--text); }
+.cal-grid-mes, .fiscal-calendario-semana { grid-template-columns: repeat(7, minmax(0, 1fr)); }

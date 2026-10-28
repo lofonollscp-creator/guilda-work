@@ -109,3 +109,18 @@ body.pagina-login {
 .pagina-login .login-caja .muted { color: var(--apagado); }
 .pagina-login .login-caja a { color: var(--acento); }
 @media (max-width: 560px) { .pagina-login .login-caja { padding: 28px 22px; border-radius: 24px; } }
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-tema]) {
+    --cristal: rgba(255, 255, 255, 0.78); --cristal-2: rgba(16, 40, 44, 0.045); --cristal-2-hover: rgba(16, 40, 44, 0.08);
+    --borde: rgba(16, 40, 44, 0.12); --resalte: inset 0 1px 0 rgba(255, 255, 255, 0.95); --sombra: 0 14px 38px -20px rgba(16, 40, 44, 0.3);
+    --ambiente: radial-gradient(900px 560px at 92% -8%, rgba(27, 138, 150, 0.14), transparent 62%), radial-gradient(800px 640px at -8% 105%, rgba(31, 157, 99, 0.09), transparent 60%);
+    --apagado: #4d666a;
+    color-scheme: light;
+  }
+  :root:not([data-tema]) .pagina-login .login-caja { background: rgba(255, 255, 255, 0.86); border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 28px 70px -30px rgba(10, 20, 40, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8); --texto: #10282c; --apagado: #4d666a; --acento: #0e5a63; }
+}
+/* Botón de tema: un icono por preferencia */
+.boton-tema .tema-ico { display: none; }
+:root[data-preferencia="sistema"] .tema-ico-sistema, :root[data-preferencia="claro"] .tema-ico-claro, :root[data-preferencia="oscuro"] .tema-ico-oscuro { display: inline-flex; }
+:root:not([data-preferencia]) .tema-ico-sistema { display: inline-flex; }

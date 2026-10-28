@@ -12,6 +12,26 @@ CARPETA = os.environ.get("GUILDA_CAPTURAS_WEB")
 pytestmark = pytest.mark.skipif(not CARPETA, reason="GUILDA_CAPTURAS_WEB sin definir")
 
 
+CONTRASTE = """() => {
+  const parse = c => { const m = c.match(/rgba?\\(([^)]+)\\)/); if (!m) return null; const p = m[1].split(/[ ,\\/]+/).filter(Boolean).map(Number); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; };
+  const lum = ({r, g, b}) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const mezcla = (f, b) => ({r: f.r * f.a + b.r * (1 - f.a), g: f.g * f.a + b.g * (1 - f.a), b: f.b * f.a + b.b * (1 - f.a), a: 1});
+  const fondo = el => { const capas = []; for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.backgroundImage !== 'none' && !cs.backgroundImage.startsWith('linear-gradient(rgba')) return null; const c = parse(cs.backgroundColor); if (c && c.a > 0) { capas.push(c); if (c.a >= 1) break; } }
+    let base = {r: 255, g: 255, b: 255, a: 1}; for (let i = capas.length - 1; i >= 0; i--) base = mezcla(capas[i], base); return base; };
+  const out = [], vistos = new Set();
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) {
+    if (!n.textContent.trim()) continue; const el = n.parentElement; if (!el || ['SCRIPT', 'STYLE', 'NOSCRIPT', 'OPTION'].includes(el.tagName)) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) < 0.3) continue;
+    const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2 || r.bottom < 0 || r.top > innerHeight) continue;
+    const fg = parse(cs.color); const bg = fondo(el); if (!fg || !bg) continue;
+    const f = mezcla(fg, bg), l1 = lum(f), l2 = lum(bg), ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    const grande = parseFloat(cs.fontSize) >= 24 || (parseFloat(cs.fontSize) >= 18.66 && parseInt(cs.fontWeight) >= 700);
+    if (ratio < (grande ? 3 : 4.5)) { const k = (el.className || el.tagName) + '|' + cs.color + '|' + ratio.toFixed(1); if (!vistos.has(k)) { vistos.add(k); out.push(ratio.toFixed(1) + ' ' + (el.className || el.tagName).toString().slice(0, 50) + ' «' + n.textContent.trim().slice(0, 28) + '»'); } }
+  }
+  return out.slice(0, 12);
+}"""
+
 DESBORDES = """() => {
   const W = document.documentElement.clientWidth, out = [];
   if (document.documentElement.scrollWidth > W + 1) out.push('PAGINA ' + document.documentElement.scrollWidth);
@@ -114,9 +134,16 @@ def test_capturas(servidor, abrir, entrar_como_equipo):
             for nombre, ruta in PAGINAS + [("notas", "/notas"), ("tareas_tablero", "/tareas/tablero")] + _extra():
                 pagina.goto(f"{servidor.url}{ruta.format(**ids)}")
                 pagina.wait_for_load_state("networkidle")
-                pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)
+                if tema.startswith("sistema"):
+                    pagina.emulate_media(color_scheme="dark" if tema.endswith("oscuro") else "light")
+                    pagina.evaluate("() => document.documentElement.removeAttribute('data-theme')")
+                else:
+                    pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)
                 pagina.wait_for_timeout(150)
                 pagina.screenshot(path=os.path.join(CARPETA, f"{nombre}_{ancho}_{tema}.png"))
+                if os.environ.get("GUILDA_CONTRASTE"):
+                    for f in pagina.evaluate(CONTRASTE):
+                        print(f"CONTRASTE {nombre} {ancho} {tema}: {f}")
                 bordes = pagina.evaluate(DESBORDES)
                 if bordes:
                     print(f"DESBORDE {nombre} {ancho}: {bordes}")

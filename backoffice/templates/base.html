@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-tema="oscuro">
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -57,7 +57,9 @@
         <span class="avatar" style="--c: {{ admin.usuario|color_avatar }}">{{ (admin.nombre or admin.usuario)|iniciales }}</span>
         <span class="admin-nombre">{{ admin.nombre or admin.usuario }}</span>
       </a>
-      <button type="button" class="boton-icono" data-accion="tema" title="Cambiar tema" aria-label="Cambiar tema">{{ icono('moon') }}</button>
+      <button type="button" class="boton-icono boton-tema" data-accion="tema" title="Tema: sistema (clic para cambiar)" aria-label="Cambiar tema: sistema, claro u oscuro">
+        <span class="tema-ico tema-ico-sistema">{{ icono('monitor') }}</span><span class="tema-ico tema-ico-claro">{{ icono('sun') }}</span><span class="tema-ico tema-ico-oscuro">{{ icono('moon') }}</span>
+      </button>
       <form method="post" action="{{ url_for('rutas.logout') }}">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <button type="submit" class="boton-icono" title="Cerrar sesión" aria-label="Cerrar sesión">{{ icono('log-out') }}</button>
