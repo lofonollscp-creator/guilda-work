@@ -27,7 +27,7 @@ def test_cada_casilla_va_al_campo_que_dice_el_diseno():
         diseno = fr.cargar_diseno(modelo)
         por_n = {c["n"]: c["descripcion"] for c in diseno["paginas"][1]["campos"]}
         for casilla, texto in esperadas.items():
-            n = fr._campo_111(casilla) if modelo == "111" else fr.CAMPO_115[casilla]
+            n = fr._campo(modelo, casilla)
             assert texto in por_n[n], (modelo, casilla, n, por_n[n])
 
 

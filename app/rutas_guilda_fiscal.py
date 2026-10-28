@@ -268,6 +268,48 @@ def captura(cliente_id: int):
                            max_archivos=fc.MAX_ARCHIVOS_POR_SUBIDA)
 
 
+def _ajustes_130() -> dict:
+    """Los ajustes del formulario del 130 (importes acumulados del año en euros; en blanco = nada o, en los dos últimos, «calcúlalo tú»)."""
+    f = request.args
+
+    def euros(clave: str):
+        return _euros(f[clave]) if f.get(clave, "").strip() else None
+    return {"otros_ingresos": euros("otros_ingresos") or 0, "otros_gastos": euros("otros_gastos") or 0, "otras_retenciones": euros("otras_retenciones") or 0, "rendimiento_anterior": euros("rendimiento_anterior"),
+            "simplificada": bool(f.get("simplificada")), "pagos_previos": euros("pagos_previos"), "negativos_previos": euros("negativos_previos")}
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/130")
+@login_required
+def modelo_130(cliente_id: int):
+    """Modelo 130 (pago fraccionado del IRPF, estimación directa) del trimestre, calculado ahora con los apuntes aprobados y unos ajustes a mano. No se guarda nada."""
+    c = _cliente_o_404(cliente_id)
+    ejercicio, periodo = fn.periodo_por_defecto(date.today())
+    ejercicio = request.args.get("ejercicio", ejercicio, type=int)
+    periodo = request.args.get("periodo", periodo) if request.args.get("periodo") in PERIODOS else periodo
+    error, calculo, ajustes = _error(), None, {}
+    try:
+        ajustes = _ajustes_130()
+        calculo = fn.calculo_130(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, **ajustes)
+    except (ErrorFiscal, ValueError) as e:
+        error = error or str(e)
+    return render_template("fiscal_130.html", c=c, ejercicio=ejercicio, periodo=periodo, periodos=PERIODOS, calculo=calculo, valores=request.args, consulta={**request.args.to_dict(), "ejercicio": ejercicio, "periodo": periodo}, error=error)
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/130/fichero")
+@login_required
+def fichero_130_prueba(cliente_id: int):
+    _cliente_o_404(cliente_id)
+    ejercicio, periodo = request.args.get("ejercicio", type=int), request.args.get("periodo", "")
+    if not ejercicio or periodo not in PERIODOS:
+        abort(404)
+    destino = {k: v for k, v in request.args.items()}
+    try:
+        datos, nombre = fn.descargar_fichero_130(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, **_ajustes_130())
+    except (ErrorFiscal, ValueError) as e:
+        return _atras(url_for("guilda_fiscal.modelo_130", cliente_id=cliente_id, **destino), e)
+    return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
+
+
 @guilda_fiscal_bp.route("/<int:cliente_id>/conciliacion", methods=["GET", "POST"])
 @login_required
 def conciliacion(cliente_id: int):

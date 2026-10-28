@@ -17,8 +17,9 @@ from datetime import date, datetime, timedelta
 from flask_babel import lazy_gettext as _l  # noqa: F401  (los textos de pantalla se traducen en las rutas)
 
 from . import acceso, auditoria, db, fiscal_perfiles
-from .fiscal_modelos import exportador_303, fichero_303, fichero_390, fichero_retenciones, libros_lsi, motor_303, motor_390, motor_retenciones, validacion_apuntes
+from .fiscal_modelos import exportador_303, fichero_303, fichero_390, fichero_retenciones, libros_lsi, motor_130, motor_303, motor_390, motor_retenciones, validacion_apuntes
 from .fiscal_modelos.apuntes import RECTIFICATIVAS as RECTIFICATIVAS_APUNTE, Apunte
+motor_303_RECTIFICATIVAS = RECTIFICATIVAS_APUNTE
 from .fiscal_perfiles import ErrorFiscal
 
 VERSION_MOTOR = "1"
@@ -743,6 +744,94 @@ def descargar_fichero_390(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
         raise ErrorFiscal(str(e), "no_soportado")
     auditoria.registrar(tenant_id, usuario_id, "fiscal.390.descargar", "cliente_fiscal", cliente_fiscal_id, {"ejercicio": ejercicio, "hash": hashlib.sha256(contenido).hexdigest()})
     return contenido, f"{ejercicio}_390_prueba.390"
+
+
+def _acumulados_130(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int) -> dict[str, dict[str, int]]:
+    """Por trimestre, lo acumulado desde el 1 de enero hasta su último día, con los apuntes aprobados: `ingresos` (base de las emitidas, con abonos restando), `gastos` (base de las recibidas más el IVA que
+    no se dedujo, sin los bienes de inversión, que se amortizan) y `retenciones` (de IRPF soportadas en las facturas emitidas que ya son apunte). `inversion` cuenta los bienes de inversión que se han dejado fuera."""
+    apuntes = [a_apunte(f) for f in listar_apuntes(tenant_id, usuario_id, cliente_fiscal_id, ejercicio=ejercicio)]
+    salida = {}
+    for t in ("1T", "2T", "3T", "4T"):
+        fin = _fecha_fin_periodo(ejercicio, t)
+        ingresos = gastos = inversion = 0
+        for a in apuntes:
+            fecha = a.fecha_expedicion if a.tipo_factura in motor_303_RECTIFICATIVAS else (a.fecha_operacion or a.fecha_expedicion)
+            if fecha.year != ejercicio or fecha > fin:
+                continue
+            if a.libro == "E":
+                ingresos += a.base
+            elif a.bien_inversion:
+                inversion += 1
+            else:
+                gastos += a.base + (a.cuota - a.deducible if a.clave != "09" and not a.isp else 0)
+        retenciones = 0
+        for p in ("1T", "2T", "3T", "4T"):
+            if p > t:
+                break
+            retenciones += sum(f["retencion"] for f in facturas_del_periodo(tenant_id, usuario_id, cliente_fiscal_id, ejercicio, p)["facturas"]
+                               if f["m_retencion"] == "soportada" and f["m303"] == "computa" and f["incluir_en_fiscal"])
+        salida[t] = {"ingresos": ingresos, "gastos": gastos, "retenciones": retenciones, "inversion": inversion}
+    return salida
+
+
+def calculo_130(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str, *, otros_ingresos: int = 0, otros_gastos: int = 0, otras_retenciones: int = 0,
+                rendimiento_anterior: int | None = None, simplificada: bool = False, pagos_previos: int | None = None, negativos_previos: int | None = None) -> dict:
+    """Modelo 130 del trimestre calculado AHORA con los apuntes aprobados (no se guarda: no hay borrador ni estados). Los ajustes son importes ACUMULADOS del año que los apuntes no recogen (cuotas de
+    autónomos, amortizaciones, ingresos sin factura…). `pagos_previos` (casilla 05) y `negativos_previos` (casilla 15) salen, si no se dan, de calcular los trimestres anteriores solo con los apuntes, como
+    si se hubieran presentado así: es una suposición y se avisa. Devuelve `{"resultado", "sumas", "pagos_previos", "negativos_previos", "calculados_de_los_anteriores", "titular"}`."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    if periodo not in ("1T", "2T", "3T", "4T"):
+        raise ErrorFiscal("El 130 es trimestral: 1T, 2T, 3T o 4T.")
+    perfil = fiscal_perfiles.perfil_en(tenant_id, cliente_fiscal_id, _fecha_fin_periodo(ejercicio, periodo).isoformat())
+    if not perfil:
+        raise ErrorFiscal("El titular no tiene perfil fiscal vigente en ese periodo: créalo antes.", "sin_perfil")
+    conn = db.get_connection()
+    try:
+        titular = dict(_titular(conn, tenant_id, cliente_fiscal_id))
+    finally:
+        conn.close()
+    sumas = _acumulados_130(tenant_id, usuario_id, cliente_fiscal_id, ejercicio)
+    # trimestres anteriores, solo con los apuntes
+    pagos = negativos = 0
+    for t in ("1T", "2T", "3T"):
+        if t >= periodo:
+            break
+        s = sumas[t]
+        previo = motor_130.calcular(ejercicio=ejercicio, periodo=t, ingresos=s["ingresos"], gastos=s["gastos"], retenciones=s["retenciones"], pagos_previos=pagos, negativos_previos=negativos,
+                                    rendimiento_anterior=rendimiento_anterior, simplificada=simplificada)
+        if not previo.calculable:
+            continue
+        pagos += max(0, previo.casillas["07"]) - previo.casillas.get("16", 0)
+        negativos = max(0, negativos - previo.casillas.get("15", 0)) + (-previo.casillas["19"] if previo.casillas["19"] < 0 else 0)
+    de_los_anteriores = pagos_previos is None and negativos_previos is None
+    s = sumas[periodo]
+    resultado = motor_130.calcular(ejercicio=ejercicio, periodo=periodo, ingresos=s["ingresos"] + otros_ingresos, gastos=s["gastos"] + otros_gastos, retenciones=s["retenciones"] + otras_retenciones,
+                                   pagos_previos=pagos if pagos_previos is None else pagos_previos, negativos_previos=negativos if negativos_previos is None else negativos_previos,
+                                   rendimiento_anterior=rendimiento_anterior, simplificada=simplificada)
+    if perfil["forma_juridica"] != "persona_fisica":
+        resultado.bloqueos.append("El modelo 130 lo presentan personas físicas con actividad económica en estimación directa: el perfil de este titular no es de persona física.")
+    if de_los_anteriores and periodo != "1T":
+        resultado.avisos.append("Los pagos de trimestres anteriores (casilla 05) y los resultados negativos pendientes (casilla 15) se han calculado con los apuntes, como si cada trimestre se hubiera presentado "
+                                "así. Si lo presentado fue distinto, indícalo.")
+    if s["inversion"]:
+        resultado.avisos.append(f"Hay {s['inversion']} apunte(s) de bienes de inversión que no se cuentan como gasto: se amortizan. Suma la amortización del año en «otros gastos».")
+    return {"resultado": resultado, "sumas": s, "pagos_previos": pagos if pagos_previos is None else pagos_previos, "negativos_previos": negativos if negativos_previos is None else negativos_previos,
+            "calculados_de_los_anteriores": de_los_anteriores, "titular": titular}
+
+
+def descargar_fichero_130(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str, **ajustes) -> tuple[bytes, str]:
+    """El fichero de PRUEBA del 130 (se importa en el simulador o el formulario de la AEAT; no se presenta tal cual). Solo quien aprueba apuntes. Queda en la auditoría."""
+    _exigir_aprobador(tenant_id, usuario_id)
+    c = calculo_130(tenant_id, usuario_id, cliente_fiscal_id, ejercicio, periodo, **ajustes)
+    if not c["resultado"].calculable:
+        raise ErrorFiscal("El cálculo del 130 está bloqueado: " + " · ".join(c["resultado"].bloqueos[:3]), "no_soportado")
+    try:
+        contenido = fichero_retenciones.generar(c["resultado"], nif=(c["titular"]["nif"] or "").upper(), nombre=c["titular"]["nombre"])
+    except (fichero_retenciones.FicheroNoGenerable, exportador_303.ErrorDeFormato) as e:
+        raise ErrorFiscal(str(e), "no_soportado")
+    auditoria.registrar(tenant_id, usuario_id, "fiscal.130.descargar", "cliente_fiscal", cliente_fiscal_id, {"ejercicio": ejercicio, "periodo": periodo, "resultado": c["resultado"].casillas.get("19", 0),
+                                                                                                         "hash": hashlib.sha256(contenido).hexdigest()})
+    return contenido, f"{ejercicio}_{periodo}_130_prueba.txt"
 
 
 def descargar_fichero_retenciones(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, modelo: str, ejercicio: int, periodo: str) -> tuple[bytes, str]:

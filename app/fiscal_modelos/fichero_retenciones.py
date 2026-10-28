@@ -8,9 +8,10 @@ from decimal import Decimal
 from pathlib import Path
 
 from .exportador_303 import ErrorDeFormato, PERIODOS, _decimales, _pagina, formatear
-from .motor_retenciones import ResultadoRetenciones
+from .motor_retenciones import ResultadoRetenciones  # noqa: F401  (el 130 usa el mismo molde: modelo, ejercicio, periodo, casillas, tipo_declaracion y bloqueos)
 
-DISENOS = {"111": Path(__file__).resolve().parent / "disenos" / "111_v18.json", "115": Path(__file__).resolve().parent / "disenos" / "115_v13.json"}
+DISENOS = {"111": Path(__file__).resolve().parent / "disenos" / "111_v18.json", "115": Path(__file__).resolve().parent / "disenos" / "115_v13.json",
+           "130": Path(__file__).resolve().parent / "disenos" / "130_v12.json"}
 
 
 class FicheroNoGenerable(ValueError):
@@ -24,10 +25,25 @@ def _campo_111(casilla: str) -> int:
 
 
 CAMPO_115 = {"01": 12, "02": 13, "03": 14, "04": 15, "05": 16}
+
+
+def _campo_130(casilla: str) -> int:
+    """Casilla del 130 -> nº de campo de la página: los campos 12 a 30 son las casillas 01 a 19 por orden."""
+    c = int(casilla)
+    if not 1 <= c <= 19:
+        raise FicheroNoGenerable(f"La casilla {casilla} no existe en el diseño del modelo 130.")
+    return c + 11
+
+
+def _campo(modelo: str, casilla: str) -> int:
+    return {"111": _campo_111, "115": CAMPO_115.get, "130": _campo_130}[modelo](casilla)
 # nombre en el diseño de cada campo, para que una prueba compruebe la correspondencia (casilla -> palabras de su descripción)
 DESCRIPCION_ESPERADA = {"111": {"03": "Rendimientos dinerarios - Importe retenciones", "07": "actividades económicas - Rendimientos dinerarios -Nº de percep", "09": "actividades económicas - Rendimientos dinerarios -Importe rete",
                                 "28": "Suma retenciones", "29": "Resultado de anteriores declaraciones", "30": "Resultado a ingresar"},
-                        "115": {"01": "Número perceptores", "02": "Base retenciones", "03": "Retenciones e ingresos a cuenta [03]", "04": "Resultado anteriores declaraciones", "05": "Resultado a ingresar"}}
+                        "115": {"01": "Número perceptores", "02": "Base retenciones", "03": "Retenciones e ingresos a cuenta [03]", "04": "Resultado anteriores declaraciones", "05": "Resultado a ingresar"},
+                        "130": {"01": "[01] Ingresos computables", "02": "[02] Gastos fiscalmente deducibles", "03": "[03 ]Rendimiento neto", "04": "[04] 20 por 100", "05": "[05] A deducir : De los trim. anteriores",
+                                "06": "[06] A deducir: Retenciones", "07": "[07] Pago fraccionado previo", "12": "[12] Suma de pagos fraccionados", "13": "[13] A deducir: Minorac.", "14": "[14] Diferencia",
+                                "15": "[15] A deducir: Resultados negativos", "16": "[16] A deducir: cantidades al pago", "17": "[17] Total", "19": "[19] Resultado de la autoliquidación"}}
 
 
 def cargar_diseno(modelo: str) -> dict:
@@ -37,7 +53,7 @@ def cargar_diseno(modelo: str) -> dict:
 def _valores_pagina(diseno: dict, r: ResultadoRetenciones, nif: str, nombre: str) -> dict[int, object]:
     pagina = diseno["paginas"][1]
     por_n = {c["n"]: c for c in pagina["campos"]}
-    mapa = {c: (_campo_111(c) if r.modelo == "111" else CAMPO_115[c]) for c in r.casillas}
+    mapa = {c: _campo(r.modelo, c) for c in r.casillas}
     valores: dict[int, object] = {6: r.tipo_declaracion, 7: nif, 8: nombre, 10: r.ejercicio, 11: r.periodo}
     for casilla, valor in r.casillas.items():
         campo = por_n[mapa[casilla]]
@@ -45,7 +61,7 @@ def _valores_pagina(diseno: dict, r: ResultadoRetenciones, nif: str, nombre: str
     return valores
 
 
-def generar(r: ResultadoRetenciones, *, nif: str, nombre: str, diseno: dict | None = None) -> bytes:
+def generar(r, *, nif: str, nombre: str, diseno: dict | None = None) -> bytes:
     if not r.calculable:
         raise FicheroNoGenerable("El cálculo está bloqueado: " + " · ".join(r.bloqueos[:3]))
     if r.periodo not in PERIODOS:

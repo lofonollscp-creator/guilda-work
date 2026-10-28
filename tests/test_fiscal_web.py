@@ -612,3 +612,20 @@ def test_captura_desde_el_movil_va_al_titular_elegido(cliente):
     sin = cliente.post(f"/guilda-fiscal/{otro}/captura", data={"tipo": "recibida"}, content_type="multipart/form-data", follow_redirects=True)
     assert "al menos un archivo" in sin.get_data(as_text=True)
     assert cliente.get("/guilda-fiscal/999999/captura").status_code == 404
+
+
+def test_modelo_130_desde_la_ficha(cliente):
+    from app.fiscal_modelos import fichero_retenciones as fr
+    from tests.escenarios_303 import venta
+    uid, t, c = _web(cliente, email="m130web@ejemplo.com")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "persona_fisica", "residencia": "ES", "territorio_iva": "peninsula_baleares",
+                                                           "regimen_iva": "general", "periodicidad": "trimestral"}).status_code == 302
+    fn.aprobar_apunte(t, uid, c, venta(100000, 2100, numero="1", fecha=date(2026, 2, 10)))
+    assert "Modelo 130 (IRPF)" in cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=1T").get_data(as_text=True)
+    html = cliente.get(f"/guilda-fiscal/{c}/130?ejercicio=2026&periodo=1T").get_data(as_text=True)
+    assert 'id="calculo-130"' in html and "200,00 €" in html and "Descargar el fichero de prueba del modelo 130" in html
+    html = cliente.get(f"/guilda-fiscal/{c}/130?ejercicio=2026&periodo=1T&otros_gastos=500,00").get_data(as_text=True)
+    assert "Gastos fiscalmente deducibles" in html and "500,00 €" in html and "100,00 €" in html                      # 1.000 − 500 = 500 € de rendimiento y el 20 % son 100 €
+    r = cliente.get(f"/guilda-fiscal/{c}/130/fichero?ejercicio=2026&periodo=1T")
+    assert r.status_code == 200 and "2026_1T_130_prueba.txt" in r.headers["Content-Disposition"] and int(fr.leer_campos("130", r.data)[18]) == 20000
+    assert cliente.get(f"/guilda-fiscal/{c}/130/fichero?ejercicio=2026&periodo=9T").status_code == 404

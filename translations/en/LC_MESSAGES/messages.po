@@ -18024,3 +18024,96 @@ msgstr "Own checks"
 
 msgid "Las comprobaciones propias (NIF, IVA de cada línea, fecha, duplicados) no han encontrado nada."
 msgstr "The own checks (tax ID, VAT per line, date, duplicates) found nothing."
+
+msgid "Modelo 130"
+msgstr "Form 130"
+
+msgid "Modelo 130 (IRPF)"
+msgstr "Form 130 (income tax)"
+
+msgid "Pago fraccionado del IRPF (estimación directa)"
+msgstr "Income tax instalment (direct estimation)"
+
+msgid "Se calcula ahora con los apuntes aprobados del año (ingresos y gastos sin IVA, acumulados hasta el fin del trimestre) y con los ajustes que pongas aquí. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal."
+msgstr "It is calculated now from the year's approved entries (income and expenses without VAT, accumulated to the end of the quarter) and the adjustments you enter here. Nothing is stored and this form has no draft or statuses in Guilda Fiscal."
+
+msgid "Ajustes (importes acumulados del año hasta el fin del trimestre, en euros):"
+msgstr "Adjustments (amounts accumulated for the year up to the end of the quarter, in euros):"
+
+msgid "Otros ingresos no registrados"
+msgstr "Other unrecorded income"
+
+msgid "Otros gastos (cuotas de autónomos, amortizaciones, provisiones…)"
+msgstr "Other expenses (self-employed contributions, depreciation, provisions…)"
+
+msgid "Otras retenciones soportadas"
+msgstr "Other withholdings suffered"
+
+msgid "Rendimiento neto del año anterior (para la minoración, si fue de 12.000 € o menos)"
+msgstr "Net income of the previous year (for the reduction, if it was 12,000 € or less)"
+
+msgid "Pagos de trimestres anteriores (casilla 05; en blanco = calcular)"
+msgstr "Payments of previous quarters (box 05; blank = calculate)"
+
+msgid "Resultados negativos pendientes (casilla 15; en blanco = calcular)"
+msgstr "Pending negative results (box 15; blank = calculate)"
+
+msgid "Estimación directa simplificada (añade los gastos de difícil justificación: 5 por 100, hasta 2.000 € al año)"
+msgstr "Simplified direct estimation (adds hard-to-document expenses: 5 per cent, up to 2,000 € a year)"
+
+msgid "Ingresos computables"
+msgstr "Taxable income"
+
+msgid "Gastos fiscalmente deducibles"
+msgstr "Tax-deductible expenses"
+
+msgid "Rendimiento neto (01 − 02)"
+msgstr "Net income (01 − 02)"
+
+msgid "20 por 100 del rendimiento neto"
+msgstr "20 per cent of net income"
+
+msgid "A deducir: pagos de trimestres anteriores"
+msgstr "To deduct: payments of previous quarters"
+
+msgid "A deducir: retenciones e ingresos a cuenta soportados"
+msgstr "To deduct: withholdings suffered"
+
+msgid "Pago fraccionado previo del trimestre"
+msgstr "Preliminary instalment of the quarter"
+
+msgid "Suma de pagos fraccionados del trimestre"
+msgstr "Sum of the quarter's instalments"
+
+msgid "A deducir: minoración por rendimientos bajos"
+msgstr "To deduct: reduction for low income"
+
+msgid "Diferencia (12 − 13)"
+msgstr "Difference (12 − 13)"
+
+msgid "A deducir: resultados negativos de trimestres anteriores"
+msgstr "To deduct: negative results of previous quarters"
+
+msgid "Total (14 − 15 − 16)"
+msgstr "Total (14 − 15 − 16)"
+
+msgid "Resultado de la autoliquidación"
+msgstr "Result of the self-assessment"
+
+msgid "Tipo de declaración"
+msgstr "Return type"
+
+msgid "Ingreso"
+msgstr "Payment"
+
+msgid "Negativa"
+msgstr "Nil"
+
+msgid "A deducir en los siguientes pagos"
+msgstr "To deduct in the following payments"
+
+msgid "Descargar el fichero de prueba del modelo 130"
+msgstr "Download the test file for form 130"
+
+msgid "impórtalo en el simulador de la AEAT antes de presentar."
+msgstr "import it in the tax agency's simulator before filing."

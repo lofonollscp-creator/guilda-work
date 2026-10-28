@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Modelo 130') }} — {{ c.nombre }}{% endblock %}
+{% block content %}
+{% set conceptos = {'01': _('Ingresos computables'), '02': _('Gastos fiscalmente deducibles'), '03': _('Rendimiento neto (01 − 02)'), '04': _('20 por 100 del rendimiento neto'),
+  '05': _('A deducir: pagos de trimestres anteriores'), '06': _('A deducir: retenciones e ingresos a cuenta soportados'), '07': _('Pago fraccionado previo del trimestre'),
+  '12': _('Suma de pagos fraccionados del trimestre'), '13': _('A deducir: minoración por rendimientos bajos'), '14': _('Diferencia (12 − 13)'),
+  '15': _('A deducir: resultados negativos de trimestres anteriores'), '17': _('Total (14 − 15 − 16)'), '19': _('Resultado de la autoliquidación')} %}
+{% macro euros(v) %}{{ ('%.2f'|format(v / 100)).replace('.', ',') }} €{% endmacro %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Modelo 130') }} · {{ ejercicio }} {{ periodo }}</h1>
+    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '—' }} · {{ _('Pago fraccionado del IRPF (estimación directa)') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ c.nombre }}</a>
+</header>
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  <p class="muted">{{ _('Se calcula ahora con los apuntes aprobados del año (ingresos y gastos sin IVA, acumulados hasta el fin del trimestre) y con los ajustes que pongas aquí. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal.') }}</p>
+  <form method="get" class="edit-form">
+    <div class="fila-campos">
+      <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100"></label>
+      <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option {{ 'selected' if p == periodo }}>{{ p }}</option>{% endfor %}</select></label>
+    </div>
+    <p class="muted">{{ _('Ajustes (importes acumulados del año hasta el fin del trimestre, en euros):') }}</p>
+    <div class="fila-campos">
+      <label>{{ _('Otros ingresos no registrados') }} <input type="text" name="otros_ingresos" value="{{ valores.get('otros_ingresos', '') }}" inputmode="decimal"></label>
+      <label>{{ _('Otros gastos (cuotas de autónomos, amortizaciones, provisiones…)') }} <input type="text" name="otros_gastos" value="{{ valores.get('otros_gastos', '') }}" inputmode="decimal"></label>
+      <label>{{ _('Otras retenciones soportadas') }} <input type="text" name="otras_retenciones" value="{{ valores.get('otras_retenciones', '') }}" inputmode="decimal"></label>
+    </div>
+    <div class="fila-campos">
+      <label>{{ _('Rendimiento neto del año anterior (para la minoración, si fue de 12.000 € o menos)') }} <input type="text" name="rendimiento_anterior" value="{{ valores.get('rendimiento_anterior', '') }}" inputmode="decimal"></label>
+      <label>{{ _('Pagos de trimestres anteriores (casilla 05; en blanco = calcular)') }} <input type="text" name="pagos_previos" value="{{ valores.get('pagos_previos', '') }}" inputmode="decimal"></label>
+      <label>{{ _('Resultados negativos pendientes (casilla 15; en blanco = calcular)') }} <input type="text" name="negativos_previos" value="{{ valores.get('negativos_previos', '') }}" inputmode="decimal"></label>
+    </div>
+    <label class="checkbox-label"><input type="checkbox" name="simplificada" value="1" {{ 'checked' if valores.get('simplificada') }}> {{ _('Estimación directa simplificada (añade los gastos de difícil justificación: 5 por 100, hasta 2.000 € al año)') }}</label>
+    <div class="ds-fila"><button class="btn btn-primary" type="submit">{{ _('Calcular') }}</button></div>
+  </form>
+</section>
+{% if calculo %}
+{% set r = calculo.resultado %}
+<section class="dash-panel ds-mt-16" id="calculo-130">
+  {% for b in r.bloqueos %}<p class="ia-error" role="alert">{{ b }}</p>{% endfor %}
+  {% if r.casillas %}<div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th></tr></thead><tbody>
+    {% for cas, v in r.casillas.items()|sort %}<tr><td>{{ cas }}</td><td>{{ conceptos.get(cas, '') }}</td><td>{{ euros(v) }}</td></tr>{% endfor %}</tbody></table></div>
+  <p><strong>{{ _('Tipo de declaración') }}:</strong> {{ {'I': _('Ingreso'), 'N': _('Negativa'), 'B': _('A deducir en los siguientes pagos')}[r.tipo_declaracion] }}</p>{% endif %}
+  {% for a in r.avisos %}<p class="muted">{{ a }}</p>{% endfor %}
+  {% if puede_aprobar and r.calculable %}<p><a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.fichero_130_prueba', cliente_id=c.id, **consulta) }}">{{ _('Descargar el fichero de prueba del modelo 130') }}</a>
+    <span class="muted">· {{ _('impórtalo en el simulador de la AEAT antes de presentar.') }}</span></p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

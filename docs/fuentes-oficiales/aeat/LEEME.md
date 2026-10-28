@@ -23,3 +23,6 @@ Descargados el 27-oct-2026 (con permiso expreso de Jorge) para el 390 y los mode
 | `Instrucciones_modelo_390-2025.pdf` | Instrucciones oficiales del 390 (cómo se rellena cada casilla; p. ej. la 108 = 99+653+103+104+105+110+100+101+102+125+126+127+128+227+228 − 106 − 107) |
 | `disenos_100_199.html` | Página de diseños de registro de los modelos 100–199 (para vigilar revisiones del 111, 115, 130 y 131) |
 | `dr111e16v18.xls`, `DR115e15v13.xls` | Diseños de registro del 111 y del 115, formato `.xls` antiguo (`xlrd` solo hace falta para extraerlos). De ellos salen `app/fiscal_modelos/disenos/111_v18.json` y `115_v13.json` con `scripts/fiscal/extraer_diseno.py`: base del fichero de retenciones |
+| `DR130e15v12.xls` | **Diseño de registro del modelo 130** (versión 1.2, ejercicios 2019 y siguientes). De él sale `app/fiscal_modelos/disenos/130_v12.json` con `scripts/fiscal/extraer_diseno.py` (necesita `xlrd`) |
+| `DR131_2026.xlsx` | **Diseño de registro del modelo 131**, ejercicio 2026 (actualizado 28/09/2026). De él sale `app/fiscal_modelos/disenos/131_2026.json`; **aún sin usar**: el 131 pide los datos-base de cada módulo por actividad, que no tenemos |
+| `130_instrucciones.html` | **Instrucciones del modelo 130**: de ellas salen las reglas de `motor_130.py` (casillas 01 a 19) |

@@ -103,5 +103,26 @@
   "bytes": 176640,
   "sha256": "d0b4c2cb344fe2d4b91a082bc85cc7906e383be792134504ddaedd0dc8bb2694",
   "descargado": "2026-10-27T15:18:55"
+ },
+ {
+  "fichero": "DR130e15v12.xls",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Disenyo_registro/DR_100_199/archivos/DR130e15v12.xls",
+  "bytes": 180736,
+  "sha256": "58f731b0c72eff7fd23484000c74e73e0ac803a5167065176d78cac8712f5fe7",
+  "descargado": "2026-10-28T13:06:27"
+ },
+ {
+  "fichero": "DR131_2026.xlsx",
+  "url": "https://sede.agenciatributaria.gob.es/static_files/Sede/Disenyo_registro/DR_100_199/archivos_26/DR131_2026.xlsx",
+  "bytes": 183581,
+  "sha256": "b394370ae16d303a3ed7e192ca34ba1ff49dbbbea49e4d2bbe220085cc53600f",
+  "descargado": "2026-10-28T13:06:27"
+ },
+ {
+  "fichero": "130_instrucciones.html",
+  "url": "https://sede.agenciatributaria.gob.es/Sede/impuestos-tasas/impuesto-sobre-renta-personas-fisicas/modelo-130-irpf______esionales-estimacion-directa-fraccionado_/instrucciones.html",
+  "bytes": 40838,
+  "sha256": "6f2721adf99468a175bfc0e67d62b31f9f35afdfa0d339ccc4f9da53e786ed08",
+  "descargado": "2026-10-28T13:06:27"
  }
 ]

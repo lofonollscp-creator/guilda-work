@@ -18109,3 +18109,96 @@ msgstr "Contrôles propres"
 
 msgid "Las comprobaciones propias (NIF, IVA de cada línea, fecha, duplicados) no han encontrado nada."
 msgstr "Les contrôles propres (NIF, TVA de chaque ligne, date, doublons) n'ont rien trouvé."
+
+msgid "Modelo 130"
+msgstr "Modèle 130"
+
+msgid "Modelo 130 (IRPF)"
+msgstr "Modèle 130 (IRPF)"
+
+msgid "Pago fraccionado del IRPF (estimación directa)"
+msgstr "Paiement fractionné de l'IRPF (estimation directe)"
+
+msgid "Se calcula ahora con los apuntes aprobados del año (ingresos y gastos sin IVA, acumulados hasta el fin del trimestre) y con los ajustes que pongas aquí. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal."
+msgstr "Il est calculé maintenant avec les écritures approuvées de l'année (recettes et dépenses hors TVA, cumulées jusqu'à la fin du trimestre) et les ajustements saisis ici. Rien n'est conservé et ce modèle n'a ni brouillon ni statuts dans Guilda Fiscal."
+
+msgid "Ajustes (importes acumulados del año hasta el fin del trimestre, en euros):"
+msgstr "Ajustements (montants cumulés de l'année jusqu'à la fin du trimestre, en euros) :"
+
+msgid "Otros ingresos no registrados"
+msgstr "Autres recettes non enregistrées"
+
+msgid "Otros gastos (cuotas de autónomos, amortizaciones, provisiones…)"
+msgstr "Autres dépenses (cotisations d'indépendant, amortissements, provisions…)"
+
+msgid "Otras retenciones soportadas"
+msgstr "Autres retenues subies"
+
+msgid "Rendimiento neto del año anterior (para la minoración, si fue de 12.000 € o menos)"
+msgstr "Revenu net de l'année précédente (pour la minoration, s'il était de 12 000 € ou moins)"
+
+msgid "Pagos de trimestres anteriores (casilla 05; en blanco = calcular)"
+msgstr "Paiements des trimestres précédents (case 05 ; vide = calculer)"
+
+msgid "Resultados negativos pendientes (casilla 15; en blanco = calcular)"
+msgstr "Résultats négatifs en attente (case 15 ; vide = calculer)"
+
+msgid "Estimación directa simplificada (añade los gastos de difícil justificación: 5 por 100, hasta 2.000 € al año)"
+msgstr "Estimation directe simplifiée (ajoute les dépenses difficiles à justifier : 5 pour cent, jusqu'à 2 000 € par an)"
+
+msgid "Ingresos computables"
+msgstr "Recettes imposables"
+
+msgid "Gastos fiscalmente deducibles"
+msgstr "Dépenses fiscalement déductibles"
+
+msgid "Rendimiento neto (01 − 02)"
+msgstr "Revenu net (01 − 02)"
+
+msgid "20 por 100 del rendimiento neto"
+msgstr "20 pour cent du revenu net"
+
+msgid "A deducir: pagos de trimestres anteriores"
+msgstr "À déduire : paiements des trimestres précédents"
+
+msgid "A deducir: retenciones e ingresos a cuenta soportados"
+msgstr "À déduire : retenues subies"
+
+msgid "Pago fraccionado previo del trimestre"
+msgstr "Paiement fractionné préalable du trimestre"
+
+msgid "Suma de pagos fraccionados del trimestre"
+msgstr "Somme des paiements fractionnés du trimestre"
+
+msgid "A deducir: minoración por rendimientos bajos"
+msgstr "À déduire : minoration pour faibles revenus"
+
+msgid "Diferencia (12 − 13)"
+msgstr "Différence (12 − 13)"
+
+msgid "A deducir: resultados negativos de trimestres anteriores"
+msgstr "À déduire : résultats négatifs des trimestres précédents"
+
+msgid "Total (14 − 15 − 16)"
+msgstr "Total (14 − 15 − 16)"
+
+msgid "Resultado de la autoliquidación"
+msgstr "Résultat de l'autoliquidation"
+
+msgid "Tipo de declaración"
+msgstr "Type de déclaration"
+
+msgid "Ingreso"
+msgstr "Paiement"
+
+msgid "Negativa"
+msgstr "Négative"
+
+msgid "A deducir en los siguientes pagos"
+msgstr "À déduire des paiements suivants"
+
+msgid "Descargar el fichero de prueba del modelo 130"
+msgstr "Télécharger le fichier de test du modèle 130"
+
+msgid "impórtalo en el simulador de la AEAT antes de presentar."
+msgstr "importez-le dans le simulateur de l'AEAT avant de déposer."

@@ -18033,3 +18033,96 @@ msgstr "Comprovacions pròpies"
 
 msgid "Las comprobaciones propias (NIF, IVA de cada línea, fecha, duplicados) no han encontrado nada."
 msgstr "Les comprovacions pròpies (NIF, IVA de cada línia, data, duplicats) no han trobat res."
+
+msgid "Modelo 130"
+msgstr "Model 130"
+
+msgid "Modelo 130 (IRPF)"
+msgstr "Model 130 (IRPF)"
+
+msgid "Pago fraccionado del IRPF (estimación directa)"
+msgstr "Pagament fraccionat de l'IRPF (estimació directa)"
+
+msgid "Se calcula ahora con los apuntes aprobados del año (ingresos y gastos sin IVA, acumulados hasta el fin del trimestre) y con los ajustes que pongas aquí. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal."
+msgstr "Es calcula ara amb els apunts aprovats de l'any (ingressos i despeses sense IVA, acumulats fins al final del trimestre) i amb els ajustos que posis aquí. No es desa res i aquest model no té esborrany ni estats a Guilda Fiscal."
+
+msgid "Ajustes (importes acumulados del año hasta el fin del trimestre, en euros):"
+msgstr "Ajustos (imports acumulats de l'any fins al final del trimestre, en euros):"
+
+msgid "Otros ingresos no registrados"
+msgstr "Altres ingressos no registrats"
+
+msgid "Otros gastos (cuotas de autónomos, amortizaciones, provisiones…)"
+msgstr "Altres despeses (quotes d'autònoms, amortitzacions, provisions…)"
+
+msgid "Otras retenciones soportadas"
+msgstr "Altres retencions suportades"
+
+msgid "Rendimiento neto del año anterior (para la minoración, si fue de 12.000 € o menos)"
+msgstr "Rendiment net de l'any anterior (per a la minoració, si va ser de 12.000 € o menys)"
+
+msgid "Pagos de trimestres anteriores (casilla 05; en blanco = calcular)"
+msgstr "Pagaments de trimestres anteriors (casella 05; en blanc = calcular)"
+
+msgid "Resultados negativos pendientes (casilla 15; en blanco = calcular)"
+msgstr "Resultats negatius pendents (casella 15; en blanc = calcular)"
+
+msgid "Estimación directa simplificada (añade los gastos de difícil justificación: 5 por 100, hasta 2.000 € al año)"
+msgstr "Estimació directa simplificada (afegeix les despeses de difícil justificació: 5 per 100, fins a 2.000 € a l'any)"
+
+msgid "Ingresos computables"
+msgstr "Ingressos computables"
+
+msgid "Gastos fiscalmente deducibles"
+msgstr "Despeses fiscalment deduïbles"
+
+msgid "Rendimiento neto (01 − 02)"
+msgstr "Rendiment net (01 − 02)"
+
+msgid "20 por 100 del rendimiento neto"
+msgstr "20 per 100 del rendiment net"
+
+msgid "A deducir: pagos de trimestres anteriores"
+msgstr "A deduir: pagaments de trimestres anteriors"
+
+msgid "A deducir: retenciones e ingresos a cuenta soportados"
+msgstr "A deduir: retencions i ingressos a compte suportats"
+
+msgid "Pago fraccionado previo del trimestre"
+msgstr "Pagament fraccionat previ del trimestre"
+
+msgid "Suma de pagos fraccionados del trimestre"
+msgstr "Suma de pagaments fraccionats del trimestre"
+
+msgid "A deducir: minoración por rendimientos bajos"
+msgstr "A deduir: minoració per rendiments baixos"
+
+msgid "Diferencia (12 − 13)"
+msgstr "Diferència (12 − 13)"
+
+msgid "A deducir: resultados negativos de trimestres anteriores"
+msgstr "A deduir: resultats negatius de trimestres anteriors"
+
+msgid "Total (14 − 15 − 16)"
+msgstr "Total (14 − 15 − 16)"
+
+msgid "Resultado de la autoliquidación"
+msgstr "Resultat de l'autoliquidació"
+
+msgid "Tipo de declaración"
+msgstr "Tipus de declaració"
+
+msgid "Ingreso"
+msgstr "Ingrés"
+
+msgid "Negativa"
+msgstr "Negativa"
+
+msgid "A deducir en los siguientes pagos"
+msgstr "A deduir en els pagaments següents"
+
+msgid "Descargar el fichero de prueba del modelo 130"
+msgstr "Descarregar el fitxer de prova del model 130"
+
+msgid "impórtalo en el simulador de la AEAT antes de presentar."
+msgstr "importa'l al simulador de l'AEAT abans de presentar."
