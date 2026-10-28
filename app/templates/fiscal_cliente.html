@@ -58,11 +58,11 @@
 {% if recordatorio %}
 <details class="dash-panel ds-mb-16">
   <summary><strong>{{ _('Mensaje al cliente: lo que falta para cerrar el trimestre') }}</strong></summary>
-  <p class="muted">{{ _('Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes.') }}</p>
+  <p class="muted">{{ _('Texto listo para enviar. Guilda Work no lo envía solo: ábrelo en el redactor de correo, revísalo y envíalo tú.') }}</p>
   <textarea readonly rows="9" class="fiscal-recordatorio" id="recordatorio-texto">{{ recordatorio.texto }}</textarea>
   <div class="ds-fila ds-envolver ds-mt-16">
     <button type="button" class="btn btn-ghost" data-copiar="#recordatorio-texto" data-copiado="{{ _('Copiado') }}">{{ _('Copiar') }}</button>
-    <a class="btn btn-ghost" href="mailto:?subject={{ recordatorio.asunto|urlencode }}&body={{ recordatorio.texto|urlencode }}">{{ _('Abrir en el correo') }}</a>
+    <a class="btn btn-primary" href="{{ url_for('correo.redactar', para=c.email or '', asunto=recordatorio.asunto, cuerpo=recordatorio.texto, cliente_fiscal_id=c.id) }}">{{ _('Abrir en el correo') }}</a>
   </div>
 </details>
 {% endif %}

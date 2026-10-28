@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% from "_tarea_fila.html" import fila, defecto_eliminar, opciones_proyectos with context %}
 {% block title %}{{ _('Tareas') }} — Guilda Work{% endblock %}
+{% block barra_accion %}<a class="top-bar-accion" href="#tarea-alta-asunto"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-plus"></use></svg> {{ _('Nueva tarea') }}</a>{% endblock %}
 {% block content %}
-<header class="page-header">
+<header class="page-header sr-only">
   <div>
     <h1>{{ _('Tareas') }}</h1>
     <p class="subtitle">{{ _('Tus tareas con vencimiento, prioridad y estado, con cronómetro opcional para registrar el tiempo dedicado.') }}</p>
@@ -42,59 +43,61 @@
 </nav>
 {% endif %}
 
-<form class="filters" method="get">
+<form class="tareas-filtros" method="get">
   {% if companeros %}
-  <label>{{ _('Mostrar') }}
-    <select name="vista">
-      <option value="" {% if not vista %}selected{% endif %}>{{ _('Mías y asignadas a mí') }}</option>
-      <option value="mias" {% if vista == 'mias' %}selected{% endif %}>{{ _('Solo las mías') }}</option>
-      <option value="asignadas" {% if vista == 'asignadas' %}selected{% endif %}>{{ _('Asignadas a mí') }}</option>
-      <option value="compartidas" {% if vista == 'compartidas' %}selected{% endif %}>{{ _('Compartidas conmigo') }}</option>
-    </select>
-  </label>
+  <div class="tareas-ambito" role="group" aria-label="{{ _('Mostrar') }}">
+    <a class="chip-v2 {{ 'on' if not vista }}" href="{{ url_for('tareas.listar', q=q or none, estado=estado or none, prioridad=prioridad or none, categoria=categoria or none) }}">{{ _('Mías y asignadas a mí') }}</a>
+    <a class="chip-v2 {{ 'on' if vista == 'mias' }}" href="{{ url_for('tareas.listar', vista='mias', q=q or none, estado=estado or none, prioridad=prioridad or none, categoria=categoria or none) }}">{{ _('Solo las mías') }}</a>
+    <a class="chip-v2 {{ 'on' if vista == 'asignadas' }}" href="{{ url_for('tareas.listar', vista='asignadas', q=q or none, estado=estado or none, prioridad=prioridad or none, categoria=categoria or none) }}">{{ _('Asignadas a mí') }}</a>
+    <a class="chip-v2 {{ 'on' if vista == 'compartidas' }}" href="{{ url_for('tareas.listar', vista='compartidas', q=q or none, estado=estado or none, prioridad=prioridad or none, categoria=categoria or none) }}">{{ _('Compartidas conmigo') }}</a>
+  </div>
+  <span class="tareas-filtros-sep" aria-hidden="true"></span>
   {% endif %}
-  <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Texto...') }}"></label>
-  <label>{{ _('Estado') }}
-    <select name="estado">
-      <option value="">{{ _('Todos (sin completadas)') }}</option>
-      {% for valor, etiqueta in estados %}
-      <option value="{{ valor }}" {% if estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
-      {% endfor %}
-    </select>
-  </label>
-  <label>{{ _('Prioridad') }}
-    <select name="prioridad">
-      <option value="">{{ _('Todas') }}</option>
-      {% for valor, etiqueta in prioridades %}
-      <option value="{{ valor }}" {% if prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
-      {% endfor %}
-    </select>
-  </label>
+  {% if vista %}<input type="hidden" name="vista" value="{{ vista }}">{% endif %}
+  {% if incluir_completadas %}<input type="hidden" name="completadas" value="1">{% endif %}
+  <label class="sr-only" for="tareas-q">{{ _('Buscar') }}</label>
+  <input id="tareas-q" class="chip-v2 chip-campo" type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar…') }}">
+  <label class="sr-only" for="tareas-estado">{{ _('Estado') }}</label>
+  <select id="tareas-estado" class="chip-v2 chip-campo" name="estado" data-autoenviar>
+    <option value="">{{ _('Estado: todos (sin completadas)') }}</option>
+    {% for valor, etiqueta in estados %}
+    <option value="{{ valor }}" {% if estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+    {% endfor %}
+  </select>
+  <label class="sr-only" for="tareas-prioridad">{{ _('Prioridad') }}</label>
+  <select id="tareas-prioridad" class="chip-v2 chip-campo" name="prioridad" data-autoenviar>
+    <option value="">{{ _('Prioridad: todas') }}</option>
+    {% for valor, etiqueta in prioridades %}
+    <option value="{{ valor }}" {% if prioridad == valor %}selected{% endif %}>{{ etiqueta }}</option>
+    {% endfor %}
+  </select>
   {% if categorias_outlook %}
-  <label>{{ _('Categoría') }}
-    <select name="categoria">
-      <option value="">{{ _('Todas') }}</option>
-      {% for c in categorias_outlook %}
-      <option value="{{ c }}" {% if categoria == c %}selected{% endif %}>{{ c }}</option>
-      {% endfor %}
-    </select>
-  </label>
+  <label class="sr-only" for="tareas-categoria">{{ _('Categoría') }}</label>
+  <select id="tareas-categoria" class="chip-v2 chip-campo" name="categoria" data-autoenviar>
+    <option value="">{{ _('Categoría: todas') }}</option>
+    {% for c in categorias_outlook %}
+    <option value="{{ c }}" {% if categoria == c %}selected{% endif %}>{{ c }}</option>
+    {% endfor %}
+  </select>
   {% endif %}
-  <span class="action-group">
-    <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
-    {% if q or estado or prioridad or categoria or vista %}
-    <a class="btn btn-ghost" href="{{ url_for('tareas.listar') }}">{{ _('Limpiar') }}</a>
-    {% else %}
-    <a class="btn btn-ghost" href="{{ url_for('tareas.listar', completadas=1) }}">{{ _('Ver también completadas') }}</a>
-    {% endif %}
-  </span>
+  <button type="submit" class="chip-v2 on">{{ _('Filtrar') }}</button>
+  {% if q or estado or prioridad or categoria or vista %}
+  <a class="chip-v2" href="{{ url_for('tareas.listar') }}">{{ _('Limpiar') }}</a>
+  {% else %}
+  <a class="chip-v2" href="{{ url_for('tareas.listar', completadas=1) }}">{{ _('Ver también completadas') }}</a>
+  {% endif %}
 </form>
 
 <section class="quick-actions">
   <form class="quick-card quick-card-full" id="nueva-tarea" action="{{ url_for('tareas.crear') }}" method="post">
-    <label>{{ _('Nueva tarea') }}</label>
+    <div class="tarea-alta-principal">
+      <label class="sr-only" for="tarea-alta-asunto">{{ _('Nueva tarea') }}</label>
+      <input id="tarea-alta-asunto" type="text" name="asunto" placeholder="{{ _('Añadir tarea… («mañana 10h llamar a Vidal», «@luis», «!alta», «#proyecto»)') }}" required autocomplete="off">
+      <button type="submit" class="btn btn-primary">+ {{ _('Añadir') }}</button>
+    </div>
+    <details class="tarea-alta-mas">
+    <summary>{{ _('Más opciones') }}</summary>
     <div class="quick-row">
-      <input type="text" name="asunto" placeholder="{{ _('Asunto... (puedes añadir «viernes 10h», «@luis», «!alta», «#proyecto»)') }}" required autofocus autocomplete="off">
       <input type="datetime-local" name="fecha_inicio" title="{{ _('Fecha y hora de inicio') }}">
       <input type="datetime-local" name="fecha_vencimiento" title="{{ _('Fecha y hora de vencimiento') }}">
       <select name="prioridad" title="{{ _('Prioridad') }}">
@@ -135,8 +138,8 @@
         {% for c in categorias_outlook %}<option value="{{ c }}">{% endfor %}
       </datalist>
       <label class="tarea-con-cronometro"><input type="checkbox" name="con_cronometro" value="1"> {{ _('Iniciar cronómetro') }}</label>
-      <button type="submit" class="btn btn-primary">+ {{ _('Añadir') }}</button>
     </div>
+    </details>
   </form>
 </section>
 
@@ -146,11 +149,17 @@
 {% if aviso %}<p class="muted" role="status">{{ aviso }}</p>{% endif %}
 {% include "_tareas_lote.html" %}
 {{ opciones_proyectos() }}
-<ul class="log-list" {{ defecto_eliminar() }}>
+<div class="tareas-v2">
+<div class="tareas-v2-tabla">
+  <div class="tarea-fila-cabecera" aria-hidden="true"><span class="tarea-fila-check"></span><span class="tarea-fila-main">{{ _('Tarea') }}</span><span class="tarea-fila-col tarea-fila-estado">{{ _('Estado') }}</span><span class="tarea-fila-col tarea-fila-prio">{{ _('Prioridad') }}</span><span class="tarea-fila-col tarea-fila-vence">{{ _('Vence') }}</span><span class="tarea-fila-acciones"></span></div>
+  <ul class="tareas-v2-lista" {{ defecto_eliminar() }}>
   {% for t in tareas %}
   {{ fila(t, estados, cronometros, checklists, menus) }}
   {% endfor %}
-</ul>
+  </ul>
+</div>
+<aside class="tareas-v2-ficha" id="tareas-ficha" aria-label="{{ _('Ficha de la tarea') }}" aria-live="polite" data-vacia="{{ _('Elige una tarea para ver su ficha.') }}"><p class="muted tareas-v2-ficha-vacia">{{ _('Elige una tarea para ver su ficha.') }}</p></aside>
+</div>
 {% if hay_pagina_anterior or hay_pagina_siguiente %}
 <nav class="paginacion" aria-label="{{ _('Paginación de tareas') }}">
   {% if hay_pagina_anterior %}
@@ -168,4 +177,5 @@
 {% endif %}
 {% endif %}
 <script src="{{ url_for('static', filename='timer.js') }}"></script>
+<script src="{{ url_for('static', filename='tareas_ficha.js') }}" defer></script>
 {% endblock %}

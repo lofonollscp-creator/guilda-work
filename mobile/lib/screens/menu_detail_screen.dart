@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -102,8 +106,8 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.categoria.nombre)),
-      body: FutureBuilder<void>(
+      appBar: AppBar(title: Text(widget.categoria.nombre), actions: [AccionAsistente(contexto: widget.categoria.nombre)]),
+      body: AnchoMaximo(child: FutureBuilder<void>(
         future: _carga,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -173,7 +177,7 @@ class _MenuDetailScreenState extends State<MenuDetailScreen> {
             ),
           );
         },
-      ),
+      )),
     );
   }
 

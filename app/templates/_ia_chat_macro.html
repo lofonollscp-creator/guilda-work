@@ -1,6 +1,5 @@
-{% macro chat(mensajes, pendiente, contenedor_id, atajos=[]) %}
+{% macro chat(mensajes, pendiente, contenedor_id, atajos=[], con_info=False) %}
 <div class="ia-chat" id="{{ contenedor_id }}">
-  <p class="ia-chat-aviso"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bot"></use></svg> {{ _('Respuestas generadas por IA — pueden contener errores, comprueba lo importante.') }}</p>
   <div class="ia-chat-mensajes" id="{{ contenedor_id }}-mensajes">
     {% for m in mensajes %}
       {% if m.rol == 'user' %}
@@ -15,8 +14,9 @@
   </div>
   <div class="ia-chat-pendiente" id="{{ contenedor_id }}-pendiente" data-tool-call-id="{{ pendiente.tool_call_id if pendiente else '' }}" {{ 'hidden' if not pendiente }}>
     {% if pendiente %}
-    <p class="ia-chat-pendiente-titulo">{{ _('¿Ejecuto') }} <strong>{{ pendiente.herramienta }}</strong>?</p>
+    <p class="ia-chat-pendiente-titulo"><strong data-herramienta="{{ pendiente.herramienta }}">{{ pendiente.herramienta }}</strong></p>
     <pre class="ia-chat-pendiente-args">{{ pendiente.argumentos }}</pre>
+    <p class="ia-chat-pendiente-pregunta">{{ _('Voy a hacer esto. ¿Lo confirmo?') }}</p>
     {% endif %}
     <div class="ia-chat-pendiente-botones">
       <button type="button" class="ia-chat-confirmar" data-aceptar="true">{{ _('Sí, hazlo') }}</button>
@@ -38,6 +38,7 @@
     <button class="ia-chat-enviar" type="submit">{{ _('Enviar') }}</button>
   </form>
   <div class="ia-chat-pie">
+    <span class="ia-chat-pie-aviso">{{ _('IA · puede equivocarse') }}{% if con_info %} · <button type="button" class="ia-enlace js-ia-info">{{ _('Cómo funciona') }}</button>{% endif %}</span>
     <button type="button" class="ia-chat-vaciar" id="{{ contenedor_id }}-vaciar">{{ _('Nueva conversación') }}</button>
     <!-- Modo manoslibres: escucha -> envía -> lee la respuesta en voz alta ->
          vuelve a escuchar, hasta que se desactiva. Se oculta con JS si el

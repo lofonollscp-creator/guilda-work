@@ -266,6 +266,79 @@ class PestanasSubnav<T> extends StatelessWidget {
   }
 }
 
+/// Un control segmentado para cambiar de vista: una pista gris con la opción activa como píldora blanca. Si no caben todas, se desliza y deja la activa a la vista.
+class ControlSegmentado<T> extends StatefulWidget {
+  final List<(T, String)> opciones;
+  final T actual;
+  final void Function(T) alElegir;
+  const ControlSegmentado({super.key, required this.opciones, required this.actual, required this.alElegir});
+
+  @override
+  State<ControlSegmentado<T>> createState() => _ControlSegmentadoState<T>();
+}
+
+class _ControlSegmentadoState<T> extends State<ControlSegmentado<T>> {
+  final _claves = <GlobalKey>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _claves.addAll([for (final _ in widget.opciones) GlobalKey()]);
+    _verActual();
+  }
+
+  @override
+  void didUpdateWidget(ControlSegmentado<T> anterior) {
+    super.didUpdateWidget(anterior);
+    if (anterior.actual != widget.actual) _verActual();
+  }
+
+  void _verActual() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final i = widget.opciones.indexWhere((o) => o.$1 == widget.actual);
+      final ctx = i < 0 ? null : _claves[i].currentContext;
+      if (ctx != null && ctx.mounted) Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 200), alignment: 0.5);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: tema.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(15)),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          for (final (i, (valor, etiqueta)) in widget.opciones.indexed)
+            Semantics(
+              key: _claves[i],
+              button: true,
+              selected: valor == widget.actual,
+              child: Material(
+                // La activa, con el tinte del acento (como el destino activo de la barra inferior): se distingue igual en claro y en oscuro.
+                color: valor == widget.actual ? Color.alphaBlend(tema.colorScheme.primary.withValues(alpha: tema.brightness == Brightness.dark ? 0.30 : 0.45), tema.colorScheme.surface) : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => widget.alElegir(valor),
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 44, minWidth: 48),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    alignment: Alignment.center,
+                    // Texto del color normal en las dos opciones (el atenuado no llega a 4,5:1 sobre la pista); la activa se distingue por la píldora y el peso.
+                    child: Text(etiqueta, style: tema.textTheme.labelLarge?.copyWith(fontWeight: valor == widget.actual ? FontWeight.w800 : FontWeight.w600, color: tema.colorScheme.onSurface)),
+                  ),
+                ),
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
+}
+
 /// Un bloque de la ficha: título y contenido dentro de una tarjeta, para que la ficha no sea una columna larga de texto suelto.
 class BloqueFicha extends StatelessWidget {
   final String? titulo;
@@ -363,6 +436,22 @@ class PildoraMenu<T> extends StatelessWidget {
 
 
 /// Un grupo de filas (accesos o ajustes) en una tarjeta, con un filo entre ellas.
+/// El rótulo de una sección («Hoy», «Apariencia»…): pequeño, atenuado y con aire, sobre las tarjetas que agrupa.
+class EtiquetaSeccion extends StatelessWidget {
+  final String texto;
+  final EdgeInsetsGeometry padding;
+  const EtiquetaSeccion(this.texto, {super.key, this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 6)});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Padding(
+      padding: padding,
+      child: Semantics(header: true, child: Text(texto, style: tema.textTheme.labelMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant, fontWeight: FontWeight.w700, letterSpacing: 0.4))),
+    );
+  }
+}
+
 class GrupoAjustes extends StatelessWidget {
   final List<Widget> children;
   const GrupoAjustes({super.key, required this.children});

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 
@@ -106,7 +108,7 @@ class _AusenciasScreenState extends State<AusenciasScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(t.ausenciasTitulo)),
+      appBar: AppBar(title: Text(t.ausenciasTitulo), actions: [AccionAsistente(contexto: t.ausenciasTitulo)]),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _pedir,
         icon: const Icon(Icons.add),
@@ -189,8 +191,7 @@ class _Titulo extends StatelessWidget {
   const _Titulo(this.texto);
 
   @override
-  Widget build(BuildContext context) =>
-      Padding(padding: const EdgeInsets.fromLTRB(16, 20, 16, 4), child: Text(texto, style: Theme.of(context).textTheme.titleMedium));
+  Widget build(BuildContext context) => EtiquetaSeccion(texto);
 }
 
 class _TarjetaSaldo extends StatelessWidget {

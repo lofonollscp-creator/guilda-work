@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -139,6 +141,7 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
         title: Text(t.fichajeTitulo),
         // Antes tres iconos sueltos sin texto; ahora un menú con nombre (historial, ausencias, mis datos).
         actions: [
+          AccionAsistente(contexto: t.fichajeTitulo),
           PopupMenuButton<String>(
             tooltip: t.menuMasOpciones,
             onSelected: (v) async {

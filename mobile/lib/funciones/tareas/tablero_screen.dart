@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../nucleo/abrir_asistente.dart';
+import '../../nucleo/panel_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/generado/modelos.g.dart';
@@ -55,12 +58,14 @@ class TableroScreen extends ConsumerWidget {
   const TableroScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) => ConAsistenteLateral(contexto: AppLocalizations.of(context).tareasTitulo, anchoMinimo: anchoConAsistente, hijo: _pantalla(context, ref));
+
+  Widget _pantalla(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final tablero = ref.watch(tableroProvider);
     final c = ref.read(tableroProvider.notifier);
     return Scaffold(
-      appBar: AppBar(title: Text(t.tareasTitulo)),
+      appBar: AppBar(title: Text(t.tareasTitulo), actions: [AccionAsistente(contexto: t.tareasTitulo, anchoMinimoPanel: anchoConAsistente)]),
       body: Column(children: [
         const AvisoDatosGuardados(prefijo: '/tareas-outlook'),
         const AvisoPendientes(),

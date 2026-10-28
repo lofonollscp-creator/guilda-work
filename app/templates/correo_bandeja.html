@@ -401,6 +401,27 @@
     <p class="correo-sync-aviso" role="status"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ _('Este mensaje está protegido con la clave del despacho. Un responsable tiene que desbloquear los documentos (Seguridad del despacho) para poder leerlo.') }}</p>
     {% endif %}
     <h2 class="correo-lectura-asunto">{{ mensaje_seleccionado.asunto or (_('Mensaje protegido') if mensaje_seleccionado.protegido else _('(sin asunto)')) }}</h2>
+    <div class="correo-ia-franja" role="group" aria-label="{{ _('Asistente sobre este correo') }}">
+      <button type="button" class="chip-ia" data-ia-accion="resumir"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg> {{ _('Resumir') }}</button>
+      <button type="button" class="chip-ia" data-ia-accion="responder">{{ _('Redactar respuesta') }}</button>
+      <button type="button" class="chip-ia" data-ia-accion="tareas">{{ _('Extraer tareas') }}</button>
+    </div>
+    <section class="correo-ia-panel" id="correo-ia-panel" hidden aria-live="polite"
+             data-url-base="{{ url_for('correo.ia_sobre_correo', mensaje_id=mensaje_seleccionado.id, accion='ACCION') }}"
+             data-url-borrador="{{ url_for('correo.ia_borrador_respuesta', mensaje_id=mensaje_seleccionado.id) }}"
+             data-url-tareas="{{ url_for('correo.crear_tareas_marcadas', mensaje_id=mensaje_seleccionado.id) }}"
+             data-url-aplicar="{{ url_for('correo.ia_aplicar_acciones', mensaje_id=mensaje_seleccionado.id) }}"
+             data-t-acc-sin="{{ _('No se han encontrado acciones para este correo.') }}" data-t-acc-aplicar="{{ _('Aplicar las marcadas') }}"
+             data-t-acc-tareas="{{ _('Tareas') }}" data-t-acc-fecha="{{ _('Fecha') }}" data-t-acc-estimacion="{{ _('Estimación') }}"
+             data-t-acc-alta="{{ _('Alta') }}" data-t-acc-normal="{{ _('Normal') }}" data-t-acc-baja="{{ _('Baja') }}"
+             data-t-acc-cliente="{{ _('Vincular este correo con %s') }}" data-t-acc-archivar="{{ _('Archivar los %s adjuntos en el expediente de este cliente') }}"
+             data-t-acc-respuesta="{{ _('Dejar este borrador de respuesta para revisarlo') }}"
+             data-t-cargando="{{ _('Pensando…') }}" data-t-error="{{ _('No se ha podido completar la acción.') }}"
+             data-t-usar="{{ _('Usar como borrador') }}" data-t-crear="{{ _('Crear las marcadas') }}"
+             data-t-sin-tareas="{{ _('No se han encontrado tareas en este correo.') }}" data-t-cerrar="{{ _('Cerrar') }}">
+      <p class="correo-ia-privacidad">{{ _('El contenido de este correo se envía al proveedor de IA que tienes configurado.') }}</p>
+      <div class="correo-ia-resultado"></div>
+    </section>
     {% if contexto_correo and (contexto_correo.cliente or contexto_correo.candidatos or contexto_correo.documentos) %}
     <details class="correo-contexto" open>
       <summary>{{ _('Contexto') }}{% if contexto_correo.cliente %}: {{ contexto_correo.cliente.nombre }}{% endif %}</summary>
@@ -479,22 +500,6 @@
       </ul>
     </details>
     {% endif %}
-    <section class="correo-ia-panel" id="correo-ia-panel" hidden aria-live="polite"
-             data-url-base="{{ url_for('correo.ia_sobre_correo', mensaje_id=mensaje_seleccionado.id, accion='ACCION') }}"
-             data-url-borrador="{{ url_for('correo.ia_borrador_respuesta', mensaje_id=mensaje_seleccionado.id) }}"
-             data-url-tareas="{{ url_for('correo.crear_tareas_marcadas', mensaje_id=mensaje_seleccionado.id) }}"
-             data-url-aplicar="{{ url_for('correo.ia_aplicar_acciones', mensaje_id=mensaje_seleccionado.id) }}"
-             data-t-acc-sin="{{ _('No se han encontrado acciones para este correo.') }}" data-t-acc-aplicar="{{ _('Aplicar las marcadas') }}"
-             data-t-acc-tareas="{{ _('Tareas') }}" data-t-acc-fecha="{{ _('Fecha') }}" data-t-acc-estimacion="{{ _('Estimación') }}"
-             data-t-acc-alta="{{ _('Alta') }}" data-t-acc-normal="{{ _('Normal') }}" data-t-acc-baja="{{ _('Baja') }}"
-             data-t-acc-cliente="{{ _('Vincular este correo con %s') }}" data-t-acc-archivar="{{ _('Archivar los %s adjuntos en el expediente de este cliente') }}"
-             data-t-acc-respuesta="{{ _('Dejar este borrador de respuesta para revisarlo') }}"
-             data-t-cargando="{{ _('Pensando…') }}" data-t-error="{{ _('No se ha podido completar la acción.') }}"
-             data-t-usar="{{ _('Usar como borrador') }}" data-t-crear="{{ _('Crear las marcadas') }}"
-             data-t-sin-tareas="{{ _('No se han encontrado tareas en este correo.') }}" data-t-cerrar="{{ _('Cerrar') }}">
-      <p class="correo-ia-privacidad">{{ _('El contenido de este correo se envía al proveedor de IA que tienes configurado.') }}</p>
-      <div class="correo-ia-resultado"></div>
-    </section>
     {% if clientes_fiscales %}
     <details class="correo-expediente">
       <summary>{{ _('Archivar en el expediente de un cliente') }}</summary>

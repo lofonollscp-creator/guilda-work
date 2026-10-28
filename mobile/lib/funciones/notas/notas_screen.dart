@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+
+import '../../nucleo/panel_asistente.dart';
+
+import '../../nucleo/abrir_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/errores.dart';
 import '../../api/generado/modelos.g.dart';
+import '../../diseno/adaptable.dart';
 import '../../diseno/componentes.dart';
 import '../../diseno/formatos.dart';
 import '../../l10n/app_localizations.dart';
@@ -13,6 +18,15 @@ import 'notas_acciones.dart';
 import 'notas_lista_controlador.dart';
 import 'notas_repositorio.dart';
 import 'texto_nota.dart';
+
+/// La nota abierta en el panel de la derecha (solo en tableta; en el móvil la nota es otra pantalla): su id, `0` para una nota nueva y `null` si no hay ninguna.
+class NotaAbierta extends Notifier<int?> {
+  @override
+  int? build() => null;
+  void abrir(int? id) => state = id;
+}
+
+final notaAbiertaProvider = NotifierProvider<NotaAbierta, int?>(NotaAbierta.new);
 
 /// Las notas: lo tuyo y lo que te han compartido, las fijadas primero. Buscar, filtrar por ámbito y proyecto, fijar y borrar (con «Deshacer») desde la lista.
 class NotasScreen extends ConsumerStatefulWidget {
@@ -43,6 +57,11 @@ class _NotasScreenState extends ConsumerState<NotasScreen> {
   }
 
   Future<void> _abrir(int? id) async {
+    // En tableta la nota se abre al lado de la lista, sin otra pantalla.
+    if (esAncha(context)) {
+      ref.read(notaAbiertaProvider.notifier).abrir(id ?? 0);
+      return;
+    }
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotaScreen(notaId: id)));
     if (mounted) ref.read(notasListaProvider.notifier).recargar();
   }
@@ -64,6 +83,35 @@ class _NotasScreenState extends ConsumerState<NotasScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final lista = _lista(context);
+    if (!esAncha(context)) return lista;
+    // Tableta: la lista a la izquierda y la nota elegida a la derecha (y, si cabe, el asistente).
+    final abierta = ref.watch(notaAbiertaProvider);
+    return ConAsistenteLateral(
+      contexto: t.notasTitulo,
+      contextoIa: abierta == null || abierta == 0 ? null : 'nota #$abierta',
+      anchoMinimo: anchoConAsistente,
+      hijo: Row(children: [
+        SizedBox(width: 400, child: lista),
+        VerticalDivider(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
+        Expanded(
+          child: abierta == null
+              ? Scaffold(body: EstadoVacio(icono: Icons.sticky_note_2_outlined, titulo: t.notasElegirUna))
+              : NotaScreen(
+                  key: ValueKey(abierta),
+                  notaId: abierta == 0 ? null : abierta,
+                  alTerminar: () {
+                    ref.read(notaAbiertaProvider.notifier).abrir(null);
+                    ref.read(notasListaProvider.notifier).recargar();
+                  },
+                ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _lista(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final estado = ref.watch(notasListaProvider);
     final c = ref.read(notasListaProvider.notifier);
     return Scaffold(
@@ -78,6 +126,7 @@ class _NotasScreenState extends ConsumerState<NotasScreen> {
               )
             : Text(t.notasTitulo),
         actions: [
+          AccionAsistente(contexto: t.notasTitulo, anchoMinimoPanel: anchoConAsistente),
           IconButton(
             icon: Icon(_buscando ? Icons.close : Icons.search),
             tooltip: t.notasBuscar,

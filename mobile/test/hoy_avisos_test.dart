@@ -190,28 +190,41 @@ void main() {
         );
 
     testWidgets('enseña el resumen, las secciones y los elementos con su fecha', (t) async {
+      t.view.physicalSize = const Size(800, 2400); // con «Lo siguiente» arriba, el resto de la lista queda más abajo
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
       await t.pumpWidget(app(() async => EstadoHoy(bandeja(), ahora), []));
       await t.pumpAndSettle();
-      expect(find.text('3 pendientes · 2 urgentes'), findsOneWidget);
+      // Dos números grandes (pendientes y urgentes) y, arriba, lo más urgente con su botón.
+      expect(find.text('Pendientes'), findsOneWidget);
+      expect(find.text('Urgentes'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      expect(find.text('Lo siguiente'), findsOneWidget);
       expect(find.text('Tareas'), findsOneWidget);
-      expect(find.text('2'), findsOneWidget, reason: 'la cuenta de la sección va en su píldora');
-      expect(find.text('Llamar a Acme'), findsOneWidget);
-      expect(find.text('ayer'), findsOneWidget); // fecha relativa, una sola forma de escribirla en toda la app
+      expect(find.text('2'), findsWidgets, reason: 'la cuenta de la sección va en su píldora (y los urgentes en su contador)');
+      expect(find.text('Llamar a Acme'), findsWidgets); // en «Lo siguiente» y en su sección
+      expect(find.text('ayer'), findsWidgets); // fecha relativa, una sola forma de escribirla en toda la app
       expect(find.text('hoy 10:30'), findsOneWidget);
       expect(find.text('hoy'), findsOneWidget); // 00:00 no enseña hora
     });
 
     testWidgets('tocar un elemento abre su destino con la URL de la web como respaldo', (t) async {
+      t.view.physicalSize = const Size(800, 2400); // con «Lo siguiente» arriba, el resto de la lista queda más abajo
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
       final abiertos = <(Destino, String?)>[];
       await t.pumpWidget(app(() async => EstadoHoy(bandeja(), ahora), abiertos));
       await t.pumpAndSettle();
-      await t.tap(find.text('303 · Talleres Soler SL'));
+      await t.tap(find.text('303 · Talleres Soler SL').last);
       expect(abiertos.single.$1.tipo, 'vencimiento');
       expect(abiertos.single.$1.id, 41);
       expect(abiertos.single.$2, '/fiscal/vencimientos/41/editar');
     });
 
     testWidgets('solo las tareas se pueden completar desde la lista', (t) async {
+      t.view.physicalSize = const Size(800, 2400); // con «Lo siguiente» arriba, el resto de la lista queda más abajo
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
       await t.pumpWidget(app(() async => EstadoHoy(bandeja(), ahora), []));
       await t.pumpAndSettle();
       expect(find.byTooltip('Completar'), findsNWidgets(2));
@@ -227,7 +240,7 @@ void main() {
       await t.pumpWidget(app(() async => EstadoHoy(bandeja(), ahora, desactualizado: true), []));
       await t.pumpAndSettle();
       expect(find.text('Sin conexión · datos de las 09:05'), findsOneWidget);
-      expect(find.text('Llamar a Acme'), findsOneWidget);
+      expect(find.text('Llamar a Acme'), findsWidgets);
     });
 
     testWidgets('sin datos y con error: mensaje y reintentar', (t) async {

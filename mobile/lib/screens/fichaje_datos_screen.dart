@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../nucleo/abrir_asistente.dart';
+
 import '../../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
 
@@ -106,7 +108,7 @@ class _FichajeDatosScreenState extends State<FichajeDatosScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(t.fichajeDatosTitulo)),
+      appBar: AppBar(title: Text(t.fichajeDatosTitulo), actions: [AccionAsistente(contexto: t.fichajeDatosTitulo)]),
       body: AnchoMaximo(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : ListView(

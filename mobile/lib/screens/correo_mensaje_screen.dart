@@ -3,6 +3,10 @@ import 'dart:io';
 import '../../diseno/adaptable.dart';
 import 'package:flutter/material.dart';
 
+import '../diseno/asistente.dart';
+
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 import '../diseno/formatos.dart';
 
@@ -52,11 +56,15 @@ class CorreoMensajeScreen extends StatefulWidget {
   final int mensajeId;
   final List<Carpeta> carpetas;
 
+  /// Si el mensaje va en el panel de la derecha (tableta), eliminarlo no cierra una pantalla: avisa a la bandeja para que vuelva a la vista vacía.
+  final VoidCallback? alTerminar;
+
   const CorreoMensajeScreen({
     super.key,
     required this.api,
     required this.mensajeId,
     required this.carpetas,
+    this.alTerminar,
   });
 
   @override
@@ -127,7 +135,12 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
     try {
       await widget.api.eliminarMensaje(widget.mensajeId);
       if (!mounted) return;
-      Navigator.of(context).pop();
+      final alTerminar = widget.alTerminar;
+      if (alTerminar != null) {
+        alTerminar();
+      } else {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       if (mounted) setState(() => _error = mensajeDeError(AppLocalizations.of(context), e));
     }
@@ -210,9 +223,32 @@ class _CorreoMensajeScreenState extends State<CorreoMensajeScreen> {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).comunMensaje),
         actions: [
+          AccionAsistente(contexto: AppLocalizations.of(context).comunMensaje, contextoIa: 'correo, mensaje #${widget.mensajeId}'),
           IconButton(icon: Icon(Icons.delete_outline), tooltip: AppLocalizations.of(context).comunEliminar, onPressed: _eliminar),
         ],
       ),
+      // Atajos del asistente sobre este correo (en la tableta, el panel de al lado ya los ofrece).
+      bottomNavigationBar: widget.alTerminar != null
+          ? null
+          : SafeArea(
+              child: SizedBox(
+                height: 56,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: [
+                    for (final texto in [AppLocalizations.of(context).iaSugCorreoResumir, AppLocalizations.of(context).iaSugCorreoResponder, AppLocalizations.of(context).iaSugCorreoTarea])
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChipIa(
+                          texto: texto,
+                          alPulsar: () => abrirAsistente(context, consulta: texto, contexto: AppLocalizations.of(context).comunMensaje, contextoIa: 'correo, mensaje #${widget.mensajeId}'),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
       body: AnchoMaximo(child: FutureBuilder<Mensaje>(
         future: _mensaje,
         builder: (context, snapshot) {

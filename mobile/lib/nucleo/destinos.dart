@@ -110,3 +110,19 @@ Apertura resolverDestino(Destino d) {
       return const SoloWeb();
   }
 }
+
+/// A dónde lleva una fuente citada por el asistente: su dirección en la web (`/tareas/7/editar`, `/nota/3/editar`,
+/// `/correo/?cuenta_id=1&mensaje_id=9`…) a la pantalla de la app que la abre; lo que no tiene pantalla propia se ofrece en la web.
+Destino destinoDeFuenteIa(String tipo, String url) {
+  int? numero(RegExp r) {
+    final m = r.firstMatch(url);
+    return m == null ? null : int.tryParse(m.group(1)!);
+  }
+
+  return switch (tipo) {
+    'tarea' => Destino('tarea', numero(RegExp(r'/tareas/(\d+)'))),
+    'nota' => Destino('nota', numero(RegExp(r'/nota/(\d+)'))),
+    'correo' => Destino('correo', numero(RegExp(r'mensaje_id=(\d+)'))),
+    _ => Destino(tipo, numero(RegExp(r'/(\d+)(?:\D|$)'))),
+  };
+}

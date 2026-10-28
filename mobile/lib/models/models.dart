@@ -1,3 +1,5 @@
+import 'dart:convert' show jsonDecode;
+
 import '../l10n/app_localizations.dart';
 
 /// Modelos de datos para el Dashboard y Notas/Tareas con duración (Fase 4c).
@@ -802,6 +804,9 @@ class IaMensaje {
   final String? nombreHerramienta;
   final String creadoEn;
 
+  /// Las tareas, notas, correos y clientes de donde salen los datos de una respuesta del asistente (JSON en crudo, ver ia_fuentes.py).
+  final String? fuentesJson;
+
   IaMensaje({
     required this.id,
     required this.rol,
@@ -810,7 +815,19 @@ class IaMensaje {
     this.toolCallId,
     this.nombreHerramienta,
     required this.creadoEn,
+    this.fuentesJson,
   });
+
+  /// Las fuentes ya leídas; vacías si no hay o el JSON no se entiende (citar fuentes es un extra: nunca rompe el mensaje).
+  List<IaFuente> get fuentes {
+    final crudo = fuentesJson;
+    if (crudo == null || crudo.isEmpty) return const [];
+    try {
+      return [for (final f in jsonDecode(crudo) as List) IaFuente.fromJson((f as Map).cast<String, dynamic>())];
+    } catch (_) {
+      return const [];
+    }
+  }
 
   factory IaMensaje.fromJson(Map<String, dynamic> json) => IaMensaje(
     id: json['id'] as int,
@@ -820,7 +837,55 @@ class IaMensaje {
     toolCallId: json['tool_call_id'] as String?,
     nombreHerramienta: json['nombre_herramienta'] as String?,
     creadoEn: json['creado_en'] as String,
+    fuentesJson: json['fuentes_json'] as String?,
   );
+}
+
+/// Una conversación con el asistente (la activa y las anteriores).
+class IaConversacion {
+  final int id;
+  final String? titulo;
+  final bool activa;
+  final String? actualizadaEn;
+  const IaConversacion({required this.id, this.titulo, required this.activa, this.actualizadaEn});
+
+  factory IaConversacion.fromJson(Map<String, dynamic> j) => IaConversacion(
+        id: (j['id'] as num).toInt(),
+        titulo: j['titulo'] as String?,
+        activa: j['activa'] == 1 || j['activa'] == true,
+        actualizadaEn: j['actualizada_en'] as String?,
+      );
+}
+
+/// Un dato citado por el asistente: `tipo` (tarea, nota, correo, cliente, expediente, vencimiento), su título y su dirección en la web.
+class IaFuente {
+  final String tipo;
+  final String titulo;
+  final String url;
+  const IaFuente({required this.tipo, required this.titulo, required this.url});
+
+  factory IaFuente.fromJson(Map<String, dynamic> json) => IaFuente(
+        tipo: '${json['tipo'] ?? ''}',
+        titulo: '${json['titulo'] ?? ''}',
+        url: '${json['url'] ?? ''}',
+      );
+}
+
+/// Un archivo de texto ya subido al chat: su id es lo que el asistente necesita para leerlo.
+class IaAdjunto {
+  final int id;
+  final String nombre;
+  const IaAdjunto({required this.id, required this.nombre});
+}
+
+/// La línea `[Contexto: …]` que la app pone al principio del primer mensaje para decirle al asistente de qué elemento hablas: a ti no se te enseña.
+String quitarContextoDelTexto(String texto) => texto.replaceFirst(RegExp(r'^\[Contexto: [^\]\n]*\]\n?'), '');
+
+/// Los mensajes que empiezan por `[Adjunto #12: datos.csv]` y una línea nueva llevan un archivo: el nombre y el resto del texto.
+({String nombre, String texto})? separarAdjuntoDelTexto(String texto) {
+  final m = RegExp(r'^\[Adjunto #\d+: ([^\]\n]+)\]\n?').firstMatch(texto);
+  if (m == null) return null;
+  return (nombre: m.group(1)!, texto: texto.substring(m.end));
 }
 
 /// Una acción esperando confirmación explícita (ver

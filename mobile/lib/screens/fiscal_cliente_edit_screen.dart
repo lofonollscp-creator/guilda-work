@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -145,8 +149,9 @@ class _FiscalClienteEditScreenState extends State<FiscalClienteEditScreen> {
         title: Text(
           _esAlta ? t.fiscalClienteNuevoTitulo : t.fiscalClienteEditarTitulo,
         ),
+        actions: [if (!_esAlta) AccionAsistente(contexto: t.fiscalTitulo, contextoIa: 'cliente fiscal #${widget.cliente!.id}')],
       ),
-      body: ListView(
+      body: AnchoMaximo(child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           TextField(
@@ -236,7 +241,7 @@ class _FiscalClienteEditScreenState extends State<FiscalClienteEditScreen> {
             ),
           ],
         ],
-      ),
+      )),
     );
   }
 }

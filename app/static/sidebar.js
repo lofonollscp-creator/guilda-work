@@ -105,12 +105,13 @@
     railToggle.addEventListener("click", () => {
       if (movil.matches) { fijarMenuMovil(false); return; }   // en móvil este botón cierra el panel
       const expandido = document.documentElement.dataset.railExpandido === "1";
+      // El menú va expandido por defecto; lo que se recuerda es que la persona lo haya recogido.
       if (expandido) {
         delete document.documentElement.dataset.railExpandido;
-        localStorage.removeItem("guilda-work-rail-expandido");
+        localStorage.setItem("guilda-work-rail-compacto", "1");
       } else {
         document.documentElement.dataset.railExpandido = "1";
-        localStorage.setItem("guilda-work-rail-expandido", "1");
+        localStorage.removeItem("guilda-work-rail-compacto");
       }
     });
   }
@@ -131,13 +132,13 @@
 
   // Buscador del rail: abre el mismo modal que el botón de la barra
   // superior (static/busqueda.js escucha ese botón, no hay que duplicarlo).
-  const railBuscar = document.getElementById("rail-buscar");
-  if (railBuscar) {
-    railBuscar.addEventListener("click", () => {
+  // También el campo «Buscar o preguntar…» de la barra superior (.js-abrir-busqueda).
+  document.querySelectorAll("#rail-buscar, .js-abrir-busqueda").forEach((boton) => {
+    boton.addEventListener("click", () => {
       const abrir = document.getElementById("busqueda-abrir");
       if (abrir) abrir.click();
     });
-  }
+  });
 
   // Grupos plegables del rail (Correo, Fiscal) -- el chevron alterna
   // "is-abierto" sin navegar; el enlace padre sigue navegando normal

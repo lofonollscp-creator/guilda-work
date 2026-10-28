@@ -1279,5 +1279,94 @@
       }
     }
   },
-  "fichajeAunNoHoy": "Aún no has fichado hoy"
+  "fichajeAunNoHoy": "Aún no has fichado hoy",
+  "iaSubtitulo": "Conoce tus tareas, notas y correo",
+  "iaContexto": "Contexto: {contexto}",
+  "@iaContexto": {
+    "placeholders": {
+      "contexto": {
+        "type": "String"
+      }
+    }
+  },
+  "iaInicioTitulo": "¿En qué te ayudo?",
+  "iaBarraHint": "Pregunta o pide algo…",
+  "iaBarraTareasHint": "Pregunta sobre tus tareas",
+  "iaTarjetaTitulo": "Tu asistente",
+  "iaAviso": "Es un asistente de IA y puede contener errores. Revisa lo importante antes de actuar.",
+  "iaFuentes": "Fuentes",
+  "iaAdjuntar": "Adjuntar texto o CSV (hasta 1 MB)",
+  "iaAdjuntoSubiendo": "Subiendo archivo…",
+  "iaAdjuntoQuitar": "Quitar archivo",
+  "iaAdjuntoError": "No se ha podido subir el archivo.",
+  "iaAdjuntoPregunta": "Lee el archivo adjunto y dime qué contiene.",
+  "iaPreguntarAlAsistente": "Preguntar al asistente",
+  "iaOcultarAsistente": "Ocultar el asistente",
+  "notasElegirUna": "Elige una nota para verla.",
+  "correoElegirUno": "Elige un correo para leerlo.",
+  "iaInfoSubtitulo": "IA · puede equivocarse",
+  "iaComoTitulo": "Cómo funciona el asistente",
+  "iaComoVeTitulo": "Lo que ve",
+  "iaComoVeTexto": "Tus tareas, notas y correo, y lo del despacho que tu usuario ya puede ver. Nada más.",
+  "iaComoHaceTitulo": "Lo que hace con tu permiso",
+  "iaComoHaceTexto": "Leer y resumir es libre. Crear, cambiar o borrar algo siempre te lo enseña antes. Enviar un correo, siempre lo confirmas tú.",
+  "iaComoErrorTitulo": "Puede equivocarse",
+  "iaComoErrorTexto": "Sobre todo con cifras, fechas y plazos fiscales. Cada respuesta indica de dónde sale: ábrela y compruébalo antes de actuar.",
+  "iaComoAjustes": "Ajustes del asistente",
+  "iaComoRecordarTitulo": "Recordarme revisar las cifras fiscales",
+  "iaComoRecordarDetalle": "Muestra una etiqueta de cautela junto a importes y plazos",
+  "iaCautela": "Cifra estimada: compruébala antes de presentar",
+  "iaFuentesN": "{n, plural, =1{1 fuente} other{{n} fuentes}}",
+  "@iaFuentesN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "iaCopiar": "Copiar",
+  "iaCopiado": "Copiado",
+  "iaLeerEnVozAlta": "Leer en voz alta",
+  "iaAhoraMismo": "Ahora mismo · {contexto}",
+  "@iaAhoraMismo": {
+    "placeholders": {
+      "contexto": {
+        "type": "String"
+      }
+    }
+  },
+  "iaContinua": "Continúa",
+  "iaPieAviso": "Puede equivocarse: revisa lo importante.",
+  "iaComoFunciona": "Cómo funciona",
+  "iaAccionCrearTarea": "Nueva tarea",
+  "iaAccionCrearNota": "Nueva nota",
+  "iaAccionEditarTarea": "Cambiar una tarea",
+  "iaAccionEditarNota": "Cambiar una nota",
+  "iaAccionCompletarTarea": "Completar una tarea",
+  "iaAccionEnviarCorreo": "Enviar un correo",
+  "iaDetener": "Detener respuesta",
+  "iaPasoConsultando": "Consultando…",
+  "iaQuitarContexto": "Quitar contexto",
+  "iaVozTitulo": "Modo voz",
+  "iaVozEscuchando": "Te escucho",
+  "iaVozHablando": "Hablando",
+  "iaVozPensando": "Pensando",
+  "iaVozAyuda": "Habla con normalidad. Si cambio algo, te lo leo y espero tu «sí».",
+  "iaVozSilenciar": "Silenciar micrófono",
+  "iaVozTerminar": "Terminar",
+  "iaVozEscribir": "Escribir en su lugar",
+  "iaSugCorreoResumir": "Resume este correo",
+  "iaSugCorreoResponder": "Redacta una respuesta",
+  "iaSugCorreoTarea": "Crea una tarea a partir de este correo",
+  "iaSugTareaResumir": "Resume esta tarea",
+  "iaSugTareaFalta": "¿Qué falta para terminarla?",
+  "iaSugTareaSubtareas": "Propón subtareas",
+  "iaSugNotaResumir": "Resume esta nota",
+  "iaSugNotaTareas": "Saca tareas de esta nota",
+  "iaHoyResumen": "Pídele un resumen de tu día",
+  "iaHoyResumenConsulta": "Resume mi día: tareas, correos sin contestar, vencimientos y reuniones",
+  "hoyLoSiguiente": "Lo siguiente",
+  "hoyAbrir": "Abrir",
+  "hoyContadorPendientes": "Pendientes",
+  "hoyContadorUrgentes": "Urgentes"
 }

@@ -1,59 +1,114 @@
 {% extends "base.html" %}
 {% from "_ds/componentes.html" import estado_vacio, chip %}
 {% block title %}{{ _('Hoy') }} — Guilda Work{% endblock %}
+{% block barra_titulo %}{{ _('Hoy') }}<span class="top-bar-subtitulo">{{ barra_fecha }}</span>{% endblock %}
+{% block barra_accion %}
+<a class="top-bar-accion" href="{{ url_for('tareas.listar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-plus"></use></svg> {{ _('Nueva tarea') }}</a>
+{% endblock %}
 {% block content %}
-<header class="page-header">
-  <div>
-    <h1>{{ _('Hoy') }}</h1>
-    <p class="subtitle">{% if bandeja.total %}{{ ngettext('%(n)s cosa necesita tu atención', '%(n)s cosas necesitan tu atención', bandeja.total, n=bandeja.total) }}{% if bandeja.urgentes %} · {{ ngettext('%(n)s urgente', '%(n)s urgentes', bandeja.urgentes, n=bandeja.urgentes) }}{% endif %}{% else %}{{ _('Todo lo que necesita tu atención, de todos los módulos, en un solo sitio.') }}{% endif %}</p>
-  </div>
+<header class="page-header sr-only">
+  <h1>{{ _('Hoy') }}</h1>
+  <p class="subtitle">{% if bandeja.total %}{{ ngettext('%(n)s cosa necesita tu atención', '%(n)s cosas necesitan tu atención', bandeja.total, n=bandeja.total) }}{% if bandeja.urgentes %} · {{ ngettext('%(n)s urgente', '%(n)s urgentes', bandeja.urgentes, n=bandeja.urgentes) }}{% endif %}{% else %}{{ _('Todo lo que necesita tu atención, de todos los módulos, en un solo sitio.') }}{% endif %}</p>
 </header>
 
 {% if hechos %}<div class="aviso" role="status">{{ ngettext('%(n)s elemento marcado como hecho.', '%(n)s elementos marcados como hechos.', hechos, n=hechos) }}</div>{% endif %}
 {% if fallos %}<div class="aviso" role="alert">{{ ngettext('%(n)s no se ha podido marcar: está bloqueado, tiene pasos pendientes o no tienes permiso. Ábrelo para ver por qué.', '%(n)s no se han podido marcar: están bloqueados, tienen pasos pendientes o no tienes permiso. Ábrelos para ver por qué.', fallos, n=fallos) }}</div>{% endif %}
 {% set hechos_posibles = [] %}
 {% for s in bandeja.secciones %}{% for i in s.elementos %}{% if i.destino and i.destino.tipo in ('tarea', 'plazo') %}{% set _marca = hechos_posibles.append(i.destino.tipo ~ ':' ~ i.destino.id) %}{% endif %}{% endfor %}{% endfor %}
-{% if hechos_posibles|length > 1 %}
-<form method="post" action="{{ url_for('hoy.hecho') }}" class="hoy-todo" data-confirmar-envio="{{ _('¿Marcar como hechas todas las tareas y plazos de esta lista?') }}">
-  {% for k in hechos_posibles %}<input type="hidden" name="elemento" value="{{ k }}">{% endfor %}
-  <button type="submit" class="btn btn-ghost">{{ _('Marcar todo como hecho') }} ({{ hechos_posibles|length }})</button>
-</form>
-{% endif %}
+{% set por_clave = {} %}{% for s in bandeja.secciones %}{% set _c = por_clave.update({s.clave: s}) %}{% endfor %}
+{% set siguiente = bandeja.destacados[0] if bandeja.destacados else none %}
 
-{% if not bandeja.secciones %}
-  {{ estado_vacio(_('Todo al día'), _('No tienes nada pendiente: ni tareas, ni plazos, ni vencimientos, ni mensajes de clientes por contestar.'), 'check') }}
-{% else %}
-<div class="hoy-rejilla">
-  {% for s in bandeja.secciones %}
-  <section class="dash-panel hoy-seccion" id="hoy-{{ s.clave }}" aria-labelledby="hoy-{{ s.clave }}-t">
-    {% set de_la_seccion = s.elementos|selectattr('destino')|selectattr('destino.tipo', 'in', ['tarea', 'plazo'])|list %}
-    <div class="dash-panel-cab"><h2 id="hoy-{{ s.clave }}-t">{{ s.titulo }} <span class="muted">({{ s.total }})</span></h2>
-      {% if de_la_seccion|length > 1 %}
-      <form method="post" action="{{ url_for('hoy.hecho') }}" data-confirmar-envio="{{ _('¿Marcar como hechos todos los de esta sección?') }}">
-        {% for i in de_la_seccion %}<input type="hidden" name="elemento" value="{{ i.destino.tipo }}:{{ i.destino.id }}">{% endfor %}
-        <button type="submit" class="btn btn-ghost btn-sm">{{ _('Marcar la sección como hecha') }}</button>
-      </form>
+<div class="hoy-v2">
+  <div class="hoy-v2-principal">
+    {% if not bandeja.secciones %}
+      {{ estado_vacio(_('Todo al día'), _('No tienes nada pendiente: ni tareas, ni plazos, ni vencimientos, ni mensajes de clientes por contestar.'), 'check') }}
+    {% else %}
+    <div class="hoy-v2-arriba">
+      {% if siguiente %}
+      <section class="hoy-v2-siguiente" aria-labelledby="hoy-siguiente-t">
+        <div class="hoy-v2-siguiente-cab">
+          {% if siguiente.urgencia == 'vencido' %}<span class="pildora-v2 rojo">{{ _('Vencido') }}</span>{% elif siguiente.urgencia == 'hoy' %}<span class="pildora-v2 rojo">{{ _('Vence hoy') }}{% if siguiente.fecha and siguiente.fecha|length > 10 and siguiente.fecha[11:16] != '00:00' %} · {{ siguiente.fecha[11:16] }}{% endif %}</span>{% elif siguiente.urgencia == 'proximo' %}<span class="pildora-v2 ambar">{{ _('Esta semana') }}</span>{% endif %}
+          <span class="muted" id="hoy-siguiente-t">{{ _('Lo siguiente') }}</span>
+        </div>
+        <p class="hoy-v2-siguiente-titulo">{{ siguiente.titulo }}</p>
+        {% if siguiente.detalle %}<p class="muted hoy-v2-siguiente-detalle">{{ siguiente.detalle }}</p>{% endif %}
+        <div class="hoy-v2-siguiente-acciones">
+          <a class="btn btn-primary" href="{{ siguiente.url }}">{{ _('Abrir') }}</a>
+          {% if siguiente.destino and siguiente.destino.tipo in ('tarea', 'plazo') %}
+          <form method="post" action="{{ url_for('hoy.hecho') }}"><input type="hidden" name="elemento" value="{{ siguiente.destino.tipo }}:{{ siguiente.destino.id }}"><button type="submit" class="btn btn-secondary">{{ _('Marcar como hecho') }}</button></form>
+          {% endif %}
+          {% if hechos_posibles|length > 1 %}
+          <form method="post" action="{{ url_for('hoy.hecho') }}" class="hoy-todo" data-confirmar-envio="{{ _('¿Marcar como hechas todas las tareas y plazos de esta lista?') }}">
+            {% for k in hechos_posibles %}<input type="hidden" name="elemento" value="{{ k }}">{% endfor %}
+            <button type="submit" class="btn btn-ghost">{{ _('Marcar todo como hecho') }} ({{ hechos_posibles|length }})</button>
+          </form>
+          {% endif %}
+        </div>
+      </section>
       {% endif %}
+      <div class="hoy-v2-cifras">
+        <div class="hoy-v2-cifra"><span class="hoy-v2-num">{{ bandeja.total }}</span><span class="muted">{{ _('Pendientes') }}</span></div>
+        <div class="hoy-v2-cifra"><span class="hoy-v2-num {{ 'es-rojo' if bandeja.urgentes }}">{{ bandeja.urgentes }}</span><span class="muted">{{ _('Urgentes') }}</span></div>
+        <div class="hoy-v2-cifra"><span class="hoy-v2-num">{{ por_clave.correo.total if por_clave.correo else 0 }}</span><span class="muted">{{ _('Sin contestar') }}</span></div>
+        <div class="hoy-v2-cifra"><span class="hoy-v2-num">{{ por_clave.vencimientos.total if por_clave.vencimientos else 0 }}</span><span class="muted">{{ _('Vencimientos') }}</span></div>
+      </div>
     </div>
-    <ul class="hoy-lista">
-      {% for i in s.elementos %}
-      <li class="hoy-item hoy-{{ i.urgencia }}">
-        <a href="{{ i.url }}"><strong>{{ i.titulo }}</strong></a>
-        {% if i.urgencia == 'vencido' %}{{ chip(_('Vencido')) }}{% elif i.urgencia == 'hoy' %}{{ chip(_('Hoy')) }}{% elif i.urgencia == 'proximo' %}{{ chip(_('Esta semana')) }}{% endif %}
-        {% if i.detalle %}<span class="muted"> · {{ i.detalle }}</span>{% endif %}
-        {% if i.fecha %}<span class="muted hoy-fecha">{{ i.fecha[:10] }}</span>{% endif %}
-        {% if i.destino and i.destino.tipo in ('tarea', 'plazo') %}
-        <form method="post" action="{{ url_for('hoy.hecho') }}" class="hoy-hecho">
-          <input type="hidden" name="elemento" value="{{ i.destino.tipo }}:{{ i.destino.id }}">
-          <button type="submit" class="btn btn-ghost btn-sm" aria-label="{{ _('Marcar como hecho: %(t)s', t=i.titulo) }}" title="{{ _('Marcar como hecho') }}">✓ {{ _('Hecho') }}</button>
-        </form>
-        {% endif %}
-      </li>
+
+    <div class="hoy-v2-secciones">
+      {% for s in bandeja.secciones %}
+      <section class="hoy-v2-seccion" id="hoy-{{ s.clave }}" aria-labelledby="hoy-{{ s.clave }}-t">
+        {% set de_la_seccion = s.elementos|selectattr('destino')|selectattr('destino.tipo', 'in', ['tarea', 'plazo'])|list %}
+        <div class="hoy-v2-seccion-cab"><h2 id="hoy-{{ s.clave }}-t" class="etiqueta-seccion">{{ s.titulo }} · {{ s.total }}</h2>
+          {% if de_la_seccion|length > 1 %}
+          <form method="post" action="{{ url_for('hoy.hecho') }}" data-confirmar-envio="{{ _('¿Marcar como hechos todos los de esta sección?') }}">
+            {% for i in de_la_seccion %}<input type="hidden" name="elemento" value="{{ i.destino.tipo }}:{{ i.destino.id }}">{% endfor %}
+            <button type="submit" class="btn btn-ghost btn-sm">{{ _('Marcar la sección como hecha') }}</button>
+          </form>
+          {% endif %}
+        </div>
+        <ul class="hoy-v2-lista">
+          {% for i in s.elementos %}
+          <li class="hoy-v2-fila hoy-{{ i.urgencia }}">
+            {% if i.destino and i.destino.tipo in ('tarea', 'plazo') %}
+            <form method="post" action="{{ url_for('hoy.hecho') }}" class="hoy-v2-hecho">
+              <input type="hidden" name="elemento" value="{{ i.destino.tipo }}:{{ i.destino.id }}">
+              <button type="submit" class="hoy-v2-check {{ 'es-rojo' if i.urgencia in ('vencido', 'hoy') }}" aria-label="{{ _('Marcar como hecho: %(t)s', t=i.titulo) }}" title="{{ _('Marcar como hecho') }}"></button>
+            </form>
+            {% endif %}
+            <div class="hoy-v2-fila-texto">
+              <a href="{{ i.url }}"><strong>{{ i.titulo }}</strong></a>
+              {% if i.detalle %}<span class="muted hoy-v2-detalle">{{ i.detalle }}</span>{% endif %}
+            </div>
+            {% if i.urgencia == 'vencido' %}<span class="pildora-v2 rojo">{{ _('Vencido') }}</span>{% elif i.urgencia == 'hoy' %}<span class="pildora-v2 rojo">{{ _('Hoy') }}</span>{% elif i.urgencia == 'proximo' %}<span class="pildora-v2 ambar">{{ _('Esta semana') }}</span>{% endif %}
+            {% if i.fecha %}<span class="muted hoy-v2-fecha">{{ i.fecha[:10] }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% if s.total > s.elementos|length %}<p class="muted hoy-v2-mas">{{ _('Se enseñan los %(n)s más urgentes.', n=s.elementos|length) }}</p>{% endif %}
+      </section>
       {% endfor %}
-    </ul>
-    {% if s.total > s.elementos|length %}<p class="muted">{{ _('Se enseñan los %(n)s más urgentes.', n=s.elementos|length) }}</p>{% endif %}
-  </section>
-  {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <aside class="ia-lateral" aria-labelledby="hoy-ia-t">
+    <div class="ia-lateral-cab">
+      <span class="ia-insignia" aria-hidden="true"><svg class="icono-inline"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></span>
+      <div class="ia-lateral-titulo"><strong id="hoy-ia-t">{{ _('Asistente') }}</strong><span class="muted">{{ _('IA · puede equivocarse') }}</span></div>
+      <a class="ia-lateral-ampliar" href="{{ url_for('ia.asistente_vista') }}" aria-label="{{ _('Abrir a pantalla completa') }}" title="{{ _('Abrir a pantalla completa') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-maximize-2"></use></svg></a>
+    </div>
+    <div class="ia-lateral-cuerpo">
+      <div class="ia-lateral-resumen"><span class="ia-lateral-etiqueta">{{ _('Tu día en breve') }}</span><p>{{ resumen }}</p></div>
+      <p class="etiqueta-seccion">{{ _('Prueba a pedir') }}</p>
+      {% for q in [_('Resume mi día'), _('¿Qué vence esta semana?'), _('Correos importantes sin leer')] %}
+      <a class="chip-ia ia-lateral-chip" href="{{ url_for('ia.asistente_vista', q=q) }}">{{ q }}</a>
+      {% endfor %}
+    </div>
+    <form class="ia-lateral-form" method="get" action="{{ url_for('ia.asistente_vista') }}">
+      <label class="sr-only" for="hoy-ia-q">{{ _('Pregunta al asistente') }}</label>
+      <input id="hoy-ia-q" name="q" type="text" autocomplete="off" placeholder="{{ _('Pregunta o pide algo…') }}" required>
+      <button type="submit" class="ia-lateral-enviar" aria-label="{{ _('Enviar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-arrow-up"></use></svg></button>
+    </form>
+  </aside>
 </div>
-{% endif %}
 {% endblock %}

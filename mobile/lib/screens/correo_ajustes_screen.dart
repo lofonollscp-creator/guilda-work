@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
+import '../nucleo/abrir_asistente.dart';
+
 import '../l10n/app_localizations.dart';
 
 import '../services/api_client.dart';
@@ -17,8 +21,8 @@ class CorreoAjustesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).correoAjustesTitulo)),
-      body: ListView(
+      appBar: AppBar(title: Text(AppLocalizations.of(context).correoAjustesTitulo), actions: [AccionAsistente(contexto: AppLocalizations.of(context).correoAjustesTitulo)]),
+      body: AnchoMaximo(child: ListView(
         children: [
           ListTile(
             leading: const Icon(Icons.shield_outlined),
@@ -39,7 +43,7 @@ class CorreoAjustesScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

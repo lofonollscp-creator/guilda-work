@@ -143,7 +143,7 @@ def enviar_mensaje_stream():
             for evento in asistente.procesar_turno_stream(usuario_id, texto):
                 yield _sse(evento)
         except Exception as e:  # noqa: BLE001 -- el stream ya está abierto, no se puede devolver un 500
-            yield _sse({"tipo": "error", "mensaje": str(e)})
+            yield _sse({"tipo": "error", "mensaje": asistente.mensaje_de_error(e)})
 
     return Response(stream_with_context(generar()), mimetype="text/event-stream")
 
@@ -160,7 +160,7 @@ def confirmar_stream():
             for evento in asistente.confirmar_pendiente_stream(usuario_id, aceptar):
                 yield _sse(evento)
         except Exception as e:  # noqa: BLE001
-            yield _sse({"tipo": "error", "mensaje": str(e)})
+            yield _sse({"tipo": "error", "mensaje": asistente.mensaje_de_error(e)})
 
     return Response(stream_with_context(generar()), mimetype="text/event-stream")
 

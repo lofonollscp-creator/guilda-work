@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../nucleo/abrir_asistente.dart';
+import '../../nucleo/panel_asistente.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -50,7 +53,9 @@ class CargaScreen extends ConsumerWidget {
   const CargaScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) => ConAsistenteLateral(contexto: AppLocalizations.of(context).tareasTitulo, anchoMinimo: anchoConAsistente, hijo: _pantalla(context, ref));
+
+  Widget _pantalla(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final carga = ref.watch(cargaProvider);
     final c = ref.read(cargaProvider.notifier);
@@ -58,7 +63,7 @@ class CargaScreen extends ConsumerWidget {
     final fin = c.semana.masDias(6);
     final titulo = '${DateFormat.MMMd(idioma).format(DateTime(c.semana.anio, c.semana.mes, c.semana.dia))} – ${DateFormat.yMMMd(idioma).format(DateTime(fin.anio, fin.mes, fin.dia))}';
     return Scaffold(
-      appBar: AppBar(title: Text(t.tareasTitulo)),
+      appBar: AppBar(title: Text(t.tareasTitulo), actions: [AccionAsistente(contexto: t.tareasTitulo, anchoMinimoPanel: anchoConAsistente)]),
       body: Column(children: [
         const AvisoDatosGuardados(prefijo: '/tareas-outlook'),
         const AvisoPendientes(),

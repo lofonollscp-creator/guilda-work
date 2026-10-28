@@ -3,6 +3,7 @@ vista de bandeja de 3 paneles al estilo New Outlook (rail de cuentas +
 carpetas + lista de mensajes + panel de lectura, todo en la misma ruta
 `/correo/`). Vive en su propio Blueprint, mismo patrón que app/rutas_tareas.py.
 """
+import html as html_lib
 import os
 import re
 import secrets
@@ -944,6 +945,10 @@ def redactar():
         cuentas_con_smtp = [c for c in db.listar_cuentas_correo(g.usuario_id) if c["smtp_host"]]
         cuenta_id = cuentas_con_smtp[0]["id"] if cuentas_con_smtp else None
     cuerpo_html = correo.preparar_cuerpo_inicial(g.usuario_id, cuenta_id, es_respuesta=False) if cuenta_id else ""
+    texto_inicial = (request.args.get("cuerpo") or "")[:4000].strip()
+    if texto_inicial:                  # texto de partida (p. ej. el recordatorio al cliente), encima de la firma
+        parrafos = [p for p in re.split(r"\n\s*\n", texto_inicial.replace("\r", ""))]
+        cuerpo_html = "".join("<p>" + html_lib.escape(p.strip()).replace("\n", "<br>") + "</p>" for p in parrafos if p.strip()) + cuerpo_html
     # Desde otras pantallas («Escribir al cliente», desde un vencimiento…): destinatario y asunto de partida, y el cliente para rellenar las variables de las plantillas.
     cliente_id = request.args.get("cliente_fiscal_id", type=int)
     if cliente_id is not None and (g.tenant_id is None or not acceso.puede_ver_cliente(g.tenant_id, g.usuario_id, cliente_id)):

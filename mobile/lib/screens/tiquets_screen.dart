@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -92,8 +96,8 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
     final tipos = tiposTiquet(t);
     final estados = estadosTiquet(t);
     return Scaffold(
-      appBar: AppBar(title: Text(t.tiquetsTitulo)),
-      body: Column(
+      appBar: AppBar(title: Text(t.tiquetsTitulo), actions: [AccionAsistente(contexto: t.tiquetsTitulo)]),
+      body: AnchoMaximo(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -181,7 +185,7 @@ class _TiquetsScreenState extends State<TiquetsScreen> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 

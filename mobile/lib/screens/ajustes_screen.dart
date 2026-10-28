@@ -101,7 +101,7 @@ class AjustesScreen extends StatelessWidget {
             ),
           ]),
           // Apariencia: tema, color de los botones e idioma, juntos.
-          Padding(padding: const EdgeInsets.fromLTRB(4, 4, 4, 8), child: Text(t.ajustesApariencia, style: Theme.of(context).textTheme.titleSmall)),
+          EtiquetaSeccion(t.ajustesApariencia, padding: const EdgeInsets.fromLTRB(4, 4, 4, 8)),
           Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: Padding(

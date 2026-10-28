@@ -194,6 +194,29 @@ app.add_template_filter(_fecha_hora, "fecha_y_hora")
 app.add_template_filter(lambda valor: _fecha_hora(valor, solo_fecha=True), "fecha_dia")
 
 
+def _vence(valor, completada=False):
+    """El vencimiento de una tarea como lo lee una persona: («Hace 2 días», «rojo»), («Hoy 14:00», «rojo»), («Mañana», «»), («12 nov», «»). Sin fecha, ("", "")."""
+    if not valor:
+        return "", ""
+    texto = str(valor).strip().replace(" ", "T", 1)
+    try:
+        momento = datetime.fromisoformat(texto)
+    except ValueError:
+        return str(valor), ""
+    dias = (momento.date() - datetime.now().date()).days
+    hora = format_datetime(momento, "HH:mm") if len(texto) > 10 and momento.strftime("%H:%M") != "00:00" else ""
+    if dias < 0:
+        return (ngettext("Hace %(n)s día", "Hace %(n)s días", -dias, n=-dias), "" if completada else "rojo")
+    if dias == 0:
+        return ((_("Hoy") + (" " + hora if hora else "")), "" if completada else "rojo")
+    if dias == 1:
+        return (_("Mañana") + (" " + hora if hora else ""), "")
+    return format_date(momento.date(), "d MMM"), ""
+
+
+app.add_template_filter(_vence, "vence")
+
+
 def _msg_kratos(mensaje) -> str:
     """Texto de un mensaje o etiqueta de Kratos (que llegan en inglés) en el idioma de la persona. Se reconocen por el principio del texto
     inglés (no por el id numérico: las variables, como los minutos que lleva caducado un flujo, no cambian el principio); si no se

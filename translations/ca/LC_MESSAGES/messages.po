@@ -16066,8 +16066,8 @@ msgstr "Sense perfil fiscal"
 msgid "Sube varios ficheros .xlsx en el formato oficial de la AEAT. Cada uno se asigna al titular cuyo NIF aparece en el nombre del fichero (por ejemplo, A12345674-2T.xlsx). Lo que no se pueda asignar se te dice, no se adivina."
 msgstr "Puja diversos fitxers .xlsx en el format oficial de l'AEAT. Cadascun s'assigna al titular el NIF del qual apareix al nom del fitxer (per exemple, A12345674-2T.xlsx). El que no es pugui assignar se't diu, no s'endevina."
 
-msgid "Texto listo para enviar. Guilda Work no lo envía: cópialo o ábrelo en tu correo y revísalo antes."
-msgstr "Text a punt per enviar. Guilda Work no l'envia: copia'l o obre'l al teu correu i revisa'l abans."
+msgid "Texto listo para enviar. Guilda Work no lo envía solo: ábrelo en el redactor de correo, revísalo y envíalo tú."
+msgstr "Text a punt per enviar. Guilda Work no l'envia sol: obre'l al redactor de correu, revisa'l i envia'l tu."
 
 msgid "Volver a la cartera"
 msgstr "Torna a la cartera"
@@ -17537,6 +17537,308 @@ msgstr "Descarregar el fitxer de prova del model %(m)s"
 
 msgid "impórtalo en el simulador de la AEAT antes de presentar; este modelo no tiene borrador ni estados en Guilda Fiscal."
 msgstr "importa'l al simulador de l'AEAT abans de presentar; aquest model no té esborrany ni estats a Guilda Fiscal."
+
+#: app/rutas_api.py
+msgid "Falta el archivo (campo `adjunto`)."
+msgstr "Falta el fitxer (camp `adjunto`)."
+
+#: app/rutas_api.py
+msgid "El archivo pesa demasiado (máximo 1 MB)."
+msgstr "El fitxer pesa massa (màxim 1 MB)."
+
+#: app/rutas_api.py
+msgid "Solo se admiten archivos de texto o CSV (UTF-8)."
+msgstr "Només s'admeten fitxers de text o CSV (UTF-8)."
+
+#: app/templates (web v2)
+msgid "%(n)s cosa urgente"
+msgid_plural "%(n)s cosas urgentes"
+msgstr[0] "%(n)s cosa urgent"
+msgstr[1] "%(n)s coses urgents"
+
+#: app/templates (web v2)
+msgid "%(n)s correo por contestar"
+msgid_plural "%(n)s correos por contestar"
+msgstr[0] "%(n)s correu per contestar"
+msgstr[1] "%(n)s correus per contestar"
+
+#: app/templates (web v2)
+msgid "%(n)s vencimiento fiscal"
+msgid_plural "%(n)s vencimientos fiscales"
+msgstr[0] "%(n)s venciment fiscal"
+msgstr[1] "%(n)s venciments fiscals"
+
+#: app/templates (web v2)
+msgid "Todo al día: no tienes nada pendiente."
+msgstr "Tot al dia: no tens res pendent."
+
+#: app/templates (web v2)
+msgid "Hoy tienes"
+msgstr "Avui tens"
+
+#: app/templates (web v2)
+msgid "Hace %(n)s día"
+msgid_plural "Hace %(n)s días"
+msgstr[0] "Fa %(n)s dia"
+msgstr[1] "Fa %(n)s dies"
+
+#: app/templates (web v2)
+msgid "Mañana"
+msgstr "Demà"
+
+#: app/templates (web v2)
+msgid "Voy a hacer esto. ¿Lo confirmo?"
+msgstr "Faré això. Ho confirmo?"
+
+#: app/templates (web v2)
+msgid "IA · puede equivocarse"
+msgstr "IA · pot equivocar-se"
+
+#: app/templates (web v2)
+msgid "Resume la tarea «%(t)s» y dime qué falta"
+msgstr "Resumeix la tasca «%(t)s» i digues-me què falta"
+
+#: app/templates (web v2)
+msgid "Preguntar al asistente sobre esta tarea"
+msgstr "Pregunta a l'assistent sobre aquesta tasca"
+
+#: app/templates (web v2)
+msgid "Marcar hecha"
+msgstr "Marca-la feta"
+
+#: app/templates (web v2)
+msgid "Abrir completa"
+msgstr "Obre-la completa"
+
+#: app/templates (web v2)
+msgid "Asistente"
+msgstr "Assistent"
+
+#: app/templates (web v2)
+msgid "Vistas de tareas"
+msgstr "Vistes de tasques"
+
+#: app/templates (web v2)
+msgid "Más vistas"
+msgstr "Més vistes"
+
+#: app/templates (web v2)
+msgid "Más"
+msgstr "Més"
+
+#: app/templates (web v2)
+msgid "Secciones de fiscal"
+msgstr "Seccions de fiscal"
+
+#: app/templates (web v2)
+msgid "Más secciones"
+msgstr "Més seccions"
+
+#: app/templates (web v2)
+msgid "Buscar o preguntar…"
+msgstr "Cerca o pregunta…"
+
+#: app/templates (web v2)
+msgid "Filtrar por tipo"
+msgstr "Filtra per tipus"
+
+#: app/templates (web v2)
+msgid "moverse"
+msgstr "moure's"
+
+#: app/templates (web v2)
+msgid "Intro"
+msgstr "Intro"
+
+#: app/templates (web v2)
+msgid "abrir"
+msgstr "obre"
+
+#: app/templates (web v2)
+msgid "cerrar"
+msgstr "tanca"
+
+#: app/templates (web v2)
+msgid "Asistente sobre este correo"
+msgstr "Assistent sobre aquest correu"
+
+#: app/templates (web v2)
+msgid "Redactar respuesta"
+msgstr "Redacta una resposta"
+
+#: app/templates (web v2)
+msgid "Nuevo vencimiento"
+msgstr "Nou venciment"
+
+#: app/templates (web v2)
+msgid "Vencen esta semana"
+msgstr "Venen aquesta setmana"
+
+#: app/templates (web v2)
+msgid "Vencidos sin presentar"
+msgstr "Vençuts sense presentar"
+
+#: app/templates (web v2)
+msgid "Próximos 30 días"
+msgstr "Propers 30 dies"
+
+#: app/templates (web v2)
+msgid "Prepara el borrador del modelo que vence esta semana."
+msgid_plural "Prepara los borradores de los %(n)s modelos que vencen esta semana."
+msgstr[0] "Prepara l'esborrany del model que venç aquesta setmana."
+msgstr[1] "Prepara els esborranys dels %(n)s models que vencen aquesta setmana."
+
+#: app/templates (web v2)
+msgid "Pregúntale qué vence en los próximos días."
+msgstr "Pregunta-li què venç els propers dies."
+
+#: app/templates (web v2)
+msgid "¿Qué modelos vencen esta semana y qué me falta para presentarlos?"
+msgstr "Quins models vencen aquesta setmana i què em falta per presentar-los?"
+
+#: app/templates (web v2)
+msgid "Preguntar"
+msgstr "Pregunta"
+
+#: app/templates (web v2)
+msgid "Cliente: todos"
+msgstr "Client: tots"
+
+#: app/templates (web v2)
+msgid "País: todos"
+msgstr "País: tots"
+
+#: app/templates (web v2)
+msgid "Ver en calendario"
+msgstr "Veure al calendari"
+
+#: app/templates (web v2)
+msgid "Lo siguiente"
+msgstr "El següent"
+
+#: app/templates (web v2)
+msgid "Urgentes"
+msgstr "Urgents"
+
+#: app/templates (web v2)
+msgid "Sin contestar"
+msgstr "Sense contestar"
+
+#: app/templates (web v2)
+msgid "Abrir a pantalla completa"
+msgstr "Obre a pantalla completa"
+
+#: app/templates (web v2)
+msgid "Tu día en breve"
+msgstr "El teu dia en breu"
+
+#: app/templates (web v2)
+msgid "Prueba a pedir"
+msgstr "Prova de demanar"
+
+#: app/templates (web v2)
+msgid "Resume mi día"
+msgstr "Resumeix el meu dia"
+
+#: app/templates (web v2)
+msgid "Pregunta al asistente"
+msgstr "Pregunta a l'assistent"
+
+#: app/templates (web v2)
+msgid "Pregunta o pide algo…"
+msgstr "Pregunta o demana alguna cosa…"
+
+#: app/templates (web v2)
+msgid "Conversaciones"
+msgstr "Converses"
+
+#: app/templates (web v2)
+msgid "Fuentes y ayuda"
+msgstr "Fonts i ajuda"
+
+#: app/templates (web v2)
+msgid "Fuentes de esta respuesta"
+msgstr "Fonts d'aquesta resposta"
+
+#: app/templates (web v2)
+msgid "Lee y resume con libertad; para crear, cambiar o borrar te enseña antes lo que hará."
+msgstr "Llegeix i resumeix amb llibertat; per crear, canviar o esborrar t'ensenya abans el que farà."
+
+#: app/templates (web v2)
+msgid "Saber más"
+msgstr "Saber-ne més"
+
+#: app/templates (web v2)
+msgid "Cómo funciona el asistente"
+msgstr "Com funciona l'assistent"
+
+#: app/templates (web v2)
+msgid "Lo que ve"
+msgstr "El que veu"
+
+#: app/templates (web v2)
+msgid "Tus tareas, notas y correo, y lo del despacho que tu usuario ya puede ver. Nada más."
+msgstr "Les teves tasques, notes i correu, i el del despatx que el teu usuari ja pot veure. Res més."
+
+#: app/templates (web v2)
+msgid "Lo que hace con tu permiso"
+msgstr "El que fa amb el teu permís"
+
+#: app/templates (web v2)
+msgid "Leer y resumir es libre. Crear, cambiar o borrar algo siempre te lo enseña antes. Enviar un correo, siempre lo confirmas tú."
+msgstr "Llegir i resumir és lliure. Crear, canviar o esborrar alguna cosa sempre t'ho ensenya abans. Enviar un correu, sempre ho confirmes tu."
+
+#: app/templates (web v2)
+msgid "Puede equivocarse"
+msgstr "Pot equivocar-se"
+
+#: app/templates (web v2)
+msgid "Sobre todo con cifras, fechas y plazos fiscales. Cada respuesta indica de dónde sale: ábrela y compruébalo antes de actuar."
+msgstr "Sobretot amb xifres, dates i terminis fiscals. Cada resposta indica d'on surt: obre-la i comprova-ho abans d'actuar."
+
+#: app/templates (web v2)
+msgid "Recordarme revisar las cifras fiscales"
+msgstr "Recorda'm revisar les xifres fiscals"
+
+#: app/templates (web v2)
+msgid "Muestra una etiqueta de cautela junto a importes y plazos"
+msgstr "Mostra una etiqueta de precaució al costat d'imports i terminis"
+
+#: app/templates (web v2)
+msgid "Ajustes del asistente"
+msgstr "Ajustos de l'assistent"
+
+#: app/templates (web v2)
+msgid "Entendido"
+msgstr "Entès"
+
+#: app/templates (web v2)
+msgid "Estado: todos (sin completadas)"
+msgstr "Estat: tots (sense completades)"
+
+#: app/templates (web v2)
+msgid "Prioridad: todas"
+msgstr "Prioritat: totes"
+
+#: app/templates (web v2)
+msgid "Categoría: todas"
+msgstr "Categoria: totes"
+
+#: app/templates (web v2)
+msgid "Añadir tarea… («mañana 10h llamar a Vidal», «@luis», «!alta», «#proyecto»)"
+msgstr "Afegeix una tasca… («demà 10h trucar a Vidal», «@lluís», «!alta», «#projecte»)"
+
+#: app/templates (web v2)
+msgid "Más opciones"
+msgstr "Més opcions"
+
+#: app/templates (web v2)
+msgid "Ficha de la tarea"
+msgstr "Fitxa de la tasca"
+
+#: app/templates (web v2)
+msgid "Elige una tarea para ver su ficha."
+msgstr "Tria una tasca per veure'n la fitxa."
 
 msgid "Conciliación con el banco"
 msgstr "Conciliació amb el banc"

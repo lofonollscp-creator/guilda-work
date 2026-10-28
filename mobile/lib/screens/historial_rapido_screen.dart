@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
+import '../nucleo/abrir_asistente.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -56,8 +60,8 @@ class _HistorialRapidoScreenState extends State<HistorialRapidoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.titulo)),
-      body: FutureBuilder<List<EntradaHistorial>>(
+      appBar: AppBar(title: Text(widget.titulo), actions: [AccionAsistente(contexto: widget.titulo)]),
+      body: AnchoMaximo(child: FutureBuilder<List<EntradaHistorial>>(
         future: _entradas,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -75,7 +79,7 @@ class _HistorialRapidoScreenState extends State<HistorialRapidoScreen> {
             itemBuilder: (context, i) => _tarjeta(entradas[i]),
           );
         },
-      ),
+      )),
     );
   }
 

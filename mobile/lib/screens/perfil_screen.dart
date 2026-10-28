@@ -197,7 +197,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
               const SizedBox(height: 8),
               Text(t.perfilNombreSubtitulo, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 24),
-              Text(t.perfilNotificacionesLabel, style: Theme.of(context).textTheme.titleSmall),
+              EtiquetaSeccion(t.perfilNotificacionesLabel, padding: EdgeInsets.zero),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: perfil.notificarPushVencimientos,

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
+import '../diseno/asistente.dart';
+
 import '../l10n/app_localizations.dart';
 
 import '../models/models.dart';
@@ -80,7 +84,7 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context).iaAjustesTitulo)),
-      body: _cargando
+      body: AnchoMaximo(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(
@@ -99,6 +103,10 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    const Align(alignment: Alignment.centerLeft, child: InsigniaIa(tamano: 44)),
+                    const SizedBox(height: 12),
+                    AvisoIa(texto: AppLocalizations.of(context).iaAviso),
+                    const SizedBox(height: 20),
                     Text(AppLocalizations.of(context).iaAjustesModelo, style: Theme.of(context).textTheme.titleSmall),
                     const SizedBox(height: 8),
                     _selectorModelo(),
@@ -130,7 +138,7 @@ class _IaAjustesScreenState extends State<IaAjustesScreen> {
                       child: AppButton(texto: AppLocalizations.of(context).comunGuardar, cargando: _guardando, onPressed: _guardar),
                     ),
                   ],
-                ),
+                )),
     );
   }
 

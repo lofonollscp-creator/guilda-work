@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guilda_work_mobile/funciones/fichaje/fichaje_acciones.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
+import 'package:guilda_work_mobile/models/models.dart';
 import 'package:guilda_work_mobile/nucleo/paginas.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
 import 'package:guilda_work_mobile/nucleo/shell.dart';
@@ -16,6 +18,7 @@ import 'package:guilda_work_mobile/services/locale_service.dart';
 import 'package:guilda_work_mobile/theme/app_theme.dart';
 
 import 'ayudas/pantallas.dart';
+import 'package:guilda_work_mobile/nucleo/servicios.dart';
 
 void main() {
   final carpeta = carpetaCapturas;
@@ -64,6 +67,35 @@ void main() {
   });
 
   group('Correo', () {
+    testWidgets('en una tableta el correo se lee al lado de la bandeja', (t) async {
+      t.view.physicalSize = const Size(1000, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      final api = ApiFalsa()..mensajes = [msg(1, 'Marta Ruiz <marta@ejemplo.com>', 'Consulta sobre la renta', 'Hola', leido: false)];
+      await t.pumpWidget(appDePantalla(CorreoBandejaScreen(api: api), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('Elige un correo para leerlo.'), findsOneWidget);
+      await t.tap(find.text('Consulta sobre la renta'));
+      await t.pumpAndSettle();
+      expect(find.text('Elige un correo para leerlo.'), findsNothing);
+      expect(find.byType(CorreoMensajeScreen), findsOneWidget);
+      expect(find.text('Consulta sobre la renta'), findsWidgets);
+      await t.pump(const Duration(seconds: 2)); // la bandeja se refresca (ya leído) un segundo después
+    });
+
+    testWidgets('en una tableta el asistente va en un panel junto a la bandeja', (t) async {
+      t.view.physicalSize = const Size(1400, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      sinVoz();
+      final api = ApiFalsa()..mensajes = [msg(1, 'Marta Ruiz <marta@ejemplo.com>', 'Consulta sobre la renta', 'Hola', leido: false)];
+      await t.pumpWidget(appDePantalla(CorreoBandejaScreen(api: api), [estadoSesionProvider.overrideWith(SesionFija.new), serviciosProvider.overrideWithValue(serviciosFalsos())]));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsOneWidget);
+      expect(find.text('Contexto: Correo'), findsOneWidget);
+      expect(find.text('Consulta sobre la renta'), findsOneWidget);
+    });
+
     testWidgets('la bandeja tiene una fila de filtros, y cada correo enseña quién, el asunto y el principio; lo no leído se marca con palabras', (t) async {
       final api = ApiFalsa()
         ..mensajes = [
@@ -112,10 +144,120 @@ void main() {
       final api = ApiFalsa();
       await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
       await t.pumpAndSettle();
-      expect(find.byIcon(Icons.lightbulb_outline), findsNWidgets(4));
-      await t.tap(find.byIcon(Icons.lightbulb_outline).first);
+      expect(find.text('¿Qué tengo pendiente hoy?'), findsOneWidget);
+      expect(find.text('Crea una nota con lo que te dicte'), findsOneWidget);
+      // En una pantalla baja la lista de tarjetas se desplaza por debajo del campo de escritura.
+      await t.ensureVisible(find.text('¿Qué tengo pendiente hoy?'));
       await t.pumpAndSettle();
-      expect(api.enviadosIa.length, 1);
+      await t.tap(find.text('¿Qué tengo pendiente hoy?'));
+      await t.pumpAndSettle();
+      expect(api.enviadosIa, ['¿Qué tengo pendiente hoy?']);
+    });
+
+    testWidgets('abierto desde otra pantalla: manda la consulta sola y dice de qué trata', (t) async {
+      sinVoz();
+      final api = ApiFalsa();
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService(), consultaInicial: 'Resume mi día', contexto: 'Hoy'), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(api.enviadosIa, ['Resume mi día']);
+      expect(find.text('Contexto: Hoy'), findsOneWidget);
+    });
+
+    testWidgets('con la conversación empezada salen atajos encima del campo, y uno envía', (t) async {
+      sinVoz();
+      final api = ApiFalsa()..chat = [iaMsg(1, 'user', 'Hola'), iaMsg(2, 'assistant', 'Hola, ¿en qué te ayudo?')];
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Resume mis correos sin contestar'));
+      await t.pumpAndSettle();
+      expect(api.enviadosIa, ['Resume mis correos sin contestar']);
+    });
+
+    testWidgets('desde un elemento: el asistente recibe de qué hablas con el primer mensaje, y a ti no se te enseña esa línea', (t) async {
+      sinVoz();
+      final api = ApiFalsa();
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService(), contextoIa: 'tarea #7 «Presentar el 303»', contexto: 'Tarea'), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextField), '¿Cuándo vence?');
+      await t.tap(find.byTooltip('Enviar'));
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextField), 'Gracias');
+      await t.tap(find.byTooltip('Enviar'));
+      await t.pumpAndSettle();
+      expect(api.enviadosIa, ['[Contexto: tarea #7 «Presentar el 303»]\n¿Cuándo vence?', 'Gracias']);
+      expect(find.text('¿Cuándo vence?'), findsOneWidget);
+      expect(find.textContaining('[Contexto'), findsNothing);
+    });
+
+    testWidgets('«Cómo funciona» se abre desde la «i» y deja silenciar la etiqueta de cautela', (t) async {
+      sinVoz();
+      SharedPreferences.setMockInitialValues({});
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: ApiFalsa(), locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      await t.tap(find.byTooltip('Cómo funciona'));
+      await t.pumpAndSettle();
+      expect(find.text('Cómo funciona el asistente'), findsOneWidget);
+      expect(find.text('Puede equivocarse'), findsOneWidget);
+      expect(find.text('Recordarme revisar las cifras fiscales'), findsOneWidget);
+    });
+
+    testWidgets('sobre un correo, las sugerencias son las de un correo; y «Continúa» enseña conversaciones anteriores', (t) async {
+      sinVoz();
+      final api = ApiFalsa()..conversaciones = [IaConversacion(id: 1, titulo: 'Vencimientos de noviembre', activa: false), IaConversacion(id: 2, titulo: 'Esta', activa: true)];
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService(), contexto: 'Mensaje', contextoIa: 'correo, mensaje #3'), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('Resume este correo'), findsWidgets);
+      expect(find.text('Redacta una respuesta'), findsOneWidget);
+      expect(find.text('Ahora mismo · Mensaje'), findsOneWidget);
+      await t.scrollUntilVisible(find.text('Vencimientos de noviembre'), 200, scrollable: find.byType(Scrollable).first);
+      expect(find.text('Vencimientos de noviembre'), findsOneWidget);
+      expect(find.text('Esta'), findsNothing); // la activa no se ofrece como «continúa»
+    });
+
+    testWidgets('con cifras fiscales sale la cautela; sin ellas, no', (t) async {
+      sinVoz();
+      final api = ApiFalsa()
+        ..chat = [
+          iaMsg(1, 'user', 'Cuánto IVA'),
+          iaMsg(2, 'assistant', 'El 303 sale a 1.284,50 € a ingresar.'),
+          iaMsg(3, 'user', 'Gracias'),
+          iaMsg(4, 'assistant', 'De nada, aquí estoy.'),
+        ];
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('Cifra estimada: compruébala antes de presentar'), findsOneWidget);
+    });
+
+    testWidgets('el aviso de que es una IA acompaña al campo de escritura', (t) async {
+      sinVoz();
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: ApiFalsa(), locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      // El aviso ya no es un banner fijo: va en el subtítulo, con su «i» a un toque de «Cómo funciona».
+      expect(find.text('IA · puede equivocarse'), findsOneWidget);
+      expect(find.textContaining('puede contener errores'), findsNothing);
+      expect(find.byTooltip('Cómo funciona'), findsOneWidget);
+      expect(find.byTooltip('Adjuntar texto o CSV (hasta 1 MB)'), findsOneWidget);
+    });
+
+    testWidgets('las respuestas citan sus fuentes y lo tuyo con un archivo lo muestra como píldora, sin la línea técnica', (t) async {
+      sinVoz();
+      final api = ApiFalsa()
+        ..chat = [
+          iaMsg(1, 'user', '[Adjunto #4: gastos.csv]\n¿Cuánto suman?'),
+          iaMsg(2, 'assistant', 'Suman 120 €.', fuentes: '[{"tipo":"tarea","titulo":"Pagar a Acme","url":"/tareas/7/editar"},{"tipo":"nota","titulo":"Gastos de octubre","url":"/nota/3/editar"}]'),
+        ];
+      await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
+      await t.pumpAndSettle();
+      expect(find.text('gastos.csv'), findsOneWidget);
+      expect(find.text('¿Cuánto suman?'), findsOneWidget);
+      expect(find.textContaining('[Adjunto'), findsNothing);
+      // Las fuentes van plegadas («2 fuentes») y al tocarlas se despliegan.
+      expect(find.text('2 fuentes'), findsOneWidget);
+      expect(find.text('Pagar a Acme'), findsNothing);
+      await t.tap(find.text('2 fuentes'));
+      await t.pumpAndSettle();
+      expect(find.text('Pagar a Acme'), findsOneWidget);
+      expect(find.text('Gastos de octubre'), findsOneWidget);
     });
 
     testWidgets('con historial: lo tuyo a la derecha con el acento, lo del asistente en tarjeta, lo que hizo por detrás en píldora, y la acción pendiente pide confirmar', (t) async {
@@ -129,8 +271,8 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('Crea una tarea para llamar a Acme mañana'), findsOneWidget);
       expect(find.textContaining('crear la tarea'), findsOneWidget);
-      expect(find.textContaining('crear_tarea'), findsWidgets);
-      expect(find.text('asunto'), findsOneWidget);
+      expect(find.text('Nueva tarea'.toUpperCase()), findsOneWidget); // lo que va a hacer, con nombre humano
+      expect(find.text('Asunto'), findsOneWidget);
       expect(find.text('Llamar a Acme'), findsOneWidget);
       expect(find.text('No'), findsOneWidget);
       expect(find.text('Sí, hazlo'), findsOneWidget);
@@ -236,8 +378,8 @@ void main() {
         addTearDown(t.view.reset);
         final api = ApiFalsa()
           ..chat = [
-            iaMsg(1, 'user', '¿Qué tengo pendiente hoy?'),
-            iaMsg(2, 'assistant', 'Tienes **2 vencimientos** y una tarea vencida: el 303 de Acme SL. ¿Quieres que la pase a mañana?'),
+            iaMsg(1, 'user', '[Adjunto #4: gastos-octubre.csv]\n¿Qué tengo pendiente hoy?'),
+            iaMsg(2, 'assistant', 'Tienes **2 vencimientos** y una tarea vencida: el 303 de Acme SL. ¿Quieres que la pase a mañana?', fuentes: '[{"tipo":"tarea","titulo":"Presentar modelo 303 · Acme SL","url":"/tareas/7/editar"},{"tipo":"nota","titulo":"Gastos de octubre","url":"/nota/3/editar"}]'),
             iaMsg(3, 'user', 'Sí, y crea una tarea para llamar a Acme'),
             iaMsg(4, 'tool', '{"ok": true}', callId: 'c0', herramienta: 'mover_tarea'),
             iaMsg(5, 'assistant', 'Hecho. Voy a crear la tarea.', calls: '[{"id":"c1","function":{"name":"crear_tarea","arguments":"{\\"asunto\\":\\"Llamar a Acme\\",\\"fecha_vencimiento\\":\\"2026-10-27\\"}"}}]'),

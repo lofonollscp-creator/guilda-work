@@ -1566,3 +1566,14 @@ def test_intervalo_del_autosync_del_servidor_por_variable_de_entorno(monkeypatch
     assert main.minutos_sincronizacion_correo_servidor() == 0
     monkeypatch.setenv("GUILDA_CORREO_SYNC_MINUTOS", "abc")
     assert main.minutos_sincronizacion_correo_servidor() == 5
+
+
+def test_redactar_acepta_un_texto_de_partida_escapado(cliente, monkeypatch):
+    from tests.conftest import iniciar_sesion_de_prueba
+    uid = iniciar_sesion_de_prueba(cliente, "redactar-texto@ejemplo.com", "contrasena123")
+    _crear_cuenta_con_smtp(monkeypatch, uid)
+    r = cliente.get("/correo/redactar", query_string={"para": "cli@ejemplo.com", "asunto": "IVA 3T", "cuerpo": "Hola,\n\nFalta <b>esto</b>\nGracias."})
+    assert r.status_code == 200
+    cuerpo = r.get_data(as_text=True)
+    assert "Falta &lt;b&gt;esto&lt;/b&gt;<br>Gracias." in cuerpo
+    assert "<b>esto</b>" not in cuerpo

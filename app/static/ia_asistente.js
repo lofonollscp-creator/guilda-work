@@ -145,8 +145,11 @@
         var dd = document.createElement("dd"); dd.textContent = valorLegible(argumentos[k]);
         lista.appendChild(dt); lista.appendChild(dd);
       });
-    } else {
-      var dd0 = document.createElement("dd"); dd0.textContent = typeof argumentos === "string" ? argumentos : "—"; lista.appendChild(dd0);
+    } else if (typeof argumentos === "string" && argumentos.trim() && argumentos.trim() !== "{}") {
+      var dd0 = document.createElement("dd"); dd0.textContent = argumentos; lista.appendChild(dd0);
+    } else {                                              // sin parámetros: no hay nada que enseñar
+      antiguo.remove();
+      return;
     }
     antiguo.replaceWith(lista);
   }
@@ -196,23 +199,116 @@
   // rutas que empiezan por "/"), creados con textContent/href, nunca con innerHTML.
   function pintarFuentes(burbuja, fuentes) {
     if (!burbuja || !fuentes || !fuentes.length) return;
-    var caja = document.createElement("div");
+    var validas = fuentes.filter(function (f) { return f && typeof f.url === "string" && f.url.charAt(0) === "/" && f.url.charAt(1) !== "/"; });
+    if (!validas.length) return;
+    var caja = document.createElement("details");
     caja.className = "ia-fuentes";
-    var etiqueta = document.createElement("span");
-    etiqueta.className = "ia-fuentes-etiqueta";
-    etiqueta.textContent = document.documentElement.lang === "ca" ? "Fonts:" :
-      document.documentElement.lang === "en" ? "Sources:" :
-      document.documentElement.lang === "fr" ? "Sources :" : "Fuentes:";
-    caja.appendChild(etiqueta);
-    fuentes.forEach(function (f) {
-      if (!f || typeof f.url !== "string" || f.url.charAt(0) !== "/" || f.url.charAt(1) === "/") return;
+    var resumen = document.createElement("summary");
+    resumen.className = "ia-fuentes-etiqueta";
+    resumen.textContent = (TXT[document.documentElement.lang] || TXT.es).fuentes(validas.length);
+    caja.appendChild(resumen);
+    validas.forEach(function (f) {
       var a = document.createElement("a");
       a.className = "ia-fuente ia-fuente-" + String(f.tipo || "").replace(/[^a-z]/g, "");
       a.href = f.url;
       a.textContent = String(f.titulo || f.url);
       caja.appendChild(a);
     });
-    if (caja.children.length > 1) burbuja.insertAdjacentElement("afterend", caja);
+    pieDe(burbuja).appendChild(caja);
+  }
+
+  // Textos de lo nuevo (el resto de la interfaz va en el HTML; esto se pinta desde JavaScript).
+  var TXT = {
+    es: { fuentes: function (n) { return n === 1 ? "1 fuente" : n + " fuentes"; }, cautela: "Cifra estimada: compruébala antes de presentar", copiar: "Copiar", copiado: "Copiado", leer: "Leer en voz alta",
+          ejecuto: "Voy a hacer esto. ¿Lo confirmo?", si: "Sí, hazlo", no: "No", pasos: "Consultando…",
+          acciones: { crear_tarea: "Nueva tarea", crear_nota: "Nueva nota", editar_tarea: "Cambiar una tarea", editar_nota: "Cambiar una nota", completar_tarea: "Completar una tarea", enviar_correo: "Enviar un correo" } },
+    ca: { fuentes: function (n) { return n === 1 ? "1 font" : n + " fonts"; }, cautela: "Xifra estimada: comprova-la abans de presentar", copiar: "Copia", copiado: "Copiat", leer: "Llegeix en veu alta",
+          ejecuto: "Faré això. Ho confirmo?", si: "Sí, fes-ho", no: "No", pasos: "Consultant…",
+          acciones: { crear_tarea: "Nova tasca", crear_nota: "Nova nota", editar_tarea: "Canviar una tasca", editar_nota: "Canviar una nota", completar_tarea: "Completar una tasca", enviar_correo: "Enviar un correu" } },
+    en: { fuentes: function (n) { return n === 1 ? "1 source" : n + " sources"; }, cautela: "Estimated figure: check it before filing", copiar: "Copy", copiado: "Copied", leer: "Read aloud",
+          ejecuto: "I'm about to do this. Shall I go ahead?", si: "Yes, do it", no: "No", pasos: "Looking it up…",
+          acciones: { crear_tarea: "New task", crear_nota: "New note", editar_tarea: "Change a task", editar_nota: "Change a note", completar_tarea: "Complete a task", enviar_correo: "Send an email" } },
+    fr: { fuentes: function (n) { return n === 1 ? "1 source" : n + " sources"; }, cautela: "Chiffre estimé : vérifiez-le avant de déclarer", copiar: "Copier", copiado: "Copié", leer: "Lire à voix haute",
+          ejecuto: "Je vais faire ceci. Je confirme ?", si: "Oui, fais-le", no: "Non", pasos: "Consultation…",
+          acciones: { crear_tarea: "Nouvelle tâche", crear_nota: "Nouvelle note", editar_tarea: "Modifier une tâche", editar_nota: "Modifier une note", completar_tarea: "Terminer une tâche", enviar_correo: "Envoyer un e-mail" } },
+  };
+  function t() { return TXT[document.documentElement.lang] || TXT.es; }
+  function nombreAccion(herramienta) { var a = t().acciones[herramienta]; return a || nombreLegible(herramienta); }
+
+  // La etiqueta de cautela solo acompaña a respuestas con importes o plazos fiscales, y se puede silenciar (localStorage).
+  var CLAVE_CAUTELA = "guilda-ia-recordar-cifras";
+  function cautelaActiva() { try { return localStorage.getItem(CLAVE_CAUTELA) !== "0"; } catch (e) { return true; } }
+  function hablaDeCifras(texto) { return /\d[\d.,]*\s?€|€\s?\d|\b(modelo|IVA|IRPF|303|130|111|115|390|200)\b/i.test(texto || ""); }
+
+  // El pie de una respuesta (cautela, fuentes plegadas, acciones) vive en un contenedor justo debajo de su burbuja.
+  function pieDe(burbuja) {
+    var p = burbuja.nextElementSibling;
+    if (!p || !p.classList.contains("ia-msg-pie")) {
+      p = document.createElement("div");
+      p.className = "ia-msg-pie";
+      burbuja.insertAdjacentElement("afterend", p);
+    }
+    return p;
+  }
+  function pintarCautela(burbuja, texto) {
+    if (!cautelaActiva() || !hablaDeCifras(texto)) return;
+    var pie = pieDe(burbuja);
+    if (pie.querySelector(".ia-cautela")) return;
+    var c = document.createElement("p");
+    c.className = "ia-cautela";
+    c.innerHTML = iconoSvg("info");
+    c.appendChild(document.createTextNode(" " + t().cautela));
+    pie.insertBefore(c, pie.firstChild);
+  }
+  // Copiar y leer en voz alta, solo bajo la última respuesta.
+  function pintarAcciones(mensajesEl) {
+    mensajesEl.querySelectorAll(".ia-msg-acciones").forEach(function (a) { a.remove(); });
+    var respuestas = mensajesEl.querySelectorAll(".ia-msg-assistant:not(.chat-pensando)");
+    var ultima = respuestas[respuestas.length - 1];
+    if (!ultima || !ultima.textContent.trim()) return;
+    var caja = document.createElement("div");
+    caja.className = "ia-msg-acciones";
+    var copiar = document.createElement("button");
+    copiar.type = "button"; copiar.className = "ia-msg-accion"; copiar.title = t().copiar; copiar.setAttribute("aria-label", t().copiar);
+    copiar.innerHTML = iconoSvg("copy");
+    copiar.addEventListener("click", function () {
+      if (navigator.clipboard) navigator.clipboard.writeText(ultima.textContent.trim());
+      copiar.title = t().copiado; copiar.setAttribute("aria-label", t().copiado);
+      setTimeout(function () { copiar.title = t().copiar; copiar.setAttribute("aria-label", t().copiar); }, 1500);
+    });
+    caja.appendChild(copiar);
+    if ("speechSynthesis" in window) {
+      var leer = document.createElement("button");
+      leer.type = "button"; leer.className = "ia-msg-accion"; leer.title = t().leer; leer.setAttribute("aria-label", t().leer);
+      leer.innerHTML = iconoSvg("volume-2");
+      leer.addEventListener("click", function () {
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(ultima.textContent.trim());
+        u.lang = LOCALE_VOZ[document.documentElement.lang] || "es-ES";
+        window.speechSynthesis.speak(u);
+      });
+      caja.appendChild(leer);
+    }
+    pieDe(ultima).appendChild(caja);
+  }
+  // El panel de la derecha enseña las fuentes de la última respuesta.
+  function actualizarPanelFuentes(mensajesEl) {
+    var lado = document.getElementById("ia-lado-fuentes");
+    if (!lado) return;
+    var cajas = mensajesEl.querySelectorAll(".ia-fuentes");
+    var ultima = cajas[cajas.length - 1];
+    var lista = lado.querySelector(".ia-lado-fuentes-lista");
+    lista.innerHTML = "";
+    var enlaces = ultima ? ultima.querySelectorAll("a.ia-fuente") : [];
+    enlaces.forEach(function (a) {
+      var li = document.createElement("li");
+      var copia = document.createElement("a");
+      copia.href = a.getAttribute("href");
+      copia.textContent = a.textContent;
+      li.appendChild(copia);
+      lista.appendChild(li);
+    });
+    lado.hidden = enlaces.length === 0;
   }
 
   function iniciarChat(contenedor) {
@@ -238,11 +334,13 @@
     if (!pendienteEl.hidden) {
       var argsServidor = pendienteEl.querySelector(".ia-chat-pendiente-args");
       var nombreServidor = pendienteEl.querySelector("strong");
-      if (nombreServidor) nombreServidor.textContent = nombreLegible(nombreServidor.textContent);
+      if (nombreServidor) nombreServidor.textContent = nombreAccion(nombreServidor.dataset.herramienta || nombreServidor.textContent);
       if (argsServidor) pintarArgumentos(pendienteEl, argsServidor.textContent);
     }
     mensajesEl.querySelectorAll(".ia-msg-assistant").forEach(function (el) {
-      el.innerHTML = renderizarMarkdown(el.textContent);
+      var textoPlano = el.textContent;
+      el.innerHTML = renderizarMarkdown(textoPlano);
+      pintarCautela(el, textoPlano);
     });
     // Fuentes de los mensajes ya guardados (las pinta Jinja como contenedores vacíos).
     mensajesEl.querySelectorAll(".ia-fuentes[data-fuentes]").forEach(function (caja) {
@@ -252,6 +350,8 @@
       caja.remove();
       pintarFuentes(previo, datos);
     });
+    pintarAcciones(mensajesEl);
+    actualizarPanelFuentes(mensajesEl);
     // Atajos: un clic envía el texto del atajo.
     var atajosEl = document.getElementById(id + "-atajos");
     if (atajosEl) {
@@ -274,13 +374,17 @@
         return;
       }
       pendienteEl.innerHTML =
-        '<p class="ia-chat-pendiente-titulo">¿Ejecuto <strong></strong>?</p>' +
+        '<p class="ia-chat-pendiente-titulo"><strong></strong></p>' +
         '<pre class="ia-chat-pendiente-args"></pre>' +
+        '<p class="ia-chat-pendiente-pregunta"></p>' +
         '<div class="ia-chat-pendiente-botones">' +
-        '<button type="button" class="ia-chat-confirmar" data-aceptar="true">Sí, hazlo</button>' +
-        '<button type="button" class="ia-chat-confirmar" data-aceptar="false">No</button>' +
+        '<button type="button" class="ia-chat-confirmar" data-aceptar="true"></button>' +
+        '<button type="button" class="ia-chat-confirmar" data-aceptar="false"></button>' +
         "</div>";
-      pendienteEl.querySelector("strong").textContent = nombreLegible(pendiente.herramienta);
+      pendienteEl.querySelector("strong").textContent = nombreAccion(pendiente.herramienta);
+      pendienteEl.querySelector(".ia-chat-pendiente-pregunta").textContent = t().ejecuto;
+      pendienteEl.querySelector('[data-aceptar="true"]').textContent = t().si;
+      pendienteEl.querySelector('[data-aceptar="false"]').textContent = t().no;
       pintarArgumentos(pendienteEl, pendiente.argumentos);
       pendienteEl.hidden = false;
       adjuntarBotonesPendiente();
@@ -460,7 +564,8 @@
       textareaEl.disabled = true;
       var pensandoEl = document.createElement("div");
       pensandoEl.className = "ia-msg ia-msg-assistant chat-pensando";
-      pensandoEl.textContent = "Pensando...";
+      pensandoEl.innerHTML = '<span class="ia-puntos" aria-hidden="true"><i></i><i></i><i></i></span>';
+      pensandoEl.appendChild(document.createTextNode(" " + t().pasos));
       mensajesEl.appendChild(pensandoEl);
       mensajesEl.scrollTop = mensajesEl.scrollHeight;
 
@@ -491,12 +596,15 @@
           if (mensaje.rol === "assistant" && mensaje.contenido) {
             if (!bubbujaViva) iniciarBurbujaViva();
             bubbujaViva.innerHTML = renderizarMarkdown(mensaje.contenido);
+            pintarCautela(bubbujaViva, mensaje.contenido);
             if (mensaje.fuentes_json) {
               var fuentesVivas = [];
               try { fuentesVivas = JSON.parse(mensaje.fuentes_json); } catch (e) { fuentesVivas = []; }
               pintarFuentes(bubbujaViva, fuentesVivas);
             }
             bubbujaViva = null;
+            pintarAcciones(mensajesEl);
+            actualizarPanelFuentes(mensajesEl);
           } else if (mensaje.rol === "tool") {
             var div = document.createElement("div");
             div.className = "ia-msg ia-msg-tool";
@@ -643,34 +751,67 @@
 
   document.querySelectorAll(".ia-chat").forEach(iniciarChat);
 
-  // Selector de conversaciones (solo en la página del asistente).
-  var convSelect = document.getElementById("ia-conv-select");
-  if (convSelect) {
-    var convCaja = convSelect.closest(".ia-conversaciones");
+  // Lista de conversaciones (solo en la página del asistente).
+  var convCaja = document.querySelector(".ia-conversaciones");
+  if (convCaja) {
     var accionConversacion = function (url, cuerpo) {
       var opciones = { method: "POST" };
       if (cuerpo) { opciones.headers = { "Content-Type": "application/json" }; opciones.body = JSON.stringify(cuerpo); }
       return fetch(url, opciones).then(function () { location.reload(); });
     };
-    convSelect.addEventListener("change", function () {
-      accionConversacion("/ia/conversaciones/" + convSelect.value + "/activar");
+    var activa = function () { return convCaja.querySelector(".ia-conv-item.on"); };
+    convCaja.querySelectorAll(".ia-conv-item").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (b.classList.contains("on")) return;
+        accionConversacion("/ia/conversaciones/" + b.dataset.convId + "/activar");
+      });
     });
-    document.getElementById("ia-conv-renombrar").addEventListener("click", function () {
-      var opcion = convSelect.options[convSelect.selectedIndex];
-      var idConv = convSelect.value;
-      var preguntarTitulo = window.GuildaDS ? window.GuildaDS.pedirTexto(convCaja.dataset.promptRenombrar, opcion.dataset.titulo || "") : Promise.resolve(prompt(convCaja.dataset.promptRenombrar, opcion.dataset.titulo || ""));
+    var renombrar = document.getElementById("ia-conv-renombrar");
+    if (renombrar) renombrar.addEventListener("click", function () {
+      var actual = activa();
+      if (!actual) return;
+      var preguntarTitulo = window.GuildaDS ? window.GuildaDS.pedirTexto(convCaja.dataset.promptRenombrar, actual.dataset.titulo || "") : Promise.resolve(prompt(convCaja.dataset.promptRenombrar, actual.dataset.titulo || ""));
       preguntarTitulo.then(function (titulo) {
         if (titulo === null || !titulo.trim()) return;
-        accionConversacion("/ia/conversaciones/" + idConv + "/renombrar", { titulo: titulo });
+        accionConversacion("/ia/conversaciones/" + actual.dataset.convId + "/renombrar", { titulo: titulo });
       });
     });
-    document.getElementById("ia-conv-eliminar").addEventListener("click", function () {
-      var idConv = convSelect.value;
+    var eliminar = document.getElementById("ia-conv-eliminar");
+    if (eliminar) eliminar.addEventListener("click", function () {
+      var actual = activa();
+      if (!actual) return;
       var preguntarBorrar = window.GuildaDS ? window.GuildaDS.confirmar(convCaja.dataset.confirmarEliminar, { peligro: true }) : Promise.resolve(confirm(convCaja.dataset.confirmarEliminar));
       preguntarBorrar.then(function (si) {
-        if (si) accionConversacion("/ia/conversaciones/" + idConv + "/eliminar");
+        if (si) accionConversacion("/ia/conversaciones/" + actual.dataset.convId + "/eliminar");
       });
     });
+  }
+
+  var nuevaConv = document.getElementById("ia-nueva-conversacion");
+  var vaciarPagina = document.getElementById("ia-chat-pagina-vaciar");
+  if (nuevaConv && vaciarPagina) nuevaConv.addEventListener("click", function () { vaciarPagina.click(); });
+
+  // «Cómo funciona»: el aviso de que la IA puede equivocarse, a un clic desde la cabecera, con el interruptor de la etiqueta de cautela.
+  var infoDialogo = document.getElementById("ia-info");
+  if (infoDialogo) {
+    var cautelaCasilla = document.getElementById("ia-info-cautela");
+    if (cautelaCasilla) {
+      cautelaCasilla.checked = cautelaActiva();
+      cautelaCasilla.addEventListener("change", function () { try { localStorage.setItem(CLAVE_CAUTELA, cautelaCasilla.checked ? "1" : "0"); } catch (e) { /* sin almacenamiento */ } });
+    }
+    document.querySelectorAll(".js-ia-info").forEach(function (b) {
+      b.addEventListener("click", function () { if (infoDialogo.showModal) infoDialogo.showModal(); else infoDialogo.setAttribute("open", ""); });
+    });
+    infoDialogo.querySelectorAll(".js-ia-info-cerrar").forEach(function (b) { b.addEventListener("click", function () { infoDialogo.close ? infoDialogo.close() : infoDialogo.removeAttribute("open"); }); });
+  }
+
+  // `?q=` en la dirección (las sugerencias de Hoy y de las fichas): se escribe la pregunta y se envía una sola vez.
+  var consulta = new URLSearchParams(location.search).get("q");
+  if (consulta) {
+    history.replaceState(null, "", location.pathname);
+    var cajaTexto = document.querySelector(".ia-chat-form textarea");
+    var formChat = document.querySelector(".ia-chat-form");
+    if (cajaTexto && formChat) { cajaTexto.value = consulta; formChat.requestSubmit ? formChat.requestSubmit() : formChat.dispatchEvent(new Event("submit", { cancelable: true })); }
   }
 
   var togglePanel = document.getElementById("ia-panel-toggle");

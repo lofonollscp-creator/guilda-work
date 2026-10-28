@@ -34,7 +34,7 @@ logger = logging.getLogger("guilda")
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
 # Versión del contrato (mayor.menor): el menor sube con cada ampliación compatible; el mayor solo si algo se rompe.
-API_VERSION = "1.10"
+API_VERSION = "1.11"
 
 
 _CODIGOS_HTTP = {
@@ -1690,7 +1690,7 @@ def enviar_mensaje_ia_stream():
             for evento in ia_asistente.procesar_turno_stream(usuario_id, texto):
                 yield _sse(evento)
         except Exception as e:  # noqa: BLE001 -- el stream ya está abierto, no se puede devolver un error HTTP normal
-            yield _sse({"tipo": "error", "mensaje": str(e)})
+            yield _sse({"tipo": "error", "mensaje": ia_asistente.mensaje_de_error(e)})
 
     return Response(stream_with_context(generar()), mimetype="text/event-stream")
 
@@ -1706,9 +1706,31 @@ def confirmar_ia_stream():
             for evento in ia_asistente.confirmar_pendiente_stream(usuario_id, aceptar):
                 yield _sse(evento)
         except Exception as e:  # noqa: BLE001
-            yield _sse({"tipo": "error", "mensaje": str(e)})
+            yield _sse({"tipo": "error", "mensaje": ia_asistente.mensaje_de_error(e)})
 
     return Response(stream_with_context(generar()), mimetype="text/event-stream")
+
+
+_ADJUNTO_IA_MAXIMO_BYTES = 1 * 1024 * 1024  # 1 MB: son ficheros de texto o CSV pequeños, no documentos
+
+
+@api_bp.route("/ia/adjuntos", methods=["POST"])
+@token_required
+def subir_adjunto_ia():
+    """Sube un archivo de texto o CSV (UTF-8, hasta 1 MB) para que el asistente lo lea. Multipart con el campo `adjunto`.
+    Devuelve `{"id", "nombre_archivo"}`; para que el asistente lo use, empieza el mensaje por `[Adjunto #<id>: <nombre>]` y una línea nueva (lo lee a demanda)."""
+    fichero = request.files.get("adjunto")
+    if not fichero or not fichero.filename:
+        return _err(gettext("Falta el archivo (campo `adjunto`)."), 400, campo="adjunto")
+    datos = fichero.read(_ADJUNTO_IA_MAXIMO_BYTES + 1)
+    if len(datos) > _ADJUNTO_IA_MAXIMO_BYTES:
+        return _err(gettext("El archivo pesa demasiado (máximo 1 MB)."), 413, campo="adjunto")
+    try:
+        datos.decode("utf-8")
+    except UnicodeDecodeError:
+        return _err(gettext("Solo se admiten archivos de texto o CSV (UTF-8)."), 400, campo="adjunto")
+    adjunto_id = db.crear_adjunto_ia(g.usuario_id, fichero.filename, fichero.mimetype, datos)
+    return _ok({"id": adjunto_id, "nombre_archivo": fichero.filename}, 201)
 
 
 @api_bp.route("/ia/vaciar", methods=["POST"])

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../diseno/adaptable.dart';
+
 import '../diseno/componentes.dart';
 
 import '../l10n/app_localizations.dart';
@@ -75,7 +77,7 @@ class _FiscalClientesScreenState extends State<FiscalClientesScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return Scaffold(
-      body: Column(
+      body: AnchoMaximo(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -153,7 +155,7 @@ class _FiscalClientesScreenState extends State<FiscalClientesScreen> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }

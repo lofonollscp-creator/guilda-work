@@ -1,0 +1,38 @@
+{# Ficha de una tarea para el panel de la lista (fragmento: lo pide static/tareas_ficha.js). #}
+{% set clase_estado = {'en_progreso': 'azul', 'completada': 'verde', 'esperando': 'ambar', 'en_revision': 'ia'}.get(tarea.estado, '') %}
+{% set vence_txt, vence_clase = (tarea.fecha_vencimiento|vence(tarea.estado == 'completada')) if tarea.fecha_vencimiento else ('', '') %}
+<div class="ficha-cab">
+  <div class="ficha-pildoras">
+    <span class="pildora-v2 {{ clase_estado }}">{{ estados|selectattr('0', 'equalto', tarea.estado)|map(attribute='1')|first }}</span>
+    <span class="pildora-v2 {{ {'alta': 'ambar', 'baja': 'azul'}.get(tarea.prioridad, '') }}">{{ tarea.prioridad|capitalize }}</span>
+    <span class="ficha-espacio"></span>
+    <a class="ficha-ia" href="{{ url_for('ia.asistente_vista', q=_('Resume la tarea «%(t)s» y dime qué falta', t=tarea.asunto)) }}" title="{{ _('Preguntar al asistente sobre esta tarea') }}" aria-label="{{ _('Preguntar al asistente sobre esta tarea') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg></a>
+  </div>
+  <h2 class="ficha-titulo">{{ tarea.asunto }}</h2>
+  <dl class="ficha-datos">
+    {% if vence_txt %}<div><dt>{{ _('Vence') }}</dt><dd class="{{ 'es-rojo' if vence_clase == 'rojo' }}">{{ vence_txt }}</dd></div>{% endif %}
+    <div><dt>{{ _('Responsable') }}</dt><dd>{{ dueno_nombre or '' }}</dd></div>
+    {% if tarea.cliente_fiscal_nombre %}<div><dt>{{ _('Cliente') }}</dt><dd>{{ tarea.cliente_fiscal_nombre }}</dd></div>{% endif %}
+  </dl>
+</div>
+<div class="ficha-cuerpo">
+  {% if tarea.cuerpo %}<p class="ficha-descripcion">{{ tarea.cuerpo }}</p>{% endif %}
+  {% if checklist %}
+  <h3 class="etiqueta-seccion">{{ _('Subtareas') }} · {{ checklist|selectattr('hecha')|list|length }} / {{ checklist|length }}</h3>
+  <ul class="ficha-subtareas">
+    {% for item in checklist %}<li class="{{ 'is-hecha' if item.hecha }}"><span class="ficha-subtarea-marca" aria-hidden="true">{% if item.hecha %}<svg class="icono-inline"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-check"></use></svg>{% endif %}</span><span>{{ item.texto }}</span></li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if ultimo_comentario %}
+  <h3 class="etiqueta-seccion">{{ _('Actividad') }}</h3>
+  <p class="ficha-comentario">{{ ultimo_comentario.texto }}</p>
+  <p class="muted ficha-comentario-autor">{{ ultimo_comentario.autor }} · {{ ultimo_comentario.creado_en|fecha_y_hora }}</p>
+  {% endif %}
+</div>
+<div class="ficha-pie">
+  {% if tarea.estado != 'completada' %}
+  <form action="{{ url_for('tareas.completar', tarea_id=tarea.id) }}" method="post"><button type="submit" class="btn btn-primary">{{ _('Marcar hecha') }}</button></form>
+  {% endif %}
+  {% if puede_editar %}<a class="btn btn-secondary" href="{{ url_for('tareas.editar', tarea_id=tarea.id) }}">{{ _('Editar') }}</a>{% endif %}
+  <a class="btn btn-ghost" href="{{ url_for('tareas.ver', tarea_id=tarea.id) }}">{{ _('Abrir completa') }}</a>
+</div>

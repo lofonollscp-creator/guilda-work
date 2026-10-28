@@ -10,6 +10,8 @@ import '../../api/generado/modelos.g.dart';
 import '../../datos/local/cola_escritura.dart' show ColaLlena;
 import '../../dominio/tarea.dart';
 import '../../l10n/app_localizations.dart';
+import '../../nucleo/abrir_asistente.dart';
+import '../../nucleo/panel_asistente.dart';
 import '../../nucleo/lectura_guardada.dart';
 import '../pendientes/pendientes_sheet.dart';
 import 'fila_tarea.dart';
@@ -27,6 +29,7 @@ class TareaAbierta extends Notifier<int?> {
 }
 
 final tareaAbiertaProvider = NotifierProvider<TareaAbierta, int?>(TareaAbierta.new);
+
 
 /// La lista de tareas: ámbitos (mías, asignadas, compartidas, todas), estado, búsqueda,
 /// paginación infinita y alta rápida con un campo al pie.
@@ -225,6 +228,8 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
     final seleccion = estado.seleccion;
     final ancha = esAncha(context);
     final abierta = ref.watch(tareaAbiertaProvider);
+    final cabePanel = ancha && MediaQuery.sizeOf(context).width >= anchoConAsistente;
+    final panelAbierto = cabePanel && ref.watch(panelAsistenteAbiertoProvider);
     final barra = seleccion.isNotEmpty
         ? _barraSeleccion(t, seleccion)
         : AppBar(
@@ -238,6 +243,8 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
                   )
                 : Text(t.tareasTitulo),
             actions: [
+              // El asistente: en la tableta, reabre su panel; en el móvil, abre el chat sabiendo que vienes de Tareas.
+              AccionAsistente(contexto: t.tareasTitulo, anchoMinimoPanel: anchoConAsistente),
               IconButton(
                 icon: Icon(_buscando ? Icons.close : Icons.search),
                 tooltip: t.tareasBuscar,
@@ -272,6 +279,13 @@ class _TareasScreenState extends ConsumerState<TareasScreen> {
             ? Scaffold(body: EstadoVacio(icono: Icons.task_alt, titulo: t.tareasElegirUna))
             : TareaDetalleScreen(key: ValueKey(abierta), tareaId: abierta),
       ),
+      if (panelAbierto) ...[
+        VerticalDivider(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
+        PanelAsistente(
+          contexto: abierta == null ? t.tareasTitulo : t.tareaDetalleTitulo,
+          contextoIa: abierta == null ? null : 'tarea #$abierta',
+        ),
+      ],
     ]);
   }
 }

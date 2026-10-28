@@ -18,6 +18,8 @@ import 'package:guilda_work_mobile/services/api_client.dart' as sv;
 import 'package:guilda_work_mobile/theme/app_theme.dart';
 
 import 'ayudas/pantallas.dart' as aux;
+import 'package:guilda_work_mobile/nucleo/servicios.dart';
+import 'package:guilda_work_mobile/screens/ia_chat_screen.dart';
 
 Nota _nota(int id, {String? titulo, String texto = 'Texto', bool fijada = false, String rol = 'dueno', int participantes = 0, int adjuntos = 0, String? proyecto, String? dueno, List<Map<String, dynamic>> gente = const []}) => Nota.fromJson({
       'id': id, 'usuario_id': rol == 'dueno' ? 1 : 2, 'titulo': titulo, 'texto': texto, 'fijada': fijada ? 1 : 0, 'creada_en': '2026-10-20T09:30', 'rol': rol, 'n_participantes': participantes, 'n_adjuntos': adjuntos,
@@ -181,6 +183,59 @@ void main() {
         _nota(3, titulo: 'De Ana', texto: 'Para ti', rol: 'colabora', dueno: 'Ana Pla'),
       ]
       ..proy = [Proyecto.fromJson({'id': 5, 'nombre': 'Acme'})];
+
+    testWidgets('en una tableta el asistente va en un panel junto a la lista; se cierra y la chispa lo reabre', (t) async {
+      t.view.physicalSize = const Size(1400, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_app(const NotasScreen(), [..._over(repo()), serviciosProvider.overrideWithValue(aux.serviciosFalsos())]));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsOneWidget);
+      expect(find.text('Contexto: Notas'), findsOneWidget);
+      expect(find.text('Reunión del lunes'), findsOneWidget);
+      await t.tap(find.byTooltip('Ocultar el asistente'));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsNothing);
+      await t.tap(find.byTooltip('Preguntar al asistente'));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsOneWidget);
+    });
+
+    testWidgets('en una tableta la nota se abre al lado de la lista, sin empujar otra pantalla', (t) async {
+      t.view.physicalSize = const Size(1000, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_app(const NotasScreen(), _over(repo())));
+      await t.pumpAndSettle();
+      expect(find.text('Elige una nota para verla.'), findsOneWidget);
+      await t.tap(find.text('Reunión del lunes'));
+      await t.pumpAndSettle();
+      expect(find.text('Elige una nota para verla.'), findsNothing);
+      expect(find.byType(NotaScreen), findsOneWidget);
+      expect(find.text('Reunión del lunes'), findsWidgets); // la lista sigue a la vista
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('captura tableta_notas', (t) async {
+      if (aux.carpetaCapturas == null) return;
+      await aux.cargarFuentesParaCapturas();
+      final clave = GlobalKey();
+      t.view.physicalSize = const Size(1640, 1180);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(RepaintBoundary(key: clave, child: _app(const NotasScreen(), [..._over(repo()), serviciosProvider.overrideWithValue(aux.serviciosFalsos())])));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Reunión del lunes'));
+      await t.pumpAndSettle();
+      await aux.capturar(t, clave, 'tableta_notas');
+    });
+
+    testWidgets('en el móvil no hay panel: la chispa abre el chat aparte', (t) async {
+      await t.pumpWidget(_app(const NotasScreen(), _over(repo())));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsNothing);
+      expect(find.byTooltip('Preguntar al asistente'), findsOneWidget);
+    });
 
     testWidgets('enseña título, principio sin marcas y lo que la distingue', (t) async {
       await t.pumpWidget(_app(const NotasScreen(), _over(repo())));
