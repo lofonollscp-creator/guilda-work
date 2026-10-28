@@ -68,6 +68,13 @@ def _sembrar(uid: int, tenant: int) -> dict:
         mid = db.guardar_mensaje_correo(cuenta, f"uid{i}", asunto, de, "info@despacho.es", f"2026-10-2{4 - i // 2}T0{9 - i}:30:00", texto, None, leido=leido)
         if i == 0:
             primero = mid
+    p1 = db.crear_categoria(uid, "Cierre de trimestre", "#a6e600")
+    p2 = db.crear_categoria(uid, "Auditoría Acme", "#6c63ff")
+    db.crear_nota(uid, "Revisar con Marta la deducción por vivienda habitual.\n\n- Pedir escritura de compra\n- Comprobar si hay **alquiler** hasta 2022\n- Calcular el importe con el 303", categoria_id=p1, titulo="Consulta de Marta Ruiz", fijada=True)
+    db.crear_nota(uid, "Llamar al banco para el certificado de saldos a 31 de diciembre.", categoria_id=p2, titulo="Certificado de saldos")
+    db.crear_nota(uid, "Ideas para la reunión del lunes: plantillas de recordatorio, calendario compartido y avisos por WhatsApp.", titulo="Reunión del lunes")
+    db.crear_tiquet(uid, "error", "El calendario fiscal no muestra el 115", "Al filtrar por cliente desaparece.")
+    db.crear_tiquet(uid, "sugerencia", "Poder duplicar un vencimiento", None)
     return {"mensaje": primero, "cuenta": cuenta}
 
 

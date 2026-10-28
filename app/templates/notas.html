@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Notas') }} — Guilda Work{% endblock %}
+{% block barra_accion %}<a class="btn btn-primary top-bar-accion top-bar-nuevo-btn" href="{{ url_for('lista_notas', nueva=1, categoria_id=categoria_id, q=q or none) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-plus"></use></svg> {{ _('Nueva nota') }}</a>{% endblock %}
 {% block content %}
 {% set filtros = {'categoria_id': categoria_id, 'q': q or None} %}
 <header class="page-header">

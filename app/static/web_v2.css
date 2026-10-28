@@ -230,7 +230,7 @@ body { background-image: none; }
 /* ======================================================================================================================== */
 /* Tareas: vistas en la barra, lista como tabla y ficha a la derecha                                                        */
 /* ======================================================================================================================== */
-.tareas-subnav { display: none; }                                                      /* el selector de vistas vive ahora en la barra superior */
+.tareas-subnav-vistas { display: none; }                                                /* el selector de vistas de Tareas vive ahora en la barra superior */
 .barra-vistas { margin-left: 8px; align-items: center; flex: none; }
 .barra-vistas-mas { position: relative; }
 .barra-vistas-mas summary { list-style: none; min-height: 36px; padding: 0 14px; border-radius: 9px; display: flex; align-items: center; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-muted); }
@@ -632,3 +632,42 @@ html, body { max-width: 100%; overflow-x: clip; }
 .ia-v2-centro .ia-chat-form textarea, .ia-v2-centro .ia-chat-form textarea:focus, .ia-v2-centro .ia-chat-form textarea:focus-visible { outline: none !important; box-shadow: none !important; border: 0 !important; background: transparent !important; }
 .ia-v2-centro .ia-chat-form:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ia) 28%, transparent); }
 .ia-lateral-form input:focus, .ia-lateral-form input:focus-visible { outline: none; box-shadow: none; }
+
+/* Subnavegaciones de sección (Clientes/Expedientes…, Tiquets, Fichaje…): control segmentado */
+.tareas-subnav:not(.tareas-subnav-vistas) { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin: 0 0 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel-2); border-bottom: 1px solid var(--border); max-width: 100%; }
+.tareas-subnav:not(.tareas-subnav-vistas) a { min-height: 34px; padding: 0 14px; border-radius: 10px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; color: var(--text-muted); text-decoration: none; border: 0; margin: 0; }
+.tareas-subnav:not(.tareas-subnav-vistas) a:hover { color: var(--text); }
+.tareas-subnav:not(.tareas-subnav-vistas) a.active { background: var(--lima-suave); color: var(--text); box-shadow: none; }
+
+/* ======================================================================================================================== */
+/* Notas: lista a la izquierda, documento a la derecha, a toda altura                                                       */
+/* ======================================================================================================================== */
+@media (min-width: 901px) {
+  .content:has(> .notas-layout) { padding: 0; }
+  .notas-layout { gap: 0; align-items: stretch; height: calc(100vh - 68px); min-height: 480px; grid-template-columns: clamp(280px, 26vw, 380px) minmax(0, 1fr); background: var(--surface); }
+  .notas-layout .notas-lista { border: 0; border-right: 1px solid var(--border); border-radius: 0; display: flex; flex-direction: column; min-height: 0; background: var(--surface); }
+  .notas-layout .notas-items { max-height: none; flex: 1; min-height: 0; }
+  .notas-layout .notas-editor { overflow-y: auto; padding: 28px 40px 40px; align-content: start; background: var(--bg); }
+  .notas-layout .notas-doc { background: var(--surface); }
+}
+.notas-filtros { padding: 14px 16px; }
+.notas-filtros input[type="search"] { background: var(--bg); border-radius: 12px; min-height: 40px; }
+.notas-vistas { margin: 10px 16px 4px; }
+.nota-item { border-top: 0; border-bottom: 1px solid var(--linea); padding: 14px 16px; }
+.nota-item-titulo { font-weight: 800; font-size: 15px; }
+.nota-item.is-activa { background: var(--lima-suave); box-shadow: inset 3px 0 0 var(--primary); }
+.notas-doc { border-radius: 16px; padding: 28px 32px; }
+.notas-doc-titulo { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+
+/* Tiquets */
+.tiquets-seccion h2 { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.tiquets-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+
+/* Filtros y tablas de las pantallas de lista (Clientes, Tiquets, Proyectos…): sin tarjeta, en una fila */
+form.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding: 0; margin: 0 0 16px; background: none; border: 0; box-shadow: none; }
+form.filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--text-muted); }
+form.filters input, form.filters select { min-height: 40px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); font-size: 14px; font-weight: 600; }
+form.filters input[type="search"] { min-width: 260px; }
+.content table a:not(.btn):not(.chip) { text-decoration: none; font-weight: 700; color: var(--text); }
+.content table a:not(.btn):not(.chip):hover { text-decoration: underline; }
+.content table tbody tr:hover { background: var(--panel-2); }
