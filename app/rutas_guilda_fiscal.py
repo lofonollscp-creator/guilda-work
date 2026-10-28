@@ -176,7 +176,8 @@ def cliente(cliente_id: int):
         cierre = None
     return render_template("fiscal_cliente.html", c=c, ejercicio=ejercicio, computan=computan, retenciones=retenciones, cierre=cierre, perfil=fp.perfil_en(g.tenant_id, cliente_id, date.today().isoformat()),
                            apuntes=fn.listar_apuntes(g.tenant_id, g.usuario_id, cliente_id, ejercicio=ejercicio), declaraciones=fn.listar_declaraciones(g.tenant_id, g.usuario_id, cliente_id),
-                           periodos=PERIODOS, periodo_defecto=fn.periodo_por_defecto(date.today()), recordatorio=_recordatorio(c, fn.periodo_por_defecto(date.today())), sin_revisar=fn.contadores_facturas(g.tenant_id, g.usuario_id, cliente_id).get(cliente_id, {}).get("sin_revisar", 0), por_registrar=fn.facturas_por_registrar(g.tenant_id, g.usuario_id, cliente_id, ejercicio), error=_error())
+                           periodos=PERIODOS, periodo_defecto=fn.periodo_por_defecto(date.today()), recordatorio=_recordatorio(c, fn.periodo_por_defecto(date.today())), sin_revisar=fn.contadores_facturas(g.tenant_id, g.usuario_id, cliente_id).get(cliente_id, {}).get("sin_revisar", 0), por_registrar=fn.facturas_por_registrar(g.tenant_id, g.usuario_id, cliente_id, ejercicio), error=_error(),
+                           repetido={"creados": request.args.get("repetido", type=int), "ya": request.args.get("ya", 0, type=int), "futuros": request.args.get("futuros", 0, type=int)} if request.args.get("repetido", type=int) is not None else None)
 
 
 def _opciones_perfil() -> dict:
@@ -440,6 +441,19 @@ def apunte_nuevo(cliente_id: int):
         if r:
             datos.update({"ret_modelo": r["modelo"], "ret_clave": r["clave"], "ret_base": _euros_texto(r["base"]), "ret_pct": f"{r['pct'] / 100:g}".replace(".", ","), "ret_importe": _euros_texto(r["importe"])})
     return _plantilla_apunte(c, datos, None, _error())
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/apuntes/<int:apunte_id>/repetir", methods=["POST"])
+@login_required
+def apunte_repetir(cliente_id: int, apunte_id: int):
+    """Repite el apunte (alquiler, gasto fijo) cada mes hasta el mes indicado."""
+    _cliente_o_404(cliente_id)
+    destino = url_for("guilda_fiscal.apunte_ver", cliente_id=cliente_id, apunte_id=apunte_id)
+    try:
+        r = fn.repetir_apunte(g.tenant_id, g.usuario_id, cliente_id, apunte_id, hasta=request.form.get("hasta", ""))
+    except ErrorFiscal as e:
+        return _atras(destino, e)
+    return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id, repetido=len(r["creados"]), ya=r["ya_existian"], futuros=r["futuros"]))
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/apuntes/<int:apunte_id>", methods=["GET", "POST"])

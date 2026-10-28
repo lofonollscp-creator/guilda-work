@@ -17,6 +17,7 @@
   </div>
 </header>
 {{ aviso_error(error) }}
+{% if repetido is not none %}<div class="dash-panel" role="status">{{ _('Apuntes mensuales creados: %(n)s. Ya existían: %(ya)s. Sin crear por tener fecha futura: %(f)s.', n=repetido.creados, ya=repetido.ya, f=repetido.futuros) }}</div>{% endif %}
 
 {% if puede_aprobar and perfil %}
 <section class="dash-panel">

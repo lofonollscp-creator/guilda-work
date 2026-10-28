@@ -17597,3 +17597,21 @@ msgstr "Possible"
 
 msgid "Ningún movimiento casa con una factura."
 msgstr "No transaction matches an invoice."
+
+msgid "Repetir cada mes"
+msgstr "Repeat every month"
+
+msgid "Para alquileres y gastos fijos: crea una copia aprobada de este apunte por cada mes hasta el que indiques, con los mismos importes y la misma retención. No crea apuntes con fecha futura ni repite un mes que ya tiene uno igual. En las facturas recibidas el número lleva el mes añadido: corrígelo cuando llegue la factura real."
+msgstr "For rents and fixed expenses: creates an approved copy of this entry for each month up to the one you choose, with the same amounts and the same withholding. It does not create future-dated entries or repeat a month that already has an identical one. On received invoices the number has the month appended: correct it when the real invoice arrives."
+
+msgid "Hasta el mes"
+msgstr "Up to month"
+
+msgid "¿Crear los apuntes mensuales? Quedarán aprobados."
+msgstr "Create the monthly entries? They will be approved."
+
+msgid "Repetir"
+msgstr "Repeat"
+
+msgid "Apuntes mensuales creados: %(n)s. Ya existían: %(ya)s. Sin crear por tener fecha futura: %(f)s."
+msgstr "Monthly entries created: %(n)s. Already existed: %(ya)s. Not created because of a future date: %(f)s."

@@ -81,6 +81,16 @@
   <label>{{ _('Motivo para anular') }}<input type="text" name="motivo" maxlength="300" required></label><button type="submit" class="btn btn-ghost">{{ _('Anular apunte') }}</button>
 </form>
 {% endif %}
+{% if apunte_id and puede_aprobar and not datos.get('anulado_en') and not (datos.get('tipo_factura') or '').startswith('R') %}
+<section class="dash-panel ds-mt-16" id="repetir-apunte">
+  <h2>{{ _('Repetir cada mes') }}</h2>
+  <p class="muted">{{ _('Para alquileres y gastos fijos: crea una copia aprobada de este apunte por cada mes hasta el que indiques, con los mismos importes y la misma retención. No crea apuntes con fecha futura ni repite un mes que ya tiene uno igual. En las facturas recibidas el número lleva el mes añadido: corrígelo cuando llegue la factura real.') }}</p>
+  <form method="post" action="{{ url_for('guilda_fiscal.apunte_repetir', cliente_id=c.id, apunte_id=apunte_id) }}" class="ds-fila ds-envolver">
+    <label>{{ _('Hasta el mes') }} <input type="month" name="hasta" required></label>
+    <button type="submit" class="btn btn-ghost" data-confirmar-clic="{{ _('¿Crear los apuntes mensuales? Quedarán aprobados.') }}">{{ _('Repetir') }}</button>
+  </form>
+</section>
+{% endif %}
 {% if apunte_id and historial %}
 <section class="dash-panel ds-mt-16">
   <h2>{{ _('Historial de cambios') }}</h2>

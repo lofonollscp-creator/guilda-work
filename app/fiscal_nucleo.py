@@ -18,7 +18,7 @@ from flask_babel import lazy_gettext as _l  # noqa: F401  (los textos de pantall
 
 from . import acceso, auditoria, db, fiscal_perfiles
 from .fiscal_modelos import exportador_303, fichero_303, fichero_390, fichero_retenciones, libros_lsi, motor_303, motor_390, motor_retenciones, validacion_apuntes
-from .fiscal_modelos.apuntes import Apunte
+from .fiscal_modelos.apuntes import RECTIFICATIVAS as RECTIFICATIVAS_APUNTE, Apunte
 from .fiscal_perfiles import ErrorFiscal
 
 VERSION_MOTOR = "1"
@@ -409,6 +409,64 @@ def siguiente_numero(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ej
         return {"serie": "", "numero": ""}
     siguiente = _siguiente(f["numero"])
     return {"serie": f["serie"] or "", "numero": siguiente} if siguiente else {"serie": f["serie"] or "", "numero": ""}
+
+
+def _mes_despues(texto: str, meses: int) -> str:
+    """La fecha `texto` (AAAA-MM-DD) desplazada `meses` meses, con el día recortado al último del mes (31 de enero + 1 mes = 28/29 de febrero), siempre contando desde la fecha original."""
+    import calendar
+    d = date.fromisoformat(texto[:10])
+    indice = d.year * 12 + d.month - 1 + meses
+    anio, mes = divmod(indice, 12)
+    return date(anio, mes + 1, min(d.day, calendar.monthrange(anio, mes + 1)[1])).isoformat()
+
+
+def repetir_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apunte_id: int, *, hasta: str, hoy: date | None = None) -> dict:
+    """Alquileres y gastos fijos: crea una copia APROBADA del apunte por cada mes desde el siguiente hasta `hasta` («AAAA-MM», como mucho 12 meses), con los mismos importes y la misma retención de IRPF.
+    No crea apuntes con fecha futura (no se validarían: se salta lo que falta y se dice), ni repite un mes que ya tiene un apunte igual (misma contraparte, libro e importe), así que se puede volver a lanzar.
+    Las copias de una factura recibida llevan el número del original con el mes añadido: se corrige cuando llega la factura real. Devuelve `{"creados": [ids], "ya_existian": n, "futuros": n}`."""
+    _exigir_aprobador(tenant_id, usuario_id)
+    hoy = hoy or date.today()
+    filas = listar_apuntes(tenant_id, usuario_id, cliente_fiscal_id)
+    fila = next((f for f in filas if f["id"] == apunte_id), None)
+    if not fila:
+        raise ErrorFiscal("El apunte no existe o está anulado.", "no_encontrado")
+    if fila["tipo_factura"] in RECTIFICATIVAS_APUNTE:
+        raise ErrorFiscal("No se repite una factura rectificativa.")
+    if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", hasta or ""):
+        raise ErrorFiscal("Indica el último mes como AAAA-MM.")
+    origen = date.fromisoformat(fila["fecha_expedicion"][:10])
+    meses = (int(hasta[:4]) * 12 + int(hasta[5:7])) - (origen.year * 12 + origen.month)
+    if meses < 1:
+        raise ErrorFiscal("El último mes debe ser posterior al del apunte.")
+    if meses > 12:
+        raise ErrorFiscal("Como mucho se repite durante 12 meses de una vez.")
+    nif = _nif_limpio(fila["contraparte_nif"])
+    existentes = {(f["libro"], _nif_limpio(f["contraparte_nif"]), f["base_centimos"], f["tipo_iva_centesimas"], f["fecha_expedicion"][:7]) for f in filas}
+    retencion = None
+    if fila.get("retencion_modelo"):
+        retencion = {"modelo": fila["retencion_modelo"], "clave": fila["retencion_clave"], "base": fila["retencion_base_centimos"], "pct": fila["retencion_pct_centesimas"], "importe": fila["retencion_centimos"]}
+    base_apunte = a_apunte(fila).con(deducible_periodo_posterior=False, periodo_deduccion=None)
+    creados, ya_existian, futuros = [], 0, 0
+    for n in range(1, meses + 1):
+        fecha = _mes_despues(fila["fecha_expedicion"], n)
+        if date.fromisoformat(fecha) > hoy:
+            futuros += 1
+            continue
+        if (fila["libro"], nif, fila["base_centimos"], fila["tipo_iva_centesimas"], fecha[:7]) in existentes:
+            ya_existian += 1
+            continue
+        etiqueta = fecha[:7].replace("-", "")
+        numero, serie = f"{fila['numero']}-{etiqueta}", fila["serie"] or ""
+        if fila["libro"] == "E":
+            sig = siguiente_numero(tenant_id, usuario_id, cliente_fiscal_id)
+            if sig["numero"]:
+                numero, serie = sig["numero"], sig["serie"]
+        copia = base_apunte.con(fecha_expedicion=date.fromisoformat(fecha), numero=numero, serie=serie,
+                                fecha_operacion=date.fromisoformat(_mes_despues(fila["fecha_operacion"], n)) if fila["fecha_operacion"] else None,
+                                fecha_recepcion=date.fromisoformat(_mes_despues(fila["fecha_recepcion"], n)) if fila["fecha_recepcion"] else None)
+        creados.append(aprobar_apunte(tenant_id, usuario_id, cliente_fiscal_id, copia, retencion=retencion)["id"])
+    auditoria.registrar(tenant_id, usuario_id, "fiscal.apunte.repetir", "cliente_fiscal", cliente_fiscal_id, {"apunte_id": apunte_id, "hasta": hasta, "creados": len(creados), "ya_existian": ya_existian, "futuros": futuros})
+    return {"creados": creados, "ya_existian": ya_existian, "futuros": futuros}
 
 
 def existe_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, libro: str, serie: str, numero: str, nif: str, excluir_id: int | None = None) -> dict | None:

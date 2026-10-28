@@ -570,3 +570,21 @@ def test_conciliar_un_extracto_desde_la_ficha(cliente):
     malo = cliente.post(f"/guilda-fiscal/{c}/conciliacion", data={"ejercicio": "2026", "periodo": "2T", "extracto": (io.BytesIO(b"hola"), "x.csv")}, content_type="multipart/form-data")
     assert "No encuentro las columnas" in malo.get_data(as_text=True)
     assert "Elige el extracto" in cliente.post(f"/guilda-fiscal/{c}/conciliacion", data={"ejercicio": "2026", "periodo": "2T"}).get_data(as_text=True)
+
+
+def test_repetir_un_apunte_cada_mes_desde_la_web(cliente):
+    uid, t, c = _web(cliente, email="repetirweb@ejemplo.com")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
+                                                           "periodicidad": "trimestral"}).status_code == 302
+    datos = {"libro": "R", "tipo_factura": "F1", "clave": "11", "numero": "ALQ-1", "fecha_expedicion": "2026-01-05", "fecha_recepcion": "2026-01-05", "base": "1.000,00", "tipo_iva": "21",
+             "contraparte_nif": "B11111111", "contraparte_nombre": "Casero SL", "ret_modelo": "115", "ret_pct": "19"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    ap = fn.listar_apuntes(t, uid, c)[0]
+    pagina = cliente.get(f"/guilda-fiscal/{c}/apuntes/{ap['id']}").get_data(as_text=True)
+    assert 'id="repetir-apunte"' in pagina and "Repetir cada mes" in pagina
+    r = cliente.post(f"/guilda-fiscal/{c}/apuntes/{ap['id']}/repetir", data={"hasta": "2026-03"})
+    assert r.status_code == 302 and "repetido=2" in r.headers["Location"]
+    assert len(fn.listar_apuntes(t, uid, c)) == 3
+    assert "Apuntes mensuales creados: 2" in cliente.get(r.headers["Location"]).get_data(as_text=True)
+    malo = cliente.post(f"/guilda-fiscal/{c}/apuntes/{ap['id']}/repetir", data={"hasta": "2025-01"}, follow_redirects=True)
+    assert "posterior" in malo.get_data(as_text=True)

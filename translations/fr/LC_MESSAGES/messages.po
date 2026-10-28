@@ -17682,3 +17682,21 @@ msgstr "Possible"
 
 msgid "Ningún movimiento casa con una factura."
 msgstr "Aucun mouvement ne correspond à une facture."
+
+msgid "Repetir cada mes"
+msgstr "Répéter chaque mois"
+
+msgid "Para alquileres y gastos fijos: crea una copia aprobada de este apunte por cada mes hasta el que indiques, con los mismos importes y la misma retención. No crea apuntes con fecha futura ni repite un mes que ya tiene uno igual. En las facturas recibidas el número lleva el mes añadido: corrígelo cuando llegue la factura real."
+msgstr "Pour les loyers et les charges fixes : crée une copie approuvée de cette écriture pour chaque mois jusqu'à celui que vous indiquez, avec les mêmes montants et la même retenue. Elle ne crée pas d'écritures à date future ni ne répète un mois qui en a déjà une identique. Sur les factures reçues, le numéro porte le mois ajouté : corrigez-le à l'arrivée de la vraie facture."
+
+msgid "Hasta el mes"
+msgstr "Jusqu'au mois"
+
+msgid "¿Crear los apuntes mensuales? Quedarán aprobados."
+msgstr "Créer les écritures mensuelles ? Elles seront approuvées."
+
+msgid "Repetir"
+msgstr "Répéter"
+
+msgid "Apuntes mensuales creados: %(n)s. Ya existían: %(ya)s. Sin crear por tener fecha futura: %(f)s."
+msgstr "Écritures mensuelles créées : %(n)s. Existaient déjà : %(ya)s. Non créées car à date future : %(f)s."

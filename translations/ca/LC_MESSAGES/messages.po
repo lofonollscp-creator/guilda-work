@@ -17606,3 +17606,21 @@ msgstr "Possible"
 
 msgid "Ningún movimiento casa con una factura."
 msgstr "Cap moviment casa amb una factura."
+
+msgid "Repetir cada mes"
+msgstr "Repetir cada mes"
+
+msgid "Para alquileres y gastos fijos: crea una copia aprobada de este apunte por cada mes hasta el que indiques, con los mismos importes y la misma retención. No crea apuntes con fecha futura ni repite un mes que ya tiene uno igual. En las facturas recibidas el número lleva el mes añadido: corrígelo cuando llegue la factura real."
+msgstr "Per a lloguers i despeses fixes: crea una còpia aprovada d'aquest apunt per cada mes fins al que indiquis, amb els mateixos imports i la mateixa retenció. No crea apunts amb data futura ni repeteix un mes que ja en té un d'igual. A les factures rebudes el número porta el mes afegit: corregeix-lo quan arribi la factura real."
+
+msgid "Hasta el mes"
+msgstr "Fins al mes"
+
+msgid "¿Crear los apuntes mensuales? Quedarán aprobados."
+msgstr "Crear els apunts mensuals? Quedaran aprovats."
+
+msgid "Repetir"
+msgstr "Repetir"
+
+msgid "Apuntes mensuales creados: %(n)s. Ya existían: %(ya)s. Sin crear por tener fecha futura: %(f)s."
+msgstr "Apunts mensuals creats: %(n)s. Ja existien: %(ya)s. Sense crear per tenir data futura: %(f)s."
