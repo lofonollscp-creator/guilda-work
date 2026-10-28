@@ -18067,3 +18067,45 @@ msgstr[1] "%(n)s factures téléversées. Elles restent à lire."
 
 msgid "Cambiar de titular"
 msgstr "Changer de titulaire"
+
+msgid "NIF del emisor"
+msgstr "NIF de l'émetteur"
+
+msgid "NIF del receptor"
+msgstr "NIF du destinataire"
+
+msgid "Cuota de IVA"
+msgstr "Montant de TVA"
+
+msgid "Evidencias de la lectura con IA"
+msgstr "Preuves de la lecture par IA"
+
+msgid "La IA propone y tú validas: esto solo te ahorra buscar. Cada cita se contrasta con el valor que se le atribuye, pero los recuadros sobre la imagen son aproximados. Nada se da por bueno hasta que marques la factura como revisada."
+msgstr "L'IA propose et vous validez : cela vous évite seulement de chercher. Chaque citation est confrontée à la valeur qui lui est attribuée, mais les cadres sur l'image sont approximatifs. Rien n'est tenu pour bon tant que vous n'avez pas marqué la facture comme vérifiée."
+
+msgid "Esta lectura no trae evidencias (el modelo no las dio): comprueba cada dato con la factura delante."
+msgstr "Cette lecture n'a pas de preuves (le modèle n'en a pas donné) : vérifiez chaque donnée avec la facture sous les yeux."
+
+msgid "Factura adjunta"
+msgstr "Facture jointe"
+
+msgid "Valor leído"
+msgstr "Valeur lue"
+
+msgid "Lo que cita la factura"
+msgstr "Ce que cite la facture"
+
+msgid "Coincide"
+msgstr "Correspond"
+
+msgid "No coincide con el valor"
+msgstr "Ne correspond pas à la valeur"
+
+msgid "Ver en la imagen"
+msgstr "Voir sur l'image"
+
+msgid "Comprobaciones propias"
+msgstr "Contrôles propres"
+
+msgid "Las comprobaciones propias (NIF, IVA de cada línea, fecha, duplicados) no han encontrado nada."
+msgstr "Les contrôles propres (NIF, TVA de chaque ligne, date, doublons) n'ont rien trouvé."

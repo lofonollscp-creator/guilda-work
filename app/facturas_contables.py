@@ -228,6 +228,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "criterio_caja", "INTEGER NOT NULL DEFAULT 0")          # recibida de un proveedor en criterio de caja (posición 177 del enlace)
     db._asegurar_columna(conn, "facturas_contables", "lectura", "TEXT")           # NULL = escrita a mano · pendiente = solo el archivo, por leer · ia = leída por la IA · fallida
     db._asegurar_columna(conn, "facturas_contables", "lectura_error", "TEXT")
+    db._asegurar_columna(conn, "facturas_contables", "lectura_evidencia", "TEXT")      # de dónde sacó la IA cada dato (migración 008)
     db._asegurar_columna(conn, "facturas_contables", "incluir_en_fiscal", "INTEGER NOT NULL DEFAULT 1")      # 1 = cuenta para Guilda Fiscal (modelos de impuestos); 0 = solo contabilidad
 
 

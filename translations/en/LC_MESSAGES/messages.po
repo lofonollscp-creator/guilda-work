@@ -17982,3 +17982,45 @@ msgstr[1] "%(n)s invoices uploaded. They are waiting to be read."
 
 msgid "Cambiar de titular"
 msgstr "Change holder"
+
+msgid "NIF del emisor"
+msgstr "Issuer tax ID"
+
+msgid "NIF del receptor"
+msgstr "Recipient tax ID"
+
+msgid "Cuota de IVA"
+msgstr "VAT amount"
+
+msgid "Evidencias de la lectura con IA"
+msgstr "Evidence of the AI reading"
+
+msgid "La IA propone y tú validas: esto solo te ahorra buscar. Cada cita se contrasta con el valor que se le atribuye, pero los recuadros sobre la imagen son aproximados. Nada se da por bueno hasta que marques la factura como revisada."
+msgstr "The AI proposes and you validate: this only saves you searching. Each quote is checked against the value attributed to it, but the boxes on the image are approximate. Nothing is accepted until you mark the invoice as reviewed."
+
+msgid "Esta lectura no trae evidencias (el modelo no las dio): comprueba cada dato con la factura delante."
+msgstr "This reading has no evidence (the model did not provide it): check each item against the invoice."
+
+msgid "Factura adjunta"
+msgstr "Attached invoice"
+
+msgid "Valor leído"
+msgstr "Value read"
+
+msgid "Lo que cita la factura"
+msgstr "What the invoice quotes"
+
+msgid "Coincide"
+msgstr "Matches"
+
+msgid "No coincide con el valor"
+msgstr "Does not match the value"
+
+msgid "Ver en la imagen"
+msgstr "Show on the image"
+
+msgid "Comprobaciones propias"
+msgstr "Own checks"
+
+msgid "Las comprobaciones propias (NIF, IVA de cada línea, fecha, duplicados) no han encontrado nada."
+msgstr "The own checks (tax ID, VAT per line, date, duplicates) found nothing."

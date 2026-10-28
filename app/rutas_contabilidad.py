@@ -144,8 +144,43 @@ def ver(factura_id: int):
     datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "", criterio_caja="1" if f.get("criterio_caja") else "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
-                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]), periodo_cerrado=fc.periodos_cerrados(g.tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"]),
+                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), evidencia=lectura_facturas.evidencia_de(f) if f.get("lectura") == "ia" else None,
+                           imagen_en_linea=(f.get("documento_id") is not None and _es_imagen(f)), regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]), periodo_cerrado=fc.periodos_cerrados(g.tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"]),
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
+
+
+def _es_imagen(f: dict) -> bool:
+    """¿El archivo adjunto de la factura es una imagen que se puede enseñar en línea? (se mira el tipo guardado, sin abrir el documento)"""
+    from . import almacen_documentos
+    datos = almacen_documentos.datos_de_cliente_fiscal(g.tenant_id, f["cliente_fiscal_id"], f["documento_id"])
+    return bool(datos) and (datos.get("tipo_mime") or "").lower().split(";")[0] in IMAGENES_EN_LINEA
+
+
+IMAGENES_EN_LINEA = ("image/png", "image/jpeg", "image/webp", "image/gif")
+
+
+@contabilidad_bp.route("/<int:factura_id>/imagen")
+@login_required
+def imagen(factura_id: int):
+    """La foto de la factura, en línea, para enseñar sobre ella de dónde sacó la IA cada dato. Solo imágenes (nunca PDF, SVG ni HTML); los PDF se abren con el enlace de descarga."""
+    from . import almacen_documentos
+    from .cifrado_despacho import DespachoBloqueado
+    f = fc.obtener(g.tenant_id, g.usuario_id, factura_id)
+    if f is None or not f.get("documento_id"):
+        abort(404)
+    try:
+        doc = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, f["cliente_fiscal_id"], f["documento_id"], g.usuario_id)
+    except DespachoBloqueado:
+        abort(404)
+    tipo = ((doc or {}).get("tipo_mime") or "").lower().split(";")[0]
+    if doc is None or tipo not in IMAGENES_EN_LINEA:
+        abort(404)
+    r = Response(bytes(doc["contenido"]), mimetype=tipo)
+    r.headers["Content-Disposition"] = "inline"
+    r.headers["X-Content-Type-Options"] = "nosniff"
+    r.headers["Cache-Control"] = "private, no-store"
+    r.headers["Content-Security-Policy"] = "default-src 'none'; img-src 'self'; sandbox"
+    return r
 
 
 @contabilidad_bp.route("/recordatorios", methods=["GET", "POST"])

@@ -74,6 +74,25 @@
   <div class="ds-fila"><button type="submit" class="btn btn-primary" {{ 'disabled' if f and f.estado == 'exportada' }}>{{ _('Guardar') }}</button></div>
 </form>
 
+{% if f and f.lectura == 'ia' %}
+{% set etiquetas = {'numero': _('Número de factura'), 'fecha': _('Fecha'), 'emisor_nif': _('NIF del emisor'), 'receptor_nif': _('NIF del receptor'), 'total': _('Total'), 'base': _('Base imponible'), 'iva': _('Cuota de IVA')} %}
+<section class="dash-panel ds-mt-24" id="evidencias-lectura">
+  <h2>{{ _('Evidencias de la lectura con IA') }}</h2>
+  <p class="muted">{{ _('La IA propone y tú validas: esto solo te ahorra buscar. Cada cita se contrasta con el valor que se le atribuye, pero los recuadros sobre la imagen son aproximados. Nada se da por bueno hasta que marques la factura como revisada.') }}</p>
+  {% if not evidencia or not evidencia.campos %}<p class="muted">{{ _('Esta lectura no trae evidencias (el modelo no las dio): comprueba cada dato con la factura delante.') }}</p>{% endif %}
+  <div class="ds-fila ds-envolver" data-evidencias>
+    {% if imagen_en_linea %}<div data-evidencia-imagen><img src="{{ url_for('contabilidad.imagen', factura_id=f.id) }}" alt="{{ _('Factura adjunta') }}" style="max-width:100%;height:auto"><div data-evidencia-caja hidden></div></div>{% endif %}
+    {% if evidencia and evidencia.campos %}<div class="table-wrap"><table class="historial-table">
+      <thead><tr><th>{{ _('Dato') }}</th><th>{{ _('Valor leído') }}</th><th>{{ _('Lo que cita la factura') }}</th><th></th></tr></thead>
+      <tbody>{% for campo, e in evidencia.campos.items() %}<tr>
+        <td>{{ etiquetas.get(campo, campo) }}</td><td>{{ e.valor }}</td><td>«{{ e.texto }}» {% if e.coherente %}<span class="pill semaforo-verde">{{ _('Coincide') }}</span>{% else %}<span class="pill semaforo-ambar">{{ _('No coincide con el valor') }}</span>{% endif %}</td>
+        <td>{% if e.caja and imagen_en_linea %}<button type="button" class="btn btn-ghost" data-evidencia-ver="{{ e.caja|join(',') }}">{{ _('Ver en la imagen') }}</button>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>{% endif %}
+  </div>
+  {% if evidencia and evidencia.verificaciones %}<h3>{{ _('Comprobaciones propias') }}</h3><ul>{% for v in evidencia.verificaciones %}<li>{{ v }}</li>{% endfor %}</ul>{% elif evidencia %}<p class="muted">{{ _('Las comprobaciones propias (NIF, IVA de cada línea, fecha, duplicados) no han encontrado nada.') }}</p>{% endif %}
+</section>
+<script src="{{ url_for('static', filename='contabilidad_evidencia.js') }}" defer></script>
+{% endif %}
 {% if f %}
 <section class="ds-mt-24"><h2>{{ _('Revisión') }}</h2>
   <div class="ds-fila">

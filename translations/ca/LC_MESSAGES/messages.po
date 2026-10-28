@@ -17991,3 +17991,45 @@ msgstr[1] "%(n)s factures pujades. Queden per llegir."
 
 msgid "Cambiar de titular"
 msgstr "Canviar de titular"
+
+msgid "NIF del emisor"
+msgstr "NIF de l'emissor"
+
+msgid "NIF del receptor"
+msgstr "NIF del receptor"
+
+msgid "Cuota de IVA"
+msgstr "Quota d'IVA"
+
+msgid "Evidencias de la lectura con IA"
+msgstr "Evidències de la lectura amb IA"
+
+msgid "La IA propone y tú validas: esto solo te ahorra buscar. Cada cita se contrasta con el valor que se le atribuye, pero los recuadros sobre la imagen son aproximados. Nada se da por bueno hasta que marques la factura como revisada."
+msgstr "La IA proposa i tu valides: això només t'estalvia cercar. Cada cita es contrasta amb el valor que se li atribueix, però els requadres sobre la imatge són aproximats. Res es dona per bo fins que marquis la factura com a revisada."
+
+msgid "Esta lectura no trae evidencias (el modelo no las dio): comprueba cada dato con la factura delante."
+msgstr "Aquesta lectura no porta evidències (el model no les va donar): comprova cada dada amb la factura al davant."
+
+msgid "Factura adjunta"
+msgstr "Factura adjunta"
+
+msgid "Valor leído"
+msgstr "Valor llegit"
+
+msgid "Lo que cita la factura"
+msgstr "El que cita la factura"
+
+msgid "Coincide"
+msgstr "Coincideix"
+
+msgid "No coincide con el valor"
+msgstr "No coincideix amb el valor"
+
+msgid "Ver en la imagen"
+msgstr "Veure a la imatge"
+
+msgid "Comprobaciones propias"
+msgstr "Comprovacions pròpies"
+
+msgid "Las comprobaciones propias (NIF, IVA de cada línea, fecha, duplicados) no han encontrado nada."
+msgstr "Les comprovacions pròpies (NIF, IVA de cada línia, data, duplicats) no han trobat res."
