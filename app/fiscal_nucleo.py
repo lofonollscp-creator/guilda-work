@@ -1302,7 +1302,7 @@ def rectificar_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int,
         raise ErrorFiscal("Solo se rectifica un 303 que ya se presentó. Si todavía no lo has presentado, anúlalo y calcula el periodo de nuevo.", "estado_invalido")
     if original["rectifica_a_id"]:
         raise ErrorFiscal("Esta declaración ya es una rectificativa: las segundas rectificativas no están soportadas (las instrucciones de la AEAT las tratan con ejemplos aparte).", "no_soportado")
-    justificante = (justificante or "").strip()
+    justificante = (justificante or "").strip() or justificante_de(original) or ""            # si ya se anotó al presentarla, no hace falta teclearlo otra vez
     if not re.fullmatch(r"\d{13}", justificante):
         raise ErrorFiscal("El número de justificante de la declaración presentada tiene 13 cifras: es el que da la AEAT al presentarla.", "invalido")
     conn = db.get_connection()
@@ -1418,10 +1418,62 @@ def descargar_artefacto(tenant_id: int, usuario_id: int, declaracion_id: int, ti
     return (bytes(contenido) if not isinstance(contenido, bytes) else contenido), nombre
 
 
-def marcar_presentada(tenant_id: int, usuario_id: int, declaracion_id: int, referencia: str = "") -> dict:
-    """Anota que el cliente o su colaborador social presentó el fichero (con el justificante o CSV si se tiene). Guilda Work no presenta."""
+def justificante_de(declaracion: dict) -> str | None:
+    """El número de justificante (13 cifras) anotado en una declaración presentada, si lo hay."""
+    m = re.search(r"(?<!\d)\d{13}(?!\d)", declaracion.get("referencia_presentacion") or "")
+    return m.group(0) if m else None
+
+
+def _referencia_de_presentacion(tenant_id: int, declaracion_id: int, referencia: str, justificante: str, csv: str) -> str | None:
+    """El texto que se guarda: «justificante 3030000000123 · CSV ABC…»; con solo `referencia` libre (formato antiguo) se guarda tal cual. El justificante tiene 13 cifras y no puede estar ya en otra declaración."""
+    justificante, csv = (justificante or "").strip(), re.sub(r"\s+", "", csv or "").upper()
+    if not justificante and not csv:
+        return (referencia or "").strip()[:200] or None
+    if justificante:
+        if not re.fullmatch(r"\d{13}", justificante):
+            raise ErrorFiscal("El número de justificante tiene 13 cifras: es el que da la AEAT al presentar.")
+        conn = db.get_connection()
+        try:
+            otra = conn.execute("SELECT id FROM fiscal_declaraciones WHERE tenant_id = ? AND id <> ? AND referencia_presentacion LIKE ?", (tenant_id, declaracion_id, f"%{justificante}%")).fetchone()
+        finally:
+            conn.close()
+        if otra:
+            raise ErrorFiscal(f"Ese justificante ya está anotado en la declaración {otra['id']}.")
+    if csv and not re.fullmatch(r"[A-Z0-9]{8,40}", csv):
+        raise ErrorFiscal("El CSV (código seguro de verificación) son letras y números, sin espacios.")
+    return " · ".join(p for p in (f"justificante {justificante}" if justificante else "", f"CSV {csv}" if csv else "") if p)
+
+
+def anotar_justificante(tenant_id: int, usuario_id: int, declaracion_id: int, *, justificante: str = "", csv: str = "") -> dict:
+    """Completa el justificante o el CSV de una declaración YA presentada (por ejemplo, una que se anotó solo con el CSV): hace falta el justificante para poder rectificarla."""
     _exigir_aprobador(tenant_id, usuario_id)
-    d = _cambiar_estado(tenant_id, usuario_id, declaracion_id, "presentada", {"presentada_en": db.now_iso(), "referencia_presentacion": (referencia or "").strip()[:200] or None})
+    d = obtener_declaracion(tenant_id, usuario_id, declaracion_id)
+    if d["estado"] != "presentada":
+        raise ErrorFiscal("Solo se anota el justificante de una declaración presentada.", "estado_invalido")
+    if not (justificante or "").strip() and not (csv or "").strip():
+        raise ErrorFiscal("Indica el justificante o el CSV.")
+    previa = (d["referencia_presentacion"] or "").strip()
+    nueva = _referencia_de_presentacion(tenant_id, declaracion_id, "", justificante or justificante_de(d) or "", csv)
+    if not nueva:
+        raise ErrorFiscal("Indica el justificante o el CSV.")
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE fiscal_declaraciones SET referencia_presentacion = ? WHERE id = ? AND tenant_id = ?", (nueva, declaracion_id, tenant_id))
+        auditoria.registrar(tenant_id, usuario_id, "fiscal.declaracion.justificante", "cliente_fiscal", d["cliente_fiscal_id"], {"declaracion_id": declaracion_id, "antes": previa[:80], "despues": nueva[:80]}, conn=conn)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return obtener_declaracion(tenant_id, usuario_id, declaracion_id)
+
+
+def marcar_presentada(tenant_id: int, usuario_id: int, declaracion_id: int, referencia: str = "", *, justificante: str = "", csv: str = "") -> dict:
+    """Anota que el cliente o su colaborador social presentó el fichero, con el número de justificante (13 cifras) y/o el CSV si se tienen (o una `referencia` libre, formato antiguo). Guilda Work no presenta."""
+    _exigir_aprobador(tenant_id, usuario_id)
+    texto = _referencia_de_presentacion(tenant_id, declaracion_id, referencia, justificante, csv)
+    d = _cambiar_estado(tenant_id, usuario_id, declaracion_id, "presentada", {"presentada_en": db.now_iso(), "referencia_presentacion": texto})
     if d["vencimiento_id"]:                                                       # el calendario fiscal se entera: el vencimiento queda presentado
         db.marcar_presentado_vencimiento_fiscal(tenant_id, d["vencimiento_id"], usuario_id)
     return d

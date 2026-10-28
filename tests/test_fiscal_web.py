@@ -651,3 +651,24 @@ def test_apunte_con_criterio_de_caja_desde_el_formulario(cliente):
     did = int(cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "2T"}).headers["Location"].rsplit("/", 1)[1])
     html = cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
     assert "210.00" in html                                             # los dos cobros caen en el 2T: se devenga toda la cuota (210 €)
+
+
+def test_anotar_la_presentacion_con_justificante_y_csv_desde_la_web(cliente):
+    uid, t, c = _web(cliente, email="presentaweb@ejemplo.com")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
+                                                           "periodicidad": "trimestral"}).status_code == 302
+    datos = {"libro": "E", "tipo_factura": "F1", "clave": "01", "numero": "F-1", "fecha_expedicion": "2026-05-10", "base": "100,00", "tipo_iva": "21", "contraparte_nif": "B11111111", "contraparte_nombre": "Cliente SL"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    did = int(cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "2T"}).headers["Location"].rsplit("/", 1)[1])
+    for accion in ("revisar", "exportar"):
+        assert cliente.post(f"/guilda-fiscal/declaracion/{did}/{accion}").status_code == 302
+    pagina = cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
+    assert 'name="justificante"' in pagina and 'name="csv"' in pagina and "Presenta el fichero en la sede" in pagina
+    r = cliente.post(f"/guilda-fiscal/declaracion/{did}/presentada", data={"justificante": "123"}, follow_redirects=True)
+    assert "13 cifras" in r.get_data(as_text=True)
+    assert cliente.post(f"/guilda-fiscal/declaracion/{did}/presentada", data={"csv": "ABCD1234EFGH5678"}).status_code == 302
+    pagina = cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
+    assert "CSV ABCD1234EFGH5678" in pagina and "sin el número de justificante" in pagina
+    assert cliente.post(f"/guilda-fiscal/declaracion/{did}/justificante", data={"justificante": "3030000000123"}).status_code == 302
+    pagina = cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
+    assert "justificante 3030000000123" in pagina and "sin el número de justificante" not in pagina and 'value="3030000000123"' in pagina        # el formulario de rectificar ya lo trae

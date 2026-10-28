@@ -18129,3 +18129,18 @@ msgstr "importa'l al simulador de l'AEAT abans de presentar."
 
 msgid "Cobros o pagos (solo con la clave 07, criterio de caja): uno por línea, «fecha; importe». Una devolución va en negativo."
 msgstr "Cobraments o pagaments (només amb la clau 07, criteri de caixa): un per línia, «data; import». Una devolució va en negatiu."
+
+msgid "Nº de justificante (13 cifras)"
+msgstr "Nre. de justificant (13 xifres)"
+
+msgid "CSV (opcional)"
+msgstr "CSV (opcional)"
+
+msgid "Presenta el fichero en la sede de la AEAT (o pásalo a tu colaborador social) y copia aquí el número de justificante que te da: sin él no se podrá rectificar la declaración sin teclearlo."
+msgstr "Presenta el fitxer a la seu de l'AEAT (o passa'l al teu col·laborador social) i copia aquí el número de justificant que et dona: sense ell no es podrà rectificar la declaració sense escriure'l."
+
+msgid "Anotar el justificante"
+msgstr "Anotar el justificant"
+
+msgid "Esta declaración está presentada sin el número de justificante de 13 cifras; hace falta para poder rectificarla."
+msgstr "Aquesta declaració està presentada sense el número de justificant de 13 xifres; cal per poder rectificar-la."

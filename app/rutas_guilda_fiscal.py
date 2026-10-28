@@ -655,7 +655,7 @@ def declaracion(declaracion_id: int):
     todas = fn.listar_declaraciones(g.tenant_id, g.usuario_id, d["cliente_fiscal_id"])
     rectificativa = next((x for x in todas if x["rectifica_a_id"] == d["id"] and x["estado"] != "anulada"), None)
     original = next((x for x in todas if x["id"] == d["rectifica_a_id"]), None)
-    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, rectificativa=rectificativa, original=original, apuntes={a["apunte_id"]: a for a in inst["datos"]["apuntes"]}, cambios=fn.comparar_con_anterior(g.tenant_id, g.usuario_id, declaracion_id),
+    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, rectificativa=rectificativa, original=original, justificante=fn.justificante_de(d), apuntes={a["apunte_id"]: a for a in inst["datos"]["apuntes"]}, cambios=fn.comparar_con_anterior(g.tenant_id, g.usuario_id, declaracion_id),
                            error=_error())
 
 
@@ -695,7 +695,8 @@ def declaracion_rectificar(declaracion_id: int):
 @login_required
 def declaracion_accion(declaracion_id: int, accion: str):
     acciones = {"revisar": lambda: fn.revisar_declaracion(g.tenant_id, g.usuario_id, declaracion_id), "exportar": lambda: fn.exportar_declaracion(g.tenant_id, g.usuario_id, declaracion_id),
-                "presentada": lambda: fn.marcar_presentada(g.tenant_id, g.usuario_id, declaracion_id, request.form.get("referencia", "")),
+                "presentada": lambda: fn.marcar_presentada(g.tenant_id, g.usuario_id, declaracion_id, request.form.get("referencia", ""), justificante=request.form.get("justificante", ""), csv=request.form.get("csv", "")),
+                "justificante": lambda: fn.anotar_justificante(g.tenant_id, g.usuario_id, declaracion_id, justificante=request.form.get("justificante", ""), csv=request.form.get("csv", "")),
                 "anular": lambda: fn.anular_declaracion(g.tenant_id, g.usuario_id, declaracion_id)}
     if accion not in acciones:
         abort(404)

@@ -18205,3 +18205,18 @@ msgstr "importez-le dans le simulateur de l'AEAT avant de déposer."
 
 msgid "Cobros o pagos (solo con la clave 07, criterio de caja): uno por línea, «fecha; importe». Una devolución va en negativo."
 msgstr "Encaissements ou paiements (uniquement avec la clé 07, TVA de caisse) : un par ligne, « date ; montant ». Un remboursement est négatif."
+
+msgid "Nº de justificante (13 cifras)"
+msgstr "N° de justificatif (13 chiffres)"
+
+msgid "CSV (opcional)"
+msgstr "CSV (facultatif)"
+
+msgid "Presenta el fichero en la sede de la AEAT (o pásalo a tu colaborador social) y copia aquí el número de justificante que te da: sin él no se podrá rectificar la declaración sin teclearlo."
+msgstr "Déposez le fichier sur le site de l'AEAT (ou transmettez-le à votre collaborateur social) et copiez ici le numéro de justificatif qu'il vous donne : sans lui, la déclaration ne pourra être rectifiée sans le saisir."
+
+msgid "Anotar el justificante"
+msgstr "Enregistrer le justificatif"
+
+msgid "Esta declaración está presentada sin el número de justificante de 13 cifras; hace falta para poder rectificarla."
+msgstr "Cette déclaration a été déposée sans le numéro de justificatif à 13 chiffres ; il est nécessaire pour la rectifier."

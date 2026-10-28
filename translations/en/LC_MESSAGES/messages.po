@@ -18120,3 +18120,18 @@ msgstr "import it in the tax agency's simulator before filing."
 
 msgid "Cobros o pagos (solo con la clave 07, criterio de caja): uno por línea, «fecha; importe». Una devolución va en negativo."
 msgstr "Receipts or payments (only with key 07, cash accounting): one per line, «date; amount». A refund goes in negative."
+
+msgid "Nº de justificante (13 cifras)"
+msgstr "Receipt number (13 digits)"
+
+msgid "CSV (opcional)"
+msgstr "CSV (optional)"
+
+msgid "Presenta el fichero en la sede de la AEAT (o pásalo a tu colaborador social) y copia aquí el número de justificante que te da: sin él no se podrá rectificar la declaración sin teclearlo."
+msgstr "File the document on the tax agency's website (or pass it to your social collaborator) and copy here the receipt number it gives you: without it the return cannot be amended without typing it."
+
+msgid "Anotar el justificante"
+msgstr "Record the receipt number"
+
+msgid "Esta declaración está presentada sin el número de justificante de 13 cifras; hace falta para poder rectificarla."
+msgstr "This return was filed without the 13-digit receipt number; it is needed to amend it."

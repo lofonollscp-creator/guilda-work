@@ -32,7 +32,8 @@
   <div class="ds-fila ds-envolver">
     {% if d.estado == 'borrador' and not d.bloqueos %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='revisar') }}"><button class="btn btn-primary" type="submit">{{ _('Marcar como revisada') }}</button></form>{% endif %}
     {% if d.estado == 'revisada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='exportar') }}"><button class="btn btn-primary" type="submit">{{ _('Generar el fichero para la AEAT') }}</button></form>{% endif %}
-    {% if d.estado == 'exportada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='presentada') }}" class="ds-fila ds-envolver"><input type="text" name="referencia" placeholder="{{ _('CSV o justificante (opcional)') }}" maxlength="200"><button class="btn btn-primary" type="submit">{{ _('Anotar que se ha presentado') }}</button></form>{% endif %}
+    {% if d.estado == 'exportada' %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='presentada') }}" class="ds-fila ds-envolver"><input type="text" name="justificante" inputmode="numeric" pattern="[0-9]{13}" maxlength="13" placeholder="{{ _('Nº de justificante (13 cifras)') }}" aria-label="{{ _('Nº de justificante (13 cifras)') }}"><input type="text" name="csv" maxlength="40" placeholder="{{ _('CSV (opcional)') }}" aria-label="{{ _('CSV (opcional)') }}"><button class="btn btn-primary" type="submit">{{ _('Anotar que se ha presentado') }}</button></form>
+      <p class="muted">{{ _('Presenta el fichero en la sede de la AEAT (o pásalo a tu colaborador social) y copia aquí el número de justificante que te da: sin él no se podrá rectificar la declaración sin teclearlo.') }}</p>{% endif %}
     {% if d.estado in ('borrador', 'revisada', 'exportada') %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='anular') }}"><button class="btn btn-ghost" type="submit" data-confirmar-clic="{{ _('¿Anular esta declaración? Quedará en el historial como anulada y podrás calcular el periodo de nuevo.') }}">{{ _('Anular') }}</button></form>{% endif %}
   </div>
   {% endif %}
@@ -42,7 +43,7 @@
     <details class="ds-mb-16"><summary>{{ _('Rectificar este 303') }}</summary>
       <form method="post" action="{{ url_for('guilda_fiscal.declaracion_rectificar', declaracion_id=d.id) }}" class="ds-fila ds-envolver">
         <p class="muted">{{ _('Se calcula un 303 nuevo del periodo con los apuntes tal como están ahora, que sustituye al presentado. Hace falta el número de justificante que dio la AEAT al presentarlo.') }}</p>
-        <label>{{ _('Justificante de la declaración presentada (13 cifras)') }} <input type="text" name="justificante" inputmode="numeric" pattern="[0-9]{13}" maxlength="13" required></label>
+        <label>{{ _('Justificante de la declaración presentada (13 cifras)') }} <input type="text" name="justificante" inputmode="numeric" pattern="[0-9]{13}" maxlength="13" value="{{ justificante or '' }}" required></label>
         {% if d.casillas.get('69', 0) < 0 and d.tipo_declaracion == 'D' %}<label><input type="checkbox" name="devolucion_acordada" value="1"> {{ _('La AEAT ya acordó la devolución que se pidió') }}</label>{% endif %}
         <label>{{ _('Si sale a favor del titular') }} <select name="destino_negativo"><option value="C">{{ _('Compensar en los periodos siguientes') }}</option><option value="D">{{ _('Solicitar la devolución') }}</option></select></label>
         <button class="btn btn-primary" type="submit">{{ _('Calcular la rectificativa') }}</button>
@@ -56,6 +57,12 @@
   {% endif %}
   {% if d.estado != 'anulada' %}<p><a href="{{ url_for('guilda_fiscal.declaracion_resumen_pdf', declaracion_id=d.id) }}" target="_blank" rel="noopener">{{ _('Resumen en PDF para el cliente') }}</a></p>{% endif %}
   {% if d.referencia_presentacion %}<p class="muted">{{ _('Presentada: %(r)s', r=d.referencia_presentacion) }}</p>{% endif %}
+  {% if d.estado == 'presentada' and puede_aprobar and not justificante %}
+  <form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='justificante') }}" class="ds-fila ds-envolver">
+    <input type="text" name="justificante" inputmode="numeric" pattern="[0-9]{13}" maxlength="13" placeholder="{{ _('Nº de justificante (13 cifras)') }}" aria-label="{{ _('Nº de justificante (13 cifras)') }}" required>
+    <button class="btn btn-ghost" type="submit">{{ _('Anotar el justificante') }}</button></form>
+  <p class="muted">{{ _('Esta declaración está presentada sin el número de justificante de 13 cifras; hace falta para poder rectificarla.') }}</p>
+  {% endif %}
 </section>
 
 {% if cambios %}
