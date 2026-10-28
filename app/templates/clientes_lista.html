@@ -40,22 +40,21 @@
   {% endif %}
 {% else %}
 <p class="muted">{{ ngettext('%(n)s cliente', '%(n)s clientes', total, n=total) }}</p>
-<div class="table-wrap">
-<table class="historial-table">
-  <thead><tr><th>{{ _('Nombre') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Contacto') }}</th><th>{{ _('Etiquetas') }}</th><th>{{ _('Expedientes abiertos') }}</th></tr></thead>
-  <tbody>
-    {% for c in clientes %}
-    <tr>
-      <td><a href="{{ url_for('clientes.ficha', cliente_id=c.id) }}"><strong>{{ c.nombre }}</strong></a> {{ chip(_('Empresa') if c.tipo == 'empresa' else _('Persona')) }}</td>
-      <td class="mono">{{ c.nif or '—' }}</td>
-      <td>{{ c.email or c.telefono or '—' }}</td>
-      <td>{% for e in (c.etiquetas or '').split(',') if e %}<a href="{{ url_for('clientes.lista', etiqueta=e) }}">{{ chip(e) }}</a> {% endfor %}</td>
-      <td>{{ c.expedientes_abiertos or '—' }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-</div>
+<ul class="clientes-lista">
+  {% for c in clientes %}
+  <li class="cliente-fila">
+    <a class="cliente-fila-enlace" href="{{ url_for('clientes.ficha', cliente_id=c.id) }}" aria-label="{{ c.nombre }}"></a>
+    <span class="avatar-circulo cliente-fila-avatar" style="--avatar-color: {{ c.nombre|avatar_color }};" aria-hidden="true">{{ c.nombre|iniciales }}</span>
+    <div class="cliente-fila-main">
+      <strong class="cliente-fila-nombre">{{ c.nombre }}</strong>
+      <span class="cliente-fila-sub">{{ chip(_('Empresa') if c.tipo == 'empresa' else _('Persona')) }}{% if c.nif %} <span class="mono">{{ c.nif }}</span>{% endif %}</span>
+    </div>
+    <span class="cliente-fila-contacto">{{ c.email or c.telefono or '—' }}</span>
+    <span class="cliente-fila-etiquetas">{% for e in (c.etiquetas or '').split(',') if e %}<a href="{{ url_for('clientes.lista', etiqueta=e) }}">{{ chip(e) }}</a> {% endfor %}</span>
+    <span class="cliente-fila-exp {{ 'sin-datos' if not c.expedientes_abiertos }}">{% if c.expedientes_abiertos %}<strong>{{ c.expedientes_abiertos }}</strong> <span class="muted">{{ ngettext('expediente', 'expedientes', c.expedientes_abiertos) }}</span>{% else %}—{% endif %}</span>
+  </li>
+  {% endfor %}
+</ul>
 {% if paginas > 1 %}
 <div class="paginacion ds-fila ds-mt-16">
   {% if pagina > 1 %}<a class="btn btn-ghost" href="{{ url_for('clientes.lista', q=q or None, tipo=tipo or None, etiqueta=etiqueta or None, pagina=pagina - 1) }}">‹ {{ _('Anterior') }}</a>{% endif %}

@@ -766,3 +766,96 @@ a.fiscal-cifra.es-activa { border-color: var(--primary); background: var(--lima-
   .top-bar:not(:has(.barra-vistas)) .top-bar-acciones { flex: 0 0 auto; }
 }
 .top-bar-titulo .top-bar-subtitulo { flex: 0 1 auto; }
+
+/* ======================================================================================================================== */
+/* Tareas · Mi día                                                                                                          */
+/* ======================================================================================================================== */
+.midia-resumen { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tareas-dia-seccion { margin: 0 0 20px; }
+.tareas-dia-titulo { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 13px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
+.tareas-dia-punto { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); }
+.tareas-dia-vencidas .tareas-dia-punto { background: var(--danger-text); }
+.tareas-dia-vencidas .tareas-dia-titulo { color: var(--danger-text); }
+.tareas-dia-hoy .tareas-dia-punto { background: var(--primary); }
+.tareas-dia-en_progreso .tareas-dia-punto { background: #4b8bd6; }
+.tareas-dia-asignadas .tareas-dia-punto, .tareas-dia-compartidas .tareas-dia-punto { background: var(--ia); }
+.tareas-dia-seccion > .log-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.tareas-dia-seccion .tarea-fila { grid-template-columns: 44px minmax(0, 1fr) 100px 130px auto; }
+.tareas-dia-seccion .tarea-fila:last-child { border-bottom: 0; }
+.tareas-dia-seccion .tarea-fila-acciones select { max-width: 130px; min-height: 32px; font-size: 12px; border-radius: 10px; }
+@media (max-width: 900px) { .midia-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tareas-dia-seccion .tarea-fila { grid-template-columns: 40px minmax(0, 1fr) auto; } .tareas-dia-seccion .tarea-fila-prio { display: none; } }
+
+/* ======================================================================================================================== */
+/* Tareas · Tablero                                                                                                         */
+/* ======================================================================================================================== */
+.tareas-tablero { display: flex; gap: 14px; overflow-x: auto; padding: 2px 2px 18px; align-items: flex-start; scroll-snap-type: x proximity; }
+.tareas-columna { flex: 0 0 292px; background: var(--panel-2); border: 0; border-radius: 18px; padding: 12px; scroll-snap-align: start; box-shadow: none; min-height: 140px; }
+.tareas-columna-titulo { display: flex; align-items: center; gap: 8px; margin: 2px 4px 12px; font-size: 13px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); }
+.tareas-columna-titulo .tareas-columna-nombre { color: var(--text); }
+.tareas-columna-titulo .pill { margin-left: auto; background: var(--surface); border: 1px solid var(--border); }
+.tareas-columna-cuerpo { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 230px); overflow-y: auto; padding: 0 2px 2px; }
+.tareas-tarjeta { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: none; display: flex; flex-direction: column; gap: 8px; cursor: grab; }
+.tareas-tarjeta:hover { border-color: color-mix(in srgb, var(--text) 25%, var(--border)); }
+.tareas-tarjeta-titulo { font-weight: 800; font-size: 14.5px; color: var(--text); text-decoration: none; line-height: 1.3; }
+.tareas-tarjeta-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; }
+.tareas-tarjeta-fecha { margin-left: auto; }
+.tareas-tarjeta-mover select { width: 100%; min-height: 32px; font-size: 12px; border-radius: 10px; background: var(--panel-2); border: 0; color: var(--text-muted); }
+.tareas-tarjeta-barra { display: block; flex: 1; height: 6px; border-radius: 99px; background: var(--panel-2-hover); overflow: hidden; }
+.tareas-tarjeta-barra > span { display: block; height: 100%; background: var(--primary); }
+.tareas-columna-vacia { text-align: center; padding: 18px 8px; border: 1px dashed var(--border); border-radius: 12px; margin: 0; }
+.tareas-columna.is-destino, .tareas-columna.drag-over { outline: 2px dashed var(--primary); outline-offset: -4px; }
+
+/* ======================================================================================================================== */
+/* Notas · documento                                                                                                        */
+/* ======================================================================================================================== */
+.notas-doc-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--linea); }
+.notas-doc-cuerpo { font-size: 16px; line-height: 1.7; max-width: 72ch; }
+.notas-doc-cuerpo ul, .notas-doc-cuerpo ol { padding-left: 1.3em; }
+.notas-acordeon { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.notas-acordeon > summary { cursor: pointer; list-style: none; padding: 14px 20px; font-size: 13px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+.notas-acordeon > summary::-webkit-details-marker { display: none; }
+.notas-acordeon > summary::after { content: "▾"; margin-left: auto; transition: transform .15s; }
+.notas-acordeon[open] > summary::after { transform: rotate(180deg); }
+.notas-acordeon[open] > summary { border-bottom: 1px solid var(--linea); color: var(--text); }
+.notas-acordeon .edit-form, .notas-acordeon .tarea-compartir-bloque { border: 0; border-radius: 0; margin: 0; padding: 18px 20px; box-shadow: none; background: none; }
+.notas-acordeon .notas-editor-titulo { display: none; }
+.notas-vinculos { margin: 0; }
+.notas-vinculo { background: var(--surface); }
+form.edit-form-delete { margin-top: 4px; }
+
+/* ======================================================================================================================== */
+/* Clientes                                                                                                                 */
+/* ======================================================================================================================== */
+.clientes-lista { list-style: none; margin: 0 0 20px; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+.cliente-fila { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 1fr) 130px; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--linea); min-height: 68px; }
+.cliente-fila:last-child { border-bottom: 0; }
+.cliente-fila:hover { background: var(--panel-2); }
+.cliente-fila-enlace { position: absolute; inset: 0; z-index: 1; }
+.cliente-fila-etiquetas a, .cliente-fila-etiquetas { position: relative; z-index: 2; }
+.cliente-fila-avatar, .avatar-circulo.cliente-fila-avatar { width: 44px; height: 44px; border-radius: 14px; font-size: 14px; font-weight: 800; }
+.cliente-fila-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cliente-fila-nombre { font-size: 15px; font-weight: 800; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cliente-fila-sub { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+.cliente-fila-contacto { color: var(--text-muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cliente-fila-exp { text-align: right; font-size: 13px; }
+.cliente-fila-exp strong { font-size: 18px; font-weight: 800; }
+.cliente-fila-exp.sin-datos { color: var(--text-muted); }
+@media (max-width: 900px) { .cliente-fila { grid-template-columns: 44px minmax(0, 1fr) auto; } .cliente-fila-contacto, .cliente-fila-etiquetas { display: none; } }
+
+/* Ficha del cliente */
+.cliente-cabecera { display: flex; align-items: center; gap: 18px; padding: 20px 24px; margin: 0 0 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; flex-wrap: wrap; }
+.cliente-cabecera-texto { flex: 1 1 280px; min-width: 0; }
+.cliente-avatar-grande, .avatar-circulo.cliente-avatar-grande { width: 68px; height: 68px; border-radius: 20px; font-size: 22px; font-weight: 800; flex: none; }
+.cliente-cabecera .subtitle { margin: 4px 0 0; font-weight: 600; color: var(--text-muted); }
+.cliente-cabecera.h1-en-barra .cliente-cabecera-texto { display: flex; flex-direction: column; justify-content: center; }
+.cliente-cabecera > .ds-fila { margin: 0 !important; flex-wrap: wrap; gap: 8px; }
+.ficha-volver { margin: 0 0 8px; font-size: 13px; font-weight: 700; }
+.ficha-volver a { color: var(--text-muted); text-decoration: none; }
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start; }
+.dash-panel h2 { font-size: 15px; font-weight: 800; margin: 0 0 14px; }
+.dash-grid .dash-panel form.edit-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; padding: 0; border: 0; background: none; box-shadow: none; margin: 0; max-width: none; }
+.dash-grid .dash-panel form.edit-form > :has(textarea), .dash-grid .dash-panel form.edit-form > button, .dash-grid .dash-panel form.edit-form > .ds-campo-ancho { grid-column: 1 / -1; }
+.dash-grid .dash-panel form.edit-form > button { justify-self: start; margin-top: 8px; }
+@media (max-width: 640px) { .dash-grid .dash-panel form.edit-form { grid-template-columns: minmax(0, 1fr); } }
+form.edit-form-delete { border: 0; padding: 0; background: none; max-width: none; }
+form.edit-form-delete .btn-stop { background: none; color: var(--danger-text); border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border)); }

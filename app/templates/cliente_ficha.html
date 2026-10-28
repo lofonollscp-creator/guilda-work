@@ -3,11 +3,12 @@
 {% from "_nucleo_macros.html" import aviso_error, chip_plazo, selector_equipo %}
 {% block title %}{{ c.nombre }} — {{ _('Clientes') }} — Guilda Work{% endblock %}
 {% block content %}
-<header class="page-header">
-  <div>
+<header class="page-header cliente-cabecera">
+  <span class="avatar-circulo cliente-avatar-grande" style="--avatar-color: {{ c.nombre|avatar_color }};" aria-hidden="true">{{ c.nombre|iniciales }}</span>
+  <div class="cliente-cabecera-texto">
     <h1>{{ c.nombre }} {{ chip(_('Empresa') if c.tipo == 'empresa' else _('Persona')) }}{% if c.papelera_en %} {{ chip(_('En la papelera'), 'peligro') }}{% endif %}
       {% if semaforo %}{% if semaforo.estado == 'atrasado' %}{{ chip(_('Atrasado') ~ ' · ' ~ semaforo.atrasados, 'peligro') }}{% elif semaforo.estado == 'proximo' %}{{ chip(_('Vence pronto') ~ ' · ' ~ semaforo.proximos, 'aviso') }}{% elif semaforo.estado == 'al_dia' %}{{ chip(_('Al día'), 'exito') }}{% endif %}{% endif %}</h1>
-    <p class="subtitle">{% if c.nif %}{{ c.nif }}{% endif %}{% if c.email %} · {{ c.email }}{% endif %}{% if c.telefono %} · {{ c.telefono }}{% endif %}</p>
+    <p class="subtitle">{{ [c.nif, c.email, c.telefono]|select|join(' · ') }}</p>
   </div>
   <div class="ds-fila">
     {{ boton(_('Nuevo expediente'), 'primario', href=url_for('expedientes.nuevo', cliente_id=c.id)) }}

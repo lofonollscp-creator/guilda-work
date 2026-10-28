@@ -14,6 +14,18 @@
 {% if error %}<div class="ia-error">{{ error }}</div>{% endif %}
 
 {% set total = totales.vencidas + totales.hoy + totales.en_progreso + totales.asignadas + totales.compartidas %}
+{% if total %}
+<div class="fiscal-resumen midia-resumen">
+  <div class="fiscal-cifra"><span class="muted">{{ _('Vencidas') }}</span><span class="fiscal-cifra-num {{ 'es-rojo' if totales.vencidas }}">{{ totales.vencidas }}</span></div>
+  <div class="fiscal-cifra"><span class="muted">{{ _('Vencen hoy') }}</span><span class="fiscal-cifra-num">{{ totales.hoy }}</span></div>
+  <div class="fiscal-cifra"><span class="muted">{{ _('En progreso') }}</span><span class="fiscal-cifra-num">{{ totales.en_progreso }}</span></div>
+  <div class="fiscal-cifra fiscal-cifra-ia">
+    <span class="fiscal-cifra-ia-etiqueta"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg> {{ _('Asistente') }}</span>
+    <p>{{ _('Resume mi día') }}</p>
+    <a href="{{ url_for('ia.asistente_vista', q=_('Resume mi día')) }}">{{ _('Preguntar') }} →</a>
+  </div>
+</div>
+{% endif %}
 {% if not total %}
 <p class="empty-lane">{{ _('No tienes nada pendiente para hoy. Buen momento para adelantar trabajo.') }}</p>
 {% endif %}
@@ -22,7 +34,7 @@
 {% for clave, titulo in (('vencidas', _('Vencidas')), ('hoy', _('Vencen hoy')), ('en_progreso', _('En progreso')), ('asignadas', _('Asignadas a mí')), ('compartidas', _('Compartidas conmigo'))) %}
 {% if secciones[clave] %}
 <section class="tareas-dia-seccion tareas-dia-{{ clave }}" id="seccion-{{ clave }}">
-  <h2 class="tareas-dia-titulo">{{ titulo }} <span class="pill">{{ totales[clave] }}</span></h2>
+  <h2 class="tareas-dia-titulo"><span class="tareas-dia-punto" aria-hidden="true"></span>{{ titulo }} <span class="pildora-v2">{{ totales[clave] }}</span></h2>
   <ul class="log-list" {{ defecto_eliminar() }}>
     {% for t in secciones[clave] %}
     {{ fila(t, estados, cronometros, checklists, menus, mostrar_estado=False) }}
