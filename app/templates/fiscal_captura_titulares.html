@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Captura desde el móvil') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Captura desde el móvil') }}</h1>
+    <p class="subtitle">{{ _('Elige el titular y haz las fotos: las facturas van directas a su carpeta, por leer.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cartera') }}">‹ {{ _('Guilda Fiscal') }}</a>
+</header>
+<form method="get" role="search" class="fiscal-buscador ds-mb-16">
+  <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar por nombre o NIF') }}" aria-label="{{ _('Buscar titular') }}" autocomplete="off">
+  <button type="submit" class="btn btn-ghost">{{ _('Buscar') }}</button>
+</form>
+<nav class="captura-lista" aria-label="{{ _('Titulares') }}">
+  {% for t in titulares %}<a class="btn {{ 'btn-primary' if t.id == ultimo and not q else 'btn-ghost' }} captura-titular" href="{{ url_for('guilda_fiscal.captura', cliente_id=t.id) }}">
+    <strong>{{ t.nombre }}</strong> <span class="muted">{{ t.nif or '' }}</span>{% if t.id == ultimo and not q %} <span class="pill">{{ _('El último') }}</span>{% endif %}</a>
+  {% else %}<p class="muted">{{ _('Ningún titular coincide.') }}</p>{% endfor %}
+</nav>
+{% if mas %}<p class="muted">{{ _('Hay más titulares: afina la búsqueda.') }}</p>{% endif %}
+{% endblock %}

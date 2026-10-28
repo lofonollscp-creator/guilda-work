@@ -588,3 +588,27 @@ def test_repetir_un_apunte_cada_mes_desde_la_web(cliente):
     assert "Apuntes mensuales creados: 2" in cliente.get(r.headers["Location"]).get_data(as_text=True)
     malo = cliente.post(f"/guilda-fiscal/{c}/apuntes/{ap['id']}/repetir", data={"hasta": "2025-01"}, follow_redirects=True)
     assert "posterior" in malo.get_data(as_text=True)
+
+
+def test_captura_desde_el_movil_va_al_titular_elegido(cliente):
+    import io
+    uid, t, c = _web(cliente, email="captura@ejemplo.com")
+    otro = crear_cliente_fiscal(t, "Otra Empresa SL", nif="B87654321")
+    assert "Captura desde el móvil" in cliente.get("/guilda-fiscal/").get_data(as_text=True)
+    lista = cliente.get("/guilda-fiscal/captura").get_data(as_text=True)
+    assert "Empresa Web SL" in lista and "Otra Empresa SL" in lista
+    assert "Otra Empresa SL" in cliente.get("/guilda-fiscal/captura?q=otra").get_data(as_text=True) and "Empresa Web SL" not in cliente.get("/guilda-fiscal/captura?q=otra").get_data(as_text=True)
+    pagina = cliente.get(f"/guilda-fiscal/{otro}/captura").get_data(as_text=True)
+    assert 'capture="environment"' in pagina and "Hacer foto" in pagina and "Otra Empresa SL" in pagina
+    assert "El último" in cliente.get("/guilda-fiscal/captura").get_data(as_text=True)                       # el último titular usado sale marcado
+    png = b"\x89PNG\r\n\x1a\n" + b"0" * 200
+    r = cliente.post(f"/guilda-fiscal/{otro}/captura", data={"tipo": "recibida", "archivos": [(io.BytesIO(png), "ticket1.png"), (io.BytesIO(png), "ticket2.png")]}, content_type="multipart/form-data")
+    assert r.status_code == 302 and "subidas=2" in r.headers["Location"]
+    assert "2 facturas subidas" in cliente.get(r.headers["Location"]).get_data(as_text=True)
+    assert len(fn.capturas_recientes(t, uid, otro)) == 2 and fn.capturas_recientes(t, uid, c) == []
+    assert all(x["lectura"] == "pendiente" for x in fn.capturas_recientes(t, uid, otro))
+    malo = cliente.post(f"/guilda-fiscal/{otro}/captura", data={"tipo": "recibida", "archivos": [(io.BytesIO(b"texto"), "nota.txt")]}, content_type="multipart/form-data", follow_redirects=True)
+    assert "Archivo no válido" in malo.get_data(as_text=True)
+    sin = cliente.post(f"/guilda-fiscal/{otro}/captura", data={"tipo": "recibida"}, content_type="multipart/form-data", follow_redirects=True)
+    assert "al menos un archivo" in sin.get_data(as_text=True)
+    assert cliente.get("/guilda-fiscal/999999/captura").status_code == 404

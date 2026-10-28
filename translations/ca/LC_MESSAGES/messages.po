@@ -17926,3 +17926,68 @@ msgstr "Repetir"
 
 msgid "Apuntes mensuales creados: %(n)s. Ya existían: %(ya)s. Sin crear por tener fecha futura: %(f)s."
 msgstr "Apunts mensuals creats: %(n)s. Ja existien: %(ya)s. Sense crear per tenir data futura: %(f)s."
+
+msgid "Captura desde el móvil"
+msgstr "Captura des del mòbil"
+
+msgid "Elige el titular y haz las fotos: las facturas van directas a su carpeta, por leer."
+msgstr "Tria el titular i fes les fotos: les factures van directes a la seva carpeta, per llegir."
+
+msgid "Titulares"
+msgstr "Titulars"
+
+msgid "El último"
+msgstr "L'últim"
+
+msgid "Ningún titular coincide."
+msgstr "Cap titular coincideix."
+
+msgid "Hay más titulares: afina la búsqueda."
+msgstr "Hi ha més titulars: afina la cerca."
+
+msgid "Puedes seguir haciendo fotos."
+msgstr "Pots continuar fent fotos."
+
+msgid "Recibidas (compras y gastos)"
+msgstr "Rebudes (compres i despeses)"
+
+msgid "Emitidas (ventas)"
+msgstr "Emeses (vendes)"
+
+msgid "Hacer foto"
+msgstr "Fer foto"
+
+msgid "Elegir de la galería o PDF"
+msgstr "Triar de la galeria o PDF"
+
+msgid "Hasta %(n)s archivos de 8 MB cada vez. Las fotos se reducen antes de subirlas."
+msgstr "Fins a %(n)s fitxers de 8 MB cada cop. Les fotos es redueixen abans de pujar-les."
+
+msgid "Últimas subidas"
+msgstr "Últimes pujades"
+
+msgid "recibida"
+msgstr "rebuda"
+
+msgid "emitida"
+msgstr "emesa"
+
+msgid "por leer"
+msgstr "per llegir"
+
+msgid "no se pudo leer"
+msgstr "no s'ha pogut llegir"
+
+msgid "leída"
+msgstr "llegida"
+
+msgid "Ver en Contabilidad"
+msgstr "Veure a Comptabilitat"
+
+msgid "%(n)s factura subida. Queda por leer."
+msgid_plural "%(n)s facturas subidas. Quedan por leer."
+msgstr[0] "%(n)s factura pujada. Queda per llegir."
+msgstr[1] "%(n)s factures pujades. Queden per llegir."
+
+msgid "Cambiar de titular"
+msgstr "Canviar de titular"

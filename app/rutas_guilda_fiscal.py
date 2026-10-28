@@ -9,7 +9,7 @@ import unicodedata
 from datetime import date, timedelta
 from urllib.parse import quote
 
-from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
 from . import acceso, db, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
@@ -235,6 +235,37 @@ def fichero_390_prueba(cliente_id: int):
     except ErrorFiscal as e:
         return redirect(url_for("guilda_fiscal.resumen_anual_390", cliente_id=cliente_id, ejercicio=ejercicio, error=str(e)[:300]))
     return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
+
+
+@guilda_fiscal_bp.route("/captura")
+@login_required
+def captura_titulares():
+    """Captura desde el móvil, paso 1: a qué titular van las fotos. El último usado sale arriba."""
+    q = _sin_acentos(request.args.get("q", ""))
+    titulares = [{"id": f["id"], "nombre": f["nombre"], "nif": f["nif"]} for f in fn.resumen_cartera(g.tenant_id, g.usuario_id)]
+    if q:
+        titulares = [t for t in titulares if all(p in _sin_acentos(f"{t['nombre']} {t['nif'] or ''}") for p in q.split())]
+    ultimo = session.get("captura_ultimo")
+    titulares.sort(key=lambda t: (t["id"] != ultimo, t["nombre"].lower()))
+    return render_template("fiscal_captura_titulares.html", titulares=titulares[:60], ultimo=ultimo, q=request.args.get("q", "").strip()[:80], mas=len(titulares) > 60)
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/captura", methods=["GET", "POST"])
+@login_required
+def captura(cliente_id: int):
+    """Captura desde el móvil, paso 2: hacer fotos (o elegir PDF) y mandarlas al titular. Quedan como facturas «por leer»; no se aprueba nada."""
+    c = _cliente_o_404(cliente_id)
+    if request.method == "POST":
+        try:
+            archivos = [(a.filename, a.mimetype, a.read(fc.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
+            ids = fc.subir_archivos(g.tenant_id, g.usuario_id, cliente_id, request.form.get("tipo", ""), archivos)
+        except ValueError as e:
+            return redirect(url_for("guilda_fiscal.captura", cliente_id=cliente_id, error=str(e)[:300]))
+        session["captura_ultimo"] = cliente_id
+        return redirect(url_for("guilda_fiscal.captura", cliente_id=cliente_id, subidas=len(ids)))
+    session["captura_ultimo"] = cliente_id
+    return render_template("fiscal_captura_movil.html", c=c, subidas=request.args.get("subidas", type=int), recientes=fn.capturas_recientes(g.tenant_id, g.usuario_id, cliente_id), error=_error(),
+                           max_archivos=fc.MAX_ARCHIVOS_POR_SUBIDA)
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/conciliacion", methods=["GET", "POST"])

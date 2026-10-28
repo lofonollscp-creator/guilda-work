@@ -11,7 +11,8 @@
     <h1>{{ _('Guilda Fiscal') }}</h1>
     <p class="subtitle">{{ _('Perfil fiscal, facturas aprobadas y borrador del modelo 303 de cada titular. Tú decides lo que se aprueba; Guilda Work calcula y genera el fichero, pero no presenta.') }}</p>
   </div>
-  <div class="ds-fila ds-envolver"><a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.vencimientos') }}">{{ _('Vencimientos y carga de trabajo') }}</a>
+  <div class="ds-fila ds-envolver"><a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.captura_titulares') }}">{{ _('Captura desde el móvil') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.vencimientos') }}">{{ _('Vencimientos y carga de trabajo') }}</a>
   <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.recordatorios') }}">{{ _('Recordatorios a los clientes') }}</a></div>
 </header>
 {{ aviso_error(error) }}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Captura desde el móvil') }} — {{ c.nombre }}{% endblock %}
+{% block scripts_pagina %}<script src="{{ url_for('static', filename='fiscal_captura.js') }}"></script>{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ c.nombre }}</h1>
+    <p class="subtitle">{{ c.nif or '' }} · {{ _('Captura desde el móvil') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.captura_titulares') }}">{{ _('Cambiar de titular') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if subidas %}<div class="dash-panel" role="status"><strong>{{ ngettext('%(n)s factura subida. Queda por leer.', '%(n)s facturas subidas. Quedan por leer.', subidas, n=subidas) }}</strong> {{ _('Puedes seguir haciendo fotos.') }}</div>{% endif %}
+<section class="dash-panel">
+  <form method="post" enctype="multipart/form-data" data-captura data-max="{{ max_archivos }}" class="edit-form">
+    <label>{{ _('¿Qué facturas son?') }}
+      <select name="tipo">
+        <option value="recibida">{{ _('Recibidas (compras y gastos)') }}</option>
+        <option value="emitida">{{ _('Emitidas (ventas)') }}</option>
+      </select></label>
+    <label class="btn btn-primary captura-boton">{{ _('Hacer foto') }}<input type="file" name="archivos" accept="image/*" capture="environment" multiple hidden data-captura-entrada></label>
+    <label class="btn btn-ghost captura-boton">{{ _('Elegir de la galería o PDF') }}<input type="file" name="archivos" accept="image/*,application/pdf" multiple hidden data-captura-entrada></label>
+    <p class="muted" data-captura-resumen aria-live="polite">{{ _('Hasta %(n)s archivos de 8 MB cada vez. Las fotos se reducen antes de subirlas.', n=max_archivos) }}</p>
+    <button type="submit" class="btn btn-primary" data-captura-enviar disabled>{{ _('Subir') }}</button>
+  </form>
+</section>
+{% if recientes %}
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Últimas subidas') }}</h2>
+  <ul>{% for r in recientes %}<li>{{ r.creado_en[:16].replace('T', ' ') }} · {{ _('recibida') if r.tipo == 'recibida' else _('emitida') }} ·
+    {% if r.lectura == 'pendiente' %}{{ _('por leer') }}{% elif r.lectura == 'fallida' %}{{ _('no se pudo leer') }}{% else %}{{ _('leída') }}{% endif %}
+    · <a href="{{ url_for('contabilidad.lista', cliente_id=c.id) }}">{{ _('Ver en Contabilidad') }}</a></li>{% endfor %}</ul>
+</section>
+{% endif %}
+{% endblock %}

@@ -18002,3 +18002,68 @@ msgstr "Répéter"
 
 msgid "Apuntes mensuales creados: %(n)s. Ya existían: %(ya)s. Sin crear por tener fecha futura: %(f)s."
 msgstr "Écritures mensuelles créées : %(n)s. Existaient déjà : %(ya)s. Non créées car à date future : %(f)s."
+
+msgid "Captura desde el móvil"
+msgstr "Capture depuis le mobile"
+
+msgid "Elige el titular y haz las fotos: las facturas van directas a su carpeta, por leer."
+msgstr "Choisissez le titulaire et prenez les photos : les factures vont directement dans son dossier, à lire."
+
+msgid "Titulares"
+msgstr "Titulaires"
+
+msgid "El último"
+msgstr "Le dernier"
+
+msgid "Ningún titular coincide."
+msgstr "Aucun titulaire ne correspond."
+
+msgid "Hay más titulares: afina la búsqueda."
+msgstr "Il y a d'autres titulaires : affinez la recherche."
+
+msgid "Puedes seguir haciendo fotos."
+msgstr "Vous pouvez continuer à prendre des photos."
+
+msgid "Recibidas (compras y gastos)"
+msgstr "Reçues (achats et frais)"
+
+msgid "Emitidas (ventas)"
+msgstr "Émises (ventes)"
+
+msgid "Hacer foto"
+msgstr "Prendre une photo"
+
+msgid "Elegir de la galería o PDF"
+msgstr "Choisir dans la galerie ou un PDF"
+
+msgid "Hasta %(n)s archivos de 8 MB cada vez. Las fotos se reducen antes de subirlas."
+msgstr "Jusqu'à %(n)s fichiers de 8 Mo à la fois. Les photos sont réduites avant l'envoi."
+
+msgid "Últimas subidas"
+msgstr "Derniers envois"
+
+msgid "recibida"
+msgstr "reçue"
+
+msgid "emitida"
+msgstr "émise"
+
+msgid "por leer"
+msgstr "à lire"
+
+msgid "no se pudo leer"
+msgstr "illisible"
+
+msgid "leída"
+msgstr "lue"
+
+msgid "Ver en Contabilidad"
+msgstr "Voir dans Comptabilité"
+
+msgid "%(n)s factura subida. Queda por leer."
+msgid_plural "%(n)s facturas subidas. Quedan por leer."
+msgstr[0] "%(n)s facture téléversée. Elle reste à lire."
+msgstr[1] "%(n)s factures téléversées. Elles restent à lire."
+
+msgid "Cambiar de titular"
+msgstr "Changer de titulaire"

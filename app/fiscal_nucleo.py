@@ -469,6 +469,17 @@ def repetir_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apun
     return {"creados": creados, "ya_existian": ya_existian, "futuros": futuros}
 
 
+def capturas_recientes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, limite: int = 8) -> list[dict]:
+    """Las últimas facturas subidas por el despacho (foto o PDF) de un titular, con su estado de lectura: `pendiente` (sin leer), `ia` (leída), `fallida` o `None` (ya escrita a mano)."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        return [dict(f) for f in conn.execute("SELECT id, tipo, estado, lectura, creado_en, numero FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND origen = 'despacho' "
+                                              "AND documento_id IS NOT NULL ORDER BY id DESC LIMIT ?", (tenant_id, cliente_fiscal_id, limite)).fetchall()]
+    finally:
+        conn.close()
+
+
 def existe_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, libro: str, serie: str, numero: str, nif: str, excluir_id: int | None = None) -> dict | None:
     """El apunte vivo con ese libro, serie, número y contraparte (aviso de duplicado en el formulario)."""
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)

@@ -17917,3 +17917,68 @@ msgstr "Repeat"
 
 msgid "Apuntes mensuales creados: %(n)s. Ya existían: %(ya)s. Sin crear por tener fecha futura: %(f)s."
 msgstr "Monthly entries created: %(n)s. Already existed: %(ya)s. Not created because of a future date: %(f)s."
+
+msgid "Captura desde el móvil"
+msgstr "Capture from your phone"
+
+msgid "Elige el titular y haz las fotos: las facturas van directas a su carpeta, por leer."
+msgstr "Choose the holder and take the photos: the invoices go straight to their folder, unread."
+
+msgid "Titulares"
+msgstr "Holders"
+
+msgid "El último"
+msgstr "The last one"
+
+msgid "Ningún titular coincide."
+msgstr "No holder matches."
+
+msgid "Hay más titulares: afina la búsqueda."
+msgstr "There are more holders: narrow the search."
+
+msgid "Puedes seguir haciendo fotos."
+msgstr "You can keep taking photos."
+
+msgid "Recibidas (compras y gastos)"
+msgstr "Received (purchases and expenses)"
+
+msgid "Emitidas (ventas)"
+msgstr "Issued (sales)"
+
+msgid "Hacer foto"
+msgstr "Take photo"
+
+msgid "Elegir de la galería o PDF"
+msgstr "Choose from gallery or PDF"
+
+msgid "Hasta %(n)s archivos de 8 MB cada vez. Las fotos se reducen antes de subirlas."
+msgstr "Up to %(n)s files of 8 MB each time. Photos are reduced before uploading."
+
+msgid "Últimas subidas"
+msgstr "Latest uploads"
+
+msgid "recibida"
+msgstr "received"
+
+msgid "emitida"
+msgstr "issued"
+
+msgid "por leer"
+msgstr "to read"
+
+msgid "no se pudo leer"
+msgstr "could not be read"
+
+msgid "leída"
+msgstr "read"
+
+msgid "Ver en Contabilidad"
+msgstr "View in Accounting"
+
+msgid "%(n)s factura subida. Queda por leer."
+msgid_plural "%(n)s facturas subidas. Quedan por leer."
+msgstr[0] "%(n)s invoice uploaded. It is waiting to be read."
+msgstr[1] "%(n)s invoices uploaded. They are waiting to be read."
+
+msgid "Cambiar de titular"
+msgstr "Change holder"
