@@ -18220,3 +18220,18 @@ msgstr "Enregistrer le justificatif"
 
 msgid "Esta declaración está presentada sin el número de justificante de 13 cifras; hace falta para poder rectificarla."
 msgstr "Cette déclaration a été déposée sans le numéro de justificatif à 13 chiffres ; il est nécessaire pour la rectifier."
+
+msgid "IBAN del titular"
+msgstr "IBAN du titulaire"
+
+msgid "Guardar el IBAN"
+msgstr "Enregistrer l'IBAN"
+
+msgid "La declaración sale a devolver: el fichero lleva la cuenta en la que se pide la devolución."
+msgstr "La déclaration est à rembourser : le fichier porte le compte sur lequel le remboursement est demandé."
+
+msgid "Esta rectificativa lleva la casilla 111: el diseño oficial exige los datos de la cuenta bancaria aunque no se pida devolución."
+msgstr "Cette déclaration rectificative comporte la case 111 : le format officiel exige les coordonnées bancaires même sans demande de remboursement."
+
+msgid "Cuentas españolas y de la zona SEPA."
+msgstr "Comptes espagnols et de la zone SEPA."

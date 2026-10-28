@@ -10,7 +10,7 @@ from app.fiscal_modelos import exportador_303 as ex
 from app.fiscal_modelos import motor_303 as m
 from app.fiscal_modelos.apuntes import Apunte
 from app.fiscal_modelos.disenos_oficiales import indice_casillas
-from tests.escenarios_303 import ESCENARIOS, compra, venta
+from tests.escenarios_303 import ESCENARIOS, ESCENARIOS_ESPECIALES, compra, venta
 
 ORACULO = Path(__file__).resolve().parent / "fixtures" / "aeat" / "oraculo_libros"
 DISENO = json.loads(ex.DISENO_303_2026.read_text(encoding="utf-8"))
@@ -27,7 +27,8 @@ def _grabados():
 
 
 def test_todos_los_escenarios_tienen_su_resultado_de_la_aeat_grabado():
-    assert set(ESCENARIOS) <= set(_grabados()), f"faltan por grabar: {sorted(set(ESCENARIOS) - set(_grabados()))} (scripts/fiscal/grabar_oraculo.py)"
+    faltan = sorted((set(ESCENARIOS) | set(ESCENARIOS_ESPECIALES)) - set(_grabados()))
+    assert not faltan, f"faltan por grabar: {faltan} (scripts/fiscal/grabar_oraculo.py)"
 
 
 @pytest.mark.parametrize("nombre", sorted(ESCENARIOS))
@@ -42,6 +43,18 @@ def test_el_motor_da_las_mismas_casillas_que_la_aeat(nombre):
     mio, aeat = _sin_porcentajes(r.casillas), _sin_porcentajes(esperado["casillas"])
     # el motor también calcula el 87 y el 110 (compensación), que el libro no trae: se comparan solo las que la AEAT calcula
     mio = {k: v for k, v in mio.items() if k in aeat or k not in ("78", "87", "110")}
+    assert mio == aeat, f"{nombre}: diferencias {sorted(set(mio.items()) ^ set(aeat.items()))}"
+
+
+@pytest.mark.parametrize("nombre", sorted(ESCENARIOS_ESPECIALES))
+def test_recargo_y_criterio_de_caja_dan_las_mismas_casillas_que_la_aeat(nombre):
+    """Recargo de equivalencia y criterio de caja (clave 07), con los cobros y pagos como líneas propias del libro: la AEAT calcula las casillas y el motor debe coincidir."""
+    apuntes, ejercicio, periodo, kwargs, _respuestas = ESCENARIOS_ESPECIALES[nombre]
+    esperado = json.loads((ORACULO / f"{nombre}.json").read_text())
+    r = m.calcular(apuntes, ejercicio=ejercicio, periodo=periodo, **kwargs)
+    assert r.calculable, r.bloqueos
+    aeat = _sin_porcentajes(esperado["casillas"])
+    mio = {k: v for k, v in _sin_porcentajes(r.casillas).items() if k in aeat or k not in ("62", "63", "74", "75", "78", "87", "110")}      # 62, 63, 74 y 75 son informativas: la AEAT no las calcula desde el libro
     assert mio == aeat, f"{nombre}: diferencias {sorted(set(mio.items()) ^ set(aeat.items()))}"
 
 

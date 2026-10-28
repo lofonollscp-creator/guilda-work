@@ -27,12 +27,12 @@ def test_pantalla_pagina_y_conserva_los_filtros(cliente):
     for i in range(VENCIMIENTOS_POR_PAGINA + 20):
         db.crear_vencimiento_fiscal(tenant, cid, f"M{i:03d}", "1T", (base + timedelta(days=i)).isoformat())
     p1 = cliente.get("/fiscal/vencimientos?estado=pendiente").get_data(as_text=True)
-    assert p1.count('class="log-item vencimiento-fiscal-item') == VENCIMIENTOS_POR_PAGINA and "Página 1" in p1
+    assert p1.count('<li class="fiscal-fila vencimiento-fiscal-item') == VENCIMIENTOS_POR_PAGINA and "Página 1" in p1
     assert "M000" in p1 and "M099" in p1 and "M100" not in p1 and "pagina=2" in p1 and "estado=pendiente" in p1.split("pagina=2")[0][-200:]
     p2 = cliente.get("/fiscal/vencimientos?estado=pendiente&pagina=2").get_data(as_text=True)
-    assert p2.count('class="log-item vencimiento-fiscal-item') == 20 and "M100" in p2 and "M119" in p2 and "pagina=1" in p2 and "Página 2" in p2
+    assert p2.count('<li class="fiscal-fila vencimiento-fiscal-item') == 20 and "M100" in p2 and "M119" in p2 and "pagina=1" in p2 and "Página 2" in p2
     assert "pagina=3" not in p2
     assert cliente.get("/fiscal/vencimientos?pagina=basura").status_code == 200
     assert cliente.get("/fiscal/vencimientos?pagina=99").status_code == 200                   # fuera de rango: página vacía, no un error
     corto = cliente.get(f"/fiscal/vencimientos?cliente_id={cid}&desde=2026-12-01&hasta=2026-12-03").get_data(as_text=True)
-    assert corto.count('class="log-item vencimiento-fiscal-item') == 3 and "Anterior</a>" not in corto and "icono-arrow-left" not in corto
+    assert corto.count('<li class="fiscal-fila vencimiento-fiscal-item') == 3 and "Anterior</a>" not in corto and "icono-arrow-left" not in corto

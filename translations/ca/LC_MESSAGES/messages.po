@@ -18144,3 +18144,18 @@ msgstr "Anotar el justificant"
 
 msgid "Esta declaración está presentada sin el número de justificante de 13 cifras; hace falta para poder rectificarla."
 msgstr "Aquesta declaració està presentada sense el número de justificant de 13 xifres; cal per poder rectificar-la."
+
+msgid "IBAN del titular"
+msgstr "IBAN del titular"
+
+msgid "Guardar el IBAN"
+msgstr "Desar l'IBAN"
+
+msgid "La declaración sale a devolver: el fichero lleva la cuenta en la que se pide la devolución."
+msgstr "La declaració surt a retornar: el fitxer porta el compte en què es demana la devolució."
+
+msgid "Esta rectificativa lleva la casilla 111: el diseño oficial exige los datos de la cuenta bancaria aunque no se pida devolución."
+msgstr "Aquesta rectificativa porta la casella 111: el disseny oficial exigeix les dades del compte bancari encara que no es demani devolució."
+
+msgid "Cuentas españolas y de la zona SEPA."
+msgstr "Comptes espanyols i de la zona SEPA."

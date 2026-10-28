@@ -37,6 +37,12 @@
     {% if d.estado in ('borrador', 'revisada', 'exportada') %}<form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='anular') }}"><button class="btn btn-ghost" type="submit" data-confirmar-clic="{{ _('¿Anular esta declaración? Quedará en el historial como anulada y podrás calcular el periodo de nuevo.') }}">{{ _('Anular') }}</button></form>{% endif %}
   </div>
   {% endif %}
+  {% if puede_aprobar and d.estado in ('borrador', 'revisada') and (necesita_iban or d.iban) %}
+  <form method="post" action="{{ url_for('guilda_fiscal.declaracion_accion', declaracion_id=d.id, accion='iban') }}" class="ds-fila ds-envolver">
+    <label>{{ _('IBAN del titular') }} <input type="text" name="iban" maxlength="40" autocomplete="off" value="{{ d.iban or iban_propuesto or '' }}" placeholder="ES00 0000 0000 0000 0000 0000" {% if necesita_iban %}required{% endif %}></label>
+    <button class="btn btn-ghost" type="submit">{{ _('Guardar el IBAN') }}</button></form>
+  <p class="muted">{% if d.tipo_declaracion == 'D' %}{{ _('La declaración sale a devolver: el fichero lleva la cuenta en la que se pide la devolución.') }}{% else %}{{ _('Esta rectificativa lleva la casilla 111: el diseño oficial exige los datos de la cuenta bancaria aunque no se pida devolución.') }}{% endif %} {{ _('Cuentas españolas y de la zona SEPA.') }}</p>
+  {% endif %}
   {% if d.estado == 'presentada' and not d.rectifica_a_id %}
     {% if rectificativa %}<p>{{ _('Este 303 tiene una rectificativa en curso:') }} <a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=rectificativa.id) }}">{{ _('abrir la rectificativa') }}</a></p>
     {% elif puede_aprobar %}

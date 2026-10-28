@@ -672,3 +672,31 @@ def test_anotar_la_presentacion_con_justificante_y_csv_desde_la_web(cliente):
     assert cliente.post(f"/guilda-fiscal/declaracion/{did}/justificante", data={"justificante": "3030000000123"}).status_code == 302
     pagina = cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
     assert "justificante 3030000000123" in pagina and "sin el número de justificante" not in pagina and 'value="3030000000123"' in pagina        # el formulario de rectificar ya lo trae
+
+
+def test_el_iban_de_una_rectificativa_con_casilla_111_se_anota_desde_la_web(cliente):
+    uid, t, c = _web(cliente, email="iban@ejemplo.com")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
+                                                           "periodicidad": "trimestral"}).status_code == 302
+    venta = {"libro": "E", "tipo_factura": "F1", "clave": "01", "numero": "F-1", "fecha_expedicion": "2026-05-10", "fecha_recepcion": "2026-05-10", "base": "100,00", "tipo_iva": "21",
+             "contraparte_nif": "B11111111", "contraparte_nombre": "Cliente SL"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=venta).status_code == 302
+    did = int(cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "2T"}).headers["Location"].rsplit("/", 1)[1])
+    pagina = cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
+    assert 'name="iban"' not in pagina                                         # un resultado a ingresar no pide cuenta
+    for accion in ("revisar", "exportar"):
+        assert cliente.post(f"/guilda-fiscal/declaracion/{did}/{accion}").status_code == 302
+    assert cliente.post(f"/guilda-fiscal/declaracion/{did}/presentada", data={"justificante": "3030000000123"}).status_code == 302
+    compra = {**venta, "libro": "R", "numero": "P-1", "base": "400,00", "contraparte_nif": "B22222222", "contraparte_nombre": "Proveedor SL"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=compra).status_code == 302
+    nuevo = int(cliente.post(f"/guilda-fiscal/declaracion/{did}/rectificar", data={"justificante": "3030000000123"}).headers["Location"].rsplit("/", 1)[1])
+    pagina = cliente.get(f"/guilda-fiscal/declaracion/{nuevo}").get_data(as_text=True)
+    assert 'name="iban"' in pagina and "casilla 111" in pagina
+    assert cliente.post(f"/guilda-fiscal/declaracion/{nuevo}/revisar").status_code == 302
+    # sin IBAN no se genera el fichero y se explica; con uno mal copiado, tampoco se guarda
+    assert "necesita el IBAN" in cliente.post(f"/guilda-fiscal/declaracion/{nuevo}/exportar", follow_redirects=True).get_data(as_text=True)
+    assert "dígitos de control" in cliente.post(f"/guilda-fiscal/declaracion/{nuevo}/iban", data={"iban": "ES9121000418450200051333"}, follow_redirects=True).get_data(as_text=True)
+    assert cliente.post(f"/guilda-fiscal/declaracion/{nuevo}/iban", data={"iban": "ES91 2100 0418 4502 0005 1332"}).status_code == 302
+    assert "ES9121000418450200051332" in cliente.get(f"/guilda-fiscal/declaracion/{nuevo}").get_data(as_text=True)
+    assert cliente.post(f"/guilda-fiscal/declaracion/{nuevo}/exportar").status_code == 302
+    assert cliente.get(f"/guilda-fiscal/declaracion/{nuevo}/descargar/303").status_code == 200

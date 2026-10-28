@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from flask_babel import lazy_gettext as _l  # noqa: F401  (los textos de pantalla se traducen en las rutas)
 
 from . import acceso, auditoria, db, fiscal_perfiles
-from .fiscal_modelos import exportador_303, fichero_303, fichero_390, fichero_retenciones, libros_lsi, motor_130, motor_303, motor_390, motor_retenciones, validacion_apuntes
+from .fiscal_modelos import exportador_303, fichero_303, fichero_390, fichero_retenciones, iban as iban_mod, libros_lsi, motor_130, motor_303, motor_390, motor_retenciones, validacion_apuntes
 from .fiscal_modelos.apuntes import RECTIFICATIVAS as RECTIFICATIVAS_APUNTE, Apunte
 motor_303_RECTIFICATIVAS = RECTIFICATIVAS_APUNTE
 from .fiscal_perfiles import ErrorFiscal
@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS fiscal_declaraciones (
     version_diseno TEXT NOT NULL,
     rectifica_a_id INTEGER REFERENCES fiscal_declaraciones(id),
     justificante_anterior TEXT,
+    iban TEXT,
     bloqueos TEXT,
     revisada_por INTEGER REFERENCES usuarios(id),
     revisada_en TEXT,
@@ -183,6 +184,7 @@ def crear_esquema(conn) -> None:
         db._asegurar_columna(conn, "fiscal_apuntes", columna, "INTEGER NOT NULL DEFAULT 0")                  # bases anteriores a la migración 007
     db._asegurar_columna(conn, "fiscal_apuntes", "cobros_json", "TEXT")                                       # bases anteriores a la migración 009
     db._asegurar_columna(conn, "fiscal_declaraciones", "justificante_anterior", "TEXT")      # bases anteriores a la migración 006
+    db._asegurar_columna(conn, "fiscal_declaraciones", "iban", "TEXT")                       # bases anteriores a la migración 010
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
@@ -418,7 +420,7 @@ def siguiente_numero(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ej
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
     conn = db.get_connection()
     try:
-        f = conn.execute("SELECT serie, numero FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND libro = 'E' AND anulado_en IS NULL AND tipo_factura NOT LIKE 'R%' "
+        f = conn.execute("SELECT serie, numero FROM fiscal_apuntes WHERE tenant_id = ? AND cliente_fiscal_id = ? AND libro = 'E' AND anulado_en IS NULL AND SUBSTR(tipo_factura, 1, 1) <> 'R' "
                          "ORDER BY fecha_expedicion DESC, id DESC LIMIT 1", (tenant_id, cliente_fiscal_id)).fetchone()
     finally:
         conn.close()
@@ -1372,10 +1374,14 @@ def exportar_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) -
     if exonerado and datos["perfil"].get("prorrata_centesimas") is not None:
         raise ErrorFiscal("El titular está exonerado del 390 y aplica prorrata: el último periodo lleva la página de prorrata (CNAE, importe y porcentaje por actividad) y todavía no se genera.", "no_soportado")
     problemas = validacion_apuntes.validar(apuntes, hoy=date.today(), nif_titular=datos["titular"]["nif"] or "")
+    if necesita_iban(d) and not d.get("iban"):
+        raise ErrorFiscal("Esta declaración necesita el IBAN del titular (" + ("devolución" if d["tipo_declaracion"] == "D" else "rectificativa con casilla 111: el diseño oficial exige los datos de la cuenta")
+                          + "): anótalo en la declaración antes de generar el fichero.", "iban_necesario")
     resultado = motor_303.Resultado303(d["ejercicio"], d["periodo"], casillas=dict(d["casillas"]), tipo_declaracion=d["tipo_declaracion"])
     try:
         fichero = fichero_303.generar(resultado, nif=(datos["titular"]["nif"] or "").upper(), nombre=datos["titular"]["nombre"], exonerado_390=exonerado, volumen=volumen,
-                                      justificante_anterior=d["justificante_anterior"] if d["rectifica_a_id"] else None, criterio_caja=bool(datos["perfil"].get("criterio_caja")))
+                                      justificante_anterior=d["justificante_anterior"] if d["rectifica_a_id"] else None, criterio_caja=bool(datos["perfil"].get("criterio_caja")),
+                                      iban=d.get("iban") or None)
     except fichero_303.FicheroNoGenerable as e:
         raise ErrorFiscal(str(e), "no_soportado")
     libro = libros_lsi.escribir_xlsx(apuntes, ejercicio=d["ejercicio"], periodo=d["periodo"])
@@ -1418,6 +1424,45 @@ def descargar_artefacto(tenant_id: int, usuario_id: int, declaracion_id: int, ti
     return (bytes(contenido) if not isinstance(contenido, bytes) else contenido), nombre
 
 
+def necesita_iban(d: dict) -> bool:
+    """Una declaración a devolver lleva la cuenta de la devolución; una rectificativa con casilla 111 también (Nota 3 de la página DID del diseño oficial), aunque no sea a devolver."""
+    return d["tipo_declaracion"] == "D" or bool(d["casillas"].get("111"))
+
+
+def guardar_iban(tenant_id: int, usuario_id: int, declaracion_id: int, iban: str) -> dict:
+    """Anota (o quita, con texto vacío) el IBAN de la declaración mientras es borrador o está revisada: el fichero ya generado no cambia."""
+    _exigir_aprobador(tenant_id, usuario_id)
+    d = obtener_declaracion(tenant_id, usuario_id, declaracion_id)
+    if d["estado"] not in ("borrador", "revisada"):
+        raise ErrorFiscal("El IBAN se anota antes de generar el fichero: esta declaración ya está " + d["estado"] + ".", "estado_invalido")
+    try:
+        limpio = iban_mod.validar(iban) if (iban or "").strip() else None
+    except iban_mod.IbanNoValido as e:
+        raise ErrorFiscal(str(e), "invalido") from None
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE fiscal_declaraciones SET iban = ? WHERE id = ? AND tenant_id = ?", (limpio, declaracion_id, tenant_id))
+        auditoria.registrar(tenant_id, usuario_id, "fiscal.declaracion.iban", "cliente_fiscal", d["cliente_fiscal_id"], {"declaracion_id": declaracion_id, "iban": ("…" + limpio[-4:]) if limpio else None}, conn=conn)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return obtener_declaracion(tenant_id, usuario_id, declaracion_id)
+
+
+def iban_reciente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> str | None:
+    """El último IBAN anotado en una declaración de este titular, para proponerlo en la siguiente."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT iban FROM fiscal_declaraciones WHERE tenant_id = ? AND cliente_fiscal_id = ? AND iban IS NOT NULL AND iban <> '' ORDER BY id DESC LIMIT 1", (tenant_id, cliente_fiscal_id)).fetchone()
+    finally:
+        conn.close()
+    return f["iban"] if f else None
+
+
 def justificante_de(declaracion: dict) -> str | None:
     """El número de justificante (13 cifras) anotado en una declaración presentada, si lo hay."""
     m = re.search(r"(?<!\d)\d{13}(?!\d)", declaracion.get("referencia_presentacion") or "")
@@ -1434,7 +1479,7 @@ def _referencia_de_presentacion(tenant_id: int, declaracion_id: int, referencia:
             raise ErrorFiscal("El número de justificante tiene 13 cifras: es el que da la AEAT al presentar.")
         conn = db.get_connection()
         try:
-            otra = conn.execute("SELECT id FROM fiscal_declaraciones WHERE tenant_id = ? AND id <> ? AND referencia_presentacion LIKE ?", (tenant_id, declaracion_id, f"%{justificante}%")).fetchone()
+            otra = conn.execute("SELECT id FROM fiscal_declaraciones WHERE tenant_id = ? AND id <> ? AND LOWER(referencia_presentacion) LIKE LOWER(?)", (tenant_id, declaracion_id, f"%{justificante}%")).fetchone()
         finally:
             conn.close()
         if otra:
@@ -1600,13 +1645,15 @@ def contadores_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int 
     Solo las del ejercicio que se declara y posteriores; las marcadas como «solo contabilidad» no cuentan."""
     visibles = acceso.clientes_visibles(tenant_id, usuario_id)
     desde = f"{periodo_por_defecto(date.today())[0]}-01-01"
-    sql = ("SELECT f.cliente_fiscal_id, f.estado, count(*) AS n FROM facturas_contables f LEFT JOIN fiscal_apuntes a ON a.tenant_id = f.tenant_id AND a.factura_id = f.id AND a.anulado_en IS NULL "
-           "WHERE f.tenant_id = ? AND f.incluir_en_fiscal = 1 AND f.estado IN ('pendiente', 'revisada', 'exportada') AND f.fecha >= ? AND a.id IS NULL")
     args: list = [tenant_id, desde]
-    if cliente_fiscal_id is not None:
-        sql += " AND f.cliente_fiscal_id = ?"
+    if cliente_fiscal_id is None:
+        sql = ("SELECT f.cliente_fiscal_id, f.estado, count(*) AS n FROM facturas_contables f LEFT JOIN fiscal_apuntes a ON a.tenant_id = f.tenant_id AND a.factura_id = f.id AND a.anulado_en IS NULL "
+               "WHERE f.tenant_id = ? AND f.incluir_en_fiscal = 1 AND f.estado IN ('pendiente', 'revisada', 'exportada') AND f.fecha >= ? AND a.id IS NULL GROUP BY f.cliente_fiscal_id, f.estado")
+    else:
+        sql = ("SELECT f.cliente_fiscal_id, f.estado, count(*) AS n FROM facturas_contables f LEFT JOIN fiscal_apuntes a ON a.tenant_id = f.tenant_id AND a.factura_id = f.id AND a.anulado_en IS NULL "
+               "WHERE f.tenant_id = ? AND f.incluir_en_fiscal = 1 AND f.estado IN ('pendiente', 'revisada', 'exportada') AND f.fecha >= ? AND a.id IS NULL AND f.cliente_fiscal_id = ? "
+               "GROUP BY f.cliente_fiscal_id, f.estado")
         args.append(cliente_fiscal_id)
-    sql += " GROUP BY f.cliente_fiscal_id, f.estado"
     conn = db.get_connection()
     try:
         filas = conn.execute(sql, tuple(args)).fetchall()

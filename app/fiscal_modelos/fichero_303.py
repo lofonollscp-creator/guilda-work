@@ -6,6 +6,7 @@ import json
 from decimal import Decimal
 
 from . import exportador_303 as ex
+from . import iban as iban_mod
 from .disenos_oficiales import indice_casillas
 from .motor_303 import Resultado303
 
@@ -20,6 +21,8 @@ VOLUMEN_PAGINA_4 = {24: "99", 26: "103", 27: "104", 28: "105", 29: "110", 30: "1
 TERRITORIO_COMUN = 23                                                      # [107], 100,00 %
 # Página 3, bloque «Rectificativa»: nº de campo -> qué lleva. El motivo es siempre «Rectificaciones (excepto discrepancia de criterio administrativo)», el único que se genera.
 RECTIFICATIVA_MARCA, RECTIFICATIVA_JUSTIFICANTE, RECTIFICATIVA_MOTIVO = 31, 32, 35
+# Página DID («Domiciliación/Devolución»): nº de campo del IBAN y de la marca SEPA (1 España · 2 SEPA)
+PAGINA_CUENTA, CUENTA_IBAN, CUENTA_MARCA_SEPA = "DP303DID", 6, 11
 
 
 def pagina_4(volumen) -> dict:
@@ -30,9 +33,9 @@ def pagina_4(volumen) -> dict:
 
 
 def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, exonerado_390: bool = False, volumen=None, justificante_anterior: str | None = None,
-                  criterio_caja: bool = False) -> dict[str, dict]:
+                  criterio_caja: bool = False, iban: str | None = None) -> dict[str, dict]:
     """`{hoja: {casilla|nº de campo: valor}}` listo para `exportador_303.construir`. En el último periodo (4T/12): quien NO está exonerado del 390 no lleva nada más; quien lo está necesita el volumen
-    de operaciones del año (`volumen`) y lleva la página 4. Con `justificante_anterior` (13 cifras) es una autoliquidación rectificativa y lleva el bloque «Rectificativa» de la página 3."""
+    de operaciones del año (`volumen`) y lleva la página 4. Con `justificante_anterior` (13 cifras) es una autoliquidación rectificativa y lleva el bloque «Rectificativa» de la página 3. Con `iban`, la página DID lleva la cuenta (devolución, o rectificativa con casilla 111)."""
     if not r.calculable:
         raise FicheroNoGenerable("El cálculo está bloqueado: " + " · ".join(r.bloqueos[:3]))
     ultimo = r.periodo in ex.ULTIMOS
@@ -57,14 +60,20 @@ def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_
             paginas.setdefault(campo["hoja"], {})[casilla] = Decimal(valor) / 100
         else:
             paginas.setdefault(campo["hoja"], {})[casilla] = Decimal(valor) / 100
+    if iban:
+        try:
+            limpio = iban_mod.validar(iban)
+        except iban_mod.IbanNoValido as e:
+            raise FicheroNoGenerable(f"IBAN no válido: {e}") from None
+        paginas[PAGINA_CUENTA] = {CUENTA_IBAN: limpio, CUENTA_MARCA_SEPA: iban_mod.marca_sepa(limpio)}
     if justificante_anterior is not None:
         paginas.setdefault(indice["71"][0]["hoja"], {}).update({RECTIFICATIVA_MARCA: "X", RECTIFICATIVA_JUSTIFICANTE: justificante_anterior, RECTIFICATIVA_MOTIVO: "X"})
     return paginas
 
 
 def generar(r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, diseno: dict | None = None, exonerado_390: bool = False, volumen=None,
-            justificante_anterior: str | None = None, criterio_caja: bool = False) -> bytes:
+            justificante_anterior: str | None = None, criterio_caja: bool = False, iban: str | None = None) -> bytes:
     diseno = diseno or json.loads(ex.DISENO_303_2026.read_text(encoding="utf-8"))
     return ex.construir(diseno, ejercicio=r.ejercicio, periodo=r.periodo, paginas=paginas_desde(diseno, r, nif=nif, nombre=nombre, tipo_declaracion=tipo_declaracion, exonerado_390=exonerado_390, volumen=volumen,
                                                                                   justificante_anterior=justificante_anterior,
-                                                                                  criterio_caja=criterio_caja))
+                                                                                  criterio_caja=criterio_caja, iban=iban))

@@ -24,6 +24,10 @@ CASILLAS_RECARGO = {(400, 50): ("168", "170"), (1000, 140): ("19", "21"), (2100,
 CUOTAS_DEDUCIBLES = ("29", "31", "33", "35", "37", "39", "41", "44")                   # casilla 45 (42 y 43 no se calculan; la 44 es la regularización de la prorrata en el último periodo)
 
 
+ULTIMOS_PERIODOS = ("12", "4T")
+BLOQUEO_DEVOLUCION = ("No se permite solicitar la devolución en el periodo {periodo}: la AEAT solo la admite en el último periodo (4T o 12; error 30260 del simulador). Elige compensar el resultado en los periodos siguientes.")
+
+
 class ErrorDeCalculo(ValueError):
     pass
 
@@ -361,6 +365,8 @@ def calcular(apuntes: list[Apunte], *, ejercicio: int, periodo: str, cuotas_a_co
         if destino_negativo not in ("C", "D"):
             raise ErrorDeCalculo("el destino de un resultado negativo es «C» (compensar) o «D» (devolución)")
         r.tipo_declaracion = destino_negativo
+        if destino_negativo == "D" and r.periodo not in ULTIMOS_PERIODOS:
+            r.bloqueos.append(BLOQUEO_DEVOLUCION.format(periodo=r.periodo))
     return r
 
 
@@ -388,3 +394,5 @@ def aplicar_rectificativa(r: Resultado303, anterior: dict[str, int], *, devoluci
         if destino_negativo not in ("C", "D"):
             raise ErrorDeCalculo("el destino de un resultado negativo es «C» (compensar) o «D» (devolución)")
         r.tipo_declaracion = destino_negativo
+        if destino_negativo == "D" and r.periodo not in ULTIMOS_PERIODOS:
+            r.bloqueos.append(BLOQUEO_DEVOLUCION.format(periodo=r.periodo))

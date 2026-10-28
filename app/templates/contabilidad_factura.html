@@ -81,7 +81,7 @@
   <p class="muted">{{ _('La IA propone y tú validas: esto solo te ahorra buscar. Cada cita se contrasta con el valor que se le atribuye, pero los recuadros sobre la imagen son aproximados. Nada se da por bueno hasta que marques la factura como revisada.') }}</p>
   {% if not evidencia or not evidencia.campos %}<p class="muted">{{ _('Esta lectura no trae evidencias (el modelo no las dio): comprueba cada dato con la factura delante.') }}</p>{% endif %}
   <div class="ds-fila ds-envolver" data-evidencias>
-    {% if imagen_en_linea %}<div data-evidencia-imagen><img src="{{ url_for('contabilidad.imagen', factura_id=f.id) }}" alt="{{ _('Factura adjunta') }}" style="max-width:100%;height:auto"><div data-evidencia-caja hidden></div></div>{% endif %}
+    {% if imagen_en_linea %}<div data-evidencia-imagen><img src="{{ url_for('contabilidad.imagen', factura_id=f.id) }}" alt="{{ _('Factura adjunta') }}"><div data-evidencia-caja hidden></div></div>{% endif %}
     {% if evidencia and evidencia.campos %}<div class="table-wrap"><table class="historial-table">
       <thead><tr><th>{{ _('Dato') }}</th><th>{{ _('Valor leído') }}</th><th>{{ _('Lo que cita la factura') }}</th><th></th></tr></thead>
       <tbody>{% for campo, e in evidencia.campos.items() %}<tr>

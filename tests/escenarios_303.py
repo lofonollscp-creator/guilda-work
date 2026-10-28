@@ -50,3 +50,24 @@ ESCENARIOS = {
                                   compra(2500, numero="P-1")], 2026, "2T"),
     "alquiler_turistico_al_10": ([venta(45000, 1000, numero="1"), venta(30000, 1000, numero="2", fecha=d(2026, 6, 3)), compra(9000, numero="LIMP-1"), compra(12000, 1000, numero="SUM-1")], 2026, "2T"),
 }
+
+
+# --- Regímenes especiales: se calculan con kwargs del motor y el simulador necesita contestar a la identificación (criterio de caja, etc.).
+# nombre -> (apuntes, ejercicio, periodo, kwargs de motor_303.calcular, respuestas de «Identificación»)
+CAJA = {"acogido al régimen especial del criterio de Caja": "SI"}
+
+
+def _re(base, tipo, rec, **kw):
+    return venta(base, tipo, recargo_pct=rec, recargo_cuota=(base * rec + 5000) // 10000, **kw)
+
+
+ESCENARIOS_ESPECIALES = {
+    "recargo_21": ([_re(100000, 2100, 520), compra(20000)], 2026, "2T", {}, {}),
+    "recargo_varios_tipos": ([_re(10000, 400, 50), _re(20000, 1000, 140, numero="2"), _re(30000, 2100, 520, numero="3")], 2026, "2T", {}, {}),
+    "recargo_con_abono": ([_re(100000, 2100, 520), venta(-10000, 2100, numero="9", tipo_factura="R1", recargo_pct=520, recargo_cuota=-520)], 2026, "2T", {}, {}),
+    "caja_cobro_total_en_el_periodo": ([venta(100000, clave="07", cobros=((d(2026, 5, 20), 121000),)), compra(5000)], 2026, "2T", {"criterio_caja": True}, CAJA),
+    "caja_cobro_parcial": ([venta(100000, clave="07", cobros=((d(2026, 5, 20), 30000), (d(2026, 8, 1), 50000)))], 2026, "2T", {"criterio_caja": True}, CAJA),
+    "caja_cobro_en_periodo_posterior": ([venta(100000, clave="07", fecha=d(2026, 2, 10), cobros=((d(2026, 5, 20), 60500),))], 2026, "2T", {"criterio_caja": True}, CAJA),
+    "caja_sin_cobros": ([venta(100000, clave="07"), venta(10000, numero="2")], 2026, "2T", {"criterio_caja": True}, CAJA),
+    "caja_compra_pagada": ([venta(100000), compra(50000, clave="07", cobros=((d(2026, 6, 1), 30250),))], 2026, "2T", {"criterio_caja": True}, CAJA),
+}

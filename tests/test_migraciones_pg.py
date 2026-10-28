@@ -13,8 +13,8 @@ psycopg = pytest.importorskip("psycopg")
 @pytest.fixture(params=["multitenant", "citus"])
 def entorno(request, tmp_path, monkeypatch):
     from app.bd import postgres as pg
+    monkeypatch.setattr(migraciones, "DIRECTORIO_MIGRACIONES", tmp_path)                  # antes de crear la base: así nace en la versión base y no aplica las migraciones reales (otros tests las prueban)
     url, limpiar = pg_ayudas.crear_base_con_esquema(request.param)
-    monkeypatch.setattr(migraciones, "DIRECTORIO_MIGRACIONES", tmp_path)
     try:
         yield request.param, url, tmp_path, pg
     finally:

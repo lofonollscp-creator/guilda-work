@@ -20,14 +20,15 @@ DESTINO = RAIZ / "tests" / "fixtures" / "aeat" / "oraculo_libros"
 def main(argv=None) -> int:
     from app.fiscal_modelos import exportador_303 as ex
     from app.fiscal_modelos.libros_lsi import escribir_xlsx
-    from tests.escenarios_303 import ESCENARIOS
+    from tests.escenarios_303 import ESCENARIOS, ESCENARIOS_ESPECIALES
     import simulador_libros as sl
     args = [a for a in (argv or sys.argv[1:]) if not a.startswith("--")]
     forzar = "--forzar" in (argv or sys.argv[1:])
     diseno = json.loads(ex.DISENO_303_2026.read_text(encoding="utf-8"))
     DESTINO.mkdir(parents=True, exist_ok=True)
     fallos = 0
-    for nombre, (apuntes, ejercicio, periodo) in ESCENARIOS.items():
+    todos = {**{n: (a, e, p, {}, {}) for n, (a, e, p) in ESCENARIOS.items()}, **ESCENARIOS_ESPECIALES}
+    for nombre, (apuntes, ejercicio, periodo, _kw, respuestas) in todos.items():
         if args and nombre not in args:
             continue
         fichero = DESTINO / f"{nombre}.json"
@@ -37,7 +38,7 @@ def main(argv=None) -> int:
             libro = Path(tmp) / f"{nombre}.xlsx"
             libro.write_bytes(escribir_xlsx(apuntes, ejercicio=ejercicio, periodo=periodo))
             try:
-                r = sl.probar(libro, ejercicio=ejercicio, periodo=periodo, exportar_en=tmp)
+                r = sl.probar(libro, ejercicio=ejercicio, periodo=periodo, exportar_en=tmp, respuestas=respuestas)
             except Exception as e:                                                  # noqa: BLE001
                 print(f"{nombre}: no se pudo usar el simulador: {str(e)[:150]}")
                 fallos += 1

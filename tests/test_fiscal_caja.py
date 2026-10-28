@@ -106,20 +106,52 @@ def test_validacion_del_criterio_de_caja():
     assert "cobros_sin_caja" in [e.codigo for e in validacion_apuntes.validar_apunte(venta(100000, 2100, cobros=((D(2026, 5, 20), 100),)), hoy=HOY)]
 
 
-def test_el_libro_de_la_aeat_lleva_una_linea_por_cobro_y_se_lee_de_vuelta_en_una_sola_factura():
+def test_el_libro_de_la_aeat_lleva_la_factura_una_vez_y_una_linea_sin_importes_por_cobro_y_se_lee_de_vuelta_en_una_sola_factura():
     e = _venta([(D(2026, 5, 20), 30000), (D(2026, 8, 1), 91000)])
     r = compra(50000, 2100, clave="07", cobros=((D(2026, 6, 20), 60500),), fecha=D(2026, 5, 12))
     contenido = libros_lsi.escribir_xlsx([e, r, venta(5000, 2100, numero="9")], ejercicio=2026, periodo="3T")
     import io
     import openpyxl
     hojas = openpyxl.load_workbook(io.BytesIO(contenido))
-    assert hojas["EXPEDIDAS_INGRESOS"].max_row == 3 and hojas["RECIBIDAS_GASTOS"].max_row == 1                         # dos líneas para los dos cobros y una para la otra factura
-    assert hojas["EXPEDIDAS_INGRESOS"].cell(1, 18).value == "07" and hojas["EXPEDIDAS_INGRESOS"].cell(2, 28).value == 910.0 and hojas["EXPEDIDAS_INGRESOS"].cell(1, 29).value == "04"
+    ex, re_ = hojas["EXPEDIDAS_INGRESOS"], hojas["RECIBIDAS_GASTOS"]
+    assert ex.max_row == 4 and re_.max_row == 2                                         # la factura una vez, una línea por cobro o pago y la otra factura
+    assert ex.cell(1, 18).value == "07" and ex.cell(1, 22).value == 1000.0 and ex.cell(1, 23).value == 21.0 and ex.cell(1, 27).value is None
+    for fila, importe in ((2, 300.0), (3, 910.0)):                                      # la línea del cobro identifica la factura y NO lleva total, base, tipo ni cuota (el simulador de la AEAT las rechaza)
+        assert ex.cell(fila, 12).value == "1" and ex.cell(fila, 28).value == importe and ex.cell(fila, 29).value == "04"
+        assert all(ex.cell(fila, c).value is None for c in (21, 22, 23, 24))
+    assert ex.cell(2, 2).value == "2T" and ex.cell(3, 2).value == "3T"                  # cada línea, en el periodo del cobro
+    assert re_.cell(2, 34).value == 605.0 and all(re_.cell(2, c).value is None for c in (26, 27, 28, 29))
     leidos, ilegibles = libros_lsi.leer_xlsx(contenido)
     assert not ilegibles and len(leidos) == 3
     caja = next(a for a in leidos if a.libro == "E" and a.clave == "07")
     assert caja.cobros == ((D(2026, 5, 20), 30000), (D(2026, 8, 1), 91000))
     assert next(a for a in leidos if a.libro == "R").cobros == ((D(2026, 6, 20), 60500),)
+
+
+def test_un_cobro_sin_su_factura_en_el_libro_se_senala():
+    contenido = libros_lsi.escribir_xlsx([_venta([(D(2026, 5, 20), 30000)])], ejercicio=2026, periodo="2T")
+    import io
+    import openpyxl
+    libro = openpyxl.load_workbook(io.BytesIO(contenido))
+    libro["EXPEDIDAS_INGRESOS"].delete_rows(1)                                       # se quita la factura y queda el cobro suelto
+    salida = io.BytesIO(); libro.save(salida)
+    leidos, ilegibles = libros_lsi.leer_xlsx(salida.getvalue())
+    assert leidos == [] and ilegibles and "no está en el libro" in ilegibles[0]["motivo"]
+
+
+def test_un_libro_de_otro_programa_que_repite_la_factura_en_cada_cobro_tambien_se_une():
+    e = _venta([(D(2026, 5, 20), 30000), (D(2026, 8, 1), 91000)])
+    repetida = libros_lsi.escribir_xlsx([e], ejercicio=2026, periodo="3T")
+    import io
+    import openpyxl
+    libro = openpyxl.load_workbook(io.BytesIO(repetida))
+    ws = libro["EXPEDIDAS_INGRESOS"]
+    for fila, (f, i) in zip((2, 3), e.cobros):                                       # cada línea repite los importes de la factura, como lo escribíamos antes
+        for c, v in ((21, 121000 / 100), (22, 1000.0), (23, 21.0), (24, 210.0)):
+            ws.cell(fila, c).value = v
+    salida = io.BytesIO(); libro.save(salida)
+    leidos, ilegibles = libros_lsi.leer_xlsx(salida.getvalue())
+    assert not ilegibles and len(leidos) == 1 and len(leidos[0].cobros) == 2
 
 
 def _despacho(nombre="Despacho caja", **perfil):

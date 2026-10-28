@@ -37,8 +37,24 @@ def periodo_natural(a: Apunte, periodo_objetivo: str) -> str:
     return periodo_de(a.fecha_operacion or a.fecha_expedicion, mensual)
 
 
+def _entra(fecha, ejercicio: int, periodo: str) -> bool:
+    """¿Un cobro o pago de esa fecha cabe en el libro del ejercicio hasta el periodo de la autoliquidación? Los posteriores se anotarán cuando ocurran."""
+    mensual = periodo[-1] != "T"
+    natural = periodo_de(fecha, mensual)
+    return fecha.year == ejercicio and (int(natural) <= int(periodo) if mensual else int(natural[0]) <= int(periodo[0]))
+
+
+# Columnas (base 0) que la línea de un cobro o pago NO lleva: total, base, tipo y cuota (y recargo y deducible). El simulador de la AEAT las rechaza («incompatible rellenar el campo tipo de IVA con los
+# campos de cobro»; «si hay base imponible debe indicar la cuota»); la línea solo identifica la factura y aporta la fecha, el importe y el medio.
+CAMPOS_DE_IMPORTE = {EXPEDIDAS: (20, 21, 22, 23, 24, 25), RECIBIDAS: (25, 26, 27, 28, 29)}
+
+
+def _solo_cobro(f: dict[int, object], libro: str) -> dict[int, object]:
+    return {c: v for c, v in f.items() if c not in CAMPOS_DE_IMPORTE[libro]}
+
+
 def fila_expedida(a: Apunte, ejercicio: int, periodo: str, cobro=None) -> dict[int, object]:
-    """Columnas (base 0) del libro de expedidas. `cobro`: `(fecha, importe)` de la línea (criterio de caja: una línea por cobro)."""
+    """Columnas (base 0) del libro de expedidas. `cobro`: `(fecha, importe)` de la línea de un cobro (criterio de caja)."""
     f = {0: ejercicio, 1: periodo, 2: ACTIVIDAD[0], 3: ACTIVIDAD[1], 5: a.tipo_factura, 8: _fecha(a.fecha_expedicion), 9: _fecha(a.fecha_operacion), 10: a.serie or None, 11: a.numero,
          15: a.contraparte_nif or None, 16: a.contraparte_nombre, 17: a.clave, 18: a.calificacion or None, 19: a.exenta or None, 20: _euros(a.total_efectivo), 21: _euros(a.base)}
     if a.contraparte_nif_tipo:
@@ -54,7 +70,7 @@ def fila_expedida(a: Apunte, ejercicio: int, periodo: str, cobro=None) -> dict[i
 
 
 def fila_recibida(a: Apunte, ejercicio: int, periodo: str, pago=None) -> dict[int, object]:
-    """Columnas (base 0) del libro de recibidas. `pago`: `(fecha, importe)` de la línea (criterio de caja: una línea por pago)."""
+    """Columnas (base 0) del libro de recibidas. `pago`: `(fecha, importe)` de la línea de un pago (criterio de caja)."""
     f = {0: ejercicio, 1: periodo, 2: ACTIVIDAD[0], 3: ACTIVIDAD[1], 5: a.tipo_factura, 8: _fecha(a.fecha_expedicion), 9: _fecha(a.fecha_operacion), 10: f"{a.serie}{a.numero}",
          12: _fecha(a.fecha_recepcion or a.fecha_expedicion), 17: a.contraparte_nif or None, 18: a.contraparte_nombre, 19: a.clave, 20: "S" if a.bien_inversion else None,
          21: "S" if a.isp else None, 22: "S" if a.deducible_periodo_posterior else None, 25: _euros(a.total_efectivo), 26: _euros(a.base), 27: _pct(a.tipo_iva), 28: _euros(a.cuota),
@@ -83,9 +99,12 @@ def escribir_xlsx(apuntes: list[Apunte], *, ejercicio: int, periodo: str) -> byt
         for a in apuntes:
             if a.libro != libro:
                 continue
-            for cobro in (a.cobros if a.clave == "07" and a.cobros else (None,)):                 # criterio de caja: una línea por cobro o pago, repitiendo el resto
+            filas = [fila(a, ejercicio, periodo_natural(a, periodo))]
+            if a.clave == "07":                                                                     # criterio de caja: la factura va UNA vez; cada cobro o pago, en una línea propia del periodo en que se produce
+                filas += [_solo_cobro(fila(a, ejercicio, periodo_de(c[0], periodo[-1] != "T"), c), libro) for c in sorted(a.cobros) if _entra(c[0], ejercicio, periodo)]
+            for f in filas:
                 n += 1
-                for col, valor in fila(a, ejercicio, periodo_natural(a, periodo), cobro).items():
+                for col, valor in f.items():
                     if valor is None or valor == "":
                         continue
                     celda = ws.cell(n, col + 1)
@@ -151,6 +170,7 @@ def leer_xlsx(contenido: bytes) -> tuple[list[Apunte], list[dict]]:
     import openpyxl
     wb = openpyxl.load_workbook(io.BytesIO(contenido), data_only=True, read_only=True)
     apuntes: list[Apunte] = []
+    origen: list[tuple[str, int]] = []                                              # hoja y fila de cada apunte, para señalar un cobro sin factura
     ilegibles: list[dict] = []
     for nombre, libro in ((HOJAS[0], EXPEDIDAS), (HOJAS[1], RECIBIDAS)):
         if nombre not in wb.sheetnames:
@@ -162,6 +182,7 @@ def leer_xlsx(contenido: bytes) -> tuple[list[Apunte], list[dict]]:
             try:
                 if not isinstance(c[0], (int, float)) and not _s(c[0]).isdigit():
                     continue                                                    # cabecera o texto explicativo de la plantilla
+                origen.append((nombre, n))
                 if libro == EXPEDIDAS:
                     apuntes.append(Apunte(EXPEDIDAS, _s(c[5]), _f(c[8]), numero=_s(c[11]), serie=_s(c[10]), clave=_s(c[17]) or "01", base=_c(c[21]), tipo_iva=_c(c[22]), cuota=_c(c[23]),
                                           total=_c(c[20]) if c[20] not in (None, "") else None, fecha_operacion=_f(c[9]), contraparte_nombre=_s(c[16]), contraparte_nif=_s(c[15]),
@@ -175,23 +196,39 @@ def leer_xlsx(contenido: bytes) -> tuple[list[Apunte], list[dict]]:
                                           cuota_deducible=_c(c[29]) if c[29] not in (None, "") else None, deducible_periodo_posterior=_s(c[22]).upper() == "S", periodo_deduccion=ded,
                                           inmueble_situacion=_s(c[39]), inmueble_referencia=_s(c[40]), cobros=_cobro(c[32], c[33], c[34])))
             except (ValueError, TypeError, ArithmeticError) as e:
+                origen = origen[:len(apuntes)]
                 ilegibles.append({"hoja": nombre, "fila": n, "motivo": str(e)[:150]})
-    return _unir_cobros(apuntes), ilegibles
+    unidos, sueltos = _unir_cobros(apuntes)
+    ilegibles += [{"hoja": origen[i][0], "fila": origen[i][1], "motivo": "cobro o pago de una factura que no está en el libro"} for i in sueltos]
+    return unidos, ilegibles
 
 
-def _unir_cobros(apuntes: list[Apunte]) -> list[Apunte]:
-    """En el libro del criterio de caja una factura con varios cobros o pagos ocupa varias líneas con el resto de datos repetidos: se vuelve a una sola factura con todos sus cobros."""
+def _unir_cobros(apuntes: list[Apunte]) -> tuple[list[Apunte], list[int]]:
+    """En el libro del criterio de caja la factura va una vez y cada cobro o pago, en una línea propia SIN importes (formato de la AEAT); un libro de otro programa puede repetir además todos los datos de la
+    factura en cada línea. Se vuelve a una sola factura con todos sus cobros. Devuelve también la posición (en `apuntes`) de las líneas de cobro cuya factura no está en el libro."""
     salida: list[Apunte] = []
     vistos: dict[tuple, int] = {}
-    for a in apuntes:
+    cobros_aparte: list[int] = []
+    for i, a in enumerate(apuntes):
         if a.clave != "07":
             salida.append(a)
-            continue
-        clave = (a.libro, a.tipo_factura, a.fecha_expedicion, a.serie, a.numero, a.contraparte_nif, a.base, a.tipo_iva, a.cuota)
+        elif a.cobros and not a.base and not a.cuota and not a.total:
+            cobros_aparte.append(i)                                          # va después, esté donde esté su factura
+        else:
+            clave = (a.libro, a.tipo_factura, a.fecha_expedicion, a.serie, a.numero, a.contraparte_nif)
+            if clave in vistos:
+                previo = salida[vistos[clave]]
+                salida[vistos[clave]] = previo.con(cobros=tuple(sorted(set(previo.cobros) | set(a.cobros))))
+            else:
+                vistos[clave] = len(salida)
+                salida.append(a)
+    sueltos: list[int] = []
+    for i in cobros_aparte:
+        a = apuntes[i]
+        clave = (a.libro, a.tipo_factura, a.fecha_expedicion, a.serie, a.numero, a.contraparte_nif)
         if clave in vistos:
             previo = salida[vistos[clave]]
-            salida[vistos[clave]] = previo.con(cobros=tuple(sorted(previo.cobros + a.cobros)))
+            salida[vistos[clave]] = previo.con(cobros=tuple(sorted(set(previo.cobros) | set(a.cobros))))
         else:
-            vistos[clave] = len(salida)
-            salida.append(a)
-    return salida
+            sueltos.append(i)
+    return salida, sueltos

@@ -18135,3 +18135,18 @@ msgstr "Record the receipt number"
 
 msgid "Esta declaración está presentada sin el número de justificante de 13 cifras; hace falta para poder rectificarla."
 msgstr "This return was filed without the 13-digit receipt number; it is needed to amend it."
+
+msgid "IBAN del titular"
+msgstr "Holder's IBAN"
+
+msgid "Guardar el IBAN"
+msgstr "Save the IBAN"
+
+msgid "La declaración sale a devolver: el fichero lleva la cuenta en la que se pide la devolución."
+msgstr "The return is a refund: the file carries the account the refund is requested into."
+
+msgid "Esta rectificativa lleva la casilla 111: el diseño oficial exige los datos de la cuenta bancaria aunque no se pida devolución."
+msgstr "This amended return has box 111: the official layout requires the bank account details even when no refund is requested."
+
+msgid "Cuentas españolas y de la zona SEPA."
+msgstr "Spanish and SEPA-area accounts."

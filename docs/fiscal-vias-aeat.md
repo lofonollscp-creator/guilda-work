@@ -85,7 +85,24 @@ Reglas de validación que el simulador aplica al libro (y que nuestro validador 
 
 **Resultado:** 23 escenarios (también simplificadas y resumen, rectificativas de intracomunitarias y de inversión del sujeto pasivo, abonos en otro periodo y tres de alquileres: local comercial al 21 % con referencia catastral, vivienda exenta y alquiler turístico al 10 %) más los 16 de abajo (ventas por tipo, otros trimestres, fecha de operación, rectificativas y abonos, bien de inversión, importación, adquisición intracomunitaria, inversión del sujeto pasivo en recibidas y en expedidas, exentas y no sujetas, recepción posterior, deducción diferida, resultado negativo, céntimos con decimales) dan **exactamente las mismas casillas** en nuestro `motor_303` y en la AEAT, y el `.303` que generamos (`fichero_303`) coincide byte a byte con el que exporta la AEAT salvo identificación del programa.
 
-Límites: el simulador no presenta; no cubre censo, firma ni presentación real. El último periodo (4T/12) lleva información anual (casillas 79-99) y no se genera todavía. No están soportados (se BLOQUEAN, no se calculan): criterio de caja, recargo de equivalencia, prorrata, régimen simplificado/agrario, ventanilla única (OSS), tributación foral, compensaciones del régimen especial y regularización de inversiones.
+Límites: el simulador no presenta; no cubre censo, firma ni presentación real. El último periodo (4T/12) lleva información anual (casillas 79-99) y no se genera todavía. Después se soportaron criterio de caja, recargo repercutido y prorrata general (§4f). No están soportados (se BLOQUEAN, no se calculan): prorrata especial, régimen simplificado/agrario, ventanilla única (OSS), tributación foral, compensaciones del régimen especial y regularización de inversiones.
+
+## 4f. Rectificativa, recargo, caja y prorrata contra el simulador (28-oct-2026)
+
+Se pasaron por el simulador público (el mismo procedimiento de §4d y §4e) los casos que se habían construido sin poder contrastarlos. Todo queda grabado y se comprueba sin red: `scripts/fiscal/grabar_oraculo.py` (libros: `ESCENARIOS_ESPECIALES`) y `scripts/fiscal/grabar_ficheros_303.py` (ficheros `.303` completos: `tests/escenarios_ficheros_303.py`), con `tests/test_fiscal_motor_303.py` y `tests/test_fiscal_ficheros_aeat.py`.
+
+**Cálculo (libro → AEAT).** Recargo de equivalencia (tres escenarios: 21 %/5,2 %, varios tipos y con abono) y criterio de caja (cobro total, cobro parcial, cobro en un periodo posterior al de la factura, factura sin cobros y compra pagada en parte): `motor_303` da **exactamente las mismas casillas** que la AEAT.
+
+**Ficheros `.303` (importar → validar → exportar de vuelta).** Once ficheros: rectificativa a ingresar, rectificativa con casilla 111 e IBAN, recargo, caja (acogido y destinatario), prorrata general, resultado a compensar, 1T, 3T y los meses 01 y 05. Los once se importan con «No existen errores» (solo avisos 30xxx/31xxx) y el fichero que **exporta la AEAT es idéntico al nuestro** salvo los cuatro campos que son suyos (§4d).
+
+| Lo que dijo el simulador | Qué se corrigió |
+|---|---|
+| Línea de cobro con tipo de IVA: «Es incompatible rellenar el campo tipo de IVA con los campos de cobro»; «El periodo y ejercicio consignado deben coincidir con los de la Fecha de Cobro» | En el libro, la factura va una vez y cada cobro o pago en una línea propia **sin total, base, tipo ni cuota** y con el periodo del cobro (antes repetíamos la factura entera en cada cobro) |
+| Rectificativa con casilla 111: `35066` «el código cuenta IBAN es obligatorio» y `EDID112` «Marca SEPA» | La página DID del fichero lleva el IBAN y la marca SEPA (1 España, 2 SEPA); se pide en la pantalla (Nota 3 del diseño) |
+| Tipo «D» fuera del último periodo: `30260` «No se permite la devolución excepto en el último período» | Pedir la devolución fuera del 4T/12 bloquea el cálculo; se compensa |
+| 4T de 2026: «El periodo seleccionado no está permitido» (ni en libro ni en fichero) | **No se puede probar todavía** (hasta que se abra el periodo): la casilla 44 de la prorrata, la página 4 y la devolución con IBAN quedan sin contrastar |
+
+Tampoco se contrastaron en el simulador la casilla 44 (solo existe en el último periodo) ni el 390, 111, 115 y 130 (otros modelos, otro simulador).
 
 ## 5. Lo que sigue sin saberse (y cómo se resuelve)
 

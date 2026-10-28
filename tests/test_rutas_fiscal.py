@@ -65,7 +65,7 @@ def test_clientes_fiscales_muestra_pill_de_pais_solo_si_no_es_espana(cliente):
     assert html.count('title="País de tributación"') == 1
 
 
-def test_vencimientos_se_agrupan_por_cliente(cliente):
+def test_vencimientos_se_listan_con_su_cliente(cliente):
     usuario_id = iniciar_sesion_de_prueba(cliente, "agrupa@ejemplo.com", "contrasena123")
     tenant_id = db.crear_tenant("Gestoria Agrupa")
     db.asignar_tenant(usuario_id, tenant_id)
@@ -78,7 +78,7 @@ def test_vencimientos_se_agrupan_por_cliente(cliente):
     resp = cliente.get("/fiscal/vencimientos")
     html = resp.get_data(as_text=True)
     assert resp.status_code == 200
-    assert html.count('class="fiscal-grupo"') == 2
+    assert html.count('<li class="fiscal-fila vencimiento-fiscal-item') == 3
     assert "Cliente A" in html and "Cliente B" in html
 
 

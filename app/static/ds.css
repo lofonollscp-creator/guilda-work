@@ -270,3 +270,5 @@ input[type="file"]::file-selector-button:hover { border-color: var(--accent, var
 .fiscal-buscador { display: flex; gap: 8px; align-items: center; flex: 1 1 280px; max-width: 460px; }
 .fiscal-buscador input[type="search"] { flex: 1 1 auto; min-width: 0; }
 tr[hidden] { display: none; }
+
+[data-evidencia-imagen] img { max-width: 100%; height: auto; }
