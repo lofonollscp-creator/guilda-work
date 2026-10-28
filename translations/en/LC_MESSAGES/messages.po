@@ -18117,3 +18117,6 @@ msgstr "Download the test file for form 130"
 
 msgid "impórtalo en el simulador de la AEAT antes de presentar."
 msgstr "import it in the tax agency's simulator before filing."
+
+msgid "Cobros o pagos (solo con la clave 07, criterio de caja): uno por línea, «fecha; importe». Una devolución va en negativo."
+msgstr "Receipts or payments (only with key 07, cash accounting): one per line, «date; amount». A refund goes in negative."

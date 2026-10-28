@@ -121,7 +121,8 @@ def _pagina(pagina: dict, valores: dict) -> str:
     return texto
 
 
-def indicadores_pagina1(periodo: str, *, prorrata_especial: str | None = None, revocacion_prorrata: str | None = None, exonerado_390: bool = False, volumen_distinto_de_cero: bool = True) -> dict:
+def indicadores_pagina1(periodo: str, *, prorrata_especial: str | None = None, revocacion_prorrata: str | None = None, exonerado_390: bool = False, volumen_distinto_de_cero: bool = True,
+                         criterio_caja: bool = False, destinatario_caja: bool = False) -> dict:
     """Los valores que el diseño fija según el PERIODO en la identificación de la página 1 (Notas 3, 4, 6 y 8), para un titular que NO tributa a una Administración foral, en régimen general
     (solo RG), sin autoliquidación conjunta, sin criterio de caja, fuera del SII y no exonerado del 390. Lo demás (perfil real del titular) lo aporta el motor. Los valores se han
     contrastado con el simulador de la AEAT (docs/fiscal-vias-aeat.md §4d)."""
@@ -131,8 +132,8 @@ def indicadores_pagina1(periodo: str, *, prorrata_especial: str | None = None, r
         12: "2",                        # registro de devolución mensual: NO
         13: "3",                        # solo régimen general
         14: "2",                        # autoliquidación conjunta: NO
-        15: "2",                        # criterio de caja: NO
-        16: "2",                        # destinatario de operaciones en criterio de caja: NO
+        15: "1" if criterio_caja else "2",             # sujeto pasivo acogido al criterio de caja
+        16: "1" if destinatario_caja else "2",         # destinatario de operaciones en criterio de caja
         17: prorrata_especial or "2",   # Nota 6: «2» (en periodos que no son el último el diseño lo llama «blanco», pero el simulador rechaza un blanco real: E010170)
         18: revocacion_prorrata or "2", # ídem (E010180)
         19: "2",                        # concurso: NO

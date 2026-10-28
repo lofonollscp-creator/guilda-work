@@ -53,6 +53,8 @@ class Apunte:
     # --- expedidas a comerciantes minoristas en recargo de equivalencia: el cliente (mayorista) repercute IVA y recargo
     recargo_pct: int = 0                         # tipo del recargo en centésimas: 520 = 5,2 %
     recargo_cuota: int = 0                       # céntimos
+    # --- criterio de caja (clave 07): cobros (expedidas) o pagos (recibidas), parciales o totales, con su fecha; una devolución va en negativo
+    cobros: tuple[tuple[date, int], ...] = ()
 
     @property
     def total_efectivo(self) -> int:

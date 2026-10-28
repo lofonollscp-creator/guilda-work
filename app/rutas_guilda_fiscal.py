@@ -22,8 +22,9 @@ guilda_fiscal_bp = Blueprint("guilda_fiscal", __name__, url_prefix="/guilda-fisc
 
 PERIODOS = ("1T", "2T", "3T", "4T")
 CLAVES_EXPEDIDAS = (("01", "01 · Régimen general"), ("11", "11 · Arrendamiento de local (sin retención)"), ("12", "12 · Arrendamiento de local (con retención)"), ("13", "13 · Arrendamiento de local (mixto)"),
-                    ("02", "02 · Exportación"), ("15", "15 · Tracto sucesivo"), ("03", "03 · Bienes usados / arte"), ("05", "05 · Agencias de viaje"))
-CLAVES_RECIBIDAS = (("01", "01 · Régimen general"), ("12", "12 · Arrendamiento de local"), ("09", "09 · Adquisición intracomunitaria"))
+                    ("02", "02 · Exportación"), ("15", "15 · Tracto sucesivo"), ("03", "03 · Bienes usados / arte"), ("05", "05 · Agencias de viaje"),
+                    ("07", "07 · Criterio de caja"))
+CLAVES_RECIBIDAS = (("01", "01 · Régimen general"), ("12", "12 · Arrendamiento de local"), ("09", "09 · Adquisición intracomunitaria"), ("07", "07 · Criterio de caja"))
 TIPOS_FACTURA = ("F1", "F2", "F3", "F4", "F5", "F6", "R1", "R2", "R3", "R4", "R5", "AJ", "LC")
 CALIFICACIONES = (("S1", "S1 · Sujeta y no exenta"), ("S2", "S2 · Sujeta con inversión del sujeto pasivo"), ("N1", "N1 · No sujeta (art. 7, 14)"), ("N2", "N2 · No sujeta por localización"), ("", "—"))
 EXENCIONES = (("", "—"), ("E1", "E1 · Art. 20"), ("E2", "E2 · Art. 21"), ("E3", "E3 · Art. 22"), ("E4", "E4 · Art. 23-24"), ("E5", "E5 · Art. 25 (entrega intracomunitaria)"), ("E6", "E6 · Otras"))
@@ -418,6 +419,7 @@ def _apunte_del_formulario() -> tuple[Apunte, str | None]:
         ej, per = f["periodo_deduccion"].split("-")
         deduccion = (int(ej), per)
     e = f["libro"] == "E"
+    cobros = _cobros_del_texto(f.get("cobros", ""))
     recargo_pct = fc.porcentaje_a_centesimas(f.get("recargo_pct", "") or "0") if e else 0
     recargo_cuota = 0
     if recargo_pct:
@@ -428,7 +430,22 @@ def _apunte_del_formulario() -> tuple[Apunte, str | None]:
                   contraparte_nif_tipo=f.get("contraparte_nif_tipo", ""), contraparte_pais=f.get("contraparte_pais", "").strip().upper(), calificacion=f.get("calificacion", "S1") if e else "",
                   exenta=f.get("exenta", "") if e else "", fecha_recepcion=None if e else fecha("fecha_recepcion"), isp=bool(f.get("isp")), bien_inversion=bool(f.get("bien_inversion")),
                   cuota_deducible=_euros(f["cuota_deducible"]) if f.get("cuota_deducible", "").strip() else None, deducible_periodo_posterior=bool(f.get("deducible_periodo_posterior")),
-                  periodo_deduccion=deduccion, inmueble_situacion=f.get("inmueble_situacion", ""), inmueble_referencia=f.get("inmueble_referencia", "").strip().upper(), recargo_pct=recargo_pct, recargo_cuota=recargo_cuota), (f.get("causa") or None)
+                  periodo_deduccion=deduccion, inmueble_situacion=f.get("inmueble_situacion", ""), inmueble_referencia=f.get("inmueble_referencia", "").strip().upper(), recargo_pct=recargo_pct, recargo_cuota=recargo_cuota, cobros=cobros), (f.get("causa") or None)
+
+
+def _cobros_del_texto(texto: str) -> tuple:
+    """«2026-05-20; 605,00» o «20/05/2026; -605,00» (uno por línea) → cobros o pagos del apunte con criterio de caja. Una línea mal escrita se rechaza con el número de línea."""
+    salida = []
+    for n, linea in enumerate((texto or "").splitlines(), 1):
+        if not linea.strip():
+            continue
+        partes = re.split(r"[;\t]", linea.strip(), maxsplit=1)
+        try:
+            dia = date.fromisoformat(partes[0].strip()) if "-" in partes[0] else date(*(int(x) for x in reversed(partes[0].strip().split("/"))))
+            salida.append((dia, _euros(partes[1])))
+        except (ValueError, IndexError, TypeError):
+            raise ValueError(f"Cobros o pagos, línea {n}: escribe «fecha; importe», por ejemplo «2026-05-20; 605,00».") from None
+    return tuple(sorted(salida))
 
 
 def _retencion_del_formulario(apunte: Apunte) -> dict | None:
@@ -449,6 +466,7 @@ def _datos_de_apunte(fila: dict) -> dict:
                   "total": _euros_texto(fila["total_centimos"]), "cuota_deducible": _euros_texto(fila["cuota_deducible_centimos"]),
                   "recargo_pct": f"{(fila.get('recargo_pct_centesimas') or 0) / 100:g}".replace(".", ",") if fila.get("recargo_pct_centesimas") else "",
                   "recargo_cuota": _euros_texto(fila.get("recargo_cuota_centimos")) if fila.get("recargo_cuota_centimos") else "",
+                  "cobros": "\n".join(f"{d.isoformat()}; {_euros_texto(importe)}" for d, importe in fn.cobros_de_json(fila.get("cobros_json"))),
                   "ret_modelo": fila.get("retencion_modelo") or "", "ret_clave": fila.get("retencion_clave") or "", "ret_base": _euros_texto(fila.get("retencion_base_centimos")),
                   "ret_pct": "" if fila.get("retencion_pct_centesimas") is None else f"{fila['retencion_pct_centesimas'] / 100:g}".replace(".", ","),
                   "ret_importe": _euros_texto(fila.get("retencion_centimos"))})

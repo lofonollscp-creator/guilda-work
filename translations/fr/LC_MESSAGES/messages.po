@@ -18202,3 +18202,6 @@ msgstr "Télécharger le fichier de test du modèle 130"
 
 msgid "impórtalo en el simulador de la AEAT antes de presentar."
 msgstr "importez-le dans le simulateur de l'AEAT avant de déposer."
+
+msgid "Cobros o pagos (solo con la clave 07, criterio de caja): uno por línea, «fecha; importe». Una devolución va en negativo."
+msgstr "Encaissements ou paiements (uniquement avec la clé 07, TVA de caisse) : un par ligne, « date ; montant ». Un remboursement est négatif."

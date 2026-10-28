@@ -54,11 +54,11 @@ def test_redondeo_mitad_hacia_arriba():
 def test_lo_no_soportado_se_bloquea_en_vez_de_inventar():
     r = m.calcular([venta(10000, 700)], ejercicio=2026, periodo="2T")                     # IVA al 7 %: no existe
     assert not r.calculable and "7" in r.bloqueos[0]
-    r = m.calcular([venta(10000, clave="07")], ejercicio=2026, periodo="2T")              # criterio de caja
-    assert not r.calculable
+    r = m.calcular([venta(10000, clave="07", tipo_factura="R1")], ejercicio=2026, periodo="2T")      # criterio de caja con una rectificativa
+    assert not r.calculable and "rectificativas con caja" in r.bloqueos[0]
     r = m.calcular([compra(10000, cuota_deducible=500)], ejercicio=2026, periodo="2T")    # deducción parcial
     assert not r.calculable and "parcial" in r.bloqueos[0]
-    for ajuste in ({"prorrata": True}, {"tributacion_foral": True}, {"criterio_caja": True}, {"regimen_simplificado": True}, {"recargo_equivalencia": True}):
+    for ajuste in ({"prorrata": True}, {"tributacion_foral": True}, {"regimen_simplificado": True}, {"recargo_equivalencia": True}):
         assert not m.calcular([], ejercicio=2026, periodo="2T", **ajuste).calculable
 
 

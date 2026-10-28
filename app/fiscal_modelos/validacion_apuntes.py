@@ -106,6 +106,25 @@ def validar_apunte(a: Apunte, indice: int | None = None, *, hoy: date | None = N
         p.append(_a("nif_digito", f"{nombre}: el dígito de control del NIF de la contraparte no es válido.", indice))
     elif a.contraparte_nif and not re.fullmatch(r"[A-Z0-9]\d{7}[A-Z0-9]", a.contraparte_nif.replace("-", "").upper()) and a.contraparte_nif_tipo == "":
         p.append(_a("nif_dudoso", f"{nombre}: el NIF de la contraparte no tiene la forma de un NIF español (L99999999 / 99999999L).", indice))
+    if a.clave == "07":
+        verbo = "pago" if a.libro == RECIBIDAS else "cobro"
+        if rectifica:
+            p.append(_e("caja_rectificativa", f"{nombre}: una factura rectificativa no puede ir con criterio de caja (clave 07): los {verbo}s de la devolución se anotan en la factura original.", indice))
+        if a.libro != RECIBIDAS and (a.calificacion in ("N1", "N2", "S2") or a.exenta in ("E2", "E3", "E4", "E5")):
+            p.append(_e("caja_calificacion", f"{nombre}: con la clave 07 la operación no puede ser no sujeta, con inversión del sujeto pasivo ni una exención E2 a E5.", indice))
+        if a.libro == RECIBIDAS and a.isp:
+            p.append(_e("caja_isp", f"{nombre}: con la clave 07 no puede haber inversión del sujeto pasivo.", indice))
+        acumulado = 0
+        for dia, importe in sorted(a.cobros):
+            if dia > hoy:
+                p.append(_e("cobro_futuro", f"{nombre}: hay un {verbo} con fecha posterior a hoy ({dia.strftime('%d/%m/%Y')}).", indice))
+            acumulado += importe
+            if acumulado < 0:
+                p.append(_e("cobro_negativo", f"{nombre}: la devolución del {dia.strftime('%d/%m/%Y')} supera lo {'pagado' if a.libro == RECIBIDAS else 'cobrado'} hasta esa fecha.", indice))
+            elif acumulado > a.total_efectivo:
+                p.append(_e("cobros_exceden", f"{nombre}: los {verbo}s superan el total de la factura ({a.total_efectivo / 100:.2f} €).", indice))
+    elif a.cobros:
+        p.append(_a("cobros_sin_caja", f"{nombre}: tiene cobros o pagos anotados pero no la clave 07 (criterio de caja): se ignoran.", indice))
     tipos = TIPOS_IVA_VIGENTES.get(a.fecha_expedicion.year)
     if tipos and a.calificacion == "S1" and a.libro != RECIBIDAS and not rectifica and a.tipo_iva not in tipos:
         p.append(_e("tipo_iva_no_vigente", f"{nombre}: el tipo de IVA del {a.tipo_iva / 100:g} % no está vigente en {a.fecha_expedicion.year} (salvo en rectificativas).", indice))

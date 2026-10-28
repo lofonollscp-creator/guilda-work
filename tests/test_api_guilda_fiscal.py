@@ -53,7 +53,7 @@ def test_consulta_de_perfil_apuntes_comprobacion_y_simulacion(cliente):
 
 def test_simulacion_con_caso_no_soportado_da_bloqueos_no_numeros(cliente):
     h, t, u, c = _despacho(cliente, "gfapi2@ejemplo.com")
-    fp.guardar_perfil(t, u, c, {"forma_juridica": "sociedad", "criterio_caja": 1}, vigente_desde="2026-01-01")
+    fp.guardar_perfil(t, u, c, {"forma_juridica": "sociedad", "prorrata_especial": 1}, vigente_desde="2026-01-01")
     for a in ESCENARIOS["basico"][0]:
         fn.aprobar_apunte(t, u, c, a)
     sim = cliente.get(f"/api/v1/guilda-fiscal/titulares/{c}/simulacion-303?ejercicio=2026&periodo=2T", headers=h).get_json()["data"]

@@ -48,6 +48,9 @@
     <label>{{ _('Cuota del recargo (€; en blanco = base × tipo)') }}<input type="text" name="recargo_cuota" value="{{ datos.get('recargo_cuota') or '' }}" inputmode="decimal"></label>{% endif %}
     <label>{{ _('Total de la factura (€, opcional)') }}<input type="text" name="total" value="{{ datos.get('total') or '' }}" inputmode="decimal"><small class="fiscal-ayuda fiscal-ayuda-aviso" data-total-aviso role="status" aria-live="polite" data-texto="{{ _('El total debería ser base + cuota: {v} €.') }}"></small></label>
   </div>
+  <div class="fila-campos">
+    <label>{{ _('Cobros o pagos (solo con la clave 07, criterio de caja): uno por línea, «fecha; importe». Una devolución va en negativo.') }}<textarea name="cobros" rows="3" placeholder="2026-05-20; 605,00">{{ datos.get('cobros') or '' }}</textarea></label>
+  </div>
   {% if not e %}
   <div class="fila-campos">
     <label class="checkbox-label"><input type="checkbox" name="isp" value="1" {{ 'checked' if datos.get('isp') in (1, '1', 'on') }}> {{ _('Inversión del sujeto pasivo') }}</label>

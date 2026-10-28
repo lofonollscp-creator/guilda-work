@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS fiscal_apuntes (
     inmueble_referencia TEXT NOT NULL DEFAULT '',
     recargo_pct_centesimas INTEGER NOT NULL DEFAULT 0,
     recargo_cuota_centimos INTEGER NOT NULL DEFAULT 0,
+    cobros_json TEXT,
     contraparte_nombre TEXT NOT NULL,
     contraparte_nif TEXT,
     contraparte_nif_tipo TEXT NOT NULL DEFAULT '',
@@ -180,6 +181,7 @@ def crear_esquema(conn) -> None:
         db._asegurar_columna(conn, "fiscal_apuntes", columna, tipo)          # bases anteriores a la migración 005
     for columna in ("recargo_pct_centesimas", "recargo_cuota_centimos"):
         db._asegurar_columna(conn, "fiscal_apuntes", columna, "INTEGER NOT NULL DEFAULT 0")                  # bases anteriores a la migración 007
+    db._asegurar_columna(conn, "fiscal_apuntes", "cobros_json", "TEXT")                                       # bases anteriores a la migración 009
     db._asegurar_columna(conn, "fiscal_declaraciones", "justificante_anterior", "TEXT")      # bases anteriores a la migración 006
 
 
@@ -215,7 +217,7 @@ def _titular(conn, tenant_id: int, cliente_fiscal_id: int):
 # --- Apuntes ------------------------------------------------------------------------------------------------------------------------------------
 CAMPOS_APUNTE = ("libro", "tipo_factura", "clave", "calificacion", "exenta", "serie", "numero", "fecha_expedicion", "fecha_operacion", "fecha_recepcion", "base_centimos", "tipo_iva_centesimas",
                  "cuota_centimos", "total_centimos", "cuota_deducible_centimos", "isp", "bien_inversion", "deducible_periodo_posterior", "periodo_deduccion", "inmueble_situacion",
-                 "inmueble_referencia", "recargo_pct_centesimas", "recargo_cuota_centimos", "contraparte_nombre", "contraparte_nif", "contraparte_nif_tipo", "contraparte_pais", "causa")
+                 "inmueble_referencia", "recargo_pct_centesimas", "recargo_cuota_centimos", "cobros_json", "contraparte_nombre", "contraparte_nif", "contraparte_nif_tipo", "contraparte_pais", "causa")
 CAMPOS_RETENCION = ("retencion_modelo", "retencion_clave", "retencion_base_centimos", "retencion_pct_centesimas", "retencion_centimos")
 CAMPOS_GUARDADOS = CAMPOS_APUNTE + CAMPOS_RETENCION
 CLAVES_RETENCION_111 = ("G", "A")            # G: actividades profesionales · A: rendimientos del trabajo (claves de percepción del 190)
@@ -251,6 +253,20 @@ def normalizar_retencion(apunte: Apunte, retencion: dict | None) -> dict:
     return {"retencion_modelo": modelo, "retencion_clave": clave, "retencion_base_centimos": base, "retencion_pct_centesimas": pct, "retencion_centimos": importe}
 
 
+def cobros_a_json(cobros) -> str | None:
+    """Los cobros (o pagos) de un apunte con criterio de caja como texto para guardar: `[["2026-05-20", 60500], …]`, o None si no hay."""
+    return json.dumps([[d.isoformat(), int(importe)] for d, importe in cobros]) if cobros else None
+
+
+def cobros_de_json(texto) -> tuple:
+    if not texto:
+        return ()
+    try:
+        return tuple(sorted((date.fromisoformat(d), int(importe)) for d, importe in json.loads(texto)))
+    except (ValueError, TypeError):
+        return ()
+
+
 def a_apunte(f) -> Apunte:
     """La fila (o el diccionario) como `Apunte` del motor."""
     d = dict(f)
@@ -265,7 +281,7 @@ def a_apunte(f) -> Apunte:
                   contraparte_pais=d.get("contraparte_pais") or "", calificacion=d.get("calificacion") or "", exenta=d.get("exenta") or "", fecha_recepcion=fecha(d.get("fecha_recepcion")),
                   isp=bool(d.get("isp")), bien_inversion=bool(d.get("bien_inversion")), cuota_deducible=d.get("cuota_deducible_centimos"),
                   deducible_periodo_posterior=bool(d.get("deducible_periodo_posterior")), periodo_deduccion=ded, inmueble_situacion=d.get("inmueble_situacion") or "",
-                  inmueble_referencia=d.get("inmueble_referencia") or "", recargo_pct=d.get("recargo_pct_centesimas") or 0, recargo_cuota=d.get("recargo_cuota_centimos") or 0)
+                  inmueble_referencia=d.get("inmueble_referencia") or "", recargo_pct=d.get("recargo_pct_centesimas") or 0, recargo_cuota=d.get("recargo_cuota_centimos") or 0, cobros=cobros_de_json(d.get("cobros_json")))
 
 
 def _datos_de_apunte(a: Apunte) -> dict:
@@ -274,7 +290,7 @@ def _datos_de_apunte(a: Apunte) -> dict:
             "fecha_recepcion": a.fecha_recepcion.isoformat() if a.fecha_recepcion else None, "base_centimos": a.base, "tipo_iva_centesimas": a.tipo_iva, "cuota_centimos": a.cuota,
             "total_centimos": a.total, "cuota_deducible_centimos": a.cuota_deducible, "isp": int(a.isp), "bien_inversion": int(a.bien_inversion),
             "deducible_periodo_posterior": int(a.deducible_periodo_posterior), "periodo_deduccion": f"{a.periodo_deduccion[0]}-{a.periodo_deduccion[1]}" if a.periodo_deduccion else None,
-            "inmueble_situacion": a.inmueble_situacion, "inmueble_referencia": a.inmueble_referencia, "recargo_pct_centesimas": a.recargo_pct, "recargo_cuota_centimos": a.recargo_cuota,
+            "inmueble_situacion": a.inmueble_situacion, "inmueble_referencia": a.inmueble_referencia, "recargo_pct_centesimas": a.recargo_pct, "recargo_cuota_centimos": a.recargo_cuota, "cobros_json": cobros_a_json(a.cobros),
             "contraparte_nombre": a.contraparte_nombre, "contraparte_nif": a.contraparte_nif or None,
             "contraparte_nif_tipo": a.contraparte_nif_tipo, "contraparte_pais": a.contraparte_pais}
 
@@ -1359,7 +1375,7 @@ def exportar_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) -
     resultado = motor_303.Resultado303(d["ejercicio"], d["periodo"], casillas=dict(d["casillas"]), tipo_declaracion=d["tipo_declaracion"])
     try:
         fichero = fichero_303.generar(resultado, nif=(datos["titular"]["nif"] or "").upper(), nombre=datos["titular"]["nombre"], exonerado_390=exonerado, volumen=volumen,
-                                      justificante_anterior=d["justificante_anterior"] if d["rectifica_a_id"] else None)
+                                      justificante_anterior=d["justificante_anterior"] if d["rectifica_a_id"] else None, criterio_caja=bool(datos["perfil"].get("criterio_caja")))
     except fichero_303.FicheroNoGenerable as e:
         raise ErrorFiscal(str(e), "no_soportado")
     libro = libros_lsi.escribir_xlsx(apuntes, ejercicio=d["ejercicio"], periodo=d["periodo"])

@@ -22,6 +22,9 @@ def _pct(centesimas: int) -> float:
     return round(centesimas / 100, 2)
 
 
+MEDIO_OTROS = "04"                      # «Medio utilizado» del cobro o pago: 01 transferencia, 02 cheque, 03 no se cobra, 04 otros medios, 05 domiciliación
+
+
 def _fecha(d) -> datetime | None:
     return datetime(d.year, d.month, d.day) if d else None
 
@@ -34,8 +37,8 @@ def periodo_natural(a: Apunte, periodo_objetivo: str) -> str:
     return periodo_de(a.fecha_operacion or a.fecha_expedicion, mensual)
 
 
-def fila_expedida(a: Apunte, ejercicio: int, periodo: str) -> dict[int, object]:
-    """Columnas (base 0) del libro de expedidas."""
+def fila_expedida(a: Apunte, ejercicio: int, periodo: str, cobro=None) -> dict[int, object]:
+    """Columnas (base 0) del libro de expedidas. `cobro`: `(fecha, importe)` de la línea (criterio de caja: una línea por cobro)."""
     f = {0: ejercicio, 1: periodo, 2: ACTIVIDAD[0], 3: ACTIVIDAD[1], 5: a.tipo_factura, 8: _fecha(a.fecha_expedicion), 9: _fecha(a.fecha_operacion), 10: a.serie or None, 11: a.numero,
          15: a.contraparte_nif or None, 16: a.contraparte_nombre, 17: a.clave, 18: a.calificacion or None, 19: a.exenta or None, 20: _euros(a.total_efectivo), 21: _euros(a.base)}
     if a.contraparte_nif_tipo:
@@ -43,13 +46,15 @@ def fila_expedida(a: Apunte, ejercicio: int, periodo: str) -> dict[int, object]:
     f[22], f[23] = (_pct(a.tipo_iva), _euros(a.cuota)) if a.calificacion == "S1" else (0.0, 0.0)       # S2/N/exentas: tipo y cuota a cero, no vacíos
     if a.recargo_pct or a.recargo_cuota:
         f[24], f[25] = _pct(a.recargo_pct), _euros(a.recargo_cuota)
+    if cobro:
+        f[26], f[27], f[28] = _fecha(cobro[0]), _euros(cobro[1]), MEDIO_OTROS
     if a.inmueble_situacion:
         f[33], f[34] = a.inmueble_situacion, a.inmueble_referencia or None
     return f
 
 
-def fila_recibida(a: Apunte, ejercicio: int, periodo: str) -> dict[int, object]:
-    """Columnas (base 0) del libro de recibidas."""
+def fila_recibida(a: Apunte, ejercicio: int, periodo: str, pago=None) -> dict[int, object]:
+    """Columnas (base 0) del libro de recibidas. `pago`: `(fecha, importe)` de la línea (criterio de caja: una línea por pago)."""
     f = {0: ejercicio, 1: periodo, 2: ACTIVIDAD[0], 3: ACTIVIDAD[1], 5: a.tipo_factura, 8: _fecha(a.fecha_expedicion), 9: _fecha(a.fecha_operacion), 10: f"{a.serie}{a.numero}",
          12: _fecha(a.fecha_recepcion or a.fecha_expedicion), 17: a.contraparte_nif or None, 18: a.contraparte_nombre, 19: a.clave, 20: "S" if a.bien_inversion else None,
          21: "S" if a.isp else None, 22: "S" if a.deducible_periodo_posterior else None, 25: _euros(a.total_efectivo), 26: _euros(a.base), 27: _pct(a.tipo_iva), 28: _euros(a.cuota),
@@ -58,6 +63,8 @@ def fila_recibida(a: Apunte, ejercicio: int, periodo: str) -> dict[int, object]:
         f[15], f[16] = a.contraparte_nif_tipo, a.contraparte_pais or None
     if a.periodo_deduccion:
         f[23], f[24] = a.periodo_deduccion
+    if pago:
+        f[32], f[33], f[34] = _fecha(pago[0]), _euros(pago[1]), MEDIO_OTROS
     if a.inmueble_situacion:
         f[39], f[40] = a.inmueble_situacion, a.inmueble_referencia or None
     return f
@@ -76,14 +83,15 @@ def escribir_xlsx(apuntes: list[Apunte], *, ejercicio: int, periodo: str) -> byt
         for a in apuntes:
             if a.libro != libro:
                 continue
-            n += 1
-            for col, valor in fila(a, ejercicio, periodo_natural(a, periodo)).items():
-                if valor is None or valor == "":
-                    continue
-                celda = ws.cell(n, col + 1)
-                celda.value = valor
-                if isinstance(valor, datetime):
-                    celda.number_format = "dd/mm/yyyy"
+            for cobro in (a.cobros if a.clave == "07" and a.cobros else (None,)):                 # criterio de caja: una línea por cobro o pago, repitiendo el resto
+                n += 1
+                for col, valor in fila(a, ejercicio, periodo_natural(a, periodo), cobro).items():
+                    if valor is None or valor == "":
+                        continue
+                    celda = ws.cell(n, col + 1)
+                    celda.value = valor
+                    if isinstance(valor, datetime):
+                        celda.number_format = "dd/mm/yyyy"
     salida = io.BytesIO()
     wb.save(salida)
     return salida.getvalue()
@@ -107,6 +115,13 @@ def _f(v):
         return date.fromisoformat(texto[:10])
     except ValueError:
         raise ValueError(f"fecha no válida: {texto!r}") from None
+
+
+def _cobro(fecha, importe, medio) -> tuple:
+    """El cobro o pago de una línea del libro. El medio «03» (no se cobra) marca el límite de devengo del 31 de diciembre: no es un cobro."""
+    if fecha in (None, "") or importe in (None, "") or _s(medio) == "03":
+        return ()
+    return ((_f(fecha), _c(importe)),)
 
 
 def _c(v) -> int:
@@ -151,14 +166,32 @@ def leer_xlsx(contenido: bytes) -> tuple[list[Apunte], list[dict]]:
                     apuntes.append(Apunte(EXPEDIDAS, _s(c[5]), _f(c[8]), numero=_s(c[11]), serie=_s(c[10]), clave=_s(c[17]) or "01", base=_c(c[21]), tipo_iva=_c(c[22]), cuota=_c(c[23]),
                                           total=_c(c[20]) if c[20] not in (None, "") else None, fecha_operacion=_f(c[9]), contraparte_nombre=_s(c[16]), contraparte_nif=_s(c[15]),
                                           contraparte_nif_tipo=_s(c[13]), contraparte_pais=_s(c[14]), calificacion=_s(c[18]), exenta=_s(c[19]), inmueble_situacion=_s(c[33]), inmueble_referencia=_s(c[34]),
-                                          recargo_pct=_c(c[24]) if c[24] not in (None, "") else 0, recargo_cuota=_c(c[25]) if c[25] not in (None, "") else 0))
+                                          recargo_pct=_c(c[24]) if c[24] not in (None, "") else 0, recargo_cuota=_c(c[25]) if c[25] not in (None, "") else 0, cobros=_cobro(c[26], c[27], c[28])))
                 else:
                     ded = (int(float(c[23])), _s(c[24])) if c[23] not in (None, "") and c[24] not in (None, "") else None
                     apuntes.append(Apunte(RECIBIDAS, _s(c[5]), _f(c[8]), numero=_s(c[10]), clave=_s(c[19]) or "01", base=_c(c[26]), tipo_iva=_c(c[27]), cuota=_c(c[28]),
                                           total=_c(c[25]) if c[25] not in (None, "") else None, fecha_operacion=_f(c[9]), fecha_recepcion=_f(c[12]), contraparte_nombre=_s(c[18]), contraparte_nif=_s(c[17]),
                                           contraparte_nif_tipo=_s(c[15]), contraparte_pais=_s(c[16]), bien_inversion=_s(c[20]).upper() == "S", isp=_s(c[21]).upper() == "S",
                                           cuota_deducible=_c(c[29]) if c[29] not in (None, "") else None, deducible_periodo_posterior=_s(c[22]).upper() == "S", periodo_deduccion=ded,
-                                          inmueble_situacion=_s(c[39]), inmueble_referencia=_s(c[40])))
+                                          inmueble_situacion=_s(c[39]), inmueble_referencia=_s(c[40]), cobros=_cobro(c[32], c[33], c[34])))
             except (ValueError, TypeError, ArithmeticError) as e:
                 ilegibles.append({"hoja": nombre, "fila": n, "motivo": str(e)[:150]})
-    return apuntes, ilegibles
+    return _unir_cobros(apuntes), ilegibles
+
+
+def _unir_cobros(apuntes: list[Apunte]) -> list[Apunte]:
+    """En el libro del criterio de caja una factura con varios cobros o pagos ocupa varias líneas con el resto de datos repetidos: se vuelve a una sola factura con todos sus cobros."""
+    salida: list[Apunte] = []
+    vistos: dict[tuple, int] = {}
+    for a in apuntes:
+        if a.clave != "07":
+            salida.append(a)
+            continue
+        clave = (a.libro, a.tipo_factura, a.fecha_expedicion, a.serie, a.numero, a.contraparte_nif, a.base, a.tipo_iva, a.cuota)
+        if clave in vistos:
+            previo = salida[vistos[clave]]
+            salida[vistos[clave]] = previo.con(cobros=tuple(sorted(previo.cobros + a.cobros)))
+        else:
+            vistos[clave] = len(salida)
+            salida.append(a)
+    return salida

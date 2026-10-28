@@ -629,3 +629,25 @@ def test_modelo_130_desde_la_ficha(cliente):
     r = cliente.get(f"/guilda-fiscal/{c}/130/fichero?ejercicio=2026&periodo=1T")
     assert r.status_code == 200 and "2026_1T_130_prueba.txt" in r.headers["Content-Disposition"] and int(fr.leer_campos("130", r.data)[18]) == 20000
     assert cliente.get(f"/guilda-fiscal/{c}/130/fichero?ejercicio=2026&periodo=9T").status_code == 404
+
+
+def test_apunte_con_criterio_de_caja_desde_el_formulario(cliente):
+    uid, t, c = _web(cliente, email="cajaweb@ejemplo.com")
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES", "territorio_iva": "peninsula_baleares", "regimen_iva": "general",
+                                                           "periodicidad": "trimestral", "criterio_caja": "1"}).status_code == 302
+    nuevo = cliente.get(f"/guilda-fiscal/{c}/apuntes/nuevo").get_data(as_text=True)
+    assert "07 · Criterio de caja" in nuevo and 'name="cobros"' in nuevo
+    datos = {"libro": "E", "tipo_factura": "F1", "clave": "07", "numero": "F-1", "fecha_expedicion": "2026-05-10", "base": "1.000,00", "tipo_iva": "21", "contraparte_nif": "B11111111",
+             "contraparte_nombre": "Cliente SL", "cobros": "2026-05-20; 605,00\n20/06/2026; 605,00"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    ap = fn.listar_apuntes(t, uid, c)[0]
+    assert ap["clave"] == "07" and fn.cobros_de_json(ap["cobros_json"]) == ((date(2026, 5, 20), 60500), (date(2026, 6, 20), 60500))
+    pagina = cliente.get(f"/guilda-fiscal/{c}/apuntes/{ap['id']}").get_data(as_text=True)
+    assert "2026-05-20; 605,00" in pagina and "2026-06-20; 605,00" in pagina
+    r = cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data={**datos, "numero": "F-2", "cobros": "ayer; mucho"})
+    assert r.status_code == 400 and "línea 1" in r.get_data(as_text=True)
+    r = cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data={**datos, "numero": "F-3", "cobros": "2026-05-20; 5.000,00"})
+    assert r.status_code == 400 and "superan el total" in r.get_data(as_text=True)
+    did = int(cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "2T"}).headers["Location"].rsplit("/", 1)[1])
+    html = cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
+    assert "210.00" in html                                             # los dos cobros caen en el 2T: se devenga toda la cuota (210 €)

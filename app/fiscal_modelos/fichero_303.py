@@ -29,7 +29,8 @@ def pagina_4(volumen) -> dict:
     return valores
 
 
-def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, exonerado_390: bool = False, volumen=None, justificante_anterior: str | None = None) -> dict[str, dict]:
+def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, exonerado_390: bool = False, volumen=None, justificante_anterior: str | None = None,
+                  criterio_caja: bool = False) -> dict[str, dict]:
     """`{hoja: {casilla|nº de campo: valor}}` listo para `exportador_303.construir`. En el último periodo (4T/12): quien NO está exonerado del 390 no lleva nada más; quien lo está necesita el volumen
     de operaciones del año (`volumen`) y lleva la página 4. Con `justificante_anterior` (13 cifras) es una autoliquidación rectificativa y lleva el bloque «Rectificativa» de la página 3."""
     if not r.calculable:
@@ -42,7 +43,8 @@ def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_
     indice = indice_casillas(diseno)
     distinto_de_cero = bool(volumen and volumen.casillas.get("108", 0))
     paginas: dict[str, dict] = {"DP30301": {6: tipo_declaracion or r.tipo_declaracion, 7: nif, 8: nombre, 9: str(r.ejercicio), 10: r.periodo,
-                                            **ex.indicadores_pagina1(r.periodo, exonerado_390=exonerado_390, volumen_distinto_de_cero=distinto_de_cero)}}
+                                            **ex.indicadores_pagina1(r.periodo, exonerado_390=exonerado_390, volumen_distinto_de_cero=distinto_de_cero, criterio_caja=criterio_caja,
+                                                                                      destinatario_caja=bool(r.casillas.get("74") or r.casillas.get("75")))}}
     if ultimo and exonerado_390:
         paginas["DP30304"] = pagina_4(volumen)
     if justificante_anterior is not None and not (len(justificante_anterior) == 13 and justificante_anterior.isdigit()):
@@ -61,7 +63,8 @@ def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_
 
 
 def generar(r: Resultado303, *, nif: str, nombre: str, tipo_declaracion: str | None = None, diseno: dict | None = None, exonerado_390: bool = False, volumen=None,
-            justificante_anterior: str | None = None) -> bytes:
+            justificante_anterior: str | None = None, criterio_caja: bool = False) -> bytes:
     diseno = diseno or json.loads(ex.DISENO_303_2026.read_text(encoding="utf-8"))
     return ex.construir(diseno, ejercicio=r.ejercicio, periodo=r.periodo, paginas=paginas_desde(diseno, r, nif=nif, nombre=nombre, tipo_declaracion=tipo_declaracion, exonerado_390=exonerado_390, volumen=volumen,
-                                                                                  justificante_anterior=justificante_anterior))
+                                                                                  justificante_anterior=justificante_anterior,
+                                                                                  criterio_caja=criterio_caja))

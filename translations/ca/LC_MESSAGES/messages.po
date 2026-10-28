@@ -18126,3 +18126,6 @@ msgstr "Descarregar el fitxer de prova del model 130"
 
 msgid "impórtalo en el simulador de la AEAT antes de presentar."
 msgstr "importa'l al simulador de l'AEAT abans de presentar."
+
+msgid "Cobros o pagos (solo con la clave 07, criterio de caja): uno por línea, «fecha; importe». Una devolución va en negativo."
+msgstr "Cobraments o pagaments (només amb la clau 07, criteri de caixa): un per línia, «data; import». Una devolució va en negatiu."

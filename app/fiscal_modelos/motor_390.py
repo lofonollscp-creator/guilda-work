@@ -203,6 +203,8 @@ def calcular(apuntes: list[Apunte], *, ejercicio: int, saldo_compensar_inicial: 
              prorrata_general: int | None = None) -> Resultado390:
     """Las casillas del 390 de `ejercicio`. `declaraciones_303`: `{"1T": {"casillas": {...}, "tipo_declaracion": "I"}, …}` con los 303 ya revisados (si falta un trimestre se calcula ahora)."""
     r = Resultado390(ejercicio)
+    if any(a.clave == "07" and a.fecha_expedicion.year <= ejercicio for a in apuntes):
+        r.bloqueos.append("Hay facturas con criterio de caja (clave 07): el cálculo automático del 390 con caja no está soportado todavía.")
     if any(a.libro == EXPEDIDAS and (a.recargo_pct or a.recargo_cuota) and a.fecha_expedicion.year == ejercicio for a in apuntes):
         r.bloqueos.append("Hay facturas emitidas con recargo de equivalencia: el cálculo automático del 390 con recargo repercutido no está soportado todavía.")
     ajustes = {"tributacion_foral": tributacion_foral, "criterio_caja": criterio_caja, "prorrata": prorrata, "regimen_simplificado": regimen_simplificado, "recargo_equivalencia": recargo_equivalencia}
