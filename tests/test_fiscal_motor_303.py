@@ -174,3 +174,16 @@ def test_el_simulador_acepta_el_fichero_del_motor_y_calcula_lo_mismo(nombre, tmp
     assert not [x for x in res["validacion"] if x["codigo"].startswith("E")], res["validacion"]
     esperado = json.loads((ORACULO / f"{nombre}.json").read_text())["resultado"]
     assert res["resultado"] == esperado
+
+
+def test_devolucion_con_cuotas_pendientes_avisa_y_exonerado_con_prorrata_no_genera_fichero():
+    from app.fiscal_modelos import motor_390 as m390
+    ap = [venta(10000, fecha=d(2026, 11, 3)), compra(60000, fecha=d(2026, 11, 5))]
+    r = m.calcular(ap, ejercicio=2026, periodo="4T", destino_negativo="D", cuotas_a_compensar_anteriores=5000)
+    assert r.tipo_declaracion == "D" and r.casillas["87"] == 5000 and any("casilla 110" in a for a in r.avisos)
+    assert not any("casilla 110" in a for a in m.calcular(ap, ejercicio=2026, periodo="4T", destino_negativo="D").avisos)
+    anio = [venta(100000, fecha=d(2026, 2, 3)), venta(50000, 0, 0, numero="2", fecha=d(2026, 3, 3), exenta="E1"), compra(100000, fecha=d(2026, 5, 12))]
+    r4 = m.calcular(anio, ejercicio=2026, periodo="4T", prorrata_general=8000)
+    assert r4.casillas["44"] == -2730                                    # 21.000 de cuota soportada: 80 % provisional (16.800) frente a 67 % definitivo (14.070)
+    with pytest.raises(f3.FicheroNoGenerable):
+        f3.generar(r4, nif="A12345674", nombre="X", exonerado_390=True, volumen=m390.volumen_anual(anio, 2026))

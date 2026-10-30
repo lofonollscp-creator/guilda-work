@@ -7,6 +7,7 @@ from tests.escenarios_303 import ESCENARIOS, _re, compra, d, venta
 NIF, NOMBRE = "A12345674", "EMPRESA DE PRUEBA SL"
 JUSTIFICANTE = "3030000000123"
 IBAN_ES = "ES91 2100 0418 4502 0005 1332"
+IBAN_SEPA = "DE89 3704 0044 0532 0130 00"
 BASICO = ESCENARIOS["basico"][0]
 NEGATIVO = ESCENARIOS["resultado_negativo"][0]
 
@@ -33,6 +34,7 @@ def _periodo(periodo, mes, **kw):
 CASOS = {
     "rectificativa_a_ingresar": lambda: _g(_rectificativa([venta(10000, numero="2")]), justificante_anterior=JUSTIFICANTE),
     "rectificativa_111_con_iban": lambda: _g(_rectificativa([compra(40000, numero="P-9")]), justificante_anterior=JUSTIFICANTE, iban=IBAN_ES),
+    "rectificativa_111_con_iban_sepa": lambda: _g(_rectificativa([compra(40000, numero="P-9")]), justificante_anterior=JUSTIFICANTE, iban=IBAN_SEPA),
     "recargo": lambda: _g(m.calcular([_re(100000, 2100, 520), _re(10000, 400, 50, numero="2"), compra(20000)], ejercicio=2026, periodo="2T")),
     "caja": lambda: _g(m.calcular([venta(100000, clave="07", cobros=((d(2026, 5, 20), 30000), (d(2026, 8, 1), 50000))), venta(10000, numero="2")], ejercicio=2026, periodo="2T", criterio_caja=True), criterio_caja=True),
     "caja_destinataria": lambda: _g(m.calcular([venta(100000), compra(50000, clave="07", cobros=((d(2026, 6, 1), 30250),))], ejercicio=2026, periodo="2T", criterio_caja=True), criterio_caja=True),

@@ -41,6 +41,8 @@ def paginas_desde(diseno: dict, r: Resultado303, *, nif: str, nombre: str, tipo_
     ultimo = r.periodo in ex.ULTIMOS
     if ultimo and exonerado_390 and volumen is None:
         raise FicheroNoGenerable("El titular está exonerado del 390: el último periodo lleva el volumen de operaciones del año y no se ha calculado.")
+    if ultimo and exonerado_390 and r.prorrata_pct is not None:
+        raise FicheroNoGenerable("El titular está exonerado del 390 y aplica prorrata: el último periodo lleva la página de prorrata (CNAE, importe y porcentaje por actividad) y todavía no se genera.")
     if ultimo and exonerado_390 and not volumen.calculable:
         raise FicheroNoGenerable("El volumen de operaciones del año está bloqueado: " + " · ".join(volumen.bloqueos[:3]))
     indice = indice_casillas(diseno)

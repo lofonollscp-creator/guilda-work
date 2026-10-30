@@ -102,6 +102,15 @@ Se pasaron por el simulador público (el mismo procedimiento de §4d y §4e) los
 | Tipo «D» fuera del último periodo: `30260` «No se permite la devolución excepto en el último período» | Pedir la devolución fuera del 4T/12 bloquea el cálculo; se compensa |
 | 4T de 2026: «El periodo seleccionado no está permitido» (ni en libro ni en fichero) | **No se puede probar todavía** (hasta que se abra el periodo): la casilla 44 de la prorrata, la página 4 y la devolución con IBAN quedan sin contrastar |
 
+### Revisión del 4T/12 sin simulador (30-oct-2026)
+
+Se revisó contra el diseño y las instrucciones oficiales lo que no se puede importar todavía:
+
+- **Casilla 44** (prorrata general): comprobada a mano. Con 80 % provisional y 67 % definitivo (100.000 con derecho sobre 150.000 de volumen), 31.500 de cuota soportada dan 25.200 deducidas y 21.105 que corresponden: la 44 es −4.095 y la 45 la incluye (fórmula oficial de la 45: 29+31+33+35+37+39+41+42+43+44). El motor no aplica las exclusiones del art. 104.Tres (avisa).
+- **Página 4** (exonerado del 390): los importes salen del volumen anual y el territorio común va al 100 %; el código de actividad y el epígrafe IAE quedan en blanco. Con prorrata, el fichero **no se genera** (también desde `fichero_303`, no solo desde la pantalla): faltan las casillas 504 a 524 y 700 a 805.
+- **Devolución con IBAN**: la página DID es la misma que en la rectificativa con 111. Un IBAN SEPA no español (alemán de prueba) se contrastó con el simulador en una rectificativa con 111: aceptado, sin pedir SWIFT-BIC (fixture `rectificativa_111_con_iban_sepa`).
+- **Hueco abierto**: las instrucciones dicen que la devolución «deberá incluir el importe total de la casilla 110». Si hay cuotas pendientes de periodos anteriores, el motor las deja en la 87 y avisa para revisar el importe en el formulario. Se cerrará cuando se pueda importar un 4T.
+
 Tampoco se contrastaron en el simulador la casilla 44 (solo existe en el último periodo) ni el 390, 111, 115 y 130 (otros modelos, otro simulador).
 
 ## 5. Lo que sigue sin saberse (y cómo se resuelve)

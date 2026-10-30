@@ -367,6 +367,9 @@ def calcular(apuntes: list[Apunte], *, ejercicio: int, periodo: str, cuotas_a_co
         r.tipo_declaracion = destino_negativo
         if destino_negativo == "D" and r.periodo not in ULTIMOS_PERIODOS:
             r.bloqueos.append(BLOQUEO_DEVOLUCION.format(periodo=r.periodo))
+        if destino_negativo == "D" and c.get("87"):
+            r.avisos.append("Devolución con cuotas a compensar pendientes de periodos anteriores (casilla 87): las instrucciones del 303 dicen que la devolución solicitada debe incluir el total de la casilla 110. "
+                            "Revisa en el formulario el importe a devolver antes de presentar: este cálculo deja esas cuotas pendientes en la casilla 87.")
     return r
 
 
