@@ -18167,3 +18167,48 @@ msgstr "Estimated result"
 
 msgid "Opciones avanzadas"
 msgstr "Advanced options"
+
+msgid "Arrendadores de bienes inmuebles"
+msgstr "Lessors of real estate"
+
+msgid "Ganadería independiente"
+msgstr "Independent livestock farming"
+
+msgid "Resto de actividades empresariales"
+msgstr "Other business activities"
+
+msgid "Actividades profesionales de carácter artístico o deportivo"
+msgstr "Professional activities of an artistic or sporting nature"
+
+msgid "Resto de actividades profesionales"
+msgstr "Other professional activities"
+
+msgid "Actividad agrícola"
+msgstr "Agricultural activity"
+
+msgid "Actividad ganadera dependiente"
+msgstr "Dependent livestock activity"
+
+msgid "Actividad forestal"
+msgstr "Forestry activity"
+
+msgid "Producción del mejillón en batea"
+msgstr "Mussel production on rafts"
+
+msgid "Actividad pesquera, excepto el mejillón en batea"
+msgstr "Fishing activity, except mussel production on rafts"
+
+msgid "Otras actividades no sujetas al IAE"
+msgstr "Other activities not subject to the IAE"
+
+msgid "Actividades no iniciadas"
+msgstr "Activities not yet started"
+
+msgid "Actividades (página 4 del 303 del último periodo, para quien está exonerado del 390)"
+msgstr "Activities (page 4 of the last-period 303, for those exempt from the 390)"
+
+msgid "La primera es la principal: la de mayor volumen de operaciones. Clave y epígrafe del IAE se escriben tal cual en el fichero."
+msgstr "The first is the main one: the one with the highest volume of operations. The key and the IAE heading are written as is in the file."
+
+msgid "Epígrafe IAE"
+msgstr "IAE heading"

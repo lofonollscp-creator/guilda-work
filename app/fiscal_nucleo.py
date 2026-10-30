@@ -1381,12 +1381,14 @@ def exportar_declaracion(tenant_id: int, usuario_id: int, declaracion_id: int) -
     try:
         fichero = fichero_303.generar(resultado, nif=(datos["titular"]["nif"] or "").upper(), nombre=datos["titular"]["nombre"], exonerado_390=exonerado, volumen=volumen,
                                       justificante_anterior=d["justificante_anterior"] if d["rectifica_a_id"] else None, criterio_caja=bool(datos["perfil"].get("criterio_caja")),
-                                      iban=d.get("iban") or None)
+                                      iban=d.get("iban") or None, actividades=fiscal_perfiles.actividades_de(datos["perfil"]) if exonerado else None)
     except fichero_303.FicheroNoGenerable as e:
         raise ErrorFiscal(str(e), "no_soportado")
     libro = libros_lsi.escribir_xlsx(apuntes, ejercicio=d["ejercicio"], periodo=d["periodo"])
     resumen = _resumen(d, datos).encode("utf-8")
-    informe = json.dumps([{"nivel": p.nivel, "codigo": p.codigo, "mensaje": p.mensaje} for p in problemas], ensure_ascii=False)
+    avisos_pagina_4 = [{"nivel": "aviso", "codigo": "actividad_sin_informar", "mensaje": "El titular está exonerado del 390: la página 4 del 303 lleva la clave de actividad y el epígrafe del IAE, y el perfil no los tiene. "
+                        "Complétalos en el formulario o en el perfil fiscal."}] if exonerado and not any(a.get("codigo") for a in fiscal_perfiles.actividades_de(datos["perfil"])) else []
+    informe = json.dumps([{"nivel": p.nivel, "codigo": p.codigo, "mensaje": p.mensaje} for p in problemas] + avisos_pagina_4, ensure_ascii=False)
     conn = db.get_connection()
     try:
         for tipo, contenido in (("303", fichero), ("libro_xlsx", libro), ("resumen", resumen)):

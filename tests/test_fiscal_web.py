@@ -43,9 +43,18 @@ def test_flujo_completo_desde_la_web(cliente):
     pagina = cliente.get(f"/guilda-fiscal/{c}/perfil").get_data(as_text=True)
     assert 'name="perfil_id"' in pagina and "Guardar cambios" in pagina
     existente = fp.perfil_en(t, c, "2026-05-01")
+    assert 'name="actividad_codigo"' in pagina and "Epígrafe IAE" in pagina
     assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"perfil_id": existente["id"], "version": existente["version"], "vigente_desde": "2026-01-01", "forma_juridica": "persona_fisica", "residencia": "ES",
                                                            "territorio_iva": "peninsula_baleares", "regimen_iva": "general", "periodicidad": "trimestral"}).status_code == 302
     assert fp.perfil_en(t, c, "2026-05-01")["forma_juridica"] == "persona_fisica" and len(fp.perfiles_de(t, c)) == 1
+    actual = fp.perfil_en(t, c, "2026-05-01")
+    datos = {"perfil_id": actual["id"], "version": actual["version"], "vigente_desde": "2026-01-01", "forma_juridica": "persona_fisica", "residencia": "ES", "territorio_iva": "peninsula_baleares",
+             "regimen_iva": "general", "periodicidad": "trimestral"}
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={**datos, "actividad_codigo": ["A05", "", "B9"], "actividad_epigrafe": ["7211", "", ""], "actividad_descripcion": ["Consultoría", "", ""]}).status_code == 400
+    assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={**datos, "actividad_codigo": ["A05", ""], "actividad_epigrafe": ["7211", ""], "actividad_descripcion": ["Consultoría", ""]}).status_code == 302
+    assert fp.actividades_de(fp.perfil_en(t, c, "2026-05-01")) == [{"codigo": "A05", "epigrafe": "7211", "descripcion": "Consultoría"}]
+    pagina = cliente.get(f"/guilda-fiscal/{c}/perfil").get_data(as_text=True)
+    assert 'value="7211"' in pagina and 'value="Consultoría"' in pagina and 'value="A05" selected' in pagina
     # con una versión vieja se rechaza y se explica
     assert cliente.post(f"/guilda-fiscal/{c}/perfil", data={"perfil_id": existente["id"], "version": existente["version"], "vigente_desde": "2026-01-01", "forma_juridica": "sociedad", "residencia": "ES",
                                                            "territorio_iva": "peninsula_baleares", "regimen_iva": "general", "periodicidad": "trimestral"}).status_code == 400

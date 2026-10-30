@@ -36,6 +36,19 @@
   <div class="fiscal-banderas">{% for b in opciones.banderas %}<label class="checkbox-label"><input type="checkbox" name="{{ b }}" value="1" {{ 'checked' if perfil.get(b) in (1, '1', True) }}> {{ {'criterio_caja': _('Criterio de caja'), 'sii': _('SII'), 'redeme': _('REDEME'), 'tributacion_foral': _('Tributación foral'),
     'autoliquidacion_conjunta': _('Autoliquidación conjunta'), 'exonerado_390': _('Exonerado del modelo 390'), 'deduce_pago_cuenta_carburantes': _('Deduce pago a cuenta de carburantes'), 'prorrata_especial': _('Prorrata especial'),
     'sectores_diferenciados': _('Sectores diferenciados')}[b] }}</label>{% endfor %}</div>
+  {% set nombres_actividad = {'A01': _('Arrendadores de bienes inmuebles'), 'A02': _('Ganadería independiente'), 'A03': _('Resto de actividades empresariales'), 'A04': _('Actividades profesionales de carácter artístico o deportivo'),
+    'A05': _('Resto de actividades profesionales'), 'B01': _('Actividad agrícola'), 'B02': _('Actividad ganadera dependiente'), 'B03': _('Actividad forestal'), 'B04': _('Producción del mejillón en batea'),
+    'B05': _('Actividad pesquera, excepto el mejillón en batea'), 'B06': _('Otras actividades no sujetas al IAE'), 'C': _('Actividades no iniciadas')} %}
+  <fieldset>
+    <legend>{{ _('Actividades (página 4 del 303 del último periodo, para quien está exonerado del 390)') }}</legend>
+    <p class="muted">{{ _('La primera es la principal: la de mayor volumen de operaciones. Clave y epígrafe del IAE se escriben tal cual en el fichero.') }}</p>
+    {% for i in range(opciones.max_actividades) %}{% set a = actividades_lista[i] if i < actividades_lista|length else {} %}
+    <div class="fila-campos">
+      <label>{{ _('Clave') }}<select name="actividad_codigo"><option value=""></option>{% for k in opciones.actividades %}<option value="{{ k }}" {{ 'selected' if a.get('codigo') == k }}>{{ k }} · {{ nombres_actividad[k] }}</option>{% endfor %}</select></label>
+      <label>{{ _('Epígrafe IAE') }}<input type="text" name="actividad_epigrafe" value="{{ a.get('epigrafe') or '' }}" maxlength="4"></label>
+      <label>{{ _('Descripción') }}<input type="text" name="actividad_descripcion" value="{{ a.get('descripcion') or '' }}" maxlength="120"></label>
+    </div>{% endfor %}
+  </fieldset>
   <label>{{ _('Notas') }}<textarea name="notas" rows="2" maxlength="500">{{ perfil.get('notas') or '' }}</textarea></label>
   <button type="submit" class="btn btn-primary">{{ _('Guardar cambios') if editado else _('Guardar perfil') }}</button>
 </form>

@@ -7,6 +7,8 @@ dice «quién cuelga de quién», con vigencia, y las dos puntas son siempre tit
 Los verticales `fiscal` y `alquileres` se registran reservados (`disponible=False`) hasta que tengan pantallas."""
 from __future__ import annotations
 
+import re
+
 from datetime import date, timedelta
 
 from flask_babel import lazy_gettext as _l
@@ -23,6 +25,51 @@ PERIODICIDADES = ("trimestral", "mensual")
 TIPOS_RELACION = ("gestora_titular", "grupo", "otro")
 BANDERAS = ("criterio_caja", "sii", "redeme", "tributacion_foral", "autoliquidacion_conjunta", "exonerado_390", "deduce_pago_cuenta_carburantes", "prorrata_especial", "sectores_diferenciados")
 _CAMPOS_PERFIL = ("forma_juridica", "residencia", "pais", "territorio_iva", "regimen_iva", "periodicidad", *BANDERAS, "prorrata_centesimas", "saldo_a_compensar_centimos", "actividades", "opciones", "notas")
+
+# Clave de actividad de la página 4 del 303 (instrucciones oficiales, «B Clave»): se declara en el último periodo por quien está exonerado del 390
+CODIGOS_ACTIVIDAD = {"A01": "Arrendadores de bienes inmuebles", "A02": "Ganadería independiente", "A03": "Resto de actividades empresariales", "A04": "Actividades profesionales de carácter artístico o deportivo",
+                     "A05": "Resto de actividades profesionales", "B01": "Actividad agrícola", "B02": "Actividad ganadera dependiente", "B03": "Actividad forestal", "B04": "Producción del mejillón en batea",
+                     "B05": "Actividad pesquera, excepto el mejillón en batea", "B06": "Otras actividades no sujetas al IAE", "C": "Actividades no iniciadas"}
+MAX_ACTIVIDADES = 6                      # la página 4 recoge la principal y cinco más
+
+
+def normalizar_actividades(valor) -> list[dict] | None:
+    """`[{"codigo", "epigrafe", "descripcion"}]` validado (la primera es la principal) o None si no hay ninguna. Acepta la lista o su JSON; un campo vacío no se guarda."""
+    if valor in (None, "", []):
+        return None
+    if isinstance(valor, str):
+        import json
+        try:
+            valor = json.loads(valor)
+        except ValueError:
+            raise ErrorFiscal("Las actividades no tienen un formato válido.") from None
+    if not isinstance(valor, list):
+        raise ErrorFiscal("Las actividades deben ser una lista.")
+    salida = []
+    for x in valor:
+        if not isinstance(x, dict):
+            raise ErrorFiscal("Cada actividad debe llevar su clave, su epígrafe y su descripción.")
+        codigo = str(x.get("codigo") or "").strip().upper()
+        epigrafe = str(x.get("epigrafe") or "").strip().upper()
+        descripcion = str(x.get("descripcion") or "").strip()[:120]
+        if codigo and codigo not in CODIGOS_ACTIVIDAD:
+            raise ErrorFiscal(f"La clave de actividad «{codigo}» no existe: usa una de {', '.join(CODIGOS_ACTIVIDAD)}.")
+        if epigrafe and not re.fullmatch(r"[0-9A-Z]{1,4}", epigrafe):
+            raise ErrorFiscal(f"El epígrafe del IAE «{epigrafe}» no es válido: lleva hasta cuatro cifras o letras.")
+        if codigo or epigrafe or descripcion:
+            salida.append({k: v for k, v in (("codigo", codigo), ("epigrafe", epigrafe), ("descripcion", descripcion)) if v})
+    if len(salida) > MAX_ACTIVIDADES:
+        raise ErrorFiscal(f"Como máximo {MAX_ACTIVIDADES} actividades: la principal y cinco más.")
+    return salida or None
+
+
+def actividades_de(perfil: dict) -> list[dict]:
+    """Las actividades guardadas en un perfil (o en su copia dentro de una instantánea); lo que no se pueda leer se ignora."""
+    try:
+        return normalizar_actividades((perfil or {}).get("actividades")) or []
+    except ErrorFiscal:
+        return []
+
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS fiscal_perfiles (
@@ -153,7 +200,7 @@ def _normalizar(datos: dict) -> dict:
         "periodicidad": _elegir(datos.get("periodicidad"), PERIODICIDADES, "periodicidad", "trimestral"),
         "prorrata_centesimas": _entero(datos.get("prorrata_centesimas"), "prorrata_centesimas", minimo=0, maximo=10000, opcional=True),
         "saldo_a_compensar_centimos": _entero(datos.get("saldo_a_compensar_centimos"), "saldo_a_compensar_centimos", minimo=0),
-        "actividades": datos.get("actividades") or None,
+        "actividades": normalizar_actividades(datos.get("actividades")),
         "opciones": datos.get("opciones") or None,
         "notas": (datos.get("notas") or "").strip() or None,
     }

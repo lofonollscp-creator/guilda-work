@@ -18252,3 +18252,48 @@ msgstr "Résultat estimé"
 
 msgid "Opciones avanzadas"
 msgstr "Options avancées"
+
+msgid "Arrendadores de bienes inmuebles"
+msgstr "Bailleurs de biens immobiliers"
+
+msgid "Ganadería independiente"
+msgstr "Élevage indépendant"
+
+msgid "Resto de actividades empresariales"
+msgstr "Autres activités commerciales"
+
+msgid "Actividades profesionales de carácter artístico o deportivo"
+msgstr "Activités professionnelles à caractère artistique ou sportif"
+
+msgid "Resto de actividades profesionales"
+msgstr "Autres activités professionnelles"
+
+msgid "Actividad agrícola"
+msgstr "Activité agricole"
+
+msgid "Actividad ganadera dependiente"
+msgstr "Activité d'élevage dépendante"
+
+msgid "Actividad forestal"
+msgstr "Activité forestière"
+
+msgid "Producción del mejillón en batea"
+msgstr "Production de moules sur radeaux"
+
+msgid "Actividad pesquera, excepto el mejillón en batea"
+msgstr "Activité de pêche, hors production de moules sur radeaux"
+
+msgid "Otras actividades no sujetas al IAE"
+msgstr "Autres activités non soumises à l'IAE"
+
+msgid "Actividades no iniciadas"
+msgstr "Activités non commencées"
+
+msgid "Actividades (página 4 del 303 del último periodo, para quien está exonerado del 390)"
+msgstr "Activités (page 4 du 303 de la dernière période, pour les exonérés du 390)"
+
+msgid "La primera es la principal: la de mayor volumen de operaciones. Clave y epígrafe del IAE se escriben tal cual en el fichero."
+msgstr "La première est la principale : celle au plus gros volume d'opérations. La clé et la rubrique de l'IAE sont écrites telles quelles dans le fichier."
+
+msgid "Epígrafe IAE"
+msgstr "Rubrique IAE"

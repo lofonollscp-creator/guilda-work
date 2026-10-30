@@ -182,7 +182,7 @@ def cliente(cliente_id: int):
 
 
 def _opciones_perfil() -> dict:
-    return {"formas": fp.FORMAS_JURIDICAS, "residencias": fp.RESIDENCIAS, "territorios": fp.TERRITORIOS_IVA, "regimenes": fp.REGIMENES_IVA, "periodicidades": fp.PERIODICIDADES, "banderas": fp.BANDERAS}
+    return {"formas": fp.FORMAS_JURIDICAS, "residencias": fp.RESIDENCIAS, "territorios": fp.TERRITORIOS_IVA, "regimenes": fp.REGIMENES_IVA, "periodicidades": fp.PERIODICIDADES, "banderas": fp.BANDERAS, "actividades": fp.CODIGOS_ACTIVIDAD, "max_actividades": fp.MAX_ACTIVIDADES}
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/informe.pdf")
@@ -388,11 +388,14 @@ def perfil(cliente_id: int):
         abort(404)
 
     def pantalla(perfil_datos, f, error=None, estado=200):
-        return render_template("fiscal_perfil.html", c=c, perfil=perfil_datos, f=f, opciones=_opciones_perfil(), error=error, editado=editado, perfiles=todos), estado
+        enviadas = perfil_datos.get("actividades")
+        lista = enviadas if isinstance(enviadas, list) else fp.actividades_de(perfil_datos)
+        return render_template("fiscal_perfil.html", c=c, perfil=perfil_datos, f=f, opciones=_opciones_perfil(), error=error, editado=editado, perfiles=todos, actividades_lista=lista), estado
 
     if request.method == "POST":
         datos = {k: request.form.get(k, "") for k in ("forma_juridica", "residencia", "pais", "territorio_iva", "regimen_iva", "periodicidad", "notas")}
         datos.update({k: request.form.get(k) for k in fp.BANDERAS})
+        datos["actividades"] = [{"codigo": c, "epigrafe": e, "descripcion": x} for c, e, x in zip(request.form.getlist("actividad_codigo"), request.form.getlist("actividad_epigrafe"), request.form.getlist("actividad_descripcion"))]
         try:
             datos["prorrata_centesimas"] = fc.porcentaje_a_centesimas(request.form["prorrata"]) if request.form.get("prorrata", "").strip() else None
             datos["saldo_a_compensar_centimos"] = fc.importe_a_centimos(request.form.get("saldo_a_compensar", "0") or "0")

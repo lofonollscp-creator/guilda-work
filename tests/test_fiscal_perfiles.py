@@ -141,3 +141,14 @@ def test_el_proceso_del_backoffice_ofrece_guilda_fiscal():
     r = subprocess.run([sys.executable, "-c", "import backoffice.main as m; m.create_app(testing=True); from app import verticales; print(verticales.VERTICALES['fiscal'].disponible)"], cwd=raiz,
                        capture_output=True, text=True, timeout=120)
     assert r.stdout.strip().splitlines()[-1] == "True", r.stderr[-400:]
+
+
+def test_actividades_del_perfil_se_validan_y_se_ordenan_como_la_pagina_4_del_303():
+    t, u = _despacho(); c = _titular(t)
+    ok = fp.guardar_perfil(t, u, c, {**BASE, "actividades": [{"codigo": "a05", "epigrafe": "7211", "descripcion": "Consultoría"}, {"codigo": "", "epigrafe": "", "descripcion": ""}, {"codigo": "A01", "epigrafe": "861"}]},
+                           vigente_desde="2026-01-01")
+    assert fp.actividades_de(ok) == [{"codigo": "A05", "epigrafe": "7211", "descripcion": "Consultoría"}, {"codigo": "A01", "epigrafe": "861"}]
+    assert fp.actividades_de({}) == [] and fp.actividades_de({"actividades": "no es json"}) == []
+    for malo in ([{"codigo": "Z99"}], [{"epigrafe": "12345"}], [{"codigo": "A01"}] * 7, "no es json", [3]):
+        with pytest.raises(fp.ErrorFiscal):
+            fp.normalizar_actividades(malo)

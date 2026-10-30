@@ -134,3 +134,19 @@ def test_el_volumen_del_303_y_el_del_390_son_los_mismos_conceptos_en_los_dos_dis
         campo = next(c for c in p4 if c["n"] == n)
         d390 = next(t for h, c, t in m._descripciones() if h == "Pág. 6" and c == c390)
         assert palabras[n].lower() in campo["descripcion"].lower() and palabras[n].lower() in d390.lower(), (n, c390, campo["descripcion"], d390)
+
+
+def test_pagina_4_lleva_las_actividades_del_perfil_y_sin_ellas_queda_en_blanco():
+    import json
+    from app.fiscal_modelos import exportador_303 as ex, fichero_303 as f303
+    ap = _anio()
+    r4 = motor_303.calcular(ap, ejercicio=2026, periodo="4T")
+    volumen = m.volumen_anual(ap, 2026)
+    diseno = json.loads(ex.DISENO_303_2026.read_text(encoding="utf-8"))
+    sin = ex.descomponer(diseno, f303.generar(r4, nif="B12345674", nombre="X", exonerado_390=True, volumen=volumen))
+    p4 = next(p for p in sin["paginas"] if p["hoja"] == "DP30304")["campos"]
+    assert not p4[10].strip() and not p4[11].strip()
+    con = f303.generar(r4, nif="B12345674", nombre="X", exonerado_390=True, volumen=volumen, actividades=[{"codigo": "A05", "epigrafe": "7211"}, {"codigo": "C"}, {"epigrafe": "861"}])
+    p4 = next(p for p in ex.descomponer(diseno, con)["paginas"] if p["hoja"] == "DP30304")["campos"]
+    assert (p4[10].strip(), p4[11].strip(), p4[12].strip(), p4[13].strip(), p4[14].strip(), p4[15].strip()) == ("A05", "7211", "C", "", "", "861")
+    assert int(p4[24]) == 170000                                         # los importes siguen siendo los del volumen
