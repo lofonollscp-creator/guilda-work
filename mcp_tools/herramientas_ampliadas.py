@@ -284,6 +284,78 @@ def iniciar_cronometro_tarea(tarea_id: int, proyecto: str | int | None = None) -
     return {"tarea_cronometro_id": _mt.db.iniciar_cronometro_tarea_outlook(uid, tarea_id, categoria)}
 
 
+def _momento_aviso(avisar_en: str) -> "datetime":
+    """Fecha y hora (hora del servidor) a partir de «YYYY-MM-DD HH:MM» o «YYYY-MM-DDTHH:MM»; sin hora, las 09:00."""
+    from datetime import datetime, timedelta
+    texto = str(avisar_en or "").strip().replace("T", " ")
+    try:
+        momento = datetime.fromisoformat(texto) if len(texto) > 10 else datetime.fromisoformat(texto + " 09:00")
+    except ValueError as e:
+        raise ValueError("`avisar_en` debe ser una fecha y hora tipo «2026-11-03 09:00».") from e
+    if momento < datetime.now() - timedelta(minutes=1):
+        raise ValueError("Esa fecha y hora ya han pasado: indica un momento futuro.")
+    return momento
+
+
+def _canales_aviso(correo: bool) -> list[str]:
+    return ["app", "correo"] if correo else ["app"]
+
+
+def _aviso_correo_sin_configurar(correo: bool) -> dict:
+    from app import notificaciones_email
+    if correo and not notificaciones_email.configurado():
+        return {"aviso": "El correo saliente de la plataforma no está configurado: el aviso llegará solo a la app y al móvil."}
+    return {}
+
+
+def crear_recordatorio(texto: str, avisar_en: str, correo: bool = True) -> dict:
+    """Te avisa de algo en un momento concreto, por la app y por correo (`correo=false`: solo app). Sirve para un hecho que quieres recordar o para el vencimiento de algo que no es una tarea. `avisar_en`: fecha y hora «YYYY-MM-DD HH:MM» (hora del servidor; sin hora, las 09:00). Queda como una tarea «Recordatorio: …» que vence a esa hora, así la ves en Tareas y puedes posponer el aviso."""
+    uid = _mt._uid()
+    asunto = str(texto or "").strip()[:280]
+    if not asunto:
+        raise ValueError("Falta el texto del recordatorio.")
+    momento = _momento_aviso(avisar_en)
+    tarea_id = _mt.db.crear_tarea_outlook(uid, "Recordatorio: " + asunto, fecha_vencimiento=momento.strftime("%Y-%m-%d %H:%M"), categoria_outlook="Recordatorio")
+    canales = _canales_aviso(correo)
+    recordatorio_id = _mt.db.anadir_recordatorio_tarea(uid, tarea_id, momento.isoformat(timespec="seconds"), canales)
+    if recordatorio_id is None:
+        raise ValueError("No se ha podido crear el recordatorio.")
+    return {"recordatorio_id": recordatorio_id, "tarea_id": tarea_id, "avisar_en": momento.strftime("%Y-%m-%d %H:%M"), "canales": canales, **_aviso_correo_sin_configurar(correo)}
+
+
+def recordar_tarea(tarea_id: int, avisar_en: str | None = None, atajo: str | None = None, correo: bool = True) -> dict:
+    """Pone un aviso a una tarea que ya existe (por ejemplo, antes de su vencimiento), por la app y por correo (`correo=false`: solo app). Indica `avisar_en` («YYYY-MM-DD HH:MM») o un `atajo` respecto al vencimiento de la tarea: `al_vencer`, `1h_antes` o `1d_antes`."""
+    uid = _mt._uid()
+    if _mt.db.obtener_tarea_outlook_visible(uid, tarea_id) is None:
+        raise ValueError(f"No existe la tarea {tarea_id} (o no tienes acceso).")
+    canales = _canales_aviso(correo)
+    if atajo:
+        recordatorio_id = _mt.db.recordatorio_relativo(uid, tarea_id, str(atajo), canales)
+        if recordatorio_id is None:
+            raise ValueError("El atajo debe ser al_vencer, 1h_antes o 1d_antes, y la tarea necesita fecha de vencimiento.")
+    elif avisar_en:
+        recordatorio_id = _mt.db.anadir_recordatorio_tarea(uid, tarea_id, _momento_aviso(avisar_en).isoformat(timespec="seconds"), canales)
+    else:
+        raise ValueError("Indica `avisar_en` o un `atajo`.")
+    if recordatorio_id is None:
+        raise ValueError("No se ha podido crear el aviso.")
+    return {"recordatorio_id": recordatorio_id, "tarea_id": tarea_id, "canales": canales, **_aviso_correo_sin_configurar(correo)}
+
+
+def listar_recordatorios() -> list[dict]:
+    """Tus avisos pendientes (los que aún no han saltado), del más próximo al más lejano, con la tarea a la que pertenecen y por dónde te llegarán."""
+    uid = _mt._uid()
+    conn = _mt.db.get_connection()
+    try:
+        return _mt._filas(conn.execute(
+            """SELECT r.id AS recordatorio_id, r.tarea_id, t.asunto, r.avisar_en, r.canales
+               FROM tarea_recordatorios r JOIN tareas_outlook t ON t.id = r.tarea_id
+               WHERE r.usuario_id = ? AND r.enviado_en IS NULL AND t.papelera_en IS NULL AND t.estado != 'completada'
+               ORDER BY r.avisar_en LIMIT 50""", (uid,)).fetchall())
+    finally:
+        conn.close()
+
+
 def consumo_ia() -> dict:
     """Consultas de IA que ha usado tu despacho este mes y su tope (o `ilimitado`)."""
     from app import ia_consumo

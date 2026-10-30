@@ -38,7 +38,8 @@ def test_tools_tiene_217_herramientas():
     # + 11 de ausencias, turnos y bolsa de horas (grupo fichaje).
     # + 2 de certificados digitales (listar_certificados, riesgos_de_certificados).
     # + 2 más (registrar_certificado, renovar_certificado).
-    assert len(mt.TOOLS) == 265
+    # + 3 de avisos por correo (crear_recordatorio, recordar_tarea, listar_recordatorios).
+    assert len(mt.TOOLS) == 268
 
 
 def test_registrar_tools_las_registra_todas():

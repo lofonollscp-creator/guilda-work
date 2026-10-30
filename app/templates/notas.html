@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Notas') }} — Guilda Work{% endblock %}
+{% block barra_accion %}<a class="btn btn-primary top-bar-accion top-bar-nuevo-btn" href="{{ url_for('lista_notas', nueva=1, categoria_id=categoria_id, q=q or none) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-plus"></use></svg> {{ _('Nueva nota') }}</a>{% endblock %}
 {% block content %}
 {% set filtros = {'categoria_id': categoria_id, 'q': q or None} %}
 <header class="page-header">
@@ -89,6 +90,11 @@
         <span class="mono">{{ nota.creada_en|fecha_y_hora }}</span>
       </p>
       <div class="notas-doc-cuerpo nota-cuerpo">{{ nota.texto|nota_html }}</div>
+      <div class="notas-doc-acciones">
+        <a class="chip-ia" href="{{ url_for('ia.asistente_vista', q=_('Resume la nota «%(t)s»', t=(nota.titulo or nota.texto.split('\n')[0]|truncate(60, True)))) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sparkles"></use></svg> {{ _('Preguntar al asistente sobre esta nota') }}</a>
+        {% if detalle.rol in ('dueno', 'colabora') %}<a class="chip-v2" href="{{ url_for('lista_notas', nota=nota.id, editar=1, **filtros) }}#editar">{{ _('Editar') }}</a>{% endif %}
+        {% if detalle.rol == 'dueno' %}<a class="chip-v2" href="{{ url_for('lista_notas', nota=nota.id, compartir=1, **filtros) }}#compartir">{{ _('Compartir') }}</a>{% endif %}
+      </div>
     </article>
 
     {% if nota.cliente_fiscal_nombre or detalle.tarea or detalle.mensaje or detalle.adjuntos %}
@@ -101,8 +107,9 @@
     {% endif %}
 
     {% if detalle.rol in ('dueno', 'colabora') %}
+    <details class="notas-acordeon" id="editar" {{ 'open' if request.args.get('editar') }}>
+    <summary>{{ _('Editar') }}</summary>
     <form class="edit-form notas-form" method="post" action="{{ url_for('editar_nota', nota_id=nota.id) }}">
-      <h3 class="notas-editor-titulo">{{ _('Editar') }}</h3>
       <input type="hidden" name="volver_a" value="{{ volver }}">
       <label>{{ _('Título') }} <span class="muted">({{ _('opcional') }})</span>
         <input type="text" name="titulo" maxlength="120" value="{{ nota.titulo or '' }}">
@@ -127,11 +134,13 @@
         {% if detalle.rol == 'dueno' %}<a class="btn btn-ghost" href="{{ url_for('editar_nota', nota_id=nota.id, volver_a=volver) }}#adjuntos"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg> {{ _('Gestionar adjuntos') }}</a>{% endif %}
       </div>
     </form>
+    </details>
     {% endif %}
 
     {% if detalle.rol == 'dueno' %}
+    <details class="notas-acordeon" {{ 'open' if request.args.get('compartir') or detalle.participantes }}>
+    <summary>{{ _('Compartida con') }}{% if detalle.participantes %} · {{ detalle.participantes|length }}{% endif %}</summary>
     <section class="tarea-compartir-bloque" id="compartir">
-      <h3 class="notas-editor-titulo">{{ _('Compartida con') }}</h3>
       {% if detalle.participantes %}
       <ul class="tarea-participantes">
         {% for p in detalle.participantes %}
@@ -162,6 +171,7 @@
       </form>
       {% endif %}
     </section>
+    </details>
     {% else %}
     <form action="{{ url_for('dejar_de_compartir_nota', nota_id=nota.id) }}" method="post">
       <input type="hidden" name="usuario_id" value="{{ g.usuario_id }}">

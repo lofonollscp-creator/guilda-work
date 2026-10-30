@@ -18235,3 +18235,20 @@ msgstr "Cette déclaration rectificative comporte la case 111 : le format offici
 
 msgid "Cuentas españolas y de la zona SEPA."
 msgstr "Comptes espagnols et de la zone SEPA."
+
+msgid "Resume la nota «%(t)s»"
+msgstr "Résume la note « %(t)s »"
+
+msgid "Preguntar al asistente sobre esta nota"
+msgstr "Interroger l'assistant sur cette note"
+
+msgid "expediente"
+msgid_plural "expedientes"
+msgstr[0] "dossier"
+msgstr[1] "dossiers"
+
+msgid "Resultado estimado"
+msgstr "Résultat estimé"
+
+msgid "Opciones avanzadas"
+msgstr "Options avancées"

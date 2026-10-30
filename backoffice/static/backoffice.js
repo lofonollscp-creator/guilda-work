@@ -12,9 +12,12 @@
     if (el.dataset.confirmar && !window.confirm(el.dataset.confirmar)) { e.preventDefault(); return; }
 
     if (el.dataset.accion === "tema") {
-      var nuevo = raiz.dataset.tema === "claro" ? "oscuro" : "claro";
-      raiz.dataset.tema = nuevo;
+      var actual = raiz.dataset.preferencia || "sistema";                      // sistema → claro → oscuro → sistema
+      var nuevo = actual === "sistema" ? "claro" : (actual === "claro" ? "oscuro" : "sistema");
+      raiz.dataset.preferencia = nuevo;
+      if (nuevo === "sistema") { delete raiz.dataset.tema; } else { raiz.dataset.tema = nuevo; }
       guardar("bo-tema", nuevo);
+      el.title = "Tema: " + nuevo + " (clic para cambiar)";
     } else if (el.dataset.accion === "lateral") {
       var cerrado = raiz.dataset.lateral === "cerrado";
       if (cerrado) { delete raiz.dataset.lateral; } else { raiz.dataset.lateral = "cerrado"; }

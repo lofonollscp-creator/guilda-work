@@ -19,7 +19,8 @@ def test_catalogo_tiene_las_mismas_162_herramientas_clasificadas():
     # + 4: activar_herramientas, resumen_del_dia, detalle_tarea, completar_tareas.
     # + 4 de soporte: ayuda_buscar, abrir_pantalla, ver_mis_ajustes, cambiar_mis_ajustes.
     # + 5 del núcleo del despacho (solo lectura): clientes, expedientes y plazos.
-    assert len(nombres) == 210
+    # + 3 de avisos por correo: crear_recordatorio, recordar_tarea, listar_recordatorios.
+    assert len(nombres) == 213
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)
@@ -318,3 +319,30 @@ def test_generar_documento_al_chat_formato_no_soportado_lanza_error(usuario_id):
             usuario_id, "generar_documento_al_chat",
             {"titulo": "X", "formato": "txt", "columnas": ["A"], "filas": [["1"]]},
         )
+
+
+def test_crear_recordatorio_deja_un_aviso_por_app_y_correo(usuario_id):
+    from datetime import datetime, timedelta
+    cuando = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d 09:30")
+    r = h.ejecutar(usuario_id, "crear_recordatorio", {"texto": "Pedir el certificado a Vidal", "avisar_en": cuando})
+    assert r["canales"] == ["app", "correo"] and r["avisar_en"] == cuando
+    pendientes = h.ejecutar(usuario_id, "listar_recordatorios", {})
+    assert [p["asunto"] for p in pendientes] == ["Recordatorio: Pedir el certificado a Vidal"]
+    assert pendientes[0]["canales"] == "app,correo"
+
+
+def test_crear_recordatorio_en_el_pasado_o_sin_texto_da_error_legible(usuario_id):
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(usuario_id, "crear_recordatorio", {"texto": "x", "avisar_en": "2020-01-01 09:00"})
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(usuario_id, "crear_recordatorio", {"texto": " ", "avisar_en": "2099-01-01 09:00"})
+
+
+def test_recordar_tarea_con_atajo_respecto_al_vencimiento(usuario_id):
+    from datetime import datetime, timedelta
+    vence = (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d 12:00")
+    t = h.ejecutar(usuario_id, "crear_tarea", {"asunto": "Presentar el 303", "fecha_vencimiento": vence})
+    r = h.ejecutar(usuario_id, "recordar_tarea", {"tarea_id": t["id"], "atajo": "1d_antes", "correo": False})
+    assert r["canales"] == ["app"]
+    with pytest.raises(h.ErrorHerramientaIA):
+        h.ejecutar(usuario_id, "recordar_tarea", {"tarea_id": t["id"]})

@@ -31,8 +31,13 @@
   <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
 </form>
 
-<p>{{ chip(ngettext('%(n)s pendiente', '%(n)s pendientes', resumen.pendiente, n=resumen.pendiente)) }} {{ chip(ngettext('%(n)s revisada', '%(n)s revisadas', resumen.revisada, n=resumen.revisada)) }}
-   {{ chip(ngettext('%(n)s exportada', '%(n)s exportadas', resumen.exportada, n=resumen.exportada)) }}</p>
+<div class="fiscal-resumen contabilidad-resumen">
+  {% for clave, etiqueta, n in (('pendiente', _('Pendientes de revisar'), resumen.pendiente), ('revisada', _('Revisadas'), resumen.revisada), ('exportada', _('Exportadas'), resumen.exportada)) %}
+  <a class="fiscal-cifra {{ 'es-activa' if estado == clave }}" href="{{ url_for('contabilidad.lista', cliente_id=cliente_id, trimestre=trimestre or None, tipo=tipo or None, estado=None if estado == clave else clave) }}">
+    <span class="muted">{{ etiqueta }}</span><span class="fiscal-cifra-num">{{ n }}</span>
+  </a>
+  {% endfor %}
+</div>
 
 {% if uso_plan %}
 <p class="muted" role="status">
@@ -113,8 +118,8 @@
       <td>{{ _('Recibida') if f.tipo == 'recibida' else _('Emitida') }}{% if f.abono %} · {{ _('Abono') }}{% endif %}{% if f.origen == 'portal' %} <span class="pill">{{ _('Portal') }}</span>{% endif %}{% if f.lectura == 'pendiente' %} <span class="pill">{{ _('Por leer') }}</span>{% elif f.lectura == 'fallida' %} <span class="pill">{{ _('No se pudo leer') }}</span>{% elif f.lectura == 'ia' %} <span class="pill">{{ _('Leída con IA') }}</span>{% endif %}{% if f.periodo_cerrado %} <span class="pill">{{ _('Periodo cerrado') }}</span>{% endif %}</td>
       <td><a href="{{ url_for('contabilidad.ver', factura_id=f.id) }}"><strong>{{ f.numero }}</strong></a></td>
       <td>{{ f.tercero_nombre }}{% if f.tercero_nif %} <span class="muted mono">{{ f.tercero_nif }}</span>{% endif %}</td>
-      <td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
-      <td>{{ {'pendiente': _('Pendiente'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'descartada': _('Descartada')}[f.estado] }}</td>
+      <td class="mono contabilidad-total">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
+      <td><span class="pildora-v2 {{ {'pendiente': 'ambar', 'revisada': 'azul', 'exportada': 'verde'}.get(f.estado, '') }}">{{ {'pendiente': _('Pendiente'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'descartada': _('Descartada')}[f.estado] }}</span></td>
       <td>{% if f.estado == 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="revisada"><input type="hidden" name="volver" value="{{ request.full_path }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Marcar como revisada') }}</button></form>{% endif %}</td>
     </tr>
   {% endfor %}

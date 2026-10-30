@@ -18159,3 +18159,20 @@ msgstr "Aquesta rectificativa porta la casella 111: el disseny oficial exigeix l
 
 msgid "Cuentas españolas y de la zona SEPA."
 msgstr "Comptes espanyols i de la zona SEPA."
+
+msgid "Resume la nota «%(t)s»"
+msgstr "Resumeix la nota «%(t)s»"
+
+msgid "Preguntar al asistente sobre esta nota"
+msgstr "Pregunta a l'assistent sobre aquesta nota"
+
+msgid "expediente"
+msgid_plural "expedientes"
+msgstr[0] "expedient"
+msgstr[1] "expedients"
+
+msgid "Resultado estimado"
+msgstr "Resultat estimat"
+
+msgid "Opciones avanzadas"
+msgstr "Opcions avançades"

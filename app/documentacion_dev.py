@@ -76,6 +76,7 @@ _PROPIAS_GUILDA_WORK = {
     "listar_checklist_tarea", "agregar_item_checklist", "alternar_item_checklist",
     "resumen_del_dia", "detalle_tarea", "completar_tareas", "listar_notificaciones",
     "cambiar_estado_tarea", "listar_comentarios_tarea", "comentar_tarea", "iniciar_cronometro_tarea",
+    "crear_recordatorio", "recordar_tarea", "listar_recordatorios",
     "consumo_ia", "listar_comunicados", "webhooks_entregas",
 }
 

@@ -1372,6 +1372,21 @@ HERRAMIENTAS.append(_tool(
     {"tarea_id": _param("integer", "Id de la tarea."), "proyecto": _param("string", "Proyecto (nombre o id), solo si la tarea no tiene.")}, ["tarea_id"],
 ))
 HERRAMIENTAS.append(_tool(
+    "crear_recordatorio",
+    "Te avisa de algo en un momento concreto, por la app y por correo electrónico (usa correo=false para avisar solo por la app). Úsala cuando la persona pida que le recuerdes un hecho o el vencimiento de algo. Si no dice la hora, usa las 09:00.",
+    {"texto": _param("string", "Qué hay que recordarle."), "avisar_en": _param("string", "Fecha y hora del aviso, «YYYY-MM-DD HH:MM» (hora del servidor, futura)."),
+     "correo": _param("boolean", "Enviar también por correo; por defecto sí.")}, ["texto", "avisar_en"],
+))
+HERRAMIENTAS.append(_tool(
+    "recordar_tarea",
+    "Pone un aviso (app y correo) a una tarea que ya existe: en un momento concreto o respecto a su vencimiento.",
+    {"tarea_id": _param("integer", "Id de la tarea."), "avisar_en": _param("string", "«YYYY-MM-DD HH:MM», opcional."),
+     "atajo": _param("string", "Respecto al vencimiento: al_vencer, 1h_antes o 1d_antes, opcional."), "correo": _param("boolean", "Enviar también por correo; por defecto sí.")}, ["tarea_id"],
+))
+HERRAMIENTAS.append(_tool(
+    "listar_recordatorios", "Lista los avisos pendientes de la persona, del más próximo al más lejano.", {}, [],
+))
+HERRAMIENTAS.append(_tool(
     "activar_herramientas",
     "Activa grupos de herramientas que no están disponibles ahora. Úsala cuando necesites algo que no ves en tu lista "
     "(p. ej. correo, fiscal, fichaje, facturación, CRM, archivos, firmas, tareas_avanzadas). Tras llamarla verás las herramientas del grupo.",
@@ -1434,7 +1449,7 @@ LECTURA: set[str] = {
     "generar_documento_al_chat",
     "listar_reglas_correo", "listar_conversacion_correo", "listar_proyectos", "listar_tareas_hoy",
     "ayuda_buscar", "abrir_pantalla", "ver_mis_ajustes",
-    "listar_companeros", "listar_checklist_tarea", "activar_herramientas", "resumen_del_dia", "detalle_tarea", "listar_comentarios_tarea",
+    "listar_recordatorios", "listar_companeros", "listar_checklist_tarea", "activar_herramientas", "resumen_del_dia", "detalle_tarea", "listar_comentarios_tarea",
     "comercial_listar_etapas", "comercial_listar_reuniones",
     "juridico_buscar", "juridico_ver_documento", "juridico_listar_informes", "juridico_ver_informe",
 }
@@ -1455,7 +1470,7 @@ ESCRITURA: set[str] = {
     "crear_tarea_desde_correo", "guardar_nota_desde_correo", "crear_proyecto", "renombrar_proyecto",
     "eliminar_proyecto", "eliminar_nota", "eliminar_tarea", "fijar_nota", "asignar_tarea",
     "agregar_item_checklist", "alternar_item_checklist", "completar_tareas",
-    "cambiar_estado_tarea", "comentar_tarea", "iniciar_cronometro_tarea",
+    "cambiar_estado_tarea", "comentar_tarea", "iniciar_cronometro_tarea", "crear_recordatorio", "recordar_tarea",
     "cambiar_mis_ajustes",
     "pedir_ausencia", "cancelar_ausencia", "resolver_ausencia", "asignar_turno", "ajustar_bolsa_de_horas",
     "cambiar_estado_tarea_con_motivo", "crear_subtarea", "fijar_clientes_de_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "ocultar_comentario_cliente_tarea", "anadir_dependencia_tarea", "quitar_dependencia_tarea", "comercial_crear_oportunidad", "comercial_mover_oportunidad", "comercial_anotar_actividad", "comercial_crear_reunion", "comercial_generar_acta",

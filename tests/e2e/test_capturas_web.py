@@ -12,6 +12,26 @@ CARPETA = os.environ.get("GUILDA_CAPTURAS_WEB")
 pytestmark = pytest.mark.skipif(not CARPETA, reason="GUILDA_CAPTURAS_WEB sin definir")
 
 
+CONTRASTE = """() => {
+  const parse = c => { const m = c.match(/rgba?\\(([^)]+)\\)/); if (!m) return null; const p = m[1].split(/[ ,\\/]+/).filter(Boolean).map(Number); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; };
+  const lum = ({r, g, b}) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const mezcla = (f, b) => ({r: f.r * f.a + b.r * (1 - f.a), g: f.g * f.a + b.g * (1 - f.a), b: f.b * f.a + b.b * (1 - f.a), a: 1});
+  const fondo = el => { const capas = []; for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.backgroundImage !== 'none' && !cs.backgroundImage.startsWith('linear-gradient(rgba')) return null; const c = parse(cs.backgroundColor); if (c && c.a > 0) { capas.push(c); if (c.a >= 1) break; } }
+    let base = {r: 255, g: 255, b: 255, a: 1}; for (let i = capas.length - 1; i >= 0; i--) base = mezcla(capas[i], base); return base; };
+  const out = [], vistos = new Set();
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) {
+    if (!n.textContent.trim()) continue; const el = n.parentElement; if (!el || ['SCRIPT', 'STYLE', 'NOSCRIPT', 'OPTION'].includes(el.tagName)) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) < 0.3) continue;
+    const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2 || r.bottom < 0 || r.top > innerHeight) continue;
+    const fg = parse(cs.color); const bg = fondo(el); if (!fg || !bg) continue;
+    const f = mezcla(fg, bg), l1 = lum(f), l2 = lum(bg), ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    const grande = parseFloat(cs.fontSize) >= 24 || (parseFloat(cs.fontSize) >= 18.66 && parseInt(cs.fontWeight) >= 700);
+    if (ratio < (grande ? 3 : 4.5)) { const k = (el.className || el.tagName) + '|' + cs.color + '|' + ratio.toFixed(1); if (!vistos.has(k)) { vistos.add(k); out.push(ratio.toFixed(1) + ' ' + (el.className || el.tagName).toString().slice(0, 50) + ' «' + n.textContent.trim().slice(0, 28) + '»'); } }
+  }
+  return out.slice(0, 12);
+}"""
+
 DESBORDES = """() => {
   const W = document.documentElement.clientWidth, out = [];
   if (document.documentElement.scrollWidth > W + 1) out.push('PAGINA ' + document.documentElement.scrollWidth);
@@ -68,7 +88,34 @@ def _sembrar(uid: int, tenant: int) -> dict:
         mid = db.guardar_mensaje_correo(cuenta, f"uid{i}", asunto, de, "info@despacho.es", f"2026-10-2{4 - i // 2}T0{9 - i}:30:00", texto, None, leido=leido)
         if i == 0:
             primero = mid
-    return {"mensaje": primero, "cuenta": cuenta}
+    p1 = db.crear_categoria(uid, "Cierre de trimestre", "#a6e600")
+    p2 = db.crear_categoria(uid, "Auditoría Acme", "#6c63ff")
+    db.crear_nota(uid, "Revisar con Marta la deducción por vivienda habitual.\n\n- Pedir escritura de compra\n- Comprobar si hay **alquiler** hasta 2022\n- Calcular el importe con el 303", categoria_id=p1, titulo="Consulta de Marta Ruiz", fijada=True)
+    db.crear_nota(uid, "Llamar al banco para el certificado de saldos a 31 de diciembre.", categoria_id=p2, titulo="Certificado de saldos")
+    db.crear_nota(uid, "Ideas para la reunión del lunes: plantillas de recordatorio, calendario compartido y avisos por WhatsApp.", titulo="Reunión del lunes")
+    db.crear_tiquet(uid, "error", "El calendario fiscal no muestra el 115", "Al filtrar por cliente desaparece.")
+    db.crear_tiquet(uid, "sugerencia", "Poder duplicar un vencimiento", None)
+    for asunto, estado in (("Recoger extractos bancarios", "completada"), ("Conciliar IVA soportado", "en_progreso"), ("Preparar el 303", "no_iniciada"), ("Enviar borrador al cliente", "no_iniciada")):
+        db.crear_tarea_outlook(uid, asunto=asunto, estado=estado, categoria_id=p1, fecha_vencimiento=_dia(2))
+    try:
+        from app import facturas_contables as fc, verticales
+        verticales.fijar_activo(tenant, "contabilizacion", True)
+        verticales.fijar_activo(tenant, "juridico", True)
+        verticales.fijar_activo(tenant, "fiscal", True)
+        from app import fiscal_nucleo as fn, fiscal_perfiles as fp
+        from app.fiscal_modelos.apuntes import Apunte
+        from datetime import date as _d
+        fp.guardar_perfil(tenant, uid, c1, {"forma_juridica": "sociedad"}, vigente_desde=f"{_d.today().year}-01-01")
+        hoy = _d.today()
+        for libro, num, base, cuota, quien in (("E", "A-0031", 340000, 71400, "Hotel Mirador SL"), ("E", "A-0032", 120000, 25200, "Beta SA"), ("R", "F-2026-114", 120000, 25200, "Suministros Ríos SL")):
+            fn.aprobar_apunte(tenant, uid, c1, Apunte(libro=libro, tipo_factura="F1", fecha_expedicion=_d(2026, 8, 20), numero=num, base=base, tipo_iva=2100, cuota=cuota, contraparte_nombre=quien))
+        for tipo, n, quien, base in (("recibida", "F-2026-114", "Suministros Ríos SL", "1200"), ("emitida", "A-0031", "Construcciones Vidal", "3400"), ("recibida", "F-2026-121", "Gráficas Norte SA", "260,50")):
+            fc.crear(tenant, uid, c1, {"tipo": tipo, "fecha": _dia(-3), "numero": n, "tercero_nombre": quien, "tercero_nif": "B12345678"}, [{"base": base, "pct_iva": "21"}])
+    except Exception as e:                                            # solo es decorado de la captura
+        print("SIN FACTURAS", e)
+    db.guardar_fichaje_datos(uid, "Jorge Capturas", "12345678Z")
+    db.fichar(uid, tenant, "entrada")
+    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1, "cliente": c1}
 
 
 PAGINAS = [
@@ -96,9 +143,16 @@ def test_capturas(servidor, abrir, entrar_como_equipo):
             for nombre, ruta in PAGINAS + [("notas", "/notas"), ("tareas_tablero", "/tareas/tablero")] + _extra():
                 pagina.goto(f"{servidor.url}{ruta.format(**ids)}")
                 pagina.wait_for_load_state("networkidle")
-                pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)
+                if tema.startswith("sistema"):
+                    pagina.emulate_media(color_scheme="dark" if tema.endswith("oscuro") else "light")
+                    pagina.evaluate("() => document.documentElement.removeAttribute('data-theme')")
+                else:
+                    pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)
                 pagina.wait_for_timeout(150)
                 pagina.screenshot(path=os.path.join(CARPETA, f"{nombre}_{ancho}_{tema}.png"))
+                if os.environ.get("GUILDA_CONTRASTE"):
+                    for f in pagina.evaluate(CONTRASTE):
+                        print(f"CONTRASTE {nombre} {ancho} {tema}: {f}")
                 bordes = pagina.evaluate(DESBORDES)
                 if bordes:
                     print(f"DESBORDE {nombre} {ancho}: {bordes}")

@@ -18150,3 +18150,20 @@ msgstr "This amended return has box 111: the official layout requires the bank a
 
 msgid "Cuentas españolas y de la zona SEPA."
 msgstr "Spanish and SEPA-area accounts."
+
+msgid "Resume la nota «%(t)s»"
+msgstr "Summarise the note «%(t)s»"
+
+msgid "Preguntar al asistente sobre esta nota"
+msgstr "Ask the assistant about this note"
+
+msgid "expediente"
+msgid_plural "expedientes"
+msgstr[0] "case"
+msgstr[1] "cases"
+
+msgid "Resultado estimado"
+msgstr "Estimated result"
+
+msgid "Opciones avanzadas"
+msgstr "Advanced options"

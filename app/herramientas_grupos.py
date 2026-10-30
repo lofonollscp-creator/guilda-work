@@ -12,7 +12,7 @@ GRUPOS: dict[str, tuple[str, ...]] = {
     "nucleo": (
         "buscar_semantico", "listar_notas", "crear_nota", "editar_nota", "listar_tareas", "crear_tarea", "editar_tarea",
         "completar_tarea", "consultar_calendario", "listar_tareas_hoy", "listar_proyectos", "activar_herramientas", "resumen_del_dia",
-        "ayuda_buscar", "abrir_pantalla",
+        "ayuda_buscar", "abrir_pantalla", "crear_recordatorio", "recordar_tarea", "listar_recordatorios",
     ),
     "soporte": ("ver_mis_ajustes", "cambiar_mis_ajustes"),
     "tareas_avanzadas": (
