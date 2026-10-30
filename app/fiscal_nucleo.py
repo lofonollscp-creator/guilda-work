@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from flask_babel import lazy_gettext as _l  # noqa: F401  (los textos de pantalla se traducen en las rutas)
 
 from . import acceso, auditoria, db, fiscal_perfiles
-from .fiscal_modelos import exportador_303, fichero_303, fichero_390, fichero_retenciones, iban as iban_mod, libros_lsi, motor_130, motor_303, motor_390, motor_retenciones, validacion_apuntes
+from .fiscal_modelos import exportador_303, fichero_303, fichero_131, fichero_390, fichero_retenciones, iban as iban_mod, libros_lsi, motor_130, motor_131, motor_303, motor_390, motor_retenciones, validacion_apuntes
 from .fiscal_modelos.apuntes import RECTIFICATIVAS as RECTIFICATIVAS_APUNTE, Apunte
 motor_303_RECTIFICATIVAS = RECTIFICATIVAS_APUNTE
 from .fiscal_perfiles import ErrorFiscal
@@ -850,6 +850,47 @@ def descargar_fichero_130(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     auditoria.registrar(tenant_id, usuario_id, "fiscal.130.descargar", "cliente_fiscal", cliente_fiscal_id, {"ejercicio": ejercicio, "periodo": periodo, "resultado": c["resultado"].casillas.get("19", 0),
                                                                                                          "hash": hashlib.sha256(contenido).hexdigest()})
     return contenido, f"{ejercicio}_{periodo}_130_prueba.txt"
+
+
+def calculo_131(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str, *, retenciones_a_mano: int = 0, **datos) -> dict:
+    """Modelo 131 (pago fraccionado del IRPF en estimación objetiva) del trimestre, calculado AHORA con los importes que se teclean (no se guarda: no hay borrador ni estados). Las retenciones de la casilla 08 son
+    las de las facturas emitidas del trimestre ya aprobadas más `retenciones_a_mano`; el resto de `datos` son los argumentos de `motor_131.calcular`. Devuelve `{"resultado", "sugerencias", "titular"}`: las
+    sugerencias son los ingresos y las retenciones que suman los apuntes del trimestre, para que la persona los contraste con lo que teclea."""
+    _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    if periodo not in motor_131.TRIMESTRES:
+        raise ErrorFiscal("El 131 es trimestral: 1T, 2T, 3T o 4T.")
+    perfil = fiscal_perfiles.perfil_en(tenant_id, cliente_fiscal_id, _fecha_fin_periodo(ejercicio, periodo).isoformat())
+    if not perfil:
+        raise ErrorFiscal("El titular no tiene perfil fiscal vigente en ese periodo: créalo antes.", "sin_perfil")
+    conn = db.get_connection()
+    try:
+        titular = dict(_titular(conn, tenant_id, cliente_fiscal_id))
+    finally:
+        conn.close()
+    sumas = _acumulados_130(tenant_id, usuario_id, cliente_fiscal_id, ejercicio)
+    anterior = sumas[motor_131.TRIMESTRES[motor_131.TRIMESTRES.index(periodo) - 1]] if periodo != "1T" else {"ingresos": 0, "retenciones": 0}
+    sugerencias = {"ingresos": sumas[periodo]["ingresos"] - anterior["ingresos"], "retenciones": sumas[periodo]["retenciones"] - anterior["retenciones"]}
+    resultado = motor_131.calcular(ejercicio=ejercicio, periodo=periodo, retenciones=sugerencias["retenciones"] + retenciones_a_mano, **datos)
+    if perfil["forma_juridica"] != "persona_fisica":
+        resultado.bloqueos.append("El modelo 131 lo presentan personas físicas con actividades en estimación objetiva: el perfil de este titular no es de persona física.")
+    if sugerencias["retenciones"]:
+        resultado.avisos.append(f"La casilla 08 incluye {sugerencias['retenciones'] / 100:.2f} € de retenciones de las facturas emitidas del trimestre ya aprobadas.")
+    return {"resultado": resultado, "sugerencias": sugerencias, "titular": titular}
+
+
+def descargar_fichero_131(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str, *, iban: str | None = None, **datos) -> tuple[bytes, str]:
+    """El fichero de PRUEBA del 131 (se importa en el simulador o el formulario de la AEAT; no se presenta tal cual). Solo quien aprueba apuntes. Queda en la auditoría."""
+    _exigir_aprobador(tenant_id, usuario_id)
+    c = calculo_131(tenant_id, usuario_id, cliente_fiscal_id, ejercicio, periodo, **datos)
+    if not c["resultado"].calculable:
+        raise ErrorFiscal("El cálculo del 131 está bloqueado: " + " · ".join(c["resultado"].bloqueos[:3]), "no_soportado")
+    try:
+        contenido = fichero_131.generar(c["resultado"], nif=(c["titular"]["nif"] or "").upper(), nombre=c["titular"]["nombre"], iban=iban or None)
+    except (fichero_131.FicheroNoGenerable, exportador_303.ErrorDeFormato) as e:
+        raise ErrorFiscal(str(e), "no_soportado")
+    auditoria.registrar(tenant_id, usuario_id, "fiscal.131.descargar", "cliente_fiscal", cliente_fiscal_id, {"ejercicio": ejercicio, "periodo": periodo, "resultado": c["resultado"].casillas.get("15", 0),
+                                                                                                         "hash": hashlib.sha256(contenido).hexdigest()})
+    return contenido, f"{ejercicio}_{periodo}_131_prueba.txt"
 
 
 def descargar_fichero_retenciones(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, modelo: str, ejercicio: int, periodo: str) -> tuple[bytes, str]:

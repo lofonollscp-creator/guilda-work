@@ -18221,3 +18221,117 @@ msgstr "La primera és la principal: la de més volum d'operacions. La clau i l'
 
 msgid "Epígrafe IAE"
 msgstr "Epígraf IAE"
+
+msgid "A deducir: retenciones e ingresos a cuenta"
+msgstr "A deduir: retencions i ingressos a compte"
+
+msgid "Deducción por Ceuta, Melilla o La Palma"
+msgstr "Deducció per Ceuta, Melilla o La Palma"
+
+msgid "Descargar el fichero de prueba del modelo 131"
+msgstr "Descarregar el fitxer de prova del model 131"
+
+msgid "Diferencia (07 − 08 − 09)"
+msgstr "Diferència (07 − 08 − 09)"
+
+msgid "I. Actividades en estimación objetiva (no agrícolas, ganaderas ni forestales)"
+msgstr "I. Activitats en estimació objectiva (no agrícoles, ramaderes ni forestals)"
+
+msgid "IBAN de domiciliación (opcional)"
+msgstr "IBAN de domiciliació (opcional)"
+
+msgid "II. Actividades sin posibilidad de determinar los datos-base"
+msgstr "II. Activitats sense possibilitat de determinar les dades base"
+
+msgid "III. Actividades agrícolas, ganaderas y forestales"
+msgstr "III. Activitats agrícoles, ramaderes i forestals"
+
+msgid "IV. Total liquidación"
+msgstr "IV. Total liquidació"
+
+msgid "Ingresos de explotaciones ordinarias (€)"
+msgstr "Ingressos d'explotacions ordinàries (€)"
+
+msgid "Ingresos de explotaciones prioritarias (€)"
+msgstr "Ingressos d'explotacions prioritàries (€)"
+
+msgid "Ingresos ordinarios en Ceuta, Melilla o La Palma (€)"
+msgstr "Ingressos ordinaris a Ceuta, Melilla o La Palma (€)"
+
+msgid "Ingresos prioritarios en Ceuta, Melilla o La Palma (€)"
+msgstr "Ingressos prioritaris a Ceuta, Melilla o La Palma (€)"
+
+msgid "Los apuntes aprobados suman %(importe)s € de base emitida en el trimestre: contrástalos con los ingresos que has puesto."
+msgstr "Els apunts aprovats sumen %(importe)s € de base emesa al trimestre: contrasta'ls amb els ingressos que has posat."
+
+msgid "Minoración por rendimientos bajos del ejercicio anterior"
+msgstr "Minoració per rendiments baixos de l'exercici anterior"
+
+msgid "Modelo 131"
+msgstr "Model 131"
+
+msgid "Modelo 131 (IRPF, módulos)"
+msgstr "Model 131 (IRPF, mòduls)"
+
+msgid "Otras retenciones soportadas del trimestre (€)"
+msgstr "Altres retencions suportades del trimestre (€)"
+
+msgid "Pago fraccionado"
+msgstr "Pagament fraccionat"
+
+msgid "Pago fraccionado del IRPF (estimación objetiva, «módulos»)"
+msgstr "Pagament fraccionat de l'IRPF (estimació objectiva, «mòduls»)"
+
+msgid "Pago fraccionado previo del apartado I"
+msgstr "Pagament fraccionat previ de l'apartat I"
+
+msgid "Pago fraccionado previo del apartado II"
+msgstr "Pagament fraccionat previ de l'apartat II"
+
+msgid "Pago fraccionado previo del apartado III"
+msgstr "Pagament fraccionat previ de l'apartat III"
+
+msgid "Personal asalariado (unidades)"
+msgstr "Personal assalariat (unitats)"
+
+msgid "Porcentaje"
+msgstr "Percentatge"
+
+msgid "Porcentaje superior"
+msgstr "Percentatge superior"
+
+msgid "Rendimiento neto"
+msgstr "Rendiment net"
+
+msgid "Rendimiento neto (€)"
+msgstr "Rendiment net (€)"
+
+msgid "Rendimiento neto a efectos del pago fraccionado de cada actividad y unidades del módulo de personal asalariado: 0 paga el 2 por 100, hasta 1 el 3 por 100 y más de 1 el 4 por 100. Un porcentaje superior es opcional; nunca inferior."
+msgstr "Rendiment net a efectes del pagament fraccionat de cada activitat i unitats del mòdul de personal assalariat: 0 paga el 2 per 100, fins a 1 el 3 per 100 i més d'1 el 4 per 100. Un percentatge superior és opcional; mai inferior."
+
+msgid "Resultados negativos de trimestres anteriores sin deducir (€)"
+msgstr "Resultats negatius de trimestres anteriors sense deduir (€)"
+
+msgid "Se calcula ahora con los importes que pongas aquí (del trimestre, no acumulados). Guilda no tiene los datos-base de cada módulo: el rendimiento neto de cada actividad lo calculas tú con la Orden de módulos del año. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal."
+msgstr "Es calcula ara amb els imports que posis aquí (del trimestre, no acumulats). Guilda no té les dades base de cada mòdul: el rendiment net de cada activitat el calcules tu amb l'Ordre de mòduls de l'any. No es desa res i aquest model no té esborrany ni estats a Guilda Fiscal."
+
+msgid "Suma de los pagos fraccionados previos (02 + 04 + 06)"
+msgstr "Suma dels pagaments fraccionats previs (02 + 04 + 06)"
+
+msgid "Suma de rendimientos netos de las actividades del apartado I"
+msgstr "Suma de rendiments nets de les activitats de l'apartat I"
+
+msgid "Total (10 − 11 − 12)"
+msgstr "Total (10 − 11 − 12)"
+
+msgid "Ventas o ingresos del trimestre (€)"
+msgstr "Vendes o ingressos del trimestre (€)"
+
+msgid "Volumen de ingresos del apartado III (agrícolas, ganaderas y forestales)"
+msgstr "Volum d'ingressos de l'apartat III (agrícoles, ramaderes i forestals)"
+
+msgid "Volumen de ventas o ingresos del apartado II"
+msgstr "Volum de vendes o ingressos de l'apartat II"
+
+msgid "impórtalo en el formulario de la AEAT antes de presentar; las páginas de detalle de cada actividad se completan allí."
+msgstr "importa'l al formulari de l'AEAT abans de presentar; les pàgines de detall de cada activitat es completen allà."

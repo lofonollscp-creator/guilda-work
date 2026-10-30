@@ -18212,3 +18212,117 @@ msgstr "The first is the main one: the one with the highest volume of operations
 
 msgid "Epígrafe IAE"
 msgstr "IAE heading"
+
+msgid "A deducir: retenciones e ingresos a cuenta"
+msgstr "To deduct: withholdings and payments on account"
+
+msgid "Deducción por Ceuta, Melilla o La Palma"
+msgstr "Deduction for Ceuta, Melilla or La Palma"
+
+msgid "Descargar el fichero de prueba del modelo 131"
+msgstr "Download the test file for form 131"
+
+msgid "Diferencia (07 − 08 − 09)"
+msgstr "Difference (07 − 08 − 09)"
+
+msgid "I. Actividades en estimación objetiva (no agrícolas, ganaderas ni forestales)"
+msgstr "I. Activities under objective assessment (non-agricultural, livestock or forestry)"
+
+msgid "IBAN de domiciliación (opcional)"
+msgstr "Direct debit IBAN (optional)"
+
+msgid "II. Actividades sin posibilidad de determinar los datos-base"
+msgstr "II. Activities for which the base data cannot be determined"
+
+msgid "III. Actividades agrícolas, ganaderas y forestales"
+msgstr "III. Agricultural, livestock and forestry activities"
+
+msgid "IV. Total liquidación"
+msgstr "IV. Total settlement"
+
+msgid "Ingresos de explotaciones ordinarias (€)"
+msgstr "Income from ordinary holdings (€)"
+
+msgid "Ingresos de explotaciones prioritarias (€)"
+msgstr "Income from priority holdings (€)"
+
+msgid "Ingresos ordinarios en Ceuta, Melilla o La Palma (€)"
+msgstr "Ordinary income in Ceuta, Melilla or La Palma (€)"
+
+msgid "Ingresos prioritarios en Ceuta, Melilla o La Palma (€)"
+msgstr "Priority income in Ceuta, Melilla or La Palma (€)"
+
+msgid "Los apuntes aprobados suman %(importe)s € de base emitida en el trimestre: contrástalos con los ingresos que has puesto."
+msgstr "The approved entries add up to €%(importe)s of invoiced base in the quarter: compare them with the income you entered."
+
+msgid "Minoración por rendimientos bajos del ejercicio anterior"
+msgstr "Reduction for low net income in the previous year"
+
+msgid "Modelo 131"
+msgstr "Form 131"
+
+msgid "Modelo 131 (IRPF, módulos)"
+msgstr "Form 131 (personal income tax, modules)"
+
+msgid "Otras retenciones soportadas del trimestre (€)"
+msgstr "Other withholdings borne in the quarter (€)"
+
+msgid "Pago fraccionado"
+msgstr "Instalment payment"
+
+msgid "Pago fraccionado del IRPF (estimación objetiva, «módulos»)"
+msgstr "Personal income tax instalment (objective assessment, “modules”)"
+
+msgid "Pago fraccionado previo del apartado I"
+msgstr "Prior instalment payment of section I"
+
+msgid "Pago fraccionado previo del apartado II"
+msgstr "Prior instalment payment of section II"
+
+msgid "Pago fraccionado previo del apartado III"
+msgstr "Prior instalment payment of section III"
+
+msgid "Personal asalariado (unidades)"
+msgstr "Salaried staff (units)"
+
+msgid "Porcentaje"
+msgstr "Percentage"
+
+msgid "Porcentaje superior"
+msgstr "Higher percentage"
+
+msgid "Rendimiento neto"
+msgstr "Net income"
+
+msgid "Rendimiento neto (€)"
+msgstr "Net income (€)"
+
+msgid "Rendimiento neto a efectos del pago fraccionado de cada actividad y unidades del módulo de personal asalariado: 0 paga el 2 por 100, hasta 1 el 3 por 100 y más de 1 el 4 por 100. Un porcentaje superior es opcional; nunca inferior."
+msgstr "Net income for instalment purposes for each activity and units of the salaried-staff module: 0 pays 2 per cent, up to 1 pays 3 per cent and more than 1 pays 4 per cent. A higher percentage is optional; never lower."
+
+msgid "Resultados negativos de trimestres anteriores sin deducir (€)"
+msgstr "Negative results of earlier quarters not yet deducted (€)"
+
+msgid "Se calcula ahora con los importes que pongas aquí (del trimestre, no acumulados). Guilda no tiene los datos-base de cada módulo: el rendimiento neto de cada actividad lo calculas tú con la Orden de módulos del año. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal."
+msgstr "It is calculated now from the amounts you enter here (for the quarter, not cumulative). Guilda does not have the base data of each module: you calculate the net income of each activity with the year's modules Order. Nothing is saved and this form has no draft or states in Guilda Fiscal."
+
+msgid "Suma de los pagos fraccionados previos (02 + 04 + 06)"
+msgstr "Sum of prior instalment payments (02 + 04 + 06)"
+
+msgid "Suma de rendimientos netos de las actividades del apartado I"
+msgstr "Sum of net income of the section I activities"
+
+msgid "Total (10 − 11 − 12)"
+msgstr "Total (10 − 11 − 12)"
+
+msgid "Ventas o ingresos del trimestre (€)"
+msgstr "Sales or income for the quarter (€)"
+
+msgid "Volumen de ingresos del apartado III (agrícolas, ganaderas y forestales)"
+msgstr "Income volume of section III (agricultural, livestock and forestry)"
+
+msgid "Volumen de ventas o ingresos del apartado II"
+msgstr "Sales or income volume of section II"
+
+msgid "impórtalo en el formulario de la AEAT antes de presentar; las páginas de detalle de cada actividad se completan allí."
+msgstr "import it into the AEAT form before filing; the detail pages of each activity are completed there."

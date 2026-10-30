@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Modelo 131') }} — {{ c.nombre }}{% endblock %}
+{% block content %}
+{% set conceptos = {'01': _('Suma de rendimientos netos de las actividades del apartado I'), '02': _('Pago fraccionado previo del apartado I'), '03': _('Volumen de ventas o ingresos del apartado II'),
+  '04': _('Pago fraccionado previo del apartado II'), '05': _('Volumen de ingresos del apartado III (agrícolas, ganaderas y forestales)'), '06': _('Pago fraccionado previo del apartado III'),
+  '07': _('Suma de los pagos fraccionados previos (02 + 04 + 06)'), '08': _('A deducir: retenciones e ingresos a cuenta'), '09': _('Minoración por rendimientos bajos del ejercicio anterior'),
+  '10': _('Diferencia (07 − 08 − 09)'), '11': _('A deducir: resultados negativos de trimestres anteriores'), '13': _('Total (10 − 11 − 12)'), '15': _('Resultado de la autoliquidación')} %}
+{% macro euros(v) %}{{ ('%.2f'|format(v / 100)).replace('.', ',') }} €{% endmacro %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Modelo 131') }} · {{ ejercicio }} {{ periodo }}</h1>
+    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '—' }} · {{ _('Pago fraccionado del IRPF (estimación objetiva, «módulos»)') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ c.nombre }}</a>
+</header>
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  <p class="muted">{{ _('Se calcula ahora con los importes que pongas aquí (del trimestre, no acumulados). Guilda no tiene los datos-base de cada módulo: el rendimiento neto de cada actividad lo calculas tú con la Orden de módulos del año. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal.') }}</p>
+  <form method="get" class="edit-form">
+    <div class="fila-campos">
+      <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100"></label>
+      <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option {{ 'selected' if p == periodo }}>{{ p }}</option>{% endfor %}</select></label>
+    </div>
+    <fieldset>
+      <legend>{{ _('I. Actividades en estimación objetiva (no agrícolas, ganaderas ni forestales)') }}</legend>
+      <p class="muted">{{ _('Rendimiento neto a efectos del pago fraccionado de cada actividad y unidades del módulo de personal asalariado: 0 paga el 2 por 100, hasta 1 el 3 por 100 y más de 1 el 4 por 100. Un porcentaje superior es opcional; nunca inferior.') }}</p>
+      {% for i in filas %}<div class="fila-campos">
+        <label>{{ _('Epígrafe IAE') }} <input type="text" name="epigrafe_{{ i }}" value="{{ valores.get('epigrafe_' ~ i, '') }}" maxlength="4"></label>
+        <label>{{ _('Rendimiento neto (€)') }} <input type="text" name="rendimiento_{{ i }}" value="{{ valores.get('rendimiento_' ~ i, '') }}" inputmode="decimal"></label>
+        <label>{{ _('Personal asalariado (unidades)') }} <input type="text" name="asalariados_{{ i }}" value="{{ valores.get('asalariados_' ~ i, '') }}" inputmode="decimal"></label>
+        <label>{{ _('Porcentaje superior') }} (%) <input type="text" name="superior_{{ i }}" value="{{ valores.get('superior_' ~ i, '') }}" inputmode="decimal"></label>
+        <label class="checkbox-label"><input type="checkbox" name="ceuta_{{ i }}" value="1" {{ 'checked' if valores.get('ceuta_' ~ i) }}> {{ _('Deducción por Ceuta, Melilla o La Palma') }}</label>
+      </div>{% endfor %}
+    </fieldset>
+    <fieldset>
+      <legend>{{ _('II. Actividades sin posibilidad de determinar los datos-base') }}</legend>
+      <div class="fila-campos">
+        <label>{{ _('Ventas o ingresos del trimestre (€)') }} <input type="text" name="ventas_ii" value="{{ valores.get('ventas_ii', '') }}" inputmode="decimal"></label>
+        <label>{{ _('Porcentaje superior') }} (%) <input type="text" name="superior_ii" value="{{ valores.get('superior_ii', '') }}" inputmode="decimal"></label>
+        <label class="checkbox-label"><input type="checkbox" name="ceuta_ii" value="1" {{ 'checked' if valores.get('ceuta_ii') }}> {{ _('Deducción por Ceuta, Melilla o La Palma') }}</label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>{{ _('III. Actividades agrícolas, ganaderas y forestales') }}</legend>
+      <div class="fila-campos">
+        <label>{{ _('Ingresos de explotaciones ordinarias (€)') }} <input type="text" name="ingresos_iii" value="{{ valores.get('ingresos_iii', '') }}" inputmode="decimal"></label>
+        <label>{{ _('Ingresos de explotaciones prioritarias (€)') }} <input type="text" name="ingresos_iii_prioritarias" value="{{ valores.get('ingresos_iii_prioritarias', '') }}" inputmode="decimal"></label>
+        <label>{{ _('Porcentaje superior') }} (%) <input type="text" name="superior_iii" value="{{ valores.get('superior_iii', '') }}" inputmode="decimal"></label>
+      </div>
+      <div class="fila-campos">
+        <label>{{ _('Ingresos ordinarios en Ceuta, Melilla o La Palma (€)') }} <input type="text" name="ingresos_iii_ceuta" value="{{ valores.get('ingresos_iii_ceuta', '') }}" inputmode="decimal"></label>
+        <label>{{ _('Ingresos prioritarios en Ceuta, Melilla o La Palma (€)') }} <input type="text" name="ingresos_iii_ceuta_prioritarias" value="{{ valores.get('ingresos_iii_ceuta_prioritarias', '') }}" inputmode="decimal"></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>{{ _('IV. Total liquidación') }}</legend>
+      <div class="fila-campos">
+        <label>{{ _('Otras retenciones soportadas del trimestre (€)') }} <input type="text" name="otras_retenciones" value="{{ valores.get('otras_retenciones', '') }}" inputmode="decimal"></label>
+        <label>{{ _('Rendimiento neto del año anterior (para la minoración, si fue de 12.000 € o menos)') }} <input type="text" name="rendimiento_anterior" value="{{ valores.get('rendimiento_anterior', '') }}" inputmode="decimal"></label>
+        <label>{{ _('Resultados negativos de trimestres anteriores sin deducir (€)') }} <input type="text" name="negativos_previos" value="{{ valores.get('negativos_previos', '') }}" inputmode="decimal"></label>
+        <label>{{ _('IBAN de domiciliación (opcional)') }} <input type="text" name="iban" value="{{ valores.get('iban', '') }}" maxlength="40"></label>
+      </div>
+    </fieldset>
+    <div class="ds-fila"><button class="btn btn-primary" type="submit">{{ _('Calcular') }}</button></div>
+  </form>
+</section>
+{% if calculo %}
+{% set r = calculo.resultado %}
+<section class="dash-panel ds-mt-16" id="calculo-131">
+  {% for b in r.bloqueos %}<p class="ia-error" role="alert">{{ b }}</p>{% endfor %}
+  {% if r.filas %}<div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Epígrafe IAE') }}</th><th>{{ _('Rendimiento neto') }}</th><th>{{ _('Porcentaje') }}</th><th>{{ _('Pago fraccionado') }}</th></tr></thead><tbody>
+    {% for f in r.filas %}<tr><td>{{ f.epigrafe }}</td><td>{{ euros(f.rendimiento_neto) }}</td><td>{{ ('%g'|format(f.porcentaje / 100)).replace('.', ',') }} %</td><td>{{ euros(f.resultado) }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+  {% if r.casillas %}<div class="table-wrap ds-mt-16"><table class="fiscal-table"><thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th></tr></thead><tbody>
+    {% for cas, v in r.casillas.items()|sort %}<tr><td>{{ cas }}</td><td>{{ conceptos.get(cas, '') }}</td><td>{{ euros(v) }}</td></tr>{% endfor %}</tbody></table></div>
+  <p><strong>{{ _('Tipo de declaración') }}:</strong> {{ {'I': _('Ingreso'), 'N': _('Negativa'), 'B': _('A deducir en los siguientes pagos')}[r.tipo_declaracion] }}</p>{% endif %}
+  {% if calculo.sugerencias.ingresos %}<p class="muted">{{ _('Los apuntes aprobados suman %(importe)s € de base emitida en el trimestre: contrástalos con los ingresos que has puesto.', importe=('%.2f'|format(calculo.sugerencias.ingresos / 100)).replace('.', ',')) }}</p>{% endif %}
+  {% for a in r.avisos %}<p class="muted">{{ a }}</p>{% endfor %}
+  {% if puede_aprobar and r.calculable %}<p><a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.fichero_131_prueba', cliente_id=c.id, **consulta) }}">{{ _('Descargar el fichero de prueba del modelo 131') }}</a>
+    <span class="muted">· {{ _('impórtalo en el formulario de la AEAT antes de presentar; las páginas de detalle de cada actividad se completan allí.') }}</span></p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from datetime import date, timedelta
+from decimal import Decimal
 from urllib.parse import quote
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
@@ -14,7 +15,7 @@ from flask_babel import gettext as _
 
 from . import acceso, db, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
-from .fiscal_modelos import motor_390
+from .fiscal_modelos import motor_131, motor_390
 from .fiscal_modelos.apuntes import Apunte
 from .fiscal_perfiles import ErrorFiscal
 
@@ -308,6 +309,60 @@ def fichero_130_prueba(cliente_id: int):
         datos, nombre = fn.descargar_fichero_130(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, **_ajustes_130())
     except (ErrorFiscal, ValueError) as e:
         return _atras(url_for("guilda_fiscal.modelo_130", cliente_id=cliente_id, **destino), e)
+    return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
+
+
+def _datos_131() -> dict:
+    """Los datos del formulario del 131 (importes en euros del trimestre; porcentajes en %; en blanco = nada). Devuelve los argumentos de `fn.calculo_131`, sin el IBAN."""
+    f = request.args
+
+    def euros(clave: str) -> int:
+        return _euros(f[clave]) if f.get(clave, "").strip() else 0
+
+    def porcentaje(clave: str):
+        return fc.porcentaje_a_centesimas(f[clave]) if f.get(clave, "").strip() else None
+    actividades = []
+    for i in range(1, motor_131.MAX_ACTIVIDADES + 1):
+        if not (f.get(f"epigrafe_{i}", "").strip() or f.get(f"rendimiento_{i}", "").strip()):
+            continue
+        actividades.append({"epigrafe": f.get(f"epigrafe_{i}", ""), "rendimiento_neto": euros(f"rendimiento_{i}"), "asalariados": Decimal((f.get(f"asalariados_{i}") or "0").replace(",", ".")),
+                            "superior": porcentaje(f"superior_{i}"), "ceuta_melilla": bool(f.get(f"ceuta_{i}"))})
+    return {"actividades": actividades, "ventas_ii": euros("ventas_ii"), "ceuta_ii": bool(f.get("ceuta_ii")), "superior_ii": porcentaje("superior_ii"), "ingresos_iii": euros("ingresos_iii"),
+            "ingresos_iii_prioritarias": euros("ingresos_iii_prioritarias"), "ingresos_iii_ceuta": euros("ingresos_iii_ceuta"), "ingresos_iii_ceuta_prioritarias": euros("ingresos_iii_ceuta_prioritarias"),
+            "superior_iii": porcentaje("superior_iii"), "retenciones_a_mano": euros("otras_retenciones"), "rendimiento_anterior": euros("rendimiento_anterior") if f.get("rendimiento_anterior", "").strip() else None,
+            "negativos_previos": euros("negativos_previos")}
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/131")
+@login_required
+def modelo_131(cliente_id: int):
+    """Modelo 131 (pago fraccionado del IRPF, estimación objetiva) del trimestre, calculado ahora con los importes que se teclean. No se guarda nada."""
+    c = _cliente_o_404(cliente_id)
+    ejercicio, periodo = fn.periodo_por_defecto(date.today())
+    ejercicio = request.args.get("ejercicio", ejercicio, type=int)
+    periodo = request.args.get("periodo", periodo) if request.args.get("periodo") in PERIODOS else periodo
+    error, calculo = _error(), None
+    if any(k not in ("ejercicio", "periodo") for k in request.args):
+        try:
+            calculo = fn.calculo_131(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, **_datos_131())
+        except (ErrorFiscal, ValueError, ArithmeticError) as e:
+            error = error or str(e)
+    return render_template("fiscal_131.html", c=c, ejercicio=ejercicio, periodo=periodo, periodos=PERIODOS, calculo=calculo, valores=request.args, consulta={**request.args.to_dict(), "ejercicio": ejercicio, "periodo": periodo},
+                           filas=range(1, motor_131.MAX_ACTIVIDADES + 1), error=error)
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/131/fichero")
+@login_required
+def fichero_131_prueba(cliente_id: int):
+    _cliente_o_404(cliente_id)
+    ejercicio, periodo = request.args.get("ejercicio", type=int), request.args.get("periodo", "")
+    if not ejercicio or periodo not in PERIODOS:
+        abort(404)
+    destino = {k: v for k, v in request.args.items()}
+    try:
+        datos, nombre = fn.descargar_fichero_131(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, iban=request.args.get("iban") or None, **_datos_131())
+    except (ErrorFiscal, ValueError, ArithmeticError) as e:
+        return _atras(url_for("guilda_fiscal.modelo_131", cliente_id=cliente_id, **destino), e)
     return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
 
 
