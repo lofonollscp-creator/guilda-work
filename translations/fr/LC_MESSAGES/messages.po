@@ -18411,3 +18411,54 @@ msgstr "Volume de ventes ou de revenus de la section II"
 
 msgid "impórtalo en el formulario de la AEAT antes de presentar; las páginas de detalle de cada actividad se completan allí."
 msgstr "importez-le dans le formulaire de l'AEAT avant de déposer ; les pages de détail de chaque activité y sont complétées."
+
+msgid "Alquileres y gastos fijos que se repiten solos"
+msgstr "Loyers et dépenses fixes qui se répètent seuls"
+
+msgid "Apuntes recurrentes"
+msgstr "Écritures récurrentes"
+
+msgid "Cada fecha que toca y ya ha llegado, el sistema crea una copia aprobada del apunte modelo (entra en el 303 y el 130 del periodo), queda en la auditoría y te avisa. No crea apuntes con fecha futura ni repite uno que ya existe. Para crear una plantilla, abre un apunte y usa «Repetir automáticamente»."
+msgstr "À chaque échéance atteinte, le système crée une copie approuvée de l'écriture modèle (elle compte dans le 303 et le 130 de la période), l'enregistre dans l'audit et vous prévient. Il ne crée pas d'écritures à date future ni ne répète une écriture existante. Pour créer un modèle, ouvrez une écriture et utilisez « Répéter automatiquement »."
+
+msgid "Cada trimestre"
+msgstr "Chaque trimestre"
+
+msgid "Convierte este apunte en una plantilla recurrente: cada mes o trimestre, el sistema crea solo una copia aprobada con los mismos importes y la misma retención, y te avisa. Puedes pausarla o borrarla cuando quieras desde las plantillas del titular."
+msgstr "Transforme cette écriture en modèle récurrent : chaque mois ou trimestre, le système crée seul une copie approuvée avec les mêmes montants et la même retenue, et vous prévient. Vous pouvez la suspendre ou la supprimer à tout moment depuis les modèles du titulaire."
+
+msgid "Creados: %(n)s"
+msgstr "Créées : %(n)s"
+
+msgid "Creados: %(n)s · ya existían: %(y)s · con error: %(e)s."
+msgstr "Créées : %(n)s · existaient déjà : %(y)s · en erreur : %(e)s."
+
+msgid "Este titular no tiene plantillas recurrentes todavía."
+msgstr "Ce titulaire n'a pas encore de modèles récurrents."
+
+msgid "Frecuencia"
+msgstr "Fréquence"
+
+msgid "Generar lo que toca ahora"
+msgstr "Générer maintenant ce qui est dû"
+
+msgid "Plantilla"
+msgstr "Modèle"
+
+msgid "Plantillas recurrentes"
+msgstr "Modèles récurrents"
+
+msgid "Repetir automáticamente"
+msgstr "Répéter automatiquement"
+
+msgid "Terminada"
+msgstr "Terminée"
+
+msgid "Ver las plantillas recurrentes del titular"
+msgstr "Voir les modèles récurrents du titulaire"
+
+msgid "¿Borrar la plantilla? Los apuntes que ya creó se quedan."
+msgstr "Supprimer le modèle ? Les écritures déjà créées restent."
+
+msgid "¿Crear la plantilla? Los apuntes se crearán solos y quedarán aprobados."
+msgstr "Créer le modèle ? Les écritures seront créées seules et approuvées."

@@ -18326,3 +18326,54 @@ msgstr "Sales or income volume of section II"
 
 msgid "impórtalo en el formulario de la AEAT antes de presentar; las páginas de detalle de cada actividad se completan allí."
 msgstr "import it into the AEAT form before filing; the detail pages of each activity are completed there."
+
+msgid "Alquileres y gastos fijos que se repiten solos"
+msgstr "Rents and fixed expenses that repeat on their own"
+
+msgid "Apuntes recurrentes"
+msgstr "Recurring entries"
+
+msgid "Cada fecha que toca y ya ha llegado, el sistema crea una copia aprobada del apunte modelo (entra en el 303 y el 130 del periodo), queda en la auditoría y te avisa. No crea apuntes con fecha futura ni repite uno que ya existe. Para crear una plantilla, abre un apunte y usa «Repetir automáticamente»."
+msgstr "Each due date that has arrived, the system creates an approved copy of the model entry (it counts in the period's 303 and 130), logs it in the audit trail and notifies you. It does not create future-dated entries or repeat one that already exists. To create a template, open an entry and use “Repeat automatically”."
+
+msgid "Cada trimestre"
+msgstr "Every quarter"
+
+msgid "Convierte este apunte en una plantilla recurrente: cada mes o trimestre, el sistema crea solo una copia aprobada con los mismos importes y la misma retención, y te avisa. Puedes pausarla o borrarla cuando quieras desde las plantillas del titular."
+msgstr "Turns this entry into a recurring template: every month or quarter, the system creates an approved copy with the same amounts and the same withholding on its own, and notifies you. You can pause or delete it whenever you like from the holder's templates."
+
+msgid "Creados: %(n)s"
+msgstr "Created: %(n)s"
+
+msgid "Creados: %(n)s · ya existían: %(y)s · con error: %(e)s."
+msgstr "Created: %(n)s · already existed: %(y)s · with errors: %(e)s."
+
+msgid "Este titular no tiene plantillas recurrentes todavía."
+msgstr "This holder has no recurring templates yet."
+
+msgid "Frecuencia"
+msgstr "Frequency"
+
+msgid "Generar lo que toca ahora"
+msgstr "Generate what is due now"
+
+msgid "Plantilla"
+msgstr "Template"
+
+msgid "Plantillas recurrentes"
+msgstr "Recurring templates"
+
+msgid "Repetir automáticamente"
+msgstr "Repeat automatically"
+
+msgid "Terminada"
+msgstr "Finished"
+
+msgid "Ver las plantillas recurrentes del titular"
+msgstr "See the holder's recurring templates"
+
+msgid "¿Borrar la plantilla? Los apuntes que ya creó se quedan."
+msgstr "Delete the template? The entries it already created stay."
+
+msgid "¿Crear la plantilla? Los apuntes se crearán solos y quedarán aprobados."
+msgstr "Create the template? The entries will be created on their own and approved."

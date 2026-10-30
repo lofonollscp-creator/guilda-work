@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Plantillas recurrentes') }} — {{ c.nombre }}{% endblock %}
+{% block content %}
+{% macro euros(v) %}{{ ('%.2f'|format(v / 100)).replace('.', ',') }} €{% endmacro %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Plantillas recurrentes') }}</h1>
+    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '—' }} · {{ _('Alquileres y gastos fijos que se repiten solos') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ c.nombre }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if resultado %}<p class="muted" role="status">{{ _('Creados: %(n)s · ya existían: %(y)s · con error: %(e)s.', n=resultado.creados, y=resultado.ya_existian, e=resultado.errores) }}</p>{% endif %}
+<section class="dash-panel">
+  <p class="muted">{{ _('Cada fecha que toca y ya ha llegado, el sistema crea una copia aprobada del apunte modelo (entra en el 303 y el 130 del periodo), queda en la auditoría y te avisa. No crea apuntes con fecha futura ni repite uno que ya existe. Para crear una plantilla, abre un apunte y usa «Repetir automáticamente».') }}</p>
+  {% if plantillas %}
+  <div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Plantilla') }}</th><th>{{ _('Frecuencia') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Siguiente') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead><tbody>
+    {% for p in plantillas %}<tr>
+      <td><a href="{{ url_for('guilda_fiscal.apunte_ver', cliente_id=c.id, apunte_id=p.apunte_id) }}">{{ p.nombre }}</a><br><span class="muted">{{ _('Creados: %(n)s', n=p.generadas) }}</span></td>
+      <td>{{ _('Cada mes') if p.frecuencia == 'mensual' else _('Cada trimestre') }}</td>
+      <td>{{ euros(p.datos.base_centimos) }}</td>
+      <td>{{ p.proxima }}{% if p.hasta %}<br><span class="muted">{{ _('hasta') }} {{ p.hasta }}</span>{% endif %}</td>
+      <td>{% if p.terminada %}{{ _('Terminada') }}{% elif p.activa %}{{ _('Activa') }}{% else %}{{ _('En pausa') }}{% endif %}{% if p.ultimo_error %}<br><span class="ia-error">{{ p.ultimo_error }}</span>{% endif %}</td>
+      <td>{% if puede_aprobar %}<form method="post" class="ds-fila"><input type="hidden" name="plantilla_id" value="{{ p.id }}">
+        <button class="btn btn-ghost" type="submit" name="accion" value="{{ 'pausar' if p.activa else 'reanudar' }}">{{ _('Pausar') if p.activa else _('Reanudar') }}</button>
+        <button class="btn btn-ghost" type="submit" name="accion" value="borrar" data-confirmar-clic="{{ _('¿Borrar la plantilla? Los apuntes que ya creó se quedan.') }}">{{ _('Borrar') }}</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  {% if puede_aprobar %}<form method="post" class="ds-fila ds-mt-16"><button class="btn btn-primary" type="submit" name="accion" value="generar">{{ _('Generar lo que toca ahora') }}</button></form>{% endif %}
+  {% else %}<p class="muted">{{ _('Este titular no tiene plantillas recurrentes todavía.') }}</p>{% endif %}
+</section>
+{% endblock %}

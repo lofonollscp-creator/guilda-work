@@ -83,6 +83,7 @@
     <a href="{{ url_for('guilda_fiscal.resumen_anual_390', cliente_id=c.id, ejercicio=computan.ejercicio) }}">{{ _('Resumen anual del IVA (modelo 390)') }}</a>
     <a href="{{ url_for('guilda_fiscal.modelo_130', cliente_id=c.id, ejercicio=computan.ejercicio, periodo=computan.periodo) }}">{{ _('Modelo 130 (IRPF)') }}</a>
     <a href="{{ url_for('guilda_fiscal.modelo_131', cliente_id=c.id, ejercicio=computan.ejercicio, periodo=computan.periodo) }}">{{ _('Modelo 131 (IRPF, módulos)') }}</a>
+    <a href="{{ url_for('guilda_fiscal.recurrentes', cliente_id=c.id) }}">{{ _('Plantillas recurrentes') }}</a>
     <a href="{{ url_for('guilda_fiscal.captura', cliente_id=c.id) }}">{{ _('Captura desde el móvil') }}</a>
     <a href="{{ url_for('guilda_fiscal.conciliacion', cliente_id=c.id, ejercicio=computan.ejercicio, periodo=computan.periodo) }}">{{ _('Conciliar con el banco') }}</a>
     </div></details>

@@ -292,6 +292,9 @@ CREATE POLICY aislamiento ON fichajes USING (tenant_id = nullif(current_setting(
 ALTER TABLE fiscal_apuntes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON fiscal_apuntes;
 CREATE POLICY aislamiento ON fiscal_apuntes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE fiscal_apuntes_recurrentes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON fiscal_apuntes_recurrentes;
+CREATE POLICY aislamiento ON fiscal_apuntes_recurrentes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE fiscal_artefactos ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON fiscal_artefactos;
 CREATE POLICY aislamiento ON fiscal_artefactos USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

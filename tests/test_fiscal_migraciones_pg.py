@@ -48,7 +48,8 @@ def test_una_base_anterior_recibe_las_columnas_y_repetir_no_hace_nada(base):
     base.execute("DELETE FROM bd_esquema_version WHERE version >= 4")
     base.commit()
     assert not any(_existe(base, t, c) for t, c in columnas)
-    assert migraciones.pendientes(base) == list(range(4, 11))
-    assert migraciones.aplicar(base) == list(range(4, 11))
+    ultima = migraciones.version_esperada()
+    assert migraciones.pendientes(base) == list(range(4, ultima + 1))
+    assert migraciones.aplicar(base) == list(range(4, ultima + 1))
     assert all(_existe(base, t, c) for t, c in columnas)
-    assert migraciones.aplicar(base) == [] and migraciones.version_actual(base) == 10
+    assert migraciones.aplicar(base) == [] and migraciones.version_actual(base) == ultima

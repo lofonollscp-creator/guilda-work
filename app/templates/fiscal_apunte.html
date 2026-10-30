@@ -94,6 +94,18 @@
   </form>
 </section>
 {% endif %}
+{% if apunte_id and puede_aprobar and not datos.get('anulado_en') and not (datos.get('tipo_factura') or '').startswith('R') %}
+<section class="dash-panel ds-mt-16" id="recurrente-apunte">
+  <h2>{{ _('Repetir automáticamente') }}</h2>
+  <p class="muted">{{ _('Convierte este apunte en una plantilla recurrente: cada mes o trimestre, el sistema crea solo una copia aprobada con los mismos importes y la misma retención, y te avisa. Puedes pausarla o borrarla cuando quieras desde las plantillas del titular.') }}</p>
+  <form method="post" action="{{ url_for('guilda_fiscal.apunte_recurrente', cliente_id=c.id, apunte_id=apunte_id) }}" class="ds-fila ds-envolver">
+    <label>{{ _('Frecuencia') }} <select name="frecuencia"><option value="mensual">{{ _('Cada mes') }}</option><option value="trimestral">{{ _('Cada trimestre') }}</option></select></label>
+    <label>{{ _('Hasta (opcional)') }} <input type="date" name="hasta"></label>
+    <button type="submit" class="btn btn-ghost" data-confirmar-clic="{{ _('¿Crear la plantilla? Los apuntes se crearán solos y quedarán aprobados.') }}">{{ _('Crear plantilla') }}</button>
+  </form>
+  <p class="muted"><a href="{{ url_for('guilda_fiscal.recurrentes', cliente_id=c.id) }}">{{ _('Ver las plantillas recurrentes del titular') }}</a></p>
+</section>
+{% endif %}
 {% if apunte_id and historial %}
 <section class="dash-panel ds-mt-16">
   <h2>{{ _('Historial de cambios') }}</h2>

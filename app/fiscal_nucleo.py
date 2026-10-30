@@ -77,6 +77,26 @@ CREATE TABLE IF NOT EXISTS fiscal_apuntes (
 CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_periodo ON fiscal_apuntes(tenant_id, cliente_fiscal_id, libro, fecha_expedicion);
 CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_factura ON fiscal_apuntes(tenant_id, factura_id);
 
+-- Plantillas de apuntes que se repiten solos (alquileres, gastos fijos): `datos` es el apunte modelo en JSON; `generadas` cuenta las repeticiones ya creadas (la siguiente es la `generadas + 1`)
+CREATE TABLE IF NOT EXISTS fiscal_apuntes_recurrentes (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+    cliente_fiscal_id INTEGER NOT NULL REFERENCES clientes_fiscales(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    apunte_id INTEGER,
+    datos TEXT NOT NULL,
+    frecuencia TEXT NOT NULL CHECK (frecuencia IN ('mensual','trimestral')),
+    generadas INTEGER NOT NULL DEFAULT 0,
+    hasta TEXT,
+    activa INTEGER NOT NULL DEFAULT 1,
+    ultima_ejecucion TEXT,
+    ultimo_error TEXT,
+    creado_por INTEGER NOT NULL REFERENCES usuarios(id),
+    creado_en TEXT NOT NULL,
+    actualizado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_recurrentes ON fiscal_apuntes_recurrentes(tenant_id, cliente_fiscal_id, activa);
+
 CREATE TABLE IF NOT EXISTS fiscal_instantaneas (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL REFERENCES tenants(id),
@@ -191,7 +211,7 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     """Al borrar un despacho por completo: lo inmutable solo se puede borrar con el permiso que existe durante esa transacción (el mismo de la auditoría)."""
     conn.execute("INSERT INTO auditoria_control (clave, valor) VALUES ('permitir_borrado', '1') ON CONFLICT(clave) DO UPDATE SET valor = '1'")
     try:
-        for tabla in ("fiscal_artefactos", "fiscal_casillas", "fiscal_declaraciones", "fiscal_instantaneas", "fiscal_apuntes"):
+        for tabla in ("fiscal_artefactos", "fiscal_casillas", "fiscal_declaraciones", "fiscal_instantaneas", "fiscal_apuntes_recurrentes", "fiscal_apuntes"):
             conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
     finally:
         conn.execute("UPDATE auditoria_control SET valor = '0' WHERE clave = 'permitir_borrado'")
@@ -439,6 +459,27 @@ def _mes_despues(texto: str, meses: int) -> str:
     return date(anio, mes + 1, min(d.day, calendar.monthrange(anio, mes + 1)[1])).isoformat()
 
 
+def retencion_de_apunte(fila: dict) -> dict | None:
+    """La retención de IRPF de un apunte guardado, en la forma que espera `aprobar_apunte`."""
+    if not fila.get("retencion_modelo"):
+        return None
+    return {"modelo": fila["retencion_modelo"], "clave": fila["retencion_clave"], "base": fila["retencion_base_centimos"], "pct": fila["retencion_pct_centesimas"], "importe": fila["retencion_centimos"]}
+
+
+def apunte_desplazado(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, fila: dict, meses: int) -> Apunte:
+    """Copia de un apunte guardado `meses` meses después (alquileres y gastos fijos): mismas cifras, fechas desplazadas, número nuevo (en las emitidas el siguiente de la serie; en las recibidas el del original con
+    el mes añadido, que se corrige cuando llega la factura real)."""
+    fecha = _mes_despues(fila["fecha_expedicion"], meses)
+    numero, serie = f"{fila['numero']}-{fecha[:7].replace('-', '')}", fila.get("serie") or ""
+    if fila["libro"] == "E":
+        sig = siguiente_numero(tenant_id, usuario_id, cliente_fiscal_id)
+        if sig["numero"]:
+            numero, serie = sig["numero"], sig["serie"]
+    return a_apunte(fila).con(deducible_periodo_posterior=False, periodo_deduccion=None, fecha_expedicion=date.fromisoformat(fecha), numero=numero, serie=serie,
+                              fecha_operacion=date.fromisoformat(_mes_despues(fila["fecha_operacion"], meses)) if fila.get("fecha_operacion") else None,
+                              fecha_recepcion=date.fromisoformat(_mes_despues(fila["fecha_recepcion"], meses)) if fila.get("fecha_recepcion") else None)
+
+
 def repetir_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apunte_id: int, *, hasta: str, hoy: date | None = None) -> dict:
     """Alquileres y gastos fijos: crea una copia APROBADA del apunte por cada mes desde el siguiente hasta `hasta` («AAAA-MM», como mucho 12 meses), con los mismos importes y la misma retención de IRPF.
     No crea apuntes con fecha futura (no se validarían: se salta lo que falta y se dice), ni repite un mes que ya tiene un apunte igual (misma contraparte, libro e importe), así que se puede volver a lanzar.
@@ -461,10 +502,7 @@ def repetir_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apun
         raise ErrorFiscal("Como mucho se repite durante 12 meses de una vez.")
     nif = _nif_limpio(fila["contraparte_nif"])
     existentes = {(f["libro"], _nif_limpio(f["contraparte_nif"]), f["base_centimos"], f["tipo_iva_centesimas"], f["fecha_expedicion"][:7]) for f in filas}
-    retencion = None
-    if fila.get("retencion_modelo"):
-        retencion = {"modelo": fila["retencion_modelo"], "clave": fila["retencion_clave"], "base": fila["retencion_base_centimos"], "pct": fila["retencion_pct_centesimas"], "importe": fila["retencion_centimos"]}
-    base_apunte = a_apunte(fila).con(deducible_periodo_posterior=False, periodo_deduccion=None)
+    retencion = retencion_de_apunte(fila)
     creados, ya_existian, futuros = [], 0, 0
     for n in range(1, meses + 1):
         fecha = _mes_despues(fila["fecha_expedicion"], n)
@@ -474,15 +512,7 @@ def repetir_apunte(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apun
         if (fila["libro"], nif, fila["base_centimos"], fila["tipo_iva_centesimas"], fecha[:7]) in existentes:
             ya_existian += 1
             continue
-        etiqueta = fecha[:7].replace("-", "")
-        numero, serie = f"{fila['numero']}-{etiqueta}", fila["serie"] or ""
-        if fila["libro"] == "E":
-            sig = siguiente_numero(tenant_id, usuario_id, cliente_fiscal_id)
-            if sig["numero"]:
-                numero, serie = sig["numero"], sig["serie"]
-        copia = base_apunte.con(fecha_expedicion=date.fromisoformat(fecha), numero=numero, serie=serie,
-                                fecha_operacion=date.fromisoformat(_mes_despues(fila["fecha_operacion"], n)) if fila["fecha_operacion"] else None,
-                                fecha_recepcion=date.fromisoformat(_mes_despues(fila["fecha_recepcion"], n)) if fila["fecha_recepcion"] else None)
+        copia = apunte_desplazado(tenant_id, usuario_id, cliente_fiscal_id, fila, n)
         creados.append(aprobar_apunte(tenant_id, usuario_id, cliente_fiscal_id, copia, retencion=retencion)["id"])
     auditoria.registrar(tenant_id, usuario_id, "fiscal.apunte.repetir", "cliente_fiscal", cliente_fiscal_id, {"apunte_id": apunte_id, "hasta": hasta, "creados": len(creados), "ya_existian": ya_existian, "futuros": futuros})
     return {"creados": creados, "ya_existian": ya_existian, "futuros": futuros}

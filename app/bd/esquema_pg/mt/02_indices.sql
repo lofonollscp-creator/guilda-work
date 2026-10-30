@@ -94,6 +94,7 @@ CREATE INDEX IF NOT EXISTS idx_fichajes_tenant_marca ON fichajes (tenant_id, mar
 CREATE INDEX IF NOT EXISTS idx_fichajes_usuario_marca ON fichajes (usuario_id, marca_tiempo);
 CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_factura ON fiscal_apuntes (tenant_id, factura_id);
 CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_periodo ON fiscal_apuntes (tenant_id, cliente_fiscal_id, libro, fecha_expedicion);
+CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_recurrentes ON fiscal_apuntes_recurrentes (tenant_id, cliente_fiscal_id, activa);
 CREATE INDEX IF NOT EXISTS idx_fiscal_artefactos ON fiscal_artefactos (tenant_id, declaracion_id, tipo);
 CREATE INDEX IF NOT EXISTS idx_fiscal_declaraciones ON fiscal_declaraciones (tenant_id, cliente_fiscal_id, modelo, ejercicio, periodo);
 CREATE INDEX IF NOT EXISTS idx_fiscal_instantaneas ON fiscal_instantaneas (tenant_id, cliente_fiscal_id, modelo, ejercicio, periodo);

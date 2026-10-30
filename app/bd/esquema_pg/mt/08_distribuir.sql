@@ -117,6 +117,7 @@ SELECT create_distributed_table('fichaje_avisos_turno', 'tenant_id', colocate_wi
 SELECT create_distributed_table('fichaje_datos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fichajes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_apuntes', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('fiscal_apuntes_recurrentes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_artefactos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_casillas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_config', 'tenant_id', colocate_with => 'abogados_ajustes');

@@ -927,6 +927,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "fiscal_apuntes_recurrentes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "fiscal_artefactos": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

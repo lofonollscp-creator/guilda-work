@@ -18335,3 +18335,54 @@ msgstr "Volum de vendes o ingressos de l'apartat II"
 
 msgid "impórtalo en el formulario de la AEAT antes de presentar; las páginas de detalle de cada actividad se completan allí."
 msgstr "importa'l al formulari de l'AEAT abans de presentar; les pàgines de detall de cada activitat es completen allà."
+
+msgid "Alquileres y gastos fijos que se repiten solos"
+msgstr "Lloguers i despeses fixes que es repeteixen sols"
+
+msgid "Apuntes recurrentes"
+msgstr "Apunts recurrents"
+
+msgid "Cada fecha que toca y ya ha llegado, el sistema crea una copia aprobada del apunte modelo (entra en el 303 y el 130 del periodo), queda en la auditoría y te avisa. No crea apuntes con fecha futura ni repite uno que ya existe. Para crear una plantilla, abre un apunte y usa «Repetir automáticamente»."
+msgstr "Cada data que toca i ja ha arribat, el sistema crea una còpia aprovada de l'apunt model (entra al 303 i al 130 del període), queda a l'auditoria i t'avisa. No crea apunts amb data futura ni en repeteix un que ja existeix. Per crear una plantilla, obre un apunt i fes servir «Repetir automàticament»."
+
+msgid "Cada trimestre"
+msgstr "Cada trimestre"
+
+msgid "Convierte este apunte en una plantilla recurrente: cada mes o trimestre, el sistema crea solo una copia aprobada con los mismos importes y la misma retención, y te avisa. Puedes pausarla o borrarla cuando quieras desde las plantillas del titular."
+msgstr "Converteix aquest apunt en una plantilla recurrent: cada mes o trimestre, el sistema crea sol una còpia aprovada amb els mateixos imports i la mateixa retenció, i t'avisa. Pots aturar-la o esborrar-la quan vulguis des de les plantilles del titular."
+
+msgid "Creados: %(n)s"
+msgstr "Creats: %(n)s"
+
+msgid "Creados: %(n)s · ya existían: %(y)s · con error: %(e)s."
+msgstr "Creats: %(n)s · ja existien: %(y)s · amb error: %(e)s."
+
+msgid "Este titular no tiene plantillas recurrentes todavía."
+msgstr "Aquest titular encara no té plantilles recurrents."
+
+msgid "Frecuencia"
+msgstr "Freqüència"
+
+msgid "Generar lo que toca ahora"
+msgstr "Generar ara el que toca"
+
+msgid "Plantilla"
+msgstr "Plantilla"
+
+msgid "Plantillas recurrentes"
+msgstr "Plantilles recurrents"
+
+msgid "Repetir automáticamente"
+msgstr "Repetir automàticament"
+
+msgid "Terminada"
+msgstr "Acabada"
+
+msgid "Ver las plantillas recurrentes del titular"
+msgstr "Veure les plantilles recurrents del titular"
+
+msgid "¿Borrar la plantilla? Los apuntes que ya creó se quedan."
+msgstr "Esborrar la plantilla? Els apunts que ja va crear es queden."
+
+msgid "¿Crear la plantilla? Los apuntes se crearán solos y quedarán aprobados."
+msgstr "Crear la plantilla? Els apunts es crearan sols i quedaran aprovats."

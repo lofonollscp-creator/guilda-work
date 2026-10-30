@@ -13,7 +13,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
+from . import acceso, db, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
 from .fiscal_modelos import motor_131, motor_390
 from .fiscal_modelos.apuntes import Apunte
@@ -603,6 +603,44 @@ def apunte_repetir(cliente_id: int, apunte_id: int):
     except ErrorFiscal as e:
         return _atras(destino, e)
     return redirect(url_for("guilda_fiscal.cliente", cliente_id=cliente_id, repetido=len(r["creados"]), ya=r["ya_existian"], futuros=r["futuros"]))
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/apuntes/<int:apunte_id>/recurrente", methods=["POST"])
+@login_required
+def apunte_recurrente(cliente_id: int, apunte_id: int):
+    """Define la plantilla recurrente a partir de este apunte (alquiler, gasto fijo): se repetirá sola."""
+    _cliente_o_404(cliente_id)
+    try:
+        fr.crear(g.tenant_id, g.usuario_id, cliente_id, apunte_id, frecuencia=request.form.get("frecuencia", "mensual"), hasta=request.form.get("hasta") or None)
+    except ErrorFiscal as e:
+        return _atras(url_for("guilda_fiscal.apunte_ver", cliente_id=cliente_id, apunte_id=apunte_id), e)
+    return redirect(url_for("guilda_fiscal.recurrentes", cliente_id=cliente_id))
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/recurrentes", methods=["GET", "POST"])
+@login_required
+def recurrentes(cliente_id: int):
+    """Las plantillas recurrentes del titular y sus acciones (pausar, reanudar, borrar y generar lo que toca ahora)."""
+    c = _cliente_o_404(cliente_id)
+    error, resultado = _error(), None
+    if request.method == "POST":
+        accion, plantilla_id = request.form.get("accion", ""), request.form.get("plantilla_id", type=int)
+        try:
+            if accion == "generar":
+                resultado = fr.generar_de_un_titular(g.tenant_id, g.usuario_id, cliente_id)
+            elif accion in ("pausar", "reanudar") and plantilla_id:
+                fr.pausar(g.tenant_id, g.usuario_id, cliente_id, plantilla_id, accion == "reanudar")
+            elif accion == "borrar" and plantilla_id:
+                fr.borrar(g.tenant_id, g.usuario_id, cliente_id, plantilla_id)
+            else:
+                abort(400)
+        except ErrorFiscal as e:
+            error = str(e)
+    try:
+        plantillas = fr.listar(g.tenant_id, g.usuario_id, cliente_id)
+    except ErrorFiscal as e:
+        abort(404 if e.codigo == "no_encontrado" else 403)
+    return render_template("fiscal_recurrentes.html", c=c, plantillas=plantillas, resultado=resultado, hoy=date.today().isoformat(), error=error)
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/apuntes/<int:apunte_id>", methods=["GET", "POST"])

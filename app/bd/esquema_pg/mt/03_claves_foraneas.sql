@@ -230,6 +230,9 @@ ALTER TABLE fiscal_apuntes ADD CONSTRAINT fk_fiscal_apuntes_aprobado_por FOREIGN
 ALTER TABLE fiscal_apuntes ADD CONSTRAINT fk_fiscal_apuntes_cliente_fiscal_id FOREIGN KEY (tenant_id, cliente_fiscal_id) REFERENCES clientes_fiscales (tenant_id, id) ON DELETE CASCADE;
 ALTER TABLE fiscal_apuntes ADD CONSTRAINT fk_fiscal_apuntes_factura_id FOREIGN KEY (tenant_id, factura_id) REFERENCES facturas_contables (tenant_id, id);
 ALTER TABLE fiscal_apuntes ADD CONSTRAINT fk_fiscal_apuntes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
+ALTER TABLE fiscal_apuntes_recurrentes ADD CONSTRAINT fk_fiscal_apuntes_recurrentes_cliente_fiscal_id FOREIGN KEY (tenant_id, cliente_fiscal_id) REFERENCES clientes_fiscales (tenant_id, id) ON DELETE CASCADE;
+ALTER TABLE fiscal_apuntes_recurrentes ADD CONSTRAINT fk_fiscal_apuntes_recurrentes_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id);
+ALTER TABLE fiscal_apuntes_recurrentes ADD CONSTRAINT fk_fiscal_apuntes_recurrentes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE fiscal_artefactos ADD CONSTRAINT fk_fiscal_artefactos_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id);
 ALTER TABLE fiscal_artefactos ADD CONSTRAINT fk_fiscal_artefactos_declaracion_id FOREIGN KEY (tenant_id, declaracion_id) REFERENCES fiscal_declaraciones (tenant_id, id) ON DELETE CASCADE;
 ALTER TABLE fiscal_artefactos ADD CONSTRAINT fk_fiscal_artefactos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);

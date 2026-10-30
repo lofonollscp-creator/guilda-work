@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-TABLAS = ("fiscal_perfiles", "fiscal_relaciones", "fiscal_apuntes", "fiscal_instantaneas", "fiscal_declaraciones", "fiscal_casillas", "fiscal_artefactos")
+TABLAS = ("fiscal_perfiles", "fiscal_relaciones", "fiscal_apuntes", "fiscal_apuntes_recurrentes", "fiscal_instantaneas", "fiscal_declaraciones", "fiscal_casillas", "fiscal_artefactos")
 TRIGGERS = ("fiscal_instantaneas_inmutable", "fiscal_artefactos_inmutable", "fiscal_casillas_solo_borrador", "fiscal_declaraciones_reglas")
 VERSION_MINIMA = 5
 

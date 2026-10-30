@@ -34,8 +34,8 @@ def _tablas(conn):
 
 def test_la_migracion_crea_distribuye_y_es_repetible(base_antigua):
     modo, conn = base_antigua
-    assert migraciones.pendientes(conn) == [2] and not _tablas(conn)
-    assert migraciones.aplicar(conn) == [2]
+    assert migraciones.pendientes(conn)[0] == 2 and not _tablas(conn)
+    assert 2 in migraciones.aplicar(conn)
     assert {"fiscal_perfiles", "fiscal_relaciones"} <= _tablas(conn)
     if modo == "citus":
         distribuidas = {f[0] for f in conn.execute("SELECT logicalrelid::text FROM pg_dist_partition WHERE logicalrelid::text IN ('fiscal_perfiles', 'fiscal_relaciones')").fetchall()}
@@ -43,9 +43,9 @@ def test_la_migracion_crea_distribuye_y_es_repetible(base_antigua):
     pk = conn.execute("SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'fiscal_perfiles'::regclass AND contype = 'p'").fetchone()[0]
     assert "tenant_id" in pk
     assert conn.execute("SELECT count(*) FROM pg_policy WHERE polrelid IN ('fiscal_perfiles'::regclass, 'fiscal_relaciones'::regclass)").fetchone()[0] == 2
-    conn.execute("DELETE FROM bd_esquema_version WHERE version = 2")                                  # repetir: nada se rompe
+    conn.execute("DELETE FROM bd_esquema_version WHERE version >= 2")                                  # repetir: nada se rompe
     conn.commit()
-    assert migraciones.aplicar(conn) == [2]
+    assert 2 in migraciones.aplicar(conn)
 
 
 def test_la_base_impone_que_las_vigencias_de_un_titular_no_se_solapen(base_antigua):
