@@ -959,3 +959,22 @@ form.filters fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wr
 form.filters fieldset legend { font-size: 12px; font-weight: 700; color: var(--text-muted); padding: 0; margin: 0 0 4px; width: 100%; }
 form.filters fieldset label { flex-direction: row; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface); color: var(--text); font-size: 13.5px; cursor: pointer; }
 .juridico-form input[type="checkbox"] { min-height: 0; width: 18px; height: 18px; border-radius: 5px; accent-color: var(--primary); }
+
+/* Contraste y desbordes detectados por la auditoría */
+.hint { color: var(--text-muted); }
+.selbus-origen, .selbus-origen label, label.selbus-origen { max-width: 100%; min-width: 0; }
+form label { min-width: 0; }
+
+/* Formularios largos (editar tarea, apuntes, perfiles…): tarjeta legible, casillas en fila y ayudas con contraste */
+form.edit-form, .edit-form { max-width: 980px; border-radius: 18px; padding: 24px 26px; }
+.edit-form fieldset { border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px 14px; margin: 8px 0 16px; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.edit-form fieldset legend { font-size: 13px; font-weight: 800; color: var(--text-muted); padding: 0 6px; }
+.edit-form fieldset label, .edit-form label.checkbox-label, label.checkbox-label { flex-direction: row; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); }
+.edit-form input[type="checkbox"], .edit-form input[type="radio"] { width: 18px; height: 18px; min-height: 0; accent-color: var(--primary); flex: none; }
+.fiscal-ayuda-aviso { color: var(--warning-text); font-weight: 600; }
+.captura-boton, .btn-primary.captura-boton { color: var(--on-accent, #0a0a0a) !important; background: var(--primary); }
+@media (max-width: 640px) { form.edit-form, .edit-form { padding: 18px 16px; border-radius: 16px; } }
+.fila-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 16px; align-items: end; margin-bottom: 12px; }
+.fila-campos > label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-muted); min-width: 0; }
+.fila-campos input, .fila-campos select { width: 100%; box-sizing: border-box; }
+.form-2col { max-width: none; }

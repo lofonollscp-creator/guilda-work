@@ -593,6 +593,7 @@ from .herramientas_backoffice import (  # noqa: E402,F401
 )
 from .herramientas_ampliadas import (  # noqa: E402,F401
     _mensaje_propio,
+    _momento_aviso, _canales_aviso, _aviso_correo_sin_configurar,
     mover_correo,
     destacar_correo,
     posponer_correo,

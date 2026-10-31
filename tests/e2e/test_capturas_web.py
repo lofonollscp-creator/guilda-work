@@ -50,6 +50,18 @@ DESBORDES = """() => {
 }"""
 
 
+EXCLUIR = ("logout", "apagar", "salir", "cerrar", "eliminar", "borrar", "oauth", "descargar", "export", "fichero", "pdf", "csv", "json", "ics", "static", "api", "mcp", "backoffice", "webhook", "healthz", "login", "registro", "callback", "imagen", "adjunto", "avatar", "logo", "estilo", "stream", "feed", "sse", "restaurar", "papelera/vaciar", "verificar", "sincronizar", "enviar", "marcar", "activar", "stripe", "portal", "p/", "magic", "estado.json", "metricas", "robots", "sitemap", "manifest", "sw.js", "cambiar", "idioma", "ver-como", "ver_como")
+
+
+def _todas(app):
+    rutas = []
+    for r in sorted(app.url_map.iter_rules(), key=lambda r: r.rule):
+        if "GET" not in r.methods or r.arguments or r.rule.count("{") or any(x in r.rule.lower() for x in EXCLUIR):
+            continue
+        rutas.append((r.rule.strip("/").replace("/", "_") or "raiz", r.rule))
+    return rutas
+
+
 def _extra():
     """Rutas adicionales: GUILDA_RUTAS=/clientes,/tiquets (el nombre del fichero sale de la ruta)."""
     return [(r.strip("/").replace("/", "_") or "raiz", r) for r in os.environ.get("GUILDA_RUTAS", "").split(",") if r]
@@ -108,14 +120,16 @@ def _sembrar(uid: int, tenant: int) -> dict:
         fp.guardar_perfil(tenant, uid, c1, {"forma_juridica": "sociedad"}, vigente_desde=f"{_d.today().year}-01-01")
         hoy = _d.today()
         for libro, num, base, cuota, quien in (("E", "A-0031", 340000, 71400, "Hotel Mirador SL"), ("E", "A-0032", 120000, 25200, "Beta SA"), ("R", "F-2026-114", 120000, 25200, "Suministros Ríos SL")):
-            fn.aprobar_apunte(tenant, uid, c1, Apunte(libro=libro, tipo_factura="F1", fecha_expedicion=_d(2026, 8, 20), numero=num, base=base, tipo_iva=2100, cuota=cuota, contraparte_nombre=quien))
+            ap = fn.aprobar_apunte(tenant, uid, c1, Apunte(libro=libro, tipo_factura="F1", fecha_expedicion=_d(2026, 8, 20), numero=num, base=base, tipo_iva=2100, cuota=cuota, contraparte_nombre=quien))
+            apunte_id = ap["id"]
         for tipo, n, quien, base in (("recibida", "F-2026-114", "Suministros Ríos SL", "1200"), ("emitida", "A-0031", "Construcciones Vidal", "3400"), ("recibida", "F-2026-121", "Gráficas Norte SA", "260,50")):
             fc.crear(tenant, uid, c1, {"tipo": tipo, "fecha": _dia(-3), "numero": n, "tercero_nombre": quien, "tercero_nif": "B12345678"}, [{"base": base, "pct_iva": "21"}])
     except Exception as e:                                            # solo es decorado de la captura
         print("SIN FACTURAS", e)
     db.guardar_fichaje_datos(uid, "Jorge Capturas", "12345678Z")
     db.fichar(uid, tenant, "entrada")
-    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1, "cliente": c1}
+    tareas = db.listar_tareas_outlook(uid) if hasattr(db, "listar_tareas_outlook") else []
+    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1, "cliente": c1, "apunte": locals().get("apunte_id", 1), "tarea": tareas[0]["id"] if tareas else 1}
 
 
 PAGINAS = [
@@ -140,7 +154,8 @@ def test_capturas(servidor, abrir, entrar_como_equipo):
     for ancho in anchos:
         pagina.set_viewport_size({"width": ancho, "height": 900})
         for tema in temas:
-            for nombre, ruta in PAGINAS + [("notas", "/notas"), ("tareas_tablero", "/tareas/tablero")] + _extra():
+            extra = _todas(servidor.app) if os.environ.get("GUILDA_TODAS") else _extra()
+            for nombre, ruta in ([] if os.environ.get("GUILDA_TODAS") else PAGINAS + [("notas", "/notas"), ("tareas_tablero", "/tareas/tablero")]) + extra:
                 pagina.goto(f"{servidor.url}{ruta.format(**ids)}")
                 pagina.wait_for_load_state("networkidle")
                 if tema.startswith("sistema"):
