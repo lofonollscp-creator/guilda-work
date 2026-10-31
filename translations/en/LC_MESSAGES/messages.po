@@ -18212,3 +18212,6 @@ msgstr "The first is the main one: the one with the highest volume of operations
 
 msgid "Epígrafe IAE"
 msgstr "IAE heading"
+
+msgid "Resultado de la declaración"
+msgstr "Return result"

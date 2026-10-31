@@ -122,6 +122,9 @@ def _sembrar(uid: int, tenant: int) -> dict:
         for libro, num, base, cuota, quien in (("E", "A-0031", 340000, 71400, "Hotel Mirador SL"), ("E", "A-0032", 120000, 25200, "Beta SA"), ("R", "F-2026-114", 120000, 25200, "Suministros Ríos SL")):
             ap = fn.aprobar_apunte(tenant, uid, c1, Apunte(libro=libro, tipo_factura="F1", fecha_expedicion=_d(2026, 8, 20), numero=num, base=base, tipo_iva=2100, cuota=cuota, contraparte_nombre=quien))
             apunte_id = ap["id"]
+        inst = fn.crear_instantanea(tenant, uid, c1, ejercicio=2026, periodo="3T")
+        dec = fn.calcular_declaracion(tenant, uid, inst["id"], destino_negativo="C")
+        declaracion_id = dec["id"]
         for tipo, n, quien, base in (("recibida", "F-2026-114", "Suministros Ríos SL", "1200"), ("emitida", "A-0031", "Construcciones Vidal", "3400"), ("recibida", "F-2026-121", "Gráficas Norte SA", "260,50")):
             fc.crear(tenant, uid, c1, {"tipo": tipo, "fecha": _dia(-3), "numero": n, "tercero_nombre": quien, "tercero_nif": "B12345678"}, [{"base": base, "pct_iva": "21"}])
     except Exception as e:                                            # solo es decorado de la captura
@@ -129,7 +132,7 @@ def _sembrar(uid: int, tenant: int) -> dict:
     db.guardar_fichaje_datos(uid, "Jorge Capturas", "12345678Z")
     db.fichar(uid, tenant, "entrada")
     tareas = db.listar_tareas_outlook(uid) if hasattr(db, "listar_tareas_outlook") else []
-    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1, "cliente": c1, "apunte": locals().get("apunte_id", 1), "tarea": tareas[0]["id"] if tareas else 1}
+    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1, "cliente": c1, "apunte": locals().get("apunte_id", 1), "declaracion": locals().get("declaracion_id", 1), "tarea": tareas[0]["id"] if tareas else 1}
 
 
 PAGINAS = [

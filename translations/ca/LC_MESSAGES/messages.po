@@ -18221,3 +18221,6 @@ msgstr "La primera és la principal: la de més volum d'operacions. La clau i l'
 
 msgid "Epígrafe IAE"
 msgstr "Epígraf IAE"
+
+msgid "Resultado de la declaración"
+msgstr "Resultat de la declaració"

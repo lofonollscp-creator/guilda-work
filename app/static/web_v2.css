@@ -978,3 +978,38 @@ form.edit-form, .edit-form { max-width: 980px; border-radius: 18px; padding: 24p
 .fila-campos > label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-muted); min-width: 0; }
 .fila-campos input, .fila-campos select { width: 100%; box-sizing: border-box; }
 .form-2col { max-width: none; }
+
+/* ======================================================================================================================== */
+/* Guilda Fiscal · declaración (modelo 303)                                                                                 */
+/* ======================================================================================================================== */
+.decl-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 0 0 14px; }
+.decl-titulo .subtitle { margin: 2px 0 0; font-weight: 600; color: var(--text-muted); }
+.decl-resumen { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; margin: 0 0 18px; align-items: stretch; }
+.decl-resultado .fiscal-cifra-num { font-size: 40px; white-space: nowrap; }
+.decl-estado { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 26px; display: flex; align-items: center; }
+.decl-pasos { list-style: none; display: flex; width: 100%; margin: 0; padding: 0; gap: 0; }
+.decl-pasos li { flex: 1; display: flex; align-items: center; gap: 10px; position: relative; font-weight: 700; font-size: 14px; color: var(--text-muted); }
+.decl-pasos li:not(:last-child)::after { content: ""; flex: 1; min-width: 16px; height: 2px; margin: 0 12px 0 4px; background: var(--border); }
+.decl-pasos li.hecho:not(:last-child)::after { background: var(--primary); }
+.decl-pasos li { flex: 1 1 auto; }
+.decl-pasos li:last-child { flex: 0 0 auto; }
+.decl-paso-punto { position: relative; z-index: 1; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; background: var(--panel-2); border: 2px solid var(--border); color: var(--text-muted); flex: none; }
+.decl-pasos li.hecho { color: var(--text); }
+.decl-pasos li.hecho .decl-paso-punto { background: var(--primary); border-color: var(--primary); color: var(--on-accent, #0a0a0a); }
+.decl-pasos li.actual { color: var(--text); }
+.decl-pasos li.actual .decl-paso-punto { border-color: var(--primary); color: var(--text); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 28%, transparent); background: var(--surface); }
+.decl-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+.decl-main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.decl-main h2 { font-size: 15px; font-weight: 800; margin: 4px 0 0; }
+.decl-main > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+.decl-lado { position: sticky; top: 84px; min-width: 0; }
+.decl-acciones { padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+.decl-acciones > * { margin: 0 !important; }
+.decl-acciones .btn { width: 100%; justify-content: center; min-height: 44px; }
+.decl-acciones form { width: 100%; }
+.decl-acciones .ds-fila { flex-direction: column; align-items: stretch; gap: 8px; }
+.decl-acciones .muted { font-size: 13px; line-height: 1.45; }
+.decl-acciones input[type="text"] { width: 100%; box-sizing: border-box; }
+tr.casilla-clave td { font-weight: 800; background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
+@media (max-width: 1100px) { .decl-resumen { grid-template-columns: minmax(0, 1fr); } .decl-layout { grid-template-columns: minmax(0, 1fr); } .decl-lado { position: static; order: -1; } }
+@media (max-width: 640px) { .decl-pasos { flex-direction: column; gap: 10px; } .decl-pasos li:not(:last-child)::after { display: none; } .decl-estado { padding: 18px; } }

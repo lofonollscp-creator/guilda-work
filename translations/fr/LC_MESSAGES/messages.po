@@ -18297,3 +18297,6 @@ msgstr "La première est la principale : celle au plus gros volume d'opérations
 
 msgid "Epígrafe IAE"
 msgstr "Rubrique IAE"
+
+msgid "Resultado de la declaración"
+msgstr "Résultat de la déclaration"
