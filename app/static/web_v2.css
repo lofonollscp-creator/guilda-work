@@ -1013,3 +1013,8 @@ form.edit-form, .edit-form { max-width: 980px; border-radius: 18px; padding: 24p
 tr.casilla-clave td { font-weight: 800; background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
 @media (max-width: 1100px) { .decl-resumen { grid-template-columns: minmax(0, 1fr); } .decl-layout { grid-template-columns: minmax(0, 1fr); } .decl-lado { position: static; order: -1; } }
 @media (max-width: 640px) { .decl-pasos { flex-direction: column; gap: 10px; } .decl-pasos li:not(:last-child)::after { display: none; } .decl-estado { padding: 18px; } }
+
+/* Revisión en el navegador (móvil): tablas que no se aplastan, etiquetas sin partirse por letras, y el engranaje de Correo sin pisar las cuentas */
+.table-wrap > table, .table-wrap > .fiscal-table { min-width: 560px; }
+td .pill, td .chip, td .pildora-v2, th .pill { white-space: nowrap; }
+@media (max-width: 820px) { .correo-shell:not(.con-mensaje) .correo-topbar { display: none; } }
