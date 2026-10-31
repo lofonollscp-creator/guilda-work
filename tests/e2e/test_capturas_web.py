@@ -152,6 +152,10 @@ def test_capturas(servidor, abrir, entrar_como_equipo):
     ids = _sembrar(uid, t)
     os.makedirs(CARPETA, exist_ok=True)
     pagina.set_viewport_size({"width": 1440, "height": 900})
+    if "@docs" in os.environ.get("GUILDA_RUTAS", ""):
+        pagina.goto(f"{servidor.url}/docs/")
+        enlaces = pagina.evaluate("() => [...new Set([...document.querySelectorAll('.docs-sidebar a')].map(a => a.getAttribute('href')))]")
+        os.environ["GUILDA_RUTAS"] = ",".join(r for r in os.environ["GUILDA_RUTAS"].split(",") if r != "@docs") + "," + ",".join(enlaces)
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "1440").split(",")]
     temas = os.environ.get("GUILDA_TEMAS", "light").split(",")
     for ancho in anchos:

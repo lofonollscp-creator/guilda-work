@@ -7,6 +7,7 @@
   <meta name="description" content="{{ pagina.descripcion }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='docs.css') }}">
+  <script src="{{ url_for('static', filename='docs_tema.js') }}"></script>
 </head>
 <body>
   <header class="docs-topbar">
@@ -20,6 +21,7 @@
       <span class="docs-buscar-atajo">Ctrl K</span>
     </button>
     <nav class="docs-topbar-links">
+      <button type="button" id="docs-tema" class="docs-tema-boton" aria-label="Tema"><span class="docs-tema-icono" aria-hidden="true">◐</span><span class="docs-tema-texto">Sistema</span></button>
       <a href="{{ url_for('inicio') }}">← {{ _('Volver a la app') }}</a>
     </nav>
   </header>
