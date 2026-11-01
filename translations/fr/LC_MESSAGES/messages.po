@@ -18555,3 +18555,9 @@ msgstr "En faveur du titulaire"
 
 msgid "Resultado de la liquidación anual"
 msgstr "Résultat de la liquidation annuelle"
+
+msgid "Se muestran los %(n)s primeros de %(t)s vencimientos."
+msgstr "Affichage des %(n)s premières échéances sur %(t)s."
+
+msgid "Ver todos"
+msgstr "Tout voir"

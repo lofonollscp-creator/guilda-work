@@ -61,6 +61,7 @@
   {% endfor %}
   </tbody>
 </table></div>
+{% if total > panel.filas | length %}<p class="muted">{{ _('Se muestran los %(n)s primeros de %(t)s vencimientos.', n=panel.filas | length, t=total) }} <a href="{{ url_for('guilda_fiscal.vencimientos', dias=dias, responsable=responsable, todos=1) }}">{{ _('Ver todos') }}</a></p>{% endif %}
 <p class="muted" data-sin-resultados hidden>{{ _('Ningún vencimiento coincide con el filtro.') }}</p>
 {% endif %}
 {% endblock %}

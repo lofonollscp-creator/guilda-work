@@ -18479,3 +18479,9 @@ msgstr "A favor del titular"
 
 msgid "Resultado de la liquidación anual"
 msgstr "Resultat de la liquidació anual"
+
+msgid "Se muestran los %(n)s primeros de %(t)s vencimientos."
+msgstr "Es mostren els %(n)s primers de %(t)s venciments."
+
+msgid "Ver todos"
+msgstr "Veure tots"

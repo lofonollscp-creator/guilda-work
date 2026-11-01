@@ -1081,6 +1081,44 @@ def panel_vencimientos(tenant_id: int, usuario_id: int, *, dias: int = 60, hoy: 
             "carga_maxima": max([s["carga"] for s in orden_semanas] + [1])}
 
 
+def _pendiente_de_recordar_lote(tenant_id: int, pares: set[tuple[int, int, str]]) -> dict[tuple[int, int, str], dict]:
+    """Lo mismo que `pendiente_de_recordar` para muchos `(titular, ejercicio, trimestre)` a la vez, con una consulta de apuntes y otra de facturas en vez de varias por titular. Sin comprobar acceso: quien llama
+    ya ha filtrado los titulares visibles. `fecha_limite` queda en None (la rellena quien conoce el vencimiento)."""
+    if not pares:
+        return {}
+    ejercicios = sorted({e for _, e, _ in pares})
+    conn = db.get_connection()
+    try:
+        apuntes: dict[tuple[int, str, str], int] = {}                                                  # (titular, libro, AAAA-MM) -> cuántos
+        for f in conn.execute("SELECT cliente_fiscal_id, libro, substr(fecha_expedicion, 1, 7) AS mes, COUNT(*) AS n FROM fiscal_apuntes WHERE tenant_id = ? AND anulado_en IS NULL AND substr(fecha_expedicion, 1, 4) IN ("
+                              + ", ".join("?" * len(ejercicios)) + ") GROUP BY cliente_fiscal_id, libro, substr(fecha_expedicion, 1, 7)", (tenant_id, *map(str, ejercicios))).fetchall():
+            apuntes[(f["cliente_fiscal_id"], f["libro"], f["mes"])] = f["n"]
+        facturas: dict[tuple[int, str], list[dict]] = {}                                                # (titular, ejercicio) -> facturas revisadas sin apunte
+        for f in conn.execute("SELECT id, cliente_fiscal_id, tipo, fecha, numero, tercero_nombre, total_centimos, abono FROM facturas_contables WHERE tenant_id = ? AND estado IN ('revisada', 'exportada') "
+                              "AND incluir_en_fiscal = 1 AND substr(fecha, 1, 4) IN (" + ", ".join("?" * len(ejercicios)) + ") AND id NOT IN (SELECT factura_id FROM fiscal_apuntes WHERE tenant_id = ? "
+                              "AND factura_id IS NOT NULL AND anulado_en IS NULL) ORDER BY fecha, id", (tenant_id, *map(str, ejercicios), tenant_id)).fetchall():
+            facturas.setdefault((f["cliente_fiscal_id"], f["fecha"][:4]), []).append(dict(f))
+        lineas: dict[int, list] = {}
+        ids = [f["id"] for fs in facturas.values() for f in fs]
+        for i in range(0, len(ids), 500):
+            trozo = ids[i:i + 500]
+            for l in conn.execute("SELECT factura_id, pct_iva, pct_recargo, sujeta_iva FROM facturas_contables_lineas WHERE factura_id IN (" + ", ".join("?" * len(trozo)) + ")", trozo).fetchall():
+                lineas.setdefault(l["factura_id"], []).append(l)
+    finally:
+        conn.close()
+    salida = {}
+    for cliente, ejercicio, periodo in pares:
+        meses = [f"{ejercicio}-{m:02d}" for m in range(int(periodo[0]) * 3 - 2, int(periodo[0]) * 3 + 1)]
+        sin_registrar = []
+        for f in facturas.get((cliente, str(ejercicio)), []):
+            if motor_303_en_periodo(f["fecha"], ejercicio, periodo):
+                ls = lineas.get(f["id"], [])
+                sin_registrar.append({**f, "automatica": bool(ls) and all(l["sujeta_iva"] and l["pct_iva"] in (400, 1000, 2100) and not l["pct_recargo"] for l in ls)})
+        salida[(cliente, ejercicio, periodo)] = {"emitidas": sum(apuntes.get((cliente, "E", m), 0) for m in meses), "recibidas": sum(apuntes.get((cliente, "R", m), 0) for m in meses),
+                                                 "sin_registrar": sin_registrar, "fecha_limite": None}
+    return salida
+
+
 def recordatorios_sugeridos(tenant_id: int, usuario_id: int, *, dias: int = 21, hoy: date | None = None) -> list[dict]:
     """Los clientes a quienes conviene recordar ya lo que falta para su 303: el vencimiento está pendiente y cae en los próximos `dias` días (o ya pasó), y aún faltan facturas (por registrar, o ningún libro).
     Solo propone: no escribe a nadie. `puede` = tiene email y no se le ha escrito por este periodo en los últimos `DIAS_ENTRE_RECORDATORIOS` días (los mismos que los recordatorios de facturas)."""
@@ -1100,14 +1138,12 @@ def recordatorios_sugeridos(tenant_id: int, usuario_id: int, *, dias: int = 21, 
         conn.close()
     desde = (datetime.now() - timedelta(days=fc.DIAS_ENTRE_RECORDATORIOS)).isoformat(timespec="seconds")
     salida = []
+    venc = [v for v in venc if _periodo_de_vencimiento(v["periodo"]) and (visibles is None or v["cliente_fiscal_id"] in visibles)]
+    lote = _pendiente_de_recordar_lote(tenant_id, {(v["cliente_fiscal_id"], *_periodo_de_vencimiento(v["periodo"])) for v in venc})
     for v in venc:
         per = _periodo_de_vencimiento(v["periodo"])
-        if not per or (visibles is not None and v["cliente_fiscal_id"] not in visibles):
-            continue
-        try:
-            p = pendiente_de_recordar(tenant_id, usuario_id, v["cliente_fiscal_id"], per[0], per[1])
-        except ErrorFiscal:
-            continue
+        p = lote[(v["cliente_fiscal_id"], *per)]
+        p["fecha_limite"] = v["fecha_limite"][:10]
         if not (p["sin_registrar"] or not p["emitidas"] or not p["recibidas"]):
             continue
         clave = f"{per[0]}-T{per[1][0]}"

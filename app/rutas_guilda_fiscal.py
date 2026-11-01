@@ -22,6 +22,7 @@ from .fiscal_perfiles import ErrorFiscal
 guilda_fiscal_bp = Blueprint("guilda_fiscal", __name__, url_prefix="/guilda-fiscal")
 
 PERIODOS = ("1T", "2T", "3T", "4T")
+LIMITE_VENCIMIENTOS = 300                                      # filas que pinta de golpe el panel de vencimientos
 CLAVES_EXPEDIDAS = (("01", "01 · Régimen general"), ("11", "11 · Arrendamiento de local (sin retención)"), ("12", "12 · Arrendamiento de local (con retención)"), ("13", "13 · Arrendamiento de local (mixto)"),
                     ("02", "02 · Exportación"), ("15", "15 · Tracto sucesivo"), ("03", "03 · Bienes usados / arte"), ("05", "05 · Agencias de viaje"),
                     ("07", "07 · Criterio de caja"))
@@ -100,7 +101,11 @@ def vencimientos():
     solo = request.args.get("responsable")
     if solo is not None:
         panel["filas"] = [f for f in panel["filas"] if f["responsable"] == solo]
-    return render_template("fiscal_panel_vencimientos.html", panel=panel, dias=dias if dias in (30, 60, 90, 180) else 60, responsable=solo, error=_error())
+    total = len(panel["filas"])
+    todos = request.args.get("todos") == "1"
+    if not todos:
+        panel["filas"] = panel["filas"][:LIMITE_VENCIMIENTOS]                      # miles de filas pesan más de 700 KB y tardan en pintarse; las cifras de arriba cuentan siempre todas
+    return render_template("fiscal_panel_vencimientos.html", panel=panel, dias=dias if dias in (30, 60, 90, 180) else 60, responsable=solo, total=total, todos=todos, limite=LIMITE_VENCIMIENTOS, error=_error())
 
 
 def _mensaje_recordatorio(p: dict, ejercicio: int, trimestre: str) -> dict | None:

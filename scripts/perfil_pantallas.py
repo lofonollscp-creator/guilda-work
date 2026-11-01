@@ -24,6 +24,8 @@ PANTALLAS = [
     "/", "/tareas/", "/tareas/?vista=asignadas", "/tareas/hoy", "/tareas/tablero", "/tareas/calendario", "/notas",
     "/correo/?cuenta_id={cuenta}", "/correo/?cuenta_id={cuenta}&q=factura", "/correo/?cuenta_id={cuenta}&q=inexistentezzz",
     "/correo/?cuenta_id={cuenta}&q=lorem+ipsum", "/correo/?cuenta_id={cuenta}&mensaje_id=5",
+    "/guilda-fiscal/", "/guilda-fiscal/vencimientos?dias=180", "/guilda-fiscal/recordatorios", "/guilda-fiscal/{fiscal_cliente}?ejercicio=2026", "/guilda-fiscal/{fiscal_cliente}/130?ejercicio=2026&periodo=3T",
+    "/guilda-fiscal/{fiscal_cliente}/recurrentes", "/guilda-fiscal/{fiscal_cliente}/390?ejercicio=2026",
     "/historial", "/estadisticas", "/fiscal/vencimientos", "/fiscal/clientes", "/menu/{proyecto}",
     # núcleo con un despacho grande (5.000 clientes, 3.000 expedientes, 4.000 plazos, 6.000 partes de horas)
     "/clientes/", "/clientes/?q=garcia", "/clientes/?pagina=40", "/clientes/{ncliente}", "/expedientes/", "/expedientes/?q=asunto+12", "/expedientes/{nexp}",
@@ -74,10 +76,38 @@ def sembrar(db, tmp: Path, n_correos: int):
     conn.commit()
     conn.close()
     _sembrar_nucleo(db, t, us)
+    _sembrar_fiscal(db, t, us[0], cf)
     return cuentas[0], cats[0]
 
 
 NUCLEO = {}
+
+
+def _sembrar_fiscal(db, t, yo, cf):
+    """Guilda Fiscal con 200 titulares: perfil, 12 apuntes aprobados de 2026, 303 y 130 de cada trimestre en el calendario y una plantilla recurrente cada diez. Por la API del módulo, con sus comprobaciones."""
+    from datetime import date
+
+    from app import fiscal_nucleo as fn, fiscal_perfiles as fp, fiscal_recurrentes as fr, verticales
+    from tests.escenarios_303 import compra, venta
+    verticales.fijar_activo(t, "fiscal", True)
+    db.asignar_supervisor_tenant(yo, True)
+    random.seed(13)
+    for n, c in enumerate(cf):
+        fp.guardar_perfil(t, yo, c, {"forma_juridica": "persona_fisica" if n % 2 else "sociedad"}, vigente_desde="2026-01-01")
+        for i in range(12):
+            fecha = date(2026, random.randint(1, 9), random.randint(1, 28))
+            fn.aprobar_apunte(t, yo, c, (venta if i % 2 else compra)(random.randint(50, 5000) * 100, numero=f"{i}", fecha=fecha))
+        if n % 10 == 0:
+            fr.crear(t, yo, c, fn.listar_apuntes(t, yo, c)[0]["id"], frecuencia="mensual")
+    conn = db.get_connection()
+    for c in cf:
+        for modelo in ("303", "130"):
+            for q, limite in ((1, "2026-04-20"), (2, "2026-07-20"), (3, "2026-10-20"), (4, "2027-01-30")):
+                conn.execute("INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, usuario_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, ?, ?, ?, ?, 'pendiente', '2026-01-01')",
+                             (t, c, yo, modelo, f"2026-T{q}", limite))
+    conn.commit()
+    conn.close()
+    NUCLEO.update(fiscal_cliente=cf[len(cf) // 2])
 
 
 def _sembrar_nucleo(db, t, us):

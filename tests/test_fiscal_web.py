@@ -454,6 +454,14 @@ def test_panel_de_vencimientos_enlaza_el_borrador_y_avisa_si_no_hay_apuntes(clie
     pagina = cliente.get("/guilda-fiscal/vencimientos?dias=180").get_data(as_text=True)
     assert f"/guilda-fiscal/{c}/130?ejercicio=2026&amp;periodo=2T" in pagina and f"/guilda-fiscal/{c}/131?ejercicio=2026&amp;periodo=2T" in pagina
     assert pagina.count("Sin apuntes del trimestre") == 1
+    from app import rutas_guilda_fiscal as rgf
+    rgf.LIMITE_VENCIMIENTOS, original = 2, rgf.LIMITE_VENCIMIENTOS
+    try:
+        corta = cliente.get("/guilda-fiscal/vencimientos?dias=400").get_data(as_text=True)
+        assert "Se muestran los 2 primeros de" in corta and corta.count("data-modelo=") == 2 and "todos=1" in corta
+        assert "Se muestran los" not in cliente.get("/guilda-fiscal/vencimientos?dias=400&todos=1").get_data(as_text=True)
+    finally:
+        rgf.LIMITE_VENCIMIENTOS = original
     assert 'data-filtro-modelo="130"' in pagina and 'data-filtro-modelo="390"' in pagina and pagina.count('data-modelo="130"') == 2 and "fiscal_vencimientos.js" in pagina
 
 
