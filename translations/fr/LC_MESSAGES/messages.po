@@ -18300,3 +18300,6 @@ msgstr "Rubrique IAE"
 
 msgid "Resultado de la declaración"
 msgstr "Résultat de la déclaration"
+
+msgid "Navegación principal"
+msgstr "Navigation principale"

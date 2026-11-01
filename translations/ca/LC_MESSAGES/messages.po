@@ -18224,3 +18224,6 @@ msgstr "Epígraf IAE"
 
 msgid "Resultado de la declaración"
 msgstr "Resultat de la declaració"
+
+msgid "Navegación principal"
+msgstr "Navegació principal"

@@ -473,6 +473,14 @@
       {% endif %}
         {% block content %}{% endblock %}
       </main>
+      <nav class="barra-inferior" aria-label="{{ _('Navegación principal') }}">
+        {% set _e = request.endpoint or '' %}
+        <a href="{{ url_for('hoy.bandeja') }}" class="{{ 'activo' if _e.startswith('hoy.') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-sun"></use></svg><span>{{ _('Hoy') }}</span></a>
+        <a href="{{ url_for('tareas.listar') }}" class="{{ 'activo' if _e.startswith('tareas.') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg><span>{{ _('Tareas') }}</span></a>
+        <a href="{{ url_for('lista_notas') }}" class="{{ 'activo' if _e in ('lista_notas', 'editar_nota') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg><span>{{ _('Notas') }}</span></a>
+        <a href="{{ url_for('correo.bandeja') }}" class="{{ 'activo' if _e.startswith('correo.') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg><span>{{ _('Correo') }}</span></a>
+        <button type="button" id="barra-inferior-mas"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-panel-left"></use></svg><span>{{ _('Más') }}</span></button>
+      </nav>
     </div>
   </div>
 
@@ -591,6 +599,7 @@
   <script src="{{ url_for('static', filename='selector_buscable.js') }}"></script>
   <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
   <script src="{{ url_for('static', filename='pagina_v2.js') }}"></script>
+  <script src="{{ url_for('static', filename='ux_v2.js') }}"></script>
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
   <script src="{{ url_for('static', filename='busqueda.js') }}"></script>

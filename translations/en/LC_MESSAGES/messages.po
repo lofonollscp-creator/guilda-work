@@ -18215,3 +18215,6 @@ msgstr "IAE heading"
 
 msgid "Resultado de la declaración"
 msgstr "Return result"
+
+msgid "Navegación principal"
+msgstr "Main navigation"

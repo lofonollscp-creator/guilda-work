@@ -1020,3 +1020,25 @@ td .pill, td .chip, td .ds-chip, td .pildora-v2, th .pill { white-space: nowrap;
 .ds-chip { white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 820px) { .correo-shell:not(.con-mensaje) .correo-topbar { display: none; } }
 td .ds-chip.ds-chip, .table-wrap .ds-chip.ds-chip { white-space: nowrap; overflow-wrap: normal; max-width: none; }
+
+/* ======================================================================================================================== */
+/* Flujos de interfaz: barra inferior en móvil, envíos con estado, acciones fijas en formularios largos                      */
+/* ======================================================================================================================== */
+.barra-inferior { display: none; }
+@media (max-width: 640px) {
+  .barra-inferior { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--surface); border-top: 1px solid var(--border); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+  .barra-inferior a, .barra-inferior button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; border: 0; background: none; color: var(--text-muted); font: 700 11px var(--font-mono); text-decoration: none; border-radius: 12px; cursor: pointer; }
+  .barra-inferior svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .barra-inferior .activo { color: var(--text); background: var(--lima-suave); }
+  .content, .app-main > main { padding-bottom: 84px; }
+  .correo-shell { height: calc(100vh - 68px - 66px); }
+}
+.js .solo-sin-js { display: none; }
+button.is-enviando, .btn.is-enviando { position: relative; color: transparent !important; pointer-events: none; }
+button.is-enviando::after, .btn.is-enviando::after { content: ""; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--on-accent, #0a0a0c); border-right-color: transparent; animation: giro-v2 0.7s linear infinite; }
+.btn-ghost.is-enviando::after, .btn-secondary.is-enviando::after { border-color: var(--text); border-right-color: transparent; }
+@keyframes giro-v2 { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { button.is-enviando::after, .btn.is-enviando::after { animation-duration: 2s; } }
+/* Formularios largos: las acciones se quedan a la vista */
+.edit-form-actions { position: sticky; bottom: 0; z-index: 5; display: flex; gap: 10px; flex-wrap: wrap; padding: 12px 0; margin-top: 8px; background: linear-gradient(to top, var(--surface) 70%, transparent); }
+@media (max-width: 640px) { .edit-form-actions { bottom: 58px; } }
