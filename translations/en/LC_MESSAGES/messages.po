@@ -18449,3 +18449,24 @@ msgstr "Filter by form"
 
 msgid "Ningún vencimiento coincide con el filtro."
 msgstr "No due date matches the filter."
+
+msgid "Cambiar de ejercicio"
+msgstr "Change fiscal year"
+
+msgid "Cambiar de periodo"
+msgstr "Change period"
+
+msgid "sin calcular"
+msgstr "not calculated"
+
+msgid "A compensar"
+msgstr "To carry forward"
+
+msgid "A devolver"
+msgstr "Refund"
+
+msgid "A favor del titular"
+msgstr "In the holder's favour"
+
+msgid "Resultado de la liquidación anual"
+msgstr "Annual settlement result"

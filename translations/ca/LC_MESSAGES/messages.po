@@ -18458,3 +18458,24 @@ msgstr "Filtrar per model"
 
 msgid "Ningún vencimiento coincide con el filtro."
 msgstr "Cap venciment coincideix amb el filtre."
+
+msgid "Cambiar de ejercicio"
+msgstr "Canviar d'exercici"
+
+msgid "Cambiar de periodo"
+msgstr "Canviar de període"
+
+msgid "sin calcular"
+msgstr "sense calcular"
+
+msgid "A compensar"
+msgstr "A compensar"
+
+msgid "A devolver"
+msgstr "A retornar"
+
+msgid "A favor del titular"
+msgstr "A favor del titular"
+
+msgid "Resultado de la liquidación anual"
+msgstr "Resultat de la liquidació anual"

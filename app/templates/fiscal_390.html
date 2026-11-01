@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_nucleo_macros.html" import aviso_error %}
+{% from "_nucleo_macros.html" import aviso_error, navegador_ejercicio %}
 {% block title %}{{ _('Resumen anual del IVA (modelo 390)') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -10,12 +10,15 @@
   <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ c.nombre }}</a>
 </header>
 {{ aviso_error(error) }}
+{{ navegador_ejercicio('guilda_fiscal.resumen_anual_390', c.id, ejercicio) }}
 <form method="get" class="filters ds-fila ds-envolver">
   <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2025" max="2100"></label>
   <button class="btn btn-ghost" type="submit">{{ _('Ver') }}</button>
 </form>
 {% if resumen %}
 {% set r = resumen.resultado %}
+{% if resultado_anual is not none %}<div class="fiscal-cifra ds-mt-16"><span class="muted">{{ _('Resultado de la liquidación anual') }}</span><span class="fiscal-cifra-num">{{ '%.2f'|format(resultado_anual / 100) }} €</span>
+  <span class="muted fiscal-cifra-pie">{{ _('A ingresar') if resultado_anual > 0 else (_('A favor del titular') if resultado_anual < 0 else _('Sin pago')) }}</span></div>{% endif %}
 <section class="dash-panel ds-mt-16">
   <p class="muted">{{ _('Se calcula ahora con los apuntes aprobados del año y se cuadra con los cuatro 303. No se guarda nada: si corriges un apunte, vuelve a calcularse.') }}</p>
   {% if resumen.exonerado %}<p class="pill semaforo-gris">{{ _('Este titular está exonerado del 390: la información anual va en el 303 del último periodo.') }}</p>{% endif %}

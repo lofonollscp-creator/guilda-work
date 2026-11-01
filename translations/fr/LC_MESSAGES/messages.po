@@ -18534,3 +18534,24 @@ msgstr "Filtrer par modèle"
 
 msgid "Ningún vencimiento coincide con el filtro."
 msgstr "Aucune échéance ne correspond au filtre."
+
+msgid "Cambiar de ejercicio"
+msgstr "Changer d'exercice"
+
+msgid "Cambiar de periodo"
+msgstr "Changer de période"
+
+msgid "sin calcular"
+msgstr "non calculé"
+
+msgid "A compensar"
+msgstr "À compenser"
+
+msgid "A devolver"
+msgstr "À rembourser"
+
+msgid "A favor del titular"
+msgstr "En faveur du titulaire"
+
+msgid "Resultado de la liquidación anual"
+msgstr "Résultat de la liquidation annuelle"

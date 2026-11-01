@@ -222,7 +222,10 @@ def resumen_anual_390(cliente_id: int):
             if k in resumen["resultado"].casillas and k not in vistas:
                 vistas.add(k)
                 filas.append({"hoja": hoja, "casilla": k, "concepto": re.sub(r"^.*? - ", "", texto), "valor": resumen["resultado"].casillas[k], "porcentaje": k == motor_390.casilla("Pág. 6", "Territorio común")})
-    return render_template("fiscal_390.html", c=c, ejercicio=ejercicio, resumen=resumen, filas=filas, error=error or _error())
+    resultado_anual = None
+    if resumen and resumen["resultado"].calculable and not resumen["exonerado"]:
+        resultado_anual = resumen["resultado"].casillas.get(motor_390.casilla("Pág. 6", "Resultado liquidación anual", "Resultado de la liquidación"))
+    return render_template("fiscal_390.html", c=c, ejercicio=ejercicio, resumen=resumen, filas=filas, resultado_anual=resultado_anual, error=error or _error())
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/390/fichero")
@@ -739,6 +742,23 @@ def periodo(cliente_id: int):
     return redirect(url_for("guilda_fiscal.declaracion", declaracion_id=dec["id"]))
 
 
+def _vecinas_303(d: dict, cliente_id: int, todas: list[dict]) -> dict:
+    """El periodo anterior y el siguiente del 303 (solo trimestrales): con su declaración vigente si la hay (la última no anulada) o, si no, el enlace a la ficha del titular para calcularla."""
+    if d["periodo"] not in PERIODOS:
+        return {"anterior": None, "siguiente": None}
+    i = PERIODOS.index(d["periodo"])
+    candidatos = {"anterior": (d["ejercicio"], PERIODOS[i - 1]) if i else (d["ejercicio"] - 1, PERIODOS[-1]), "siguiente": (d["ejercicio"], PERIODOS[i + 1]) if i < 3 else (d["ejercicio"] + 1, PERIODOS[0])}
+    salida = {}
+    for clave, (ejercicio, periodo) in candidatos.items():
+        if ejercicio < 2026 or ejercicio > 2100:
+            salida[clave] = None
+            continue
+        dec = next((x for x in todas if x["ejercicio"] == ejercicio and x["periodo"] == periodo and x["estado"] != "anulada" and x["modelo"] == "303"), None)
+        url = url_for("guilda_fiscal.declaracion", declaracion_id=dec["id"]) if dec else url_for("guilda_fiscal.cliente", cliente_id=cliente_id, p_ejercicio=ejercicio, p_periodo=periodo)
+        salida[clave] = {"ejercicio": ejercicio, "periodo": periodo, "declaracion_id": dec["id"] if dec else None, "url": url}
+    return salida
+
+
 @guilda_fiscal_bp.route("/declaracion/<int:declaracion_id>")
 @login_required
 def declaracion(declaracion_id: int):
@@ -751,7 +771,8 @@ def declaracion(declaracion_id: int):
     todas = fn.listar_declaraciones(g.tenant_id, g.usuario_id, d["cliente_fiscal_id"])
     rectificativa = next((x for x in todas if x["rectifica_a_id"] == d["id"] and x["estado"] != "anulada"), None)
     original = next((x for x in todas if x["id"] == d["rectifica_a_id"]), None)
-    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, rectificativa=rectificativa, original=original, justificante=fn.justificante_de(d), necesita_iban=fn.necesita_iban(d), iban_propuesto=fn.iban_reciente(g.tenant_id, g.usuario_id, d["cliente_fiscal_id"]),
+    vecinas = _vecinas_303(d, c["id"], todas)
+    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, vecinas=vecinas, rectificativa=rectificativa, original=original, justificante=fn.justificante_de(d), necesita_iban=fn.necesita_iban(d), iban_propuesto=fn.iban_reciente(g.tenant_id, g.usuario_id, d["cliente_fiscal_id"]),
                            apuntes={a["apunte_id"]: a for a in inst["datos"]["apuntes"]}, cambios=fn.comparar_con_anterior(g.tenant_id, g.usuario_id, declaracion_id),
                            error=_error())
 

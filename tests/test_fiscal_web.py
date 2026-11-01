@@ -76,6 +76,7 @@ def test_flujo_completo_desde_la_web(cliente):
     did = int(r.headers["Location"].rsplit("/", 1)[1])
     html = cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
     assert "10.50" in html and "Borrador" in html and "Marcar como revisada" in html
+    assert "A ingresar" in html and "1T 2026" in html and "3T 2026" in html and html.count("sin calcular") == 2 and 'p_periodo=3T' in html     # los periodos vecinos aún no tienen declaración: llevan a calcularla
     # los ficheros no existen hasta exportar
     assert cliente.get(f"/guilda-fiscal/declaracion/{did}/descargar/303").status_code == 404
     assert "no se puede" in cliente.post(f"/guilda-fiscal/declaracion/{did}/exportar", follow_redirects=True).get_data(as_text=True).lower() or True
@@ -87,6 +88,8 @@ def test_flujo_completo_desde_la_web(cliente):
     assert cliente.post(f"/guilda-fiscal/declaracion/{did}/presentada", data={"referencia": "CSV XYZ"}).status_code == 302
     assert "Presentada" in cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)
     assert "Presentada" in cliente.get("/guilda-fiscal/").get_data(as_text=True)
+    r3 = cliente.post(f"/guilda-fiscal/{c}/periodo", data={"ejercicio": "2026", "periodo": "3T"})
+    assert f"/guilda-fiscal/declaracion/{int(r3.headers['Location'].rsplit('/', 1)[1])}" in cliente.get(f"/guilda-fiscal/declaracion/{did}").get_data(as_text=True)    # ya calculado: enlaza a su declaración
     assert cliente.get(f"/guilda-fiscal/declaracion/{did}/descargar/otro").status_code == 404
 
 
@@ -497,6 +500,7 @@ def test_resumen_anual_del_390_y_su_fichero_de_prueba(cliente):
     assert r["resultado"].calculable and casillas["05"] == 100000 and casillas["606"] == 8400 and casillas["65"] == 21000 - 8400
     pagina = cliente.get(f"/guilda-fiscal/{c}/390?ejercicio=2026").get_data(as_text=True)
     assert "Resumen anual del IVA" in pagina and "casillas-390" in pagina and "Descargar fichero .390 de prueba" in pagina
+    assert "Resultado de la liquidación anual" in pagina and "126.00 €" in pagina and f"/guilda-fiscal/{c}/390?ejercicio=2025" in pagina and f"/guilda-fiscal/{c}/390?ejercicio=2027" in pagina
     assert f"/guilda-fiscal/{c}/390?ejercicio=2026" in cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=2T").get_data(as_text=True)
     f = cliente.get(f"/guilda-fiscal/{c}/390/fichero?ejercicio=2026")
     assert f.status_code == 200 and f.data.startswith(b"<T390020260A0000>") and b"EMPRESA WEB SL" in f.data

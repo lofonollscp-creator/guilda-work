@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_nucleo_macros.html" import aviso_error %}
+{% from "_nucleo_macros.html" import aviso_error, navegador_declaraciones %}
 {% block title %}{{ _('Modelo 303') }} {{ d.ejercicio }} {{ d.periodo }} — {{ c.nombre }}{% endblock %}
 {% block content %}
 {% set estados = {'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada'), 'anulada': _('Anulada')} %}
@@ -12,8 +12,9 @@
 </header>
 {% set orden = ['borrador', 'revisada', 'exportada', 'presentada'] %}
 {% set paso = orden.index(d.estado) if d.estado in orden else -1 %}
+{{ navegador_declaraciones(vecinas) }}
 <div class="decl-resumen">
-  <div class="fiscal-cifra decl-resultado"><span class="muted">{{ _('Resultado de la declaración') }}</span><span class="fiscal-cifra-num">{{ '%.2f'|format(d.resultado_centimos / 100) }} €</span><span class="muted fiscal-cifra-pie">{{ _('Casilla') }} 71</span></div>
+  <div class="fiscal-cifra decl-resultado"><span class="muted">{{ _('Resultado de la declaración') }}</span><span class="fiscal-cifra-num">{{ '%.2f'|format(d.resultado_centimos / 100) }} €</span><span class="muted fiscal-cifra-pie">{{ _('Casilla') }} 71 · {{ {'I': _('A ingresar'), 'N': _('Sin pago'), 'C': _('A compensar'), 'D': _('A devolver')}.get(d.tipo_declaracion, '') }}</span></div>
   <div class="decl-estado">
     {% if d.estado == 'anulada' %}<span class="pildora-v2 rojo">{{ estados['anulada'] }}</span>
     {% else %}<ol class="decl-pasos" aria-label="{{ _('Estado') }}">

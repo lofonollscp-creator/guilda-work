@@ -53,3 +53,21 @@
   <span class="pill semaforo {{ clases[tipo] }}">{{ textos[tipo] }}</span>
 </div>
 {%- endmacro %}
+
+{% macro navegador_ejercicio(endpoint, cliente_id, ejercicio, minimo=2025) -%}
+{#- «‹ 2025 · 2026 · 2027 ›» para las pantallas anuales. -#}
+<nav class="ds-fila ds-envolver ds-mb-16" aria-label="{{ _('Cambiar de ejercicio') }}">
+  {% if ejercicio - 1 >= minimo %}<a class="btn btn-ghost btn-sm" rel="prev" href="{{ url_for(endpoint, cliente_id=cliente_id, ejercicio=ejercicio - 1) }}">‹ {{ ejercicio - 1 }}</a>{% endif %}
+  <strong>{{ ejercicio }}</strong>
+  {% if ejercicio + 1 <= 2100 %}<a class="btn btn-ghost btn-sm" rel="next" href="{{ url_for(endpoint, cliente_id=cliente_id, ejercicio=ejercicio + 1) }}">{{ ejercicio + 1 }} ›</a>{% endif %}
+</nav>
+{%- endmacro %}
+
+{% macro navegador_declaraciones(vecinas) -%}
+{#- «‹ 1T 2026 · 3T 2026 ›» entre los 303 del titular: si el periodo vecino ya tiene declaración, abre esa; si no, lleva a calcularla. -#}
+<nav class="ds-fila ds-envolver ds-mb-16" aria-label="{{ _('Cambiar de periodo') }}">
+  {% for v, flecha in ((vecinas.anterior, 'prev'), (vecinas.siguiente, 'next')) %}{% if v %}
+    <a class="btn btn-ghost btn-sm" rel="{{ flecha }}" href="{{ v.url }}">{% if flecha == 'prev' %}‹ {% endif %}{{ v.periodo }} {{ v.ejercicio }}{% if flecha == 'next' %} ›{% endif %}{% if not v.declaracion_id %} · {{ _('sin calcular') }}{% endif %}</a>
+  {% endif %}{% endfor %}
+</nav>
+{%- endmacro %}
