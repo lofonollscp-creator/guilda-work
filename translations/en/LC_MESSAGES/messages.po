@@ -18404,3 +18404,30 @@ msgstr "No entries this quarter"
 
 msgid "El trimestre no tiene ningún apunte aprobado: faltan facturas o no hubo actividad."
 msgstr "The quarter has no approved entries: invoices are missing or there was no activity."
+
+msgid "Previsión de los próximos 12 meses"
+msgstr "Forecast for the next 12 months"
+
+msgid "Lo que las plantillas activas crearán solas. Solo informa: no crea nada hasta que llega la fecha."
+msgstr "What the active templates will create on their own. For information only: nothing is created until the date arrives."
+
+msgid "Apuntes"
+msgstr "Entries"
+
+msgid "Base emitidas"
+msgstr "Issued base"
+
+msgid "Cuota emitidas"
+msgstr "Issued VAT"
+
+msgid "Base recibidas"
+msgstr "Received base"
+
+msgid "Cuota recibidas"
+msgstr "Received VAT"
+
+msgid "Ver cada apunte previsto"
+msgstr "See each expected entry"
+
+msgid "Toca ya"
+msgstr "Due now"

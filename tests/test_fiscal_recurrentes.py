@@ -146,6 +146,26 @@ def test_el_script_diario_recorre_todos_los_despachos(capsys):
         assert len({f["numero"] for f in fn.listar_apuntes(t, u, c)}) == len(fn.listar_apuntes(t, u, c))
 
 
+def test_la_prevision_resume_por_trimestre_sin_crear_nada():
+    t, u, c = _despacho("Despacho recurrentes 3")
+    ap = _alquiler(t, u, c, fecha=date(2026, 1, 5))
+    fr.crear(t, u, c, ap["id"], frecuencia="mensual", hasta="2026-06-05")
+    ap2 = fn.aprobar_apunte(t, u, c, venta(200000, numero="SERV-1", fecha=date(2026, 1, 10)))
+    pausada = fr.crear(t, u, c, ap2["id"], frecuencia="trimestral")
+    antes = len(fn.listar_apuntes(t, u, c))
+    pl = fr.listar(t, u, c)
+    pr = fr.prevision(pl, meses=12, hoy=date(2026, 3, 20))
+    mensual = [x for x in pr["lineas"] if x["nombre"] != pausada["nombre"]]
+    assert [x["fecha"] for x in mensual] == ["2026-02-05", "2026-03-05", "2026-04-05", "2026-05-05", "2026-06-05"] and [x["pendiente"] for x in mensual] == [True, True, False, False, False]
+    trimestral = [x["fecha"] for x in pr["lineas"] if x["nombre"] == pausada["nombre"]]
+    assert trimestral == ["2026-04-10", "2026-07-10", "2026-10-10", "2027-01-10", "2027-04-10"][:len(trimestral)] and trimestral[0] == "2026-04-10" and trimestral[-1] <= "2027-03-20"
+    assert pr["trimestres"]["2026-T2"]["recibidas"] == 3 and pr["trimestres"]["2026-T2"]["emitidas"] == 1 and pr["trimestres"]["2026-T2"]["base_r"] == 300000 and pr["trimestres"]["2026-T2"]["retencion"] == 57000
+    fr.pausar(t, u, c, pausada["id"], False)
+    sin = fr.prevision(fr.listar(t, u, c), meses=12, hoy=date(2026, 3, 20))
+    assert all(x["libro"] == "R" for x in sin["lineas"]) and len(fn.listar_apuntes(t, u, c)) == antes             # lo pausado no se prevé y mirar no crea apuntes
+    assert fr.prevision([], hoy=date(2026, 3, 20)) == {"lineas": [], "trimestres": {}}
+
+
 def test_pantallas_de_las_plantillas(cliente):
     from app import verticales
     uid = iniciar_sesion_de_prueba(cliente, "recweb@ejemplo.com", "contrasena123")
@@ -161,6 +181,7 @@ def test_pantallas_de_las_plantillas(cliente):
     assert r.status_code == 302 and r.headers["Location"].endswith(f"/guilda-fiscal/{c}/recurrentes")
     html = cliente.get(f"/guilda-fiscal/{c}/recurrentes").get_data(as_text=True)
     assert "ALQ-1" in html and "Activa" in html and "Generar lo que toca ahora" in html
+    assert "Previsión de los próximos 12 meses" in html
     duplicada = cliente.post(f"/guilda-fiscal/{c}/apuntes/{ap['id']}/recurrente", data={"frecuencia": "mensual"})
     assert duplicada.status_code == 302 and "error=" in duplicada.headers["Location"]
     pid = fr.listar(t, uid, c)[0]["id"]

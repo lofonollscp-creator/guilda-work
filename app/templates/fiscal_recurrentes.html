@@ -28,4 +28,15 @@
   {% if puede_aprobar %}<form method="post" class="ds-fila ds-mt-16"><button class="btn btn-primary" type="submit" name="accion" value="generar">{{ _('Generar lo que toca ahora') }}</button></form>{% endif %}
   {% else %}<p class="muted">{{ _('Este titular no tiene plantillas recurrentes todavía.') }}</p>{% endif %}
 </section>
+{% if prevision.lineas %}
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Previsión de los próximos 12 meses') }}</h2>
+  <p class="muted">{{ _('Lo que las plantillas activas crearán solas. Solo informa: no crea nada hasta que llega la fecha.') }}</p>
+  <div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Trimestre') }}</th><th>{{ _('Apuntes') }}</th><th>{{ _('Base emitidas') }}</th><th>{{ _('Cuota emitidas') }}</th><th>{{ _('Base recibidas') }}</th><th>{{ _('Cuota recibidas') }}</th><th>{{ _('Retención') }}</th></tr></thead><tbody>
+    {% for t, v in prevision.trimestres.items() | sort %}<tr><td>{{ t }}</td><td>{{ v.n }}</td><td>{{ euros(v.base_e) }}</td><td>{{ euros(v.cuota_e) }}</td><td>{{ euros(v.base_r) }}</td><td>{{ euros(v.cuota_r) }}</td><td>{{ euros(v.retencion) }}</td></tr>{% endfor %}</tbody></table></div>
+  <details class="ds-mt-16"><summary>{{ _('Ver cada apunte previsto') }} ({{ prevision.lineas | length }})</summary>
+  <div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Plantilla') }}</th><th>{{ _('Importe') }}</th></tr></thead><tbody>
+    {% for x in prevision.lineas %}<tr><td>{{ x.fecha }}{% if x.pendiente %} <span class="chip">{{ _('Toca ya') }}</span>{% endif %}</td><td>{{ x.nombre }}</td><td>{{ euros(x.base) }}</td></tr>{% endfor %}</tbody></table></div></details>
+</section>
+{% endif %}
 {% endblock %}

@@ -44,6 +44,36 @@ def listar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> list[dict
         conn.close()
 
 
+def prevision(plantillas: list[dict], *, meses: int = 12, hoy: date | None = None) -> dict:
+    """Los apuntes que las plantillas ACTIVAS crearán en los próximos `meses` meses (más los que ya tocan y aún no se han generado), por fecha, y su resumen por trimestre natural: base y cuota del libro de
+    emitidas (E) y de recibidas (R), y la retención. Solo mira: no crea nada. Devuelve `{"lineas", "trimestres"}`."""
+    hoy = hoy or date.today()
+    limite = fn._mes_despues(hoy.isoformat(), meses)
+    lineas = []
+    for p in plantillas:
+        if not p["activa"]:
+            continue
+        paso, n = FRECUENCIAS[p["frecuencia"]], p["generadas"] + 1
+        fecha = fn._mes_despues(p["datos"]["fecha_expedicion"], n * paso)
+        while fecha <= limite and not (p["hasta"] and fecha > p["hasta"]) and len(lineas) < 500:
+            d = p["datos"]
+            lineas.append({"fecha": fecha, "plantilla_id": p["id"], "nombre": p["nombre"], "libro": d.get("libro"), "base": d.get("base_centimos") or 0, "cuota": d.get("cuota_centimos") or 0,
+                           "retencion": d.get("retencion_centimos") or 0, "pendiente": fecha <= hoy.isoformat()})
+            n += 1
+            fecha = fn._mes_despues(p["datos"]["fecha_expedicion"], n * paso)
+    lineas.sort(key=lambda x: (x["fecha"], x["nombre"]))
+    trimestres = {}
+    for x in lineas:
+        t = trimestres.setdefault(f"{x['fecha'][:4]}-T{(int(x['fecha'][5:7]) - 1) // 3 + 1}", {"emitidas": 0, "recibidas": 0, "base_e": 0, "base_r": 0, "cuota_e": 0, "cuota_r": 0, "retencion": 0, "n": 0})
+        clave = "e" if x["libro"] == "E" else "r"
+        t["emitidas" if clave == "e" else "recibidas"] += 1
+        t["base_" + clave] += x["base"]
+        t["cuota_" + clave] += x["cuota"]
+        t["retencion"] += x["retencion"]
+        t["n"] += 1
+    return {"lineas": lineas, "trimestres": trimestres}
+
+
 def crear(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, apunte_id: int, *, frecuencia: str = "mensual", hasta: str | None = None, nombre: str | None = None) -> dict:
     """Define la plantilla a partir de un apunte aprobado. Cada apunte tiene como mucho una plantilla activa. `hasta`: última fecha (AAAA-MM-DD) hasta la que se repite; en blanco, sin fin."""
     fn._exigir_aprobador(tenant_id, usuario_id)

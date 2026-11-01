@@ -18489,3 +18489,30 @@ msgstr "Aucune écriture ce trimestre"
 
 msgid "El trimestre no tiene ningún apunte aprobado: faltan facturas o no hubo actividad."
 msgstr "Le trimestre n'a aucune écriture approuvée : il manque des factures ou il n'y a pas eu d'activité."
+
+msgid "Previsión de los próximos 12 meses"
+msgstr "Prévision des 12 prochains mois"
+
+msgid "Lo que las plantillas activas crearán solas. Solo informa: no crea nada hasta que llega la fecha."
+msgstr "Ce que les modèles actifs créeront seuls. À titre informatif : rien n'est créé avant la date."
+
+msgid "Apuntes"
+msgstr "Écritures"
+
+msgid "Base emitidas"
+msgstr "Base émises"
+
+msgid "Cuota emitidas"
+msgstr "TVA émise"
+
+msgid "Base recibidas"
+msgstr "Base reçues"
+
+msgid "Cuota recibidas"
+msgstr "TVA reçue"
+
+msgid "Ver cada apunte previsto"
+msgstr "Voir chaque écriture prévue"
+
+msgid "Toca ya"
+msgstr "À faire maintenant"

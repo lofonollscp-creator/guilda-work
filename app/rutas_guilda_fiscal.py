@@ -640,7 +640,7 @@ def recurrentes(cliente_id: int):
         plantillas = fr.listar(g.tenant_id, g.usuario_id, cliente_id)
     except ErrorFiscal as e:
         abort(404 if e.codigo == "no_encontrado" else 403)
-    return render_template("fiscal_recurrentes.html", c=c, plantillas=plantillas, resultado=resultado, hoy=date.today().isoformat(), error=error)
+    return render_template("fiscal_recurrentes.html", c=c, plantillas=plantillas, prevision=fr.prevision(plantillas, hoy=date.today()), resultado=resultado, hoy=date.today().isoformat(), error=error)
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/apuntes/<int:apunte_id>", methods=["GET", "POST"])

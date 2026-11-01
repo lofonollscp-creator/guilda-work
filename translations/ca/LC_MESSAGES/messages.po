@@ -18413,3 +18413,30 @@ msgstr "Sense apunts del trimestre"
 
 msgid "El trimestre no tiene ningún apunte aprobado: faltan facturas o no hubo actividad."
 msgstr "El trimestre no té cap apunt aprovat: falten factures o no hi ha hagut activitat."
+
+msgid "Previsión de los próximos 12 meses"
+msgstr "Previsió dels propers 12 mesos"
+
+msgid "Lo que las plantillas activas crearán solas. Solo informa: no crea nada hasta que llega la fecha."
+msgstr "El que les plantilles actives crearan soles. Només informa: no crea res fins que arriba la data."
+
+msgid "Apuntes"
+msgstr "Apunts"
+
+msgid "Base emitidas"
+msgstr "Base emeses"
+
+msgid "Cuota emitidas"
+msgstr "Quota emeses"
+
+msgid "Base recibidas"
+msgstr "Base rebudes"
+
+msgid "Cuota recibidas"
+msgstr "Quota rebudes"
+
+msgid "Ver cada apunte previsto"
+msgstr "Veure cada apunt previst"
+
+msgid "Toca ya"
+msgstr "Toca ja"
