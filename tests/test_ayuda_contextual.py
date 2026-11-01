@@ -13,7 +13,7 @@ def test_el_prefijo_mas_largo_gana_y_lo_desconocido_va_a_la_portada():
     assert ayuda.ruta_de("tareas.hoy") == "trabajo-diario/mi-dia"
     assert ayuda.ruta_de("tareas.listar") == "trabajo-diario/tareas"
     assert ayuda.ruta_de("tareas.carga_mover") == "trabajo-diario/tareas-en-equipo"
-    assert ayuda.ruta_de("correo.equipo_mensaje") == "trabajo-diario/tareas-en-equipo"
+    assert ayuda.ruta_de("correo.equipo_mensaje") == "trabajo-diario/contactos-y-correo-de-equipo"
     assert ayuda.ruta_de("correo.bandeja") == "trabajo-diario/correo"
     assert ayuda.ruta_de("fiscal.recordatorios") == "trabajo-diario/recordatorios-a-clientes"
     assert ayuda.ruta_de("ia.ajustes") == "asistente-ia/ajustes-y-limites"
