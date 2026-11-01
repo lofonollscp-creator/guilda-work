@@ -53,6 +53,93 @@
     fr: { nota: "Notes", tarea: "Tâches", mensaje: "E-mail", vencimiento_fiscal: "Fiscal", cliente_fiscal: "Clients", preguntar: "Demander à l'assistant" },
   };
   var ETIQUETAS_TIPO = ETIQUETAS_POR_IDIOMA[document.documentElement.lang] || ETIQUETAS_POR_IDIOMA.es;
+  // Comandos de la paleta: «Ir a…» sale del propio menú lateral (así respeta idioma, permisos y módulos activos); las acciones son fijas.
+  var TXT_COMANDOS = {
+    es: { ir: "Ir a", acciones: "Acciones", nueva_tarea: "Nueva tarea", nueva_nota: "Nueva nota", redactar: "Redactar correo", nuevo_cliente: "Nuevo cliente", tema: "Cambiar tema (sistema · claro · oscuro)", atajos: "Ver atajos de teclado", plegar: "Plegar o desplegar el menú lateral", tema_ahora: "Tema" },
+    ca: { ir: "Anar a", acciones: "Accions", nueva_tarea: "Nova tasca", nueva_nota: "Nova nota", redactar: "Redactar correu", nuevo_cliente: "Nou client", tema: "Canviar tema (sistema · clar · fosc)", atajos: "Veure dreceres de teclat", plegar: "Plegar o desplegar el menú lateral", tema_ahora: "Tema" },
+    en: { ir: "Go to", acciones: "Actions", nueva_tarea: "New task", nueva_nota: "New note", redactar: "Write email", nuevo_cliente: "New client", tema: "Change theme (system · light · dark)", atajos: "Show keyboard shortcuts", plegar: "Collapse or expand the side menu", tema_ahora: "Theme" },
+    fr: { ir: "Aller à", acciones: "Actions", nueva_tarea: "Nouvelle tâche", nueva_nota: "Nouvelle note", redactar: "Écrire un e-mail", nuevo_cliente: "Nouveau client", tema: "Changer de thème (système · clair · sombre)", atajos: "Voir les raccourcis clavier", plegar: "Replier ou déplier le menu latéral", tema_ahora: "Thème" },
+  };
+  var TC = TXT_COMANDOS[document.documentElement.lang] || TXT_COMANDOS.es;
+
+  function normalizar(t) { return String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim(); }
+
+  function comandosDeNavegacion() {
+    var vistos = {}, res = [];
+    document.querySelectorAll("#rail-principal a[href], .icon-rail a[href]").forEach(function (a) {
+      var href = a.getAttribute("href");
+      if (!href || a.classList.contains("icon-rail-brand") || href.charAt(0) !== "/" || /logout|salir|apagar|ver-como|#/.test(href) || vistos[href]) return;
+      var et = a.querySelector(".icon-rail-etiqueta");
+      var texto = ((et ? et.textContent : a.textContent) || "").replace(/\s+/g, " ").trim();
+      if (!texto || texto.length > 48) return;
+      var uso = a.querySelector("svg use"); var icono = uso ? (uso.getAttribute("href") || "").split("#icono-")[1] : "";
+      vistos[href] = true;
+      res.push({ grupo: "ir", etiqueta: TC.ir + " " + texto, buscar: normalizar(texto + " " + TC.ir), href: href, icono: icono || "arrow-right" });
+    });
+    return res;
+  }
+
+  function comandosDeAccion() {
+    var tieneClientes = !!document.querySelector('.icon-rail a[href^="/clientes"]');
+    var c = [
+      { grupo: "acciones", etiqueta: TC.nueva_tarea, buscar: normalizar(TC.nueva_tarea + " crear tarea add task"), href: "/tareas/?nueva=1", icono: "plus" },
+      { grupo: "acciones", etiqueta: TC.nueva_nota, buscar: normalizar(TC.nueva_nota + " crear nota add note"), href: "/notas?nueva=1", icono: "notebook-pen" },
+      { grupo: "acciones", etiqueta: TC.redactar, buscar: normalizar(TC.redactar + " nuevo correo email mail compose"), href: "/correo/redactar", icono: "mail" },
+    ];
+    if (tieneClientes) c.push({ grupo: "acciones", etiqueta: TC.nuevo_cliente, buscar: normalizar(TC.nuevo_cliente + " crear cliente add client"), href: "/clientes/nuevo", icono: "users" });
+    c.push({ grupo: "acciones", etiqueta: TC.tema, buscar: normalizar(TC.tema + " theme oscuro claro dark light"), accion: "tema", icono: "moon" });
+    c.push({ grupo: "acciones", etiqueta: TC.atajos, buscar: normalizar(TC.atajos + " ayuda help shortcuts"), accion: "atajos", icono: "zap" });
+    c.push({ grupo: "acciones", etiqueta: TC.plegar, buscar: normalizar(TC.plegar + " sidebar menu"), accion: "plegar", icono: "panel-left" });
+    return c;
+  }
+
+  var COMANDOS = null;
+  function comandos() { return COMANDOS || (COMANDOS = comandosDeAccion().concat(comandosDeNavegacion())); }
+
+  function comandosParaTexto(texto) {
+    var todos = comandos();
+    var q = normalizar(texto);
+    if (!q) return todos.filter(function (c) { return c.grupo === "acciones"; }).slice(0, 5).concat(todos.filter(function (c) { return c.grupo === "ir"; }).slice(0, 8));
+    var palabras = q.split(/\s+/);
+    return todos.filter(function (c) { return palabras.every(function (p) { return c.buscar.indexOf(p) !== -1; }); }).slice(0, 7);
+  }
+
+  function ejecutarAccion(nombre) {
+    cerrar();
+    if (nombre === "atajos") { var b = document.getElementById("atajos-ayuda-abrir"); if (b) b.click(); }
+    else if (nombre === "plegar") { var t = document.querySelector(".icon-rail-toggle"); if (t) t.click(); }
+    else if (nombre === "tema") {
+      var orden = ["system", "light", "dark"], actual = "system";
+      try { actual = localStorage.getItem("guilda-work-tema") || "system"; } catch (e) { /* sin almacenamiento */ }
+      var sig = orden[(orden.indexOf(actual) + 1) % 3];
+      try { localStorage.setItem("guilda-work-tema", sig); } catch (e) { /* sin almacenamiento */ }
+      if (sig === "system") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = sig;
+    }
+  }
+
+  function pintarComandos(texto) {
+    var cmds = comandosParaTexto(texto), grupo = null;
+    cmds.forEach(function (c) {
+      if (c.grupo !== grupo) {
+        grupo = c.grupo;
+        var cab = document.createElement("li"); cab.className = "busqueda-grupo"; cab.setAttribute("role", "presentation");
+        cab.textContent = grupo === "ir" ? TC.ir : TC.acciones; lista.appendChild(cab);
+      }
+      var li = document.createElement("li"), a = document.createElement("a");
+      a.href = c.href || "#"; a.className = "busqueda-comando";
+      if (c.accion) a.dataset.accion = c.accion;
+      a.innerHTML = '<span class="busqueda-icono-tipo"><svg aria-hidden="true"><use href="' + URL_ICONOS + '#icono-' + escapeHtml(c.icono) + '"></use></svg></span><span class="busqueda-resultado-texto">' + escapeHtml(c.etiqueta) + "</span>";
+      li.appendChild(a); lista.appendChild(li);
+    });
+  }
+
+  function pintarSoloComandos() {
+    lista.innerHTML = "";
+    pintarComandos("");
+    resultadosActuales = Array.prototype.slice.call(lista.querySelectorAll("a"));
+    activo = resultadosActuales.length ? 0 : -1;
+    marcarActivo();
+  }
   var ICONO_TIPO = { nota: "notebook-pen", tarea: "list-checks", mensaje: "mail", vencimiento_fiscal: "calendar-days", cliente_fiscal: "briefcase" };
   var filtroTipo = "";                 // "" = todo
   var hitsCrudos = [];
@@ -123,6 +210,7 @@
       lista.appendChild(li0);
     }
     activo = texto ? 0 : (visibles.length ? 0 : -1);
+    if (texto) pintarComandos(texto);
     var grupoActual = null;
     visibles.forEach(function (hit, i) {
       if (hit.tipo !== grupoActual) {
@@ -183,7 +271,7 @@
 
   function buscar(texto) {
     clearTimeout(temporizadorCarga);
-    if (!texto.trim()) { limpiar(); return; }
+    if (!texto.trim()) { limpiar(); pintarSoloComandos(); return; }
     var miPeticion = ++peticionEnCurso;
     // Meilisearch local suele responder en pocos ms -- el indicador de
     // carga solo se enseña si de verdad tarda, para no parpadear en
@@ -234,6 +322,7 @@
     input.value = "";
     actualizarIcono();
     limpiar();
+    pintarSoloComandos();
     setTimeout(function () { input.focus(); }, 0);
   }
 
@@ -265,6 +354,10 @@
   });
 
   cerrarBoton.addEventListener("click", cerrar);
+  lista.addEventListener("click", function (e) {
+    var a = e.target.closest("a[data-accion]");
+    if (a) { e.preventDefault(); ejecutarAccion(a.dataset.accion); }
+  });
 
   // Icono dinámico: lupa decorativa mientras el campo está vacío
   // (enfoca el input al pulsarlo), botón de limpiar en cuanto hay
@@ -277,6 +370,7 @@
     if (input.value) {
       input.value = "";
       limpiar();
+      pintarSoloComandos();
       actualizarIcono();
     }
     input.focus();
@@ -300,7 +394,10 @@
       if (resultadosActuales.length) { activo = (activo - 1 + resultadosActuales.length) % resultadosActuales.length; marcarActivo(); }
     } else if (e.key === "Enter") {
       var enlaces = lista.querySelectorAll("a");
-      if (enlaces[activo]) window.location.href = enlaces[activo].getAttribute("href");
+      if (enlaces[activo]) {
+        if (enlaces[activo].dataset.accion) { e.preventDefault(); ejecutarAccion(enlaces[activo].dataset.accion); }
+        else window.location.href = enlaces[activo].getAttribute("href");
+      }
     }
   });
 })();

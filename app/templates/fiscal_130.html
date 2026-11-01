@@ -17,7 +17,7 @@
 {{ aviso_error(error) }}
 <section class="dash-panel">
   <p class="muted">{{ _('Se calcula ahora con los apuntes aprobados del año (ingresos y gastos sin IVA, acumulados hasta el fin del trimestre) y con los ajustes que pongas aquí. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal.') }}</p>
-  <form method="get" class="edit-form">
+  <form method="get" class="edit-form form-2col">
     <div class="fila-campos">
       <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100"></label>
       <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option {{ 'selected' if p == periodo }}>{{ p }}</option>{% endfor %}</select></label>

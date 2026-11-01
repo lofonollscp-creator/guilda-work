@@ -18386,3 +18386,24 @@ msgstr "Esborrar la plantilla? Els apunts que ja va crear es queden."
 
 msgid "¿Crear la plantilla? Los apuntes se crearán solos y quedarán aprobados."
 msgstr "Crear la plantilla? Els apunts es crearan sols i quedaran aprovats."
+
+msgid "Resultado de la declaración"
+msgstr "Resultat de la declaració"
+
+msgid "Navegación principal"
+msgstr "Navegació principal"
+
+msgid "Ir a Hoy, Tareas, Notas o Correo"
+msgstr "Anar a Avui, Tasques, Notes o Correu"
+
+msgid "Abrir la búsqueda"
+msgstr "Obrir la cerca"
+
+msgid "Moverte por la lista"
+msgstr "Moure't per la llista"
+
+msgid "Completar la tarea seleccionada"
+msgstr "Completar la tasca seleccionada"
+
+msgid "Plegar o desplegar el menú lateral"
+msgstr "Plegar o desplegar el menú lateral"

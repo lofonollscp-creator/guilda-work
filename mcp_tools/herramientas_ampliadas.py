@@ -314,13 +314,13 @@ def crear_recordatorio(texto: str, avisar_en: str, correo: bool = True) -> dict:
     asunto = str(texto or "").strip()[:280]
     if not asunto:
         raise ValueError("Falta el texto del recordatorio.")
-    momento = _momento_aviso(avisar_en)
+    momento = _mt._momento_aviso(avisar_en)
     tarea_id = _mt.db.crear_tarea_outlook(uid, "Recordatorio: " + asunto, fecha_vencimiento=momento.strftime("%Y-%m-%d %H:%M"), categoria_outlook="Recordatorio")
-    canales = _canales_aviso(correo)
+    canales = _mt._canales_aviso(correo)
     recordatorio_id = _mt.db.anadir_recordatorio_tarea(uid, tarea_id, momento.isoformat(timespec="seconds"), canales)
     if recordatorio_id is None:
         raise ValueError("No se ha podido crear el recordatorio.")
-    return {"recordatorio_id": recordatorio_id, "tarea_id": tarea_id, "avisar_en": momento.strftime("%Y-%m-%d %H:%M"), "canales": canales, **_aviso_correo_sin_configurar(correo)}
+    return {"recordatorio_id": recordatorio_id, "tarea_id": tarea_id, "avisar_en": momento.strftime("%Y-%m-%d %H:%M"), "canales": canales, **_mt._aviso_correo_sin_configurar(correo)}
 
 
 def recordar_tarea(tarea_id: int, avisar_en: str | None = None, atajo: str | None = None, correo: bool = True) -> dict:
@@ -328,18 +328,18 @@ def recordar_tarea(tarea_id: int, avisar_en: str | None = None, atajo: str | Non
     uid = _mt._uid()
     if _mt.db.obtener_tarea_outlook_visible(uid, tarea_id) is None:
         raise ValueError(f"No existe la tarea {tarea_id} (o no tienes acceso).")
-    canales = _canales_aviso(correo)
+    canales = _mt._canales_aviso(correo)
     if atajo:
         recordatorio_id = _mt.db.recordatorio_relativo(uid, tarea_id, str(atajo), canales)
         if recordatorio_id is None:
             raise ValueError("El atajo debe ser al_vencer, 1h_antes o 1d_antes, y la tarea necesita fecha de vencimiento.")
     elif avisar_en:
-        recordatorio_id = _mt.db.anadir_recordatorio_tarea(uid, tarea_id, _momento_aviso(avisar_en).isoformat(timespec="seconds"), canales)
+        recordatorio_id = _mt.db.anadir_recordatorio_tarea(uid, tarea_id, _mt._momento_aviso(avisar_en).isoformat(timespec="seconds"), canales)
     else:
         raise ValueError("Indica `avisar_en` o un `atajo`.")
     if recordatorio_id is None:
         raise ValueError("No se ha podido crear el aviso.")
-    return {"recordatorio_id": recordatorio_id, "tarea_id": tarea_id, "canales": canales, **_aviso_correo_sin_configurar(correo)}
+    return {"recordatorio_id": recordatorio_id, "tarea_id": tarea_id, "canales": canales, **_mt._aviso_correo_sin_configurar(correo)}
 
 
 def listar_recordatorios() -> list[dict]:

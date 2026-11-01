@@ -3,13 +3,24 @@
 {% block title %}{{ _('Modelo 303') }} {{ d.ejercicio }} {{ d.periodo }} — {{ c.nombre }}{% endblock %}
 {% block content %}
 {% set estados = {'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada'), 'anulada': _('Anulada')} %}
-<header class="page-header">
-  <div>
+<header class="page-header decl-cabecera">
+  <div class="decl-titulo">
     <h1>{{ _('Modelo 303') }} · {{ d.ejercicio }} {{ d.periodo }}</h1>
-    <p class="subtitle">{{ c.nombre }} · {{ c.nif or '' }} · <span class="pill">{{ estados[d.estado] }}</span>{% if d.rectifica_a_id %} <span class="pill">{{ _('Rectificativa') }}</span>{% endif %} · {{ _('Resultado (casilla 71): %(r)s €', r='%.2f'|format(d.resultado_centimos / 100)) }}</p>
+    <p class="subtitle">{{ c.nombre }}{% if c.nif %} · {{ c.nif }}{% endif %}{% if d.rectifica_a_id %} · <span class="pill">{{ _('Rectificativa') }}</span>{% endif %}</p>
   </div>
   <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id, ejercicio=d.ejercicio) }}">‹ {{ _('Volver al titular') }}</a>
 </header>
+{% set orden = ['borrador', 'revisada', 'exportada', 'presentada'] %}
+{% set paso = orden.index(d.estado) if d.estado in orden else -1 %}
+<div class="decl-resumen">
+  <div class="fiscal-cifra decl-resultado"><span class="muted">{{ _('Resultado de la declaración') }}</span><span class="fiscal-cifra-num">{{ '%.2f'|format(d.resultado_centimos / 100) }} €</span><span class="muted fiscal-cifra-pie">{{ _('Casilla') }} 71</span></div>
+  <div class="decl-estado">
+    {% if d.estado == 'anulada' %}<span class="pildora-v2 rojo">{{ estados['anulada'] }}</span>
+    {% else %}<ol class="decl-pasos" aria-label="{{ _('Estado') }}">
+      {% for e in orden %}<li class="{{ 'hecho' if loop.index0 < paso else ('actual' if loop.index0 == paso else '') }}" {% if loop.index0 == paso %}aria-current="step"{% endif %}><span class="decl-paso-punto" aria-hidden="true">{{ loop.index }}</span><span>{{ estados[e] }}</span></li>{% endfor %}
+    </ol>{% endif %}
+  </div>
+</div>
 {{ aviso_error(error) }}
 
 {% if d.bloqueos %}
@@ -26,7 +37,31 @@
 {% endif %}
 {% if not inst.integra %}<div class="ia-error" role="alert">{{ _('La huella de la instantánea no coincide: no te fíes de esta declaración.') }}</div>{% endif %}
 
+<div class="decl-layout">
+<div class="decl-main">
+{% if cambios %}
 <section class="dash-panel">
+  <h2>{{ _('Qué ha cambiado respecto al cálculo anterior') }}</h2>
+  <p class="muted">{{ _('Comparado con el cálculo anterior de este periodo (declaración %(i)s): resultado antes %(a)s €, ahora %(b)s €.', i=cambios.id, a='%.2f'|format(cambios.resultado_antes / 100), b='%.2f'|format(cambios.resultado_ahora / 100)) }}</p>
+  {% if cambios.cambios %}<div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Antes') }}</th><th>{{ _('Ahora') }}</th></tr></thead>
+    <tbody>{% for x in cambios.cambios %}<tr><td>{{ x.casilla }}</td><td>{{ etiqueta_casilla(x.casilla) }}</td><td class="num">{{ '%.2f'|format(x.antes / 100) }}</td><td class="num">{{ '%.2f'|format(x.ahora / 100) }}</td></tr>{% endfor %}</tbody>
+  </table></div>{% else %}<p class="muted">{{ _('Las casillas son las mismas.') }}</p>{% endif %}
+</section>
+{% endif %}
+<h2>{{ _('Casillas') }}</h2>
+<div class="table-wrap ds-mb-16"><table class="historial-table">
+  <thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Valor') }}</th><th>{{ _('De qué apuntes sale') }}</th></tr></thead>
+  <tbody>
+  {% for k, v in d.casillas.items() | sort(attribute='0') if k not in ('02', '05', '08') %}
+    <tr class="{{ 'casilla-clave' if k in ('27', '45', '46', '64', '69', '71') }}"><td class="mono">{{ k }}</td><td>{{ etiqueta_casilla(k) }}</td><td class="num {{ 'casilla-clave' if k in ('27', '45', '46', '64', '69', '71') }}">{% if k == '65' %}{{ '%.2f'|format(v / 100) }} %{% else %}{{ '%.2f'|format(v / 100) }} €{% endif %}</td>
+      <td>{% for aid in d.origen.get(k, []) %}{% set a = apuntes.get(aid) %}{% if a %}<span class="chip">{{ a.serie }}{{ a.numero }}</span> {% endif %}{% endfor %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+</div>
+<aside class="decl-lado">
+<section class="dash-panel decl-acciones">
   <p class="muted">{{ _('Calculado sobre la instantánea %(i)s del %(f)s (%(n)s apuntes). Motor %(m)s, diseño %(d)s.', i=inst.id, f=inst.aprobada_en[:10], n=inst.datos.apuntes|length, m=d.version_motor, d=d.version_diseno) }}</p>
   {% if puede_aprobar %}
   <div class="ds-fila ds-envolver">
@@ -70,26 +105,6 @@
   <p class="muted">{{ _('Esta declaración está presentada sin el número de justificante de 13 cifras; hace falta para poder rectificarla.') }}</p>
   {% endif %}
 </section>
-
-{% if cambios %}
-<section class="dash-panel">
-  <h2>{{ _('Qué ha cambiado respecto al cálculo anterior') }}</h2>
-  <p class="muted">{{ _('Comparado con el cálculo anterior de este periodo (declaración %(i)s): resultado antes %(a)s €, ahora %(b)s €.', i=cambios.id, a='%.2f'|format(cambios.resultado_antes / 100), b='%.2f'|format(cambios.resultado_ahora / 100)) }}</p>
-  {% if cambios.cambios %}<div class="table-wrap"><table class="historial-table">
-    <thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Antes') }}</th><th>{{ _('Ahora') }}</th></tr></thead>
-    <tbody>{% for x in cambios.cambios %}<tr><td>{{ x.casilla }}</td><td>{{ etiqueta_casilla(x.casilla) }}</td><td>{{ '%.2f'|format(x.antes / 100) }}</td><td>{{ '%.2f'|format(x.ahora / 100) }}</td></tr>{% endfor %}</tbody>
-  </table></div>{% else %}<p class="muted">{{ _('Las casillas son las mismas.') }}</p>{% endif %}
-</section>
-{% endif %}
-
-<h2 class="ds-mt-16">{{ _('Casillas') }}</h2>
-<div class="table-wrap ds-mb-16"><table class="historial-table">
-  <thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Valor') }}</th><th>{{ _('De qué apuntes sale') }}</th></tr></thead>
-  <tbody>
-  {% for k, v in d.casillas.items() | sort(attribute='0') if k not in ('02', '05', '08') %}
-    <tr><td>{{ k }}</td><td>{{ etiqueta_casilla(k) }}</td><td>{% if k == '65' %}{{ '%.2f'|format(v / 100) }} %{% else %}{{ '%.2f'|format(v / 100) }} €{% endif %}</td>
-      <td>{% for aid in d.origen.get(k, []) %}{% set a = apuntes.get(aid) %}{% if a %}<span class="chip">{{ a.serie }}{{ a.numero }}</span> {% endif %}{% endfor %}</td></tr>
-  {% endfor %}
-  </tbody>
-</table></div>
+</aside>
+</div>
 {% endblock %}

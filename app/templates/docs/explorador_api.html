@@ -7,6 +7,7 @@
   <meta name="description" content="{{ _('Referencia interactiva de /api/v1/*, generada en vivo desde el documento OpenAPI real.') }}">
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='docs.css') }}">
+  <script src="{{ url_for('static', filename='docs_tema.js') }}"></script>
 </head>
 <body>
   <header class="docs-topbar">
@@ -15,6 +16,7 @@
       <span>Guilda Work<em>Developers</em></span>
     </a>
     <nav class="docs-topbar-links">
+      <button type="button" id="docs-tema" class="docs-tema-boton" aria-label="Tema"><span class="docs-tema-icono" aria-hidden="true">◐</span><span class="docs-tema-texto">Sistema</span></button>
       <a href="{{ url_for('docs.pagina', slug='referencia-api') }}">← {{ _('Referencia de la API') }}</a>
     </nav>
   </header>
