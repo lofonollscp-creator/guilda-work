@@ -18218,3 +18218,18 @@ msgstr "Return result"
 
 msgid "Navegación principal"
 msgstr "Main navigation"
+
+msgid "Ir a Hoy, Tareas, Notas o Correo"
+msgstr "Go to Today, Tasks, Notes or Mail"
+
+msgid "Abrir la búsqueda"
+msgstr "Open search"
+
+msgid "Moverte por la lista"
+msgstr "Move through the list"
+
+msgid "Completar la tarea seleccionada"
+msgstr "Complete the selected task"
+
+msgid "Plegar o desplegar el menú lateral"
+msgstr "Collapse or expand the side menu"

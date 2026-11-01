@@ -18303,3 +18303,18 @@ msgstr "Résultat de la déclaration"
 
 msgid "Navegación principal"
 msgstr "Navigation principale"
+
+msgid "Ir a Hoy, Tareas, Notas o Correo"
+msgstr "Aller à Aujourd'hui, Tâches, Notes ou Courrier"
+
+msgid "Abrir la búsqueda"
+msgstr "Ouvrir la recherche"
+
+msgid "Moverte por la lista"
+msgstr "Parcourir la liste"
+
+msgid "Completar la tarea seleccionada"
+msgstr "Terminer la tâche sélectionnée"
+
+msgid "Plegar o desplegar el menú lateral"
+msgstr "Replier ou déplier le menu latéral"
