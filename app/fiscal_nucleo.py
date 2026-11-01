@@ -11,7 +11,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from dataclasses import asdict
 from datetime import date, datetime, timedelta
 
 from flask_babel import lazy_gettext as _l  # noqa: F401  (los textos de pantalla se traducen en las rutas)
@@ -794,10 +793,24 @@ def descargar_fichero_390(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     return contenido, f"{ejercicio}_390_prueba.390"
 
 
+def _perfil_y_titular(tenant_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> tuple[dict, dict]:
+    """El perfil fiscal vigente al final del trimestre y la ficha del titular, para los cálculos de IRPF (130 y 131)."""
+    perfil = fiscal_perfiles.perfil_en(tenant_id, cliente_fiscal_id, _fecha_fin_periodo(ejercicio, periodo).isoformat())
+    if not perfil:
+        raise ErrorFiscal("El titular no tiene perfil fiscal vigente en ese periodo: créalo antes.", "sin_perfil")
+    conn = db.get_connection()
+    try:
+        return perfil, dict(_titular(conn, tenant_id, cliente_fiscal_id))
+    finally:
+        conn.close()
+
+
 def _acumulados_130(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int) -> dict[str, dict[str, int]]:
     """Por trimestre, lo acumulado desde el 1 de enero hasta su último día, con los apuntes aprobados: `ingresos` (base de las emitidas, con abonos restando), `gastos` (base de las recibidas más el IVA que
     no se dedujo, sin los bienes de inversión, que se amortizan) y `retenciones` (de IRPF soportadas en las facturas emitidas que ya son apunte). `inversion` cuenta los bienes de inversión que se han dejado fuera."""
     apuntes = [a_apunte(f) for f in listar_apuntes(tenant_id, usuario_id, cliente_fiscal_id, ejercicio=ejercicio)]
+    retenciones_por_trimestre = {p: sum(f["retencion"] for f in facturas_del_periodo(tenant_id, usuario_id, cliente_fiscal_id, ejercicio, p)["facturas"]          # una consulta por trimestre, no una por cada acumulado
+                                        if f["m_retencion"] == "soportada" and f["m303"] == "computa" and f["incluir_en_fiscal"]) for p in ("1T", "2T", "3T", "4T")}
     salida = {}
     for t in ("1T", "2T", "3T", "4T"):
         fin = _fecha_fin_periodo(ejercicio, t)
@@ -812,13 +825,7 @@ def _acumulados_130(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, eje
                 inversion += 1
             else:
                 gastos += a.base + (a.cuota - a.deducible if a.clave != "09" and not a.isp else 0)
-        retenciones = 0
-        for p in ("1T", "2T", "3T", "4T"):
-            if p > t:
-                break
-            retenciones += sum(f["retencion"] for f in facturas_del_periodo(tenant_id, usuario_id, cliente_fiscal_id, ejercicio, p)["facturas"]
-                               if f["m_retencion"] == "soportada" and f["m303"] == "computa" and f["incluir_en_fiscal"])
-        salida[t] = {"ingresos": ingresos, "gastos": gastos, "retenciones": retenciones, "inversion": inversion}
+        salida[t] = {"ingresos": ingresos, "gastos": gastos, "retenciones": sum(retenciones_por_trimestre[p] for p in ("1T", "2T", "3T", "4T") if p <= t), "inversion": inversion}
     return salida
 
 
@@ -830,14 +837,7 @@ def calculo_130(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercic
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
     if periodo not in ("1T", "2T", "3T", "4T"):
         raise ErrorFiscal("El 130 es trimestral: 1T, 2T, 3T o 4T.")
-    perfil = fiscal_perfiles.perfil_en(tenant_id, cliente_fiscal_id, _fecha_fin_periodo(ejercicio, periodo).isoformat())
-    if not perfil:
-        raise ErrorFiscal("El titular no tiene perfil fiscal vigente en ese periodo: créalo antes.", "sin_perfil")
-    conn = db.get_connection()
-    try:
-        titular = dict(_titular(conn, tenant_id, cliente_fiscal_id))
-    finally:
-        conn.close()
+    perfil, titular = _perfil_y_titular(tenant_id, cliente_fiscal_id, ejercicio, periodo)
     sumas = _acumulados_130(tenant_id, usuario_id, cliente_fiscal_id, ejercicio)
     # trimestres anteriores, solo con los apuntes
     pagos = negativos = 0
@@ -889,14 +889,7 @@ def calculo_131(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercic
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
     if periodo not in motor_131.TRIMESTRES:
         raise ErrorFiscal("El 131 es trimestral: 1T, 2T, 3T o 4T.")
-    perfil = fiscal_perfiles.perfil_en(tenant_id, cliente_fiscal_id, _fecha_fin_periodo(ejercicio, periodo).isoformat())
-    if not perfil:
-        raise ErrorFiscal("El titular no tiene perfil fiscal vigente en ese periodo: créalo antes.", "sin_perfil")
-    conn = db.get_connection()
-    try:
-        titular = dict(_titular(conn, tenant_id, cliente_fiscal_id))
-    finally:
-        conn.close()
+    perfil, titular = _perfil_y_titular(tenant_id, cliente_fiscal_id, ejercicio, periodo)
     sumas = _acumulados_130(tenant_id, usuario_id, cliente_fiscal_id, ejercicio)
     anterior = sumas[motor_131.TRIMESTRES[motor_131.TRIMESTRES.index(periodo) - 1]] if periodo != "1T" else {"ingresos": 0, "retenciones": 0}
     sugerencias = {"ingresos": sumas[periodo]["ingresos"] - anterior["ingresos"], "retenciones": sumas[periodo]["retenciones"] - anterior["retenciones"]}

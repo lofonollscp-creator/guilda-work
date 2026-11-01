@@ -16,7 +16,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from . import motor_303 as m303
-from .apuntes import EXPEDIDAS, RECIBIDAS, RECTIFICATIVAS, Apunte
+from .apuntes import EXPEDIDAS, RECTIFICATIVAS, Apunte
 
 DISENO_390 = Path(__file__).resolve().parent / "disenos" / "390_2025.json"
 TRIMESTRES = ("1T", "2T", "3T", "4T")

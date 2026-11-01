@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 
-from .apuntes import RECIBIDAS, RECTIFICATIVAS, Apunte, en_periodo, periodo_de
+from .apuntes import RECIBIDAS, RECTIFICATIVAS, Apunte, en_periodo
 
 CLAVES_DEVENGO_S1 = {"01", "11", "12", "13", "15", "03", "05", "09"}
 TIPOS_EMITIDAS_NORMALES = {"F1", "F2", "F4"}
