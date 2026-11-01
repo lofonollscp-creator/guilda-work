@@ -31,3 +31,25 @@
 {% macro tamano(bytes) -%}
 {%- if bytes < 1024 -%}{{ bytes }} B{%- elif bytes < 1048576 -%}{{ (bytes / 1024)|round(1) }} KB{%- else -%}{{ (bytes / 1048576)|round(1) }} MB{%- endif -%}
 {%- endmacro %}
+
+{% macro navegador_trimestre(endpoint, cliente_id, consulta, ejercicio, periodo) -%}
+{#- «‹ 1T 2026 · 3T 2026 ›»: salta de trimestre conservando los ajustes tecleados (el ejercicio mínimo es el 2026, como en el formulario). -#}
+{% set i = ['1T', '2T', '3T', '4T'].index(periodo) %}
+{% set ant = (ejercicio, ['1T', '2T', '3T', '4T'][i - 1]) if i > 0 else (ejercicio - 1, '4T') %}
+{% set sig = (ejercicio, ['1T', '2T', '3T', '4T'][i + 1]) if i < 3 else (ejercicio + 1, '1T') %}
+<nav class="ds-fila ds-envolver ds-mb-16" aria-label="{{ _('Cambiar de trimestre') }}">
+  {% if ant[0] >= 2026 %}<a class="btn btn-ghost btn-sm" rel="prev" href="{{ url_for(endpoint, cliente_id=cliente_id, **dict(consulta, ejercicio=ant[0], periodo=ant[1])) }}">‹ {{ ant[1] }} {{ ant[0] }}</a>{% endif %}
+  <strong>{{ periodo }} {{ ejercicio }}</strong>
+  {% if sig[0] <= 2100 %}<a class="btn btn-ghost btn-sm" rel="next" href="{{ url_for(endpoint, cliente_id=cliente_id, **dict(consulta, ejercicio=sig[0], periodo=sig[1])) }}">{{ sig[1] }} {{ sig[0] }} ›</a>{% endif %}
+</nav>
+{%- endmacro %}
+
+{% macro resultado_destacado(importe, tipo) -%}
+{#- La cifra final de una autoliquidación, grande y con su significado: a ingresar, negativa o a deducir en los siguientes pagos. `importe` en céntimos. -#}
+{% set clases = {'I': 'semaforo-ambar', 'N': 'semaforo-verde', 'B': 'semaforo-verde'} %}
+{% set textos = {'I': _('A ingresar'), 'N': _('Sin pago'), 'B': _('A deducir en los siguientes pagos')} %}
+<div class="fiscal-resultado" role="status">
+  <span class="fiscal-resultado-cifra">{{ ('%.2f'|format(importe / 100)).replace('.', ',') }} €</span>
+  <span class="pill semaforo {{ clases[tipo] }}">{{ textos[tipo] }}</span>
+</div>
+{%- endmacro %}

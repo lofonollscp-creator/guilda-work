@@ -18516,3 +18516,21 @@ msgstr "Voir chaque écriture prévue"
 
 msgid "Toca ya"
 msgstr "À faire maintenant"
+
+msgid "Cambiar de trimestre"
+msgstr "Changer de trimestre"
+
+msgid "A ingresar"
+msgstr "À payer"
+
+msgid "Sin pago"
+msgstr "Aucun paiement"
+
+msgid "Buscar por titular"
+msgstr "Rechercher par titulaire"
+
+msgid "Filtrar por modelo"
+msgstr "Filtrer par modèle"
+
+msgid "Ningún vencimiento coincide con el filtro."
+msgstr "Aucune échéance ne correspond au filtre."

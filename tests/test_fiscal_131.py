@@ -160,6 +160,7 @@ def test_modelo_131_desde_la_ficha(cliente):
     consulta = "ejercicio=2026&periodo=1T&epigrafe_1=6421&rendimiento_1=10000,00&asalariados_1=0&otras_retenciones=50,00"
     html = cliente.get(f"/guilda-fiscal/{c}/131?{consulta}").get_data(as_text=True)
     assert 'id="calculo-131"' in html and "150,00 €" in html and "Descargar el fichero de prueba del modelo 131" in html
+    assert 'class="fiscal-resultado-cifra">150,00 €' in html and f"/guilda-fiscal/{c}/131?ejercicio=2026&amp;periodo=2T" in html
     r = cliente.get(f"/guilda-fiscal/{c}/131/fichero?{consulta}&iban=ES91+2100+0418+4502+0005+1332")
     assert r.status_code == 200 and "2026_1T_131_prueba.txt" in r.headers["Content-Disposition"] and int(f131.leer_campos(r.data)[59]) == 15000
     mal = cliente.get(f"/guilda-fiscal/{c}/131?ejercicio=2026&periodo=1T&epigrafe_1=6421&rendimiento_1=abc").get_data(as_text=True)

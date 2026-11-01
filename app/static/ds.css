@@ -270,5 +270,10 @@ input[type="file"]::file-selector-button:hover { border-color: var(--accent, var
 .fiscal-buscador { display: flex; gap: 8px; align-items: center; flex: 1 1 280px; max-width: 460px; }
 .fiscal-buscador input[type="search"] { flex: 1 1 auto; min-width: 0; }
 tr[hidden] { display: none; }
+.fiscal-resultado { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin: 0 0 16px; }
+.fiscal-resultado-cifra { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.fiscal-table td:last-child, .fiscal-table th:last-child { font-variant-numeric: tabular-nums; }
+.filtro-modelos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.btn[aria-pressed="true"] { background: var(--accent, #2f5bea); color: var(--on-accent, #fff); border-color: transparent; }
 
 [data-evidencia-imagen] img { max-width: 100%; height: auto; }

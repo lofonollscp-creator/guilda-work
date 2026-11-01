@@ -451,6 +451,7 @@ def test_panel_de_vencimientos_enlaza_el_borrador_y_avisa_si_no_hay_apuntes(clie
     pagina = cliente.get("/guilda-fiscal/vencimientos?dias=180").get_data(as_text=True)
     assert f"/guilda-fiscal/{c}/130?ejercicio=2026&amp;periodo=2T" in pagina and f"/guilda-fiscal/{c}/131?ejercicio=2026&amp;periodo=2T" in pagina
     assert pagina.count("Sin apuntes del trimestre") == 1
+    assert 'data-filtro-modelo="130"' in pagina and 'data-filtro-modelo="390"' in pagina and pagina.count('data-modelo="130"') == 2 and "fiscal_vencimientos.js" in pagina
 
 
 def test_recordatorios_sugeridos_se_envian_solo_con_confirmacion(cliente, monkeypatch):
@@ -654,6 +655,10 @@ def test_modelo_130_desde_la_ficha(cliente):
     assert "Modelo 130 (IRPF)" in cliente.get(f"/guilda-fiscal/{c}?p_ejercicio=2026&p_periodo=1T").get_data(as_text=True)
     html = cliente.get(f"/guilda-fiscal/{c}/130?ejercicio=2026&periodo=1T").get_data(as_text=True)
     assert 'id="calculo-130"' in html and "200,00 €" in html and "Descargar el fichero de prueba del modelo 130" in html
+    assert 'class="fiscal-resultado-cifra">200,00 €' in html and "A ingresar" in html                                    # la cifra final, destacada
+    assert f"/guilda-fiscal/{c}/130?ejercicio=2026&amp;periodo=2T" in html and 'rel="prev"' not in html                 # 1T 2026: sin trimestre anterior (el ejercicio mínimo es 2026)
+    h4 = cliente.get(f"/guilda-fiscal/{c}/130?ejercicio=2026&periodo=4T&otros_gastos=500,00").get_data(as_text=True)
+    assert "periodo=3T" in h4 and "ejercicio=2027" in h4 and "otros_gastos=500" in h4                              # navega de trimestre conservando los ajustes
     html = cliente.get(f"/guilda-fiscal/{c}/130?ejercicio=2026&periodo=1T&otros_gastos=500,00").get_data(as_text=True)
     assert "Gastos fiscalmente deducibles" in html and "500,00 €" in html and "100,00 €" in html                      # 1.000 − 500 = 500 € de rendimiento y el 20 % son 100 €
     r = cliente.get(f"/guilda-fiscal/{c}/130/fichero?ejercicio=2026&periodo=1T")

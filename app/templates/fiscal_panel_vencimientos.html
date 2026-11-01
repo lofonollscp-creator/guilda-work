@@ -2,6 +2,7 @@
 {% from "_ds/componentes.html" import estado_vacio %}
 {% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ _('Vencimientos fiscales') }} — Guilda Work{% endblock %}
+{% block scripts_pagina %}<script src="{{ url_for('static', filename='fiscal_vencimientos.js') }}"></script>{% endblock %}
 {% block content %}
 {% set estados = {None: _('Sin crear'), 'borrador': _('Borrador'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'presentada': _('Presentada')} %}
 <header class="page-header">
@@ -35,11 +36,18 @@
     <tbody>{% for r in panel.responsables %}<tr><td><a href="{{ url_for('guilda_fiscal.vencimientos', dias=dias, responsable=r.responsable) }}">{{ r.responsable or _('Sin asignar') }}</a></td><td>{{ r.vencimientos }}</td><td>{{ r.carga }}</td></tr>{% endfor %}</tbody>
   </table></div>
 </section>
+<div class="fiscal-barra ds-mb-16">
+  <input type="search" placeholder="{{ _('Buscar por titular') }}" aria-label="{{ _('Buscar por titular') }}" autocomplete="off" data-buscar-campo>
+  <div class="filtro-modelos" role="group" aria-label="{{ _('Filtrar por modelo') }}">
+    <button type="button" class="btn btn-ghost btn-sm" data-filtro-modelo="" aria-pressed="true">{{ _('Todos') }}</button>
+    {% for m in panel.filas | map(attribute='modelo') | unique | sort %}<button type="button" class="btn btn-ghost btn-sm" data-filtro-modelo="{{ m }}" aria-pressed="false">{{ m }}</button>{% endfor %}
+  </div>
+</div>
 <div class="table-wrap"><table class="historial-table">
   <thead><tr><th>{{ _('Vence') }}</th><th>{{ _('Titular') }}</th><th>{{ _('Modelo') }}</th><th>{{ _('Periodo') }}</th><th>{{ _('Responsable') }}</th><th>{{ _('Pendiente') }}</th><th>{{ _('Carga') }}</th></tr></thead>
   <tbody>
   {% for f in panel.filas %}
-    <tr>
+    <tr data-buscar="{{ f.cliente }} {{ f.modelo }} {{ f.periodo }} {{ f.responsable }}" data-modelo="{{ f.modelo }}">
       <td><span class="pill semaforo semaforo-{{ 'rojo' if f.nivel == 'vencido' else ('ambar' if f.nivel == 'semana' else 'gris') }}">{{ f.fecha_limite[:10] }}</span>
         <small class="muted">{% if f.dias < 0 %}{{ _('hace %(n)s días', n=-f.dias) }}{% elif f.dias == 0 %}{{ _('hoy') }}{% else %}{{ _('en %(n)s días', n=f.dias) }}{% endif %}</small></td>
       <td><a href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.cliente_fiscal_id) }}">{{ f.cliente }}</a></td>
@@ -53,5 +61,6 @@
   {% endfor %}
   </tbody>
 </table></div>
+<p class="muted" data-sin-resultados hidden>{{ _('Ningún vencimiento coincide con el filtro.') }}</p>
 {% endif %}
 {% endblock %}

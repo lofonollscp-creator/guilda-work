@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_nucleo_macros.html" import aviso_error %}
+{% from "_nucleo_macros.html" import aviso_error, navegador_trimestre, resultado_destacado %}
 {% block title %}{{ _('Modelo 131') }} — {{ c.nombre }}{% endblock %}
 {% block content %}
 {% set conceptos = {'01': _('Suma de rendimientos netos de las actividades del apartado I'), '02': _('Pago fraccionado previo del apartado I'), '03': _('Volumen de ventas o ingresos del apartado II'),
@@ -15,6 +15,7 @@
   <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cliente', cliente_id=c.id) }}">‹ {{ c.nombre }}</a>
 </header>
 {{ aviso_error(error) }}
+{{ navegador_trimestre('guilda_fiscal.modelo_131', c.id, consulta if calculo else request.args.to_dict(), ejercicio, periodo) }}
 <section class="dash-panel">
   <p class="muted">{{ _('Se calcula ahora con los importes que pongas aquí (del trimestre, no acumulados). Guilda no tiene los datos-base de cada módulo: el rendimiento neto de cada actividad lo calculas tú con la Orden de módulos del año. No se guarda nada y este modelo no tiene borrador ni estados en Guilda Fiscal.') }}</p>
   <form method="get" class="edit-form">
@@ -71,6 +72,7 @@
   {% for b in r.bloqueos %}<p class="ia-error" role="alert">{{ b }}</p>{% endfor %}
   {% if r.filas %}<div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Epígrafe IAE') }}</th><th>{{ _('Rendimiento neto') }}</th><th>{{ _('Porcentaje') }}</th><th>{{ _('Pago fraccionado') }}</th></tr></thead><tbody>
     {% for f in r.filas %}<tr><td>{{ f.epigrafe }}</td><td>{{ euros(f.rendimiento_neto) }}</td><td>{{ ('%g'|format(f.porcentaje / 100)).replace('.', ',') }} %</td><td>{{ euros(f.resultado) }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+  {% if r.casillas and r.calculable and '15' in r.casillas %}{{ resultado_destacado(r.casillas['15'], r.tipo_declaracion) }}{% endif %}
   {% if r.casillas %}<div class="table-wrap ds-mt-16"><table class="fiscal-table"><thead><tr><th>{{ _('Casilla') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th></tr></thead><tbody>
     {% for cas, v in r.casillas.items()|sort %}<tr><td>{{ cas }}</td><td>{{ conceptos.get(cas, '') }}</td><td>{{ euros(v) }}</td></tr>{% endfor %}</tbody></table></div>
   <p><strong>{{ _('Tipo de declaración') }}:</strong> {{ {'I': _('Ingreso'), 'N': _('Negativa'), 'B': _('A deducir en los siguientes pagos')}[r.tipo_declaracion] }}</p>{% endif %}
