@@ -724,7 +724,7 @@ def solicitar_revision(usuario_id: int, tarea_id: int, revisores, nota: str | No
     try:
         tenant = _tenant_de_usuario(conn, usuario_id)
         for r in ids:
-            if tenant is None or conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (r, tenant)).fetchone() is None:
+            if tenant is None or conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (r, tenant, tenant)).fetchone() is None:
                 raise TransicionInvalida("revisor_invalido", gettext("Quien revisa tiene que ser de tu despacho."), "revisor_ids")
         try:
             cur = conn.execute("INSERT INTO tarea_revisiones (tenant_id, tarea_id, solicitada_por, revisor_id, nota_solicitud, solicitada_en, modo) VALUES (?, ?, ?, ?, ?, ?, ?)",

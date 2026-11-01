@@ -154,11 +154,22 @@ def asignar_supervisor_tenant(usuario_id: int, valor: bool) -> None:
         conn.close()
 
 
+def sql_miembro(alias: str = "u") -> str:
+    """Condición SQL «la persona `alias` pertenece a este despacho» (el principal o cualquiera de los suyos en `usuarios_tenants`). Lleva DOS marcadores `?`: pasa el `tenant_id` dos veces."""
+    return f"({alias}.tenant_id = ? OR EXISTS (SELECT 1 FROM usuarios_tenants _m WHERE _m.usuario_id = {alias}.id AND _m.tenant_id = ?))"
+
+
+def sql_supervisor(alias: str = "u") -> str:
+    """Condición SQL «la persona `alias` dirige este despacho»: en el principal manda `usuarios.supervisor_tenant`; en los demás, el de su pertenencia. DOS marcadores `?`: el `tenant_id` dos veces."""
+    return (f"(({alias}.tenant_id = ? AND {alias}.supervisor_tenant = 1) OR EXISTS (SELECT 1 FROM usuarios_tenants _m WHERE _m.usuario_id = {alias}.id AND _m.tenant_id = ? "
+            f"AND _m.tenant_id <> COALESCE({alias}.tenant_id, 0) AND _m.supervisor_tenant = 1))")
+
+
 def usuario_pertenece_a_tenant(usuario_id: int, tenant_id: int) -> bool:
     conn = _db.get_connection()
     try:
         fila = conn.execute(
-            "SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id),
+            "SELECT 1 FROM usuarios u WHERE u.id = ? AND " + sql_miembro(), (usuario_id, tenant_id, tenant_id),
         ).fetchone()
         return fila is not None
     finally:
@@ -1265,7 +1276,7 @@ def usuarios_de_tenant(tenant_id: int) -> list[int]:
     forma correcta de agregar por tenant sin ese problema."""
     conn = _db.get_connection()
     try:
-        filas = conn.execute("SELECT id FROM usuarios WHERE tenant_id = ?", (tenant_id,)).fetchall()
+        filas = conn.execute("SELECT u.id FROM usuarios u WHERE " + sql_miembro(), (tenant_id, tenant_id)).fetchall()
         return [f["id"] for f in filas]
     finally:
         conn.close()

@@ -138,7 +138,7 @@ def _persona_del_despacho(conn, tenant_id: int, persona_id) -> int | None:
         persona_id = int(persona_id)
     except (TypeError, ValueError):
         raise ErrorComercial("La persona elegida no es válida.") from None
-    if conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (persona_id, tenant_id)).fetchone() is None:
+    if conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (persona_id, tenant_id, tenant_id)).fetchone() is None:
         raise ErrorComercial("La persona elegida no es de tu despacho.")
     return persona_id
 

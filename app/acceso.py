@@ -312,7 +312,7 @@ def conceder_cliente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *,
             raise ValueError("Solo la dirección o quien coordina la oficina del cliente puede compartirlo.")
         if oficina_id is not None and conn.execute("SELECT 1 FROM oficinas WHERE id = ? AND tenant_id = ? AND activa = 1", (oficina_id, tenant_id)).fetchone() is None:
             raise ValueError("No existe esa oficina.")
-        if para_usuario_id is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (para_usuario_id, tenant_id)).fetchone() is None:
+        if para_usuario_id is not None and conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (para_usuario_id, tenant_id, tenant_id)).fetchone() is None:
             raise ValueError("Esa persona no pertenece al despacho.")
         cur = conn.execute("INSERT INTO concesiones_cliente (tenant_id, cliente_fiscal_id, oficina_id, usuario_id, nivel, vigente_hasta, creado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                            (tenant_id, cliente_fiscal_id, oficina_id, para_usuario_id, nivel, (hasta or "")[:10] or None, usuario_id, db.now_iso()))
@@ -372,7 +372,7 @@ def dar_membresia(tenant_id: int, usuario_id: int, para_usuario_id: int, rol: st
             raise ValueError("Solo la dirección, o quien coordina la oficina (para gestores y auditores de ella), puede dar roles.")
     conn = db.get_connection()
     try:
-        if conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (para_usuario_id, tenant_id)).fetchone() is None:
+        if conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (para_usuario_id, tenant_id, tenant_id)).fetchone() is None:
             raise ValueError("Esa persona no pertenece al despacho.")
         if alcance_tipo == "oficina" and conn.execute("SELECT 1 FROM oficinas WHERE id = ? AND tenant_id = ? AND activa = 1", (alcance_id, tenant_id)).fetchone() is None:
             raise ValueError("No existe esa oficina.")

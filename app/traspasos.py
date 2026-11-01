@@ -88,7 +88,7 @@ def proponer(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, a_usuario_
         c = conn.execute("SELECT id, nombre, oficina_id, responsable_id FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (cliente_fiscal_id, tenant_id)).fetchone()
         if c is None or not acceso.puede_modificar_cliente(tenant_id, usuario_id, cliente_fiscal_id):
             raise ValueError("No existe ese cliente.")
-        if conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (a_usuario_id, tenant_id)).fetchone() is None:
+        if conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (a_usuario_id, tenant_id, tenant_id)).fetchone() is None:
             raise ValueError("Esa persona no pertenece al despacho.")
         if a_usuario_id == c["responsable_id"]:
             raise ValueError("Esa persona ya es la responsable del cliente.")
@@ -189,7 +189,7 @@ def asignar_responsable(tenant_id: int, usuario_id: int, cliente_fiscal_id: int,
             raise ValueError("No existe ese cliente.")
         if not acceso.es_directivo(usuario_id) and (c["oficina_id"] is None or c["oficina_id"] not in acceso._oficinas_que_coordina(tenant_id, usuario_id)):
             raise ValueError("Solo la dirección o quien coordina la oficina del cliente puede cambiar el responsable.")
-        if responsable_id is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (responsable_id, tenant_id)).fetchone() is None:
+        if responsable_id is not None and conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (responsable_id, tenant_id, tenant_id)).fetchone() is None:
             raise ValueError("Esa persona no pertenece al despacho.")
         if conn.execute("SELECT 1 FROM traspasos WHERE cliente_fiscal_id = ? AND estado = 'pendiente'", (cliente_fiscal_id,)).fetchone():
             raise ValueError("Hay un traspaso pendiente de aceptar: resuélvelo antes.")

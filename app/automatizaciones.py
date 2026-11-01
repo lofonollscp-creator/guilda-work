@@ -296,7 +296,7 @@ def comprobar_pertenencia(tenant_id: int, condiciones: dict, acciones: list[dict
     conn = db.get_connection()
     try:
         for u in personas:
-            if conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (u, tenant_id)).fetchone() is None:
+            if conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (u, tenant_id, tenant_id)).fetchone() is None:
                 raise ValueError("Una de las personas elegidas no es de tu despacho.")
         cliente = condiciones.get("cliente_fiscal_id")
         if cliente and conn.execute("SELECT 1 FROM clientes_fiscales WHERE id = ? AND tenant_id = ? AND papelera_en IS NULL", (cliente, tenant_id)).fetchone() is None:
@@ -582,7 +582,7 @@ def rellenar(texto: str, datos: dict) -> str:
 def _direccion_del_despacho(tenant_id: int) -> list[int]:
     conn = db.get_connection()
     try:
-        return [f["id"] for f in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ? AND supervisor_tenant = 1", (tenant_id,))]
+        return [f["id"] for f in conn.execute("SELECT u.id FROM usuarios u WHERE " + db.sql_supervisor(), (tenant_id, tenant_id))]
     finally:
         conn.close()
 
@@ -592,7 +592,7 @@ def _usuario_del_despacho(tenant_id: int, usuario_id) -> int | None:
         return None
     conn = db.get_connection()
     try:
-        f = conn.execute("SELECT id FROM usuarios WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id)).fetchone()
+        f = conn.execute("SELECT u.id FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (usuario_id, tenant_id, tenant_id)).fetchone()
         return f["id"] if f else None
     finally:
         conn.close()

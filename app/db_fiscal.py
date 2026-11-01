@@ -1066,9 +1066,9 @@ def destinatarios_aviso_vencimiento(tenant_id: int, usuario_id: int | None) -> l
     """A quién avisar de un vencimiento: su responsable si sigue en el despacho; si no, los supervisores."""
     conn = _db.get_connection()
     try:
-        if usuario_id is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id)).fetchone():
+        if usuario_id is not None and conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + _db.sql_miembro(), (usuario_id, tenant_id, tenant_id)).fetchone():
             return [usuario_id]
-        return [f["id"] for f in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ? AND supervisor_tenant = 1", (tenant_id,))]
+        return [f["id"] for f in conn.execute("SELECT u.id FROM usuarios u WHERE " + _db.sql_supervisor(), (tenant_id, tenant_id))]
     finally:
         conn.close()
 

@@ -243,7 +243,7 @@ def crear(tenant_id: int, usuario_id: int, cliente_id: int, tipo: str, titulo: s
     conn = db.get_connection()
     try:
         for uid, campo in ((revisor_id, "El revisor"), (responsable_id, "El responsable")):
-            if uid is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (uid, tenant_id)).fetchone() is None:
+            if uid is not None and conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (uid, tenant_id, tenant_id)).fetchone() is None:
                 raise ValueError(f"{campo} no pertenece al despacho.")
         if oficina_id is not None and conn.execute("SELECT 1 FROM oficinas WHERE id = ? AND tenant_id = ? AND activa = 1", (oficina_id, tenant_id)).fetchone() is None:
             raise ValueError("No existe esa oficina.")
@@ -332,7 +332,7 @@ def editar_control(tenant_id: int, usuario_id: int, expediente_id: int, **campos
     try:
         if "revisor_id" in campos:
             r = campos["revisor_id"] or None
-            if r is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (r, tenant_id)).fetchone() is None:
+            if r is not None and conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (r, tenant_id, tenant_id)).fetchone() is None:
                 raise ValueError("El revisor no pertenece al despacho.")
             if r is not None and r == x["responsable_id"]:
                 raise ValueError("El revisor y el responsable deben ser personas distintas.")
@@ -381,7 +381,7 @@ def anadir_punto(tenant_id: int, usuario_id: int, expediente_id: int, texto: str
             raise ValueError("La fecha debe tener el formato AAAA-MM-DD.") from None
     conn = db.get_connection()
     try:
-        if asignado_id is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (asignado_id, tenant_id)).fetchone() is None:
+        if asignado_id is not None and conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (asignado_id, tenant_id, tenant_id)).fetchone() is None:
             raise ValueError("Esa persona no pertenece al despacho.")
         orden = (conn.execute("SELECT COALESCE(MAX(orden), -1) + 1 FROM expediente_checklist WHERE expediente_id = ?", (expediente_id,)).fetchone()[0])
         cur = conn.execute("INSERT INTO expediente_checklist (expediente_id, texto, obligatorio, asignado_id, fecha_limite, orden, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?)",

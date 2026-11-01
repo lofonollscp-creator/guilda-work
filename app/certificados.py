@@ -426,8 +426,9 @@ def fijar_custodio_flag(tenant_id: int, supervisor_id: int, usuario_id: int, val
 def custodios(tenant_id: int) -> list[dict]:
     conn = db.get_connection()
     try:
-        return [dict(f) for f in conn.execute("SELECT u.id, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS nombre, u.custodio_certificados AS custodio FROM usuarios u "
-                                                "LEFT JOIN usuario_perfil p ON p.usuario_id = u.id WHERE u.tenant_id = ? ORDER BY lower(COALESCE(NULLIF(p.nombre_mostrado, ''), u.email))", (tenant_id,))]
+        return [dict(f) for f in conn.execute("SELECT u.id, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS nombre, CASE WHEN u.tenant_id = ? THEN u.custodio_certificados ELSE COALESCE(m.custodio_certificados, 0) END AS custodio FROM usuarios u "
+                                                "LEFT JOIN usuarios_tenants m ON m.usuario_id = u.id AND m.tenant_id = ? LEFT JOIN usuario_perfil p ON p.usuario_id = u.id WHERE " + db.sql_miembro() + " ORDER BY lower(COALESCE(NULLIF(p.nombre_mostrado, ''), u.email))",
+                                                (tenant_id, tenant_id, tenant_id, tenant_id))]
     finally:
         conn.close()
 

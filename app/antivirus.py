@@ -122,7 +122,7 @@ def _avisar_a_la_direccion(nombre: str, firma: str, tenant_id: int | None, clien
         auditoria.registrar(tenant_id, None, "antivirus.rechazado", "cliente", cliente_fiscal_id, {"archivo": nombre[:150], "firma": firma[:100]})
         conn = db.get_connection()
         try:
-            direccion = [f["id"] for f in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ? AND supervisor_tenant = 1", (tenant_id,))]
+            direccion = [f["id"] for f in conn.execute("SELECT u.id FROM usuarios u WHERE " + db.sql_supervisor(), (tenant_id, tenant_id))]
         finally:
             conn.close()
         for u in direccion:

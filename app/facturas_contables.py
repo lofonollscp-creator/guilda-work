@@ -1317,7 +1317,7 @@ def _avisar_al_despacho(f, factura_id: int, datos: dict, cuantas: int = 1) -> No
         from . import notificaciones
         conn = db.get_connection()
         try:
-            destinatarios = [f["responsable_id"]] if f["responsable_id"] else [r["id"] for r in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ? AND supervisor_tenant = 1", (f["tenant_id"],))]
+            destinatarios = [f["responsable_id"]] if f["responsable_id"] else [r["id"] for r in conn.execute("SELECT u.id FROM usuarios u WHERE " + db.sql_supervisor(), (f["tenant_id"], f["tenant_id"]))]
         finally:
             conn.close()
         titulo = f"{f['nombre']} ha anotado una factura" if cuantas == 1 else f"{f['nombre']} ha subido {cuantas} facturas"

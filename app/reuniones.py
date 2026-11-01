@@ -325,7 +325,7 @@ def acta_valida(datos, equipo: dict[str, int] | None = None) -> dict:
 def _equipo(tenant_id: int) -> dict[str, int]:
     conn = db.get_connection()
     try:
-        ids = [f["id"] for f in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ?", (tenant_id,))]
+        ids = [f["id"] for f in conn.execute("SELECT u.id FROM usuarios u WHERE " + db.sql_miembro(), (tenant_id, tenant_id))]
     finally:
         conn.close()
     nombres: dict[str, list[int]] = {}
@@ -387,7 +387,7 @@ def crear_tareas(tenant_id: int, usuario_id: int, reunion_id: int, elegidas: lis
     conn = db.get_connection()
     try:
         from . import comercial
-        equipo_ok = {f["id"] for f in conn.execute("SELECT id FROM usuarios WHERE tenant_id = ?", (tenant_id,))}
+        equipo_ok = {f["id"] for f in conn.execute("SELECT u.id FROM usuarios u WHERE " + db.sql_miembro(), (tenant_id, tenant_id))}
     finally:
         conn.close()
     cliente_fiscal = comercial._fiscal_de(r["cliente_id"])

@@ -2785,6 +2785,8 @@ from .db_plataforma import (  # noqa: E402,F401
     es_supervisor_tenant,
     asignar_supervisor_tenant,
     usuario_pertenece_a_tenant,
+    sql_miembro,
+    sql_supervisor,
     fijar_fichaje_geolocalizacion,
     quitar_admin,
     verificar_credenciales,

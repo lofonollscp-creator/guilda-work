@@ -254,7 +254,7 @@ def _de_tenant(conn, tabla: str, fila_id, tenant_id: int, mensaje: str):
 
 
 def _usuario_de_tenant(conn, usuario_id, tenant_id: int, campo: str = "La persona") -> None:
-    if usuario_id is not None and conn.execute("SELECT 1 FROM usuarios WHERE id = ? AND tenant_id = ?", (usuario_id, tenant_id)).fetchone() is None:
+    if usuario_id is not None and conn.execute("SELECT 1 FROM usuarios u WHERE u.id = ? AND " + db.sql_miembro(), (usuario_id, tenant_id, tenant_id)).fetchone() is None:
         raise ValueError(f"{campo} no pertenece a este despacho.")
 
 
@@ -263,7 +263,7 @@ def equipo(tenant_id: int) -> list:
     conn = db.get_connection()
     try:
         return conn.execute("SELECT u.id, COALESCE(NULLIF(p.nombre_mostrado, ''), u.email) AS nombre FROM usuarios u LEFT JOIN usuario_perfil p ON p.usuario_id = u.id "
-                            "WHERE u.tenant_id = ? ORDER BY lower(COALESCE(NULLIF(p.nombre_mostrado, ''), u.email))", (tenant_id,)).fetchall()
+                            "WHERE " + db.sql_miembro() + " ORDER BY lower(COALESCE(NULLIF(p.nombre_mostrado, ''), u.email))", (tenant_id, tenant_id)).fetchall()
     finally:
         conn.close()
 
