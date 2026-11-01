@@ -18483,3 +18483,9 @@ msgstr "Terminer la tâche sélectionnée"
 
 msgid "Plegar o desplegar el menú lateral"
 msgstr "Replier ou déplier le menu latéral"
+
+msgid "Sin apuntes del trimestre"
+msgstr "Aucune écriture ce trimestre"
+
+msgid "El trimestre no tiene ningún apunte aprobado: faltan facturas o no hubo actividad."
+msgstr "Le trimestre n'a aucune écriture approuvée : il manque des factures ou il n'y a pas eu d'activité."

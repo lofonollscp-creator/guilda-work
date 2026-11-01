@@ -432,6 +432,27 @@ def test_panel_de_vencimientos_con_carga_de_trabajo(cliente):
     assert "Vencimientos y carga de trabajo" in cliente.get("/guilda-fiscal/").get_data(as_text=True)
 
 
+def test_panel_de_vencimientos_enlaza_el_borrador_y_avisa_si_no_hay_apuntes(cliente):
+    uid, t, c = _web(cliente, email="vencenl@ejemplo.com")
+    datos = {"libro": "R", "tipo_factura": "F1", "clave": "01", "numero": "P-1", "fecha_expedicion": "2026-05-10", "fecha_recepcion": "2026-05-10", "base": "1.000,00", "tipo_iva": "21",
+             "contraparte_nif": "B87654321", "contraparte_nombre": "Profesional SL"}
+    assert cliente.post(f"/guilda-fiscal/{c}/apuntes/nuevo", data=datos).status_code == 302
+    conn = db.get_connection()
+    for modelo, periodo, limite in (("130", "2026-T1", "2026-04-20"), ("130", "2026-T2", "2026-07-20"), ("131", "2026-T2", "2026-07-20"), ("303", "2026-T2", "2026-07-20"), ("390", "2026-anual", "2027-01-30")):
+        conn.execute("INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, usuario_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, ?, ?, ?, ?, 'pendiente', '2026-01-01')",
+                     (t, c, uid, modelo, periodo, limite))
+    conn.commit()
+    conn.close()
+    filas = {(f["modelo"], f["periodo"]): f for f in fn.panel_vencimientos(t, uid, dias=400, hoy=date(2026, 7, 1))["filas"]}
+    assert filas[("130", "2026-T1")]["apuntes"] == 0 and filas[("130", "2026-T1")]["sin_apuntes"]
+    assert filas[("130", "2026-T2")]["apuntes"] == 1 and not filas[("130", "2026-T2")]["sin_apuntes"] and filas[("131", "2026-T2")]["apuntes"] == 1
+    assert filas[("303", "2026-T2")]["apuntes"] == 1 and filas[("390", "2026-anual")]["apuntes"] is None and not filas[("390", "2026-anual")]["sin_apuntes"]
+    assert (filas[("130", "2026-T2")]["ejercicio"], filas[("130", "2026-T2")]["trimestre"]) == (2026, "2T")
+    pagina = cliente.get("/guilda-fiscal/vencimientos?dias=180").get_data(as_text=True)
+    assert f"/guilda-fiscal/{c}/130?ejercicio=2026&amp;periodo=2T" in pagina and f"/guilda-fiscal/{c}/131?ejercicio=2026&amp;periodo=2T" in pagina
+    assert pagina.count("Sin apuntes del trimestre") == 1
+
+
 def test_recordatorios_sugeridos_se_envian_solo_con_confirmacion(cliente, monkeypatch):
     from datetime import timedelta
     from app import notificaciones_email as ne

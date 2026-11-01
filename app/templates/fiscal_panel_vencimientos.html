@@ -43,8 +43,11 @@
       <td><span class="pill semaforo semaforo-{{ 'rojo' if f.nivel == 'vencido' else ('ambar' if f.nivel == 'semana' else 'gris') }}">{{ f.fecha_limite[:10] }}</span>
         <small class="muted">{% if f.dias < 0 %}{{ _('hace %(n)s días', n=-f.dias) }}{% elif f.dias == 0 %}{{ _('hoy') }}{% else %}{{ _('en %(n)s días', n=f.dias) }}{% endif %}</small></td>
       <td><a href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.cliente_fiscal_id) }}">{{ f.cliente }}</a></td>
-      <td>{{ f.modelo }}</td><td>{{ f.periodo }}</td><td>{{ f.responsable or '—' }}</td>
-      <td>{% if f.modelo == '303' %}{{ estados[f.declaracion] }}{% endif %}{% if f.sin_revisar %} · <a class="chip" href="{{ url_for('contabilidad.lista', cliente_id=f.cliente_fiscal_id, estado='pendiente') }}">{{ _('%(n)s por revisar', n=f.sin_revisar) }}</a>{% endif %}{% if f.por_registrar %} <a class="chip" href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.cliente_fiscal_id) }}">{{ _('%(n)s por registrar', n=f.por_registrar) }}</a>{% endif %}</td>
+      <td>{% if f.modelo == '130' and f.ejercicio %}<a href="{{ url_for('guilda_fiscal.modelo_130', cliente_id=f.cliente_fiscal_id, ejercicio=f.ejercicio, periodo=f.trimestre) }}">{{ f.modelo }}</a>
+        {% elif f.modelo == '131' and f.ejercicio %}<a href="{{ url_for('guilda_fiscal.modelo_131', cliente_id=f.cliente_fiscal_id, ejercicio=f.ejercicio, periodo=f.trimestre) }}">{{ f.modelo }}</a>
+        {% elif f.modelo == '303' and f.declaracion_id %}<a href="{{ url_for('guilda_fiscal.declaracion', declaracion_id=f.declaracion_id) }}">{{ f.modelo }}</a>
+        {% else %}{{ f.modelo }}{% endif %}</td><td>{{ f.periodo }}</td><td>{{ f.responsable or '—' }}</td>
+      <td>{% if f.modelo == '303' %}{{ estados[f.declaracion] }}{% endif %}{% if f.sin_apuntes %}<span class="chip" title="{{ _('El trimestre no tiene ningún apunte aprobado: faltan facturas o no hubo actividad.') }}">{{ _('Sin apuntes del trimestre') }}</span> {% endif %}{% if f.sin_revisar %} · <a class="chip" href="{{ url_for('contabilidad.lista', cliente_id=f.cliente_fiscal_id, estado='pendiente') }}">{{ _('%(n)s por revisar', n=f.sin_revisar) }}</a>{% endif %}{% if f.por_registrar %} <a class="chip" href="{{ url_for('guilda_fiscal.cliente', cliente_id=f.cliente_fiscal_id) }}">{{ _('%(n)s por registrar', n=f.por_registrar) }}</a>{% endif %}</td>
       <td>{{ f.carga }}</td>
     </tr>
   {% endfor %}

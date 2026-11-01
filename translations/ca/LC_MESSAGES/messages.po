@@ -18407,3 +18407,9 @@ msgstr "Completar la tasca seleccionada"
 
 msgid "Plegar o desplegar el menú lateral"
 msgstr "Plegar o desplegar el menú lateral"
+
+msgid "Sin apuntes del trimestre"
+msgstr "Sense apunts del trimestre"
+
+msgid "El trimestre no tiene ningún apunte aprobado: faltan facturas o no hubo actividad."
+msgstr "El trimestre no té cap apunt aprovat: falten factures o no hi ha hagut activitat."

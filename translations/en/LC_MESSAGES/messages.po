@@ -18398,3 +18398,9 @@ msgstr "Complete the selected task"
 
 msgid "Plegar o desplegar el menú lateral"
 msgstr "Collapse or expand the side menu"
+
+msgid "Sin apuntes del trimestre"
+msgstr "No entries this quarter"
+
+msgid "El trimestre no tiene ningún apunte aprobado: faltan facturas o no hubo actividad."
+msgstr "The quarter has no approved entries: invoices are missing or there was no activity."

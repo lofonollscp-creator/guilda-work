@@ -1026,6 +1026,7 @@ def _periodo_de_vencimiento(texto: str) -> tuple[int, str] | None:
     return (int(m.group(1)), f"{m.group(2)}T") if m else None
 
 
+MODELOS_CON_APUNTES = ("303", "130", "131")                                                              # los modelos trimestrales que se calculan con los apuntes del trimestre
 PESO_DECLARACION = {None: 3, "borrador": 2, "revisada": 1, "exportada": 1, "presentada": 0}          # lo que falta de un 303 según el estado de su declaración
 
 
@@ -1044,8 +1045,15 @@ def panel_vencimientos(tenant_id: int, usuario_id: int, *, dias: int = 60, hoy: 
             "FROM vencimientos_fiscales v JOIN clientes_fiscales c ON c.id = v.cliente_fiscal_id AND c.tenant_id = v.tenant_id LEFT JOIN usuarios u ON u.id = v.usuario_id "
             "WHERE v.tenant_id = ? AND v.estado <> 'presentado' AND v.papelera_en IS NULL AND c.papelera_en IS NULL AND substr(v.fecha_limite, 1, 10) <= ? ORDER BY v.fecha_limite, c.nombre",
             (tenant_id, limite)).fetchall()]
-        estado_decl = {(f["cliente_fiscal_id"], f["ejercicio"], f["periodo"]): f["estado"] for f in conn.execute(
-            "SELECT cliente_fiscal_id, ejercicio, periodo, estado FROM fiscal_declaraciones WHERE tenant_id = ? AND modelo = '303' AND estado <> 'anulada' ORDER BY id", (tenant_id,)).fetchall()}
+        estado_decl = {(f["cliente_fiscal_id"], f["ejercicio"], f["periodo"]): (f["estado"], f["id"]) for f in conn.execute(
+            "SELECT id, cliente_fiscal_id, ejercicio, periodo, estado FROM fiscal_declaraciones WHERE tenant_id = ? AND modelo = '303' AND estado <> 'anulada' ORDER BY id", (tenant_id,)).fetchall()}
+        periodos = [_periodo_de_vencimiento(f["periodo"]) for f in filas]
+        desde = min([date(e, int(t[0]) * 3 - 2, 1) for e, t in (p for p in periodos if p)], default=None)
+        meses = {}
+        if desde:                                                                                       # apuntes vivos por titular y mes: el aviso «sin apuntes» sale de aquí
+            for f in conn.execute("SELECT cliente_fiscal_id, substr(fecha_expedicion, 1, 7) AS mes, COUNT(*) AS n FROM fiscal_apuntes WHERE tenant_id = ? AND anulado_en IS NULL AND fecha_expedicion >= ? "
+                                  "GROUP BY cliente_fiscal_id, substr(fecha_expedicion, 1, 7)", (tenant_id, desde.isoformat())).fetchall():
+                meses[(f["cliente_fiscal_id"], f["mes"])] = f["n"]
     finally:
         conn.close()
     salida, semanas, responsables = [], {}, {}
@@ -1056,8 +1064,12 @@ def panel_vencimientos(tenant_id: int, usuario_id: int, *, dias: int = 60, hoy: 
         f["dias"] = (dia - hoy).days
         f["nivel"] = "vencido" if f["dias"] < 0 else ("semana" if f["dias"] <= 7 else "proximo")
         pend = facturas.get(f["cliente_fiscal_id"], {"sin_revisar": 0, "por_registrar": 0}) if f["modelo"] in ("303", "390") else {"sin_revisar": 0, "por_registrar": 0}
-        per = _periodo_de_vencimiento(f["periodo"]) if f["modelo"] == "303" else None
-        f["declaracion"] = estado_decl.get((f["cliente_fiscal_id"], *per)) if per else None
+        trimestral = _periodo_de_vencimiento(f["periodo"]) if f["modelo"] in MODELOS_CON_APUNTES else None
+        per = trimestral if f["modelo"] == "303" else None
+        f["ejercicio"], f["trimestre"] = trimestral if trimestral else (None, None)
+        f["declaracion"], f["declaracion_id"] = estado_decl.get((f["cliente_fiscal_id"], *per), (None, None)) if per else (None, None)
+        f["apuntes"] = sum(meses.get((f["cliente_fiscal_id"], f"{trimestral[0]}-{m:02d}"), 0) for m in range(int(trimestral[1][0]) * 3 - 2, int(trimestral[1][0]) * 3 + 1)) if trimestral else None
+        f["sin_apuntes"] = f["apuntes"] == 0                                                           # el trimestre no tiene ningún apunte: o falta trabajo o no hubo actividad (la persona lo decide)
         f["sin_revisar"], f["por_registrar"] = pend["sin_revisar"], pend["por_registrar"]
         f["carga"] = 1 + pend["sin_revisar"] + pend["por_registrar"] + (PESO_DECLARACION.get(f["declaracion"], 1) if per else 0)
         f["responsable"] = (f.pop("responsable_email") or "").split("@")[0]
