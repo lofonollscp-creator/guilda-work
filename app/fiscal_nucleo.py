@@ -1086,23 +1086,23 @@ def _pendiente_de_recordar_lote(tenant_id: int, pares: set[tuple[int, int, str]]
     ya ha filtrado los titulares visibles. `fecha_limite` queda en None (la rellena quien conoce el vencimiento)."""
     if not pares:
         return {}
-    ejercicios = sorted({e for _, e, _ in pares})
+    desde, hasta = str(min(e for _, e, _ in pares)), str(max(e for _, e, _ in pares))
     conn = db.get_connection()
     try:
         apuntes: dict[tuple[int, str, str], int] = {}                                                  # (titular, libro, AAAA-MM) -> cuántos
-        for f in conn.execute("SELECT cliente_fiscal_id, libro, substr(fecha_expedicion, 1, 7) AS mes, COUNT(*) AS n FROM fiscal_apuntes WHERE tenant_id = ? AND anulado_en IS NULL AND substr(fecha_expedicion, 1, 4) IN ("
-                              + ", ".join("?" * len(ejercicios)) + ") GROUP BY cliente_fiscal_id, libro, substr(fecha_expedicion, 1, 7)", (tenant_id, *map(str, ejercicios))).fetchall():
+        for f in conn.execute("SELECT cliente_fiscal_id, libro, substr(fecha_expedicion, 1, 7) AS mes, COUNT(*) AS n FROM fiscal_apuntes WHERE tenant_id = ? AND anulado_en IS NULL "
+                              "AND substr(fecha_expedicion, 1, 4) BETWEEN ? AND ? GROUP BY cliente_fiscal_id, libro, substr(fecha_expedicion, 1, 7)", (tenant_id, desde, hasta)).fetchall():
             apuntes[(f["cliente_fiscal_id"], f["libro"], f["mes"])] = f["n"]
+        sin_apunte = ("f.tenant_id = ? AND f.estado IN ('revisada', 'exportada') AND f.incluir_en_fiscal = 1 AND substr(f.fecha, 1, 4) BETWEEN ? AND ? "
+                      "AND f.id NOT IN (SELECT factura_id FROM fiscal_apuntes WHERE tenant_id = ? AND factura_id IS NOT NULL AND anulado_en IS NULL)")
         facturas: dict[tuple[int, str], list[dict]] = {}                                                # (titular, ejercicio) -> facturas revisadas sin apunte
-        for f in conn.execute("SELECT id, cliente_fiscal_id, tipo, fecha, numero, tercero_nombre, total_centimos, abono FROM facturas_contables WHERE tenant_id = ? AND estado IN ('revisada', 'exportada') "
-                              "AND incluir_en_fiscal = 1 AND substr(fecha, 1, 4) IN (" + ", ".join("?" * len(ejercicios)) + ") AND id NOT IN (SELECT factura_id FROM fiscal_apuntes WHERE tenant_id = ? "
-                              "AND factura_id IS NOT NULL AND anulado_en IS NULL) ORDER BY fecha, id", (tenant_id, *map(str, ejercicios), tenant_id)).fetchall():
+        for f in conn.execute("SELECT f.id, f.cliente_fiscal_id, f.tipo, f.fecha, f.numero, f.tercero_nombre, f.total_centimos, f.abono FROM facturas_contables f WHERE " + sin_apunte + " ORDER BY f.fecha, f.id",
+                              (tenant_id, desde, hasta, tenant_id)).fetchall():
             facturas.setdefault((f["cliente_fiscal_id"], f["fecha"][:4]), []).append(dict(f))
         lineas: dict[int, list] = {}
-        ids = [f["id"] for fs in facturas.values() for f in fs]
-        for i in range(0, len(ids), 500):
-            trozo = ids[i:i + 500]
-            for l in conn.execute("SELECT factura_id, pct_iva, pct_recargo, sujeta_iva FROM facturas_contables_lineas WHERE factura_id IN (" + ", ".join("?" * len(trozo)) + ")", trozo).fetchall():
+        if facturas:
+            for l in conn.execute("SELECT l.factura_id, l.pct_iva, l.pct_recargo, l.sujeta_iva FROM facturas_contables_lineas l JOIN facturas_contables f ON f.id = l.factura_id WHERE " + sin_apunte,
+                                  (tenant_id, desde, hasta, tenant_id)).fetchall():
                 lineas.setdefault(l["factura_id"], []).append(l)
     finally:
         conn.close()

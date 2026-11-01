@@ -11,7 +11,7 @@ AS $$ SELECT public.unaccent('public.unaccent'::regdictionary, $1) $$;
 
 -- Equivalente de app.nucleo.plano(): minúsculas y sin acentos, para buscar «maria» y encontrar «María».
 CREATE OR REPLACE FUNCTION plano(text) RETURNS text LANGUAGE sql IMMUTABLE PARALLEL SAFE
-AS $$ SELECT lower(f_unaccent(coalesce($1, ''))) $$;
+AS $$ SELECT lower(public.f_unaccent(coalesce($1, ''))) $$;     -- cualificada: las expresiones de los índices se evalúan sin search_path
 
 -- Búsqueda de texto (fase 5), equivalente al tokenizador de SQLite `unicode61 remove_diacritics 2`: minúsculas, sin acentos (ñ→n),
 -- sin raíces (no hay «stemming»: la recuperación jurídica se mide contra el comportamiento de SQLite) y cualquier carácter que no sea

@@ -362,3 +362,19 @@ def test_importes_a_la_espanola(texto, centimos):
 def test_importes_no_validos(texto):
     with pytest.raises(ValueError, match="importe"):
         nucleo.importe_a_centimos(texto)
+
+
+def test_buscar_clientes_por_cualquier_dato_sin_acentos_y_solo_en_su_despacho(usuario_id):
+    t, (u1, _) = _despacho()
+    a = nucleo.crear_cliente(t, "Sociedad Pérez", nif="B12345674", email="info@perez.es", telefono="600111222")
+    b = nucleo.crear_cliente(t, "Otra Empresa")
+    nucleo.anadir_contacto(t, b, "María Gómez", email="maria@otra.es")
+    otro_t, _ = _despacho("Despacho B")
+    nucleo.crear_cliente(otro_t, "Pérez en otro despacho")
+    busca = lambda q: sorted(c["nombre"] for c in nucleo.listar_clientes(t, q)[0])
+    assert busca("perez") == ["Sociedad Pérez"] and busca("B12345674") == ["Sociedad Pérez"] and busca("info@perez") == ["Sociedad Pérez"] and busca("600111") == ["Sociedad Pérez"]
+    assert busca("maria gomez") == ["Otra Empresa"] and busca("maria@otra") == ["Otra Empresa"]            # por el nombre o el email de un contacto
+    assert busca("zzz") == [] and nucleo.listar_clientes(t, "perez")[1] == 1
+    assert [x["titulo"] for x in nucleo.listar_expedientes(t, u1, q="otra empresa")[0]] == []
+    nucleo.crear_expediente(t, u1, b, "Asunto uno", referencia="R-1")
+    assert [x["titulo"] for x in nucleo.listar_expedientes(t, u1, q="otra empresa")[0]] == ["Asunto uno"]  # por el nombre del cliente

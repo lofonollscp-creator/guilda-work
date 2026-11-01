@@ -41,7 +41,7 @@ def test_la_migracion_crea_distribuye_y_es_repetible(base_antigua):
     pk = conn.execute("SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'fiscal_apuntes_recurrentes'::regclass AND contype = 'p'").fetchone()[0]
     assert "tenant_id" in pk
     assert conn.execute("SELECT count(*) FROM pg_policy WHERE polrelid = 'fiscal_apuntes_recurrentes'::regclass").fetchone()[0] == 1
-    conn.execute("DELETE FROM bd_esquema_version WHERE version = 11")                                 # repetir: nada se rompe
+    conn.execute("DELETE FROM bd_esquema_version WHERE version >= 11")                                 # repetir: nada se rompe
     conn.commit()
     assert 11 in migraciones.aplicar(conn)
 
