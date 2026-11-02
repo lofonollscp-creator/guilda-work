@@ -28,3 +28,16 @@ def test_los_atributos_se_leen_en_el_despacho_de_que_se_trate():
     db.fijar_atributos_en_despacho(viajera, a, supervisor_tenant=1)                                     # en el principal manda `usuarios`
     assert viajera in db_fiscal.destinatarios_aviso_vencimiento(a, None)
     assert db_fiscal.destinatarios_aviso_vencimiento(a, solo_a) == [solo_a] and db_fiscal.destinatarios_aviso_vencimiento(b, solo_a) != [solo_a]     # el responsable ya no es de ese despacho: avisan los supervisores
+
+
+def test_los_selectores_de_companeros_incluyen_a_quien_trabaja_en_mas_de_un_despacho():
+    from app import db_tareas
+    a, b, solo_a, solo_b, viajera = _despachos()
+    ids = lambda u: [f["id"] for f in db_tareas.listar_companeros_tenant(u)]
+    assert ids(solo_a) == [viajera] and ids(solo_b) == [viajera]                  # antes solo_b no la veía: su principal es el otro despacho
+    assert ids(viajera) == [solo_a]                                               # sin contexto de despacho (SQLite) trabaja en el principal
+    conn = db.get_connection()
+    try:
+        assert db_tareas._companero_del_tenant(conn, solo_b, viajera) == viajera and db_tareas._companero_del_tenant(conn, solo_a, solo_b) is None
+    finally:
+        conn.close()

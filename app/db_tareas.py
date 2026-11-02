@@ -797,16 +797,23 @@ def _mensaje_correo_id_propio(conn: sqlite3.Connection, usuario_id: int, mensaje
     return fila["id"] if fila else None
 
 
+def _despacho_de_trabajo(conn: sqlite3.Connection, usuario_id: int) -> int | None:
+    """Despacho con el que trabaja la persona: el activo de la conexión (PostgreSQL) o, sin contexto (SQLite), el principal."""
+    if _db._bd.es_postgres(conn) and _db._bd.contexto.despacho_actual() is not None:
+        return _db._bd.contexto.despacho_actual()
+    fila = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
+    return fila["tenant_id"] if fila else None
+
+
 def _companero_del_tenant(conn: sqlite3.Connection, usuario_id: int, otro_id: int | None) -> int | None:
     """Solo se puede asignar a alguien del MISMO despacho (y no a uno mismo:
     la tarea ya es suya). Si no, se ignora."""
     if otro_id is None or otro_id == usuario_id:
         return None
-    fila = conn.execute(
-        """SELECT o.id FROM usuarios o JOIN usuarios yo ON yo.tenant_id = o.tenant_id
-           WHERE o.id = ? AND yo.id = ? AND yo.tenant_id IS NOT NULL""",
-        (otro_id, usuario_id),
-    ).fetchone()
+    tenant = _despacho_de_trabajo(conn, usuario_id)
+    if tenant is None:
+        return None
+    fila = conn.execute(f"SELECT o.id FROM usuarios o WHERE o.id = ? AND {_db.sql_miembro('o')}", (otro_id, tenant, tenant)).fetchone()
     return fila["id"] if fila else None
 
 
@@ -815,12 +822,14 @@ def listar_companeros_tenant(usuario_id: int) -> list[sqlite3.Row]:
     elegido o, en su defecto, el correo -- para el selector de asignación."""
     conn = _db.get_connection()
     try:
+        tenant = _despacho_de_trabajo(conn, usuario_id)
+        if tenant is None:
+            return []
         return conn.execute(
-            """SELECT o.id, COALESCE(NULLIF(p.nombre_mostrado, ''), o.email) AS nombre
-               FROM usuarios o JOIN usuarios yo ON yo.tenant_id = o.tenant_id
-               LEFT JOIN usuario_perfil p ON p.usuario_id = o.id
-               WHERE yo.id = ? AND yo.tenant_id IS NOT NULL AND o.id != ? ORDER BY nombre""",
-            (usuario_id, usuario_id),
+            f"""SELECT o.id, COALESCE(NULLIF(p.nombre_mostrado, ''), o.email) AS nombre
+               FROM usuarios o LEFT JOIN usuario_perfil p ON p.usuario_id = o.id
+               WHERE {_db.sql_miembro('o')} AND o.id != ? ORDER BY nombre""",
+            (tenant, tenant, usuario_id),
         ).fetchall()
     finally:
         conn.close()
@@ -2110,14 +2119,14 @@ def carga_semanal(usuario_id: int, lunes: _db.date) -> dict:
     desde, hasta = dias[0].isoformat(), dias[-1].isoformat()
     conn = _db.get_connection()
     try:
-        yo = conn.execute("SELECT tenant_id FROM usuarios WHERE id = ?", (usuario_id,)).fetchone()
-        if yo is None:
+        if conn.execute("SELECT 1 FROM usuarios WHERE id = ?", (usuario_id,)).fetchone() is None:
             return {"personas": [], "dias": dias}
+        tenant = _despacho_de_trabajo(conn, usuario_id)
         personas_filas = conn.execute(
-            """SELECT u.id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, fd.jornada_semanal_horas AS jornada
+            f"""SELECT u.id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, fd.jornada_semanal_horas AS jornada
                FROM usuarios u LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id LEFT JOIN fichaje_datos fd ON fd.usuario_id = u.id
-               WHERE u.id = ? OR (CAST(? AS BIGINT) IS NOT NULL AND u.tenant_id = ?) ORDER BY (u.id = ?) DESC, nombre""",
-            (usuario_id, yo["tenant_id"], yo["tenant_id"], usuario_id),
+               WHERE u.id = ? OR (CAST(? AS BIGINT) IS NOT NULL AND {_db.sql_miembro('u')}) ORDER BY (u.id = ?) DESC, nombre""",
+            (usuario_id, tenant, tenant, tenant, usuario_id),
         ).fetchall()
         filas = conn.execute(
             """SELECT t.id, t.asunto, t.estimacion_min, t.prioridad, t.estado, substr(t.fecha_vencimiento, 1, 10) AS fecha,
