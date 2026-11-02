@@ -105,6 +105,24 @@ def actualizar(cliente_id: int, documento_id: int):
     return _accion(cliente_id, documento_id, documentos_firma.refrescar, "actualizado")
 
 
+@documentos_firma_bp.route("/pendientes")
+@login_required
+def pendientes():
+    return render_template("documentos_firma_pendientes.html", documentos=documentos_firma.pendientes_del_despacho(_tenant(), g.usuario_id), max_recordatorios=documentos_firma.MAX_RECORDATORIOS,
+                           dias_aviso=documentos_firma.recordatorio_dias(_tenant()), error=(request.args.get("error") or "")[:300] or None, aviso=request.args.get("aviso"), subnav="clientes")
+
+
+@documentos_firma_bp.route("/pendientes/<int:cliente_id>/<int:documento_id>/recordar", methods=["POST"])
+@login_required
+def recordar_desde_pendientes(cliente_id: int, documento_id: int):
+    _cliente(cliente_id)
+    try:
+        estado = documentos_firma.recordar(_tenant(), g.usuario_id, cliente_id, documento_id)
+    except documentos_firma.ErrorDocumento as e:
+        return redirect(url_for("documentos_firma.pendientes", error=str(e)[:300]))
+    return redirect(url_for("documentos_firma.pendientes", aviso="recordado" if estado == "recordado" else "ya_firmado" if estado == "firmado" else "sin_cambios"))
+
+
 @documentos_firma_bp.route("/clientes/<int:cliente_id>/<int:documento_id>/recordar", methods=["POST"])
 @login_required
 def recordar(cliente_id: int, documento_id: int):

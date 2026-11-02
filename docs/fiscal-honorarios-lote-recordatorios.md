@@ -48,3 +48,12 @@ excepciones de módulos) y `app/ayuda.py` enlaza cada pantalla nueva con la suya
 
 ## Puesta en producción
 Migración 016 con el superusuario (una tabla y tres columnas) **antes** de reiniciar los tres servicios; después, publicar la ayuda.
+
+---
+
+# Honorario al presentar, facturarlo y panel de firmas (sin migración)
+
+- **Honorario sugerido** en la ficha de cada vencimiento (`fiscal_vencimiento_editar.html`): si hay una regla que encaja y aún no tiene honorario, se enseña la propuesta y, al presentarlo con el formulario de factura, el concepto y el importe vienen rellenos (nunca se factura solo). La cartera de Guilda Fiscal muestra, a quien dirige, cuántos presentados esperan honorario.
+- **Facturar el honorario confirmado** (`honorarios.facturar_en_facturascripts`): crea en FacturaScripts una factura de una línea con el concepto y el importe, exige el cliente vinculado y sus datos completos (NIF, dirección, código postal, ciudad), se reserva antes de crear la factura (dos pulsaciones no la duplican), y anota el código. «Marcar facturado» sigue para facturas hechas por otro lado.
+- El formulario antiguo «Marcar como presentado y facturar» pasa ahora el mismo control de datos del cliente (antes podía emitir sin NIF o dirección).
+- **Firmas pendientes** (`/documentos-firma/pendientes`): todos los envíos sin firmar del despacho (de los clientes que la persona ve), del más antiguo al más reciente, con días de espera, avisos enviados y botón «Recordar la firma».

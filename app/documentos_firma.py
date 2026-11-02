@@ -592,6 +592,29 @@ def refrescar(tenant_id: int, usuario_id: int, cliente_id: int, documento_id: in
     return nuevo
 
 
+def pendientes_del_despacho(tenant_id: int, usuario_id: int, *, ahora: datetime | None = None, limite: int = 300) -> list[dict]:
+    """Todos los envíos aún sin firmar del despacho (de los clientes que la persona ve), del más antiguo al más reciente, con los días que llevan esperando y si se les puede recordar."""
+    ahora = ahora or datetime.now()
+    cond, params = acceso.condicion_nucleo(tenant_id, usuario_id, "c.id")
+    sql = ("SELECT d.*, c.nombre AS cliente_nombre FROM documentos_firma d JOIN clientes c ON c.id = d.cliente_id AND c.tenant_id = d.tenant_id "
+           "WHERE d.tenant_id = ? AND d.estado = 'enviado'" + (f" AND {cond}" if cond else "") + " ORDER BY d.enviado_en, d.id LIMIT ?")
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(sql, [tenant_id, *params, limite]).fetchall()
+    finally:
+        conn.close()
+    salida = []
+    for f in filas:
+        d = _fila(f)
+        try:
+            d["dias"] = max(0, (ahora - datetime.fromisoformat(d["enviado_en"])).days) if d.get("enviado_en") else 0
+        except ValueError:
+            d["dias"] = 0
+        d["puede_recordar"] = bool(d["documenso_id"]) and (d["recordatorios"] or 0) < MAX_RECORDATORIOS
+        salida.append(d)
+    return salida
+
+
 # --- Recordatorios a quien no firma ------------------------------------------------------------------------------------------
 
 def recordatorio_dias(tenant_id: int) -> int:

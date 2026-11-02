@@ -102,6 +102,16 @@ def facturar(aplicado_id: int):
     return _vuelta()
 
 
+@honorarios_bp.route("/aplicados/<int:aplicado_id>/facturar-fs", methods=["POST"])
+@login_required
+def facturar_fs(aplicado_id: int):
+    try:
+        honorarios.facturar_en_facturascripts(g.tenant_id, g.usuario_id, aplicado_id)
+    except ErrorHonorarios as e:
+        return _error(e)
+    return _vuelta()
+
+
 @honorarios_bp.route("/aplicados/<int:aplicado_id>/anular", methods=["POST"])
 @login_required
 def anular(aplicado_id: int):

@@ -8,7 +8,8 @@
     <h1>{{ _('Documentos de firma') }}</h1>
     <p class="subtitle">{{ _('Los textos prehechos que se generan desde la ficha del cliente y se firman con Documenso.') }}</p>
   </div>
-  <a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Volver a clientes') }}</a>
+  <div class="ds-fila ds-envolver"><a class="btn btn-ghost" href="{{ url_for('documentos_firma.pendientes') }}">{{ _('Firmas pendientes') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Volver a clientes') }}</a></div>
 </header>
 <p>{{ sin_validar(_('Los textos de serie son un punto de partida: revísalos con tu criterio profesional')) }}</p>
 <section class="dash-panel">

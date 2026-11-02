@@ -19419,3 +19419,66 @@ msgstr "An invoice can carry several lines (for example, one per service or part
 
 msgid "Ver proforma (sin validez fiscal)"
 msgstr "View pro forma (no tax validity)"
+
+msgid "%(n)s apuntes en el periodo"
+msgstr "%(n)s entries in the period"
+
+msgid "Aviso automático activado: a los %(n)s días sin firmar."
+msgstr "Automatic reminder on: after %(n)s unsigned days."
+
+msgid "Cuando envíes un documento a firmar aparecerá aquí hasta que se firme."
+msgstr "When you send a document to be signed it will appear here until it is signed."
+
+msgid "Documento"
+msgstr "Document"
+
+msgid "El aviso automático está desactivado: se puede activar en Documentos de firma."
+msgstr "The automatic reminder is off: you can turn it on in Documents to sign."
+
+msgid "Facturar en FacturaScripts"
+msgstr "Invoice in FacturaScripts"
+
+msgid "Firmante"
+msgstr "Signer"
+
+msgid "Firmas pendientes"
+msgstr "Pending signatures"
+
+msgid "Honorario sugerido"
+msgstr "Suggested fee"
+
+msgid "No había nadie a quien recordar."
+msgstr "There was nobody to remind."
+
+msgid "No hay firmas pendientes"
+msgstr "No pending signatures"
+
+msgid "Presentado, pero no se ha emitido la factura. Faltan datos del cliente para facturar: %(f)s."
+msgstr "Filed, but the invoice was not issued. Client details missing for invoicing: %(f)s."
+
+msgid "Regla «%(r)s»"
+msgstr "Rule “%(r)s”"
+
+msgid "Revisar en Honorarios por tramos"
+msgstr "Review in Fees by bands"
+
+msgid "Se creará la factura en FacturaScripts a nombre del cliente. ¿Continuar?"
+msgstr "The invoice will be created in FacturaScripts in the client's name. Continue?"
+
+msgid "Se propone al presentarlo; nada se cobra hasta que la dirección lo confirma."
+msgstr "It is suggested when you file it; nothing is charged until management confirms."
+
+msgid "Sin más avisos"
+msgstr "No more reminders"
+
+msgid "Todos los documentos enviados a firmar que aún no se han firmado, del más antiguo al más reciente."
+msgstr "All documents sent for signing that are still unsigned, oldest first."
+
+msgid "Ya estaba firmado: se ha anotado."
+msgstr "It was already signed: it has been recorded."
+
+msgid "Ya está presentado y aún no tiene honorario."
+msgstr "It is already filed and has no fee yet."
+
+msgid "último el %(f)s"
+msgstr "last on %(f)s"

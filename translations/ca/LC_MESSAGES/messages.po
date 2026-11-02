@@ -19428,3 +19428,66 @@ msgstr "Una factura pot portar diverses línies (per exemple, una per cada serve
 
 msgid "Ver proforma (sin validez fiscal)"
 msgstr "Veure proforma (sense validesa fiscal)"
+
+msgid "%(n)s apuntes en el periodo"
+msgstr "%(n)s apunts al període"
+
+msgid "Aviso automático activado: a los %(n)s días sin firmar."
+msgstr "Avís automàtic activat: als %(n)s dies sense signar."
+
+msgid "Cuando envíes un documento a firmar aparecerá aquí hasta que se firme."
+msgstr "Quan enviïs un document a signar apareixerà aquí fins que se signi."
+
+msgid "Documento"
+msgstr "Document"
+
+msgid "El aviso automático está desactivado: se puede activar en Documentos de firma."
+msgstr "L'avís automàtic està desactivat: es pot activar a Documents de firma."
+
+msgid "Facturar en FacturaScripts"
+msgstr "Facturar a FacturaScripts"
+
+msgid "Firmante"
+msgstr "Signant"
+
+msgid "Firmas pendientes"
+msgstr "Signatures pendents"
+
+msgid "Honorario sugerido"
+msgstr "Honorari suggerit"
+
+msgid "No había nadie a quien recordar."
+msgstr "No hi havia ningú a qui recordar."
+
+msgid "No hay firmas pendientes"
+msgstr "No hi ha signatures pendents"
+
+msgid "Presentado, pero no se ha emitido la factura. Faltan datos del cliente para facturar: %(f)s."
+msgstr "Presentat, però no s'ha emès la factura. Falten dades del client per facturar: %(f)s."
+
+msgid "Regla «%(r)s»"
+msgstr "Regla «%(r)s»"
+
+msgid "Revisar en Honorarios por tramos"
+msgstr "Revisar a Honoraris per trams"
+
+msgid "Se creará la factura en FacturaScripts a nombre del cliente. ¿Continuar?"
+msgstr "Es crearà la factura a FacturaScripts a nom del client. Continuar?"
+
+msgid "Se propone al presentarlo; nada se cobra hasta que la dirección lo confirma."
+msgstr "Es proposa en presentar-lo; no es cobra res fins que la direcció ho confirma."
+
+msgid "Sin más avisos"
+msgstr "Sense més avisos"
+
+msgid "Todos los documentos enviados a firmar que aún no se han firmado, del más antiguo al más reciente."
+msgstr "Tots els documents enviats a signar que encara no s'han signat, del més antic al més recent."
+
+msgid "Ya estaba firmado: se ha anotado."
+msgstr "Ja estava signat: s'ha anotat."
+
+msgid "Ya está presentado y aún no tiene honorario."
+msgstr "Ja està presentat i encara no té honorari."
+
+msgid "último el %(f)s"
+msgstr "últim el %(f)s"

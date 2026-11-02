@@ -59,16 +59,25 @@
   </div>
 </form>
 
+{% if honorario %}
+<section class="dash-panel ds-max-640">
+  <h2>{{ _('Honorario sugerido') }}: {{ (honorario.importe_centimos / 100) | round(2) }} €</h2>
+  <p class="muted">{{ _('Regla «%(r)s»', r=honorario.regla.nombre) }}{% if honorario.apuntes is not none %} · {{ _('%(n)s apuntes en el periodo', n=honorario.apuntes) }}{% endif %}.
+    {% if vencimiento.estado == 'presentado' %}{{ _('Ya está presentado y aún no tiene honorario.') }}{% else %}{{ _('Se propone al presentarlo; nada se cobra hasta que la dirección lo confirma.') }}{% endif %}</p>
+  <a class="btn btn-ghost" href="{{ url_for('honorarios.inicio') }}">{{ _('Revisar en Honorarios por tramos') }}</a>
+</section>
+{% endif %}
+
 {% if puede_facturar and vencimiento.estado != 'presentado' %}
 <form class="edit-form ds-max-640" method="post" action="{{ url_for('fiscal.marcar_presentado', vencimiento_id=vencimiento.id) }}" enctype="multipart/form-data">
   <label>{{ _('Marcar como presentado y facturar (opcional)') }}</label>
   <p class="subtitle">{{ _('Deja el concepto y el importe en blanco si solo quieres marcarlo como presentado, sin generar factura.') }}</p>
   <div class="ia-form-row">
     <label>{{ _('Concepto') }}
-      <input type="text" name="factura_concepto" placeholder="{{ _('ej. Presentación modelo %(modelo)s %(periodo)s', modelo=vencimiento.modelo, periodo=vencimiento.periodo) }}">
+      <input type="text" name="factura_concepto" {% if honorario %}value="Honorarios modelo {{ vencimiento.modelo }} {{ vencimiento.periodo }}" {% endif %}placeholder="{{ _('ej. Presentación modelo %(modelo)s %(periodo)s', modelo=vencimiento.modelo, periodo=vencimiento.periodo) }}">
     </label>
     <label>{{ _('Importe (€)') }}
-      <input type="number" name="factura_importe" step="0.01" min="0">
+      <input type="number" name="factura_importe" step="0.01" min="0" {% if honorario %}value="{{ '%.2f' | format(honorario.importe_centimos / 100) }}"{% endif %}>
     </label>
   </div>
   <label>{{ _('Justificante oficial (opcional)') }}

@@ -64,3 +64,41 @@ def test_quien_no_dirige_ve_pero_no_gestiona(cliente):
     assert "Nueva regla" not in pagina
     r = cliente.post("/guilda-fiscal/honorarios/reglas", data={"nombre": "X", "calculo": "fijo", "importe": "5"})
     assert "error=" in r.headers["Location"] and h.listar_reglas(t) == []
+
+
+def test_el_vencimiento_sugiere_el_honorario_y_se_factura_desde_la_pantalla(cliente, monkeypatch):
+    from app import facturascripts as fs
+    uid, t, c = _web(cliente, "sugiereweb@ejemplo.com")
+    db.guardar_facturascripts(t, "http://127.0.0.1:1/", "a", "b"); db.guardar_facturascripts_api_key(t, "k")
+    db.editar_cliente_fiscal(t, c, facturascripts_cliente_codigo="C1")
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes SET direccion = 'Calle Mayor 1, 08001 Barcelona', nif = '12345678Z' WHERE id = (SELECT cliente_id FROM clientes_fiscales WHERE id = ?)", (c,))
+    conn.commit(); conn.close()
+    creadas = []
+    monkeypatch.setattr(fs, "crear_factura", lambda url, key, cod, lineas: creadas.append(lineas) or {"idfactura": "3"})
+    monkeypatch.setattr(fs, "obtener_factura", lambda *a, **k: {"codigo": "FAC3"})
+    h.crear_regla(t, uid, {"nombre": "Fijo 303", "modelo": "303", "calculo": "fijo", "importe": "90"})
+    v = crear_vencimiento_fiscal(t, c, "303", "2T 2026", "2026-07-20", usuario_id=uid)
+    editar = cliente.get(f"/fiscal/vencimientos/{v}/editar").get_data(as_text=True)
+    assert "Honorario sugerido" in editar and "90.0" in editar and 'value="90.00"' in editar and "Honorarios modelo 303 2T 2026" in editar
+    marcar_presentado_vencimiento_fiscal(t, v, uid)
+    assert "1</span>" in cliente.get("/guilda-fiscal/").get_data(as_text=True) and "Ya está presentado" in cliente.get(f"/fiscal/vencimientos/{v}/editar").get_data(as_text=True)
+    cliente.post(f"/guilda-fiscal/honorarios/vencimientos/{v}/confirmar", data={})
+    a = h.aplicado_de(t, v)
+    assert "Facturar en FacturaScripts" in cliente.get("/guilda-fiscal/honorarios/").get_data(as_text=True)
+    assert cliente.post(f"/guilda-fiscal/honorarios/aplicados/{a['id']}/facturar-fs").status_code == 302
+    assert h.aplicado_de(t, v)["referencia_factura"] == "FAC3" and creadas[0][0]["precio"] == 90.0
+    assert "FAC3" in cliente.get("/guilda-fiscal/honorarios/").get_data(as_text=True)
+
+
+def test_presentar_y_facturar_a_mano_tambien_exige_los_datos_del_cliente(cliente, monkeypatch):
+    from app import facturascripts as fs
+    uid, t, c = _web(cliente, "legadoweb@ejemplo.com")
+    db.guardar_facturascripts(t, "http://127.0.0.1:1/", "a", "b"); db.guardar_facturascripts_api_key(t, "k")
+    db.editar_cliente_fiscal(t, c, facturascripts_cliente_codigo="C1")
+    creadas = []
+    monkeypatch.setattr(fs, "crear_factura", lambda *a, **k: creadas.append(a) or {"idfactura": "1"})
+    v = crear_vencimiento_fiscal(t, c, "303", "2T 2026", "2026-07-20", usuario_id=uid)
+    r = cliente.post(f"/fiscal/vencimientos/{v}/presentado", data={"factura_concepto": "Honorarios", "factura_importe": "50"})
+    assert r.status_code == 302 and "error=" in r.headers["Location"] and creadas == []
+    assert dict(db.obtener_vencimiento_fiscal(t, v))["estado"] == "presentado"                  # presentar sí se hizo; solo la factura quedó sin emitir

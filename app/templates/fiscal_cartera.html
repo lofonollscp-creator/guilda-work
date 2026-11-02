@@ -13,7 +13,7 @@
   </div>
   <div class="ds-fila ds-envolver"><a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.captura_titulares') }}">{{ _('Captura desde el móvil') }}</a>
   <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.vencimientos') }}">{{ _('Vencimientos y carga de trabajo') }}</a>
-  <a class="btn btn-ghost" href="{{ url_for('honorarios.inicio') }}">{{ _('Honorarios por tramos') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('honorarios.inicio') }}">{{ _('Honorarios por tramos') }}{% if honorarios_pendientes %} <span class="chip">{{ honorarios_pendientes }}</span>{% endif %}</a>
   <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.recordatorios') }}">{{ _('Recordatorios a los clientes') }}</a></div>
 </header>
 {{ aviso_error(error) }}

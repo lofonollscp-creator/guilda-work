@@ -274,3 +274,26 @@ def test_reenviar_a_firma_solo_avisa_a_quien_no_ha_firmado(monkeypatch):
     monkeypatch.setattr(documenso, "_peticion_json", lambda *a, **k: (500, {"message": "fallo"}))
     with pytest.raises(documenso.ErrorDocumenso):
         documenso.reenviar_a_firma("k", "env_1")
+
+
+def test_el_panel_lista_las_firmas_pendientes_de_todo_el_despacho(monkeypatch):
+    from datetime import datetime, timedelta
+    t, u, c = _despacho()
+    c2 = nucleo.crear_cliente(t, "Otro Cliente SL", tipo="empresa", nif="B11111111", email="otro@cliente.example", direccion="Calle 2, Barcelona")
+    monkeypatch.setattr(documenso, "crear_documento", lambda *a, **k: {"id": "env_p"})
+    monkeypatch.setattr(documenso, "enviar_a_firma", lambda *a: {})
+    ids = []
+    for cliente_id in (c, c2):
+        did = df.crear_borrador(t, u, cliente_id, "consentimiento_comercial", _datos("consentimiento_comercial"), lugar="Barcelona", hoy=HOY)
+        df.enviar(t, u, cliente_id, did)
+        ids.append(did)
+    borrador = df.crear_borrador(t, u, c, "consentimiento_rgpd", _datos("consentimiento_rgpd"), lugar="Barcelona", hoy=HOY)          # un borrador no es pendiente
+    ahora = datetime.now() + timedelta(days=10)
+    lista = df.pendientes_del_despacho(t, u, ahora=ahora)
+    assert [d["id"] for d in lista] == ids and all(d["dias"] == 10 and d["puede_recordar"] for d in lista) and borrador not in [d["id"] for d in lista]
+    assert {d["cliente_nombre"] for d in lista} == {"Marta Soler SL", "Otro Cliente SL"}
+    conn = db.get_connection(); conn.execute("UPDATE documentos_firma SET recordatorios = ? WHERE id = ?", (df.MAX_RECORDATORIOS, ids[0])); conn.commit(); conn.close()
+    assert [d["puede_recordar"] for d in df.pendientes_del_despacho(t, u, ahora=ahora)] == [False, True]
+    t2 = db.crear_tenant("Otro despacho")
+    u2 = db.crear_usuario_vinculado_a_kratos("otro-gestor@ejemplo.com", "k-otro-gestor"); db.asignar_tenant(u2, t2)
+    assert df.pendientes_del_despacho(t2, u2) == []                                    # cada despacho ve lo suyo

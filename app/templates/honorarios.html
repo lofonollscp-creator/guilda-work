@@ -116,6 +116,9 @@
         <td>{{ euros(a.importe_centimos) }}</td>
         <td>{% if a.estado == 'facturado' %}{{ chip(_('Facturado'), 'exito') }} <span class="muted">{{ a.referencia_factura }}</span>{% elif a.estado == 'anulado' %}{{ chip(_('Anulado')) }} <span class="muted">{{ a.anulado_motivo }}</span>{% else %}{{ chip(_('Confirmado'), 'aviso') }}{% endif %}</td>
         <td><div class="ds-fila">
+          {% if puede_gestionar and a.estado == 'confirmado' and not a.referencia_factura %}
+          <form method="post" action="{{ url_for('honorarios.facturar_fs', aplicado_id=a.id) }}"><button type="submit" class="btn btn-primary btn-sm" data-confirmar-envio="{{ _('Se creará la factura en FacturaScripts a nombre del cliente. ¿Continuar?') }}">{{ _('Facturar en FacturaScripts') }}</button></form>
+          {% endif %}
           {% if puede_gestionar and a.estado == 'confirmado' %}
           <form method="post" action="{{ url_for('honorarios.facturar', aplicado_id=a.id) }}" class="ds-fila"><input type="text" name="referencia" placeholder="{{ _('Nº de factura') }}" aria-label="{{ _('Nº de factura') }}" maxlength="60" size="12" required><button type="submit" class="btn btn-ghost btn-sm">{{ _('Marcar facturado') }}</button></form>
           {% endif %}

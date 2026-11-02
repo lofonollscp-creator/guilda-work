@@ -709,6 +709,9 @@ def test_marcar_presentado_con_concepto_e_importe_factura(cliente, monkeypatch):
     db.asignar_tenant(usuario_id, tenant_id)
     cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Con Concepto")
     db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="8")
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes SET nif = '12345678Z', direccion = 'Calle Mayor 1, 08001 Barcelona' WHERE id = (SELECT cliente_id FROM clientes_fiscales WHERE id = ?)", (cliente_id,))
+    conn.commit(); conn.close()
     v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
 
     llamadas = []
@@ -798,6 +801,9 @@ def test_marcar_presentado_con_factura_emite_tambien_factura_emitida(cliente, mo
     db.asignar_tenant(usuario_id, tenant_id)
     cliente_id = db.crear_cliente_fiscal(tenant_id, "Cliente Evento Factura")
     db.editar_cliente_fiscal(tenant_id, cliente_id, facturascripts_cliente_codigo="7")
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes SET nif = '12345678Z', direccion = 'Calle Mayor 1, 08001 Barcelona' WHERE id = (SELECT cliente_id FROM clientes_fiscales WHERE id = ?)", (cliente_id,))
+    conn.commit(); conn.close()
     v_id = db.crear_vencimiento_fiscal(tenant_id, cliente_id, "303", "2026-T1", "2026-04-20")
 
     monkeypatch.setattr(rutas_fiscal.facturascripts, "crear_factura", lambda *a, **k: None)

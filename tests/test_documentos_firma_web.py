@@ -88,3 +88,19 @@ def test_recordar_la_firma_y_los_dias_del_aviso_automatico(cliente, monkeypatch)
     assert df.recordatorio_dias(t) == 5
     r = cliente.post("/documentos-firma/plantillas/recordatorio", data={"dias": "99"})
     assert "error=" in r.headers["Location"] and df.recordatorio_dias(t) == 5
+
+
+def test_el_panel_de_firmas_pendientes_y_su_boton_de_recordar(cliente, monkeypatch):
+    uid, t, c = _web(cliente, "pendientesweb@ejemplo.com")
+    monkeypatch.setattr(documenso, "crear_documento", lambda *a, **k: {"id": "env_pw"})
+    monkeypatch.setattr(documenso, "enviar_a_firma", lambda *a: {})
+    monkeypatch.setattr(documenso, "estado_documento", lambda *a: "PENDING")
+    monkeypatch.setattr(documenso, "reenviar_a_firma", lambda *a: 1)
+    assert "No hay firmas pendientes" in cliente.get("/documentos-firma/pendientes").get_data(as_text=True)
+    did = df.crear_borrador(t, uid, c, "consentimiento_comercial", {"contacto_rgpd": "datos@despacho.example"}, lugar="Barcelona")
+    df.enviar(t, uid, c, did)
+    html = cliente.get("/documentos-firma/pendientes").get_data(as_text=True)
+    assert "Cliente Web SL" in html and "Recordar la firma" in html and "0/3" in html
+    r = cliente.post(f"/documentos-firma/pendientes/{c}/{did}/recordar")
+    assert r.status_code == 302 and "aviso=recordado" in r.headers["Location"]
+    assert "1/3" in cliente.get("/documentos-firma/pendientes").get_data(as_text=True) and "Firmas pendientes" in cliente.get("/documentos-firma/plantillas").get_data(as_text=True)

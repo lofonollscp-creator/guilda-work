@@ -430,6 +430,79 @@ def confirmar(tenant_id: int, usuario_id: int, vencimiento_id: int, *, importe=N
     return aplicado_id
 
 
+def sugerencia_para(tenant_id: int, usuario_id: int, vencimiento_id: int) -> dict | None:
+    """La propuesta de honorario de un vencimiento si hay una que enseñar: hay regla que encaja, se puede calcular y aún no tiene honorario. None en cualquier otro caso."""
+    try:
+        p = proponer(tenant_id, usuario_id, vencimiento_id)
+    except ErrorHonorarios:
+        return None
+    return p if p["importe_centimos"] is not None and p["aplicado"] is None else None
+
+
+def contar_pendientes(tenant_id: int) -> int:
+    """Cuántos vencimientos presentados esperan honorario (hasta 99), para el contador de la cartera. Solo cuenta si hay alguna regla activa."""
+    if not listar_reglas(tenant_id, solo_activas=True):
+        return 0
+    conn = db.get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) AS n FROM (SELECT v.id FROM vencimientos_fiscales v WHERE v.tenant_id = ? AND v.estado = 'presentado' AND v.papelera_en IS NULL AND NOT EXISTS "
+            "(SELECT 1 FROM honorarios_aplicados h WHERE h.tenant_id = v.tenant_id AND h.vencimiento_id = v.id AND h.estado != 'anulado') LIMIT 99) t", (tenant_id,)).fetchone()["n"]
+    finally:
+        conn.close()
+
+
+def facturar_en_facturascripts(tenant_id: int, usuario_id: int, aplicado_id: int) -> str:
+    """Crea la factura del honorario confirmado en FacturaScripts (una línea, sin IVA: lo pone FacturaScripts) y lo marca como facturado con su código. Devuelve la referencia.
+    Se reserva antes de crear la factura (dos pulsaciones a la vez no la duplican) y se libera si falla."""
+    from . import facturacion_despacho as fd, facturascripts
+    _exigir_dirigir(tenant_id, usuario_id)
+    conn = db.get_connection()
+    try:
+        a = conn.execute("SELECT * FROM honorarios_aplicados WHERE id = ? AND tenant_id = ?", (aplicado_id, tenant_id)).fetchone()
+        if a is None or not acceso.puede_ver_cliente(tenant_id, usuario_id, a["cliente_fiscal_id"]):
+            raise ErrorHonorarios("El honorario no existe.")
+        if a["estado"] != "confirmado" or a["referencia_factura"]:
+            raise ErrorHonorarios("Este honorario ya no admite ese cambio.")
+        cur = conn.execute("UPDATE honorarios_aplicados SET referencia_factura = ? WHERE id = ? AND tenant_id = ? AND estado = 'confirmado' AND referencia_factura IS NULL",
+                           ("(en curso)", aplicado_id, tenant_id))
+        if cur.rowcount != 1:
+            conn.rollback()
+            raise ErrorHonorarios("Este honorario ya se está facturando.")
+        conn.commit()
+    finally:
+        conn.close()
+
+    def liberar() -> None:
+        c = db.get_connection()
+        try:
+            c.execute("UPDATE honorarios_aplicados SET referencia_factura = NULL WHERE id = ? AND tenant_id = ? AND referencia_factura = '(en curso)'", (aplicado_id, tenant_id))
+            c.commit()
+        finally:
+            c.close()
+    try:
+        creada = fd.facturar_honorario(tenant_id, a["cliente_fiscal_id"], a["concepto"], a["importe_centimos"])
+    except ValueError as e:
+        liberar()
+        raise ErrorHonorarios(str(e)) from e
+    except facturascripts.ErrorFacturaScripts as e:
+        liberar()
+        raise ErrorHonorarios(f"FacturaScripts no ha podido crear la factura: {str(e)[:150]}") from e
+    except Exception:
+        liberar()
+        raise
+    referencia = (creada["codigo"] or (f"#{creada['idfactura']}" if creada["idfactura"] else "FacturaScripts"))[:60]
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE honorarios_aplicados SET estado = 'facturado', facturado_en = ?, referencia_factura = ? WHERE id = ? AND tenant_id = ?", (_ahora(), referencia, aplicado_id, tenant_id))
+        auditoria.registrar(tenant_id, usuario_id, "honorarios.facturar_fs", "cliente_fiscal", a["cliente_fiscal_id"],
+                            {"vencimiento_id": a["vencimiento_id"], "importe_centimos": a["importe_centimos"], "idfactura": creada["idfactura"], "codigo": creada["codigo"]}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    return referencia
+
+
 def _cambiar_estado(tenant_id: int, usuario_id: int, aplicado_id: int, nuevo: str, campos: dict, accion: str) -> None:
     _exigir_dirigir(tenant_id, usuario_id)
     conn = db.get_connection()

@@ -23,7 +23,8 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, fiscal_identidad, obligaciones
+from . import acceso, fiscal_identidad, honorarios, obligaciones
+from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
 
@@ -774,6 +775,9 @@ def marcar_presentado(vencimiento_id: int):
     if concepto and importe:
         cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
         if cliente is not None and cliente["facturascripts_cliente_codigo"]:
+            _ficha, faltan = fd.datos_del_cliente_fiscal(g.tenant_id, cliente["id"])
+            if faltan:                                   # mismo control que al facturar desde un expediente: sin NIF, dirección, código postal y ciudad no se emite
+                return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=_("Presentado, pero no se ha emitido la factura. Faltan datos del cliente para facturar: %(f)s.", f=", ".join(faltan))))
             tenant = db.obtener_tenant(g.tenant_id)
             try:
                 facturascripts.crear_factura(
@@ -848,6 +852,7 @@ def editar_vencimiento(vencimiento_id: int):
         # Facturación (app/facturascripts.py): solo se ofrece si el cliente
         # ya está vinculado a un código de FacturaScripts.
         puede_facturar=bool(cliente and cliente["facturascripts_cliente_codigo"]),
+        honorario=honorarios.sugerencia_para(g.tenant_id, g.usuario_id, vencimiento_id), puede_confirmar_honorario=acceso.puede_autorizar(g.tenant_id, g.usuario_id),
         # Cobro por Stripe Connect (app/stripe_pagos.py): solo si el tenant
         # ya conectó su propia cuenta y el cliente tiene email al que
         # mandarle el enlace de Checkout.

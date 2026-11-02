@@ -204,6 +204,44 @@ def _exigir_datos_completos(estado: dict) -> None:
         raise ValueError("Faltan datos del cliente para facturar: " + ", ".join(estado["faltan"]) + ". Complétalos en su ficha (la dirección, como «Calle Mayor 1, 08001 Barcelona»).")
 
 
+def datos_del_cliente_fiscal(tenant_id: int, cliente_fiscal_id: int) -> tuple[dict | None, list[str]]:
+    """(ficha fiscal, datos que faltan para facturarle). La dirección, el NIF… están en la ficha del núcleo enlazada; sin ella no se puede comprobar y se piden todos."""
+    fiscal = db.obtener_cliente_fiscal(tenant_id, cliente_fiscal_id)
+    if fiscal is None:
+        return None, []
+    core = nucleo.obtener_cliente(tenant_id, fiscal["cliente_id"]) if fiscal["cliente_id"] else None
+    return dict(fiscal), (datos_que_faltan(core) if core else ["NIF", "dirección", "código postal", "ciudad"])
+
+
+def facturar_honorario(tenant_id: int, cliente_fiscal_id: int, concepto: str, base_centimos: int) -> dict:
+    """Crea en FacturaScripts una factura de una línea (base sin IVA) para un cliente fiscal, sin expediente (honorarios de un vencimiento). Devuelve `{idfactura, codigo}`.
+    `ValueError` si algo no vale (FacturaScripts sin configurar, cliente sin vincular, datos del cliente incompletos); `ErrorFacturaScripts` si FacturaScripts falla."""
+    tenant = db.obtener_tenant(tenant_id)
+    if not configurada(tenant):
+        raise ValueError("Este despacho no tiene FacturaScripts configurado.")
+    fiscal, faltan = datos_del_cliente_fiscal(tenant_id, cliente_fiscal_id)
+    if fiscal is None:
+        raise ValueError("Cliente no encontrado.")
+    if not fiscal["facturascripts_cliente_codigo"]:
+        raise ValueError("Vincula primero al cliente con FacturaScripts desde su ficha fiscal.")
+    if faltan:
+        raise ValueError("Faltan datos del cliente para facturar: " + ", ".join(faltan) + ". Complétalos en su ficha (la dirección, como «Calle Mayor 1, 08001 Barcelona»).")
+    if not 0 < int(base_centimos) <= int(MAX_IMPORTE * 100):
+        raise ValueError("El importe no es válido.")
+    concepto = (concepto or "").strip()[:200]
+    creada = facturascripts.crear_factura(tenant["facturascripts_url"], tenant["facturascripts_api_key"], fiscal["facturascripts_cliente_codigo"],
+                                          [{"descripcion": concepto, "cantidad": 1, "precio": int(base_centimos) / 100}])
+    idfactura = str(creada.get("idfactura") or "") or None
+    codigo = None
+    try:
+        detalle = facturascripts.obtener_factura(tenant["facturascripts_url"], tenant["facturascripts_api_key"], idfactura) if idfactura else None
+        codigo = (detalle or {}).get("codigo")
+    except facturascripts.ErrorFacturaScripts:
+        pass                                                   # la factura ya existe: no se pierde la referencia por no poder leer su código
+    olvidar_cache(tenant_id)
+    return {"idfactura": idfactura, "codigo": codigo}
+
+
 def facturar_expediente(tenant_id: int, usuario_id: int, supervisor: bool, expediente_id: int, concepto: str, importe, lineas=None) -> dict:
     """Crea en FacturaScripts una factura (por defecto de una línea: base imponible `importe`; o varias en `lineas`, una por concepto; el IVA lo pone FacturaScripts) para el cliente del expediente y deja
     la relación y una anotación en el expediente. No se emite si faltan NIF, dirección, código postal o ciudad del cliente.

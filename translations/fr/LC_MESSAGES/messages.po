@@ -19504,3 +19504,66 @@ msgstr "Une facture peut comporter plusieurs lignes (par exemple, une par servic
 
 msgid "Ver proforma (sin validez fiscal)"
 msgstr "Voir la proforma (sans valeur fiscale)"
+
+msgid "%(n)s apuntes en el periodo"
+msgstr "%(n)s écritures dans la période"
+
+msgid "Aviso automático activado: a los %(n)s días sin firmar."
+msgstr "Rappel automatique activé : après %(n)s jours sans signature."
+
+msgid "Cuando envíes un documento a firmar aparecerá aquí hasta que se firme."
+msgstr "Lorsque vous enverrez un document à signer, il apparaîtra ici jusqu'à sa signature."
+
+msgid "Documento"
+msgstr "Document"
+
+msgid "El aviso automático está desactivado: se puede activar en Documentos de firma."
+msgstr "Le rappel automatique est désactivé : on peut l'activer dans Documents à signer."
+
+msgid "Facturar en FacturaScripts"
+msgstr "Facturer dans FacturaScripts"
+
+msgid "Firmante"
+msgstr "Signataire"
+
+msgid "Firmas pendientes"
+msgstr "Signatures en attente"
+
+msgid "Honorario sugerido"
+msgstr "Honoraire suggéré"
+
+msgid "No había nadie a quien recordar."
+msgstr "Il n'y avait personne à qui rappeler."
+
+msgid "No hay firmas pendientes"
+msgstr "Aucune signature en attente"
+
+msgid "Presentado, pero no se ha emitido la factura. Faltan datos del cliente para facturar: %(f)s."
+msgstr "Déposé, mais la facture n'a pas été émise. Données du client manquantes pour facturer : %(f)s."
+
+msgid "Regla «%(r)s»"
+msgstr "Règle « %(r)s »"
+
+msgid "Revisar en Honorarios por tramos"
+msgstr "Vérifier dans Honoraires par tranches"
+
+msgid "Se creará la factura en FacturaScripts a nombre del cliente. ¿Continuar?"
+msgstr "La facture sera créée dans FacturaScripts au nom du client. Continuer ?"
+
+msgid "Se propone al presentarlo; nada se cobra hasta que la dirección lo confirma."
+msgstr "Il est proposé au dépôt ; rien n'est facturé avant la confirmation de la direction."
+
+msgid "Sin más avisos"
+msgstr "Plus de rappels"
+
+msgid "Todos los documentos enviados a firmar que aún no se han firmado, del más antiguo al más reciente."
+msgstr "Tous les documents envoyés à signer qui ne sont pas encore signés, du plus ancien au plus récent."
+
+msgid "Ya estaba firmado: se ha anotado."
+msgstr "Il était déjà signé : c'est noté."
+
+msgid "Ya está presentado y aún no tiene honorario."
+msgstr "Il est déjà déposé et n'a pas encore d'honoraire."
+
+msgid "último el %(f)s"
+msgstr "dernier le %(f)s"

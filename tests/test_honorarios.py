@@ -151,3 +151,68 @@ def test_importes_invalidos_se_rechazan():
         with pytest.raises(h.ErrorHonorarios):
             h.crear_regla(t, u, malo)
     assert h.euros(123456) == "1.234,56 €" and h.euros(None) == "—"
+
+
+def _con_facturascripts(t, c, direccion="Calle Mayor 1, 08001 Barcelona"):
+    db.guardar_facturascripts(t, "http://127.0.0.1:1/", "a", "b"); db.guardar_facturascripts_api_key(t, "k")
+    db.editar_cliente_fiscal(t, c, facturascripts_cliente_codigo="C1")
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes SET direccion = ?, nif = COALESCE(nif, '12345678Z') WHERE id = (SELECT cliente_id FROM clientes_fiscales WHERE id = ?)", (direccion, c))
+    conn.commit(); conn.close()
+
+
+def test_sugerencia_y_contador_de_pendientes():
+    t, u, c = _despacho()
+    v = _venc(t, u, c)
+    assert h.sugerencia_para(t, u, v) is None and h.contar_pendientes(t) == 0                      # sin reglas no hay nada que sugerir
+    h.crear_regla(t, u, {"nombre": "Fijo", "calculo": "fijo", "importe": "80"})
+    s = h.sugerencia_para(t, u, v)
+    assert s["importe_centimos"] == 8000 and h.contar_pendientes(t) == 0                          # sin presentar no cuenta como pendiente
+    marcar_presentado_vencimiento_fiscal(t, v, u)
+    assert h.contar_pendientes(t) == 1
+    h.confirmar(t, u, v)
+    assert h.sugerencia_para(t, u, v) is None and h.contar_pendientes(t) == 0
+
+
+def test_facturar_el_honorario_en_facturascripts(monkeypatch):
+    from app import facturascripts as fs
+    t, u, c = _despacho()
+    _con_facturascripts(t, c)
+    creadas = []
+    monkeypatch.setattr(fs, "crear_factura", lambda url, key, cod, lineas: creadas.append((cod, lineas)) or {"idfactura": "7"})
+    monkeypatch.setattr(fs, "obtener_factura", lambda url, key, i: {"codigo": "FAC20260007"})
+    h.crear_regla(t, u, {"nombre": "Fijo", "calculo": "fijo", "importe": "100,50"})
+    v = _venc(t, u, c)
+    a = h.confirmar(t, u, v)
+    assert h.facturar_en_facturascripts(t, u, a) == "FAC20260007"
+    assert creadas == [("C1", [{"descripcion": "Honorarios modelo 303 2T 2026", "cantidad": 1, "precio": 100.5}])]
+    ap = h.aplicado_de(t, v)
+    assert ap["estado"] == "facturado" and ap["referencia_factura"] == "FAC20260007"
+    with pytest.raises(h.ErrorHonorarios, match="ya no admite"):
+        h.facturar_en_facturascripts(t, u, a)                                                     # no se factura dos veces
+    assert len(creadas) == 1
+
+
+def test_no_se_factura_el_honorario_si_faltan_datos_o_falla_facturascripts(monkeypatch):
+    from app import facturascripts as fs
+    t, u, c = _despacho()
+    h.crear_regla(t, u, {"nombre": "Fijo", "calculo": "fijo", "importe": "100"})
+    v = _venc(t, u, c)
+    a = h.confirmar(t, u, v)
+    with pytest.raises(h.ErrorHonorarios, match="FacturaScripts configurado"):
+        h.facturar_en_facturascripts(t, u, a)
+    _con_facturascripts(t, c, direccion="Calle Mayor 1")
+    with pytest.raises(h.ErrorHonorarios, match="código postal, ciudad"):
+        h.facturar_en_facturascripts(t, u, a)
+    assert h.aplicado_de(t, v)["referencia_factura"] is None                                      # se libera: se puede reintentar
+    _con_facturascripts(t, c)
+
+    def cae(*a, **k):
+        raise fs.ErrorFacturaScripts("caído")
+    monkeypatch.setattr(fs, "crear_factura", cae)
+    with pytest.raises(h.ErrorHonorarios, match="FacturaScripts no ha podido"):
+        h.facturar_en_facturascripts(t, u, a)
+    assert h.aplicado_de(t, v)["estado"] == "confirmado" and h.aplicado_de(t, v)["referencia_factura"] is None
+    monkeypatch.setattr(fs, "crear_factura", lambda *a, **k: {"idfactura": "9"})
+    monkeypatch.setattr(fs, "obtener_factura", lambda *a, **k: None)
+    assert h.facturar_en_facturascripts(t, u, a) == "#9"

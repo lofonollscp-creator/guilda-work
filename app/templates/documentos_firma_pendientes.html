@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Firmas pendientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Firmas pendientes') }}</h1>
+    <p class="subtitle">{{ _('Todos los documentos enviados a firmar que aún no se han firmado, del más antiguo al más reciente.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('documentos_firma.plantillas') }}">{{ _('Documentos de firma') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if aviso %}<div class="ds-estado-ok" role="status">{{ {'recordado': _('Aviso de firma reenviado.'), 'ya_firmado': _('Ya estaba firmado: se ha anotado.'), 'sin_cambios': _('No había nadie a quien recordar.')}.get(aviso, '') }}</div>{% endif %}
+<p class="muted">{% if dias_aviso %}{{ _('Aviso automático activado: a los %(n)s días sin firmar.', n=dias_aviso) }}{% else %}{{ _('El aviso automático está desactivado: se puede activar en Documentos de firma.') }}{% endif %}</p>
+{% if documentos %}
+<div class="tabla-scroll"><table class="tabla">
+  <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Documento') }}</th><th>{{ _('Firmante') }}</th><th>{{ _('Esperando') }}</th><th>{{ _('Avisos') }}</th><th></th></tr></thead>
+  <tbody>
+  {% for d in documentos %}
+    <tr>
+      <td><a href="{{ url_for('clientes.ficha', cliente_id=d.cliente_id, pestana='documentos') }}">{{ d.cliente_nombre }}</a></td>
+      <td><a href="{{ url_for('documentos_firma.ver', cliente_id=d.cliente_id, documento_id=d.id) }}">{{ d.nombre_plantilla }}</a></td>
+      <td>{{ d.firmante_nombre or d.firmante_email }}<br><span class="muted">{{ d.firmante_email }}</span></td>
+      <td>{{ chip(_('%(n)s días', n=d.dias), 'peligro' if d.dias >= 14 else ('aviso' if d.dias >= 7 else 'neutro')) }}</td>
+      <td>{{ d.recordatorios or 0 }}/{{ max_recordatorios }}{% if d.recordado_en %}<br><span class="muted">{{ _('último el %(f)s', f=d.recordado_en[:10]) }}</span>{% endif %}</td>
+      <td>{% if d.puede_recordar %}<form method="post" action="{{ url_for('documentos_firma.recordar_desde_pendientes', cliente_id=d.cliente_id, documento_id=d.id) }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Recordar la firma') }}</button></form>{% else %}<span class="muted">{{ _('Sin más avisos') }}</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}{{ estado_vacio(_('No hay firmas pendientes'), _('Cuando envíes un documento a firmar aparecerá aquí hasta que se firme.')) }}{% endif %}
+{% endblock %}

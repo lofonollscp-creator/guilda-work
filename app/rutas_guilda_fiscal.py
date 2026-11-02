@@ -13,7 +13,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_panel as fpn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
+from . import acceso, db, honorarios, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_panel as fpn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
 from .fiscal_modelos import motor_131, motor_390
 from .fiscal_modelos.apuntes import Apunte
@@ -90,7 +90,7 @@ def cartera():
         filas = [f for f in filas if all(palabra in _sin_acentos(f"{f['nombre']} {f['nif'] or ''}") for palabra in q.split())]
     orden = {"rojo": 0, "ambar": 1, "verde": 2, "gris": 3}
     filas.sort(key=lambda f: (orden[f["semaforo"]["nivel"]], (f["proximo_303"] or {}).get("fecha_limite") or "9999", f["nombre"].lower()))      # lo urgente arriba, y dentro, lo que vence antes
-    return render_template("fiscal_cartera.html", filas=filas, cuentas=cuentas, filtro=filtro, q=request.args.get("q", "").strip()[:80], periodo=fn.periodo_por_defecto(date.today()), error=_error())
+    return render_template("fiscal_cartera.html", filas=filas, cuentas=cuentas, filtro=filtro, honorarios_pendientes=honorarios.contar_pendientes(g.tenant_id) if acceso.puede_autorizar(g.tenant_id, g.usuario_id) else 0, q=request.args.get("q", "").strip()[:80], periodo=fn.periodo_por_defecto(date.today()), error=_error())
 
 
 @guilda_fiscal_bp.route("/vencimientos")
