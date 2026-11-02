@@ -173,6 +173,24 @@ def enviar_a_firma(api_key: str, documento_id: str) -> dict:
     return cuerpo
 
 
+def reenviar_a_firma(api_key: str, documento_id: str) -> int:
+    """Vuelve a mandar el correo de firma a quien aún no ha firmado (Documenso `envelope/redistribute`). Devuelve a cuántas personas se ha avisado; 0 si no queda nadie por firmar."""
+    if not api_key:
+        raise ErrorDocumenso("Este tenant no tiene un token de Documenso configurado todavía.")
+    estado, envelope = _peticion_json(f"/envelope/{documento_id}", api_key)
+    if estado != 200:
+        mensaje = envelope.get("message") or envelope.get("error") or envelope
+        raise ErrorDocumenso(f"No se ha podido consultar el documento {documento_id} de Documenso: {mensaje}")
+    sin_firmar = [r["id"] for r in envelope.get("recipients", []) if r.get("role") == "SIGNER" and r.get("signingStatus") == "NOT_SIGNED" and isinstance(r.get("id"), int)]
+    if not sin_firmar:
+        return 0
+    estado, cuerpo = _peticion_json("/envelope/redistribute", api_key, metodo="POST", cuerpo={"envelopeId": documento_id, "recipients": sin_firmar})
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorDocumenso(f"No se ha podido reenviar el documento {documento_id} a firma: {mensaje}")
+    return len(sin_firmar)
+
+
 def descargar_firmado(api_key: str, documento_id: str) -> bytes:
     """Descarga el PDF de un documento (firmado del todo o no — el propio
     PDF refleja el estado actual). Verificado en vivo: el documento en sí

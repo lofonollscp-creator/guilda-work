@@ -68,3 +68,23 @@ def test_la_direccion_edita_los_textos_y_los_demas_solo_los_ven(cliente):
     assert cliente.get("/documentos-firma/plantillas/no_existe").status_code == 404
     cliente.post("/documentos-firma/plantillas/hoja_encargo", data={"accion": "restaurar"})
     assert not df.texto_de(t, "hoja_encargo")[1]
+
+
+def test_recordar_la_firma_y_los_dias_del_aviso_automatico(cliente, monkeypatch):
+    uid, t, c = _web(cliente, "recordarweb@ejemplo.com")
+    monkeypatch.setattr(documenso, "crear_documento", lambda *a, **k: {"id": "env_rw"})
+    monkeypatch.setattr(documenso, "enviar_a_firma", lambda *a: {})
+    monkeypatch.setattr(documenso, "estado_documento", lambda *a: "PENDING")
+    monkeypatch.setattr(documenso, "reenviar_a_firma", lambda *a: 1)
+    did = df.crear_borrador(t, uid, c, "consentimiento_comercial", {"contacto_rgpd": "datos@despacho.example"}, lugar="Barcelona")
+    df.enviar(t, uid, c, did)
+    ver = cliente.get(f"/documentos-firma/clientes/{c}/{did}").get_data(as_text=True)
+    assert "Recordar la firma" in ver
+    assert cliente.post(f"/documentos-firma/clientes/{c}/{did}/recordar").status_code == 302
+    assert df.obtener(t, c, did)["recordatorios"] == 1
+    assert "recordado 1" in cliente.get(f"/documentos-firma/clientes/{c}/{did}").get_data(as_text=True)
+    assert "Recordar a quien no firma" in cliente.get("/documentos-firma/plantillas").get_data(as_text=True)
+    assert cliente.post("/documentos-firma/plantillas/recordatorio", data={"dias": "5"}).status_code == 302
+    assert df.recordatorio_dias(t) == 5
+    r = cliente.post("/documentos-firma/plantillas/recordatorio", data={"dias": "99"})
+    assert "error=" in r.headers["Location"] and df.recordatorio_dias(t) == 5

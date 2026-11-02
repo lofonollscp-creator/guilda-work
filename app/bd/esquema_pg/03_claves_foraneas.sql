@@ -170,6 +170,8 @@ ALTER TABLE fichajes ADD CONSTRAINT fk_fichajes_corrige_a FOREIGN KEY (corrige_a
 ALTER TABLE fichajes ADD CONSTRAINT fk_fichajes_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id);
 ALTER TABLE fichajes ADD CONSTRAINT fk_fichajes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE fichajes ADD CONSTRAINT fk_fichajes_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
+ALTER TABLE fiscal_acciones_masivas ADD CONSTRAINT fk_fiscal_acciones_masivas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE fiscal_acciones_masivas ADD CONSTRAINT fk_fiscal_acciones_masivas_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
 ALTER TABLE fiscal_apuntes ADD CONSTRAINT fk_fiscal_apuntes_aprobado_por FOREIGN KEY (aprobado_por) REFERENCES usuarios (id);
 ALTER TABLE fiscal_apuntes ADD CONSTRAINT fk_fiscal_apuntes_cliente_fiscal_id FOREIGN KEY (cliente_fiscal_id) REFERENCES clientes_fiscales (id) ON DELETE CASCADE;
 ALTER TABLE fiscal_apuntes ADD CONSTRAINT fk_fiscal_apuntes_factura_id FOREIGN KEY (factura_id) REFERENCES facturas_contables (id) ON DELETE SET NULL;
@@ -201,6 +203,8 @@ ALTER TABLE fiscal_relaciones ADD CONSTRAINT fk_fiscal_relaciones_creado_por FOR
 ALTER TABLE fiscal_relaciones ADD CONSTRAINT fk_fiscal_relaciones_desde_cliente_id FOREIGN KEY (desde_cliente_id) REFERENCES clientes_fiscales (id) ON DELETE CASCADE;
 ALTER TABLE fiscal_relaciones ADD CONSTRAINT fk_fiscal_relaciones_hasta_cliente_id FOREIGN KEY (hasta_cliente_id) REFERENCES clientes_fiscales (id) ON DELETE CASCADE;
 ALTER TABLE fiscal_relaciones ADD CONSTRAINT fk_fiscal_relaciones_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
+ALTER TABLE honorarios_aplicados ADD CONSTRAINT fk_honorarios_aplicados_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE honorarios_reglas ADD CONSTRAINT fk_honorarios_reglas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_adjuntos ADD CONSTRAINT fk_ia_adjuntos_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
 ALTER TABLE ia_consumo ADD CONSTRAINT fk_ia_consumo_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;

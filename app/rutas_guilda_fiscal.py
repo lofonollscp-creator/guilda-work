@@ -105,7 +105,7 @@ def vencimientos():
     todos = request.args.get("todos") == "1"
     if not todos:
         panel["filas"] = panel["filas"][:LIMITE_VENCIMIENTOS]                      # miles de filas pesan más de 700 KB y tardan en pintarse; las cifras de arriba cuentan siempre todas
-    return render_template("fiscal_panel_vencimientos.html", panel=panel, dias=dias if dias in (30, 60, 90, 180) else 60, responsable=solo, total=total, todos=todos, limite=LIMITE_VENCIMIENTOS, error=_error())
+    return render_template("fiscal_panel_vencimientos.html", panel=panel, dias=dias if dias in (30, 60, 90, 180) else 60, responsable=solo, total=total, todos=todos, limite=LIMITE_VENCIMIENTOS, equipo=db.listar_companeros_tenant(g.usuario_id), error=_error())
 
 
 def _mensaje_recordatorio(p: dict, ejercicio: int, trimestre: str) -> dict | None:

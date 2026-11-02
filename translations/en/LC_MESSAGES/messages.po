@@ -19185,3 +19185,219 @@ msgstr "Remove this channel? The saved key is deleted."
 
 msgid "¿Volver a permitir envíos a este correo?"
 msgstr "Allow mailings to this email again?"
+
+msgid "%(n)s vencimientos cambiados · %(o)s omitidos."
+msgstr "%(n)s due dates changed · %(o)s skipped."
+
+msgid "%(n)s vencimientos cambiarán · %(o)s se omiten · se podrá deshacer durante 90 días."
+msgstr "%(n)s due dates will change · %(o)s are skipped · it can be undone for 90 days."
+
+msgid "Ahora mismo no se recuerda automáticamente."
+msgstr "Right now no automatic reminders are sent."
+
+msgid "Ahora mismo: %(n)s días."
+msgstr "Right now: %(n)s days."
+
+msgid "Aparecerán aquí al confirmar la propuesta de un vencimiento."
+msgstr "They will appear here when you confirm a due date's proposal."
+
+msgid "Aplicar a %(n)s vencimientos"
+msgstr "Apply to %(n)s due dates"
+
+msgid "Aviso de firma reenviado."
+msgstr "Signing reminder resent."
+
+msgid "Aún no hay honorarios confirmados"
+msgstr "No confirmed fees yet"
+
+msgid "Aún no hay reglas"
+msgstr "No rules yet"
+
+msgid "Base más importe por apunte"
+msgstr "Base plus amount per entry"
+
+msgid "Cambiar varios a la vez"
+msgstr "Change several at once"
+
+msgid "Con un modelo fiscal por presentar"
+msgstr "With a tax form still to file"
+
+msgid "Confirmado"
+msgstr "Confirmed"
+
+msgid "Confirmar"
+msgstr "Confirm"
+
+msgid "Crea la primera abajo: por ejemplo, el 303 de una sociedad por tramos según el número de apuntes."
+msgstr "Create the first one below: for example, a company's form 303 by bands according to the number of entries."
+
+msgid "Cuando se presente un vencimiento aparecerá aquí con su propuesta."
+msgstr "When a due date is filed it will appear here with its proposal."
+
+msgid "Cálculo"
+msgstr "Calculation"
+
+msgid "Cómo se calcula"
+msgstr "How it is calculated"
+
+msgid "Desactivada"
+msgstr "Disabled"
+
+msgid "Desactivar"
+msgstr "Disable"
+
+msgid "Días de antelación"
+msgstr "Days in advance"
+
+msgid "Editar regla"
+msgstr "Edit rule"
+
+msgid "El número más bajo se mira primero."
+msgstr "The lowest number is checked first."
+
+msgid "Esta propuesta caducó: vuelve a proponerla desde los vencimientos."
+msgstr "This proposal has expired: propose it again from the due dates."
+
+msgid "Fijo"
+msgstr "Fixed"
+
+msgid "Honorarios confirmados"
+msgstr "Confirmed fees"
+
+msgid "Honorarios por tramos"
+msgstr "Fees by bands"
+
+msgid "Importe fijo"
+msgstr "Fixed amount"
+
+msgid "Importe fijo o base (€)"
+msgstr "Fixed amount or base (€)"
+
+msgid "Importe por apunte (€)"
+msgstr "Amount per entry (€)"
+
+msgid "Lo que se ha cambiado de golpe en los vencimientos fiscales, con la opción de deshacerlo durante 90 días."
+msgstr "What has been changed in bulk on tax due dates, with the option to undo it for 90 days."
+
+msgid "Los importes son los que fijas tú: la herramienta calcula, pero la tarifa es una decisión del despacho"
+msgstr "The amounts are the ones you set: the tool calculates, but the fee is the firm's decision"
+
+msgid "Los vencimientos volvieron a su estado anterior, salvo los que se habían vuelto a cambiar."
+msgstr "The due dates went back to their previous state, except those that had been changed again."
+
+msgid "Marca los vencimientos, elige qué hacer y revisa el cambio antes de aplicarlo: se puede deshacer durante 90 días."
+msgstr "Tick the due dates, choose what to do and review the change before applying it: it can be undone for 90 days."
+
+msgid "Marca varios vencimientos en el panel para cambiarlos de una vez."
+msgstr "Tick several due dates in the panel to change them at once."
+
+msgid "Marcar facturado"
+msgstr "Mark as invoiced"
+
+msgid "Marcar todos"
+msgstr "Tick all"
+
+msgid "Motivo (al posponer)"
+msgstr "Reason (when postponing)"
+
+msgid "Nada pendiente"
+msgstr "Nothing pending"
+
+msgid "Nº de factura"
+msgstr "Invoice no."
+
+msgid "Omitidos"
+msgstr "Skipped"
+
+msgid "Otro importe"
+msgstr "Other amount"
+
+msgid "Para avisos como «se acerca el 303». Vacío = sin este filtro. Solo clientes con Guilda Fiscal."
+msgstr "For notices such as “form 303 is coming up”. Empty = no filter. Only clients with Guilda Fiscal."
+
+msgid "Para «fijo» es el precio; para «por apunte», la base que se suma."
+msgstr "For “fixed” it is the price; for “per entry”, the base that is added."
+
+msgid "Plantilla de aviso de vencimiento fiscal"
+msgstr "Tax due date notice template"
+
+msgid "Por tramos según el número de apuntes"
+msgstr "By bands according to the number of entries"
+
+msgid "Posponer la fecha de seguimiento"
+msgstr "Postpone the follow-up date"
+
+msgid "Posponer mueve la fecha que sigue el despacho, no el plazo legal de presentación."
+msgstr "Postponing moves the date the firm tracks, not the legal filing deadline."
+
+msgid "Presentados sin honorario"
+msgstr "Filed without a fee"
+
+msgid "Probar las reglas"
+msgstr "Test the rules"
+
+msgid "Propuesta"
+msgstr "Proposal"
+
+msgid "Recordar a los"
+msgstr "Remind after"
+
+msgid "Recordar a quien no firma"
+msgstr "Remind those who haven't signed"
+
+msgid "Recordar la firma"
+msgstr "Send a signing reminder"
+
+msgid "Reglas que proponen cuánto cobrar por presentar cada modelo. Aplica la primera regla activa que encaja; nada se cobra hasta que la dirección confirma."
+msgstr "Rules that suggest how much to charge for filing each form. The first active rule that matches applies; nothing is charged until management confirms."
+
+msgid "Se devolverá cada vencimiento a como estaba, salvo los que se hayan vuelto a cambiar. ¿Deshacer?"
+msgstr "Each due date will go back to how it was, except those that have been changed again. Undo?"
+
+msgid "Se pospone %(d)s días la fecha de seguimiento. Motivo: %(m)s"
+msgstr "The follow-up date is postponed %(d)s days. Reason: %(m)s"
+
+msgid "Si dejas «Otro importe» vacío se confirma la propuesta; si lo rellenas, queda ese importe y se conserva el cálculo."
+msgstr "If you leave “Other amount” empty the proposal is confirmed; if you fill it in, that amount is used and the calculation is kept."
+
+msgid "Si un cliente no firma en el plazo que indiques, Documenso le reenvía el aviso de firma. Máximo %(n)s veces por documento; después, que lo gestione una persona. Pon 0 para no recordar."
+msgstr "If a client doesn't sign within the period you set, Documenso resends the signing notice. At most %(n)s times per document; after that, a person should follow up. Enter 0 for no reminders."
+
+msgid "Tramos"
+msgstr "Bands"
+
+msgid "Una línea por tramo, de menor a mayor: «hasta 10: 60,00». La última: «resto: 45,00»."
+msgstr "One line per band, from lowest to highest: “hasta 10: 60,00”. The last one: “resto: 45,00”."
+
+msgid "Vacío = todos los modelos. Ejemplo: 303."
+msgstr "Empty = all forms. Example: 303."
+
+msgid "Vencimientos que cambian"
+msgstr "Due dates that change"
+
+msgid "ajustado a mano"
+msgstr "adjusted by hand"
+
+msgid "días sin firmar"
+msgstr "days unsigned"
+
+msgid "hasta %(n)s"
+msgstr "up to %(n)s"
+
+msgid "mínimo"
+msgstr "minimum"
+
+msgid "por apunte"
+msgstr "per entry"
+
+msgid "recordado %(n)s vez/veces, el último el %(f)s"
+msgstr "reminded %(n)s time(s), the last on %(f)s"
+
+msgid "regla"
+msgstr "rule"
+
+msgid "resto"
+msgstr "rest"
+
+msgid "¿Quitar esta regla? Los honorarios ya confirmados conservan su cálculo."
+msgstr "Remove this rule? Fees already confirmed keep their calculation."

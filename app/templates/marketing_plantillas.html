@@ -3,7 +3,7 @@
 {% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ _('Plantillas de correo') }} — Guilda Work{% endblock %}
 {% block content %}
-<header class="page-header"><div><h1>{{ _('Plantillas de correo') }}</h1></div><a class="btn btn-primary" href="{{ url_for('marketing.plantilla') }}">+ {{ _('Nueva plantilla') }}</a></header>
+<header class="page-header"><div><h1>{{ _('Plantillas de correo') }}</h1></div><div class="ds-fila ds-envolver"><a class="btn btn-ghost" href="{{ url_for('marketing.plantilla', modelo='aviso_fiscal') }}">{{ _('Plantilla de aviso de vencimiento fiscal') }}</a><a class="btn btn-primary" href="{{ url_for('marketing.plantilla') }}">+ {{ _('Nueva plantilla') }}</a></div></header>
 {% include "_comercial_subnav.html" %}
 {{ aviso_error(error) }}
 {% if plantillas %}<section class="dash-panel"><ul class="log-list">{% for p in plantillas %}<li class="log-item"><span class="log-text"><a href="{{ url_for('marketing.plantilla', plantilla_id=p.id) }}">{{ p.nombre }}</a> <span class="muted">· {{ p.asunto }}</span></span>

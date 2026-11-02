@@ -87,7 +87,7 @@ def test_un_despacho_que_no_existe_o_una_copia_de_otro_esquema_se_rechazan(base,
             dc.exportar(raw, 99, str(tmp_path / "x.tar.gz"))
         fichero = str(tmp_path / "d2.tar.gz")
         dc.exportar(raw, 2, fichero)
-        raw.execute("UPDATE bd_esquema_version SET version = version + 1")
+        raw.execute("UPDATE bd_esquema_version SET version = version + 1000")
         with pytest.raises(dc.ErrorDeCopia, match="esquema"):
             dc.importar(raw, fichero, reemplazar=True)
         assert dc.importar(raw, fichero, reemplazar=True, permitir_otra_version=True)["ok"]

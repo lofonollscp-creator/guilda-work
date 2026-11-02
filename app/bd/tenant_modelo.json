@@ -937,6 +937,11 @@
    }
   ]
  },
+ "fiscal_acciones_masivas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "fiscal_apuntes": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
@@ -978,6 +983,16 @@
   "via": []
  },
  "fiscal_relaciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "honorarios_aplicados": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "honorarios_reglas": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
   "via": []

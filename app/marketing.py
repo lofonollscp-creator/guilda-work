@@ -19,7 +19,7 @@ import json
 import os
 import re
 import smtplib
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from email.message import EmailMessage
 from html import escape
 from urllib.parse import urlparse
@@ -298,6 +298,11 @@ def reglas_validas(reglas: dict) -> dict:
     limpias = {"fuente": fuente, "etiquetas": etiquetas, "etiquetas_modo": "todas" if reglas.get("etiquetas_modo") == "todas" else "alguna",
                "tipo": reglas.get("tipo") if reglas.get("tipo") in ("persona", "empresa") else "", "origen": str(reglas.get("origen") or "").strip()[:100],
                "idioma": str(reglas.get("idioma") or "").strip()[:10], "etapa": str(reglas.get("etapa") or "").strip()[:60]}
+    limpias["vencimiento_modelo"] = re.sub(r"[^0-9A-Za-z]", "", str(reglas.get("vencimiento_modelo") or ""))[:6].upper()
+    try:
+        limpias["vencimiento_dias"] = min(max(int(reglas.get("vencimiento_dias") or 30), 1), 365)
+    except (TypeError, ValueError):
+        raise ErrorMarketing("Los días de antelación no son válidos.") from None
     try:
         limpias["responsable_id"] = int(reglas["responsable_id"]) if reglas.get("responsable_id") not in (None, "") else None
     except (TypeError, ValueError):
@@ -314,6 +319,8 @@ def describir_reglas(r: dict) -> str:
     for clave, texto in (("origen", "origen"), ("idioma", "idioma"), ("etapa", "etapa")):
         if r[clave]:
             partes.append(f"{texto} {r[clave]}")
+    if r.get("vencimiento_modelo"):
+        partes.append(f"con el modelo {r['vencimiento_modelo']} por presentar en los próximos {r.get('vencimiento_dias', 30)} días")
     if r["responsable_id"]:
         partes.append("de una persona concreta")
     return " · ".join(partes)
@@ -390,6 +397,12 @@ def audiencia(tenant_id: int, usuario_id: int, reglas: dict) -> dict:
             if r["responsable_id"]:
                 donde.append("c.responsable_id = ?")
                 p.append(r["responsable_id"])
+            if r["vencimiento_modelo"]:                                  # clientes con ese modelo aún por presentar dentro del plazo: «se acerca el 303»
+                hoy = date.today()
+                donde.append("EXISTS (SELECT 1 FROM vencimientos_fiscales v JOIN clientes_fiscales f ON f.id = v.cliente_fiscal_id AND f.tenant_id = v.tenant_id "
+                             "WHERE f.cliente_id = c.id AND v.tenant_id = c.tenant_id AND v.modelo = ? AND v.estado = 'pendiente' AND v.papelera_en IS NULL "
+                             "AND substr(v.fecha_limite, 1, 10) >= ? AND substr(v.fecha_limite, 1, 10) <= ?)")
+                p += [r["vencimiento_modelo"], hoy.isoformat(), (hoy + timedelta(days=r["vencimiento_dias"])).isoformat()]
             if r["etiquetas"]:
                 marcas = ", ".join("?" for _ in r["etiquetas"])
                 if r["etiquetas_modo"] == "todas":
@@ -523,6 +536,11 @@ def render_texto(bloques: list[dict], valores: dict, despacho: dict) -> str:
 PLANTILLA_INICIAL = [{"tipo": "titulo", "texto": "Una novedad para ti, {{nombre}}", "url": ""},
                      {"tipo": "texto", "texto": "Hola {{nombre}},\n\nEscribe aquí tu mensaje.", "url": ""},
                      {"tipo": "boton", "texto": "Más información", "url": "https://"}]
+
+PLANTILLA_AVISO_FISCAL = [{"tipo": "titulo", "texto": "Se acerca la fecha de presentación, {{nombre}}", "url": ""},
+                          {"tipo": "texto", "texto": "Hola {{nombre}},\n\nTe recordamos que se acerca el plazo de presentación del modelo que tenemos pendiente contigo. Para llegar a tiempo necesitamos que nos "
+                                                     "envíes la documentación que falte (facturas emitidas y recibidas del periodo).\n\nSi ya nos lo has enviado todo, no tienes que hacer nada.", "url": ""},
+                          {"tipo": "boton", "texto": "Enviar documentación", "url": "https://"}]
 
 
 def crear_plantilla(tenant_id: int, usuario_id: int, nombre: str, asunto: str, bloques) -> int:

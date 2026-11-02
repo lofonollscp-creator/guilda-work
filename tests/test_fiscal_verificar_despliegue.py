@@ -31,7 +31,7 @@ def test_una_base_migrada_pasa_todas_las_comprobaciones_y_una_incompleta_no(base
     fallos = [t for ok, t in vd.comprobar(conn) if not ok]
     assert fallos == [], fallos
     conn.execute("DROP TABLE fiscal_artefactos CASCADE")
-    conn.execute("DELETE FROM bd_esquema_version WHERE version = 3")
+    conn.execute("DELETE FROM bd_esquema_version WHERE version >= 4")
     conn.commit()
     fallos = [t for ok, t in vd.comprobar(conn) if not ok]
     assert any("tabla fiscal_artefactos" in t for t in fallos) and any("versión del esquema" in t for t in fallos)

@@ -2339,6 +2339,10 @@ def init_db() -> None:
         plantillas_cliente.crear_esquema(conn)  # plantillas de alta de cliente por tipo (app/plantillas_cliente.py)
         from . import documentos_firma
         documentos_firma.crear_esquema(conn)  # documentos prehechos que se firman con Documenso desde la ficha del cliente (app/documentos_firma.py)
+        from . import fiscal_masivo
+        fiscal_masivo.crear_esquema(conn)     # cambios en lote de los vencimientos fiscales: proponer, confirmar y deshacer (app/fiscal_masivo.py)
+        from . import honorarios
+        honorarios.crear_esquema(conn)        # reglas de honorarios por tramos de los vencimientos fiscales (app/honorarios.py)
         from . import traspasos
         traspasos.crear_esquema(conn)         # traspasos de clientes entre personas y oficinas, y responsable del cliente (app/traspasos.py)
         from . import avisos

@@ -298,6 +298,9 @@ CREATE POLICY aislamiento ON fichaje_datos USING (tenant_id = nullif(current_set
 ALTER TABLE fichajes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON fichajes;
 CREATE POLICY aislamiento ON fichajes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE fiscal_acciones_masivas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON fiscal_acciones_masivas;
+CREATE POLICY aislamiento ON fiscal_acciones_masivas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE fiscal_apuntes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON fiscal_apuntes;
 CREATE POLICY aislamiento ON fiscal_apuntes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
@@ -325,6 +328,12 @@ CREATE POLICY aislamiento ON fiscal_perfiles USING (tenant_id = nullif(current_s
 ALTER TABLE fiscal_relaciones ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON fiscal_relaciones;
 CREATE POLICY aislamiento ON fiscal_relaciones USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE honorarios_aplicados ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON honorarios_aplicados;
+CREATE POLICY aislamiento ON honorarios_aplicados USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE honorarios_reglas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON honorarios_reglas;
+CREATE POLICY aislamiento ON honorarios_reglas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE ia_adjuntos ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON ia_adjuntos;
 CREATE POLICY aislamiento ON ia_adjuntos USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

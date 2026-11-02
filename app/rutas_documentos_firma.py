@@ -64,7 +64,7 @@ def ver(cliente_id: int, documento_id: int):
     if d is None:
         abort(404)
     return render_template("documento_firma_ver.html", c=c, d=d, error=(request.args.get("error") or "")[:300] or None, aviso=request.args.get("aviso"),
-                           puede_enviar=documentos_firma.puede_enviar(_tenant()), subnav="clientes")
+                           puede_enviar=documentos_firma.puede_enviar(_tenant()), max_recordatorios=documentos_firma.MAX_RECORDATORIOS, subnav="clientes")
 
 
 @documentos_firma_bp.route("/clientes/<int:cliente_id>/<int:documento_id>/pdf")
@@ -105,10 +105,28 @@ def actualizar(cliente_id: int, documento_id: int):
     return _accion(cliente_id, documento_id, documentos_firma.refrescar, "actualizado")
 
 
+@documentos_firma_bp.route("/clientes/<int:cliente_id>/<int:documento_id>/recordar", methods=["POST"])
+@login_required
+def recordar(cliente_id: int, documento_id: int):
+    return _accion(cliente_id, documento_id, documentos_firma.recordar, "recordado")
+
+
 @documentos_firma_bp.route("/plantillas")
 @login_required
 def plantillas():
-    return render_template("documentos_firma_plantillas.html", catalogo=documentos_firma.catalogo(_tenant()), puede_editar=_supervisor(), subnav="clientes")
+    return render_template("documentos_firma_plantillas.html", catalogo=documentos_firma.catalogo(_tenant()), puede_editar=_supervisor(), subnav="clientes",
+                           recordatorio_dias=documentos_firma.recordatorio_dias(_tenant()), max_dias=documentos_firma.MAX_DIAS_RECORDATORIO, max_recordatorios=documentos_firma.MAX_RECORDATORIOS,
+                           error=(request.args.get("error") or "")[:300] or None, aviso=request.args.get("aviso"))
+
+
+@documentos_firma_bp.route("/plantillas/recordatorio", methods=["POST"])
+@login_required
+def recordatorio():
+    try:
+        documentos_firma.fijar_recordatorio_dias(_tenant(), g.usuario_id, request.form.get("dias"))
+    except documentos_firma.ErrorDocumento as e:
+        return redirect(url_for("documentos_firma.plantillas", error=str(e)))
+    return redirect(url_for("documentos_firma.plantillas", aviso="guardado"))
 
 
 @documentos_firma_bp.route("/plantillas/<clave>", methods=["GET", "POST"])

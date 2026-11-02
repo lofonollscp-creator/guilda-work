@@ -268,6 +268,8 @@ from .rutas_seguridad import seguridad_bp  # noqa: E402
 from .rutas_nucleo import clientes_bp, expedientes_bp, plazos_bp, tiempo_bp  # noqa: E402
 from .rutas_importar_clientes import importar_clientes_bp  # noqa: E402
 from .rutas_documentos_firma import documentos_firma_bp  # noqa: E402
+from .rutas_fiscal_masivo import fiscal_masivo_bp  # noqa: E402
+from .rutas_honorarios import honorarios_bp  # noqa: E402
 from .rutas_marketing import baja_bp, marketing_bp  # noqa: E402
 from .rutas_documenso_webhook import documenso_webhook_bp  # noqa: E402
 from .rutas_hoy import hoy_bp  # noqa: E402
@@ -285,6 +287,8 @@ app.register_blueprint(asunto_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(importar_clientes_bp)
 app.register_blueprint(documentos_firma_bp)
+app.register_blueprint(fiscal_masivo_bp)
+app.register_blueprint(honorarios_bp)
 app.register_blueprint(marketing_bp)
 app.register_blueprint(baja_bp)
 app.register_blueprint(documenso_webhook_bp)

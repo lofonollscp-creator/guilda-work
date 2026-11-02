@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Cambios en lote') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Cambios en lote') }}</h1><p class="subtitle">{{ _('Lo que se ha cambiado de golpe en los vencimientos fiscales, con la opción de deshacerlo durante 90 días.') }}</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.vencimientos') }}">{{ _('Volver a los vencimientos') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if not acciones %}{{ estado_vacio(_('Todavía no hay cambios en lote'), _('Marca varios vencimientos en el panel para cambiarlos de una vez.')) }}
+{% else %}
+<section class="dash-panel"><ul class="log-list">
+  {% for a in acciones %}
+  <li class="log-item"><span class="log-text"><a href="{{ url_for('fiscal_masivo.ver', accion_id=a.id) }}">{{ a.descripcion }}</a>
+    {{ chip({'aplicada': _('Aplicado'), 'deshecha': _('Deshecho'), 'cancelada': _('Cancelado')}.get(a.estado, a.estado), 'exito' if a.estado == 'aplicada' else 'neutro') }}
+    <span class="muted">{{ (a.aplicada_en or a.creada_en)[:10] }}{% if a.se_puede_deshacer %} · {{ _('se puede deshacer hasta el %(f)s', f=a.caduca_en[:10]) }}{% endif %}</span></span></li>
+  {% endfor %}
+</ul></section>
+{% endif %}
+{% endblock %}

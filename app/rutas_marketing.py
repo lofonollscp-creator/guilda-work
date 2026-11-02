@@ -72,7 +72,8 @@ def consentimientos():
 
 def _reglas_del_formulario(f) -> dict:
     return {"fuente": f.get("fuente"), "tipo": f.get("tipo"), "etiquetas": [x for x in (f.get("etiquetas") or "").split(",") if x.strip()], "etiquetas_modo": f.get("etiquetas_modo"),
-            "origen": f.get("origen"), "idioma": f.get("idioma"), "etapa": f.get("etapa"), "responsable_id": f.get("responsable_id") or None}
+            "origen": f.get("origen"), "idioma": f.get("idioma"), "etapa": f.get("etapa"), "responsable_id": f.get("responsable_id") or None,
+            "vencimiento_modelo": f.get("vencimiento_modelo"), "vencimiento_dias": f.get("vencimiento_dias")}
 
 
 @marketing_bp.route("/grupos", methods=["GET", "POST"])
@@ -136,7 +137,10 @@ def plantilla(plantilla_id: int | None = None):
         abort(404)
     nombre = existente["nombre"] if existente else ""
     asunto = existente["asunto"] if existente else ""
-    bloques = existente["bloques"] if existente else [dict(b) for b in marketing.PLANTILLA_INICIAL]
+    inicial = marketing.PLANTILLA_AVISO_FISCAL if request.args.get("modelo") == "aviso_fiscal" else marketing.PLANTILLA_INICIAL
+    if not existente and request.args.get("modelo") == "aviso_fiscal":
+        nombre, asunto = "Aviso de vencimiento fiscal", "Se acerca la fecha de presentación"
+    bloques = existente["bloques"] if existente else [dict(b) for b in inicial]
     error, vista, ia = _error(), None, None
     if request.method == "POST":
         f = request.form

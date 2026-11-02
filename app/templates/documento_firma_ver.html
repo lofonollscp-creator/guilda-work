@@ -12,12 +12,12 @@
   <a class="btn btn-ghost" href="{{ url_for('clientes.ficha', cliente_id=c.id, pestana='documentos') }}#firmas">{{ _('Volver a la ficha') }}</a>
 </header>
 {{ aviso_error(error) }}
-{% if aviso %}<div class="ds-estado-ok" role="status">{{ {'enviado': _('Enviado a firma: el cliente recibirá un correo de Documenso.'), 'cancelado': _('Documento cancelado.'), 'actualizado': _('Estado actualizado.')}.get(aviso, '') }}</div>{% endif %}
+{% if aviso %}<div class="ds-estado-ok" role="status">{{ {'enviado': _('Enviado a firma: el cliente recibirá un correo de Documenso.'), 'cancelado': _('Documento cancelado.'), 'actualizado': _('Estado actualizado.'), 'recordado': _('Aviso de firma reenviado.')}.get(aviso, '') }}</div>{% endif %}
 
 <section class="dash-panel">
   <h2>{{ _('Quién firma') }}</h2>
   <p>{{ d.firmante_nombre }} · {{ d.firmante_email }}</p>
-  <p class="muted">{{ _('Creado el') }} {{ d.creado_en[:10] }}{% if d.enviado_en %} · {{ _('enviado el') }} {{ d.enviado_en[:10] }}{% endif %}{% if d.firmado_en %} · {{ _('firmado el') }} {{ d.firmado_en[:10] }}{% endif %}</p>
+  <p class="muted">{{ _('Creado el') }} {{ d.creado_en[:10] }}{% if d.enviado_en %} · {{ _('enviado el') }} {{ d.enviado_en[:10] }}{% endif %}{% if d.firmado_en %} · {{ _('firmado el') }} {{ d.firmado_en[:10] }}{% endif %}{% if d.recordatorios %} · {{ _('recordado %(n)s vez/veces, el último el %(f)s', n=d.recordatorios, f=d.recordado_en[:10]) }}{% endif %}</p>
   <div class="ds-fila">
     <a class="btn btn-ghost" href="{{ url_for('documentos_firma.pdf', cliente_id=c.id, documento_id=d.id) }}" target="_blank" rel="noopener">{{ _('Ver PDF') }}</a>
     {% if d.estado == 'borrador' %}
@@ -29,6 +29,7 @@
     {% endif %}
     {% if d.estado == 'enviado' %}
       <form method="post" action="{{ url_for('documentos_firma.actualizar', cliente_id=c.id, documento_id=d.id) }}">{{ boton(_('Comprobar si está firmado'), 'fantasma', tipo='submit') }}</form>
+      {% if d.recordatorios < max_recordatorios %}<form method="post" action="{{ url_for('documentos_firma.recordar', cliente_id=c.id, documento_id=d.id) }}">{{ boton(_('Recordar la firma'), 'fantasma', tipo='submit') }}</form>{% endif %}
     {% endif %}
     {% if d.estado in ('borrador', 'enviado', 'rechazado') %}
       <form method="post" action="{{ url_for('documentos_firma.cancelar', cliente_id=c.id, documento_id=d.id) }}">{{ boton(_('Cancelar'), 'peligro', tipo='submit', confirmar=_('¿Cancelar este documento?')) }}</form>

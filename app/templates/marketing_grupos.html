@@ -28,6 +28,8 @@
     {% call campo(_('Origen'), 'g-origen') %}<input type="text" id="g-origen" name="origen" maxlength="100">{% endcall %}
     {% call campo(_('Idioma'), 'g-idioma') %}<input type="text" id="g-idioma" name="idioma" maxlength="10" placeholder="es">{% endcall %}
     {% call campo(_('Etapa del prospecto'), 'g-etapa') %}<select id="g-etapa" name="etapa"><option value="">{{ _('Cualquiera') }}</option>{% for e in etapas %}{% if e.tipo == 'abierta' %}<option value="{{ e.clave }}">{{ e.nombre }}</option>{% endif %}{% endfor %}</select>{% endcall %}
+    {% call campo(_('Con un modelo fiscal por presentar'), 'g-venc', ayuda=_('Para avisos como «se acerca el 303». Vacío = sin este filtro. Solo clientes con Guilda Fiscal.')) %}<input type="text" id="g-venc" name="vencimiento_modelo" maxlength="6" placeholder="303">{% endcall %}
+    {% call campo(_('Días de antelación'), 'g-venc-dias') %}<input type="number" id="g-venc-dias" name="vencimiento_dias" min="1" max="365" value="30">{% endcall %}
     <label>{{ _('Responsable') }} {{ selector_equipo('responsable_id', equipo, none, vacio=_('Cualquiera')) }}</label>
     <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Crear grupo') }}</button></div>
   </form>

@@ -94,6 +94,7 @@ CREATE INDEX IF NOT EXISTS idx_facturas_contables ON facturas_contables (tenant_
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_lineas ON facturas_contables_lineas (factura_id);
 CREATE INDEX IF NOT EXISTS idx_fichajes_tenant_marca ON fichajes (tenant_id, marca_tiempo);
 CREATE INDEX IF NOT EXISTS idx_fichajes_usuario_marca ON fichajes (usuario_id, marca_tiempo);
+CREATE INDEX IF NOT EXISTS idx_fiscal_acciones_masivas ON fiscal_acciones_masivas (tenant_id, creada_en);
 CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_factura ON fiscal_apuntes (tenant_id, factura_id);
 CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_periodo ON fiscal_apuntes (tenant_id, cliente_fiscal_id, libro, fecha_expedicion);
 CREATE INDEX IF NOT EXISTS idx_fiscal_apuntes_recurrentes ON fiscal_apuntes_recurrentes (tenant_id, cliente_fiscal_id, activa);
@@ -102,6 +103,9 @@ CREATE INDEX IF NOT EXISTS idx_fiscal_declaraciones ON fiscal_declaraciones (ten
 CREATE INDEX IF NOT EXISTS idx_fiscal_instantaneas ON fiscal_instantaneas (tenant_id, cliente_fiscal_id, modelo, ejercicio, periodo);
 CREATE INDEX IF NOT EXISTS idx_fiscal_perfiles_cliente ON fiscal_perfiles (tenant_id, cliente_fiscal_id, vigente_hasta);
 CREATE INDEX IF NOT EXISTS idx_fiscal_relaciones_hasta ON fiscal_relaciones (tenant_id, hasta_cliente_id);
+CREATE INDEX IF NOT EXISTS idx_honorarios_aplicados ON honorarios_aplicados (tenant_id, vencimiento_id);
+CREATE INDEX IF NOT EXISTS idx_honorarios_aplicados_cliente ON honorarios_aplicados (tenant_id, cliente_fiscal_id, estado);
+CREATE INDEX IF NOT EXISTS idx_honorarios_reglas ON honorarios_reglas (tenant_id, prioridad);
 CREATE INDEX IF NOT EXISTS idx_ia_atajos_usuario ON ia_atajos (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_ia_conversaciones_usuario ON ia_conversaciones (usuario_id, actualizada_en);
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_conversacion ON ia_mensajes (conversacion_id);

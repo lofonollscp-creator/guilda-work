@@ -194,3 +194,83 @@ def test_el_barrido_de_respaldo_repasa_los_pendientes_de_todos_los_despachos(mon
     d2 = df.crear_borrador(t2, u2, c2, "hoja_encargo", _datos("hoja_encargo"), hoy=HOY); df.enviar(t2, u2, c2, d2)
     assert df.sincronizar_pendientes() == {"revisados": 2, "firmados": 1, "rechazados": 1}
     assert df.obtener(t, c, d1)["estado"] == "rechazado" and df.obtener(t2, c2, d2)["estado"] == "firmado" and sorted(a.split(":")[0] for a in avisos) == ["Firmado", "Rechazado"]
+
+
+def _enviado(monkeypatch, t, u, c):
+    monkeypatch.setattr(documenso, "crear_documento", lambda *a, **k: {"id": "env_r"})
+    monkeypatch.setattr(documenso, "enviar_a_firma", lambda *a: {})
+    did = df.crear_borrador(t, u, c, "consentimiento_comercial", _datos("consentimiento_comercial"), lugar="Barcelona", hoy=HOY)
+    df.enviar(t, u, c, did)
+    return did
+
+
+def test_el_recordatorio_reenvia_el_aviso_y_se_agota_a_las_tres_veces(monkeypatch):
+    t, u, c = _despacho()
+    did = _enviado(monkeypatch, t, u, c)
+    estado, reenvios = {"v": "PENDING"}, []
+    monkeypatch.setattr(documenso, "estado_documento", lambda clave, ident: estado["v"])
+    monkeypatch.setattr(documenso, "reenviar_a_firma", lambda clave, ident: reenvios.append(ident) or 1)
+    assert df.recordar(t, u, c, did) == "recordado" and reenvios == ["env_r"]
+    d = df.obtener(t, c, did)
+    assert d["recordatorios"] == 1 and d["recordado_en"]
+    df.recordar(t, u, c, did); df.recordar(t, u, c, did)
+    with pytest.raises(df.ErrorDocumento, match="3 veces"):
+        df.recordar(t, u, c, did)
+    assert len(reenvios) == 3
+
+
+def test_si_ya_estaba_firmado_no_se_molesta_al_cliente(monkeypatch):
+    t, u, c = _despacho()
+    did = _enviado(monkeypatch, t, u, c)
+    monkeypatch.setattr(documenso, "estado_documento", lambda clave, ident: "COMPLETED")
+    monkeypatch.setattr(documenso, "descargar_firmado", lambda clave, ident: b"%PDF-firmado")
+    monkeypatch.setattr(documenso, "reenviar_a_firma", lambda *a: pytest.fail("no debe reenviar"))
+    assert df.recordar(t, u, c, did) == "firmado"
+    with pytest.raises(df.ErrorDocumento, match="pendiente de firma"):
+        df.recordar(t, u, c, did)
+
+
+def test_el_aviso_automatico_solo_corre_si_la_direccion_lo_pide_y_respeta_los_plazos(monkeypatch):
+    from datetime import datetime, timedelta
+    t, u, c = _despacho()
+    db.asignar_supervisor_tenant(u, True)
+    did = _enviado(monkeypatch, t, u, c)
+    monkeypatch.setattr(documenso, "estado_documento", lambda clave, ident: "PENDING")
+    reenvios = []
+    monkeypatch.setattr(documenso, "reenviar_a_firma", lambda clave, ident: reenvios.append(ident) or 1)
+    d = df.obtener(t, c, did)
+    enviado = datetime.fromisoformat(d["enviado_en"])
+    assert df.recordatorio_dias(t) == 0 and not df.toca_recordar(d, 0)
+    assert df.recordar_pendientes(enviado + timedelta(days=30))["recordados"] == 0 and reenvios == []        # desactivado
+    with pytest.raises(df.ErrorDocumento):
+        df.fijar_recordatorio_dias(t, u, 99)
+    df.fijar_recordatorio_dias(t, u, 3)
+    assert df.recordatorio_dias(t) == 3
+    assert df.toca_recordar(d, 3, enviado + timedelta(days=3)) and not df.toca_recordar(d, 3, enviado + timedelta(days=2))
+    assert df.recordar_pendientes(enviado + timedelta(days=2))["recordados"] == 0
+    assert df.recordar_pendientes(enviado + timedelta(days=4))["recordados"] == 1 and reenvios == ["env_r"]
+    avisado = datetime.fromisoformat(df.obtener(t, c, did)["recordado_en"])
+    assert df.recordar_pendientes(avisado + timedelta(days=1))["recordados"] == 0                              # recién avisado: hasta pasar otros 3 días
+    assert df.recordar_pendientes(avisado + timedelta(days=3))["recordados"] == 1
+    otro = db.crear_usuario_vinculado_a_kratos("normal@ejemplo.com", "k-normal"); db.asignar_tenant(otro, t)
+    with pytest.raises(df.ErrorDocumento):
+        df.fijar_recordatorio_dias(t, otro, 5)                                                                 # solo la dirección
+
+
+def test_reenviar_a_firma_solo_avisa_a_quien_no_ha_firmado(monkeypatch):
+    llamadas = []
+
+    def falso(endpoint, clave, metodo="GET", cuerpo=None):
+        llamadas.append((metodo, endpoint, cuerpo))
+        if metodo == "GET":
+            return 200, {"recipients": [{"id": 1, "role": "SIGNER", "signingStatus": "SIGNED"}, {"id": 2, "role": "SIGNER", "signingStatus": "NOT_SIGNED"}, {"id": 3, "role": "CC", "signingStatus": "NOT_SIGNED"}]}
+        return 200, {"success": True}
+    monkeypatch.setattr(documenso, "_peticion_json", falso)
+    assert documenso.reenviar_a_firma("k", "env_1") == 1
+    assert llamadas[1] == ("POST", "/envelope/redistribute", {"envelopeId": "env_1", "recipients": [2]})
+    llamadas.clear()
+    monkeypatch.setattr(documenso, "_peticion_json", lambda *a, **k: (200, {"recipients": [{"id": 1, "role": "SIGNER", "signingStatus": "SIGNED"}]}))
+    assert documenso.reenviar_a_firma("k", "env_1") == 0
+    monkeypatch.setattr(documenso, "_peticion_json", lambda *a, **k: (500, {"message": "fallo"}))
+    with pytest.raises(documenso.ErrorDocumenso):
+        documenso.reenviar_a_firma("k", "env_1")

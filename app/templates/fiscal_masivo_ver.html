@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import boton, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Cambio en lote') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set estados = {'propuesta': (_('Pendiente de confirmar'), 'aviso'), 'aplicada': (_('Aplicado'), 'exito'), 'deshecha': (_('Deshecho'), 'neutro'), 'cancelada': (_('Cancelado'), 'neutro')} %}
+{% set nombres = {'reasignar': _('Cambiar de responsable'), 'posponer': _('Posponer la fecha de seguimiento')} %}
+<header class="page-header">
+  <div><h1>{{ nombres[a.tipo] }}</h1><p class="subtitle">{{ a.descripcion }} · {{ chip(estados[a.estado][0], estados[a.estado][1]) }}</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.vencimientos') }}">{{ _('Volver a los vencimientos') }}</a>
+</header>
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  {% if a.estado == 'propuesta' %}
+    <h2>{{ _('¿Aplicar este cambio?') }}</h2>
+    <p>{{ _('%(n)s vencimientos cambiarán · %(o)s se omiten · se podrá deshacer durante 90 días.', n=a.afectados|length, o=a.omitidos|length) }}</p>
+    {% if a.tipo == 'posponer' %}<p>{{ _('Se pospone %(d)s días la fecha de seguimiento. Motivo: %(m)s', d=a.parametros.dias, m=a.parametros.motivo) }}</p>{% endif %}
+    {% if not a.se_puede_aplicar %}<p class="muted">{{ _('Esta propuesta caducó: vuelve a proponerla desde los vencimientos.') }}</p>
+    {% else %}
+    <form method="post" action="{{ url_for('fiscal_masivo.aplicar', accion_id=a.id) }}" class="ds-fila">{{ boton(_('Aplicar a %(n)s vencimientos', n=a.afectados|length), 'primario', tipo='submit') }}</form>
+    <form method="post" action="{{ url_for('fiscal_masivo.cancelar', accion_id=a.id) }}">{{ boton(_('Cancelar'), 'fantasma', tipo='submit') }}</form>
+    {% endif %}
+  {% elif a.estado == 'aplicada' %}
+    <h2>{{ _('Cambio aplicado') }}</h2>
+    <p>{{ _('%(n)s vencimientos cambiados · %(o)s omitidos.', n=a.afectados|length, o=a.omitidos|length) }}
+      {% if a.se_puede_deshacer %}{{ _('Puedes deshacerlo hasta el %(f)s.', f=a.caduca_en[:10]) }}{% else %}{{ _('Ya no se puede deshacer.') }}{% endif %}</p>
+    {% if a.se_puede_deshacer %}
+    <form method="post" action="{{ url_for('fiscal_masivo.deshacer', accion_id=a.id) }}">{{ boton(_('Deshacer este cambio'), 'peligro', tipo='submit', confirmar=_('Se devolverá cada vencimiento a como estaba, salvo los que se hayan vuelto a cambiar. ¿Deshacer?')) }}</form>
+    {% endif %}
+  {% elif a.estado == 'deshecha' %}
+    <h2>{{ _('Cambio deshecho') }}</h2><p class="muted">{{ _('Los vencimientos volvieron a su estado anterior, salvo los que se habían vuelto a cambiar.') }}</p>
+  {% else %}<h2>{{ _('Propuesta cancelada') }}</h2>{% endif %}
+</section>
+<section class="dash-panel">
+  <h2>{{ _('Vencimientos que cambian') }} ({{ a.afectados|length }})</h2>
+  <ul class="log-list">{% for x in a.afectados[:50] %}<li class="log-item"><span class="log-text">{{ x.titulo }}</span></li>{% endfor %}</ul>
+  {% if a.afectados|length > 50 %}<p class="muted">{{ _('… y %(n)s más.', n=a.afectados|length - 50) }}</p>{% endif %}
+  {% if a.omitidos %}
+  <h2>{{ _('Omitidos') }} ({{ a.omitidos|length }})</h2>
+  <ul class="log-list">{% for x in a.omitidos[:50] %}<li class="log-item"><span class="log-text">{{ x.titulo }} <span class="muted">· {{ x.motivo }}</span></span></li>{% endfor %}</ul>
+  {% endif %}
+</section>
+{% endblock %}

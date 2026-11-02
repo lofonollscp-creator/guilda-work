@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_ds/componentes.html" import chip, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ _('Documentos de firma') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -19,5 +20,19 @@
     </li>
     {% endfor %}
   </ul>
+</section>
+{{ aviso_error(error) }}
+{% if aviso %}<div class="ds-estado-ok" role="status">{{ _('Guardado.') }}</div>{% endif %}
+<section class="dash-panel">
+  <h2>{{ _('Recordar a quien no firma') }}</h2>
+  <p class="muted">{{ _('Si un cliente no firma en el plazo que indiques, Documenso le reenvía el aviso de firma. Máximo %(n)s veces por documento; después, que lo gestione una persona. Pon 0 para no recordar.', n=max_recordatorios) }}</p>
+  {% if puede_editar %}
+  <form method="post" action="{{ url_for('documentos_firma.recordatorio') }}" class="ds-fila ds-envolver">
+    <label for="dias-recordatorio">{{ _('Recordar a los') }}</label>
+    <input type="number" id="dias-recordatorio" name="dias" min="0" max="{{ max_dias }}" value="{{ recordatorio_dias }}">
+    <span>{{ _('días sin firmar') }}</span>
+    <button type="submit" class="btn btn-primary btn-sm">{{ _('Guardar') }}</button>
+  </form>
+  {% else %}<p>{{ _('Ahora mismo: %(n)s días.', n=recordatorio_dias) if recordatorio_dias else _('Ahora mismo no se recuerda automáticamente.') }}</p>{% endif %}
 </section>
 {% endblock %}

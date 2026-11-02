@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, campo, estado_vacio, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Honorarios por tramos') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set formas_nombre = {'persona_fisica': _('Persona física'), 'sociedad': _('Sociedad'), 'comunidad_bienes': _('Comunidad de bienes'), 'otra': _('Otra')} %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Honorarios por tramos') }}</h1>
+    <p class="subtitle">{{ _('Reglas que proponen cuánto cobrar por presentar cada modelo. Aplica la primera regla activa que encaja; nada se cobra hasta que la dirección confirma.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cartera') }}">‹ {{ _('Cartera') }}</a>
+</header>
+{{ aviso_error(error) }}
+<p>{{ sin_validar(_('Los importes son los que fijas tú: la herramienta calcula, pero la tarifa es una decisión del despacho')) }}</p>
+
+<section class="dash-panel">
+  <h2>{{ _('Reglas') }}</h2>
+  {% if reglas %}
+  <div class="tabla-scroll"><table class="tabla">
+    <thead><tr><th>{{ _('Prioridad') }}</th><th>{{ _('Regla') }}</th><th>{{ _('Modelo') }}</th><th>{{ _('Forma jurídica') }}</th><th>{{ _('Cálculo') }}</th><th></th></tr></thead>
+    <tbody>
+    {% for r in reglas %}
+      <tr>
+        <td>{{ r.prioridad }}</td>
+        <td><strong>{{ r.nombre }}</strong> {% if not r.activa %}{{ chip(_('Desactivada')) }}{% endif %}</td>
+        <td>{{ r.modelo or _('Todos') }}</td>
+        <td>{{ formas_nombre.get(r.forma_juridica, _('Todas')) }}</td>
+        <td>
+          {% if r.calculo == 'fijo' %}{{ _('Fijo') }}: {{ euros(r.importe_centimos) }}
+          {% elif r.calculo == 'por_apunte' %}{{ euros(r.importe_centimos) }} + {{ euros(r.unidad_centimos) }} {{ _('por apunte') }}{% if r.minimo_centimos %} ({{ _('mínimo') }} {{ euros(r.minimo_centimos) }}){% endif %}
+          {% else %}{% for t in r.tramos %}<span class="muted">{{ _('hasta %(n)s', n=t.hasta) if t.hasta is not none else _('resto') }}:</span> {{ euros(t.importe_centimos) }}{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}
+        </td>
+        <td><div class="ds-fila">
+          {% if puede_gestionar %}
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('honorarios.inicio', editar=r.id) }}#formulario">{{ _('Editar') }}</a>
+          <form method="post" action="{{ url_for('honorarios.activar_regla', regla_id=r.id) }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Desactivar') if r.activa else _('Activar') }}</button></form>
+          <form method="post" action="{{ url_for('honorarios.eliminar_regla', regla_id=r.id) }}"><button type="submit" class="btn btn-ghost btn-sm" data-confirmar-envio="{{ _('¿Quitar esta regla? Los honorarios ya confirmados conservan su cálculo.') }}">{{ _('Quitar') }}</button></form>
+          {% endif %}
+        </div></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}{{ estado_vacio(_('Aún no hay reglas'), _('Crea la primera abajo: por ejemplo, el 303 de una sociedad por tramos según el número de apuntes.')) }}{% endif %}
+</section>
+
+{% if puede_gestionar %}
+<section class="dash-panel" id="formulario">
+  <h2>{{ _('Editar regla') if regla else _('Nueva regla') }}</h2>
+  <form method="post" action="{{ url_for('honorarios.guardar_regla') }}" class="edit-form ds-max-640">
+    {% if regla %}<input type="hidden" name="regla_id" value="{{ regla.id }}">{% endif %}
+    {% call campo(_('Nombre'), 'h-nombre', requerido=True) %}<input type="text" id="h-nombre" name="nombre" value="{{ regla.nombre if regla else '' }}" maxlength="120" required>{% endcall %}
+    {% call campo(_('Prioridad'), 'h-prioridad', ayuda=_('El número más bajo se mira primero.')) %}<input type="number" id="h-prioridad" name="prioridad" min="1" max="9999" value="{{ regla.prioridad if regla else 100 }}">{% endcall %}
+    {% call campo(_('Modelo'), 'h-modelo', ayuda=_('Vacío = todos los modelos. Ejemplo: 303.')) %}<input type="text" id="h-modelo" name="modelo" value="{{ regla.modelo if regla else '' }}" maxlength="6">{% endcall %}
+    {% call campo(_('Forma jurídica'), 'h-forma') %}
+      <select id="h-forma" name="forma_juridica"><option value="">{{ _('Todas') }}</option>{% for f in formas %}<option value="{{ f }}" {{ 'selected' if regla and regla.forma_juridica == f }}>{{ formas_nombre[f] }}</option>{% endfor %}</select>{% endcall %}
+    {% call campo(_('Cómo se calcula'), 'h-calculo') %}
+      <select id="h-calculo" name="calculo">{% set etiquetas_calculo = {'fijo': _('Importe fijo'), 'por_apunte': _('Base más importe por apunte'), 'tramos': _('Por tramos según el número de apuntes')} %}{% for k in calculos %}<option value="{{ k }}" {{ 'selected' if regla and regla.calculo == k }}>{{ etiquetas_calculo[k] }}</option>{% endfor %}</select>{% endcall %}
+    {% call campo(_('Importe fijo o base (€)'), 'h-importe', ayuda=_('Para «fijo» es el precio; para «por apunte», la base que se suma.')) %}<input type="text" id="h-importe" name="importe" inputmode="decimal" value="{{ euros(regla.importe_centimos)[:-2] if regla and regla.calculo != 'tramos' else '' }}">{% endcall %}
+    {% call campo(_('Importe por apunte (€)'), 'h-unidad') %}<input type="text" id="h-unidad" name="unidad" inputmode="decimal" value="{{ euros(regla.unidad_centimos)[:-2] if regla and regla.calculo == 'por_apunte' else '' }}">{% endcall %}
+    {% call campo(_('Mínimo (€)'), 'h-minimo') %}<input type="text" id="h-minimo" name="minimo" inputmode="decimal" value="{{ euros(regla.minimo_centimos)[:-2] if regla and regla.calculo == 'por_apunte' and regla.minimo_centimos else '' }}">{% endcall %}
+    {% call campo(_('Tramos'), 'h-tramos', ayuda=_('Una línea por tramo, de menor a mayor: «hasta 10: 60,00». La última: «resto: 45,00».')) %}<textarea id="h-tramos" name="tramos" rows="5">{{ tramos_texto }}</textarea>{% endcall %}
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>{% if regla %}<a class="btn btn-ghost" href="{{ url_for('honorarios.inicio') }}">{{ _('Cancelar') }}</a>{% endif %}</div>
+  </form>
+</section>
+{% endif %}
+
+<section class="dash-panel">
+  <h2>{{ _('Probar las reglas') }}</h2>
+  <form method="get" class="ds-fila ds-envolver">
+    <input type="text" name="sim_modelo" value="{{ sim.get('sim_modelo', '303') }}" placeholder="{{ _('Modelo') }}" aria-label="{{ _('Modelo') }}" maxlength="6" size="6">
+    <select name="sim_forma" aria-label="{{ _('Forma jurídica') }}"><option value="">{{ _('Cualquiera') }}</option>{% for f in formas %}<option value="{{ f }}" {{ 'selected' if sim.get('sim_forma') == f }}>{{ formas_nombre[f] }}</option>{% endfor %}</select>
+    <input type="number" name="sim_apuntes" min="0" value="{{ sim.get('sim_apuntes', 0) }}" aria-label="{{ _('Apuntes') }}">
+    <button type="submit" class="btn btn-ghost">{{ _('Calcular') }}</button>
+  </form>
+  {% if simulacion %}
+    <p>{% if simulacion.importe_centimos is not none %}<strong>{{ euros(simulacion.importe_centimos) }}</strong> · {{ _('regla') }} «{{ simulacion.regla.nombre }}»{% else %}{{ simulacion.motivo }}{% endif %}</p>
+  {% endif %}
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Presentados sin honorario') }}</h2>
+  {% if pendientes %}
+  <div class="tabla-scroll"><table class="tabla">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Modelo') }}</th><th>{{ _('Periodo') }}</th><th>{{ _('Apuntes') }}</th><th>{{ _('Propuesta') }}</th><th></th></tr></thead>
+    <tbody>
+    {% for p in pendientes %}
+      <tr>
+        <td>{{ p.vencimiento.cliente }}</td><td>{{ p.vencimiento.modelo }}</td><td>{{ p.vencimiento.periodo }}</td>
+        <td>{{ p.apuntes if p.apuntes is not none else '—' }}</td>
+        <td>{% if p.importe_centimos is not none %}<strong>{{ euros(p.importe_centimos) }}</strong> <span class="muted">{{ p.regla.nombre }}</span>{% else %}<span class="muted">{{ p.motivo }}</span>{% endif %}</td>
+        <td>{% if puede_gestionar %}
+          <form method="post" action="{{ url_for('honorarios.confirmar', vencimiento_id=p.vencimiento.id) }}" class="ds-fila">
+            <input type="text" name="importe" inputmode="decimal" placeholder="{{ _('Otro importe') }}" aria-label="{{ _('Otro importe') }}" size="9">
+            <button type="submit" class="btn btn-primary btn-sm">{{ _('Confirmar') }}</button>
+          </form>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="muted">{{ _('Si dejas «Otro importe» vacío se confirma la propuesta; si lo rellenas, queda ese importe y se conserva el cálculo.') }}</p>
+  {% else %}{{ estado_vacio(_('Nada pendiente'), _('Cuando se presente un vencimiento aparecerá aquí con su propuesta.')) }}{% endif %}
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Honorarios confirmados') }}</h2>
+  {% if aplicados %}
+  <div class="tabla-scroll"><table class="tabla">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
+    <tbody>
+    {% for a in aplicados %}
+      <tr>
+        <td>{{ a.cliente }}</td>
+        <td>{{ a.concepto }} <span class="muted">· {{ a.regla_nombre }}{% if a.desglose.get('ajustado_a_mano') %} · {{ _('ajustado a mano') }}{% endif %}</span></td>
+        <td>{{ euros(a.importe_centimos) }}</td>
+        <td>{% if a.estado == 'facturado' %}{{ chip(_('Facturado'), 'exito') }} <span class="muted">{{ a.referencia_factura }}</span>{% elif a.estado == 'anulado' %}{{ chip(_('Anulado')) }} <span class="muted">{{ a.anulado_motivo }}</span>{% else %}{{ chip(_('Confirmado'), 'aviso') }}{% endif %}</td>
+        <td><div class="ds-fila">
+          {% if puede_gestionar and a.estado == 'confirmado' %}
+          <form method="post" action="{{ url_for('honorarios.facturar', aplicado_id=a.id) }}" class="ds-fila"><input type="text" name="referencia" placeholder="{{ _('Nº de factura') }}" aria-label="{{ _('Nº de factura') }}" maxlength="60" size="12" required><button type="submit" class="btn btn-ghost btn-sm">{{ _('Marcar facturado') }}</button></form>
+          {% endif %}
+          {% if puede_gestionar and a.estado != 'anulado' %}
+          <form method="post" action="{{ url_for('honorarios.anular', aplicado_id=a.id) }}" class="ds-fila"><input type="text" name="motivo" placeholder="{{ _('Motivo') }}" aria-label="{{ _('Motivo') }}" maxlength="300" size="14" required><button type="submit" class="btn btn-ghost btn-sm">{{ _('Anular') }}</button></form>
+          {% endif %}
+        </div></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}{{ estado_vacio(_('Aún no hay honorarios confirmados'), _('Aparecerán aquí al confirmar la propuesta de un vencimiento.')) }}{% endif %}
+</section>
+{% endblock %}

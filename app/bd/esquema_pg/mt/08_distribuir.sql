@@ -119,6 +119,7 @@ SELECT create_distributed_table('fichaje_avisos', 'tenant_id', colocate_with => 
 SELECT create_distributed_table('fichaje_avisos_turno', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fichaje_datos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fichajes', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('fiscal_acciones_masivas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_apuntes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_apuntes_recurrentes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_artefactos', 'tenant_id', colocate_with => 'abogados_ajustes');
@@ -128,6 +129,8 @@ SELECT create_distributed_table('fiscal_declaraciones', 'tenant_id', colocate_wi
 SELECT create_distributed_table('fiscal_instantaneas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_perfiles', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fiscal_relaciones', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('honorarios_aplicados', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('honorarios_reglas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_adjuntos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_atajos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_consumo', 'tenant_id', colocate_with => 'abogados_ajustes');

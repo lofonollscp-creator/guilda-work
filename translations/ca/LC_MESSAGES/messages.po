@@ -19194,3 +19194,219 @@ msgstr "Treure aquest canal? S'esborra la clau desada."
 
 msgid "¿Volver a permitir envíos a este correo?"
 msgstr "Tornar a permetre enviaments a aquest correu?"
+
+msgid "%(n)s vencimientos cambiados · %(o)s omitidos."
+msgstr "%(n)s venciments canviats · %(o)s omesos."
+
+msgid "%(n)s vencimientos cambiarán · %(o)s se omiten · se podrá deshacer durante 90 días."
+msgstr "%(n)s venciments canviaran · %(o)s s'ometen · es podrà desfer durant 90 dies."
+
+msgid "Ahora mismo no se recuerda automáticamente."
+msgstr "Ara mateix no es recorda automàticament."
+
+msgid "Ahora mismo: %(n)s días."
+msgstr "Ara mateix: %(n)s dies."
+
+msgid "Aparecerán aquí al confirmar la propuesta de un vencimiento."
+msgstr "Apareixeran aquí en confirmar la proposta d'un venciment."
+
+msgid "Aplicar a %(n)s vencimientos"
+msgstr "Aplicar a %(n)s venciments"
+
+msgid "Aviso de firma reenviado."
+msgstr "Avís de signatura reenviat."
+
+msgid "Aún no hay honorarios confirmados"
+msgstr "Encara no hi ha honoraris confirmats"
+
+msgid "Aún no hay reglas"
+msgstr "Encara no hi ha regles"
+
+msgid "Base más importe por apunte"
+msgstr "Base més import per apunt"
+
+msgid "Cambiar varios a la vez"
+msgstr "Canviar-ne diversos alhora"
+
+msgid "Con un modelo fiscal por presentar"
+msgstr "Amb un model fiscal per presentar"
+
+msgid "Confirmado"
+msgstr "Confirmat"
+
+msgid "Confirmar"
+msgstr "Confirmar"
+
+msgid "Crea la primera abajo: por ejemplo, el 303 de una sociedad por tramos según el número de apuntes."
+msgstr "Crea la primera a sota: per exemple, el 303 d'una societat per trams segons el nombre d'apunts."
+
+msgid "Cuando se presente un vencimiento aparecerá aquí con su propuesta."
+msgstr "Quan es presenti un venciment apareixerà aquí amb la seva proposta."
+
+msgid "Cálculo"
+msgstr "Càlcul"
+
+msgid "Cómo se calcula"
+msgstr "Com es calcula"
+
+msgid "Desactivada"
+msgstr "Desactivada"
+
+msgid "Desactivar"
+msgstr "Desactivar"
+
+msgid "Días de antelación"
+msgstr "Dies d'antelació"
+
+msgid "Editar regla"
+msgstr "Editar regla"
+
+msgid "El número más bajo se mira primero."
+msgstr "El número més baix es mira primer."
+
+msgid "Esta propuesta caducó: vuelve a proponerla desde los vencimientos."
+msgstr "Aquesta proposta ha caducat: torna a proposar-la des dels venciments."
+
+msgid "Fijo"
+msgstr "Fix"
+
+msgid "Honorarios confirmados"
+msgstr "Honoraris confirmats"
+
+msgid "Honorarios por tramos"
+msgstr "Honoraris per trams"
+
+msgid "Importe fijo"
+msgstr "Import fix"
+
+msgid "Importe fijo o base (€)"
+msgstr "Import fix o base (€)"
+
+msgid "Importe por apunte (€)"
+msgstr "Import per apunt (€)"
+
+msgid "Lo que se ha cambiado de golpe en los vencimientos fiscales, con la opción de deshacerlo durante 90 días."
+msgstr "El que s'ha canviat de cop als venciments fiscals, amb la opció de desfer-ho durant 90 dies."
+
+msgid "Los importes son los que fijas tú: la herramienta calcula, pero la tarifa es una decisión del despacho"
+msgstr "Els imports són els que fixes tu: l'eina calcula, però la tarifa és una decisió del despatx"
+
+msgid "Los vencimientos volvieron a su estado anterior, salvo los que se habían vuelto a cambiar."
+msgstr "Els venciments van tornar al seu estat anterior, tret dels que s'havien tornat a canviar."
+
+msgid "Marca los vencimientos, elige qué hacer y revisa el cambio antes de aplicarlo: se puede deshacer durante 90 días."
+msgstr "Marca els venciments, tria què fer i revisa el canvi abans d'aplicar-lo: es pot desfer durant 90 dies."
+
+msgid "Marca varios vencimientos en el panel para cambiarlos de una vez."
+msgstr "Marca diversos venciments al tauler per canviar-los alhora."
+
+msgid "Marcar facturado"
+msgstr "Marcar facturat"
+
+msgid "Marcar todos"
+msgstr "Marcar-los tots"
+
+msgid "Motivo (al posponer)"
+msgstr "Motiu (en ajornar)"
+
+msgid "Nada pendiente"
+msgstr "Res pendent"
+
+msgid "Nº de factura"
+msgstr "Núm. de factura"
+
+msgid "Omitidos"
+msgstr "Omesos"
+
+msgid "Otro importe"
+msgstr "Un altre import"
+
+msgid "Para avisos como «se acerca el 303». Vacío = sin este filtro. Solo clientes con Guilda Fiscal."
+msgstr "Per a avisos com «s'acosta el 303». Buit = sense aquest filtre. Només clients amb Guilda Fiscal."
+
+msgid "Para «fijo» es el precio; para «por apunte», la base que se suma."
+msgstr "Per a «fix» és el preu; per a «per apunt», la base que se suma."
+
+msgid "Plantilla de aviso de vencimiento fiscal"
+msgstr "Plantilla d'avís de venciment fiscal"
+
+msgid "Por tramos según el número de apuntes"
+msgstr "Per trams segons el nombre d'apunts"
+
+msgid "Posponer la fecha de seguimiento"
+msgstr "Ajornar la data de seguiment"
+
+msgid "Posponer mueve la fecha que sigue el despacho, no el plazo legal de presentación."
+msgstr "Ajornar mou la data que segueix el despatx, no el termini legal de presentació."
+
+msgid "Presentados sin honorario"
+msgstr "Presentats sense honorari"
+
+msgid "Probar las reglas"
+msgstr "Provar les regles"
+
+msgid "Propuesta"
+msgstr "Proposta"
+
+msgid "Recordar a los"
+msgstr "Recordar als"
+
+msgid "Recordar a quien no firma"
+msgstr "Recordar a qui no signa"
+
+msgid "Recordar la firma"
+msgstr "Recordar la signatura"
+
+msgid "Reglas que proponen cuánto cobrar por presentar cada modelo. Aplica la primera regla activa que encaja; nada se cobra hasta que la dirección confirma."
+msgstr "Regles que proposen quant cobrar per presentar cada model. S'aplica la primera regla activa que encaixa; no es cobra res fins que la direcció confirma."
+
+msgid "Se devolverá cada vencimiento a como estaba, salvo los que se hayan vuelto a cambiar. ¿Deshacer?"
+msgstr "Es tornarà cada venciment a com estava, tret dels que s'hagin tornat a canviar. Desfer?"
+
+msgid "Se pospone %(d)s días la fecha de seguimiento. Motivo: %(m)s"
+msgstr "S'ajorna %(d)s dies la data de seguiment. Motiu: %(m)s"
+
+msgid "Si dejas «Otro importe» vacío se confirma la propuesta; si lo rellenas, queda ese importe y se conserva el cálculo."
+msgstr "Si deixes «Un altre import» buit es confirma la proposta; si l'omples, queda aquest import i es conserva el càlcul."
+
+msgid "Si un cliente no firma en el plazo que indiques, Documenso le reenvía el aviso de firma. Máximo %(n)s veces por documento; después, que lo gestione una persona. Pon 0 para no recordar."
+msgstr "Si un client no signa en el termini que indiquis, Documenso li reenvia l'avís de signatura. Màxim %(n)s vegades per document; després, que ho gestioni una persona. Posa 0 per no recordar."
+
+msgid "Tramos"
+msgstr "Trams"
+
+msgid "Una línea por tramo, de menor a mayor: «hasta 10: 60,00». La última: «resto: 45,00»."
+msgstr "Una línia per tram, de menor a major: «hasta 10: 60,00». L'última: «resto: 45,00»."
+
+msgid "Vacío = todos los modelos. Ejemplo: 303."
+msgstr "Buit = tots els models. Exemple: 303."
+
+msgid "Vencimientos que cambian"
+msgstr "Venciments que canvien"
+
+msgid "ajustado a mano"
+msgstr "ajustat a mà"
+
+msgid "días sin firmar"
+msgstr "dies sense signar"
+
+msgid "hasta %(n)s"
+msgstr "fins a %(n)s"
+
+msgid "mínimo"
+msgstr "mínim"
+
+msgid "por apunte"
+msgstr "per apunt"
+
+msgid "recordado %(n)s vez/veces, el último el %(f)s"
+msgstr "recordat %(n)s vegada/vegades, l'últim el %(f)s"
+
+msgid "regla"
+msgstr "regla"
+
+msgid "resto"
+msgstr "resta"
+
+msgid "¿Quitar esta regla? Los honorarios ya confirmados conservan su cálculo."
+msgstr "Treure aquesta regla? Els honoraris ja confirmats conserven el seu càlcul."

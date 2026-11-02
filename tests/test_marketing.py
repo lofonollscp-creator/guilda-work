@@ -425,3 +425,29 @@ def test_mailchimp_devuelve_bajas_y_rebotes_por_separado(d):
     mk.procesar_pendientes(proveedores={"mailchimp": prov}, ahora=datetime.now() + timedelta(seconds=1))
     s = mk.sincronizar_proveedores(proveedores={"mailchimp": prov})
     assert s["bajas"] == 1 and s["rebotes"] == 1 and mk.obtener_contacto(d.t, "b@x.example")["estado"] == "baja" and mk.obtener_contacto(d.t, "r@x.example")["estado"] == "rebotado"
+
+
+def test_un_grupo_puede_apuntar_a_los_clientes_con_un_modelo_por_presentar(d):
+    from datetime import date
+    from app.db_fiscal import crear_cliente_fiscal, crear_vencimiento_fiscal, marcar_presentado_vencimiento_fiscal
+    t, u = d.t, d.ana
+    ids = {}
+    for nombre, email in (("Con 303", "con303@ejemplo.com"), ("Sin 303", "sin303@ejemplo.com"), ("Presentado", "ya@ejemplo.com"), ("Lejano", "lejos@ejemplo.com")):
+        cid = nucleo.crear_cliente(t, nombre, email=email)
+        cf = crear_cliente_fiscal(t, nombre + " SL", nif=None, cliente_id=cid)
+        ids[nombre] = (cid, cf)
+        mk.registrar_consentimiento(t, u, email, origen="formulario", evidencia="Casilla marcada en el formulario web", cliente_id=cid)
+    en = lambda dias: (date.today() + timedelta(days=dias)).isoformat()
+    crear_vencimiento_fiscal(t, ids["Con 303"][1], "303", "2T 2026", en(10), usuario_id=u)
+    crear_vencimiento_fiscal(t, ids["Sin 303"][1], "130", "2T 2026", en(10), usuario_id=u)
+    ya = crear_vencimiento_fiscal(t, ids["Presentado"][1], "303", "2T 2026", en(10), usuario_id=u)
+    marcar_presentado_vencimiento_fiscal(t, ya, u)
+    crear_vencimiento_fiscal(t, ids["Lejano"][1], "303", "2T 2026", en(90), usuario_id=u)
+    a = mk.audiencia(t, u, {"fuente": "clientes", "vencimiento_modelo": "303", "vencimiento_dias": 30})
+    assert [d["email"] for d in a["destinatarios"]] == ["con303@ejemplo.com"]
+    assert [d["email"] for d in mk.audiencia(t, u, {"fuente": "clientes", "vencimiento_modelo": "303", "vencimiento_dias": 120})["destinatarios"]] == ["con303@ejemplo.com", "lejos@ejemplo.com"]
+    assert len(mk.audiencia(t, u, {"fuente": "clientes"})["destinatarios"]) == 4                 # sin el filtro entran todos los que consienten
+    assert "303" in mk.describir_reglas(mk.reglas_validas({"vencimiento_modelo": "303", "vencimiento_dias": 15}))
+    mk.registrar_baja(t, u, "con303@ejemplo.com")
+    assert mk.audiencia(t, u, {"fuente": "clientes", "vencimiento_modelo": "303"})["destinatarios"] == []   # la baja prevalece también aquí
+    mk.bloques_validos([{**b, "url": "https://despacho.example/documentos"} if b["tipo"] == "boton" else b for b in mk.PLANTILLA_AVISO_FISCAL])      # el enlace del botón se rellena al usarla

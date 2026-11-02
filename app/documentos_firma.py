@@ -14,7 +14,7 @@ import hashlib
 import io
 import json
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from . import acceso, almacen_documentos, auditoria, db, documenso, nucleo
 from .documentos_firma_textos import (AUTORIZACION_AEAT, CONSENTIMIENTO_COMERCIAL, CONSENTIMIENTO_RGPD, HOJA_ENCARGO, MANDATO_SEPA, TEXTO_ESQUEMA_B2B, TEXTO_ESQUEMA_CORE)
@@ -48,7 +48,9 @@ CREATE TABLE IF NOT EXISTS documentos_firma (
     creado_en TEXT NOT NULL,
     enviado_en TEXT,
     firmado_en TEXT,
-    actualizado_en TEXT
+    actualizado_en TEXT,
+    recordado_en TEXT,
+    recordatorios INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_documentos_firma_cliente ON documentos_firma(tenant_id, cliente_id, creado_en);
 """
@@ -56,6 +58,8 @@ CREATE INDEX IF NOT EXISTS idx_documentos_firma_cliente ON documentos_firma(tena
 AJUSTES = "general"                                    # fila de `documentos_plantillas` con los valores que se repiten (acreedor SEPA, contacto RGPD, lugar…)
 CLAVES_AJUSTES = ("acreedor_sepa", "contacto_rgpd", "lugar")
 LARGO_TEXTO = 20000
+MAX_RECORDATORIOS = 3                                  # veces que se reenvía el aviso de firma a quien no firma; luego, que lo gestione una persona
+MAX_DIAS_RECORDATORIO = 30
 FIRMA = (55.0, 87.0, 35.0, 6.0)                        # x, y, ancho y alto del campo de firma en % de la página (el PDF deja ese hueco libre)
 
 # Efectos al firmarse: `{clave de plantilla: función(tenant_id, usuario_id, documento)}`; los registra quien los necesita (p. ej. marketing).
@@ -68,6 +72,8 @@ class ErrorDocumento(ValueError):
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
+    db._asegurar_columna(conn, "documentos_firma", "recordado_en", "TEXT")                     # bases anteriores a los recordatorios de firma
+    db._asegurar_columna(conn, "documentos_firma", "recordatorios", "INTEGER NOT NULL DEFAULT 0")
 
 
 # --- Catálogo ---------------------------------------------------------------------------------------------------------------
@@ -584,6 +590,107 @@ def refrescar(tenant_id: int, usuario_id: int, cliente_id: int, documento_id: in
     if nuevo == "firmado" and d["plantilla"] in AL_FIRMAR:
         AL_FIRMAR[d["plantilla"]](tenant_id, usuario_id, {**d, "estado": "firmado", "documento_firmado_id": guardado})
     return nuevo
+
+
+# --- Recordatorios a quien no firma ------------------------------------------------------------------------------------------
+
+def recordatorio_dias(tenant_id: int) -> int:
+    """Días sin firmar tras los que el sistema reenvía solo el aviso de Documenso (0 = no lo hace). Lo fija la dirección; hasta `MAX_RECORDATORIOS` veces por documento."""
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT ajustes FROM documentos_plantillas WHERE tenant_id = ? AND clave = ?", (tenant_id, AJUSTES)).fetchone()
+    finally:
+        conn.close()
+    try:
+        return max(0, min(int(json.loads(f["ajustes"]).get("recordatorio_dias") or 0), MAX_DIAS_RECORDATORIO)) if f else 0
+    except (ValueError, TypeError, AttributeError):
+        return 0
+
+
+def fijar_recordatorio_dias(tenant_id: int, usuario_id: int, dias) -> None:
+    _exigir_direccion(usuario_id)
+    try:
+        dias = int(dias or 0)
+    except (TypeError, ValueError):
+        raise ErrorDocumento("Los días no son un número.") from None
+    if not 0 <= dias <= MAX_DIAS_RECORDATORIO:
+        raise ErrorDocumento(f"Elige entre 0 (no recordar) y {MAX_DIAS_RECORDATORIO} días.")
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT ajustes FROM documentos_plantillas WHERE tenant_id = ? AND clave = ?", (tenant_id, AJUSTES)).fetchone()
+        try:
+            actuales = json.loads(f["ajustes"]) if f else {}
+        except ValueError:
+            actuales = {}
+        actuales["recordatorio_dias"] = dias
+        conn.execute(
+            "INSERT INTO documentos_plantillas (tenant_id, clave, cuerpo, ajustes, actualizado_en, actualizado_por) VALUES (?, ?, NULL, ?, ?, ?) "
+            "ON CONFLICT (tenant_id, clave) DO UPDATE SET ajustes = excluded.ajustes, actualizado_en = excluded.actualizado_en, actualizado_por = excluded.actualizado_por",
+            (tenant_id, AJUSTES, json.dumps(actuales, ensure_ascii=False), _ahora(), usuario_id))
+        auditoria.registrar(tenant_id, usuario_id, "documento_firma.recordatorio_dias", "documentos_firma", None, {"dias": dias}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def toca_recordar(d: dict, dias: int, ahora: datetime | None = None) -> bool:
+    """¿Lleva este envío `dias` o más sin firmar desde el último aviso (o desde el envío) y aún no ha agotado los recordatorios?"""
+    if d["estado"] != "enviado" or not d.get("documenso_id") or dias <= 0 or (d.get("recordatorios") or 0) >= MAX_RECORDATORIOS:
+        return False
+    desde = d.get("recordado_en") or d.get("enviado_en")
+    try:
+        return bool(desde) and (ahora or datetime.now()) - datetime.fromisoformat(desde) >= timedelta(days=dias)
+    except ValueError:
+        return False
+
+
+def recordar(tenant_id: int, usuario_id: int, cliente_id: int, documento_id: int) -> str:
+    """Reenvía el aviso de firma a quien aún no ha firmado. Antes pregunta a Documenso: si ya estaba firmado, lo anota y no molesta. Devuelve el estado final."""
+    _exigir_escritura(tenant_id, usuario_id)
+    d = obtener(tenant_id, cliente_id, documento_id)
+    if d is None:
+        raise ErrorDocumento("Documento no encontrado.")
+    if d["estado"] != "enviado" or not d["documenso_id"]:
+        raise ErrorDocumento("Solo se puede recordar un documento que está pendiente de firma.")
+    if (d["recordatorios"] or 0) >= MAX_RECORDATORIOS:
+        raise ErrorDocumento(f"Ya se ha recordado {MAX_RECORDATORIOS} veces: habla con la persona por otro medio.")
+    nuevo = refrescar(tenant_id, usuario_id, cliente_id, documento_id)
+    if nuevo != "enviado":
+        return nuevo
+    try:
+        avisados = documenso.reenviar_a_firma(_clave_documenso(tenant_id), d["documenso_id"])
+    except documenso.ErrorDocumenso as e:
+        raise ErrorDocumento(str(e)) from e
+    if not avisados:
+        return "enviado"
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE documentos_firma SET recordado_en = ?, recordatorios = recordatorios + 1, actualizado_en = ? WHERE id = ? AND tenant_id = ?", (_ahora(), _ahora(), documento_id, tenant_id))
+        auditoria.registrar(tenant_id, usuario_id, "documento_firma.recordar", "documentos_firma", documento_id, {"plantilla": d["plantilla"], "n": (d["recordatorios"] or 0) + 1}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    return "recordado"
+
+
+def recordar_pendientes(ahora: datetime | None = None) -> dict:
+    """Para el temporizador: a los despachos que lo han pedido, reenvía el aviso de los envíos que llevan sus días sin firmar. Devuelve `{recordados, errores}`."""
+    from .bd import contexto
+    r = {"recordados": 0, "errores": 0}
+    dias_de: dict[int, int] = {}
+    for d in _pendientes_de_documenso(limite=1000):
+        t = d["tenant_id"]
+        with contexto.en_despacho(t):
+            if t not in dias_de:
+                dias_de[t] = recordatorio_dias(t)
+            if not toca_recordar(d, dias_de[t], ahora):
+                continue
+            try:
+                if recordar(t, d["creado_por"], d["cliente_id"], d["id"]) == "recordado":
+                    r["recordados"] += 1
+            except ErrorDocumento:
+                r["errores"] += 1
+    return r
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:

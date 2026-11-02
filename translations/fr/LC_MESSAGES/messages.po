@@ -19270,3 +19270,219 @@ msgstr "Retirer ce canal ? La clé enregistrée est supprimée."
 
 msgid "¿Volver a permitir envíos a este correo?"
 msgstr "Autoriser de nouveau les envois à cet e-mail ?"
+
+msgid "%(n)s vencimientos cambiados · %(o)s omitidos."
+msgstr "%(n)s échéances modifiées · %(o)s ignorées."
+
+msgid "%(n)s vencimientos cambiarán · %(o)s se omiten · se podrá deshacer durante 90 días."
+msgstr "%(n)s échéances vont changer · %(o)s sont ignorées · annulable pendant 90 jours."
+
+msgid "Ahora mismo no se recuerda automáticamente."
+msgstr "Pour l'instant, aucun rappel automatique n'est envoyé."
+
+msgid "Ahora mismo: %(n)s días."
+msgstr "Actuellement : %(n)s jours."
+
+msgid "Aparecerán aquí al confirmar la propuesta de un vencimiento."
+msgstr "Ils apparaîtront ici lorsque vous confirmerez la proposition d'une échéance."
+
+msgid "Aplicar a %(n)s vencimientos"
+msgstr "Appliquer à %(n)s échéances"
+
+msgid "Aviso de firma reenviado."
+msgstr "Rappel de signature renvoyé."
+
+msgid "Aún no hay honorarios confirmados"
+msgstr "Aucun honoraire confirmé pour l'instant"
+
+msgid "Aún no hay reglas"
+msgstr "Aucune règle pour l'instant"
+
+msgid "Base más importe por apunte"
+msgstr "Base plus montant par écriture"
+
+msgid "Cambiar varios a la vez"
+msgstr "En modifier plusieurs à la fois"
+
+msgid "Con un modelo fiscal por presentar"
+msgstr "Avec un modèle fiscal à déposer"
+
+msgid "Confirmado"
+msgstr "Confirmé"
+
+msgid "Confirmar"
+msgstr "Confirmer"
+
+msgid "Crea la primera abajo: por ejemplo, el 303 de una sociedad por tramos según el número de apuntes."
+msgstr "Créez la première ci-dessous : par exemple, le 303 d'une société par tranches selon le nombre d'écritures."
+
+msgid "Cuando se presente un vencimiento aparecerá aquí con su propuesta."
+msgstr "Quand une échéance sera déposée, elle apparaîtra ici avec sa proposition."
+
+msgid "Cálculo"
+msgstr "Calcul"
+
+msgid "Cómo se calcula"
+msgstr "Comment c'est calculé"
+
+msgid "Desactivada"
+msgstr "Désactivée"
+
+msgid "Desactivar"
+msgstr "Désactiver"
+
+msgid "Días de antelación"
+msgstr "Jours d'avance"
+
+msgid "Editar regla"
+msgstr "Modifier la règle"
+
+msgid "El número más bajo se mira primero."
+msgstr "Le numéro le plus bas est examiné en premier."
+
+msgid "Esta propuesta caducó: vuelve a proponerla desde los vencimientos."
+msgstr "Cette proposition a expiré : proposez-la à nouveau depuis les échéances."
+
+msgid "Fijo"
+msgstr "Fixe"
+
+msgid "Honorarios confirmados"
+msgstr "Honoraires confirmés"
+
+msgid "Honorarios por tramos"
+msgstr "Honoraires par tranches"
+
+msgid "Importe fijo"
+msgstr "Montant fixe"
+
+msgid "Importe fijo o base (€)"
+msgstr "Montant fixe ou base (€)"
+
+msgid "Importe por apunte (€)"
+msgstr "Montant par écriture (€)"
+
+msgid "Lo que se ha cambiado de golpe en los vencimientos fiscales, con la opción de deshacerlo durante 90 días."
+msgstr "Ce qui a été modifié en lot sur les échéances fiscales, avec la possibilité de l'annuler pendant 90 jours."
+
+msgid "Los importes son los que fijas tú: la herramienta calcula, pero la tarifa es una decisión del despacho"
+msgstr "Les montants sont ceux que vous fixez : l'outil calcule, mais le tarif est une décision du cabinet"
+
+msgid "Los vencimientos volvieron a su estado anterior, salvo los que se habían vuelto a cambiar."
+msgstr "Les échéances sont revenues à leur état précédent, sauf celles qui avaient été modifiées à nouveau."
+
+msgid "Marca los vencimientos, elige qué hacer y revisa el cambio antes de aplicarlo: se puede deshacer durante 90 días."
+msgstr "Cochez les échéances, choisissez quoi faire et vérifiez le changement avant de l'appliquer : annulable pendant 90 jours."
+
+msgid "Marca varios vencimientos en el panel para cambiarlos de una vez."
+msgstr "Cochez plusieurs échéances dans le tableau pour les modifier en une fois."
+
+msgid "Marcar facturado"
+msgstr "Marquer comme facturé"
+
+msgid "Marcar todos"
+msgstr "Tout cocher"
+
+msgid "Motivo (al posponer)"
+msgstr "Motif (en cas de report)"
+
+msgid "Nada pendiente"
+msgstr "Rien en attente"
+
+msgid "Nº de factura"
+msgstr "N° de facture"
+
+msgid "Omitidos"
+msgstr "Ignorées"
+
+msgid "Otro importe"
+msgstr "Autre montant"
+
+msgid "Para avisos como «se acerca el 303». Vacío = sin este filtro. Solo clientes con Guilda Fiscal."
+msgstr "Pour des avis comme « le 303 approche ». Vide = sans ce filtre. Uniquement les clients avec Guilda Fiscal."
+
+msgid "Para «fijo» es el precio; para «por apunte», la base que se suma."
+msgstr "Pour « fixe », c'est le prix ; pour « par écriture », la base ajoutée."
+
+msgid "Plantilla de aviso de vencimiento fiscal"
+msgstr "Modèle d'avis d'échéance fiscale"
+
+msgid "Por tramos según el número de apuntes"
+msgstr "Par tranches selon le nombre d'écritures"
+
+msgid "Posponer la fecha de seguimiento"
+msgstr "Reporter la date de suivi"
+
+msgid "Posponer mueve la fecha que sigue el despacho, no el plazo legal de presentación."
+msgstr "Reporter déplace la date suivie par le cabinet, pas le délai légal de dépôt."
+
+msgid "Presentados sin honorario"
+msgstr "Déposés sans honoraire"
+
+msgid "Probar las reglas"
+msgstr "Tester les règles"
+
+msgid "Propuesta"
+msgstr "Proposition"
+
+msgid "Recordar a los"
+msgstr "Rappeler après"
+
+msgid "Recordar a quien no firma"
+msgstr "Rappeler à ceux qui n'ont pas signé"
+
+msgid "Recordar la firma"
+msgstr "Rappeler la signature"
+
+msgid "Reglas que proponen cuánto cobrar por presentar cada modelo. Aplica la primera regla activa que encaja; nada se cobra hasta que la dirección confirma."
+msgstr "Règles qui proposent combien facturer pour déposer chaque modèle. La première règle active qui correspond s'applique ; rien n'est facturé avant la confirmation de la direction."
+
+msgid "Se devolverá cada vencimiento a como estaba, salvo los que se hayan vuelto a cambiar. ¿Deshacer?"
+msgstr "Chaque échéance reviendra à son état précédent, sauf celles qui ont été modifiées à nouveau. Annuler ?"
+
+msgid "Se pospone %(d)s días la fecha de seguimiento. Motivo: %(m)s"
+msgstr "La date de suivi est reportée de %(d)s jours. Motif : %(m)s"
+
+msgid "Si dejas «Otro importe» vacío se confirma la propuesta; si lo rellenas, queda ese importe y se conserva el cálculo."
+msgstr "Si vous laissez « Autre montant » vide, la proposition est confirmée ; si vous le remplissez, ce montant est retenu et le calcul est conservé."
+
+msgid "Si un cliente no firma en el plazo que indiques, Documenso le reenvía el aviso de firma. Máximo %(n)s veces por documento; después, que lo gestione una persona. Pon 0 para no recordar."
+msgstr "Si un client ne signe pas dans le délai indiqué, Documenso lui renvoie l'avis de signature. %(n)s fois maximum par document ; ensuite, une personne doit s'en charger. Saisissez 0 pour ne pas rappeler."
+
+msgid "Tramos"
+msgstr "Tranches"
+
+msgid "Una línea por tramo, de menor a mayor: «hasta 10: 60,00». La última: «resto: 45,00»."
+msgstr "Une ligne par tranche, de la plus petite à la plus grande : « hasta 10: 60,00 ». La dernière : « resto: 45,00 »."
+
+msgid "Vacío = todos los modelos. Ejemplo: 303."
+msgstr "Vide = tous les modèles. Exemple : 303."
+
+msgid "Vencimientos que cambian"
+msgstr "Échéances qui changent"
+
+msgid "ajustado a mano"
+msgstr "ajusté à la main"
+
+msgid "días sin firmar"
+msgstr "jours sans signature"
+
+msgid "hasta %(n)s"
+msgstr "jusqu'à %(n)s"
+
+msgid "mínimo"
+msgstr "minimum"
+
+msgid "por apunte"
+msgstr "par écriture"
+
+msgid "recordado %(n)s vez/veces, el último el %(f)s"
+msgstr "rappelé %(n)s fois, la dernière le %(f)s"
+
+msgid "regla"
+msgstr "règle"
+
+msgid "resto"
+msgstr "reste"
+
+msgid "¿Quitar esta regla? Los honorarios ya confirmados conservan su cálculo."
+msgstr "Retirer cette règle ? Les honoraires déjà confirmés conservent leur calcul."
