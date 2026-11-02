@@ -1061,3 +1061,5 @@ kbd { font: 700 12px var(--font-mono); background: var(--panel-2); border: 1px s
 .busqueda-comando { display: flex; align-items: center; gap: 12px; }
 .busqueda-modal { max-height: min(78vh, 720px); }
 .busqueda-resultados, #busqueda-resultados { overflow-y: auto; }
+.decl-acciones > p, .decl-acciones > details { font-size: 13.5px; line-height: 1.5; }
+.decl-acciones > p:not(.muted) { color: var(--text); }
