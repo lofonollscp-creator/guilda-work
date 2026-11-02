@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, replace
+from datetime import date, timedelta
 from functools import wraps
 from typing import Callable
 
@@ -180,32 +181,69 @@ def esta_activo(tenant_id: int | None, vertical_id: str) -> bool:
     return vertical_id in activos_de(tenant_id)
 
 
-def fijar_activo(tenant_id: int, vertical_id: str, activo: bool, activo_hasta: str | None = None) -> None:
-    """Activa o desactiva a mano un vertical para un despacho (backoffice). `activo_hasta` solo vale al activar (prueba con caducidad)."""
+def _anotar(conn, tenant_id: int, vertical_id: str, accion: str, activo_hasta: str | None, motivo: str, por: str) -> None:
+    conn.execute("INSERT INTO tenants_verticales_historial (tenant_id, vertical_id, accion, activo_hasta, motivo, por, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                 (tenant_id, vertical_id, accion, activo_hasta, motivo, por, db.now_iso()))
+
+
+def _motivo_valido(motivo: str | None) -> str:
+    motivo = " ".join((motivo or "").split())[:300]
+    if len(motivo) < 3:
+        raise ValueError("Escribe el motivo de la excepción: queda en el historial del despacho.")
+    return motivo
+
+
+def fijar_activo(tenant_id: int, vertical_id: str, activo: bool, activo_hasta: str | None = None, *, motivo: str | None = None, por: str = "") -> None:
+    """Activa o desactiva a mano un vertical para un despacho (backoffice): una EXCEPCIÓN al plan, con motivo obligatorio y anotada en el historial. `activo_hasta` solo vale al activar
+    (prueba con caducidad: pasada la fecha, vuelve solo a lo que diga el plan). Sin `motivo` ni `por` (código interno y pruebas) se guarda como «ajuste sin motivo»."""
     if vertical_id not in VERTICALES:
         raise ValueError("Módulo de negocio desconocido.")
+    motivo = _motivo_valido(motivo) if por else (" ".join((motivo or "ajuste sin motivo").split())[:300])
+    hasta = activo_hasta if activo else None
     conn = db.get_connection()
     try:
         conn.execute(
-            "INSERT INTO tenants_verticales (tenant_id, vertical_id, activo, activo_hasta, creado_en) VALUES (?, ?, ?, ?, ?) "
-            "ON CONFLICT(tenant_id, vertical_id) DO UPDATE SET activo = excluded.activo, activo_hasta = excluded.activo_hasta",
-            (tenant_id, vertical_id, 1 if activo else 0, activo_hasta if activo else None, db.now_iso()),
+            "INSERT INTO tenants_verticales (tenant_id, vertical_id, activo, activo_hasta, creado_en, motivo, fijado_por, fijado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(tenant_id, vertical_id) DO UPDATE SET activo = excluded.activo, activo_hasta = excluded.activo_hasta, motivo = excluded.motivo, fijado_por = excluded.fijado_por, fijado_en = excluded.fijado_en",
+            (tenant_id, vertical_id, 1 if activo else 0, hasta, db.now_iso(), motivo, por or None, db.now_iso()),
         )
+        _anotar(conn, tenant_id, vertical_id, ("prueba" if hasta else "activar") if activo else "desactivar", hasta, motivo, por or "sistema")
         conn.commit()
     finally:
         conn.close()
     invalidar(tenant_id)
 
 
-def quitar_ajuste_manual(tenant_id: int, vertical_id: str) -> None:
-    """Vuelve a lo que corresponda por defecto o por extras (borra el ajuste manual)."""
+def prueba_de_dias(tenant_id: int, vertical_id: str, dias: int, *, motivo: str, por: str) -> str:
+    """Activa el módulo `dias` días (1-365) a modo de prueba; devuelve la fecha en que caduca. Pasada esa fecha vuelve a lo que diga el plan."""
+    if not 1 <= int(dias) <= 365:
+        raise ValueError("Los días de prueba van de 1 a 365.")
+    hasta = (date.today() + timedelta(days=int(dias))).isoformat()
+    fijar_activo(tenant_id, vertical_id, True, hasta, motivo=motivo, por=por)
+    return hasta
+
+
+def quitar_ajuste_manual(tenant_id: int, vertical_id: str, *, motivo: str | None = None, por: str = "") -> None:
+    """«Volver al plan»: borra la excepción y vuelve a lo que corresponda por defecto o por extras. Queda anotado en el historial."""
+    motivo = " ".join((motivo or "vuelta al plan").split())[:300]
     conn = db.get_connection()
     try:
         conn.execute("DELETE FROM tenants_verticales WHERE tenant_id = ? AND vertical_id = ?", (tenant_id, vertical_id))
+        _anotar(conn, tenant_id, vertical_id, "volver_al_plan", None, motivo, por or "sistema")
         conn.commit()
     finally:
         conn.close()
     invalidar(tenant_id)
+
+
+def historial_de(tenant_id: int, limite: int = 50) -> list[dict]:
+    """Las excepciones de un despacho, de la más reciente a la más antigua: qué módulo, qué se hizo, hasta cuándo, por qué y quién."""
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT * FROM tenants_verticales_historial WHERE tenant_id = ? ORDER BY id DESC LIMIT ?", (tenant_id, limite)).fetchall()
+    finally:
+        conn.close()
+    return [dict(f, nombre=_es(VERTICALES[f["vertical_id"]].nombre) if f["vertical_id"] in VERTICALES else f["vertical_id"]) for f in filas]
 
 
 def fijar_vertical_de_extra(extra_id: int, vertical_id: str | None) -> None:
@@ -254,6 +292,8 @@ def estado_para_backoffice(tenant_id: int) -> list[dict]:
         m = manual.get(v.id)
         motivo = "manual" if m else ("extra" if v.id in por_extra else ("defecto" if v.por_defecto else None))
         res.append({"id": v.id, "nombre": _es(v.nombre), "descripcion": _es(v.descripcion), "activo": v.id in activos, "motivo": motivo, "hasta": m["activo_hasta"] if m else None,
+                    "excepcion_motivo": m.get("motivo") if m else None, "excepcion_por": m.get("fijado_por") if m else None, "excepcion_en": m.get("fijado_en") if m else None,
+                    "caducada": bool(m and m["activo"] and m["activo_hasta"] and m["activo_hasta"] < db.now_iso()),
                     "uso": v.uso(tenant_id) if (v.uso and v.id in activos) else []})
     return res
 

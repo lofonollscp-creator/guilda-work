@@ -167,6 +167,7 @@ CREATE INDEX IF NOT EXISTS idx_tareas_tarea_outlook ON tareas(tarea_outlook_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_usuario ON tareas(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_tareas_vistas_tenant ON tareas_vistas(tenant_id, compartida);
 CREATE INDEX IF NOT EXISTS idx_tenants_extras_activos_tenant ON tenants_extras_activos(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenants_verticales_historial ON tenants_verticales_historial(tenant_id, id);
 CREATE INDEX IF NOT EXISTS idx_tiquets_adjuntos_tiquet ON tiquets_adjuntos(tiquet_id);
 CREATE INDEX IF NOT EXISTS idx_tiquets_asignado ON tiquets(usuario_asignado_id);
 CREATE INDEX IF NOT EXISTS idx_tiquets_usuario ON tiquets(usuario_id);

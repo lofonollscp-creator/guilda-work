@@ -17,14 +17,27 @@
   <p class="empty-lane">{{ _('Todavía no se ha facturado nada desde este expediente.') }}</p>
   {% endif %}
   {% if fact.puede %}
+  {% if fact.faltan %}
+  <div class="ds-estado-aviso" role="alert"><strong>{{ _('Faltan datos del cliente para facturar:') }}</strong> {{ fact.faltan | join(', ') }}.
+    <a href="{{ url_for('clientes.ficha', cliente_id=x.cliente_id) }}">{{ _('Completar la ficha del cliente') }}</a>
+    <span class="muted">{{ _('La dirección, como «Calle Mayor 1, 08001 Barcelona».') }}</span></div>
+  {% endif %}
   <form method="post" action="{{ url_for('cobros.facturar', expediente_id=x.id) }}" class="edit-form">
-    <label for="fact-concepto">{{ _('Concepto') }}</label>
-    <input type="text" id="fact-concepto" name="concepto" value="{{ x.titulo }}" maxlength="200" required>
-    <label for="fact-importe">{{ _('Importe sin IVA (€)') }}</label>
-    <input type="text" id="fact-importe" name="importe" inputmode="decimal" placeholder="1.234,56" required>
+    <p class="muted">{{ _('Una factura puede llevar varias líneas (por ejemplo, una por cada servicio o una parte de los honorarios). Deja vacías las que no uses.') }}</p>
+    {% for n in range(1, 6) %}
+    <div class="ds-fila ds-envolver">
+      <label for="fact-concepto-{{ n }}" class="sr-only">{{ _('Concepto') }} {{ n }}</label>
+      <input type="text" id="fact-concepto-{{ n }}" name="{{ 'concepto' if n == 1 else 'concepto_' ~ n }}" {% if n == 1 %}value="{{ x.titulo }}" required{% endif %} maxlength="200" placeholder="{{ _('Concepto') }}">
+      <label for="fact-importe-{{ n }}" class="sr-only">{{ _('Importe sin IVA (€)') }} {{ n }}</label>
+      <input type="text" id="fact-importe-{{ n }}" name="{{ 'importe' if n == 1 else 'importe_' ~ n }}" inputmode="decimal" placeholder="{{ _('Importe sin IVA (€)') }}: 1.234,56" {{ 'required' if n == 1 }}>
+    </div>
+    {% endfor %}
     <label class="checkbox-label"><input type="checkbox" name="confirmo" value="1" required> {{ _('Confirmo que quiero emitir esta factura a nombre de %(cliente)s.', cliente=x.cliente_nombre) }}</label>
-    <button type="submit" class="btn btn-primary">{{ _('Emitir factura') }}</button>
-    <p class="muted">{{ _('El IVA lo aplica FacturaScripts según su configuración. La factura se crea allí y queda enlazada a este expediente.') }}</p>
+    <div class="ds-fila">
+      <button type="submit" class="btn btn-primary">{{ _('Emitir factura') }}</button>
+      <button type="submit" class="btn btn-ghost" formaction="{{ url_for('cobros.proforma', expediente_id=x.id) }}" formtarget="_blank" formnovalidate>{{ _('Ver proforma (sin validez fiscal)') }}</button>
+    </div>
+    <p class="muted">{{ _('El IVA lo aplica FacturaScripts según su configuración. La factura se crea allí y queda enlazada a este expediente. La proforma no es una factura: no gasta número ni se guarda.') }}</p>
   </form>
   {% if fact.horas %}
   <h3>{{ _('Horas sin facturar') }}</h3>

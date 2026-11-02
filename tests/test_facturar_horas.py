@@ -111,6 +111,7 @@ def test_desde_la_web_se_ven_las_horas_y_se_facturan_con_confirmacion(cliente, f
     db.guardar_facturascripts(t, "http://127.0.0.1:1/", "a", "b"); db.guardar_facturascripts_api_key(t, "k")
     f = crear_cliente_fiscal(t, "Cliente Horas", nif="12345678Z"); db.editar_cliente_fiscal(t, f, facturascripts_cliente_codigo="C7")
     c = nucleo.listar_clientes(t, limite=5)[0][0]["id"]
+    conn = db.get_connection(); conn.execute("UPDATE clientes SET direccion = 'Calle Mayor 1, 08001 Barcelona' WHERE id = ?", (c,)); conn.commit(); conn.close()
     x = nucleo.crear_expediente(t, uid, c, "Expediente horas")
     a, b = _partes(t, uid, x, (60, 120, True), (45, None, True))
     html = cliente.get(f"/expedientes/{x}").get_data(as_text=True)

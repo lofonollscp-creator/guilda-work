@@ -363,6 +363,7 @@ ALTER TABLE tenants_extras_activos ADD CONSTRAINT fk_tenants_extras_activos_extr
 ALTER TABLE tenants_extras_activos ADD CONSTRAINT fk_tenants_extras_activos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE tenants_herramientas_ocultas ADD CONSTRAINT fk_tenants_herramientas_ocultas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE tenants_verticales ADD CONSTRAINT fk_tenants_verticales_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE tenants_verticales_historial ADD CONSTRAINT fk_tenants_verticales_historial_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE tiquets ADD CONSTRAINT fk_tiquets_usuario_asignado_id FOREIGN KEY (usuario_asignado_id) REFERENCES usuarios (id);
 ALTER TABLE tiquets ADD CONSTRAINT fk_tiquets_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
 ALTER TABLE tiquets_adjuntos ADD CONSTRAINT fk_tiquets_adjuntos_tiquet_id FOREIGN KEY (tiquet_id) REFERENCES tiquets (id) ON DELETE CASCADE;

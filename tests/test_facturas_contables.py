@@ -469,7 +469,7 @@ def test_el_backoffice_activa_el_modulo_y_enseña_su_uso(bo, monkeypatch):
     entrar(bo)
     html = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
     assert "Contabilización de facturas" in html and "Uso este mes" not in html
-    assert post(bo, f"/tenants/{t}/verticales/contabilizacion").status_code == 302
+    assert post(bo, f"/tenants/{t}/verticales/contabilizacion", motivo="Prueba de la contabilización").status_code == 302
     verticales.invalidar(t)
     assert verticales.esta_activo(t, "contabilizacion")
     fc.crear(t, u, c, _datos(), [LINEA])

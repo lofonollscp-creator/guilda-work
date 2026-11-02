@@ -1,7 +1,7 @@
 """Facturación conectada al trabajo del despacho (ver app/facturacion_despacho.py): facturar desde un expediente y el estado de cobro de cada cliente."""
 from __future__ import annotations
 
-from flask import Blueprint, abort, g, redirect, request, url_for
+from flask import Blueprint, Response, abort, g, redirect, request, url_for
 from flask_babel import gettext as _
 
 from . import facturacion_despacho as fd
@@ -15,6 +15,27 @@ def _supervisor() -> bool:
     return bool(g.get("supervisor_tenant") or g.get("es_admin"))
 
 
+FILAS_DE_LINEAS = 5
+
+
+def _lineas_del_formulario() -> list[tuple[str, str]]:
+    """Las líneas del formulario: la primera (`concepto`, `importe`) y hasta cuatro más (`concepto_2`, `importe_2`…)."""
+    f = request.form
+    return [(f.get("concepto" if n == 1 else f"concepto_{n}", ""), f.get("importe" if n == 1 else f"importe_{n}", "")) for n in range(1, FILAS_DE_LINEAS + 1)]
+
+
+@cobros_bp.route("/<int:expediente_id>/proforma", methods=["POST"])
+@login_required
+def proforma(expediente_id: int):
+    if g.get("tenant_id") is None:
+        abort(404)
+    try:
+        pdf = fd.proforma_pdf(g.tenant_id, g.usuario_id, _supervisor(), expediente_id, _lineas_del_formulario())
+    except ValueError as e:
+        return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, error=str(e)[:200]) + "#facturacion")
+    return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": "inline; filename=proforma-sin-validez-fiscal.pdf"})
+
+
 @cobros_bp.route("/<int:expediente_id>/facturar", methods=["POST"])
 @login_required
 def facturar(expediente_id: int):
@@ -24,7 +45,7 @@ def facturar(expediente_id: int):
     if request.form.get("confirmo") != "1":
         return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, error=_("Marca la casilla para confirmar que quieres emitir la factura.")) + "#facturacion")
     try:
-        r = fd.facturar_expediente(g.tenant_id, g.usuario_id, _supervisor(), expediente_id, request.form.get("concepto"), request.form.get("importe"))
+        r = fd.facturar_expediente(g.tenant_id, g.usuario_id, _supervisor(), expediente_id, request.form.get("concepto"), request.form.get("importe"), lineas=_lineas_del_formulario())
     except fd.facturascripts.ErrorFacturaScripts as e:
         return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, error=_("FacturaScripts no ha podido crear la factura: %(motivo)s", motivo=str(e)[:150])) + "#facturacion")
     except ValueError as e:

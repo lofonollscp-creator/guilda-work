@@ -1802,6 +1802,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "tenants_verticales_historial": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "tiquets": {
   "clase": "usuario",
   "motivo": "datos personales: despacho en que se crearon",

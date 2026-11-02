@@ -19401,3 +19401,21 @@ msgstr "rest"
 
 msgid "¿Quitar esta regla? Los honorarios ya confirmados conservan su cálculo."
 msgstr "Remove this rule? Fees already confirmed keep their calculation."
+
+msgid "Completar la ficha del cliente"
+msgstr "Complete the client file"
+
+msgid "El IVA lo aplica FacturaScripts según su configuración. La factura se crea allí y queda enlazada a este expediente. La proforma no es una factura: no gasta número ni se guarda."
+msgstr "VAT is applied by FacturaScripts according to its settings. The invoice is created there and linked to this case. A pro forma is not an invoice: it uses no number and is not saved."
+
+msgid "Faltan datos del cliente para facturar:"
+msgstr "Client details missing for invoicing:"
+
+msgid "La dirección, como «Calle Mayor 1, 08001 Barcelona»."
+msgstr "The address, as “Calle Mayor 1, 08001 Barcelona”."
+
+msgid "Una factura puede llevar varias líneas (por ejemplo, una por cada servicio o una parte de los honorarios). Deja vacías las que no uses."
+msgstr "An invoice can carry several lines (for example, one per service or part of the fees). Leave unused ones empty."
+
+msgid "Ver proforma (sin validez fiscal)"
+msgstr "View pro forma (no tax validity)"

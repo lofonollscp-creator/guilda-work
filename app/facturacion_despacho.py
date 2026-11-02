@@ -126,6 +126,50 @@ def importe_valido(texto) -> Decimal:
     return v
 
 
+MAX_LINEAS = 10
+_CODIGO_POSTAL = re.compile(r"(?<!\d)\d{5}(?!\d)")
+
+
+def datos_que_faltan(cliente) -> list[str]:
+    """Lo que falta en la ficha del cliente para poder facturarle: NIF, dirección, código postal y ciudad. La dirección es un texto libre, así que el código postal es un número de cinco cifras
+    dentro de ella y la ciudad, lo que queda tras él (o tras la última coma): «Calle Mayor 1, 08001 Barcelona»."""
+    faltan = []
+    if not (cliente["nif"] or "").strip():
+        faltan.append("NIF")
+    direccion = (cliente["direccion"] or "").strip()
+    if not direccion:
+        return faltan + ["dirección", "código postal", "ciudad"]
+    m = _CODIGO_POSTAL.search(direccion)
+    if not m:
+        faltan.append("código postal")
+    resto = direccion[m.end():] if m else direccion.rsplit(",", 1)[-1] if "," in direccion else ""
+    ciudad = re.sub(r"^[\s,.\-–]+|[\s,.\-–]+$", "", resto)
+    if len(ciudad) < 2 or ciudad.isdigit():
+        faltan.append("ciudad")
+    return faltan
+
+
+def lineas_validas(lineas) -> list[tuple[str, Decimal]]:
+    """`[(concepto, importe)]` con conceptos y importes comprobados (importe sin IVA). `ValueError` con un mensaje legible si algo no vale."""
+    limpias = []
+    for concepto, importe in lineas or []:
+        concepto = (concepto or "").strip()
+        if not concepto and not str(importe or "").strip():
+            continue                                                   # una fila vacía del formulario
+        if not concepto:
+            raise ValueError("Escribe el concepto de cada línea.")
+        if len(concepto) > 200:
+            raise ValueError("El concepto es demasiado largo (máx. 200 caracteres).")
+        limpias.append((concepto, importe_valido(importe)))
+    if not limpias:
+        raise ValueError("Escribe el concepto de la factura.")
+    if len(limpias) > MAX_LINEAS:
+        raise ValueError(f"Como máximo {MAX_LINEAS} líneas por factura.")
+    if sum(i for _, i in limpias) > MAX_IMPORTE:
+        raise ValueError("El importe total es demasiado grande.")
+    return limpias
+
+
 def _cliente_fiscal_del_expediente(tenant_id: int, expediente) -> dict | None:
     c = nucleo.obtener_cliente(tenant_id, expediente["cliente_id"])
     if c is None or not c["cliente_fiscal_id"]:
@@ -150,11 +194,19 @@ def situacion(tenant_id: int, usuario_id: int, supervisor: bool, expediente) -> 
         return {"disponible": True, "puede": False, "motivo": "sin_gestion_fiscal", "fiscal": None}
     if not fiscal["facturascripts_cliente_codigo"]:
         return {"disponible": True, "puede": False, "motivo": "sin_vincular", "fiscal": fiscal}
-    return {"disponible": True, "puede": True, "motivo": None, "fiscal": fiscal}
+    cliente = nucleo.obtener_cliente(tenant_id, expediente["cliente_id"])
+    faltan = datos_que_faltan(cliente) if cliente else ["NIF", "dirección", "código postal", "ciudad"]
+    return {"disponible": True, "puede": True, "motivo": None, "fiscal": fiscal, "faltan": faltan}
 
 
-def facturar_expediente(tenant_id: int, usuario_id: int, supervisor: bool, expediente_id: int, concepto: str, importe) -> dict:
-    """Crea en FacturaScripts una factura de una línea (base imponible `importe`, el IVA lo pone FacturaScripts) para el cliente del expediente y deja la relación y una anotación en el expediente.
+def _exigir_datos_completos(estado: dict) -> None:
+    if estado.get("faltan"):
+        raise ValueError("Faltan datos del cliente para facturar: " + ", ".join(estado["faltan"]) + ". Complétalos en su ficha (la dirección, como «Calle Mayor 1, 08001 Barcelona»).")
+
+
+def facturar_expediente(tenant_id: int, usuario_id: int, supervisor: bool, expediente_id: int, concepto: str, importe, lineas=None) -> dict:
+    """Crea en FacturaScripts una factura (por defecto de una línea: base imponible `importe`; o varias en `lineas`, una por concepto; el IVA lo pone FacturaScripts) para el cliente del expediente y deja
+    la relación y una anotación en el expediente. No se emite si faltan NIF, dirección, código postal o ciudad del cliente.
     `ValueError` si algo no vale (sin permiso, cliente sin vincular, importe…); `ErrorFacturaScripts` si FacturaScripts falla (entonces no se guarda nada)."""
     exp = nucleo.obtener_expediente(tenant_id, expediente_id, usuario_id, supervisor)
     if exp is None:
@@ -166,15 +218,13 @@ def facturar_expediente(tenant_id: int, usuario_id: int, supervisor: bool, exped
         raise ValueError({"permiso": "Solo la dirección, la coordinación o quien lleva el expediente puede facturarlo.",
                           "sin_gestion_fiscal": "El cliente no tiene gestión fiscal activada: actívala en su ficha para poder vincularlo con FacturaScripts.",
                           "sin_vincular": "Vincula primero al cliente con FacturaScripts desde su ficha fiscal."}[estado["motivo"]])
-    concepto = (concepto or "").strip()
-    if not concepto:
-        raise ValueError("Escribe el concepto de la factura.")
-    if len(concepto) > 200:
-        raise ValueError("El concepto es demasiado largo (máx. 200 caracteres).")
-    base = importe_valido(importe)
+    _exigir_datos_completos(estado)
+    validas = lineas_validas(lineas if lineas is not None else [(concepto, importe)])
+    base = sum(i for _, i in validas)
+    concepto = validas[0][0] if len(validas) == 1 else f"{validas[0][0]} y {len(validas) - 1} línea(s) más"
     tenant = db.obtener_tenant(tenant_id)
     creada = facturascripts.crear_factura(tenant["facturascripts_url"], tenant["facturascripts_api_key"], estado["fiscal"]["facturascripts_cliente_codigo"],
-                                          [{"descripcion": concepto, "cantidad": 1, "precio": float(base)}])
+                                          [{"descripcion": c, "cantidad": 1, "precio": float(i)} for c, i in validas])
     idfactura = str(creada.get("idfactura") or "") or None
     codigo = None
     try:
@@ -188,7 +238,7 @@ def facturar_expediente(tenant_id: int, usuario_id: int, supervisor: bool, exped
         cur = conn.execute("INSERT INTO facturacion_expedientes (tenant_id, expediente_id, idfactura, codigo, concepto, base_centimos, creado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                            (tenant_id, expediente_id, idfactura, codigo, concepto, centimos, usuario_id, db.now_iso()))
         nucleo._evento(conn, expediente_id, "factura", f"Factura {codigo or ('#' + idfactura if idfactura else '')} creada: {concepto} ({_eur(centimos)} + IVA)".replace("  ", " "), usuario_id)
-        auditoria.registrar(tenant_id, usuario_id, "factura.creada", "expediente", expediente_id, {"idfactura": idfactura, "codigo": codigo, "base": str(base), "concepto": concepto}, conn=conn)
+        auditoria.registrar(tenant_id, usuario_id, "factura.creada", "expediente", expediente_id, {"idfactura": idfactura, "codigo": codigo, "base": str(base), "concepto": concepto, "lineas": len(validas)}, conn=conn)
         conn.commit()
         registro = cur.lastrowid
     finally:
@@ -231,6 +281,7 @@ def facturar_horas(tenant_id: int, usuario_id: int, supervisor: bool, expediente
         raise ValueError({"permiso": "Solo la dirección, la coordinación o quien lleva el expediente puede facturarlo.",
                           "sin_gestion_fiscal": "El cliente no tiene gestión fiscal activada: actívala en su ficha para poder vincularlo con FacturaScripts.",
                           "sin_vincular": "Vincula primero al cliente con FacturaScripts desde su ficha fiscal."}[estado["motivo"]])
+    _exigir_datos_completos(estado)
     ids = sorted({int(i) for i in parte_ids})
     if not ids:
         raise ValueError("Elige al menos un parte de horas.")
@@ -331,3 +382,43 @@ def vencidas_sin_cobrar(tenant_id: int, usuario_id: int, supervisor: bool) -> li
         res.append({"codigo": f.get("codigo") or f.get("numero") or f"#{f.get('idfactura')}", "cliente": f.get("nombrecliente"), "total": f.get("total"), "fecha": f.get("fecha"),
                     "expediente_id": exp_id, "cliente_id": fiscales.get(f.get("codcliente"))})
     return res
+
+
+def proforma_pdf(tenant_id: int, usuario_id: int, supervisor: bool, expediente_id: int, lineas) -> bytes:
+    """Una PROFORMA en PDF con las mismas líneas que tendría la factura, marcada «sin validez fiscal». No crea nada en FacturaScripts, no gasta número de factura y no se guarda."""
+    import io
+    from datetime import date
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    exp = nucleo.obtener_expediente(tenant_id, expediente_id, usuario_id, supervisor)
+    if exp is None:
+        raise ValueError("Expediente no encontrado.")
+    if not puede_facturar(tenant_id, usuario_id, supervisor, exp):
+        raise ValueError("Solo la dirección, la coordinación o quien lleva el expediente puede preparar la proforma.")
+    validas = lineas_validas(lineas)
+    cliente = nucleo.obtener_cliente(tenant_id, exp["cliente_id"])
+    tenant = db.obtener_tenant(tenant_id)
+    estilos = getSampleStyleSheet()
+    normal = ParagraphStyle("n", parent=estilos["Normal"], fontName="Helvetica", fontSize=10, leading=13)
+    aviso = ParagraphStyle("a", parent=normal, fontName="Helvetica-Bold", fontSize=11, textColor=colors.HexColor("#9b1c1c"))
+    salida = io.BytesIO()
+    doc = SimpleDocTemplate(salida, pagesize=A4, leftMargin=20 * mm, rightMargin=20 * mm, topMargin=18 * mm, bottomMargin=18 * mm, title="Proforma (sin validez fiscal)")
+    esc = lambda t: (t or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")                     # noqa: E731
+    historia = [Paragraph("PROFORMA — SIN VALIDEZ FISCAL", ParagraphStyle("t", parent=estilos["Title"], fontName="Helvetica-Bold", fontSize=18, textColor=colors.HexColor("#9b1c1c"))),
+                Paragraph("Este documento no es una factura: no tiene número de factura ni efectos fiscales. Sirve para que el cliente conozca el importe antes de emitir la factura.", aviso), Spacer(1, 8 * mm)]
+    emisor = [x for x in (tenant["nombre"], tenant["cif"] if "cif" in tenant.keys() else None, tenant["direccion_fiscal"] if "direccion_fiscal" in tenant.keys() else None) if x]
+    historia += [Paragraph("<b>De:</b> " + esc(" · ".join(emisor)), normal),
+                 Paragraph("<b>Para:</b> " + esc(f"{cliente['nombre']} · {cliente['nif'] or ''} · {cliente['direccion'] or ''}"), normal),
+                 Paragraph(f"<b>Fecha:</b> {date.today().strftime('%d/%m/%Y')} · <b>Expediente:</b> {esc(exp['titulo'])}", normal), Spacer(1, 6 * mm)]
+    filas = [["Concepto", "Base imponible"]] + [[Paragraph(esc(c), normal), _eur(int(i * 100))] for c, i in validas]
+    total = sum(i for _, i in validas)
+    filas.append(["Total base imponible", _eur(int(total * 100))])
+    tabla = Table(filas, colWidths=[125 * mm, 45 * mm])
+    tabla.setStyle(TableStyle([("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"), ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"), ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.grey),
+                               ("LINEABOVE", (0, -1), (-1, -1), 0.6, colors.grey), ("ALIGN", (1, 0), (1, -1), "RIGHT"), ("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    historia += [tabla, Spacer(1, 5 * mm), Paragraph("El IVA y los demás impuestos se calcularán al emitir la factura.", normal)]
+    doc.build(historia)
+    return salida.getvalue()

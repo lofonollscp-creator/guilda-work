@@ -212,6 +212,7 @@ SELECT create_distributed_table('tenant_marca', 'tenant_id', colocate_with => 'a
 SELECT create_distributed_table('tenants_extras_activos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('tenants_herramientas_ocultas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('tenants_verticales', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('tenants_verticales_historial', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('tiquets', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('tiquets_adjuntos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('trabajadores_cliente', 'tenant_id', colocate_with => 'abogados_ajustes');

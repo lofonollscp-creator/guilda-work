@@ -2306,6 +2306,8 @@ def init_db() -> None:
         _crear_vista_participantes_todos(conn)
         from . import nucleo
         nucleo.crear_esquema(conn)            # clientes, expedientes, plazos, horas y verticales (app/nucleo.py)
+        for _columna in ("motivo", "fijado_por", "fijado_en"):               # excepciones de módulos con motivo (bases anteriores)
+            _asegurar_columna(conn, "tenants_verticales", _columna, "TEXT")
         from . import ausencias
         ausencias.crear_esquema(conn)         # ausencias, vacaciones y permisos con saldo (app/ausencias.py)
         from . import turnos, bolsa_horas

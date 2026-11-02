@@ -26,3 +26,25 @@ vigente, sin bajas ni rebotes, un correo por dirección. Hay una plantilla de pa
 ## Puesta en producción
 Migración 015 con el superusuario **antes** de reiniciar `guilda-work`, `guilda-work-mcp` y `guilda-backoffice` (tres tablas nuevas y dos columnas en `documentos_firma`).
 No hay variables nuevas ni temporizadores nuevos: el recordatorio de firma usa el de `sincronizar-firmas`.
+
+---
+
+# Facturación, excepciones de módulos y ayuda (migración 016)
+
+## Validar antes de facturar (`app/facturacion_despacho.py`)
+- No se emite una factura (ni de horas) si al cliente le falta **NIF, dirección, código postal o ciudad**; el panel del expediente lo avisa y lista lo que falta. La dirección es un texto libre:
+  el código postal es un número de cinco cifras dentro de ella y la ciudad, lo que queda tras él (o tras la última coma).
+- Una factura puede llevar **hasta 5 líneas** desde el formulario (10 desde código): sirve para facturar por servicios o una parte de los honorarios.
+- **Proforma** (`POST /expedientes/<id>/proforma`): PDF con las mismas líneas marcado «sin validez fiscal»; no crea nada en FacturaScripts ni gasta número.
+- **No hecho:** numeración por patrón (`F2026[YYYY]`) y la verificación de numeración: dependen de la normativa de facturación y de la serie de FacturaScripts; hay que contrastarlas con la normativa antes de tocarlas.
+
+## Excepciones de módulos por despacho (`app/verticales.py`, backoffice)
+Forzar un módulo a un despacho es una **excepción** con **motivo obligatorio**, **prueba de 15/30/60/90 días** o sin caducidad, y queda en el **historial** (`tenants_verticales_historial`:
+qué, hasta cuándo, motivo, quién). Pasada la fecha vuelve sola al plan; **Volver al plan** borra la excepción y también se anota.
+
+## Centro de ayuda (`/home/guilda/guilda-help`)
+El centro de ayuda público (`help.guildawork.com`) ya existía. Se añaden seis guías en es/ca/en/fr (documentos para firmar, cambios en lote, marketing, honorarios, facturar desde un expediente,
+excepciones de módulos) y `app/ayuda.py` enlaza cada pantalla nueva con la suya. **Para publicarlas:** `cd /home/guilda/guilda-help && .venv/bin/python generar.py && sudo cp -r salida/* /var/www/help/ && sudo chown -R caddy:caddy /var/www/help`.
+
+## Puesta en producción
+Migración 016 con el superusuario (una tabla y tres columnas) **antes** de reiniciar los tres servicios; después, publicar la ayuda.

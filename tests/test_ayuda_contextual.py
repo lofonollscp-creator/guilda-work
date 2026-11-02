@@ -63,3 +63,11 @@ def test_contabilizacion_de_facturas_tiene_su_ayuda(cliente):
     _uid, _t, c = _web(cliente, "ayudaconta@ejemplo.com")
     assert b"https://help.guildawork.com/contabilizacion-de-facturas/anotar-y-revisar-facturas/" in cliente.get("/contabilidad/").data
     assert b"https://help.guildawork.com/contabilizacion-de-facturas/ajustes-de-a3/" in cliente.get("/contabilidad/ajustes").data
+
+
+def test_las_pantallas_nuevas_apuntan_a_su_guia():
+    from app import ayuda
+    for endpoint, ruta in (("documentos_firma.ver", "gestion-del-despacho/documentos-para-firmar"), ("fiscal_masivo.ver", "gestion-del-despacho/cambios-en-lote"),
+                           ("comercial.masivo_ver", "gestion-del-despacho/cambios-en-lote"), ("marketing.grupos", "gestion-del-despacho/marketing-del-comercial"),
+                           ("honorarios.inicio", "guilda-fiscal/honorarios-por-tramos"), ("cobros.proforma", "gestion-del-despacho/facturar-desde-un-expediente")):
+        assert ayuda.ruta_de(endpoint) == ruta, endpoint

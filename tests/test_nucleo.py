@@ -337,10 +337,14 @@ def test_el_backoffice_activa_y_desactiva_modulos_de_negocio_y_vincula_extras(tm
     t = db.crear_tenant("Despacho BO")
     html = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
     assert "Módulos de negocio" in html and "Gestoría" in html and "Incluido por defecto" in html and "/verticales/inmobiliaria" in html and "/verticales/abogados" in html
-    post(bo, f"/tenants/{t}/verticales/gestoria")
-    assert verticales.activos_de(t, usar_cache=False) == set() and "Ajuste manual" in bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
+    post(bo, f"/tenants/{t}/verticales/gestoria")                                                  # sin motivo no hay excepción
+    assert verticales.activos_de(t, usar_cache=False) == {"gestoria"} and verticales.historial_de(t) == []
+    post(bo, f"/tenants/{t}/verticales/gestoria", motivo="Acuerdo con el cliente")
+    pagina = bo.get(f"/tenants/{t}?seccion=modulos").get_data(as_text=True)
+    assert verticales.activos_de(t, usar_cache=False) == set() and "Excepción" in pagina and "Acuerdo con el cliente" in pagina and "Volver al plan" in pagina
     post(bo, f"/tenants/{t}/verticales/gestoria", accion="auto")
     assert verticales.activos_de(t, usar_cache=False) == {"gestoria"}
+    assert [h["accion"] for h in verticales.historial_de(t)] == ["volver_al_plan", "desactivar"]
     assert post(bo, f"/tenants/{t}/verticales/astrologia").status_code == 400
     # un extra de pago vinculado a un módulo
     post(bo, "/extras", nombre="Pack abogados", descripcion="x", precio="49", vertical_id="abogados")

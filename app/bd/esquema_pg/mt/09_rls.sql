@@ -577,6 +577,9 @@ CREATE POLICY aislamiento ON tenants_herramientas_ocultas USING (tenant_id = nul
 ALTER TABLE tenants_verticales ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON tenants_verticales;
 CREATE POLICY aislamiento ON tenants_verticales USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE tenants_verticales_historial ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON tenants_verticales_historial;
+CREATE POLICY aislamiento ON tenants_verticales_historial USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE tiquets ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON tiquets;
 CREATE POLICY aislamiento ON tiquets USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

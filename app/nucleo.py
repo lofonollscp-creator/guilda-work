@@ -22,8 +22,23 @@ CREATE TABLE IF NOT EXISTS tenants_verticales (
     activo INTEGER NOT NULL DEFAULT 1,
     activo_hasta TEXT,
     creado_en TEXT NOT NULL,
+    motivo TEXT,
+    fijado_por TEXT,
+    fijado_en TEXT,
     PRIMARY KEY (tenant_id, vertical_id)
 );
+
+CREATE TABLE IF NOT EXISTS tenants_verticales_historial (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    vertical_id TEXT NOT NULL,
+    accion TEXT NOT NULL CHECK (accion IN ('activar', 'desactivar', 'prueba', 'volver_al_plan')),
+    activo_hasta TEXT,
+    motivo TEXT NOT NULL,
+    por TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_tenants_verticales_historial ON tenants_verticales_historial(tenant_id, id);
 
 CREATE TABLE IF NOT EXISTS clientes (
     id INTEGER PRIMARY KEY,

@@ -25,7 +25,8 @@ class FakeFS:
         if self.fallar:
             raise fs.ErrorFacturaScripts("caído")
         n = len(self.facturas) + 1
-        precio = lineas[0]["precio"]
+        self.ultimas_lineas = lineas
+        precio = sum(l["precio"] for l in lineas)
         self.facturas.append({"idfactura": str(n), "codigo": f"FAC2026{n:04d}", "codcliente": cliente_codigo, "nombrecliente": "Cliente", "fecha": date.today().isoformat(),
                               "total": round(precio * 1.21, 2), "pagada": False, "vencida": False})
         return {"idfactura": str(n)}
@@ -59,6 +60,9 @@ def _despacho(vinculado=True, con_fs=True, gestion_fiscal=True):
     else:
         c = nucleo.crear_cliente(t, nombre)
     x = nucleo.crear_expediente(t, u2, c, "Asunto a facturar", responsable_id=u2)
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes SET nif = COALESCE(nif, '12345678Z'), direccion = 'Calle Mayor 1, 08001 Barcelona' WHERE id = ?", (c,))
+    conn.commit(); conn.close()
     return t, u1, u2, x
 
 
@@ -200,6 +204,7 @@ def test_el_panel_del_expediente_ofrece_facturar_y_lista_lo_facturado(ffs, clien
     db.guardar_facturascripts(t, "http://127.0.0.1:1/", "a", "b"); db.guardar_facturascripts_api_key(t, "k")
     f = crear_cliente_fiscal(t, "Cliente Panel", nif="12345678Z"); db.editar_cliente_fiscal(t, f, facturascripts_cliente_codigo="C9")
     c = nucleo.listar_clientes(t, limite=5)[0][0]["id"]
+    conn = db.get_connection(); conn.execute("UPDATE clientes SET direccion = 'Calle Mayor 1, 08001 Barcelona' WHERE id = ?", (c,)); conn.commit(); conn.close()
     x = nucleo.crear_expediente(t, uid, c, "Expediente panel")
     html = cliente.get(f"/expedientes/{x}").get_data(as_text=True)
     assert 'id="facturacion"' in html and "Emitir factura" in html and "Todavía no se ha facturado nada" in html
@@ -212,6 +217,9 @@ def test_el_panel_del_expediente_ofrece_facturar_y_lista_lo_facturado(ffs, clien
     assert "FAC20260001" in html and "Honorarios" in html and "Pendiente de cobro" in html and "300,00 €" in html
     ffs.facturas[0]["pagada"] = True; fd.olvidar_cache(t)
     assert "Cobrada" in cliente.get(f"/expedientes/{x}").get_data(as_text=True)
+    pro = cliente.post(f"/expedientes/{x}/proforma", data={"concepto": "Honorarios", "importe": "100", "concepto_2": "Otro", "importe_2": "20"})
+    assert pro.status_code == 200 and pro.mimetype == "application/pdf" and pro.data.startswith(b"%PDF") and len(ffs.facturas) == 1
+    assert "Ver proforma" in cliente.get(f"/expedientes/{x}").get_data(as_text=True)
 
 
 def test_el_panel_no_aparece_sin_facturascripts_ni_para_quien_no_puede(ffs, cliente):
@@ -235,3 +243,52 @@ def test_la_ficha_del_cliente_enseña_el_estado_de_cobro(ffs, cliente):
     c = nucleo.listar_clientes(t, limite=5)[0][0]["id"]
     html = cliente.get(f"/clientes/{c}?pestana=fiscal").get_data(as_text=True)
     assert "Facturado" in html and "160.00 €" in html and "Cobrado" in html and "100.00 €" in html and "60.00 €" in html and "1 factura vencida" in html and "Cobrada" in html and "Vencida" in html
+
+
+# --- Datos completos, varias líneas y proforma -------------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("direccion,faltan", [
+    ("Calle Mayor 1, 08001 Barcelona", []), ("Calle Mayor 1 08001 Barcelona", []), ("08001 Barcelona", []),
+    ("", ["dirección", "código postal", "ciudad"]), ("Calle Mayor 1, Barcelona", ["código postal"]), ("Calle Mayor 1, 08001", ["ciudad"]), ("Calle Mayor 1", ["código postal", "ciudad"]),
+])
+def test_datos_que_faltan_para_facturar(direccion, faltan):
+    assert fd.datos_que_faltan({"nif": "12345678Z", "direccion": direccion}) == faltan
+    assert fd.datos_que_faltan({"nif": " ", "direccion": "Calle 1, 08001 Barcelona"}) == ["NIF"]
+
+
+def test_no_se_factura_si_faltan_datos_y_el_panel_lo_dice(ffs):
+    t, u1, u2, x = _despacho()
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes SET direccion = 'Calle Mayor 1' WHERE tenant_id = ?", (t,)); conn.commit(); conn.close()
+    exp = nucleo.obtener_expediente(t, x, u2, False)
+    assert fd.situacion(t, u2, False, exp)["faltan"] == ["código postal", "ciudad"]
+    with pytest.raises(ValueError, match="Faltan datos del cliente para facturar: código postal, ciudad"):
+        fd.facturar_expediente(t, u2, False, x, "Honorarios", "100")
+    assert ffs.facturas == []
+    with pytest.raises(ValueError, match="Faltan datos"):
+        fd.facturar_horas(t, u2, False, x, [1])
+
+
+def test_una_factura_puede_llevar_varias_lineas(ffs):
+    t, u1, u2, x = _despacho()
+    r = fd.facturar_expediente(t, u2, False, x, "", "", lineas=[("Contabilidad del trimestre", "300,00"), ("", ""), ("Declaración del IVA", "80,50")])
+    assert str(r["base"]) == "380.50"
+    assert [(l["descripcion"], l["precio"]) for l in ffs.ultimas_lineas] == [("Contabilidad del trimestre", 300.0), ("Declaración del IVA", 80.5)]
+    lista = fd.facturas_del_expediente(t, x)
+    assert lista[0]["base"] == "380,50 €" and "1 línea(s) más" in lista[0]["concepto"]
+    with pytest.raises(ValueError, match="concepto de cada línea"):
+        fd.lineas_validas([("", "10")])
+    with pytest.raises(ValueError):
+        fd.lineas_validas([("x", "0")])
+    with pytest.raises(ValueError, match="Como máximo"):
+        fd.lineas_validas([("x", "1")] * (fd.MAX_LINEAS + 1))
+
+
+def test_la_proforma_es_un_pdf_marcado_sin_validez_fiscal_y_no_crea_nada(ffs):
+    t, u1, u2, x = _despacho()
+    pdf = fd.proforma_pdf(t, u2, False, x, [("Honorarios", "1.000,00")])
+    assert pdf.startswith(b"%PDF") and len(pdf) > 1500
+    assert ffs.facturas == [] and fd.facturas_del_expediente(t, x) == []
+    otro = db.crear_usuario_vinculado_a_kratos("fact3@ejemplo.com", "k-fact3"); db.asignar_tenant(otro, t)
+    with pytest.raises(ValueError, match="Solo la dirección"):
+        fd.proforma_pdf(t, otro, False, x, [("x", "1")])

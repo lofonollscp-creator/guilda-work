@@ -19486,3 +19486,21 @@ msgstr "reste"
 
 msgid "¿Quitar esta regla? Los honorarios ya confirmados conservan su cálculo."
 msgstr "Retirer cette règle ? Les honoraires déjà confirmés conservent leur calcul."
+
+msgid "Completar la ficha del cliente"
+msgstr "Compléter la fiche du client"
+
+msgid "El IVA lo aplica FacturaScripts según su configuración. La factura se crea allí y queda enlazada a este expediente. La proforma no es una factura: no gasta número ni se guarda."
+msgstr "La TVA est appliquée par FacturaScripts selon sa configuration. La facture y est créée et liée à ce dossier. La proforma n'est pas une facture : elle ne consomme aucun numéro et n'est pas enregistrée."
+
+msgid "Faltan datos del cliente para facturar:"
+msgstr "Données du client manquantes pour facturer :"
+
+msgid "La dirección, como «Calle Mayor 1, 08001 Barcelona»."
+msgstr "L'adresse, comme « Calle Mayor 1, 08001 Barcelona »."
+
+msgid "Una factura puede llevar varias líneas (por ejemplo, una por cada servicio o una parte de los honorarios). Deja vacías las que no uses."
+msgstr "Une facture peut comporter plusieurs lignes (par exemple, une par service ou une partie des honoraires). Laissez vides celles que vous n'utilisez pas."
+
+msgid "Ver proforma (sin validez fiscal)"
+msgstr "Voir la proforma (sans valeur fiscale)"
