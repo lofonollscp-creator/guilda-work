@@ -20,7 +20,8 @@ def test_catalogo_tiene_las_mismas_162_herramientas_clasificadas():
     # + 4 de soporte: ayuda_buscar, abrir_pantalla, ver_mis_ajustes, cambiar_mis_ajustes.
     # + 5 del núcleo del despacho (solo lectura): clientes, expedientes y plazos.
     # + 3 de avisos por correo: crear_recordatorio, recordar_tarea, listar_recordatorios.
-    assert len(nombres) == 213
+    # + 3 de cambios en lote del Comercial (proponer, aplicar, deshacer).
+    assert len(nombres) == 216
     assert nombres == (h.LECTURA | h.ESCRITURA | h.SIEMPRE_CONFIRMAR)
     assert not (h.LECTURA & h.ESCRITURA)
     assert not (h.LECTURA & h.SIEMPRE_CONFIRMAR)

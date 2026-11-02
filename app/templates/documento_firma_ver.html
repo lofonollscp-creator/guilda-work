@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import boton, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ d.titulo }} — Guilda Work{% endblock %}
+{% block content %}
+{% set estados = {'borrador': (_('Borrador'), 'neutro'), 'enviado': (_('Pendiente de firma'), 'aviso'), 'firmado': (_('Firmado'), 'exito'), 'rechazado': (_('Rechazado'), 'peligro'), 'cancelado': (_('Cancelado'), 'neutro')} %}
+<header class="page-header">
+  <div>
+    <h1>{{ d.nombre_plantilla }}</h1>
+    <p class="subtitle">{{ c.nombre }} · {{ chip(estados[d.estado][0], estados[d.estado][1]) }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('clientes.ficha', cliente_id=c.id, pestana='documentos') }}#firmas">{{ _('Volver a la ficha') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if aviso %}<div class="ds-estado-ok" role="status">{{ {'enviado': _('Enviado a firma: el cliente recibirá un correo de Documenso.'), 'cancelado': _('Documento cancelado.'), 'actualizado': _('Estado actualizado.')}.get(aviso, '') }}</div>{% endif %}
+
+<section class="dash-panel">
+  <h2>{{ _('Quién firma') }}</h2>
+  <p>{{ d.firmante_nombre }} · {{ d.firmante_email }}</p>
+  <p class="muted">{{ _('Creado el') }} {{ d.creado_en[:10] }}{% if d.enviado_en %} · {{ _('enviado el') }} {{ d.enviado_en[:10] }}{% endif %}{% if d.firmado_en %} · {{ _('firmado el') }} {{ d.firmado_en[:10] }}{% endif %}</p>
+  <div class="ds-fila">
+    <a class="btn btn-ghost" href="{{ url_for('documentos_firma.pdf', cliente_id=c.id, documento_id=d.id) }}" target="_blank" rel="noopener">{{ _('Ver PDF') }}</a>
+    {% if d.estado == 'borrador' %}
+      {% if puede_enviar %}
+      <form method="post" action="{{ url_for('documentos_firma.enviar', cliente_id=c.id, documento_id=d.id) }}">
+        {{ boton(_('Enviar a firmar'), 'primario', tipo='submit', confirmar=_('Se enviará por correo a %(email)s con Documenso. ¿Enviar?', email=d.firmante_email)) }}
+      </form>
+      {% else %}<span class="muted">{{ _('El despacho no tiene Documenso configurado: descarga el PDF para firmarlo por otro medio.') }}</span>{% endif %}
+    {% endif %}
+    {% if d.estado == 'enviado' %}
+      <form method="post" action="{{ url_for('documentos_firma.actualizar', cliente_id=c.id, documento_id=d.id) }}">{{ boton(_('Comprobar si está firmado'), 'fantasma', tipo='submit') }}</form>
+    {% endif %}
+    {% if d.estado in ('borrador', 'enviado', 'rechazado') %}
+      <form method="post" action="{{ url_for('documentos_firma.cancelar', cliente_id=c.id, documento_id=d.id) }}">{{ boton(_('Cancelar'), 'peligro', tipo='submit', confirmar=_('¿Cancelar este documento?')) }}</form>
+    {% endif %}
+    {% if d.documento_firmado_id %}
+      <a class="btn btn-ghost" href="{{ url_for('clientes.descargar_documento', cliente_id=c.id, documento_id=d.documento_firmado_id) }}">{{ _('Descargar firmado') }}</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Texto del documento') }}</h2>
+  <p class="muted">{{ _('Esto es exactamente lo que se envía a firmar. Si algo no es correcto, cancela este borrador y crea otro.') }}</p>
+  <pre class="ds-texto-documento">{{ d.texto }}</pre>
+  <p class="muted">{{ _('Huella SHA-256 del PDF:') }} <code>{{ d.pdf_sha256 }}</code></p>
+</section>
+{% endblock %}

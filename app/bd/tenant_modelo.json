@@ -725,6 +725,11 @@
    }
   ]
  },
+ "crm_acciones_masivas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "crm_actividades": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
@@ -751,6 +756,16 @@
   "via": []
  },
  "documentos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "documentos_firma": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "documentos_plantillas": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
   "via": []
@@ -1223,6 +1238,31 @@
   "via": []
  },
  "mantenimiento": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "marketing_contactos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "marketing_envio_destinatarios": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "marketing_envios": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "marketing_grupos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "marketing_plantillas": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
   "via": []

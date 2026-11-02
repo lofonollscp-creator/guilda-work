@@ -15,6 +15,7 @@
   <div class="ia-chat-pendiente" id="{{ contenedor_id }}-pendiente" data-tool-call-id="{{ pendiente.tool_call_id if pendiente else '' }}" {{ 'hidden' if not pendiente }}>
     {% if pendiente %}
     <p class="ia-chat-pendiente-titulo"><strong data-herramienta="{{ pendiente.herramienta }}">{{ pendiente.herramienta }}</strong></p>
+    {% if pendiente.resumen %}<p class="ia-chat-pendiente-resumen">{{ pendiente.resumen }}</p>{% endif %}
     <pre class="ia-chat-pendiente-args">{{ pendiente.argumentos }}</pre>
     <p class="ia-chat-pendiente-pregunta">{{ _('Voy a hacer esto. ¿Lo confirmo?') }}</p>
     {% endif %}

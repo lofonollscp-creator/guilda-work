@@ -12,7 +12,7 @@ from datetime import date, timedelta
 
 from flask import url_for
 
-from . import almacen_documentos, calcom, db, espocrm, facturacion_despacho, facturascripts, perfil_fiscal
+from . import almacen_documentos, calcom, db, documentos_firma, espocrm, facturacion_despacho, facturascripts, perfil_fiscal
 from .vencimientos_fiscales import modelos_disponibles
 
 FILTROS_TAREAS = ("todas", "abiertas", "vencidas", "completadas")
@@ -86,7 +86,8 @@ def contexto_fiscal(tenant_id: int, usuario_id: int, cliente, vencimientos) -> d
 
 def contexto_documentos(tenant_id: int, usuario_id: int, c, cliente_fiscal, vencimientos) -> dict:
     """Los documentos del cliente (almacén del núcleo) y, con gestión fiscal, el expediente fiscal y lo que ha subido él por el portal."""
-    ctx = {"documentos": almacen_documentos.listar(tenant_id, usuario_id, cliente_id=c["id"]), "expediente": None, "documentos_totales": []}
+    ctx = {"documentos": almacen_documentos.listar(tenant_id, usuario_id, cliente_id=c["id"]), "expediente": None, "documentos_totales": [],
+           "firmas": documentos_firma.listar_de_cliente(tenant_id, c["id"]), "catalogo_firmas": documentos_firma.catalogo(tenant_id)}
     if cliente_fiscal is not None:
         ctx["expediente"] = almacen_documentos.listar_de_cliente_fiscal(tenant_id, cliente_fiscal["id"])
         ctx["categorias_documento"] = db.CATEGORIAS_DOCUMENTO

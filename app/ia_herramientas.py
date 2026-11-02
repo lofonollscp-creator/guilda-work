@@ -698,6 +698,26 @@ HERRAMIENTAS: list[dict] = [
         {"oportunidad_id": _param("integer", "Id de la oportunidad.")}, ["oportunidad_id"],
     ),
     _tool(
+        "comercial_proponer_cambio_masivo",
+        "Prepara un cambio en lote sobre varias oportunidades SIN aplicarlo: devuelve cuántas cambiarían, cuáles se omiten y un accion_id. Úsala antes de cambiar de etapa, reasignar, posponer o enviar a la papelera "
+        "varias oportunidades a la vez. Aún no cambia nada: enseña el resumen a la persona y, si lo acepta, llama a comercial_aplicar_cambio_masivo.",
+        {"tipo": _param("string", "mover_etapa, reasignar, posponer_cierre o papelera."), "ids": _param("array", "Ids de las oportunidades (o usa los filtros)."),
+         "estado": _param("string", "Filtro: abierta, ganada, perdida o todas."), "etapa": _param("string", "Filtro: clave de la etapa actual."),
+         "responsable_id": _param("integer", "Filtro: quien las lleva ahora."), "estancadas": _param("boolean", "Filtro: solo las que llevan 14 días sin actividad."),
+         "etapa_destino": _param("string", "Para mover_etapa: clave de la etapa de destino."), "motivo": _param("string", "Para mover_etapa a perdida: el motivo."),
+         "responsable_nuevo_id": _param("integer", "Para reasignar: id de la persona."), "dias": _param("integer", "Para posponer_cierre: días (1 a 365).")}, ["tipo"],
+    ),
+    _tool(
+        "comercial_aplicar_cambio_masivo",
+        "Aplica un cambio en lote ya propuesto con comercial_proponer_cambio_masivo. La persona lo confirma antes; se puede deshacer 90 días. Si manda oportunidades a la papelera, lo confirma ella en pantalla escribiendo el recuento.",
+        {"accion_id": _param("integer", "El accion_id de la propuesta."), "confirmacion": _param("string", "Solo si la persona te ha dado el texto de confirmación.")}, ["accion_id"],
+    ),
+    _tool(
+        "comercial_deshacer_cambio_masivo",
+        "Deshace un cambio en lote aplicado hace menos de 90 días: cada oportunidad vuelve a su estado anterior, salvo las que se hayan vuelto a cambiar.",
+        {"accion_id": _param("integer", "El accion_id del cambio aplicado.")}, ["accion_id"],
+    ),
+    _tool(
         "comercial_listar_reuniones",
         "Lista las reuniones que puedes ver, de la más reciente a la más antigua, sin notas ni transcripción. Se pueden filtrar por cliente o por oportunidad.",
         {"cliente_id": _param("integer", "Solo reuniones de ese cliente."), "oportunidad_id": _param("integer", "Solo reuniones de esa oportunidad."), "limite": _param("integer", "Máximo de resultados (30 por defecto).")},
@@ -1450,7 +1470,7 @@ LECTURA: set[str] = {
     "listar_reglas_correo", "listar_conversacion_correo", "listar_proyectos", "listar_tareas_hoy",
     "ayuda_buscar", "abrir_pantalla", "ver_mis_ajustes",
     "listar_recordatorios", "listar_companeros", "listar_checklist_tarea", "activar_herramientas", "resumen_del_dia", "detalle_tarea", "listar_comentarios_tarea",
-    "comercial_listar_etapas", "comercial_listar_reuniones",
+    "comercial_listar_etapas", "comercial_listar_reuniones", "comercial_proponer_cambio_masivo",
     "juridico_buscar", "juridico_ver_documento", "juridico_listar_informes", "juridico_ver_informe",
 }
 
@@ -1486,9 +1506,27 @@ ESCRITURA: set[str] = {
 # ya avisaban de esto en su description para el LLM, pero solo estaban en
 # ESCRITURA -- con modo autónomo activado, el propio modelo decidía si
 # confirmar o no, sin ninguna garantía en código).
-SIEMPRE_CONFIRMAR: set[str] = {"enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma", "responder_mensaje_de_enlace", "responder_cliente_tarea", "comercial_guardar_transcripcion"}
+SIEMPRE_CONFIRMAR: set[str] = {"comercial_aplicar_cambio_masivo", "comercial_deshacer_cambio_masivo", "enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma", "responder_mensaje_de_enlace", "responder_cliente_tarea", "comercial_guardar_transcripcion"}
 
 _NOMBRES_VALIDOS = LECTURA | ESCRITURA | SIEMPRE_CONFIRMAR
+
+
+def resumen_de_confirmacion(usuario_id: int, nombre: str, argumentos: dict) -> str:
+    """Lo que hace exactamente la acción pendiente, en una frase, cuando la herramienta lo sabe (hoy, los cambios en lote del Comercial); vacío en las demás. Nunca falla: la tarjeta de confirmación
+    sigue enseñando la herramienta y sus argumentos."""
+    if nombre not in ("comercial_aplicar_cambio_masivo", "comercial_deshacer_cambio_masivo"):
+        return ""
+    try:
+        from app import comercial_masivo, db
+        tenant = db.tenant_de_usuario(usuario_id)
+        accion = comercial_masivo.obtener(tenant["id"], usuario_id, int(argumentos.get("accion_id"))) if tenant else None
+        if accion is None:
+            return ""
+        if nombre == "comercial_aplicar_cambio_masivo":
+            return comercial_masivo.resumen_para_confirmar(tenant["id"], usuario_id, accion["id"])
+        return f"Deshacer: {accion['descripcion']}. Cada oportunidad vuelve a como estaba, salvo las que se hayan vuelto a cambiar."
+    except Exception:       # noqa: BLE001 -- un resumen que falla no debe impedir confirmar o rechazar
+        return ""
 
 
 def necesita_confirmacion(nombre: str, modo_autonomo: bool) -> bool:

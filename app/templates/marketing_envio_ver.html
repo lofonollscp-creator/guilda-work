@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, boton %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ e.nombre }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ e.nombre }}</h1><p class="subtitle">{{ chip({'borrador': _('Borrador'), 'programado': _('Programado'), 'enviando': _('Enviando'), 'enviado': _('Enviado'), 'cancelado': _('Cancelado')}[e.estado]) }} · {{ e.asunto }}</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('marketing.envios') }}">{{ _('Volver') }}</a></header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+{% if aviso %}<div class="ds-estado-ok" role="status">{{ {'prueba': _('Prueba enviada.'), 'programado': _('Envío programado: saldrá en los próximos minutos.'), 'cancelado': _('Envío cancelado.')}.get(aviso, '') }}</div>{% endif %}
+
+{% if e.estado == 'borrador' %}
+<section class="dash-panel">
+  <h2>{{ _('Paso 2: revisa a quién llegará') }}</h2>
+  <p>{{ chip(_('%(n)s destinatarios con consentimiento', n=revision.audiencia.destinatarios|length), 'exito') }}
+    {% for k, v in revision.audiencia.excluidos.items() %}{{ chip(({'sin_correo': _('sin correo'), 'correo_no_valido': _('correo no válido'), 'sin_consentimiento': _('sin consentimiento'), 'baja': _('de baja'), 'rebotado': _('rebotado'), 'duplicado': _('repetido')}[k]) ~ ' ' ~ v) }} {% endfor %}</p>
+  <p class="muted">{{ _('La lista se vuelve a comprobar al enviar cada correo: quien se dé de baja antes no lo recibe.') }}
+    <a href="{{ url_for('marketing.envio_csv', envio_id=e.id) }}">{{ _('Descargar la audiencia (CSV)') }}</a></p>
+  {% if revision.problemas %}<div class="ia-error" role="alert"><ul>{% for p in revision.problemas %}<li>{{ p }}</li>{% endfor %}</ul></div>{% endif %}
+  <h2>{{ _('Prueba') }}</h2>
+  <form method="post" action="{{ url_for('marketing.envio_prueba', envio_id=e.id) }}" class="ds-fila"><input type="email" name="email" required placeholder="{{ _('Tu correo') }}" aria-label="{{ _('Correo de prueba') }}"><button type="submit" class="btn btn-ghost">{{ _('Enviarme una prueba') }}</button></form>
+  <h2>{{ _('Paso 3: confirmar') }}</h2>
+  {% if es_direccion %}
+  <form method="post" action="{{ url_for('marketing.envio_programar', envio_id=e.id) }}" class="edit-form ds-max-640">
+    <label>{{ _('Escribe %(n)s (el número de destinatarios) para confirmar', n=revision.audiencia.destinatarios|length) }} <input type="text" name="confirmacion" inputmode="numeric" autocomplete="off" required></label>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary"{% if revision.problemas %} disabled{% endif %}>{{ _('Programar el envío') }}</button></div>
+  </form>
+  {% else %}<p class="muted">{{ _('Solo la dirección del despacho programa los envíos.') }}</p>{% endif %}
+</section>
+{% else %}
+<section class="dash-panel">
+  <h2>{{ _('Estado') }}</h2>
+  <p>{{ _('%(a)s enviados de %(b)s · %(c)s con error', a=e.enviados, b=e.total, c=e.errores) }}</p>
+  {% if e.estado in ('programado', 'enviando') %}<form method="post" action="{{ url_for('marketing.envio_cancelar', envio_id=e.id) }}">{{ boton(_('Cancelar lo que falta'), 'peligro', tipo='submit', confirmar=_('¿Cancelar el envío? Los ya enviados no se pueden recuperar.')) }}</form>{% endif %}
+  <table class="ds-tabla"><thead><tr><th>{{ _('Correo') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead><tbody>
+  {% for d in destinatarios %}<tr><td>{{ d.email }}</td><td>{{ {'pendiente': _('Pendiente'), 'enviado': _('Enviado'), 'error': _('Error'), 'omitido': _('Omitido')}[d.estado] }}</td><td class="muted">{{ d.error or '' }}</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endif %}
+<section class="dash-panel"><h2>{{ _('Vista previa') }}</h2><iframe class="ds-vista-correo" sandbox srcdoc="{{ vista }}" title="{{ _('Vista previa del correo') }}"></iframe></section>
+{% endblock %}

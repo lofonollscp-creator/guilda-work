@@ -553,6 +553,7 @@ from .herramientas_comercial import (  # noqa: E402,F401
     _ctx_comercial, _traducir_comercial, _oportunidad_json,
     comercial_listar_oportunidades, comercial_ver_oportunidad, comercial_embudo, comercial_ver_reunion, comercial_crear_oportunidad, comercial_mover_oportunidad, comercial_anotar_actividad, comercial_crear_reunion, comercial_generar_acta,
     comercial_listar_etapas, comercial_editar_oportunidad, comercial_convertir_en_cliente, comercial_eliminar_oportunidad, comercial_listar_reuniones, comercial_editar_reunion, comercial_guardar_transcripcion, comercial_borrar_transcripcion, comercial_guardar_acta, comercial_crear_tareas_de_acta, comercial_eliminar_reunion,
+    comercial_proponer_cambio_masivo, comercial_aplicar_cambio_masivo, comercial_deshacer_cambio_masivo,
 )
 from .herramientas_juridico import (  # noqa: E402,F401
     _ctx_juridico, _traducir_juridico,
@@ -713,6 +714,7 @@ TOOLS = [
     # Comercial: oportunidades, embudo y reuniones con acta de IA
     comercial_listar_oportunidades, comercial_ver_oportunidad, comercial_embudo, comercial_ver_reunion, comercial_crear_oportunidad, comercial_mover_oportunidad, comercial_anotar_actividad, comercial_crear_reunion, comercial_generar_acta,
     comercial_listar_etapas, comercial_editar_oportunidad, comercial_convertir_en_cliente, comercial_eliminar_oportunidad, comercial_listar_reuniones, comercial_editar_reunion, comercial_guardar_transcripcion, comercial_borrar_transcripcion, comercial_guardar_acta, comercial_crear_tareas_de_acta, comercial_eliminar_reunion,
+    comercial_proponer_cambio_masivo, comercial_aplicar_cambio_masivo, comercial_deshacer_cambio_masivo,
     # Asistente jurídico: biblioteca, consultas con citas e informes
     juridico_buscar, juridico_ver_documento, juridico_consultar, juridico_guardar_informe, juridico_listar_informes, juridico_ver_informe,
     # Fichaje

@@ -277,3 +277,9 @@ tr[hidden] { display: none; }
 .btn[aria-pressed="true"] { background: var(--accent, #2f5bea); color: var(--on-accent, #fff); border-color: transparent; }
 
 [data-evidencia-imagen] img { max-width: 100%; height: auto; }
+
+/* Documentos prehechos para firmar (documentos_firma): el texto exacto que se envía y el editor del texto del despacho. */
+.ds-texto-documento { white-space: pre-wrap; font: inherit; line-height: 1.5; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface, transparent); max-height: 60vh; overflow: auto; }
+.ds-texto-documento-editor { width: 100%; font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.5; }
+
+.ds-vista-correo { width: 100%; height: 520px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }

@@ -34,14 +34,14 @@ def _tablas(conn):
 
 def test_la_migracion_crea_distribuye_instala_triggers_y_es_repetible(base_antigua):
     modo, conn = base_antigua
-    assert migraciones.pendientes(conn) == [3] and not _tablas(conn)
-    assert migraciones.aplicar(conn) == [3]
+    assert 3 in migraciones.pendientes(conn) and not _tablas(conn)
+    assert 3 in migraciones.aplicar(conn)
     assert _tablas(conn) == set(TABLAS)
     if modo == "citus":
         assert {f[0] for f in conn.execute("SELECT logicalrelid::text FROM pg_dist_partition WHERE logicalrelid::text LIKE 'fiscal\\_%'").fetchall()} >= set(TABLAS)
     assert conn.execute("SELECT count(*) FROM pg_policy WHERE polrelid::regclass::text = ANY(?)", (list(TABLAS),)).fetchone()[0] == 5
     triggers = {f[0] for f in conn.execute("SELECT tgname FROM pg_trigger WHERE NOT tgisinternal AND tgname LIKE 'fiscal\\_%'").fetchall()}
     assert {"fiscal_instantaneas_inmutable", "fiscal_artefactos_inmutable", "fiscal_casillas_solo_borrador", "fiscal_declaraciones_reglas"} <= triggers
-    conn.execute("DELETE FROM bd_esquema_version WHERE version = 3")
+    conn.execute("DELETE FROM bd_esquema_version WHERE version >= 3")
     conn.commit()
-    assert migraciones.aplicar(conn) == [3]                                                          # repetir no rompe nada
+    assert 3 in migraciones.aplicar(conn)                                                          # repetir no rompe nada

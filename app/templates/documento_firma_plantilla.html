@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import boton, chip, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ p.titulo }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ p.titulo }}</h1>
+    <p class="subtitle">{% if propio %}{{ chip(_('Texto del despacho'), 'exito') }}{% else %}{{ chip(_('De serie')) }}{% endif %}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('documentos_firma.plantillas') }}">{{ _('Volver') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if aviso %}<div class="ds-estado-ok" role="status">{{ {'guardado': _('Texto guardado.'), 'restaurado': _('Vuelves a usar el texto de serie.')}.get(aviso, '') }}</div>{% endif %}
+<p>{{ sin_validar(_('Texto sin validar: revísalo con tu criterio profesional')) }}</p>
+<form method="post" class="edit-form">
+  <textarea name="texto" rows="28" class="ds-texto-documento-editor" maxlength="20000"{% if not puede_editar %} readonly{% endif %}>{{ texto }}</textarea>
+  <p class="muted">{{ _('Una línea «# Título» es un epígrafe, «- » abre una viñeta y una línea en blanco separa párrafos.') }}</p>
+  <h2>{{ _('Variables') }}</h2>
+  <p>{% for v in variables %}<code>{{ '{{' }}{{ v }}{{ '}}' }}</code> {% endfor %}</p>
+  {% if puede_editar %}
+  <div class="ds-fila">
+    <button type="submit" class="btn btn-primary">{{ _('Guardar texto') }}</button>
+    {% if propio %}<button type="submit" name="accion" value="restaurar" class="btn btn-ghost" data-confirmar-envio="{{ _('¿Volver al texto de serie? Se pierde el del despacho.') }}">{{ _('Restaurar el de serie') }}</button>{% endif %}
+  </div>
+  {% else %}<p class="muted">{{ _('Solo la dirección del despacho cambia los textos.') }}</p>{% endif %}
+</form>
+{% endblock %}

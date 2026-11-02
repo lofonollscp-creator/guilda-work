@@ -169,7 +169,7 @@ def usuario_pertenece_a_tenant(usuario_id: int, tenant_id: int) -> bool:
     conn = _db.get_connection()
     try:
         fila = conn.execute(
-            "SELECT 1 FROM usuarios u WHERE u.id = ? AND " + sql_miembro(), (usuario_id, tenant_id, tenant_id),
+            "SELECT 1 FROM usuarios u WHERE u.id = ? AND " + _db.sql_miembro(), (usuario_id, tenant_id, tenant_id),
         ).fetchone()
         return fila is not None
     finally:
@@ -754,7 +754,8 @@ def borrar_tenant(tenant_id: int, incluir_fichajes: bool = False) -> None:
             conn.execute(f"UPDATE {tabla} SET cliente_fiscal_id = NULL WHERE cliente_fiscal_id IN ({clientes})", (tenant_id,))
         conn.execute(f"DELETE FROM clientes_fiscales_accesos WHERE cliente_fiscal_id IN ({clientes})", (tenant_id,))
         conn.execute("DELETE FROM clientes_fiscales WHERE tenant_id = ?", (tenant_id,))
-        from . import nucleo
+        from . import documentos_firma, nucleo
+        documentos_firma.borrar_datos_de_tenant(conn, tenant_id)  # antes que el núcleo: referencian a los clientes
         nucleo.borrar_datos_de_tenant(conn, tenant_id)
         conn.execute("DELETE FROM webhooks_entregas WHERE webhook_id IN (SELECT id FROM webhooks WHERE tenant_id = ?)", (tenant_id,))
         conn.execute("DELETE FROM webhooks WHERE tenant_id = ?", (tenant_id,))
@@ -1276,7 +1277,7 @@ def usuarios_de_tenant(tenant_id: int) -> list[int]:
     forma correcta de agregar por tenant sin ese problema."""
     conn = _db.get_connection()
     try:
-        filas = conn.execute("SELECT u.id FROM usuarios u WHERE " + sql_miembro(), (tenant_id, tenant_id)).fetchall()
+        filas = conn.execute("SELECT u.id FROM usuarios u WHERE " + _db.sql_miembro(), (tenant_id, tenant_id)).fetchall()
         return [f["id"] for f in filas]
     finally:
         conn.close()

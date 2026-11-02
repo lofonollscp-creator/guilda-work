@@ -1,0 +1,14 @@
+# Plantilla de timer systemd para marketing-envios.service. Copia junto al .service a /etc/systemd/system/, luego:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now marketing-envios.timer
+# Cada 5 minutos: envía un lote (200 correos) de los envíos programados.
+
+[Unit]
+Description=Guilda Work - envío por lotes de marketing (ver marketing-envios.service)
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=false
+
+[Install]
+WantedBy=timers.target

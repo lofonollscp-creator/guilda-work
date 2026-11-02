@@ -1,0 +1,14 @@
+# Plantilla de unidad systemd para scripts/enviar_marketing.py en el VPS. Copia a /etc/systemd/system/marketing-envios.service, ajusta USUARIO y las rutas, y activa el timer
+# (deploy/marketing-envios.timer), no esta unidad directamente. Necesita MARKETING_SMTP_HOST, MARKETING_SMTP_USUARIO, MARKETING_SMTP_CONTRASENA y MARKETING_SMTP_REMITENTE
+# (y opcionalmente MARKETING_SMTP_PUERTO) en /etc/guilda-work.env: un canal saliente PROPIO, distinto del PORTAL_SMTP_* de los avisos y enlaces del portal.
+
+[Unit]
+Description=Guilda Work - envío por lotes de los correos de marketing programados
+After=network.target
+
+[Service]
+Type=oneshot
+User=USUARIO
+WorkingDirectory=/home/USUARIO/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/USUARIO/guilda-work/.venv/bin/python scripts/enviar_marketing.py

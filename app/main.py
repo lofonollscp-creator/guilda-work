@@ -267,6 +267,8 @@ from .rutas_inmobiliaria import inmobiliaria_bp, propietario_bp  # noqa: E402
 from .rutas_seguridad import seguridad_bp  # noqa: E402
 from .rutas_nucleo import clientes_bp, expedientes_bp, plazos_bp, tiempo_bp  # noqa: E402
 from .rutas_importar_clientes import importar_clientes_bp  # noqa: E402
+from .rutas_documentos_firma import documentos_firma_bp  # noqa: E402
+from .rutas_marketing import baja_bp, marketing_bp  # noqa: E402
 from .rutas_hoy import hoy_bp  # noqa: E402
 from .rutas_menu import menu_bp  # noqa: E402
 from .rutas_cobros import cobros_bp  # noqa: E402
@@ -281,6 +283,9 @@ app.register_blueprint(propietario_bp)
 app.register_blueprint(asunto_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(importar_clientes_bp)
+app.register_blueprint(documentos_firma_bp)
+app.register_blueprint(marketing_bp)
+app.register_blueprint(baja_bp)
 app.register_blueprint(hoy_bp)
 app.register_blueprint(menu_bp)
 app.register_blueprint(cobros_bp)

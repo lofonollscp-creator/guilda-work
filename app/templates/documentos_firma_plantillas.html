@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, sin_validar %}
+{% block title %}{{ _('Documentos de firma') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Documentos de firma') }}</h1>
+    <p class="subtitle">{{ _('Los textos prehechos que se generan desde la ficha del cliente y se firman con Documenso.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('clientes.lista') }}">{{ _('Volver a clientes') }}</a>
+</header>
+<p>{{ sin_validar(_('Los textos de serie son un punto de partida: revísalos con tu criterio profesional')) }}</p>
+<section class="dash-panel">
+  <ul class="log-list">
+    {% for p in catalogo %}
+    <li class="log-item">
+      <span class="log-text"><strong>{{ p.titulo }}</strong> {% if p.propio %}{{ chip(_('Texto del despacho'), 'exito') }}{% else %}{{ chip(_('De serie')) }}{% endif %}<br><span class="muted">{{ p.descripcion }}</span></span>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('documentos_firma.plantilla', clave=p.clave) }}">{{ _('Ver texto') if not puede_editar else _('Editar') }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

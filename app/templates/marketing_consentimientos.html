@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, campo, estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Consentimientos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Consentimientos') }}</h1><p class="subtitle">{{ _('Quién ha dado permiso para recibir comunicaciones comerciales, cuándo y con qué prueba.') }}</p></div></header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+<form class="filters" method="get">
+  <label>{{ _('Buscar') }} <input type="search" name="q" value="{{ q }}"></label>
+  <label>{{ _('Estado') }} <select name="estado" data-autoenviar><option value="">{{ _('Todos') }}</option>{% for v, n in (('consentido', _('Con consentimiento')), ('baja', _('De baja')), ('rebotado', _('Rebotados'))) %}<option value="{{ v }}" {{ 'selected' if estado == v }}>{{ n }}</option>{% endfor %}</select></label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+{% if contactos %}
+<table class="ds-tabla"><thead><tr><th>{{ _('Correo') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Vía') }}</th><th>{{ _('Prueba') }}</th><th>{{ _('Fecha') }}</th></tr></thead><tbody>
+{% for c in contactos %}<tr><td>{{ c.email }}<br><span class="muted">{{ c.nombre or '' }}</span></td>
+  <td>{{ chip({'consentido': _('Consentido'), 'baja': _('De baja'), 'rebotado': _('Rebotado')}[c.estado], 'exito' if c.estado == 'consentido' else 'neutro') }}</td>
+  <td>{{ nombres_origen.get(c.origen, c.origen) }}</td><td class="muted">{{ c.evidencia }}</td><td>{{ (c.baja_en or c.consentido_en or c.actualizado_en)[:10] }}</td></tr>{% endfor %}
+</tbody></table>
+{% else %}{{ estado_vacio(_('Todavía no hay consentimientos registrados'), _('Registra uno abajo o envía a firmar el consentimiento comercial desde la ficha del cliente.')) }}{% endif %}
+
+<section class="dash-panel">
+  <h2>{{ _('Registrar un consentimiento') }}</h2>
+  <form method="post" class="edit-form ds-max-640">
+    {% call campo(_('Correo'), 'k-email', requerido=True) %}<input type="email" id="k-email" name="email" required maxlength="200">{% endcall %}
+    {% call campo(_('Nombre'), 'k-nombre') %}<input type="text" id="k-nombre" name="nombre" maxlength="200">{% endcall %}
+    {% call campo(_('Cómo lo dio'), 'k-origen') %}<select id="k-origen" name="origen">{% for o in origenes %}<option value="{{ o }}">{{ nombres_origen[o] }}</option>{% endfor %}</select>{% endcall %}
+    {% call campo(_('Prueba'), 'k-evidencia', ayuda=_('Cuándo y cómo lo dio, p. ej. «Casilla de la web el 12/10/2026, desde 1.2.3.4». Sin prueba no se registra.'), requerido=True) %}<textarea id="k-evidencia" name="evidencia" rows="2" required maxlength="500"></textarea>{% endcall %}
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Registrar consentimiento') }}</button>
+      <button type="submit" name="accion" value="baja" class="btn btn-ghost" data-confirmar-envio="{{ _('¿Dar de baja este correo? Nunca más recibirá envíos.') }}">{{ _('Registrar una baja') }}</button></div>
+  </form>
+</section>
+{% endblock %}

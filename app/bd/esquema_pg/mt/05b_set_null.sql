@@ -10,6 +10,7 @@ BEGIN
     UPDATE jur_adjuntos SET cliente_id = NULL WHERE tenant_id = OLD.tenant_id AND cliente_id = OLD.id;
     UPDATE jur_conversaciones SET cliente_id = NULL WHERE tenant_id = OLD.tenant_id AND cliente_id = OLD.id;
     UPDATE jur_informes SET cliente_id = NULL WHERE tenant_id = OLD.tenant_id AND cliente_id = OLD.id;
+    UPDATE marketing_contactos SET cliente_id = NULL WHERE tenant_id = OLD.tenant_id AND cliente_id = OLD.id;
     RETURN OLD;
 END $$;
 DROP TRIGGER IF EXISTS fk_set_null ON clientes;
@@ -57,6 +58,14 @@ BEGIN
 END $$;
 DROP TRIGGER IF EXISTS fk_set_null ON inmobiliaria_demandas;
 CREATE TRIGGER fk_set_null BEFORE DELETE ON inmobiliaria_demandas FOR EACH ROW EXECUTE FUNCTION fk_set_null_inmobiliaria_demandas();
+
+CREATE OR REPLACE FUNCTION fk_set_null_marketing_grupos() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE marketing_envios SET grupo_id = NULL WHERE tenant_id = OLD.tenant_id AND grupo_id = OLD.id;
+    RETURN OLD;
+END $$;
+DROP TRIGGER IF EXISTS fk_set_null ON marketing_grupos;
+CREATE TRIGGER fk_set_null BEFORE DELETE ON marketing_grupos FOR EACH ROW EXECUTE FUNCTION fk_set_null_marketing_grupos();
 
 CREATE OR REPLACE FUNCTION fk_set_null_vencimientos_fiscales() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN

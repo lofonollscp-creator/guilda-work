@@ -70,6 +70,7 @@ CREATE INDEX IF NOT EXISTS idx_correo_reglas_usuario ON correo_reglas (usuario_i
 CREATE INDEX IF NOT EXISTS idx_correo_remitentes_confiables_usuario ON correo_remitentes_confiables (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_correo_seguimientos_estado ON correo_seguimientos (estado, avisar_en);
 CREATE INDEX IF NOT EXISTS idx_correo_seguimientos_usuario ON correo_seguimientos (usuario_id, estado);
+CREATE INDEX IF NOT EXISTS idx_crm_acciones_masivas ON crm_acciones_masivas (tenant_id, creada_en);
 CREATE INDEX IF NOT EXISTS idx_crm_act_cliente ON crm_actividades (cliente_id, fecha);
 CREATE INDEX IF NOT EXISTS idx_crm_act_oport ON crm_actividades (oportunidad_id, fecha);
 CREATE INDEX IF NOT EXISTS idx_crm_oport_cliente ON crm_oportunidades (cliente_id);
@@ -79,6 +80,7 @@ CREATE INDEX IF NOT EXISTS idx_crm_reuniones_oport ON crm_reuniones (oportunidad
 CREATE INDEX IF NOT EXISTS idx_crm_reuniones_tenant ON crm_reuniones (tenant_id, fecha);
 CREATE INDEX IF NOT EXISTS idx_documentos_cliente ON documentos (tenant_id, cliente_id, papelera_en);
 CREATE INDEX IF NOT EXISTS idx_documentos_expediente ON documentos (expediente_id, papelera_en);
+CREATE INDEX IF NOT EXISTS idx_documentos_firma_cliente ON documentos_firma (tenant_id, cliente_id, creado_en);
 CREATE INDEX IF NOT EXISTS idx_errores_servidor_fecha ON errores_servidor (creado_en);
 CREATE INDEX IF NOT EXISTS idx_evidencias_venc ON obligaciones_evidencias (vencimiento_id);
 CREATE INDEX IF NOT EXISTS idx_expediente_checklist ON expediente_checklist (expediente_id, orden);
@@ -107,6 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_demandas ON inmobiliaria_demandas (tenant_id, estado, operacion);
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_inmuebles ON inmobiliaria_inmuebles (tenant_id, municipio);
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_visitas ON inmobiliaria_visitas (tenant_id, estado, fecha_hora);
+CREATE INDEX IF NOT EXISTS idx_marketing_envios ON marketing_envios (tenant_id, estado, creado_en);
 CREATE INDEX IF NOT EXISTS idx_mcp_auditoria_fecha ON mcp_auditoria (creado_en);
 CREATE INDEX IF NOT EXISTS idx_mcp_auditoria_usuario ON mcp_auditoria (usuario_id, creado_en);
 CREATE INDEX IF NOT EXISTS idx_membresias_usuario ON membresias (tenant_id, usuario_id, revocada_en);

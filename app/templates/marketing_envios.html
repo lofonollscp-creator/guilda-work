@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Envíos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Envíos') }}</h1></div><a class="btn btn-primary" href="{{ url_for('marketing.envio_nuevo') }}">+ {{ _('Nuevo envío') }}</a></header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+{% if envios %}<table class="ds-tabla"><thead><tr><th>{{ _('Envío') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Enviados') }}</th><th>{{ _('Fecha') }}</th></tr></thead><tbody>
+{% for e in envios %}<tr><td><a href="{{ url_for('marketing.envio_ver', envio_id=e.id) }}">{{ e.nombre }}</a></td>
+  <td>{{ chip({'borrador': _('Borrador'), 'programado': _('Programado'), 'enviando': _('Enviando'), 'enviado': _('Enviado'), 'cancelado': _('Cancelado')}[e.estado]) }}</td><td>{{ e.enviados }}/{{ e.total }}{% if e.errores %} · {{ e.errores }} {{ _('con error') }}{% endif %}</td><td>{{ (e.terminado_en or e.programado_para or e.creado_en)[:10] }}</td></tr>{% endfor %}
+</tbody></table>
+{% else %}{{ estado_vacio(_('Todavía no hay envíos'), _('Crea uno: eliges grupo y plantilla, revisas y confirmas.'), 'folder', _('Nuevo envío'), url_for('marketing.envio_nuevo')) }}{% endif %}
+{% endblock %}

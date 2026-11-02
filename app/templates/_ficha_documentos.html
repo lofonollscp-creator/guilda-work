@@ -66,3 +66,24 @@
 </section>
 {% endif %}
 {% endif %}
+
+{# Documentos prehechos para firmar con Documenso (app/documentos_firma.py) #}
+<section class="dash-panel ds-mt-32" id="firmas">
+  <h2>{{ _('Documentos para firmar') }}</h2>
+  <p class="muted">{{ _('Genera desde la ficha un documento prehecho, revísalo y envíalo a firmar con Documenso.') }}
+    <a href="{{ url_for('documentos_firma.plantillas') }}">{{ _('Textos') }}</a></p>
+  {% set estados = {'borrador': (_('Borrador'), 'neutro'), 'enviado': (_('Pendiente de firma'), 'aviso'), 'firmado': (_('Firmado'), 'exito'), 'rechazado': (_('Rechazado'), 'peligro'), 'cancelado': (_('Cancelado'), 'neutro')} %}
+  {% if firmas %}
+  <ul class="log-list">
+    {% for d in firmas %}
+    <li class="log-item">
+      <span class="log-text"><a href="{{ url_for('documentos_firma.ver', cliente_id=c.id, documento_id=d.id) }}">{{ d.nombre_plantilla }}</a>
+        {{ chip(estados[d.estado][0], estados[d.estado][1]) }} <span class="muted">{{ d.creado_en[:10] }} · {{ d.firmante_email }}</span></span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <div class="ds-fila ds-mt-12">
+    {% for p in catalogo_firmas %}<a class="btn btn-ghost btn-sm" href="{{ url_for('documentos_firma.nuevo', cliente_id=c.id, clave=p.clave) }}" title="{{ p.descripcion }}">+ {{ p.titulo }}</a>{% endfor %}
+  </div>
+</section>

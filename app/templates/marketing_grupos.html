@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, campo, boton, estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error, selector_equipo %}
+{% block title %}{{ _('Grupos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Grupos de clientes') }}</h1><p class="subtitle">{{ _('Un grupo es una regla: quién entra se recalcula en cada envío. Solo llegan los que tienen consentimiento.') }}</p></div></header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+<section class="dash-panel always-on">
+  <p class="muted">{{ _('Siempre se aplican estos filtros: solo con consentimiento de marketing por correo; un envío por correo aunque lo compartan varios clientes; nunca bajas ni correos rebotados; solo el correo del cliente, no sus contactos o familiares.') }}</p>
+</section>
+{% if grupos %}
+<section class="dash-panel"><ul class="log-list">
+  {% for gr in grupos %}<li class="log-item"><span class="log-text"><strong>{{ gr.nombre }}</strong> {{ chip(_('%(n)s destinatarios', n=gr.destinatarios), 'exito') }}<br>
+    <span class="muted">{{ gr.descripcion_reglas }}{% if gr.excluidos %} · {{ _('Excluidos') }}: {% for k, v in gr.excluidos.items() %}{{ {'sin_correo': _('sin correo'), 'correo_no_valido': _('correo no válido'), 'sin_consentimiento': _('sin consentimiento'), 'baja': _('de baja'), 'rebotado': _('rebotado'), 'duplicado': _('repetido')}[k] }} {{ v }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}</span></span>
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('marketing.grupo_csv', grupo_id=gr.id) }}">{{ _('Descargar CSV') }}</a>
+    <form method="post" action="{{ url_for('marketing.grupo_papelera', grupo_id=gr.id) }}">{{ boton(_('Quitar'), 'peligro', tipo='submit', pequeno=True, confirmar=_('¿Quitar este grupo?')) }}</form></li>{% endfor %}
+</ul></section>
+{% else %}{{ estado_vacio(_('Todavía no hay grupos'), _('Crea el primero abajo.')) }}{% endif %}
+<section class="dash-panel">
+  <h2>{{ _('Nuevo grupo') }}</h2>
+  <form method="post" class="edit-form ds-max-640">
+    {% call campo(_('Nombre'), 'g-nombre', requerido=True) %}<input type="text" id="g-nombre" name="nombre" required maxlength="100">{% endcall %}
+    {% call campo(_('Quién entra'), 'g-fuente') %}<select id="g-fuente" name="fuente"><option value="clientes">{{ _('Clientes') }}</option><option value="prospectos">{{ _('Prospectos (oportunidades abiertas sin cliente)') }}</option><option value="ambos">{{ _('Clientes y prospectos') }}</option></select>{% endcall %}
+    {% call campo(_('Tipo de cliente'), 'g-tipo') %}<select id="g-tipo" name="tipo"><option value="">{{ _('Cualquiera') }}</option><option value="persona">{{ _('Personas') }}</option><option value="empresa">{{ _('Empresas') }}</option></select>{% endcall %}
+    {% call campo(_('Etiquetas'), 'g-etq', ayuda=_('Separadas por comas.')) %}<input type="text" id="g-etq" name="etiquetas">{% endcall %}
+    {% call campo(_('Con las etiquetas'), 'g-modo') %}<select id="g-modo" name="etiquetas_modo"><option value="alguna">{{ _('Alguna de ellas') }}</option><option value="todas">{{ _('Todas') }}</option></select>{% endcall %}
+    {% call campo(_('Origen'), 'g-origen') %}<input type="text" id="g-origen" name="origen" maxlength="100">{% endcall %}
+    {% call campo(_('Idioma'), 'g-idioma') %}<input type="text" id="g-idioma" name="idioma" maxlength="10" placeholder="es">{% endcall %}
+    {% call campo(_('Etapa del prospecto'), 'g-etapa') %}<select id="g-etapa" name="etapa"><option value="">{{ _('Cualquiera') }}</option>{% for e in etapas %}{% if e.tipo == 'abierta' %}<option value="{{ e.clave }}">{{ e.nombre }}</option>{% endif %}{% endfor %}</select>{% endcall %}
+    <label>{{ _('Responsable') }} {{ selector_equipo('responsable_id', equipo, none, vacio=_('Cualquiera')) }}</label>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Crear grupo') }}</button></div>
+  </form>
+</section>
+{% endblock %}

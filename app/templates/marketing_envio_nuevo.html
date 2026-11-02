@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Nuevo envío') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Nuevo envío') }}</h1><p class="subtitle">{{ _('Paso 1: a quién y qué. Después lo revisas y confirmas.') }}</p></div></header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+{% if not grupos or not plantillas %}<p class="muted">{{ _('Antes necesitas al menos un grupo y una plantilla.') }} <a href="{{ url_for('marketing.grupos') }}">{{ _('Grupos') }}</a> · <a href="{{ url_for('marketing.plantillas') }}">{{ _('Plantillas') }}</a></p>
+{% else %}
+<form method="post" class="edit-form ds-max-640">
+  {% call campo(_('Nombre del envío'), 'e-nombre', requerido=True) %}<input type="text" id="e-nombre" name="nombre" required maxlength="100">{% endcall %}
+  {% call campo(_('Grupo de clientes'), 'e-grupo', requerido=True) %}<select id="e-grupo" name="grupo_id" required>{% for gr in grupos %}<option value="{{ gr.id }}">{{ gr.nombre }}</option>{% endfor %}</select>{% endcall %}
+  {% call campo(_('Plantilla'), 'e-plantilla', requerido=True) %}<select id="e-plantilla" name="plantilla_id" required>{% for p in plantillas %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>{% endcall %}
+  {% call campo(_('Asunto'), 'e-asunto', ayuda=_('Si lo dejas vacío se usa el de la plantilla.')) %}<input type="text" id="e-asunto" name="asunto" maxlength="200">{% endcall %}
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Continuar') }}</button></div>
+</form>
+{% endif %}
+{% endblock %}

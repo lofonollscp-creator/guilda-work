@@ -18476,3 +18476,583 @@ msgstr "Showing the first %(n)s of %(t)s due dates."
 
 msgid "Ver todos"
 msgstr "See all"
+
+msgid "%(a)s enviados de %(b)s · %(c)s con error"
+msgstr "%(a)s sent of %(b)s · %(c)s with errors"
+
+msgid "%(n)s destinatarios"
+msgstr "%(n)s recipients"
+
+msgid "%(n)s destinatarios con consentimiento"
+msgstr "%(n)s recipients with consent"
+
+msgid "%(n)s oportunidades cambiadas · %(o)s omitidas."
+msgstr "%(n)s opportunities changed · %(o)s skipped."
+
+msgid "%(n)s oportunidades cambiarán · %(o)s se omiten · se podrá deshacer durante 90 días."
+msgstr "%(n)s opportunities will change · %(o)s are skipped · it can be undone for 90 days."
+
+msgid "Alguna de ellas"
+msgstr "Any of them"
+
+msgid "Antes de generarlo, completa estos datos:"
+msgstr "Before generating it, fill in this information:"
+
+msgid "Antes necesitas al menos un grupo y una plantilla."
+msgstr "First you need at least one group and one template."
+
+msgid "Aparece en el documento, p. ej. «Barcelona»."
+msgstr "Shown in the document, e.g. “Barcelona”."
+
+msgid "Aplicado"
+msgstr "Applied"
+
+msgid "Aplicar a %(n)s oportunidades"
+msgstr "Apply to %(n)s opportunities"
+
+msgid "Ayuda de IA"
+msgstr "AI help"
+
+msgid "Bloques"
+msgstr "Blocks"
+
+msgid "Cambiar de etapa"
+msgstr "Change stage"
+
+msgid "Cambiar de responsable"
+msgstr "Change owner"
+
+msgid "Cambiar varias a la vez"
+msgstr "Change several at once"
+
+msgid "Cambio aplicado"
+msgstr "Change applied"
+
+msgid "Cambio deshecho"
+msgstr "Change undone"
+
+msgid "Cambio en lote"
+msgstr "Bulk change"
+
+msgid "Cambios en lote"
+msgstr "Bulk changes"
+
+msgid "Cancelar lo que falta"
+msgstr "Cancel what is left"
+
+msgid "Clientes y prospectos"
+msgstr "Clients and prospects"
+
+msgid "Comprobar si está firmado"
+msgstr "Check whether it is signed"
+
+msgid "Con consentimiento"
+msgstr "With consent"
+
+msgid "Con consentimiento: %(n)s"
+msgstr "With consent: %(n)s"
+
+msgid "Con las etiquetas"
+msgstr "With the tags"
+
+msgid "Consentido"
+msgstr "Consented"
+
+msgid "Consentimientos"
+msgstr "Consents"
+
+msgid "Correo de prueba"
+msgstr "Test email"
+
+msgid "Correo de quien firma"
+msgstr "Signer's email"
+
+msgid "Crea el primero abajo."
+msgstr "Create the first one below."
+
+msgid "Crea una con bloques de título, texto y botón."
+msgstr "Create one with title, text and button blocks."
+
+msgid "Crea uno: eliges grupo y plantilla, revisas y confirmas."
+msgstr "Create one: pick a group and a template, review and confirm."
+
+msgid "Creado el"
+msgstr "Created on"
+
+msgid "Cuándo y cómo lo dio, p. ej. «Casilla de la web el 12/10/2026, desde 1.2.3.4». Sin prueba no se registra."
+msgstr "When and how they gave it, e.g. “Website checkbox on 12/10/2026, from 1.2.3.4”. Without proof it is not recorded."
+
+msgid "Cómo lo dio"
+msgstr "How they gave it"
+
+msgid "Darme de baja"
+msgstr "Unsubscribe me"
+
+msgid "De baja: %(n)s"
+msgstr "Unsubscribed: %(n)s"
+
+msgid "Descargar firmado"
+msgstr "Download signed"
+
+msgid "Descargar la audiencia (CSV)"
+msgstr "Download the audience (CSV)"
+
+msgid "Deshacer este cambio"
+msgstr "Undo this change"
+
+msgid "Deshecho"
+msgstr "Undone"
+
+msgid "Documento cancelado."
+msgstr "Document cancelled."
+
+msgid "Documentos de firma"
+msgstr "Documents to sign"
+
+msgid "Documentos para firmar"
+msgstr "Documents to sign"
+
+msgid "Días a posponer"
+msgstr "Days to postpone"
+
+msgid "Ej.: avisar de que se acerca el plazo del IVA"
+msgstr "E.g.: warn that the VAT deadline is near"
+
+msgid "El canal de envío no está configurado en el servidor: puedes preparar grupos, plantillas y envíos y descargar la audiencia, pero no enviar desde aquí."
+msgstr "The sending channel is not configured on the server: you can prepare groups, templates and mailings and download the audience, but not send from here."
+
+msgid "El despacho no tiene Documenso configurado: descarga el PDF para firmarlo por otro medio."
+msgstr "The firm has no Documenso set up: download the PDF to sign it another way."
+
+msgid "El enlace de baja y los datos del despacho se añaden siempre al pie: no se pueden quitar. Para quitar un bloque, vacía su texto."
+msgstr "The unsubscribe link and the firm's details are always added at the bottom: they cannot be removed. To remove a block, empty its text."
+
+msgid "Elige…"
+msgstr "Choose…"
+
+msgid "Empresas"
+msgstr "Companies"
+
+msgid "Enlace (https://…) para botones e imágenes"
+msgstr "Link (https://…) for buttons and images"
+
+msgid "Enviado a firma: el cliente recibirá un correo de Documenso."
+msgstr "Sent for signing: the client will receive an email from Documenso."
+
+msgid "Enviados"
+msgstr "Sent"
+
+msgid "Enviando"
+msgstr "Sending"
+
+msgid "Enviar a firmar"
+msgstr "Send for signing"
+
+msgid "Enviar a la papelera"
+msgstr "Move to trash"
+
+msgid "Enviarme una prueba"
+msgstr "Send me a test"
+
+msgid "Envío"
+msgstr "Mailing"
+
+msgid "Envío cancelado."
+msgstr "Mailing cancelled."
+
+msgid "Envío programado: saldrá en los próximos minutos."
+msgstr "Mailing scheduled: it will go out in the next few minutes."
+
+msgid "Envíos"
+msgstr "Mailings"
+
+msgid "Envíos de marketing"
+msgstr "Marketing mailings"
+
+msgid "Es un borrador para que lo revises. Solo se envía a la IA el texto de la plantilla y lo que escribas aquí: nunca datos de clientes."
+msgstr "It is a draft for you to review. Only the template text and what you write here is sent to the AI: never client data."
+
+msgid "Escribe %(n)s (el número de destinatarios) para confirmar"
+msgstr "Type %(n)s (the number of recipients) to confirm"
+
+msgid "Escribe «%(t)s» para confirmar"
+msgstr "Type “%(t)s” to confirm"
+
+msgid "Esta propuesta caducó: vuelve a proponerla desde la lista."
+msgstr "This proposal has expired: propose it again from the list."
+
+msgid "Estado actualizado."
+msgstr "Status updated."
+
+msgid "Este enlace no es válido"
+msgstr "This link is not valid"
+
+msgid "Esto es exactamente lo que se envía a firmar. Si algo no es correcto, cancela este borrador y crea otro."
+msgstr "This is exactly what is sent for signing. If anything is wrong, cancel this draft and create another."
+
+msgid "Etapa de destino"
+msgstr "Target stage"
+
+msgid "Etapa del prospecto"
+msgstr "Prospect stage"
+
+msgid "Excluidos"
+msgstr "Excluded"
+
+msgid "Genera desde la ficha un documento prehecho, revísalo y envíalo a firmar con Documenso."
+msgstr "Generate a ready-made document from the file, review it and send it to sign with Documenso."
+
+msgid "Generar borrador"
+msgstr "Generate draft"
+
+msgid "Grupo de clientes"
+msgstr "Client group"
+
+msgid "Grupos de clientes"
+msgstr "Client groups"
+
+msgid "Guardar texto"
+msgstr "Save text"
+
+msgid "Historial de cambios en lote"
+msgstr "Bulk change history"
+
+msgid "Huella SHA-256 del PDF:"
+msgstr "SHA-256 fingerprint of the PDF:"
+
+msgid "La lista se vuelve a comprobar al enviar cada correo: quien se dé de baja antes no lo recibe."
+msgstr "The list is checked again as each email is sent: anyone who unsubscribes before does not receive it."
+
+msgid "Las oportunidades volvieron a su estado anterior, salvo las que se habían vuelto a cambiar."
+msgstr "The opportunities went back to their previous state, except those that had been changed again."
+
+msgid "Listo, te hemos dado de baja"
+msgstr "Done, you have been unsubscribed"
+
+msgid "Lo que se ha cambiado de golpe en las oportunidades, con la opción de deshacerlo durante 90 días."
+msgstr "What has been changed in bulk on opportunities, with the option to undo it for 90 days."
+
+msgid "Los del cliente se editan en su ficha; los del despacho, en el backoffice."
+msgstr "The client's are edited in their file; the firm's, in the backoffice."
+
+msgid "Los textos de serie son un punto de partida: revísalos con tu criterio profesional"
+msgstr "The default texts are a starting point: review them with your professional judgement"
+
+msgid "Los textos prehechos que se generan desde la ficha del cliente y se firman con Documenso."
+msgstr "The ready-made texts generated from the client file and signed with Documenso."
+
+msgid "Lugar de la firma"
+msgstr "Place of signing"
+
+msgid "Marca las oportunidades, elige qué hacer y revisa el cambio antes de aplicarlo: se puede deshacer durante 90 días."
+msgstr "Tick the opportunities, choose what to do and review the change before applying it: it can be undone for 90 days."
+
+msgid "Marca varias oportunidades en la lista para cambiarlas de una vez."
+msgstr "Tick several opportunities in the list to change them at once."
+
+msgid "Marcar %(t)s"
+msgstr "Select %(t)s"
+
+msgid "Marketing"
+msgstr "Marketing"
+
+msgid "Motivo (si se pierden)"
+msgstr "Reason (if lost)"
+
+msgid "No se envía nada todavía: primero lo revisas."
+msgstr "Nothing is sent yet: you review it first."
+
+msgid "No volverás a recibir comunicaciones comerciales. Si ha sido un error, escríbenos."
+msgstr "You will no longer receive commercial communications. If this was a mistake, write to us."
+
+msgid "Nombre (interno)"
+msgstr "Name (internal)"
+
+msgid "Nombre del envío"
+msgstr "Mailing name"
+
+msgid "Nuevo envío"
+msgstr "New mailing"
+
+msgid "Objetivo del correo"
+msgstr "Email goal"
+
+msgid "Omitidas"
+msgstr "Skipped"
+
+msgid "Omitido"
+msgstr "Skipped"
+
+msgid "Oportunidades que cambian"
+msgstr "Opportunities that change"
+
+msgid "Para enviar, el despacho necesita estos datos legales:"
+msgstr "To send, the firm needs these legal details:"
+
+msgid "Paso 1: a quién y qué. Después lo revisas y confirmas."
+msgstr "Step 1: to whom and what. Then you review and confirm."
+
+msgid "Paso 2: revisa a quién llegará"
+msgstr "Step 2: review who will receive it"
+
+msgid "Paso 3: confirmar"
+msgstr "Step 3: confirm"
+
+msgid "Pedir borrador"
+msgstr "Ask for a draft"
+
+msgid "Pendiente de confirmar"
+msgstr "Awaiting confirmation"
+
+msgid "Pendiente de firma"
+msgstr "Awaiting signature"
+
+msgid "Plantilla de correo"
+msgstr "Email template"
+
+msgid "Plantillas de correo"
+msgstr "Email templates"
+
+msgid "Posponer el cierre previsto"
+msgstr "Postpone the expected close"
+
+msgid "Programado"
+msgstr "Scheduled"
+
+msgid "Programar el envío"
+msgstr "Schedule the mailing"
+
+msgid "Propuesta cancelada"
+msgstr "Proposal cancelled"
+
+msgid "Prospectos (oportunidades abiertas sin cliente)"
+msgstr "Prospects (open opportunities without a client)"
+
+msgid "Prueba"
+msgstr "Test"
+
+msgid "Prueba enviada."
+msgstr "Test sent."
+
+msgid "Puede que esté incompleto. Responde al correo y te daremos de baja a mano."
+msgstr "It may be incomplete. Reply to the email and we will unsubscribe you by hand."
+
+msgid "Puedes deshacerlo hasta el %(f)s."
+msgstr "You can undo it until %(f)s."
+
+msgid "Pulsa el botón y no volverás a recibir comunicaciones comerciales."
+msgstr "Press the button and you will no longer receive commercial communications."
+
+msgid "Quién entra"
+msgstr "Who is included"
+
+msgid "Quién firma"
+msgstr "Who signs"
+
+msgid "Quién ha dado permiso para recibir comunicaciones comerciales, cuándo y con qué prueba."
+msgstr "Who has given permission to receive commercial communications, when and with what proof."
+
+msgid "Qué hacer"
+msgstr "What to do"
+
+msgid "Qué quieres"
+msgstr "What you want"
+
+msgid "Rebotado"
+msgstr "Bounced"
+
+msgid "Rebotados"
+msgstr "Bounced"
+
+msgid "Rebotados: %(n)s"
+msgstr "Bounced: %(n)s"
+
+msgid "Recibirá el enlace de Documenso para firmar."
+msgstr "They will receive the Documenso link to sign."
+
+msgid "Registra uno abajo o envía a firmar el consentimiento comercial desde la ficha del cliente."
+msgstr "Record one below or send the commercial consent for signing from the client file."
+
+msgid "Registrar consentimiento"
+msgstr "Record consent"
+
+msgid "Registrar un consentimiento"
+msgstr "Record a consent"
+
+msgid "Registrar una baja"
+msgstr "Record an unsubscribe"
+
+msgid "Responsable nuevo"
+msgstr "New owner"
+
+msgid "Restaurar el de serie"
+msgstr "Restore the default"
+
+msgid "Revisar el cambio"
+msgstr "Review the change"
+
+msgid "Se devolverá cada oportunidad a como estaba, salvo las que se hayan vuelto a cambiar. ¿Deshacer?"
+msgstr "Each opportunity will go back as it was, except those changed again. Undo?"
+
+msgid "Se enviará por correo a %(email)s con Documenso. ¿Enviar?"
+msgstr "It will be emailed to %(email)s with Documenso. Send?"
+
+msgid "Segmenta a tus clientes y mándales correos: solo a quien ha dado su consentimiento, con baja de un clic."
+msgstr "Segment your clients and email them: only those who have given consent, with one-click unsubscribe."
+
+msgid "Si lo dejas vacío se usa el de la plantilla."
+msgstr "If you leave it empty, the template's is used."
+
+msgid "Siempre se aplican estos filtros: solo con consentimiento de marketing por correo; un envío por correo aunque lo compartan varios clientes; nunca bajas ni correos rebotados; solo el correo del cliente, no sus contactos o familiares."
+msgstr "These filters always apply: only with marketing-by-email consent; one mailing per address even if several clients share it; never unsubscribed or bounced addresses; only the client's email, not their contacts or relatives."
+
+msgid "Solo la dirección del despacho cambia los textos."
+msgstr "Only the firm's management changes the texts."
+
+msgid "Solo la dirección del despacho programa los envíos."
+msgstr "Only the firm's management schedules mailings."
+
+msgid "Solo se escribe a quien ha consentido, con prueba: un documento firmado desde su ficha o una constancia que anotas aquí."
+msgstr "We only write to those who have consented, with proof: a document signed from their file or a record you note here."
+
+msgid "Texto de serie sin validar: revísalo antes de enviarlo"
+msgstr "Unvalidated default text: review it before sending"
+
+msgid "Texto del despacho"
+msgstr "Firm's text"
+
+msgid "Texto del documento"
+msgstr "Document text"
+
+msgid "Texto guardado."
+msgstr "Text saved."
+
+msgid "Texto sin validar: revísalo con tu criterio profesional"
+msgstr "Unvalidated text: review it with your professional judgement"
+
+msgid "Textos"
+msgstr "Texts"
+
+msgid "Tipo de bloque"
+msgstr "Block type"
+
+msgid "Todavía no hay cambios en lote"
+msgstr "There are no bulk changes yet"
+
+msgid "Todavía no hay consentimientos registrados"
+msgstr "No consents recorded yet"
+
+msgid "Todavía no hay envíos"
+msgstr "There are no mailings yet"
+
+msgid "Todavía no hay envíos."
+msgstr "There are no mailings yet."
+
+msgid "Todavía no hay grupos"
+msgstr "There are no groups yet"
+
+msgid "Todavía no hay plantillas"
+msgstr "There are no templates yet"
+
+msgid "Tu correo"
+msgstr "Your email"
+
+msgid "Un grupo es una regla: quién entra se recalcula en cada envío. Solo llegan los que tienen consentimiento."
+msgstr "A group is a rule: who is included is recalculated on each mailing. Only those with consent are reached."
+
+msgid "Una línea «# Título» es un epígrafe, «- » abre una viñeta y una línea en blanco separa párrafos."
+msgstr "A line “# Title” is a heading, “- ” starts a bullet and a blank line separates paragraphs."
+
+msgid "Variables"
+msgstr "Variables"
+
+msgid "Variables:"
+msgstr "Variables:"
+
+msgid "Ver PDF"
+msgstr "View PDF"
+
+msgid "Ver texto"
+msgstr "View text"
+
+msgid "Ver y registrar consentimientos"
+msgstr "View and record consents"
+
+msgid "Vista previa"
+msgstr "Preview"
+
+msgid "Vista previa del correo"
+msgstr "Email preview"
+
+msgid "Volver a la ficha"
+msgstr "Back to the file"
+
+msgid "Vuelves a usar el texto de serie."
+msgstr "You are using the default text again."
+
+msgid "Vía"
+msgstr "Channel"
+
+msgid "Ya no se puede deshacer."
+msgstr "It can no longer be undone."
+
+msgid "con error"
+msgstr "with errors"
+
+msgid "correo no válido"
+msgstr "invalid email"
+
+msgid "de baja"
+msgstr "unsubscribed"
+
+msgid "enviado el"
+msgstr "sent on"
+
+msgid "firmado el"
+msgstr "signed on"
+
+msgid "rebotado"
+msgstr "bounced"
+
+msgid "repetido"
+msgstr "duplicate"
+
+msgid "se puede deshacer hasta el %(f)s"
+msgstr "can be undone until %(f)s"
+
+msgid "sin consentimiento"
+msgstr "no consent"
+
+msgid "sin correo"
+msgstr "no email"
+
+msgid "¿Aplicar este cambio?"
+msgstr "Apply this change?"
+
+msgid "¿Cancelar el envío? Los ya enviados no se pueden recuperar."
+msgstr "Cancel the mailing? Those already sent cannot be recalled."
+
+msgid "¿Cancelar este documento?"
+msgstr "Cancel this document?"
+
+msgid "¿Dar de baja este correo? Nunca más recibirá envíos."
+msgstr "Unsubscribe this email? It will never receive mailings again."
+
+msgid "¿Quieres dejar de recibir estos correos?"
+msgstr "Do you want to stop receiving these emails?"
+
+msgid "¿Quitar esta plantilla?"
+msgstr "Remove this template?"
+
+msgid "¿Quitar este grupo?"
+msgstr "Remove this group?"
+
+msgid "¿Volver al texto de serie? Se pierde el del despacho."
+msgstr "Go back to the default text? The firm's is lost."
+
+msgid "Últimos envíos"
+msgstr "Latest mailings"
+
+msgid "… y %(n)s más."
+msgstr "… and %(n)s more."
+

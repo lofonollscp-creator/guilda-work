@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>{{ _('Darme de baja') }}</title>
+<style>body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:32px}main{max-width:480px;margin:40px auto;background:#fff;padding:32px;border-radius:8px}h1{font-size:22px}button{background:#1f3a5f;color:#fff;border:0;border-radius:6px;padding:12px 22px;font-size:15px;cursor:pointer}</style></head>
+<body><main>
+{% if estado == 'confirmar' %}
+  <h1>{{ _('¿Quieres dejar de recibir estos correos?') }}</h1>
+  <p>{{ _('Pulsa el botón y no volverás a recibir comunicaciones comerciales.') }}</p>
+  <form method="post" action="{{ url_for('baja_marketing.baja', token=token) }}"><button type="submit" class="btn btn-primary">{{ _('Darme de baja') }}</button></form>
+{% elif estado == 'hecha' %}
+  <h1>{{ _('Listo, te hemos dado de baja') }}</h1><p>{{ _('No volverás a recibir comunicaciones comerciales. Si ha sido un error, escríbenos.') }}</p>
+{% else %}
+  <h1>{{ _('Este enlace no es válido') }}</h1><p>{{ _('Puede que esté incompleto. Responde al correo y te daremos de baja a mano.') }}</p>
+{% endif %}
+</main></body></html>

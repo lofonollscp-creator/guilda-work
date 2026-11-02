@@ -2337,6 +2337,8 @@ def init_db() -> None:
         laboral.crear_esquema(conn)           # trabajadores de los clientes: gestión laboral, primera rebanada (app/laboral.py)
         from . import plantillas_cliente
         plantillas_cliente.crear_esquema(conn)  # plantillas de alta de cliente por tipo (app/plantillas_cliente.py)
+        from . import documentos_firma
+        documentos_firma.crear_esquema(conn)  # documentos prehechos que se firman con Documenso desde la ficha del cliente (app/documentos_firma.py)
         from . import traspasos
         traspasos.crear_esquema(conn)         # traspasos de clientes entre personas y oficinas, y responsable del cliente (app/traspasos.py)
         from . import avisos
@@ -2991,6 +2993,7 @@ from .db_tareas import (  # noqa: E402,F401
     completar_tareas_de_vencimiento,
     _mensaje_correo_id_propio,
     _companero_del_tenant,
+    _despacho_de_trabajo,
     listar_companeros_tenant,
     crear_tarea_recurrente,
     crear_regla_por_vencimiento,

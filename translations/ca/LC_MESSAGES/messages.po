@@ -18485,3 +18485,583 @@ msgstr "Es mostren els %(n)s primers de %(t)s venciments."
 
 msgid "Ver todos"
 msgstr "Veure tots"
+
+msgid "%(a)s enviados de %(b)s · %(c)s con error"
+msgstr "%(a)s enviats de %(b)s · %(c)s amb error"
+
+msgid "%(n)s destinatarios"
+msgstr "%(n)s destinataris"
+
+msgid "%(n)s destinatarios con consentimiento"
+msgstr "%(n)s destinataris amb consentiment"
+
+msgid "%(n)s oportunidades cambiadas · %(o)s omitidas."
+msgstr "%(n)s oportunitats canviades · %(o)s omeses."
+
+msgid "%(n)s oportunidades cambiarán · %(o)s se omiten · se podrá deshacer durante 90 días."
+msgstr "%(n)s oportunitats canviaran · %(o)s s'ometen · es podrà desfer durant 90 dies."
+
+msgid "Alguna de ellas"
+msgstr "Alguna d'elles"
+
+msgid "Antes de generarlo, completa estos datos:"
+msgstr "Abans de generar-lo, completa aquestes dades:"
+
+msgid "Antes necesitas al menos un grupo y una plantilla."
+msgstr "Abans necessites almenys un grup i una plantilla."
+
+msgid "Aparece en el documento, p. ej. «Barcelona»."
+msgstr "Apareix al document, p. ex. «Barcelona»."
+
+msgid "Aplicado"
+msgstr "Aplicat"
+
+msgid "Aplicar a %(n)s oportunidades"
+msgstr "Aplicar a %(n)s oportunitats"
+
+msgid "Ayuda de IA"
+msgstr "Ajuda d'IA"
+
+msgid "Bloques"
+msgstr "Blocs"
+
+msgid "Cambiar de etapa"
+msgstr "Canviar d'etapa"
+
+msgid "Cambiar de responsable"
+msgstr "Canviar de responsable"
+
+msgid "Cambiar varias a la vez"
+msgstr "Canviar-ne diverses alhora"
+
+msgid "Cambio aplicado"
+msgstr "Canvi aplicat"
+
+msgid "Cambio deshecho"
+msgstr "Canvi desfet"
+
+msgid "Cambio en lote"
+msgstr "Canvi en lot"
+
+msgid "Cambios en lote"
+msgstr "Canvis en lot"
+
+msgid "Cancelar lo que falta"
+msgstr "Cancel·lar el que falta"
+
+msgid "Clientes y prospectos"
+msgstr "Clients i prospectes"
+
+msgid "Comprobar si está firmado"
+msgstr "Comprovar si està signat"
+
+msgid "Con consentimiento"
+msgstr "Amb consentiment"
+
+msgid "Con consentimiento: %(n)s"
+msgstr "Amb consentiment: %(n)s"
+
+msgid "Con las etiquetas"
+msgstr "Amb les etiquetes"
+
+msgid "Consentido"
+msgstr "Consentit"
+
+msgid "Consentimientos"
+msgstr "Consentiments"
+
+msgid "Correo de prueba"
+msgstr "Correu de prova"
+
+msgid "Correo de quien firma"
+msgstr "Correu de qui signa"
+
+msgid "Crea el primero abajo."
+msgstr "Crea el primer a sota."
+
+msgid "Crea una con bloques de título, texto y botón."
+msgstr "Crea'n una amb blocs de títol, text i botó."
+
+msgid "Crea uno: eliges grupo y plantilla, revisas y confirmas."
+msgstr "Crea'n un: tries grup i plantilla, revises i confirmes."
+
+msgid "Creado el"
+msgstr "Creat el"
+
+msgid "Cuándo y cómo lo dio, p. ej. «Casilla de la web el 12/10/2026, desde 1.2.3.4». Sin prueba no se registra."
+msgstr "Quan i com el va donar, p. ex. «Casella del web el 12/10/2026, des d'1.2.3.4». Sense prova no es registra."
+
+msgid "Cómo lo dio"
+msgstr "Com el va donar"
+
+msgid "Darme de baja"
+msgstr "Donar-me de baixa"
+
+msgid "De baja: %(n)s"
+msgstr "De baixa: %(n)s"
+
+msgid "Descargar firmado"
+msgstr "Descarregar signat"
+
+msgid "Descargar la audiencia (CSV)"
+msgstr "Descarregar l'audiència (CSV)"
+
+msgid "Deshacer este cambio"
+msgstr "Desfer aquest canvi"
+
+msgid "Deshecho"
+msgstr "Desfet"
+
+msgid "Documento cancelado."
+msgstr "Document cancel·lat."
+
+msgid "Documentos de firma"
+msgstr "Documents de signatura"
+
+msgid "Documentos para firmar"
+msgstr "Documents per signar"
+
+msgid "Días a posponer"
+msgstr "Dies a ajornar"
+
+msgid "Ej.: avisar de que se acerca el plazo del IVA"
+msgstr "P. ex.: avisar que s'acosta el termini de l'IVA"
+
+msgid "El canal de envío no está configurado en el servidor: puedes preparar grupos, plantillas y envíos y descargar la audiencia, pero no enviar desde aquí."
+msgstr "El canal d'enviament no està configurat al servidor: pots preparar grups, plantilles i enviaments i descarregar l'audiència, però no enviar des d'aquí."
+
+msgid "El despacho no tiene Documenso configurado: descarga el PDF para firmarlo por otro medio."
+msgstr "El despatx no té Documenso configurat: descarrega el PDF per signar-lo per un altre mitjà."
+
+msgid "El enlace de baja y los datos del despacho se añaden siempre al pie: no se pueden quitar. Para quitar un bloque, vacía su texto."
+msgstr "L'enllaç de baixa i les dades del despatx s'afegeixen sempre al peu: no es poden treure. Per treure un bloc, buida'n el text."
+
+msgid "Elige…"
+msgstr "Tria…"
+
+msgid "Empresas"
+msgstr "Empreses"
+
+msgid "Enlace (https://…) para botones e imágenes"
+msgstr "Enllaç (https://…) per a botons i imatges"
+
+msgid "Enviado a firma: el cliente recibirá un correo de Documenso."
+msgstr "Enviat a signar: el client rebrà un correu de Documenso."
+
+msgid "Enviados"
+msgstr "Enviats"
+
+msgid "Enviando"
+msgstr "Enviant"
+
+msgid "Enviar a firmar"
+msgstr "Enviar a signar"
+
+msgid "Enviar a la papelera"
+msgstr "Enviar a la paperera"
+
+msgid "Enviarme una prueba"
+msgstr "Enviar-me una prova"
+
+msgid "Envío"
+msgstr "Enviament"
+
+msgid "Envío cancelado."
+msgstr "Enviament cancel·lat."
+
+msgid "Envío programado: saldrá en los próximos minutos."
+msgstr "Enviament programat: sortirà en els propers minuts."
+
+msgid "Envíos"
+msgstr "Enviaments"
+
+msgid "Envíos de marketing"
+msgstr "Enviaments de màrqueting"
+
+msgid "Es un borrador para que lo revises. Solo se envía a la IA el texto de la plantilla y lo que escribas aquí: nunca datos de clientes."
+msgstr "És un esborrany perquè el revisis. Només s'envia a la IA el text de la plantilla i el que escriguis aquí: mai dades de clients."
+
+msgid "Escribe %(n)s (el número de destinatarios) para confirmar"
+msgstr "Escriu %(n)s (el nombre de destinataris) per confirmar"
+
+msgid "Escribe «%(t)s» para confirmar"
+msgstr "Escriu «%(t)s» per confirmar"
+
+msgid "Esta propuesta caducó: vuelve a proponerla desde la lista."
+msgstr "Aquesta proposta ha caducat: torna a proposar-la des de la llista."
+
+msgid "Estado actualizado."
+msgstr "Estat actualitzat."
+
+msgid "Este enlace no es válido"
+msgstr "Aquest enllaç no és vàlid"
+
+msgid "Esto es exactamente lo que se envía a firmar. Si algo no es correcto, cancela este borrador y crea otro."
+msgstr "Això és exactament el que s'envia a signar. Si alguna cosa no és correcta, cancel·la aquest esborrany i crea'n un altre."
+
+msgid "Etapa de destino"
+msgstr "Etapa de destinació"
+
+msgid "Etapa del prospecto"
+msgstr "Etapa del prospecte"
+
+msgid "Excluidos"
+msgstr "Exclosos"
+
+msgid "Genera desde la ficha un documento prehecho, revísalo y envíalo a firmar con Documenso."
+msgstr "Genera des de la fitxa un document predefinit, revisa'l i envia'l a signar amb Documenso."
+
+msgid "Generar borrador"
+msgstr "Generar esborrany"
+
+msgid "Grupo de clientes"
+msgstr "Grup de clients"
+
+msgid "Grupos de clientes"
+msgstr "Grups de clients"
+
+msgid "Guardar texto"
+msgstr "Desar el text"
+
+msgid "Historial de cambios en lote"
+msgstr "Historial de canvis en lot"
+
+msgid "Huella SHA-256 del PDF:"
+msgstr "Empremta SHA-256 del PDF:"
+
+msgid "La lista se vuelve a comprobar al enviar cada correo: quien se dé de baja antes no lo recibe."
+msgstr "La llista es torna a comprovar en enviar cada correu: qui es doni de baixa abans no el rep."
+
+msgid "Las oportunidades volvieron a su estado anterior, salvo las que se habían vuelto a cambiar."
+msgstr "Les oportunitats han tornat a l'estat anterior, tret de les que s'havien tornat a canviar."
+
+msgid "Listo, te hemos dado de baja"
+msgstr "Fet, t'hem donat de baixa"
+
+msgid "Lo que se ha cambiado de golpe en las oportunidades, con la opción de deshacerlo durante 90 días."
+msgstr "El que s'ha canviat d'un cop a les oportunitats, amb l'opció de desfer-ho durant 90 dies."
+
+msgid "Los del cliente se editan en su ficha; los del despacho, en el backoffice."
+msgstr "Els del client s'editen a la seva fitxa; els del despatx, al backoffice."
+
+msgid "Los textos de serie son un punto de partida: revísalos con tu criterio profesional"
+msgstr "Els textos de sèrie són un punt de partida: revisa'ls amb el teu criteri professional"
+
+msgid "Los textos prehechos que se generan desde la ficha del cliente y se firman con Documenso."
+msgstr "Els textos predefinits que es generen des de la fitxa del client i se signen amb Documenso."
+
+msgid "Lugar de la firma"
+msgstr "Lloc de la signatura"
+
+msgid "Marca las oportunidades, elige qué hacer y revisa el cambio antes de aplicarlo: se puede deshacer durante 90 días."
+msgstr "Marca les oportunitats, tria què fer i revisa el canvi abans d'aplicar-lo: es pot desfer durant 90 dies."
+
+msgid "Marca varias oportunidades en la lista para cambiarlas de una vez."
+msgstr "Marca diverses oportunitats a la llista per canviar-les d'un cop."
+
+msgid "Marcar %(t)s"
+msgstr "Marcar %(t)s"
+
+msgid "Marketing"
+msgstr "Màrqueting"
+
+msgid "Motivo (si se pierden)"
+msgstr "Motiu (si es perden)"
+
+msgid "No se envía nada todavía: primero lo revisas."
+msgstr "Encara no s'envia res: primer ho revises."
+
+msgid "No volverás a recibir comunicaciones comerciales. Si ha sido un error, escríbenos."
+msgstr "No tornaràs a rebre comunicacions comercials. Si ha estat un error, escriu-nos."
+
+msgid "Nombre (interno)"
+msgstr "Nom (intern)"
+
+msgid "Nombre del envío"
+msgstr "Nom de l'enviament"
+
+msgid "Nuevo envío"
+msgstr "Nou enviament"
+
+msgid "Objetivo del correo"
+msgstr "Objectiu del correu"
+
+msgid "Omitidas"
+msgstr "Ometes"
+
+msgid "Omitido"
+msgstr "Omès"
+
+msgid "Oportunidades que cambian"
+msgstr "Oportunitats que canvien"
+
+msgid "Para enviar, el despacho necesita estos datos legales:"
+msgstr "Per enviar, el despatx necessita aquestes dades legals:"
+
+msgid "Paso 1: a quién y qué. Después lo revisas y confirmas."
+msgstr "Pas 1: a qui i què. Després ho revises i confirmes."
+
+msgid "Paso 2: revisa a quién llegará"
+msgstr "Pas 2: revisa a qui arribarà"
+
+msgid "Paso 3: confirmar"
+msgstr "Pas 3: confirmar"
+
+msgid "Pedir borrador"
+msgstr "Demanar esborrany"
+
+msgid "Pendiente de confirmar"
+msgstr "Pendent de confirmar"
+
+msgid "Pendiente de firma"
+msgstr "Pendent de signatura"
+
+msgid "Plantilla de correo"
+msgstr "Plantilla de correu"
+
+msgid "Plantillas de correo"
+msgstr "Plantilles de correu"
+
+msgid "Posponer el cierre previsto"
+msgstr "Ajornar el tancament previst"
+
+msgid "Programado"
+msgstr "Programat"
+
+msgid "Programar el envío"
+msgstr "Programar l'enviament"
+
+msgid "Propuesta cancelada"
+msgstr "Proposta cancel·lada"
+
+msgid "Prospectos (oportunidades abiertas sin cliente)"
+msgstr "Prospectes (oportunitats obertes sense client)"
+
+msgid "Prueba"
+msgstr "Prova"
+
+msgid "Prueba enviada."
+msgstr "Prova enviada."
+
+msgid "Puede que esté incompleto. Responde al correo y te daremos de baja a mano."
+msgstr "Pot ser que estigui incomplet. Respon el correu i et donarem de baixa a mà."
+
+msgid "Puedes deshacerlo hasta el %(f)s."
+msgstr "Pots desfer-ho fins al %(f)s."
+
+msgid "Pulsa el botón y no volverás a recibir comunicaciones comerciales."
+msgstr "Prem el botó i no tornaràs a rebre comunicacions comercials."
+
+msgid "Quién entra"
+msgstr "Qui hi entra"
+
+msgid "Quién firma"
+msgstr "Qui signa"
+
+msgid "Quién ha dado permiso para recibir comunicaciones comerciales, cuándo y con qué prueba."
+msgstr "Qui ha donat permís per rebre comunicacions comercials, quan i amb quina prova."
+
+msgid "Qué hacer"
+msgstr "Què fer"
+
+msgid "Qué quieres"
+msgstr "Què vols"
+
+msgid "Rebotado"
+msgstr "Rebotat"
+
+msgid "Rebotados"
+msgstr "Rebotats"
+
+msgid "Rebotados: %(n)s"
+msgstr "Rebotats: %(n)s"
+
+msgid "Recibirá el enlace de Documenso para firmar."
+msgstr "Rebrà l'enllaç de Documenso per signar."
+
+msgid "Registra uno abajo o envía a firmar el consentimiento comercial desde la ficha del cliente."
+msgstr "Registra'n un a sota o envia a signar el consentiment comercial des de la fitxa del client."
+
+msgid "Registrar consentimiento"
+msgstr "Registrar consentiment"
+
+msgid "Registrar un consentimiento"
+msgstr "Registrar un consentiment"
+
+msgid "Registrar una baja"
+msgstr "Registrar una baixa"
+
+msgid "Responsable nuevo"
+msgstr "Responsable nou"
+
+msgid "Restaurar el de serie"
+msgstr "Restaurar el de sèrie"
+
+msgid "Revisar el cambio"
+msgstr "Revisar el canvi"
+
+msgid "Se devolverá cada oportunidad a como estaba, salvo las que se hayan vuelto a cambiar. ¿Deshacer?"
+msgstr "Es tornarà cada oportunitat a com estava, tret de les que s'hagin tornat a canviar. Desfer?"
+
+msgid "Se enviará por correo a %(email)s con Documenso. ¿Enviar?"
+msgstr "S'enviarà per correu a %(email)s amb Documenso. Enviar?"
+
+msgid "Segmenta a tus clientes y mándales correos: solo a quien ha dado su consentimiento, con baja de un clic."
+msgstr "Segmenta els teus clients i envia'ls correus: només a qui ha donat el consentiment, amb baixa d'un clic."
+
+msgid "Si lo dejas vacío se usa el de la plantilla."
+msgstr "Si el deixes buit s'utilitza el de la plantilla."
+
+msgid "Siempre se aplican estos filtros: solo con consentimiento de marketing por correo; un envío por correo aunque lo compartan varios clientes; nunca bajas ni correos rebotados; solo el correo del cliente, no sus contactos o familiares."
+msgstr "Sempre s'apliquen aquests filtres: només amb consentiment de màrqueting per correu; un enviament per correu encara que el comparteixin diversos clients; mai baixes ni correus rebotats; només el correu del client, no els seus contactes o familiars."
+
+msgid "Solo la dirección del despacho cambia los textos."
+msgstr "Només la direcció del despatx canvia els textos."
+
+msgid "Solo la dirección del despacho programa los envíos."
+msgstr "Només la direcció del despatx programa els enviaments."
+
+msgid "Solo se escribe a quien ha consentido, con prueba: un documento firmado desde su ficha o una constancia que anotas aquí."
+msgstr "Només s'escriu a qui ha consentit, amb prova: un document signat des de la seva fitxa o una constància que anotes aquí."
+
+msgid "Texto de serie sin validar: revísalo antes de enviarlo"
+msgstr "Text de sèrie sense validar: revisa'l abans d'enviar-lo"
+
+msgid "Texto del despacho"
+msgstr "Text del despatx"
+
+msgid "Texto del documento"
+msgstr "Text del document"
+
+msgid "Texto guardado."
+msgstr "Text desat."
+
+msgid "Texto sin validar: revísalo con tu criterio profesional"
+msgstr "Text sense validar: revisa'l amb el teu criteri professional"
+
+msgid "Textos"
+msgstr "Textos"
+
+msgid "Tipo de bloque"
+msgstr "Tipus de bloc"
+
+msgid "Todavía no hay cambios en lote"
+msgstr "Encara no hi ha canvis en lot"
+
+msgid "Todavía no hay consentimientos registrados"
+msgstr "Encara no hi ha consentiments registrats"
+
+msgid "Todavía no hay envíos"
+msgstr "Encara no hi ha enviaments"
+
+msgid "Todavía no hay envíos."
+msgstr "Encara no hi ha enviaments."
+
+msgid "Todavía no hay grupos"
+msgstr "Encara no hi ha grups"
+
+msgid "Todavía no hay plantillas"
+msgstr "Encara no hi ha plantilles"
+
+msgid "Tu correo"
+msgstr "El teu correu"
+
+msgid "Un grupo es una regla: quién entra se recalcula en cada envío. Solo llegan los que tienen consentimiento."
+msgstr "Un grup és una regla: qui hi entra es recalcula a cada enviament. Només arriben els que tenen consentiment."
+
+msgid "Una línea «# Título» es un epígrafe, «- » abre una viñeta y una línea en blanco separa párrafos."
+msgstr "Una línia «# Títol» és un epígraf, «- » obre una vinyeta i una línia en blanc separa paràgrafs."
+
+msgid "Variables"
+msgstr "Variables"
+
+msgid "Variables:"
+msgstr "Variables:"
+
+msgid "Ver PDF"
+msgstr "Veure PDF"
+
+msgid "Ver texto"
+msgstr "Veure text"
+
+msgid "Ver y registrar consentimientos"
+msgstr "Veure i registrar consentiments"
+
+msgid "Vista previa"
+msgstr "Vista prèvia"
+
+msgid "Vista previa del correo"
+msgstr "Vista prèvia del correu"
+
+msgid "Volver a la ficha"
+msgstr "Tornar a la fitxa"
+
+msgid "Vuelves a usar el texto de serie."
+msgstr "Tornes a utilitzar el text de sèrie."
+
+msgid "Vía"
+msgstr "Via"
+
+msgid "Ya no se puede deshacer."
+msgstr "Ja no es pot desfer."
+
+msgid "con error"
+msgstr "amb error"
+
+msgid "correo no válido"
+msgstr "correu no vàlid"
+
+msgid "de baja"
+msgstr "de baixa"
+
+msgid "enviado el"
+msgstr "enviat el"
+
+msgid "firmado el"
+msgstr "signat el"
+
+msgid "rebotado"
+msgstr "rebotat"
+
+msgid "repetido"
+msgstr "repetit"
+
+msgid "se puede deshacer hasta el %(f)s"
+msgstr "es pot desfer fins al %(f)s"
+
+msgid "sin consentimiento"
+msgstr "sense consentiment"
+
+msgid "sin correo"
+msgstr "sense correu"
+
+msgid "¿Aplicar este cambio?"
+msgstr "Aplicar aquest canvi?"
+
+msgid "¿Cancelar el envío? Los ya enviados no se pueden recuperar."
+msgstr "Cancel·lar l'enviament? Els ja enviats no es poden recuperar."
+
+msgid "¿Cancelar este documento?"
+msgstr "Cancel·lar aquest document?"
+
+msgid "¿Dar de baja este correo? Nunca más recibirá envíos."
+msgstr "Donar de baixa aquest correu? Mai més rebrà enviaments."
+
+msgid "¿Quieres dejar de recibir estos correos?"
+msgstr "Vols deixar de rebre aquests correus?"
+
+msgid "¿Quitar esta plantilla?"
+msgstr "Treure aquesta plantilla?"
+
+msgid "¿Quitar este grupo?"
+msgstr "Treure aquest grup?"
+
+msgid "¿Volver al texto de serie? Se pierde el del despacho."
+msgstr "Tornar al text de sèrie? Es perd el del despatx."
+
+msgid "Últimos envíos"
+msgstr "Últims enviaments"
+
+msgid "… y %(n)s más."
+msgstr "… i %(n)s més."
+

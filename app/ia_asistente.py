@@ -500,12 +500,17 @@ def _ejecutar_tool_call(usuario_id: int, tool_call: dict) -> str:
         return json.dumps({"error": _ERROR_LECTURA_FALLIDA}, ensure_ascii=False)
 
 
-def _pendiente_dict(tool_call: dict) -> dict:
-    return {
+def _pendiente_dict(tool_call: dict, usuario_id: int | None = None) -> dict:
+    argumentos = json.loads(tool_call["function"]["arguments"] or "{}")
+    pendiente = {
         "tool_call_id": tool_call["id"],
         "herramienta": tool_call["function"]["name"],
-        "argumentos": json.loads(tool_call["function"]["arguments"] or "{}"),
+        "argumentos": argumentos,
     }
+    resumen = herramientas.resumen_de_confirmacion(usuario_id, pendiente["herramienta"], argumentos) if usuario_id is not None else ""
+    if resumen:
+        pendiente["resumen"] = resumen                      # qué va a cambiar exactamente, para enseñarlo en la tarjeta de confirmación
+    return pendiente
 
 
 def _reservar_uso(usuario_id: int) -> None:
@@ -591,7 +596,7 @@ def _continuar_conversacion(usuario_id: int) -> dict:
             tool_call = _tool_call_por_id(usuario_id, tool_call_id_pendiente)
             return {
                 "mensajes_nuevos": _mensajes_nuevos_desde(usuario_id, ids_antes),
-                "pendiente": _pendiente_dict(tool_call),
+                "pendiente": _pendiente_dict(tool_call, usuario_id),
             }
 
         mensajes_api = _mensajes_para_openrouter(usuario_id)
@@ -628,7 +633,7 @@ def _continuar_conversacion(usuario_id: int) -> dict:
             if herramientas.necesita_confirmacion(nombre, modo_autonomo):
                 return {
                     "mensajes_nuevos": _mensajes_nuevos_desde(usuario_id, ids_antes),
-                    "pendiente": _pendiente_dict(tool_call),
+                    "pendiente": _pendiente_dict(tool_call, usuario_id),
                 }
             contenido = _ejecutar_tool_call(usuario_id, tool_call)
             db.agregar_mensaje_ia(
@@ -662,7 +667,7 @@ def pendiente_actual(usuario_id: int) -> dict | None:
     tool_call_id = _tool_call_id_pendiente(usuario_id)
     if tool_call_id is None:
         return None
-    return _pendiente_dict(_tool_call_por_id(usuario_id, tool_call_id))
+    return _pendiente_dict(_tool_call_por_id(usuario_id, tool_call_id), usuario_id)
 
 
 def confirmar_pendiente(usuario_id: int, aceptar: bool) -> dict:
@@ -712,7 +717,7 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
         tool_call_id_pendiente = _tool_call_id_pendiente(usuario_id)
         if tool_call_id_pendiente is not None:
             tool_call = _tool_call_por_id(usuario_id, tool_call_id_pendiente)
-            yield {"tipo": "pendiente", "pendiente": _pendiente_dict(tool_call)}
+            yield {"tipo": "pendiente", "pendiente": _pendiente_dict(tool_call, usuario_id)}
             return
 
         ids_antes = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}
@@ -775,7 +780,7 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
                     yield {"tipo": "mensaje", "mensaje": mensaje}
                 continue
             if herramientas.necesita_confirmacion(nombre, modo_autonomo):
-                yield {"tipo": "pendiente", "pendiente": _pendiente_dict(tool_call)}
+                yield {"tipo": "pendiente", "pendiente": _pendiente_dict(tool_call, usuario_id)}
                 return
             contenido = _ejecutar_tool_call(usuario_id, tool_call)
             ids_antes_tool = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}

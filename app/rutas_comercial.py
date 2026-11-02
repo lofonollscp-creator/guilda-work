@@ -6,7 +6,7 @@ from datetime import date
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, alta_cliente, comercial, db, nucleo, reuniones, verticales
+from . import acceso, alta_cliente, comercial, comercial_masivo, db, nucleo, reuniones, verticales
 from .auth import login_required
 from .comercial import ErrorComercial
 from .reuniones import ErrorReunion
@@ -201,6 +201,73 @@ def etapas():
             return _con_error("comercial.etapas", e)
         return _volver("comercial.etapas")
     return render_template("comercial_etapas.html", etapas=comercial.listar_etapas(g.tenant_id), puede_editar=acceso.es_directivo(g.usuario_id), error=_error())
+
+
+# --- Cambios en lote: proponer, confirmar y deshacer (app/comercial_masivo.py) ----------------------------------------------------
+
+@comercial_bp.route("/masivo")
+@login_required
+def masivo_historial():
+    return render_template("comercial_masivo_historial.html", acciones=comercial_masivo.historial(g.tenant_id, g.usuario_id), error=_error(), subnav_activa="lista")
+
+
+@comercial_bp.route("/masivo/proponer", methods=["POST"])
+@login_required
+def masivo_proponer():
+    f = request.form
+    tipo = f.get("tipo", "")
+    parametros = {"etapa": f.get("etapa"), "motivo": f.get("motivo"), "responsable_id": f.get("responsable_id"), "dias": f.get("dias")}
+    try:
+        a = comercial_masivo.proponer(g.tenant_id, g.usuario_id, tipo, {"ids": f.getlist("ids")}, parametros)
+    except ErrorComercial as e:
+        return _con_error("comercial.tablero", e, vista="lista")
+    return _volver("comercial.masivo_ver", accion_id=a["id"])
+
+
+def _accion_o_404(accion_id: int) -> dict:
+    a = comercial_masivo.obtener(g.tenant_id, g.usuario_id, accion_id)
+    if a is None:
+        abort(404)
+    return a
+
+
+@comercial_bp.route("/masivo/<int:accion_id>")
+@login_required
+def masivo_ver(accion_id: int):
+    return render_template("comercial_masivo_ver.html", a=_accion_o_404(accion_id), error=_error(), subnav_activa="lista")
+
+
+@comercial_bp.route("/masivo/<int:accion_id>/aplicar", methods=["POST"])
+@login_required
+def masivo_aplicar(accion_id: int):
+    _accion_o_404(accion_id)
+    try:
+        comercial_masivo.aplicar(g.tenant_id, g.usuario_id, accion_id, request.form.get("confirmacion"))
+    except ErrorComercial as e:
+        return _con_error("comercial.masivo_ver", e, accion_id=accion_id)
+    return _volver("comercial.masivo_ver", accion_id=accion_id)
+
+
+@comercial_bp.route("/masivo/<int:accion_id>/cancelar", methods=["POST"])
+@login_required
+def masivo_cancelar(accion_id: int):
+    _accion_o_404(accion_id)
+    try:
+        comercial_masivo.cancelar(g.tenant_id, g.usuario_id, accion_id)
+    except ErrorComercial as e:
+        return _con_error("comercial.masivo_ver", e, accion_id=accion_id)
+    return _volver("comercial.tablero", vista="lista")
+
+
+@comercial_bp.route("/masivo/<int:accion_id>/deshacer", methods=["POST"])
+@login_required
+def masivo_deshacer(accion_id: int):
+    _accion_o_404(accion_id)
+    try:
+        comercial_masivo.deshacer(g.tenant_id, g.usuario_id, accion_id)
+    except ErrorComercial as e:
+        return _con_error("comercial.masivo_ver", e, accion_id=accion_id)
+    return _volver("comercial.masivo_ver", accion_id=accion_id)
 
 
 @comercial_bp.route("/informes")

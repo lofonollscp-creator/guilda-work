@@ -375,6 +375,7 @@
       }
       pendienteEl.innerHTML =
         '<p class="ia-chat-pendiente-titulo"><strong></strong></p>' +
+        '<p class="ia-chat-pendiente-resumen" hidden></p>' +
         '<pre class="ia-chat-pendiente-args"></pre>' +
         '<p class="ia-chat-pendiente-pregunta"></p>' +
         '<div class="ia-chat-pendiente-botones">' +
@@ -386,6 +387,8 @@
       pendienteEl.querySelector('[data-aceptar="true"]').textContent = t().si;
       pendienteEl.querySelector('[data-aceptar="false"]').textContent = t().no;
       pintarArgumentos(pendienteEl, pendiente.argumentos);
+      var resumenEl = pendienteEl.querySelector(".ia-chat-pendiente-resumen");
+      if (pendiente.resumen) { resumenEl.textContent = pendiente.resumen; resumenEl.hidden = false; }
       pendienteEl.hidden = false;
       adjuntarBotonesPendiente();
     }

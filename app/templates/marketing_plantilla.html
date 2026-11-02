@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Plantilla de correo') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ nombre or _('Nueva plantilla') }}</h1></div><a class="btn btn-ghost" href="{{ url_for('marketing.plantillas') }}">{{ _('Volver') }}</a></header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+<form method="post" class="edit-form">
+  {% call campo(_('Nombre (interno)'), 'p-nombre', requerido=True) %}<input type="text" id="p-nombre" name="nombre" value="{{ nombre }}" required maxlength="100">{% endcall %}
+  {% call campo(_('Asunto'), 'p-asunto', requerido=True) %}<input type="text" id="p-asunto" name="asunto" value="{{ asunto }}" required maxlength="200">{% endcall %}
+  <h2>{{ _('Bloques') }}</h2>
+  <p class="muted">{{ _('Variables:') }} {% for v, n in variables.items() %}<code>{{ '{{' }}{{ v }}{{ '}}' }}</code> {% endfor %}. {{ _('El enlace de baja y los datos del despacho se añaden siempre al pie: no se pueden quitar. Para quitar un bloque, vacía su texto.') }}</p>
+  {% for b in bloques %}
+  <fieldset class="dash-panel">
+    <select name="tipo" aria-label="{{ _('Tipo de bloque') }}">{% for k, n in tipos.items() %}<option value="{{ k }}" {{ 'selected' if b.tipo == k }}>{{ n }}</option>{% endfor %}</select>
+    <textarea name="texto" rows="3" maxlength="2000" aria-label="{{ _('Texto') }}">{{ b.texto }}</textarea>
+    <input type="text" name="url" value="{{ b.url }}" placeholder="{{ _('Enlace (https://…) para botones e imágenes') }}" maxlength="500" aria-label="{{ _('Enlace') }}">
+  </fieldset>
+  {% endfor %}
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar plantilla') }}</button>
+    <button type="submit" name="accion" value="previsualizar" class="btn btn-ghost">{{ _('Vista previa') }}</button></div>
+  <section class="dash-panel">
+    <h2>{{ _('Ayuda de IA') }}</h2>
+    <p class="muted">{{ _('Es un borrador para que lo revises. Solo se envía a la IA el texto de la plantilla y lo que escribas aquí: nunca datos de clientes.') }}</p>
+    <label>{{ _('Qué quieres') }} <select name="ia_accion">{% for k, n in acciones_ia.items() %}<option value="{{ k }}">{{ n }}</option>{% endfor %}</select></label>
+    <label>{{ _('Objetivo del correo') }} <input type="text" name="objetivo" maxlength="500" placeholder="{{ _('Ej.: avisar de que se acerca el plazo del IVA') }}"></label>
+    <button type="submit" name="accion" value="ia" class="btn btn-ghost">{{ _('Pedir borrador') }}</button>
+    {% if ia %}<pre class="ds-texto-documento">{{ ia }}</pre>{% endif %}
+  </section>
+</form>
+{% if vista %}<section class="dash-panel"><h2>{{ _('Vista previa') }}</h2><iframe class="ds-vista-correo" sandbox srcdoc="{{ vista }}" title="{{ _('Vista previa del correo') }}"></iframe></section>{% endif %}
+{% endblock %}

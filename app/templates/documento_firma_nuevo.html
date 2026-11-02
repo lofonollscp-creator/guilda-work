@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import campo, boton, chip, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ f.titulo }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ f.titulo }}</h1>
+    <p class="subtitle">{{ f.descripcion }} · {{ c.nombre }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('clientes.ficha', cliente_id=c.id, pestana='documentos') }}">{{ _('Volver a la ficha') }}</a>
+</header>
+{{ aviso_error(error) }}
+<p>{{ sin_validar(_('Texto de serie sin validar: revísalo antes de enviarlo')) }}</p>
+
+{% if f.faltan %}
+<div class="ia-error" role="alert">
+  <strong>{{ _('Antes de generarlo, completa estos datos:') }}</strong>
+  <ul>{% for x in f.faltan %}<li>{{ x }}</li>{% endfor %}</ul>
+  <p>{{ _('Los del cliente se editan en su ficha; los del despacho, en el backoffice.') }}</p>
+</div>
+{% endif %}
+
+<form class="edit-form ds-max-640" method="post" action="{{ url_for('documentos_firma.crear', cliente_id=c.id, clave=f.clave) }}">
+  {% for k in f.campos %}
+    {% set v = valores.get(k.clave, k.valor) %}
+    {% call campo(k.etiqueta, 'f-' ~ k.clave, ayuda=k.ayuda or None, requerido=k.obligatorio) %}
+      {% if k.tipo == 'area' %}<textarea id="f-{{ k.clave }}" name="{{ k.clave }}" rows="4" maxlength="2000"{% if k.obligatorio %} required{% endif %}>{{ v }}</textarea>
+      {% elif k.tipo == 'select' %}<select id="f-{{ k.clave }}" name="{{ k.clave }}">{% for o in k.opciones %}<option value="{{ o }}"{% if o == v %} selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+      {% else %}<input type="text" id="f-{{ k.clave }}" name="{{ k.clave }}" value="{{ v }}" maxlength="300"{% if k.obligatorio %} required{% endif %}{% if k.tipo == 'iban' %} autocomplete="off" inputmode="text"{% endif %}>{% endif %}
+    {% endcall %}
+  {% endfor %}
+  {% call campo(_('Lugar de la firma'), 'f-lugar', ayuda=_('Aparece en el documento, p. ej. «Barcelona».')) %}
+    <input type="text" id="f-lugar" name="lugar" value="{{ valores.get('lugar', f.lugar) }}" maxlength="100">
+  {% endcall %}
+  <h2>{{ _('Quién firma') }}</h2>
+  {% call campo(_('Correo de quien firma'), 'f-firmante-email', ayuda=_('Recibirá el enlace de Documenso para firmar.'), requerido=True) %}
+    <input type="email" id="f-firmante-email" name="firmante_email" value="{{ valores.get('firmante_email', f.firmante_email) }}" required maxlength="200">
+  {% endcall %}
+  {% call campo(_('Nombre de quien firma'), 'f-firmante-nombre') %}
+    <input type="text" id="f-firmante-nombre" name="firmante_nombre" value="{{ valores.get('firmante_nombre', f.firmante_nombre) }}" maxlength="100">
+  {% endcall %}
+  <div class="ds-fila">
+    <button type="submit" class="btn btn-primary"{% if f.faltan %} disabled{% endif %}>{{ _('Generar borrador') }}</button>
+    <span class="muted">{{ _('No se envía nada todavía: primero lo revisas.') }}</span>
+  </div>
+</form>
+{% endblock %}

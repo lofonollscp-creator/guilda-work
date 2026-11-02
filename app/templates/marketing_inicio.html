@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, sin_validar %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Marketing') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Marketing') }}</h1><p class="subtitle">{{ _('Segmenta a tus clientes y mándales correos: solo a quien ha dado su consentimiento, con baja de un clic.') }}</p></div>
+  <div class="ds-fila"><a class="btn btn-primary" href="{{ url_for('marketing.envio_nuevo') }}">+ {{ _('Nuevo envío') }}</a></div>
+</header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+{% if faltan %}<div class="ia-error" role="alert">{{ _('Para enviar, el despacho necesita estos datos legales:') }} {{ faltan|join(', ') }}.</div>{% endif %}
+{% if not canal %}<p class="muted">{{ _('El canal de envío no está configurado en el servidor: puedes preparar grupos, plantillas y envíos y descargar la audiencia, pero no enviar desde aquí.') }}</p>{% endif %}
+<section class="dash-panel">
+  <h2>{{ _('Consentimientos') }}</h2>
+  <p>{{ chip(_('Con consentimiento: %(n)s', n=resumen.consentido), 'exito') }} {{ chip(_('De baja: %(n)s', n=resumen.baja)) }} {{ chip(_('Rebotados: %(n)s', n=resumen.rebotado), 'aviso') if resumen.rebotado }}</p>
+  <p class="muted">{{ _('Solo se escribe a quien ha consentido, con prueba: un documento firmado desde su ficha o una constancia que anotas aquí.') }}</p>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('marketing.consentimientos') }}">{{ _('Ver y registrar consentimientos') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('marketing.grupos') }}">{{ _('Grupos') }}</a><a class="btn btn-ghost" href="{{ url_for('marketing.plantillas') }}">{{ _('Plantillas') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('marketing.envios') }}">{{ _('Envíos') }}</a></div>
+</section>
+<section class="dash-panel">
+  <h2>{{ _('Últimos envíos') }}</h2>
+  {% if envios %}<ul class="log-list">{% for e in envios %}<li class="log-item"><span class="log-text"><a href="{{ url_for('marketing.envio_ver', envio_id=e.id) }}">{{ e.nombre }}</a>
+    {{ chip({'borrador': _('Borrador'), 'programado': _('Programado'), 'enviando': _('Enviando'), 'enviado': _('Enviado'), 'cancelado': _('Cancelado')}[e.estado]) }} <span class="muted">{{ e.enviados }}/{{ e.total }}</span></span></li>{% endfor %}</ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay envíos.') }}</p>{% endif %}
+</section>
+{% endblock %}

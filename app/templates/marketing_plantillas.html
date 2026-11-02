@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import boton, estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Plantillas de correo') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Plantillas de correo') }}</h1></div><a class="btn btn-primary" href="{{ url_for('marketing.plantilla') }}">+ {{ _('Nueva plantilla') }}</a></header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+{% if plantillas %}<section class="dash-panel"><ul class="log-list">{% for p in plantillas %}<li class="log-item"><span class="log-text"><a href="{{ url_for('marketing.plantilla', plantilla_id=p.id) }}">{{ p.nombre }}</a> <span class="muted">· {{ p.asunto }}</span></span>
+  <form method="post" action="{{ url_for('marketing.plantilla_papelera', plantilla_id=p.id) }}">{{ boton(_('Quitar'), 'peligro', tipo='submit', pequeno=True, confirmar=_('¿Quitar esta plantilla?')) }}</form></li>{% endfor %}</ul></section>
+{% else %}{{ estado_vacio(_('Todavía no hay plantillas'), _('Crea una con bloques de título, texto y botón.'), 'folder', _('Nueva plantilla'), url_for('marketing.plantilla')) }}{% endif %}
+{% endblock %}

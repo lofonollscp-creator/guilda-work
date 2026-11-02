@@ -810,7 +810,7 @@ def _companero_del_tenant(conn: sqlite3.Connection, usuario_id: int, otro_id: in
     la tarea ya es suya). Si no, se ignora."""
     if otro_id is None or otro_id == usuario_id:
         return None
-    tenant = _despacho_de_trabajo(conn, usuario_id)
+    tenant = _db._despacho_de_trabajo(conn, usuario_id)
     if tenant is None:
         return None
     fila = conn.execute(f"SELECT o.id FROM usuarios o WHERE o.id = ? AND {_db.sql_miembro('o')}", (otro_id, tenant, tenant)).fetchone()
@@ -822,7 +822,7 @@ def listar_companeros_tenant(usuario_id: int) -> list[sqlite3.Row]:
     elegido o, en su defecto, el correo -- para el selector de asignación."""
     conn = _db.get_connection()
     try:
-        tenant = _despacho_de_trabajo(conn, usuario_id)
+        tenant = _db._despacho_de_trabajo(conn, usuario_id)
         if tenant is None:
             return []
         return conn.execute(
@@ -2121,7 +2121,7 @@ def carga_semanal(usuario_id: int, lunes: _db.date) -> dict:
     try:
         if conn.execute("SELECT 1 FROM usuarios WHERE id = ?", (usuario_id,)).fetchone() is None:
             return {"personas": [], "dias": dias}
-        tenant = _despacho_de_trabajo(conn, usuario_id)
+        tenant = _db._despacho_de_trabajo(conn, usuario_id)
         personas_filas = conn.execute(
             f"""SELECT u.id, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS nombre, fd.jornada_semanal_horas AS jornada
                FROM usuarios u LEFT JOIN usuario_perfil pf ON pf.usuario_id = u.id LEFT JOIN fichaje_datos fd ON fd.usuario_id = u.id

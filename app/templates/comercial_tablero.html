@@ -37,16 +37,36 @@
 {% if not oportunidades %}
   {{ estado_vacio(_('Todavía no hay oportunidades'), _('Apunta aquí a quien podría ser cliente y sigue cada paso hasta cerrarlo.'), 'folder', _('Nueva oportunidad'), url_for('comercial.nueva')) }}
 {% elif vista == 'lista' %}
+<form method="post" action="{{ url_for('comercial.masivo_proponer') }}" id="masivo">
 <table class="ds-tabla">
-  <thead><tr><th>{{ _('Oportunidad') }}</th><th>{{ _('Etapa') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Prob.') }}</th><th>{{ _('Cierre previsto') }}</th><th>{{ _('Responsable') }}</th></tr></thead>
+  <thead><tr><th><input type="checkbox" data-marcar-todos="ids" aria-label="{{ _('Marcar todas') }}"></th><th>{{ _('Oportunidad') }}</th><th>{{ _('Etapa') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Prob.') }}</th><th>{{ _('Cierre previsto') }}</th><th>{{ _('Responsable') }}</th></tr></thead>
   <tbody>
   {% for o in oportunidades %}
-    <tr><td><a href="{{ url_for('comercial.ficha', oportunidad_id=o.id) }}">{{ o.titulo }}</a><br><span class="muted">{{ o.contacto }}</span></td>
+    <tr><td><input type="checkbox" name="ids" value="{{ o.id }}" aria-label="{{ _('Marcar %(t)s', t=o.titulo) }}"></td>
+      <td><a href="{{ url_for('comercial.ficha', oportunidad_id=o.id) }}">{{ o.titulo }}</a><br><span class="muted">{{ o.contacto }}</span></td>
       <td>{{ chip(o.etapa_nombre, 'exito' if o.estado == 'ganada' else ('peligro' if o.estado == 'perdida' else 'neutro')) }}</td>
       <td>{{ o.importe_centimos|importe }}</td><td>{{ o.probabilidad }} %</td><td>{{ o.cierre_previsto|fecha_dia if o.cierre_previsto else '—' }}</td><td>{{ o.responsable or '—' }}</td></tr>
   {% endfor %}
   </tbody>
 </table>
+<details class="dash-panel ds-mt-12" id="masivo-acciones">
+  <summary><strong>{{ _('Cambiar varias a la vez') }}</strong> <span class="muted">{{ _('Marca las oportunidades, elige qué hacer y revisa el cambio antes de aplicarlo: se puede deshacer durante 90 días.') }}</span></summary>
+  <div class="edit-form ds-max-640">
+    <label>{{ _('Qué hacer') }}
+      <select name="tipo">
+        <option value="mover_etapa">{{ _('Cambiar de etapa') }}</option><option value="reasignar">{{ _('Cambiar de responsable') }}</option>
+        <option value="posponer_cierre">{{ _('Posponer el cierre previsto') }}</option><option value="papelera">{{ _('Enviar a la papelera') }}</option>
+      </select></label>
+    <label>{{ _('Etapa de destino') }} <select name="etapa">{% for e2 in etapas %}<option value="{{ e2.clave }}">{{ e2.nombre }}</option>{% endfor %}</select></label>
+    <label>{{ _('Motivo (si se pierden)') }} <input type="text" name="motivo" maxlength="500"></label>
+    <label>{{ _('Responsable nuevo') }} {{ selector_equipo('responsable_id', equipo, none, vacio=_('Elige…')) }}</label>
+    <label>{{ _('Días a posponer') }} <input type="number" name="dias" min="1" max="365" value="7"></label>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Revisar el cambio') }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('comercial.masivo_historial') }}">{{ _('Historial de cambios en lote') }}</a></div>
+  </div>
+</details>
+</form>
+<script src="{{ url_for('static', filename='comercial_masivo.js') }}" defer></script>
 {% else %}
 <div class="ds-tablero">
   {% for e in mostradas %}

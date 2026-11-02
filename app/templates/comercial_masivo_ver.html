@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import boton, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Cambio en lote') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set estados = {'propuesta': (_('Pendiente de confirmar'), 'aviso'), 'aplicada': (_('Aplicado'), 'exito'), 'deshecha': (_('Deshecho'), 'neutro'), 'cancelada': (_('Cancelado'), 'neutro')} %}
+<header class="page-header">
+  <div><h1>{{ a.nombre_tipo }}</h1><p class="subtitle">{{ a.descripcion }} · {{ chip(estados[a.estado][0], estados[a.estado][1]) }}</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('comercial.tablero', vista='lista') }}">{{ _('Volver a la lista') }}</a>
+</header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+
+<section class="dash-panel">
+  {% if a.estado == 'propuesta' %}
+    <h2>{{ _('¿Aplicar este cambio?') }}</h2>
+    <p>{{ _('%(n)s oportunidades cambiarán · %(o)s se omiten · se podrá deshacer durante 90 días.', n=a.afectados|length, o=a.omitidos|length) }}</p>
+    {% if not a.se_puede_aplicar %}<p class="muted">{{ _('Esta propuesta caducó: vuelve a proponerla desde la lista.') }}</p>
+    {% else %}
+    <form method="post" action="{{ url_for('comercial.masivo_aplicar', accion_id=a.id) }}" class="edit-form ds-max-640">
+      {% if a.requiere_texto %}
+      <label>{{ _('Escribe «%(t)s» para confirmar', t=a.texto_confirmacion) }} <input type="text" name="confirmacion" autocomplete="off" placeholder="{{ a.texto_confirmacion }}" required></label>
+      {% endif %}
+      <div class="ds-fila">
+        {{ boton(_('Aplicar a %(n)s oportunidades', n=a.afectados|length), 'peligro' if a.requiere_texto else 'primario', tipo='submit') }}
+      </div>
+    </form>
+    <form method="post" action="{{ url_for('comercial.masivo_cancelar', accion_id=a.id) }}">{{ boton(_('Cancelar'), 'fantasma', tipo='submit') }}</form>
+    {% endif %}
+  {% elif a.estado == 'aplicada' %}
+    <h2>{{ _('Cambio aplicado') }}</h2>
+    <p>{{ _('%(n)s oportunidades cambiadas · %(o)s omitidas.', n=a.afectados|length, o=a.omitidos|length) }}
+      {% if a.se_puede_deshacer %}{{ _('Puedes deshacerlo hasta el %(f)s.', f=a.caduca_en[:10]) }}{% else %}{{ _('Ya no se puede deshacer.') }}{% endif %}</p>
+    {% if a.se_puede_deshacer %}
+    <form method="post" action="{{ url_for('comercial.masivo_deshacer', accion_id=a.id) }}">{{ boton(_('Deshacer este cambio'), 'peligro', tipo='submit', confirmar=_('Se devolverá cada oportunidad a como estaba, salvo las que se hayan vuelto a cambiar. ¿Deshacer?')) }}</form>
+    {% endif %}
+  {% elif a.estado == 'deshecha' %}
+    <h2>{{ _('Cambio deshecho') }}</h2><p class="muted">{{ _('Las oportunidades volvieron a su estado anterior, salvo las que se habían vuelto a cambiar.') }}</p>
+  {% else %}<h2>{{ _('Propuesta cancelada') }}</h2>{% endif %}
+</section>
+
+<section class="dash-panel">
+  <h2>{{ _('Oportunidades que cambian') }} ({{ a.afectados|length }})</h2>
+  <ul class="log-list">{% for x in a.afectados[:50] %}<li class="log-item"><span class="log-text"><a href="{{ url_for('comercial.ficha', oportunidad_id=x.id) }}">{{ x.titulo }}</a></span></li>{% endfor %}</ul>
+  {% if a.afectados|length > 50 %}<p class="muted">{{ _('… y %(n)s más.', n=a.afectados|length - 50) }}</p>{% endif %}
+  {% if a.omitidos %}
+  <h2>{{ _('Omitidas') }} ({{ a.omitidos|length }})</h2>
+  <ul class="log-list">{% for x in a.omitidos[:50] %}<li class="log-item"><span class="log-text">{{ x.titulo }} <span class="muted">· {{ x.motivo }}</span></span></li>{% endfor %}</ul>
+  {% endif %}
+</section>
+{% endblock %}

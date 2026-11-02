@@ -263,3 +263,51 @@ def comercial_eliminar_reunion(reunion_id: int) -> dict:
     except (reuniones.ErrorReunion, ValueError) as e:
         raise _mt._traducir_comercial(e) from e
     return {"reunion_id": reunion_id, "en_papelera": True}
+
+
+def comercial_proponer_cambio_masivo(tipo: str, ids: list[int] | None = None, estado: str = "", etapa: str = "", responsable_id: int | None = None, estancadas: bool = False,
+                                     etapa_destino: str = "", motivo: str = "", responsable_nuevo_id: int | None = None, dias: int | None = None) -> dict:
+    """Prepara un cambio en lote sobre oportunidades SIN aplicarlo: devuelve cuántas cambiarían, cuáles se omiten y por qué, y un `accion_id`. `tipo`: mover_etapa (con `etapa_destino` y,
+    si es perdida, `motivo`), reasignar (con `responsable_nuevo_id`), posponer_cierre (con `dias`, 1 a 365) o papelera. Elige las oportunidades con `ids` o con un filtro (`estado`, `etapa`,
+    `responsable_id`, `estancadas`). Para aplicarlo hace falta `comercial_aplicar_cambio_masivo`, que pide confirmación a la persona."""
+    from app import comercial_masivo
+    from app.comercial import ErrorComercial
+    t, u = _mt._ctx_comercial()
+    seleccion = {"ids": ids} if ids else {"estado": estado or "abierta", "etapa": etapa or None, "responsable_id": responsable_id, "estancadas": bool(estancadas)}
+    try:
+        a = comercial_masivo.proponer(t, u, tipo, seleccion, {"etapa": etapa_destino, "motivo": motivo, "responsable_id": responsable_nuevo_id, "dias": dias})
+    except ErrorComercial as e:
+        raise _mt._traducir_comercial(e) from e
+    return {"accion_id": a["id"], "descripcion": a["descripcion"], "cambiarian": len(a["afectados"]), "omitidas": [{"id": x["id"], "motivo": x["motivo"]} for x in a["omitidos"]][:20],
+            "ejemplos": [x["titulo"] for x in a["afectados"][:5]], "requiere_escribir_en_pantalla": a["requiere_texto"],
+            "siguiente_paso": "Enseña este resumen a la persona y, si lo acepta, llama a comercial_aplicar_cambio_masivo con este accion_id. Aún no se ha cambiado nada."}
+
+
+def comercial_aplicar_cambio_masivo(accion_id: int, confirmacion: str = "") -> dict:
+    """Aplica un cambio en lote ya propuesto con `comercial_proponer_cambio_masivo` (siempre pide confirmación a la persona). Si manda oportunidades a la papelera, se confirma en pantalla escribiendo
+    el recuento: esta herramienta no lo hace por ella. Se puede deshacer durante 90 días con `comercial_deshacer_cambio_masivo`."""
+    from app import comercial_masivo
+    from app.comercial import ErrorComercial
+    t, u = _mt._ctx_comercial()
+    a = comercial_masivo.obtener(t, u, accion_id)
+    if a is None or a["estado"] != "propuesta":
+        raise ValueError(f"No hay ninguna propuesta pendiente con el id {accion_id}.")
+    if a["requiere_texto"] and (confirmacion or "").strip().lower() != a["texto_confirmacion"].lower():
+        raise ValueError(f"Este cambio envía oportunidades a la papelera: la persona lo confirma en pantalla (Comercial → Cambios en lote, propuesta {accion_id}) escribiendo «{a['texto_confirmacion']}».")
+    try:
+        r = comercial_masivo.aplicar(t, u, accion_id, confirmacion)
+    except ErrorComercial as e:
+        raise _mt._traducir_comercial(e) from e
+    return {"accion_id": r["id"], "aplicadas": len(r["afectados"]), "omitidas": [{"id": x["id"], "motivo": x["motivo"]} for x in r["omitidos"]][:20], "se_puede_deshacer_hasta": (r["caduca_en"] or "")[:10]}
+
+
+def comercial_deshacer_cambio_masivo(accion_id: int) -> dict:
+    """Deshace un cambio en lote aplicado hace menos de 90 días: devuelve cada oportunidad a su estado anterior, salvo las que se hayan vuelto a cambiar después."""
+    from app import comercial_masivo
+    from app.comercial import ErrorComercial
+    t, u = _mt._ctx_comercial()
+    try:
+        r = comercial_masivo.deshacer(t, u, accion_id)
+    except ErrorComercial as e:
+        raise _mt._traducir_comercial(e) from e
+    return {"accion_id": r["id"], "devueltas": r["devueltas"], "sin_tocar": [{"id": x["id"], "motivo": x["motivo"]} for x in r["sin_tocar"]][:20]}

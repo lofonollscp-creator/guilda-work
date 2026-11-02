@@ -105,11 +105,13 @@ def _cuerpo_multipart(campos: dict, nombre_archivo: str, contenido_pdf: bytes) -
     return b"".join(partes), f"multipart/form-data; boundary={limite}"
 
 
-def crear_documento(api_key: str, titulo: str, contenido_pdf: bytes, firmantes: list[dict]) -> dict:
+def crear_documento(api_key: str, titulo: str, contenido_pdf: bytes, firmantes: list[dict], *, pagina: int = 1, campo: tuple[float, float, float, float] = (70, 85, 20, 5)) -> dict:
     """Crea un documento (envelope) y lo deja en borrador, listo para
     `enviar_a_firma`. `firmantes`: lista de {"email": str, "nombre": str}
-    — cada uno recibe un único campo de firma en la primera página,
-    posicionado por defecto (esquina inferior derecha); para colocar
+    — cada uno recibe un único campo de firma, por defecto en la primera
+    página y en la esquina inferior derecha. `pagina` y `campo` (x, y, ancho,
+    alto, en % de la página desde su esquina superior izquierda) lo colocan
+    donde quien genera el PDF ha dejado el hueco de la firma; para colocar
     campos a medida, usa la propia interfaz web de Documenso."""
     if not api_key:
         raise ErrorDocumenso("Este tenant no tiene un token de Documenso configurado todavía.")
@@ -120,8 +122,8 @@ def crear_documento(api_key: str, titulo: str, contenido_pdf: bytes, firmantes: 
             "role": "SIGNER",
             "fields": [{
                 "type": "SIGNATURE",
-                "page": 1,
-                "positionX": 70, "positionY": 85, "width": 20, "height": 5,
+                "page": pagina,
+                "positionX": campo[0], "positionY": campo[1], "width": campo[2], "height": campo[3],
             }],
         }
         for f in firmantes
@@ -144,6 +146,17 @@ def crear_documento(api_key: str, titulo: str, contenido_pdf: bytes, firmantes: 
     except urllib.error.URLError as e:
         raise ErrorDocumenso(f"No se ha podido conectar con Documenso ({DOCUMENSO_URL}): {e.reason}") from e
     return resultado
+
+
+def estado_documento(api_key: str, documento_id: str) -> str:
+    """El estado que Documenso da al documento (`DRAFT`, `PENDING`, `COMPLETED` o `REJECTED`), en mayúsculas; cadena vacía si no lo informa."""
+    if not api_key:
+        raise ErrorDocumenso("Este tenant no tiene un token de Documenso configurado todavía.")
+    estado, cuerpo = _peticion_json(f"/envelope/{documento_id}", api_key)
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorDocumenso(f"No se ha podido consultar el documento {documento_id} de Documenso: {mensaje}")
+    return str(cuerpo.get("status") or "").upper()
 
 
 def enviar_a_firma(api_key: str, documento_id: str) -> dict:

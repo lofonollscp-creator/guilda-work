@@ -88,13 +88,17 @@ class ErrorComercial(ValueError):
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
-    from . import reuniones
+    from . import comercial_masivo, marketing, reuniones
     reuniones.crear_esquema(conn)
+    comercial_masivo.crear_esquema(conn)      # cambios en lote con propuesta, confirmación y deshacer (app/comercial_masivo.py)
+    marketing.crear_esquema(conn)             # consentimientos, grupos, plantillas y envíos de marketing (app/marketing.py)
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
-    from . import reuniones
+    from . import comercial_masivo, marketing, reuniones
     reuniones.borrar_datos_de_tenant(conn, tenant_id)
+    comercial_masivo.borrar_datos_de_tenant(conn, tenant_id)
+    marketing.borrar_datos_de_tenant(conn, tenant_id)
     conn.execute("DELETE FROM crm_actividades WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM crm_oportunidades WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM crm_etapas WHERE tenant_id = ?", (tenant_id,))
