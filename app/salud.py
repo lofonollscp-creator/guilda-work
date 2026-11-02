@@ -46,6 +46,8 @@ ETIQUETAS_LATIDOS = {
     "tareas_recurrentes": lambda: _("Tareas recurrentes"),
     "apuntes_recurrentes": lambda: _("Apuntes recurrentes"),
     "marketing_envios": lambda: _("Envíos de marketing"),
+    "firmas_documenso": lambda: _("Firmas de Documenso"),
+    "marketing_rebotes": lambda: _("Rebotes de marketing"),
     "recordatorios_tareas": lambda: _("Recordatorios de tareas"),
     "vigilante_salud": lambda: _("Vigilante de salud"),
     "backoffice_tareas": lambda: _("Tareas del backoffice (histórico, cobros y resumen semanal)"),

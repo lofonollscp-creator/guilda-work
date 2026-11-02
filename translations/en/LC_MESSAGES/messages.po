@@ -19056,3 +19056,132 @@ msgstr "Latest mailings"
 msgid "… y %(n)s más."
 msgstr "… and %(n)s more."
 
+
+msgid "Antes del primer envío real, prueba la conexión y manda un envío pequeño a un grupo de prueba: las conexiones se han construido con la documentación oficial de cada proveedor, pero aún no se han contrastado con una cuenta real."
+msgstr "Before the first real mailing, test the connection and send a small mailing to a test group: the connections were built from each provider's official documentation, but have not yet been checked against a real account."
+
+msgid "Arrastrar para reordenar"
+msgstr "Drag to reorder"
+
+msgid "Audience settings → Audience name and defaults."
+msgstr "Audience settings → Audience name and defaults."
+
+msgid "Añadir un bloque"
+msgstr "Add a block"
+
+msgid "Blando"
+msgstr "Soft"
+
+msgid "Bloque añadido"
+msgstr "Block added"
+
+msgid "Bloque movido a la posición"
+msgstr "Block moved to position"
+
+msgid "Bloque quitado"
+msgstr "Block removed"
+
+msgid "Canal de envío"
+msgstr "Sending channel"
+
+msgid "Canal propio"
+msgstr "Own channel"
+
+msgid "Canales de envío"
+msgstr "Sending channels"
+
+msgid "Carpeta de contactos (opcional)"
+msgstr "Contacts folder (optional)"
+
+msgid "Clave de la API"
+msgstr "API key"
+
+msgid "Conexión correcta: %(c)s"
+msgstr "Connection OK: %(c)s"
+
+msgid "Correo del remitente"
+msgstr "Sender email"
+
+msgid "Correo rebotado"
+msgstr "Bounced email"
+
+msgid "Código"
+msgstr "Code"
+
+msgid "Debe estar verificado en el proveedor."
+msgstr "It must be verified with the provider."
+
+msgid "Duro"
+msgstr "Hard"
+
+msgid "En Brevo: SMTP y API → Claves de API. "
+msgstr "In Brevo: SMTP & API → API keys. "
+
+msgid "En Mailchimp: Account → Extras → API keys; termina en el centro de datos, p. ej. …-us21."
+msgstr "In Mailchimp: Account → Extras → API keys; it ends with the data centre, e.g. …-us21."
+
+msgid "Envía por tu propia cuenta de Brevo o Mailchimp. Guilda sube solo a quien ha consentido y trae de vuelta las bajas y los rebotes."
+msgstr "Send through your own Brevo or Mailchimp account. Guilda uploads only those who consented and brings back unsubscribes and bounces."
+
+msgid "Falta probar"
+msgstr "Needs testing"
+
+msgid "Firmas de Documenso"
+msgstr "Documenso signatures"
+
+msgid "Guardada, termina en %(f)s. Déjalo vacío para conservarla."
+msgstr "Saved, ends in %(f)s. Leave empty to keep it."
+
+msgid "Guardado. Ahora prueba la conexión."
+msgstr "Saved. Now test the connection."
+
+msgid "Guilda (canal propio)"
+msgstr "Guilda (own channel)"
+
+msgid "Identificador de la audiencia"
+msgstr "Audience ID"
+
+msgid "Informe de entrega"
+msgstr "Delivery report"
+
+msgid "Nombre del remitente"
+msgstr "Sender name"
+
+msgid "Por Guilda (sin coste extra) o por tu cuenta de Brevo o Mailchimp, que gestiona las bajas y los rebotes a su manera."
+msgstr "Through Guilda (no extra cost) or your Brevo or Mailchimp account, which handles unsubscribes and bounces in its own way."
+
+msgid "Por qué se reactiva"
+msgstr "Why it is being reactivated"
+
+msgid "Probado"
+msgstr "Tested"
+
+msgid "Queja"
+msgstr "Complaint"
+
+msgid "Quitar bloque"
+msgstr "Remove block"
+
+msgid "Rebotes de marketing"
+msgstr "Marketing bounces"
+
+msgid "Rebotes recientes"
+msgstr "Recent bounces"
+
+msgid "Si la dejas vacía se usa la primera carpeta de tu cuenta."
+msgstr "If you leave it empty, the first folder in your account is used."
+
+msgid "Sin configurar"
+msgstr "Not set up"
+
+msgid "Solo la dirección del despacho configura los canales."
+msgstr "Only the firm's management configures the channels."
+
+msgid "Un rebote duro (el buzón no existe) o varios blandos dejan ese correo como rebotado: no se le vuelve a escribir."
+msgstr "A hard bounce (the mailbox does not exist) or several soft ones mark that email as bounced: it is not written to again."
+
+msgid "¿Quitar este canal? Se borra la clave guardada."
+msgstr "Remove this channel? The saved key is deleted."
+
+msgid "¿Volver a permitir envíos a este correo?"
+msgstr "Allow mailings to this email again?"

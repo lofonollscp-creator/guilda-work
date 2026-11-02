@@ -161,6 +161,8 @@ SELECT create_distributed_table('marketing_envio_destinatarios', 'tenant_id', co
 SELECT create_distributed_table('marketing_envios', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('marketing_grupos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('marketing_plantillas', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('marketing_proveedores', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('marketing_rebotes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('mcp_auditoria', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('membresias', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('mensajes_enlace', 'tenant_id', colocate_with => 'abogados_ajustes');

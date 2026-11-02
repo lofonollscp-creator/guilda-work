@@ -1,0 +1,12 @@
+# Plantilla de unidad systemd para scripts/sincronizar_firmas.py en el VPS. Copia a /etc/systemd/system/sincronizar-firmas.service, ajusta USUARIO y las rutas, y activa el timer
+
+[Unit]
+Description=Guilda Work - repaso de los documentos pendientes de firma en Documenso
+After=network.target
+
+[Service]
+Type=oneshot
+User=USUARIO
+WorkingDirectory=/home/USUARIO/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/USUARIO/guilda-work/.venv/bin/python scripts/sincronizar_firmas.py

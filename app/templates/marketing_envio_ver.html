@@ -3,7 +3,7 @@
 {% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ e.nombre }} — Guilda Work{% endblock %}
 {% block content %}
-<header class="page-header"><div><h1>{{ e.nombre }}</h1><p class="subtitle">{{ chip({'borrador': _('Borrador'), 'programado': _('Programado'), 'enviando': _('Enviando'), 'enviado': _('Enviado'), 'cancelado': _('Cancelado')}[e.estado]) }} · {{ e.asunto }}</p></div>
+<header class="page-header"><div><h1>{{ e.nombre }}</h1><p class="subtitle">{{ chip({'borrador': _('Borrador'), 'programado': _('Programado'), 'enviando': _('Enviando'), 'enviado': _('Enviado'), 'cancelado': _('Cancelado')}[e.estado]) }} · {{ e.asunto }} · {{ {'propio': _('Canal propio'), 'brevo': 'Brevo', 'mailchimp': 'Mailchimp'}[e.canal] }}</p></div>
   <a class="btn btn-ghost" href="{{ url_for('marketing.envios') }}">{{ _('Volver') }}</a></header>
 {% include "_comercial_subnav.html" %}
 {{ aviso_error(error) }}

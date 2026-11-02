@@ -1,0 +1,14 @@
+# Plantilla de timer systemd para sincronizar-firmas.service. Copia junto al .service a /etc/systemd/system/, luego:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now sincronizar-firmas.timer
+# Cada 30 minutos: respaldo del webhook de Documenso (/webhooks/documenso).
+
+[Unit]
+Description=Guilda Work - repaso de firmas pendientes en Documenso (ver sincronizar-firmas.service)
+
+[Timer]
+OnCalendar=*:0/30
+Persistent=false
+
+[Install]
+WantedBy=timers.target

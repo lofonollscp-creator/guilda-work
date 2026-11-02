@@ -19065,3 +19065,132 @@ msgstr "Últims enviaments"
 msgid "… y %(n)s más."
 msgstr "… i %(n)s més."
 
+
+msgid "Antes del primer envío real, prueba la conexión y manda un envío pequeño a un grupo de prueba: las conexiones se han construido con la documentación oficial de cada proveedor, pero aún no se han contrastado con una cuenta real."
+msgstr "Abans del primer enviament real, prova la connexió i envia un enviament petit a un grup de prova: les connexions s'han construït amb la documentació oficial de cada proveïdor, però encara no s'han contrastat amb un compte real."
+
+msgid "Arrastrar para reordenar"
+msgstr "Arrossegar per reordenar"
+
+msgid "Audience settings → Audience name and defaults."
+msgstr "Audience settings → Audience name and defaults."
+
+msgid "Añadir un bloque"
+msgstr "Afegir un bloc"
+
+msgid "Blando"
+msgstr "Tou"
+
+msgid "Bloque añadido"
+msgstr "Bloc afegit"
+
+msgid "Bloque movido a la posición"
+msgstr "Bloc mogut a la posició"
+
+msgid "Bloque quitado"
+msgstr "Bloc eliminat"
+
+msgid "Canal de envío"
+msgstr "Canal d'enviament"
+
+msgid "Canal propio"
+msgstr "Canal propi"
+
+msgid "Canales de envío"
+msgstr "Canals d'enviament"
+
+msgid "Carpeta de contactos (opcional)"
+msgstr "Carpeta de contactes (opcional)"
+
+msgid "Clave de la API"
+msgstr "Clau de l'API"
+
+msgid "Conexión correcta: %(c)s"
+msgstr "Connexió correcta: %(c)s"
+
+msgid "Correo del remitente"
+msgstr "Correu del remitent"
+
+msgid "Correo rebotado"
+msgstr "Correu rebotat"
+
+msgid "Código"
+msgstr "Codi"
+
+msgid "Debe estar verificado en el proveedor."
+msgstr "Ha d'estar verificat al proveïdor."
+
+msgid "Duro"
+msgstr "Dur"
+
+msgid "En Brevo: SMTP y API → Claves de API. "
+msgstr "A Brevo: SMTP i API → Claus d'API. "
+
+msgid "En Mailchimp: Account → Extras → API keys; termina en el centro de datos, p. ej. …-us21."
+msgstr "A Mailchimp: Account → Extras → API keys; acaba amb el centre de dades, p. ex. …-us21."
+
+msgid "Envía por tu propia cuenta de Brevo o Mailchimp. Guilda sube solo a quien ha consentido y trae de vuelta las bajas y los rebotes."
+msgstr "Envia amb el teu propi compte de Brevo o Mailchimp. Guilda puja només qui ha consentit i recupera les baixes i els rebots."
+
+msgid "Falta probar"
+msgstr "Falta provar"
+
+msgid "Firmas de Documenso"
+msgstr "Signatures de Documenso"
+
+msgid "Guardada, termina en %(f)s. Déjalo vacío para conservarla."
+msgstr "Desada, acaba en %(f)s. Deixa-ho buit per conservar-la."
+
+msgid "Guardado. Ahora prueba la conexión."
+msgstr "Desat. Ara prova la connexió."
+
+msgid "Guilda (canal propio)"
+msgstr "Guilda (canal propi)"
+
+msgid "Identificador de la audiencia"
+msgstr "Identificador de l'audiència"
+
+msgid "Informe de entrega"
+msgstr "Informe de lliurament"
+
+msgid "Nombre del remitente"
+msgstr "Nom del remitent"
+
+msgid "Por Guilda (sin coste extra) o por tu cuenta de Brevo o Mailchimp, que gestiona las bajas y los rebotes a su manera."
+msgstr "Per Guilda (sense cost extra) o pel teu compte de Brevo o Mailchimp, que gestiona les baixes i els rebots a la seva manera."
+
+msgid "Por qué se reactiva"
+msgstr "Per què es reactiva"
+
+msgid "Probado"
+msgstr "Provat"
+
+msgid "Queja"
+msgstr "Queixa"
+
+msgid "Quitar bloque"
+msgstr "Treure el bloc"
+
+msgid "Rebotes de marketing"
+msgstr "Rebots de màrqueting"
+
+msgid "Rebotes recientes"
+msgstr "Rebots recents"
+
+msgid "Si la dejas vacía se usa la primera carpeta de tu cuenta."
+msgstr "Si la deixes buida s'utilitza la primera carpeta del teu compte."
+
+msgid "Sin configurar"
+msgstr "Sense configurar"
+
+msgid "Solo la dirección del despacho configura los canales."
+msgstr "Només la direcció del despatx configura els canals."
+
+msgid "Un rebote duro (el buzón no existe) o varios blandos dejan ese correo como rebotado: no se le vuelve a escribir."
+msgstr "Un rebot dur (la bústia no existeix) o diversos de tous deixen aquest correu com a rebotat: no se li torna a escriure."
+
+msgid "¿Quitar este canal? Se borra la clave guardada."
+msgstr "Treure aquest canal? S'esborra la clau desada."
+
+msgid "¿Volver a permitir envíos a este correo?"
+msgstr "Tornar a permetre enviaments a aquest correu?"

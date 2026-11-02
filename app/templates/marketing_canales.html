@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip, campo, boton %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Canales de envío') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Canales de envío') }}</h1><p class="subtitle">{{ _('Envía por tu propia cuenta de Brevo o Mailchimp. Guilda sube solo a quien ha consentido y trae de vuelta las bajas y los rebotes.') }}</p></div></header>
+{% include "_comercial_subnav.html" %}
+{{ aviso_error(error) }}
+{% if aviso %}<div class="ds-estado-ok" role="status">{{ aviso }}</div>{% endif %}
+<p class="muted">{{ _('Antes del primer envío real, prueba la conexión y manda un envío pequeño a un grupo de prueba: las conexiones se han construido con la documentación oficial de cada proveedor, pero aún no se han contrastado con una cuenta real.') }}</p>
+{% for c in canales %}
+<section class="dash-panel">
+  <h2>{{ c.nombre }} {% if c.config and c.config.verificado_en %}{{ chip(_('Probado'), 'exito') }}{% elif c.config %}{{ chip(_('Falta probar'), 'aviso') }}{% else %}{{ chip(_('Sin configurar')) }}{% endif %}</h2>
+  {% if es_direccion %}
+  <form method="post" class="edit-form ds-max-640">
+    <input type="hidden" name="proveedor" value="{{ c.proveedor }}">
+    {% call campo(_('Clave de la API'), 'k-' ~ c.proveedor, ayuda=(_('Guardada, termina en %(f)s. Déjalo vacío para conservarla.', f=c.config.clave_final) if c.config else (_('En Brevo: SMTP y API → Claves de API. ') if c.proveedor == 'brevo' else _('En Mailchimp: Account → Extras → API keys; termina en el centro de datos, p. ej. …-us21.')))) %}
+      <input type="password" id="k-{{ c.proveedor }}" name="clave" autocomplete="off" maxlength="200">{% endcall %}
+    {% call campo(_('Nombre del remitente'), 'rn-' ~ c.proveedor) %}<input type="text" id="rn-{{ c.proveedor }}" name="remitente_nombre" value="{{ c.config.ajustes.remitente_nombre if c.config else '' }}" maxlength="100">{% endcall %}
+    {% call campo(_('Correo del remitente'), 're-' ~ c.proveedor, ayuda=_('Debe estar verificado en el proveedor.'), requerido=True) %}<input type="email" id="re-{{ c.proveedor }}" name="remitente_email" value="{{ c.config.ajustes.remitente_email if c.config else '' }}" maxlength="200">{% endcall %}
+    {% if c.proveedor == 'mailchimp' %}{% call campo(_('Identificador de la audiencia'), 'au-mailchimp', ayuda=_('Audience settings → Audience name and defaults.'), requerido=True) %}<input type="text" id="au-mailchimp" name="audiencia_id" value="{{ c.config.ajustes.audiencia_id if c.config else '' }}" maxlength="50">{% endcall %}
+    {% else %}{% call campo(_('Carpeta de contactos (opcional)'), 'ca-brevo', ayuda=_('Si la dejas vacía se usa la primera carpeta de tu cuenta.')) %}<input type="text" id="ca-brevo" name="carpeta_id" value="{{ c.config.ajustes.carpeta_id if c.config else '' }}" maxlength="20">{% endcall %}{% endif %}
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+      {% if c.config %}<button type="submit" name="accion" value="probar" class="btn btn-ghost">{{ _('Probar conexión') }}</button>
+      <button type="submit" name="accion" value="quitar" class="btn btn-ghost" data-confirmar-envio="{{ _('¿Quitar este canal? Se borra la clave guardada.') }}">{{ _('Quitar') }}</button>{% endif %}</div>
+  </form>
+  {% else %}<p class="muted">{{ _('Solo la dirección del despacho configura los canales.') }}</p>{% endif %}
+</section>
+{% endfor %}
+{% endblock %}

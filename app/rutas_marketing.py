@@ -52,7 +52,9 @@ def consentimientos():
     if request.method == "POST":
         f = request.form
         try:
-            if f.get("accion") == "baja":
+            if f.get("accion") == "reactivar":
+                marketing.reactivar_rebotado(g.tenant_id, g.usuario_id, f.get("email"), f.get("evidencia", ""))
+            elif f.get("accion") == "baja":
                 marketing.registrar_baja(g.tenant_id, g.usuario_id, f.get("email"), origen="manual", motivo=f.get("evidencia") or "Baja registrada a mano")
             else:
                 marketing.registrar_consentimiento(g.tenant_id, g.usuario_id, f.get("email"), origen=f.get("origen", ""), evidencia=f.get("evidencia", ""), nombre=f.get("nombre", ""))
@@ -62,7 +64,8 @@ def consentimientos():
     estado = request.args.get("estado") if request.args.get("estado") in ("consentido", "baja", "rebotado") else None
     return render_template("marketing_consentimientos.html", **_plano(contactos=marketing.listar_contactos(g.tenant_id, estado=estado, q=request.args.get("q")), estado=estado,
                                                                       q=request.args.get("q") or "", origenes=marketing.ORIGENES_MANUALES, nombres_origen=marketing.ORIGENES,
-                                                                      resumen=marketing.resumen_consentimientos(g.tenant_id)))
+                                                                      resumen=marketing.resumen_consentimientos(g.tenant_id), rebotes=marketing.listar_rebotes(g.tenant_id, 20),
+                                                                      es_direccion=bool(g.get("supervisor_tenant") or g.get("es_admin"))))
 
 
 # --- Grupos ---------------------------------------------------------------------------------------------------------------------
@@ -154,6 +157,17 @@ def plantilla(plantilla_id: int | None = None):
                                                                 tipos=marketing.TIPOS_BLOQUE, variables=marketing.VARIABLES, acciones_ia=marketing.ACCIONES_IA, error=error))
 
 
+@marketing_bp.route("/plantillas/vista-previa", methods=["POST"])
+@login_required
+def plantilla_vista_previa():
+    """El HTML del correo para el editor visual (el mismo que se enviará), a partir de los bloques tal como están ahora en pantalla. Nunca guarda nada."""
+    datos = request.get_json(silent=True) or {}
+    try:
+        return {"html": marketing.vista_previa(g.tenant_id, datos.get("bloques") or [])}
+    except ErrorMarketing as e:
+        return {"html": marketing.vista_previa(g.tenant_id, [b for b in (datos.get("bloques") or []) if isinstance(b, dict) and b.get("tipo") in ("titulo", "texto", "divisor") and (b.get("texto") or b.get("tipo") == "divisor")] or marketing.PLANTILLA_INICIAL[:2]), "error": str(e)}
+
+
 @marketing_bp.route("/plantillas/<int:plantilla_id>/papelera", methods=["POST"])
 @login_required
 def plantilla_papelera(plantilla_id: int):
@@ -181,11 +195,12 @@ def envio_nuevo():
         try:
             if p is None:
                 raise ErrorMarketing("Elige una plantilla.")
-            eid = marketing.crear_envio(g.tenant_id, g.usuario_id, f.get("nombre", ""), int(f.get("grupo_id") or 0), f.get("asunto") or p["asunto"], p["bloques"])
+            eid = marketing.crear_envio(g.tenant_id, g.usuario_id, f.get("nombre", ""), int(f.get("grupo_id") or 0), f.get("asunto") or p["asunto"], p["bloques"], f.get("canal") or "propio")
         except ErrorMarketing as e:
             return _con_error("marketing.envio_nuevo", e)
         return redirect(url_for("marketing.envio_ver", envio_id=eid))
-    return render_template("marketing_envio_nuevo.html", **_plano(grupos=marketing.listar_grupos(g.tenant_id), plantillas=marketing.listar_plantillas(g.tenant_id)))
+    return render_template("marketing_envio_nuevo.html", **_plano(grupos=marketing.listar_grupos(g.tenant_id), plantillas=marketing.listar_plantillas(g.tenant_id),
+                                                                  canales=[c for c in marketing.listar_proveedores(g.tenant_id) if c["config"] and c["config"]["verificado_en"]]))
 
 
 def _envio_o_404(envio_id: int) -> dict:
@@ -246,6 +261,29 @@ def envio_csv(envio_id: int):
         abort(404)
     datos = marketing.exportar_audiencia_csv(marketing.audiencia(g.tenant_id, g.usuario_id, gr["reglas"])["destinatarios"])
     return Response(datos, mimetype="text/csv", headers={"Content-Disposition": f'attachment; filename="envio-{envio_id}.csv"', "Cache-Control": "private, no-store"})
+
+
+# --- Canales de envío (Brevo y Mailchimp) ---------------------------------------------------------------------------------------
+
+@marketing_bp.route("/canales", methods=["GET", "POST"])
+@login_required
+def canales():
+    aviso = None
+    if request.method == "POST":
+        f = request.form
+        proveedor = f.get("proveedor", "")
+        try:
+            if f.get("accion") == "quitar":
+                marketing.quitar_proveedor(g.tenant_id, g.usuario_id, proveedor)
+            elif f.get("accion") == "probar":
+                aviso = _("Conexión correcta: %(c)s", c=marketing.probar_proveedor(g.tenant_id, g.usuario_id, proveedor))
+            else:
+                marketing.guardar_proveedor(g.tenant_id, g.usuario_id, proveedor, f.get("clave", ""),
+                                            {k: f.get(k) for k in ("remitente_nombre", "remitente_email", "audiencia_id", "carpeta_id")})
+                aviso = _("Guardado. Ahora prueba la conexión.")
+        except ErrorMarketing as e:
+            return _con_error("marketing.canales", e)
+    return render_template("marketing_canales.html", **_plano(canales=marketing.listar_proveedores(g.tenant_id), aviso=aviso, es_direccion=bool(g.get("supervisor_tenant") or g.get("es_admin"))))
 
 
 # --- Baja de un clic (pública) ---------------------------------------------------------------------------------------------------

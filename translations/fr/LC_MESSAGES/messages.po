@@ -19141,3 +19141,132 @@ msgstr "Derniers envois"
 msgid "… y %(n)s más."
 msgstr "… et %(n)s de plus."
 
+
+msgid "Antes del primer envío real, prueba la conexión y manda un envío pequeño a un grupo de prueba: las conexiones se han construido con la documentación oficial de cada proveedor, pero aún no se han contrastado con una cuenta real."
+msgstr "Avant le premier envoi réel, testez la connexion et faites un petit envoi à un groupe de test : les connexions ont été construites d'après la documentation officielle de chaque fournisseur, mais n'ont pas encore été vérifiées avec un compte réel."
+
+msgid "Arrastrar para reordenar"
+msgstr "Glisser pour réorganiser"
+
+msgid "Audience settings → Audience name and defaults."
+msgstr "Audience settings → Audience name and defaults."
+
+msgid "Añadir un bloque"
+msgstr "Ajouter un bloc"
+
+msgid "Blando"
+msgstr "Temporaire"
+
+msgid "Bloque añadido"
+msgstr "Bloc ajouté"
+
+msgid "Bloque movido a la posición"
+msgstr "Bloc déplacé à la position"
+
+msgid "Bloque quitado"
+msgstr "Bloc retiré"
+
+msgid "Canal de envío"
+msgstr "Canal d'envoi"
+
+msgid "Canal propio"
+msgstr "Canal propre"
+
+msgid "Canales de envío"
+msgstr "Canaux d'envoi"
+
+msgid "Carpeta de contactos (opcional)"
+msgstr "Dossier de contacts (facultatif)"
+
+msgid "Clave de la API"
+msgstr "Clé d'API"
+
+msgid "Conexión correcta: %(c)s"
+msgstr "Connexion réussie : %(c)s"
+
+msgid "Correo del remitente"
+msgstr "E-mail de l'expéditeur"
+
+msgid "Correo rebotado"
+msgstr "E-mail rejeté"
+
+msgid "Código"
+msgstr "Code"
+
+msgid "Debe estar verificado en el proveedor."
+msgstr "Il doit être vérifié chez le fournisseur."
+
+msgid "Duro"
+msgstr "Définitif"
+
+msgid "En Brevo: SMTP y API → Claves de API. "
+msgstr "Dans Brevo : SMTP et API → Clés d'API. "
+
+msgid "En Mailchimp: Account → Extras → API keys; termina en el centro de datos, p. ej. …-us21."
+msgstr "Dans Mailchimp : Account → Extras → API keys ; elle se termine par le centre de données, p. ex. …-us21."
+
+msgid "Envía por tu propia cuenta de Brevo o Mailchimp. Guilda sube solo a quien ha consentido y trae de vuelta las bajas y los rebotes."
+msgstr "Envoyez via votre propre compte Brevo ou Mailchimp. Guilda ne charge que ceux qui ont consenti et récupère les désabonnements et les rejets."
+
+msgid "Falta probar"
+msgstr "À tester"
+
+msgid "Firmas de Documenso"
+msgstr "Signatures Documenso"
+
+msgid "Guardada, termina en %(f)s. Déjalo vacío para conservarla."
+msgstr "Enregistrée, se termine par %(f)s. Laissez vide pour la conserver."
+
+msgid "Guardado. Ahora prueba la conexión."
+msgstr "Enregistré. Testez maintenant la connexion."
+
+msgid "Guilda (canal propio)"
+msgstr "Guilda (canal propre)"
+
+msgid "Identificador de la audiencia"
+msgstr "Identifiant de l'audience"
+
+msgid "Informe de entrega"
+msgstr "Rapport de livraison"
+
+msgid "Nombre del remitente"
+msgstr "Nom de l'expéditeur"
+
+msgid "Por Guilda (sin coste extra) o por tu cuenta de Brevo o Mailchimp, que gestiona las bajas y los rebotes a su manera."
+msgstr "Via Guilda (sans coût supplémentaire) ou via votre compte Brevo ou Mailchimp, qui gère désabonnements et rejets à sa manière."
+
+msgid "Por qué se reactiva"
+msgstr "Pourquoi on le réactive"
+
+msgid "Probado"
+msgstr "Testé"
+
+msgid "Queja"
+msgstr "Plainte"
+
+msgid "Quitar bloque"
+msgstr "Retirer le bloc"
+
+msgid "Rebotes de marketing"
+msgstr "Rejets marketing"
+
+msgid "Rebotes recientes"
+msgstr "Rejets récents"
+
+msgid "Si la dejas vacía se usa la primera carpeta de tu cuenta."
+msgstr "Si vous la laissez vide, le premier dossier de votre compte est utilisé."
+
+msgid "Sin configurar"
+msgstr "Non configuré"
+
+msgid "Solo la dirección del despacho configura los canales."
+msgstr "Seule la direction du cabinet configure les canaux."
+
+msgid "Un rebote duro (el buzón no existe) o varios blandos dejan ese correo como rebotado: no se le vuelve a escribir."
+msgstr "Un rejet définitif (la boîte n'existe pas) ou plusieurs temporaires marquent cet e-mail comme rejeté : on ne lui réécrit plus."
+
+msgid "¿Quitar este canal? Se borra la clave guardada."
+msgstr "Retirer ce canal ? La clé enregistrée est supprimée."
+
+msgid "¿Volver a permitir envíos a este correo?"
+msgstr "Autoriser de nouveau les envois à cet e-mail ?"

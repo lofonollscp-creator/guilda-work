@@ -1,4 +1,5 @@
 """Marketing del Comercial (app/marketing.py): consentimientos, grupos, plantillas y envíos con constancia."""
+import json
 from datetime import datetime, timedelta
 
 import pytest
@@ -224,3 +225,203 @@ def test_aislamiento_entre_despachos(d):
     assert mk.obtener_contacto(t2, "ana@x.example") is None and mk.listar_contactos(t2) == []
     g = mk.crear_grupo(d.t, d.ana, "G", {})
     assert mk.obtener_grupo(t2, g) is None and mk.listar_grupos(t2) == []
+
+
+# --- Rebotes ------------------------------------------------------------------------------------------------------------------
+
+def _dsn(email, estado="5.1.1", accion="failed", detalle="smtp; 550 5.1.1 user unknown"):
+    """Un informe de entrega como lo manda un servidor de correo (RFC 3464), escrito a mano."""
+    return (f"From: MAILER-DAEMON@mx.ejemplo.com\nTo: no-responder@despacho.example\nSubject: Undelivered Mail Returned to Sender\nMIME-Version: 1.0\n"
+            f'Content-Type: multipart/report; report-type=delivery-status; boundary="lim"\n\n--lim\nContent-Type: text/plain\n\nNo se pudo entregar.\n\n'
+            f"--lim\nContent-Type: message/delivery-status\n\nReporting-MTA: dns; mx.ejemplo.com\n\nFinal-Recipient: rfc822; {email}\nAction: {accion}\nStatus: {estado}\n"
+            f"Diagnostic-Code: {detalle}\n\n--lim--\n").encode()
+
+
+def test_el_informe_de_entrega_se_interpreta_y_lo_demas_se_ignora(d):
+    r = mk.parsear_dsn(_dsn("Ana@X.example"))
+    assert r == [{"email": "ana@x.example", "estado": "5.1.1", "accion": "failed", "detalle": "smtp; 550 5.1.1 user unknown", "tipo": "duro"}]
+    assert mk.parsear_dsn(_dsn("b@x.example", "4.2.2", "delayed", "smtp; 452 mailbox full"))[0]["tipo"] == "blando"
+    assert mk.parsear_dsn(_dsn("c@x.example", "2.0.0", "delivered")) == []
+    assert mk.parsear_dsn(b"Subject: Fuera de la oficina\n\nVuelvo el lunes.") == [] and mk.parsear_dsn(b"\xff\xfe basura") == []
+
+
+def test_un_rebote_duro_corta_el_correo_y_los_blandos_al_repetirse(d):
+    _consentir(d, "duro@x.example"); _consentir(d, "blando@x.example")
+    assert mk.registrar_rebote(d.t, "duro@x.example", tipo="duro", codigo="5.1.1", origen="dsn")["rebotado"]
+    assert mk.obtener_contacto(d.t, "duro@x.example")["estado"] == "rebotado"
+    ahora = datetime.now()
+    for i in range(2):
+        assert not mk.registrar_rebote(d.t, "blando@x.example", tipo="blando", origen="dsn", ahora=ahora - timedelta(days=i))["rebotado"]
+    assert mk.obtener_contacto(d.t, "blando@x.example")["estado"] == "consentido"
+    assert mk.registrar_rebote(d.t, "blando@x.example", tipo="blando", origen="dsn", ahora=ahora)["rebotado"]
+    assert mk.obtener_contacto(d.t, "blando@x.example")["estado"] == "rebotado" and len(mk.listar_rebotes(d.t)) == 4
+    _consentir(d, "viejo@x.example")
+    for i in range(3):                                                                                       # tres blandos, pero repartidos en más de 30 días: no bastan
+        mk.registrar_rebote(d.t, "viejo@x.example", tipo="blando", origen="dsn", ahora=ahora - timedelta(days=40 * i))
+    assert mk.obtener_contacto(d.t, "viejo@x.example")["estado"] == "consentido"
+    with pytest.raises(ErrorMarketing):
+        mk.registrar_rebote(d.t, "x@x.example", tipo="raro", origen="dsn")
+
+
+def test_el_servidor_que_rechaza_el_buzon_en_el_envio_lo_marca_como_rebotado(d, monkeypatch):
+    import smtplib
+    for v, x in (("MARKETING_SMTP_HOST", "h"), ("MARKETING_SMTP_USUARIO", "u"), ("MARKETING_SMTP_CONTRASENA", "p"), ("MARKETING_SMTP_REMITENTE", "r@x")):
+        monkeypatch.setenv(v, x)
+    g, eid = _preparar_envio(d, 2)
+    mk.programar(d.t, d.sup, eid, "2", url_base="https://app.ejemplo.com")
+
+    def enviador(destino, *a):
+        if destino == "c0@x.example":
+            raise smtplib.SMTPRecipientsRefused({destino: (550, b"5.1.1 user unknown")})
+    mk.procesar_pendientes(enviador=enviador, ahora=datetime.now() + timedelta(seconds=1))
+    assert mk.obtener_contacto(d.t, "c0@x.example")["estado"] == "rebotado" and mk.obtener_contacto(d.t, "c1@x.example")["estado"] == "consentido"
+    estados = {x["email"]: (x["estado"], x["error"]) for x in mk.destinatarios_de(d.t, eid)}
+    assert estados["c0@x.example"][0] == "error" and "550" in estados["c0@x.example"][1] and estados["c1@x.example"][0] == "enviado"
+    assert mk.listar_rebotes(d.t)[0]["origen"] == "smtp"
+
+
+class _ImapFalso:
+    def __init__(self, mensajes):
+        self.mensajes, self.vistos, self.cerrado = mensajes, [], False
+    def select(self, carpeta): return "OK", []
+    def search(self, *a): return "OK", [b" ".join(str(i + 1).encode() for i in range(len(self.mensajes)))]
+    def fetch(self, num, partes): return "OK", [(b"1 (RFC822)", self.mensajes[int(num) - 1]), b")"]
+    def store(self, num, *a): self.vistos.append(int(num))
+    def logout(self): self.cerrado = True
+
+
+def test_el_buzon_de_rebotes_registra_los_de_nuestros_envios_y_marca_los_mensajes(d, monkeypatch):
+    for v, x in (("MARKETING_SMTP_HOST", "h"), ("MARKETING_SMTP_USUARIO", "u"), ("MARKETING_SMTP_CONTRASENA", "p"), ("MARKETING_SMTP_REMITENTE", "r@x")):
+        monkeypatch.setenv(v, x)
+    g, eid = _preparar_envio(d, 2)
+    mk.programar(d.t, d.sup, eid, "2", url_base="https://app.ejemplo.com")
+    mk.procesar_pendientes(enviador=lambda *a: None, ahora=datetime.now() + timedelta(seconds=1))
+    imap = _ImapFalso([_dsn("c0@x.example"), _dsn("ajeno@otro.example"), b"Subject: hola\n\nnormal"])
+    r = mk.revisar_buzon_de_rebotes(imap=imap)
+    assert r == {"leidos": 3, "rebotes": 1} and imap.vistos == [1, 2, 3] and imap.cerrado
+    assert mk.obtener_contacto(d.t, "c0@x.example")["estado"] == "rebotado" and mk.listar_rebotes(d.t)[0]["envio_id"] == eid and mk.listar_rebotes(d.t)[0]["origen"] == "dsn"
+    for v in ("MARKETING_IMAP_HOST", "MARKETING_IMAP_USUARIO", "MARKETING_IMAP_CONTRASENA"):
+        monkeypatch.delenv(v, raising=False)
+    assert mk.revisar_buzon_de_rebotes() == {"leidos": 0, "rebotes": 0, "sin_buzon": True}
+
+
+def test_solo_la_direccion_reactiva_un_rebotado_y_con_motivo(d):
+    _consentir(d, "r@x.example")
+    mk.registrar_rebote(d.t, "r@x.example", tipo="duro", origen="dsn")
+    with pytest.raises(ErrorMarketing):
+        mk.reactivar_rebotado(d.t, d.ana, "r@x.example", "ya funciona")
+    with pytest.raises(ErrorMarketing):
+        mk.reactivar_rebotado(d.t, d.sup, "r@x.example", " ")
+    with pytest.raises(ErrorMarketing):
+        mk.reactivar_rebotado(d.t, d.sup, "otro@x.example", "x")
+    c = mk.reactivar_rebotado(d.t, d.sup, "r@x.example", "El cliente confirma que su buzón funciona")
+    assert c["estado"] == "consentido" and "Reactivado tras rebote" in c["evidencia"]
+
+
+# --- Canales de envío: Brevo y Mailchimp -----------------------------------------------------------------------------------------
+
+class _Proveedor:
+    """Un proveedor falso: apunta lo que recibe y devuelve lo que se le diga."""
+    etiquetas = {"nombre": "{{ contact.FIRSTNAME }}", "email": "{{ contact.EMAIL }}", "enlace_baja": "{{ unsubscribe }}"}
+
+    def __init__(self, bajas=None, falla=None):
+        self.recibido, self._bajas, self.falla = [], bajas or {"baja": [], "rebotado": []}, falla
+
+    def verificar(self):
+        if self.falla == "verificar":
+            from app.marketing_proveedores import ErrorProveedor
+            raise ErrorProveedor("Brevo respondió 401: clave no válida")
+        return "Despacho SL"
+
+    def enviar(self, nombre, asunto, html, destinatarios):
+        if self.falla == "enviar":
+            from app.marketing_proveedores import ErrorProveedor
+            raise ErrorProveedor("Brevo respondió 500")
+        self.recibido.append((nombre, asunto, html, destinatarios))
+        return {"lista": 7, "campana": 9}
+
+    def bajas(self, ref):
+        return self._bajas
+
+
+def _canal(d, proveedor="brevo", probar=True, prov=None):
+    mk.guardar_proveedor(d.t, d.sup, proveedor, "xkeysib-secreta-1234", {"remitente_nombre": "Despacho", "remitente_email": "hola@despacho.example"})
+    if probar:
+        mk.probar_proveedor(d.t, d.sup, proveedor, proveedores={proveedor: prov or _Proveedor()})
+
+
+def test_la_configuracion_de_un_canal_la_hace_la_direccion_oculta_la_clave_y_exige_probarla(d):
+    with pytest.raises(ErrorMarketing):
+        mk.guardar_proveedor(d.t, d.ana, "brevo", "k", {})                                                    # solo la dirección
+    with pytest.raises(ErrorMarketing):
+        mk.guardar_proveedor(d.t, d.sup, "brevo", "", {})                                                     # sin clave nueva ni anterior
+    with pytest.raises(ErrorMarketing):
+        mk.guardar_proveedor(d.t, d.sup, "inventado", "k", {})
+    _canal(d, probar=False)
+    c = mk.obtener_proveedor(d.t, "brevo")
+    assert c["clave_final"] == "1234" and c["verificado_en"] is None and c["ajustes"]["remitente_email"] == "hola@despacho.example"
+    with pytest.raises(ErrorMarketing):
+        mk.crear_envio(d.t, d.ana, "E", mk.crear_grupo(d.t, d.ana, "G", {}), "A", [{"tipo": "texto", "texto": "x"}], canal="brevo")        # sin probar no se usa
+    with pytest.raises(ErrorMarketing) as e:
+        mk.probar_proveedor(d.t, d.sup, "brevo", proveedores={"brevo": _Proveedor(falla="verificar")})
+    assert "401" in str(e.value) and mk.obtener_proveedor(d.t, "brevo")["verificado_en"] is None
+    assert mk.probar_proveedor(d.t, d.sup, "brevo", proveedores={"brevo": _Proveedor()}) == "Despacho SL" and mk.obtener_proveedor(d.t, "brevo")["verificado_en"]
+    mk.guardar_proveedor(d.t, d.sup, "brevo", "", {"remitente_email": "otro@despacho.example"})             # cambiar un ajuste conserva la clave pero exige volver a probar
+    assert mk.obtener_proveedor(d.t, "brevo")["clave_final"] == "1234" and mk.obtener_proveedor(d.t, "brevo")["verificado_en"] is None
+    mk.quitar_proveedor(d.t, d.sup, "brevo")
+    assert mk.obtener_proveedor(d.t, "brevo") is None
+
+
+def test_un_envio_por_proveedor_sube_solo_a_los_consentidos_y_aplica_las_bajas_de_vuelta(d):
+    prov = _Proveedor()
+    _canal(d, prov=prov)
+    for i in range(3):
+        nucleo.crear_cliente(d.t, f"Cliente {i}", email=f"c{i}@x.example", etiquetas=["vip"])
+    _consentir(d, "c0@x.example"); _consentir(d, "c1@x.example")                                              # c2 nunca consintió
+    g = mk.crear_grupo(d.t, d.ana, "VIP", {"etiquetas": ["vip"]})
+    eid = mk.crear_envio(d.t, d.ana, "Novedades", g, "Hola {{nombre}}", [{"tipo": "texto", "texto": "Hola {{nombre}}"}, {"tipo": "boton", "texto": "Ver", "url": "https://ejemplo.com"}], canal="brevo")
+    assert mk.revisar(d.t, d.sup, eid)["problemas"] == []                                                    # no hace falta el SMTP propio
+    mk.programar(d.t, d.sup, eid, "2", url_base="https://app.ejemplo.com")
+    mk.registrar_baja(d.t, None, "c1@x.example")                                                              # se da de baja después de programar
+    r = mk.procesar_pendientes(proveedores={"brevo": prov}, ahora=datetime.now() + timedelta(seconds=1))
+    assert r == {"enviados": 1, "errores": 0, "omitidos": 0}                                                  # la baja ya había sacado a c1 de los pendientes
+    nombre, asunto, html, dest = prov.recibido[0]
+    assert dest == [{"email": "c0@x.example", "nombre": "Cliente 0"}] and asunto == "Hola {{ contact.FIRSTNAME }}"
+    assert "{{ unsubscribe }}" in html and "Darme de baja" in html and "{{ contact.FIRSTNAME }}" in html
+    e = mk.obtener_envio(d.t, eid)
+    assert e["estado"] == "enviado" and e["enviados"] == 1 and e["proveedor_estado"] == "entregado_al_proveedor" and json.loads(e["proveedor_ref"]) == {"lista": 7, "campana": 9}
+    assert {x["email"]: x["estado"] for x in mk.destinatarios_de(d.t, eid)} == {"c0@x.example": "enviado", "c1@x.example": "omitido"}
+    assert len(prov.recibido) == 1 and mk.procesar_pendientes(proveedores={"brevo": prov}, ahora=datetime.now() + timedelta(seconds=1))["enviados"] == 0 and len(prov.recibido) == 1      # no se reenvía
+
+    _consentir(d, "c0@x.example")
+    prov._bajas = {"baja": ["c0@x.example"], "rebotado": ["nadie@x.example"]}                                # el proveedor informa de una baja
+    s = mk.sincronizar_proveedores(proveedores={"brevo": prov})
+    assert s == {"envios": 1, "bajas": 1, "rebotes": 0, "errores": 0} and mk.obtener_contacto(d.t, "c0@x.example")["estado"] == "baja"
+    assert mk.sincronizar_proveedores(proveedores={"brevo": prov})["bajas"] == 0                              # ya está de baja: no se repite
+
+
+def test_si_el_proveedor_falla_el_envio_se_cancela_y_no_se_reintenta(d):
+    prov = _Proveedor(falla="enviar")
+    _canal(d)
+    nucleo.crear_cliente(d.t, "C", email="c@x.example", etiquetas=["vip"]); _consentir(d, "c@x.example")
+    g = mk.crear_grupo(d.t, d.ana, "VIP", {"etiquetas": ["vip"]})
+    eid = mk.crear_envio(d.t, d.ana, "E", g, "A", [{"tipo": "texto", "texto": "Hola"}], canal="brevo")
+    mk.programar(d.t, d.sup, eid, "1", url_base="https://app")
+    r = mk.procesar_pendientes(proveedores={"brevo": prov}, ahora=datetime.now() + timedelta(seconds=1))
+    e = mk.obtener_envio(d.t, eid)
+    assert r["errores"] == 1 and e["estado"] == "cancelado" and "500" in e["ultimo_error"]
+    assert mk.procesar_pendientes(proveedores={"brevo": prov}, ahora=datetime.now() + timedelta(seconds=1))["errores"] == 0               # no se reintenta solo
+
+
+def test_mailchimp_devuelve_bajas_y_rebotes_por_separado(d):
+    prov = _Proveedor(bajas={"baja": ["b@x.example"], "rebotado": ["r@x.example"]})
+    _canal(d, "mailchimp", prov=prov)
+    nucleo.crear_cliente(d.t, "A", email="a@x.example", etiquetas=["vip"])
+    for e in ("a@x.example", "b@x.example", "r@x.example"):
+        _consentir(d, e)
+    g = mk.crear_grupo(d.t, d.ana, "VIP", {"etiquetas": ["vip"]})
+    eid = mk.crear_envio(d.t, d.ana, "E", g, "A", [{"tipo": "texto", "texto": "Hola"}], canal="mailchimp")
+    mk.programar(d.t, d.sup, eid, "1", url_base="https://app")
+    mk.procesar_pendientes(proveedores={"mailchimp": prov}, ahora=datetime.now() + timedelta(seconds=1))
+    s = mk.sincronizar_proveedores(proveedores={"mailchimp": prov})
+    assert s["bajas"] == 1 and s["rebotes"] == 1 and mk.obtener_contacto(d.t, "b@x.example")["estado"] == "baja" and mk.obtener_contacto(d.t, "r@x.example")["estado"] == "rebotado"

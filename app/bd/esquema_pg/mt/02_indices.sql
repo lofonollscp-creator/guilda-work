@@ -110,6 +110,7 @@ CREATE INDEX IF NOT EXISTS idx_inmobiliaria_demandas ON inmobiliaria_demandas (t
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_inmuebles ON inmobiliaria_inmuebles (tenant_id, municipio);
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_visitas ON inmobiliaria_visitas (tenant_id, estado, fecha_hora);
 CREATE INDEX IF NOT EXISTS idx_marketing_envios ON marketing_envios (tenant_id, estado, creado_en);
+CREATE INDEX IF NOT EXISTS idx_marketing_rebotes ON marketing_rebotes (tenant_id, email, recibido_en);
 CREATE INDEX IF NOT EXISTS idx_mcp_auditoria_fecha ON mcp_auditoria (creado_en);
 CREATE INDEX IF NOT EXISTS idx_mcp_auditoria_usuario ON mcp_auditoria (usuario_id, creado_en);
 CREATE INDEX IF NOT EXISTS idx_membresias_usuario ON membresias (tenant_id, usuario_id, revocada_en);

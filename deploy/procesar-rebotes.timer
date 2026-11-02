@@ -1,0 +1,14 @@
+# Plantilla de timer systemd para procesar-rebotes.service. Copia junto al .service a /etc/systemd/system/, luego:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now procesar-rebotes.timer
+# Cada 15 minutos: registra los rebotes de marketing.
+
+[Unit]
+Description=Guilda Work - lectura del buzón de rebotes de marketing (ver procesar-rebotes.service)
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=false
+
+[Install]
+WantedBy=timers.target

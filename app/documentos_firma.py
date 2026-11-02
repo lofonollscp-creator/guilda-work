@@ -589,3 +589,61 @@ def refrescar(tenant_id: int, usuario_id: int, cliente_id: int, documento_id: in
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("DELETE FROM documentos_firma WHERE tenant_id = ?", (tenant_id,))
     conn.execute("DELETE FROM documentos_plantillas WHERE tenant_id = ?", (tenant_id,))
+
+
+# --- Aviso automático cuando Documenso firma (webhook y barrido de respaldo) --------------------------------------------------
+
+def _avisar_resultado(tenant_id: int, d: dict, nuevo: str) -> None:
+    """Avisa a quien creó el documento (en la app y por push) de que se ha firmado o rechazado. Nunca impide el resto."""
+    try:
+        from . import notificaciones
+        titulo = f"{'Firmado' if nuevo == 'firmado' else 'Rechazado'}: {d['nombre_plantilla']}"
+        cuerpo = f"{d['firmante_nombre'] or d['firmante_email']} ha {'firmado' if nuevo == 'firmado' else 'rechazado'} «{d['titulo']}»."
+        notificaciones.crear_y_enviar(d["creado_por"], "documento_firma", titulo, cuerpo, f"/documentos-firma/clientes/{d['cliente_id']}/{d['id']}", despacho_id=tenant_id)
+    except Exception:       # noqa: BLE001 -- el aviso es un extra
+        pass
+
+
+def _pendientes_de_documenso(documenso_id: str | None = None, limite: int = 200) -> list[dict]:
+    """Los envíos pendientes de firma de TODOS los despachos (o el de un id de Documenso)."""
+    from .bd import contexto
+    with contexto.como_plataforma():
+        conn = db.get_connection(plataforma=True)
+        try:
+            if documenso_id:
+                filas = conn.execute("SELECT * FROM documentos_firma WHERE estado = 'enviado' AND documenso_id = ?", (str(documenso_id),)).fetchall()
+            else:
+                filas = conn.execute("SELECT * FROM documentos_firma WHERE estado = 'enviado' AND documenso_id IS NOT NULL ORDER BY id LIMIT ?", (limite,)).fetchall()
+        finally:
+            conn.close()
+    return [_fila(f) for f in filas]
+
+
+def _refrescar_y_avisar(d: dict) -> str:
+    from .bd import contexto
+    with contexto.en_despacho(d["tenant_id"]):
+        try:
+            nuevo = refrescar(d["tenant_id"], d["creado_por"], d["cliente_id"], d["id"])
+        except ErrorDocumento:
+            return "enviado"
+    if nuevo in ("firmado", "rechazado"):
+        _avisar_resultado(d["tenant_id"], d, nuevo)
+    return nuevo
+
+
+def refrescar_por_documenso(documenso_id: str) -> list[str]:
+    """Lo llama el webhook: consulta a Documenso el estado REAL de ese documento (no se fía de lo que diga el aviso) y, si ya está firmado o rechazado, lo anota y avisa."""
+    return [_refrescar_y_avisar(d) for d in _pendientes_de_documenso(documenso_id)]
+
+
+def sincronizar_pendientes(limite: int = 200) -> dict:
+    """Respaldo del webhook (por si Documenso no pudo avisar): repasa los envíos pendientes. Devuelve `{revisados, firmados, rechazados}`."""
+    r = {"revisados": 0, "firmados": 0, "rechazados": 0}
+    for d in _pendientes_de_documenso(limite=limite):
+        r["revisados"] += 1
+        nuevo = _refrescar_y_avisar(d)
+        if nuevo == "firmado":
+            r["firmados"] += 1
+        elif nuevo == "rechazado":
+            r["rechazados"] += 1
+    return r

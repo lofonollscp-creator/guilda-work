@@ -2,6 +2,7 @@
 {% from "_ds/componentes.html" import campo, chip %}
 {% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ _('Plantilla de correo') }} — Guilda Work{% endblock %}
+{% block scripts_pagina %}<script src="{{ url_for('static', filename='marketing_editor.js') }}" defer></script>{% endblock %}
 {% block content %}
 <header class="page-header"><div><h1>{{ nombre or _('Nueva plantilla') }}</h1></div><a class="btn btn-ghost" href="{{ url_for('marketing.plantillas') }}">{{ _('Volver') }}</a></header>
 {% include "_comercial_subnav.html" %}
@@ -11,13 +12,30 @@
   {% call campo(_('Asunto'), 'p-asunto', requerido=True) %}<input type="text" id="p-asunto" name="asunto" value="{{ asunto }}" required maxlength="200">{% endcall %}
   <h2>{{ _('Bloques') }}</h2>
   <p class="muted">{{ _('Variables:') }} {% for v, n in variables.items() %}<code>{{ '{{' }}{{ v }}{{ '}}' }}</code> {% endfor %}. {{ _('El enlace de baja y los datos del despacho se añaden siempre al pie: no se pueden quitar. Para quitar un bloque, vacía su texto.') }}</p>
-  {% for b in bloques %}
-  <fieldset class="dash-panel">
-    <select name="tipo" aria-label="{{ _('Tipo de bloque') }}">{% for k, n in tipos.items() %}<option value="{{ k }}" {{ 'selected' if b.tipo == k }}>{{ n }}</option>{% endfor %}</select>
-    <textarea name="texto" rows="3" maxlength="2000" aria-label="{{ _('Texto') }}">{{ b.texto }}</textarea>
-    <input type="text" name="url" value="{{ b.url }}" placeholder="{{ _('Enlace (https://…) para botones e imágenes') }}" maxlength="500" aria-label="{{ _('Enlace') }}">
-  </fieldset>
-  {% endfor %}
+  <div class="mk-editor">
+    <div class="mk-paleta" role="group" aria-label="{{ _('Añadir un bloque') }}">
+      {% for k, n in tipos.items() %}<button type="button" class="btn btn-ghost btn-sm" data-mk-anadir="{{ k }}" hidden>+ {{ n }}</button>{% endfor %}
+    </div>
+    <div id="mk-bloques" class="mk-lista" data-url-vista="{{ url_for('marketing.plantilla_vista_previa') }}"
+         data-textos="{{ {'arrastrar': _('Arrastrar para reordenar'), 'subir': _('Subir'), 'bajar': _('Bajar'), 'quitar': _('Quitar bloque'), 'movido': _('Bloque movido a la posición'), 'quitado': _('Bloque quitado'), 'anadido': _('Bloque añadido')}|tojson|forceescape }}">
+      {% for b in bloques %}
+      <fieldset class="dash-panel mk-bloque" data-tipo="{{ b.tipo }}">
+        <select name="tipo" aria-label="{{ _('Tipo de bloque') }}">{% for k, n in tipos.items() %}<option value="{{ k }}" {{ 'selected' if b.tipo == k }}>{{ n }}</option>{% endfor %}</select>
+        <textarea name="texto" rows="3" maxlength="2000" aria-label="{{ _('Texto') }}">{{ b.texto }}</textarea>
+        <input type="text" name="url" value="{{ b.url }}" placeholder="{{ _('Enlace (https://…) para botones e imágenes') }}" maxlength="500" aria-label="{{ _('Enlace') }}">
+      </fieldset>
+      {% endfor %}
+    </div>
+    <template id="mk-bloque-plantilla"><fieldset class="dash-panel mk-bloque" data-tipo="texto">
+      <select name="tipo" aria-label="{{ _('Tipo de bloque') }}">{% for k, n in tipos.items() %}<option value="{{ k }}">{{ n }}</option>{% endfor %}</select>
+      <textarea name="texto" rows="3" maxlength="2000" aria-label="{{ _('Texto') }}"></textarea>
+      <input type="text" name="url" placeholder="{{ _('Enlace (https://…) para botones e imágenes') }}" maxlength="500" aria-label="{{ _('Enlace') }}">
+    </fieldset></template>
+    <div class="mk-vista">
+      <iframe id="mk-vista-en-vivo" class="ds-vista-correo" sandbox title="{{ _('Vista previa del correo') }}" srcdoc="{{ vista or '' }}"></iframe>
+    </div>
+  </div>
+  <p id="mk-estado" class="muted" role="status" aria-live="polite"></p>
   <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar plantilla') }}</button>
     <button type="submit" name="accion" value="previsualizar" class="btn btn-ghost">{{ _('Vista previa') }}</button></div>
   <section class="dash-panel">

@@ -19,6 +19,23 @@
 </tbody></table>
 {% else %}{{ estado_vacio(_('Todavía no hay consentimientos registrados'), _('Registra uno abajo o envía a firmar el consentimiento comercial desde la ficha del cliente.')) }}{% endif %}
 
+{% if rebotes %}
+<section class="dash-panel">
+  <h2>{{ _('Rebotes recientes') }}</h2>
+  <p class="muted">{{ _('Un rebote duro (el buzón no existe) o varios blandos dejan ese correo como rebotado: no se le vuelve a escribir.') }}</p>
+  <table class="ds-tabla"><thead><tr><th>{{ _('Correo') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Código') }}</th><th>{{ _('Origen') }}</th><th>{{ _('Fecha') }}</th></tr></thead><tbody>
+  {% for r in rebotes %}<tr><td>{{ r.email }}</td><td>{{ {'duro': _('Duro'), 'blando': _('Blando'), 'queja': _('Queja')}[r.tipo] }}</td><td>{{ r.codigo or '' }}</td><td>{{ {'smtp': _('Envío'), 'dsn': _('Informe de entrega'), 'proveedor': _('Proveedor')}.get(r.origen, r.origen) }}</td><td>{{ r.recibido_en[:10] }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% if es_direccion and resumen.rebotado %}
+  <form method="post" class="ds-fila ds-mt-12">
+    <input type="email" name="email" required placeholder="{{ _('Correo rebotado') }}" aria-label="{{ _('Correo rebotado') }}">
+    <input type="text" name="evidencia" required placeholder="{{ _('Por qué se reactiva') }}" aria-label="{{ _('Por qué se reactiva') }}" maxlength="300">
+    <button type="submit" name="accion" value="reactivar" class="btn btn-ghost" data-confirmar-envio="{{ _('¿Volver a permitir envíos a este correo?') }}">{{ _('Reactivar') }}</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+
 <section class="dash-panel">
   <h2>{{ _('Registrar un consentimiento') }}</h2>
   <form method="post" class="edit-form ds-max-640">

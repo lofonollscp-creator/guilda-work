@@ -345,6 +345,9 @@ ALTER TABLE marketing_grupos ADD CONSTRAINT fk_marketing_grupos_creado_por FOREI
 ALTER TABLE marketing_grupos ADD CONSTRAINT fk_marketing_grupos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE marketing_plantillas ADD CONSTRAINT fk_marketing_plantillas_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id);
 ALTER TABLE marketing_plantillas ADD CONSTRAINT fk_marketing_plantillas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE marketing_proveedores ADD CONSTRAINT fk_marketing_proveedores_actualizado_por FOREIGN KEY (actualizado_por) REFERENCES usuarios (id);
+ALTER TABLE marketing_proveedores ADD CONSTRAINT fk_marketing_proveedores_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE marketing_rebotes ADD CONSTRAINT fk_marketing_rebotes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE mcp_auditoria ADD CONSTRAINT fk_mcp_auditoria_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE membresias ADD CONSTRAINT fk_membresias_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id);
 ALTER TABLE membresias ADD CONSTRAINT fk_membresias_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;

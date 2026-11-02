@@ -74,6 +74,9 @@ CREATE TABLE IF NOT EXISTS marketing_envios (
     estado TEXT NOT NULL DEFAULT 'borrador' CHECK (estado IN ('borrador', 'programado', 'enviando', 'enviado', 'cancelado')),
     url_base TEXT,
     programado_para TEXT,
+    canal TEXT NOT NULL DEFAULT 'propio',
+    proveedor_ref TEXT,
+    proveedor_estado TEXT,
     total INTEGER NOT NULL DEFAULT 0,
     enviados INTEGER NOT NULL DEFAULT 0,
     errores INTEGER NOT NULL DEFAULT 0,
@@ -86,6 +89,28 @@ CREATE TABLE IF NOT EXISTS marketing_envios (
     terminado_en TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_marketing_envios ON marketing_envios(tenant_id, estado, creado_en);
+CREATE TABLE IF NOT EXISTS marketing_rebotes (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    envio_id INTEGER,
+    tipo TEXT NOT NULL CHECK (tipo IN ('duro', 'blando', 'queja')),
+    codigo TEXT,
+    detalle TEXT,
+    origen TEXT NOT NULL,
+    recibido_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_marketing_rebotes ON marketing_rebotes(tenant_id, email, recibido_en);
+CREATE TABLE IF NOT EXISTS marketing_proveedores (
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    proveedor TEXT NOT NULL CHECK (proveedor IN ('brevo', 'mailchimp')),
+    clave TEXT NOT NULL,
+    ajustes TEXT NOT NULL DEFAULT '{}',
+    verificado_en TEXT,
+    actualizado_en TEXT NOT NULL,
+    actualizado_por INTEGER REFERENCES usuarios(id),
+    PRIMARY KEY (tenant_id, proveedor)
+);
 CREATE TABLE IF NOT EXISTS marketing_envio_destinatarios (
     envio_id INTEGER NOT NULL REFERENCES marketing_envios(id) ON DELETE CASCADE,
     tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -115,10 +140,12 @@ class ErrorMarketing(ValueError):
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
+    for columna, definicion in (("canal", "TEXT NOT NULL DEFAULT 'propio'"), ("proveedor_ref", "TEXT"), ("proveedor_estado", "TEXT")):     # bases anteriores a los conectores
+        db._asegurar_columna(conn, "marketing_envios", columna, definicion)
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
-    for tabla in ("marketing_envio_destinatarios", "marketing_envios", "marketing_plantillas", "marketing_grupos", "marketing_contactos"):
+    for tabla in ("marketing_envio_destinatarios", "marketing_envios", "marketing_plantillas", "marketing_grupos", "marketing_rebotes", "marketing_proveedores", "marketing_contactos"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
 
 
@@ -641,7 +668,7 @@ def _enviar_smtp(destinatario: str, asunto: str, texto: str, html: str, enlace_b
     with smtplib.SMTP(os.environ["MARKETING_SMTP_HOST"], int(os.environ.get("MARKETING_SMTP_PUERTO", "587")), timeout=15) as smtp:
         smtp.starttls()
         smtp.login(os.environ["MARKETING_SMTP_USUARIO"], os.environ["MARKETING_SMTP_CONTRASENA"])
-        smtp.send_message(m)
+        smtp.send_message(m, from_addr=os.environ.get("MARKETING_SMTP_RETORNO") or None)       # a dónde vuelven los rebotes (por defecto, el remitente)
 
 
 def _envio(f) -> dict:
@@ -651,7 +678,7 @@ def _envio(f) -> dict:
     return d
 
 
-def crear_envio(tenant_id: int, usuario_id: int, nombre: str, grupo_id: int, asunto: str, bloques) -> int:
+def crear_envio(tenant_id: int, usuario_id: int, nombre: str, grupo_id: int, asunto: str, bloques, canal: str = "propio") -> int:
     """Un borrador de envío: el grupo, el asunto y los bloques (copia de la plantilla, que luego puede cambiar sin afectar a lo enviado)."""
     _exigir_escritura(tenant_id, usuario_id)
     nombre = re.sub(r"\s+", " ", nombre or "").strip()[:100]
@@ -661,10 +688,14 @@ def crear_envio(tenant_id: int, usuario_id: int, nombre: str, grupo_id: int, asu
     if obtener_grupo(tenant_id, grupo_id) is None:
         raise ErrorMarketing("Elige a qué grupo va el envío.")
     limpios = bloques_validos(bloques)
+    if canal != "propio":
+        p = obtener_proveedor(tenant_id, canal)
+        if p is None or not p["verificado_en"]:
+            raise ErrorMarketing("Ese canal no está configurado y probado: hazlo en Marketing → Canales de envío.")
     conn = db.get_connection()
     try:
-        cur = conn.execute("INSERT INTO marketing_envios (tenant_id, nombre, grupo_id, asunto, bloques, creado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                           (tenant_id, nombre, grupo_id, asunto, json.dumps(limpios, ensure_ascii=False), usuario_id, _ahora()))
+        cur = conn.execute("INSERT INTO marketing_envios (tenant_id, nombre, grupo_id, asunto, bloques, canal, creado_por, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                           (tenant_id, nombre, grupo_id, asunto, json.dumps(limpios, ensure_ascii=False), canal, usuario_id, _ahora()))
         auditoria.registrar(tenant_id, usuario_id, "marketing.envio.crear", "marketing_envio", cur.lastrowid, {"grupo_id": grupo_id}, conn=conn)
         conn.commit()
         return cur.lastrowid
@@ -706,8 +737,10 @@ def revisar(tenant_id: int, usuario_id: int, envio_id: int) -> dict:
     problemas = [f"Falta: {x}" for x in datos_legales_que_faltan(tenant_id)]
     if not a["destinatarios"]:
         problemas.append("No hay ningún destinatario con consentimiento en este grupo.")
-    if not canal_configurado():
+    if e["canal"] == "propio" and not canal_configurado():
         problemas.append("El canal de envío de marketing no está configurado en el servidor (MARKETING_SMTP_*): puedes descargar la audiencia y enviarla desde otra herramienta.")
+    if e["canal"] != "propio" and (obtener_proveedor(tenant_id, e["canal"]) or {}).get("verificado_en") is None:
+        problemas.append("El canal elegido ya no está configurado y probado.")
     return {"envio": e, "audiencia": a, "problemas": problemas}
 
 
@@ -775,11 +808,10 @@ def enviar_prueba(tenant_id: int, usuario_id: int, envio_id: int, email: str, *,
         raise ErrorMarketing(f"No se pudo enviar la prueba: {err}") from err
 
 
-def procesar_pendientes(*, enviador=None, lote: int = LOTE_POR_DEFECTO, ahora: datetime | None = None) -> dict:
+def procesar_pendientes(*, enviador=None, lote: int = LOTE_POR_DEFECTO, ahora: datetime | None = None, proveedores: dict | None = None) -> dict:
     """Envía, de los envíos programados, hasta `lote` correos. Antes de CADA correo vuelve a comprobar que el destinatario sigue con consentimiento y sin baja. Lo llama el temporizador."""
     enviador = enviador or _enviar_smtp
-    if enviador is _enviar_smtp and not canal_configurado():
-        return {"enviados": 0, "errores": 0, "omitidos": 0, "sin_canal": True}
+    smtp_listo = enviador is not _enviar_smtp or canal_configurado()
     t = _ahora(ahora)
     totales = {"enviados": 0, "errores": 0, "omitidos": 0}
     with contexto.como_plataforma():
@@ -790,11 +822,12 @@ def procesar_pendientes(*, enviador=None, lote: int = LOTE_POR_DEFECTO, ahora: d
             conn.close()
     restante = lote
     for e in envios:
-        if restante <= 0:
-            break
         with contexto.en_despacho(e["tenant_id"]):
-            restante = _procesar_envio(e, enviador, restante, t, totales)
-    return totales
+            if e["canal"] != "propio":                                      # un proveedor recibe el envío ENTERO de una vez: no entra en el lote
+                _procesar_envio_proveedor(e, t, totales, proveedores)
+            elif smtp_listo and restante > 0:
+                restante = _procesar_envio(e, enviador, restante, t, totales)
+    return {**totales, "sin_canal": True} if not smtp_listo and not any(totales.values()) else totales
 
 
 def _procesar_envio(e: dict, enviador, restante: int, t: str, totales: dict) -> int:
@@ -816,6 +849,12 @@ def _procesar_envio(e: dict, enviador, restante: int, t: str, totales: dict) -> 
                 asunto, texto, html, enlace = _componer_correo(e["tenant_id"], e, p["email"], p["nombre"], e["url_base"] or "")
                 enviador(p["email"], asunto, texto, html, enlace)
                 nuevo, error = "enviado", None
+            except smtplib.SMTPRecipientsRefused as err:
+                codigo, mensaje = err.recipients.get(p["email"], (0, b""))
+                mensaje = mensaje.decode(errors="replace") if isinstance(mensaje, bytes) else str(mensaje)
+                nuevo, error = "error", f"buzón rechazado: {codigo} {mensaje}"[:300]
+                if 500 <= int(codigo or 0) < 600:                                   # el servidor de destino dice que ese buzón no existe o no acepta correo: rebote duro
+                    registrar_rebote(e["tenant_id"], p["email"], tipo="duro", codigo=str(codigo), detalle=mensaje, origen="smtp", envio_id=e["id"])
             except (smtplib.SMTPException, OSError, ErrorMarketing) as err:
                 nuevo, error = "error", str(err)[:300]
         conn = db.get_connection()
@@ -835,3 +874,312 @@ def _procesar_envio(e: dict, enviador, restante: int, t: str, totales: dict) -> 
     finally:
         conn.close()
     return restante
+
+
+# --- Rebotes ------------------------------------------------------------------------------------------------------------------
+
+BLANDOS_PARA_REBOTAR = 3                 # rebotes blandos (buzón lleno, servidor caído…) en DIAS_BLANDOS días bastan para dejar de escribir a ese correo
+DIAS_BLANDOS = 30
+
+
+def registrar_rebote(tenant_id: int, email: str, *, tipo: str, codigo: str = "", detalle: str = "", origen: str, envio_id: int | None = None, ahora: datetime | None = None) -> dict:
+    """Anota un rebote. Uno DURO (el buzón no existe) o una QUEJA de spam deja ese correo como «rebotado» al instante; los BLANDOS lo hacen al repetirse. Un correo rebotado nunca recibe nada."""
+    from datetime import timedelta
+    if tipo not in ("duro", "blando", "queja"):
+        raise ErrorMarketing("Tipo de rebote no válido.")
+    e = normalizar_email(email)
+    t = _ahora(ahora)
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT INTO marketing_rebotes (tenant_id, email, envio_id, tipo, codigo, detalle, origen, recibido_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                     (tenant_id, e, envio_id, tipo, (codigo or "")[:20] or None, (detalle or "")[:500] or None, origen, t))
+        desde = _ahora((ahora or datetime.now()) - timedelta(days=DIAS_BLANDOS))
+        blandos = conn.execute("SELECT COUNT(*) FROM marketing_rebotes WHERE tenant_id = ? AND email = ? AND tipo = 'blando' AND recibido_en >= ? AND recibido_en <= ?", (tenant_id, e, desde, t)).fetchone()[0]
+        rebota = tipo in ("duro", "queja") or blandos >= BLANDOS_PARA_REBOTAR
+        if rebota:
+            conn.execute("UPDATE marketing_contactos SET estado = 'rebotado', actualizado_en = ? WHERE tenant_id = ? AND email = ? AND estado = 'consentido'", (t, tenant_id, e))
+            conn.execute("UPDATE marketing_envio_destinatarios SET estado = 'omitido', error = 'rebotado' WHERE tenant_id = ? AND email = ? AND estado = 'pendiente'", (tenant_id, e))
+        auditoria.registrar(tenant_id, None, "marketing.rebote", "marketing_contacto", e, {"tipo": tipo, "origen": origen, "codigo": codigo}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    return {"email": e, "tipo": tipo, "rebotado": rebota}
+
+
+def listar_rebotes(tenant_id: int, limite: int = 30) -> list[dict]:
+    conn = db.get_connection()
+    try:
+        return [dict(f) for f in conn.execute("SELECT * FROM marketing_rebotes WHERE tenant_id = ? ORDER BY id DESC LIMIT ?", (tenant_id, limite)).fetchall()]
+    finally:
+        conn.close()
+
+
+def reactivar_rebotado(tenant_id: int, usuario_id: int, email: str, motivo: str) -> dict:
+    """La dirección del despacho vuelve a permitir escribir a un correo rebotado (p. ej. el cliente confirma que su buzón ya funciona). Exige un motivo y queda en la auditoría."""
+    _exigir_direccion(usuario_id, "reactiva un correo rebotado")
+    e = normalizar_email(email)
+    motivo = re.sub(r"\s+", " ", motivo or "").strip()[:300]
+    actual = obtener_contacto(tenant_id, e)
+    if actual is None or actual["estado"] != "rebotado":
+        raise ErrorMarketing("Ese correo no está marcado como rebotado.")
+    if not motivo:
+        raise ErrorMarketing("Anota por qué se reactiva.")
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE marketing_contactos SET estado = 'consentido', evidencia = ?, actualizado_en = ? WHERE tenant_id = ? AND email = ?",
+                     (f"{actual['evidencia']} · Reactivado tras rebote: {motivo}"[:500], _ahora(), tenant_id, e))
+        auditoria.registrar(tenant_id, usuario_id, "marketing.reactivar", "marketing_contacto", e, {"motivo": motivo}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    return obtener_contacto(tenant_id, e)
+
+
+def parsear_dsn(crudo: bytes) -> list[dict]:
+    """Los rebotes de un mensaje de informe de entrega (RFC 3464, `multipart/report`): `[{email, estado, accion, detalle, tipo}]`. Cualquier otro mensaje (respuesta automática, «fuera de la
+    oficina», correo normal) da `[]`: solo cuenta lo que el servidor de correo declara como fallo de entrega. `tipo` es «duro» para 5.x.x con acción failed y «blando» para 4.x.x o retrasos."""
+    from email import policy
+    from email.parser import BytesParser
+    try:
+        m = BytesParser(policy=policy.default).parsebytes(crudo)
+    except Exception:       # noqa: BLE001 -- un mensaje ilegible no es un rebote
+        return []
+    if m.get_content_type() != "multipart/report" or m.get_param("report-type") != "delivery-status":
+        return []
+    salida = []
+    for parte in m.walk():
+        if parte.get_content_type() != "message/delivery-status":
+            continue
+        for grupo in parte.get_payload():                       # el primero describe el mensaje; los siguientes, a cada destinatario
+            final = grupo.get("Final-Recipient") or grupo.get("Original-Recipient")
+            if not final:
+                continue
+            email = str(final).split(";", 1)[-1].strip().strip("<>").lower()
+            estado = str(grupo.get("Status") or "").strip()
+            accion = str(grupo.get("Action") or "").strip().lower()
+            detalle = str(grupo.get("Diagnostic-Code") or "").strip()
+            if accion not in ("failed", "delayed") or not _EMAIL.match(email):
+                continue
+            salida.append({"email": email, "estado": estado, "accion": accion, "detalle": detalle, "tipo": "duro" if accion == "failed" and estado.startswith("5") else "blando"})
+    return salida
+
+
+def _tenant_y_envio_de(email: str) -> tuple[int, int] | None:
+    """A qué despacho (y envío) pertenece un rebote: el último envío que SALIÓ hacia ese correo."""
+    with contexto.como_plataforma():
+        conn = db.get_connection(plataforma=True)
+        try:
+            f = conn.execute("SELECT tenant_id, envio_id FROM marketing_envio_destinatarios WHERE email = ? AND estado = 'enviado' ORDER BY enviado_en DESC, envio_id DESC LIMIT 1", (email,)).fetchone()
+        finally:
+            conn.close()
+    return (f["tenant_id"], f["envio_id"]) if f else None
+
+
+def procesar_rebotes_de(crudo: bytes, *, ahora: datetime | None = None) -> int:
+    """Registra los rebotes de UN mensaje (los de correos que no enviamos nosotros se ignoran). Devuelve cuántos registró."""
+    n = 0
+    for r in parsear_dsn(crudo):
+        destino = _tenant_y_envio_de(r["email"])
+        if destino is None:
+            continue
+        with contexto.en_despacho(destino[0]):
+            registrar_rebote(destino[0], r["email"], tipo=r["tipo"], codigo=r["estado"], detalle=r["detalle"], origen="dsn", envio_id=destino[1], ahora=ahora)
+        n += 1
+    return n
+
+
+def buzon_de_rebotes_configurado() -> bool:
+    return all(os.environ.get(v) for v in ("MARKETING_IMAP_HOST", "MARKETING_IMAP_USUARIO", "MARKETING_IMAP_CONTRASENA"))
+
+
+def revisar_buzon_de_rebotes(*, imap=None, maximo: int = 200) -> dict:
+    """Lee los mensajes sin leer del buzón donde llegan los rebotes (`MARKETING_IMAP_*`), registra los rebotes y los marca como leídos. `imap` permite probarlo sin servidor."""
+    import imaplib
+    if imap is None:
+        if not buzon_de_rebotes_configurado():
+            return {"leidos": 0, "rebotes": 0, "sin_buzon": True}
+        imap = imaplib.IMAP4_SSL(os.environ["MARKETING_IMAP_HOST"], int(os.environ.get("MARKETING_IMAP_PUERTO", "993")))
+        imap.login(os.environ["MARKETING_IMAP_USUARIO"], os.environ["MARKETING_IMAP_CONTRASENA"])
+    leidos = rebotes = 0
+    try:
+        imap.select(os.environ.get("MARKETING_IMAP_CARPETA", "INBOX"))
+        _estado, datos = imap.search(None, "UNSEEN")
+        for num in (datos[0].split() if datos and datos[0] else [])[:maximo]:
+            _estado, partes = imap.fetch(num, "(RFC822)")
+            crudo = next((p[1] for p in partes if isinstance(p, tuple)), b"")
+            rebotes += procesar_rebotes_de(crudo)
+            imap.store(num, "+FLAGS", "\\Seen")
+            leidos += 1
+    finally:
+        try:
+            imap.logout()
+        except Exception:       # noqa: BLE001
+            pass
+    return {"leidos": leidos, "rebotes": rebotes}
+
+
+# --- Canales de envío: Brevo y Mailchimp ----------------------------------------------------------------------------------------
+
+def _clase_proveedor(proveedor: str):
+    from . import marketing_proveedores
+    if proveedor not in marketing_proveedores.PROVEEDORES:
+        raise ErrorMarketing("Ese canal no existe.")
+    return marketing_proveedores.PROVEEDORES[proveedor]
+
+
+def obtener_proveedor(tenant_id: int, proveedor: str) -> dict | None:
+    """La configuración de un canal; la clave NUNCA sale de aquí entera (`clave_final` son sus últimos caracteres, para reconocerla)."""
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT * FROM marketing_proveedores WHERE tenant_id = ? AND proveedor = ?", (tenant_id, proveedor)).fetchone()
+    finally:
+        conn.close()
+    if f is None:
+        return None
+    d = dict(f)
+    d["ajustes"] = json.loads(d["ajustes"] or "{}")
+    d["clave_final"] = d["clave"][-4:]
+    return d
+
+
+def listar_proveedores(tenant_id: int) -> list[dict]:
+    from . import marketing_proveedores
+    return [{"proveedor": k, "nombre": n, "config": obtener_proveedor(tenant_id, k)} for k, n in marketing_proveedores.NOMBRES.items()]
+
+
+def guardar_proveedor(tenant_id: int, usuario_id: int, proveedor: str, clave: str, ajustes: dict) -> None:
+    """Guarda la clave y los ajustes de un canal (solo la dirección). Una clave en blanco conserva la anterior. Cualquier cambio exige volver a probar la conexión."""
+    _exigir_direccion(usuario_id, "configura los canales de envío")
+    _clase_proveedor(proveedor)
+    actual = obtener_proveedor(tenant_id, proveedor)
+    clave = (clave or "").strip()
+    if not clave and actual is None:
+        raise ErrorMarketing("Indica la clave de la cuenta.")
+    limpios = {k: re.sub(r"\s+", " ", str((ajustes or {}).get(k) or "")).strip()[:200] for k in ("remitente_nombre", "remitente_email", "audiencia_id", "carpeta_id")}
+    if limpios["remitente_email"]:
+        normalizar_email(limpios["remitente_email"])
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT INTO marketing_proveedores (tenant_id, proveedor, clave, ajustes, verificado_en, actualizado_en, actualizado_por) VALUES (?, ?, ?, ?, NULL, ?, ?) "
+                     "ON CONFLICT (tenant_id, proveedor) DO UPDATE SET clave = excluded.clave, ajustes = excluded.ajustes, verificado_en = NULL, actualizado_en = excluded.actualizado_en, actualizado_por = excluded.actualizado_por",
+                     (tenant_id, proveedor, clave or actual["clave"], json.dumps(limpios, ensure_ascii=False), _ahora(), usuario_id))
+        auditoria.registrar(tenant_id, usuario_id, "marketing.canal.guardar", "marketing_proveedor", proveedor, {"cambia_clave": bool(clave)}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def quitar_proveedor(tenant_id: int, usuario_id: int, proveedor: str) -> None:
+    _exigir_direccion(usuario_id, "configura los canales de envío")
+    conn = db.get_connection()
+    try:
+        conn.execute("DELETE FROM marketing_proveedores WHERE tenant_id = ? AND proveedor = ?", (tenant_id, proveedor))
+        auditoria.registrar(tenant_id, usuario_id, "marketing.canal.quitar", "marketing_proveedor", proveedor, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _instancia(tenant_id: int, proveedor: str, proveedores: dict | None = None):
+    if proveedores and proveedor in proveedores:
+        return proveedores[proveedor]
+    cfg = obtener_proveedor(tenant_id, proveedor)
+    if cfg is None:
+        raise ErrorMarketing("Ese canal no está configurado.")
+    return _clase_proveedor(proveedor)(cfg["clave"], cfg["ajustes"])
+
+
+def probar_proveedor(tenant_id: int, usuario_id: int, proveedor: str, *, proveedores: dict | None = None) -> str:
+    """Comprueba la clave contra el proveedor y, si responde, deja el canal listo para usar. Devuelve el nombre de la cuenta."""
+    from .marketing_proveedores import ErrorProveedor
+    _exigir_direccion(usuario_id, "configura los canales de envío")
+    try:
+        cuenta = _instancia(tenant_id, proveedor, proveedores).verificar()
+    except ErrorProveedor as e:
+        raise ErrorMarketing(str(e)) from e
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE marketing_proveedores SET verificado_en = ? WHERE tenant_id = ? AND proveedor = ?", (_ahora(), tenant_id, proveedor))
+        conn.commit()
+    finally:
+        conn.close()
+    return cuenta
+
+
+def _procesar_envio_proveedor(e: dict, t: str, totales: dict, proveedores: dict | None) -> None:
+    """Entrega un envío ENTERO a su proveedor. Vuelve a comprobar el consentimiento de cada destinatario antes de subirlo. Si algo falla el envío se CANCELA y no se reintenta solo: el proveedor podría
+    haber enviado ya, y repetirlo duplicaría correos a clientes."""
+    from .marketing_proveedores import ErrorProveedor
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE marketing_envios SET estado = 'enviando', iniciado_en = COALESCE(iniciado_en, ?) WHERE id = ?", (t, e["id"]))
+        pendientes = [dict(f) for f in conn.execute("SELECT * FROM marketing_envio_destinatarios WHERE envio_id = ? AND estado = 'pendiente' ORDER BY email", (e["id"],)).fetchall()]
+        conn.commit()
+    finally:
+        conn.close()
+    vigentes, omitidos = [], []
+    for p in pendientes:
+        c = obtener_contacto(e["tenant_id"], p["email"])
+        (vigentes if c and c["estado"] == "consentido" else omitidos).append(p)
+    error = None
+    ref = None
+    try:
+        prov = _instancia(e["tenant_id"], e["canal"], proveedores)
+        d = _datos_del_despacho(e["tenant_id"])
+        valores = dict(prov.etiquetas, empresa=d["nombre"])
+        if not vigentes:
+            raise ErrorProveedor("Ningún destinatario conserva el consentimiento.")
+        ref = prov.enviar(e["nombre"], _sustituir(e["asunto"], valores), render_html(e["bloques"], valores, d), [{"email": p["email"], "nombre": p["nombre"]} for p in vigentes])
+    except (ErrorProveedor, ErrorMarketing) as err:
+        error = str(err)[:300]
+    conn = db.get_connection()
+    try:
+        if error is None:
+            conn.executemany("UPDATE marketing_envio_destinatarios SET estado = 'enviado', enviado_en = ? WHERE envio_id = ? AND email = ?", [(t, e["id"], p["email"]) for p in vigentes])
+        conn.executemany("UPDATE marketing_envio_destinatarios SET estado = 'omitido', error = ? WHERE envio_id = ? AND email = ?",
+                         [(("sin consentimiento" if error is None else "envío cancelado"), e["id"], p["email"]) for p in (omitidos if error is None else omitidos + vigentes)])
+        if error is None:
+            conn.execute("UPDATE marketing_envios SET estado = 'enviado', enviados = ?, proveedor_ref = ?, proveedor_estado = 'entregado_al_proveedor', terminado_en = ? WHERE id = ?",
+                         (len(vigentes), json.dumps(ref), t, e["id"]))
+            totales["enviados"] += len(vigentes)
+            totales["omitidos"] += len(omitidos)
+        else:
+            conn.execute("UPDATE marketing_envios SET estado = 'cancelado', ultimo_error = ?, errores = ?, terminado_en = ? WHERE id = ?", (error, len(vigentes), t, e["id"]))
+            totales["errores"] += len(vigentes)
+        auditoria.registrar(e["tenant_id"], None, "marketing.envio.proveedor", "marketing_envio", e["id"], {"canal": e["canal"], "enviados": 0 if error else len(vigentes), "error": error}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def sincronizar_proveedores(*, proveedores: dict | None = None, dias: int = 60, ahora: datetime | None = None) -> dict:
+    """Trae de Brevo y Mailchimp las bajas y los rebotes de los envíos recientes y los aplica al registro de consentimientos: lo que se da de baja allí queda de baja aquí."""
+    from datetime import timedelta
+    from .marketing_proveedores import ErrorProveedor
+    desde = _ahora((ahora or datetime.now()) - timedelta(days=dias))
+    with contexto.como_plataforma():
+        conn = db.get_connection(plataforma=True)
+        try:
+            envios = [_envio(f) for f in conn.execute("SELECT * FROM marketing_envios WHERE canal <> 'propio' AND estado = 'enviado' AND proveedor_ref IS NOT NULL AND terminado_en >= ? ORDER BY id", (desde,)).fetchall()]
+        finally:
+            conn.close()
+    r = {"envios": 0, "bajas": 0, "rebotes": 0, "errores": 0}
+    for e in envios:
+        with contexto.en_despacho(e["tenant_id"]):
+            try:
+                resultado = _instancia(e["tenant_id"], e["canal"], proveedores).bajas(json.loads(e["proveedor_ref"]))
+            except (ErrorProveedor, ErrorMarketing):
+                r["errores"] += 1
+                continue
+            r["envios"] += 1
+            for correo in resultado["baja"]:
+                actual = obtener_contacto(e["tenant_id"], correo)
+                if actual is not None and actual["estado"] == "consentido":
+                    registrar_baja(e["tenant_id"], None, correo, origen="proveedor", motivo=f"Baja en {e['canal']} (envío {e['id']})")
+                    r["bajas"] += 1
+            for correo in resultado["rebotado"]:
+                actual = obtener_contacto(e["tenant_id"], correo)
+                if actual is not None and actual["estado"] == "consentido":
+                    registrar_rebote(e["tenant_id"], correo, tipo="duro", detalle=f"Rebote en {e['canal']}", origen="proveedor", envio_id=e["id"])
+                    r["rebotes"] += 1
+    return r

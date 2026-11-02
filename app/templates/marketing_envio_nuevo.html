@@ -12,6 +12,8 @@
   {% call campo(_('Nombre del envío'), 'e-nombre', requerido=True) %}<input type="text" id="e-nombre" name="nombre" required maxlength="100">{% endcall %}
   {% call campo(_('Grupo de clientes'), 'e-grupo', requerido=True) %}<select id="e-grupo" name="grupo_id" required>{% for gr in grupos %}<option value="{{ gr.id }}">{{ gr.nombre }}</option>{% endfor %}</select>{% endcall %}
   {% call campo(_('Plantilla'), 'e-plantilla', requerido=True) %}<select id="e-plantilla" name="plantilla_id" required>{% for p in plantillas %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>{% endcall %}
+  {% call campo(_('Canal de envío'), 'e-canal', ayuda=_('Por Guilda (sin coste extra) o por tu cuenta de Brevo o Mailchimp, que gestiona las bajas y los rebotes a su manera.')) %}
+    <select id="e-canal" name="canal"><option value="propio">{{ _('Guilda (canal propio)') }}</option>{% for c in canales %}<option value="{{ c.proveedor }}">{{ c.nombre }}</option>{% endfor %}</select>{% endcall %}
   {% call campo(_('Asunto'), 'e-asunto', ayuda=_('Si lo dejas vacío se usa el de la plantilla.')) %}<input type="text" id="e-asunto" name="asunto" maxlength="200">{% endcall %}
   <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Continuar') }}</button></div>
 </form>

@@ -82,3 +82,48 @@ def test_la_baja_de_un_clic_es_publica_firmada_y_definitiva(cliente):
     assert "te hemos dado de baja" in cliente.post(f"/baja/{tok}").get_data(as_text=True)
     assert mk.obtener_contacto(t, "ana@x.example")["estado"] == "baja"
     assert cliente.get("/baja/manipulado").status_code == 404 and cliente.post(f"/baja/{tok[:-2]}00").status_code == 404
+
+
+def test_los_rebotes_se_ven_y_la_direccion_puede_reactivar(cliente):
+    uid, t = _web(cliente)
+    mk.registrar_consentimiento(t, uid, "r@x.example", origen="formulario", evidencia="x")
+    mk.registrar_rebote(t, "r@x.example", tipo="duro", codigo="5.1.1", origen="dsn")
+    html = cliente.get("/comercial/marketing/consentimientos").get_data(as_text=True)
+    assert "Rebotes recientes" in html and "5.1.1" in html and "Reactivar" in html
+    cliente.post("/comercial/marketing/consentimientos", data={"accion": "reactivar", "email": "r@x.example", "evidencia": "Buzón arreglado"})
+    assert mk.obtener_contacto(t, "r@x.example")["estado"] == "consentido"
+
+
+def test_los_canales_se_configuran_se_prueban_y_se_eligen_al_crear_un_envio(cliente, monkeypatch):
+    from app import marketing_proveedores as mp
+    uid, t = _web(cliente)
+    mk.crear_grupo(t, uid, "G", {})
+    mk.crear_plantilla(t, uid, "P", "Asunto", [{"tipo": "texto", "texto": "Hola"}])
+    html = cliente.get("/comercial/marketing/canales").get_data(as_text=True)
+    assert "Brevo" in html and "Mailchimp" in html and "Sin configurar" in html
+    assert "Guilda (canal propio)" in cliente.get("/comercial/marketing/envios/nuevo").get_data(as_text=True) and "Brevo</option>" not in cliente.get("/comercial/marketing/envios/nuevo").get_data(as_text=True)
+    cliente.post("/comercial/marketing/canales", data={"proveedor": "brevo", "clave": "xkeysib-secreta-9999", "remitente_email": "hola@despacho.example", "remitente_nombre": "Despacho"})
+    html = cliente.get("/comercial/marketing/canales").get_data(as_text=True)
+    assert "Falta probar" in html and "xkeysib-secreta-9999" not in html and "9999" in html                  # la clave nunca vuelve a la pantalla
+    monkeypatch.setattr(mp.Brevo, "verificar", lambda self: "Despacho SL")
+    r = cliente.post("/comercial/marketing/canales", data={"proveedor": "brevo", "accion": "probar"})
+    assert "Conexión correcta: Despacho SL" in r.get_data(as_text=True) and "Probado" in r.get_data(as_text=True)
+    assert "Brevo</option>" in cliente.get("/comercial/marketing/envios/nuevo").get_data(as_text=True)
+    mal = cliente.post("/comercial/marketing/canales", data={"proveedor": "inventado", "clave": "k"}, follow_redirects=True).get_data(as_text=True)
+    assert "no existe" in mal
+
+
+def test_el_editor_visual_expone_la_paleta_la_vista_previa_en_vivo_y_sigue_funcionando_sin_js(cliente):
+    uid, t = _web(cliente)
+    html = cliente.get("/comercial/marketing/plantillas/nueva").get_data(as_text=True)
+    assert 'id="mk-bloques"' in html and "marketing_editor.js" in html and 'data-mk-anadir="boton"' in html and 'id="mk-bloque-plantilla"' in html
+    assert html.count('class="dash-panel mk-bloque"') >= 3 and 'name="tipo"' in html                      # el formulario normal sigue ahí
+    r = cliente.post("/comercial/marketing/plantillas/vista-previa", json={"bloques": [{"tipo": "titulo", "texto": "Hola {{nombre}}", "url": ""}, {"tipo": "texto", "texto": "<script>x</script>", "url": ""}]})
+    j = r.get_json()
+    assert r.status_code == 200 and "error" not in j and "Hola Marta" in j["html"] and "<script>" not in j["html"] and "Darme de baja" in j["html"]
+    mal = cliente.post("/comercial/marketing/plantillas/vista-previa", json={"bloques": [{"tipo": "boton", "texto": "Ir", "url": "javascript:alert(1)"}, {"tipo": "texto", "texto": "Sigue", "url": ""}]}).get_json()
+    assert "https://" in mal["error"] and "Sigue" in mal["html"] and "javascript" not in mal["html"]          # un bloque a medias no rompe la vista
+    assert cliente.post("/comercial/marketing/plantillas/vista-previa", data="no json").status_code == 200
+    # guardar sigue funcionando con los mismos campos que antes
+    r = cliente.post("/comercial/marketing/plantillas/nueva", data={"nombre": "N", "asunto": "A", "tipo": ["titulo", "texto"], "texto": ["T", "x"], "url": ["", ""]})
+    assert r.status_code == 302

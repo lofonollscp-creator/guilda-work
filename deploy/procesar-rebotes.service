@@ -1,0 +1,12 @@
+# Plantilla de unidad systemd para scripts/procesar_rebotes.py en el VPS. Copia a /etc/systemd/system/procesar-rebotes.service, ajusta USUARIO y las rutas, y activa el timer (deploy/procesar-rebotes.timer). Necesita MARKETING_IMAP_HOST, MARKETING_IMAP_USUARIO y MARKETING_IMAP_CONTRASENA (y MARKETING_IMAP_PUERTO, MARKETING_IMAP_CARPETA si no son 993 e INBOX) en /etc/guilda-work.env.
+
+[Unit]
+Description=Guilda Work - lectura del buzón de rebotes de marketing
+After=network.target
+
+[Service]
+Type=oneshot
+User=USUARIO
+WorkingDirectory=/home/USUARIO/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/USUARIO/guilda-work/.venv/bin/python scripts/procesar_rebotes.py

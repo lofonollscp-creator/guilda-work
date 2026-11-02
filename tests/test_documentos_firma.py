@@ -155,3 +155,42 @@ def test_otro_despacho_no_ve_ni_toca_los_documentos():
     assert df.obtener(t2, c2, did) is None and df.listar_de_cliente(t2, c2) == []
     with pytest.raises(df.ErrorDocumento):
         df.componer(t2, c, "hoja_encargo", _datos("hoja_encargo"), hoy=HOY)       # el cliente no es de ese despacho
+
+
+def test_el_aviso_automatico_anota_la_firma_y_avisa_a_quien_creo_el_documento(monkeypatch):
+    t, u, c = _despacho()
+    monkeypatch.setattr(documenso, "crear_documento", lambda *a, **k: {"id": "env_77"})
+    monkeypatch.setattr(documenso, "enviar_a_firma", lambda *a: {})
+    estado = {"v": "PENDING"}
+    monkeypatch.setattr(documenso, "estado_documento", lambda *a: estado["v"])
+    monkeypatch.setattr(documenso, "descargar_firmado", lambda *a: b"%PDF-firmado")
+    avisos = []
+    from app import notificaciones
+    monkeypatch.setattr(notificaciones, "crear_y_enviar", lambda usuario, tipo, titulo, cuerpo, url=None, **k: avisos.append((usuario, tipo, titulo, cuerpo, url)))
+    did = df.crear_borrador(t, u, c, "hoja_encargo", _datos("hoja_encargo"), hoy=HOY)
+    df.enviar(t, u, c, did)
+
+    assert df.refrescar_por_documenso("otro") == [] and df.refrescar_por_documenso("env_77") == ["enviado"] and not avisos      # sin firmar no se avisa
+    estado["v"] = "COMPLETED"
+    assert df.refrescar_por_documenso("env_77") == ["firmado"]
+    assert df.obtener(t, c, did)["estado"] == "firmado" and len(avisos) == 1 and avisos[0][0] == u and avisos[0][2].startswith("Firmado") and avisos[0][4].endswith(f"/{did}")
+    assert df.refrescar_por_documenso("env_77") == []                                                                     # ya no está pendiente: no se avisa dos veces
+
+
+def test_el_barrido_de_respaldo_repasa_los_pendientes_de_todos_los_despachos(monkeypatch):
+    t, u, c = _despacho()
+    t2 = db.crear_tenant("Segundo")
+    u2 = db.crear_usuario_vinculado_a_kratos("g2@ejemplo.com", "k-g2"); db.asignar_tenant(u2, t2)
+    db.guardar_datos_tenant(t2, "B22222222", "Calle 2"); db.guardar_documenso_api_key(t2, "clave2")
+    c2 = nucleo.crear_cliente(t2, "Cliente 2", nif="B3", email="c2@x.example", direccion="X")
+    monkeypatch.setattr(documenso, "crear_documento", lambda *a, **k: {"id": "e" + a[1][:3]})
+    monkeypatch.setattr(documenso, "enviar_a_firma", lambda *a: {})
+    monkeypatch.setattr(documenso, "estado_documento", lambda clave, ident: "COMPLETED" if clave == "clave2" else "REJECTED")
+    monkeypatch.setattr(documenso, "descargar_firmado", lambda *a: b"%PDF")
+    from app import notificaciones
+    avisos = []
+    monkeypatch.setattr(notificaciones, "crear_y_enviar", lambda usuario, tipo, titulo, *a, **k: avisos.append(titulo))
+    d1 = df.crear_borrador(t, u, c, "hoja_encargo", _datos("hoja_encargo"), hoy=HOY); df.enviar(t, u, c, d1)
+    d2 = df.crear_borrador(t2, u2, c2, "hoja_encargo", _datos("hoja_encargo"), hoy=HOY); df.enviar(t2, u2, c2, d2)
+    assert df.sincronizar_pendientes() == {"revisados": 2, "firmados": 1, "rechazados": 1}
+    assert df.obtener(t, c, d1)["estado"] == "rechazado" and df.obtener(t2, c2, d2)["estado"] == "firmado" and sorted(a.split(":")[0] for a in avisos) == ["Firmado", "Rechazado"]

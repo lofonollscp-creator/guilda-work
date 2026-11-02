@@ -45,21 +45,45 @@ En **Comercial → Lista** se marcan oportunidades y se elige: cambiar de etapa,
 - **Enviar**: solo la dirección del despacho programa, tras ver el recuento y escribirlo. Se puede enviar una prueba a una dirección propia. La lista se congela al programar, pero **antes de cada correo se vuelve a comprobar** el consentimiento: quien se dé de baja entre medias no lo recibe.
 - **Baja de un clic** sin iniciar sesión (`/baja/<token>`, token firmado). Cada correo lleva las cabeceras `List-Unsubscribe` y `List-Unsubscribe-Post` (RFC 8058).
 
+### Rebotes
+- **En el momento del envío:** si el servidor de destino rechaza el buzón con un error 5xx, ese correo queda como **rebotado** y no se le vuelve a escribir.
+- **Después, por informe de entrega:** `scripts/procesar_rebotes.py` (timer cada 15 minutos) lee un buzón por IMAP (`MARKETING_IMAP_*`), interpreta los informes de entrega (RFC 3464) y los asigna al despacho y al envío por el último correo que salió hacia esa dirección. Para que los informes lleguen a ese buzón, el remitente (`MARKETING_SMTP_REMITENTE`) o el de retorno (`MARKETING_SMTP_RETORNO`) debe ser una dirección cuyo buzón lea ese IMAP.
+- **Duros** (5.x.x, el buzón no existe) y **quejas**: rebotado al instante. **Blandos** (4.x.x, buzón lleno, servidor caído): rebotado al repetirse 3 veces en 30 días.
+- Las respuestas automáticas y los mensajes que no son informes de entrega se ignoran. La dirección puede **reactivar** un correo rebotado con un motivo (queda en la auditoría). Pantalla: Marketing → Consentimientos → Rebotes recientes.
+
+### Canales de Brevo y Mailchimp (Marketing → Canales de envío)
+- Cada despacho usa **su propia cuenta**: clave de la API, remitente (verificado en el proveedor) y, en Mailchimp, la audiencia. Solo la dirección los configura; la clave no vuelve a mostrarse (solo sus 4 últimas cifras) y cualquier cambio exige volver a **probar la conexión**.
+- Guilda decide la audiencia y sube **solo a quien tiene consentimiento**: en Brevo, a una lista nueva por envío; en Mailchimp, a la audiencia y a un segmento estático por envío. La campaña usa el HTML de Guilda con las etiquetas del proveedor para el nombre y el enlace de baja, y se envía.
+- **Un envío por proveedor no se reintenta solo**: si algo falla se cancela con el motivo, porque el proveedor podría haber enviado ya y repetirlo duplicaría correos a clientes.
+- Las **bajas** y los **rebotes** de cada proveedor se traen de vuelta (mismo timer que los rebotes) y se aplican al registro de consentimientos.
+- Hasta 2.000 destinatarios por envío (se suben de uno en uno); para más, usar el CSV de la audiencia en la propia herramienta.
+- **Importante:** las llamadas siguen la documentación oficial de Brevo v3 y Mailchimp Marketing 3.0 y están probadas contra un transporte simulado, **no contra cuentas reales**. Antes del primer envío real: «Probar conexión» y un envío pequeño a un grupo de prueba.
+
+### Editor visual de plantillas
+En la plantilla, los bloques se **arrastran** para reordenarlos (o con los botones ↑ ↓, que también funcionan con teclado y en el móvil), se añaden desde una paleta, se quitan, y a la derecha hay una **vista previa en vivo** que pide el HTML al servidor (el mismo código que arma el correo real). Si el script no carga, sigue funcionando el formulario de siempre. No se ha podido probar en un navegador en este entorno: conviene comprobarlo a mano en Chrome, Safari y móvil.
+
+### Aviso automático de firma de Documenso
+- **Webhook** `POST /webhooks/documenso`: en Documenso, Ajustes → Webhooks, URL `https://<tu dominio>/webhooks/documenso`, evento de documento completado (y rechazado) y un **secreto**; el mismo texto en `DOCUMENSO_WEBHOOK_SECRET`. Documenso lo manda tal cual en la cabecera `X-Documenso-Secret`; sin la variable el endpoint no acepta nada. **El contenido del aviso no se da por bueno**: solo sirve para saber qué documento es, y el estado se pregunta a la API de Documenso. Por eso no importa cómo se llame el evento.
+- Al firmarse o rechazarse: se anota, se guarda el PDF firmado y se **avisa a quien creó el documento** (en la app y por push).
+- **Respaldo:** `scripts/sincronizar_firmas.py` (timer cada 30 minutos) repasa los pendientes por si algún aviso se perdió.
+
 ### Lo que NO hace (todavía)
-- **No usa Listmonk.** Listmonk envía a una lista entera por despacho y no permite apuntar a un segmento con las garantías de arriba; por eso el envío es propio. Tampoco hay conectores de Brevo, Mailchimp o GoHighLevel: de momento se descarga la audiencia en CSV.
-- **No detecta rebotes ni mide aperturas.** Un correo rebotado se marca a mano; el envío con error queda anotado por destinatario.
-- No hay editor visual de arrastrar y soltar (los bloques se ordenan editando la lista) ni versiones de plantilla.
-- Los prospectos solo entran si su oportunidad no está enlazada a un cliente (al convertirse, pasan a ser cliente).
+- **No usa Listmonk** (envía a una lista entera por despacho; no permite apuntar a un segmento con las garantías de arriba).
+- No mide aperturas ni clics en el canal propio (los proveedores sí, en su panel).
+- Los prospectos solo entran si su oportunidad no está enlazada a un cliente.
+- El editor no tiene bloques de varias columnas ni versiones de plantilla.
 
 ## Puesta en producción
 
-1. **Migración 013** (ocho tablas): con el superusuario, antes de reiniciar.
+1. **Migraciones 013 y 014** (diez tablas y tres columnas): con el superusuario, antes de reiniciar.
    ```
    sudo bash -c 'set -a; source /etc/guilda-pg-admin.env; set +a; cd /home/guilda/guilda-work && runuser -u guilda --preserve-environment -- .venv/bin/python scripts/migrar_esquema_pg.py'
    ```
 2. **Reiniciar** `guilda-work`, `guilda-work-mcp` y `guilda-backoffice`.
-3. **Canal de envío propio** (solo si se va a enviar marketing): en `/etc/guilda-work.env`, `MARKETING_SMTP_HOST`, `MARKETING_SMTP_USUARIO`, `MARKETING_SMTP_CONTRASENA`, `MARKETING_SMTP_REMITENTE` y, si no es el 587, `MARKETING_SMTP_PUERTO`. **No reutilices el `PORTAL_SMTP_*`**: lleva los enlaces de acceso del portal y no debe compartir reputación con el marketing. Después, instalar `deploy/marketing-envios.service` y `.timer` (cambiar `USUARIO`) y activar el timer. Sin las variables todo funciona salvo enviar.
-4. **Datos legales del despacho** (CIF y dirección fiscal): sin ellos no se generan los documentos ni se programan envíos.
+3. **Firmas de Documenso:** `DOCUMENSO_WEBHOOK_SECRET` en `/etc/guilda-work.env`, el webhook en Documenso, y el timer de respaldo (`deploy/sincronizar-firmas.service` y `.timer`).
+4. **Marketing por el canal propio:** `MARKETING_SMTP_HOST`, `MARKETING_SMTP_USUARIO`, `MARKETING_SMTP_CONTRASENA`, `MARKETING_SMTP_REMITENTE` (y `MARKETING_SMTP_PUERTO`, `MARKETING_SMTP_RETORNO` si hacen falta) y el timer `deploy/marketing-envios.*`. **No reutilices el `PORTAL_SMTP_*`.** Rebotes: `MARKETING_IMAP_HOST`, `MARKETING_IMAP_USUARIO`, `MARKETING_IMAP_CONTRASENA` (y `MARKETING_IMAP_PUERTO`, `MARKETING_IMAP_CARPETA`) y el timer `deploy/procesar-rebotes.*`.
+5. **Marketing por Brevo o Mailchimp:** nada en el servidor; la dirección configura la clave en Marketing → Canales de envío y prueba la conexión. El timer de rebotes también trae sus bajas.
+6. **Datos legales del despacho** (CIF y dirección fiscal): sin ellos no se generan los documentos ni se programan envíos.
 
 ## Revisión jurídica pendiente (la hace una persona, no el código)
 Los cinco textos de serie, el aviso del pie y el flujo de consentimiento y baja deben revisarse con el criterio profesional del despacho (RGPD, LOPDGDD y LSSI) antes de usarlos con clientes.

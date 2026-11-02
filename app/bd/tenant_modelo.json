@@ -1267,6 +1267,16 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "marketing_proveedores": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "marketing_rebotes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "mcp_auditoria": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

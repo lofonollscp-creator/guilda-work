@@ -424,6 +424,12 @@ CREATE POLICY aislamiento ON marketing_grupos USING (tenant_id = nullif(current_
 ALTER TABLE marketing_plantillas ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON marketing_plantillas;
 CREATE POLICY aislamiento ON marketing_plantillas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE marketing_proveedores ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON marketing_proveedores;
+CREATE POLICY aislamiento ON marketing_proveedores USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE marketing_rebotes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON marketing_rebotes;
+CREATE POLICY aislamiento ON marketing_rebotes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE mcp_auditoria ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON mcp_auditoria;
 CREATE POLICY aislamiento ON mcp_auditoria USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

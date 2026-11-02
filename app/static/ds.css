@@ -283,3 +283,19 @@ tr[hidden] { display: none; }
 .ds-texto-documento-editor { width: 100%; font-family: ui-monospace, monospace; font-size: 13px; line-height: 1.5; }
 
 .ds-vista-correo { width: 100%; height: 520px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+
+/* Editor visual de plantillas de correo (marketing_editor.js): arrastrar, subir/bajar y vista previa en vivo. Sin JS se ve el formulario normal. */
+.mk-editor { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .mk-editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .mk-paleta { grid-column: 1 / -1; } }
+.mk-paleta { display: flex; flex-wrap: wrap; gap: 8px; }
+.mk-lista { display: grid; gap: 12px; align-content: start; }
+.mk-bloque { display: grid; gap: 8px; margin: 0; }
+.mk-barra { display: flex; gap: 6px; justify-content: flex-end; }
+.mk-asa { cursor: grab; }
+.mk-arrastrando { opacity: .45; }
+.mk-sobre { outline: 2px dashed var(--accent, #2f6fed); outline-offset: 2px; }
+.mk-bloque[data-tipo="divisor"] textarea, .mk-bloque[data-tipo="divisor"] input[name="url"],
+.mk-bloque[data-tipo="titulo"] input[name="url"], .mk-bloque[data-tipo="texto"] input[name="url"] { display: none; }
+.mk-vista { position: sticky; top: 16px; align-self: start; }
+.mk-con-error { outline: 2px solid var(--danger, #c0392b); }
+[data-mk-anadir][hidden] { display: none !important; }
