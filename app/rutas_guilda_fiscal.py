@@ -13,7 +13,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
+from . import acceso, db, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_panel as fpn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
 from .fiscal_modelos import motor_131, motor_390
 from .fiscal_modelos.apuntes import Apunte
@@ -97,7 +97,7 @@ def cartera():
 @login_required
 def vencimientos():
     dias = request.args.get("dias", 60, type=int)
-    panel = fn.panel_vencimientos(g.tenant_id, g.usuario_id, dias=dias if dias in (30, 60, 90, 180) else 60)
+    panel = fpn.panel_vencimientos(g.tenant_id, g.usuario_id, dias=dias if dias in (30, 60, 90, 180) else 60)
     solo = request.args.get("responsable")
     if solo is not None:
         panel["filas"] = [f for f in panel["filas"] if f["responsable"] == solo]
@@ -141,7 +141,7 @@ def _recordatorio(c: dict, periodo: tuple[int, str]) -> dict | None:
 def recordatorios():
     """Recordatorios sugeridos a los clientes con lo que falta para su 303. Nada sale solo: se revisa el texto (editable), se marcan los que se quieren y se confirma."""
     error = resultado = None
-    sugeridos = fn.recordatorios_sugeridos(g.tenant_id, g.usuario_id)
+    sugeridos = fpn.recordatorios_sugeridos(g.tenant_id, g.usuario_id)
     if request.method == "POST":
         elegidos = set(request.form.getlist("envio"))
         if not elegidos:
@@ -152,10 +152,10 @@ def recordatorios():
             envios = [{"cliente_id": s["cliente_id"], "ejercicio": s["ejercicio"], "trimestre": s["trimestre"], "asunto": request.form.get(f"asunto_{s['clave']}_{s['cliente_id']}", ""),
                        "texto": request.form.get(f"texto_{s['clave']}_{s['cliente_id']}", "")} for s in sugeridos if f"{s['clave']}_{s['cliente_id']}" in elegidos]
             try:
-                resultado = fn.enviar_recordatorios(g.tenant_id, g.usuario_id, envios, url_for("portal_cliente.entrar", _external=True))
+                resultado = fpn.enviar_recordatorios(g.tenant_id, g.usuario_id, envios, url_for("portal_cliente.entrar", _external=True))
             except ErrorFiscal as e:
                 error = str(e)
-            sugeridos = fn.recordatorios_sugeridos(g.tenant_id, g.usuario_id)
+            sugeridos = fpn.recordatorios_sugeridos(g.tenant_id, g.usuario_id)
     for s in sugeridos:
         s["mensaje"] = _mensaje_recordatorio(s["pendiente"], s["ejercicio"], s["trimestre"])
     return render_template("fiscal_recordatorios.html", sugeridos=[s for s in sugeridos if s["mensaje"]], resultado=resultado, error=error, dias=fc.DIAS_ENTRE_RECORDATORIOS), (400 if error else 200)

@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from app import db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_perfiles as fp, verticales
+from app import db, facturas_contables as fc, fiscal_nucleo as fn, fiscal_panel as fpn, fiscal_perfiles as fp, verticales
 from app.db_fiscal import crear_cliente_fiscal
 from tests.conftest import iniciar_sesion_de_prueba
 
@@ -425,7 +425,7 @@ def test_panel_de_vencimientos_con_carga_de_trabajo(cliente):
                      (t, c, uid, modelo, periodo, limite))
     conn.commit()
     conn.close()
-    p = fn.panel_vencimientos(t, uid, dias=60, hoy=date(2026, 7, 1))
+    p = fpn.panel_vencimientos(t, uid, dias=60, hoy=date(2026, 7, 1))
     assert [(f["modelo"], f["periodo"], f["nivel"]) for f in p["filas"]] == [("303", "1T 2026", "vencido"), ("303", "2T 2026", "proximo"), ("111", "2T 2026", "proximo")]       # el 3T queda fuera de 60 días
     assert p["vencidos"] == 1 and [f["carga"] for f in p["filas"]] == [4, 4, 1] and p["filas"][0]["declaracion"] is None
     assert p["semanas"][0]["inicio"] is None and p["semanas"][1]["vencimientos"] == 2 and p["semanas"][1]["carga"] == 5
@@ -446,7 +446,7 @@ def test_panel_de_vencimientos_enlaza_el_borrador_y_avisa_si_no_hay_apuntes(clie
                      (t, c, uid, modelo, periodo, limite))
     conn.commit()
     conn.close()
-    filas = {(f["modelo"], f["periodo"]): f for f in fn.panel_vencimientos(t, uid, dias=400, hoy=date(2026, 7, 1))["filas"]}
+    filas = {(f["modelo"], f["periodo"]): f for f in fpn.panel_vencimientos(t, uid, dias=400, hoy=date(2026, 7, 1))["filas"]}
     assert filas[("130", "2026-T1")]["apuntes"] == 0 and filas[("130", "2026-T1")]["sin_apuntes"]
     assert filas[("130", "2026-T2")]["apuntes"] == 1 and not filas[("130", "2026-T2")]["sin_apuntes"] and filas[("131", "2026-T2")]["apuntes"] == 1
     assert filas[("303", "2026-T2")]["apuntes"] == 1 and filas[("390", "2026-anual")]["apuntes"] is None and not filas[("390", "2026-anual")]["sin_apuntes"]
@@ -481,7 +481,7 @@ def test_recordatorios_sugeridos_se_envian_solo_con_confirmacion(cliente, monkey
     enviados = []
     monkeypatch.setattr(ne, "configurado", lambda: True)
     monkeypatch.setattr(ne, "enviar_recordatorio_fiscal", lambda *a, **k: enviados.append((a, k)))
-    sug = {s["nombre"]: s for s in fn.recordatorios_sugeridos(t, uid)}
+    sug = {s["nombre"]: s for s in fpn.recordatorios_sugeridos(t, uid)}
     assert sug["Empresa Web SL"]["puede"] and not sug["Sin Correo SL"]["puede"] and not enviados
     pagina = cliente.get("/guilda-fiscal/recordatorios").get_data(as_text=True)
     assert "Recordatorios a los clientes" in pagina and "Empresa Web SL" in pagina and "no tiene email" in pagina and not enviados
@@ -491,7 +491,7 @@ def test_recordatorios_sugeridos_se_envian_solo_con_confirmacion(cliente, monkey
     ok = cliente.post("/guilda-fiscal/recordatorios", data={"envio": k, "confirmo": "1", f"asunto_{k}": "Faltan facturas", f"texto_{k}": "Hola, nos faltan tus facturas."})
     assert ok.status_code == 200 and "Recordatorios enviados: 1" in ok.get_data(as_text=True)
     assert enviados[0][0][:3] == ("cliente@ejemplo.com", "Faltan facturas", "Hola, nos faltan tus facturas.")
-    assert fn.recordatorios_sugeridos(t, uid)[0]["reciente"]
+    assert fpn.recordatorios_sugeridos(t, uid)[0]["reciente"]
     otra = cliente.post("/guilda-fiscal/recordatorios", data={"envio": k, "confirmo": "1", f"asunto_{k}": "x", f"texto_{k}": "y"}).get_data(as_text=True)
     assert len(enviados) == 1                                                                                          # no se repite por el mismo periodo
 
