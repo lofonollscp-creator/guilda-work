@@ -125,6 +125,14 @@ def _sembrar(uid: int, tenant: int) -> dict:
         inst = fn.crear_instantanea(tenant, uid, c1, ejercicio=2026, periodo="3T")
         dec = fn.calcular_declaracion(tenant, uid, inst["id"], destino_negativo="C")
         declaracion_id = dec["id"]
+        try:                                                          # variantes: exportada → presentada → rectificativa
+            fn.revisar_declaracion(tenant, uid, declaracion_id)
+            fn.exportar_declaracion(tenant, uid, declaracion_id)
+            fn.marcar_presentada(tenant, uid, declaracion_id, "REF-0001", justificante="1234567890123", csv="ABCD1234EFGH5678")
+            rect = fn.rectificar_declaracion(tenant, uid, declaracion_id, justificante="1234567890123")
+            rectificativa_id = rect["id"]
+        except Exception as e:
+            print("SIN VARIANTES", e)
         for tipo, n, quien, base in (("recibida", "F-2026-114", "Suministros Ríos SL", "1200"), ("emitida", "A-0031", "Construcciones Vidal", "3400"), ("recibida", "F-2026-121", "Gráficas Norte SA", "260,50")):
             fc.crear(tenant, uid, c1, {"tipo": tipo, "fecha": _dia(-3), "numero": n, "tercero_nombre": quien, "tercero_nif": "B12345678"}, [{"base": base, "pct_iva": "21"}])
     except Exception as e:                                            # solo es decorado de la captura
@@ -132,7 +140,7 @@ def _sembrar(uid: int, tenant: int) -> dict:
     db.guardar_fichaje_datos(uid, "Jorge Capturas", "12345678Z")
     db.fichar(uid, tenant, "entrada")
     tareas = db.listar_tareas_outlook(uid) if hasattr(db, "listar_tareas_outlook") else []
-    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1, "cliente": c1, "apunte": locals().get("apunte_id", 1), "declaracion": locals().get("declaracion_id", 1), "tarea": tareas[0]["id"] if tareas else 1}
+    return {"mensaje": primero, "cuenta": cuenta, "proyecto": p1, "cliente": c1, "apunte": locals().get("apunte_id", 1), "declaracion": locals().get("declaracion_id", 1), "rectificativa": locals().get("rectificativa_id", 1), "tarea": tareas[0]["id"] if tareas else 1}
 
 
 PAGINAS = [

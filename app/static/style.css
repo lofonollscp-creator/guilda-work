@@ -2540,7 +2540,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   font-size: 0.8em;
   font-weight: 700;
   color: #fff;
-  background: color-mix(in srgb, var(--avatar-color, #7c8ba1) 85%, black 0%);
+  background: color-mix(in srgb, var(--avatar-color, #7c8ba1) 70%, black);
 }
 .avatar-circulo.avatar-grande { width: 48px; height: 48px; font-size: 0.95em; }
 
