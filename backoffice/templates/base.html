@@ -35,6 +35,7 @@
       <p class="nav-grupo">Comercial</p>
       {{ enlace(url_for('rutas.comunicados_vista'), 'Comunicados', 'bell', endpoint == 'rutas.comunicados_vista') }}
       {{ enlace(url_for('rutas.leads'), 'Leads', 'mail', endpoint == 'rutas.leads') }}
+      {{ enlace(url_for('rutas.ayuda_publica'), 'Ayuda pública', 'message-circle', endpoint == 'rutas.ayuda_publica') }}
       {{ enlace(url_for('rutas.solicitudes'), 'Solicitudes del portal', 'message-circle', endpoint == 'rutas.solicitudes') }}
       <p class="nav-grupo">Facturación</p>
       {{ enlace(url_for('rutas.planes'), 'Planes y extras', 'credit-card', endpoint == 'rutas.planes') }}

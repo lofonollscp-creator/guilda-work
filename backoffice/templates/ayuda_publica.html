@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Ayuda pública{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Ayuda pública</h1><p class="muted">Lo que dicen los visitantes de help.guildawork.com, de forma anónima: las búsquedas que no encuentran nada y los votos «¿Te ha servido?».</p></header>
+
+<h2>Búsquedas sin resultado</h2>
+<p class="muted">Cada una es una guía que falta o un sinónimo que añadir. Márcala como resuelta cuando ya esté cubierta.</p>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Búsqueda</th><th>Idioma</th><th>Veces</th><th>Última</th><th></th></tr></thead>
+  <tbody>
+    {% for b in busquedas %}
+    <tr><td>{{ b.consulta }}</td><td>{{ b.idioma }}</td><td>{{ b.veces }}</td><td>{{ b.ultima_en|fecha }}</td>
+      <td class="acciones"><form method="post" action="{{ url_for('rutas.ayuda_busqueda_borrar', busqueda_id=b.id) }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">Resuelta</button></form></td></tr>
+    {% else %}<tr><td colspan="5" class="vacio">Todavía no hay búsquedas sin resultado.</td></tr>{% endfor %}
+  </tbody></table></div>
+
+<h2>Guías según los votos</h2>
+<p class="muted">De la menos útil a la más. Una guía con pocos votos dice poco: fíjate en las que tienen varios.</p>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Guía</th><th>Votos</th><th>Les sirvió</th></tr></thead>
+  <tbody>
+    {% for g in guias %}
+    <tr><td><a href="https://help.guildawork.com/{{ g.pagina }}/" target="_blank" rel="noopener">{{ g.pagina }}</a></td><td>{{ g.votos }}</td><td>{{ g.pct_util }} %</td></tr>
+    {% else %}<tr><td colspan="3" class="vacio">Todavía no hay votos.</td></tr>{% endfor %}
+  </tbody></table></div>
+{% endblock %}
