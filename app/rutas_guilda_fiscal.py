@@ -158,7 +158,7 @@ def recordatorios():
             sugeridos = fpn.recordatorios_sugeridos(g.tenant_id, g.usuario_id)
     for s in sugeridos:
         s["mensaje"] = _mensaje_recordatorio(s["pendiente"], s["ejercicio"], s["trimestre"])
-    return render_template("fiscal_recordatorios.html", sugeridos=[s for s in sugeridos if s["mensaje"]], resultado=resultado, error=error, dias=fc.DIAS_ENTRE_RECORDATORIOS), (400 if error else 200)
+    return render_template("guilda_fiscal_recordatorios.html", sugeridos=[s for s in sugeridos if s["mensaje"]], resultado=resultado, error=error, dias=fc.DIAS_ENTRE_RECORDATORIOS), (400 if error else 200)
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>")

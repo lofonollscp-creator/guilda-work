@@ -213,7 +213,7 @@ def test_alta_rapida_en_la_lista_general_de_tareas(cliente):
     cliente.post("/tareas/", data={"asunto": "Solo un título normal"})
     n = [x for x in db.listar_tareas_outlook(uid) if x["asunto"] == "Solo un título normal"][0]
     assert n["fecha_vencimiento"] is None and n["prioridad"] == "normal"
-    assert "viernes 10h" in cliente.get("/tareas/").get_data(as_text=True)
+    assert "«@luis», «!alta», «#proyecto»" in cliente.get("/tareas/").get_data(as_text=True)
 
 
 def test_el_javascript_y_las_rutas_apuntan_a_lo_mismo(cliente):

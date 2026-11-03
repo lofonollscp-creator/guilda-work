@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Recordatorios a los clientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Recordatorios a los clientes') }}</h1>
+    <p class="subtitle">{{ _('Clientes a los que les faltan facturas para su 303 y cuyo vencimiento se acerca. Guilda Work propone el mensaje; tú lo revisas, lo editas si quieres y confirmas. Nada sale solo.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('guilda_fiscal.cartera') }}">‹ {{ _('Cartera') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if resultado %}
+<p class="portal-peticion" role="status"><strong>{{ _('Recordatorios enviados: %(n)s', n=resultado.enviados) }}</strong></p>
+{% if resultado.omitidos %}<ul class="muted">{% for nombre, motivo in resultado.omitidos %}<li>{{ nombre }}: {{ motivo }}</li>{% endfor %}</ul>{% endif %}
+{% endif %}
+{% if not sugeridos %}
+{{ estado_vacio(_('No hay recordatorios que enviar'), _('Ningún vencimiento del 303 próximo tiene facturas pendientes de pedir al cliente.')) }}
+{% else %}
+<form method="post" class="edit-form">
+  {% for s in sugeridos %}
+  {% set k = s.clave ~ '_' ~ s.cliente_id %}
+  <section class="dash-panel ds-mb-16">
+    <label class="checkbox-label"><input type="checkbox" name="envio" value="{{ k }}" {{ 'checked' if s.puede }} {{ 'disabled' if not s.puede }}>
+      <strong>{{ s.nombre }}</strong> · {{ s.trimestre }} {{ s.ejercicio }} · {{ _('vence el %(f)s', f=s.fecha_limite) }}
+      {% if s.dias < 0 %}<span class="pill semaforo-rojo">{{ _('Vencido') }}</span>{% endif %}</label>
+    <p class="muted">{% if not s.email %}{{ _('Este cliente no tiene email en su ficha: no se puede avisar.') }}{% elif s.reciente %}{{ _('Ya se le recordó el %(f)s (hace menos de %(n)s días).', f=s.ultimo[:10], n=dias) }}{% else %}{{ _('Se enviará a %(e)s', e=s.email) }}{% endif %}</p>
+    {% if s.puede %}
+    <label>{{ _('Asunto') }}<input type="text" name="asunto_{{ k }}" value="{{ s.mensaje.asunto }}" maxlength="200"></label>
+    <label>{{ _('Mensaje') }}<textarea name="texto_{{ k }}" rows="9" maxlength="4000">{{ s.mensaje.texto }}</textarea></label>
+    {% endif %}
+  </section>
+  {% endfor %}
+  <label class="checkbox-label"><input type="checkbox" name="confirmo" value="1" required> {{ _('Confirmo que quiero enviar un correo a los clientes marcados con el texto de arriba.') }}</label>
+  <button type="submit" class="btn btn-primary">{{ _('Enviar los recordatorios marcados') }}</button>
+  <p class="muted">{{ _('El correo lleva la marca de tu despacho y un botón al portal del cliente.') }}</p>
+</form>
+{% endif %}
+{% endblock %}
