@@ -19693,3 +19693,63 @@ msgstr "Sur votre mobile et votre navigateur vous verrez seulement « Vous avez 
 #: app/templates/base.html
 msgid "Novedades en la ayuda"
 msgstr "Nouveautés de l'aide"
+
+#: app/templates/error.html
+msgid "No tienes acceso a esta página"
+msgstr "Vous n'avez pas accès à cette page"
+
+#: app/templates/error.html
+msgid "Tu usuario no tiene permiso para verla. Si crees que es un error, pídeselo a la dirección de tu despacho."
+msgstr "Votre utilisateur n'a pas la permission de la voir. Si vous pensez que c'est une erreur, demandez à la direction de votre cabinet."
+
+#: app/templates/error.html
+msgid "Esta página no existe"
+msgstr "Cette page n'existe pas"
+
+#: app/templates/error.html
+msgid "Puede que el enlace esté anticuado, que se haya movido o que ese módulo no esté activado en tu despacho."
+msgstr "Le lien est peut-être périmé, a été déplacé ou ce module n'est pas activé dans votre cabinet."
+
+#: app/templates/error.html
+msgid "Esta acción no está permitida aquí"
+msgstr "Cette action n'est pas autorisée ici"
+
+#: app/templates/error.html
+msgid "Vuelve al inicio y prueba desde el menú."
+msgstr "Revenez à l'accueil et essayez depuis le menu."
+
+#: app/templates/error.html
+msgid "Demasiadas peticiones seguidas"
+msgstr "Trop de requêtes à la suite"
+
+#: app/templates/error.html
+msgid "Espera un momento y vuelve a intentarlo."
+msgstr "Patientez un instant et réessayez."
+
+#: app/templates/error.html
+msgid "Algo ha fallado por nuestra parte"
+msgstr "Un problème est survenu de notre côté"
+
+#: app/templates/error.html
+msgid "Se ha registrado para que lo revisemos. Prueba de nuevo en unos minutos; si sigue igual, dinos la referencia de abajo."
+msgstr "Il a été enregistré pour que nous l'examinions. Réessayez dans quelques minutes ; si cela persiste, indiquez-nous la référence ci-dessous."
+
+#: app/templates/error.html
+msgid "Ir al inicio"
+msgstr "Aller à l'accueil"
+
+#: app/templates/correo_bandeja.html
+msgid "Seleccionar mensaje"
+msgstr "Sélectionner le message"
+
+#: app/main.py
+msgid "Verificar el código"
+msgstr "Vérifier le code"
+
+#: app/main.py
+msgid "Generar nuevos códigos de recuperación"
+msgstr "Générer de nouveaux codes de récupération"
+
+#: app/templates/docs/pagina.html
+msgid "Contenido de la guía"
+msgstr "Contenu du guide"

@@ -299,3 +299,6 @@ tr[hidden] { display: none; }
 .mk-vista { position: sticky; top: 16px; align-self: start; }
 .mk-con-error { outline: 2px solid var(--danger, #c0392b); }
 [data-mk-anadir][hidden] { display: none !important; }
+
+/* Las filas de botones/controles pasan a la línea siguiente en pantallas estrechas en vez de salirse de la pantalla (las que caben no cambian). */
+@media (max-width: 900px) { .ds-fila { flex-wrap: wrap !important; } }

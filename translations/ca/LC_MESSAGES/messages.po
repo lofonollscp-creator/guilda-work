@@ -19617,3 +19617,63 @@ msgstr "Al mòbil i al navegador només veuràs «Tens un avís nou», sense nom
 #: app/templates/base.html
 msgid "Novedades en la ayuda"
 msgstr "Novetats a l'ajuda"
+
+#: app/templates/error.html
+msgid "No tienes acceso a esta página"
+msgstr "No tens accés a aquesta pàgina"
+
+#: app/templates/error.html
+msgid "Tu usuario no tiene permiso para verla. Si crees que es un error, pídeselo a la dirección de tu despacho."
+msgstr "El teu usuari no té permís per veure-la. Si creus que és un error, demana-ho a la direcció del teu despatx."
+
+#: app/templates/error.html
+msgid "Esta página no existe"
+msgstr "Aquesta pàgina no existeix"
+
+#: app/templates/error.html
+msgid "Puede que el enlace esté anticuado, que se haya movido o que ese módulo no esté activado en tu despacho."
+msgstr "Potser l'enllaç és antic, s'ha mogut o aquest mòdul no està activat al teu despatx."
+
+#: app/templates/error.html
+msgid "Esta acción no está permitida aquí"
+msgstr "Aquesta acció no està permesa aquí"
+
+#: app/templates/error.html
+msgid "Vuelve al inicio y prueba desde el menú."
+msgstr "Torna a l'inici i prova des del menú."
+
+#: app/templates/error.html
+msgid "Demasiadas peticiones seguidas"
+msgstr "Massa peticions seguides"
+
+#: app/templates/error.html
+msgid "Espera un momento y vuelve a intentarlo."
+msgstr "Espera un moment i torna-ho a provar."
+
+#: app/templates/error.html
+msgid "Algo ha fallado por nuestra parte"
+msgstr "Alguna cosa ha fallat per la nostra part"
+
+#: app/templates/error.html
+msgid "Se ha registrado para que lo revisemos. Prueba de nuevo en unos minutos; si sigue igual, dinos la referencia de abajo."
+msgstr "S'ha registrat perquè ho revisem. Prova-ho de nou d'aquí a uns minuts; si continua igual, digues-nos la referència d'a sota."
+
+#: app/templates/error.html
+msgid "Ir al inicio"
+msgstr "Vés a l'inici"
+
+#: app/templates/correo_bandeja.html
+msgid "Seleccionar mensaje"
+msgstr "Seleccionar el missatge"
+
+#: app/main.py
+msgid "Verificar el código"
+msgstr "Verificar el codi"
+
+#: app/main.py
+msgid "Generar nuevos códigos de recuperación"
+msgstr "Generar nous codis de recuperació"
+
+#: app/templates/docs/pagina.html
+msgid "Contenido de la guía"
+msgstr "Contingut de la guia"

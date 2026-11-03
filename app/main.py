@@ -235,6 +235,9 @@ def _msg_kratos(mensaje) -> str:
         ("Recovery code", _("Código de recuperación")),
         ("Verification code", _("Código de verificación")),
         ("Resend code", _("Reenviar el código")),
+        ("Save", _("Guardar")),
+        ("Verify code", _("Verificar el código")),
+        ("Generate new backup recovery codes", _("Generar nuevos códigos de recuperación")),
         ("Continue", _("Continuar")),
         ("Submit", _("Enviar")),
         ("Password", _("Contraseña")),
@@ -246,6 +249,18 @@ def _msg_kratos(mensaje) -> str:
 
 
 app.add_template_filter(_msg_kratos, "msg_kratos")
+
+
+def _js_texto(valor) -> str:
+    """Un texto (traducido) para ponerlo DENTRO de un literal de JavaScript entre comillas: `'{{ _("No s'ha pogut")|js_texto }}'`. Sin esto, un apóstrofo del catalán o del francés cerraba la cadena y el script entero fallaba."""
+    from markupsafe import Markup
+    s = json.dumps(str(valor), ensure_ascii=False)[1:-1]
+    for c, e in (("<", "\\u003c"), (">", "\\u003e"), ("&", "\\u0026"), ("'", "\\u0027"), ("\u2028", "\\u2028"), ("\u2029", "\\u2029")):
+        s = s.replace(c, e)
+    return Markup(s)
+
+
+app.add_template_filter(_js_texto, "js_texto")
 
 
 def _comentario_html(texto, mencionados=()):
@@ -342,13 +357,28 @@ def _registrar_excepcion_no_controlada(error):
             # 404/405 de enrutado (antes de entrar en el blueprint): también JSON uniforme, nunca HTML, para la API.
             from .rutas_api import _codigo_de
             return jsonify(ok=False, error=error.description, codigo=_codigo_de(error.code), request_id=peticion.id_actual()), error.code
-        return error
+        pagina = _pagina_de_error(error.code, error.description if error.description != type(error).description else None)
+        return pagina if pagina is not None else error
     logger.exception("Excepción no controlada en %s %s [req %s]", request.method, request.path, peticion.id_actual())
     sentry_sdk.capture_exception(error)
-    return (jsonify(ok=False, error=_("Ha ocurrido un error interno. Se ha registrado para revisión."), codigo="error_interno", request_id=peticion.id_actual()), 500) if request.path.startswith("/api/") else (
-        _("Ha ocurrido un error interno. Se ha registrado para revisión."),
-        500,
-    )
+    if request.path.startswith("/api/"):
+        return jsonify(ok=False, error=_("Ha ocurrido un error interno. Se ha registrado para revisión."), codigo="error_interno", request_id=peticion.id_actual()), 500
+    return _pagina_de_error(500, None) or (_("Ha ocurrido un error interno. Se ha registrado para revisión."), 500)
+
+
+def _pagina_de_error(codigo, detalle):
+    """Página con el estilo de la app para los errores de una pantalla (nunca el «Not Found» crudo del servidor). Solo si quien pide acepta HTML: fuera, la respuesta de siempre."""
+    textos = {
+        403: (_("No tienes acceso a esta página"), _("Tu usuario no tiene permiso para verla. Si crees que es un error, pídeselo a la dirección de tu despacho.")),
+        404: (_("Esta página no existe"), _("Puede que el enlace esté anticuado, que se haya movido o que ese módulo no esté activado en tu despacho.")),
+        405: (_("Esta acción no está permitida aquí"), _("Vuelve al inicio y prueba desde el menú.")),
+        429: (_("Demasiadas peticiones seguidas"), _("Espera un momento y vuelve a intentarlo.")),
+        500: (_("Algo ha fallado por nuestra parte"), _("Se ha registrado para que lo revisemos. Prueba de nuevo en unos minutos; si sigue igual, dinos la referencia de abajo.")),
+    }
+    if codigo not in textos or request.is_json or not request.accept_mimetypes.accept_html:
+        return None
+    titulo, texto = textos[codigo]
+    return render_template("error.html", codigo=codigo, titulo=titulo, texto=detalle or texto, id_peticion=peticion.id_actual() if codigo >= 500 else None), codigo
 
 
 @app.before_request

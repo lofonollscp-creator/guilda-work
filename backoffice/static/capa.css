@@ -124,3 +124,13 @@ body.pagina-login {
 .boton-tema .tema-ico { display: none; }
 :root[data-preferencia="sistema"] .tema-ico-sistema, :root[data-preferencia="claro"] .tema-ico-claro, :root[data-preferencia="oscuro"] .tema-ico-oscuro { display: inline-flex; }
 :root:not([data-preferencia]) .tema-ico-sistema { display: inline-flex; }
+
+/* Que nada ensanche la página: las filas de formulario pasan a la línea siguiente y los desplegables con nombres largos (despachos) se quedan dentro de su caja. */
+select, input:not([type="checkbox"]):not([type="radio"]) { max-width: 100%; }
+.fila-catalogo > * { min-width: 0; }
+@media (max-width: 1100px) { .fila-catalogo, .fila-catalogo.nueva { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); } }
+/* Un desplegable con opciones largas (nombres de despacho) nunca es más ancho que la pantalla, aunque su etiqueta se ajuste al contenido. */
+select { max-width: min(100%, calc(100vw - 80px)); text-overflow: ellipsis; }
+.fila-campos { grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); }
+.fila-campos > *, .formulario label { min-width: 0; }
+.formulario label select { width: 100%; }

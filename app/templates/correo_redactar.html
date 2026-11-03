@@ -218,9 +218,9 @@
       if (!respuesta.ok) throw new Error("HTTP " + respuesta.status);
       const datos = await respuesta.json();
       campoBorradorId.value = datos.borrador_id;
-      if (window.mostrarToast) window.mostrarToast("{{ _('Borrador guardado.') }}", "exito");
+      if (window.mostrarToast) window.mostrarToast("{{ _('Borrador guardado.')|js_texto }}", "exito");
     } catch (err) {
-      if (window.mostrarToast) window.mostrarToast("{{ _('No se pudo guardar el borrador.') }}", "error");
+      if (window.mostrarToast) window.mostrarToast("{{ _('No se pudo guardar el borrador.')|js_texto }}", "error");
     }
   });
 })();

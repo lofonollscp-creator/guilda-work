@@ -2,7 +2,8 @@
    1) Marca <html class="js"> (para ocultar controles que solo hacen falta sin JavaScript).
    2) Evita envíos dobles: al enviar un formulario, el botón se bloquea y muestra «cargando» (se libera al volver con «atrás» o a los 20 s).
    3) Avisa antes de salir de un formulario largo con cambios sin guardar.
-   4) El botón «Más» de la barra inferior (móvil) abre el menú lateral. */
+   4) El botón «Más» de la barra inferior (móvil) abre el menú lateral.
+   5) Enlaza las etiquetas sueltas con su campo. */
 (function () {
   "use strict";
   document.documentElement.classList.add("js");
@@ -20,7 +21,7 @@
     var f = e.target;
     if (!(f instanceof HTMLFormElement) || e.defaultPrevented) return;
     cambiosSinGuardar = false;
-    if ((f.method || "").toLowerCase() !== "post" || f.target === "_blank" || f.hasAttribute("data-no-bloquear") || NO_BLOQUEAR.test(f.action || "")) return;
+    if ((f.getAttribute("method") || "").toLowerCase() !== "post" || f.target === "_blank" || f.hasAttribute("data-no-bloquear") || NO_BLOQUEAR.test(f.action || "")) return;
     var boton = e.submitter && e.submitter.tagName === "BUTTON" ? e.submitter : f.querySelector('button[type="submit"], button:not([type])');
     if (!boton || boton.disabled) return;
     // Se bloquea en el siguiente ciclo: así el botón sigue aportando su name/value al envío.
@@ -40,7 +41,7 @@
 
   // Formularios largos de edición: aviso al salir con cambios.
   document.querySelectorAll("form.edit-form, form.notas-form").forEach(function (f) {
-    if ((f.method || "").toLowerCase() !== "post") return;
+    if ((f.getAttribute("method") || "").toLowerCase() !== "post") return;
     f.addEventListener("input", function () { cambiosSinGuardar = true; });
   });
   window.addEventListener("beforeunload", function (e) {
@@ -98,4 +99,17 @@
     if (k === "Enter") { var a = actual.querySelector("a.cliente-fila-enlace, a.tarea-fila-titulo, a[href]"); if (a) { e.preventDefault(); a.click(); } return; }
     if (k === "x") { var ch = actual.querySelector(".tarea-check:not(:disabled)"); if (ch) { e.preventDefault(); ch.click(); } }
   });
+
+  /* 5) Enlaza cada <label> suelto con el campo que tiene justo al lado (sin `for` ni anidado): pulsar la etiqueta enfoca el campo y el lector de pantalla lo anuncia. */
+  var seq = 0;
+  function enlazarEtiquetas() {
+    document.querySelectorAll("label:not([for])").forEach(function (l) {
+      if (l.querySelector("input, select, textarea")) return;
+      var c = l.nextElementSibling;
+      if (!c || !/^(INPUT|SELECT|TEXTAREA)$/.test(c.tagName) || c.type === "hidden" || c.type === "checkbox" || c.type === "radio") return;
+      if (!c.id) c.id = "campo-auto-" + (++seq);
+      if (!document.querySelector('label[for="' + c.id + '"]')) l.setAttribute("for", c.id);
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", enlazarEtiquetas); else enlazarEtiquetas();
 })();

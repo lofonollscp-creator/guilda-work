@@ -19608,3 +19608,63 @@ msgstr "On your phone and browser you will only see “You have a new alert”, 
 #: app/templates/base.html
 msgid "Novedades en la ayuda"
 msgstr "What's new in help"
+
+#: app/templates/error.html
+msgid "No tienes acceso a esta página"
+msgstr "You don't have access to this page"
+
+#: app/templates/error.html
+msgid "Tu usuario no tiene permiso para verla. Si crees que es un error, pídeselo a la dirección de tu despacho."
+msgstr "Your user doesn't have permission to see it. If you think this is a mistake, ask your firm's management."
+
+#: app/templates/error.html
+msgid "Esta página no existe"
+msgstr "This page doesn't exist"
+
+#: app/templates/error.html
+msgid "Puede que el enlace esté anticuado, que se haya movido o que ese módulo no esté activado en tu despacho."
+msgstr "The link may be outdated, may have moved, or that module may not be switched on for your firm."
+
+#: app/templates/error.html
+msgid "Esta acción no está permitida aquí"
+msgstr "This action isn't allowed here"
+
+#: app/templates/error.html
+msgid "Vuelve al inicio y prueba desde el menú."
+msgstr "Go back to the start and try from the menu."
+
+#: app/templates/error.html
+msgid "Demasiadas peticiones seguidas"
+msgstr "Too many requests in a row"
+
+#: app/templates/error.html
+msgid "Espera un momento y vuelve a intentarlo."
+msgstr "Wait a moment and try again."
+
+#: app/templates/error.html
+msgid "Algo ha fallado por nuestra parte"
+msgstr "Something went wrong on our side"
+
+#: app/templates/error.html
+msgid "Se ha registrado para que lo revisemos. Prueba de nuevo en unos minutos; si sigue igual, dinos la referencia de abajo."
+msgstr "It has been logged so we can look into it. Try again in a few minutes; if it keeps happening, tell us the reference below."
+
+#: app/templates/error.html
+msgid "Ir al inicio"
+msgstr "Go to the start"
+
+#: app/templates/correo_bandeja.html
+msgid "Seleccionar mensaje"
+msgstr "Select message"
+
+#: app/main.py
+msgid "Verificar el código"
+msgstr "Verify the code"
+
+#: app/main.py
+msgid "Generar nuevos códigos de recuperación"
+msgstr "Generate new recovery codes"
+
+#: app/templates/docs/pagina.html
+msgid "Contenido de la guía"
+msgstr "Guide contents"

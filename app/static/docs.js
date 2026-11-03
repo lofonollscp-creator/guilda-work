@@ -175,3 +175,13 @@ document.querySelectorAll(".docs-code-copiar").forEach(function (boton) {
   document.addEventListener("scroll", actualizar, { passive: true });
   actualizar();
 })();
+
+// Móvil: el menú de la guía empieza plegado (si no, ocupa la primera pantalla entera antes del contenido); en escritorio siempre está abierto.
+(function () {
+  var menu = document.querySelector(".docs-sidebar-plegable");
+  if (!menu || !window.matchMedia) return;
+  var movil = window.matchMedia("(max-width: 780px)");
+  function ajustar() { menu.open = !movil.matches; }
+  ajustar();
+  if (movil.addEventListener) movil.addEventListener("change", ajustar);
+})();

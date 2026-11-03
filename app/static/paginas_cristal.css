@@ -119,3 +119,17 @@ body:has(.auth-shell) { background-color: #0a0a0c; background-image: none; }
   .auth-card { padding: 28px 22px; border-radius: 24px; }
 }
 @media (prefers-reduced-motion: reduce) { .portal-carpeta { transition: none; } .portal-carpeta:hover { transform: none; } }
+
+/* Portal de cliente en móvil: un nombre de cliente kilométrico se parte en vez de ensanchar la pantalla, y los iconos de la cabecera tienen zona de pulsación de ~44 px. */
+.portal-cliente-shell .page-header { flex-wrap: wrap; min-width: 0; }
+.portal-cliente-shell .page-header > div, .portal-cliente-shell .page-header h1 { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+@media (pointer: coarse), (max-width: 640px) {
+  .portal-cliente-shell .page-header a { position: relative; }
+  .portal-cliente-shell .page-header a::after { content: ""; position: absolute; inset: -7px; }
+}
+
+/* Páginas de error (404, 403, 500…) */
+.error-pagina { text-align: center; max-width: 32rem; margin: 12vh auto 0; }
+.error-codigo { margin: 0 0 .25rem; font-size: 2.5rem; font-weight: 700; line-height: 1; color: var(--text-muted, #6b7280); }
+.error-referencia { font-size: .85rem; color: var(--text-muted, #6b7280); }
+.error-acciones { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; margin-top: 1.25rem; }

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ titulo }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <main class="portal-cliente-shell">
+    <section class="dash-panel error-pagina">
+      <p class="error-codigo">{{ codigo }}</p>
+      <h1>{{ titulo }}</h1>
+      <p>{{ texto }}</p>
+      {% if id_peticion %}<p class="error-referencia">{{ _('Referencia') }}: <code>{{ id_peticion }}</code></p>{% endif %}
+      <p class="error-acciones">
+        <a class="btn btn-primary" href="/">{{ _('Ir al inicio') }}</a>
+        <a class="btn" href="javascript:history.back()">{{ _('Volver') }}</a>
+      </p>
+    </section>
+  </main>
+</body>
+</html>

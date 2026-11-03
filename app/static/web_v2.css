@@ -1095,3 +1095,43 @@ kbd { font: 700 12px var(--font-mono); background: var(--panel-2); border: 1px s
 .notificaciones-push[hidden] { display: none; }
 .notificaciones-push .btn { width: 100%; justify-content: center; }
 .notificaciones-push p { margin: 0; font-size: 12.5px; }
+
+/* Áreas táctiles en móvil: los controles pequeños (casillas redondas, estrellas, flechas de orden, «?» de atajos, «Editar») ganan una zona de pulsación invisible de ~44 px sin cambiar su aspecto; los botones y enlaces de texto sueltos, una altura mínima. */
+@media (pointer: coarse), (max-width: 640px) {
+  .tarea-check, .favorito-boton, .menu-card-reorder-btn, .atajos-ayuda-boton, .log-edit, .onboarding-ir { position: relative; }
+  .tarea-check::after, .favorito-boton::after, .menu-card-reorder-btn::after, .atajos-ayuda-boton::after, .log-edit::after { content: ""; position: absolute; inset: -11px; }
+  .fiscal-cliente-btn, .docs-code-copiar, .docs-buscar-boton, .onboarding-ir { min-height: 32px; display: inline-flex; align-items: center; }
+  .fiscal-calendario-item { min-height: 28px; display: flex; align-items: center; }
+}
+
+/* Móvil: un título largo en la barra superior acaba en «…» en vez de cortarse a mitad de letra (los títulos con menú propio no se tocan: recortarían su desplegable). */
+@media (max-width: 820px) {
+  .top-bar-titulo[aria-hidden="true"] { display: block; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 3.5rem; }
+  .top-bar-acciones { flex: 0 1 auto; margin-left: auto; min-width: 0; }
+}
+/* En pantallas de móvil estrechas el botón de ayuda («?») cede su sitio al título de la pantalla; la ayuda sigue en el panel de ajustes. */
+@media (max-width: 480px) { .top-bar .atajos-ayuda-boton { display: none !important; } }
+@media (max-width: 400px) { .top-bar { gap: 6px; padding-left: 8px; padding-right: 8px; } .top-bar-acciones { gap: 4px; } .top-bar-accion, .top-bar-nuevo-btn { padding: 0 9px; font-size: 13px; } }
+
+/* Textos largos de verdad (nombres sin espacios, URL, referencias): se parten en vez de ensanchar la pantalla. `break-word` (y no `anywhere`) para no estrechar las columnas de las tablas. */
+main :is(h1, h2, h3, h4, p, li, strong, a, dd, dt, summary, td, th, label) { overflow-wrap: break-word; }
+.hoy-v2-arriba > *, .hoy-v2-principal > *, .tiquets-kanban-col, .contactos-grupos, .contactos-grupos .log-item > *, .notas-doc, .perfil-resumen > * { min-width: 0; }
+.tarea-fila-dato.tarea-cliente { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+
+/* Textos kilométricos (cont.): en una columna apilada el contenedor no crece más que la pantalla; los botones-lista y las tablas de informe anchas se recortan o se desplazan dentro de su caja. */
+@media (max-width: 1280px) { .hoy-v2 { align-items: stretch; } }
+.hoy-v2, .hoy-v2-principal, .hoy-v2-arriba, .perfil-resumen, .perfil-resumen-texto, .contactos-grupos { max-width: 100%; }
+.perfil-resumen-texto strong { overflow-wrap: anywhere; }
+.captura-titular { white-space: normal; text-align: left; height: auto; min-height: 44px; }
+.captura-titular strong { overflow-wrap: anywhere; }
+@media (max-width: 900px) { table.tabla, table.ds-tabla { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; } }
+.hoy-item a, .perfil-chips .pill, .perfil-resumen-texto > * { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.perfil-chips .pill { white-space: normal; }
+.tabla-caja { max-width: 100%; overflow-x: auto; }
+.nota-titulo, .log-text { min-width: 0; overflow-wrap: anywhere; }
+select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]) { max-width: 100%; }
+select { max-width: min(100%, calc(100vw - 48px)); text-overflow: ellipsis; }
+fieldset { min-width: 0; }
+label { max-width: 100%; }
+fieldset > .dash-panel { box-sizing: border-box; max-width: 100%; }
+@media (max-width: 480px) { fieldset { padding-inline: 8px; margin-inline: 0; } }

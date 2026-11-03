@@ -5074,10 +5074,10 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 }
 
 /* --- Contactos (libreta del despacho) --- */
-.contactos-rejilla { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-4, 20px); align-items: start; }
+.contactos-rejilla { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--space-4, 20px); align-items: start; }
 .contactos-grupos .log-item { display: flex; align-items: center; gap: 6px; }
 .contactos-grupos a[aria-current="page"] { font-weight: 700; }
-@media (max-width: 640px) { .contactos-rejilla { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .contactos-rejilla { grid-template-columns: minmax(0, 1fr); } }
 
 /* --- Correo C6: salud del dominio --- */
 .pill.dominio-ok { background: var(--success-bg, #12351f); color: var(--success, #6ee7a0); }
@@ -5124,7 +5124,7 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
   .correo-editor-boton { min-width: 44px; min-height: 44px; }
   .correo-compose-acciones { flex-wrap: wrap; }
   .correo-compose-acciones .btn { min-height: 44px; }
-  .contactos-rejilla { grid-template-columns: 1fr; }
+  .contactos-rejilla { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* --- Correo: cada panel con su propio desplazamiento. La página no se mueve: la lista corre arriba/abajo y el mensaje queda con su cabecera y su barra de acciones fijas. --- */

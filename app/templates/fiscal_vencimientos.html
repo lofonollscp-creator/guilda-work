@@ -117,19 +117,19 @@
     var urlBase = "/fiscal/clientes/";
 
     function pintar(datos) {
-      var modelos = (datos.modelos || []).join(", ") || "{{ _('sin modelos asignados') }}";
+      var modelos = (datos.modelos || []).join(", ") || "{{ _('sin modelos asignados')|js_texto }}";
       panel.innerHTML =
         '<p class="fiscal-detalle-nombre">' + datos.nombre + '</p>' +
         (datos.nif ? '<p class="fiscal-detalle-nif mono">' + datos.nif + '</p>' : '') +
         '<div class="fiscal-detalle-filas">' +
-        '<div class="fiscal-detalle-fila"><span>{{ _("Modelos") }}</span><span>' + modelos + '</span></div>' +
-        '<div class="fiscal-detalle-fila"><span>{{ _("Vencimientos pendientes") }}</span><span>' + datos.vencimientos_pendientes + '</span></div>' +
-        '<div class="fiscal-detalle-fila"><span>{{ _("Generación automática") }}</span><span>' + (datos.generacion_automatica ? '{{ _("Activa") }}' : '{{ _("Inactiva") }}') + '</span></div>' +
-        (datos.espocrm_url ? '<div class="fiscal-detalle-fila"><span>EspoCRM</span><span><a href="' + datos.espocrm_url + '" target="_blank" rel="noopener">{{ _("Ver cuenta") }} ↗</a></span></div>' : '') +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Modelos")|js_texto }}</span><span>' + modelos + '</span></div>' +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Vencimientos pendientes")|js_texto }}</span><span>' + datos.vencimientos_pendientes + '</span></div>' +
+        '<div class="fiscal-detalle-fila"><span>{{ _("Generación automática")|js_texto }}</span><span>' + (datos.generacion_automatica ? '{{ _("Activa")|js_texto }}' : '{{ _("Inactiva")|js_texto }}') + '</span></div>' +
+        (datos.espocrm_url ? '<div class="fiscal-detalle-fila"><span>EspoCRM</span><span><a href="' + datos.espocrm_url + '" target="_blank" rel="noopener">{{ _("Ver cuenta")|js_texto }} ↗</a></span></div>' : '') +
         '</div>' +
         '<div class="fiscal-detalle-acciones">' +
-        '<a class="btn btn-ghost" href="' + datos.url_ficha + '">{{ _("Ver ficha completa") }}</a>' +
-        '<a class="btn btn-primary" href="' + datos.url_generar_vencimientos + '">{{ _("Generar vencimientos") }}</a>' +
+        '<a class="btn btn-ghost" href="' + datos.url_ficha + '">{{ _("Ver ficha completa")|js_texto }}</a>' +
+        '<a class="btn btn-primary" href="' + datos.url_generar_vencimientos + '">{{ _("Generar vencimientos")|js_texto }}</a>' +
         '</div>';
     }
 
@@ -137,12 +137,12 @@
       boton.addEventListener("click", function () {
         var clienteId = boton.dataset.clienteId;
         panel.classList.add("abierto");
-        panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("Cargando…") }}</p>';
+        panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("Cargando…")|js_texto }}</p>';
         fetch(urlBase + clienteId + "/resumen.json")
           .then(function (r) { return r.json(); })
           .then(pintar)
           .catch(function () {
-            panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("No se ha podido cargar.") }}</p>';
+            panel.innerHTML = '<p class="fiscal-detalle-vacio">{{ _("No se ha podido cargar.")|js_texto }}</p>';
           });
       });
     });

@@ -817,3 +817,37 @@ a { color: inherit; text-decoration: none; }
 .docs-content pre, .docs-code { max-width: 100%; overflow-x: auto; }
 .docs-content table { display: block; max-width: 100%; overflow-x: auto; }
 .docs-brand img { background: #0a0a0c; border-radius: 8px; padding: 3px; box-sizing: content-box; }
+
+/* Móvil: botones de «Buscar» y «Copiar» con altura táctil cómoda (≥ 36 px). */
+@media (pointer: coarse), (max-width: 640px) {
+  .docs-buscar-boton, .docs-code-copiar { min-height: 36px; }
+  .docs-code-copiar { min-width: 56px; }
+}
+
+/* Móvil: la barra superior del centro de desarrolladores no se sale de la pantalla con textos largos (p. ej. «← Retour à l'application»). */
+@media (max-width: 640px) {
+  .docs-topbar { gap: 8px; padding: 0 12px; }
+  .docs-topbar .docs-buscar-boton { margin-left: 0; }
+  .docs-topbar-links { min-width: 0; gap: 6px; margin-left: auto; }
+  .docs-topbar-links a { max-width: 8.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* Móvil: cabecera compacta del centro de desarrolladores (marca en una línea, buscador solo con su icono, tema sin texto). */
+@media (max-width: 640px) {
+  .docs-brand span { white-space: nowrap; }
+  .docs-brand em { display: none; }
+  .docs-topbar .docs-buscar-boton { min-width: 0; padding: 6px 10px; margin: 0 0 0 auto; flex: none; }
+  .docs-buscar-placeholder, .docs-buscar-atajo { display: none; }
+  .docs-tema-boton { flex: none; padding: 0 10px; }
+  .docs-topbar-links { margin-left: 0; flex: 0 1 auto; }
+}
+
+/* Menú de la guía: en móvil se pliega bajo un botón; en escritorio el botón no se ve y el menú está siempre abierto. */
+.docs-sidebar-resumen { display: none; }
+@media (max-width: 780px) {
+  .docs-sidebar-resumen { display: flex; align-items: center; min-height: 44px; padding: 0 12px; margin: 8px 12px; border: 1px solid var(--docs-border); border-radius: 8px; font-weight: 600; cursor: pointer; list-style: none; }
+  .docs-sidebar-resumen::-webkit-details-marker { display: none; }
+  .docs-sidebar-resumen::after { content: "▾"; margin-left: auto; color: var(--docs-text-muted); }
+  .docs-sidebar-plegable[open] > .docs-sidebar-resumen::after { content: "▴"; }
+}
+.docs-tema-boton { min-width: 34px; justify-content: center; }

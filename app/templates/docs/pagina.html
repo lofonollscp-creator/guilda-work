@@ -41,6 +41,8 @@
 
   <div class="docs-shell">
     <aside class="docs-sidebar">
+      <details class="docs-sidebar-plegable" open>
+      <summary class="docs-sidebar-resumen">{{ _('Contenido de la guía') }}</summary>
       <nav>
         <a class="docs-sidebar-toplink {{ 'is-active' if slug_actual == '' else '' }}" href="{{ url_for('docs.pagina') }}">{{ _('Guía para desarrolladores') }}</a>
         {% for grupo, paginas in navegacion %}
@@ -56,6 +58,7 @@
         </div>
         {% endfor %}
       </nav>
+      </details>
     </aside>
 
     <main class="docs-content">

@@ -227,6 +227,11 @@ Variables opcionales:
 | `GUILDA_BACKUPS_DIR` | `data/backups` | Carpeta de la copia única de `registro.db` (ver §9.1). |
 | `GUILDA_LIMITER_URI` | `memory://` | Almacén de los contadores del limitador de peticiones. |
 | `GUILDA_CORREO_SYNC_MINUTOS` | `5` | Cada cuántos minutos el servidor sincroniza el correo de todas las cuentas. `0` lo desactiva. |
+| `GUILDA_VAPID_PUBLIC_KEY` | _(vacío)_ | Clave pública VAPID (base64url) para los avisos push del navegador. Sin ella los avisos push no se ofrecen. Se genera una sola vez y no se cambia (cambiarla desvincula todos los dispositivos). |
+| `GUILDA_VAPID_PRIVATE_KEY` | _(vacío)_ | Clave privada VAPID de la pareja anterior (base64url). Secreta: solo en el entorno del servidor. |
+| `GUILDA_VAPID_SUBJECT` | `mailto:gestio@guilda.cat` | Contacto (`mailto:` o URL) que se declara a los servicios push junto con las claves VAPID. |
+| `GUILDA_IA_ANONIMIZAR` | `1` | `1` seudonimiza los datos personales de los textos antes de enviarlos a la IA y bloquea el envío si el detector no carga; `0` lo desactiva (solo desarrollo y pruebas). |
+| `GUILDA_RETENCION_IA_DIAS` | `365` | Días que se conservan las conversaciones con el asistente de IA desde su última actividad antes de borrarse. |
 | `GUILDA_CORREO_IDLE` | `1` | Correo casi instantáneo con IMAP IDLE: una conexión en espera por cuenta IMAP que sincroniza al aviso del servidor. `0` lo desactiva (queda el auto-sync periódico). |
 | `GUILDA_CORREO_IDLE_MAX` | `100` | Máximo de cuentas con IDLE a la vez (una conexión y un hilo por cuenta). |
 | `GUILDA_CORREO_PROPIO_HOST` | `mail.guildawork.com` | Servidor IMAP/SMTP al que se conectan los buzones que el despacho crea en un paso (Cuentas de correo → «Crear un buzón del despacho»). **Ojo:** desde el propio servidor ese nombre apunta a la IP pública y el cortafuegos (ufw) no deja entrar a 993/465 desde el propio host, así que la conexión falla; para que funcione desde aquí, añade `127.0.0.1 mail.guildawork.com` a `/etc/hosts` (el certificado es el del nombre, no el de la IP; comprobado: 127.0.0.1:993 con ese nombre verifica bien). |
