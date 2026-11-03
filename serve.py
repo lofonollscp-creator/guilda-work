@@ -46,7 +46,7 @@ if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
 
 from waitress import serve
 
-from app import anonimizar, certificados, db, eventos, resumen_pendientes, traspasos, avisos
+from app import anonimizar, certificados, retencion, db, eventos, resumen_pendientes, traspasos, avisos
 from app.main import (
     _avisos_fichaje_servidor, _envios_correo_servidor, _idle_correo_servidor, _seguimientos_correo_servidor, _recordatorios_tareas_servidor, _recordatorio_vencimientos_fiscales, _recordatorios_portal_servidor,
     _resumen_ia_semanal,
@@ -72,6 +72,7 @@ if __name__ == "__main__":
     # Motor de avisos del control fiscal: alertas con acuse y escalado (app/avisos.py); solo actúa en los despachos que lo activan.
     threading.Thread(target=avisos.bucle, daemon=True).start()
     threading.Thread(target=_precargar_proteccion_de_datos, daemon=True).start()
+    threading.Thread(target=retencion.bucle, daemon=True).start()
     # Asistente jurídico: sincroniza las fuentes habilitadas y purga adjuntos vencidos; apagado salvo LEGAL_AI_ENABLED=1 y LEGAL_AI_SYNC=1 (app/juridico/trabajador.py).
     from app.juridico import trabajador as _trabajador_juridico
     if _trabajador_juridico.activo():

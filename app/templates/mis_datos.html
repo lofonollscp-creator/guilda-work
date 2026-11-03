@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import chip %}
+{% block title %}{{ _('Mis datos y privacidad') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Mis datos y privacidad') }}</h1>
+<p class="subtitle">{{ _('Descarga lo que Guilda Work guarda de ti, borra tu historial o pide la baja de tu cuenta.') }}</p></div></header>
+{% set avisos = {'historial_ia': _('Historial del asistente de IA borrado.'), 'dispositivos': _('Dispositivos con avisos olvidados.'), 'baja': _('Solicitud de baja registrada. Se atenderá en el plazo máximo de un mes.')} %}
+{% if aviso in avisos %}<p role="status">{{ chip(avisos[aviso], 'exito') }}</p>{% endif %}
+
+<section class="ds-max-720" aria-labelledby="t-desc">
+  <h2 id="t-desc">{{ _('Descargar mis datos') }}</h2>
+  <p class="muted">{{ _('Un fichero JSON con tu cuenta, perfil, fichajes, ausencias, avisos, dispositivos y conversaciones con el asistente de IA. No incluye el contenido de trabajo del despacho (clientes, expedientes, tareas y notas compartidas): pertenece al despacho, pídelo a sus responsables.') }}</p>
+  <a class="btn btn-primary" href="{{ url_for('mis_datos.descargar') }}" download>{{ _('Descargar mis datos (JSON)') }}</a>
+</section>
+
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-ia">
+  <h2 id="t-ia">{{ _('Asistente de IA') }}</h2>
+  <p class="muted">{{ _('Tus conversaciones con el asistente se guardan para que puedas retomarlas y se borran solas pasado un año. Antes de enviar nada al modelo, los nombres, NIF, IBAN, teléfonos, correos y direcciones se sustituyen por etiquetas.') }}</p>
+  <form method="post" action="{{ url_for('mis_datos.borrar_historial_ia') }}" data-confirmar-envio="{{ _('¿Borrar todas tus conversaciones con el asistente? No se puede deshacer.') }}">
+    <button type="submit" class="btn btn-secondary" {% if not conversaciones %}disabled{% endif %}>{{ ngettext('Borrar mi historial (%(n)s conversación)', 'Borrar mi historial (%(n)s conversaciones)', conversaciones, n=conversaciones) }}</button>
+  </form>
+</section>
+
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-disp">
+  <h2 id="t-disp">{{ _('Avisos en mis dispositivos') }}</h2>
+  <p class="muted">{{ _('Si activaste avisos en el móvil o en un navegador, Guilda Work guarda un identificador del dispositivo para poder enviarlos. Puedes olvidarlos todos; tendrás que volver a activarlos donde los quieras.') }}</p>
+  <form method="post" action="{{ url_for('mis_datos.olvidar_dispositivos') }}"><button type="submit" class="btn btn-secondary">{{ _('Olvidar mis dispositivos') }}</button></form>
+</section>
+
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-baja">
+  <h2 id="t-baja">{{ _('Dar de baja mi cuenta') }}</h2>
+  <p class="muted">{{ _('Se avisa a los responsables de tu despacho y se atiende en el plazo máximo de un mes. Algunos datos no se pueden borrar al momento porque la ley obliga a conservarlos (por ejemplo, el registro horario durante cuatro años) o porque pertenecen al despacho.') }}</p>
+  {% if solicitud_abierta %}<p role="status">{{ chip(_('Ya hay una solicitud de baja abierta'), 'aviso') }}</p>
+  {% else %}<form method="post" action="{{ url_for('mis_datos.solicitar_baja') }}" data-confirmar-envio="{{ _('¿Pedir la baja de tu cuenta y la supresión de tus datos?') }}">
+    <button type="submit" class="btn btn-peligro">{{ _('Pedir la baja de mi cuenta') }}</button>
+  </form>{% endif %}
+</section>
+
+<section class="ds-max-720 ds-mt-32" aria-labelledby="t-mas">
+  <h2 id="t-mas">{{ _('Más información y reclamaciones') }}</h2>
+  <p class="muted">{{ _('Para ejercer otros derechos (rectificación, oposición, limitación) o hacer una consulta, escribe a gestio@guilda.cat. Si crees que tus datos no se tratan bien, puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).') }}</p>
+</section>
+{% endblock %}

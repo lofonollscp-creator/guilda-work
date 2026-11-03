@@ -19591,3 +19591,93 @@ msgstr "Vos données personnelles"
 #: app/templates/ia_asistente.html
 msgid "Antes de enviar nada al modelo de IA, los nombres, NIF, IBAN, teléfonos, correos y direcciones se sustituyen por etiquetas: el proveedor no recibe quién es cada persona. Las imágenes y PDF que se leen con IA no se pueden proteger así."
 msgstr "Avant d'envoyer quoi que ce soit au modèle d'IA, les noms, numéros fiscaux, IBAN, téléphones, e-mails et adresses sont remplacés par des étiquettes : le fournisseur ne sait pas qui est chaque personne. Les images et PDF lus par l'IA ne peuvent pas être protégés ainsi."
+
+#: app/templates/mis_datos.html
+msgid "Mis datos y privacidad"
+msgstr "Mes données et confidentialité"
+
+#: app/templates/mis_datos.html
+msgid "Descarga tus datos, borra tu historial o pide la baja de tu cuenta."
+msgstr "Téléchargez vos données, effacez votre historique ou demandez la suppression de votre compte."
+
+#: app/templates/mis_datos.html
+msgid "Descarga lo que Guilda Work guarda de ti, borra tu historial o pide la baja de tu cuenta."
+msgstr "Téléchargez ce que Guilda Work conserve sur vous, effacez votre historique ou demandez la suppression de votre compte."
+
+#: app/templates/mis_datos.html
+msgid "Historial del asistente de IA borrado."
+msgstr "Historique de l'assistant IA supprimé."
+
+#: app/templates/mis_datos.html
+msgid "Dispositivos con avisos olvidados."
+msgstr "Appareils avec alertes oubliés."
+
+#: app/templates/mis_datos.html
+msgid "Solicitud de baja registrada. Se atenderá en el plazo máximo de un mes."
+msgstr "Demande de suppression enregistrée. Elle sera traitée dans un délai maximal d'un mois."
+
+#: app/templates/mis_datos.html
+msgid "Descargar mis datos"
+msgstr "Télécharger mes données"
+
+#: app/templates/mis_datos.html
+msgid "Un fichero JSON con tu cuenta, perfil, fichajes, ausencias, avisos, dispositivos y conversaciones con el asistente de IA. No incluye el contenido de trabajo del despacho (clientes, expedientes, tareas y notas compartidas): pertenece al despacho, pídelo a sus responsables."
+msgstr "Un fichier JSON avec votre compte, profil, pointages, absences, alertes, appareils et conversations avec l'assistant IA. Il n'inclut pas le contenu de travail du cabinet (clients, dossiers, tâches et notes partagées) : il appartient au cabinet, demandez-le à ses responsables."
+
+#: app/templates/mis_datos.html
+msgid "Descargar mis datos (JSON)"
+msgstr "Télécharger mes données (JSON)"
+
+#: app/templates/mis_datos.html
+msgid "Tus conversaciones con el asistente se guardan para que puedas retomarlas y se borran solas pasado un año. Antes de enviar nada al modelo, los nombres, NIF, IBAN, teléfonos, correos y direcciones se sustituyen por etiquetas."
+msgstr "Vos conversations avec l'assistant sont conservées pour que vous puissiez les reprendre et sont supprimées automatiquement au bout d'un an. Avant d'envoyer quoi que ce soit au modèle, les noms, numéros fiscaux, IBAN, téléphones, e-mails et adresses sont remplacés par des étiquettes."
+
+#: app/templates/mis_datos.html
+msgid "¿Borrar todas tus conversaciones con el asistente? No se puede deshacer."
+msgstr "Supprimer toutes vos conversations avec l'assistant ? Cette action est irréversible."
+
+#: app/templates/mis_datos.html
+msgid "Avisos en mis dispositivos"
+msgstr "Alertes sur mes appareils"
+
+#: app/templates/mis_datos.html
+msgid "Si activaste avisos en el móvil o en un navegador, Guilda Work guarda un identificador del dispositivo para poder enviarlos. Puedes olvidarlos todos; tendrás que volver a activarlos donde los quieras."
+msgstr "Si vous avez activé les alertes sur votre mobile ou dans un navigateur, Guilda Work conserve un identifiant de l'appareil pour pouvoir les envoyer. Vous pouvez tous les oublier ; il faudra les réactiver là où vous les voulez."
+
+#: app/templates/mis_datos.html
+msgid "Olvidar mis dispositivos"
+msgstr "Oublier mes appareils"
+
+#: app/templates/mis_datos.html
+msgid "Dar de baja mi cuenta"
+msgstr "Supprimer mon compte"
+
+#: app/templates/mis_datos.html
+msgid "Se avisa a los responsables de tu despacho y se atiende en el plazo máximo de un mes. Algunos datos no se pueden borrar al momento porque la ley obliga a conservarlos (por ejemplo, el registro horario durante cuatro años) o porque pertenecen al despacho."
+msgstr "Les responsables de votre cabinet sont prévenus et la demande est traitée dans un délai maximal d'un mois. Certaines données ne peuvent pas être supprimées immédiatement car la loi impose de les conserver (par exemple, le registre horaire pendant quatre ans) ou parce qu'elles appartiennent au cabinet."
+
+#: app/templates/mis_datos.html
+msgid "Ya hay una solicitud de baja abierta"
+msgstr "Une demande de suppression est déjà ouverte"
+
+#: app/templates/mis_datos.html
+msgid "¿Pedir la baja de tu cuenta y la supresión de tus datos?"
+msgstr "Demander la suppression de votre compte et de vos données ?"
+
+#: app/templates/mis_datos.html
+msgid "Pedir la baja de mi cuenta"
+msgstr "Demander la suppression de mon compte"
+
+#: app/templates/mis_datos.html
+msgid "Más información y reclamaciones"
+msgstr "Plus d'informations et réclamations"
+
+#: app/templates/mis_datos.html
+msgid "Para ejercer otros derechos (rectificación, oposición, limitación) o hacer una consulta, escribe a gestio@guilda.cat. Si crees que tus datos no se tratan bien, puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es)."
+msgstr "Pour exercer d'autres droits (rectification, opposition, limitation) ou poser une question, écrivez à gestio@guilda.cat. Si vous pensez que vos données ne sont pas bien traitées, vous pouvez déposer une réclamation auprès de l'Agence espagnole de protection des données (www.aepd.es)."
+
+#: app/templates/mis_datos.html
+msgid "Borrar mi historial (%(n)s conversación)"
+msgid_plural "Borrar mi historial (%(n)s conversaciones)"
+msgstr[0] "Supprimer mon historique (%(n)s conversation)"
+msgstr[1] "Supprimer mon historique (%(n)s conversations)"

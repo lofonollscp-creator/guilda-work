@@ -265,6 +265,7 @@ app.add_template_filter(_comentario_html, "comentario_html")
 from .rutas_abogados import abogados_bp, asunto_bp  # noqa: E402
 from .rutas_inmobiliaria import inmobiliaria_bp, propietario_bp  # noqa: E402
 from .rutas_seguridad import seguridad_bp  # noqa: E402
+from .rutas_mis_datos import mis_datos_bp  # noqa: E402
 from .rutas_nucleo import clientes_bp, expedientes_bp, plazos_bp, tiempo_bp  # noqa: E402
 from .rutas_importar_clientes import importar_clientes_bp  # noqa: E402
 from .rutas_documentos_firma import documentos_firma_bp  # noqa: E402
@@ -283,6 +284,7 @@ from .rutas_juridico import juridico_bp  # noqa: E402
 app.register_blueprint(abogados_bp)
 app.register_blueprint(inmobiliaria_bp)
 app.register_blueprint(seguridad_bp)
+app.register_blueprint(mis_datos_bp)
 app.register_blueprint(propietario_bp)
 app.register_blueprint(asunto_bp)
 app.register_blueprint(clientes_bp)
@@ -1983,6 +1985,7 @@ def _secciones_ajustes() -> list[dict]:
         {"id": "exportar", "icono": "download", "titulo": _("Exportar"), "texto": _("Histórico, tareas y notas en JSON, CSV o Markdown."), "url": u("exportar"), "estado": None},
         {"id": "importar", "icono": "upload", "titulo": _("Importar"), "texto": _("Trae tus datos desde otra copia o aplicación."), "url": u("importar"), "estado": None},
         {"id": "papelera", "icono": "trash-2", "titulo": _("Papelera"), "texto": _("Recupera lo que borraste por error."), "url": u("papelera"), "estado": None},
+        {"id": "privacidad", "icono": "shield-check", "titulo": _("Mis datos y privacidad"), "texto": _("Descarga tus datos, borra tu historial o pide la baja de tu cuenta."), "url": u("mis_datos.pantalla"), "estado": None},
         {"id": "herramientas", "icono": "wrench", "titulo": _("Herramientas conectadas"), "texto": _("Catálogo de aplicaciones integradas en tu gestoría."), "url": u("herramientas"), "estado": None},
     ]
     return [
