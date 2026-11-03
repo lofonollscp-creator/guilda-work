@@ -5,7 +5,8 @@
   var caja = document.querySelector(".correo-lista-toolbar input[name='q']");
   if (!caja) return;
   var CLAVE = "guilda.correo.busquedas";
-  var textos = window.GUILDA_I18N || {};
+  var d = caja.form.dataset;
+  var textos = { correoBusquedasTitulo: d.tBusquedas, correoBusquedasGuardar: d.tGuardarBusqueda, correoBusquedasNombre: d.tNombreBusqueda, correoBusquedasVacio: d.tSinBusquedas, correoBusquedasQuitar: d.tQuitar };
 
   function leer() {
     try {

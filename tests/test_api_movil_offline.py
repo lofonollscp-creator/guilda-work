@@ -28,7 +28,7 @@ def test_fichar_dos_veces_con_el_mismo_cliente_uuid_ficha_una_sola_vez(cliente):
 
 def test_fichar_sin_conexion_conserva_la_hora_de_la_pulsacion(cliente):
     h, _ = _arranque(cliente, "fichar-hora@ejemplo.com")
-    pulsada = (datetime.now() - timedelta(hours=2)).replace(microsecond=0).isoformat()
+    pulsada = max(datetime.now() - timedelta(hours=2), datetime.now().replace(hour=0, minute=0, second=1)).replace(microsecond=0).isoformat()      # sin cruzar la medianoche: el historial se pide por día
     r = cliente.post("/api/v1/fichaje/marcar", json={"tipo": "entrada", "marca_tiempo": pulsada, "cliente_uuid": "22222222-2222-4222-8222-222222222222"}, headers=h)
     assert r.status_code == 200
     hoy = datetime.now().date().isoformat()

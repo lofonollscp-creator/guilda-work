@@ -93,7 +93,7 @@
   <section class="correo-lista-pane">
     {% if aviso and not mensaje_seleccionado %}<p class="correo-aviso-accion" role="status">{{ aviso }}</p>{% endif %}
     {% if cuentas %}
-    <form class="correo-lista-toolbar" method="get">
+    <form class="correo-lista-toolbar" method="get" data-t-busquedas="{{ _('Búsquedas') }}" data-t-guardar-busqueda="{{ _('Guardar esta búsqueda') }}" data-t-nombre-busqueda="{{ _('Nombre de la búsqueda') }}" data-t-sin-busquedas="{{ _('Aún no has guardado ninguna búsqueda.') }}" data-t-quitar="{{ _('Quitar') }}">
       <input type="hidden" name="cuenta_id" value="{{ cuenta_id }}">
       <input type="hidden" name="carpeta" value="{{ carpeta }}">
       <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Buscar correo...') }}" aria-label="{{ _('Buscar correo') }}" title="{{ _('Operadores: de:ana  para:luis  asunto:factura  adjunto:  es:noleido  es:destacado  antes:2026-10-01  despues:2026-09-01  cliente:Nombre  categoria:Nombre') }}">
