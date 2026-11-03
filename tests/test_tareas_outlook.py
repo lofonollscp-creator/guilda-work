@@ -108,3 +108,23 @@ def test_obtener_tarea_outlook_por_entry_id(usuario_id):
     assert tarea is not None
     assert tarea["id"] == tid
     assert db.obtener_tarea_outlook_por_entry_id(usuario_id, "NO-EXISTE") is None
+
+
+def test_la_busqueda_de_texto_mira_tambien_subtareas_comentarios_y_cliente():
+    from app import db
+    usuario = db.crear_usuario("busca-texto@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho busca texto")
+    db.asignar_tenant(usuario, t)
+    cf = db.crear_cliente_fiscal(t, "Ferretería Pomares")
+    por_comentario = db.crear_tarea_outlook(usuario, "Revisar IVA")
+    por_subtarea = db.crear_tarea_outlook(usuario, "Cierre de trimestre")
+    por_cliente = db.crear_tarea_outlook(usuario, "Llamar", cliente_fiscal_id=cf)
+    db.crear_tarea_outlook(usuario, "Otra cosa sin relación")
+    db.comentar_tarea_outlook(usuario, por_comentario, "El gestor pidió los extractos del banco Sabadell")
+    db.agregar_item_checklist(usuario, por_subtarea, "Conciliar movimientos de Sabadell")
+
+    def ids(q):
+        return {x["id"] for x in db.listar_tareas_outlook(usuario, texto=q)}
+    assert ids("sabadell") == {por_comentario, por_subtarea}
+    assert ids("pomares") == {por_cliente}
+    assert ids("revisar iva") == {por_comentario} and ids("no existe") == set()

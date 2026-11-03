@@ -1150,8 +1150,12 @@ def listar_tareas_outlook(
         if categoria_outlook:
             cond.append("categoria_outlook = ?"); params.append(categoria_outlook)
         if texto:
-            cond.append("(LOWER(asunto) LIKE LOWER(?) OR LOWER(cuerpo) LIKE LOWER(?))")
-            params.extend([f"%{texto}%", f"%{texto}%"])
+            # Asunto, descripción, subtareas, comentarios y el nombre de su cliente: lo que una persona recuerda de una tarea antigua rara vez es el asunto exacto.
+            cond.append("(LOWER(t.asunto) LIKE LOWER(?) OR LOWER(t.cuerpo) LIKE LOWER(?)"
+                        " OR t.id IN (SELECT tarea_outlook_id FROM tarea_checklist WHERE LOWER(texto) LIKE LOWER(?))"
+                        " OR t.id IN (SELECT tarea_id FROM tarea_comentarios WHERE LOWER(texto) LIKE LOWER(?))"
+                        " OR t.cliente_fiscal_id IN (SELECT id FROM clientes_fiscales WHERE LOWER(nombre) LIKE LOWER(?)))")
+            params.extend([f"%{texto}%"] * 5)
         if desde:
             cond.append("fecha_vencimiento >= ?"); params.append(desde)
         if hasta:
