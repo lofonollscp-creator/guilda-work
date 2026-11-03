@@ -137,3 +137,7 @@ select { max-width: min(100%, calc(100vw - 80px)); text-overflow: ellipsis; }
 /* Filas de botones sueltos (no son filas de catálogo): a su tamaño natural y, si no caben, a la línea siguiente. */
 .fila-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 0; }
 .fila-botones .boton { white-space: nowrap; }
+
+/* Botones de acción que se parten de línea: el texto largo (catalán/francés) no puede ensanchar la página en móvil. */
+.fila-botones form { max-width: 100%; min-width: 0; }
+.fila-botones .boton { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
