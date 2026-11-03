@@ -408,6 +408,12 @@
             </div>
             <div id="notificaciones-lista"></div>
             <p id="notificaciones-vacio" class="empty-lane" hidden>{{ _('No tienes notificaciones.') }}</p>
+            <div class="notificaciones-push" id="push-web" hidden
+                 data-t-activar="{{ _('Activar avisos en este dispositivo') }}" data-t-desactivar="{{ _('Desactivar avisos en este dispositivo') }}"
+                 data-t-bloqueado="{{ _('Los avisos están bloqueados en este navegador. Cámbialo en los permisos del sitio.') }}" data-t-error="{{ _('No se han podido activar los avisos ahora mismo.') }}">
+              <button type="button" class="btn btn-ghost btn-sm" id="push-web-boton"></button>
+              <p class="muted" id="push-web-mensaje" hidden></p>
+            </div>
           </div>
         </div>
           {% if barra_cronometro %}
@@ -614,6 +620,7 @@
   <script src="{{ url_for('static', filename='pagina_v2.js') }}"></script>
   <script src="{{ url_for('static', filename='ux_v2.js') }}"></script>
   <script src="{{ url_for('static', filename='sw_registro.js') }}"></script>
+  <script src="{{ url_for('static', filename='push_web.js') }}"></script>
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
   <script src="{{ url_for('static', filename='busqueda.js') }}"></script>

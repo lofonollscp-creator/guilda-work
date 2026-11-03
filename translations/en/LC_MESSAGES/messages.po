@@ -19482,3 +19482,19 @@ msgstr "It is already filed and has no fee yet."
 
 msgid "último el %(f)s"
 msgstr "last on %(f)s"
+
+#: app/templates/base.html
+msgid "Activar avisos en este dispositivo"
+msgstr "Turn on alerts on this device"
+
+#: app/templates/base.html
+msgid "Desactivar avisos en este dispositivo"
+msgstr "Turn off alerts on this device"
+
+#: app/templates/base.html
+msgid "Los avisos están bloqueados en este navegador. Cámbialo en los permisos del sitio."
+msgstr "Alerts are blocked in this browser. Change it in the site permissions."
+
+#: app/templates/base.html
+msgid "No se han podido activar los avisos ahora mismo."
+msgstr "Alerts could not be turned on right now."

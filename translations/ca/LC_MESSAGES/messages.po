@@ -19491,3 +19491,19 @@ msgstr "Ja està presentat i encara no té honorari."
 
 msgid "último el %(f)s"
 msgstr "últim el %(f)s"
+
+#: app/templates/base.html
+msgid "Activar avisos en este dispositivo"
+msgstr "Activa els avisos en aquest dispositiu"
+
+#: app/templates/base.html
+msgid "Desactivar avisos en este dispositivo"
+msgstr "Desactiva els avisos en aquest dispositiu"
+
+#: app/templates/base.html
+msgid "Los avisos están bloqueados en este navegador. Cámbialo en los permisos del sitio."
+msgstr "Els avisos estan bloquejats en aquest navegador. Canvia-ho als permisos del lloc."
+
+#: app/templates/base.html
+msgid "No se han podido activar los avisos ahora mismo."
+msgstr "Ara mateix no s'han pogut activar els avisos."

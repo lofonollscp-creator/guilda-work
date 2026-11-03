@@ -19567,3 +19567,19 @@ msgstr "Il est déjà déposé et n'a pas encore d'honoraire."
 
 msgid "último el %(f)s"
 msgstr "dernier le %(f)s"
+
+#: app/templates/base.html
+msgid "Activar avisos en este dispositivo"
+msgstr "Activer les alertes sur cet appareil"
+
+#: app/templates/base.html
+msgid "Desactivar avisos en este dispositivo"
+msgstr "Désactiver les alertes sur cet appareil"
+
+#: app/templates/base.html
+msgid "Los avisos están bloqueados en este navegador. Cámbialo en los permisos del sitio."
+msgstr "Les alertes sont bloquées dans ce navigateur. Modifiez-le dans les autorisations du site."
+
+#: app/templates/base.html
+msgid "No se han podido activar los avisos ahora mismo."
+msgstr "Impossible d'activer les alertes pour le moment."

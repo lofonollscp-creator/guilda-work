@@ -84,23 +84,84 @@ def _enviar_a_token(fcm_token: str, titulo: str, cuerpo: str, datos: dict | None
         return True
 
 
+# --- Web Push (VAPID) de la webapp instalada o abierta en el navegador -------------------------------------------------
+# Claves en GUILDA_VAPID_PUBLIC_KEY / GUILDA_VAPID_PRIVATE_KEY (base64url, las genera una sola vez quien administra el servidor);
+# sin ellas el canal web queda apagado, igual que FCM sin credenciales de Firebase.
+VAPID_PUBLICA = os.environ.get("GUILDA_VAPID_PUBLIC_KEY", "")
+VAPID_PRIVADA = os.environ.get("GUILDA_VAPID_PRIVATE_KEY", "")
+VAPID_CONTACTO = os.environ.get("GUILDA_VAPID_SUBJECT", "mailto:gestio@guilda.cat")
+MAX_CUERPO_WEB = 180
+
+
+def web_configurado() -> bool:
+    return bool(VAPID_PUBLICA and VAPID_PRIVADA)
+
+
+def _ruta_propia(url: str | None) -> str:
+    """Solo rutas de la propia app: un aviso nunca puede mandar al navegador a otra web."""
+    return url if url and url.startswith("/") and not url.startswith("//") else "/hoy/"
+
+
+def _enviar_web(suscripcion_json: str, carga: dict) -> bool:
+    """True si hay que conservar la suscripción; False si el servicio de push dice que ya no existe (404/410) o está mal formada."""
+    from pywebpush import WebPushException, webpush
+    try:
+        suscripcion = json.loads(suscripcion_json)
+        webpush(
+            subscription_info=suscripcion,
+            data=json.dumps(carga, separators=(",", ":")),
+            vapid_private_key=VAPID_PRIVADA,
+            vapid_claims={"sub": VAPID_CONTACTO},
+            ttl=24 * 3600,
+            timeout=TIMEOUT_SEGUNDOS,
+        )
+        return True
+    except WebPushException as e:
+        codigo = getattr(getattr(e, "response", None), "status_code", None)
+        return codigo not in (404, 410)
+    except (ValueError, KeyError):
+        return False
+    except Exception:
+        return True                                   # red, cuota…: se reintenta con el siguiente aviso
+
+
+def enviar_web_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | None = None) -> None:
+    from . import db
+    suscripciones = db.suscripciones_web_de_usuario(usuario_id)
+    if not suscripciones:
+        return
+    datos = datos or {}
+    carga = {"titulo": titulo[:120], "cuerpo": (cuerpo or "")[:MAX_CUERPO_WEB], "url": _ruta_propia(datos.get("url")), "tag": str(datos.get("notificacion_id") or datos.get("tipo") or "guilda")}
+    for sus in suscripciones:
+        if not _enviar_web(sus, carga):
+            try:
+                endpoint = json.loads(sus).get("endpoint", "")
+            except ValueError:
+                endpoint = ""
+            if endpoint:
+                db.eliminar_suscripcion_web(usuario_id, endpoint)
+            else:
+                db.eliminar_tokens_push([sus])
+
+
 def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | None = None, ignorar_silencio: bool = False, canal: str | None = None) -> None:
     """Punto de entrada usado desde los puntos de emisión de eventos (ver
     p.ej. `app/correo.py:_emitir_evento_correo_nuevo`) -- manda el push a
-    todos los dispositivos del usuario, limpiando los que FCM rechace como
-    no registrados. No lanza: un fallo aquí no debe impedir que la acción
+    todos los dispositivos del usuario (app móvil por FCM y navegadores por Web Push), limpiando los que
+    rechacen como no registrados. No lanza: un fallo aquí no debe impedir que la acción
     que lo disparó se complete (mismo criterio que `eventos.emitir`)."""
-    if not configurado():
+    if not configurado() and not web_configurado():
         return
     try:
         from . import db  # import perezoso: evita el ciclo db <-> push
         if not ignorar_silencio and db.en_horas_de_silencio(usuario_id):
             return                                    # «no molestar»: la notificación queda en la app, sin vibrar el móvil
-        tokens = db.tokens_push_de_usuario(usuario_id)
-        if not tokens:
-            return
-        invalidos = [t for t in tokens if not _enviar_a_token(t, titulo, cuerpo, datos, canal)]
-        if invalidos:
-            db.eliminar_tokens_push(invalidos)
+        if configurado():
+            tokens = db.tokens_push_de_usuario(usuario_id)
+            invalidos = [t for t in tokens if not _enviar_a_token(t, titulo, cuerpo, datos, canal)]
+            if invalidos:
+                db.eliminar_tokens_push(invalidos)
+        if web_configurado():
+            enviar_web_a_usuario(usuario_id, titulo, cuerpo, datos)
     except Exception:
         pass

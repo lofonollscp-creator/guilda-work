@@ -1601,9 +1601,53 @@ def eliminar_dispositivo_push(usuario_id: int, fcm_token: str) -> None:
 
 
 def tokens_push_de_usuario(usuario_id: int) -> list[str]:
+    """Tokens FCM de la app móvil (las suscripciones de la webapp, plataforma «web», se leen aparte)."""
     conn = _db.get_connection()
     try:
-        filas = conn.execute("SELECT fcm_token FROM dispositivos_push WHERE usuario_id = ?", (usuario_id,)).fetchall()
+        filas = conn.execute("SELECT fcm_token FROM dispositivos_push WHERE usuario_id = ? AND plataforma <> 'web'", (usuario_id,)).fetchall()
+        return [f["fcm_token"] for f in filas]
+    finally:
+        conn.close()
+
+
+# --- Web Push de la webapp: una suscripción = una fila de `dispositivos_push` con plataforma «web» y la suscripción
+#     completa (JSON con endpoint y claves) en `fcm_token`, que ya es único. Sin tabla nueva.
+
+def _patron_endpoint(endpoint: str) -> str:
+    """Patrón LIKE (con ESCAPE '\\') de la fila cuya suscripción guarda ese endpoint (JSON compacto, endpoint primero)."""
+    literal = json.dumps(endpoint).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return '{"endpoint":' + literal + ',%'
+
+
+def registrar_suscripcion_web(usuario_id: int, suscripcion_json: str, endpoint: str) -> None:
+    """Alta o refresco de la suscripción de un navegador. Si ese mismo endpoint ya estaba (claves renovadas o
+    cuenta distinta en el mismo navegador) se sustituye, no se duplica."""
+    conn = _db.get_connection()
+    try:
+        conn.execute("DELETE FROM dispositivos_push WHERE plataforma = 'web' AND fcm_token LIKE ? ESCAPE '\\'", (_db._patron_endpoint(endpoint),))
+        ahora = _db.now_iso()
+        conn.execute(
+            "INSERT INTO dispositivos_push (usuario_id, fcm_token, plataforma, creado_en, actualizado_en) VALUES (?, ?, 'web', ?, ?)",
+            (usuario_id, suscripcion_json, ahora, ahora),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def eliminar_suscripcion_web(usuario_id: int, endpoint: str) -> None:
+    conn = _db.get_connection()
+    try:
+        conn.execute("DELETE FROM dispositivos_push WHERE plataforma = 'web' AND usuario_id = ? AND fcm_token LIKE ? ESCAPE '\\'", (usuario_id, _db._patron_endpoint(endpoint)))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def suscripciones_web_de_usuario(usuario_id: int) -> list[str]:
+    conn = _db.get_connection()
+    try:
+        filas = conn.execute("SELECT fcm_token FROM dispositivos_push WHERE usuario_id = ? AND plataforma = 'web'", (usuario_id,)).fetchall()
         return [f["fcm_token"] for f in filas]
     finally:
         conn.close()

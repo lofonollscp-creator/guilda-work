@@ -24,6 +24,7 @@ python-docx>=1.1
 # y reimplementar eso a mano no compensa frente a la librería oficial.
 google-auth>=2.35
 requests>=2.31
+pywebpush>=2.0
 # Captcha de prueba de trabajo para el login (app/captcha.py) -- ALTCHA,
 # self-hosted, sin servicio de terceros ni CDN.
 altcha>=2.1

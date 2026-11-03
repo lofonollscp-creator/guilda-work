@@ -1091,3 +1091,7 @@ kbd { font: 700 12px var(--font-mono); background: var(--panel-2); border: 1px s
   html { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
 }
 @media (display-mode: standalone) { body { -webkit-user-select: none; user-select: none; } input, textarea, [contenteditable], .ia-msg, .correo-cuerpo, td, p { -webkit-user-select: text; user-select: text; } }
+.notificaciones-push { border-top: 1px solid var(--border); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.notificaciones-push[hidden] { display: none; }
+.notificaciones-push .btn { width: 100%; justify-content: center; }
+.notificaciones-push p { margin: 0; font-size: 12.5px; }
