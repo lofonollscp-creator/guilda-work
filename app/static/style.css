@@ -5215,3 +5215,7 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .hoy-item .hoy-fecha + .hoy-hecho { margin-left: 0; }
 .hoy-todo { margin: 0 0 var(--space-3, 12px); }
 .hoy-seccion .dash-panel-cab form { margin: 0; }
+
+/* Aviso «Novedades en la ayuda» (menú de ajustes) */
+.ayuda-novedad-punto { display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: var(--primary); vertical-align: middle; }
+.ayuda-novedad[hidden] { display: none !important; }

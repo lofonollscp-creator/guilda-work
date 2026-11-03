@@ -319,6 +319,12 @@
             <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg>
             {% if ayuda_especifica %}{{ _('Ayuda sobre esta pantalla') }}{% else %}{{ _('Centro de ayuda') }}{% endif %}
           </a>
+          {% if ayuda_novedad %}
+          <a href="{{ ayuda_novedad.url }}" target="_blank" rel="noopener" class="ajustes-panel-btn ayuda-novedad" id="ayuda-novedad" data-novedad="{{ ayuda_novedad.id }}" title="{{ ayuda_novedad.titulo }}" hidden>
+            <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-zap"></use></svg>
+            {{ _('Novedades en la ayuda') }} <span class="ayuda-novedad-punto" aria-label="{{ _('Nuevo') }}"></span>
+          </a>
+          {% endif %}
           <a href="{{ url_for('docs.pagina') }}" target="_blank" rel="noopener" class="ajustes-panel-btn">
             <svg class="ajustes-panel-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-book-open"></use></svg>
             {{ _('Documentación (desarrolladores)') }}
@@ -621,6 +627,7 @@
   <script src="{{ url_for('static', filename='ux_v2.js') }}"></script>
   <script src="{{ url_for('static', filename='sw_registro.js') }}"></script>
   <script src="{{ url_for('static', filename='push_web.js') }}"></script>
+  {% if ayuda_novedad %}<script src="{{ url_for('static', filename='ayuda_novedades.js') }}"></script>{% endif %}
   <script src="{{ url_for('static', filename='atajos.js') }}"></script>
   <script src="{{ url_for('static', filename='ia_asistente.js') }}"></script>
   <script src="{{ url_for('static', filename='busqueda.js') }}"></script>

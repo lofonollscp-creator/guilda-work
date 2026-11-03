@@ -19613,3 +19613,7 @@ msgstr "Avisos sense dades (privacitat)"
 #: app/templates/ajustes_perfil.html
 msgid "En el móvil y el navegador solo verás «Tienes un aviso nuevo», sin nombres, asuntos ni importes. El detalle sigue en la campana de la aplicación."
 msgstr "Al mòbil i al navegador només veuràs «Tens un avís nou», sense noms, assumptes ni imports. El detall continua a la campana de l'aplicació."
+
+#: app/templates/base.html
+msgid "Novedades en la ayuda"
+msgstr "Novetats a l'ajuda"

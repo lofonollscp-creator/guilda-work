@@ -36,7 +36,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .bd import contexto as contexto_bd
 from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
-from . import acceso, acento, ai_local, ayuda, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import acceso, acento, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_juridico, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -565,7 +565,7 @@ def salir_ver_como():
 @app.context_processor
 def inyectar_ayuda_contextual():
     url, especifica = ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])
-    return {"ayuda_url": url, "ayuda_especifica": especifica}
+    return {"ayuda_url": url, "ayuda_especifica": especifica, "ayuda_novedad": ayuda_novedades.novedad(str(get_locale() or "es")[:2])}
 
 
 @app.context_processor

@@ -19604,3 +19604,7 @@ msgstr "Alerts without data (privacy)"
 #: app/templates/ajustes_perfil.html
 msgid "En el móvil y el navegador solo verás «Tienes un aviso nuevo», sin nombres, asuntos ni importes. El detalle sigue en la campana de la aplicación."
 msgstr "On your phone and browser you will only see “You have a new alert”, with no names, subjects or amounts. The details remain in the app's bell."
+
+#: app/templates/base.html
+msgid "Novedades en la ayuda"
+msgstr "What's new in help"

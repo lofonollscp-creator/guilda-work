@@ -22,6 +22,18 @@
 # seguridad en la cabecera de docker-compose.yml sobre por qué los
 # puertos publicados NUNCA quedan en 0.0.0.0).
 
+# Centro de ayuda: sitio estático (repo guilda-help, `./publicar.sh` lo copia a /var/www/help). Las rutas que no existen devuelven su propia página 404.
+help.HOSTNAME {
+	log
+	root * /var/www/help
+	file_server
+	handle_errors {
+		@404 expression `{http.error.status_code} == 404`
+		rewrite @404 /404.html
+		file_server
+	}
+}
+
 app.HOSTNAME {
 	log
 	encode gzip zstd
