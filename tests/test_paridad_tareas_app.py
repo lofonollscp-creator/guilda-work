@@ -27,7 +27,7 @@ def _sembrar(uid):
 def _asuntos_web(cliente, **q):
     html = cliente.get("/tareas/", query_string=q).get_data(as_text=True)
     visto, orden = set(), []
-    for m in re.finditer(r'href="/tareas/\d+(?:/editar)?">(T\d\d[^<]*)</a>', html):
+    for m in re.finditer(r'href="/tareas/\d+(?:/editar)?"[^>]*>(T\d\d[^<]*)</a>', html):
         if m.group(1) not in visto:
             visto.add(m.group(1)); orden.append(m.group(1))
     return orden
@@ -74,7 +74,7 @@ def test_la_lista_de_la_app_trae_lo_mismo_que_la_de_la_web(ambos, web, app):
 
 def _asuntos_de(html: str) -> list[str]:
     visto, orden = set(), []
-    for m in re.finditer(r'href="/tareas/\d+(?:/editar)?">(T\d\d[^<]*)</a>', html):
+    for m in re.finditer(r'href="/tareas/\d+(?:/editar)?"[^>]*>(T\d\d[^<]*)</a>', html):
         if m.group(1) not in visto:
             visto.add(m.group(1)); orden.append(m.group(1))
     return orden

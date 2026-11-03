@@ -1,5 +1,6 @@
 """Facturas para contabilizar (app/facturas_contables.py y app/rutas_contabilidad.py): anotar, revisar y generar el fichero de a3."""
 import io
+import re
 
 import pytest
 
@@ -232,10 +233,10 @@ def test_flujo_completo_desde_la_web(cliente):
     assert "W-1" in html and "Proveedor Web" in html and "Marcar como revisada" in html
     assert cliente.post(f"/contabilidad/{fid}/estado", data={"estado": "revisada"}).status_code == 302
     lista = cliente.get(f"/contabilidad/?cliente_id={c}&trimestre=2026-T3").get_data(as_text=True)
-    assert "1 revisada" in lista and "Generar SUENLACE.DAT" in lista
+    assert re.search(r"Revisadas</span><span class=\"fiscal-cifra-num\">1<", lista) and "Generar SUENLACE.DAT" in lista
     r = cliente.post("/contabilidad/exportar", data={"cliente_id": c, "trimestre": "2026-T3"})
     assert r.status_code == 200 and "SUENLACE.DAT" in r.headers["Content-Disposition"] and len(r.data) == 1024 and r.headers["Cache-Control"] == "no-store"
-    assert "1 exportada" in cliente.get(f"/contabilidad/?cliente_id={c}").get_data(as_text=True)
+    assert re.search(r"Exportadas</span><span class=\"fiscal-cifra-num\">1<", cliente.get(f"/contabilidad/?cliente_id={c}").get_data(as_text=True))
     lotes = cliente.get("/contabilidad/lotes").get_data(as_text=True)
     assert "Descargar" in lotes
     lote = fc.listar_lotes(t, uid)[0]["id"]

@@ -151,7 +151,7 @@ def test_marcar_como_hecho_una_a_una_y_en_conjunto(cliente):
     x = nucleo.crear_expediente(t, uid, cl, "Asunto hecho", tipo="procedimiento_judicial")
     z = nucleo.crear_plazo(t, uid, "Plazo hecho", (HOY + timedelta(days=2)).isoformat(), expediente_id=x, responsable_id=uid)
     html = cliente.get("/hoy/").get_data(as_text=True)
-    assert "Marcar todo como hecho" in html and "Marcar la sección como hecha" in html and html.count('class="hoy-hecho"') == 4
+    assert "Marcar todo como hecho" in html and "Marcar la sección como hecha" in html and html.count('class="hoy-v2-hecho"') == 4
     # una por una
     r = cliente.post("/hoy/hecho", data={"elemento": f"tarea:{a}"})
     assert r.status_code == 302 and "hechos=1" in r.headers["Location"] and "fallos=0" in r.headers["Location"]

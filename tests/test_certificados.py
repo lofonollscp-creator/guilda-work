@@ -12,7 +12,7 @@ from cryptography.x509.oid import NameOID
 
 from app import certificados as ce, db
 
-AHORA = datetime(2026, 10, 13, 12, 0, 0, tzinfo=timezone.utc)
+AHORA = datetime.now(timezone.utc).replace(microsecond=0)   # la fecha real: con una fija, los certificados de prueba acaban caducando
 _CLAVES: dict = {}
 
 
