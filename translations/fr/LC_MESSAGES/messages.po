@@ -20014,3 +20014,15 @@ msgstr[1] "%(n)s étaient déjà enregistrés."
 
 msgid "No había nada nuevo que guardar: ya estaba en el expediente."
 msgstr "Rien de nouveau à enregistrer : c'était déjà dans le dossier."
+
+msgid "Búsquedas"
+msgstr "Recherches"
+
+msgid "Guardar esta búsqueda"
+msgstr "Enregistrer cette recherche"
+
+msgid "Nombre de la búsqueda"
+msgstr "Nom de la recherche"
+
+msgid "Aún no has guardado ninguna búsqueda."
+msgstr "Vous n'avez encore enregistré aucune recherche."

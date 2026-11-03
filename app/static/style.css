@@ -5231,3 +5231,12 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .correo-seleccionar-todo { display: flex; align-items: center; gap: 8px; padding: 6px 14px; font-size: 0.82em; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; }
 .correo-lista-bulkbar select { max-width: 170px; min-width: 0; }
 .correo-contexto-en-linea { display: inline; margin-left: 8px; }
+
+/* Búsquedas guardadas del correo */
+.correo-busquedas-panel { padding: 10px; margin: 6px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; gap: 8px; }
+.correo-busquedas-panel[hidden] { display: none; }
+.correo-busquedas-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.correo-busquedas-lista li { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.correo-busquedas-ir { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 6px 8px; border-radius: 8px; cursor: pointer; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.correo-busquedas-ir:hover { background: color-mix(in srgb, var(--primary) 12%, var(--surface)); }
+.correo-busquedas-quitar { flex: none; width: 28px; height: 28px; border: 0; border-radius: 8px; background: none; cursor: pointer; color: var(--text-muted); }

@@ -19929,3 +19929,15 @@ msgstr[1] "%(n)s were already saved."
 
 msgid "No había nada nuevo que guardar: ya estaba en el expediente."
 msgstr "Nothing new to save: it was already in the client file."
+
+msgid "Búsquedas"
+msgstr "Searches"
+
+msgid "Guardar esta búsqueda"
+msgstr "Save this search"
+
+msgid "Nombre de la búsqueda"
+msgstr "Search name"
+
+msgid "Aún no has guardado ninguna búsqueda."
+msgstr "You have not saved any search yet."
