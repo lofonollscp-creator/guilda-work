@@ -20080,3 +20080,15 @@ msgstr "Absent"
 
 msgid "Esa persona está ausente ese día. ¿Mover la tarea igualmente?"
 msgstr "Cette personne est absente ce jour-là. Déplacer la tâche quand même ?"
+
+msgid "Estimado"
+msgstr "Estimé"
+
+msgid "Desviación"
+msgstr "Écart"
+
+msgid "Más de lo estimado"
+msgstr "Plus que prévu"
+
+msgid "Estimado y registrado cuentan solo las tareas con estimación y el tiempo de cronómetros ya finalizados, de todo el equipo. La desviación es positiva si se ha tardado más de lo estimado."
+msgstr "Estimé et enregistré ne comptent que les tâches avec une estimation et le temps des chronomètres déjà terminés, pour toute l'équipe. L'écart est positif si cela a pris plus de temps que prévu."

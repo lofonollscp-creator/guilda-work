@@ -19995,3 +19995,15 @@ msgstr "Absent"
 
 msgid "Esa persona está ausente ese día. ¿Mover la tarea igualmente?"
 msgstr "That person is absent that day. Move the task anyway?"
+
+msgid "Estimado"
+msgstr "Estimated"
+
+msgid "Desviación"
+msgstr "Variance"
+
+msgid "Más de lo estimado"
+msgstr "More than estimated"
+
+msgid "Estimado y registrado cuentan solo las tareas con estimación y el tiempo de cronómetros ya finalizados, de todo el equipo. La desviación es positiva si se ha tardado más de lo estimado."
+msgstr "Estimated and logged count only tasks with an estimate and the time from timers already finished, for the whole team. The variance is positive if it took longer than estimated."

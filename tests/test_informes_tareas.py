@@ -179,3 +179,26 @@ def test_pantalla_csv_y_pdf(cliente):
     pdf = cliente.get("/tareas/informes.pdf?desde=2026-01-01&hasta=2026-12-31")
     assert pdf.mimetype == "application/pdf" and pdf.data[:4] == b"%PDF"
     assert cliente.get("/tareas/informes.csv?desde=malo").status_code == 302
+
+
+def test_el_informe_compara_el_tiempo_estimado_con_el_registrado_por_cliente():
+    uid = db.crear_usuario("tiempo-inf@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho tiempo informe")
+    db.asignar_tenant(uid, t)
+    cf = db.crear_cliente_fiscal(t, "Cliente Tiempo")
+    ajustada = db.crear_tarea_outlook(uid, "Con estimación", cliente_fiscal_id=cf, estimacion_min=60)
+    sin_estimar = db.crear_tarea_outlook(uid, "Sin estimación", cliente_fiscal_id=cf)
+    proyecto = db.crear_categoria(uid, "Proyecto tiempo")
+    for tarea, segundos in ((ajustada, 5400), (sin_estimar, 7200)):
+        n = db.iniciar_cronometro_tarea_outlook(uid, tarea, proyecto)
+        conn = db.get_connection()
+        conn.execute("UPDATE tareas SET estado = 'finalizada', duracion_segundos = ? WHERE id = ?", (segundos, n))
+        conn.commit()
+        conn.close()
+    r = it.informe(t, uid)
+    fila = next(f for f in r["por_cliente"] if f["cliente_fiscal_id"] == cf)
+    assert (fila["estimado_min"], fila["registrado_min"], fila["desviacion_tiempo"]) == (60, 90, 50.0)     # solo cuenta la tarea con estimación: la otra no tiene con qué compararse
+    assert r["tiempo"] == {"estimado_min": 60, "registrado_min": 90, "desviacion": 50.0}
+    planas = it.filas_planas(r)
+    cli = next(f for f in planas if f[0] == "Cliente" and f[1] == "Cliente Tiempo")
+    assert len(cli) == 2 + len(it.CABECERAS) and cli[-3:] == [1.0, 1.5, 50.0]                       # estimado (h), registrado (h) y desviación en el CSV y el PDF

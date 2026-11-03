@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_ds/componentes.html" import boton, chip, estado_vacio %}
 {% block title %}{{ _('Informes de tareas') }} — Guilda Work{% endblock %}
+{% macro horas(m) %}{% if m %}{{ '%.1f'|format(m / 60)|replace('.', ',') }} h{% else %}—{% endif %}{% endmacro %}
 {% macro tasa(f) %}{% if f.tasa_en_plazo is none %}—{% else %}{{ f.tasa_en_plazo|string|replace('.', ',') }} % <small class="muted">({{ f.en_plazo }}/{{ f.con_fecha }})</small>{% endif %}{% endmacro %}
 {% block content %}
 <header class="page-header">
@@ -65,13 +66,15 @@
   <h2>{{ titulo }}</h2>
   {% if filas %}
   <div class="tabla-caja"><table class="tabla">
-    <thead><tr><th>{{ _('Nombre') }}</th><th>{{ _('Abiertas') }}</th><th>{{ _('Vencidas') }}</th><th>{{ _('Completadas') }}</th><th>{{ _('En plazo') }}</th></tr></thead>
+    <thead><tr><th>{{ _('Nombre') }}</th><th>{{ _('Abiertas') }}</th><th>{{ _('Vencidas') }}</th><th>{{ _('Completadas') }}</th><th>{{ _('En plazo') }}</th><th>{{ _('Estimado') }}</th><th>{{ _('Registrado') }}</th><th>{{ _('Desviación') }}</th></tr></thead>
     <tbody>
       {% for f in filas %}
-      <tr><td>{{ f.nombre or _('Sin cliente') }}</td><td>{{ f.abiertas }}</td><td>{{ f.vencidas }}{% if f.vencidas %} {{ chip(_('Atención'), 'aviso') }}{% endif %}</td><td>{{ f.completadas }}</td><td>{{ tasa(f) }}</td></tr>
+      <tr><td>{{ f.nombre or _('Sin cliente') }}</td><td>{{ f.abiertas }}</td><td>{{ f.vencidas }}{% if f.vencidas %} {{ chip(_('Atención'), 'aviso') }}{% endif %}</td><td>{{ f.completadas }}</td><td>{{ tasa(f) }}</td><td>{{ horas(f.estimado_min) }}</td><td>{{ horas(f.registrado_min) }}</td>
+        <td>{% if f.desviacion_tiempo is none %}—{% else %}{{ ('+' if f.desviacion_tiempo > 0 else '') ~ (f.desviacion_tiempo|string|replace('.', ',')) }} %{% if f.desviacion_tiempo > 20 %} {{ chip(_('Más de lo estimado'), 'aviso') }}{% endif %}{% endif %}</td></tr>
       {% endfor %}
     </tbody>
   </table></div>
+  <p class="muted">{{ _('Estimado y registrado cuentan solo las tareas con estimación y el tiempo de cronómetros ya finalizados, de todo el equipo. La desviación es positiva si se ha tardado más de lo estimado.') }}</p>
   {% if clave == 'cliente' %}<p class="muted">{{ _('Una tarea vinculada a varios clientes cuenta en cada uno; por eso las filas pueden sumar más que el total.') }}</p>{% endif %}
   {% else %}<p class="muted">{{ _('No hay datos.') }}</p>{% endif %}
 </section>

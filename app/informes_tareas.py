@@ -51,7 +51,7 @@ def _tareas_visibles(usuario_id: int) -> list[dict]:
     try:
         filas = conn.execute(
             """SELECT t.id, t.asunto, t.estado, t.prioridad, t.fecha_vencimiento, t.creada_en, t.fecha_completada, t.usuario_id, t.asignada_a, t.cliente_fiscal_id,
-                      t.motivo_bloqueo, t.actualizada_en
+                      t.motivo_bloqueo, t.actualizada_en, t.estimacion_min
                FROM tareas_outlook t
                WHERE t.papelera_en IS NULL AND (t.usuario_id = ? OR t.asignada_a = ? OR t.id IN (SELECT tarea_id FROM tareas_participantes_todos WHERE usuario_id = ?))
                LIMIT ?""", (usuario_id, usuario_id, usuario_id, LIMITE_TAREAS)).fetchall()
@@ -61,8 +61,15 @@ def _tareas_visibles(usuario_id: int) -> list[dict]:
             ids = [t["id"] for t in tareas[i:i + 500]]
             for v in conn.execute(f"SELECT tarea_id, cliente_fiscal_id FROM tarea_clientes WHERE tarea_id IN ({','.join('?' * len(ids))})", ids):
                 vinculos.setdefault(v["tarea_id"], []).append(v["cliente_fiscal_id"])
+        registrado: dict[int, int] = {}                  # segundos de cronómetro ya finalizados, de todo el equipo, por tarea
+        for i in range(0, len(tareas), 500):
+            ids = [t["id"] for t in tareas[i:i + 500]]
+            for v in conn.execute(f"SELECT tarea_outlook_id, COALESCE(SUM(duracion_segundos), 0) AS total FROM tareas WHERE estado = 'finalizada' AND papelera_en IS NULL "
+                                  f"AND tarea_outlook_id IN ({','.join('?' * len(ids))}) GROUP BY tarea_outlook_id", ids):
+                registrado[v["tarea_outlook_id"]] = v["total"]
         for t in tareas:
             t["clientes"] = vinculos.get(t["id"]) or ([t["cliente_fiscal_id"]] if t["cliente_fiscal_id"] else [])
+            t["registrado_s"] = registrado.get(t["id"], 0)
         return tareas
     finally:
         conn.close()
@@ -86,7 +93,15 @@ def _bloqueada_desde(tarea_ids: list[int]) -> dict[int, str]:
 
 
 def _fila_vacia() -> dict:
-    return {"abiertas": 0, "vencidas": 0, "completadas": 0, "con_fecha": 0, "en_plazo": 0}
+    return {"abiertas": 0, "vencidas": 0, "completadas": 0, "con_fecha": 0, "en_plazo": 0, "estimado_min": 0, "registrado_min": 0}
+
+
+def _sumar_tiempo(fila: dict, t: dict) -> None:
+    """Solo cuentan las tareas CON estimación, para que lo estimado y lo registrado sean comparables (el tiempo de tareas sin estimar no tiene con qué compararse)."""
+    estimado = t.get("estimacion_min") or 0
+    if estimado > 0:
+        fila["estimado_min"] += estimado
+        fila["registrado_min"] += round((t.get("registrado_s") or 0) / 60)
 
 
 def _sumar(fila: dict, abierta: bool, vencida: bool, completada_en_ventana: bool, con_fecha: bool, en_plazo: bool) -> None:
@@ -98,7 +113,8 @@ def _sumar(fila: dict, abierta: bool, vencida: bool, completada_en_ventana: bool
 
 
 def _con_tasa(fila: dict) -> dict:
-    return {**fila, "tasa_en_plazo": _porcentaje(fila["en_plazo"], fila["con_fecha"])}
+    desviacion = round(100 * (fila["registrado_min"] - fila["estimado_min"]) / fila["estimado_min"], 1) if fila["estimado_min"] else None      # + = se ha tardado más de lo estimado
+    return {**fila, "tasa_en_plazo": _porcentaje(fila["en_plazo"], fila["con_fecha"]), "desviacion_tiempo": desviacion}
 
 
 def calcular(tareas: list[dict], desde: date, hasta: date, hoy: date, bloqueadas_desde: dict[int, str] | None = None) -> dict:
@@ -125,9 +141,14 @@ def calcular(tareas: list[dict], desde: date, hasta: date, hoy: date, bloqueadas
             cierres.append((fin - creada).days)
         args = (abierta, vencida, en_ventana, limite is not None, en_plazo)
         _sumar(total, *args)
-        _sumar(por_resp.setdefault(t["asignada_a"] or t["usuario_id"], _fila_vacia()), *args)
+        _sumar_tiempo(total, t)
+        fila_resp = por_resp.setdefault(t["asignada_a"] or t["usuario_id"], _fila_vacia())
+        _sumar(fila_resp, *args)
+        _sumar_tiempo(fila_resp, t)
         for c in (t["clientes"] or [None]):
-            _sumar(por_cli.setdefault(c, _fila_vacia()), *args)
+            fila_cli = por_cli.setdefault(c, _fila_vacia())
+            _sumar(fila_cli, *args)
+            _sumar_tiempo(fila_cli, t)
         if t["estado"] == "esperando":
             origen = _dia(bloqueadas_desde.get(t["id"])) or _dia(t["actualizada_en"]) or _dia(t["creada_en"]) or hoy
             bloqueadas.append({"id": t["id"], "asunto": t["asunto"], "motivo": t["motivo_bloqueo"], "desde": origen.isoformat(), "dias": max((hoy - origen).days, 0)})
@@ -135,6 +156,7 @@ def calcular(tareas: list[dict], desde: date, hasta: date, hoy: date, bloqueadas
     return {
         "creadas": creadas,
         "ahora": {"abiertas": total["abiertas"], "vencidas": total["vencidas"], "bloqueadas": len(bloqueadas)},
+        "tiempo": {"estimado_min": total["estimado_min"], "registrado_min": total["registrado_min"], "desviacion": _con_tasa(total)["desviacion_tiempo"]},
         "en_ventana": {"completadas": total["completadas"], "con_fecha": total["con_fecha"], "en_plazo": total["en_plazo"], "tasa_en_plazo": _porcentaje(total["en_plazo"], total["con_fecha"]),
                        "tiempo_medio_cierre_dias": round(sum(cierres) / len(cierres), 1) if cierres else None, "tiempo_medio_n": len(cierres)},
         "por_responsable": {k: _con_tasa(v) for k, v in por_resp.items()},
@@ -164,7 +186,7 @@ def informe(tenant_id: int, usuario_id: int, desde: str | None = None, hasta: st
                        if t["estado"] != "completada" and t["fecha_vencimiento"] and hoy <= _dia(t["fecha_vencimiento"]) <= limite), key=lambda x: (x["fecha"], x["id"]))
     return {
         "ventana": {"desde": ini.isoformat(), "hasta": fin.isoformat(), "dias": (fin - ini).days + 1}, "hoy": hoy.isoformat(), "alcance": "tareas que la persona puede ver",
-        "creadas_en_ventana": r["creadas"], "ahora": r["ahora"], "en_ventana": r["en_ventana"],
+        "creadas_en_ventana": r["creadas"], "ahora": r["ahora"], "en_ventana": r["en_ventana"], "tiempo": r["tiempo"],
         "por_responsable": por_responsable, "por_cliente": por_cliente, "bloqueadas": r["bloqueadas"],
         "proximas": {"dias": dias_proximos, "tareas": proximas, "vencimientos_fiscales": _vencimientos_proximos(tenant_id, usuario_id, hoy, limite, visibles),
                      "certificados": _certificados_proximos(tenant_id, usuario_id, dias_proximos)},
@@ -190,11 +212,16 @@ def _certificados_proximos(tenant_id: int, usuario_id: int, dias: int) -> list[d
 
 # --- Salidas: tablas planas para CSV y PDF ----------------------------------------------------------------------------------------
 
-CABECERAS = ("Abiertas", "Vencidas", "Completadas en la ventana", "Con fecha límite", "En plazo", "% en plazo")
+CABECERAS = ("Abiertas", "Vencidas", "Completadas en la ventana", "Con fecha límite", "En plazo", "% en plazo", "Estimado (h)", "Registrado (h)", "Desviación %")
+
+
+def _horas(minutos: int) -> float | str:
+    return round(minutos / 60, 2) if minutos else ""
 
 
 def _celdas(f: dict) -> list:
-    return [f["abiertas"], f["vencidas"], f["completadas"], f["con_fecha"], f["en_plazo"], "" if f["tasa_en_plazo"] is None else f["tasa_en_plazo"]]
+    return [f["abiertas"], f["vencidas"], f["completadas"], f["con_fecha"], f["en_plazo"], "" if f["tasa_en_plazo"] is None else f["tasa_en_plazo"],
+            _horas(f["estimado_min"]), _horas(f["registrado_min"]), "" if f["desviacion_tiempo"] is None else f["desviacion_tiempo"]]
 
 
 def filas_planas(r: dict) -> list[list]:
