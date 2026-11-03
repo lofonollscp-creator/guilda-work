@@ -91,6 +91,7 @@ def _sembrar(uid: int, tenant: int) -> dict:
                           fuentes_json=json.dumps([{"tipo": "tarea", "titulo": "Presentar modelo 303", "url": "/tareas/1"}, {"tipo": "vencimiento", "titulo": "303 · 3T · Vidal", "url": "/fiscal/vencimientos"}]))
     db.agregar_mensaje_ia(uid, "user", "Recuérdame llamar a Vidal mañana a las 10")
     cuenta = db.crear_cuenta_correo(uid, "info@despacho.es", "imap", "imap.ejemplo.com", 993, "info@despacho.es")
+    db.marcar_error_sincronizacion_cuenta_correo(cuenta, "Error inesperado (DataError) en imap.ejemplo.com: " + "x" * 90)   # la fila de «Cuentas» con un fallo largo
     for i, (de, asunto, texto, leido) in enumerate([
         ("Marta Ruiz <marta@ejemplo.com>", "Consulta sobre la renta", "Hola, quería preguntaros por la deducción de la vivienda habitual. Hasta 2022 vivíamos de alquiler y en 2023 compramos el piso. ¿Podemos aplicarla este año?", False),
         ("Hacienda <no-reply@aeat.es>", "Notificación electrónica pendiente", "Tiene una notificación pendiente de lectura en la sede electrónica.", False),

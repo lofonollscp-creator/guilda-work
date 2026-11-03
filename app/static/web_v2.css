@@ -865,7 +865,7 @@ form.edit-form-delete { margin-top: 4px; }
 .cliente-cabecera > .ds-fila { margin: 0 !important; flex-wrap: wrap; gap: 8px; }
 .ficha-volver { margin: 0 0 8px; font-size: 13px; font-weight: 700; }
 .ficha-volver a { color: var(--text-muted); text-decoration: none; }
-.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start; }
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 20px; align-items: start; }
 .dash-panel h2 { font-size: 15px; font-weight: 800; margin: 0 0 14px; }
 .dash-grid .dash-panel form.edit-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; padding: 0; border: 0; background: none; box-shadow: none; margin: 0; max-width: none; }
 .dash-grid .dash-panel form.edit-form > :has(textarea), .dash-grid .dash-panel form.edit-form > button, .dash-grid .dash-panel form.edit-form > .ds-campo-ancho { grid-column: 1 / -1; }
@@ -1138,3 +1138,20 @@ fieldset > .dash-panel { box-sizing: border-box; max-width: 100%; }
 
 /* Barra lateral: una etiqueta más larga que el hueco acaba en «…» en vez de cortarse en seco. */
 .icon-rail-link .icon-rail-etiqueta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Barra superior en móvil: el buscador es un icono de 40px; el min-width de escritorio lo ensanchaba y lo sacaba de su caja. */
+@media (max-width: 820px) { .top-bar-buscar { flex: none; min-width: 0; width: 40px; } }
+@media (max-width: 820px) { .top-bar-acciones { flex: 0 0 auto; } }
+
+/* Últimos desbordes de la pasada: cabecera de lectura de correo, «posponer» de la cinta, cronómetro de la fila de tareas y enlace de ayuda de la IA. */
+.correo-lectura-header > * { min-width: 0; }
+.correo-lectura-remitente { min-width: 0; flex-wrap: wrap; overflow-wrap: anywhere; }
+.correo-lectura-remitente > :not(.avatar-circulo) { min-width: 0; }
+.correo-ribbon-posponer { flex-wrap: wrap; max-width: 100%; min-width: 0; }
+.tarea-fila-acciones .tarea-cronometro-form { min-width: 0; flex: 0 1 auto; }
+.tarea-fila-acciones .tarea-cronometro-form select { max-width: 72px; }
+.tarea-fila-acciones > * { flex-shrink: 0; }
+.tarea-fila-acciones .tarea-cronometro-form { flex-shrink: 1; }
+.ia-enlace { max-width: 100%; text-align: left; }
+.ia-barra-texto .ia-enlace { white-space: nowrap; }
+.ia-enlace svg { flex: none; }

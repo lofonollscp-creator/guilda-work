@@ -54,7 +54,7 @@
 {% else %}
 <ul class="log-list ds-mt-16">
   {% for c in cuentas %}
-  <li class="log-item">
+  <li class="log-item correo-cuenta-fila">
     <span class="avatar-circulo" style="--avatar-color: {{ c.nombre|avatar_color }};">{{ c.nombre|iniciales }}</span>
       <span class="log-text">{{ c.nombre }} <span class="muted">({{ c.usuario }} · {{ c.protocolo|upper }}{% if c.auth_tipo != 'password' %} · OAuth2{% endif %} · {{ c.host }}:{{ c.puerto }})</span></span>
       {% if c.ultima_sincronizacion %}

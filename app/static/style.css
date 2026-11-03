@@ -5219,3 +5219,10 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 /* Aviso «Novedades en la ayuda» (menú de ajustes) */
 .ayuda-novedad-punto { display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: var(--primary); vertical-align: middle; }
 .ayuda-novedad[hidden] { display: none !important; }
+
+/* Cuentas de correo: la fila envuelve; el texto de la cuenta nunca se queda en una columna de una letra y el error de sincronización va debajo. */
+.correo-cuenta-fila { flex-wrap: wrap; }
+.correo-cuenta-fila .avatar-circulo { flex: none; }
+.correo-cuenta-fila .log-text { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+.correo-cuenta-fila .log-duration { flex: 0 1 auto; }
+.correo-cuenta-fila .correo-cuenta-editar { flex: none; }
