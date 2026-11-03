@@ -3412,6 +3412,8 @@ from .db_ia import (  # noqa: E402,F401
     _migrar_conversaciones_ia,
     _crear_conversacion_ia,
     conversacion_ia_activa_id,
+    _memo_activa,
+    _olvidar_activa,
     listar_conversaciones_ia,
     crear_conversacion_ia,
     activar_conversacion_ia,

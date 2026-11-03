@@ -498,7 +498,7 @@
         <a href="{{ url_for('tareas.listar') }}" class="{{ 'activo' if _e.startswith('tareas.') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-list-checks"></use></svg><span>{{ _('Tareas') }}</span></a>
         <a href="{{ url_for('lista_notas') }}" class="{{ 'activo' if _e in ('lista_notas', 'editar_nota') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-notebook-pen"></use></svg><span>{{ _('Notas') }}</span></a>
         <a href="{{ url_for('correo.bandeja') }}" class="{{ 'activo' if _e.startswith('correo.') }}"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg><span>{{ _('Correo') }}</span></a>
-        <button type="button" id="barra-inferior-mas"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-panel-left"></use></svg><span>{{ _('Más') }}</span></button>
+        <button type="button" id="barra-inferior-mas" class="barra-inferior-boton"><svg aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-panel-left"></use></svg><span>{{ _('Más') }}</span></button>
       </nav>
     </div>
   </div>

@@ -104,9 +104,22 @@ def _migrar_conversaciones_ia(conn: sqlite3.Connection) -> None:
         )
 
 
+def _memo_activa() -> dict | None:
+    """Recuerda, solo durante una petición, qué conversación es la activa de cada persona: una pantalla la pedía 4 veces (la portada, la burbuja del asistente...). Fuera de una petición no se recuerda nada."""
+    from flask import g, has_request_context
+    return g.setdefault("_ia_conversacion_activa", {}) if has_request_context() else None
+
+
+def _olvidar_activa(usuario_id: int) -> None:
+    memo = _db._memo_activa()
+    if memo is not None:
+        memo.pop(usuario_id, None)
+
+
 def _crear_conversacion_ia(conn: sqlite3.Connection, usuario_id: int) -> int:
     ahora = _db.now_iso()
     conn.execute("UPDATE ia_conversaciones SET activa = 0 WHERE usuario_id = ?", (usuario_id,))
+    _db._olvidar_activa(usuario_id)
     cur = conn.execute(
         "INSERT INTO ia_conversaciones (usuario_id, titulo, creada_en, actualizada_en, activa) VALUES (?, NULL, ?, ?, 1)",
         (usuario_id, ahora, ahora),
@@ -127,14 +140,21 @@ def _crear_conversacion_ia(conn: sqlite3.Connection, usuario_id: int) -> int:
 
 def conversacion_ia_activa_id(usuario_id: int, crear: bool = True) -> int | None:
     """La conversación activa del usuario; si no tiene ninguna y `crear`, abre una."""
+    memo = _db._memo_activa()
+    if memo is not None and usuario_id in memo and (memo[usuario_id] is not None or not crear):
+        return memo[usuario_id]                                      # también recuerda «no tiene ninguna» (None) para quien solo mira
     conn = _db.get_connection()
     try:
         fila = conn.execute(
             "SELECT id FROM ia_conversaciones WHERE usuario_id = ? AND activa = 1", (usuario_id,)
         ).fetchone()
         if fila:
+            if memo is not None:
+                memo[usuario_id] = fila["id"]
             return fila["id"]
         if not crear:
+            if memo is not None:
+                memo[usuario_id] = None
             return None
         nueva = _db._crear_conversacion_ia(conn, usuario_id)
         conn.commit()
@@ -185,6 +205,7 @@ def activar_conversacion_ia(usuario_id: int, conversacion_id: int) -> bool:
             return False
         conn.execute("UPDATE ia_conversaciones SET activa = CASE WHEN id = ? THEN 1 ELSE 0 END WHERE usuario_id = ?", (conversacion_id, usuario_id))
         conn.commit()
+        _db._olvidar_activa(usuario_id)
         return True
     finally:
         conn.close()
@@ -226,6 +247,7 @@ def eliminar_conversacion_ia(usuario_id: int, conversacion_id: int) -> bool:
             if reciente:
                 conn.execute("UPDATE ia_conversaciones SET activa = 1 WHERE id = ?", (reciente["id"],))
         conn.commit()
+        _db._olvidar_activa(usuario_id)
         return True
     finally:
         conn.close()
