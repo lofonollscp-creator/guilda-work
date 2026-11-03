@@ -1280,11 +1280,15 @@ def ia_aplicar_acciones(mensaje_id: int):
 def crear_tareas_marcadas(mensaje_id: int):
     mensaje = _mensaje_de_usuario_o_404(mensaje_id)
     creadas = 0
+    personas = [(c["id"], c["nombre"], c["email"] if "email" in c.keys() else "") for c in db.listar_companeros_tenant(g.usuario_id)]
     for asunto in request.form.getlist("tarea")[:correo_ia.MAX_TAREAS]:
         asunto = " ".join(asunto.split())[:correo_ia.MAX_LONGITUD_TAREA]
         if asunto:
+            # Como en el alta rápida de tareas: «Enviar los extractos el viernes !alta @luis» crea la tarea con su fecha, su prioridad y su responsable, no con todo eso dentro del título.
+            e = quickadd.interpretar(asunto, date.today(), personas)
             db.crear_tarea_outlook(
-                g.usuario_id, asunto, cliente_fiscal_id=mensaje["cliente_fiscal_id"], mensaje_correo_id=mensaje_id,
+                g.usuario_id, e.asunto or asunto, cliente_fiscal_id=mensaje["cliente_fiscal_id"], mensaje_correo_id=mensaje_id,
+                fecha_vencimiento=e.vencimiento, prioridad=e.prioridad or "normal", asignada_a=e.persona_id,
             )
             creadas += 1
     return _volver_a_mensaje(mensaje, _("{n} tareas creadas.").format(n=creadas))

@@ -593,3 +593,20 @@ def test_archivar_todo_en_el_expediente_guarda_el_correo_y_los_adjuntos_en_un_pa
     otra = cliente.post(f"/correo/{mid}/archivar-todo", data={}, follow_redirects=True).get_data(as_text=True)
     assert "No había nada nuevo que guardar" in otra                                              # sin repetir lo ya archivado
     assert cliente.post(f"/correo/{mid}/archivar-todo", data={"cliente_fiscal_id": 99999}).status_code == 404
+
+
+def test_las_tareas_propuestas_por_la_ia_entienden_fecha_prioridad_y_responsable(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "tareas-ia-q@ejemplo.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho tareas ia")
+    db.asignar_tenant(usuario_id, tenant)
+    luis = db.crear_usuario("luis.ia@ejemplo.com", "contrasena123")
+    db.asignar_tenant(luis, tenant)
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mid = _crear_mensaje(cuenta_id, "1")
+    r = cliente.post(f"/correo/{mid}/tareas-ia", data={"tarea": ["Enviar los extractos mañana !alta @luis", "Llamar al cliente"]})
+    assert r.status_code == 302
+    tareas = {t["asunto"]: t for t in db.listar_tareas_outlook(usuario_id, incluir_asignadas=True) if t["mensaje_correo_id"] == mid}
+    assert set(tareas) == {"Enviar los extractos", "Llamar al cliente"}
+    t = tareas["Enviar los extractos"]
+    assert t["prioridad"] == "alta" and t["asignada_a"] == luis and t["fecha_vencimiento"]
+    assert tareas["Llamar al cliente"]["prioridad"] == "normal" and tareas["Llamar al cliente"]["fecha_vencimiento"] is None
