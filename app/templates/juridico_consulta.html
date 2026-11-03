@@ -18,6 +18,14 @@
   {{ chip(_('Borrador pendiente de revisión profesional')) }}
   {{ chip(_('Fecha jurídica: %(f)s', f=r.coverage.legalAsOf)) }}
 </p>
+{% if avisos_citas and (avisos_citas.modificadas or avisos_citas.no_disponibles or avisos_citas.derogadas or avisos_citas.fuera_de_fecha) %}
+<div class="aviso" role="alert">
+  {% if avisos_citas.modificadas %}{{ ngettext('%(n)s fuente citada se ha actualizado desde que se hizo esta consulta: revisa la versión actual antes de usar la conclusión.', '%(n)s fuentes citadas se han actualizado desde que se hizo esta consulta: revisa las versiones actuales antes de usar la conclusión.', avisos_citas.modificadas, n=avisos_citas.modificadas) }}{% endif %}
+  {% if avisos_citas.derogadas %} {{ ngettext('%(n)s cita corresponde a un texto que ya no está en vigor.', '%(n)s citas corresponden a textos que ya no están en vigor.', avisos_citas.derogadas, n=avisos_citas.derogadas) }}{% endif %}
+  {% if avisos_citas.fuera_de_fecha %} {{ ngettext('%(n)s cita no estaba vigente en la fecha jurídica de la consulta.', '%(n)s citas no estaban vigentes en la fecha jurídica de la consulta.', avisos_citas.fuera_de_fecha, n=avisos_citas.fuera_de_fecha) }}{% endif %}
+  {% if avisos_citas.no_disponibles %} {{ ngettext('%(n)s fuente citada ya no está disponible en tu despacho.', '%(n)s fuentes citadas ya no están disponibles en tu despacho.', avisos_citas.no_disponibles, n=avisos_citas.no_disponibles) }}{% endif %}
+</div>
+{% endif %}
 {% if r.status == 'insufficient_evidence' %}
 <div class="aviso" role="status">{{ _('Las fuentes recuperadas no bastan para responder con fundamento, o la respuesta propuesta no superó la verificación de citas. No se contesta de memoria.') }}</div>
 {% endif %}
@@ -37,7 +45,7 @@
   <h2>{{ _('Fuentes') }}</h2>
   {% if r.citations %}<ol>{% for c in r.citations %}<li id="cita-{{ c.id }}"><strong>{{ c.title }}</strong> · {{ c.locator }}<br>
     <small>«{{ c.quote }}»</small><br>
-    {% if c.kind == 'legal_source' %}<a href="{{ url_for('juridico.documento', documento_id=c.documentId, version=c.versionId) }}">{{ _('Abrir en la biblioteca') }}</a>
+    {% if c.kind == 'legal_source' %}{% include "_juridico_cita_estado.html" %}
       {% if c.canonicalUrl %} · <a href="{{ c.canonicalUrl }}" rel="noopener noreferrer" target="_blank">{{ _('Fuente original') }}</a>{% endif %}
     {% else %}<span class="muted">{{ _('Adjunto privado') }}</span>{% endif %}</li>{% endfor %}</ol>
   {% elif r.sources %}<p class="muted">{{ _('Fuentes recuperadas (no citadas):') }}</p><ul>{% for c in r.sources %}<li><a href="{{ url_for('juridico.documento', documento_id=c.documentId) }}">{{ c.title }}</a> · {{ c.locator }}</li>{% endfor %}</ul>

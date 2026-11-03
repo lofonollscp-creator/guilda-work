@@ -1,0 +1,17 @@
+{# Estado actual de una cita (app/juridico/citas.py): enlace al fragmento exacto y avisos si la fuente cambió. Uso: {% include %} con `c` (la cita) y `estados` (por id de cita). #}
+{% from "_ds/componentes.html" import chip %}
+{% set e = estados.get(c.id) %}
+{% if c.kind == 'legal_source' %}
+  {% if e and not e.disponible %}
+    {{ chip(_('La fuente ya no está disponible en tu despacho'), 'aviso') }}
+  {% else %}
+    <a href="{{ url_for('juridico.documento', documento_id=c.documentId, version=c.versionId or None, fragmento=c.locator, _anchor='f-%s' % c.chunkId) if c.chunkId else url_for('juridico.documento', documento_id=c.documentId, version=c.versionId or None) }}">{{ _('Abrir el fragmento exacto') }}</a>
+    {% if e %}
+      {% if e.vigente_desde or e.vigente_hasta %}<small class="muted"> · {{ _('Vigente desde %(d)s', d=(e.vigente_desde or '?')[:10]) }}{% if e.vigente_hasta %} {{ _('hasta %(h)s', h=e.vigente_hasta[:10]) }}{% endif %}</small>{% endif %}
+      {% if e.derogada %}<br>{{ chip(_('Este texto ya no está en vigor'), 'aviso') }}{% endif %}
+      {% if e.fuera_de_fecha %}<br>{{ chip(_('No estaba vigente en la fecha jurídica de la consulta'), 'aviso') }}{% endif %}
+      {% if e.modificada %}<br>{{ chip(_('La fuente se ha actualizado desde esta consulta'), 'aviso') }}
+        <a href="{{ url_for('juridico.documento', documento_id=c.documentId) }}">{{ _('Ver la versión actual') }}</a> <small class="muted">({{ _('capturada el %(f)s', f=e.actual.capturada_en) }})</small>{% endif %}
+    {% endif %}
+  {% endif %}
+{% endif %}

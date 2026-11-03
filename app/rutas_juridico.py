@@ -13,7 +13,7 @@ from flask_babel import gettext as _
 
 from . import acceso, db, nucleo, verticales
 from .auth import login_required
-from .juridico import adjuntos, asistente, busqueda, calidad, catalogo, corpus, informes, ingesta, modulo
+from .juridico import adjuntos, asistente, busqueda, calidad, catalogo, citas, corpus, informes, ingesta, modulo
 from .juridico.esquema import COLECCIONES
 
 juridico_bp = Blueprint("juridico", __name__, url_prefix="/juridico")
@@ -94,7 +94,8 @@ def consulta(run_id: int):
     e = asistente.ejecucion(g.tenant_id, g.usuario_id, run_id)
     if e is None:
         abort(404)
-    return render_template("juridico_consulta.html", e=e, r=e["respuesta"], error=_error(), puede_guardar=not acceso.es_solo_auditor(g.tenant_id, g.usuario_id))
+    estados = citas.estado_de_citas(g.tenant_id, (e["respuesta"] or {}).get("citations", []), (e["respuesta"] or {}).get("coverage", {}).get("legalAsOf"))
+    return render_template("juridico_consulta.html", e=e, r=e["respuesta"], estados=estados, avisos_citas=citas.resumen_de_avisos(estados), error=_error(), puede_guardar=not acceso.es_solo_auditor(g.tenant_id, g.usuario_id))
 
 
 @juridico_bp.route("/consulta/<int:run_id>/informe", methods=["POST"])
@@ -158,7 +159,8 @@ def informe(informe_id: int):
     inf = informes.obtener(g.tenant_id, g.usuario_id, informe_id)
     if inf is None:
         abort(404)
-    return render_template("juridico_informe.html", inf=inf, r=inf["instantanea"]["respuesta"], texto=informes.texto_para_copiar(inf), error=_error(),
+    estados = citas.estado_de_citas(g.tenant_id, inf["instantanea"]["respuesta"].get("citations", []), inf["instantanea"].get("fecha_juridica"))
+    return render_template("juridico_informe.html", inf=inf, r=inf["instantanea"]["respuesta"], estados=estados, avisos_citas=citas.resumen_de_avisos(estados), texto=informes.texto_para_copiar(inf), error=_error(),
                            puede_revisar=inf["estado"] == "borrador" and (acceso.es_directivo(g.usuario_id) or acceso.puede_autorizar(g.tenant_id, g.usuario_id)))
 
 

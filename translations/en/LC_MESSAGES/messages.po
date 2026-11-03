@@ -19842,3 +19842,44 @@ msgstr "missing details"
 
 msgid "error"
 msgstr "error"
+
+msgid "La fuente ya no está disponible en tu despacho"
+msgstr "The source is no longer available in your firm"
+
+msgid "Abrir el fragmento exacto"
+msgstr "Open the exact passage"
+
+msgid "Este texto ya no está en vigor"
+msgstr "This text is no longer in force"
+
+msgid "No estaba vigente en la fecha jurídica de la consulta"
+msgstr "It was not in force on the legal date of the query"
+
+msgid "La fuente se ha actualizado desde esta consulta"
+msgstr "The source has been updated since this query"
+
+msgid "Ver la versión actual"
+msgstr "View the current version"
+
+msgid "capturada el %(f)s"
+msgstr "captured on %(f)s"
+
+msgid "%(n)s fuente citada se ha actualizado desde que se hizo esta consulta: revisa la versión actual antes de usar la conclusión."
+msgid_plural "%(n)s fuentes citadas se han actualizado desde que se hizo esta consulta: revisa las versiones actuales antes de usar la conclusión."
+msgstr[0] "%(n)s cited source has been updated since this query was made: check the current version before using the conclusion."
+msgstr[1] "%(n)s cited sources have been updated since this query was made: check the current versions before using the conclusion."
+
+msgid "%(n)s cita corresponde a un texto que ya no está en vigor."
+msgid_plural "%(n)s citas corresponden a textos que ya no están en vigor."
+msgstr[0] "%(n)s citation refers to a text that is no longer in force."
+msgstr[1] "%(n)s citations refer to texts that are no longer in force."
+
+msgid "%(n)s cita no estaba vigente en la fecha jurídica de la consulta."
+msgid_plural "%(n)s citas no estaban vigentes en la fecha jurídica de la consulta."
+msgstr[0] "%(n)s citation was not in force on the legal date of the query."
+msgstr[1] "%(n)s citations were not in force on the legal date of the query."
+
+msgid "%(n)s fuente citada ya no está disponible en tu despacho."
+msgid_plural "%(n)s fuentes citadas ya no están disponibles en tu despacho."
+msgstr[0] "%(n)s cited source is no longer available in your firm."
+msgstr[1] "%(n)s cited sources are no longer available in your firm."

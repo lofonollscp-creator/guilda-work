@@ -19927,3 +19927,44 @@ msgstr "informations manquantes"
 
 msgid "error"
 msgstr "erreur"
+
+msgid "La fuente ya no está disponible en tu despacho"
+msgstr "La source n'est plus disponible dans votre cabinet"
+
+msgid "Abrir el fragmento exacto"
+msgstr "Ouvrir le passage exact"
+
+msgid "Este texto ya no está en vigor"
+msgstr "Ce texte n'est plus en vigueur"
+
+msgid "No estaba vigente en la fecha jurídica de la consulta"
+msgstr "Il n'était pas en vigueur à la date juridique de la requête"
+
+msgid "La fuente se ha actualizado desde esta consulta"
+msgstr "La source a été mise à jour depuis cette requête"
+
+msgid "Ver la versión actual"
+msgstr "Voir la version actuelle"
+
+msgid "capturada el %(f)s"
+msgstr "capturée le %(f)s"
+
+msgid "%(n)s fuente citada se ha actualizado desde que se hizo esta consulta: revisa la versión actual antes de usar la conclusión."
+msgid_plural "%(n)s fuentes citadas se han actualizado desde que se hizo esta consulta: revisa las versiones actuales antes de usar la conclusión."
+msgstr[0] "%(n)s source citée a été mise à jour depuis cette requête : vérifiez la version actuelle avant d'utiliser la conclusion."
+msgstr[1] "%(n)s sources citées ont été mises à jour depuis cette requête : vérifiez les versions actuelles avant d'utiliser la conclusion."
+
+msgid "%(n)s cita corresponde a un texto que ya no está en vigor."
+msgid_plural "%(n)s citas corresponden a textos que ya no están en vigor."
+msgstr[0] "%(n)s citation renvoie à un texte qui n'est plus en vigueur."
+msgstr[1] "%(n)s citations renvoient à des textes qui ne sont plus en vigueur."
+
+msgid "%(n)s cita no estaba vigente en la fecha jurídica de la consulta."
+msgid_plural "%(n)s citas no estaban vigentes en la fecha jurídica de la consulta."
+msgstr[0] "%(n)s citation n'était pas en vigueur à la date juridique de la requête."
+msgstr[1] "%(n)s citations n'étaient pas en vigueur à la date juridique de la requête."
+
+msgid "%(n)s fuente citada ya no está disponible en tu despacho."
+msgid_plural "%(n)s fuentes citadas ya no están disponibles en tu despacho."
+msgstr[0] "%(n)s source citée n'est plus disponible dans votre cabinet."
+msgstr[1] "%(n)s sources citées ne sont plus disponibles dans votre cabinet."

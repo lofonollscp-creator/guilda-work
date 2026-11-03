@@ -16,6 +16,14 @@
   {{ chip(_('Guardado el %(f)s', f=inf.creado_en[:10])) }}
 </p>
 {% if inf.aviso_fuente %}<div class="aviso" role="alert">{{ inf.aviso_fuente }} {{ _('Vuelve a lanzar la consulta antes de revisarlo.') }}</div>{% endif %}
+{% if avisos_citas and (avisos_citas.modificadas or avisos_citas.no_disponibles or avisos_citas.derogadas or avisos_citas.fuera_de_fecha) %}
+<div class="aviso" role="alert">
+  {% if avisos_citas.modificadas %}{{ ngettext('%(n)s fuente citada se ha actualizado desde que se hizo esta consulta: revisa la versión actual antes de usar la conclusión.', '%(n)s fuentes citadas se han actualizado desde que se hizo esta consulta: revisa las versiones actuales antes de usar la conclusión.', avisos_citas.modificadas, n=avisos_citas.modificadas) }}{% endif %}
+  {% if avisos_citas.derogadas %} {{ ngettext('%(n)s cita corresponde a un texto que ya no está en vigor.', '%(n)s citas corresponden a textos que ya no están en vigor.', avisos_citas.derogadas, n=avisos_citas.derogadas) }}{% endif %}
+  {% if avisos_citas.fuera_de_fecha %} {{ ngettext('%(n)s cita no estaba vigente en la fecha jurídica de la consulta.', '%(n)s citas no estaban vigentes en la fecha jurídica de la consulta.', avisos_citas.fuera_de_fecha, n=avisos_citas.fuera_de_fecha) }}{% endif %}
+  {% if avisos_citas.no_disponibles %} {{ ngettext('%(n)s fuente citada ya no está disponible en tu despacho.', '%(n)s fuentes citadas ya no están disponibles en tu despacho.', avisos_citas.no_disponibles, n=avisos_citas.no_disponibles) }}{% endif %}
+</div>
+{% endif %}
 <section class="dash-panel">
   {% if r.conclusion %}<h2>{{ _('Conclusión') }}</h2><p>{{ r.conclusion }}</p>{% endif %}
   <h2>{{ _('Fundamento') }}</h2>
@@ -25,6 +33,7 @@
 <section class="dash-panel"><h2>{{ _('Fuentes') }}</h2>
   <ol>{% for c in r.citations %}<li id="cita-{{ c.id }}"><strong>{{ c.title }}</strong> · {{ c.locator }}<br><small>«{{ c.quote }}»</small><br>
     {% if c.captura %}<small class="muted">{{ _('Versión capturada el') }} {{ c.captura.capturada_en[:10] }}{% if c.captura.fecha_resolucion %} · {{ _('resolución') }} {{ c.captura.fecha_resolucion }}{% endif %}</small>{% endif %}
+    {% include "_juridico_cita_estado.html" %}
     {% if c.canonicalUrl %}<br><a href="{{ c.canonicalUrl }}" rel="noopener noreferrer" target="_blank">{{ _('Fuente original') }}</a>{% endif %}</li>{% endfor %}</ol></section>
 <section class="dash-panel"><h2>{{ _('Copiar con referencias') }}</h2><textarea readonly rows="10" class="ds-ancho-total" aria-label="{{ _('Copiar con referencias') }}">{{ texto }}</textarea></section>
 {% if puede_revisar and not inf.aviso_fuente %}

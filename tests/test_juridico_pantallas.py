@@ -79,7 +79,7 @@ def test_consulta_completa_desde_la_pantalla_hasta_el_informe_revisado(sesion, m
     r = c.post("/juridico/consultar", data={"pregunta": "¿Qué límite tiene la deducción de gastos?", "fecha_juridica": "2099-01-15", "modo_temporal": "actual", "objetivo": "consulta", "coleccion": ["legislacion"]})
     assert r.status_code == 302 and "/juridico/consulta/" in r.headers["Location"]
     html = c.get(r.headers["Location"]).get_data(as_text=True)
-    assert "Respondida con fuentes" in html and "quince por ciento" in html and "Borrador pendiente de revisión profesional" in html and "Abrir en la biblioteca" in html and "Fuente original" in html
+    assert "Respondida con fuentes" in html and "quince por ciento" in html and "Borrador pendiente de revisión profesional" in html and "Abrir el fragmento exacto" in html and "Fuente original" in html
     assert "Guardar como informe del cliente" in html
     run_id = int(r.headers["Location"].rstrip("/").split("/")[-1])
     g = c.post(f"/juridico/consulta/{run_id}/informe", data={"titulo": "Límite de gastos"})
@@ -170,3 +170,34 @@ def test_toda_entrada_de_menu_de_los_verticales_tiene_su_icono():
     for v in verticales.VERTICALES.values():
         for icono in [v.icono] + [e.icono for e in v.entradas_menu]:
             assert f'id="icono-{icono}"' in sprite, (v.id, icono)
+
+
+def test_las_citas_avisan_si_la_fuente_cambio_o_ya_no_esta_en_vigor(sesion):
+    """J3: cada cita enlaza al fragmento exacto y avisa si la biblioteca capturó una versión nueva del documento o si el texto citado dejó de estar vigente."""
+    cliente, uid, t = sesion
+    _cargar_biblioteca()
+    from app.juridico import citas
+    cita = {"id": "c1", "kind": "legal_source", "documentId": None, "versionId": None, "chunkId": None, "locator": "Artículo 1"}
+    conn = db.get_connection()
+    try:
+        doc = conn.execute("SELECT d.id AS doc, v.id AS ver FROM jur_documentos d JOIN jur_versiones v ON v.documento_id = d.id AND v.activa = 1 WHERE d.coleccion = 'legislacion' LIMIT 1").fetchone()
+        frag = conn.execute("SELECT id FROM jur_fragmentos WHERE version_id = ? ORDER BY orden LIMIT 1", (doc["ver"],)).fetchone()
+        conn.execute("UPDATE jur_fragmentos SET vigente_hasta = '2000-01-01' WHERE id = ?", (frag["id"],))
+        conn.commit()
+    finally:
+        conn.close()
+    cita.update(documentId=doc["doc"], versionId=doc["ver"], chunkId=frag["id"])
+    e = citas.estado_de_citas(t, [cita], "2099-01-10")["c1"]
+    assert e["disponible"] and not e["modificada"] and e["derogada"] and e["fuera_de_fecha"] is True
+    # Una versión posterior pasa a ser la activa: la cita (de la versión anterior) queda marcada como desactualizada.
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE jur_versiones SET activa = 0 WHERE id = ?", (doc["ver"],))
+        conn.execute("INSERT INTO jur_versiones (documento_id, hash_texto, capturada_en, calidad, activa, bloqueada) VALUES (?, 'hash-nuevo', '2099-02-01T10:00:00', 'ok', 1, 0)", (doc["doc"],))
+        conn.commit()
+    finally:
+        conn.close()
+    e = citas.estado_de_citas(t, [cita], "2099-01-10")["c1"]
+    assert e["modificada"] and e["actual"]["capturada_en"] == "2099-02-01"
+    assert citas.resumen_de_avisos({"c1": e})["modificadas"] == 1
+    assert citas.estado_de_citas(t, [dict(cita, kind="private_attachment")]) == {}

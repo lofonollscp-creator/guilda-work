@@ -19851,3 +19851,44 @@ msgstr "falten dades"
 
 msgid "error"
 msgstr "error"
+
+msgid "La fuente ya no está disponible en tu despacho"
+msgstr "La font ja no està disponible al teu despatx"
+
+msgid "Abrir el fragmento exacto"
+msgstr "Obrir el fragment exacte"
+
+msgid "Este texto ya no está en vigor"
+msgstr "Aquest text ja no està en vigor"
+
+msgid "No estaba vigente en la fecha jurídica de la consulta"
+msgstr "No estava vigent a la data jurídica de la consulta"
+
+msgid "La fuente se ha actualizado desde esta consulta"
+msgstr "La font s'ha actualitzat des d'aquesta consulta"
+
+msgid "Ver la versión actual"
+msgstr "Veure la versió actual"
+
+msgid "capturada el %(f)s"
+msgstr "capturada el %(f)s"
+
+msgid "%(n)s fuente citada se ha actualizado desde que se hizo esta consulta: revisa la versión actual antes de usar la conclusión."
+msgid_plural "%(n)s fuentes citadas se han actualizado desde que se hizo esta consulta: revisa las versiones actuales antes de usar la conclusión."
+msgstr[0] "%(n)s font citada s'ha actualitzat des que es va fer aquesta consulta: revisa la versió actual abans d'usar la conclusió."
+msgstr[1] "%(n)s fonts citades s'han actualitzat des que es va fer aquesta consulta: revisa les versions actuals abans d'usar la conclusió."
+
+msgid "%(n)s cita corresponde a un texto que ya no está en vigor."
+msgid_plural "%(n)s citas corresponden a textos que ya no están en vigor."
+msgstr[0] "%(n)s cita correspon a un text que ja no està en vigor."
+msgstr[1] "%(n)s cites corresponen a textos que ja no estan en vigor."
+
+msgid "%(n)s cita no estaba vigente en la fecha jurídica de la consulta."
+msgid_plural "%(n)s citas no estaban vigentes en la fecha jurídica de la consulta."
+msgstr[0] "%(n)s cita no estava vigent a la data jurídica de la consulta."
+msgstr[1] "%(n)s cites no estaven vigents a la data jurídica de la consulta."
+
+msgid "%(n)s fuente citada ya no está disponible en tu despacho."
+msgid_plural "%(n)s fuentes citadas ya no están disponibles en tu despacho."
+msgstr[0] "%(n)s font citada ja no està disponible al teu despatx."
+msgstr[1] "%(n)s fonts citades ja no estan disponibles al teu despatx."
