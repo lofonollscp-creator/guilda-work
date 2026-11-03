@@ -19755,3 +19755,90 @@ msgstr "Tasks created."
 
 msgid "Elige una fecha y hora válidas."
 msgstr "Choose a valid date and time."
+
+msgid "Calidad"
+msgstr "Quality"
+
+msgid "Calidad del asistente"
+msgstr "Assistant quality"
+
+msgid "Cómo se ha comportado el asistente en tu despacho: cuántas consultas contesta, cuántas frena y por qué. No mide si las respuestas son jurídicamente correctas: eso lo decide la revisión de un profesional."
+msgstr "How the assistant has behaved in your firm: how many queries it answers, how many it holds back and why. It does not measure whether answers are legally correct: that is decided by a professional's review."
+
+msgid "Últimos 7 días"
+msgstr "Last 7 days"
+
+msgid "Últimos 30 días"
+msgstr "Last 30 days"
+
+msgid "Últimos 90 días"
+msgstr "Last 90 days"
+
+msgid "Aún no hay consultas en este periodo"
+msgstr "No queries in this period yet"
+
+msgid "Cuando el equipo use el asistente, aquí verás cuántas respuestas se dan y cuántas se frenan."
+msgstr "When the team uses the assistant, you will see here how many answers are given and how many are held back."
+
+msgid "Se muestran solo las últimas %(n)s consultas del periodo."
+msgstr "Only the last %(n)s queries of the period are shown."
+
+msgid "Consultas"
+msgstr "Queries"
+
+msgid "Respondidas con fuentes"
+msgstr "Answered with sources"
+
+msgid "Sin evidencia suficiente"
+msgstr "Insufficient evidence"
+
+msgid "Mediana de tiempo"
+msgstr "Median time"
+
+msgid "Por qué no se responde"
+msgstr "Why queries go unanswered"
+
+msgid "No había fuentes jurídicas habilitadas que respondieran a la pregunta"
+msgstr "No enabled legal sources matched the question"
+
+msgid "La respuesta propuesta no superó la verificación de citas del servidor"
+msgstr "The proposed answer did not pass the server's citation check"
+
+msgid "Hacían falta más datos del caso"
+msgstr "More details about the case were needed"
+
+msgid "Fallos técnicos"
+msgstr "Technical failures"
+
+msgid "Reparaciones: %(n)s consultas necesitaron más de una llamada al modelo (%(p)s %%); media de %(m)s llamadas por consulta."
+msgstr "Repairs: %(n)s queries needed more than one model call (%(p)s %%); average of %(m)s calls per query."
+
+msgid "Tiempo del 95 %% de las consultas: hasta %(t)s."
+msgstr "Time for 95 %% of queries: up to %(t)s."
+
+msgid "Motivos más frecuentes de rechazo de citas"
+msgstr "Most common reasons for rejected citations"
+
+msgid "Afirmaciones de las respuestas, según su respaldo"
+msgstr "Statements in the answers, by level of support"
+
+msgid "Modelos usados"
+msgstr "Models used"
+
+msgid "Últimas consultas sin respuesta fundamentada"
+msgstr "Latest queries without a grounded answer"
+
+msgid "sin fuentes"
+msgstr "no sources"
+
+msgid "citas rechazadas"
+msgstr "citations rejected"
+
+msgid "sin fundamento"
+msgstr "unsupported"
+
+msgid "faltan datos"
+msgstr "missing details"
+
+msgid "error"
+msgstr "error"

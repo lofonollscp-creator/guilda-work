@@ -1,7 +1,8 @@
-{# Navegación del Asistente jurídico. `subnav_activa`: consultar | biblioteca | informes | fuentes #}
+{# Navegación del Asistente jurídico. `subnav_activa`: consultar | biblioteca | informes | fuentes | calidad #}
 <nav class="tareas-subnav" aria-label="{{ _('Asistente jurídico') }}">
   <a class="{{ 'active' if subnav_activa == 'consultar' }}" href="{{ url_for('juridico.inicio') }}">{{ _('Consultar') }}</a>
   <a class="{{ 'active' if subnav_activa == 'biblioteca' }}" href="{{ url_for('juridico.biblioteca') }}">{{ _('Biblioteca') }}</a>
   <a class="{{ 'active' if subnav_activa == 'informes' }}" href="{{ url_for('juridico.lista_informes') }}">{{ _('Informes') }}</a>
   <a class="{{ 'active' if subnav_activa == 'fuentes' }}" href="{{ url_for('juridico.fuentes') }}">{{ _('Fuentes') }}</a>
+  {% if g.puede_ver_calidad %}<a class="{{ 'active' if subnav_activa == 'calidad' }}" href="{{ url_for('juridico.panel_calidad') }}">{{ _('Calidad') }}</a>{% endif %}
 </nav>

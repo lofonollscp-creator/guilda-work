@@ -19840,3 +19840,90 @@ msgstr "Tâches créées."
 
 msgid "Elige una fecha y hora válidas."
 msgstr "Choisissez une date et une heure valides."
+
+msgid "Calidad"
+msgstr "Qualité"
+
+msgid "Calidad del asistente"
+msgstr "Qualité de l'assistant"
+
+msgid "Cómo se ha comportado el asistente en tu despacho: cuántas consultas contesta, cuántas frena y por qué. No mide si las respuestas son jurídicamente correctas: eso lo decide la revisión de un profesional."
+msgstr "Comportement de l'assistant dans votre cabinet : combien de requêtes il traite, combien il bloque et pourquoi. Il ne mesure pas l'exactitude juridique des réponses : c'est la révision d'un professionnel qui en décide."
+
+msgid "Últimos 7 días"
+msgstr "7 derniers jours"
+
+msgid "Últimos 30 días"
+msgstr "30 derniers jours"
+
+msgid "Últimos 90 días"
+msgstr "90 derniers jours"
+
+msgid "Aún no hay consultas en este periodo"
+msgstr "Pas encore de requêtes sur cette période"
+
+msgid "Cuando el equipo use el asistente, aquí verás cuántas respuestas se dan y cuántas se frenan."
+msgstr "Quand l'équipe utilisera l'assistant, vous verrez ici combien de réponses sont données et combien sont bloquées."
+
+msgid "Se muestran solo las últimas %(n)s consultas del periodo."
+msgstr "Seules les %(n)s dernières requêtes de la période sont affichées."
+
+msgid "Consultas"
+msgstr "Requêtes"
+
+msgid "Respondidas con fuentes"
+msgstr "Répondues avec sources"
+
+msgid "Sin evidencia suficiente"
+msgstr "Preuves insuffisantes"
+
+msgid "Mediana de tiempo"
+msgstr "Temps médian"
+
+msgid "Por qué no se responde"
+msgstr "Pourquoi certaines requêtes restent sans réponse"
+
+msgid "No había fuentes jurídicas habilitadas que respondieran a la pregunta"
+msgstr "Aucune source juridique activée ne correspondait à la question"
+
+msgid "La respuesta propuesta no superó la verificación de citas del servidor"
+msgstr "La réponse proposée n'a pas passé la vérification des citations du serveur"
+
+msgid "Hacían falta más datos del caso"
+msgstr "Il fallait plus d'informations sur le dossier"
+
+msgid "Fallos técnicos"
+msgstr "Échecs techniques"
+
+msgid "Reparaciones: %(n)s consultas necesitaron más de una llamada al modelo (%(p)s %%); media de %(m)s llamadas por consulta."
+msgstr "Réparations : %(n)s requêtes ont nécessité plus d'un appel au modèle (%(p)s %%) ; moyenne de %(m)s appels par requête."
+
+msgid "Tiempo del 95 %% de las consultas: hasta %(t)s."
+msgstr "Temps pour 95 %% des requêtes : jusqu'à %(t)s."
+
+msgid "Motivos más frecuentes de rechazo de citas"
+msgstr "Motifs les plus fréquents de rejet des citations"
+
+msgid "Afirmaciones de las respuestas, según su respaldo"
+msgstr "Affirmations des réponses, selon leur appui"
+
+msgid "Modelos usados"
+msgstr "Modèles utilisés"
+
+msgid "Últimas consultas sin respuesta fundamentada"
+msgstr "Dernières requêtes sans réponse fondée"
+
+msgid "sin fuentes"
+msgstr "sans sources"
+
+msgid "citas rechazadas"
+msgstr "citations rejetées"
+
+msgid "sin fundamento"
+msgstr "sans fondement"
+
+msgid "faltan datos"
+msgstr "informations manquantes"
+
+msgid "error"
+msgstr "erreur"

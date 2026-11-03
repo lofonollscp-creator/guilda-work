@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% block title %}{{ _('Calidad del asistente') }} — Guilda Work{% endblock %}
+{% block content %}
+{% macro dato(valor, sufijo='') %}{% if valor is none %}—{% else %}{{ valor }}{{ sufijo }}{% endif %}{% endmacro %}
+{% macro ms(valor) %}{% if valor is none %}—{% elif valor >= 1000 %}{{ '%.1f'|format(valor / 1000) }} s{% else %}{{ valor }} ms{% endif %}{% endmacro %}
+<header class="page-header"><div><h1>{{ _('Calidad del asistente') }}</h1>
+  <p class="subtitle">{{ _('Cómo se ha comportado el asistente en tu despacho: cuántas consultas contesta, cuántas frena y por qué. No mide si las respuestas son jurídicamente correctas: eso lo decide la revisión de un profesional.') }}</p></div></header>
+{% set subnav_activa = 'calidad' %}
+{% include "_juridico_subnav.html" %}
+<form method="get" class="filters" action="{{ url_for('juridico.panel_calidad') }}">
+  <label>{{ _('Periodo') }}
+    <select name="dias" data-autoenviar>
+      {% for d, etiqueta in ((7, _('Últimos 7 días')), (30, _('Últimos 30 días')), (90, _('Últimos 90 días'))) %}<option value="{{ d }}" {{ 'selected' if d == dias }}>{{ etiqueta }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn btn-ghost">{{ _('Ver') }}</button>
+</form>
+{% if not c.total %}
+{{ estado_vacio(_('Aún no hay consultas en este periodo'), _('Cuando el equipo use el asistente, aquí verás cuántas respuestas se dan y cuántas se frenan.')) }}
+{% else %}
+{% if c.truncado %}<p class="muted" role="status">{{ _('Se muestran solo las últimas %(n)s consultas del periodo.', n=c.total) }}</p>{% endif %}
+<div class="fiscal-resumen">
+  <div class="fiscal-cifra"><span class="muted">{{ _('Consultas') }}</span><span class="fiscal-cifra-num">{{ c.total }}</span></div>
+  <div class="fiscal-cifra"><span class="muted">{{ _('Respondidas con fuentes') }}</span><span class="fiscal-cifra-num">{{ dato(c.pct_respondidas, ' %') }}</span></div>
+  <div class="fiscal-cifra"><span class="muted">{{ _('Sin evidencia suficiente') }}</span><span class="fiscal-cifra-num">{{ dato(c.pct_sin_evidencia, ' %') }}</span></div>
+  <div class="fiscal-cifra"><span class="muted">{{ _('Mediana de tiempo') }}</span><span class="fiscal-cifra-num">{{ ms(c.latencia_mediana_ms) }}</span></div>
+</div>
+
+<section class="dash-panel" aria-labelledby="calidad-causas">
+  <h2 id="calidad-causas">{{ _('Por qué no se responde') }}</h2>
+  <ul class="log-list">
+    <li class="log-item"><span class="log-text">{{ _('No había fuentes jurídicas habilitadas que respondieran a la pregunta') }}</span><span class="log-duration">{{ c.sin_fuentes }}</span></li>
+    <li class="log-item"><span class="log-text">{{ _('La respuesta propuesta no superó la verificación de citas del servidor') }}</span><span class="log-duration">{{ c.citas_rechazadas }}</span></li>
+    <li class="log-item"><span class="log-text">{{ _('Hacían falta más datos del caso') }}</span><span class="log-duration">{{ c.por_estado.get('needs_context', 0) }}</span></li>
+    <li class="log-item"><span class="log-text">{{ _('Fallos técnicos') }}</span><span class="log-duration">{{ c.por_estado.get('failed', 0) }}</span></li>
+  </ul>
+  <p class="muted">{{ _('Reparaciones: %(n)s consultas necesitaron más de una llamada al modelo (%(p)s %%); media de %(m)s llamadas por consulta.', n=c.reparadas, p=dato(c.pct_reparadas), m=dato(c.llamadas_medias)) }}
+    {{ _('Tiempo del 95 %% de las consultas: hasta %(t)s.', t=ms(c.latencia_p95_ms)) }}</p>
+  {% if c.motivos_de_rechazo %}
+  <h3>{{ _('Motivos más frecuentes de rechazo de citas') }}</h3>
+  <ul class="log-list">{% for motivo, n in c.motivos_de_rechazo %}<li class="log-item"><span class="log-text">{{ motivo }}</span><span class="log-duration">{{ n }}</span></li>{% endfor %}</ul>
+  {% endif %}
+</section>
+
+{% if c.afirmaciones %}
+<section class="dash-panel" aria-labelledby="calidad-afirmaciones">
+  <h2 id="calidad-afirmaciones">{{ _('Afirmaciones de las respuestas, según su respaldo') }}</h2>
+  <ul class="log-list">{% for evaluacion, n in c.afirmaciones.items() %}<li class="log-item"><span class="log-text">{{ evaluacion }}</span><span class="log-duration">{{ n }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if c.modelos %}
+<section class="dash-panel" aria-labelledby="calidad-modelos">
+  <h2 id="calidad-modelos">{{ _('Modelos usados') }}</h2>
+  <ul class="log-list">{% for modelo, n in c.modelos %}<li class="log-item"><span class="log-text">{{ modelo }}</span><span class="log-duration">{{ n }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if c.sin_respuesta %}
+<section class="dash-panel" aria-labelledby="calidad-recientes">
+  <h2 id="calidad-recientes">{{ _('Últimas consultas sin respuesta fundamentada') }}</h2>
+  <ul class="log-list">
+    {% for q in c.sin_respuesta %}
+    <li class="log-item">
+      <a class="log-text" href="{{ url_for('juridico.consulta', run_id=q.id) }}">{{ q.pregunta }}</a>
+      <span class="muted">{{ {'sin_fuentes': _('sin fuentes'), 'citas_rechazadas': _('citas rechazadas'), 'sin_fundamento': _('sin fundamento'), 'falta_contexto': _('faltan datos'), 'error': _('error')}[q.causa] }} · {{ q.fecha }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

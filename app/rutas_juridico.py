@@ -13,7 +13,7 @@ from flask_babel import gettext as _
 
 from . import acceso, db, nucleo, verticales
 from .auth import login_required
-from .juridico import adjuntos, asistente, busqueda, catalogo, corpus, informes, ingesta, modulo
+from .juridico import adjuntos, asistente, busqueda, calidad, catalogo, corpus, informes, ingesta, modulo
 from .juridico.esquema import COLECCIONES
 
 juridico_bp = Blueprint("juridico", __name__, url_prefix="/juridico")
@@ -23,6 +23,7 @@ juridico_bp = Blueprint("juridico", __name__, url_prefix="/juridico")
 def _solo_con_el_modulo():
     if not modulo.habilitado() or g.get("tenant_id") is None or not verticales.esta_activo(g.tenant_id, "juridico"):
         abort(404)
+    g.puede_ver_calidad = acceso.es_directivo(g.usuario_id) or acceso.puede_autorizar(g.tenant_id, g.usuario_id)       # lo usa la navegación del módulo
 
 
 def _error() -> str | None:
@@ -254,3 +255,16 @@ def fuente_sincronizar(fuente_id: str):
         return _con_error("juridico.fuentes", _(str(e)))
     threading.Thread(target=ingesta.sincronizar, args=(fuente_id, conector, desde, hasta), kwargs={"usuario_id": g.usuario_id}, daemon=True).start()
     return redirect(url_for("juridico.fuentes"))
+
+
+# --- Calidad del asistente ---------------------------------------------------------------------------------------------------------------------------
+
+@juridico_bp.route("/calidad")
+@login_required
+def panel_calidad():
+    """Cómo se comporta el asistente en este despacho (no la calidad jurídica de las respuestas, que revisa un profesional). Solo la dirección y quien revisa: incluye las preguntas del equipo."""
+    if not g.puede_ver_calidad:
+        abort(403)
+    dias = request.args.get("dias", type=int)
+    dias = dias if dias in (7, 30, 90) else 30
+    return render_template("juridico_calidad.html", c=calidad.resumen(g.tenant_id, dias), dias=dias)

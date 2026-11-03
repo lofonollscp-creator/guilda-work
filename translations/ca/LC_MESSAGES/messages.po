@@ -19764,3 +19764,90 @@ msgstr "Tasques creades."
 
 msgid "Elige una fecha y hora válidas."
 msgstr "Tria una data i una hora vàlides."
+
+msgid "Calidad"
+msgstr "Qualitat"
+
+msgid "Calidad del asistente"
+msgstr "Qualitat de l'assistent"
+
+msgid "Cómo se ha comportado el asistente en tu despacho: cuántas consultas contesta, cuántas frena y por qué. No mide si las respuestas son jurídicamente correctas: eso lo decide la revisión de un profesional."
+msgstr "Com s'ha comportat l'assistent al teu despatx: quantes consultes respon, quantes en frena i per què. No mesura si les respostes són jurídicament correctes: això ho decideix la revisió d'un professional."
+
+msgid "Últimos 7 días"
+msgstr "Darrers 7 dies"
+
+msgid "Últimos 30 días"
+msgstr "Darrers 30 dies"
+
+msgid "Últimos 90 días"
+msgstr "Darrers 90 dies"
+
+msgid "Aún no hay consultas en este periodo"
+msgstr "Encara no hi ha consultes en aquest període"
+
+msgid "Cuando el equipo use el asistente, aquí verás cuántas respuestas se dan y cuántas se frenan."
+msgstr "Quan l'equip faci servir l'assistent, aquí veuràs quantes respostes es donen i quantes es frenen."
+
+msgid "Se muestran solo las últimas %(n)s consultas del periodo."
+msgstr "Es mostren només les últimes %(n)s consultes del període."
+
+msgid "Consultas"
+msgstr "Consultes"
+
+msgid "Respondidas con fuentes"
+msgstr "Respostes amb fonts"
+
+msgid "Sin evidencia suficiente"
+msgstr "Sense evidència suficient"
+
+msgid "Mediana de tiempo"
+msgstr "Mediana de temps"
+
+msgid "Por qué no se responde"
+msgstr "Per què no es respon"
+
+msgid "No había fuentes jurídicas habilitadas que respondieran a la pregunta"
+msgstr "No hi havia fonts jurídiques habilitades que responguessin la pregunta"
+
+msgid "La respuesta propuesta no superó la verificación de citas del servidor"
+msgstr "La resposta proposada no va superar la verificació de cites del servidor"
+
+msgid "Hacían falta más datos del caso"
+msgstr "Calien més dades del cas"
+
+msgid "Fallos técnicos"
+msgstr "Errors tècnics"
+
+msgid "Reparaciones: %(n)s consultas necesitaron más de una llamada al modelo (%(p)s %%); media de %(m)s llamadas por consulta."
+msgstr "Reparacions: %(n)s consultes van necessitar més d'una crida al model (%(p)s %%); mitjana de %(m)s crides per consulta."
+
+msgid "Tiempo del 95 %% de las consultas: hasta %(t)s."
+msgstr "Temps del 95 %% de les consultes: fins a %(t)s."
+
+msgid "Motivos más frecuentes de rechazo de citas"
+msgstr "Motius més freqüents de rebuig de cites"
+
+msgid "Afirmaciones de las respuestas, según su respaldo"
+msgstr "Afirmacions de les respostes, segons el seu suport"
+
+msgid "Modelos usados"
+msgstr "Models utilitzats"
+
+msgid "Últimas consultas sin respuesta fundamentada"
+msgstr "Últimes consultes sense resposta fonamentada"
+
+msgid "sin fuentes"
+msgstr "sense fonts"
+
+msgid "citas rechazadas"
+msgstr "cites rebutjades"
+
+msgid "sin fundamento"
+msgstr "sense fonament"
+
+msgid "faltan datos"
+msgstr "falten dades"
+
+msgid "error"
+msgstr "error"
