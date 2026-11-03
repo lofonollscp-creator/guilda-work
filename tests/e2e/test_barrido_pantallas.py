@@ -33,6 +33,30 @@ MEDIR = """() => {
     const r = e.getBoundingClientRect();
     if (W <= 480 && (r.height < 32 || r.width < 32) && e.tagName !== 'INPUT' && !(e.tagName === 'A' && e.closest('p, li, td, span, .md, .prosa') && e.textContent.trim().length > 3)) o.pequenos.push(desc(e) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' «' + (e.textContent || e.getAttribute('aria-label') || '').trim().slice(0, 20) + '»');
   }
+  o.fuera_de_caja = [];
+  for (const c of document.querySelectorAll('body *')) {
+    const cs = getComputedStyle(c);
+    if (!['grid', 'flex', 'inline-flex'].includes(cs.display) || cs.overflowX !== 'visible' || !visible(c)) continue;
+    const rc = c.getBoundingClientRect();
+    for (const h of c.children) {
+      if (!visible(h) || ['absolute', 'fixed'].includes(getComputedStyle(h).position)) continue;
+      const rh = h.getBoundingClientRect();
+      if (rh.width > 4 && rc.width > 4 && (rh.left < rc.left - 2 || rh.right > rc.right + 2) && o.fuera_de_caja.length < 8) { o.fuera_de_caja.push(desc(c) + ' > ' + desc(h) + ' (' + Math.round(rh.left - rc.left) + ',' + Math.round(rh.right - rc.right) + ')'); break; }
+    }
+  }
+  o.fuera_de_caja = [...new Set(o.fuera_de_caja)].slice(0, 6);
+  o.solapes = [];
+  for (const c of document.querySelectorAll('body *')) {
+    const d = getComputedStyle(c).display;
+    if ((d !== 'grid' && d !== 'flex' && d !== 'inline-flex') || !visible(c)) continue;
+    const hijos = [...c.children].filter(h => visible(h) && !['absolute', 'fixed', 'sticky'].includes(getComputedStyle(h).position) && h.getBoundingClientRect().width > 4 && h.getBoundingClientRect().height > 4);
+    for (let i = 0; i < hijos.length && o.solapes.length < 6; i++) for (let j = i + 1; j < hijos.length; j++) {
+      const a = hijos[i].getBoundingClientRect(), b = hijos[j].getBoundingClientRect();
+      const w = Math.min(a.right, b.right) - Math.max(a.left, b.left), h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (w > 3 && h > 3) { o.solapes.push(desc(c) + ' > ' + desc(hijos[i]) + ' x ' + desc(hijos[j]) + ' ' + Math.round(w) + 'x' + Math.round(h)); break; }
+    }
+  }
+  o.solapes = [...new Set(o.solapes)].slice(0, 5);
   o.sin_alt = [...document.images].filter(i => visible(i) && !i.hasAttribute('alt')).length;
   o.titulo = document.title; o.h1 = document.querySelectorAll('h1').length;
   for (const k of ['desborde', 'sin_nombre', 'pequenos']) o[k] = [...new Set(o[k])].slice(0, 8);
@@ -96,6 +120,14 @@ def test_barrido(servidor, abrir, entrar_como_equipo):
                 pagina.wait_for_timeout(120)
                 pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)
                 m = pagina.evaluate(MEDIR)
+                for fila in (".tarea-fila", ".fiscal-fila", ".cliente-fila", ".correo-fila"):         # estados al pasar el ratón (los controles de fila aparecen al hover)
+                    if pagina.locator(fila).count():
+                        pagina.locator(fila).first.hover()
+                        pagina.wait_for_timeout(120)
+                        extra = pagina.evaluate(MEDIR)
+                        m["solapes"] = list(dict.fromkeys((m.get("solapes") or []) + extra.get("solapes", [])))[:5]
+                        m["fuera_de_caja"] = list(dict.fromkeys((m.get("fuera_de_caja") or []) + extra.get("fuera_de_caja", [])))[:6]
+                        m["desborde"] = list(dict.fromkeys((m.get("desborde") or []) + extra.get("desborde", [])))[:8]
             except Exception as e:                                                  # una pantalla que no carga no para el barrido
                 informe.setdefault(fallos["actual"], {})["error"] = str(e).splitlines()[0][:120]
                 continue

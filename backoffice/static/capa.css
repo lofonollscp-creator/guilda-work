@@ -134,3 +134,6 @@ select { max-width: min(100%, calc(100vw - 80px)); text-overflow: ellipsis; }
 .fila-campos { grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); }
 .fila-campos > *, .formulario label { min-width: 0; }
 .formulario label select { width: 100%; }
+/* Filas de botones sueltos (no son filas de catálogo): a su tamaño natural y, si no caben, a la línea siguiente. */
+.fila-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 0; }
+.fila-botones .boton { white-space: nowrap; }

@@ -26,7 +26,7 @@
 
 <section class="tarjeta">
   <h2>Liquidación de {{ mes }}</h2>
-  <form method="get" class="fila-catalogo">
+  <form method="get" class="fila-botones">
     <input type="text" name="mes" value="{{ mes }}" size="8" pattern="\d{4}-\d{2}" aria-label="Mes (AAAA-MM)">
     <button type="submit" class="boton">Ver mes</button>
     <a class="boton" href="{{ url_for('rutas.cobro_contabilidad_csv', mes=mes) }}">Descargar CSV</a>
@@ -59,7 +59,7 @@
       <tfoot><tr><td colspan="6"><strong>Total sin IVA</strong></td><td colspan="3"><strong>{{ eur(total) }}</strong></td></tr></tfoot>
     </table>
   </div>
-  <div class="fila-catalogo">
+  <div class="fila-botones">
     <form method="post" action="{{ url_for('rutas.cobro_contabilidad_calcular') }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="mes" value="{{ mes }}"><button type="submit" class="boton">Calcular y guardar las liquidaciones abiertas</button></form>
     <form method="post" action="{{ url_for('rutas.cobro_contabilidad_cerrar') }}" onsubmit="return confirm('Se congelan las liquidaciones de {{ mes }}: lo que se cobre ya no cambiará aunque cambie el uso. ¿Cerrar el mes?');"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="mes" value="{{ mes }}"><button type="submit" class="boton">Cerrar el mes</button></form>
   </div>

@@ -267,13 +267,13 @@ input.chip-campo { width: 170px; cursor: text; font-weight: 600; }
 .tareas-v2 { display: flex; gap: 0; align-items: stretch; margin: 0 -28px -24px; border-top: 1px solid var(--border); background: var(--surface); min-height: calc(100vh - 360px); }
 .tareas-v2-tabla { flex: 1; min-width: 0; padding: 0; }
 .tareas-v2-lista { list-style: none; margin: 0; padding: 0; }
-.tarea-fila-cabecera, .tarea-fila { display: grid; grid-template-columns: 44px minmax(0, 1fr) 130px 100px 120px 150px; align-items: center; gap: 12px; padding: 0 20px; }
+.tarea-fila-cabecera, .tarea-fila { display: grid; grid-template-columns: 44px minmax(0, 1fr) 130px 100px 120px 200px; align-items: center; gap: 12px; padding: 0 20px; }
 .tarea-fila-cabecera { min-height: 40px; font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); background: var(--panel-2); border-bottom: 1px solid var(--border); }
 .tarea-fila { min-height: 60px; padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--linea); background: var(--surface); position: relative; flex-wrap: nowrap; margin: 0; border-radius: 0; }
 .tarea-fila:hover { background: var(--panel-2); }
 .tarea-fila.es-seleccionada { background: color-mix(in srgb, var(--primary) 16%, var(--surface)); }
 .tarea-fila.is-completada .tarea-fila-titulo { text-decoration: line-through; color: var(--text-muted); }
-.tareas-v2-lista:not(:has(.con-estado)) .tarea-fila { grid-template-columns: 44px minmax(0, 1fr) 100px 120px 150px; }
+.tareas-v2-lista:not(:has(.con-estado)) .tarea-fila { grid-template-columns: 44px minmax(0, 1fr) 100px 120px 200px; }
 .tarea-fila-check { display: flex; align-items: center; gap: 4px; }
 .tarea-fila-check form { margin: 0; }
 .tarea-fila .tarea-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #aeb4c0; background: transparent; position: relative; padding: 0; }
@@ -294,7 +294,7 @@ a.tarea-fila-dato:hover { text-decoration: underline; }
 .tarea-fila-acciones .log-edit, .tarea-fila-acciones .chip-del { opacity: 0.55; }
 .tarea-fila:hover .tarea-fila-acciones .log-edit, .tarea-fila:hover .tarea-fila-acciones .chip-del, .tarea-fila:focus-within .tarea-fila-acciones .log-edit, .tarea-fila:focus-within .tarea-fila-acciones .chip-del { opacity: 1; }
 .tarea-cronometro-texto { display: none; }
-.tarea-fila-acciones .tarea-cronometro-form select { max-width: 120px; }
+.tarea-fila-acciones .tarea-cronometro-form select { max-width: 96px; }
 .tareas-v2-ficha { width: 400px; flex: none; border-left: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; outline: none; }
 .tareas-v2-ficha-vacia { padding: 28px; margin: 0; }
 .ficha-cab { padding: 20px 24px 14px; border-bottom: 1px solid var(--linea); display: flex; flex-direction: column; gap: 10px; }
@@ -1135,3 +1135,6 @@ fieldset { min-width: 0; }
 label { max-width: 100%; }
 fieldset > .dash-panel { box-sizing: border-box; max-width: 100%; }
 @media (max-width: 480px) { fieldset { padding-inline: 8px; margin-inline: 0; } }
+
+/* Barra lateral: una etiqueta más larga que el hueco acaba en «…» en vez de cortarse en seco. */
+.icon-rail-link .icon-rail-etiqueta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

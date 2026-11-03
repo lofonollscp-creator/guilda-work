@@ -54,6 +54,9 @@ def test_barrido_backoffice(cliente, chromium, tmp_path, monkeypatch):
                 resp = pg.goto(base + ruta, wait_until="load")
                 pg.wait_for_timeout(100)
                 m = pg.evaluate(MEDIR)
+                if os.environ.get("GUILDA_BARRIDO_CAPTURAS"):
+                    Path(os.environ["GUILDA_BARRIDO_CAPTURAS"]).mkdir(parents=True, exist_ok=True)
+                    pg.screenshot(path=str(Path(os.environ["GUILDA_BARRIDO_CAPTURAS"]) / ((ruta.strip('/').replace('/', '_') or 'inicio') + f'_{ancho}.png')))
             except Exception as e:
                 informe.setdefault(actual["k"], {})["error"] = str(e).splitlines()[0][:120]
                 continue
