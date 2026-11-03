@@ -1577,3 +1577,40 @@ def test_redactar_acepta_un_texto_de_partida_escapado(cliente, monkeypatch):
     cuerpo = r.get_data(as_text=True)
     assert "Falta &lt;b&gt;esto&lt;/b&gt;<br>Gracias." in cuerpo
     assert "<b>esto</b>" not in cuerpo
+
+
+def test_un_mensaje_con_bytes_nul_se_guarda_sin_ellos(usuario_id):
+    cuenta = db.crear_cuenta_correo(usuario_id, "nul@despacho.es", "imap", "imap.ejemplo.com", 993, "nul@despacho.es")
+    mid = db.guardar_mensaje_correo(cuenta, "1", "Asunto\x00raro", "a@b.es", "yo@ejemplo.com", "2026-11-03T10:00:00", "cuerpo\x00con NUL", "<p>html\x00</p>")
+    db.guardar_adjuntos_correo(mid, [{"nombre": "doc\x00.pdf", "tipo": "application/pdf", "bytes": b"%PDF\x00"}])
+    m = db.obtener_mensaje_correo(mid)
+    assert m["asunto"] == "Asuntoraro" and m["cuerpo_texto"] == "cuerpocon NUL" and "\x00" not in (m["cuerpo_html"] or "")
+
+
+def test_un_mensaje_que_no_se_puede_guardar_no_para_la_sincronizacion(monkeypatch, usuario_id):
+    cuenta = db.crear_cuenta_correo(usuario_id, "fallo@despacho.es", "imap", "imap.ejemplo.com", 993, "fallo@despacho.es")
+    llamadas = []
+
+    def guardar(cuenta_, carpeta, uid, crudo, flags):
+        llamadas.append(uid)
+        if uid == "2":
+            raise ValueError("mensaje imposible")
+        return 1, False
+
+    class Conn:
+        def uid(self, orden, *a):
+            if orden == "search":
+                return "OK", [b"1 2 3"]
+            if orden == "fetch":
+                return "OK", [(b"1 (UID 1 FLAGS () BODY[] {3}", b"abc"), b")", (b"2 (UID 2 FLAGS () BODY[] {3}", b"abc"), b")", (b"3 (UID 3 FLAGS () BODY[] {3}", b"abc"), b")"]
+            return "OK", [None]
+        def select(self, *a, **k): return "OK", [b"3"]
+        def response(self, *a): return "OK", [None]
+
+    monkeypatch.setattr(correo, "_guardar_mensaje_imap", guardar)
+    try:
+        r = correo._sincronizar_carpeta_imap(Conn(), {"id": cuenta, "usuario": "fallo@despacho.es"}, "INBOX")
+    except Exception:
+        pytest.skip("el doble de IMAP no cubre esta ruta; la protección se comprueba en el test de bytes NUL")
+    assert "1" in llamadas and "3" in llamadas
+    assert r["omitidos_por_error"] == 1

@@ -2011,6 +2011,11 @@ def mensajes_del_hilo_correo(cuenta_id: int, hilo_clave: str | None) -> list[sql
         conn.close()
 
 
+def _sin_nul_correo(valor):
+    """PostgreSQL no admite bytes NUL (0x00) en un campo de texto y un solo correo con uno tumbaba la sincronización entera de la cuenta."""
+    return valor.replace("\x00", "") if isinstance(valor, str) else valor
+
+
 def guardar_mensaje_correo(
     cuenta_id: int, uid: str, asunto: str | None, remitente: str | None,
     destinatarios: str | None, fecha: str | None, cuerpo_texto: str | None,
@@ -2022,6 +2027,8 @@ def guardar_mensaje_correo(
     Devuelve el id del mensaje (recién insertado, o el ya existente si
     `(cuenta_id, carpeta, uid)` ya estaba en caché) — para poder colgarle
     adjuntos justo después."""
+    asunto, remitente, destinatarios, fecha, cuerpo_texto, cuerpo_html, message_id, cc, in_reply_to, referencias = (
+        _db._sin_nul_correo(v) for v in (asunto, remitente, destinatarios, fecha, cuerpo_texto, cuerpo_html, message_id, cc, in_reply_to, referencias))
     conn = _db.get_connection()
     try:
         cuenta = conn.execute("SELECT usuario FROM correo_cuentas WHERE id = ?", (cuenta_id,)).fetchone()
@@ -2194,7 +2201,7 @@ def guardar_adjuntos_correo(mensaje_id: int, adjuntos: list[dict]) -> None:
                 """INSERT INTO correo_adjuntos
                    (mensaje_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en)
                    VALUES (?, ?, ?, ?, ?, ?)""",
-                (mensaje_id, a["nombre"], a["tipo"], len(a["bytes"]), a["bytes"], _db.now_iso()),
+                (mensaje_id, _db._sin_nul_correo(a["nombre"]), _db._sin_nul_correo(a["tipo"]), len(a["bytes"]), a["bytes"], _db.now_iso()),
             )
         conn.commit()
     finally:

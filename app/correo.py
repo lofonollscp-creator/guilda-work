@@ -761,7 +761,7 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> dict
     cambio de UIDVALIDITY, mientras quede historial por bajar y cada hora) revisa toda la
     carpeta. La descarga está acotada (`DESCARGAS_POR_CICLO`, lo más reciente primero): un
     buzón de decenas de miles de correos se baja en varias pasadas sin bloquear la sincronización."""
-    resumen = {"descargados": 0, "no_leidos": 0, "estados": 0, "borrados": 0}
+    resumen = {"descargados": 0, "no_leidos": 0, "estados": 0, "borrados": 0, "omitidos_por_error": 0}
     condstore = _activar_condstore(conn)
     estado, datos_select = conn.select(f'"{carpeta}"')
     if estado != "OK":
@@ -829,7 +829,13 @@ def _sincronizar_carpeta_imap(conn: imaplib.IMAP4, cuenta, carpeta: str) -> dict
             if r is None or not r["crudo"]:
                 omitidos.add(str(uid))
                 continue
-            _, leido = _guardar_mensaje_imap(cuenta, carpeta, str(uid), r["crudo"], r["flags"])
+            try:
+                _, leido = _guardar_mensaje_imap(cuenta, carpeta, str(uid), r["crudo"], r["flags"])
+            except Exception:  # noqa: BLE001 -- un mensaje que no se puede guardar se salta (y se anota); no debe parar el resto del buzón
+                logger.exception("No se ha podido guardar el mensaje %s de %s (cuenta %s); se omite", uid, carpeta, cuenta["id"])
+                omitidos.add(str(uid))
+                resumen["omitidos_por_error"] += 1
+                continue
             resumen["descargados"] += 1
             if not leido:
                 resumen["no_leidos"] += 1
@@ -888,7 +894,7 @@ def _sincronizar_imap(cuenta) -> dict:
         db.guardar_carpetas_correo(
             cuenta["id"], [(n, _nombre_visible_carpeta(n)) for n in nombres_carpetas]
         )
-        total = {"descargados": 0, "no_leidos": 0, "estados": 0, "borrados": 0}
+        total = {"descargados": 0, "no_leidos": 0, "estados": 0, "borrados": 0, "omitidos_por_error": 0}
         for nombre in nombres_carpetas:
             for clave, valor in _sincronizar_carpeta_imap(conn, cuenta, nombre).items():
                 total[clave] += valor

@@ -3306,6 +3306,7 @@ from .db_correo import (  # noqa: E402,F401
     guardar_preferencias_correo,
     marcar_sincronizada_cuenta_correo,
     marcar_error_sincronizacion_cuenta_correo,
+    _sin_nul_correo,
     registrar_latido,
     registrar_error_servidor,
     resumen_errores_servidor,
