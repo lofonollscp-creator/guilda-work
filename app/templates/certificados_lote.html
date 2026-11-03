@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Importar certificados en lote') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Importar certificados en lote') }}</h1>
+    <p class="subtitle">{{ _('Sube varios certificados públicos (.cer, .crt o .pem). Primero se revisan: cuáles son nuevos, cuáles ya estaban y a qué cliente pertenecen por su NIF. No se guarda nada hasta que confirmes. Nunca subas claves privadas ni archivos .p12/.pfx.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('certificados.lista') }}">&larr; {{ _('Certificados digitales') }}</a>
+</header>
+{% if error %}<div class="ia-error" role="alert">{{ _(error) }}</div>{% endif %}
+
+{% if resultado %}
+<section class="dash-panel" role="status">
+  <h2>{{ _('Importación terminada') }}</h2>
+  <ul>
+    <li>{{ ngettext('%(n)s certificado importado.', '%(n)s certificados importados.', resultado.importados, n=resultado.importados) }}</li>
+    <li>{{ ngettext('%(n)s enlazado con su cliente por el NIF.', '%(n)s enlazados con su cliente por el NIF.', resultado.enlazados, n=resultado.enlazados) }}</li>
+    {% if resultado.saltados %}<li>{{ ngettext('%(n)s fichero no se importó.', '%(n)s ficheros no se importaron.', resultado.saltados, n=resultado.saltados) }}</li>{% endif %}
+  </ul>
+  {% if resultado.errores %}<ul class="muted">{% for e in resultado.errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  <p><a class="btn btn-primary" href="{{ url_for('certificados.lista') }}">{{ _('Ver los certificados') }}</a></p>
+</section>
+{% elif filas is not none %}
+{% set nuevos = filas|selectattr('0.estado', 'equalto', 'nuevo')|list %}
+{% if aviso_tope %}<p class="muted" role="status">{{ _('Solo se revisan los primeros 40 ficheros.') }}</p>{% endif %}
+<form method="post" action="{{ url_for('certificados.importar_lote') }}">
+  <input type="hidden" name="accion" value="importar">
+  <div class="tabla-caja"><table class="tabla">
+    <thead><tr><th>{{ _('Fichero') }}</th><th>{{ _('Certificado') }}</th><th>{{ _('Caduca') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Resultado') }}</th></tr></thead>
+    <tbody>
+    {% for f, adjunto in filas %}
+      <tr>
+        <td>{{ f.nombre }}{% if f.estado == 'nuevo' %}<input type="hidden" name="nombre" value="{{ adjunto[0] }}"><input type="hidden" name="contenido_b64" value="{{ adjunto[1] }}">{% endif %}</td>
+        <td>{{ f.sujeto or '—' }}{% if f.nif %} <span class="muted">· {{ f.nif }}</span>{% endif %}</td>
+        <td>{{ f.caduca or '—' }}</td>
+        <td>{% if f.cliente %}{{ f.cliente.nombre }}{% elif f.estado == 'nuevo' %}<span class="muted">{{ _('Sin cliente: se importará sin enlazar') }}</span>{% else %}—{% endif %}</td>
+        <td>{% if f.estado == 'nuevo' %}<strong>{{ _('Nuevo') }}</strong>{% elif f.estado == 'duplicado' %}{{ _('Ya estaba') }}{% elif f.estado == 'elegir' %}{{ _('Varios certificados') }}{% else %}{{ _('No válido') }}{% endif %}{% if f.motivo and f.estado != 'duplicado' %}<br><span class="muted">{{ f.motivo }}</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% if nuevos %}
+  <p><button type="submit" class="btn btn-primary">{{ ngettext('Importar %(n)s certificado', 'Importar %(n)s certificados', nuevos|length, n=nuevos|length) }}</button>
+     <a class="btn btn-ghost" href="{{ url_for('certificados.importar_lote') }}">{{ _('Cancelar') }}</a></p>
+  {% else %}<p class="muted">{{ _('No hay nada nuevo que importar.') }} <a href="{{ url_for('certificados.importar_lote') }}">{{ _('Probar con otros ficheros') }}</a></p>{% endif %}
+</form>
+{% else %}
+<form method="post" enctype="multipart/form-data" action="{{ url_for('certificados.importar_lote') }}" class="dash-panel">
+  <label>{{ _('Certificados públicos') }}
+    <input type="file" name="archivos" multiple accept=".cer,.crt,.pem,.der" required>
+  </label>
+  <p><button type="submit" class="btn btn-primary">{{ _('Revisar') }}</button></p>
+</form>
+{% endif %}
+{% endblock %}

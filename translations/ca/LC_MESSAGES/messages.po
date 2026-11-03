@@ -20028,3 +20028,62 @@ msgstr "Informe CSV"
 
 msgid "Informe PDF"
 msgstr "Informe PDF"
+
+msgid "Importar certificados en lote"
+msgstr "Importar certificats en lot"
+
+msgid "Sube varios certificados públicos (.cer, .crt o .pem). Primero se revisan: cuáles son nuevos, cuáles ya estaban y a qué cliente pertenecen por su NIF. No se guarda nada hasta que confirmes. Nunca subas claves privadas ni archivos .p12/.pfx."
+msgstr "Puja diversos certificats públics (.cer, .crt o .pem). Primer es revisen: quins són nous, quins ja hi eren i a quin client pertanyen pel seu NIF. No es desa res fins que confirmis. No pugis mai claus privades ni fitxers .p12/.pfx."
+
+msgid "Elige uno o varios certificados públicos (.cer, .crt o .pem)."
+msgstr "Tria un o diversos certificats públics (.cer, .crt o .pem)."
+
+msgid "%(n)s certificado importado."
+msgid_plural "%(n)s certificados importados."
+msgstr[0] "%(n)s certificat importat."
+msgstr[1] "%(n)s certificats importats."
+
+msgid "%(n)s enlazado con su cliente por el NIF."
+msgid_plural "%(n)s enlazados con su cliente por el NIF."
+msgstr[0] "%(n)s enllaçat amb el seu client pel NIF."
+msgstr[1] "%(n)s enllaçats amb el seu client pel NIF."
+
+msgid "%(n)s fichero no se importó."
+msgid_plural "%(n)s ficheros no se importaron."
+msgstr[0] "%(n)s fitxer no s'ha importat."
+msgstr[1] "%(n)s fitxers no s'han importat."
+
+msgid "Ver los certificados"
+msgstr "Veure els certificats"
+
+msgid "Solo se revisan los primeros 40 ficheros."
+msgstr "Només es revisen els primers 40 fitxers."
+
+msgid "Sin cliente: se importará sin enlazar"
+msgstr "Sense client: s'importarà sense enllaçar"
+
+msgid "Ya estaba"
+msgstr "Ja hi era"
+
+msgid "Varios certificados"
+msgstr "Diversos certificats"
+
+msgid "No válido"
+msgstr "No vàlid"
+
+msgid "Importar %(n)s certificado"
+msgid_plural "Importar %(n)s certificados"
+msgstr[0] "Importar %(n)s certificat"
+msgstr[1] "Importar %(n)s certificats"
+
+msgid "No hay nada nuevo que importar."
+msgstr "No hi ha res de nou per importar."
+
+msgid "Probar con otros ficheros"
+msgstr "Provar amb altres fitxers"
+
+msgid "Certificados públicos"
+msgstr "Certificats públics"
+
+msgid "Importar en lote"
+msgstr "Importar en lot"

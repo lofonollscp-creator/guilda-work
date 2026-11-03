@@ -214,6 +214,25 @@ def importar():
     return _volver(r["id"], aviso="importado" if r["nuevo"] else "ya-estaba")
 
 
+@certificados_bp.route("/importar-lote", methods=["GET", "POST"])
+@login_required
+def importar_lote():
+    """Varios certificados públicos de una vez: se revisan (nuevo, ya estaba, no vale, cliente por NIF) y se importan solo si se confirma."""
+    from . import certificados_lote
+    if request.method == "GET":
+        return render_template("certificados_lote.html", filas=None, resultado=None, **_ctx_textos())
+    ficheros = [(f.filename, f.read(ce.MAX_BYTES + 1)) for f in request.files.getlist("archivos") if f and f.filename]
+    if request.form.get("accion") == "importar":
+        # Segunda pasada: los ficheros vienen otra vez, en base64, de la pantalla de revisión (no se guardó nada entre las dos).
+        ficheros = [(n, base64.b64decode(b, validate=True)) for n, b in zip(request.form.getlist("nombre"), request.form.getlist("contenido_b64")) if b][:certificados_lote.MAX_FICHEROS]
+        return render_template("certificados_lote.html", filas=None, resultado=certificados_lote.importar(g.tenant_id, g.usuario_id, ficheros), **_ctx_textos())
+    if not ficheros:
+        return render_template("certificados_lote.html", filas=None, resultado=None, error="Elige uno o varios certificados públicos (.cer, .crt o .pem).", **_ctx_textos())
+    filas = certificados_lote.revisar(g.tenant_id, g.usuario_id, ficheros)
+    return render_template("certificados_lote.html", filas=list(zip(filas, [(n, base64.b64encode(d).decode()) for n, d in ficheros])), resultado=None, aviso_tope=len(ficheros) > certificados_lote.MAX_FICHEROS,
+                           **_ctx_textos())
+
+
 @certificados_bp.route("/alta-manual", methods=["POST"])
 @login_required
 def alta_manual():

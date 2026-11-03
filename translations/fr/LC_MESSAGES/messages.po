@@ -20104,3 +20104,62 @@ msgstr "Rapport CSV"
 
 msgid "Informe PDF"
 msgstr "Rapport PDF"
+
+msgid "Importar certificados en lote"
+msgstr "Importer des certificats en lot"
+
+msgid "Sube varios certificados públicos (.cer, .crt o .pem). Primero se revisan: cuáles son nuevos, cuáles ya estaban y a qué cliente pertenecen por su NIF. No se guarda nada hasta que confirmes. Nunca subas claves privadas ni archivos .p12/.pfx."
+msgstr "Téléversez plusieurs certificats publics (.cer, .crt ou .pem). Ils sont d'abord examinés : lesquels sont nouveaux, lesquels y étaient déjà et à quel client ils appartiennent d'après leur NIF. Rien n'est enregistré avant votre confirmation. Ne téléversez jamais de clés privées ni de fichiers .p12/.pfx."
+
+msgid "Elige uno o varios certificados públicos (.cer, .crt o .pem)."
+msgstr "Choisissez un ou plusieurs certificats publics (.cer, .crt ou .pem)."
+
+msgid "%(n)s certificado importado."
+msgid_plural "%(n)s certificados importados."
+msgstr[0] "%(n)s certificat importé."
+msgstr[1] "%(n)s certificats importés."
+
+msgid "%(n)s enlazado con su cliente por el NIF."
+msgid_plural "%(n)s enlazados con su cliente por el NIF."
+msgstr[0] "%(n)s lié à son client par le NIF."
+msgstr[1] "%(n)s liés à leur client par le NIF."
+
+msgid "%(n)s fichero no se importó."
+msgid_plural "%(n)s ficheros no se importaron."
+msgstr[0] "%(n)s fichier n'a pas été importé."
+msgstr[1] "%(n)s fichiers n'ont pas été importés."
+
+msgid "Ver los certificados"
+msgstr "Voir les certificats"
+
+msgid "Solo se revisan los primeros 40 ficheros."
+msgstr "Seuls les 40 premiers fichiers sont examinés."
+
+msgid "Sin cliente: se importará sin enlazar"
+msgstr "Sans client : il sera importé sans lien"
+
+msgid "Ya estaba"
+msgstr "Déjà présent"
+
+msgid "Varios certificados"
+msgstr "Plusieurs certificats"
+
+msgid "No válido"
+msgstr "Non valide"
+
+msgid "Importar %(n)s certificado"
+msgid_plural "Importar %(n)s certificados"
+msgstr[0] "Importer %(n)s certificat"
+msgstr[1] "Importer %(n)s certificats"
+
+msgid "No hay nada nuevo que importar."
+msgstr "Il n'y a rien de nouveau à importer."
+
+msgid "Probar con otros ficheros"
+msgstr "Essayer d'autres fichiers"
+
+msgid "Certificados públicos"
+msgstr "Certificats publics"
+
+msgid "Importar en lote"
+msgstr "Importer en lot"

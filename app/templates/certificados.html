@@ -11,6 +11,7 @@
   <div class="quick-row">
     <a class="btn btn-primary" href="#nuevo">{{ _('Añadir certificado') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('certificados.avisos') }}">{{ _('Avisos a clientes') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('certificados.importar_lote') }}">{{ _('Importar en lote') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('certificados.caducidades_ics') }}" title="{{ _('Calendario con el día de caducidad de cada certificado y avisos a 30 y 7 días') }}">{{ _('Calendario (.ics)') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('certificados.informe_csv') }}">{{ _('Informe CSV') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('certificados.informe_pdf') }}">{{ _('Informe PDF') }}</a>

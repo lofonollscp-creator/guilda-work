@@ -20019,3 +20019,62 @@ msgstr "CSV report"
 
 msgid "Informe PDF"
 msgstr "PDF report"
+
+msgid "Importar certificados en lote"
+msgstr "Import certificates in bulk"
+
+msgid "Sube varios certificados públicos (.cer, .crt o .pem). Primero se revisan: cuáles son nuevos, cuáles ya estaban y a qué cliente pertenecen por su NIF. No se guarda nada hasta que confirmes. Nunca subas claves privadas ni archivos .p12/.pfx."
+msgstr "Upload several public certificates (.cer, .crt or .pem). They are reviewed first: which are new, which were already there and which client they belong to by tax ID. Nothing is saved until you confirm. Never upload private keys or .p12/.pfx files."
+
+msgid "Elige uno o varios certificados públicos (.cer, .crt o .pem)."
+msgstr "Choose one or more public certificates (.cer, .crt or .pem)."
+
+msgid "%(n)s certificado importado."
+msgid_plural "%(n)s certificados importados."
+msgstr[0] "%(n)s certificate imported."
+msgstr[1] "%(n)s certificates imported."
+
+msgid "%(n)s enlazado con su cliente por el NIF."
+msgid_plural "%(n)s enlazados con su cliente por el NIF."
+msgstr[0] "%(n)s linked to its client by tax ID."
+msgstr[1] "%(n)s linked to their client by tax ID."
+
+msgid "%(n)s fichero no se importó."
+msgid_plural "%(n)s ficheros no se importaron."
+msgstr[0] "%(n)s file was not imported."
+msgstr[1] "%(n)s files were not imported."
+
+msgid "Ver los certificados"
+msgstr "View the certificates"
+
+msgid "Solo se revisan los primeros 40 ficheros."
+msgstr "Only the first 40 files are reviewed."
+
+msgid "Sin cliente: se importará sin enlazar"
+msgstr "No client: it will be imported unlinked"
+
+msgid "Ya estaba"
+msgstr "Already there"
+
+msgid "Varios certificados"
+msgstr "Several certificates"
+
+msgid "No válido"
+msgstr "Not valid"
+
+msgid "Importar %(n)s certificado"
+msgid_plural "Importar %(n)s certificados"
+msgstr[0] "Import %(n)s certificate"
+msgstr[1] "Import %(n)s certificates"
+
+msgid "No hay nada nuevo que importar."
+msgstr "There is nothing new to import."
+
+msgid "Probar con otros ficheros"
+msgstr "Try other files"
+
+msgid "Certificados públicos"
+msgstr "Public certificates"
+
+msgid "Importar en lote"
+msgstr "Bulk import"
