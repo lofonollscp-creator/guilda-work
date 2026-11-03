@@ -46,7 +46,10 @@
     if (celda.dataset.persona !== origen.dataset.persona) datos.persona_id = celda.dataset.persona;
     if (celda.dataset.fecha && celda.dataset.fecha !== origen.dataset.fecha) datos.fecha = celda.dataset.fecha;
     if (!datos.persona_id && !datos.fecha) return;
-    enviar(datos).then(function (r) {
+    var ausente = celda.dataset.ausente === "1";
+    var seguir = ausente ? Promise.resolve(window.GuildaDS ? window.GuildaDS.confirmar(raiz.dataset.tAusente || "Esa persona está ausente ese día. ¿Mover la tarea igualmente?", {}) : window.confirm(raiz.dataset.tAusente)) : Promise.resolve(true);
+    seguir.then(function (si) { return si ? enviar(datos) : null; }).then(function (r) {
+      if (!r) return;
       if (r.ok) { window.location.reload(); return; }
       if (window.mostrarToast) window.mostrarToast(r.mensaje || raiz.dataset.tError, "error");
     });

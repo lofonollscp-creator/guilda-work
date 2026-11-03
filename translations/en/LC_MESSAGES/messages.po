@@ -19986,3 +19986,12 @@ msgstr "The date is not valid."
 
 msgid "Ese campo no se puede cambiar desde la lista."
 msgstr "That field cannot be changed from the list."
+
+msgid "Ausencia aprobada"
+msgstr "Approved absence"
+
+msgid "Ausente"
+msgstr "Absent"
+
+msgid "Esa persona está ausente ese día. ¿Mover la tarea igualmente?"
+msgstr "That person is absent that day. Move the task anyway?"

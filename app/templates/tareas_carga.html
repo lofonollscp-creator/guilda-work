@@ -21,8 +21,11 @@
 
 {% macro celda(c, persona, fecha, capacidad) %}
 {% set nivel = '' %}
+{% set ausencia = persona.ausente.get(fecha) if fecha else none %}
+{% if ausencia %}{% set capacidad = 0 %}{% endif %}
 {% if capacidad and c.min %}{% set nivel = 'carga-roja' if c.min > capacidad else ('carga-ambar' if c.min >= capacidad * 0.7 else 'carga-verde') %}{% endif %}
-<td class="carga-celda {{ nivel }}" data-persona="{{ persona.id }}" data-fecha="{{ fecha or '' }}">
+<td class="carga-celda {{ nivel }} {{ 'carga-ausente' if ausencia }}" data-persona="{{ persona.id }}" data-fecha="{{ fecha or '' }}" {% if ausencia %}data-ausente="1"{% endif %}>
+  {% if ausencia %}<div class="carga-ausencia" title="{{ _('Ausencia aprobada') }}">{{ {'vacaciones': _('Vacaciones'), 'asuntos_propios': _('Asuntos propios'), 'permiso': _('Permiso'), 'baja': _('Baja')}.get(ausencia, _('Ausente')) }}</div>{% endif %}
   {% if c.n %}
   <div class="carga-total">{{ c.min|minutos_corto or '—' }}{% if capacidad %}<span class="muted"> / {{ capacidad|minutos_corto }}</span>{% endif %}</div>
   {% if c.sin_estimar %}<div class="muted carga-sin">{{ ngettext('%(n)s sin estimar', '%(n)s sin estimar', c.sin_estimar, n=c.sin_estimar) }}</div>{% endif %}
@@ -42,7 +45,7 @@
 {% if personas|length < 2 %}
 <p class="muted">{{ _('Aquí verás la carga de tu equipo cuando haya más personas en tu despacho.') }}</p>
 {% endif %}
-<div class="carga-envoltorio" data-url-mover="{{ url_for('tareas.carga_mover') }}" data-t-error="{{ _('No se ha podido mover la tarea.') }}" data-t-ok="{{ _('Tarea movida') }}">
+<div class="carga-envoltorio" data-url-mover="{{ url_for('tareas.carga_mover') }}" data-t-error="{{ _('No se ha podido mover la tarea.') }}" data-t-ok="{{ _('Tarea movida') }}" data-t-ausente="{{ _('Esa persona está ausente ese día. ¿Mover la tarea igualmente?') }}">
 <table class="carga-tabla">
   <thead>
     <tr>

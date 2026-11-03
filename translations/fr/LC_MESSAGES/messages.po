@@ -20071,3 +20071,12 @@ msgstr "La date n'est pas valide."
 
 msgid "Ese campo no se puede cambiar desde la lista."
 msgstr "Ce champ ne peut pas être modifié depuis la liste."
+
+msgid "Ausencia aprobada"
+msgstr "Absence approuvée"
+
+msgid "Ausente"
+msgstr "Absent"
+
+msgid "Esa persona está ausente ese día. ¿Mover la tarea igualmente?"
+msgstr "Cette personne est absente ce jour-là. Déplacer la tâche quand même ?"

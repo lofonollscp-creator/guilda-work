@@ -19995,3 +19995,12 @@ msgstr "La data no és vàlida."
 
 msgid "Ese campo no se puede cambiar desde la lista."
 msgstr "Aquest camp no es pot canviar des de la llista."
+
+msgid "Ausencia aprobada"
+msgstr "Absència aprovada"
+
+msgid "Ausente"
+msgstr "Absent"
+
+msgid "Esa persona está ausente ese día. ¿Mover la tarea igualmente?"
+msgstr "Aquesta persona és absent aquell dia. Moure la tasca igualment?"

@@ -632,6 +632,22 @@ def carga():
     otra persona la reasigna y a otro día cambia su vencimiento."""
     lunes = _lunes_de(request.args.get("semana"))
     datos = db.carga_semanal(g.usuario_id, lunes)
+    # Ausencias aprobadas del equipo esa semana: la celda de quien no está no cuenta capacidad y avisa al soltarle una tarea.
+    ausentes: dict[int, dict[str, str]] = {}
+    if g.tenant_id is not None:
+        from . import ausencias
+        domingo = (lunes + timedelta(days=6)).isoformat()
+        for a in ausencias.listar(g.tenant_id, estado="aprobada", desde=lunes.isoformat()):
+            if a["desde"][:10] > domingo:
+                continue
+            for d in datos["dias"]:
+                if a["desde"][:10] <= d.isoformat() <= a["hasta"][:10]:
+                    ausentes.setdefault(a["usuario_id"], {})[d.isoformat()] = a["tipo"]
+    for p in datos["personas"]:
+        p["ausente"] = ausentes.get(p["id"], {})
+        if p["ausente"]:
+            dias_laborables_ausente = sum(1 for d in datos["dias"] if d.weekday() < 5 and d.isoformat() in p["ausente"])
+            p["capacidad_semana_min"] = p["capacidad_dia_min"] * max(0, 5 - dias_laborables_ausente)
     return render_template(
         "tareas_carga.html", subnav_activa="carga", personas=datos["personas"], dias=datos["dias"], lunes=lunes,
         anterior=(lunes - timedelta(days=7)).isoformat(), siguiente=(lunes + timedelta(days=7)).isoformat(),

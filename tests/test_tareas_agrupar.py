@@ -80,3 +80,21 @@ def test_la_fila_de_otra_persona_no_se_edita(cliente):
     tid = db.crear_tarea_outlook(ajeno, "Tarea ajena")
     assert cliente.post(f"/tareas/{tid}/campo", data={"campo": "prioridad", "valor": "alta"}).status_code == 404
     assert db.obtener_tarea_outlook(ajeno, tid)["prioridad"] == "normal"
+
+
+def test_la_carga_marca_las_ausencias_aprobadas_y_descuenta_su_capacidad(cliente):
+    from app import ausencias
+    uid = iniciar_sesion_de_prueba(cliente, "carga-aus@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho carga ausencias")
+    db.asignar_tenant(uid, t)
+    db.asignar_supervisor_tenant(uid, True)
+    ana = db.crear_usuario("ana-aus@ejemplo.com", "contrasena123")
+    db.asignar_tenant(ana, t)
+    lunes = date.today() - timedelta(days=date.today().weekday())
+    miercoles, jueves = (lunes + timedelta(days=2)).isoformat(), (lunes + timedelta(days=3)).isoformat()
+    ausencias.solicitar(t, ana, "vacaciones", miercoles, jueves, por=uid)                  # la registra quien gestiona: queda aprobada
+    pendiente = ausencias.solicitar(t, uid, "permiso", (lunes + timedelta(days=4)).isoformat())          # pendiente: no cuenta
+    html = cliente.get("/tareas/carga").get_data(as_text=True)
+    assert html.count('data-ausente="1"') == 2 and "Vacaciones" in html and "carga-ausente" in html
+    assert pendiente and "Permiso" not in html
+    assert 'data-t-ausente="Esa persona está ausente ese día.' in html
