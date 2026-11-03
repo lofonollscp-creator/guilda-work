@@ -1067,3 +1067,27 @@ kbd { font: 700 12px var(--font-mono); background: var(--panel-2); border: 1px s
 /* El punto de «no leído» no ocupa sitio en la fila: así los avatares quedan alineados */
 .correo-fila-wrap { position: relative; }
 .correo-fila-wrap.is-no-leido::before { position: absolute; left: 3px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; }
+/* Insignia de la campana: esquina superior derecha, nunca dentro del icono ni fuera de la pantalla */
+.notificaciones-menu .icon-rail-link { overflow: visible; }
+.notificaciones-menu .icon-rail-link .icon-rail-badge.notificaciones-badge {
+  position: absolute; top: -6px; right: -6px; left: auto; bottom: auto; margin: 0; transform: none;
+  min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1; font-weight: 800; letter-spacing: 0; white-space: nowrap;
+  background: var(--danger); color: #fff; border: 2px solid var(--surface); box-shadow: none;
+}
+
+/* Webapp / móvil: sin zoom automático de iOS al enfocar campos, altura real con barras del navegador y zona segura */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea { font-size: 16px !important; }
+  .btn, .chip-v2, .icon-rail-link { min-height: 40px; }
+}
+@supports (height: 100dvh) {
+  .correo-shell { min-height: calc(100dvh - 68px); }
+  .ia-pagina-chat { height: calc(100dvh - 68px); }
+}
+@media (max-width: 760px) {
+  .top-bar { height: calc(68px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
+  .content, .app-main > main { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  html { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
+}
+@media (display-mode: standalone) { body { -webkit-user-select: none; user-select: none; } input, textarea, [contenteditable], .ia-msg, .correo-cuerpo, td, p { -webkit-user-select: text; user-select: text; } }

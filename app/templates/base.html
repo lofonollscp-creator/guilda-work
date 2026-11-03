@@ -2,7 +2,14 @@
 <html lang="{{ idioma_actual }}" data-t-buscar-en="{{ _('Buscar…') }}" data-t-sin-resultados="{{ _('Sin resultados') }}" data-t-mostrando="{{ _('Mostrando %%s de %%s: sigue escribiendo para afinar') }}">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0a0c" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Guilda Work">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>{% block title %}Guilda Work{% endblock %}</title>
   <meta property="og:title" content="{% block og_title %}Guilda Work{% endblock %}">
   <meta property="og:description" content="Gestión diaria, correo, tareas y calendario fiscal para tu gestoría, en un mismo sitio.">
@@ -392,7 +399,7 @@
           <button type="button" id="notificaciones-toggle" class="icon-rail-link" title="{{ _('Notificaciones') }}" aria-label="{{ _('Notificaciones') }}">
             <svg class="icon-rail-icono" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>
             <span class="icon-rail-etiqueta">{{ _('Notificaciones') }}</span>
-            {% if notificaciones_no_leidas %}<span class="icon-rail-badge notificaciones-badge">{{ notificaciones_no_leidas }}</span>{% endif %}
+            {% if notificaciones_no_leidas %}<span class="icon-rail-badge notificaciones-badge">{{ "99+" if notificaciones_no_leidas > 99 else notificaciones_no_leidas }}</span>{% endif %}
           </button>
           <div class="ajustes-panel notificaciones-panel" id="notificaciones-panel" hidden>
             <div class="notificaciones-panel-cabecera">
