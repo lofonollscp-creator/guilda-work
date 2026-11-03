@@ -2,7 +2,7 @@
 el módulo de Gestoría. Nunca se sube ni se pide una clave privada: solo material público (PEM/DER)."""
 import base64
 
-from flask import Blueprint, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
 from datetime import date, timedelta
@@ -67,6 +67,31 @@ def lista():
         "certificados.html", certificados=certificados, resumen=ce.resumen(g.tenant_id), riesgos=ce.riesgos(g.tenant_id), q=q, temporal=temporal, operativo=operativo, plazo=plazo, cliente_id=cliente_id,
         clientes=db.listar_clientes_fiscales(g.tenant_id), equipo=ce.custodios(g.tenant_id), es_supervisor=bool(db.es_supervisor_tenant(g.usuario_id)), cfg=ce.config(g.tenant_id),
         error=request.args.get("error"), aviso=request.args.get("aviso"), **_ctx_textos())
+
+
+@certificados_bp.route("/caducidades.ics")
+@login_required
+def caducidades_ics():
+    """Calendario con el día de caducidad de cada certificado y avisos a 30 y 7 días; para suscribirse o importarlo en el calendario del despacho."""
+    from . import certificados_exportar
+    return Response(certificados_exportar.ics(g.tenant_id), mimetype="text/calendar; charset=utf-8", headers={"Content-Disposition": 'attachment; filename="caducidad-certificados.ics"', "Cache-Control": "private, no-store"})
+
+
+@certificados_bp.route("/informe.csv")
+@login_required
+def informe_csv():
+    from . import certificados_exportar
+    return Response(certificados_exportar.csv_auditoria(g.tenant_id), mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="certificados-{date.today().isoformat()}.csv"', "Cache-Control": "private, no-store"})
+
+
+@certificados_bp.route("/informe.pdf")
+@login_required
+def informe_pdf():
+    from . import certificados_exportar
+    tenant = db.obtener_tenant(g.tenant_id)
+    return Response(certificados_exportar.pdf_auditoria(g.tenant_id, despacho=(tenant["nombre"] if tenant else None)), mimetype="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="certificados-{date.today().isoformat()}.pdf"', "Cache-Control": "private, no-store"})
 
 
 @certificados_bp.route("/nuevo", methods=["POST"])

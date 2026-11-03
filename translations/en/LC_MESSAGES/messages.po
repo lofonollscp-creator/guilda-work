@@ -20007,3 +20007,15 @@ msgstr "More than estimated"
 
 msgid "Estimado y registrado cuentan solo las tareas con estimación y el tiempo de cronómetros ya finalizados, de todo el equipo. La desviación es positiva si se ha tardado más de lo estimado."
 msgstr "Estimated and logged count only tasks with an estimate and the time from timers already finished, for the whole team. The variance is positive if it took longer than estimated."
+
+msgid "Calendario con el día de caducidad de cada certificado y avisos a 30 y 7 días"
+msgstr "Calendar with each certificate's expiry day and alerts at 30 and 7 days"
+
+msgid "Calendario (.ics)"
+msgstr "Calendar (.ics)"
+
+msgid "Informe CSV"
+msgstr "CSV report"
+
+msgid "Informe PDF"
+msgstr "PDF report"

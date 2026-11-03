@@ -20092,3 +20092,15 @@ msgstr "Plus que prévu"
 
 msgid "Estimado y registrado cuentan solo las tareas con estimación y el tiempo de cronómetros ya finalizados, de todo el equipo. La desviación es positiva si se ha tardado más de lo estimado."
 msgstr "Estimé et enregistré ne comptent que les tâches avec une estimation et le temps des chronomètres déjà terminés, pour toute l'équipe. L'écart est positif si cela a pris plus de temps que prévu."
+
+msgid "Calendario con el día de caducidad de cada certificado y avisos a 30 y 7 días"
+msgstr "Calendrier avec le jour d'expiration de chaque certificat et alertes à 30 et 7 jours"
+
+msgid "Calendario (.ics)"
+msgstr "Calendrier (.ics)"
+
+msgid "Informe CSV"
+msgstr "Rapport CSV"
+
+msgid "Informe PDF"
+msgstr "Rapport PDF"

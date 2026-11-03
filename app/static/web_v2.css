@@ -797,7 +797,7 @@ a.fiscal-cifra.es-activa { border-color: var(--primary); background: var(--lima-
 .tareas-dia-seccion .tarea-fila { grid-template-columns: 44px minmax(0, 1fr) 100px 130px auto; }
 .tareas-dia-seccion .tarea-fila:last-child { border-bottom: 0; }
 .tareas-dia-seccion .tarea-fila-acciones select { max-width: 130px; min-height: 32px; font-size: 12px; border-radius: 10px; }
-@media (max-width: 900px) { .midia-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tareas-dia-seccion .tarea-fila { grid-template-columns: 40px minmax(0, 1fr) auto; } .tareas-dia-seccion .tarea-fila-prio { display: none; } }
+@media (max-width: 900px) { .midia-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tareas-dia-seccion .tarea-fila { grid-template-columns: 40px minmax(0, 1fr) auto auto; } .tareas-dia-seccion .tarea-fila-prio { display: none; } }
 
 /* ======================================================================================================================== */
 /* Tareas · Tablero                                                                                                         */

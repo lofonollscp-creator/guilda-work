@@ -20016,3 +20016,15 @@ msgstr "Més del que s'havia estimat"
 
 msgid "Estimado y registrado cuentan solo las tareas con estimación y el tiempo de cronómetros ya finalizados, de todo el equipo. La desviación es positiva si se ha tardado más de lo estimado."
 msgstr "Estimat i registrat compten només les tasques amb estimació i el temps de cronòmetres ja finalitzats, de tot l'equip. La desviació és positiva si s'ha trigat més del que s'havia estimat."
+
+msgid "Calendario con el día de caducidad de cada certificado y avisos a 30 y 7 días"
+msgstr "Calendari amb el dia de caducitat de cada certificat i avisos a 30 i 7 dies"
+
+msgid "Calendario (.ics)"
+msgstr "Calendari (.ics)"
+
+msgid "Informe CSV"
+msgstr "Informe CSV"
+
+msgid "Informe PDF"
+msgstr "Informe PDF"
