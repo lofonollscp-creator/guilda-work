@@ -32,7 +32,8 @@
 <form class="proyecto-alta" action="{{ url_for('proyectos.crear_tarea', proyecto_id=p.id) }}" method="post">
   <label class="sr-only" for="alta-asunto">{{ _('Nueva tarea') }}</label>
   <input type="text" id="alta-asunto" name="asunto" placeholder="{{ _('Añadir una tarea…') }}" maxlength="300" required autocomplete="off"
-         data-interpretar="{{ url_for('proyectos.interpretar', proyecto_id=p.id) }}" aria-describedby="alta-ayuda alta-previa">
+         data-interpretar="{{ url_for('proyectos.interpretar', proyecto_id=p.id) }}" aria-describedby="alta-ayuda alta-previa"
+         data-alta-rapida data-sugerencias="{{ url_for('proyectos.sugerencias_alta', proyecto_id=p.id) }}" data-t-sugerencias="{{ _('Sugerencias') }}">
   {% if secciones %}
   <select name="seccion_id" aria-label="{{ _('Sección') }}"><option value="">{{ _('Sin sección') }}</option>{% for s in secciones %}<option value="{{ s.id }}">{{ s.nombre }}</option>{% endfor %}</select>
   {% endif %}
@@ -93,4 +94,5 @@
 </form>
 {% endif %}
 <script src="{{ url_for('static', filename='proyecto.js') }}"></script>
+<script src="{{ url_for('static', filename='alta_rapida.js') }}" defer></script>
 {% endblock %}

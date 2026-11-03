@@ -92,9 +92,12 @@
   <form class="quick-card quick-card-full" id="nueva-tarea" action="{{ url_for('tareas.crear') }}" method="post">
     <div class="tarea-alta-principal">
       <label class="sr-only" for="tarea-alta-asunto">{{ _('Nueva tarea') }}</label>
-      <input id="tarea-alta-asunto" type="text" name="asunto" placeholder="{{ _('Añadir tarea… («mañana 10h llamar a Vidal», «@luis», «!alta», «#proyecto»)') }}" required autocomplete="off">
+      <input id="tarea-alta-asunto" type="text" name="asunto" placeholder="{{ _('Añadir tarea… («mañana 10h llamar a Vidal», «@luis», «!alta», «#proyecto»)') }}" required autocomplete="off"
+             data-alta-rapida data-sugerencias="{{ url_for('tareas.sugerencias_alta') }}" data-interpretar="{{ url_for('tareas.interpretar_alta') }}" data-previa="tarea-alta-previa"
+             data-t-sugerencias="{{ _('Sugerencias') }}" aria-describedby="tarea-alta-previa">
       <button type="submit" class="btn btn-primary">+ {{ _('Añadir') }}</button>
     </div>
+    <p class="proyecto-previa" id="tarea-alta-previa" aria-live="polite" hidden></p>
     <details class="tarea-alta-mas">
     <summary>{{ _('Más opciones') }}</summary>
     <div class="quick-row">
@@ -178,4 +181,5 @@
 {% endif %}
 <script src="{{ url_for('static', filename='timer.js') }}"></script>
 <script src="{{ url_for('static', filename='tareas_ficha.js') }}" defer></script>
+<script src="{{ url_for('static', filename='alta_rapida.js') }}" defer></script>
 {% endblock %}

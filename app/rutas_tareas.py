@@ -4,6 +4,7 @@ haciendo crecer app/main.py — es, en la práctica, una sección independiente
 dentro de la app (sin relación con los proyectos ni con las tareas con duración).
 """
 import calendar as calendario_std
+import re
 from datetime import date, datetime, timedelta
 from urllib.parse import quote
 
@@ -386,6 +387,35 @@ def _titulo_rango(vista: str, ancla: date, inicio: date, fin: date) -> str:
     return f"{inicio.day} de {NOMBRES_MES[inicio.month]} – {fin.day} de {NOMBRES_MES[fin.month]} de {fin.year}"
 
 
+def _datos_alta_rapida(usuario_id: int) -> tuple[list, list]:
+    """Las personas y las etiquetas (proyectos) que entiende el alta rápida del usuario: (id, nombre, email) y (id, nombre)."""
+    personas = [(c["id"], c["nombre"], c["email"] if "email" in c.keys() else "") for c in db.listar_companeros_tenant(usuario_id)]
+    etiquetas = [(m["id"], m["nombre"]) for m in db.listar_proyectos_usables(usuario_id)]
+    return personas, etiquetas
+
+
+@tareas_bp.route("/sugerencias-alta.json")
+@login_required
+def sugerencias_alta():
+    """Lo que ofrece el autocompletado del alta rápida al escribir «@» (personas) o «#» (proyectos): cada opción trae el texto que se inserta y que el propio alta resuelve a esa persona o proyecto."""
+    return jsonify(quickadd.opciones_autocompletado(*_datos_alta_rapida(g.usuario_id)))
+
+
+@tareas_bp.route("/interpretar-alta")
+@login_required
+def interpretar_alta():
+    """Vista previa en vivo del alta rápida de la lista general: lo que se ha entendido del texto (no crea nada)."""
+    personas, etiquetas = _datos_alta_rapida(g.usuario_id)
+    e = quickadd.interpretar((request.args.get("texto") or "")[:400], date.today(), personas, etiquetas)
+    nombres = {pid: n for pid, n, _email in personas}
+    proyectos = dict(etiquetas)
+    return jsonify({
+        "asunto": e.asunto, "vencimiento": e.vencimiento, "fecha_texto": format_date(e.fecha, "EEE d MMM") if e.fecha else None, "hora": e.hora,
+        "prioridad": e.prioridad, "persona": nombres.get(e.persona_id), "seccion": proyectos.get(e.etiqueta_id), "sin_resolver": e.sin_resolver,
+        "estimacion": quickadd.formatear_minutos(e.estimacion_min) or None,
+    })
+
+
 @tareas_bp.route("/", methods=["POST"])
 @login_required
 def crear():
@@ -393,11 +423,7 @@ def crear():
     if asunto:
         # Texto libre: «viernes 10h pedir extractos @luis !alta #proyecto». Lo que el formulario trae
         # relleno manda; el texto solo rellena lo que está vacío.
-        entendido = quickadd.interpretar(
-            asunto, date.today(),
-            [(c["id"], c["nombre"], c["email"] if "email" in c.keys() else "") for c in db.listar_companeros_tenant(g.usuario_id)],
-            [(m["id"], m["nombre"]) for m in db.listar_proyectos_usables(g.usuario_id)],
-        )
+        entendido = quickadd.interpretar(asunto, date.today(), *_datos_alta_rapida(g.usuario_id))
         asunto = entendido.asunto
         categoria_id = request.form.get("categoria_id") or entendido.etiqueta_id
         asignada_a = _int_o_none(request.form.get("asignada_a")) or entendido.persona_id

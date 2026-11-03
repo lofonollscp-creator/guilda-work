@@ -211,6 +211,16 @@ def _interpretar(proyecto_id: int, texto: str) -> quickadd.Interpretacion:
     return quickadd.interpretar(texto, date.today(), equipo, secciones)
 
 
+@proyectos_bp.route("/<int:proyecto_id>/sugerencias-alta.json")
+@login_required
+def sugerencias_alta(proyecto_id: int):
+    """Opciones del autocompletado del alta rápida del proyecto: sus personas (quien puede recibir tareas) y sus secciones."""
+    _proyecto_o_404(proyecto_id)
+    proyecto = db.obtener_proyecto(g.usuario_id, proyecto_id)
+    personas = [(proyecto["usuario_id"], proyecto["dueno_nombre"], "")] + [(m["usuario_id"], m["nombre"], m["email"]) for m in db.miembros_de_proyecto(proyecto_id) if m["rol"] == "colabora"]
+    return jsonify(quickadd.opciones_autocompletado(personas, [(s["id"], s["nombre"]) for s in db.listar_secciones(proyecto_id)]))
+
+
 @proyectos_bp.route("/<int:proyecto_id>/interpretar")
 @login_required
 def interpretar(proyecto_id: int):

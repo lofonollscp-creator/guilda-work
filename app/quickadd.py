@@ -372,3 +372,16 @@ def _hora(hora: int, minutos: str | None, ampm: str | None) -> str | None:
     if not 0 <= m <= 59:
         return None
     return f"{hora:02d}:{m:02d}"
+
+
+def opciones_autocompletado(personas, etiquetas) -> dict:
+    """Lo que ofrece el autocompletado al escribir «@» (personas) o «#» (proyectos o secciones): cada opción trae el texto que se inserta, que `interpretar` resuelve a esa misma persona o etiqueta.
+    La persona se nombra con la primera palabra de su nombre que la distingue de las demás; si ninguna lo hace, con la primera (y el alta avisará de la ambigüedad)."""
+    opciones_personas = []
+    for pid, nombre, email in personas:
+        palabras = [p for p in re.split(r"[\s.]+", nombre or "") if p] or [p for p in [(email or "").split("@")[0]] if p]
+        manejador = next((w for w in palabras if _buscar_persona(w, personas)[0] == pid), palabras[0] if palabras else "")
+        if manejador:
+            opciones_personas.append({"nombre": nombre, "insertar": "@" + manejador})
+    opciones_etiquetas = [{"nombre": n, "insertar": ('#"%s"' % n) if re.search(r"[^\w\-]", n) else "#" + n} for _id, n in etiquetas]
+    return {"personas": opciones_personas, "etiquetas": opciones_etiquetas}
