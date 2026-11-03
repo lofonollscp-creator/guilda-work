@@ -16,6 +16,7 @@ CREATE INDEX IF NOT EXISTS idx_ausencias_usuario ON ausencias (usuario_id, desde
 CREATE INDEX IF NOT EXISTS idx_auto_ejec_tenant ON automatizaciones_ejecuciones (tenant_id, estado);
 CREATE INDEX IF NOT EXISTS idx_auto_eventos_pendientes ON automatizaciones_eventos (procesado_en, id);
 CREATE INDEX IF NOT EXISTS idx_auto_reglas_tenant ON automatizaciones_reglas (tenant_id, activa);
+CREATE INDEX IF NOT EXISTS idx_ayuda_valoraciones_pagina ON ayuda_valoraciones (pagina, util);
 CREATE INDEX IF NOT EXISTS idx_bolsa_ajustes ON bolsa_horas_ajustes (usuario_id, fecha);
 CREATE INDEX IF NOT EXISTS idx_categorias_papelera ON categorias (papelera_en);
 CREATE INDEX IF NOT EXISTS idx_categorias_usuario ON categorias (usuario_id);

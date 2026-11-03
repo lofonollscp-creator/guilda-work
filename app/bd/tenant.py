@@ -49,6 +49,8 @@ LOCAL = {
     "latidos": "latidos de procesos globales",
     "salud_alertas": "alertas de salud globales",
     "leads_contacto": "formulario público de la web de Guilda (aún sin despacho)",
+    "ayuda_valoraciones": "votos anónimos del centro de ayuda público (plataforma)",
+    "ayuda_busquedas_vacias": "búsquedas sin resultado del centro de ayuda público (plataforma)",
     "solicitudes_acceso_portal": "solicitudes públicas previas a tener despacho",
     "api_cambios_purgado": "marca de purga global",
     "contabilidad_tarifas": "tarifas de consumo globales y por ámbito",

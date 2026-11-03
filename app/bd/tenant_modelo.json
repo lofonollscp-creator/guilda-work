@@ -137,6 +137,16 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "ayuda_busquedas_vacias": {
+  "clase": "local",
+  "motivo": "búsquedas sin resultado del centro de ayuda público (plataforma)",
+  "via": []
+ },
+ "ayuda_valoraciones": {
+  "clase": "local",
+  "motivo": "votos anónimos del centro de ayuda público (plataforma)",
+  "via": []
+ },
  "bolsa_horas_ajustes": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

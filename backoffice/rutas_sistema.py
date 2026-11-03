@@ -28,6 +28,23 @@ def leads():
     return render_template("leads.html", leads=filas, estado=solo)
 
 
+@bp.route("/ayuda")
+@auth.login_required
+def ayuda_publica():
+    """Qué se busca sin encontrar y qué guías no sirven, según los votos anónimos del centro de ayuda público."""
+    from app import ayuda_metricas
+    return render_template("ayuda_publica.html", busquedas=ayuda_metricas.busquedas_sin_resultado(), guias=ayuda_metricas.valoraciones_por_guia())
+
+
+@bp.route("/ayuda/busquedas/<int:busqueda_id>/borrar", methods=["POST"])
+@auth.login_required
+def ayuda_busqueda_borrar(busqueda_id: int):
+    from app import ayuda_metricas
+    ayuda_metricas.borrar_busqueda(busqueda_id)
+    auth.auditar("ayuda.busqueda_resuelta", f"búsqueda {busqueda_id}")
+    return redirect(url_for("rutas.ayuda_publica"))
+
+
 @bp.route("/leads/<int:lead_id>/atendido", methods=["POST"])
 @auth.login_required
 def lead_atendido(lead_id: int):

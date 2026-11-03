@@ -2343,6 +2343,8 @@ def init_db() -> None:
         documentos_firma.crear_esquema(conn)  # documentos prehechos que se firman con Documenso desde la ficha del cliente (app/documentos_firma.py)
         from . import fiscal_masivo
         fiscal_masivo.crear_esquema(conn)     # cambios en lote de los vencimientos fiscales: proponer, confirmar y deshacer (app/fiscal_masivo.py)
+        from . import ayuda_metricas
+        ayuda_metricas.crear_esquema(conn)    # votos y búsquedas sin resultado del centro de ayuda público: anónimo, de plataforma (app/ayuda_metricas.py)
         from . import honorarios
         honorarios.crear_esquema(conn)        # reglas de honorarios por tramos de los vencimientos fiscales (app/honorarios.py)
         from . import traspasos

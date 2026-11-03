@@ -25,6 +25,18 @@ def bo(tmp_path, monkeypatch):
 
 # --- Comercial ----------------------------------------------------------------
 
+def test_ayuda_publica_lista_busquedas_y_votos_y_permite_resolverlas(bo):
+    from app import ayuda_metricas
+    ayuda_metricas.registrar_busqueda("subvenciones", "es")
+    for util in (True, False, False):
+        ayuda_metricas.registrar_valoracion("guilda-fiscal/empezar", "es", util)
+    html = bo.get("/ayuda").get_data(as_text=True)
+    assert "subvenciones" in html and "guilda-fiscal/empezar" in html and "33 %" in html
+    post(bo, f"/ayuda/busquedas/{ayuda_metricas.busquedas_sin_resultado()[0]['id']}/borrar")
+    assert "subvenciones" not in bo.get("/ayuda").get_data(as_text=True)
+    assert any(r["accion"] == "ayuda.busqueda_resuelta" for r in auth.listar_auditoria())
+
+
 def test_leads_filtra_pendientes_y_marca_atendidos(bo):
     a = db.crear_lead_contacto("Ana Lead", "ana@lead.com", "Empresa A", "600", "Hola")
     db.crear_lead_contacto("Beto Lead", "beto@lead.com")
