@@ -19904,3 +19904,9 @@ msgstr "With the client details as context"
 
 msgid "Fuente actualizada"
 msgstr "Source updated"
+
+msgid "Mencionas un adjunto, pero no has adjuntado ningún archivo. ¿Enviar de todos modos?"
+msgstr "You mention an attachment, but you have not attached any file. Send anyway?"
+
+msgid "Enviar igualmente"
+msgstr "Send anyway"

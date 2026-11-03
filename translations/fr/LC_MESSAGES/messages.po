@@ -19989,3 +19989,9 @@ msgstr "Avec les données du client comme contexte"
 
 msgid "Fuente actualizada"
 msgstr "Source mise à jour"
+
+msgid "Mencionas un adjunto, pero no has adjuntado ningún archivo. ¿Enviar de todos modos?"
+msgstr "Vous mentionnez une pièce jointe, mais vous n'avez joint aucun fichier. Envoyer quand même ?"
+
+msgid "Enviar igualmente"
+msgstr "Envoyer quand même"

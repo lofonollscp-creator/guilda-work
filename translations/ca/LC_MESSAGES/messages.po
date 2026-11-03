@@ -19913,3 +19913,9 @@ msgstr "Amb les dades del client com a context"
 
 msgid "Fuente actualizada"
 msgstr "Font actualitzada"
+
+msgid "Mencionas un adjunto, pero no has adjuntado ningún archivo. ¿Enviar de todos modos?"
+msgstr "Mencions un adjunt, però no has adjuntat cap fitxer. Enviar igualment?"
+
+msgid "Enviar igualmente"
+msgstr "Enviar igualment"

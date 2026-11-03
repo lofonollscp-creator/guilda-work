@@ -42,6 +42,33 @@
   setInterval(autoguardar, 20000);
   form.addEventListener("submit", function () { ultima = instantanea(); });
 
+  // --- «¿Olvidas el adjunto?»: si el texto que has escrito lo menciona y no hay ningún archivo, pregunta antes de enviar ---
+  const PALABRA_ADJUNTO = /\b(adjunt[oaáóé]\w*|adjunto|attach(?:ed|ment|ments)?|ci-?joint\w*|pi[eè]ce[s]? jointe[s]?|annex\w*)\b/i;
+  function textoPropio() {
+    if (!editor) return "";
+    const copia = editor.cloneNode(true);
+    copia.querySelectorAll("blockquote, .correo-firma, [data-citado]").forEach(function (n) { n.remove(); });     // ni la cita del mensaje respondido ni la firma cuentan
+    return copia.textContent || "";
+  }
+  function hayAdjuntos() {
+    const archivos = form.querySelector("input[type='file'][name='adjuntos']");
+    return (archivos && archivos.files && archivos.files.length > 0) || document.querySelectorAll("#correo-adjuntos-lista li, .correo-adjuntos-borrador li").length > 0;
+  }
+  let avisoAceptado = false;
+  form.addEventListener("submit", function (e) {
+    const boton = e.submitter;
+    if (avisoAceptado || (boton && boton.name === "guardar_borrador") || !PALABRA_ADJUNTO.test(textoPropio()) || hayAdjuntos()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const pregunta = i18n.correoAdjuntoOlvidado || "Mencionas un adjunto, pero no has adjuntado ningún archivo. ¿Enviar de todos modos?";
+    const continuar = window.GuildaDS ? window.GuildaDS.confirmar(pregunta, { aceptar: i18n.correoEnviarIgual || "Enviar igualmente" }) : Promise.resolve(window.confirm(pregunta));
+    Promise.resolve(continuar).then(function (si) {
+      if (!si) return;
+      avisoAceptado = true;
+      form.requestSubmit(boton || undefined);
+    });
+  }, true);
+
   // --- Adjuntos: arrastrar, pegar y quitar ---
   const entrada = form.querySelector("input[type='file'][name='adjuntos']");
   const lista = document.getElementById("correo-adjuntos-lista");
