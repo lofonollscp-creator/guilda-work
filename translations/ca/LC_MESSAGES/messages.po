@@ -19980,3 +19980,18 @@ msgstr "Es mostren les primeres tasques; filtra per veure la resta."
 
 msgid "Más adelante"
 msgstr "Més endavant"
+
+msgid "Cambiar la prioridad"
+msgstr "Canviar la prioritat"
+
+msgid "Poner fecha"
+msgstr "Posar data"
+
+msgid "Una tarea completada no se edita desde la lista."
+msgstr "Una tasca completada no s'edita des de la llista."
+
+msgid "La fecha no es válida."
+msgstr "La data no és vàlida."
+
+msgid "Ese campo no se puede cambiar desde la lista."
+msgstr "Aquest camp no es pot canviar des de la llista."

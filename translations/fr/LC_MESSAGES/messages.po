@@ -20056,3 +20056,18 @@ msgstr "Les premières tâches sont affichées ; filtrez pour voir le reste."
 
 msgid "Más adelante"
 msgstr "Plus tard"
+
+msgid "Cambiar la prioridad"
+msgstr "Changer la priorité"
+
+msgid "Poner fecha"
+msgstr "Mettre une date"
+
+msgid "Una tarea completada no se edita desde la lista."
+msgstr "Une tâche terminée ne se modifie pas depuis la liste."
+
+msgid "La fecha no es válida."
+msgstr "La date n'est pas valide."
+
+msgid "Ese campo no se puede cambiar desde la lista."
+msgstr "Ce champ ne peut pas être modifié depuis la liste."

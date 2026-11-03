@@ -19971,3 +19971,18 @@ msgstr "The first tasks are shown; filter to see the rest."
 
 msgid "Más adelante"
 msgstr "Later"
+
+msgid "Cambiar la prioridad"
+msgstr "Change the priority"
+
+msgid "Poner fecha"
+msgstr "Set a date"
+
+msgid "Una tarea completada no se edita desde la lista."
+msgstr "A completed task cannot be edited from the list."
+
+msgid "La fecha no es válida."
+msgstr "The date is not valid."
+
+msgid "Ese campo no se puede cambiar desde la lista."
+msgstr "That field cannot be changed from the list."

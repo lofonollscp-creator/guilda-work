@@ -46,8 +46,9 @@ data-eliminar-defecto data-confirmar="{{ _('¿Eliminar esta tarea? Se moverá a 
     </div>
   </div>
   {% if mostrar_estado %}<span class="tarea-fila-col tarea-fila-estado"><span class="pildora-v2 {{ clase_estado }}">{{ estados|selectattr('0', 'equalto', t.estado)|map(attribute='1')|first }}</span></span>{% endif %}
-  <span class="tarea-fila-col tarea-fila-prio"><span class="pildora-v2 {{ {'alta': 'ambar', 'baja': 'azul'}.get(t.prioridad, '') }} prioridad-{{ t.prioridad }}">{{ t.prioridad|capitalize }}</span></span>
-  <span class="tarea-fila-col tarea-fila-vence">{% if vence_txt %}<span class="pildora-v2 {{ vence_clase }}" title="{{ t.fecha_vencimiento[:10] }}">{{ vence_txt }}</span>{% endif %}</span>
+  {% set editable_en_fila = puede_editar and t.estado != 'completada' %}
+  <span class="tarea-fila-col tarea-fila-prio"><span class="pildora-v2 {{ {'alta': 'ambar', 'baja': 'azul'}.get(t.prioridad, '') }} prioridad-{{ t.prioridad }}" {% if editable_en_fila %}data-edita="prioridad" data-url="{{ url_for('tareas.cambiar_campo', tarea_id=t.id) }}" data-valor="{{ t.prioridad }}" role="button" tabindex="0" title="{{ _('Cambiar la prioridad') }}"{% endif %}>{{ t.prioridad|capitalize }}</span></span>
+  <span class="tarea-fila-col tarea-fila-vence">{% if vence_txt %}<span class="pildora-v2 {{ vence_clase }}" title="{{ t.fecha_vencimiento[:10] }}" {% if editable_en_fila %}data-edita="fecha_vencimiento" data-url="{{ url_for('tareas.cambiar_campo', tarea_id=t.id) }}" data-valor="{{ t.fecha_vencimiento[:10] }}" role="button" tabindex="0"{% endif %}>{{ vence_txt }}</span>{% elif editable_en_fila %}<span class="pildora-v2 pildora-vacia" data-edita="fecha_vencimiento" data-url="{{ url_for('tareas.cambiar_campo', tarea_id=t.id) }}" data-valor="" role="button" tabindex="0" title="{{ _('Poner fecha') }}">+ {{ _('Fecha') }}</span>{% endif %}</span>
   <div class="tarea-fila-acciones">
   {% if t.estado != 'completada' and not solo_ve %}
   {% if cr and cr.activo %}

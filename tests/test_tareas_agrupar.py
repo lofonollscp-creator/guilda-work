@@ -53,3 +53,30 @@ def test_la_lista_se_agrupa_sin_paginar_y_la_vista_guardada_lo_recuerda(cliente)
     assert cliente.get("/tareas/?agrupar=inventado").status_code == 200 and "tareas-grupo-titulo" not in cliente.get("/tareas/?agrupar=inventado").get_data(as_text=True)
     assert cliente.post("/tareas/vistas", data={"nombre": "Por cliente", "agrupar": "cliente", "vista": "mias"}).status_code == 302
     assert db.listar_vistas_tareas(uid)[0]["filtros"].get("agrupar") == "cliente"
+
+
+def test_cambiar_prioridad_y_fecha_desde_la_fila(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "enfila-1@ejemplo.com", "contrasena123")
+    tid = db.crear_tarea_outlook(uid, "Preparar el 303")
+    r = cliente.post(f"/tareas/{tid}/campo", data={"campo": "prioridad", "valor": "alta"})
+    assert r.status_code == 200 and r.get_json()["prioridad"] == "alta" and r.get_json()["prioridad_texto"] == "Alta"
+    assert db.obtener_tarea_outlook(uid, tid)["prioridad"] == "alta"
+    dia = (date.today() + timedelta(days=3)).isoformat()
+    r = cliente.post(f"/tareas/{tid}/campo", data={"campo": "fecha_vencimiento", "valor": dia})
+    assert r.get_json()["vence"]["fecha"] == dia and r.get_json()["vence"]["texto"] and db.obtener_tarea_outlook(uid, tid)["fecha_vencimiento"].startswith(dia)
+    assert cliente.post(f"/tareas/{tid}/campo", data={"campo": "fecha_vencimiento", "valor": ""}).get_json()["vence"]["texto"] == ""      # vaciar quita la fecha
+    assert cliente.post(f"/tareas/{tid}/campo", data={"campo": "fecha_vencimiento", "valor": "mañana"}).status_code == 400
+    assert cliente.post(f"/tareas/{tid}/campo", data={"campo": "prioridad", "valor": "urgentisima"}).status_code == 400
+    assert cliente.post(f"/tareas/{tid}/campo", data={"campo": "asunto", "valor": "otro"}).status_code == 400
+    db.completar_tarea_outlook(uid, tid)
+    assert cliente.post(f"/tareas/{tid}/campo", data={"campo": "prioridad", "valor": "baja"}).status_code == 409                          # completada: no se edita aquí
+    html = cliente.get("/tareas/?completadas=1").get_data(as_text=True)
+    assert "data-edita" not in html.split("tarea-fila-prio")[1][:200]
+
+
+def test_la_fila_de_otra_persona_no_se_edita(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "enfila-2@ejemplo.com", "contrasena123")
+    ajeno = db.crear_usuario("enfila-ajeno@ejemplo.com", "contrasena123")
+    tid = db.crear_tarea_outlook(ajeno, "Tarea ajena")
+    assert cliente.post(f"/tareas/{tid}/campo", data={"campo": "prioridad", "valor": "alta"}).status_code == 404
+    assert db.obtener_tarea_outlook(ajeno, tid)["prioridad"] == "normal"

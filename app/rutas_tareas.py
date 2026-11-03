@@ -718,6 +718,37 @@ def cambiar_estado(tarea_id: int):
     return redirect(request.referrer or url_for("tareas.tablero"))
 
 
+@tareas_bp.route("/<int:tarea_id>/campo", methods=["POST"])
+@login_required
+def cambiar_campo(tarea_id: int):
+    """Edición en la propia fila de la lista: la prioridad o el vencimiento, sin abrir la ficha. Solo quien puede editar la tarea (dueño o colaborador) y solo si no está completada; devuelve lo que se
+    ve en la fila (texto y color del vencimiento) para actualizarla sin recargar."""
+    if not db.puede_editar_tarea(g.usuario_id, tarea_id):
+        abort(404)
+    tarea = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    if tarea is None:
+        abort(404)
+    if tarea["estado"] == "completada":
+        return jsonify({"ok": False, "error": _("Una tarea completada no se edita desde la lista.")}), 409
+    campo, valor = request.form.get("campo", ""), (request.form.get("valor") or "").strip()
+    if campo == "prioridad" and valor in dict(PRIORIDADES):
+        db.editar_tarea_outlook(g.usuario_id, tarea_id, prioridad=valor)
+    elif campo == "fecha_vencimiento":
+        if valor:
+            try:
+                datetime.strptime(valor[:10], "%Y-%m-%d")
+            except ValueError:
+                return jsonify({"ok": False, "error": _("La fecha no es válida.")}), 400
+        db.editar_tarea_outlook(g.usuario_id, tarea_id, fecha_vencimiento=valor or None)
+    else:
+        return jsonify({"ok": False, "error": _("Ese campo no se puede cambiar desde la lista.")}), 400
+    nueva = db.obtener_tarea_outlook_visible(g.usuario_id, tarea_id)
+    from flask import current_app
+    texto, clase = current_app.jinja_env.filters["vence"](nueva["fecha_vencimiento"], False) if nueva["fecha_vencimiento"] else ("", "")
+    return jsonify({"ok": True, "prioridad": nueva["prioridad"], "prioridad_texto": dict(PRIORIDADES).get(nueva["prioridad"], nueva["prioridad"]).capitalize(),
+                    "vence": {"texto": texto, "clase": clase, "fecha": (nueva["fecha_vencimiento"] or "")[:10]}})
+
+
 @tareas_bp.route("/<int:tarea_id>/cronometro/iniciar", methods=["POST"])
 @login_required
 def iniciar_cronometro(tarea_id: int):

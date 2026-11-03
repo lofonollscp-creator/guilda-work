@@ -1167,3 +1167,10 @@ fieldset > .dash-panel { box-sizing: border-box; max-width: 100%; }
 .tareas-grupo { margin: 0 0 14px; }
 .tareas-grupo-titulo { display: flex; align-items: baseline; gap: 8px; padding: 10px 20px; font-weight: 700; cursor: pointer; background: var(--surface-2, var(--surface)); border-bottom: 1px solid var(--linea); position: sticky; top: 0; z-index: 1; }
 .tareas-grupo-titulo span:first-child { min-width: 0; overflow-wrap: anywhere; }
+
+/* Edición en la propia fila de la lista de tareas */
+.pildora-v2[data-edita] { cursor: pointer; }
+.pildora-v2[data-edita]:hover, .pildora-v2[data-edita]:focus-visible { outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent); outline-offset: 1px; }
+.pildora-vacia { color: var(--text-muted); border-style: dashed; opacity: 0; }
+.tarea-fila:hover .pildora-vacia, .tarea-fila:focus-within .pildora-vacia { opacity: 1; }
+.tarea-en-fila-control { max-width: 150px; min-height: 32px; font-size: 13px; }

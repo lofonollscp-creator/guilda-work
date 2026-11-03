@@ -37,3 +37,24 @@ def test_el_alta_rapida_autocompleta_personas_proyectos_y_prioridad(servidor, ab
     assert pagina.locator(".alta-sugerencias").is_hidden()
     pagina.keyboard.press("Escape")
     assert not errores
+
+
+def test_cambiar_la_prioridad_y_la_fecha_en_la_propia_fila(servidor, abrir, entrar_como_equipo):
+    t = db.crear_tenant("Despacho edición en fila")
+    pagina, errores = abrir()
+    uid = entrar_como_equipo(pagina, "enfila-e2e@ejemplo.com", despacho=t, direccion=True)
+    tid = db.crear_tarea_outlook(uid, "Revisar extractos")
+
+    pagina.goto(f"{servidor.url}/tareas/")
+    pagina.wait_for_load_state("networkidle")
+    fila = pagina.locator(f".tarea-fila[data-tarea-id='{tid}']")
+    fila.hover()
+    fila.locator("[data-edita=prioridad]").click()
+    fila.locator("select.tarea-en-fila-control").select_option("alta")
+    pagina.wait_for_function("(id) => document.querySelector(`.tarea-fila[data-tarea-id='${id}'] [data-edita=prioridad]`).textContent.trim() === 'Alta'", arg=tid)
+    assert db.obtener_tarea_outlook(uid, tid)["prioridad"] == "alta"
+
+    fila.locator("[data-edita=fecha_vencimiento]").click()
+    fila.locator("input.tarea-en-fila-control").fill("2099-05-04")
+    pagina.wait_for_function("(id) => /mayo|may/i.test(document.querySelector(`.tarea-fila[data-tarea-id='${id}'] [data-edita=fecha_vencimiento]`).textContent)", arg=tid)
+    assert db.obtener_tarea_outlook(uid, tid)["fecha_vencimiento"].startswith("2099-05-04") and not errores
