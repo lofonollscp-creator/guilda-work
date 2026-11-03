@@ -42,7 +42,7 @@ NOMBRES_MES = [
 PALETA_CATEGORIAS = ["#4a6cf7", "#e0555a", "#2fa66a", "#d98c1f", "#8a5cf5", "#1f9fd9", "#c94f8a", "#0f9b8e"]
 
 TAREAS_POR_PAGINA = 50
-TAREAS_AGRUPADAS_MAX = 400
+TAREAS_AGRUPADAS_MAX = 200
 
 
 @tareas_bp.app_template_filter("duracion_hm")
