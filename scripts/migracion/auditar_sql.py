@@ -137,7 +137,9 @@ def incumplimientos():
 # LIKE sobre datos que escribe la propia aplicación (prefijos, fechas, marcas): no dependen de mayúsculas. (fichero, columna)
 LIKE_SEGURO = {("app/abogados.py", "numero"), ("app/nucleo.py", "fecha"), ("app/automatizaciones.py", "COALESCE(t.referencia_externa, '')"),
                ("app/cifrado_despacho.py", "m.contenido"), ("app/juridico/corpus.py", "instantanea"), ("app/listmonk.py", "subscribers.email"),
-               ("app/listmonk.py", "subscribers.name")}
+               ("app/listmonk.py", "subscribers.name"),
+               # Suscripciones Web Push: `fcm_token` guarda el JSON con el endpoint (técnico, no texto de personas); aquí conviene que PostgreSQL distinga mayúsculas, como las URL
+               ("app/db_plataforma.py", "fcm_token")}
 
 
 def likes_sin_normalizar():
