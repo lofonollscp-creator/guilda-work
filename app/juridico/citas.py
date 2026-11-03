@@ -56,9 +56,31 @@ def resumen_de_avisos(estados: dict[str, dict]) -> dict:
 
 # --- Avisos de cambio normativo en los informes guardados (J6) -----------------------------------------------------------------------------------------
 
+ACCION_CAMBIO = "informe.fuente_actualizada"
+
+
+def _cambios_de(conn, inf) -> list[dict]:
+    """Los documentos citados en ese informe cuya versión activa en la biblioteca ya no es la citada: [{documento_id, version_nueva_id, titulo}]."""
+    try:
+        citas = json.loads(inf["instantanea"])["respuesta"].get("citations", [])
+    except (ValueError, KeyError, TypeError):
+        return []
+    cambios, vistos = [], set()
+    for c in citas:
+        if c.get("kind") != "legal_source" or not c.get("documentId") or not c.get("versionId") or (c["documentId"], c["versionId"]) in vistos:
+            continue
+        vistos.add((c["documentId"], c["versionId"]))
+        activa = conn.execute("SELECT id FROM jur_versiones WHERE documento_id = ? AND activa = 1 AND bloqueada = 0", (c["documentId"],)).fetchone()
+        if activa is not None and activa["id"] != c["versionId"]:
+            titulo = conn.execute("SELECT titulo FROM jur_documentos WHERE id = ?", (c["documentId"],)).fetchone()
+            cambios.append({"documento_id": c["documentId"], "version_nueva_id": activa["id"], "titulo": titulo["titulo"] if titulo else ""})
+    return cambios
+
+
 def revisar_cambios(tenant_id: int | None = None, enviar: bool = True) -> dict:
-    """Mira los informes vivos (borrador o revisado) y, por cada documento que citan cuya versión activa en la biblioteca ya no es la citada, deja UNA alerta (por informe, documento y versión nueva) y avisa
-    a quien creó el informe y a quien lo revisó. Un informe guardado no cambia nunca: la alerta solo dice que su fuente cambió después y que conviene volver a consultar. Devuelve {informes, alertas, avisos}."""
+    """Mira los informes vivos (borrador o revisado) y, por cada documento que citan cuya versión activa en la biblioteca ya no es la citada, avisa UNA vez (por informe, documento y versión nueva) a quien creó
+    el informe y a quien lo revisó. Un informe guardado no cambia nunca: el aviso solo dice que su fuente cambió después y que conviene volver a consultar. La señal de «ya avisado» es una entrada de
+    la auditoría del módulo (sin tablas nuevas). Devuelve {informes, alertas, avisos}."""
     conn = db.get_connection()
     nuevas: list[dict] = []
     try:
@@ -67,25 +89,13 @@ def revisar_cambios(tenant_id: int | None = None, enviar: bool = True) -> dict:
             donde, params = donde + " AND tenant_id = ?", [tenant_id]
         informes = conn.execute(f"SELECT id, tenant_id, titulo, instantanea, creado_por, revisado_por FROM jur_informes WHERE {donde} ORDER BY id", params).fetchall()
         for inf in informes:
-            try:
-                citas = json.loads(inf["instantanea"])["respuesta"].get("citations", [])
-            except (ValueError, KeyError, TypeError):
-                continue
-            vistos = set()
-            for c in citas:
-                if c.get("kind") != "legal_source" or not c.get("documentId") or not c.get("versionId") or (c["documentId"], c["versionId"]) in vistos:
-                    continue
-                vistos.add((c["documentId"], c["versionId"]))
-                activa = conn.execute("SELECT id FROM jur_versiones WHERE documento_id = ? AND activa = 1 AND bloqueada = 0", (c["documentId"],)).fetchone()
-                if activa is None or activa["id"] == c["versionId"]:
-                    continue
-                ya = conn.execute("SELECT 1 FROM jur_alertas_cambio WHERE informe_id = ? AND documento_id = ? AND version_nueva_id = ?", (inf["id"], c["documentId"], activa["id"])).fetchone()
+            for c in _cambios_de(conn, inf):
+                recurso = f"informe:{inf['id']}:documento:{c['documento_id']}:version:{c['version_nueva_id']}"
+                ya = conn.execute("SELECT 1 FROM jur_auditoria WHERE tenant_id = ? AND accion = ? AND recurso = ?", (inf["tenant_id"], ACCION_CAMBIO, recurso)).fetchone()
                 if ya:
                     continue
-                conn.execute("INSERT INTO jur_alertas_cambio (tenant_id, informe_id, documento_id, version_citada_id, version_nueva_id, creada_en) VALUES (?, ?, ?, ?, ?, ?)",
-                             (inf["tenant_id"], inf["id"], c["documentId"], c["versionId"], activa["id"], corpus.ahora()))
-                titulo = conn.execute("SELECT titulo FROM jur_documentos WHERE id = ?", (c["documentId"],)).fetchone()
-                nuevas.append({"informe_id": inf["id"], "tenant_id": inf["tenant_id"], "informe": inf["titulo"], "documento": titulo["titulo"] if titulo else "", "destinatarios": {inf["creado_por"], inf["revisado_por"]} - {None}})
+                corpus.auditar(inf["tenant_id"], None, ACCION_CAMBIO, recurso, None, conn=conn)
+                nuevas.append({"informe_id": inf["id"], "informe": inf["titulo"], "documento": c["titulo"], "destinatarios": {inf["creado_por"], inf["revisado_por"]} - {None}})
         conn.commit()
     finally:
         conn.close()
@@ -99,26 +109,19 @@ def revisar_cambios(tenant_id: int | None = None, enviar: bool = True) -> dict:
                                                   f"«{a['documento'][:120]}» se ha actualizado en la biblioteca desde que guardaste el informe «{a['informe'][:100]}». Conviene volver a consultar antes de usarlo.",
                                                   url=f"/juridico/informes/{a['informe_id']}", datos={"tipo": "juridico_cambio"})
                     avisos += 1
-                except Exception:  # noqa: BLE001 -- un aviso que falla no debe parar la revisión ni perder la alerta
+                except Exception:  # noqa: BLE001 -- un aviso que falla no debe parar la revisión
                     logger.warning("No se ha podido avisar del cambio normativo del informe %s", a["informe_id"], exc_info=True)
-        if nuevas:
-            conn = db.get_connection()
-            try:
-                for a in nuevas:
-                    conn.execute("UPDATE jur_alertas_cambio SET notificada_en = ? WHERE informe_id = ? AND notificada_en IS NULL", (corpus.ahora(), a["informe_id"]))
-                conn.commit()
-            finally:
-                conn.close()
     return {"informes": len(informes), "alertas": len(nuevas), "avisos": avisos}
 
 
 def informes_con_cambios(tenant_id: int, ids: list[int]) -> set[int]:
-    """Cuáles de esos informes tienen alguna alerta de cambio de fuente (para marcarlos en la lista)."""
+    """Cuáles de esos informes citan ahora una fuente que la biblioteca ha actualizado (se calcula al momento, para marcarlos en la lista)."""
     if not ids:
         return set()
     conn = db.get_connection()
     try:
         marcas = ",".join("?" for _ in ids)
-        return {f["informe_id"] for f in conn.execute(f"SELECT DISTINCT informe_id FROM jur_alertas_cambio WHERE tenant_id = ? AND informe_id IN ({marcas})", [tenant_id, *ids])}
+        filas = conn.execute(f"SELECT id, instantanea FROM jur_informes WHERE tenant_id = ? AND estado != 'archivado' AND id IN ({marcas})", [tenant_id, *ids]).fetchall()
+        return {f["id"] for f in filas if _cambios_de(conn, f)}
     finally:
         conn.close()
