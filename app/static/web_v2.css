@@ -582,7 +582,8 @@ html, body { max-width: 100%; overflow-x: clip; }
 .correo-ribbon-posponer input, .correo-ribbon-fecha-aviso input { max-width: 150px; min-width: 0; }
 .correo-ribbon-select, .correo-ribbon .correo-categoria-select { max-width: 160px; }
 .ia-barra-texto { min-width: 0; }
-.ia-barra-texto strong, .ia-barra-texto .ia-enlace { white-space: nowrap; }
+.ia-barra-texto strong { white-space: nowrap; }
+.ia-barra-texto .ia-enlace { white-space: normal; text-align: left; flex-wrap: wrap; }
 @media (max-width: 1100px) { .ia-v2-lista { display: none; } .ia-v2-columnas { grid-template-columns: minmax(0, 1fr); } .top-bar-accion-sec span:not(.sr-only) { display: none; } }
 @media (max-width: 820px) {
   .lote-barra { margin: 0 -16px; padding: 8px 16px; }
@@ -1153,7 +1154,6 @@ fieldset > .dash-panel { box-sizing: border-box; max-width: 100%; }
 .tarea-fila-acciones > * { flex-shrink: 0; }
 .tarea-fila-acciones .tarea-cronometro-form { flex-shrink: 1; }
 .ia-enlace { max-width: 100%; text-align: left; }
-.ia-barra-texto .ia-enlace { white-space: nowrap; }
 .ia-enlace svg { flex: none; }
 
 /* Autocompletado del alta rápida (@personas, #proyectos, !prioridad): un desplegable bajo el campo. */

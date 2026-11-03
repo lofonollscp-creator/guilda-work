@@ -861,13 +861,44 @@ def abrir_renovacion(tenant_id: int, usuario_id: int, certificado_id: int, *, ti
                            (tenant_id, certificado_id, _sin_secretos(titular, "Titular"), _sin_secretos(notas, "Notas"), usuario_id or None, db.now_iso()))
         _evento(conn, tenant_id, certificado_id, usuario_id or None, "renovacion_abierta", {"automatica": automatica})
         conn.commit()
-        return cur.lastrowid
+        renovacion_id = cur.lastrowid
     except Exception as e:
         if "UNIQUE" in str(e):
             raise ValueError("Ese certificado ya tiene una renovación en curso.") from None
         raise
     finally:
         conn.close()
+    try:
+        _tarea_de_renovacion(tenant_id, certificado_id, usuario_id)
+    except Exception:  # noqa: BLE001 -- la tarea es una ayuda: si falla, la renovación ya está abierta y no se pierde
+        logger.warning("No se ha podido crear la tarea de la renovación del certificado %s", certificado_id, exc_info=True)
+    return renovacion_id
+
+
+PASOS_DE_RENOVACION = ("Solicitar el certificado nuevo a la autoridad", "Validar la identidad (presencial u online, según el emisor)", "Descargar e instalar el certificado nuevo",
+                       "Registrar el certificado nuevo en Guilda Work", "Implantarlo en los servicios que usaban el anterior (sede, buzón, firma…)", "Comprobar que se puede presentar con él y cerrar la renovación")
+
+
+def _tarea_de_renovacion(tenant_id: int, certificado_id: int, usuario_id: int) -> int | None:
+    """Al abrir una renovación crea la tarea con sus pasos para quien custodia el certificado (si no hay custodio, el primer supervisor, o quien la abre), con vencimiento 15 días antes de que caduque
+    (o hoy, si ya es tarde). Así la renovación aparece en Hoy y en Tareas, como todo lo demás, y no solo en la pantalla de certificados."""
+    c = obtener(tenant_id, certificado_id)
+    if c is None:
+        return None
+    supervisores = [u for u in db.usuarios_de_tenant(tenant_id) if db.es_supervisor_tenant(u)]
+    responsable = c.get("custodio_id") or (supervisores[0] if supervisores else None) or usuario_id or None
+    if not responsable:
+        return None
+    hoy = _ahora().date()
+    limite = hoy
+    if c.get("caduca_el"):
+        limite = max(hoy, date.fromisoformat(c["caduca_el"][:10]) - timedelta(days=15))
+    quien = c.get("cliente_nombre") or c.get("sujeto") or "el titular"
+    tarea_id = db.crear_tarea_outlook(responsable, f"Renovar el certificado de {quien}", cuerpo=f"Caduca el {c.get('caduca_el') or '(sin fecha)'}. Sigue la renovación en /certificados/{certificado_id}.",
+                                      fecha_vencimiento=limite.isoformat(), prioridad="alta", cliente_fiscal_id=c.get("cliente_titular_id"))
+    for paso in PASOS_DE_RENOVACION:
+        db.agregar_item_checklist(responsable, tarea_id, paso)
+    return tarea_id
 
 
 def _renovacion(conn, tenant_id: int, renovacion_id: int):

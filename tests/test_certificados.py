@@ -634,3 +634,18 @@ def test_la_comprobacion_periodica_repite_lo_antiguo_y_solo_avisa_si_algo_empeor
     tercera = ce.revisar_comprobaciones(d_.t, ahora=datetime.now(timezone.utc) + timedelta(days=16), verificar=verificar)
     assert tercera["comprobados"] == 1 and tercera["avisos"] >= 1 and enviados[0][1] == f"/certificados/{cid}"
     assert ce.obtener(d_.t, cid)["revocacion"]["resultado"] == "revocado"
+
+
+def test_abrir_una_renovacion_crea_la_tarea_con_sus_pasos_para_el_custodio(d):
+    d_ = d
+    cid = ce.alta_rapida(d_.t, d_.cus, tipo="fnmt_persona_fisica", caduca=(AHORA + timedelta(days=40)).date().isoformat(), cliente_fiscal_id=d_.cf, titular="Marta Puig")["id"]
+    ce.actualizar_datos(d_.t, d_.sup, cid, custodio_id=d_.cus)
+    ce.abrir_renovacion(d_.t, d_.sup, cid)
+    tareas = [t for t in db.listar_tareas_outlook(d_.cus) if t["asunto"].startswith("Renovar el certificado de")]
+    assert len(tareas) == 1 and tareas[0]["prioridad"] == "alta" and tareas[0]["cliente_fiscal_id"] == d_.cf and tareas[0]["fecha_vencimiento"]
+    pasos = [p["texto"] for p in db.listar_checklist(tareas[0]["id"])]
+    assert pasos == list(ce.PASOS_DE_RENOVACION)
+    otra = ce.alta_rapida(d_.t, d_.cus, tipo="fnmt_persona_fisica", caduca=(AHORA + timedelta(days=5)).date().isoformat(), titular="Casi caducado")["id"]
+    ce.abrir_renovacion(d_.t, d_.sup, otra)
+    pronto = [t for t in db.listar_tareas_outlook(d_.cus) + db.listar_tareas_outlook(d_.sup) if t["asunto"] == "Renovar el certificado de Casi caducado"]
+    assert len(pronto) == 1 and pronto[0]["fecha_vencimiento"][:10] >= datetime.now(timezone.utc).date().isoformat()          # ya es tarde para los 15 días de margen: vence hoy, no en el pasado
