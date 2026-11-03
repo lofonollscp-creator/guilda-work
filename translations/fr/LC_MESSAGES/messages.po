@@ -20163,3 +20163,12 @@ msgstr "Certificats publics"
 
 msgid "Importar en lote"
 msgstr "Importer en lot"
+
+msgid "Certificados electrónicos"
+msgstr "Certificats électroniques"
+
+msgid "Custodio: %(n)s"
+msgstr "Gardien : %(n)s"
+
+msgid "Ver todos los certificados de este cliente"
+msgstr "Voir tous les certificats de ce client"

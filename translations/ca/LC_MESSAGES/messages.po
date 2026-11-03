@@ -20087,3 +20087,12 @@ msgstr "Certificats públics"
 
 msgid "Importar en lote"
 msgstr "Importar en lot"
+
+msgid "Certificados electrónicos"
+msgstr "Certificats electrònics"
+
+msgid "Custodio: %(n)s"
+msgstr "Custodi: %(n)s"
+
+msgid "Ver todos los certificados de este cliente"
+msgstr "Veure tots els certificats d'aquest client"

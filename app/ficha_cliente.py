@@ -12,7 +12,7 @@ from datetime import date, timedelta
 
 from flask import url_for
 
-from . import almacen_documentos, calcom, db, documentos_firma, espocrm, facturacion_despacho, facturascripts, perfil_fiscal
+from . import almacen_documentos, calcom, certificados, db, documentos_firma, espocrm, facturacion_despacho, facturascripts, perfil_fiscal, verticales
 from .vencimientos_fiscales import modelos_disponibles
 
 FILTROS_TAREAS = ("todas", "abiertas", "vencidas", "completadas")
@@ -75,7 +75,12 @@ def contexto_fiscal(tenant_id: int, usuario_id: int, cliente, vencimientos) -> d
             except calcom.ErrorCalcom:
                 proxima_cita = None
     supervisor = db.es_supervisor_tenant(usuario_id)
+    # Los certificados del cliente (K1): solo para quien los gestiona y si el despacho usa la gestoría; sin consultas si no.
+    certificados_cliente = []
+    if verticales.esta_activo(tenant_id, "gestoria") and certificados.puede_gestionar(usuario_id, tenant_id):
+        certificados_cliente = certificados.listar(tenant_id, cliente_fiscal_id=cliente["id"], limite=50)
     return {
+        "certificados_cliente": certificados_cliente,
         "fiscal": cliente, "vencimientos": vencimientos, "modelos_cliente": db.modelos_fiscales_de_cliente(cliente), "modelos_disponibles": modelos_disponibles(cliente["pais"]),
         "hoy": date.today().isoformat(), "limite_proximo": (date.today() + timedelta(days=7)).isoformat(),
         "facturas": facturas, "cobro": facturacion_despacho.cobro_de_cliente(tenant_id, cliente), "contactos_espocrm": contactos_espocrm, "proxima_cita": proxima_cita,

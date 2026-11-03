@@ -67,3 +67,14 @@ def test_las_pantallas_descargan_el_calendario_y_los_informes_solo_la_gestion(de
     assert "caducidades.ics" in html and "informe.csv" in html and "informe.pdf" in html
     db.asignar_supervisor_tenant(uid, False)
     assert cliente.get("/certificados/caducidades.ics").status_code == 403
+
+
+def test_la_ficha_del_cliente_muestra_sus_certificados_solo_a_quien_los_gestiona(despacho):
+    cliente, uid, t, cf = despacho
+    cid, _caduca = _alta(t, uid, cf, 12, "Marta Puig")
+    otro_cf = db.crear_cliente_fiscal(t, "Otro Cliente SL")
+    _alta(t, uid, otro_cf, 400, "De otro cliente")
+    html = cliente.get(f"/fiscal/clientes/{cf}", follow_redirects=True).get_data(as_text=True)
+    assert "Certificados electrónicos" in html and "Marta Puig" in html and "De otro cliente" not in html and f"/certificados/{cid}" in html
+    db.asignar_supervisor_tenant(uid, False)
+    assert "Certificados electrónicos" not in cliente.get(f"/fiscal/clientes/{cf}", follow_redirects=True).get_data(as_text=True)

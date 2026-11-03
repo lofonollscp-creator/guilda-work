@@ -20078,3 +20078,12 @@ msgstr "Public certificates"
 
 msgid "Importar en lote"
 msgstr "Bulk import"
+
+msgid "Certificados electrónicos"
+msgstr "Electronic certificates"
+
+msgid "Custodio: %(n)s"
+msgstr "Custodian: %(n)s"
+
+msgid "Ver todos los certificados de este cliente"
+msgstr "See all this client's certificates"
