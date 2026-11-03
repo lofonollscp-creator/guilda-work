@@ -5,14 +5,17 @@ from . import corpus
 from .conectores.base import Conector
 from .conectores.boe_consolidada import BoeConsolidada
 from .conectores.boe_diario import BoeDiario
+from .conectores.doctrina_tributaria import DgtConsultas, TeacCriterios
 from .conectores.reservados import CendojLicenciado, EurLexCellar, Hudoc, OnuJuris
 
-CONECTORES: dict[str, type[Conector]] = {c.id: c for c in (BoeConsolidada, BoeDiario, CendojLicenciado, EurLexCellar, Hudoc, OnuJuris)}
+CONECTORES: dict[str, type[Conector]] = {c.id: c for c in (BoeConsolidada, BoeDiario, DgtConsultas, TeacCriterios, CendojLicenciado, EurLexCellar, Hudoc, OnuJuris)}
 
 # (id de fuente, URL de referencia, acceso). `todos`: fuente pública oficial que cualquier despacho con el módulo puede usar una vez habilitada; `explicito`: licenciada, cada despacho la activa.
 CATALOGO = [
     ("boe-consolidada", "https://www.boe.es/datosabiertos/api/api.php?lang=es", "todos"),
     ("boe-diario-tc", "https://www.boe.es/datosabiertos/api/api.php?lang=es", "todos"),
+    ("dgt-consultas", "https://petete.tributos.hacienda.gob.es/consultas/", "todos"),
+    ("teac-dyctea", "https://serviciostelematicosext.hacienda.gob.es/TEAC/DYCTEA/", "todos"),
     ("cendoj-licenciado", "https://www.poderjudicial.es/", "explicito"),
     ("eurlex-cellar", "https://eur-lex.europa.eu/content/help/data-reuse/webservice.html?locale=en", "todos"),
     ("hudoc", "https://www.echr.coe.int/hudoc-database", "todos"),
@@ -23,6 +26,8 @@ CATALOGO = [
 VERIFICACION = {
     "boe-consolidada": "Formato inspeccionado contra el servicio real el 23-oct-2026; cliente probado con fixtures sintéticos. Condiciones: aviso legal del BOE (atribución; consolidación informativa).",
     "boe-diario-tc": "Formato del sumario y del documento XML inspeccionado contra el servicio real el 23-oct-2026; no es el fondo completo del TC, solo lo publicado en el BOE.",
+    "dgt-consultas": "Pantallas públicas de PETETE inspeccionadas contra el servicio real el 3-nov-2026 (búsqueda por fecha, listado y documento); no hay API documentada. El aviso legal no concreta condiciones de reutilización: hay que registrar una política con su evidencia antes de habilitarla.",
+    "teac-dyctea": "Pantallas públicas de DYCTEA inspeccionadas contra el servicio real el 3-nov-2026 (listado paginado y criterio); no hay API documentada. El catálogo datos.gob.es remite al aviso legal del Ministerio de Hacienda, sin una licencia concreta: hay que registrar una política con su evidencia antes de habilitarla.",
     "cendoj-licenciado": "Solo el contrato de adaptador. Sin documentación técnica ni suministro autorizado: no hay cliente ni endpoint.",
     "eurlex-cellar": "Solo el contrato de adaptador. Pendiente: alta en EUR-Lex y validar WSDL y consultas CDM contra el servicio real.",
     "hudoc": "Reservado para una fase posterior; sin API pública de ingesta confirmada.",
