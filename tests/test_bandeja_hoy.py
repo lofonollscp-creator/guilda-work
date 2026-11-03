@@ -172,3 +172,25 @@ def test_hecho_respeta_permisos_y_tareas_bloqueadas(cliente):
     assert "hechos=0" in r.headers["Location"] and "fallos=1" in r.headers["Location"]
     assert db.obtener_tarea_outlook(ajeno, de_otro)["estado"] != "completada"
     assert cliente.get("/hoy/?hechos=0&fallos=1").status_code == 200
+
+
+def test_los_certificados_que_caducan_salen_con_dias_servicios_y_riesgo_de_presentacion(cliente):
+    from app import certificados as ce
+    uid, t = _web(cliente, "hoycert@ejemplo.com")
+    db.asignar_supervisor_tenant(uid, True)
+    cf = crear_cliente_fiscal(t, "Panadería Marta")
+    pronto = ce.alta_rapida(t, uid, tipo="fnmt_persona_fisica", caduca=(HOY + timedelta(days=5)).isoformat(), cliente_fiscal_id=cf, titular="Marta Puig")["id"]
+    ce.vincular(t, uid, pronto, cliente_fiscal_id=cf, servicio="presentacion", autorizacion="Mandato firmado")
+    ce.alta_rapida(t, uid, tipo="fnmt_persona_fisica", caduca=(HOY - timedelta(days=3)).isoformat(), titular="Antiguo Pérez")
+    ce.alta_rapida(t, uid, tipo="fnmt_persona_fisica", caduca=(HOY + timedelta(days=200)).isoformat(), titular="Lejano Gómez")
+    crear_vencimiento_fiscal(t, cf, "303", "4T", (HOY + timedelta(days=20)).isoformat())
+    with cliente.application.test_request_context():
+        b = bandeja_hoy.reunir(uid, True, HOY)
+    seccion = {s["clave"]: s for s in b["secciones"]}["certificados"]
+    por_titulo = {i["titulo"]: i for i in seccion["elementos"]}
+    assert any("Marta Puig" in t for t in por_titulo) and not any("Lejano" in t for t in por_titulo)
+    marta = next(i for t_, i in por_titulo.items() if "Marta Puig" in t_)
+    assert "Caduca en 5 días" in marta["detalle"] and "Panadería Marta" in marta["detalle"] and "presentación de impuestos" in marta["detalle"] and marta["urgencia"] == "hoy"
+    antiguo = next(i for t_, i in por_titulo.items() if "Antiguo" in t_)
+    assert "Caducó hace 3 días" in antiguo["detalle"] and antiguo["urgencia"] == "vencido"
+    assert any(i["titulo"].startswith("303") and "caduca" in i["detalle"].lower() for i in {s["clave"]: s for s in b["secciones"]}["certificados_riesgo"]["elementos"])

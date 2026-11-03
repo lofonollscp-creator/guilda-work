@@ -19677,3 +19677,45 @@ msgstr "Generar nous codis de recuperació"
 #: app/templates/docs/pagina.html
 msgid "Contenido de la guía"
 msgstr "Contingut de la guia"
+
+msgid "buzón de notificaciones"
+msgstr "bústia de notificacions"
+
+msgid "firma"
+msgstr "signatura"
+
+msgid "presentación de impuestos"
+msgstr "presentació d'impostos"
+
+msgid "otros usos"
+msgstr "altres usos"
+
+msgid "renovación en gestión"
+msgstr "renovació en gestió"
+
+msgid "renovación a la espera del titular"
+msgstr "renovació a l'espera del titular"
+
+msgid "certificado nuevo obtenido"
+msgstr "certificat nou obtingut"
+
+msgid "certificado nuevo validado, por implantar"
+msgstr "certificat nou validat, per implantar"
+
+msgid "certificado nuevo implantado"
+msgstr "certificat nou implantat"
+
+msgid "Caducó hace %(n)s días"
+msgstr "Va caducar fa %(n)s dies"
+
+msgid "Caducó ayer"
+msgstr "Va caducar ahir"
+
+msgid "Caducó hoy"
+msgstr "Va caducar avui"
+
+msgid "Da servicio a: %(s)s"
+msgstr "Dona servei a: %(s)s"
+
+msgid "Presentaciones en riesgo por el certificado"
+msgstr "Presentacions en risc pel certificat"

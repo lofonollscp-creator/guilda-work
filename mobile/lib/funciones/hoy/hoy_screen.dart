@@ -156,7 +156,7 @@ IconData _iconoDeSeccion(String? clave) => switch (clave) {
       'traspasos' => Icons.swap_horiz,
       'ausencias' => Icons.beach_access_outlined,
       'facturas' || 'contabilizacion' => Icons.receipt_long_outlined,
-      'certificados' => Icons.verified_outlined,
+      'certificados' || 'certificados_riesgo' => Icons.verified_outlined,
       _ => Icons.inbox_outlined,
     };
 

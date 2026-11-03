@@ -19668,3 +19668,45 @@ msgstr "Generate new recovery codes"
 #: app/templates/docs/pagina.html
 msgid "Contenido de la guía"
 msgstr "Guide contents"
+
+msgid "buzón de notificaciones"
+msgstr "notifications mailbox"
+
+msgid "firma"
+msgstr "signing"
+
+msgid "presentación de impuestos"
+msgstr "tax filing"
+
+msgid "otros usos"
+msgstr "other uses"
+
+msgid "renovación en gestión"
+msgstr "renewal in progress"
+
+msgid "renovación a la espera del titular"
+msgstr "renewal waiting for the holder"
+
+msgid "certificado nuevo obtenido"
+msgstr "new certificate obtained"
+
+msgid "certificado nuevo validado, por implantar"
+msgstr "new certificate validated, to be deployed"
+
+msgid "certificado nuevo implantado"
+msgstr "new certificate deployed"
+
+msgid "Caducó hace %(n)s días"
+msgstr "Expired %(n)s days ago"
+
+msgid "Caducó ayer"
+msgstr "Expired yesterday"
+
+msgid "Caducó hoy"
+msgstr "Expired today"
+
+msgid "Da servicio a: %(s)s"
+msgstr "Used for: %(s)s"
+
+msgid "Presentaciones en riesgo por el certificado"
+msgstr "Filings at risk because of the certificate"

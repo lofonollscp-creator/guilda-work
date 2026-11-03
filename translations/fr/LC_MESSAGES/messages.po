@@ -19753,3 +19753,45 @@ msgstr "Générer de nouveaux codes de récupération"
 #: app/templates/docs/pagina.html
 msgid "Contenido de la guía"
 msgstr "Contenu du guide"
+
+msgid "buzón de notificaciones"
+msgstr "boîte de notifications"
+
+msgid "firma"
+msgstr "signature"
+
+msgid "presentación de impuestos"
+msgstr "dépôt des déclarations fiscales"
+
+msgid "otros usos"
+msgstr "autres usages"
+
+msgid "renovación en gestión"
+msgstr "renouvellement en cours"
+
+msgid "renovación a la espera del titular"
+msgstr "renouvellement en attente du titulaire"
+
+msgid "certificado nuevo obtenido"
+msgstr "nouveau certificat obtenu"
+
+msgid "certificado nuevo validado, por implantar"
+msgstr "nouveau certificat validé, à déployer"
+
+msgid "certificado nuevo implantado"
+msgstr "nouveau certificat déployé"
+
+msgid "Caducó hace %(n)s días"
+msgstr "Expiré il y a %(n)s jours"
+
+msgid "Caducó ayer"
+msgstr "Expiré hier"
+
+msgid "Caducó hoy"
+msgstr "Expiré aujourd'hui"
+
+msgid "Da servicio a: %(s)s"
+msgstr "Sert à : %(s)s"
+
+msgid "Presentaciones en riesgo por el certificado"
+msgstr "Dépôts à risque à cause du certificat"

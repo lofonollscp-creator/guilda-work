@@ -144,12 +144,32 @@ def reunir(usuario_id: int, supervisor: bool = False, hoy: date | None = None, t
             secciones.append(_seccion("contabilizacion", _("Facturas de clientes"), facturas_cli))
 
         if certificados.puede_gestionar(usuario_id, tid):
+            servicios = {"acceso_buzon": _("buzón de notificaciones"), "firma": _("firma"), "presentacion": _("presentación de impuestos"), "otro": _("otros usos")}
+            fases = {"en_gestion": _("renovación en gestión"), "pendiente_titular": _("renovación a la espera del titular"), "obtenido": _("certificado nuevo obtenido"), "validado": _("certificado nuevo validado, por implantar"), "implantado": _("certificado nuevo implantado")}
             cert = []
-            for plazo, urg in (("caducados", "vencido"), ("mes", "proximo")):
+            for plazo in ("caducados", "mes"):
                 for c in certificados.listar(tid, plazo=plazo):
-                    cert.append(_item(c.get("nombre_comun") or _("Certificado"), url_for("certificados.detalle", certificado_id=c["id"]), urg,
-                                      c.get("cliente_nombre") or c.get("titular"), c.get("caduca_el"), destino=_destino("certificado", c["id"])))
+                    dias = c.get("dias_restantes")
+                    if plazo == "caducados":
+                        urg, cuando = "vencido", (_("Caducó hace %(n)s días", n=-dias) if dias is not None and dias < -1 else _("Caducó ayer") if dias == -1 else _("Caducó hoy"))
+                    else:
+                        urg = "hoy" if dias is not None and dias <= DIAS_CERCANO else "proximo"
+                        cuando = _("Caduca hoy") if dias == 0 else _("Caduca mañana") if dias == 1 else _("Caduca en %(n)s días", n=dias)
+                    partes = [cuando, c.get("cliente_nombre")]
+                    usos = sorted({servicios.get(v["servicio"], v["servicio"]) for v in certificados.vinculos(tid, c["id"], solo_activos=True)})
+                    if usos:
+                        partes.append(_("Da servicio a: %(s)s", s=", ".join(usos)))
+                    if c.get("renovacion") in fases:
+                        partes.append(fases[c["renovacion"]])
+                    cert.append(_item(c.get("sujeto") or _("Certificado"), url_for("certificados.detalle", certificado_id=c["id"]), urg, " · ".join(p for p in partes if p), c.get("caduca_el"),
+                                      destino=_destino("certificado", c["id"])))
             secciones.append(_seccion("certificados", _("Certificados que caducan"), cert))
+            en_riesgo = []
+            for r in certificados.riesgos(tid, hoy=hoy, horizonte_dias=DIAS_CERTIFICADO):
+                destino_url = url_for("certificados.detalle", certificado_id=r["certificado_id"]) if r["certificado_id"] else url_for("fiscal.ficha_cliente", cliente_id=r["cliente_fiscal_id"])
+                en_riesgo.append(_item(f"{r['modelo']} · {r['cliente']}", destino_url, _urgencia(r["fecha_limite"], hoy), r["motivo"], r["fecha_limite"],
+                                       destino=_destino("vencimiento", r["vencimiento_id"], cliente_fiscal_id=r["cliente_fiscal_id"])))
+            secciones.append(_seccion("certificados_riesgo", _("Presentaciones en riesgo por el certificado"), en_riesgo))
 
     secciones = [s for s in secciones if s]
     todos = sorted((dict(i, seccion=s["titulo"], clave=s["clave"]) for s in secciones for i in s["elementos"]), key=lambda i: (ORDEN_URGENCIA[i["urgencia"]], i["fecha"] or "9999"))
