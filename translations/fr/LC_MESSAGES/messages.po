@@ -19971,3 +19971,18 @@ msgstr[1] "%(n)s sources citées ne sont plus disponibles dans votre cabinet."
 
 msgid "Descargar Word"
 msgstr "Télécharger le Word"
+
+msgid "Usar los datos del cliente como contexto de la consulta"
+msgstr "Utiliser les données du client comme contexte de la requête"
+
+msgid "Qué se envía al modelo"
+msgstr "Ce qui est envoyé au modèle"
+
+msgid "Antes de salir hacia el proveedor de IA, el nombre, el NIF y cualquier otro dato personal se sustituyen por etiquetas: el proveedor no recibe quién es el cliente."
+msgstr "Avant de partir vers le fournisseur d'IA, le nom, le NIF et toute autre donnée personnelle sont remplacés par des étiquettes : le fournisseur ne reçoit pas l'identité du client."
+
+msgid "Atención: la protección de datos personales está desactivada en este servidor; el proveedor de IA recibirá estos datos tal cual."
+msgstr "Attention : la protection des données personnelles est désactivée sur ce serveur ; le fournisseur d'IA recevra ces données telles quelles."
+
+msgid "Con los datos del cliente como contexto"
+msgstr "Avec les données du client comme contexte"

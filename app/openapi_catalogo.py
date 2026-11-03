@@ -696,6 +696,7 @@ SIN_DATOS_ESPERADOS |= {"eliminar_oportunidad_comercial_api", "guardar_transcrip
 # --- Asistente jurídico (app/rutas_api_juridico.py) -----------------------------------------------------------------------------------------------------------
 ETIQUETAS["juridico"] = "Asistente jurídico: biblioteca autorizada (legislación y jurisprudencia con su cobertura real), adjuntos privados, consultas con citas verificadas e informes revisables."
 _TIPOS["colecciones"] = {"type": "array", "items": {"type": "string", "enum": ["legislacion", "jurisprudencia", "doctrina"]}}
+_TIPOS["usar_contexto_cliente"] = {"type": "boolean", "description": "Si la conversación es de un cliente, envía su tipo, nombre, NIF y perfil fiscal vigente al modelo como hechos del despacho (no se citan). Los datos personales se seudonimizan antes de salir hacia el proveedor de IA."}
 _TIPOS["adjunto_ids"] = {"type": "array", "items": {"type": "integer"}, "description": "Ids de adjuntos privados ya subidos y listos (máximo 5)."}
 _TIPOS["limite"] = {"type": "integer", "description": "Máximo de documentos por página (50 como tope)."}
 _TIPOS["fecha_juridica"] = {"type": "string", "format": "date", "description": "AAAA-MM-DD. En legislación se devuelve la versión vigente en esa fecha según la fuente."}

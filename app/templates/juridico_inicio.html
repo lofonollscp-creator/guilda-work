@@ -24,9 +24,17 @@
     <textarea id="jur-pregunta" name="pregunta" rows="5" maxlength="4000" required placeholder="{{ _('Por ejemplo: ¿Es deducible el gasto descrito en el adjunto para un autónomo en estimación directa?') }}"></textarea>
     <div class="juridico-fila">
       <label>{{ _('Cliente (opcional)') }}
-        <select name="cliente_id"><option value="">{{ _('— Sin cliente —') }}</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></label>
+        <select name="cliente_id" id="jur-cliente" data-contexto="{{ url_for('juridico.contexto_cliente') }}"><option value="">{{ _('— Sin cliente —') }}</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select></label>
       <label>{{ _('Objetivo') }}
         <select name="objetivo"><option value="consulta">{{ _('Consulta') }}</option><option value="busqueda">{{ _('Búsqueda') }}</option><option value="resumen">{{ _('Resumen') }}</option><option value="borrador">{{ _('Borrador') }}</option></select></label>
+    </div>
+    <div class="juridico-contexto" id="jur-contexto" hidden>
+      <label class="checkbox-label"><input type="checkbox" name="usar_contexto_cliente" value="1" id="jur-usar-contexto" checked> {{ _('Usar los datos del cliente como contexto de la consulta') }}</label>
+      <details class="notas-acordeon">
+        <summary>{{ _('Qué se envía al modelo') }}</summary>
+        <pre class="ds-pre-texto" id="jur-contexto-texto"></pre>
+        <p class="muted">{% if proteccion_datos %}{{ _('Antes de salir hacia el proveedor de IA, el nombre, el NIF y cualquier otro dato personal se sustituyen por etiquetas: el proveedor no recibe quién es el cliente.') }}{% else %}{{ _('Atención: la protección de datos personales está desactivada en este servidor; el proveedor de IA recibirá estos datos tal cual.') }}{% endif %}</p>
+      </details>
     </div>
     <details class="notas-acordeon juridico-avanzado">
       <summary>{{ _('Opciones avanzadas') }}</summary>
@@ -65,4 +73,5 @@
 {% endif %}
 </aside>
 </div>
+<script src="{{ url_for('static', filename='juridico_contexto.js') }}" defer></script>
 {% endblock %}

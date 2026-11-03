@@ -543,3 +543,33 @@ def test_informes_de_un_expediente_respetan_cliente_y_despacho(e):
     assert informes.listar(otro, e.ana) == [] and informes.obtener(otro, e.ana, inf["id"]) is None
     with pytest.raises(asistente.ErrorJuridico):
         asistente.crear_conversacion(e.t, e.ana, expediente_id=424242)
+
+
+def test_el_contexto_del_cliente_solo_va_al_modelo_si_se_pide_y_se_ve_antes(e):
+    """J4: tipo, nombre, NIF y perfil fiscal vigente del cliente llegan al modelo como hechos del despacho (no citables) solo con la casilla marcada y si la persona ve al cliente."""
+    from app import nucleo
+    from app.db_fiscal import crear_cliente_fiscal
+    from app.juridico import contexto
+    cid = nucleo.crear_cliente(e.t, "Panadería Marta SL", tipo="empresa", nif="B12345674")
+    fiscal = crear_cliente_fiscal(e.t, "Panadería Marta SL", nif="B12345674")
+    from app import fiscal_perfiles
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT INTO fiscal_perfiles (tenant_id, cliente_fiscal_id, vigente_desde, forma_juridica, territorio_iva, regimen_iva, periodicidad, criterio_caja, creado_en) VALUES (?, ?, '2020-01-01', 'sociedad', 'canarias', 'recargo', 'mensual', 1, '2020-01-01T00:00:00')", (e.t, fiscal))
+        conn.commit()
+    finally:
+        conn.close()
+    d = contexto.datos_cliente(e.t, e.ana, cid)
+    t = contexto.texto(d)
+    assert "Panadería Marta SL (NIF B12345674)" in t and "empresa" in t and "sociedad" in t and "Canarias" in t and "recargo de equivalencia" in t and "criterio de caja" in t
+    assert contexto.datos_cliente(e.t, e.ana, 99999) is None and contexto.texto(None) == ""
+    conv = asistente.crear_conversacion(e.t, e.ana, cliente_id=cid, titulo="Con cliente")
+
+    recibidos = []
+    gen = modelo(ok_articulo1, recibidos)
+    asistente.consultar(e.t, e.ana, conv, "¿Qué límite tiene la deducción de gastos?", generador=gen, usar_contexto_cliente=True)
+    asistente.consultar(e.t, e.ana, conv, "¿Qué límite tiene la deducción de gastos de ejemplo?", generador=gen)
+    con, sin = recibidos[0], recibidos[1]
+    assert "DATOS DEL CLIENTE APORTADOS POR EL DESPACHO" in con and "B12345674" in con and "recargo de equivalencia" in con
+    assert "DATOS DEL CLIENTE" not in sin and "B12345674" not in sin
+    assert asistente.ejecuciones_de(e.t, e.ana, conv)[0]["filtros"]["contexto_cliente"] is True

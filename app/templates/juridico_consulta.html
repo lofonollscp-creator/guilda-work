@@ -17,6 +17,7 @@
   {% else %}{{ chip(_('Sin base suficiente'), 'aviso') }}{% endif %}
   {{ chip(_('Borrador pendiente de revisión profesional')) }}
   {{ chip(_('Fecha jurídica: %(f)s', f=r.coverage.legalAsOf)) }}
+  {% if e.filtros.contexto_cliente %}{{ chip(_('Con los datos del cliente como contexto')) }}{% endif %}
 </p>
 {% if avisos_citas and (avisos_citas.modificadas or avisos_citas.no_disponibles or avisos_citas.derogadas or avisos_citas.fuera_de_fecha) %}
 <div class="aviso" role="alert">

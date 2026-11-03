@@ -19895,3 +19895,18 @@ msgstr[1] "%(n)s fonts citades ja no estan disponibles al teu despatx."
 
 msgid "Descargar Word"
 msgstr "Descarregar Word"
+
+msgid "Usar los datos del cliente como contexto de la consulta"
+msgstr "Fer servir les dades del client com a context de la consulta"
+
+msgid "Qué se envía al modelo"
+msgstr "Què s'envia al model"
+
+msgid "Antes de salir hacia el proveedor de IA, el nombre, el NIF y cualquier otro dato personal se sustituyen por etiquetas: el proveedor no recibe quién es el cliente."
+msgstr "Abans de sortir cap al proveïdor d'IA, el nom, el NIF i qualsevol altra dada personal se substitueixen per etiquetes: el proveïdor no rep qui és el client."
+
+msgid "Atención: la protección de datos personales está desactivada en este servidor; el proveedor de IA recibirá estos datos tal cual."
+msgstr "Atenció: la protecció de dades personals està desactivada en aquest servidor; el proveïdor d'IA rebrà aquestes dades tal qual."
+
+msgid "Con los datos del cliente como contexto"
+msgstr "Amb les dades del client com a context"

@@ -13,7 +13,7 @@ from flask_babel import gettext as _
 
 from . import acceso, db, nucleo, verticales
 from .auth import login_required
-from .juridico import adjuntos, asistente, busqueda, calidad, catalogo, citas, corpus, exportar, informes, ingesta, modulo
+from .juridico import adjuntos, asistente, busqueda, calidad, catalogo, citas, contexto, corpus, exportar, informes, ingesta, modulo
 from .juridico.esquema import COLECCIONES
 
 juridico_bp = Blueprint("juridico", __name__, url_prefix="/juridico")
@@ -67,7 +67,15 @@ def inicio():
     usables = set(corpus.fuentes_para_despacho(g.tenant_id, "indexar"))
     return render_template("juridico_inicio.html", conversaciones=asistente.listar_conversaciones(g.tenant_id, g.usuario_id, 15), clientes=_clientes(), hoy=date.today().isoformat(),
                            colecciones=COLECCIONES, cobertura=[c for c in corpus.cobertura() if c["fuente_id"] in usables], ia_configurada=_estado_ia(), error=_error(), puede_escribir=not acceso.es_solo_auditor(g.tenant_id, g.usuario_id),
-                           adjuntos_recientes=adjuntos.listar(g.tenant_id, g.usuario_id, limite=10))
+                           adjuntos_recientes=adjuntos.listar(g.tenant_id, g.usuario_id, limite=10), proteccion_datos=contexto.protegido())
+
+
+@juridico_bp.route("/contexto-cliente.json")
+@login_required
+def contexto_cliente():
+    """Los datos del cliente que se enviarían al modelo como contexto, tal cual: se enseñan antes de consultar."""
+    d = contexto.datos_cliente(g.tenant_id, g.usuario_id, _int(request.args.get("cliente_id")))
+    return {"texto": contexto.texto(d)} if d else ({"texto": ""}, 404)
 
 
 @juridico_bp.route("/consultar", methods=["POST"])
@@ -82,7 +90,7 @@ def consultar():
                 ids.append(adjuntos.subir(g.tenant_id, g.usuario_id, archivo.filename, archivo.read(adjuntos.MAX_BYTES + 1), cliente_id=_int(f.get("cliente_id")), expediente_id=_int(f.get("expediente_id")))["id"])
         r = asistente.consultar(g.tenant_id, g.usuario_id, conv, f.get("pregunta", ""), colecciones=f.getlist("coleccion") or None, materia=f.get("materia") or None, territorio=f.get("territorio") or None,
                                 fecha_juridica=f.get("fecha_juridica") or None, modo_temporal=f.get("modo_temporal") or "actual", objetivo=f.get("objetivo") or "consulta", adjunto_ids=ids,
-                                clave_idempotencia=f.get("clave") or None)
+                                clave_idempotencia=f.get("clave") or None, usar_contexto_cliente=f.get("usar_contexto_cliente") == "1")
     except (asistente.ErrorJuridico, adjuntos.ErrorAdjunto) as e:
         return _con_error("juridico.inicio", _(str(e)))
     return redirect(url_for("juridico.consulta", run_id=r["runId"]))

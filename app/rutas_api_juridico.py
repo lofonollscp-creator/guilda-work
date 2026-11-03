@@ -173,7 +173,7 @@ def consultar_juridico_api(conversacion_id: int):
             return _err(gettext("`adjunto_ids` debe ser una lista de enteros."), 400, "peticion_invalida", "adjunto_ids")
         r = asistente.consultar(g.tenant_id, g.usuario_id, conversacion_id, d.get("pregunta") or "", colecciones=cols, materia=d.get("materia"), territorio=d.get("territorio"),
                                 fecha_juridica=d.get("fecha_juridica"), modo_temporal=d.get("modo_temporal") or "actual", objetivo=d.get("objetivo") or "consulta", adjunto_ids=ids,
-                                clave_idempotencia=(request.headers.get("Idempotency-Key") or "").strip()[:100] or None)
+                                clave_idempotencia=(request.headers.get("Idempotency-Key") or "").strip()[:100] or None, usar_contexto_cliente=d.get("usar_contexto_cliente") is True)
         return _ok(r, 200)
     return _protegido(_lanzar)
 
