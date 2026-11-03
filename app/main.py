@@ -25,7 +25,7 @@ from pathlib import Path
 
 import sentry_sdk
 import webview
-from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session, url_for
+from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, send_from_directory, request, session, url_for
 from flask_babel import Babel, format_date, format_datetime, get_locale
 from flask_babel import gettext as _
 from flask_babel import ngettext
@@ -508,7 +508,7 @@ def _liberar_contexto_de_despacho(_exc):
     contexto_bd.restaurar(g.pop("_ctx_despacho", None))
 
 
-_RUTAS_ABIERTAS_EN_MANTENIMIENTO = ("/static/", "/.ory/", "/webhooks/", "/soporte/ver-como", "/login", "/logout", "/idioma/")
+_RUTAS_ABIERTAS_EN_MANTENIMIENTO = ("/sw.js", "/static/", "/.ory/", "/webhooks/", "/soporte/ver-como", "/login", "/logout", "/idioma/")
 
 
 @app.before_request
@@ -996,6 +996,15 @@ def _carga_equipo_para_inicio(usuario_id):
     except Exception:
         return []
     return carga if len(carga) > 1 else []
+
+
+@app.route("/sw.js")
+def service_worker():
+    """El service worker tiene que colgar de la raíz para poder controlar toda la app; solo cachea /static/."""
+    r = send_from_directory(app.static_folder, "sw.js", mimetype="application/javascript")
+    r.headers["Cache-Control"] = "no-cache"
+    r.headers["Service-Worker-Allowed"] = "/"
+    return r
 
 
 @app.route("/")
