@@ -19892,3 +19892,6 @@ msgid "%(n)s fuente citada ya no está disponible en tu despacho."
 msgid_plural "%(n)s fuentes citadas ya no están disponibles en tu despacho."
 msgstr[0] "%(n)s font citada ja no està disponible al teu despatx."
 msgstr[1] "%(n)s fonts citades ja no estan disponibles al teu despatx."
+
+msgid "Descargar Word"
+msgstr "Descarregar Word"

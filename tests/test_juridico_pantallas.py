@@ -201,3 +201,36 @@ def test_las_citas_avisan_si_la_fuente_cambio_o_ya_no_esta_en_vigor(sesion):
     assert e["modificada"] and e["actual"]["capturada_en"] == "2099-02-01"
     assert citas.resumen_de_avisos({"c1": e})["modificadas"] == 1
     assert citas.estado_de_citas(t, [dict(cita, kind="private_attachment")]) == {}
+
+
+def test_el_informe_se_descarga_en_pdf_y_word_respetando_la_politica_de_exportacion(sesion, monkeypatch):
+    """J5: PDF y Word con conclusión, citas y estado; sin el extracto de una fuente cuya política no permite exportar."""
+    import io
+    from docx import Document
+    from app import ia_asistente, reuniones
+    c, uid, t = sesion
+    _cargar_biblioteca()
+    monkeypatch.setattr(reuniones, "configurada", lambda u: True)
+    monkeypatch.setattr(ia_asistente, "completar_texto", lambda u, s, contenido: json.dumps(ok_articulo1(contenido)))
+    r = c.post("/juridico/consultar", data={"pregunta": "¿Qué límite tiene la deducción de gastos?", "fecha_juridica": "2099-01-15", "modo_temporal": "actual", "objetivo": "consulta", "coleccion": ["legislacion"]})
+    run_id = int(r.headers["Location"].rstrip("/").split("/")[-1])
+    g = c.post(f"/juridico/consulta/{run_id}/informe", data={"titulo": "Límite de gastos"})
+    iid = int(g.headers["Location"].rstrip("/").split("/")[-1])
+    assert "Descargar PDF" in c.get(f"/juridico/informes/{iid}").get_data(as_text=True)
+
+    pdf = c.get(f"/juridico/informes/{iid}.pdf")
+    assert pdf.status_code == 200 and pdf.mimetype == "application/pdf" and pdf.data.startswith(b"%PDF") and "informe-juridico-limite-de-gastos.pdf" in pdf.headers["Content-Disposition"]
+    word = c.get(f"/juridico/informes/{iid}.docx")
+    assert word.status_code == 200 and word.mimetype.endswith("wordprocessingml.document")
+    texto = "\n".join(p.text for p in Document(io.BytesIO(word.data)).paragraphs)
+    assert "Límite de gastos" in texto and "quince por ciento" in texto and "pendiente de revisión por un profesional" in texto
+
+    conn = db.get_connection()
+    try:                                                                         # la política de la fuente deja de permitir exportar: el extracto no sale
+        conn.execute("UPDATE jur_politicas SET permite_exportar = 0 WHERE fuente_id = 'boe-consolidada'")
+        conn.commit()
+    finally:
+        conn.close()
+    sin = "\n".join(p.text for p in Document(io.BytesIO(c.get(f"/juridico/informes/{iid}.docx").data)).paragraphs)
+    assert "quince por ciento" not in sin.split("Fuentes")[-1] and "Extracto no exportable" in sin
+    assert c.get(f"/juridico/informes/{iid}.odt").status_code == 404 and c.get("/juridico/informes/99999.pdf").status_code == 404

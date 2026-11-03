@@ -35,6 +35,10 @@
     {% if c.captura %}<small class="muted">{{ _('Versión capturada el') }} {{ c.captura.capturada_en[:10] }}{% if c.captura.fecha_resolucion %} · {{ _('resolución') }} {{ c.captura.fecha_resolucion }}{% endif %}</small>{% endif %}
     {% include "_juridico_cita_estado.html" %}
     {% if c.canonicalUrl %}<br><a href="{{ c.canonicalUrl }}" rel="noopener noreferrer" target="_blank">{{ _('Fuente original') }}</a>{% endif %}</li>{% endfor %}</ol></section>
+<p class="filters">
+  <a class="btn btn-primary" href="{{ url_for('juridico.exportar_informe', informe_id=inf.id, formato='pdf') }}">{{ _('Descargar PDF') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('juridico.exportar_informe', informe_id=inf.id, formato='docx') }}">{{ _('Descargar Word') }}</a>
+</p>
 <section class="dash-panel"><h2>{{ _('Copiar con referencias') }}</h2><textarea readonly rows="10" class="ds-ancho-total" aria-label="{{ _('Copiar con referencias') }}">{{ texto }}</textarea></section>
 {% if puede_revisar and not inf.aviso_fuente %}
 <form method="post" action="{{ url_for('juridico.revisar_informe', informe_id=inf.id) }}" class="filters">

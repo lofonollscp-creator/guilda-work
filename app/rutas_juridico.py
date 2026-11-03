@@ -8,12 +8,12 @@ import threading
 from datetime import date, timedelta
 from urllib.parse import quote
 
-from flask import Blueprint, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
 from . import acceso, db, nucleo, verticales
 from .auth import login_required
-from .juridico import adjuntos, asistente, busqueda, calidad, catalogo, citas, corpus, informes, ingesta, modulo
+from .juridico import adjuntos, asistente, busqueda, calidad, catalogo, citas, corpus, exportar, informes, ingesta, modulo
 from .juridico.esquema import COLECCIONES
 
 juridico_bp = Blueprint("juridico", __name__, url_prefix="/juridico")
@@ -162,6 +162,21 @@ def informe(informe_id: int):
     estados = citas.estado_de_citas(g.tenant_id, inf["instantanea"]["respuesta"].get("citations", []), inf["instantanea"].get("fecha_juridica"))
     return render_template("juridico_informe.html", inf=inf, r=inf["instantanea"]["respuesta"], estados=estados, avisos_citas=citas.resumen_de_avisos(estados), texto=informes.texto_para_copiar(inf), error=_error(),
                            puede_revisar=inf["estado"] == "borrador" and (acceso.es_directivo(g.usuario_id) or acceso.puede_autorizar(g.tenant_id, g.usuario_id)))
+
+
+@juridico_bp.route("/informes/<int:informe_id>.<formato>")
+@login_required
+def exportar_informe(informe_id: int, formato: str):
+    """Descarga el informe en PDF o Word, con sus citas y su estado de revisión; las fuentes cuya política no permite exportar salen sin su extracto."""
+    if formato not in ("pdf", "docx"):
+        abort(404)
+    inf = informes.obtener(g.tenant_id, g.usuario_id, informe_id)
+    if inf is None:
+        abort(404)
+    datos = exportar.pdf(g.tenant_id, inf) if formato == "pdf" else exportar.docx(g.tenant_id, inf)
+    corpus.auditar(g.tenant_id, g.usuario_id, "informe.exportar", f"informe:{informe_id}", {"formato": formato})
+    tipo = "application/pdf" if formato == "pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    return Response(datos, mimetype=tipo, headers={"Content-Disposition": f'attachment; filename="{exportar.nombre_de_archivo(inf["titulo"], formato)}"', "Cache-Control": "private, no-store"})
 
 
 @juridico_bp.route("/informes/<int:informe_id>/revisar", methods=["POST"])

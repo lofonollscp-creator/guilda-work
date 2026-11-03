@@ -19968,3 +19968,6 @@ msgid "%(n)s fuente citada ya no está disponible en tu despacho."
 msgid_plural "%(n)s fuentes citadas ya no están disponibles en tu despacho."
 msgstr[0] "%(n)s source citée n'est plus disponible dans votre cabinet."
 msgstr[1] "%(n)s sources citées ne sont plus disponibles dans votre cabinet."
+
+msgid "Descargar Word"
+msgstr "Télécharger le Word"
