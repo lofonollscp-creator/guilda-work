@@ -51,6 +51,21 @@ strategies:
   # id_token sí es JWT siempre, por exigencia de la spec OIDC.
   access_token: opaque
 
+# Publica el endpoint de Registro Dinámico de Cliente (RFC 7591) en el
+# documento de descubrimiento. `oidc.dynamic_client_registration.enabled`
+# habilita la API de registro, pero Hydra no anuncia su URL por sí solo.
+# Hydra ya sirve esta ruta desde su listener público; la API
+# administrativa continúa siendo privada en 127.0.0.1:4445.
+webfinger:
+  oidc_discovery:
+    client_registration_url: https://hydra.guildawork.com/oauth2/register
+    supported_claims:
+      - email
+      - profile
+    supported_scope:
+      - email
+      - profile
+
 oidc:
   subject_identifiers:
     supported_types:
@@ -65,6 +80,11 @@ oidc:
   # él en concreto.
   dynamic_client_registration:
     enabled: true
+    default_scope:
+      - openid
+      - email
+      - profile
+      - offline_access
 
 log:
   level: info
