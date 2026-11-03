@@ -1063,3 +1063,7 @@ kbd { font: 700 12px var(--font-mono); background: var(--panel-2); border: 1px s
 .busqueda-resultados, #busqueda-resultados { overflow-y: auto; }
 .decl-acciones > p, .decl-acciones > details { font-size: 13.5px; line-height: 1.5; }
 .decl-acciones > p:not(.muted) { color: var(--text); }
+.btn[aria-pressed="true"] { background: var(--primary); color: var(--on-accent); border-color: transparent; font-weight: 800; }
+/* El punto de «no leído» no ocupa sitio en la fila: así los avatares quedan alineados */
+.correo-fila-wrap { position: relative; }
+.correo-fila-wrap.is-no-leido::before { position: absolute; left: 3px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; }
