@@ -19950,3 +19950,33 @@ msgstr "Nom de la cerca"
 
 msgid "Aún no has guardado ninguna búsqueda."
 msgstr "Encara no has desat cap cerca."
+
+msgid "Agrupar por"
+msgstr "Agrupar per"
+
+msgid "Sin agrupar"
+msgstr "Sense agrupar"
+
+msgid "Agrupar por cliente"
+msgstr "Agrupar per client"
+
+msgid "Agrupar por proyecto"
+msgstr "Agrupar per projecte"
+
+msgid "Agrupar por responsable"
+msgstr "Agrupar per responsable"
+
+msgid "Agrupar por fecha"
+msgstr "Agrupar per data"
+
+msgid "Agrupar por estado"
+msgstr "Agrupar per estat"
+
+msgid "Agrupar por prioridad"
+msgstr "Agrupar per prioritat"
+
+msgid "Se muestran las primeras tareas; filtra para ver el resto."
+msgstr "Es mostren les primeres tasques; filtra per veure la resta."
+
+msgid "Más adelante"
+msgstr "Més endavant"

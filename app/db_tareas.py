@@ -2209,6 +2209,8 @@ def filtros_vista_validos(filtros: dict) -> dict:
             continue
         if clave == "completadas" and valor != "1":
             continue
+        if clave == "agrupar" and valor not in ("cliente", "proyecto", "responsable", "fecha", "estado", "prioridad"):
+            continue
         limpios[clave] = valor
     return limpios
 

@@ -13,7 +13,7 @@ from flask_babel import format_date, ngettext
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import calcom, db, fichaje_export, notificaciones, outlook_ics, quickadd, tareas_trabajo
+from . import calcom, db, fichaje_export, notificaciones, outlook_ics, quickadd, tareas_agrupar, tareas_trabajo
 from .auth import login_required
 
 tareas_bp = Blueprint("tareas", __name__, url_prefix="/tareas")
@@ -42,6 +42,7 @@ NOMBRES_MES = [
 PALETA_CATEGORIAS = ["#4a6cf7", "#e0555a", "#2fa66a", "#d98c1f", "#8a5cf5", "#1f9fd9", "#c94f8a", "#0f9b8e"]
 
 TAREAS_POR_PAGINA = 50
+TAREAS_AGRUPADAS_MAX = 400
 
 
 @tareas_bp.app_template_filter("duracion_hm")
@@ -134,22 +135,31 @@ def listar():
     vista = request.args.get("vista") or ""
     if vista not in ("mias", "asignadas", "compartidas"):
         vista = ""
+    agrupar = request.args.get("agrupar") if request.args.get("agrupar") in tareas_agrupar.AGRUPACIONES else ""
+    # Agrupada, la lista no se pagina: los grupos tienen que verse enteros (hasta un tope razonable).
     tareas = db.listar_tareas_outlook(
         g.usuario_id, estado=estado, prioridad=prioridad, categoria_outlook=categoria, texto=q,
-        excluir_completadas=excluir_completadas, limite=TAREAS_POR_PAGINA + 1, offset=offset,
+        excluir_completadas=excluir_completadas, limite=(TAREAS_AGRUPADAS_MAX if agrupar else TAREAS_POR_PAGINA + 1), offset=0 if agrupar else offset,
         incluir_asignadas=vista == "", solo_asignadas=vista == "asignadas",
         solo_compartidas=vista == "compartidas",
     )
-    hay_pagina_siguiente = len(tareas) > TAREAS_POR_PAGINA
-    tareas = tareas[:TAREAS_POR_PAGINA]
+    hay_pagina_siguiente = not agrupar and len(tareas) > TAREAS_POR_PAGINA
+    tareas = tareas if agrupar else tareas[:TAREAS_POR_PAGINA]
+    contexto_filas = _contexto_filas(tareas)
+    grupos = []
+    if agrupar:
+        yo = db.nombre_mostrado_usuario(g.usuario_id) or db.obtener_usuario(g.usuario_id)["email"]
+        grupos = tareas_agrupar.agrupar(
+            agrupar, tareas, clientes={c["id"]: c["nombre"] for c in contexto_filas["clientes_fiscales"]}, proyectos={m["id"]: m["nombre"] for m in contexto_filas["menus"]},
+            personas={g.usuario_id: yo, **{c["id"]: c["nombre"] for c in contexto_filas["companeros"]}}, estados=dict(ESTADOS), prioridades=dict(PRIORIDADES))
 
     filtros_actuales = db.filtros_vista_validos({
-        "vista": vista, "estado": estado, "prioridad": prioridad, "categoria": categoria, "q": q, "completadas": "1" if incluir_completadas else "",
+        "vista": vista, "estado": estado, "prioridad": prioridad, "categoria": categoria, "q": q, "completadas": "1" if incluir_completadas else "", "agrupar": agrupar,
     })
     vistas = db.listar_vistas_tareas(g.usuario_id)
     return render_template(
         "tareas_lista.html",
-        **_contexto_filas(tareas),
+        **contexto_filas, agrupar=agrupar, grupos=grupos, agrupadas_truncadas=bool(agrupar and len(tareas) >= TAREAS_AGRUPADAS_MAX),
         vistas=vistas, filtros_actuales=filtros_actuales,
         vista_activa=next((v["id"] for v in vistas if v["filtros"] == filtros_actuales), None),
         vista=vista,

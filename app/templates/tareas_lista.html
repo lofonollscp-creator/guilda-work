@@ -80,8 +80,15 @@
     {% endfor %}
   </select>
   {% endif %}
+  <label class="sr-only" for="tareas-agrupar">{{ _('Agrupar por') }}</label>
+  <select id="tareas-agrupar" class="chip-v2 chip-campo" name="agrupar" data-autoenviar>
+    <option value="">{{ _('Sin agrupar') }}</option>
+    {% for valor, etiqueta in (('cliente', _('Agrupar por cliente')), ('proyecto', _('Agrupar por proyecto')), ('responsable', _('Agrupar por responsable')), ('fecha', _('Agrupar por fecha')), ('estado', _('Agrupar por estado')), ('prioridad', _('Agrupar por prioridad'))) %}
+    <option value="{{ valor }}" {% if agrupar == valor %}selected{% endif %}>{{ etiqueta }}</option>
+    {% endfor %}
+  </select>
   <button type="submit" class="chip-v2 on">{{ _('Filtrar') }}</button>
-  {% if q or estado or prioridad or categoria or vista %}
+  {% if q or estado or prioridad or categoria or vista or agrupar %}
   <a class="chip-v2" href="{{ url_for('tareas.listar') }}">{{ _('Limpiar') }}</a>
   {% else %}
   <a class="chip-v2" href="{{ url_for('tareas.listar', completadas=1) }}">{{ _('Ver también completadas') }}</a>
@@ -155,11 +162,25 @@
 <div class="tareas-v2">
 <div class="tareas-v2-tabla">
   <div class="tarea-fila-cabecera" aria-hidden="true"><span class="tarea-fila-check"></span><span class="tarea-fila-main">{{ _('Tarea') }}</span><span class="tarea-fila-col tarea-fila-estado">{{ _('Estado') }}</span><span class="tarea-fila-col tarea-fila-prio">{{ _('Prioridad') }}</span><span class="tarea-fila-col tarea-fila-vence">{{ _('Vence') }}</span><span class="tarea-fila-acciones"></span></div>
+  {% if agrupar %}
+  {% for grupo in grupos %}
+  <details class="tareas-grupo" open>
+    <summary class="tareas-grupo-titulo"><span>{{ grupo.titulo }}</span> <span class="muted">({{ grupo.tareas|length }})</span></summary>
+    <ul class="tareas-v2-lista" {{ defecto_eliminar() }}>
+    {% for t in grupo.tareas %}
+    {{ fila(t, estados, cronometros, checklists, menus) }}
+    {% endfor %}
+    </ul>
+  </details>
+  {% endfor %}
+  {% if agrupadas_truncadas %}<p class="muted" role="status">{{ _('Se muestran las primeras tareas; filtra para ver el resto.') }}</p>{% endif %}
+  {% else %}
   <ul class="tareas-v2-lista" {{ defecto_eliminar() }}>
   {% for t in tareas %}
   {{ fila(t, estados, cronometros, checklists, menus) }}
   {% endfor %}
   </ul>
+  {% endif %}
 </div>
 <aside class="tareas-v2-ficha" id="tareas-ficha" aria-label="{{ _('Ficha de la tarea') }}" aria-live="polite" data-vacia="{{ _('Elige una tarea para ver su ficha.') }}"><p class="muted tareas-v2-ficha-vacia">{{ _('Elige una tarea para ver su ficha.') }}</p></aside>
 </div>

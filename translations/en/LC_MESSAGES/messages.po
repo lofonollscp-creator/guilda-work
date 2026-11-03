@@ -19941,3 +19941,33 @@ msgstr "Search name"
 
 msgid "Aún no has guardado ninguna búsqueda."
 msgstr "You have not saved any search yet."
+
+msgid "Agrupar por"
+msgstr "Group by"
+
+msgid "Sin agrupar"
+msgstr "Not grouped"
+
+msgid "Agrupar por cliente"
+msgstr "Group by client"
+
+msgid "Agrupar por proyecto"
+msgstr "Group by project"
+
+msgid "Agrupar por responsable"
+msgstr "Group by owner"
+
+msgid "Agrupar por fecha"
+msgstr "Group by date"
+
+msgid "Agrupar por estado"
+msgstr "Group by status"
+
+msgid "Agrupar por prioridad"
+msgstr "Group by priority"
+
+msgid "Se muestran las primeras tareas; filtra para ver el resto."
+msgstr "The first tasks are shown; filter to see the rest."
+
+msgid "Más adelante"
+msgstr "Later"

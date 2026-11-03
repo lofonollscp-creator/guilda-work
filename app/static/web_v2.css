@@ -1162,3 +1162,8 @@ fieldset > .dash-panel { box-sizing: border-box; max-width: 100%; }
 .alta-sugerencia { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
 .alta-sugerencia.es-activa, .alta-sugerencia:hover { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
 .alta-sugerencia-marca { flex: none; width: 22px; height: 22px; border-radius: 6px; display: inline-grid; place-items: center; font-weight: 700; font-size: 12px; color: var(--primary-text); background: color-mix(in srgb, var(--primary) 12%, transparent); }
+
+/* Lista de tareas agrupada */
+.tareas-grupo { margin: 0 0 14px; }
+.tareas-grupo-titulo { display: flex; align-items: baseline; gap: 8px; padding: 10px 20px; font-weight: 700; cursor: pointer; background: var(--surface-2, var(--surface)); border-bottom: 1px solid var(--linea); position: sticky; top: 0; z-index: 1; }
+.tareas-grupo-titulo span:first-child { min-width: 0; overflow-wrap: anywhere; }

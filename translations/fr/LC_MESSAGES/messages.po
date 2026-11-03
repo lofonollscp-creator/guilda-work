@@ -20026,3 +20026,33 @@ msgstr "Nom de la recherche"
 
 msgid "Aún no has guardado ninguna búsqueda."
 msgstr "Vous n'avez encore enregistré aucune recherche."
+
+msgid "Agrupar por"
+msgstr "Grouper par"
+
+msgid "Sin agrupar"
+msgstr "Sans regroupement"
+
+msgid "Agrupar por cliente"
+msgstr "Grouper par client"
+
+msgid "Agrupar por proyecto"
+msgstr "Grouper par projet"
+
+msgid "Agrupar por responsable"
+msgstr "Grouper par responsable"
+
+msgid "Agrupar por fecha"
+msgstr "Grouper par date"
+
+msgid "Agrupar por estado"
+msgstr "Grouper par statut"
+
+msgid "Agrupar por prioridad"
+msgstr "Grouper par priorité"
+
+msgid "Se muestran las primeras tareas; filtra para ver el resto."
+msgstr "Les premières tâches sont affichées ; filtrez pour voir le reste."
+
+msgid "Más adelante"
+msgstr "Plus tard"

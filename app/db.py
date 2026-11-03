@@ -2599,7 +2599,7 @@ TAREAS_POR_CELDA = 6
 # --- Vistas guardadas de la lista de tareas ---------------------------------------------------
 
 MAX_VISTAS_TAREAS = 30
-FILTROS_VISTA_TAREAS = ("vista", "estado", "prioridad", "categoria", "q", "completadas")
+FILTROS_VISTA_TAREAS = ("vista", "estado", "prioridad", "categoria", "q", "completadas", "agrupar")
 
 
 # --- Acciones en lote sobre tareas ---------------------------------------------------------------
