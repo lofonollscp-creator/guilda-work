@@ -10,7 +10,7 @@ import os
 import time
 from datetime import date, timedelta
 
-from . import adjuntos, catalogo, corpus, ingesta, modulo
+from . import adjuntos, catalogo, citas, corpus, ingesta, modulo
 
 logger = logging.getLogger(__name__)
 INTERVALO_SEGUNDOS = int(os.environ.get("LEGAL_AI_INTERVALO", 6 * 3600))
@@ -38,6 +38,10 @@ def ejecutar_ciclo(hoy: date | None = None, conectores: dict | None = None) -> d
         except Exception as e:  # noqa: BLE001 -- una fuente rota no tumba el ciclo
             salida[f["id"]] = {"estado": "error", "error": str(e)}
             logger.warning("Sincronización jurídica de %s fallida: %s", f["id"], e)
+    try:
+        salida["cambios_en_informes"] = citas.revisar_cambios()                      # tras sincronizar: ¿alguna fuente citada en un informe guardado ha cambiado?
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Revisión de cambios normativos en informes fallida: %s", e)
     try:
         salida["adjuntos_purgados"] = adjuntos.purgar_vencidos()
     except Exception as e:  # noqa: BLE001

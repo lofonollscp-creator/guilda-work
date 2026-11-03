@@ -19901,3 +19901,6 @@ msgstr "Warning: personal data protection is switched off on this server; the AI
 
 msgid "Con los datos del cliente como contexto"
 msgstr "With the client details as context"
+
+msgid "Fuente actualizada"
+msgstr "Source updated"

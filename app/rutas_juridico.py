@@ -158,7 +158,8 @@ def documento(documento_id: int):
 @juridico_bp.route("/informes")
 @login_required
 def lista_informes():
-    return render_template("juridico_informes.html", informes=informes.listar(g.tenant_id, g.usuario_id, expediente_id=_int(request.args.get("expediente_id")), cliente_id=_int(request.args.get("cliente_id"))), error=_error())
+    lista = informes.listar(g.tenant_id, g.usuario_id, expediente_id=_int(request.args.get("expediente_id")), cliente_id=_int(request.args.get("cliente_id")))
+    return render_template("juridico_informes.html", informes=lista, con_cambios=citas.informes_con_cambios(g.tenant_id, [i["id"] for i in lista]), error=_error())
 
 
 @juridico_bp.route("/informes/<int:informe_id>")

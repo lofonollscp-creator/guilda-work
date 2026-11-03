@@ -109,6 +109,18 @@ CREATE TABLE IF NOT EXISTS jur_informes (
     aviso_fuente TEXT
 );
 CREATE INDEX IF NOT EXISTS jur_informes_tenant ON jur_informes (tenant_id, expediente_id);
+CREATE TABLE IF NOT EXISTS jur_alertas_cambio (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    informe_id INTEGER NOT NULL REFERENCES jur_informes(id) ON DELETE CASCADE,
+    documento_id INTEGER NOT NULL,
+    version_citada_id INTEGER NOT NULL,
+    version_nueva_id INTEGER NOT NULL,
+    creada_en TEXT NOT NULL,
+    notificada_en TEXT,
+    UNIQUE (informe_id, documento_id, version_nueva_id)
+);
+CREATE INDEX IF NOT EXISTS jur_alertas_cambio_informe ON jur_alertas_cambio (tenant_id, informe_id);
 """
 
 
@@ -116,7 +128,7 @@ def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
 
 
-TABLAS_DEL_DESPACHO = ("jur_citas", "jur_afirmaciones", "jur_informes", "jur_ejecuciones", "jur_conversaciones", "jur_fragmentos_privados", "jur_adjuntos")
+TABLAS_DEL_DESPACHO = ("jur_citas", "jur_afirmaciones", "jur_alertas_cambio", "jur_informes", "jur_ejecuciones", "jur_conversaciones", "jur_fragmentos_privados", "jur_adjuntos")
 
 
 def borrar_datos_de_tenant(conn, tenant_id: int) -> None:

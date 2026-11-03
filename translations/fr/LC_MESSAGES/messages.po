@@ -19986,3 +19986,6 @@ msgstr "Attention : la protection des données personnelles est désactivée sur
 
 msgid "Con los datos del cliente como contexto"
 msgstr "Avec les données du client comme contexte"
+
+msgid "Fuente actualizada"
+msgstr "Source mise à jour"

@@ -234,3 +234,34 @@ def test_el_informe_se_descarga_en_pdf_y_word_respetando_la_politica_de_exportac
     sin = "\n".join(p.text for p in Document(io.BytesIO(c.get(f"/juridico/informes/{iid}.docx").data)).paragraphs)
     assert "quince por ciento" not in sin.split("Fuentes")[-1] and "Extracto no exportable" in sin
     assert c.get(f"/juridico/informes/{iid}.odt").status_code == 404 and c.get("/juridico/informes/99999.pdf").status_code == 404
+
+
+def test_un_cambio_en_una_fuente_citada_avisa_una_sola_vez_y_marca_el_informe(sesion, monkeypatch):
+    """J6: si la biblioteca captura una versión nueva de un documento citado en un informe guardado, el equipo recibe un aviso (una vez) y la lista de informes lo marca."""
+    from app import ia_asistente, notificaciones, reuniones
+    from app.juridico import citas
+    c, uid, t = sesion
+    _cargar_biblioteca()
+    monkeypatch.setattr(reuniones, "configurada", lambda u: True)
+    monkeypatch.setattr(ia_asistente, "completar_texto", lambda u, s, contenido: json.dumps(ok_articulo1(contenido)))
+    r = c.post("/juridico/consultar", data={"pregunta": "¿Qué límite tiene la deducción de gastos?", "fecha_juridica": "2099-01-15", "modo_temporal": "actual", "objetivo": "consulta", "coleccion": ["legislacion"]})
+    run_id = int(r.headers["Location"].rstrip("/").split("/")[-1])
+    iid = int(c.post(f"/juridico/consulta/{run_id}/informe", data={"titulo": "Límite de gastos"}).headers["Location"].rstrip("/").split("/")[-1])
+    enviados = []
+    monkeypatch.setattr(notificaciones, "crear_y_enviar", lambda usuario_id, tipo, titulo, cuerpo, url=None, datos=None, **k: enviados.append((usuario_id, tipo, url)))
+
+    assert citas.revisar_cambios(t)["alertas"] == 0 and not enviados                        # nada cambió todavía
+    conn = db.get_connection()
+    try:                                                                                    # la fuente captura una versión nueva del documento citado
+        citado = json.loads(conn.execute("SELECT instantanea FROM jur_informes WHERE id = ?", (iid,)).fetchone()["instantanea"])["respuesta"]["citations"][0]["documentId"]
+        conn.execute("UPDATE jur_versiones SET activa = 0 WHERE documento_id = ? AND activa = 1", (citado,))
+        conn.execute("INSERT INTO jur_versiones (documento_id, hash_texto, capturada_en, calidad, activa, bloqueada) VALUES (?, 'hash-nuevo-j6', '2099-03-01T10:00:00', 'ok', 1, 0)", (citado,))
+        conn.commit()
+    finally:
+        conn.close()
+    r1 = citas.revisar_cambios(t)
+    assert r1["alertas"] == 1 and r1["avisos"] == 1 and enviados == [(uid, "juridico_cambio", f"/juridico/informes/{iid}")]
+    assert citas.revisar_cambios(t)["alertas"] == 0 and len(enviados) == 1                  # no se repite
+    lista = c.get("/juridico/informes").get_data(as_text=True)
+    assert "Fuente actualizada" in lista and citas.informes_con_cambios(t, [iid, 9999]) == {iid}
+    assert "se ha actualizado desde que se hizo esta consulta" in c.get(f"/juridico/informes/{iid}").get_data(as_text=True)

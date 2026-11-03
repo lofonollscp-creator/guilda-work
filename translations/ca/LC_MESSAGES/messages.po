@@ -19910,3 +19910,6 @@ msgstr "Atenció: la protecció de dades personals està desactivada en aquest s
 
 msgid "Con los datos del cliente como contexto"
 msgstr "Amb les dades del client com a context"
+
+msgid "Fuente actualizada"
+msgstr "Font actualitzada"
