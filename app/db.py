@@ -2288,6 +2288,8 @@ def init_db() -> None:
         _asegurar_columna(conn, "usuario_perfil", "menu_prefs", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "ultimo_uid_sincronizado", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "uidvalidity", "TEXT")
+        # Avisos push genéricos: sin nombres, asuntos ni importes en la pantalla de bloqueo ni en los servicios de push (RGPD, minimización).
+        _asegurar_columna(conn, "usuario_perfil", "avisos_genericos", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_carpetas", "ultima_pasada_completa", "TEXT")
         _asegurar_columna(conn, "correo_carpetas", "descarga_pendiente", "INTEGER NOT NULL DEFAULT 0")
         _asegurar_columna(conn, "correo_carpetas", "modseq", "TEXT")      # HIGHESTMODSEQ (CONDSTORE) de la última pasada
@@ -2956,6 +2958,7 @@ from .db_plataforma import (  # noqa: E402,F401
     apariencia_usuario,
     _hora_valida,
     en_horas_de_silencio,
+    avisos_genericos,
     notificacion_tipo_activa,
     guardar_avatar_usuario,
     eliminar_avatar_usuario,

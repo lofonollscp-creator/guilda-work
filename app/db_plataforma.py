@@ -2609,6 +2609,7 @@ def guardar_perfil_usuario(
     notificar_push_correo: bool | None = None,
     notificar_push_portal_mensajes: bool | None = None,
     avisos_cliente_por_correo: bool | None = None,
+    avisos_genericos: bool | None = None,
     cargo: str | None = None,
     telefono: str | None = None,
     silencio_desde: str | None = None,
@@ -2652,6 +2653,9 @@ def guardar_perfil_usuario(
         if avisos_cliente_por_correo is not None:
             asignaciones.append("avisos_cliente_por_correo = ?")
             valores.append(int(avisos_cliente_por_correo))
+        if avisos_genericos is not None:
+            asignaciones.append("avisos_genericos = ?")
+            valores.append(int(avisos_genericos))
         for columna, valor, largo in (("cargo", cargo, 80), ("telefono", telefono, 30)):
             if valor is not None:
                 asignaciones.append(f"{columna} = ?")
@@ -2706,6 +2710,15 @@ def _hora_valida(texto: str | None) -> str | None:
 
     m = _re.fullmatch(r"([01]\d|2[0-3]):([0-5]\d)", (texto or "").strip())
     return f"{m.group(1)}:{m.group(2)}" if m else None
+
+
+def avisos_genericos(usuario_id: int) -> bool:
+    """¿Quiere la persona avisos push sin datos (solo «tienes un aviso»)? Falso si la columna aún no existe (base sin migrar)."""
+    try:
+        perfil = _db.obtener_perfil_usuario(usuario_id)
+        return "avisos_genericos" in perfil.keys() and bool(perfil["avisos_genericos"])
+    except Exception:  # noqa: BLE001 -- ante la duda, el comportamiento anterior
+        return False
 
 
 def en_horas_de_silencio(usuario_id: int, ahora=None) -> bool:

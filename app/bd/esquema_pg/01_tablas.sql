@@ -3386,6 +3386,7 @@ CREATE TABLE IF NOT EXISTS usuario_perfil (
     resumen_diario_email bigint NOT NULL DEFAULT 1,
     resumen_diario_ultimo text,
     menu_prefs text,
+    avisos_genericos bigint NOT NULL DEFAULT 0,
     avisos_cliente_por_correo bigint NOT NULL DEFAULT 0,
     PRIMARY KEY (usuario_id)
 );

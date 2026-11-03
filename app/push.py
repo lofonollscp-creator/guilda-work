@@ -144,6 +144,26 @@ def enviar_web_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict 
                 db.eliminar_tokens_push([sus])
 
 
+# --- Avisos genéricos (privacidad): la persona puede pedir que el móvil y el navegador solo muestren «tienes un aviso» ---------------
+_TEXTO_GENERICO = {
+    "es": ("Guilda Work", "Tienes un aviso nuevo. Ábrelo para verlo."),
+    "ca": ("Guilda Work", "Tens un avís nou. Obre'l per veure'l."),
+    "en": ("Guilda Work", "You have a new alert. Open it to see it."),
+    "fr": ("Guilda Work", "Vous avez une nouvelle alerte. Ouvrez-la pour la voir."),
+}
+_CLAVES_SIN_DATOS_PERSONALES = ("tipo", "canal", "destino", "destino_tipo", "destino_id", "despacho_id", "notificacion_id", "url")
+
+
+def hacer_generico(usuario_id: int, titulo: str, cuerpo: str, datos: dict | None) -> tuple[str, str, dict | None]:
+    """Si la persona tiene activados los avisos genéricos, sustituye título y texto por uno fijo en su idioma y deja en `datos` solo lo necesario para abrir la pantalla correcta
+    (tipo, ids y ruta: nada con nombres, asuntos ni importes). El aviso completo sigue en la campana de la aplicación."""
+    from . import db
+    if not db.avisos_genericos(usuario_id):
+        return titulo, cuerpo, datos
+    t, c = _TEXTO_GENERICO.get(db.idioma_usuario(usuario_id) or "es", _TEXTO_GENERICO["es"])
+    return t, c, {k: v for k, v in (datos or {}).items() if k in _CLAVES_SIN_DATOS_PERSONALES}
+
+
 def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | None = None, ignorar_silencio: bool = False, canal: str | None = None) -> None:
     """Punto de entrada usado desde los puntos de emisión de eventos (ver
     p.ej. `app/correo.py:_emitir_evento_correo_nuevo`) -- manda el push a
@@ -156,6 +176,7 @@ def enviar_a_usuario(usuario_id: int, titulo: str, cuerpo: str, datos: dict | No
         from . import db  # import perezoso: evita el ciclo db <-> push
         if not ignorar_silencio and db.en_horas_de_silencio(usuario_id):
             return                                    # «no molestar»: la notificación queda en la app, sin vibrar el móvil
+        titulo, cuerpo, datos = hacer_generico(usuario_id, titulo, cuerpo, datos)
         if configurado():
             tokens = db.tokens_push_de_usuario(usuario_id)
             invalidos = [t for t in tokens if not _enviar_a_token(t, titulo, cuerpo, datos, canal)]

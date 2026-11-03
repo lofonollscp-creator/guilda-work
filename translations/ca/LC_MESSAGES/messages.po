@@ -19605,3 +19605,11 @@ msgid "Borrar mi historial (%(n)s conversación)"
 msgid_plural "Borrar mi historial (%(n)s conversaciones)"
 msgstr[0] "Esborrar el meu historial (%(n)s conversa)"
 msgstr[1] "Esborrar el meu historial (%(n)s converses)"
+
+#: app/templates/ajustes_perfil.html
+msgid "Avisos sin datos (privacidad)"
+msgstr "Avisos sense dades (privacitat)"
+
+#: app/templates/ajustes_perfil.html
+msgid "En el móvil y el navegador solo verás «Tienes un aviso nuevo», sin nombres, asuntos ni importes. El detalle sigue en la campana de la aplicación."
+msgstr "Al mòbil i al navegador només veuràs «Tens un avís nou», sense noms, assumptes ni imports. El detall continua a la campana de l'aplicació."

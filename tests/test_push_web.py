@@ -151,3 +151,51 @@ def test_envio_real_cifrado_y_firmado_con_las_claves_vapid(monkeypatch):
     pad = lambda s: s + "=" * (-len(s) % 4)
     texto = http_ece.decrypt(recibido["cuerpo"], private_key=navegador, auth_secret=base64.urlsafe_b64decode(pad(auth)), version="aes128gcm")
     assert json.loads(texto)["cuerpo"] == "Vence el 303"
+
+
+# --- Avisos genéricos (privacidad) ---------------------------------------------------------------------------------------
+
+DATOS_AVISO = {"tipo": "correo_nuevo", "url": "/correo/", "notificacion_id": 9, "remitente": "Marta Ruiz", "asunto": "Factura 1.200 €", "destino": '{"tipo":"correo"}'}
+
+
+def test_por_defecto_el_aviso_lleva_su_texto(usuario_id):
+    assert push.hacer_generico(usuario_id, "Marta Ruiz", "Factura 1.200 €", DATOS_AVISO) == ("Marta Ruiz", "Factura 1.200 €", DATOS_AVISO)
+
+
+def test_aviso_generico_no_lleva_datos_personales_pero_si_la_ruta(usuario_id):
+    db.guardar_perfil_usuario(usuario_id, avisos_genericos=True)
+    titulo, cuerpo, datos = push.hacer_generico(usuario_id, "Marta Ruiz", "Factura 1.200 €", DATOS_AVISO)
+    assert (titulo, cuerpo) == push._TEXTO_GENERICO["es"]
+    assert datos == {"tipo": "correo_nuevo", "url": "/correo/", "notificacion_id": 9, "destino": '{"tipo":"correo"}'}
+    assert "Marta" not in json.dumps([titulo, cuerpo, datos]) and "1.200" not in json.dumps([titulo, cuerpo, datos])
+
+
+def test_aviso_generico_en_el_idioma_de_la_persona(usuario_id):
+    db.guardar_perfil_usuario(usuario_id, avisos_genericos=True)
+    for idioma in ("ca", "en", "fr"):
+        db.guardar_idioma_usuario(usuario_id, idioma) if hasattr(db, "guardar_idioma_usuario") else None
+        if db.idioma_usuario(usuario_id) == idioma:
+            assert push.hacer_generico(usuario_id, "x", "y", {})[1] == push._TEXTO_GENERICO[idioma][1]
+
+
+def test_el_envio_web_y_fcm_usan_el_texto_generico(usuario_id, web_activado, monkeypatch):
+    db.guardar_perfil_usuario(usuario_id, avisos_genericos=True)
+    db.registrar_suscripcion_web(usuario_id, json.dumps(SUS, separators=(",", ":")), ENDPOINT)
+    db.registrar_dispositivo_push(usuario_id, "token-fcm", "android")
+    monkeypatch.setattr(push, "FIREBASE_CREDENTIALS_PATH", __file__)          # «configurado»
+    web, fcm = [], []
+    import pywebpush
+    monkeypatch.setattr(pywebpush, "webpush", lambda **kw: web.append(json.loads(kw["data"])))
+    monkeypatch.setattr(push, "_enviar_a_token", lambda token, titulo, cuerpo, datos, canal=None: fcm.append((titulo, cuerpo, datos)) or True)
+    push.enviar_a_usuario(usuario_id, "Marta Ruiz", "Factura 1.200 €", dict(DATOS_AVISO))
+    assert web[0]["titulo"] == "Guilda Work" and "Marta" not in json.dumps(web[0]) and web[0]["url"] == "/correo/"
+    assert fcm[0][0] == "Guilda Work" and "Marta" not in json.dumps(fcm[0]) and "asunto" not in fcm[0][2]
+
+
+def test_el_interruptor_de_ajustes_se_guarda(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "genericos@ejemplo.com", "contrasena123")
+    assert not db.avisos_genericos(uid)
+    assert cliente.post("/ajustes/perfil", data={"nombre_mostrado": "Ana", "avisos_genericos": "on"}).status_code == 302
+    assert db.avisos_genericos(uid)
+    cliente.post("/ajustes/perfil", data={"nombre_mostrado": "Ana"})
+    assert not db.avisos_genericos(uid)
