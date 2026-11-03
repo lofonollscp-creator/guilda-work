@@ -19507,3 +19507,11 @@ msgstr "Els avisos estan bloquejats en aquest navegador. Canvia-ho als permisos 
 #: app/templates/base.html
 msgid "No se han podido activar los avisos ahora mismo."
 msgstr "Ara mateix no s'han pogut activar els avisos."
+
+#: app/templates/ia_asistente.html
+msgid "Tus datos personales"
+msgstr "Les teves dades personals"
+
+#: app/templates/ia_asistente.html
+msgid "Antes de enviar nada al modelo de IA, los nombres, NIF, IBAN, teléfonos, correos y direcciones se sustituyen por etiquetas: el proveedor no recibe quién es cada persona. Las imágenes y PDF que se leen con IA no se pueden proteger así."
+msgstr "Abans d'enviar res al model d'IA, els noms, NIF, IBAN, telèfons, correus i adreces se substitueixen per etiquetes: el proveïdor no rep qui és cada persona. Les imatges i PDF que es llegeixen amb IA no es poden protegir així."

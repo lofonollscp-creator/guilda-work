@@ -19498,3 +19498,11 @@ msgstr "Alerts are blocked in this browser. Change it in the site permissions."
 #: app/templates/base.html
 msgid "No se han podido activar los avisos ahora mismo."
 msgstr "Alerts could not be turned on right now."
+
+#: app/templates/ia_asistente.html
+msgid "Tus datos personales"
+msgstr "Your personal data"
+
+#: app/templates/ia_asistente.html
+msgid "Antes de enviar nada al modelo de IA, los nombres, NIF, IBAN, teléfonos, correos y direcciones se sustituyen por etiquetas: el proveedor no recibe quién es cada persona. Las imágenes y PDF que se leen con IA no se pueden proteger así."
+msgstr "Before anything is sent to the AI model, names, tax IDs, IBANs, phone numbers, emails and addresses are replaced with labels: the provider does not receive who each person is. Images and PDFs read with AI cannot be protected this way."

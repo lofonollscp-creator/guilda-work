@@ -25,7 +25,7 @@ from collections.abc import Iterator
 
 import keyring
 
-from . import ayuda, db, ia_consumo, ia_fuentes, ia_soporte, ia_herramientas as herramientas
+from . import anonimizar, ayuda, db, ia_consumo, ia_fuentes, ia_soporte, ia_herramientas as herramientas
 
 SERVICIO_KEYRING_IA = "guilda-work-ia"
 CLAVE_API_OPENROUTER = "openrouter-api-key"
@@ -398,6 +398,30 @@ _ERROR_SOLO_LECTURA = json.dumps(
 )
 
 
+def _envio_protegido(usuario_id: int, mensajes: list[dict]) -> tuple[anonimizar.Seudonimizador, list[dict]]:
+    """Seudonimiza los mensajes ANTES de enviarlos al proveedor (app/anonimizar.py). Devuelve el seudonimizador (para deshacer las etiquetas en la respuesta) y los mensajes a enviar.
+    Si el detector no está disponible no se envía nada."""
+    sp = anonimizar.Seudonimizador()
+    try:
+        sp.conocer("PERSONA", db.nombre_mostrado_usuario(usuario_id) or "")
+        enviados = sp.proteger_mensajes(mensajes)
+    except anonimizar.ErrorProteccionDatos as e:
+        raise ErrorIA(str(e)) from e
+    if sp.protegidos:
+        logging.getLogger(__name__).info("IA: datos personales protegidos antes del envío (%s)", sp.resumen())
+    return sp, enviados
+
+
+def _restaurar_respuesta(sp: anonimizar.Seudonimizador, mensaje: dict) -> dict:
+    """Pone los datos reales donde el modelo usó etiquetas (texto y argumentos de herramientas)."""
+    mensaje = dict(mensaje)
+    if mensaje.get("content"):
+        mensaje["content"] = sp.restaurar(mensaje["content"])
+    if mensaje.get("tool_calls"):
+        mensaje["tool_calls"] = [dict(tc, function=dict(tc["function"], arguments=sp.restaurar_argumentos(tc["function"].get("arguments")))) for tc in mensaje["tool_calls"]]
+    return mensaje
+
+
 def _herramientas_para(solo_lectura: bool, mensajes: list[dict] | None = None) -> list[dict]:
     """Catálogo para esta llamada: núcleo + grupos que la conversación necesita; en solo lectura, solo lectura."""
     return herramientas.herramientas_para(mensajes, solo_lectura)
@@ -540,15 +564,10 @@ def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
     if not claves:
         raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
     _reservar_uso(usuario_id)
-    respuesta = _post_json_con_fallback(
-        OPENROUTER_URL,
-        {"model": modelo, "messages": [
-            {"role": "system", "content": sistema}, {"role": "user", "content": contenido},
-        ]},
-        claves,
-    )
+    sp, enviados = _envio_protegido(usuario_id, [{"role": "system", "content": sistema}, {"role": "user", "content": contenido}])
+    respuesta = _post_json_con_fallback(OPENROUTER_URL, {"model": modelo, "messages": enviados}, claves)
     try:
-        return (respuesta["choices"][0]["message"].get("content") or "").strip()
+        return (sp.restaurar(respuesta["choices"][0]["message"].get("content")) or "").strip()
     except (KeyError, IndexError, AttributeError) as e:
         raise ErrorIA(f"Respuesta inesperada de OpenRouter: {respuesta}") from e
 
@@ -563,13 +582,10 @@ def completar_partes(usuario_id: int, sistema: str, partes: list[dict], timeout:
     if not claves:
         raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
     _reservar_uso(usuario_id)
-    respuesta = _post_json_con_fallback(
-        OPENROUTER_URL,
-        {"model": modelo, "temperature": 0, "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": partes}]},
-        claves, timeout,
-    )
+    sp, enviados = _envio_protegido(usuario_id, [{"role": "system", "content": sistema}, {"role": "user", "content": partes}])   # las imágenes y PDF no se pueden proteger: solo las partes de texto
+    respuesta = _post_json_con_fallback(OPENROUTER_URL, {"model": modelo, "temperature": 0, "messages": enviados}, claves, timeout)
     try:
-        return (respuesta["choices"][0]["message"].get("content") or "").strip()
+        return (sp.restaurar(respuesta["choices"][0]["message"].get("content")) or "").strip()
     except (KeyError, IndexError, AttributeError, TypeError) as e:
         raise ErrorIA("Respuesta inesperada de OpenRouter.") from e
 
@@ -600,13 +616,14 @@ def _continuar_conversacion(usuario_id: int) -> dict:
             }
 
         mensajes_api = _mensajes_para_openrouter(usuario_id)
+        sp, mensajes_envio = _envio_protegido(usuario_id, mensajes_api)
         respuesta = _post_json_con_fallback(
             OPENROUTER_URL,
-            {"model": modelo, "messages": mensajes_api, "tools": _herramientas_para(solo_lectura, mensajes_api)},
+            {"model": modelo, "messages": mensajes_envio, "tools": _herramientas_para(solo_lectura, mensajes_api)},
             claves,
         )
         try:
-            mensaje = respuesta["choices"][0]["message"]
+            mensaje = _restaurar_respuesta(sp, respuesta["choices"][0]["message"])
         except (KeyError, IndexError) as e:
             raise ErrorIA(f"Respuesta inesperada de OpenRouter: {respuesta}") from e
 
@@ -722,7 +739,9 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
 
         ids_antes = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}
         mensajes_api = _mensajes_para_openrouter(usuario_id)
-        payload = {"model": modelo, "messages": mensajes_api, "tools": _herramientas_para(solo_lectura, mensajes_api)}
+        sp, mensajes_envio = _envio_protegido(usuario_id, mensajes_api)
+        restaurador = anonimizar.RestauradorEnStream(sp)
+        payload = {"model": modelo, "messages": mensajes_envio, "tools": _herramientas_para(solo_lectura, mensajes_api)}
         contenido_acumulado = ""
         # Los tool_calls llegan troceados por índice a lo largo de varios
         # chunks (id/nombre/argumentos incompletos hasta que termina el
@@ -736,8 +755,10 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
                 continue
             texto = delta.get("content")
             if texto:
-                contenido_acumulado += texto
-                yield {"tipo": "delta", "texto": texto}
+                texto = restaurador.alimentar(texto)          # las etiquetas [PERSONA_1]… vuelven a ser el dato real antes de llegar a pantalla
+                if texto:
+                    contenido_acumulado += texto
+                    yield {"tipo": "delta", "texto": texto}
             for tc_delta in delta.get("tool_calls") or []:
                 idx = tc_delta.get("index", 0)
                 actual = tool_calls_acumulados.setdefault(
@@ -751,7 +772,11 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
                 if fn_delta.get("arguments"):
                     actual["function"]["arguments"] += fn_delta["arguments"]
 
-        tool_calls = [tool_calls_acumulados[i] for i in sorted(tool_calls_acumulados)]
+        resto = restaurador.terminar()
+        if resto:
+            contenido_acumulado += resto
+            yield {"tipo": "delta", "texto": resto}
+        tool_calls = _restaurar_respuesta(sp, {"tool_calls": [tool_calls_acumulados[i] for i in sorted(tool_calls_acumulados)]}).get("tool_calls") or []
 
         if not tool_calls:
             db.agregar_mensaje_ia(

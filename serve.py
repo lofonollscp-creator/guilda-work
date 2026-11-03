@@ -22,6 +22,15 @@ Uso:
 import os
 import threading
 
+
+def _precargar_proteccion_de_datos():
+    """Carga el detector de datos personales de la IA (app/anonimizar.py) al arrancar, para no pagarlo en la primera consulta. Si falla, el envío a la IA se bloquea (no se manda nada sin proteger)."""
+    try:
+        anonimizar.precargar()
+    except Exception:  # noqa: BLE001 -- ya queda en el log; la IA responderá con un error claro
+        pass
+
+
 if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
     # Comprobado ANTES de importar app.main a propósito: ese import ya
     # ejecuta app/captcha.py y app/correo.py, que sin GUILDA_SECRET_KEY caen
@@ -37,7 +46,7 @@ if __name__ == "__main__" and not os.environ.get("GUILDA_SECRET_KEY"):
 
 from waitress import serve
 
-from app import certificados, db, eventos, resumen_pendientes, traspasos, avisos
+from app import anonimizar, certificados, db, eventos, resumen_pendientes, traspasos, avisos
 from app.main import (
     _avisos_fichaje_servidor, _envios_correo_servidor, _idle_correo_servidor, _seguimientos_correo_servidor, _recordatorios_tareas_servidor, _recordatorio_vencimientos_fiscales, _recordatorios_portal_servidor,
     _resumen_ia_semanal,
@@ -62,6 +71,7 @@ if __name__ == "__main__":
     threading.Thread(target=traspasos.bucle, daemon=True).start()
     # Motor de avisos del control fiscal: alertas con acuse y escalado (app/avisos.py); solo actúa en los despachos que lo activan.
     threading.Thread(target=avisos.bucle, daemon=True).start()
+    threading.Thread(target=_precargar_proteccion_de_datos, daemon=True).start()
     # Asistente jurídico: sincroniza las fuentes habilitadas y purga adjuntos vencidos; apagado salvo LEGAL_AI_ENABLED=1 y LEGAL_AI_SYNC=1 (app/juridico/trabajador.py).
     from app.juridico import trabajador as _trabajador_juridico
     if _trabajador_juridico.activo():

@@ -19583,3 +19583,11 @@ msgstr "Les alertes sont bloquées dans ce navigateur. Modifiez-le dans les auto
 #: app/templates/base.html
 msgid "No se han podido activar los avisos ahora mismo."
 msgstr "Impossible d'activer les alertes pour le moment."
+
+#: app/templates/ia_asistente.html
+msgid "Tus datos personales"
+msgstr "Vos données personnelles"
+
+#: app/templates/ia_asistente.html
+msgid "Antes de enviar nada al modelo de IA, los nombres, NIF, IBAN, teléfonos, correos y direcciones se sustituyen por etiquetas: el proveedor no recibe quién es cada persona. Las imágenes y PDF que se leen con IA no se pueden proteger así."
+msgstr "Avant d'envoyer quoi que ce soit au modèle d'IA, les noms, numéros fiscaux, IBAN, téléphones, e-mails et adresses sont remplacés par des étiquettes : le fournisseur ne sait pas qui est chaque personne. Les images et PDF lus par l'IA ne peuvent pas être protégés ainsi."

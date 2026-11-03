@@ -195,7 +195,7 @@ def test_rutas_web_de_conversaciones(cliente):
     assert datos["activa"] != primera
 
     pagina = cliente.get("/ia/").get_data(as_text=True)
-    assert 'id="ia-conv-select"' in pagina and "primera charla" in pagina and "segunda charla" in pagina
+    assert 'class="ia-conv-item' in pagina and "primera charla" in pagina and "segunda charla" in pagina
 
     assert cliente.post(f"/ia/conversaciones/{primera}/activar").status_code == 204
     assert _contenidos(uid)[0] == "primera charla"

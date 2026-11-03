@@ -35,6 +35,7 @@ os.environ.setdefault("GUILDA_SECRET_KEY", "clave-secreta-solo-para-los-tests-no
 os.environ.setdefault("GUILDA_USO_HILO", "0")                        # el uso de la API se vuelca al leerlo, sin hilo de fondo
 os.environ.setdefault("GUILDA_SYNC_VENTANA_SEG", "0")                # las pruebas esperan ver sus cambios al instante (la prueba de la ventana la fija a mano)
 os.environ.setdefault("LEGAL_AI_ENABLED", "1")                       # el asistente jurídico existe en los tests (cada prueba decide si lo apaga)
+os.environ.setdefault("GUILDA_IA_ANONIMIZAR", "0")                       # el detector de datos personales (≈300 MB) solo se carga en tests/test_anonimizar.py
 
 import keyring
 import keyring.errors
