@@ -607,9 +607,11 @@ def listar(tenant_id: int, *, q: str | None = None, temporal: str | None = None,
 
 
 # --- Evaluaciones, datos del custodio, estado operativo ----------------------------------------------------------------------------------------
-def registrar_evaluacion(tenant_id: int, usuario_id: int, certificado_id: int, dimension: str, resultado: str, *, detalle: str | None = None, metodo: str = "manual") -> None:
-    """Anota el resultado de una comprobación (en el MVP, manual y con su fecha). Sin comprobación, la dimensión sigue como «no comprobada»."""
-    _exigir(usuario_id, tenant_id)
+def registrar_evaluacion(tenant_id: int, usuario_id: int, certificado_id: int, dimension: str, resultado: str, *, detalle: str | None = None, metodo: str = "manual",
+                         sin_permiso: bool = False) -> None:
+    """Anota el resultado de una comprobación (en el MVP, manual y con su fecha). Sin comprobación, la dimensión sigue como «no comprobada». `sin_permiso`: solo la comprobación periódica del servidor."""
+    if not sin_permiso:
+        _exigir(usuario_id, tenant_id)
     if dimension not in RESULTADOS or resultado not in RESULTADOS[dimension]:
         raise ValueError("Dimensión o resultado no válidos.")
     detalle = _sin_secretos(detalle, "Detalle")
@@ -625,10 +627,11 @@ def registrar_evaluacion(tenant_id: int, usuario_id: int, certificado_id: int, d
         conn.close()
 
 
-def comprobar_ahora(tenant_id: int, usuario_id: int, certificado_id: int, *, verificar=None) -> dict:
+def comprobar_ahora(tenant_id: int, usuario_id: int, certificado_id: int, *, verificar=None, sin_permiso: bool = False) -> dict:
     """Comprueba la cadena de confianza y la revocación del certificado (app/certificados_verificacion.py) y anota los dos resultados como evaluaciones automáticas, con su fecha y detalle. Un
     fallo de red o una CA desconocida se anotan como «indeterminada», nunca como «válida». `ValueError` si el certificado se dio de alta a mano y no hay archivo que comprobar."""
-    _exigir(usuario_id, tenant_id)
+    if not sin_permiso:
+        _exigir(usuario_id, tenant_id)
     conn = db.get_connection()
     try:
         f = conn.execute("SELECT der FROM certificados WHERE id = ? AND tenant_id = ?", (certificado_id, tenant_id)).fetchone()
@@ -646,9 +649,61 @@ def comprobar_ahora(tenant_id: int, usuario_id: int, certificado_id: int, *, ver
     except Exception:  # noqa: BLE001 -- un certificado raro o un fallo inesperado no debe romper la pantalla: queda como indeterminada
         logger.exception("Fallo al comprobar el certificado %s", certificado_id)
         r = {"cadena": ("indeterminada", "No se pudo completar la comprobación."), "revocacion": ("indeterminada", "No se pudo completar la comprobación.", "automatica")}
-    registrar_evaluacion(tenant_id, usuario_id, certificado_id, "cadena", r["cadena"][0], detalle=r["cadena"][1][:300], metodo="automatica")
-    registrar_evaluacion(tenant_id, usuario_id, certificado_id, "revocacion", r["revocacion"][0], detalle=r["revocacion"][1][:300], metodo=r["revocacion"][2])
+    registrar_evaluacion(tenant_id, usuario_id, certificado_id, "cadena", r["cadena"][0], detalle=r["cadena"][1][:300], metodo="automatica", sin_permiso=sin_permiso)
+    registrar_evaluacion(tenant_id, usuario_id, certificado_id, "revocacion", r["revocacion"][0], detalle=r["revocacion"][1][:300], metodo=r["revocacion"][2], sin_permiso=sin_permiso)
     return {"cadena": r["cadena"][0], "revocacion": r["revocacion"][0]}
+
+
+DIAS_ENTRE_COMPROBACIONES = 7
+COMPROBACIONES_POR_PASADA = 15
+
+
+def revisar_comprobaciones(tenant_id: int | None = None, ahora: datetime | None = None, verificar=None, maximo: int = COMPROBACIONES_POR_PASADA) -> dict:
+    """Comprobación periódica de la cadena de confianza y la revocación (la lanza el hilo del servidor): repite la comprobación de los certificados importados —los apuntados a mano no tienen archivo— que
+    siguen vigentes y llevan más de una semana sin comprobarse, los más antiguos primero y con un tope por pasada para no hacer una ráfaga de consultas a las autoridades. Solo avisa cuando
+    ALGO EMPEORA de verdad (revocado, cadena inválida); un fallo de red o una CA desconocida quedan como «indeterminada» y no despiertan a nadie. Devuelve {comprobados, avisos}."""
+    from . import notificaciones
+    ahora = ahora or _ahora()
+    res = {"comprobados": 0, "avisos": 0}
+    conn = db.get_connection()
+    try:
+        donde, p = ("AND tenant_id = ?", [tenant_id]) if tenant_id else ("", [])
+        pendientes = []
+        for f in conn.execute(f"SELECT id, tenant_id FROM certificados WHERE der IS NOT NULL AND estado_operativo IN ('inventariado', 'autorizado', 'suspendido') AND not_after IS NOT NULL {donde}", p).fetchall():
+            c = _enriquecer(conn, conn.execute("SELECT * FROM certificados WHERE id = ?", (f["id"],)).fetchone(), ahora, None)
+            if c["temporal"] == "caducado":
+                continue
+            ultima = c["revocacion"]["comprobado_en"] or ""
+            try:
+                hace = (ahora.replace(tzinfo=None) - datetime.fromisoformat(ultima.replace("Z", "")[:19])).days if ultima else None
+            except ValueError:
+                hace = None
+            if hace is not None and hace < DIAS_ENTRE_COMPROBACIONES:
+                continue
+            pendientes.append((ultima, c))
+        pendientes.sort(key=lambda x: x[0])
+        for _u, c in pendientes[:maximo]:
+            antes_rev, antes_cad = c["revocacion"]["resultado"], c["cadena"]["resultado"]
+            nuevo = comprobar_ahora(c["tenant_id"], c["custodio_id"] or 0, c["id"], verificar=verificar, sin_permiso=True)
+            res["comprobados"] += 1
+            peor = []
+            if nuevo["revocacion"] == "revocado" and antes_rev != "revocado":
+                peor.append("ha sido revocado")
+            if nuevo["cadena"] == "invalida" and antes_cad != "invalida":
+                peor.append("ya no tiene una cadena de confianza válida")
+            if not peor:
+                continue
+            titulo = "Un certificado necesita atención"
+            cuerpo = f"La comprobación periódica indica que el certificado de {c.get('cliente_nombre') or c.get('sujeto') or 'un titular'} {' y '.join(peor)}. Revísalo y, si hace falta, abre su renovación."
+            for d in _destinatarios(conn, c["tenant_id"], c, 7):
+                try:
+                    notificaciones.crear_y_enviar(d, "certificado", titulo, cuerpo, url=f"/certificados/{c['id']}", datos={"tipo": "certificado", "certificado_id": c["id"]})
+                    res["avisos"] += 1
+                except Exception:  # noqa: BLE001 -- un aviso que falla no debe parar las demás comprobaciones
+                    logger.warning("No se ha podido avisar del certificado %s", c["id"], exc_info=True)
+    finally:
+        conn.close()
+    return res
 
 
 def actualizar_datos(tenant_id: int, usuario_id: int, certificado_id: int, *, custodio_id: int | None = ..., nif_confirmado: str | None = ..., tipo_titular: str | None = ...,
@@ -1607,7 +1662,12 @@ def bucle() -> None:
             r = revisar_avisos()
             c = avisar_clientes()
             r["fallidos"] += c["fallidos"]
-            salud.registrar_ok("certificados_avisos", INTERVALO_SEGUNDOS * 2, f"{r['avisos']} avisos, {r['renovaciones']} renovaciones, {c['clientes']} avisos a clientes")
+            try:
+                m = revisar_comprobaciones()
+            except Exception:  # noqa: BLE001 -- la comprobación periódica no debe impedir los avisos de caducidad
+                logger.exception("Comprobación periódica de certificados fallida")
+                m = {"comprobados": 0, "avisos": 0}
+            salud.registrar_ok("certificados_avisos", INTERVALO_SEGUNDOS * 2, f"{r['avisos']} avisos, {r['renovaciones']} renovaciones, {c['clientes']} avisos a clientes, {m['comprobados']} comprobaciones")
             if r["fallidos"]:
                 salud.registrar_error("certificados_avisos", INTERVALO_SEGUNDOS * 2, f"{r['fallidos']} avisos no se han podido enviar (se reintentan en la próxima pasada)")
         except Exception as e:  # noqa: BLE001

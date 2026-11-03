@@ -612,3 +612,25 @@ def test_borrar_un_despacho_con_certificados_renovaciones_y_vinculos_no_se_bloqu
             assert conn.execute(f"SELECT COUNT(*) FROM {tabla}").fetchone()[0] == 0, tabla
     finally:
         conn.close()
+
+
+def test_la_comprobacion_periodica_repite_lo_antiguo_y_solo_avisa_si_algo_empeora(d, monkeypatch):
+    from app import notificaciones
+    d_ = d
+    cid = ce.importar(d_.t, d_.cus, pem(hacer_cert(dias=200, clave=21)))["id"]
+    ce.alta_rapida(d_.t, d_.cus, tipo="otro", caduca=(AHORA + timedelta(days=100)).date().isoformat(), titular="A mano")          # sin archivo: no se comprueba
+    enviados = []
+    monkeypatch.setattr(notificaciones, "crear_y_enviar", lambda u, tipo, titulo, cuerpo, url=None, datos=None, **k: enviados.append((u, url)))
+    resultados = iter([{"cadena": ("valida", "ok"), "revocacion": ("no_revocado_en_comprobacion", "ok", "automatica")},
+                       {"cadena": ("indeterminada", "sin red"), "revocacion": ("indeterminada", "sin red", "automatica")},
+                       {"cadena": ("valida", "ok"), "revocacion": ("revocado", "OCSP: revocado", "automatica")}])
+    verificar = lambda der: next(resultados)
+
+    primera = ce.revisar_comprobaciones(d_.t, ahora=AHORA, verificar=verificar)
+    assert primera == {"comprobados": 1, "avisos": 0}                                                      # nunca comprobado: se comprueba, y bien; el de a mano no cuenta
+    assert ce.revisar_comprobaciones(d_.t, ahora=AHORA + timedelta(days=2), verificar=verificar) == {"comprobados": 0, "avisos": 0}     # todavía no toca
+    segunda = ce.revisar_comprobaciones(d_.t, ahora=datetime.now(timezone.utc) + timedelta(days=8), verificar=verificar)
+    assert segunda["comprobados"] == 1 and segunda["avisos"] == 0 and not enviados                          # «indeterminada» por falta de red no despierta a nadie
+    tercera = ce.revisar_comprobaciones(d_.t, ahora=datetime.now(timezone.utc) + timedelta(days=16), verificar=verificar)
+    assert tercera["comprobados"] == 1 and tercera["avisos"] >= 1 and enviados[0][1] == f"/certificados/{cid}"
+    assert ce.obtener(d_.t, cid)["revocacion"]["resultado"] == "revocado"
