@@ -9,7 +9,7 @@ completamente sin probar.
 """
 from datetime import date, timedelta
 
-from app import db, rutas_correo
+from app import correo, db, rutas_correo
 from app.correo import ErrorCorreo
 from app.rutas_correo import fecha_relativa, iniciales, vista_previa
 from tests.conftest import iniciar_sesion_de_prueba
@@ -539,3 +539,39 @@ def test_el_error_de_sincronizacion_se_muestra_en_cuentas_y_en_la_bandeja(client
     db.marcar_sincronizada_cuenta_correo(cuenta_id)
     despues = cliente.get(f"/correo/?cuenta_id={cuenta_id}").get_data(as_text=True)
     assert "Error al sincronizar esta cuenta" not in despues
+
+
+def test_acciones_en_lote_de_archivar_spam_categoria_cliente_posponer_y_tarea(cliente, monkeypatch):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "lote-mas@ejemplo.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho lote correo")
+    db.asignar_tenant(usuario_id, tenant)
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    m1, m2 = _crear_mensaje(cuenta_id, "1"), _crear_mensaje(cuenta_id, "2")
+    ajeno = db.crear_usuario("lote-mas-otro@ejemplo.com", "contrasena123")
+    m_ajeno = _crear_mensaje(db.crear_cuenta_correo(ajeno, "Otra", "imap", "imap.ejemplo.com", 993, "otro@ejemplo.com"), "1")
+
+    movidos = []
+    monkeypatch.setattr(correo, "mover_a_carpeta_especial", lambda uid, mid, tipo: movidos.append((mid, tipo)) or tipo)
+    assert cliente.post("/correo/mensajes/archivar", json={"ids": [m1, m2, m_ajeno]}).get_json() == {"procesados": 2, "errores": []}
+    assert cliente.post("/correo/mensajes/spam", json={"ids": [m1]}).get_json() == {"procesados": 1, "errores": []}
+    assert movidos == [(m1, "archivo"), (m2, "archivo"), (m1, "spam")]                   # el mensaje ajeno ni se toca
+
+    cat = db.crear_categoria_correo(usuario_id, "Facturas", "#2a7")
+    assert cliente.post("/correo/mensajes/categoria", json={"ids": [m1, m2, m_ajeno], "categoria_id": cat}).get_json() == {"procesados": 2}
+    assert db.obtener_mensaje_correo(m1)["categoria_id"] == cat and db.obtener_mensaje_correo(m_ajeno)["categoria_id"] is None
+    assert cliente.post("/correo/mensajes/categoria", json={"ids": [m1], "categoria_id": ""}).get_json() == {"procesados": 1}
+    assert db.obtener_mensaje_correo(m1)["categoria_id"] is None
+
+    cf = db.crear_cliente_fiscal(tenant, "Cliente Lote")
+    assert cliente.post("/correo/mensajes/cliente-fiscal", json={"ids": [m1, m2], "cliente_fiscal_id": cf}).get_json() == {"procesados": 2}
+    assert db.obtener_mensaje_correo(m2)["cliente_fiscal_id"] == cf
+
+    assert cliente.post("/correo/mensajes/posponer", json={"ids": [m1, m2], "hasta": "2026-11-04T09:00"}).get_json() == {"procesados": 2}
+    assert db.obtener_mensaje_correo(m1)["pospuesto_hasta"] == "2026-11-04T09:00"
+    malo = cliente.post("/correo/mensajes/posponer", json={"ids": [m1], "hasta": "mañana"})
+    assert malo.status_code == 400 and malo.get_json()["procesados"] == 0
+
+    assert cliente.post("/correo/mensajes/crear-tarea", json={"ids": [m1, m2, m_ajeno], "vence": "2026-11-10"}).get_json() == {"procesados": 2}
+    tareas = [t for t in db.listar_tareas_outlook(usuario_id) if t["mensaje_correo_id"] in (m1, m2)]
+    assert len(tareas) == 2 and all(t["fecha_vencimiento"].startswith("2026-11-10") for t in tareas)
+    assert [t for t in tareas if t["mensaje_correo_id"] == m2][0]["cliente_fiscal_id"] == cf   # la tarea hereda el cliente del correo

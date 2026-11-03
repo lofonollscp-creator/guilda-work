@@ -1628,3 +1628,100 @@ def mover_mensajes_lote():
         except correo.ErrorCorreo as e:
             errores.append(str(e))
     return {"procesados": len(ids) - len(errores), "errores": errores}
+
+
+def _hasta_valido(texto: str | None) -> str | None:
+    """«Posponer»: la fecha-hora que llega de un `datetime-local` («2026-11-04T09:00»); cualquier otra cosa se descarta."""
+    try:
+        return datetime.strptime((texto or "").strip(), "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M")
+    except ValueError:
+        return None
+
+
+@correo_bp.route("/mensajes/archivar", methods=["POST"])
+@login_required
+def archivar_mensajes_lote():
+    ids = _ids_propios_del_usuario(_ids_del_body())
+    errores = []
+    for mensaje_id in ids:
+        try:
+            correo.mover_a_carpeta_especial(g.usuario_id, mensaje_id, "archivo")
+        except correo.ErrorCorreo as e:
+            errores.append(str(e))
+    return {"procesados": len(ids) - len(errores), "errores": errores}
+
+
+@correo_bp.route("/mensajes/spam", methods=["POST"])
+@login_required
+def spam_mensajes_lote():
+    """Como el botón de uno en uno: lo que ya está en spam vuelve a la bandeja de entrada, el resto va a spam."""
+    ids = _ids_propios_del_usuario(_ids_del_body())
+    errores = []
+    for mensaje_id in ids:
+        try:
+            mensaje = db.obtener_mensaje_correo(mensaje_id)
+            if correo.carpeta_especial(g.usuario_id, mensaje["cuenta_id"], "spam") == mensaje["carpeta"]:
+                correo.mover_mensaje(g.usuario_id, mensaje_id, "INBOX")
+            else:
+                correo.mover_a_carpeta_especial(g.usuario_id, mensaje_id, "spam")
+        except correo.ErrorCorreo as e:
+            errores.append(str(e))
+    return {"procesados": len(ids) - len(errores), "errores": errores}
+
+
+@correo_bp.route("/mensajes/categoria", methods=["POST"])
+@login_required
+def categoria_mensajes_lote():
+    datos = request.get_json(silent=True) or {}
+    categoria_id = int(datos["categoria_id"]) if str(datos.get("categoria_id") or "").isdigit() else None       # vacío = quitar la categoría
+    ids = _ids_propios_del_usuario(_ids_del_body())
+    for mensaje_id in ids:
+        correo.asignar_categoria(g.usuario_id, mensaje_id, categoria_id)
+    return {"procesados": len(ids)}
+
+
+@correo_bp.route("/mensajes/cliente-fiscal", methods=["POST"])
+@login_required
+def cliente_fiscal_mensajes_lote():
+    datos = request.get_json(silent=True) or {}
+    if g.tenant_id is None:
+        return {"procesados": 0}
+    cliente_id = int(datos["cliente_fiscal_id"]) if str(datos.get("cliente_fiscal_id") or "").isdigit() else None
+    ids = _ids_propios_del_usuario(_ids_del_body())
+    for mensaje_id in ids:
+        correo.asignar_cliente_fiscal(g.tenant_id, mensaje_id, cliente_id)
+    return {"procesados": len(ids)}
+
+
+@correo_bp.route("/mensajes/posponer", methods=["POST"])
+@login_required
+def posponer_mensajes_lote():
+    datos = request.get_json(silent=True) or {}
+    hasta = _hasta_valido(datos.get("hasta"))
+    if hasta is None:
+        return {"procesados": 0, "errores": [_("Elige una fecha y hora válidas.")]}, 400
+    ids = _ids_propios_del_usuario(_ids_del_body())
+    for mensaje_id in ids:
+        correo.posponer_mensaje(mensaje_id, hasta)
+    return {"procesados": len(ids)}
+
+
+@correo_bp.route("/mensajes/crear-tarea", methods=["POST"])
+@login_required
+def crear_tareas_mensajes_lote():
+    """Una tarea por cada correo seleccionado (con su cliente y el enlace al mensaje), como el botón «Crear tarea» de uno en uno."""
+    datos = request.get_json(silent=True) or {}
+    vence = (datos.get("vence") or "").strip() or None
+    if vence:
+        try:
+            datetime.strptime(vence, "%Y-%m-%d")
+        except ValueError:
+            vence = None
+    ids = _ids_propios_del_usuario(_ids_del_body())
+    for mensaje_id in ids:
+        mensaje = db.obtener_mensaje_correo(mensaje_id)
+        db.crear_tarea_outlook(
+            g.usuario_id, _asunto_de(mensaje), cuerpo=_("Correo de {remitente}").format(remitente=mensaje["remitente"] or ""),
+            fecha_vencimiento=vence, cliente_fiscal_id=mensaje["cliente_fiscal_id"], mensaje_correo_id=mensaje_id,
+        )
+    return {"procesados": len(ids)}

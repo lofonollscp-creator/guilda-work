@@ -19795,3 +19795,48 @@ msgstr "Sert à : %(s)s"
 
 msgid "Presentaciones en riesgo por el certificado"
 msgstr "Dépôts à risque à cause du certificat"
+
+msgid "Posponer los mensajes seleccionados"
+msgstr "Reporter les messages sélectionnés"
+
+msgid "Esta tarde (16:00)"
+msgstr "Cet après-midi (16:00)"
+
+msgid "Mañana (09:00)"
+msgstr "Demain (09:00)"
+
+msgid "Próximo lunes (09:00)"
+msgstr "Lundi prochain (09:00)"
+
+msgid "Categoría de los mensajes seleccionados"
+msgstr "Catégorie des messages sélectionnés"
+
+msgid "Categoría…"
+msgstr "Catégorie…"
+
+msgid "Asignar los mensajes seleccionados a un cliente"
+msgstr "Attribuer les messages sélectionnés à un client"
+
+msgid "Cliente…"
+msgstr "Client…"
+
+msgid "Seleccionar todo"
+msgstr "Tout sélectionner"
+
+msgid "Mensajes archivados."
+msgstr "Messages archivés."
+
+msgid "Mensajes movidos a spam o devueltos a la bandeja."
+msgstr "Messages déplacés vers les spams ou remis dans la boîte de réception."
+
+msgid "Cliente actualizado."
+msgstr "Client mis à jour."
+
+msgid "Mensajes pospuestos."
+msgstr "Messages reportés."
+
+msgid "Tareas creadas."
+msgstr "Tâches créées."
+
+msgid "Elige una fecha y hora válidas."
+msgstr "Choisissez une date et une heure valides."

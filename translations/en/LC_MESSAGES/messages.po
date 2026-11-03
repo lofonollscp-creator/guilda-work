@@ -19710,3 +19710,48 @@ msgstr "Used for: %(s)s"
 
 msgid "Presentaciones en riesgo por el certificado"
 msgstr "Filings at risk because of the certificate"
+
+msgid "Posponer los mensajes seleccionados"
+msgstr "Snooze the selected messages"
+
+msgid "Esta tarde (16:00)"
+msgstr "This afternoon (16:00)"
+
+msgid "Mañana (09:00)"
+msgstr "Tomorrow (09:00)"
+
+msgid "Próximo lunes (09:00)"
+msgstr "Next Monday (09:00)"
+
+msgid "Categoría de los mensajes seleccionados"
+msgstr "Category of the selected messages"
+
+msgid "Categoría…"
+msgstr "Category…"
+
+msgid "Asignar los mensajes seleccionados a un cliente"
+msgstr "Assign the selected messages to a client"
+
+msgid "Cliente…"
+msgstr "Client…"
+
+msgid "Seleccionar todo"
+msgstr "Select all"
+
+msgid "Mensajes archivados."
+msgstr "Messages archived."
+
+msgid "Mensajes movidos a spam o devueltos a la bandeja."
+msgstr "Messages moved to spam or returned to the inbox."
+
+msgid "Cliente actualizado."
+msgstr "Client updated."
+
+msgid "Mensajes pospuestos."
+msgstr "Messages snoozed."
+
+msgid "Tareas creadas."
+msgstr "Tasks created."
+
+msgid "Elige una fecha y hora válidas."
+msgstr "Choose a valid date and time."

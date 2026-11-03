@@ -19719,3 +19719,48 @@ msgstr "Dona servei a: %(s)s"
 
 msgid "Presentaciones en riesgo por el certificado"
 msgstr "Presentacions en risc pel certificat"
+
+msgid "Posponer los mensajes seleccionados"
+msgstr "Posposar els missatges seleccionats"
+
+msgid "Esta tarde (16:00)"
+msgstr "Aquesta tarda (16:00)"
+
+msgid "Mañana (09:00)"
+msgstr "Demà (09:00)"
+
+msgid "Próximo lunes (09:00)"
+msgstr "Proper dilluns (09:00)"
+
+msgid "Categoría de los mensajes seleccionados"
+msgstr "Categoria dels missatges seleccionats"
+
+msgid "Categoría…"
+msgstr "Categoria…"
+
+msgid "Asignar los mensajes seleccionados a un cliente"
+msgstr "Assignar els missatges seleccionats a un client"
+
+msgid "Cliente…"
+msgstr "Client…"
+
+msgid "Seleccionar todo"
+msgstr "Seleccionar-ho tot"
+
+msgid "Mensajes archivados."
+msgstr "Missatges arxivats."
+
+msgid "Mensajes movidos a spam o devueltos a la bandeja."
+msgstr "Missatges moguts a brossa o retornats a la safata."
+
+msgid "Cliente actualizado."
+msgstr "Client actualitzat."
+
+msgid "Mensajes pospuestos."
+msgstr "Missatges posposats."
+
+msgid "Tareas creadas."
+msgstr "Tasques creades."
+
+msgid "Elige una fecha y hora válidas."
+msgstr "Tria una data i una hora vàlides."

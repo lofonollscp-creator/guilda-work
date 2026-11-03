@@ -142,6 +142,29 @@
       <button class="correo-bulkbar-boton" type="button" data-accion="marcar-leido" data-valor="false">{{ _('No leído') }}</button>
       <button class="correo-bulkbar-boton" type="button" data-accion="destacar" data-valor="true"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-flag"></use></svg> {{ _('Destacar') }}</button>
       <button class="correo-bulkbar-boton" type="button" data-accion="destacar" data-valor="false">{{ _('Quitar destacado') }}</button>
+      <button class="correo-bulkbar-boton" type="button" data-accion="archivar">{{ _('Archivar') }}</button>
+      <button class="correo-bulkbar-boton" type="button" data-accion="spam">{{ _('Spam') }}</button>
+      <button class="correo-bulkbar-boton" type="button" data-accion="crear-tarea">{{ _('Crear tarea') }}</button>
+      <select data-accion-cambio="posponer" aria-label="{{ _('Posponer los mensajes seleccionados') }}">
+        <option value="">{{ _('Posponer…') }}</option>
+        <option value="hoy">{{ _('Esta tarde (16:00)') }}</option>
+        <option value="manana">{{ _('Mañana (09:00)') }}</option>
+        <option value="lunes">{{ _('Próximo lunes (09:00)') }}</option>
+      </select>
+      {% if categorias %}
+      <select data-accion-cambio="categoria" aria-label="{{ _('Categoría de los mensajes seleccionados') }}">
+        <option value="">{{ _('Categoría…') }}</option>
+        <option value="0">{{ _('Sin categoría') }}</option>
+        {% for c in categorias %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      {% if clientes_fiscales %}
+      <select data-accion-cambio="cliente-fiscal" aria-label="{{ _('Asignar los mensajes seleccionados a un cliente') }}">
+        <option value="">{{ _('Cliente…') }}</option>
+        <option value="0">{{ _('Sin cliente') }}</option>
+        {% for c in clientes_fiscales %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+      </select>
+      {% endif %}
       {% if carpetas|length > 1 %}
       <select id="correo-bulkbar-carpeta" aria-label="{{ _('Mover los mensajes seleccionados a') }}">
         <option value="">{{ _('Mover a…') }}</option>
@@ -163,6 +186,7 @@
     {% if mensajes|selectattr('protegido')|list %}
     <p class="correo-sync-aviso" role="status"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-lock"></use></svg> {{ _('Correo protegido con la clave del despacho.') }} {% if g.get('supervisor_tenant') or g.get('es_admin') %}<a href="{{ url_for('seguridad.cifrado') }}">{{ _('Desbloquear') }}</a>{% else %}{{ _('Pide a un responsable del despacho que lo desbloquee.') }}{% endif %}</p>
     {% endif %}
+    <label class="correo-seleccionar-todo"><input type="checkbox" id="correo-seleccionar-todo"> {{ _('Seleccionar todo') }}</label>
     <ul class="correo-lista-mensajes {{ 'es-compacta' if densidad == 'compacta' }} {{ 'sin-vista-previa' if not vista.vista_previa }}" id="correo-lista-mensajes">
       {% for m in mensajes %}
       {% set cat = categorias_por_id.get(m.categoria_id) %}

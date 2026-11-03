@@ -5226,3 +5226,7 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .correo-cuenta-fila .log-text { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
 .correo-cuenta-fila .log-duration { flex: 0 1 auto; }
 .correo-cuenta-fila .correo-cuenta-editar { flex: none; }
+
+/* Bandeja de correo: «seleccionar todo» sobre la lista y desplegables de la barra de acciones en lote sin ensancharla. */
+.correo-seleccionar-todo { display: flex; align-items: center; gap: 8px; padding: 6px 14px; font-size: 0.82em; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; }
+.correo-lista-bulkbar select { max-width: 170px; min-width: 0; }
