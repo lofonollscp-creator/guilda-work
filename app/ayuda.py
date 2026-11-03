@@ -43,6 +43,7 @@ MAPA = {
     "juridico.lista_informes": "asistente-juridico/biblioteca-informes-y-fuentes",
     "juridico.informe": "asistente-juridico/biblioteca-informes-y-fuentes",
     "juridico.fuentes": "asistente-juridico/biblioteca-informes-y-fuentes",
+    "juridico.panel_calidad": "asistente-juridico/calidad-del-asistente",
     "documentos_firma.": "gestion-del-despacho/documentos-para-firmar",
     "fiscal_masivo.": "gestion-del-despacho/cambios-en-lote",
     "comercial.masivo": "gestion-del-despacho/cambios-en-lote",
