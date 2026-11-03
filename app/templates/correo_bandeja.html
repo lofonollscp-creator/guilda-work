@@ -456,6 +456,10 @@
         · <a href="{{ url_for('clientes.ficha', cliente_id=contexto_correo.cliente.nucleo_id, pestana='tareas') }}">{{ _('Tareas') }}</a>{% endif %}
         {% if contexto_correo.cliente.email %}· <a href="{{ url_for('correo.redactar', cuenta_id=cuenta_id, para=contexto_correo.cliente.email, cliente_fiscal_id=contexto_correo.cliente.id) }}">{{ _('Escribir al cliente') }}</a>{% endif %}
       </p>
+      <form action="{{ url_for('correo.archivar_todo_en_expediente', mensaje_id=mensaje_seleccionado.id) }}" method="post" class="correo-contexto-fila">
+        <input type="hidden" name="cliente_fiscal_id" value="{{ contexto_correo.cliente.id }}">
+        <button type="submit" class="btn btn-ghost">{{ _('Archivar el correo y sus adjuntos en el expediente') }}</button>
+      </form>
       {% if contexto_correo.vencimientos %}
       <p class="correo-contexto-titulo">{{ _('Vencimientos abiertos') }}</p>
       <ul class="correo-contexto-lista">{% for v in contexto_correo.vencimientos %}<li><a href="{{ url_for('fiscal.editar_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }} {{ v.periodo }}</a> <span class="muted">· {{ v.fecha_limite[:10] }}</span></li>{% endfor %}</ul>
@@ -466,7 +470,8 @@
       {% endif %}
       {% elif contexto_correo.candidatos %}
       <p class="correo-contexto-titulo">{{ _('Este remitente podría ser:') }}</p>
-      <ul class="correo-contexto-lista">{% for k in contexto_correo.candidatos %}<li><a href="{{ url_for('clientes.ficha', cliente_id=k.id) }}">{{ k.nombre }}</a></li>{% endfor %}</ul>
+      <ul class="correo-contexto-lista">{% for k in contexto_correo.candidatos %}<li><a href="{{ url_for('clientes.ficha', cliente_id=k.id) }}">{{ k.nombre }}</a>
+        {% if k.fiscal_id %}<form action="{{ url_for('correo.archivar_todo_en_expediente', mensaje_id=mensaje_seleccionado.id) }}" method="post" class="correo-contexto-en-linea"><input type="hidden" name="cliente_fiscal_id" value="{{ k.fiscal_id }}"><button type="submit" class="btn btn-ghost">{{ _('Es este cliente: archivar') }}</button></form>{% endif %}</li>{% endfor %}</ul>
       {% endif %}
       {% if contexto_correo.documentos %}
       <p class="correo-contexto-titulo">{{ _('Archivado en expedientes') }}</p>

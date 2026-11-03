@@ -19919,3 +19919,22 @@ msgstr "Mencions un adjunt, però no has adjuntat cap fitxer. Enviar igualment?"
 
 msgid "Enviar igualmente"
 msgstr "Enviar igualment"
+
+msgid "Archivar el correo y sus adjuntos en el expediente"
+msgstr "Arxivar el correu i els seus adjunts a l'expedient"
+
+msgid "Es este cliente: archivar"
+msgstr "És aquest client: arxivar"
+
+msgid "Guardado en el expediente: %(n)s documento."
+msgid_plural "Guardado en el expediente: %(n)s documentos."
+msgstr[0] "Desat a l'expedient: %(n)s document."
+msgstr[1] "Desat a l'expedient: %(n)s documents."
+
+msgid "%(n)s ya estaba guardado."
+msgid_plural "%(n)s ya estaban guardados."
+msgstr[0] "%(n)s ja estava desat."
+msgstr[1] "%(n)s ja estaven desats."
+
+msgid "No había nada nuevo que guardar: ya estaba en el expediente."
+msgstr "No hi havia res de nou per desar: ja era a l'expedient."

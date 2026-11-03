@@ -11,7 +11,7 @@ import threading
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
-from flask_babel import get_locale
+from flask_babel import get_locale, ngettext
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
@@ -1480,6 +1480,25 @@ def archivar_en_expediente(mensaje_id: int):
     except correo.ErrorCorreo:
         abort(404)
     return redirect(ficha_cliente.url_documentos(g.tenant_id, cliente_id))
+
+
+@correo_bp.route("/<int:mensaje_id>/archivar-todo", methods=["POST"])
+@login_required
+def archivar_todo_en_expediente(mensaje_id: int):
+    """Un solo paso: vincula el correo al cliente y guarda en su expediente el propio correo y todos sus adjuntos (los duplicados se detectan). Vuelve al mensaje diciendo qué se guardó."""
+    mensaje = _mensaje_de_usuario_o_404(mensaje_id)
+    cliente_id = request.form.get("cliente_fiscal_id", type=int) or mensaje["cliente_fiscal_id"]
+    if cliente_id is None:
+        abort(400)
+    try:
+        r = correo.archivar_correo_en_expediente(g.usuario_id, mensaje_id, cliente_id, guardar_correo=True)
+    except correo.ErrorCorreo:
+        abort(404)
+    nuevos = r["archivados"]
+    texto = (ngettext("Guardado en el expediente: %(n)s documento.", "Guardado en el expediente: %(n)s documentos.", nuevos, n=nuevos) if nuevos else _("No había nada nuevo que guardar: ya estaba en el expediente."))
+    if r["duplicados"] and nuevos:
+        texto += " " + ngettext("%(n)s ya estaba guardado.", "%(n)s ya estaban guardados.", r["duplicados"], n=r["duplicados"])
+    return _volver_a_mensaje(mensaje, texto)
 
 
 @correo_bp.route("/ajustes/reglas-avanzadas", methods=["POST"])

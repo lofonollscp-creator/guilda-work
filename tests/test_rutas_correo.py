@@ -575,3 +575,21 @@ def test_acciones_en_lote_de_archivar_spam_categoria_cliente_posponer_y_tarea(cl
     tareas = [t for t in db.listar_tareas_outlook(usuario_id) if t["mensaje_correo_id"] in (m1, m2)]
     assert len(tareas) == 2 and all(t["fecha_vencimiento"].startswith("2026-11-10") for t in tareas)
     assert [t for t in tareas if t["mensaje_correo_id"] == m2][0]["cliente_fiscal_id"] == cf   # la tarea hereda el cliente del correo
+
+
+def test_archivar_todo_en_el_expediente_guarda_el_correo_y_los_adjuntos_en_un_paso(cliente):
+    usuario_id = iniciar_sesion_de_prueba(cliente, "archivar-todo@ejemplo.com", "contrasena123")
+    tenant = db.crear_tenant("Despacho archivar todo")
+    db.asignar_tenant(usuario_id, tenant)
+    cf = db.crear_cliente_fiscal(tenant, "Cliente Archivo", email="cliente@ejemplo.com")
+    cuenta_id = db.crear_cuenta_correo(usuario_id, "Prueba", "imap", "imap.ejemplo.com", 993, "yo@ejemplo.com")
+    mid = _crear_mensaje(cuenta_id, "1")
+    db.guardar_adjuntos_correo(mid, [{"nombre": "factura.pdf", "tipo": "application/pdf", "bytes": b"%PDF-1.4 contenido"}])
+    r = cliente.post(f"/correo/{mid}/archivar-todo", data={"cliente_fiscal_id": cf})
+    assert r.status_code == 302 and "aviso=" in r.headers["Location"]
+    assert db.obtener_mensaje_correo(mid)["cliente_fiscal_id"] == cf                              # vinculado al cliente
+    seguido = cliente.get(r.headers["Location"], follow_redirects=True).get_data(as_text=True)
+    assert "Guardado en el expediente: 2 documentos." in seguido                                 # el adjunto y el propio correo
+    otra = cliente.post(f"/correo/{mid}/archivar-todo", data={}, follow_redirects=True).get_data(as_text=True)
+    assert "No había nada nuevo que guardar" in otra                                              # sin repetir lo ya archivado
+    assert cliente.post(f"/correo/{mid}/archivar-todo", data={"cliente_fiscal_id": 99999}).status_code == 404

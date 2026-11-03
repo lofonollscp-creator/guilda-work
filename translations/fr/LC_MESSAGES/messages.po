@@ -19995,3 +19995,22 @@ msgstr "Vous mentionnez une pièce jointe, mais vous n'avez joint aucun fichier.
 
 msgid "Enviar igualmente"
 msgstr "Envoyer quand même"
+
+msgid "Archivar el correo y sus adjuntos en el expediente"
+msgstr "Archiver le courriel et ses pièces jointes dans le dossier"
+
+msgid "Es este cliente: archivar"
+msgstr "C'est ce client : archiver"
+
+msgid "Guardado en el expediente: %(n)s documento."
+msgid_plural "Guardado en el expediente: %(n)s documentos."
+msgstr[0] "Enregistré dans le dossier : %(n)s document."
+msgstr[1] "Enregistré dans le dossier : %(n)s documents."
+
+msgid "%(n)s ya estaba guardado."
+msgid_plural "%(n)s ya estaban guardados."
+msgstr[0] "%(n)s était déjà enregistré."
+msgstr[1] "%(n)s étaient déjà enregistrés."
+
+msgid "No había nada nuevo que guardar: ya estaba en el expediente."
+msgstr "Rien de nouveau à enregistrer : c'était déjà dans le dossier."

@@ -28,7 +28,8 @@ def _clientes_candidatos(tenant_id: int, usuario_id: int, direccion: str) -> lis
     conn = db.get_connection()
     try:
         filas = conn.execute(
-            f"""SELECT DISTINCT c.id, c.nombre FROM clientes c LEFT JOIN cliente_contactos k ON k.cliente_id = c.id
+            f"""SELECT DISTINCT c.id, c.nombre, (SELECT MIN(cf.id) FROM clientes_fiscales cf WHERE cf.cliente_id = c.id AND cf.tenant_id = c.tenant_id AND cf.papelera_en IS NULL) AS fiscal_id
+                FROM clientes c LEFT JOIN cliente_contactos k ON k.cliente_id = c.id
                 WHERE c.tenant_id = ? AND c.papelera_en IS NULL AND (LOWER(TRIM(c.email)) = ? OR LOWER(TRIM(k.email)) = ?){extra} ORDER BY c.nombre LIMIT ?""",
             (tenant_id, direccion, direccion, *pe, LIMITE)).fetchall()
     finally:

@@ -19910,3 +19910,22 @@ msgstr "You mention an attachment, but you have not attached any file. Send anyw
 
 msgid "Enviar igualmente"
 msgstr "Send anyway"
+
+msgid "Archivar el correo y sus adjuntos en el expediente"
+msgstr "Archive the email and its attachments in the client file"
+
+msgid "Es este cliente: archivar"
+msgstr "This is the client: archive"
+
+msgid "Guardado en el expediente: %(n)s documento."
+msgid_plural "Guardado en el expediente: %(n)s documentos."
+msgstr[0] "Saved in the client file: %(n)s document."
+msgstr[1] "Saved in the client file: %(n)s documents."
+
+msgid "%(n)s ya estaba guardado."
+msgid_plural "%(n)s ya estaban guardados."
+msgstr[0] "%(n)s was already saved."
+msgstr[1] "%(n)s were already saved."
+
+msgid "No había nada nuevo que guardar: ya estaba en el expediente."
+msgstr "Nothing new to save: it was already in the client file."
