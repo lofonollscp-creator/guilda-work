@@ -1,0 +1,64 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Revisar mi modelo 303') }}{% endblock %}
+{% block titulo %}{{ _('Modelo 303') }} · {{ d.periodo }} {{ d.ejercicio }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }}{% if v.fecha_limite %} · {{ _('vence el %(fecha)s', fecha=v.fecha_limite|fecha_dia) }}{% endif %}{% endblock %}
+{% block contenido %}
+    <a class="portal-volver" href="{{ url_for('portal_cliente.impuestos') }}">&larr; {{ _('Volver a mis impuestos') }}</a>
+    {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+    {% if respondida == 'conforme' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: hemos avisado a tu gestoría de que estás de acuerdo.') }}</strong></p>{% endif %}
+    {% if respondida == 'error' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: hemos avisado a tu gestoría. Revisará lo que nos cuentas antes de presentar.') }}</strong></p>{% endif %}
+
+    <section class="portal-tablero" aria-labelledby="decl-resultado">
+      <h2 id="decl-resultado">{{ _('Resultado') }}</h2>
+      <p class="portal-tablero-frase">{{ frase }}</p>
+      {% if d.iban and d.resultado_centimos > 0 %}<p class="muted">{{ _('Se cobrará de la cuenta terminada en %(ult)s.', ult=d.iban[-4:]) }}</p>{% endif %}
+      {% if v.modificada %}<p class="portal-peticion" role="note"><strong>{{ _('Tu gestoría ha cambiado la declaración después de enviarte el aviso: este es el resultado actual.') }}</strong></p>{% endif %}
+      <dl class="portal-tablero-cifras">
+        <div><dt>{{ _('IVA que has cobrado (ventas)') }}</dt><dd class="mono">{{ '%.2f'|format(v.totales.iva_repercutido / 100) }} €</dd></div>
+        <div><dt>{{ _('IVA que has pagado (compras)') }}</dt><dd class="mono">{{ '%.2f'|format(v.totales.iva_soportado / 100) }} €</dd></div>
+        <div><dt>{{ _('Diferencia') }}</dt><dd class="mono">{{ '%.2f'|format(v.totales.diferencia / 100) }} €</dd></div>
+      </dl>
+    </section>
+
+    <section class="ds-mt-24" aria-labelledby="decl-facturas">
+      <h2 id="decl-facturas">{{ _('Facturas del periodo') }}</h2>
+      {% if not v.apuntes %}
+      <p class="empty-lane">{{ _('No hay facturas en este periodo.') }}</p>
+      {% else %}
+      <div class="table-wrap"><table class="historial-table">
+        <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Base') }}</th><th>{{ _('IVA') }}</th></tr></thead>
+        <tbody>{% for f in v.apuntes %}
+          <tr>
+            <td class="mono">{{ f.fecha }}</td>
+            <td>{% if con_facturas and f.factura_id %}<a href="{{ url_for('portal_cliente.factura', factura_id=f.factura_id) }}">{{ f.numero }}</a>{% else %}{{ f.numero }}{% endif %}</td>
+            <td>{{ f.tercero }}</td>
+            <td>{{ _('Emitida') if f.tipo == 'emitida' else _('Recibida') }}</td>
+            <td class="mono">{{ '%.2f'|format(f.base / 100) }} €</td>
+            <td class="mono">{{ '%.2f'|format(f.cuota / 100) }} €</td>
+          </tr>{% endfor %}</tbody>
+      </table></div>
+      {% endif %}
+    </section>
+
+    <section class="portal-conversacion" aria-labelledby="decl-conformidad">
+      <h2 id="decl-conformidad">{{ _('¿Está todo bien?') }}</h2>
+      {% if pendiente %}
+      <p class="muted">{{ _('Es una revisión previa: si ves algo raro, cuéntanoslo antes de que se presente.') }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.conformidad', declaracion_id=d.id) }}" class="portal-subir">
+        <input type="hidden" name="resultado" value="conforme">
+        <button type="submit" class="btn btn-primary">{{ _('De acuerdo') }}</button>
+      </form>
+      <form method="post" action="{{ url_for('portal_cliente.conformidad', declaracion_id=d.id) }}" class="portal-subir">
+        <input type="hidden" name="resultado" value="error">
+        <label for="decl-comentario">{{ _('Hay un error: cuéntanos qué falta o no cuadra') }}</label>
+        <textarea id="decl-comentario" class="ds-ancho-total ds-mb-3" name="comentario" rows="3" maxlength="{{ max_comentario }}" required></textarea>
+        <button type="submit" class="btn btn-ghost">{{ _('Hay un error') }}</button>
+      </form>
+      {% else %}
+      {% set r = v.conformidad.respuesta %}
+      {% if r and r.resultado == 'conforme' %}<p><span class="portal-estado ok">{{ _('Das tu conformidad') }}</span> <span class="muted">{{ r.en }}</span></p>
+      {% elif r and r.resultado == 'error' %}<p><span class="portal-estado ko">{{ _('Has indicado un error') }}</span> <span class="muted">{{ r.en }}</span></p><p class="portal-devuelta-motivo">{{ r.comentario }}</p>
+      {% else %}<p class="muted">{{ _('Esta declaración ya no está pendiente de tu revisión.') }}</p>{% endif %}
+      {% endif %}
+    </section>
+{% endblock %}

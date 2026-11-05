@@ -44,7 +44,8 @@
         {% endfor %}
       </ul>
       {% endif %}
-      {% if t.cerrado %}<p class="muted">{{ _('Tu gestoría ya ha cerrado este trimestre. Si te falta alguna factura, escríbele desde el modelo correspondiente.') }}</p>{% endif %}
+      {% if t.cerrado %}<p class="muted">{{ _('Tu gestoría ya ha cerrado este trimestre. Si te falta alguna factura, escríbele desde el modelo correspondiente.') }}</p>
+      {% if con_informe %}<a class="btn btn-ghost" href="{{ url_for('portal_cliente.informe_trimestre', trimestre=t.trimestre) }}">{{ _('Ver el informe del trimestre') }}</a>{% endif %}{% endif %}
       {% if t.otras_devueltas %}<p class="muted">{{ _('También tienes facturas por corregir en otros trimestres: míralas en la barra de arriba.') }}</p>{% endif %}
     </section>
 

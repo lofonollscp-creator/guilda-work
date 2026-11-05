@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Cerrar trimestre') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set textos = {
+  'sin_facturas': _('Hay facturas del trimestre'),
+  'por_leer': _('Facturas por leer (solo el archivo)'),
+  'por_revisar': _('Facturas por revisar'),
+  'mensajes': _('Mensajes del cliente sin leer'),
+  'duplicadas': _('Posibles facturas duplicadas'),
+  'sin_exportar': _('Revisadas sin exportar a a3'),
+  'a3': _('Configuración de a3 del cliente'),
+  'devueltas': _('Devueltas al cliente sin respuesta') } %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Cerrar el trimestre %(t)s', t=etiqueta) }}</h1>
+    <p class="subtitle">{{ cliente.nombre if cliente else '' }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente_id, trimestre=trimestre) }}">‹ {{ _('Volver a las facturas') }}</a>
+</header>
+{{ aviso_error(error) }}
+
+{% if hecho %}
+<div class="dash-panel" role="status"><strong>{{ _('Trimestre cerrado.') }}</strong>
+  {% if hecho.avisado %}{{ _('Hemos avisado al cliente por correo.') }}{% else %}{{ _('No hemos podido avisar al cliente por correo (sin correo saliente o sin email en su ficha); lo verá al entrar a su portal.') }}{% endif %}
+  {% if con_fiscal %}<br>{{ _('Tiene a su disposición el informe del trimestre en su portal.') }}{% endif %}</div>
+{% endif %}
+
+<section class="dash-panel" aria-labelledby="cierre-lista">
+  <h2 id="cierre-lista">{{ _('Antes de cerrar') }}</h2>
+  <ul class="checklist-cierre">
+    {% for p in c.puntos %}
+    <li class="cierre-{{ p.estado }}">
+      <span class="pildora-v2 {{ {'ok': 'verde', 'pendiente': 'rojo', 'aviso': 'ambar'}[p.estado] }}">{{ {'ok': _('Hecho'), 'pendiente': _('Pendiente'), 'aviso': _('Revisa')}[p.estado] }}</span>
+      {{ textos[p.clave] }}{% if p.cuantos and p.clave != 'sin_facturas' %} · <strong>{{ p.cuantos }}</strong>{% endif %}
+      {% if p.estado != 'ok' and p.filtro %}<a href="{{ url_for('contabilidad.lista', cliente_id=cliente_id, trimestre=trimestre, estado=p.filtro.estado) }}">{{ _('Ver') }}</a>{% endif %}
+      {% if p.clave == 'sin_facturas' and p.estado == 'aviso' %}<span class="muted">{{ _('No hay ninguna factura en este trimestre: ¿el cliente no tuvo actividad?') }}</span>{% endif %}
+      {% if p.clave == 'a3' and p.estado == 'pendiente' %}<a href="{{ url_for('contabilidad.configuracion', cliente_id=cliente_id) }}">{{ _('Configurar') }}</a>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted">{{ _('%(n)s de %(total)s puntos hechos.', n=c.hechos, total=c.puntos|length) }}</p>
+</section>
+
+{% if c.cierre %}
+<section class="dash-panel"><p><span class="pill prioridad-alta">{{ _('Periodo cerrado') }}</span> {{ c.cierre.detalle }}</p></section>
+{% else %}
+<form method="post" action="{{ url_for('contabilidad.cierre') }}" class="dash-panel edit-form">
+  <input type="hidden" name="cliente_id" value="{{ cliente_id }}"><input type="hidden" name="trimestre" value="{{ trimestre }}">
+  {% if not c.listo %}
+  <label class="checkbox-label"><input type="checkbox" name="forzar" value="1"> {{ _('Cerrar igualmente, aunque queden puntos pendientes (quedará constancia)') }}</label>
+  {% endif %}
+  <p class="muted">{{ _('Al cerrar, se avisa al cliente por correo y, si usas Guilda Fiscal, tiene el informe del trimestre en su portal.') }}</p>
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Cerrar el trimestre') }}</button></div>
+</form>
+{% endif %}
+{% endblock %}

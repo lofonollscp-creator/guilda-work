@@ -20358,3 +20358,231 @@ msgstr "If it's the same one, discard one of the two before exporting."
 
 msgid "Todavía no hay mensajes. El cliente los verá en su portal."
 msgstr "No messages yet. The client will see them in their portal."
+
+msgid "Revisa tu modelo 303 de %(p)s antes de presentarlo"
+msgstr "Review your form 303 for %(p)s before it is filed"
+
+msgid "Revisa tu modelo 303 de %(periodo)s"
+msgstr "Review your form 303 for %(periodo)s"
+
+msgid "Tu gestoría ha preparado tu modelo 303 de %(periodo)s y quiere que lo veas antes de presentarlo."
+msgstr "Your accountant has prepared your form 303 for %(periodo)s and wants you to see it before filing."
+
+msgid "Si todo está bien, pulsa «De acuerdo»; si falta algo o no cuadra, dínoslo desde ahí."
+msgstr "If everything is fine, press “Agree”; if something is missing or doesn't add up, tell us from there."
+
+msgid "Revisar mi modelo 303"
+msgstr "Review my form 303"
+
+msgid "Hemos cerrado el trimestre %(t)s"
+msgstr "We have closed quarter %(t)s"
+
+msgid "Tu gestoría ha cerrado el trimestre %(t)s: todas tus facturas de ese periodo están ya tratadas."
+msgstr "Your accountant has closed quarter %(t)s: all your invoices for that period have been handled."
+
+msgid "Tienes a tu disposición el informe del trimestre en tu portal."
+msgstr "The quarterly report is available in your portal."
+
+msgid "Si te falta alguna factura de ese periodo, escríbenos desde el portal."
+msgstr "If you are missing an invoice for that period, write to us from the portal."
+
+msgid "Ver mi trimestre"
+msgstr "View my quarter"
+
+msgid "Gracias: hemos avisado a tu gestoría de que estás de acuerdo."
+msgstr "Thanks: we've told your accountant that you agree."
+
+msgid "Gracias: hemos avisado a tu gestoría. Revisará lo que nos cuentas antes de presentar."
+msgstr "Thanks: we've told your accountant. They will review what you tell us before filing."
+
+msgid "Se cobrará de la cuenta terminada en %(ult)s."
+msgstr "It will be charged to the account ending in %(ult)s."
+
+msgid "Tu gestoría ha cambiado la declaración después de enviarte el aviso: este es el resultado actual."
+msgstr "Your accountant changed the return after sending you the notice: this is the current result."
+
+msgid "IVA que has cobrado (ventas)"
+msgstr "VAT you collected (sales)"
+
+msgid "IVA que has pagado (compras)"
+msgstr "VAT you paid (purchases)"
+
+msgid "No hay facturas en este periodo."
+msgstr "There are no invoices in this period."
+
+msgid "¿Está todo bien?"
+msgstr "Is everything right?"
+
+msgid "Es una revisión previa: si ves algo raro, cuéntanoslo antes de que se presente."
+msgstr "This is a preliminary review: if you see anything odd, tell us before it is filed."
+
+msgid "De acuerdo"
+msgstr "Agree"
+
+msgid "Hay un error: cuéntanos qué falta o no cuadra"
+msgstr "There is an error: tell us what is missing or doesn't add up"
+
+msgid "Hay un error"
+msgstr "There is an error"
+
+msgid "Das tu conformidad"
+msgstr "You have agreed"
+
+msgid "Has indicado un error"
+msgstr "You reported an error"
+
+msgid "Esta declaración ya no está pendiente de tu revisión."
+msgstr "This return no longer needs your review."
+
+msgid "Elige «De acuerdo» o «Hay un error»."
+msgstr "Choose “Agree” or “There is an error”."
+
+msgid "Cuéntanos qué hay que corregir."
+msgstr "Tell us what needs fixing."
+
+msgid "El comentario no puede pasar de 500 caracteres."
+msgstr "The comment can't be longer than 500 characters."
+
+msgid "Esta declaración ya no está pendiente de tu conformidad."
+msgstr "This return no longer awaits your agreement."
+
+msgid "Conformidad del cliente"
+msgstr "Client's agreement"
+
+msgid "Pedida: hemos avisado al cliente por correo."
+msgstr "Requested: we emailed the client."
+
+msgid "Pedida, pero no hemos podido avisarle por correo (sin correo saliente o sin email en su ficha): la verá al entrar a su portal."
+msgstr "Requested, but we couldn't email them (no outgoing mail or no email on file): they'll see it when they log in to their portal."
+
+msgid "Antes de presentar, el cliente puede ver en su portal el resultado y las facturas que lo componen, y decirte si está de acuerdo. No bloquea la presentación."
+msgstr "Before filing, the client can see the result and the invoices behind it in their portal and tell you whether they agree. It doesn't block filing."
+
+msgid "Pendiente de respuesta"
+msgstr "Awaiting reply"
+
+msgid "pedida el %(f)s"
+msgstr "requested on %(f)s"
+
+msgid "El cliente está de acuerdo"
+msgstr "The client agrees"
+
+msgid "El cliente dice que hay un error:"
+msgstr "The client says there is an error:"
+
+msgid "El resultado ha cambiado desde que se pidió la conformidad: conviene volver a pedirla."
+msgstr "The result has changed since agreement was requested: it's best to request it again."
+
+msgid "Volver a pedirla"
+msgstr "Request it again"
+
+msgid "Pedir conformidad al cliente"
+msgstr "Request the client's agreement"
+
+msgid "Ver el informe del trimestre"
+msgstr "View the quarterly report"
+
+msgid "Cola de trabajo"
+msgstr "Work queue"
+
+msgid "Clientes ordenados por lo que sobra de tiempo hasta su próximo plazo, una vez descontado lo que cuesta despachar lo que tienen pendiente (a %(n)s facturas por día)."
+msgstr "Clients ordered by the time left before their next deadline, after subtracting how long their pending work takes (at %(n)s invoices per day)."
+
+msgid "No hay nada pendiente"
+msgstr "Nothing pending"
+
+msgid "Ningún cliente tiene facturas por leer, revisar o exportar, ni mensajes sin leer."
+msgstr "No client has invoices to read, review or export, or unread messages."
+
+msgid "Sin plazo"
+msgstr "No deadline"
+
+msgid "Espera"
+msgstr "Waiting"
+
+msgid "Por exportar"
+msgstr "To export"
+
+msgid "Esperan al cliente"
+msgstr "Waiting on the client"
+
+msgid "Mensajes nuevos"
+msgstr "New messages"
+
+msgid "Más antigua"
+msgstr "Oldest"
+
+msgid "Anotadas por el cliente desde el portal"
+msgstr "Entered by the client from the portal"
+
+msgid "%(n)s d"
+msgstr "%(n)s d"
+
+msgid "holgura %(n)s d"
+msgstr "margin %(n)s d"
+
+msgid "Cerrar trimestre"
+msgstr "Close quarter"
+
+msgid "Hay facturas del trimestre"
+msgstr "There are invoices for the quarter"
+
+msgid "Facturas por leer (solo el archivo)"
+msgstr "Invoices to read (file only)"
+
+msgid "Facturas por revisar"
+msgstr "Invoices to review"
+
+msgid "Mensajes del cliente sin leer"
+msgstr "Unread client messages"
+
+msgid "Posibles facturas duplicadas"
+msgstr "Possible duplicate invoices"
+
+msgid "Revisadas sin exportar a a3"
+msgstr "Reviewed but not exported to a3"
+
+msgid "Configuración de a3 del cliente"
+msgstr "Client's a3 configuration"
+
+msgid "Devueltas al cliente sin respuesta"
+msgstr "Returned to the client with no reply"
+
+msgid "Antes de cerrar"
+msgstr "Before closing"
+
+msgid "Revisa"
+msgstr "Check"
+
+msgid "No hay ninguna factura en este trimestre: ¿el cliente no tuvo actividad?"
+msgstr "There are no invoices this quarter: did the client have no activity?"
+
+msgid "%(n)s de %(total)s puntos hechos."
+msgstr "%(n)s of %(total)s items done."
+
+msgid "Cerrar igualmente, aunque queden puntos pendientes (quedará constancia)"
+msgstr "Close anyway, even with pending items (it will be recorded)"
+
+msgid "Al cerrar, se avisa al cliente por correo y, si usas Guilda Fiscal, tiene el informe del trimestre en su portal."
+msgstr "On closing, the client is emailed and, if you use Guilda Fiscal, gets the quarterly report in their portal."
+
+msgid "Cerrar el trimestre"
+msgstr "Close the quarter"
+
+msgid "Trimestre cerrado."
+msgstr "Quarter closed."
+
+msgid "Hemos avisado al cliente por correo."
+msgstr "We emailed the client."
+
+msgid "No hemos podido avisar al cliente por correo (sin correo saliente o sin email en su ficha); lo verá al entrar a su portal."
+msgstr "We couldn't email the client (no outgoing mail or no email on file); they'll see it when they log in."
+
+msgid "Tiene a su disposición el informe del trimestre en su portal."
+msgstr "The quarterly report is available in their portal."
+
+msgid "Cerrar el trimestre %(t)s paso a paso"
+msgstr "Close quarter %(t)s step by step"
+
+msgid "vencido hace %(n)s días"
+msgstr "overdue by %(n)s days"

@@ -137,6 +137,17 @@ def enviar_recordatorio_fiscal(email_destino: str, asunto: str, texto: str, url_
     _enviar(email_destino, _asunto(asunto, tenant_id), plano, html)
 
 
+def enviar_aviso_portal(email_destino: str, asunto: str, lineas: list[str], boton_texto: str, url_portal: str, tenant_id: int | None = None) -> None:
+    """Aviso corto de la gestoría al cliente con un botón que lo lleva a la pantalla concreta del portal (la URL ya trae el destino: `portal_recordatorios.con_destino`)."""
+    plano, html = _construir(tenant_id,
+        asunto, lineas,
+        boton=(boton_texto, url_portal),
+        aviso=_("Entra al portal de cliente con tu email: te mandaremos un enlace de acceso."),
+        preencabezado=asunto,
+    )
+    _enviar(email_destino, _asunto(asunto, tenant_id), plano, html)
+
+
 def enviar_enlace_pago(email_destino: str, concepto: str, url_pago: str, tenant_id: int | None = None) -> None:
     """Aviso de que hay un enlace de pago de Stripe Checkout disponible
     para un vencimiento (app/rutas_fiscal.py:cobrar_stripe_vencimiento).

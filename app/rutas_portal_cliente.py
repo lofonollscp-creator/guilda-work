@@ -18,7 +18,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import facturas_contables, facturas_portal, portal_inicio
+from . import cierre_trimestre, conformidad_declaracion, facturas_contables, facturas_portal, portal_inicio
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
@@ -365,7 +365,7 @@ def facturas():
             error = str(e)
     error = error or (request.args.get("error") or "")[:200] or None
     return render_template("portal_facturas.html", cliente=cliente, tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
-                           datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
+                           datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), con_informe=verticales.esta_activo(cliente["tenant_id"], "fiscal"), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
                            max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
 
 
@@ -407,6 +407,20 @@ def comprobar_archivos():
     return {"repetidas": facturas_portal.archivos_ya_enviados(cliente["id"], huellas if isinstance(huellas, list) else [])}
 
 
+@portal_bp.route("/facturas/informe.pdf")
+@cliente_login_required
+def informe_trimestre():
+    """El informe del trimestre (el que prepara Guilda Fiscal), solo para despachos que lo usan."""
+    cliente = _cliente_con_facturas()
+    try:
+        pdf = cierre_trimestre.informe_pdf(cliente["tenant_id"], cliente["id"], request.args.get("trimestre", ""))
+    except ValueError:
+        abort(404)
+    if pdf is None:
+        abort(404)
+    return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="informe-{request.args.get("trimestre", "")}.pdf"', "X-Content-Type-Options": "nosniff"})
+
+
 @portal_bp.route("/facturas/<int:factura_id>")
 @cliente_login_required
 def factura(factura_id: int):
@@ -433,3 +447,42 @@ def mensaje_de_factura(factura_id: int):
             abort(404)
         return redirect(url_for("portal_cliente.factura", factura_id=factura_id, error=_(str(e))[:200]) + "#mensajes")
     return redirect(url_for("portal_cliente.factura", factura_id=factura_id) + "#mensajes")
+
+
+# --- Revisar el modelo antes de presentarlo (conformidad del cliente) -----------------------------------------------------------------------------------
+
+def _cliente_con_fiscal():
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None or not verticales.esta_activo(cliente["tenant_id"], "fiscal"):
+        abort(404)
+    return cliente
+
+
+@portal_bp.route("/declaraciones/<int:declaracion_id>")
+@cliente_login_required
+def declaracion(declaracion_id: int):
+    """El modelo 303 que la gestoría ha pedido revisar: resultado, cuotas y facturas que lo componen, y los botones «De acuerdo» / «Hay un error»."""
+    cliente = _cliente_con_fiscal()
+    v = conformidad_declaracion.ver_para_cliente(cliente["id"], declaracion_id)
+    if v is None:
+        abort(404)
+    from .fiscal_resumen_pdf import frase_resultado
+    d = v["declaracion"]
+    return render_template("portal_declaracion.html", cliente=cliente, v=v, d=d, frase=frase_resultado(d["tipo_declaracion"], d["resultado_centimos"]), portal_seccion="impuestos",
+                           con_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"), pendiente=v["conformidad"]["respuesta"] is None and d["estado"] in conformidad_declaracion.ESTADOS_PEDIBLES,
+                           max_comentario=conformidad_declaracion.MAX_COMENTARIO, error=(request.args.get("error") or "")[:200] or None, respondida=request.args.get("respondida"))
+
+
+@portal_bp.route("/declaraciones/<int:declaracion_id>/conformidad", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour", methods=["POST"])
+def conformidad(declaracion_id: int):
+    cliente = _cliente_con_fiscal()
+    if conformidad_declaracion.ver_para_cliente(cliente["id"], declaracion_id) is None:
+        abort(404)
+    resultado = request.form.get("resultado", "")
+    try:
+        conformidad_declaracion.responder(cliente["id"], declaracion_id, resultado, request.form.get("comentario", ""))
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.declaracion", declaracion_id=declaracion_id, error=_(str(e))[:200]))
+    return redirect(url_for("portal_cliente.declaracion", declaracion_id=declaracion_id, respondida=resultado))

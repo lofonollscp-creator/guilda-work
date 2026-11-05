@@ -106,7 +106,7 @@ def test_barrido(servidor, abrir, entrar_como_equipo):
     pagina.goto(f"{servidor.url}/docs/")
     docs = pagina.evaluate("() => [...new Set([...document.querySelectorAll('.docs-sidebar a')].map(a => a.getAttribute('href')))]")
     rutas = _rutas(servidor.app, ids) + [d for d in docs if d and d.startswith("/")]
-    rutas += [f"/clientes/{ids['cliente']}", f"/tareas/{ids['tarea']}", f"/correo/?cuenta_id={ids['cuenta']}&mensaje_id={ids['mensaje']}", f"/proyectos/{ids['proyecto']}"]
+    rutas += [f"/clientes/{ids['cliente']}", f"/tareas/{ids['tarea']}", f"/correo/?cuenta_id={ids['cuenta']}&mensaje_id={ids['mensaje']}", f"/proyectos/{ids['proyecto']}", f"/contabilidad/cierre?cliente_id={ids['cliente']}&trimestre=2026-T3"]
     informe = {}
     fallos = {"actual": ""}
     pagina.on("response", lambda r: informe.setdefault(fallos["actual"], {}).setdefault("recursos", []).append(f"{r.status} {r.url.replace(servidor.url, '')[:90]}") if r.status >= 400 and not r.url.endswith(fallos["actual"].split("@")[0]) else None)

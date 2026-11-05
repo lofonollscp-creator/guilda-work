@@ -664,6 +664,11 @@ def facturas_del_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
     si es recibida las practica el cliente (modelo 111, o 115 si es un alquiler), si es emitida las soporta él (no van en el 111). Para cada modelo: `computa` (ya cuenta), `por_registrar` / `por_revisar`
     (aún no cuenta) o `excluida` (se sacó de Guilda Fiscal). El cálculo automático del 111 todavía no existe: aquí se ve qué entrará en él. Importes en céntimos; los abonos restan."""
     _exigir_acceso(tenant_id, usuario_id, cliente_fiscal_id)
+    return _facturas_del_periodo(tenant_id, cliente_fiscal_id, ejercicio, periodo)
+
+
+def _facturas_del_periodo(tenant_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
+    """Lo mismo que `facturas_del_periodo` pero SIN comprobar a qué persona se enseña: solo para quien ya lo ha comprobado a su manera (el portal, ya autenticado como ese cliente)."""
     if periodo not in tuple(f"{m:02d}" for m in range(1, 13)) + ("1T", "2T", "3T", "4T"):
         raise ErrorFiscal("Periodo no válido.")
     desde, hasta = _limites_periodo(ejercicio, periodo)
@@ -736,6 +741,54 @@ def informe_trimestral(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, 
     declaracion = next((d for d in listar_declaraciones(tenant_id, usuario_id, cliente_fiscal_id) if d["ejercicio"] == ejercicio and d["periodo"] == periodo and d["estado"] != "anulada"), None)
     datos.update({"declaracion": declaracion, "fecha_limite": pend["fecha_limite"], "emitidas": pend["emitidas"], "recibidas": pend["recibidas"], "sin_registrar": len(pend["sin_registrar"]),
                   "no_computan": datos["totales"]["no_computan"]})
+    return datos
+
+
+def resumen_para_cliente(tenant_id: int, cliente_fiscal_id: int, declaracion_id: int) -> dict:
+    """Lo que el portal enseña al cliente de una declaración suya (modelo 303) para que dé su conformidad: el resultado, las cuotas devengada y deducible y los apuntes (facturas) del periodo que la componen,
+    con la fecha límite. Sale de la declaración y de su instantánea congelada, no de lo que haya cambiado después. Filtra por cliente (una declaración de otro es «no existe»); NO comprueba persona: lo llama
+    el portal, ya autenticado como ese cliente."""
+    conn = db.get_connection()
+    try:
+        d = conn.execute("SELECT id, modelo, ejercicio, periodo, estado, tipo_declaracion, resultado_centimos, iban, vencimiento_id, instantanea_id FROM fiscal_declaraciones WHERE id = ? AND tenant_id = ? "
+                         "AND cliente_fiscal_id = ?", (declaracion_id, tenant_id, cliente_fiscal_id)).fetchone()
+        if d is None:
+            raise ErrorFiscal("La declaración no existe.", "no_encontrado")
+        d = dict(d)
+        casillas = {c["casilla"]: c["valor"] for c in conn.execute("SELECT casilla, valor FROM fiscal_casillas WHERE declaracion_id = ? AND tenant_id = ?", (declaracion_id, tenant_id))}
+        inst = conn.execute("SELECT contenido FROM fiscal_instantaneas WHERE id = ? AND tenant_id = ?", (d["instantanea_id"], tenant_id)).fetchone()
+        v = conn.execute("SELECT fecha_limite FROM vencimientos_fiscales WHERE id = ? AND tenant_id = ?", (d["vencimiento_id"], tenant_id)).fetchone() if d["vencimiento_id"] else None
+        if v is None:
+            v = conn.execute("SELECT fecha_limite FROM vencimientos_fiscales WHERE tenant_id = ? AND cliente_fiscal_id = ? AND modelo = '303' AND periodo = ? AND papelera_en IS NULL ORDER BY id DESC LIMIT 1",
+                             (tenant_id, cliente_fiscal_id, f"{d['periodo']} {d['ejercicio']}")).fetchone()
+    finally:
+        conn.close()
+    apuntes = []
+    for a in (json.loads(inst["contenido"]).get("apuntes", []) if inst else []):
+        if motor_303_en_periodo(a["fecha_expedicion"], d["ejercicio"], d["periodo"]):
+            apuntes.append({"fecha": a["fecha_expedicion"], "numero": f"{a.get('serie') or ''}{a['numero']}", "tercero": a.get("contraparte_nombre") or "", "tipo": "emitida" if a["libro"] == "E" else "recibida",
+                            "base": a["base_centimos"], "cuota": a.get("cuota_centimos") or 0, "factura_id": a.get("factura_id")})
+    apuntes.sort(key=lambda a: (a["fecha"], a["numero"]))
+    devengada, deducible = casillas.get("27", 0), casillas.get("45", 0)
+    return {"declaracion": d, "fecha_limite": v["fecha_limite"][:10] if v and v["fecha_limite"] else None, "apuntes": apuntes,
+            "totales": {"iva_repercutido": devengada, "iva_soportado": deducible, "diferencia": devengada - deducible}}
+
+
+def informe_para_cliente(tenant_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
+    """Los mismos datos que `informe_trimestral` (los que maqueta el PDF del informe del trimestre) pero SIN comprobar a qué persona se enseñan: lo llama el portal, ya autenticado como ese cliente."""
+    datos = _facturas_del_periodo(tenant_id, cliente_fiscal_id, ejercicio, periodo)
+    conn = db.get_connection()
+    try:
+        d = conn.execute("SELECT id, estado, tipo_declaracion, resultado_centimos FROM fiscal_declaraciones WHERE tenant_id = ? AND cliente_fiscal_id = ? AND modelo = '303' AND ejercicio = ? AND periodo = ? "
+                         "AND estado != 'anulada' ORDER BY id DESC LIMIT 1", (tenant_id, cliente_fiscal_id, ejercicio, periodo)).fetchone()
+        v = conn.execute("SELECT fecha_limite FROM vencimientos_fiscales WHERE tenant_id = ? AND cliente_fiscal_id = ? AND modelo = '303' AND periodo = ? AND papelera_en IS NULL ORDER BY id DESC LIMIT 1",
+                         (tenant_id, cliente_fiscal_id, f"{periodo} {ejercicio}")).fetchone()
+    finally:
+        conn.close()
+    computan = [f for f in datos["facturas"] if f["m303"] == "computa"]
+    datos.update({"declaracion": dict(d) if d else None, "fecha_limite": v["fecha_limite"][:10] if v and v["fecha_limite"] else None,
+                  "emitidas": sum(1 for f in computan if f["tipo"] == "emitida"), "recibidas": sum(1 for f in computan if f["tipo"] == "recibida"),
+                  "sin_registrar": sum(1 for f in datos["facturas"] if f["m303"] == "por_registrar"), "no_computan": datos["totales"]["no_computan"]})
     return datos
 
 

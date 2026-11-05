@@ -24,6 +24,28 @@
 </div>
 {{ aviso_error(error) }}
 
+{% if puede_pedir_conformidad or conformidad %}
+<section class="dash-panel decl-conformidad" aria-labelledby="decl-conformidad-titulo">
+  <h2 id="decl-conformidad-titulo">{{ _('Conformidad del cliente') }}</h2>
+  {% if conformidad_aviso == 'avisado' %}<p role="status"><strong>{{ _('Pedida: hemos avisado al cliente por correo.') }}</strong></p>
+  {% elif conformidad_aviso == 'sin_aviso' %}<p role="status"><strong>{{ _('Pedida, pero no hemos podido avisarle por correo (sin correo saliente o sin email en su ficha): la verá al entrar a su portal.') }}</strong></p>{% endif %}
+  {% if not conformidad %}
+  <p class="muted">{{ _('Antes de presentar, el cliente puede ver en su portal el resultado y las facturas que lo componen, y decirte si está de acuerdo. No bloquea la presentación.') }}</p>
+  {% elif not conformidad.respuesta %}
+  <p><span class="pildora-v2 ambar">{{ _('Pendiente de respuesta') }}</span> <span class="muted">{{ _('pedida el %(f)s', f=conformidad.pedida_en) }}</span></p>
+  {% elif conformidad.respuesta.resultado == 'conforme' %}
+  <p><span class="pildora-v2 verde">{{ _('El cliente está de acuerdo') }}</span> <span class="muted">{{ conformidad.respuesta.en }}</span></p>
+  {% else %}
+  <div class="ia-error" role="alert"><strong>{{ _('El cliente dice que hay un error:') }}</strong> {{ conformidad.respuesta.comentario }} <span class="muted">{{ conformidad.respuesta.en }}</span></div>
+  {% endif %}
+  {% if conformidad and conformidad.resultado_centimos is not none and conformidad.resultado_centimos != d.resultado_centimos %}
+  <p class="muted">{{ _('El resultado ha cambiado desde que se pidió la conformidad: conviene volver a pedirla.') }}</p>{% endif %}
+  {% if puede_pedir_conformidad %}
+  <form method="post" action="{{ url_for('guilda_fiscal.pedir_conformidad', declaracion_id=d.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Volver a pedirla') if conformidad else _('Pedir conformidad al cliente') }}</button></form>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if d.bloqueos %}
 <div class="ia-error" role="alert"><strong>{{ _('El cálculo está bloqueado: este caso no está soportado todavía y no se inventa un número.') }}</strong><ul>{% for b in d.bloqueos %}<li>{{ b }}</li>{% endfor %}</ul></div>
 {% endif %}

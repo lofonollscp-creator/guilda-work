@@ -9,6 +9,7 @@
     <p class="subtitle">{{ _('Anota los datos de las facturas de tus clientes, revísalas y genera el fichero que lee a3 para contabilizarlas.') }}</p>
   </div>
   <div class="ds-fila">
+    <a class="btn btn-ghost" href="{{ url_for('contabilidad.cola') }}">{{ _('Cola de trabajo') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('contabilidad.lotes') }}">{{ _('Ficheros generados') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('contabilidad.recordatorios') }}">{{ _('Recordar a los clientes') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('contabilidad.ajustes') }}">{{ _('Ajustes de a3') }}</a>
@@ -56,6 +57,7 @@
   {% else %}<p class="muted">{{ _('Se cierra solo porque el modelo está presentado; para reabrirlo cámbialo en el calendario fiscal.') }}</p>{% endif %}
   {% else %}
   <form method="post" action="{{ url_for('contabilidad.periodo') }}" class="ds-fila"><input type="hidden" name="cliente_id" value="{{ cliente_id }}"><input type="hidden" name="trimestre" value="{{ trimestre }}"><input type="hidden" name="accion" value="cerrar">
+    <a class="btn btn-primary" href="{{ url_for('contabilidad.cierre', cliente_id=cliente_id, trimestre=trimestre) }}">{{ _('Cerrar el trimestre %(t)s paso a paso', t=trimestre) }}</a>
     <button type="submit" class="btn btn-ghost">{{ _('Cerrar el trimestre %(t)s', t=trimestre) }}</button>
     <span class="muted">{{ _('Avisa antes de exportar facturas de un periodo cerrado.') }}</span></form>
   {% endif %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% block title %}{{ _('Cola de trabajo') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Cola de trabajo') }}</h1>
+    <p class="subtitle">{{ _('Clientes ordenados por lo que sobra de tiempo hasta su próximo plazo, una vez descontado lo que cuesta despachar lo que tienen pendiente (a %(n)s facturas por día).', n=ritmo) }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Volver a las facturas') }}</a>
+</header>
+
+{% if not filas %}
+{{ estado_vacio(_('No hay nada pendiente'), _('Ningún cliente tiene facturas por leer, revisar o exportar, ni mensajes sin leer.')) }}
+{% else %}
+{% set niveles = {'vencido': (_('Vencido'), 'rojo'), 'alto': (_('Alto'), 'rojo'), 'medio': (_('Medio'), 'ambar'), 'bajo': (_('Bajo'), 'verde'), 'sin_plazo': (_('Sin plazo'), '')} %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Próximo plazo') }}</th><th>{{ _('Por leer') }}</th><th>{{ _('Por revisar') }}</th><th>{{ _('Por exportar') }}</th><th>{{ _('Esperan al cliente') }}</th><th>{{ _('Mensajes nuevos') }}</th><th>{{ _('Más antigua') }}</th><th>{{ _('Riesgo') }}</th><th></th></tr></thead>
+  <tbody>
+  {% for f in filas %}
+    <tr>
+      <td><a href="{{ url_for('contabilidad.lista', cliente_id=f.cliente_id) }}"><strong>{{ f.nombre }}</strong></a></td>
+      <td>{% if f.plazo %}{{ f.plazo.modelo }} · {{ f.plazo.fecha|fecha_dia }}<br><span class="muted">{% if f.dias_hasta < 0 %}{{ _('vencido hace %(n)s días', n=-f.dias_hasta) }}{% elif f.dias_hasta == 0 %}{{ _('vence hoy') }}{% else %}{{ _('en %(n)s días', n=f.dias_hasta) }}{% endif %}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td class="mono">{{ f.por_leer }}</td>
+      <td class="mono">{{ f.por_revisar }}{% if f.del_portal %} <span class="pill" title="{{ _('Anotadas por el cliente desde el portal') }}">{{ _('Portal') }} {{ f.del_portal }}</span>{% endif %}</td>
+      <td class="mono">{{ f.revisadas }}</td>
+      <td class="mono">{{ f.devueltas }}</td>
+      <td class="mono">{{ f.mensajes }}</td>
+      <td class="mono">{% if f.antigua_dias is not none %}{{ _('%(n)s d', n=f.antigua_dias) }}{% else %}—{% endif %}</td>
+      <td>{% set n = niveles[f.riesgo] if f.trabajo else (_('Espera'), '') %}<span class="pildora-v2 {{ n[1] }}">{{ n[0] }}</span>{% if f.holgura is not none and f.trabajo %}<br><span class="muted">{{ _('holgura %(n)s d', n=f.holgura) }}</span>{% endif %}</td>
+      <td><a class="btn btn-ghost btn-sm" href="{{ url_for('contabilidad.lista', cliente_id=f.cliente_id, estado='pendiente') }}">{{ _('Abrir') }}</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

@@ -32,13 +32,28 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     facturas_portal.devolver(t, uid, fids[2], "No es de tu empresa")
     facturas_portal.escribir_como_cliente(ids["cliente"], fids[0], "¿Os hace falta algo más de esta factura? " * 6)
     facturas_portal.escribir_como_despacho(t, uid, fids[0], "Todo recibido, gracias; en cuanto la revisemos te avisamos desde aquí mismo.")
+    from app import conformidad_declaracion, fiscal_nucleo as fn, fiscal_perfiles as fp
+    from tests.escenarios_303 import ESCENARIOS
+    verticales.fijar_activo(t, "fiscal", True)                                 # el portal enseña el modelo 303 que el despacho pide revisar
+    try:
+        fp.guardar_perfil(t, uid, ids["cliente"], {"forma_juridica": "sociedad"}, vigente_desde="2026-01-01")
+    except fp.ErrorFiscal:                                                     # la siembra común puede haberlo creado ya
+        pass
+    for ap in ESCENARIOS["basico"][0]:
+        try:
+            fn.aprobar_apunte(t, uid, ids["cliente"], ap)
+        except fp.ErrorFiscal:
+            pass
+    decl = fn.calcular_declaracion(t, uid, fn.crear_instantanea(t, uid, ids["cliente"], ejercicio=2026, periodo="2T")["id"])["id"]
+    fn.revisar_declaracion(t, uid, decl)
+    conformidad_declaracion.pedir(t, uid, decl)
     if os.environ.get("GUILDA_TEXTOS_LARGOS"):
         conn = db.get_connection()
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
-    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}"]
+    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")

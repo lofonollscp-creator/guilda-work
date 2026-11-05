@@ -20443,3 +20443,231 @@ msgstr "Si c'est la même, écartez-en une avant d'exporter."
 
 msgid "Todavía no hay mensajes. El cliente los verá en su portal."
 msgstr "Pas encore de messages. Le client les verra dans son portail."
+
+msgid "Revisa tu modelo 303 de %(p)s antes de presentarlo"
+msgstr "Vérifiez votre modèle 303 de %(p)s avant son dépôt"
+
+msgid "Revisa tu modelo 303 de %(periodo)s"
+msgstr "Vérifiez votre modèle 303 de %(periodo)s"
+
+msgid "Tu gestoría ha preparado tu modelo 303 de %(periodo)s y quiere que lo veas antes de presentarlo."
+msgstr "Votre cabinet a préparé votre modèle 303 de %(periodo)s et souhaite que vous le voyiez avant le dépôt."
+
+msgid "Si todo está bien, pulsa «De acuerdo»; si falta algo o no cuadra, dínoslo desde ahí."
+msgstr "Si tout va bien, appuyez sur « D'accord » ; s'il manque quelque chose ou si ça ne colle pas, dites-le-nous depuis là."
+
+msgid "Revisar mi modelo 303"
+msgstr "Vérifier mon modèle 303"
+
+msgid "Hemos cerrado el trimestre %(t)s"
+msgstr "Nous avons clôturé le trimestre %(t)s"
+
+msgid "Tu gestoría ha cerrado el trimestre %(t)s: todas tus facturas de ese periodo están ya tratadas."
+msgstr "Votre cabinet a clôturé le trimestre %(t)s : toutes vos factures de cette période sont traitées."
+
+msgid "Tienes a tu disposición el informe del trimestre en tu portal."
+msgstr "Le rapport du trimestre est à votre disposition dans votre portail."
+
+msgid "Si te falta alguna factura de ese periodo, escríbenos desde el portal."
+msgstr "S'il vous manque une facture de cette période, écrivez-nous depuis le portail."
+
+msgid "Ver mi trimestre"
+msgstr "Voir mon trimestre"
+
+msgid "Gracias: hemos avisado a tu gestoría de que estás de acuerdo."
+msgstr "Merci : nous avons prévenu votre cabinet que vous êtes d'accord."
+
+msgid "Gracias: hemos avisado a tu gestoría. Revisará lo que nos cuentas antes de presentar."
+msgstr "Merci : nous avons prévenu votre cabinet. Il vérifiera ce que vous nous dites avant le dépôt."
+
+msgid "Se cobrará de la cuenta terminada en %(ult)s."
+msgstr "Il sera prélevé sur le compte se terminant par %(ult)s."
+
+msgid "Tu gestoría ha cambiado la declaración después de enviarte el aviso: este es el resultado actual."
+msgstr "Votre cabinet a modifié la déclaration après vous avoir envoyé l'avis : voici le résultat actuel."
+
+msgid "IVA que has cobrado (ventas)"
+msgstr "TVA que vous avez perçue (ventes)"
+
+msgid "IVA que has pagado (compras)"
+msgstr "TVA que vous avez payée (achats)"
+
+msgid "No hay facturas en este periodo."
+msgstr "Il n'y a pas de factures sur cette période."
+
+msgid "¿Está todo bien?"
+msgstr "Tout est-il correct ?"
+
+msgid "Es una revisión previa: si ves algo raro, cuéntanoslo antes de que se presente."
+msgstr "C'est une vérification préalable : si vous voyez quelque chose d'anormal, dites-le-nous avant le dépôt."
+
+msgid "De acuerdo"
+msgstr "D'accord"
+
+msgid "Hay un error: cuéntanos qué falta o no cuadra"
+msgstr "Il y a une erreur : dites-nous ce qui manque ou ne colle pas"
+
+msgid "Hay un error"
+msgstr "Il y a une erreur"
+
+msgid "Das tu conformidad"
+msgstr "Vous avez donné votre accord"
+
+msgid "Has indicado un error"
+msgstr "Vous avez signalé une erreur"
+
+msgid "Esta declaración ya no está pendiente de tu revisión."
+msgstr "Cette déclaration n'attend plus votre vérification."
+
+msgid "Elige «De acuerdo» o «Hay un error»."
+msgstr "Choisissez « D'accord » ou « Il y a une erreur »."
+
+msgid "Cuéntanos qué hay que corregir."
+msgstr "Dites-nous ce qu'il faut corriger."
+
+msgid "El comentario no puede pasar de 500 caracteres."
+msgstr "Le commentaire ne peut pas dépasser 500 caractères."
+
+msgid "Esta declaración ya no está pendiente de tu conformidad."
+msgstr "Cette déclaration n'attend plus votre accord."
+
+msgid "Conformidad del cliente"
+msgstr "Accord du client"
+
+msgid "Pedida: hemos avisado al cliente por correo."
+msgstr "Demandé : nous avons prévenu le client par courriel."
+
+msgid "Pedida, pero no hemos podido avisarle por correo (sin correo saliente o sin email en su ficha): la verá al entrar a su portal."
+msgstr "Demandé, mais nous n'avons pas pu le prévenir par courriel (pas de courrier sortant ou pas d'email dans sa fiche) : il le verra en se connectant à son portail."
+
+msgid "Antes de presentar, el cliente puede ver en su portal el resultado y las facturas que lo componen, y decirte si está de acuerdo. No bloquea la presentación."
+msgstr "Avant le dépôt, le client peut voir dans son portail le résultat et les factures qui le composent, et vous dire s'il est d'accord. Cela ne bloque pas le dépôt."
+
+msgid "Pendiente de respuesta"
+msgstr "En attente de réponse"
+
+msgid "pedida el %(f)s"
+msgstr "demandé le %(f)s"
+
+msgid "El cliente está de acuerdo"
+msgstr "Le client est d'accord"
+
+msgid "El cliente dice que hay un error:"
+msgstr "Le client dit qu'il y a une erreur :"
+
+msgid "El resultado ha cambiado desde que se pidió la conformidad: conviene volver a pedirla."
+msgstr "Le résultat a changé depuis la demande d'accord : il vaut mieux la redemander."
+
+msgid "Volver a pedirla"
+msgstr "La redemander"
+
+msgid "Pedir conformidad al cliente"
+msgstr "Demander l'accord du client"
+
+msgid "Ver el informe del trimestre"
+msgstr "Voir le rapport du trimestre"
+
+msgid "Cola de trabajo"
+msgstr "File de travail"
+
+msgid "Clientes ordenados por lo que sobra de tiempo hasta su próximo plazo, una vez descontado lo que cuesta despachar lo que tienen pendiente (a %(n)s facturas por día)."
+msgstr "Clients classés selon le temps restant avant leur prochaine échéance, une fois déduit le temps nécessaire pour traiter leurs factures en attente (à %(n)s factures par jour)."
+
+msgid "No hay nada pendiente"
+msgstr "Rien en attente"
+
+msgid "Ningún cliente tiene facturas por leer, revisar o exportar, ni mensajes sin leer."
+msgstr "Aucun client n'a de factures à lire, vérifier ou exporter, ni de messages non lus."
+
+msgid "Sin plazo"
+msgstr "Sans échéance"
+
+msgid "Espera"
+msgstr "En attente"
+
+msgid "Por exportar"
+msgstr "À exporter"
+
+msgid "Esperan al cliente"
+msgstr "Attendent le client"
+
+msgid "Mensajes nuevos"
+msgstr "Nouveaux messages"
+
+msgid "Más antigua"
+msgstr "Plus ancienne"
+
+msgid "Anotadas por el cliente desde el portal"
+msgstr "Saisies par le client depuis le portail"
+
+msgid "%(n)s d"
+msgstr "%(n)s j"
+
+msgid "holgura %(n)s d"
+msgstr "marge %(n)s j"
+
+msgid "Cerrar trimestre"
+msgstr "Clôturer le trimestre"
+
+msgid "Hay facturas del trimestre"
+msgstr "Il y a des factures sur le trimestre"
+
+msgid "Facturas por leer (solo el archivo)"
+msgstr "Factures à lire (fichier seul)"
+
+msgid "Facturas por revisar"
+msgstr "Factures à vérifier"
+
+msgid "Mensajes del cliente sin leer"
+msgstr "Messages du client non lus"
+
+msgid "Posibles facturas duplicadas"
+msgstr "Factures en double possibles"
+
+msgid "Revisadas sin exportar a a3"
+msgstr "Vérifiées mais non exportées vers a3"
+
+msgid "Configuración de a3 del cliente"
+msgstr "Configuration a3 du client"
+
+msgid "Devueltas al cliente sin respuesta"
+msgstr "Renvoyées au client sans réponse"
+
+msgid "Antes de cerrar"
+msgstr "Avant de clôturer"
+
+msgid "Revisa"
+msgstr "À voir"
+
+msgid "No hay ninguna factura en este trimestre: ¿el cliente no tuvo actividad?"
+msgstr "Il n'y a aucune facture ce trimestre : le client n'a-t-il pas eu d'activité ?"
+
+msgid "%(n)s de %(total)s puntos hechos."
+msgstr "%(n)s points sur %(total)s faits."
+
+msgid "Cerrar igualmente, aunque queden puntos pendientes (quedará constancia)"
+msgstr "Clôturer quand même, même s'il reste des points en attente (cela sera consigné)"
+
+msgid "Al cerrar, se avisa al cliente por correo y, si usas Guilda Fiscal, tiene el informe del trimestre en su portal."
+msgstr "À la clôture, le client est prévenu par courriel et, si vous utilisez Guilda Fiscal, il trouve le rapport du trimestre dans son portail."
+
+msgid "Cerrar el trimestre"
+msgstr "Clôturer le trimestre"
+
+msgid "Trimestre cerrado."
+msgstr "Trimestre clôturé."
+
+msgid "Hemos avisado al cliente por correo."
+msgstr "Nous avons prévenu le client par courriel."
+
+msgid "No hemos podido avisar al cliente por correo (sin correo saliente o sin email en su ficha); lo verá al entrar a su portal."
+msgstr "Nous n'avons pas pu prévenir le client par courriel (pas de courrier sortant ou pas d'email dans sa fiche) ; il le verra en se connectant."
+
+msgid "Tiene a su disposición el informe del trimestre en su portal."
+msgstr "Le rapport du trimestre est à sa disposition dans son portail."
+
+msgid "Cerrar el trimestre %(t)s paso a paso"
+msgstr "Clôturer le trimestre %(t)s pas à pas"
+
+msgid "vencido hace %(n)s días"
+msgstr "échu depuis %(n)s jours"

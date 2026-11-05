@@ -13,7 +13,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import acceso, db, honorarios, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_panel as fpn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
+from . import acceso, conformidad_declaracion, db, honorarios, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_panel as fpn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
 from .fiscal_modelos import motor_131, motor_390
 from .fiscal_modelos.apuntes import Apunte
@@ -777,7 +777,8 @@ def declaracion(declaracion_id: int):
     rectificativa = next((x for x in todas if x["rectifica_a_id"] == d["id"] and x["estado"] != "anulada"), None)
     original = next((x for x in todas if x["id"] == d["rectifica_a_id"]), None)
     vecinas = _vecinas_303(d, c["id"], todas)
-    return render_template("fiscal_declaracion.html", d=d, c=c, inst=inst, vecinas=vecinas, rectificativa=rectificativa, original=original, justificante=fn.justificante_de(d), necesita_iban=fn.necesita_iban(d), iban_propuesto=fn.iban_reciente(g.tenant_id, g.usuario_id, d["cliente_fiscal_id"]),
+    return render_template("fiscal_declaracion.html", conformidad=conformidad_declaracion.estado_de(g.tenant_id, declaracion_id), conformidad_aviso=request.args.get("conformidad"),
+                           puede_pedir_conformidad=d["modelo"] == "303" and d["estado"] in conformidad_declaracion.ESTADOS_PEDIBLES and not d["bloqueos"], d=d, c=c, inst=inst, vecinas=vecinas, rectificativa=rectificativa, original=original, justificante=fn.justificante_de(d), necesita_iban=fn.necesita_iban(d), iban_propuesto=fn.iban_reciente(g.tenant_id, g.usuario_id, d["cliente_fiscal_id"]),
                            apuntes={a["apunte_id"]: a for a in inst["datos"]["apuntes"]}, cambios=fn.comparar_con_anterior(g.tenant_id, g.usuario_id, declaracion_id),
                            error=_error())
 
@@ -812,6 +813,19 @@ def declaracion_rectificar(declaracion_id: int):
     except ErrorFiscal as e:
         return _atras(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id), e)
     return redirect(url_for("guilda_fiscal.declaracion", declaracion_id=nueva["id"]))
+
+
+@guilda_fiscal_bp.route("/declaracion/<int:declaracion_id>/pedir-conformidad", methods=["POST"])
+@login_required
+def pedir_conformidad(declaracion_id: int):
+    """Pide al cliente que revise esta declaración en su portal antes de presentarla (informa; no bloquea la presentación)."""
+    try:
+        r = conformidad_declaracion.pedir(g.tenant_id, g.usuario_id, declaracion_id)
+    except ErrorFiscal as e:
+        return _atras(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id), e)
+    except ValueError as e:
+        return redirect(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id, error=str(e)[:300]))
+    return redirect(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id, conformidad="avisado" if r["avisado"] else "sin_aviso"))
 
 
 @guilda_fiscal_bp.route("/declaracion/<int:declaracion_id>/<accion>", methods=["POST"])

@@ -8,7 +8,7 @@ from datetime import date, datetime
 
 from flask import url_for
 
-from . import db, facturas_portal
+from . import db, facturas_portal, verticales
 from .facturas_portal import etiqueta_trimestre
 
 DIAS_AVISO_FACTURAS = 21
@@ -52,6 +52,15 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
                        "url": url_for("portal_cliente.documentos_vencimiento", vencimiento_id=v["id"]),
                        "titulo": _("Tu gestoría necesita: %(doc)s", doc=v["documento_solicitado"]),
                        "detalle": f"{v['modelo']} {etiqueta_trimestre(v['periodo']) if facturas_portal._trimestre_de_periodo(v['periodo']) else v['periodo']} · {_cuando(dias)}".strip(" ·")})
+
+    if verticales.esta_activo(cliente["tenant_id"], "fiscal"):
+        from . import conformidad_declaracion
+        from .fiscal_resumen_pdf import frase_resultado
+        for p in conformidad_declaracion.pendientes_del_cliente(cliente["id"]):
+            limite = next((v["fecha_limite"] for v in vencimientos if v["modelo"] == "303" and v["periodo"] == f"{p['periodo']} {p['ejercicio']}"), None)
+            dias = _dias_hasta(limite, hoy)
+            puntos.append({"clave": f"conformidad-{p['id']}", "urgente": dias is not None and dias <= 7, "accion": _("Revisar"), "url": url_for("portal_cliente.declaracion", declaracion_id=p["id"]),
+                           "titulo": _("Revisa tu modelo 303 de %(p)s antes de presentarlo", p=f"{p['periodo']} {p['ejercicio']}"), "detalle": f"{frase_resultado(p['tipo_declaracion'], p['resultado_centimos'])} {_cuando(dias)}".strip()})
 
     if con_facturas:
         for f in facturas_portal.devueltas_sin_atender(cliente["id"])[:5]:

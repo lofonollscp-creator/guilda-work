@@ -8,7 +8,7 @@ from flask_babel import gettext as _
 
 from . import acceso, cobro_contabilidad, db, enlace_a3, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
-from . import facturas_portal
+from . import cierre_trimestre, cola_contabilidad, facturas_portal
 from .auth import login_required
 
 contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad")
@@ -435,6 +435,32 @@ def periodo():
     except ValueError as e:
         return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
     return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre))
+
+
+@contabilidad_bp.route("/cola")
+@login_required
+def cola():
+    """Qué cliente atender primero: ordenados por los días que sobran hasta su próximo plazo una vez descontado lo que cuesta despachar lo pendiente."""
+    return render_template("contabilidad_cola.html", filas=cola_contabilidad.cola(g.tenant_id, g.usuario_id), ritmo=cola_contabilidad.FACTURAS_POR_DIA, subnav=None)
+
+
+@contabilidad_bp.route("/cierre", methods=["GET", "POST"])
+@login_required
+def cierre():
+    """Cierre guiado de un trimestre de un cliente: lo que queda por hacer y el botón que lo cierra, avisa al cliente y le deja el informe en su portal."""
+    cliente_id = request.values.get("cliente_id", type=int)
+    trimestre = request.values.get("trimestre") or ""
+    error, hecho = None, None
+    try:
+        if request.method == "POST":
+            hecho = cierre_trimestre.cerrar(g.tenant_id, g.usuario_id, cliente_id, trimestre, forzar=bool(request.form.get("forzar")))
+        c = cierre_trimestre.checklist(g.tenant_id, g.usuario_id, cliente_id, trimestre)
+    except ValueError as e:
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, error=str(e)[:300])) if request.method == "GET" else \
+            redirect(url_for("contabilidad.cierre", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
+    cliente = next((x for x in _clientes() if x["id"] == cliente_id), None)
+    return render_template("contabilidad_cierre.html", c=c, cliente=cliente, cliente_id=cliente_id, trimestre=trimestre, etiqueta=cierre_trimestre.etiqueta(trimestre), hecho=hecho, error=error or _error(),
+                           con_fiscal=verticales.esta_activo(g.tenant_id, "fiscal"), subnav=None)
 
 
 @contabilidad_bp.route("/exportar", methods=["POST"])

@@ -1398,8 +1398,8 @@ def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[s
     return ids
 
 
-def _avisar_al_despacho(f, factura_id: int, datos: dict, cuantas: int = 1, titulo: str | None = None) -> None:
-    """Avisa a quien lleva al cliente (o, si nadie, a la dirección y la coordinación) de que ha anotado una factura. Nunca rompe la subida."""
+def avisar_al_equipo(f, titulo: str, cuerpo: str, url: str, datos: dict) -> None:
+    """Avisa a quien lleva al cliente `f` (o, si nadie, a la dirección y la coordinación) con una notificación del tipo «mensaje del portal». Nunca rompe la operación que la provoca."""
     try:
         from . import notificaciones
         conn = db.get_connection()
@@ -1407,13 +1407,17 @@ def _avisar_al_despacho(f, factura_id: int, datos: dict, cuantas: int = 1, titul
             destinatarios = [f["responsable_id"]] if f["responsable_id"] else [r["id"] for r in conn.execute("SELECT u.id FROM usuarios u WHERE " + db.sql_supervisor(), (f["tenant_id"], f["tenant_id"]))]
         finally:
             conn.close()
-        titulo = titulo or (f"{f['nombre']} ha anotado una factura" if cuantas == 1 else f"{f['nombre']} ha subido {cuantas} facturas")
         for uid in destinatarios:
             if uid and db.notificacion_tipo_activa(uid, "portal_mensaje_nuevo"):
-                notificaciones.crear_y_enviar(uid, "portal_mensaje_nuevo", titulo, f"{datos.get('tercero_nombre') or ''} · {datos.get('numero') or ''}"[:100], url=f"/contabilidad/{factura_id}",
-                                              datos={"tipo": "portal_mensaje_nuevo", "factura_contable_id": factura_id})
+                notificaciones.crear_y_enviar(uid, "portal_mensaje_nuevo", titulo, cuerpo[:100], url=url, datos={"tipo": "portal_mensaje_nuevo", **datos})
     except Exception:
         pass
+
+
+def _avisar_al_despacho(f, factura_id: int, datos: dict, cuantas: int = 1, titulo: str | None = None) -> None:
+    """Avisa a quien lleva al cliente de que ha anotado una factura (o escrito sobre ella)."""
+    titulo = titulo or (f"{f['nombre']} ha anotado una factura" if cuantas == 1 else f"{f['nombre']} ha subido {cuantas} facturas")
+    avisar_al_equipo(f, titulo, f"{datos.get('tercero_nombre') or ''} · {datos.get('numero') or ''}", f"/contabilidad/{factura_id}", {"factura_contable_id": factura_id})
 
 
 def listar_del_cliente(cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
