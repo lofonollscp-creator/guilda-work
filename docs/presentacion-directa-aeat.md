@@ -1,5 +1,7 @@
 # Presentación directa en la AEAT (punto 16): decisión pendiente
 
+> **6-nov-2026:** la documentación técnica oficial ya está leída y el plan completo vive en [`integracion-aeat-presentacion.md`](integracion-aeat-presentacion.md). La decisión A/B/C de abajo sigue abierta y es lo que desbloquea el resto (allí, §5.1).
+
 **Estado:** sin implementar a propósito. Antes de escribir código hay una decisión de arquitectura y de seguridad que es de la dirección del despacho, y documentación de la AEAT que aún no se ha descargado.
 
 ## Por qué no se puede «simplemente hacer»
