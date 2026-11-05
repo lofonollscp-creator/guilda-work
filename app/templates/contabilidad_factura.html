@@ -15,6 +15,12 @@
 <div class="ia-error" role="alert"><strong>{{ _('Antes de poder exportarla:') }}</strong><ul>{% for p in f.problemas %}<li>{{ p }}</li>{% endfor %}</ul></div>
 {% endif %}
 
+{% if duplicados %}
+<div class="ia-error" role="alert"><strong>{{ _('Posible factura duplicada:') }}</strong>
+  <ul>{% for d in duplicados %}<li><a href="{{ url_for('contabilidad.ver', factura_id=d.id) }}">{{ d.numero }}</a> · {{ d.fecha }} · {{ {'pendiente': _('Pendiente'), 'revisada': _('Revisada'), 'exportada': _('Exportada')}[d.estado] }} — {{ _('mismo número') if d.motivo == 'mismo número' else _('mismo importe y fecha') }}</li>{% endfor %}</ul>
+  <small>{{ _('Si es la misma, descarta una de las dos antes de exportar.') }}</small></div>
+{% endif %}
+
 <form method="post" class="edit-form" enctype="multipart/form-data" {% if f %}action="{{ url_for('contabilidad.ver', factura_id=f.id) }}"{% else %}action="{{ url_for('contabilidad.nueva') }}"{% endif %}>
   {% if not f %}
   <label for="c-cliente">{{ _('Cliente del despacho') }}</label>
@@ -108,6 +114,20 @@
     <button type="submit" class="btn btn-ghost">{{ _('Devolver') }}</button>
   </form>
   {% endif %}
+</section>
+{% endif %}
+{% if f %}
+<section id="mensajes" class="ds-mt-24"><h2>{{ _('Mensajes con el cliente') }}</h2>
+  {% if mensajes %}
+  <div class="portal-hilo">
+    {% for m in mensajes %}<div class="portal-msg {{ 'cliente' if m.autor == 'cliente' else 'gestoria' }}">{{ m.texto }}<span class="fecha">{{ m.creado_en|fecha_y_hora }}{% if m.usuario_email %} · {{ m.usuario_email }}{% endif %}</span></div>{% endfor %}
+  </div>
+  {% else %}<p class="muted">{{ _('Todavía no hay mensajes. El cliente los verá en su portal.') }}</p>{% endif %}
+  <form method="post" action="{{ url_for('contabilidad.mensaje', factura_id=f.id) }}" class="edit-form">
+    <label for="mensaje-texto">{{ _('Escribir al cliente') }}</label>
+    <textarea id="mensaje-texto" name="texto" rows="3" maxlength="1000" required class="ds-ancho-total"></textarea>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button></div>
+  </form>
 </section>
 {% endif %}
 {% endblock %}

@@ -82,9 +82,22 @@ def solicitar_acceso():
     return render_template("portal_solicitar_acceso.html", enviado=enviado, error=error)
 
 
+def destino_seguro(valor: str | None) -> str | None:
+    """La pantalla del portal a la que llevar al cliente tras entrar: solo rutas propias del portal (nunca otra web), sin saltos de línea ni `//`."""
+    v = (valor or "").strip()
+    if not v.startswith("/portal/") or v.startswith("/portal/entrar") or v.startswith("/portal/salir") or len(v) > 200:
+        return None
+    if "//" in v or "\\" in v or any(ord(c) < 32 for c in v) or ":" in v.split("?")[0]:
+        return None
+    return v
+
+
 @portal_bp.route("/entrar", methods=["GET", "POST"])
 @limiter.limit("10/hour")
 def entrar():
+    siguiente = destino_seguro(request.values.get("siguiente"))
+    if request.method == "GET" and siguiente and g.cliente_fiscal_id:
+        return redirect(siguiente)
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
         if email and "@" in email:
@@ -96,7 +109,7 @@ def entrar():
                 if ultimo_envio and datetime.fromisoformat(ultimo_envio) > datetime.now() - timedelta(minutes=_MINUTOS_COOLDOWN_ENVIO):
                     continue
                 token = db.crear_acceso_cliente_fiscal(cliente["id"], request.remote_addr)
-                enlace = url_for("portal_cliente.entrar_con_token", token=token, _external=True)
+                enlace = url_for("portal_cliente.entrar_con_token", token=token, siguiente=siguiente, _external=True)
                 try:
                     enviar_enlace_portal(cliente["email"], enlace, tenant_id=cliente["tenant_id"])
                 except ErrorNotificacionesEmail:
@@ -104,7 +117,7 @@ def entrar():
         # Mismo mensaje exista o no el email -- no confirmar si un email
         # concreto está asociado a algún cliente.
         return render_template("portal_entrar.html", enviado=True)
-    return render_template("portal_entrar.html", enviado=False)
+    return render_template("portal_entrar.html", enviado=False, siguiente=siguiente)
 
 
 @portal_bp.route("/entrar/<token>")
@@ -113,7 +126,7 @@ def entrar_con_token(token: str):
     if cliente_fiscal_id is None:
         return render_template("portal_entrar.html", enviado=False, enlace_invalido=True)
     session["cliente_fiscal_id"] = cliente_fiscal_id
-    return redirect(url_for("portal_cliente.dashboard"))
+    return redirect(destino_seguro(request.args.get("siguiente")) or url_for("portal_cliente.dashboard"))
 
 
 @portal_bp.route("/salir", methods=["POST"])
@@ -337,8 +350,8 @@ def facturas():
     if request.method == "POST" and request.form.get("modo") == "archivos":
         try:
             archivos = [(a.filename, a.mimetype, a.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
-            facturas_contables.subir_desde_portal(cliente["id"], request.form.get("tipo", ""), archivos)
-            return redirect(url_for("portal_cliente.facturas", anotada=1, trimestre=destino))
+            subidas = facturas_contables.subir_desde_portal(cliente["id"], request.form.get("tipo", ""), archivos)
+            return redirect(url_for("portal_cliente.facturas", anotada=1, trimestre=destino, repetidas=subidas.repetidas or None))
         except ValueError as e:
             error = str(e)
     elif request.method == "POST":
@@ -352,7 +365,7 @@ def facturas():
             error = str(e)
     error = error or (request.args.get("error") or "")[:200] or None
     return render_template("portal_facturas.html", cliente=cliente, tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
-                           datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
+                           datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
                            max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
 
 
@@ -382,3 +395,41 @@ def factura_entendida(factura_id: int):
     except ValueError as e:
         return redirect(url_for("portal_cliente.facturas", trimestre=request.form.get("trimestre") or None, error=_(str(e))[:200]))
     return redirect(url_for("portal_cliente.facturas", trimestre=request.form.get("trimestre") or None, atendida="vista"))
+
+
+@portal_bp.route("/facturas/comprobar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("120/hour")
+def comprobar_archivos():
+    """Antes de subir: de las huellas SHA-256 de los archivos elegidos, cuáles ya están enviados (la página avisa; no se bloquea nada)."""
+    cliente = _cliente_con_facturas()
+    huellas = (request.get_json(silent=True) or {}).get("huellas")
+    return {"repetidas": facturas_portal.archivos_ya_enviados(cliente["id"], huellas if isinstance(huellas, list) else [])}
+
+
+@portal_bp.route("/facturas/<int:factura_id>")
+@cliente_login_required
+def factura(factura_id: int):
+    """Una factura del cliente con su estado, el motivo si se la devolvieron y la conversación con su gestoría."""
+    cliente = _cliente_con_facturas()
+    f = facturas_portal.detalle_del_cliente(cliente["id"], factura_id)
+    if f is None:
+        abort(404)
+    facturas_portal.marcar_leidos(cliente["tenant_id"], factura_id, "cliente")
+    return render_template("portal_factura.html", cliente=cliente, f=f, mensajes=facturas_portal.mensajes(cliente["tenant_id"], factura_id), portal_seccion="facturas",
+                           textos=facturas_contables.TEXTO_ESTADO_PORTAL, etiqueta=facturas_portal.etiqueta_trimestre, max_mensaje=facturas_portal.MAX_MENSAJE,
+                           error=(request.args.get("error") or "")[:200] or None)
+
+
+@portal_bp.route("/facturas/<int:factura_id>/mensajes", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def mensaje_de_factura(factura_id: int):
+    cliente = _cliente_con_facturas()
+    try:
+        facturas_portal.escribir_como_cliente(cliente["id"], factura_id, request.form.get("texto", ""))
+    except ValueError as e:
+        if facturas_portal.detalle_del_cliente(cliente["id"], factura_id) is None:
+            abort(404)
+        return redirect(url_for("portal_cliente.factura", factura_id=factura_id, error=_(str(e))[:200]) + "#mensajes")
+    return redirect(url_for("portal_cliente.factura", factura_id=factura_id) + "#mensajes")

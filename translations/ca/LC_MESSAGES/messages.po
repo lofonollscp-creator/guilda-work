@@ -20279,3 +20279,91 @@ msgstr "Retornar"
 
 msgid "Esa factura ya no está pendiente de corregir."
 msgstr "Aquesta factura ja no està pendent de corregir."
+
+msgid "Tienes %(n)s mensaje nuevo sobre una factura"
+msgid_plural "Tienes %(n)s mensajes nuevos sobre una factura"
+msgstr[0] "Tens %(n)s missatge nou sobre una factura"
+msgstr[1] "Tens %(n)s missatges nous sobre una factura"
+
+msgid "%(n)s archivo ya lo habías enviado y no se ha duplicado."
+msgid_plural "%(n)s archivos ya los habías enviado y no se han duplicado."
+msgstr[0] "%(n)s arxiu ja l'havies enviat i no s'ha duplicat."
+msgstr[1] "%(n)s arxius ja els havies enviat i no s'han duplicat."
+
+msgid "«%(nombre)s» parece borrosa: si puedes, hazla de nuevo con más luz y sin moverte."
+msgstr "«%(nombre)s» sembla borrosa: si pots, torna-la a fer amb més llum i sense moure't."
+
+msgid "«%(nombre)s» ya la enviaste el %(fecha)s."
+msgstr "«%(nombre)s» ja la vas enviar el %(fecha)s."
+
+msgid "«%(nombre)s» está elegida dos veces."
+msgstr "«%(nombre)s» està triada dues vegades."
+
+msgid "«%(nombre)s» pesa más de 8 MB y no se podrá subir."
+msgstr "«%(nombre)s» pesa més de 8 MB i no es podrà pujar."
+
+msgid "«%(nombre)s» no es una imagen ni un PDF y no se podrá subir."
+msgstr "«%(nombre)s» no és una imatge ni un PDF i no es podrà pujar."
+
+msgid "Tu gestoría ya ha cerrado ese trimestre. Envíala igualmente, pero escríbele para avisarle de que te falta esta factura."
+msgstr "La teva gestoria ja ha tancat aquest trimestre. Envia-la igualment, però escriu-li per avisar-la que et falta aquesta factura."
+
+msgid "Mensaje nuevo de tu gestoría"
+msgstr "Missatge nou de la teva gestoria"
+
+msgid "Volver a mis facturas"
+msgstr "Tornar a les meves factures"
+
+msgid "Recibida (compra o gasto)"
+msgstr "Rebuda (compra o despesa)"
+
+msgid "Emitida (venta)"
+msgstr "Emesa (venda)"
+
+msgid "Enviar la factura corregida"
+msgstr "Enviar la factura corregida"
+
+msgid "Mensajes con tu gestoría sobre esta factura"
+msgstr "Missatges amb la teva gestoria sobre aquesta factura"
+
+msgid "Escribe el mensaje."
+msgstr "Escriu el missatge."
+
+msgid "El mensaje no puede pasar de 1000 caracteres."
+msgstr "El missatge no pot passar de 1000 caràcters."
+
+msgid "Esta conversación ya es muy larga: escribe a tu gestoría por otra vía."
+msgstr "Aquesta conversa ja és molt llarga: escriu a la teva gestoria per una altra via."
+
+msgid "Factura no encontrada."
+msgstr "Factura no trobada."
+
+msgid "Ya nos enviaste esas facturas: tu gestoría las tiene."
+msgstr "Ja ens vas enviar aquestes factures: la teva gestoria les té."
+
+msgid "Posible duplicada"
+msgstr "Possible duplicada"
+
+msgid "Hay otra factura del mismo cliente con el mismo NIF y número"
+msgstr "Hi ha una altra factura del mateix client amb el mateix NIF i número"
+
+msgid "Mensaje nuevo"
+msgstr "Missatge nou"
+
+msgid "El cliente ha escrito en esta factura"
+msgstr "El client ha escrit en aquesta factura"
+
+msgid "Posible factura duplicada:"
+msgstr "Possible factura duplicada:"
+
+msgid "mismo número"
+msgstr "mateix número"
+
+msgid "mismo importe y fecha"
+msgstr "mateix import i data"
+
+msgid "Si es la misma, descarta una de las dos antes de exportar."
+msgstr "Si és la mateixa, descarta'n una de les dues abans d'exportar."
+
+msgid "Todavía no hay mensajes. El cliente los verá en su portal."
+msgstr "Encara no hi ha missatges. El client els veurà al seu portal."

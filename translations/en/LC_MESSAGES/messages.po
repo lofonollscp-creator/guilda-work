@@ -20270,3 +20270,91 @@ msgstr "Return"
 
 msgid "Esa factura ya no está pendiente de corregir."
 msgstr "That invoice no longer needs fixing."
+
+msgid "Tienes %(n)s mensaje nuevo sobre una factura"
+msgid_plural "Tienes %(n)s mensajes nuevos sobre una factura"
+msgstr[0] "You have %(n)s new message about an invoice"
+msgstr[1] "You have %(n)s new messages about an invoice"
+
+msgid "%(n)s archivo ya lo habías enviado y no se ha duplicado."
+msgid_plural "%(n)s archivos ya los habías enviado y no se han duplicado."
+msgstr[0] "%(n)s file had already been sent and was not duplicated."
+msgstr[1] "%(n)s files had already been sent and were not duplicated."
+
+msgid "«%(nombre)s» parece borrosa: si puedes, hazla de nuevo con más luz y sin moverte."
+msgstr "“%(nombre)s” looks blurry: if you can, retake it with more light and hold still."
+
+msgid "«%(nombre)s» ya la enviaste el %(fecha)s."
+msgstr "You already sent “%(nombre)s” on %(fecha)s."
+
+msgid "«%(nombre)s» está elegida dos veces."
+msgstr "“%(nombre)s” is selected twice."
+
+msgid "«%(nombre)s» pesa más de 8 MB y no se podrá subir."
+msgstr "“%(nombre)s” is over 8 MB and can't be uploaded."
+
+msgid "«%(nombre)s» no es una imagen ni un PDF y no se podrá subir."
+msgstr "“%(nombre)s” is not an image or a PDF and can't be uploaded."
+
+msgid "Tu gestoría ya ha cerrado ese trimestre. Envíala igualmente, pero escríbele para avisarle de que te falta esta factura."
+msgstr "Your accountant has already closed that quarter. Send it anyway, but write to them to let them know this invoice was missing."
+
+msgid "Mensaje nuevo de tu gestoría"
+msgstr "New message from your accountant"
+
+msgid "Volver a mis facturas"
+msgstr "Back to my invoices"
+
+msgid "Recibida (compra o gasto)"
+msgstr "Received (purchase or expense)"
+
+msgid "Emitida (venta)"
+msgstr "Issued (sale)"
+
+msgid "Enviar la factura corregida"
+msgstr "Send the corrected invoice"
+
+msgid "Mensajes con tu gestoría sobre esta factura"
+msgstr "Messages with your accountant about this invoice"
+
+msgid "Escribe el mensaje."
+msgstr "Write the message."
+
+msgid "El mensaje no puede pasar de 1000 caracteres."
+msgstr "The message can't be longer than 1000 characters."
+
+msgid "Esta conversación ya es muy larga: escribe a tu gestoría por otra vía."
+msgstr "This conversation is already very long: write to your accountant another way."
+
+msgid "Factura no encontrada."
+msgstr "Invoice not found."
+
+msgid "Ya nos enviaste esas facturas: tu gestoría las tiene."
+msgstr "You already sent us those invoices: your accountant has them."
+
+msgid "Posible duplicada"
+msgstr "Possible duplicate"
+
+msgid "Hay otra factura del mismo cliente con el mismo NIF y número"
+msgstr "There is another invoice from the same client with the same tax ID and number"
+
+msgid "Mensaje nuevo"
+msgstr "New message"
+
+msgid "El cliente ha escrito en esta factura"
+msgstr "The client has written on this invoice"
+
+msgid "Posible factura duplicada:"
+msgstr "Possible duplicate invoice:"
+
+msgid "mismo número"
+msgstr "same number"
+
+msgid "mismo importe y fecha"
+msgstr "same amount and date"
+
+msgid "Si es la misma, descarta una de las dos antes de exportar."
+msgstr "If it's the same one, discard one of the two before exporting."
+
+msgid "Todavía no hay mensajes. El cliente los verá en su portal."
+msgstr "No messages yet. The client will see them in their portal."

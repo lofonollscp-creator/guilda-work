@@ -30,13 +30,15 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     fids = [fc.crear_desde_portal(ids["cliente"], {"tipo": "recibida", "fecha": hoy, "numero": f"B-{i}", "tercero_nombre": n, "tercero_nif": "B11111111", "total": "121,00", "pct_iva": "21"}) for i, n in enumerate(nombres)]
     facturas_portal.devolver(t, uid, fids[1], "La foto sale movida y no se lee el NIF del proveedor; vuelve a hacerla con más luz y sin reflejos, por favor")
     facturas_portal.devolver(t, uid, fids[2], "No es de tu empresa")
+    facturas_portal.escribir_como_cliente(ids["cliente"], fids[0], "¿Os hace falta algo más de esta factura? " * 6)
+    facturas_portal.escribir_como_despacho(t, uid, fids[0], "Todo recibido, gracias; en cuanto la revisemos te avisamos desde aquí mismo.")
     if os.environ.get("GUILDA_TEXTOS_LARGOS"):
         conn = db.get_connection()
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
-    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes"]
+    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")

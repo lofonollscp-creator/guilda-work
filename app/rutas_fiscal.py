@@ -23,7 +23,7 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, fiscal_identidad, honorarios, obligaciones
+from . import acceso, fiscal_identidad, honorarios, obligaciones, portal_recordatorios
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -829,7 +829,7 @@ def editar_vencimiento(vencimiento_id: int):
             if cliente is not None and cliente["email"]:
                 try:
                     enviar_solicitud_documento(
-                        cliente["email"], documento_solicitado, url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id,
+                        cliente["email"], documento_solicitado, portal_recordatorios.con_destino(url_for("portal_cliente.entrar", _external=True), f"/portal/vencimientos/{vencimiento_id}/documentos"), tenant_id=g.tenant_id,
                     )
                 except ErrorNotificacionesEmail:
                     pass

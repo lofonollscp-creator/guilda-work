@@ -222,6 +222,7 @@ ALTER TABLE facturas_contables ADD CONSTRAINT fk_facturas_contables_lote_id FORE
 ALTER TABLE facturas_contables ADD CONSTRAINT fk_facturas_contables_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE facturas_contables_lineas ADD CONSTRAINT fk_facturas_contables_lineas_factura_id FOREIGN KEY (tenant_id, factura_id) REFERENCES facturas_contables (tenant_id, id) ON DELETE CASCADE;
 ALTER TABLE facturas_contables_lineas ADD CONSTRAINT fk_facturas_contables_lineas_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
+ALTER TABLE facturas_contables_mensajes ADD CONSTRAINT fk_facturas_contables_mensajes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE festivos ADD CONSTRAINT fk_festivos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE fichaje_avisos ADD CONSTRAINT fk_fichaje_avisos_entrada_id FOREIGN KEY (tenant_id, entrada_id) REFERENCES fichajes (tenant_id, id);
 ALTER TABLE fichaje_avisos ADD CONSTRAINT fk_fichaje_avisos_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);

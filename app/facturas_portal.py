@@ -202,3 +202,136 @@ def para_el_inicio(cliente_fiscal_id: int) -> dict:
     cuentas = etapas(facturas_del_cliente(cliente_fiscal_id))
     return {"para_corregir": cuentas["para_corregir"], "en_revision": cuentas["en_revision"]}
 
+
+
+# --- Hilo de mensajes de cada factura ---------------------------------------------------------------------------------------------------------------
+
+MAX_MENSAJE = 1000
+MAX_MENSAJES_POR_FACTURA = 200
+
+
+def _texto_valido(texto: str) -> str:
+    texto = (texto or "").strip()
+    if not texto:
+        raise ValueError("Escribe el mensaje.")
+    if len(texto) > MAX_MENSAJE:
+        raise ValueError(f"El mensaje no puede pasar de {MAX_MENSAJE} caracteres.")
+    return texto
+
+
+def mensajes(tenant_id: int, factura_id: int) -> list[dict]:
+    conn = db.get_connection()
+    try:
+        return [dict(m) for m in conn.execute("SELECT m.id, m.autor, m.texto, m.creado_en, m.leido_en, u.email AS usuario_email FROM facturas_contables_mensajes m LEFT JOIN usuarios u ON u.id = m.usuario_id "
+                                              "WHERE m.tenant_id = ? AND m.factura_id = ? ORDER BY m.id", (tenant_id, factura_id))]
+    finally:
+        conn.close()
+
+
+def _insertar_mensaje(tenant_id: int, factura_id: int, autor: str, usuario_id: int | None, texto: str) -> int:
+    conn = db.get_connection()
+    try:
+        if conn.execute("SELECT COUNT(*) FROM facturas_contables_mensajes WHERE tenant_id = ? AND factura_id = ?", (tenant_id, factura_id)).fetchone()[0] >= MAX_MENSAJES_POR_FACTURA:
+            raise ValueError("Esta conversación ya es muy larga: escribe a tu gestoría por otra vía.")
+        cur = conn.execute("INSERT INTO facturas_contables_mensajes (tenant_id, factura_id, autor, usuario_id, texto, creado_en) VALUES (?, ?, ?, ?, ?, ?)", (tenant_id, factura_id, autor, usuario_id, texto, db.now_iso()))
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def escribir_como_cliente(cliente_fiscal_id: int, factura_id: int, texto: str) -> int:
+    """El cliente escribe en una factura SUYA (cualquier otra es «no encontrada»). Avisa a quien lleva al cliente."""
+    texto = _texto_valido(texto)
+    f = detalle_del_cliente(cliente_fiscal_id, factura_id)
+    if f is None:
+        raise ValueError("Factura no encontrada.")
+    cliente = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
+    mid = _insertar_mensaje(cliente["tenant_id"], factura_id, "cliente", None, texto)
+    fc._avisar_al_despacho(cliente, factura_id, {"tercero_nombre": f["tercero_nombre"], "numero": f["numero"]}, titulo=f"{cliente['nombre']} ha escrito sobre una factura")
+    return mid
+
+
+def escribir_como_despacho(tenant_id: int, usuario_id: int, factura_id: int, texto: str) -> int:
+    texto = _texto_valido(texto)
+    if fc.obtener(tenant_id, usuario_id, factura_id) is None:
+        raise ValueError("Factura no encontrada.")
+    return _insertar_mensaje(tenant_id, factura_id, "empleado", usuario_id, texto)
+
+
+def marcar_leidos(tenant_id: int, factura_id: int, lee: str) -> None:
+    """Quien abre la conversación marca como leídos los mensajes del otro lado (`lee`: «cliente» o «empleado»)."""
+    otro = "empleado" if lee == "cliente" else "cliente"
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE facturas_contables_mensajes SET leido_en = ? WHERE tenant_id = ? AND factura_id = ? AND autor = ? AND leido_en IS NULL", (db.now_iso(), tenant_id, factura_id, otro))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def sin_leer_para_cliente(cliente_fiscal_id: int) -> list[dict]:
+    """Facturas del cliente en las que el despacho le ha escrito sin que lo haya leído: [{factura_id, numero, tercero_nombre, n}]."""
+    conn = db.get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            "SELECT x.id AS factura_id, x.numero, x.tercero_nombre, COUNT(*) AS n FROM facturas_contables_mensajes m JOIN facturas_contables x ON x.id = m.factura_id AND x.tenant_id = m.tenant_id "
+            "WHERE x.cliente_fiscal_id = ? AND m.autor = 'empleado' AND m.leido_en IS NULL GROUP BY x.id, x.numero, x.tercero_nombre ORDER BY MIN(m.id)", (cliente_fiscal_id,))]
+    finally:
+        conn.close()
+
+
+def con_mensajes_sin_leer_del_cliente(tenant_id: int, ids: list[int]) -> set[int]:
+    ids = [int(i) for i in ids]
+    if not ids:
+        return set()
+    conn = db.get_connection()
+    try:
+        return {r["factura_id"] for r in conn.execute(f"SELECT DISTINCT factura_id FROM facturas_contables_mensajes WHERE tenant_id = ? AND autor = 'cliente' AND leido_en IS NULL AND factura_id IN ({','.join('?' * len(ids))})", (tenant_id, *ids))}
+    finally:
+        conn.close()
+
+
+def detalle_del_cliente(cliente_fiscal_id: int, factura_id: int) -> dict | None:
+    """Lo que el cliente ve de UNA de sus facturas (como en `facturas_del_cliente`), o None si no es suya."""
+    cliente = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
+    if cliente is None:
+        return None
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, estado, origen, documento_id FROM facturas_contables WHERE id = ? AND cliente_fiscal_id = ? AND tenant_id = ?",
+                         (factura_id, cliente_fiscal_id, cliente["tenant_id"])).fetchone()
+        if f is None:
+            return None
+        f = dict(f)
+        ev = _eventos(conn, cliente["tenant_id"], [factura_id]).get(factura_id) if f["estado"] == "descartada" else None
+    finally:
+        conn.close()
+    f["trimestre"] = fc.trimestre_de(f["fecha"])
+    f["devuelta"], f["devuelta_en"], f["atendida"] = (ev["motivo"], ev["en"], ev["atendida"]) if ev else (None, None, False)
+    return f
+
+
+# --- Archivos que ya se enviaron --------------------------------------------------------------------------------------------------------------------
+
+def archivos_ya_enviados(cliente_fiscal_id: int, huellas: list[str]) -> dict[str, str]:
+    """{huella SHA-256: fecha de envío} de los archivos que el cliente ya tiene anotados en una factura no descartada. Solo mira huellas válidas y como mucho 20."""
+    huellas = [h.lower() for h in huellas if re.fullmatch(r"[0-9a-fA-F]{64}", h or "")][:20]
+    if not huellas:
+        return {}
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(f"SELECT d.hash_sha256 AS huella, MIN(x.creado_en) AS desde FROM cliente_documentos d JOIN facturas_contables x ON x.documento_id = d.id AND x.cliente_fiscal_id = d.cliente_fiscal_id "
+                             f"WHERE d.cliente_fiscal_id = ? AND x.estado != 'descartada' AND d.hash_sha256 IN ({','.join('?' * len(huellas))}) GROUP BY d.hash_sha256", (cliente_fiscal_id, *huellas)).fetchall()
+    finally:
+        conn.close()
+    return {f["huella"]: f["desde"][:10] for f in filas}
+
+
+def trimestres_cerrados(cliente_fiscal_id: int, hoy: date | None = None) -> list[str]:
+    """Los últimos ocho trimestres que el despacho tiene cerrados para este cliente (para avisarle al escribir la fecha de una factura)."""
+    cliente = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
+    if cliente is None:
+        return []
+    candidatos = _trimestres_vecinos(trimestre_actual(hoy), 7)
+    return sorted(fc.periodos_cerrados(cliente["tenant_id"], cliente_fiscal_id, candidatos))

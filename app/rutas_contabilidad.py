@@ -83,7 +83,8 @@ def lista():
         f["periodo_cerrado"] = cierres.get(f["cliente_fiscal_id"], {}).get(fc.trimestre_de(f["fecha"]))
     cierre = fc.periodos_cerrados(g.tenant_id, cliente_id, [trimestre]).get(trimestre) if cliente_id and trimestre else None
     uso_plan = cobro_contabilidad.consumo(g.tenant_id)
-    return render_template("contabilidad_lista.html", uso_plan=uso_plan if uso_plan["tarifa"] else None, cierre=cierre, facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
+    ids = [f["id"] for f in facturas]
+    return render_template("contabilidad_lista.html", duplicadas=fc.con_duplicado_entre(g.tenant_id, ids), con_mensaje=facturas_portal.con_mensajes_sin_leer_del_cliente(g.tenant_id, ids), uso_plan=uso_plan if uso_plan["tarifa"] else None, cierre=cierre, facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
                            trimestres=_trimestres(), resumen=fc.resumen_por_estado(g.tenant_id, g.usuario_id, cliente_id), cfg=cfg, error=_error(), subnav=None,
                            por_leer=lectura_facturas.pendientes_de_leer(g.tenant_id, g.usuario_id, cliente_id), ia_lista=lectura_facturas.configurada(g.usuario_id), max_archivos=fc.MAX_ARCHIVOS_POR_SUBIDA)
 
@@ -144,7 +145,10 @@ def ver(factura_id: int):
     datos = {k: f[k] for k in ("tipo", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "concepto", "referencia", "notas")}
     datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "", criterio_caja="1" if f.get("criterio_caja") else "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
+    mensajes = facturas_portal.mensajes(g.tenant_id, factura_id)
+    facturas_portal.marcar_leidos(g.tenant_id, factura_id, "empleado")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
+                           mensajes=mensajes, duplicados=fc.posibles_duplicados(g.tenant_id, g.usuario_id, factura_id),
                            cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), evidencia=lectura_facturas.evidencia_de(f) if f.get("lectura") == "ia" else None,
                            imagen_en_linea=(f.get("documento_id") is not None and _es_imagen(f)), regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]), periodo_cerrado=fc.periodos_cerrados(g.tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"]),
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
@@ -244,6 +248,17 @@ def estado(factura_id: int):
     except ValueError as e:
         return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]))
     return redirect(request.form.get("volver") or url_for("contabilidad.ver", factura_id=factura_id))
+
+
+@contabilidad_bp.route("/<int:factura_id>/mensajes", methods=["POST"])
+@login_required
+def mensaje(factura_id: int):
+    """Escribe al cliente en una factura suya: lo verá en su portal."""
+    try:
+        facturas_portal.escribir_como_despacho(g.tenant_id, g.usuario_id, factura_id, request.form.get("texto", ""))
+    except ValueError as e:
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]) + "#mensajes")
+    return redirect(url_for("contabilidad.ver", factura_id=factura_id) + "#mensajes")
 
 
 @contabilidad_bp.route("/<int:factura_id>/devolver", methods=["POST"])

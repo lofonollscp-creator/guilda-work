@@ -645,7 +645,7 @@ def test_captura_desde_el_movil_va_al_titular_elegido(cliente):
     assert 'capture="environment"' in pagina and "Hacer foto" in pagina and "Otra Empresa SL" in pagina
     assert "El último" in cliente.get("/guilda-fiscal/captura").get_data(as_text=True)                       # el último titular usado sale marcado
     png = b"\x89PNG\r\n\x1a\n" + b"0" * 200
-    r = cliente.post(f"/guilda-fiscal/{otro}/captura", data={"tipo": "recibida", "archivos": [(io.BytesIO(png), "ticket1.png"), (io.BytesIO(png), "ticket2.png")]}, content_type="multipart/form-data")
+    r = cliente.post(f"/guilda-fiscal/{otro}/captura", data={"tipo": "recibida", "archivos": [(io.BytesIO(png), "ticket1.png"), (io.BytesIO(png + b"1"), "ticket2.png")]}, content_type="multipart/form-data")
     assert r.status_code == 302 and "subidas=2" in r.headers["Location"]
     assert "2 facturas subidas" in cliente.get(r.headers["Location"]).get_data(as_text=True)
     assert len(fn.capturas_recientes(t, uid, otro)) == 2 and fn.capturas_recientes(t, uid, c) == []

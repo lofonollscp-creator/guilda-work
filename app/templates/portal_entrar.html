@@ -30,6 +30,7 @@
       {% else %}
       <p class="auth-alterna">{{ _('Introduce tu email y te mandaremos un enlace de acceso, sin necesidad de contraseña.') }}</p>
       <form method="post" action="{{ url_for('portal_cliente.entrar') }}">
+        {% if siguiente %}<input type="hidden" name="siguiente" value="{{ siguiente }}">{% endif %}
         <div class="correo-form-campo">
           <label for="portal-email">{{ _('Email') }}</label>
           <input type="email" id="portal-email" name="email" required autofocus>

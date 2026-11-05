@@ -283,6 +283,9 @@ CREATE POLICY aislamiento ON facturas_contables USING (tenant_id = nullif(curren
 ALTER TABLE facturas_contables_lineas ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON facturas_contables_lineas;
 CREATE POLICY aislamiento ON facturas_contables_lineas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE facturas_contables_mensajes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON facturas_contables_mensajes;
+CREATE POLICY aislamiento ON facturas_contables_mensajes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE festivos ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON festivos;
 CREATE POLICY aislamiento ON festivos USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

@@ -114,6 +114,7 @@ SELECT create_distributed_table('facturacion_accesos', 'tenant_id', colocate_wit
 SELECT create_distributed_table('facturacion_expedientes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('facturas_contables', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('facturas_contables_lineas', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('facturas_contables_mensajes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('festivos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fichaje_avisos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('fichaje_avisos_turno', 'tenant_id', colocate_with => 'abogados_ajustes');

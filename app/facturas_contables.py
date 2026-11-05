@@ -183,6 +183,18 @@ CREATE TABLE IF NOT EXISTS facturas_contables_lineas (
     sujeta_iva INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_lineas ON facturas_contables_lineas(factura_id);
+CREATE INDEX IF NOT EXISTS idx_facturas_contables_duplicadas ON facturas_contables(tenant_id, cliente_fiscal_id, tercero_nif, numero);
+CREATE TABLE IF NOT EXISTS facturas_contables_mensajes (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    factura_id INTEGER NOT NULL,
+    autor TEXT NOT NULL CHECK (autor IN ('cliente', 'empleado')),
+    usuario_id INTEGER,
+    texto TEXT NOT NULL,
+    creado_en TEXT NOT NULL,
+    leido_en TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_facturas_contables_mensajes ON facturas_contables_mensajes(tenant_id, factura_id, id);
 """
 # Tipo de operación de cada línea (campo «subtipo» del enlace de a3, posiciones 100-101). La importación (06) necesita el número de DUA y no se ofrece.
 OPERACIONES = {
@@ -1037,6 +1049,60 @@ def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str)
         conn.close()
 
 
+# --- Facturas repetidas ---------------------------------------------------------------------------------------------------------------------------------
+
+def factura_igual(cliente_fiscal_id: int, nif, numero, excluir_id: int | None = None) -> dict | None:
+    """Otra factura NO descartada del mismo cliente con el mismo NIF de proveedor o cliente y el mismo número (sin distinguir mayúsculas), o None."""
+    nif, numero = _nif(nif), str(numero or "").strip()
+    if not nif or not numero or numero == "(por leer)":
+        return None
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT id, numero, fecha, estado FROM facturas_contables WHERE cliente_fiscal_id = ? AND tercero_nif = ? AND upper(numero) = ? AND estado != 'descartada' AND id != ? ORDER BY id LIMIT 1",
+                         (cliente_fiscal_id, nif, numero.upper(), excluir_id or 0)).fetchone()
+    finally:
+        conn.close()
+    return dict(f) if f else None
+
+
+def posibles_duplicados(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
+    """Facturas del mismo cliente que pueden ser esta misma: mismo NIF y número, o mismo NIF, importe y fecha con tres días de margen. [{id, numero, fecha, estado, motivo}]."""
+    f = obtener(tenant_id, usuario_id, factura_id)
+    if f is None or f["estado"] == "descartada" or not f.get("tercero_nif"):
+        return []
+    conn = db.get_connection()
+    try:
+        otras = [dict(o) for o in conn.execute("SELECT id, numero, fecha, estado, total_centimos FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND tercero_nif = ? AND estado != 'descartada' AND id != ? ORDER BY id",
+                                               (tenant_id, f["cliente_fiscal_id"], f["tercero_nif"], factura_id))]
+    finally:
+        conn.close()
+    res = []
+    for o in otras:
+        if f["numero"] != "(por leer)" and o["numero"].strip().upper() == f["numero"].strip().upper():
+            motivo = "mismo número"
+        elif f["total_centimos"] and o["total_centimos"] == f["total_centimos"] and abs((date.fromisoformat(o["fecha"]) - date.fromisoformat(f["fecha"])).days) <= 3:
+            motivo = "mismo importe y fecha"
+        else:
+            continue
+        res.append({"id": o["id"], "numero": o["numero"], "fecha": o["fecha"], "estado": o["estado"], "motivo": motivo})
+    return res
+
+
+def con_duplicado_entre(tenant_id: int, ids: list[int]) -> set[int]:
+    """Cuáles de estas facturas tienen otra del mismo cliente con el mismo NIF y número (para marcarlas en la lista sin consultar una a una)."""
+    ids = [int(i) for i in ids]
+    if not ids:
+        return set()
+    conn = db.get_connection()
+    try:
+        filas = conn.execute(f"SELECT DISTINCT a.id FROM facturas_contables a JOIN facturas_contables b ON b.tenant_id = a.tenant_id AND b.cliente_fiscal_id = a.cliente_fiscal_id AND b.tercero_nif = a.tercero_nif "
+                             f"AND upper(b.numero) = upper(a.numero) AND b.id != a.id AND b.estado != 'descartada' WHERE a.tenant_id = ? AND a.estado != 'descartada' AND a.numero != '(por leer)' "
+                             f"AND a.id IN ({','.join('?' * len(ids))})", (tenant_id, *ids)).fetchall()
+    finally:
+        conn.close()
+    return {r["id"] for r in filas}
+
+
 def listar(tenant_id: int, usuario_id: int, *, cliente_fiscal_id: int | None = None, estado: str | None = None, tipo: str | None = None, desde: str | None = None, hasta: str | None = None,
            limite: int = 300) -> list[dict]:
     visibles = acceso.clientes_visibles(tenant_id, usuario_id)
@@ -1232,6 +1298,9 @@ def crear_desde_portal(cliente_fiscal_id: int, datos: dict, archivo: tuple[str, 
     total = importe_a_centimos(datos.get("total"), permitir_cero=False)
     if total <= 0:
         raise ValueError("Indica el total de la factura.")
+    previa = factura_igual(cliente_fiscal_id, datos.get("tercero_nif"), datos.get("numero"))
+    if previa is not None:
+        raise ValueError(f"Ya tienes anotada la factura {previa['numero']} de ese proveedor o cliente (fecha {previa['fecha']}). Si es otra, cambia el número.")
     pct = porcentaje_a_centesimas(datos.get("pct_iva"))
     base, cuota_iva = _desglose_desde_el_total(total, pct)
     notas = "Anotada por el cliente desde el portal."
@@ -1271,7 +1340,20 @@ def subir_archivos(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo
     return _subir(tenant_id, usuario_id, f, tipo, archivos, "despacho", "Subida por el despacho, pendiente de leer.")
 
 
-def _subir(tenant_id: int, usuario_id: int | None, f, tipo: str, archivos, origen: str, nota: str) -> list[int]:
+class Subida(list):
+    """Los ids de las facturas creadas; `repetidas` cuenta los archivos que ya estaban enviados (no se vuelven a anotar)."""
+    repetidas = 0
+
+
+def _archivo_ya_anotado(cliente_fiscal_id: int, documento_id: int) -> bool:
+    conn = db.get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM facturas_contables WHERE cliente_fiscal_id = ? AND documento_id = ? AND estado != 'descartada'", (cliente_fiscal_id, documento_id)).fetchone() is not None
+    finally:
+        conn.close()
+
+
+def _subir(tenant_id: int, usuario_id: int | None, f, tipo: str, archivos, origen: str, nota: str) -> Subida:
     if tipo not in TIPOS:
         raise ValueError("Indica si son facturas emitidas o recibidas.")
     archivos = [a for a in archivos if a and a[2]]
@@ -1284,14 +1366,17 @@ def _subir(tenant_id: int, usuario_id: int | None, f, tipo: str, archivos, orige
     for _n, mime, contenido in archivos:      # se comprueban todos antes de guardar ninguno
         if (mime or "").lower().split(";")[0] not in MIME_ADJUNTO or len(contenido) > MAX_ADJUNTO_BYTES:
             raise ValueError("Archivo no válido: solo imágenes o PDF, hasta 8 MB.")
-    ids = []
+    ids = Subida()
     for nombre, mime, contenido in archivos:
         documento_id = adjuntar(tenant_id, f["id"], usuario_id, nombre, mime, contenido)
+        if _archivo_ya_anotado(f["id"], documento_id):                  # el mismo archivo otra vez: no se anota una segunda factura igual
+            ids.repetidas += 1
+            continue
         ids.append(_crear_borrador(tenant_id, usuario_id, f, tipo, documento_id, origen, nota))
     return ids
 
 
-def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[str, str | None, bytes]], nota: str = "Subida por el cliente desde el portal, pendiente de leer.") -> list[int]:
+def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[str, str | None, bytes]], nota: str = "Subida por el cliente desde el portal, pendiente de leer.") -> Subida:
     """El cliente sube fotos o PDF de sus facturas sin teclear nada: el despacho las leerá de golpe. Mismos límites que anotar una a mano."""
     f = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
     if f is None:
@@ -1307,11 +1392,13 @@ def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[s
         if a and a[2]:
             antivirus.exigir_limpio(a[0], a[2], f["tenant_id"], cliente_fiscal_id)           # antes de guardar nada: si uno falla, no se guarda ninguno
     ids = _subir(f["tenant_id"], None, f, tipo, archivos, "portal", nota)
+    if not ids:
+        raise ValueError("Ya nos enviaste esas facturas: tu gestoría las tiene.")
     _avisar_al_despacho(f, ids[-1], {"tercero_nombre": f"{len(ids)} archivo(s) por leer", "numero": ""}, len(ids))
     return ids
 
 
-def _avisar_al_despacho(f, factura_id: int, datos: dict, cuantas: int = 1) -> None:
+def _avisar_al_despacho(f, factura_id: int, datos: dict, cuantas: int = 1, titulo: str | None = None) -> None:
     """Avisa a quien lleva al cliente (o, si nadie, a la dirección y la coordinación) de que ha anotado una factura. Nunca rompe la subida."""
     try:
         from . import notificaciones
@@ -1320,7 +1407,7 @@ def _avisar_al_despacho(f, factura_id: int, datos: dict, cuantas: int = 1) -> No
             destinatarios = [f["responsable_id"]] if f["responsable_id"] else [r["id"] for r in conn.execute("SELECT u.id FROM usuarios u WHERE " + db.sql_supervisor(), (f["tenant_id"], f["tenant_id"]))]
         finally:
             conn.close()
-        titulo = f"{f['nombre']} ha anotado una factura" if cuantas == 1 else f"{f['nombre']} ha subido {cuantas} facturas"
+        titulo = titulo or (f"{f['nombre']} ha anotado una factura" if cuantas == 1 else f"{f['nombre']} ha subido {cuantas} facturas")
         for uid in destinatarios:
             if uid and db.notificacion_tipo_activa(uid, "portal_mensaje_nuevo"):
                 notificaciones.crear_y_enviar(uid, "portal_mensaje_nuevo", titulo, f"{datos.get('tercero_nombre') or ''} · {datos.get('numero') or ''}"[:100], url=f"/contabilidad/{factura_id}",
@@ -1389,7 +1476,7 @@ def para_recordar(tenant_id: int, usuario_id: int, trimestre: str) -> list[dict]
 
 def recordar(tenant_id: int, usuario_id: int, cliente_ids: list[int], trimestre: str, fecha_limite: str | None, url_portal: str) -> dict:
     """Escribe a los clientes elegidos para pedirles las facturas del trimestre. Devuelve {enviados, omitidos: [(nombre, motivo)]}. `ValueError` si el correo saliente no está configurado."""
-    from . import notificaciones_email as ne
+    from . import notificaciones_email as ne, portal_recordatorios
     rango_del_trimestre(trimestre)
     fecha_limite = _fecha(fecha_limite, "Fecha límite") if str(fecha_limite or "").strip() else None
     if not ne.configurado():
@@ -1406,7 +1493,7 @@ def recordar(tenant_id: int, usuario_id: int, cliente_ids: list[int], trimestre:
             omitidos.append((c["nombre"], f"ya se le recordó hace menos de {DIAS_ENTRE_RECORDATORIOS} días"))
         else:
             try:
-                ne.enviar_recordatorio_facturas(c["email"], c["nombre"], trimestre, fecha_limite, url_portal, tenant_id=tenant_id)
+                ne.enviar_recordatorio_facturas(c["email"], c["nombre"], trimestre, fecha_limite, portal_recordatorios.con_destino(url_portal, f"/portal/facturas?trimestre={trimestre}"), tenant_id=tenant_id)
             except ne.ErrorNotificacionesEmail as e:
                 omitidos.append((c["nombre"], str(e)[:120]))
                 continue
@@ -1429,7 +1516,7 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("UPDATE facturas_contables SET lote_id = NULL WHERE tenant_id = ?", (tenant_id,))
     for tabla in ("facturas_contables_lineas",):
         conn.execute(f"DELETE FROM {tabla} WHERE factura_id IN (SELECT id FROM facturas_contables WHERE tenant_id = ?)", (tenant_id,))
-    for tabla in ("facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan", "contabilidad_reglas", "contabilidad_cierres"):
+    for tabla in ("facturas_contables_mensajes", "facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan", "contabilidad_reglas", "contabilidad_cierres"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
     from . import cobro_contabilidad
     cobro_contabilidad.borrar_datos_de_tenant(conn, tenant_id)

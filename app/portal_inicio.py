@@ -58,6 +58,10 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
             puntos.append({"clave": f"factura-{f['id']}", "urgente": True, "accion": _("Corregir"),
                            "url": url_for("portal_cliente.facturas", trimestre=f["trimestre"]) + f"#factura-{f['id']}",
                            "titulo": _("Tu gestoría te devuelve una factura: %(tercero)s", tercero=f["tercero_nombre"]), "detalle": f["devuelta"] or ""})
+        for m in facturas_portal.sin_leer_para_cliente(cliente["id"])[:5]:
+            puntos.append({"clave": f"factura-mensaje-{m['factura_id']}", "urgente": False, "accion": _("Leer"), "url": url_for("portal_cliente.factura", factura_id=m["factura_id"]) + "#mensajes",
+                           "titulo": ngettext("Tienes %(n)s mensaje nuevo sobre una factura", "Tienes %(n)s mensajes nuevos sobre una factura", m["n"], n=m["n"]),
+                           "detalle": f"{m['tercero_nombre']} · {m['numero']}" if m["numero"] != "(por leer)" else m["tercero_nombre"]})
         cuentas = facturas_portal.para_el_inicio(cliente["id"])
         if cuentas["para_corregir"] > 5:
             puntos.append({"clave": "facturas-mas", "urgente": True, "accion": _("Ver facturas"), "url": url_for("portal_cliente.facturas"),

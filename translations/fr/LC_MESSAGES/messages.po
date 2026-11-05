@@ -20355,3 +20355,91 @@ msgstr "Renvoyer"
 
 msgid "Esa factura ya no está pendiente de corregir."
 msgstr "Cette facture n'est plus à corriger."
+
+msgid "Tienes %(n)s mensaje nuevo sobre una factura"
+msgid_plural "Tienes %(n)s mensajes nuevos sobre una factura"
+msgstr[0] "Vous avez %(n)s nouveau message sur une facture"
+msgstr[1] "Vous avez %(n)s nouveaux messages sur une facture"
+
+msgid "%(n)s archivo ya lo habías enviado y no se ha duplicado."
+msgid_plural "%(n)s archivos ya los habías enviado y no se han duplicado."
+msgstr[0] "%(n)s fichier avait déjà été envoyé et n'a pas été dupliqué."
+msgstr[1] "%(n)s fichiers avaient déjà été envoyés et n'ont pas été dupliqués."
+
+msgid "«%(nombre)s» parece borrosa: si puedes, hazla de nuevo con más luz y sin moverte."
+msgstr "« %(nombre)s » semble floue : si possible, reprenez-la avec plus de lumière et sans bouger."
+
+msgid "«%(nombre)s» ya la enviaste el %(fecha)s."
+msgstr "Vous avez déjà envoyé « %(nombre)s » le %(fecha)s."
+
+msgid "«%(nombre)s» está elegida dos veces."
+msgstr "« %(nombre)s » est sélectionné deux fois."
+
+msgid "«%(nombre)s» pesa más de 8 MB y no se podrá subir."
+msgstr "« %(nombre)s » dépasse 8 Mo et ne pourra pas être envoyé."
+
+msgid "«%(nombre)s» no es una imagen ni un PDF y no se podrá subir."
+msgstr "« %(nombre)s » n'est ni une image ni un PDF et ne pourra pas être envoyé."
+
+msgid "Tu gestoría ya ha cerrado ese trimestre. Envíala igualmente, pero escríbele para avisarle de que te falta esta factura."
+msgstr "Votre cabinet a déjà clôturé ce trimestre. Envoyez-la quand même, mais écrivez-lui pour signaler qu'il manquait cette facture."
+
+msgid "Mensaje nuevo de tu gestoría"
+msgstr "Nouveau message de votre cabinet"
+
+msgid "Volver a mis facturas"
+msgstr "Retour à mes factures"
+
+msgid "Recibida (compra o gasto)"
+msgstr "Reçue (achat ou dépense)"
+
+msgid "Emitida (venta)"
+msgstr "Émise (vente)"
+
+msgid "Enviar la factura corregida"
+msgstr "Envoyer la facture corrigée"
+
+msgid "Mensajes con tu gestoría sobre esta factura"
+msgstr "Messages avec votre cabinet sur cette facture"
+
+msgid "Escribe el mensaje."
+msgstr "Écrivez le message."
+
+msgid "El mensaje no puede pasar de 1000 caracteres."
+msgstr "Le message ne peut pas dépasser 1000 caractères."
+
+msgid "Esta conversación ya es muy larga: escribe a tu gestoría por otra vía."
+msgstr "Cette conversation est déjà très longue : écrivez à votre cabinet par un autre moyen."
+
+msgid "Factura no encontrada."
+msgstr "Facture introuvable."
+
+msgid "Ya nos enviaste esas facturas: tu gestoría las tiene."
+msgstr "Vous nous avez déjà envoyé ces factures : votre cabinet les a."
+
+msgid "Posible duplicada"
+msgstr "Doublon possible"
+
+msgid "Hay otra factura del mismo cliente con el mismo NIF y número"
+msgstr "Il existe une autre facture du même client avec le même NIF et numéro"
+
+msgid "Mensaje nuevo"
+msgstr "Nouveau message"
+
+msgid "El cliente ha escrito en esta factura"
+msgstr "Le client a écrit sur cette facture"
+
+msgid "Posible factura duplicada:"
+msgstr "Facture en double possible :"
+
+msgid "mismo número"
+msgstr "même numéro"
+
+msgid "mismo importe y fecha"
+msgstr "même montant et date"
+
+msgid "Si es la misma, descarta una de las dos antes de exportar."
+msgstr "Si c'est la même, écartez-en une avant d'exporter."
+
+msgid "Todavía no hay mensajes. El cliente los verá en su portal."
+msgstr "Pas encore de messages. Le client les verra dans son portail."

@@ -25,7 +25,7 @@ from flask_babel import gettext
 from werkzeug.exceptions import HTTPException
 
 from .bd.errores import ErrorIntegridad
-from . import alta_cliente, api_contexto, correo, db, estado_herramientas, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi, quickadd
+from . import alta_cliente, api_contexto, correo, portal_recordatorios, db, estado_herramientas, eventos, fiscal_identidad, peticion, espocrm, export, herramientas, ia_asistente, ia_atajos, kratos, openapi, quickadd
 from .auth import limiter, token_required
 from .rutas_correo import _ids_propios_del_usuario, _mensaje_de_usuario_o_404
 
@@ -1139,7 +1139,7 @@ def editar_vencimiento_fiscal(vencimiento_id: int):
         if cliente is not None and cliente["email"]:
             from . import notificaciones_email as _ne
             try:
-                _ne.enviar_solicitud_documento(cliente["email"], nuevo, url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id)
+                _ne.enviar_solicitud_documento(cliente["email"], nuevo, portal_recordatorios.con_destino(url_for("portal_cliente.entrar", _external=True), f"/portal/vencimientos/{vencimiento_id}/documentos"), tenant_id=g.tenant_id)
             except _ne.ErrorNotificacionesEmail:
                 pass
     return _ok(_dict(db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)))

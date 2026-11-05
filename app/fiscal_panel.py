@@ -158,7 +158,7 @@ def recordatorios_sugeridos(tenant_id: int, usuario_id: int, *, dias: int = 21, 
 def enviar_recordatorios(tenant_id: int, usuario_id: int, envios: list[dict], url_portal: str, *, dias: int = 21) -> dict:
     """Envía los recordatorios CONFIRMADOS: cada envío es `{cliente_id, ejercicio, trimestre, asunto, texto}` con el texto que la persona ha revisado. Solo se escribe a quien sigue siendo una sugerencia válida
     (visible, con email, sin recordatorio reciente): el destinatario sale siempre de la ficha, nunca de lo enviado. Devuelve `{enviados, omitidos: [(nombre, motivo)]}`."""
-    from . import facturas_contables as fc, notificaciones_email as ne
+    from . import facturas_contables as fc, notificaciones_email as ne, portal_recordatorios
     if not ne.configurado():
         raise ErrorFiscal("El correo saliente de la plataforma no está configurado: no se puede avisar a los clientes.")
     validas = {(s["cliente_id"], s["ejercicio"], s["trimestre"]): s for s in recordatorios_sugeridos(tenant_id, usuario_id, dias=dias)}
@@ -176,7 +176,7 @@ def enviar_recordatorios(tenant_id: int, usuario_id: int, envios: list[dict], ur
             omitidos.append((s["nombre"], "falta el asunto o el texto"))
         else:
             try:
-                ne.enviar_recordatorio_fiscal(s["email"], asunto, texto, url_portal, tenant_id=tenant_id)
+                ne.enviar_recordatorio_fiscal(s["email"], asunto, texto, portal_recordatorios.con_destino(url_portal, "/portal/facturas" + (f"?trimestre={s['clave']}" if re.fullmatch(r"\d{4}-T[1-4]", str(s.get("clave") or "")) else "")), tenant_id=tenant_id)
             except ne.ErrorNotificacionesEmail as err:
                 omitidos.append((s["nombre"], str(err)[:120]))
                 continue

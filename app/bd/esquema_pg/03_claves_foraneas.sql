@@ -162,6 +162,7 @@ ALTER TABLE facturacion_expedientes ADD CONSTRAINT fk_facturacion_expedientes_ex
 ALTER TABLE facturas_contables ADD CONSTRAINT fk_facturas_contables_cliente_fiscal_id FOREIGN KEY (cliente_fiscal_id) REFERENCES clientes_fiscales (id) ON DELETE CASCADE;
 ALTER TABLE facturas_contables ADD CONSTRAINT fk_facturas_contables_lote_id FOREIGN KEY (lote_id) REFERENCES contabilidad_lotes (id);
 ALTER TABLE facturas_contables_lineas ADD CONSTRAINT fk_facturas_contables_lineas_factura_id FOREIGN KEY (factura_id) REFERENCES facturas_contables (id) ON DELETE CASCADE;
+ALTER TABLE facturas_contables_mensajes ADD CONSTRAINT fk_facturas_contables_mensajes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE festivos ADD CONSTRAINT fk_festivos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE fichaje_avisos ADD CONSTRAINT fk_fichaje_avisos_entrada_id FOREIGN KEY (entrada_id) REFERENCES fichajes (id);
 ALTER TABLE fichaje_avisos ADD CONSTRAINT fk_fichaje_avisos_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);

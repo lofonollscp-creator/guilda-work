@@ -213,3 +213,170 @@ def test_subir_archivos_lleva_al_trimestre_de_hoy(cliente):
     t, u, c = _portal(cliente, "Despacho subir")
     r = cliente.post("/portal/facturas", data={"modo": "archivos", "tipo": "recibida", "archivos": (io.BytesIO(PDF), "f.pdf", "application/pdf")}, content_type="multipart/form-data")
     assert r.status_code == 302 and f"trimestre={facturas_portal.trimestre_actual()}" in r.headers["Location"]
+
+
+# --- A2: mensajes por factura ----------------------------------------------------------------------------------------------------------------------
+
+def test_el_cliente_escribe_en_su_factura_y_el_despacho_lo_ve_y_contesta(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "mensajes-factura@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho mensajes"); db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = crear_cliente_fiscal(t, "Cliente Mensajes", nif="B12345678")
+    fid = _factura_del_portal(t, uid, c)
+    with cliente.session_transaction() as sesion:
+        sesion["cliente_fiscal_id"] = c
+    assert "Mensajes con tu gestoría sobre esta factura" in _html(cliente, f"/portal/facturas/{fid}")
+    r = cliente.post(f"/portal/facturas/{fid}/mensajes", data={"texto": "¿Os falta algo de esta factura?"})
+    assert r.status_code == 302
+    assert "error=" in cliente.post(f"/portal/facturas/{fid}/mensajes", data={"texto": "  "}).headers["Location"]
+    lista = _html(cliente, "/contabilidad/")
+    assert "Mensaje nuevo" in lista
+    ficha = _html(cliente, f"/contabilidad/{fid}")
+    assert "¿Os falta algo de esta factura?" in ficha and "Mensaje nuevo" not in _html(cliente, "/contabilidad/"), "abrirla marca el mensaje como leído"
+    assert cliente.post(f"/contabilidad/{fid}/mensajes", data={"texto": "Todo recibido, gracias"}).status_code == 302
+    assert "mensaje nuevo sobre una factura" in _html(cliente, "/portal/")
+    assert "Todo recibido, gracias" in _html(cliente, f"/portal/facturas/{fid}")
+    assert "mensaje nuevo sobre una factura" not in _html(cliente, "/portal/")
+
+
+def test_un_cliente_no_ve_ni_escribe_en_facturas_de_otro(cliente):
+    t, u, c = _portal(cliente, "Despacho mensajes aisl")
+    ajeno = crear_cliente_fiscal(t, "Otro", nif="B22222222")
+    fid = fc.crear_desde_portal(ajeno, {"tipo": "recibida", "fecha": "2026-08-10", "numero": "A-9", "tercero_nombre": "X", "tercero_nif": "B1", "total": "10", "pct_iva": "21"})
+    assert cliente.get(f"/portal/facturas/{fid}").status_code == 404
+    assert cliente.post(f"/portal/facturas/{fid}/mensajes", data={"texto": "hola"}).status_code == 404
+    assert facturas_portal.mensajes(t, fid) == []
+
+
+def test_los_mensajes_largos_y_las_conversaciones_enormes_se_rechazan(cliente):
+    t, u, c = _portal(cliente, "Despacho mensajes limite")
+    fid = _factura_del_portal(t, u, c)
+    with pytest.raises(ValueError, match="1000"):
+        facturas_portal.escribir_como_cliente(c, fid, "x" * 1001)
+    for i in range(facturas_portal.MAX_MENSAJES_POR_FACTURA):
+        facturas_portal.escribir_como_cliente(c, fid, f"m{i}")
+    with pytest.raises(ValueError, match="muy larga"):
+        facturas_portal.escribir_como_cliente(c, fid, "uno más")
+
+
+# --- A4 y A5: repetidas ----------------------------------------------------------------------------------------------------------------------------
+
+def test_el_mismo_archivo_no_crea_otra_factura_y_se_avisa(cliente):
+    import hashlib
+    t, u, c = _portal(cliente, "Despacho archivo repetido")
+    datos = {"modo": "archivos", "tipo": "recibida", "archivos": (io.BytesIO(PDF), "f.pdf", "application/pdf")}
+    assert cliente.post("/portal/facturas", data=datos, content_type="multipart/form-data").status_code == 302
+    segunda = cliente.post("/portal/facturas", data={**datos, "archivos": (io.BytesIO(PDF), "otra.pdf", "application/pdf")}, content_type="multipart/form-data")
+    assert segunda.status_code == 200 and "Ya nos enviaste esas facturas" in segunda.get_data(as_text=True)
+    assert len(fc.listar(t, u)) == 1
+    huella = hashlib.sha256(PDF).hexdigest()
+    r = cliente.post("/portal/facturas/comprobar", json={"huellas": [huella, "no-vale", "0" * 64]})
+    assert list(r.get_json()["repetidas"]) == [huella]
+    pdf2 = PDF + b"\n%otro"
+    mezcla = cliente.post("/portal/facturas", data={"modo": "archivos", "tipo": "recibida", "archivos": [(io.BytesIO(PDF), "a.pdf", "application/pdf"), (io.BytesIO(pdf2), "b.pdf", "application/pdf")]},
+                          content_type="multipart/form-data")
+    assert mezcla.status_code == 302 and "repetidas=1" in mezcla.headers["Location"] and len(fc.listar(t, u)) == 2
+
+
+def test_una_descartada_deja_volver_a_enviar_el_mismo_archivo(cliente):
+    t, u, c = _portal(cliente, "Despacho archivo descartado")
+    cliente.post("/portal/facturas", data={"modo": "archivos", "tipo": "recibida", "archivos": (io.BytesIO(PDF), "f.pdf", "application/pdf")}, content_type="multipart/form-data")
+    fc.cambiar_estado(t, u, fc.listar(t, u)[0]["id"], "descartada")
+    cliente.post("/portal/facturas", data={"modo": "archivos", "tipo": "recibida", "archivos": (io.BytesIO(PDF), "f.pdf", "application/pdf")}, content_type="multipart/form-data")
+    assert len(fc.listar(t, u)) == 2
+
+
+def test_anotar_dos_veces_la_misma_factura_del_mismo_proveedor_se_rechaza(cliente):
+    t, u, c = _portal(cliente, "Despacho anotar repetida")
+    _factura_del_portal(t, u, c, numero="Ab-1")
+    with pytest.raises(ValueError, match="Ya tienes anotada"):
+        _factura_del_portal(t, u, c, numero="ab-1")
+    _factura_del_portal(t, u, c, numero="Ab-2")            # otro número: vale
+
+
+def test_el_formulario_avisa_de_los_trimestres_cerrados(cliente):
+    t, u, c = _portal(cliente, "Despacho cerrados")
+    fc.cerrar_periodo(t, u, c, facturas_portal.trimestre_actual())
+    assert f'data-cerrados="{facturas_portal.trimestre_actual()}"' in _html(cliente, "/portal/facturas")
+    assert "portal_facturas_subida.js" in _html(cliente, "/portal/facturas")
+
+
+def test_el_despacho_ve_las_posibles_duplicadas(cliente):
+    uid = iniciar_sesion_de_prueba(cliente, "duplicadas@ejemplo.com", "contrasena123")
+    t = db.crear_tenant("Despacho duplicadas"); db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = crear_cliente_fiscal(t, "Cliente Dup", nif="B12345678")
+    a = fc.crear(t, uid, c, _datos(numero="D-1", fecha="2026-08-15"), [LINEA])
+    b = fc.crear(t, uid, c, _datos(numero="d-1", fecha="2026-08-16"), [LINEA])
+    c2 = fc.crear(t, uid, c, _datos(numero="OTRA", fecha="2026-08-17"), [LINEA])           # mismo importe, dos días después
+    d = fc.crear(t, uid, c, _datos(numero="LEJOS", fecha="2026-09-30", tercero_nif="B99999999"), [LINEA])
+    assert {x["id"]: x["motivo"] for x in fc.posibles_duplicados(t, uid, a)} == {b: "mismo número", c2: "mismo importe y fecha"}
+    assert fc.posibles_duplicados(t, uid, d) == []
+    assert fc.con_duplicado_entre(t, [a, b, c2, d]) == {a, b}
+    assert "Posible duplicada" in _html(cliente, "/contabilidad/") and "Posible factura duplicada" in _html(cliente, f"/contabilidad/{a}")
+    fc.cambiar_estado(t, uid, b, "descartada")
+    assert [x["id"] for x in fc.posibles_duplicados(t, uid, a)] == [c2] and fc.con_duplicado_entre(t, [a]) == set()
+
+
+# --- C4: enlaces que llevan a la pantalla exacta -----------------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("valor,esperado", [("/portal/facturas?trimestre=2026-T2", "/portal/facturas?trimestre=2026-T2"), ("/portal/#certificado", "/portal/#certificado"),
+                                            ("https://malo.example/portal/x", None), ("//malo.example", None), ("/portal//malo.example", None), ("/portal/entrar", None),
+                                            ("/admin", None), ("/portal/\nx", None), ("/portal/x:y", None), ("", None), (None, None)])
+def test_solo_se_aceptan_destinos_propios_del_portal(valor, esperado):
+    from app.rutas_portal_cliente import destino_seguro
+    assert destino_seguro(valor) == esperado
+
+
+def test_url_portal_con_destino(monkeypatch):
+    from app import portal_recordatorios
+    monkeypatch.setenv("GUILDA_URL_PUBLICA", "https://work.ejemplo.com/")
+    assert portal_recordatorios.url_portal("/portal/facturas?trimestre=2026-T2") == "https://work.ejemplo.com/portal/entrar?siguiente=%2Fportal%2Ffacturas%3Ftrimestre%3D2026-T2"
+    assert portal_recordatorios.url_portal() == "https://work.ejemplo.com/portal/entrar"
+    monkeypatch.delenv("GUILDA_URL_PUBLICA")
+    assert portal_recordatorios.url_portal("/portal/x") is None
+
+
+def test_el_enlace_de_acceso_conserva_el_destino_y_lleva_al_cliente_a_el(cliente, monkeypatch):
+    from app import notificaciones_email
+    t, c = db.crear_tenant("Despacho destino"), None
+    c = db.crear_cliente_fiscal(t, "Cliente Destino", email="destino@ejemplo.com")
+    enlaces = []
+    monkeypatch.setattr("app.rutas_portal_cliente.enviar_enlace_portal", lambda email, enlace, tenant_id=None: enlaces.append(enlace))
+    pagina = cliente.get("/portal/entrar?siguiente=/portal/facturas%3Ftrimestre%3D2026-T2").get_data(as_text=True)
+    assert 'name="siguiente" value="/portal/facturas?trimestre=2026-T2"' in pagina
+    cliente.post("/portal/entrar", data={"email": "destino@ejemplo.com", "siguiente": "/portal/facturas?trimestre=2026-T2"})
+    from urllib.parse import urlsplit
+    assert len(enlaces) == 1 and "siguiente=" in enlaces[0]
+    partes = urlsplit(enlaces[0])
+    r = cliente.get(partes.path + "?" + partes.query)
+    assert r.status_code == 302 and r.headers["Location"].endswith("/portal/facturas?trimestre=2026-T2")
+    ya_dentro = cliente.get("/portal/entrar?siguiente=/portal/impuestos")
+    assert ya_dentro.status_code == 302 and ya_dentro.headers["Location"].endswith("/portal/impuestos")
+
+
+def test_un_destino_ajeno_se_ignora_al_entrar(cliente):
+    t = db.crear_tenant("Despacho destino malo")
+    c = db.crear_cliente_fiscal(t, "Cliente", email="malo@ejemplo.com")
+    token = db.crear_acceso_cliente_fiscal(c, "127.0.0.1")
+    r = cliente.get(f"/portal/entrar/{token}?siguiente=https://malo.example/")
+    assert r.status_code == 302 and "malo.example" not in r.headers["Location"] and r.headers["Location"].endswith("/portal/")
+
+
+def test_los_avisos_al_cliente_llevan_a_la_pantalla_exacta(monkeypatch):
+    from app import notificaciones_email as ne, portal_recordatorios
+    monkeypatch.setenv("GUILDA_URL_PUBLICA", "https://work.ejemplo.com")
+    monkeypatch.setattr(ne, "configurado", lambda: True)
+    vistos = []
+    monkeypatch.setattr(ne, "_enviar", lambda dest, asunto, cuerpo, html=None: vistos.append(cuerpo))
+    t = db.crear_tenant("Despacho avisos destino")
+    c = db.crear_cliente_fiscal(t, "Cliente Aviso", email="aviso@ejemplo.com")
+    from datetime import datetime, timedelta
+    hoy = datetime(2026, 4, 13, 9, 0)
+    v = db.crear_vencimiento_fiscal(t, c, "303", "2026-T1", (hoy + timedelta(days=7)).strftime("%Y-%m-%d"))
+    assert portal_recordatorios.procesar_recordatorios(hoy) == 1
+    assert f"siguiente=%2Fportal%2Fvencimientos%2F{v}%2Fdocumentos" in vistos[0]
+    u = db.usuario_local_id()
+    db.asignar_tenant(u, t)
+    ne.enviar_recordatorio_facturas("aviso@ejemplo.com", "Cliente Aviso", "2026-T1", None, portal_recordatorios.con_destino("https://work.ejemplo.com/portal/entrar", "/portal/facturas?trimestre=2026-T1"), tenant_id=t)
+    assert "siguiente=%2Fportal%2Ffacturas%3Ftrimestre%3D2026-T1" in vistos[-1]

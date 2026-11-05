@@ -8,6 +8,7 @@
     {% if anotada %}<p class="portal-peticion" role="status"><strong>{{ _('Factura anotada. Tu gestoría la revisará.') }}</strong></p>{% endif %}
     {% if atendida == 'reenviada' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: hemos enviado la factura de nuevo a tu gestoría.') }}</strong></p>{% endif %}
     {% if atendida == 'vista' %}<p class="portal-peticion" role="status"><strong>{{ _('De acuerdo: no te pediremos nada más de esa factura.') }}</strong></p>{% endif %}
+    {% if repetidas %}<p class="portal-peticion" role="status"><strong>{{ ngettext('%(n)s archivo ya lo habías enviado y no se ha duplicado.', '%(n)s archivos ya los habías enviado y no se han duplicado.', repetidas, n=repetidas) }}</strong></p>{% endif %}
     {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
 
     <nav class="portal-trimestres" aria-label="{{ _('Trimestre') }}">
@@ -76,13 +77,19 @@
     <section class="dash-panel">
       <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
       <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>
-      <form method="post" enctype="multipart/form-data" class="edit-form">
+      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}"
+            data-txt-borrosa="{{ _('«%(nombre)s» parece borrosa: si puedes, hazla de nuevo con más luz y sin moverte.', nombre='%(nombre)s') }}"
+            data-txt-repetida="{{ _('«%(nombre)s» ya la enviaste el %(fecha)s.', nombre='%(nombre)s', fecha='%(fecha)s') }}"
+            data-txt-doble="{{ _('«%(nombre)s» está elegida dos veces.', nombre='%(nombre)s') }}"
+            data-txt-grande="{{ _('«%(nombre)s» pesa más de 8 MB y no se podrá subir.', nombre='%(nombre)s') }}"
+            data-txt-tipo="{{ _('«%(nombre)s» no es una imagen ni un PDF y no se podrá subir.', nombre='%(nombre)s') }}">
         <input type="hidden" name="modo" value="archivos">
         <select name="tipo" aria-label="{{ _('¿Qué facturas son?') }}">
           <option value="recibida">{{ _('Me las han hecho a mí (compras y gastos)') }}</option>
           <option value="emitida">{{ _('Las he hecho yo a mis clientes (ventas)') }}</option>
         </select>
         <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" aria-label="{{ _('Fotos o PDF de las facturas') }}">
+        <ul id="avisos-subida" class="portal-avisos" aria-live="polite"></ul>
         <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Subir facturas') }}</button></div>
       </form>
     </section>
@@ -96,7 +103,7 @@
           <option value="emitida" {{ 'selected' if datos.tipo == 'emitida' }}>{{ _('La he hecho yo a un cliente (una venta)') }}</option>
         </select>
         <div class="fila-campos">
-          <label>{{ _('Fecha de la factura') }}<input type="date" name="fecha" value="{{ datos.fecha }}" required></label>
+          <label>{{ _('Fecha de la factura') }}<input type="date" name="fecha" value="{{ datos.fecha }}" required id="fecha-factura" data-cerrados="{{ cerrados|join(',') }}"></label>
           <label>{{ _('Número de factura') }}<input type="text" name="numero" value="{{ datos.numero }}" maxlength="60" required></label>
         </div>
         <div class="fila-campos">
@@ -108,6 +115,7 @@
           <label>{{ _('Tipo de IVA') }}
             <select name="pct_iva">{% for p in ('21', '10', '4', '0') %}<option value="{{ p }}" {{ 'selected' if datos.pct_iva == p }}>{{ p }} %</option>{% endfor %}</select></label>
         </div>
+        <p id="aviso-cierre" class="portal-peticion" role="status" hidden data-txt="{{ _('Tu gestoría ya ha cerrado ese trimestre. Envíala igualmente, pero escríbele para avisarle de que te falta esta factura.') }}"></p>
         <label class="checkbox-label"><input type="checkbox" name="complicada" value="1" {{ 'checked' if datos.complicada }}> {{ _('Lleva retención (IRPF) o más de un tipo de IVA: mi gestoría la completará con la factura delante') }}</label>
         <label>{{ _('Foto o PDF de la factura (recomendado)') }}<input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" capture="environment"></label>
         <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Anotar factura') }}</button></div>
@@ -124,7 +132,7 @@
         <tbody>{% for f in t.facturas %}
           <tr>
             <td class="mono">{{ f.fecha }}</td>
-            <td>{{ f.numero if f.numero != '(por leer)' else _('Pendiente de leer') }}</td>
+            <td><a href="{{ url_for('portal_cliente.factura', factura_id=f.id) }}">{{ f.numero if f.numero != '(por leer)' else _('Pendiente de leer') }}</a>{% if f.id in sin_leer %} <span class="portal-nav-insignia" title="{{ _('Mensaje nuevo de tu gestoría') }}">&bull;</span>{% endif %}</td>
             <td>{{ f.tercero_nombre }}</td>
             <td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
             <td>
@@ -140,3 +148,4 @@
       {% endif %}
     </section>
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='portal_facturas_subida.js') }}"></script>{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Factura') }}{% endblock %}
+{% block titulo %}{{ f.tercero_nombre }}{% endblock %}
+{% block subtitulo %}{{ f.numero if f.numero != '(por leer)' else _('Pendiente de leer') }} · {{ f.fecha|fecha_dia }} · {{ etiqueta(f.trimestre) }}{% endblock %}
+{% block contenido %}
+    <a class="portal-volver" href="{{ url_for('portal_cliente.facturas', trimestre=f.trimestre) }}">&larr; {{ _('Volver a mis facturas') }}</a>
+    {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+
+    <section class="portal-tablero" aria-labelledby="factura-datos">
+      <h2 id="factura-datos">{{ _('Datos') }}</h2>
+      <dl class="portal-factura-datos">
+        <div><dt>{{ _('Tipo') }}</dt><dd>{{ _('Recibida (compra o gasto)') if f.tipo == 'recibida' else _('Emitida (venta)') }}</dd></div>
+        <div><dt>{{ _('Total') }}</dt><dd class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</dd></div>
+        <div><dt>{{ _('Estado') }}</dt>
+          <dd>{% if f.estado == 'descartada' and f.devuelta is not none %}
+            {% if f.atendida %}<span class="portal-estado ok">{{ _('Reenviada') }}</span>{% else %}<span class="portal-estado ko">{{ _('Para corregir') }}</span>{% endif %}
+            {% else %}<span class="portal-estado {{ {'exportada': 'ok', 'revisada': 'ok', 'pendiente': 'warn', 'descartada': 'ko'}[f.estado] }}">{{ textos[f.estado] }}</span>{% endif %}</dd></div>
+      </dl>
+      {% if f.devuelta is not none and not f.atendida %}
+      <p class="portal-devuelta-motivo"><span class="muted">{{ _('Qué hay que corregir:') }}</span> {{ f.devuelta }}</p>
+      <a class="btn btn-primary" href="{{ url_for('portal_cliente.facturas', trimestre=f.trimestre) }}#factura-{{ f.id }}">{{ _('Enviar la factura corregida') }}</a>
+      {% endif %}
+    </section>
+
+    <section id="mensajes" class="portal-conversacion" aria-labelledby="mensajes-titulo">
+      <h2 id="mensajes-titulo">{{ _('Mensajes con tu gestoría sobre esta factura') }}</h2>
+      {% if not mensajes %}
+      <p class="empty-lane">{{ _('Todavía no hay mensajes. Escribe el primero abajo.') }}</p>
+      {% else %}
+      <div class="portal-hilo">
+        {% for m in mensajes %}
+        <div class="portal-msg {{ 'cliente' if m.autor == 'cliente' else 'gestoria' }}">{{ m.texto }}<span class="fecha">{{ m.creado_en|fecha_y_hora }}</span></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <form method="post" action="{{ url_for('portal_cliente.mensaje_de_factura', factura_id=f.id) }}" class="portal-subir">
+        <label for="mensaje-texto">{{ _('Escribe un mensaje') }}</label>
+        <textarea id="mensaje-texto" class="ds-ancho-total ds-mb-3" name="texto" rows="3" maxlength="{{ max_mensaje }}" required></textarea>
+        <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+      </form>
+    </section>
+{% endblock %}

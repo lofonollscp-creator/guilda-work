@@ -888,6 +888,11 @@
    }
   ]
  },
+ "facturas_contables_mensajes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "festivos": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

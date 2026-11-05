@@ -103,7 +103,7 @@ def test_texto_propio_con_marcas(smtp):
     destino, asunto, cuerpo = smtp[0]
     assert asunto == "Panadería: faltan 3 días para el 303"
     assert cuerpo == ("Hola Panadería, el 303 (2T) vence dentro de 3 días, el 2026-04-16. Necesitamos: los extractos. "
-                      "https://work.ejemplo.com/portal/entrar {desconocida} {{x}} {__class__}\n— Gestoria Panadería pan@ejemplo.com")
+                      f"https://work.ejemplo.com/portal/entrar?siguiente=%2Fportal%2Fvencimientos%2F{vid}%2Fdocumentos " + "{desconocida} {{x}} {__class__}\n— Gestoria Panadería pan@ejemplo.com")
 
 
 def test_aviso_al_equipo_si_no_entrega_lo_pedido(smtp, avisos):
