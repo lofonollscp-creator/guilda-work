@@ -160,7 +160,7 @@ def test_token_valido_fija_sesion_y_lista_vencimientos_propios(cliente):
 
     resp = cliente.get(f"/portal/entrar/{token}", follow_redirects=True)
     assert resp.status_code == 200
-    assert "303" in resp.get_data(as_text=True)
+    assert "303" in cliente.get("/portal/impuestos").get_data(as_text=True)
 
 
 def test_token_invalido_no_fija_sesion(cliente):
@@ -586,7 +586,7 @@ def test_dashboard_agrupa_vencimientos_por_anio_mas_reciente_primero(cliente):
     token = db.crear_acceso_cliente_fiscal(cliente_id, "127.0.0.1")
 
     cliente.get(f"/portal/entrar/{token}")
-    resp = cliente.get("/portal/")
+    resp = cliente.get("/portal/impuestos")
     html = resp.get_data(as_text=True)
     assert resp.status_code == 200
     assert html.count('class="portal-anio-titulo"') == 2

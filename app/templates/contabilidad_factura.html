@@ -101,6 +101,13 @@
     {% if f.estado != 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="pendiente"><button type="submit" class="btn btn-ghost">{{ _('Reabrir') }}</button></form>{% endif %}
     {% if f.estado in ('pendiente', 'revisada') %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="descartada"><button type="submit" class="btn btn-ghost">{{ _('Descartar') }}</button></form>{% endif %}
   </div>
+  {% if f.origen == 'portal' and f.estado in ('pendiente', 'revisada') %}
+  <form method="post" action="{{ url_for('contabilidad.devolver', factura_id=f.id) }}" class="ds-fila ds-mt-3">
+    <label for="devolver-motivo">{{ _('Devolver al cliente') }}</label>
+    <input type="text" id="devolver-motivo" name="motivo" maxlength="300" required placeholder="{{ _('Qué ha de corregir (lo verá en su portal)') }}" class="ds-ancho-total">
+    <button type="submit" class="btn btn-ghost">{{ _('Devolver') }}</button>
+  </form>
+  {% endif %}
 </section>
 {% endif %}
 {% endblock %}

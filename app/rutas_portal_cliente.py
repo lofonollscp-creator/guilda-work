@@ -18,7 +18,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import facturas_contables
+from . import facturas_contables, facturas_portal, portal_inicio
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
@@ -31,6 +31,18 @@ MAX_ARCHIVOS_POR_SUBIDA = 10
 @portal_bp.before_request
 def _resolver_cliente_actual():
     g.cliente_fiscal_id = session.get("cliente_fiscal_id")
+
+
+@portal_bp.context_processor
+def _menu_del_portal():
+    """La barra de secciones de todas las pantallas del portal: Inicio · Facturas (si el despacho las contabiliza) · Impuestos. La insignia de Facturas cuenta las que hay que corregir."""
+    if not g.get("cliente_fiscal_id"):
+        return {}
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None:
+        return {}
+    con_facturas = verticales.esta_activo(cliente["tenant_id"], "contabilizacion")
+    return {"portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0}
 
 
 def cliente_login_required(vista):
@@ -118,41 +130,41 @@ def dashboard():
         session.pop("cliente_fiscal_id", None)
         return redirect(url_for("portal_cliente.entrar"))
     vencimientos = db.listar_vencimientos_fiscales(cliente["tenant_id"], cliente_fiscal_id=cliente["id"], sin_internos=True)
-    # Peticiones de documento concreto (app/rutas_fiscal.py:editar_vencimiento)
-    # todavía sin resolver -- "sin resolver" es "no hay ningún documento
-    # subido para ese vencimiento todavía", no un campo aparte que haya que
-    # mantener sincronizado.
-    solicitudes_pendientes = [
-        v for v in vencimientos
-        if v["documento_solicitado"] and not db.listar_documentos_vencimiento(v["id"], origen="cliente")
-    ]
-    # Agrupados por año (bloque 4 del plan de reestructuración del
-    # calendario fiscal) -- más reciente primero, para que un cliente con
-    # varios años de histórico no vea todo mezclado en una sola lista
-    # larga. `vencimientos` ya viene ordenado por fecha_limite ascendente
-    # (db.listar_vencimientos_fiscales), así que dentro de cada año se
-    # mantiene ese mismo orden.
-    por_anio: dict[str, list] = {}
-    for v in vencimientos:
-        por_anio.setdefault(v["fecha_limite"][:4], []).append(v)
-    anios_ordenados = sorted(por_anio, reverse=True)
-    # Resumen para el anillo de progreso del rediseño (dirección "B" del
-    # portal, aprobada por el usuario tras comparar mockups) -- cuántos
-    # están presentados sobre el total, y cuál es el próximo pendiente
-    # (vencimientos ya viene ordenado por fecha_limite ascendente).
+    # Peticiones de documento concreto (app/rutas_fiscal.py:editar_vencimiento) todavía sin resolver -- "sin resolver" es "no hay ningún documento subido para ese vencimiento todavía",
+    # no un campo aparte que haya que mantener sincronizado.
+    solicitudes_pendientes = [v for v in vencimientos if v["documento_solicitado"] and not db.listar_documentos_vencimiento(v["id"], origen="cliente")]
+    # Resumen para el anillo de progreso: cuántos están presentados sobre el total, y cuál es el próximo pendiente (vencimientos ya viene ordenado por fecha_limite ascendente).
     presentados = sum(1 for v in vencimientos if v["estado"] == "presentado")
     proximo_pendiente = next((v for v in vencimientos if v["estado"] != "presentado"), None)
     from . import certificados
     cfg_cert = certificados.config(cliente["tenant_id"])
+    certificados_visibles = certificados.visibles_para_cliente(cliente["id"])
+    trabajo = tareas_trabajo.tareas_para_cliente(cliente["tenant_id"], cliente["id"])
+    con_facturas = verticales.esta_activo(cliente["tenant_id"], "contabilizacion")
     return render_template(
-        "portal_dashboard.html", cliente=cliente, vencimientos=vencimientos, certificados=certificados.visibles_para_cliente(cliente["id"]), tipos_certificado=certificados.TIPOS_CERTIFICADO,
-        instrucciones_certificado=cfg_cert["instrucciones"], ayuda_enviada=request.args.get("ayuda"),
-        solicitudes_pendientes=solicitudes_pendientes,
-        por_anio=por_anio, anios_ordenados=anios_ordenados,
-        presentados=presentados, proximo_pendiente=proximo_pendiente, portal_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"),
-        trabajo_en_curso=tareas_trabajo.tareas_para_cliente(cliente["tenant_id"], cliente["id"]),
+        "portal_dashboard.html", cliente=cliente, vencimientos=vencimientos, certificados=certificados_visibles, tipos_certificado=certificados.TIPOS_CERTIFICADO,
+        instrucciones_certificado=cfg_cert["instrucciones"], ayuda_enviada=request.args.get("ayuda"), portal_seccion="inicio",
+        para_hacer=portal_inicio.para_hacer(cliente, vencimientos, solicitudes_pendientes, certificados_visibles, trabajo, con_facturas),
+        presentados=presentados, proximo_pendiente=proximo_pendiente, trabajo_en_curso=trabajo,
         aviso=(request.args.get("aviso") or "")[:200] or None, max_caracteres=tareas_trabajo.MAX_CARACTERES_COMENTARIO,
     )
+
+
+@portal_bp.route("/impuestos")
+@cliente_login_required
+def impuestos():
+    """Todos sus modelos por año, con el estado de cada uno y el acceso a sus documentos y mensajes."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None:
+        session.pop("cliente_fiscal_id", None)
+        return redirect(url_for("portal_cliente.entrar"))
+    vencimientos = db.listar_vencimientos_fiscales(cliente["tenant_id"], cliente_fiscal_id=cliente["id"], sin_internos=True)
+    # Agrupados por año, el más reciente primero, para que un cliente con varios años de histórico no vea todo mezclado; dentro de cada año se mantiene el orden por fecha límite.
+    por_anio: dict[str, list] = {}
+    for v in vencimientos:
+        por_anio.setdefault(v["fecha_limite"][:4], []).append(v)
+    return render_template("portal_impuestos.html", cliente=cliente, por_anio=por_anio, anios_ordenados=sorted(por_anio, reverse=True), vencimientos=vencimientos, portal_seccion="impuestos",
+                           sin_leer={m["vencimiento_id"]: m["n"] for m in db.mensajes_sin_leer_para_cliente(cliente["id"])})
 
 
 @portal_bp.route("/certificados/<int:certificado_id>/ayuda", methods=["POST"])
@@ -212,7 +224,7 @@ def documentos_vencimiento(vencimiento_id: int):
             return redirect(url_for("portal_cliente.documentos_vencimiento", vencimiento_id=vencimiento_id))
     return render_template(
         "portal_vencimiento_documentos.html",
-        vencimiento=vencimiento, documentos=db.listar_documentos_vencimiento(vencimiento_id, excluir_origenes=db.ORIGENES_INTERNOS_DOCUMENTO_VENCIMIENTO), error=error,
+        vencimiento=vencimiento, portal_seccion="impuestos", documentos=db.listar_documentos_vencimiento(vencimiento_id, excluir_origenes=db.ORIGENES_INTERNOS_DOCUMENTO_VENCIMIENTO), error=error,
         resultados=resultados,
     )
 
@@ -265,7 +277,7 @@ def mensajes_vencimiento(vencimiento_id: int):
     db.marcar_mensajes_leidos(vencimiento_id, "cliente")
     return render_template(
         "portal_vencimiento_mensajes.html",
-        vencimiento=vencimiento, mensajes=db.listar_mensajes_vencimiento(vencimiento_id),
+        vencimiento=vencimiento, portal_seccion="impuestos", mensajes=db.listar_mensajes_vencimiento(vencimiento_id),
     )
 
 
@@ -321,11 +333,12 @@ def _cliente_con_facturas():
 def facturas():
     cliente = _cliente_con_facturas()
     error, datos, anotada = None, {"tipo": request.args.get("tipo") or "recibida", "pct_iva": "21"}, request.args.get("anotada") == "1"
+    destino = facturas_portal.trimestre_actual()                   # lo que se sube sin fecha entra con la de hoy
     if request.method == "POST" and request.form.get("modo") == "archivos":
         try:
             archivos = [(a.filename, a.mimetype, a.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
             facturas_contables.subir_desde_portal(cliente["id"], request.form.get("tipo", ""), archivos)
-            return redirect(url_for("portal_cliente.facturas", anotada=1))
+            return redirect(url_for("portal_cliente.facturas", anotada=1, trimestre=destino))
         except ValueError as e:
             error = str(e)
     elif request.method == "POST":
@@ -334,8 +347,38 @@ def facturas():
         adjunto = (archivo.filename, archivo.mimetype, archivo.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) if archivo is not None and archivo.filename else None
         try:
             facturas_contables.crear_desde_portal(cliente["id"], datos, adjunto)
-            return redirect(url_for("portal_cliente.facturas", anotada=1))
+            return redirect(url_for("portal_cliente.facturas", anotada=1, trimestre=facturas_contables.trimestre_de(datos["fecha"])))
         except ValueError as e:
             error = str(e)
-    return render_template("portal_facturas.html", cliente=cliente, facturas=facturas_contables.listar_del_cliente(cliente["id"]), datos=datos, error=error, anotada=anotada,
-                           textos=facturas_contables.TEXTO_ESTADO_PORTAL, max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
+    error = error or (request.args.get("error") or "")[:200] or None
+    return render_template("portal_facturas.html", cliente=cliente, tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
+                           datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
+                           max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
+
+
+@portal_bp.route("/facturas/<int:factura_id>/reenviar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def reenviar_factura(factura_id: int):
+    """El cliente sube de nuevo una factura que su gestoría le devolvió."""
+    cliente = _cliente_con_facturas()
+    trimestre = request.form.get("trimestre") or None
+    try:
+        archivos = [(a.filename, a.mimetype, a.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
+        facturas_portal.reenviar(cliente["id"], factura_id, archivos)
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.facturas", trimestre=trimestre, error=_(str(e))[:200]) + f"#factura-{factura_id}")
+    return redirect(url_for("portal_cliente.facturas", trimestre=trimestre, atendida="reenviada"))
+
+
+@portal_bp.route("/facturas/<int:factura_id>/entendido", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def factura_entendida(factura_id: int):
+    """El cliente da por leído el motivo de una factura devuelta y no reenvía nada."""
+    cliente = _cliente_con_facturas()
+    try:
+        facturas_portal.dar_por_vista(cliente["id"], factura_id)
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.facturas", trimestre=request.form.get("trimestre") or None, error=_(str(e))[:200]))
+    return redirect(url_for("portal_cliente.facturas", trimestre=request.form.get("trimestre") or None, atendida="vista"))

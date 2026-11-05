@@ -1165,6 +1165,18 @@ def marcar_mensajes_leidos(vencimiento_id: int, autor_que_lee: str) -> None:
         conn.close()
 
 
+def mensajes_sin_leer_para_cliente(cliente_fiscal_id: int) -> list[dict]:
+    """Vencimientos del cliente en los que la gestoría le ha escrito y aún no lo ha leído: [{vencimiento_id, modelo, periodo, n}]."""
+    conn = _db.get_connection()
+    try:
+        return [dict(f) for f in conn.execute(
+            "SELECT v.id AS vencimiento_id, v.modelo, v.periodo, COUNT(*) AS n FROM vencimientos_fiscales_mensajes m JOIN vencimientos_fiscales v ON v.id = m.vencimiento_id "
+            "WHERE v.cliente_fiscal_id = ? AND v.papelera_en IS NULL AND m.autor = 'empleado' AND m.leido_en IS NULL GROUP BY v.id, v.modelo, v.periodo ORDER BY MIN(m.creado_en)",
+            (cliente_fiscal_id,))]
+    finally:
+        conn.close()
+
+
 def crear_solicitud_acceso_portal(nombre: str, email: str, nif: str | None = None, mensaje: str | None = None) -> int:
     conn = _db.get_connection()
     try:

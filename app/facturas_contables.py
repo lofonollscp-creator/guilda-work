@@ -1291,7 +1291,7 @@ def _subir(tenant_id: int, usuario_id: int | None, f, tipo: str, archivos, orige
     return ids
 
 
-def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[str, str | None, bytes]]) -> list[int]:
+def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[str, str | None, bytes]], nota: str = "Subida por el cliente desde el portal, pendiente de leer.") -> list[int]:
     """El cliente sube fotos o PDF de sus facturas sin teclear nada: el despacho las leerá de golpe. Mismos límites que anotar una a mano."""
     f = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
     if f is None:
@@ -1306,7 +1306,7 @@ def subir_desde_portal(cliente_fiscal_id: int, tipo: str, archivos: list[tuple[s
     for a in archivos:
         if a and a[2]:
             antivirus.exigir_limpio(a[0], a[2], f["tenant_id"], cliente_fiscal_id)           # antes de guardar nada: si uno falla, no se guarda ninguno
-    ids = _subir(f["tenant_id"], None, f, tipo, archivos, "portal", "Subida por el cliente desde el portal, pendiente de leer.")
+    ids = _subir(f["tenant_id"], None, f, tipo, archivos, "portal", nota)
     _avisar_al_despacho(f, ids[-1], {"tercero_nombre": f"{len(ids)} archivo(s) por leer", "numero": ""}, len(ids))
     return ids
 

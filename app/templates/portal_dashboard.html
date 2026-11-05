@@ -1,33 +1,30 @@
-<!doctype html>
-<html lang="{{ idioma_actual|default('es') }}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ _('Mis vencimientos') }} — Guilda Work</title>
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
-</head>
-<body>
-  <div class="portal-cliente-shell">
-    <header class="page-header">
-      <div>
-        <h1>{{ cliente.nombre }}
-          {% if cliente.pais and cliente.pais != 'ES' %}<span class="pill" title="{{ _('País de tributación') }}">{{ cliente.pais }}</span>{% endif %}
-        </h1>
-        <p class="subtitle">{{ _('Tu expediente fiscal.') }}</p>
-      </div>
-      <div class="ds-fila">
-        {% if portal_facturas %}<a class="btn btn-primary" href="{{ url_for('portal_cliente.facturas') }}">{{ _('Mis facturas') }}</a>{% endif %}
-        <form method="post" action="{{ url_for('portal_cliente.salir') }}">
-          <button type="submit" class="btn btn-ghost">{{ _('Salir') }}</button>
-        </form>
-      </div>
-    </header>
-
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Inicio') }}{% endblock %}
+{% block titulo %}{{ cliente.nombre }}{% if cliente.pais and cliente.pais != 'ES' %} <span class="pill" title="{{ _('País de tributación') }}">{{ cliente.pais }}</span>{% endif %}{% endblock %}
+{% block subtitulo %}{{ _('Tu expediente fiscal.') }}{% endblock %}
+{% block contenido %}
     {% if ayuda_enviada %}<p class="portal-peticion" role="status"><strong>{{ _('Hemos avisado a tu gestoría de que necesitas ayuda con tu certificado. Se pondrá en contacto contigo.') }}</strong></p>{% endif %}
+    <section class="portal-hoy" aria-labelledby="portal-hoy-titulo">
+      <h2 id="portal-hoy-titulo">{{ _('Para hacer') }}</h2>
+      {% if para_hacer %}
+      <ul class="portal-hoy-lista">
+        {% for p in para_hacer %}
+        <li class="portal-hoy-item {{ 'urgente' if p.urgente }}">
+          <div class="portal-hoy-texto">
+            <strong>{{ p.titulo }}</strong>
+            {% if p.detalle %}<span>{{ p.detalle }}</span>{% endif %}
+          </div>
+          <a class="btn {{ 'btn-primary' if p.urgente else 'btn-ghost' }}" href="{{ p.url }}">{{ p.accion }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="portal-hoy-vacio">{{ _('Estás al día: ahora mismo tu gestoría no necesita nada de ti.') }}</p>
+      {% endif %}
+    </section>
+
     {% for c in certificados %}
-    <section class="portal-certificado portal-certificado-{{ c.estado }}" aria-label="{{ _('Tu certificado digital') }}">
+    <section id="certificado{{ '' if loop.first else '-' ~ c.id }}" class="portal-certificado portal-certificado-{{ c.estado }}" aria-label="{{ _('Tu certificado digital') }}">
       <div>
         <strong>{{ _('Tu certificado digital') }}</strong>
         <div>{{ tipos_certificado[c.tipo].nombre }}{% if c.titular %} · {{ c.titular }}{% endif %}</div>
@@ -61,18 +58,7 @@
         <span>{{ _('Todo presentado, sin nada pendiente.') }}</span>
         {% endif %}
       </div>
-    </section>
-    {% endif %}
-
-    {% if solicitudes_pendientes %}
-    <section class="portal-peticion">
-      <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg>
-      <div>
-        <strong>{{ _('Tu gestoría necesita un documento tuyo') }}</strong>
-        {% for v in solicitudes_pendientes %}
-        <div><a href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">{{ v.documento_solicitado }}</a> <span class="muted">({{ v.modelo }} {{ v.periodo }})</span></div>
-        {% endfor %}
-      </div>
+      <a class="btn btn-ghost" href="{{ url_for('portal_cliente.impuestos') }}">{{ _('Ver mis impuestos') }}</a>
     </section>
     {% endif %}
 
@@ -112,32 +98,4 @@
     </section>
     {% endif %}
 
-    {% if not vencimientos %}
-    <p class="empty-lane">{{ _('Todavía no hay vencimientos registrados.') }}</p>
-    {% else %}
-    {% for anio in anios_ordenados %}
-    <div class="portal-anio-titulo">{{ anio }}</div>
-    {% for v in por_anio[anio] %}
-    <div class="portal-carpeta {{ 'ok' if v.estado == 'presentado' else 'warn' }}">
-      <a class="portal-carpeta-tab" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }}</a>
-      <a class="portal-carpeta-info" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">
-        <strong>{{ v.modelo }} — {{ v.periodo }}</strong>
-        <span>
-          {% if v.estado == 'presentado' %}{{ _('Presentado el %(fecha)s', fecha=v.fecha_limite|fecha_dia) }}
-          {% else %}{{ _('Vence el %(fecha)s', fecha=v.fecha_limite|fecha_dia) }}{% endif %}
-        </span>
-      </a>
-      <span class="portal-estado {{ 'ok' if v.estado == 'presentado' else 'warn' }}">
-        {{ _('Presentado') if v.estado == 'presentado' else (_('Fuera de plazo') if v.estado == 'fuera_plazo' else _('Pendiente')) }}
-      </span>
-      <span class="portal-carpeta-iconos">
-        <a href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Subir documento') }}" aria-label="{{ _('Subir documento') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg></a>
-        <a href="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Mensajes') }}" aria-label="{{ _('Mensajes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></a>
-      </span>
-    </div>
-    {% endfor %}
-    {% endfor %}
-    {% endif %}
-  </div>
-</body>
-</html>
+{% endblock %}

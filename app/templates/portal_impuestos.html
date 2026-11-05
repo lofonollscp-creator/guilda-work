@@ -1,0 +1,32 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Impuestos') }}{% endblock %}
+{% block titulo %}{{ _('Mis impuestos') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }} · {{ _('Cada modelo con sus documentos y mensajes.') }}{% endblock %}
+{% block contenido %}
+    {% if not vencimientos %}
+    <p class="empty-lane">{{ _('Todavía no hay vencimientos registrados.') }}</p>
+    {% else %}
+    {% for anio in anios_ordenados %}
+    <div class="portal-anio-titulo">{{ anio }}</div>
+    {% for v in por_anio[anio] %}
+    <div class="portal-carpeta {{ 'ok' if v.estado == 'presentado' else 'warn' }}">
+      <a class="portal-carpeta-tab" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">{{ v.modelo }}</a>
+      <a class="portal-carpeta-info" href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}">
+        <strong>{{ v.modelo }} — {{ v.periodo }}</strong>
+        <span>
+          {% if v.estado == 'presentado' %}{{ _('Presentado el %(fecha)s', fecha=v.fecha_limite|fecha_dia) }}
+          {% else %}{{ _('Vence el %(fecha)s', fecha=v.fecha_limite|fecha_dia) }}{% endif %}
+        </span>
+      </a>
+      <span class="portal-estado {{ 'ok' if v.estado == 'presentado' else 'warn' }}">
+        {{ _('Presentado') if v.estado == 'presentado' else (_('Fuera de plazo') if v.estado == 'fuera_plazo' else _('Pendiente')) }}
+      </span>
+      <span class="portal-carpeta-iconos">
+        <a href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=v.id) }}" title="{{ _('Subir documento') }}" aria-label="{{ _('Subir documento') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg></a>
+        <a href="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=v.id) }}" class="{{ 'con-novedad' if sin_leer.get(v.id) }}" title="{{ _('Mensajes') }}" aria-label="{{ _('Mensajes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></a>
+      </span>
+    </div>
+    {% endfor %}
+    {% endfor %}
+    {% endif %}
+{% endblock %}

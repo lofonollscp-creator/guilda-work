@@ -20172,3 +20172,186 @@ msgstr "Gardien : %(n)s"
 
 msgid "Ver todos los certificados de este cliente"
 msgstr "Voir tous les certificats de ce client"
+
+msgid "Secciones del portal"
+msgstr "Sections du portail"
+
+msgid "Impuestos"
+msgstr "Impôts"
+
+msgid "Facturas por corregir"
+msgstr "Factures à corriger"
+
+msgid "venció hace %(n)s días"
+msgstr "échue il y a %(n)s jours"
+
+msgid "venció ayer"
+msgstr "échue hier"
+
+msgid "vence hoy"
+msgstr "échéance aujourd'hui"
+
+msgid "vence mañana"
+msgstr "échéance demain"
+
+msgid "vence en %(n)s días"
+msgstr "échéance dans %(n)s jours"
+
+msgid "Pedir ayuda"
+msgstr "Demander de l'aide"
+
+msgid "Tu certificado digital ha caducado"
+msgstr "Votre certificat numérique a expiré"
+
+msgid "Tu certificado digital caduca pronto"
+msgstr "Votre certificat numérique expire bientôt"
+
+msgid "Sin él, tu gestoría no puede presentar impuestos en tu nombre."
+msgstr "Sans lui, votre cabinet ne peut pas déposer vos déclarations en votre nom."
+
+msgid "Conviene renovarlo cuanto antes."
+msgstr "Il vaut mieux le renouveler au plus vite."
+
+msgid "Tu gestoría necesita: %(doc)s"
+msgstr "Votre cabinet a besoin de : %(doc)s"
+
+msgid "Corregir"
+msgstr "Corriger"
+
+msgid "Tu gestoría te devuelve una factura: %(tercero)s"
+msgstr "Votre cabinet vous renvoie une facture : %(tercero)s"
+
+msgid "Ver facturas"
+msgstr "Voir les factures"
+
+msgid "Tienes %(n)s factura por corregir"
+msgid_plural "Tienes %(n)s facturas por corregir"
+msgstr[0] "Vous avez %(n)s facture à corriger"
+msgstr[1] "Vous avez %(n)s factures à corriger"
+
+msgid "Tienes %(n)s factura por corregir."
+msgid_plural "Tienes %(n)s facturas por corregir."
+msgstr[0] "Vous avez %(n)s facture à corriger."
+msgstr[1] "Vous avez %(n)s factures à corriger."
+
+msgid "¿Tienes facturas del %(t)s por enviar?"
+msgstr "Avez-vous des factures du %(t)s à envoyer ?"
+
+msgid "Aún no has enviado ninguna."
+msgstr "Vous n'en avez encore envoyé aucune."
+
+msgid "Tienes %(n)s mensaje nuevo de tu gestoría"
+msgid_plural "Tienes %(n)s mensajes nuevos de tu gestoría"
+msgstr[0] "Vous avez %(n)s nouveau message de votre cabinet"
+msgstr[1] "Vous avez %(n)s nouveaux messages de votre cabinet"
+
+msgid "Leer"
+msgstr "Lire"
+
+msgid "Tu gestoría te ha escrito en «%(asunto)s»"
+msgstr "Votre cabinet vous a écrit dans « %(asunto)s »"
+
+msgid "Para hacer"
+msgstr "À faire"
+
+msgid "Estás al día: ahora mismo tu gestoría no necesita nada de ti."
+msgstr "Vous êtes à jour : votre cabinet n'a besoin de rien de votre part pour le moment."
+
+msgid "Ver mis impuestos"
+msgstr "Voir mes impôts"
+
+msgid "Mis impuestos"
+msgstr "Mes impôts"
+
+msgid "Cada modelo con sus documentos y mensajes."
+msgstr "Chaque modèle avec ses documents et messages."
+
+msgid "Volver a mis impuestos"
+msgstr "Retour à mes impôts"
+
+msgid "Envía tus facturas y sigue cómo las va contabilizando tu gestoría."
+msgstr "Envoyez vos factures et suivez leur comptabilisation par votre cabinet."
+
+msgid "Gracias: hemos enviado la factura de nuevo a tu gestoría."
+msgstr "Merci : nous avons renvoyé la facture à votre cabinet."
+
+msgid "De acuerdo: no te pediremos nada más de esa factura."
+msgstr "D'accord : nous ne vous demanderons rien de plus sur cette facture."
+
+msgid "Todavía no has enviado facturas de este trimestre."
+msgstr "Vous n'avez pas encore envoyé de factures pour ce trimestre."
+
+msgid "Tu gestoría está revisando tus facturas."
+msgstr "Votre cabinet est en train de vérifier vos factures."
+
+msgid "Todo contabilizado: no hay nada pendiente en este trimestre."
+msgstr "Tout est comptabilisé : rien n'est en attente ce trimestre."
+
+msgid "Facturas revisadas o contabilizadas"
+msgstr "Factures vérifiées ou comptabilisées"
+
+msgid "%(n)s de %(total)s revisadas o contabilizadas"
+msgstr "%(n)s sur %(total)s vérifiées ou comptabilisées"
+
+msgid "Enviadas"
+msgstr "Envoyées"
+
+msgid "Contabilizadas"
+msgstr "Comptabilisées"
+
+msgid "Para corregir"
+msgstr "À corriger"
+
+msgid "presentado"
+msgstr "déposé"
+
+msgid "vence el %(fecha)s"
+msgstr "échéance le %(fecha)s"
+
+msgid "Tu gestoría ya ha cerrado este trimestre. Si te falta alguna factura, escríbele desde el modelo correspondiente."
+msgstr "Votre cabinet a déjà clôturé ce trimestre. S'il manque une facture, écrivez-lui depuis le modèle concerné."
+
+msgid "También tienes facturas por corregir en otros trimestres: míralas en la barra de arriba."
+msgstr "Vous avez aussi des factures à corriger sur d'autres trimestres : voyez la barre ci-dessus."
+
+msgid "Facturas que tu gestoría te devuelve"
+msgstr "Factures que votre cabinet vous renvoie"
+
+msgid "Sin leer"
+msgstr "Non lue"
+
+msgid "Qué hay que corregir:"
+msgstr "Ce qu'il faut corriger :"
+
+msgid "Sube la factura corregida (foto o PDF)"
+msgstr "Envoyez la facture corrigée (photo ou PDF)"
+
+msgid "Enviar de nuevo"
+msgstr "Renvoyer"
+
+msgid "Entendido, no tengo nada que enviar"
+msgstr "Compris, je n'ai rien à envoyer"
+
+msgid "Facturas de %(t)s"
+msgstr "Factures de %(t)s"
+
+msgid "No hay facturas en este trimestre."
+msgstr "Il n'y a pas de factures pour ce trimestre."
+
+msgid "Reenviada"
+msgstr "Renvoyée"
+
+msgid "Se muestran las %(n)s más recientes."
+msgstr "Les %(n)s plus récentes sont affichées."
+
+msgid "Devolver al cliente"
+msgstr "Renvoyer au client"
+
+msgid "Qué ha de corregir (lo verá en su portal)"
+msgstr "Ce qu'il doit corriger (visible dans son portail)"
+
+msgid "Devolver"
+msgstr "Renvoyer"
+
+msgid "Esa factura ya no está pendiente de corregir."
+msgstr "Cette facture n'est plus à corriger."

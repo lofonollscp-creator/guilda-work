@@ -299,7 +299,7 @@ def test_el_cliente_anota_una_factura_desde_su_total_y_el_despacho_la_ve(cliente
     d = fc.obtener(t, u, f["id"])
     assert d["lineas"][0]["base_centimos"] == 10000 and d["lineas"][0]["cuota_iva"] == 2100 and d["documento_id"], "el total 121 con IVA 21 % se desglosa en base 100 y cuota 21"
     assert db.get_connection().execute("SELECT categoria, subido_por, tipo_mime FROM cliente_documentos WHERE id = ?", (d["documento_id"],)).fetchone()["categoria"] == "Factura"
-    html = cliente.get("/portal/facturas?anotada=1").get_data(as_text=True)
+    html = cliente.get("/portal/facturas?anotada=1&trimestre=2026-T3").get_data(as_text=True)
     assert "Factura anotada" in html and "P-77" in html and "el despacho la revisará" in html
 
 
@@ -354,7 +354,7 @@ def test_el_portal_solo_enseña_las_facturas_del_propio_cliente(cliente):
     otro = crear_cliente_fiscal(t, "Otro Cliente", nif="B22222222")
     fc.crear(t, u, otro, _datos(numero="AJENA-1"), [LINEA])
     fc.crear(t, u, c, _datos(numero="MIA-1"), [LINEA])
-    html = cliente.get("/portal/facturas").get_data(as_text=True)
+    html = cliente.get("/portal/facturas?trimestre=2026-T3").get_data(as_text=True)
     assert "MIA-1" in html and "AJENA-1" not in html
 
 
@@ -370,7 +370,7 @@ def test_el_portal_enlaza_a_las_facturas_y_el_texto_se_escapa(cliente):
     t, u, c = _portal(cliente, "Despacho portal enlace")
     assert 'href="/portal/facturas"' in cliente.get("/portal/").get_data(as_text=True)
     fc.crear_desde_portal(c, {"tipo": "recibida", "fecha": "2026-09-10", "numero": "X-1", "tercero_nombre": "<script>alert(1)</script>", "tercero_nif": "B1", "total": "10", "pct_iva": "21"})
-    html = cliente.get("/portal/facturas").get_data(as_text=True)
+    html = cliente.get("/portal/facturas?trimestre=2026-T3").get_data(as_text=True)
     assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html
 
 

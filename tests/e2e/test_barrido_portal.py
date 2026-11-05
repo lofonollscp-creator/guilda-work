@@ -19,12 +19,24 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     pagina, _ = abrir()
     uid = entrar_como_equipo(pagina, "portal-barrido@ejemplo.com", despacho=t, direccion=True)
     ids = _sembrar(uid, t)
+    from datetime import date
+    from app import facturas_contables as fc, facturas_portal, verticales
+    verticales.fijar_activo(t, "contabilizacion", True)                       # el portal enseña sus facturas, la barra de secciones y el tablero
+    hoy = date.today().isoformat()
+    trimestre = fc.trimestre_de(hoy)
+    v303 = db.crear_vencimiento_fiscal(t, ids["cliente"], "303", trimestre, hoy[:8] + "28", usuario_id=uid)
+    db.crear_mensaje_vencimiento(v303, "empleado", "¿Nos mandas el extracto del banco del trimestre?", usuario_id=uid)
+    nombres = ("Ferretería Paco", "Suministros Industriales del Levante, Sociedad Anónima", "ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+    fids = [fc.crear_desde_portal(ids["cliente"], {"tipo": "recibida", "fecha": hoy, "numero": f"B-{i}", "tercero_nombre": n, "tercero_nif": "B11111111", "total": "121,00", "pct_iva": "21"}) for i, n in enumerate(nombres)]
+    facturas_portal.devolver(t, uid, fids[1], "La foto sale movida y no se lee el NIF del proveedor; vuelve a hacerla con más luz y sin reflejos, por favor")
+    facturas_portal.devolver(t, uid, fids[2], "No es de tu empresa")
     if os.environ.get("GUILDA_TEXTOS_LARGOS"):
         conn = db.get_connection()
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
+    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")

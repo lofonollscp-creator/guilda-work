@@ -8,6 +8,7 @@ from flask_babel import gettext as _
 
 from . import acceso, cobro_contabilidad, db, enlace_a3, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
+from . import facturas_portal
 from .auth import login_required
 
 contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad")
@@ -243,6 +244,17 @@ def estado(factura_id: int):
     except ValueError as e:
         return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]))
     return redirect(request.form.get("volver") or url_for("contabilidad.ver", factura_id=factura_id))
+
+
+@contabilidad_bp.route("/<int:factura_id>/devolver", methods=["POST"])
+@login_required
+def devolver(factura_id: int):
+    """Devuelve al cliente una factura que anotó él, con el motivo, para que la corrija o la vuelva a enviar desde su portal."""
+    try:
+        facturas_portal.devolver(g.tenant_id, g.usuario_id, factura_id, request.form.get("motivo", ""))
+    except ValueError as e:
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]))
+    return redirect(url_for("contabilidad.ver", factura_id=factura_id))
 
 
 def _es_supervisor() -> bool:

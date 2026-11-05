@@ -270,7 +270,7 @@ def test_los_vencimientos_internos_no_van_al_portal_ni_a_los_recordatorios_del_c
     visible = db.crear_vencimiento_fiscal(t, c, "TC", "2026-10", f)
     internos = {m: db.crear_vencimiento_fiscal(t, c, m, p, f) for m, p in (("NOMINAS", "2026-10"), ("ALTA-SS", "T7-alta"), ("BAJA-SS", "T7-baja"), ("CONTRATO", "T7-contrato"))}
     _entrar_como_cliente(cliente, c)
-    html = cliente.get("/portal/").get_data(as_text=True)
+    html = cliente.get("/portal/impuestos").get_data(as_text=True)
     assert "TC" in html and not any(m in html for m in ("NOMINAS", "ALTA-SS", "BAJA-SS", "CONTRATO"))
     for vid in internos.values():
         assert cliente.get(f"/portal/vencimientos/{vid}/documentos").status_code == 404 and cliente.get(f"/portal/vencimientos/{vid}/mensajes").status_code == 404

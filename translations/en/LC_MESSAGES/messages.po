@@ -20087,3 +20087,186 @@ msgstr "Custodian: %(n)s"
 
 msgid "Ver todos los certificados de este cliente"
 msgstr "See all this client's certificates"
+
+msgid "Secciones del portal"
+msgstr "Portal sections"
+
+msgid "Impuestos"
+msgstr "Taxes"
+
+msgid "Facturas por corregir"
+msgstr "Invoices to fix"
+
+msgid "venció hace %(n)s días"
+msgstr "was due %(n)s days ago"
+
+msgid "venció ayer"
+msgstr "was due yesterday"
+
+msgid "vence hoy"
+msgstr "due today"
+
+msgid "vence mañana"
+msgstr "due tomorrow"
+
+msgid "vence en %(n)s días"
+msgstr "due in %(n)s days"
+
+msgid "Pedir ayuda"
+msgstr "Ask for help"
+
+msgid "Tu certificado digital ha caducado"
+msgstr "Your digital certificate has expired"
+
+msgid "Tu certificado digital caduca pronto"
+msgstr "Your digital certificate expires soon"
+
+msgid "Sin él, tu gestoría no puede presentar impuestos en tu nombre."
+msgstr "Without it, your accountant cannot file taxes on your behalf."
+
+msgid "Conviene renovarlo cuanto antes."
+msgstr "It is best to renew it as soon as possible."
+
+msgid "Tu gestoría necesita: %(doc)s"
+msgstr "Your accountant needs: %(doc)s"
+
+msgid "Corregir"
+msgstr "Fix"
+
+msgid "Tu gestoría te devuelve una factura: %(tercero)s"
+msgstr "Your accountant is returning an invoice: %(tercero)s"
+
+msgid "Ver facturas"
+msgstr "View invoices"
+
+msgid "Tienes %(n)s factura por corregir"
+msgid_plural "Tienes %(n)s facturas por corregir"
+msgstr[0] "You have %(n)s invoice to fix"
+msgstr[1] "You have %(n)s invoices to fix"
+
+msgid "Tienes %(n)s factura por corregir."
+msgid_plural "Tienes %(n)s facturas por corregir."
+msgstr[0] "You have %(n)s invoice to fix."
+msgstr[1] "You have %(n)s invoices to fix."
+
+msgid "¿Tienes facturas del %(t)s por enviar?"
+msgstr "Do you have %(t)s invoices to send?"
+
+msgid "Aún no has enviado ninguna."
+msgstr "You haven't sent any yet."
+
+msgid "Tienes %(n)s mensaje nuevo de tu gestoría"
+msgid_plural "Tienes %(n)s mensajes nuevos de tu gestoría"
+msgstr[0] "You have %(n)s new message from your accountant"
+msgstr[1] "You have %(n)s new messages from your accountant"
+
+msgid "Leer"
+msgstr "Read"
+
+msgid "Tu gestoría te ha escrito en «%(asunto)s»"
+msgstr "Your accountant wrote to you in “%(asunto)s”"
+
+msgid "Para hacer"
+msgstr "To do"
+
+msgid "Estás al día: ahora mismo tu gestoría no necesita nada de ti."
+msgstr "You're up to date: your accountant needs nothing from you right now."
+
+msgid "Ver mis impuestos"
+msgstr "View my taxes"
+
+msgid "Mis impuestos"
+msgstr "My taxes"
+
+msgid "Cada modelo con sus documentos y mensajes."
+msgstr "Each tax form with its documents and messages."
+
+msgid "Volver a mis impuestos"
+msgstr "Back to my taxes"
+
+msgid "Envía tus facturas y sigue cómo las va contabilizando tu gestoría."
+msgstr "Send your invoices and follow how your accountant is booking them."
+
+msgid "Gracias: hemos enviado la factura de nuevo a tu gestoría."
+msgstr "Thanks: we've sent the invoice to your accountant again."
+
+msgid "De acuerdo: no te pediremos nada más de esa factura."
+msgstr "Understood: we won't ask you anything else about that invoice."
+
+msgid "Todavía no has enviado facturas de este trimestre."
+msgstr "You haven't sent any invoices for this quarter yet."
+
+msgid "Tu gestoría está revisando tus facturas."
+msgstr "Your accountant is reviewing your invoices."
+
+msgid "Todo contabilizado: no hay nada pendiente en este trimestre."
+msgstr "All booked: nothing is pending this quarter."
+
+msgid "Facturas revisadas o contabilizadas"
+msgstr "Invoices reviewed or booked"
+
+msgid "%(n)s de %(total)s revisadas o contabilizadas"
+msgstr "%(n)s of %(total)s reviewed or booked"
+
+msgid "Enviadas"
+msgstr "Sent"
+
+msgid "Contabilizadas"
+msgstr "Booked"
+
+msgid "Para corregir"
+msgstr "To fix"
+
+msgid "presentado"
+msgstr "filed"
+
+msgid "vence el %(fecha)s"
+msgstr "due on %(fecha)s"
+
+msgid "Tu gestoría ya ha cerrado este trimestre. Si te falta alguna factura, escríbele desde el modelo correspondiente."
+msgstr "Your accountant has already closed this quarter. If an invoice is missing, write to them from the relevant tax form."
+
+msgid "También tienes facturas por corregir en otros trimestres: míralas en la barra de arriba."
+msgstr "You also have invoices to fix in other quarters: see them in the bar above."
+
+msgid "Facturas que tu gestoría te devuelve"
+msgstr "Invoices your accountant is returning"
+
+msgid "Sin leer"
+msgstr "Not read yet"
+
+msgid "Qué hay que corregir:"
+msgstr "What needs fixing:"
+
+msgid "Sube la factura corregida (foto o PDF)"
+msgstr "Upload the corrected invoice (photo or PDF)"
+
+msgid "Enviar de nuevo"
+msgstr "Send again"
+
+msgid "Entendido, no tengo nada que enviar"
+msgstr "Understood, I have nothing to send"
+
+msgid "Facturas de %(t)s"
+msgstr "Invoices for %(t)s"
+
+msgid "No hay facturas en este trimestre."
+msgstr "There are no invoices in this quarter."
+
+msgid "Reenviada"
+msgstr "Resent"
+
+msgid "Se muestran las %(n)s más recientes."
+msgstr "Showing the %(n)s most recent."
+
+msgid "Devolver al cliente"
+msgstr "Return to client"
+
+msgid "Qué ha de corregir (lo verá en su portal)"
+msgstr "What they need to fix (they'll see it in their portal)"
+
+msgid "Devolver"
+msgstr "Return"
+
+msgid "Esa factura ya no está pendiente de corregir."
+msgstr "That invoice no longer needs fixing."

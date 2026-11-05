@@ -106,7 +106,7 @@ def test_cada_panel_translucido_tiene_su_alternativa_sin_desenfoque_o_es_un_menu
 def test_se_carga_despues_de_style_css_solo_en_las_pantallas_internas():
     base = (RAIZ / "app" / "templates" / "base.html").read_text(encoding="utf-8")
     assert base.index("style.css") < base.index("superficies.css")
-    for acceso in ("login", "registro", "recuperar_contrasena", "verificar_email", "portal_dashboard", "portal_entrar"):
+    for acceso in ("login", "registro", "recuperar_contrasena", "verificar_email", "portal_base", "portal_entrar"):
         assert "superficies.css" not in (RAIZ / "app" / "templates" / f"{acceso}.html").read_text(encoding="utf-8"), acceso
 
 
@@ -172,7 +172,7 @@ BACKOFFICE = (RAIZ / "backoffice" / "static" / "capa.css").read_text(encoding="u
 BACKOFFICE_BASE = (RAIZ / "backoffice" / "static" / "backoffice.css").read_text(encoding="utf-8")
 
 
-@pytest.mark.parametrize("plantilla", ["portal_dashboard", "portal_vencimiento_documentos", "portal_vencimiento_mensajes", "portal_entrar",
+@pytest.mark.parametrize("plantilla", ["portal_base", "portal_entrar",
                                        "portal_solicitar_acceso", "registro", "recuperar_contrasena", "verificar_email"])
 def test_paginas_independientes_cargan_su_capa_despues_de_style_css(plantilla):
     html = (RAIZ / "app" / "templates" / f"{plantilla}.html").read_text(encoding="utf-8")

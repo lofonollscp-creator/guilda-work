@@ -3198,6 +3198,7 @@ from .db_fiscal import (  # noqa: E402,F401
     listar_mensajes_vencimiento,
     marcar_mensajes_leidos,
     crear_solicitud_acceso_portal,
+    mensajes_sin_leer_para_cliente,
     listar_solicitudes_acceso_portal,
     marcar_solicitud_atendida,
     listar_todos_los_clientes_fiscales,

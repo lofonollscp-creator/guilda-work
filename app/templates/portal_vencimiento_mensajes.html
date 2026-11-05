@@ -1,23 +1,9 @@
-<!doctype html>
-<html lang="{{ idioma_actual|default('es') }}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ _('Mensajes') }} — Guilda Work</title>
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
-</head>
-<body>
-  <div class="portal-cliente-shell">
-    <header class="page-header">
-      <div>
-        <h1>{{ vencimiento.modelo }} — {{ vencimiento.periodo }}</h1>
-        <p class="subtitle">{{ _('Mensajes con tu gestoría sobre este vencimiento.') }}</p>
-      </div>
-    </header>
-
-    <a class="portal-volver" href="{{ url_for('portal_cliente.dashboard') }}">&larr; {{ _('Volver a tu expediente') }}</a>
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mensajes') }}{% endblock %}
+{% block titulo %}{{ vencimiento.modelo }} — {{ vencimiento.periodo }}{% endblock %}
+{% block subtitulo %}{{ _('Mensajes con tu gestoría sobre este vencimiento.') }}{% endblock %}
+{% block contenido %}
+    <a class="portal-volver" href="{{ url_for('portal_cliente.impuestos') }}">&larr; {{ _('Volver a mis impuestos') }}</a>
 
     {% if not mensajes %}
     <p class="empty-lane">{{ _('Todavía no hay mensajes. Escribe el primero abajo.') }}</p>
@@ -37,6 +23,4 @@
       <textarea class="ds-ancho-total ds-mb-3" name="texto" rows="3" required aria-label="{{ _('Escribe un mensaje') }}"></textarea>
       <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
     </form>
-  </div>
-</body>
-</html>
+{% endblock %}

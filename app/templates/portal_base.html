@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo_pagina %}{% endblock %} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <div class="portal-cliente-shell">
+    <header class="page-header">
+      <div>
+        <h1>{% block titulo %}{% endblock %}</h1>
+        <p class="subtitle">{% block subtitulo %}{% endblock %}</p>
+      </div>
+      <form method="post" action="{{ url_for('portal_cliente.salir') }}">
+        <button type="submit" class="btn btn-ghost">{{ _('Salir') }}</button>
+      </form>
+    </header>
+
+    <nav class="portal-nav" aria-label="{{ _('Secciones del portal') }}">
+      <a href="{{ url_for('portal_cliente.dashboard') }}" {% if portal_seccion == 'inicio' %}aria-current="page"{% endif %}>{{ _('Inicio') }}</a>
+      {% if portal_facturas %}
+      <a href="{{ url_for('portal_cliente.facturas') }}" {% if portal_seccion == 'facturas' %}aria-current="page"{% endif %}>{{ _('Facturas') }}{% if portal_insignia_facturas %} <span class="portal-nav-insignia" title="{{ _('Facturas por corregir') }}">{{ portal_insignia_facturas }}</span>{% endif %}</a>
+      {% endif %}
+      <a href="{{ url_for('portal_cliente.impuestos') }}" {% if portal_seccion == 'impuestos' %}aria-current="page"{% endif %}>{{ _('Impuestos') }}</a>
+    </nav>
+
+    {% block contenido %}{% endblock %}
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

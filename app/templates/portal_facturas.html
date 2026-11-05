@@ -1,25 +1,77 @@
-<!doctype html>
-<html lang="{{ idioma_actual|default('es') }}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ _('Mis facturas') }} — Guilda Work</title>
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
-</head>
-<body>
-  <div class="portal-cliente-shell">
-    <header class="page-header">
-      <div>
-        <h1>{{ _('Mis facturas') }}</h1>
-        <p class="subtitle">{{ cliente.nombre }} · {{ _('Anota aquí tus facturas del trimestre y tu gestoría las contabilizará.') }}</p>
-      </div>
-      <a class="btn btn-ghost" href="{{ url_for('portal_cliente.dashboard') }}">‹ {{ _('Volver') }}</a>
-    </header>
-
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mis facturas') }}{% endblock %}
+{% block titulo %}{{ _('Mis facturas') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }} · {{ _('Envía tus facturas y sigue cómo las va contabilizando tu gestoría.') }}{% endblock %}
+{% block contenido %}
+    {% set t = tablero %}
+    {% set c = t.cuentas %}
     {% if anotada %}<p class="portal-peticion" role="status"><strong>{{ _('Factura anotada. Tu gestoría la revisará.') }}</strong></p>{% endif %}
+    {% if atendida == 'reenviada' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: hemos enviado la factura de nuevo a tu gestoría.') }}</strong></p>{% endif %}
+    {% if atendida == 'vista' %}<p class="portal-peticion" role="status"><strong>{{ _('De acuerdo: no te pediremos nada más de esa factura.') }}</strong></p>{% endif %}
     {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+
+    <nav class="portal-trimestres" aria-label="{{ _('Trimestre') }}">
+      {% for q in t.disponibles %}
+      <a href="{{ url_for('portal_cliente.facturas', trimestre=q) }}" {% if q == t.trimestre %}aria-current="page"{% endif %}>{{ etiqueta(q) }}{% if t.otras_devueltas.get(q) %} <span class="portal-nav-insignia" title="{{ _('Facturas por corregir') }}">{{ t.otras_devueltas[q] }}</span>{% endif %}</a>
+      {% endfor %}
+    </nav>
+
+    <section class="portal-tablero portal-tablero-{{ t.situacion }}" aria-labelledby="tablero-titulo">
+      <h2 id="tablero-titulo">{{ etiqueta(t.trimestre) }}</h2>
+      <p class="portal-tablero-frase">
+        {% if t.situacion == 'corregir' %}{{ ngettext('Tienes %(n)s factura por corregir.', 'Tienes %(n)s facturas por corregir.', c.para_corregir, n=c.para_corregir) }}
+        {% elif t.situacion == 'vacio' %}{{ _('Todavía no has enviado facturas de este trimestre.') }}
+        {% elif t.situacion == 'revision' %}{{ _('Tu gestoría está revisando tus facturas.') }}
+        {% else %}{{ _('Todo contabilizado: no hay nada pendiente en este trimestre.') }}{% endif %}
+      </p>
+      {% if c.total %}
+      <progress class="portal-tablero-barra" max="{{ c.total }}" value="{{ t.avance }}" aria-label="{{ _('Facturas revisadas o contabilizadas') }}"></progress>
+      <p class="muted">{{ _('%(n)s de %(total)s revisadas o contabilizadas', n=t.avance, total=c.total) }}</p>
+      {% endif %}
+      <dl class="portal-tablero-cifras">
+        <div><dt>{{ _('Enviadas') }}</dt><dd>{{ c.total }}</dd></div>
+        <div><dt>{{ _('En revisión') }}</dt><dd>{{ c.en_revision }}</dd></div>
+        <div><dt>{{ _('Revisadas') }}</dt><dd>{{ c.revisadas }}</dd></div>
+        <div><dt>{{ _('Contabilizadas') }}</dt><dd>{{ c.contabilizadas }}</dd></div>
+        <div class="{{ 'aviso' if c.para_corregir }}"><dt>{{ _('Para corregir') }}</dt><dd>{{ c.para_corregir }}</dd></div>
+      </dl>
+      {% if t.modelos %}
+      <ul class="portal-tablero-modelos">
+        {% for m in t.modelos %}
+        <li><a href="{{ url_for('portal_cliente.documentos_vencimiento', vencimiento_id=m.id) }}">{{ _('Modelo %(m)s', m=m.modelo) }}</a> ·
+          {% if m.presentado %}{{ _('presentado') }}{% else %}{{ _('vence el %(fecha)s', fecha=m.fecha_limite|fecha_dia) }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if t.cerrado %}<p class="muted">{{ _('Tu gestoría ya ha cerrado este trimestre. Si te falta alguna factura, escríbele desde el modelo correspondiente.') }}</p>{% endif %}
+      {% if t.otras_devueltas %}<p class="muted">{{ _('También tienes facturas por corregir en otros trimestres: míralas en la barra de arriba.') }}</p>{% endif %}
+    </section>
+
+    {% set devueltas = t.facturas | selectattr('devuelta') | rejectattr('atendida') | list %}
+    {% if devueltas %}
+    <section class="portal-devueltas" aria-labelledby="devueltas-titulo">
+      <h2 id="devueltas-titulo">{{ _('Facturas que tu gestoría te devuelve') }}</h2>
+      {% for f in devueltas %}
+      <article class="portal-devuelta" id="factura-{{ f.id }}">
+        <header>
+          <strong>{{ f.tercero_nombre }}</strong>
+          <span class="muted">{{ f.numero if f.numero != '(por leer)' else _('Sin leer') }} · {{ f.fecha|fecha_dia }}</span>
+        </header>
+        <p class="portal-devuelta-motivo"><span class="muted">{{ _('Qué hay que corregir:') }}</span> {{ f.devuelta }}</p>
+        <form method="post" action="{{ url_for('portal_cliente.reenviar_factura', factura_id=f.id) }}" enctype="multipart/form-data" class="portal-devuelta-form">
+          <input type="hidden" name="trimestre" value="{{ t.trimestre }}">
+          <label for="reenvio-{{ f.id }}">{{ _('Sube la factura corregida (foto o PDF)') }}</label>
+          <input type="file" id="reenvio-{{ f.id }}" name="archivos" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" required>
+          <button type="submit" class="btn btn-primary">{{ _('Enviar de nuevo') }}</button>
+        </form>
+        <form method="post" action="{{ url_for('portal_cliente.factura_entendida', factura_id=f.id) }}">
+          <input type="hidden" name="trimestre" value="{{ t.trimestre }}">
+          <button type="submit" class="btn btn-ghost">{{ _('Entendido, no tengo nada que enviar') }}</button>
+        </form>
+      </article>
+      {% endfor %}
+    </section>
+    {% endif %}
 
     <section class="dash-panel">
       <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
@@ -35,8 +87,8 @@
       </form>
     </section>
 
-    <section class="dash-panel">
-      <h2>{{ _('Anotar una factura') }}</h2>
+    <details class="dash-panel portal-anotar" {{ 'open' if error and datos.numero }}>
+      <summary><h2>{{ _('Anotar una factura') }}</h2></summary>
       <form method="post" enctype="multipart/form-data" class="edit-form">
         <label for="f-tipo">{{ _('¿Qué factura es?') }}</label>
         <select id="f-tipo" name="tipo">
@@ -60,19 +112,31 @@
         <label>{{ _('Foto o PDF de la factura (recomendado)') }}<input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" capture="environment"></label>
         <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Anotar factura') }}</button></div>
       </form>
-    </section>
+    </details>
 
     <section class="ds-mt-24">
-      <h2>{{ _('Facturas anotadas') }}</h2>
-      {% if not facturas %}
-      <p class="empty-lane">{{ _('Todavía no has anotado ninguna factura.') }}</p>
+      <h2>{{ _('Facturas de %(t)s', t=etiqueta(t.trimestre)) }}</h2>
+      {% if not t.facturas %}
+      <p class="empty-lane">{{ _('No hay facturas en este trimestre.') }}</p>
       {% else %}
       <div class="table-wrap"><table class="historial-table">
         <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Total') }}</th><th>{{ _('Estado') }}</th></tr></thead>
-        <tbody>{% for f in facturas %}<tr><td class="mono">{{ f.fecha }}</td><td>{{ f.numero if f.numero != '(por leer)' else _('Pendiente de leer') }}</td><td>{{ f.tercero_nombre }}</td><td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td><td>{{ textos[f.estado] }}</td></tr>{% endfor %}</tbody>
+        <tbody>{% for f in t.facturas %}
+          <tr>
+            <td class="mono">{{ f.fecha }}</td>
+            <td>{{ f.numero if f.numero != '(por leer)' else _('Pendiente de leer') }}</td>
+            <td>{{ f.tercero_nombre }}</td>
+            <td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
+            <td>
+              {% if f.estado == 'descartada' and f.devuelta is not none %}
+                {% if f.atendida %}<span class="portal-estado ok">{{ _('Reenviada') }}</span>{% else %}<span class="portal-estado ko">{{ _('Para corregir') }}</span>{% endif %}
+              {% else %}
+                <span class="portal-estado {{ {'exportada': 'ok', 'revisada': 'ok', 'pendiente': 'warn', 'descartada': 'ko'}[f.estado] }}">{{ textos[f.estado] }}</span>
+              {% endif %}
+            </td>
+          </tr>{% endfor %}</tbody>
       </table></div>
+      {% if t.hay_mas %}<p class="muted">{{ _('Se muestran las %(n)s más recientes.', n=t.facturas|length) }}</p>{% endif %}
       {% endif %}
     </section>
-  </div>
-</body>
-</html>
+{% endblock %}
