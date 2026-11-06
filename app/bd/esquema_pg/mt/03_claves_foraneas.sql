@@ -373,6 +373,7 @@ ALTER TABLE notas_participantes ADD CONSTRAINT fk_notas_participantes_tenant FOR
 ALTER TABLE notas_participantes ADD CONSTRAINT fk_notas_participantes_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
 ALTER TABLE notificaciones ADD CONSTRAINT fk_notificaciones_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE notificaciones ADD CONSTRAINT fk_notificaciones_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
+ALTER TABLE objetos_almacenados ADD CONSTRAINT fk_objetos_almacenados_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE obligaciones_evidencias ADD CONSTRAINT fk_obligaciones_evidencias_declarada_por FOREIGN KEY (declarada_por) REFERENCES usuarios (id);
 ALTER TABLE obligaciones_evidencias ADD CONSTRAINT fk_obligaciones_evidencias_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE obligaciones_evidencias ADD CONSTRAINT fk_obligaciones_evidencias_vencimiento_id FOREIGN KEY (tenant_id, vencimiento_id) REFERENCES vencimientos_fiscales (tenant_id, id) ON DELETE CASCADE;

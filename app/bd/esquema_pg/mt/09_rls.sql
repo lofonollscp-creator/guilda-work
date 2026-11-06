@@ -469,6 +469,9 @@ CREATE POLICY aislamiento ON notas_participantes USING (tenant_id = nullif(curre
 ALTER TABLE notificaciones ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON notificaciones;
 CREATE POLICY aislamiento ON notificaciones USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE objetos_almacenados ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON objetos_almacenados;
+CREATE POLICY aislamiento ON objetos_almacenados USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE obligaciones_evidencias ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON obligaciones_evidencias;
 CREATE POLICY aislamiento ON obligaciones_evidencias USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

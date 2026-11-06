@@ -37,6 +37,7 @@ import unicodedata
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from . import almacen_objetos as _objetos
 from . import bd as _bd
 from .bd.errores import ErrorBD
 from . import cifrado_despacho as cd
@@ -208,7 +209,8 @@ def vaciar_wal() -> None:
 def _sellar_adjuntos(conn, mensaje_id: int, cfg: dict) -> None:
     publica = base64.b64decode(cfg["publica"])
     for a in conn.execute("SELECT id, nombre_archivo, contenido FROM correo_adjuntos WHERE mensaje_id = ? AND cifrado = 0", (mensaje_id,)).fetchall():
-        ct, sobre = cd.sellar_con_publica(publica, bytes(a["contenido"]))
+        ct, sobre = cd.sellar_con_publica(publica, _objetos.contenido("correo_adjuntos", a["id"], a["contenido"], conn))
+        ct = _objetos.preparar(conn, None, "correo_adjuntos", a["id"], ct)                  # si el adjunto vive en el almacén de objetos, el sellado se escribe allí
         nombre = a["nombre_archivo"]
         nombre_cifrado = None
         if nombre_adjunto_cifrado(cfg["nivel"]):
@@ -368,8 +370,10 @@ def exigir_clave(tenant_id: int) -> None:
 
 def abrir_adjunto(fila, con_contenido: bool = True):
     """Un adjunto con su nombre y contenido reales (si está sellado hace falta la clave: sin ella, `DespachoBloqueado` para el contenido; el nombre sale vacío)."""
-    if fila is None or not fila["cifrado"]:
+    if fila is None:
         return fila
+    if not fila["cifrado"]:
+        return _objetos.hidratar("correo_adjuntos", fila) if con_contenido and "contenido" in fila.keys() else fila
     d = dict(fila)
     conn = db.get_connection()
     try:
@@ -387,7 +391,7 @@ def abrir_adjunto(fila, con_contenido: bool = True):
     if con_contenido and "contenido" in d:
         if privada is None:
             raise cd.DespachoBloqueado("El correo de este despacho está protegido con su clave: hay que desbloquearlo con la frase de paso.")
-        d["contenido"] = cd.abrir_con_privada(privada, bytes(d["contenido"]), d["sobre"])
+        d["contenido"] = cd.abrir_con_privada(privada, _objetos.contenido("correo_adjuntos", d["id"], d["contenido"]), d["sobre"])
         cd.registrar_acceso(tenant, None, d["id"], cd.canal_actual() or "persona", "correo_adjuntos")
     d.pop("sobre", None)
     return d
@@ -667,8 +671,9 @@ def desactivar(tenant_id: int, usuario_id: int) -> int:
                 if a["nombre_cifrado"]:
                     n = json.loads(a["nombre_cifrado"])
                     nombre = cd.abrir_con_privada(privada, base64.b64decode(n["c"]), n["s"]).decode("utf-8")
+                claro = cd.abrir_con_privada(privada, _objetos.contenido("correo_adjuntos", a["id"], a["contenido"], conn), a["sobre"])
                 conn.execute("UPDATE correo_adjuntos SET contenido = ?, cifrado = 0, sobre = NULL, nombre_cifrado = NULL, nombre_archivo = ? WHERE id = ?",
-                             (cd.abrir_con_privada(privada, bytes(a["contenido"]), a["sobre"]), nombre, a["id"]))
+                             (_objetos.preparar(conn, None, "correo_adjuntos", a["id"], claro), nombre, a["id"]))
             hechos += 1
         conn.execute("UPDATE cifrado_despacho SET correo_activo = 0 WHERE tenant_id = ?", (tenant_id,))
         conn.commit()
@@ -688,12 +693,12 @@ def resellar(conn, tenant_id: int, abrir_antiguo, sellar_nuevo) -> int:
         conn.execute("UPDATE correo_mensajes SET datos = ?, sobre = ? WHERE id = ?", (nuevo, sobre, f["id"]))
         hechos += 1
     for a in conn.execute("SELECT a.id, a.contenido, a.sobre, a.nombre_cifrado FROM correo_adjuntos a JOIN correo_mensajes m ON m.id = a.mensaje_id JOIN correo_cuentas c ON c.id = m.cuenta_id JOIN usuarios u ON u.id = c.usuario_id WHERE u.tenant_id = ? AND a.cifrado = 1", (tenant_id,)).fetchall():
-        nuevo, sobre = sellar_nuevo(abrir_antiguo(bytes(a["contenido"]), a["sobre"]))
+        nuevo, sobre = sellar_nuevo(abrir_antiguo(_objetos.contenido("correo_adjuntos", a["id"], a["contenido"], conn), a["sobre"]))
         nombre = a["nombre_cifrado"]
         if nombre:
             n = json.loads(nombre)
             nn, ns = sellar_nuevo(abrir_antiguo(base64.b64decode(n["c"]), n["s"]))
             nombre = json.dumps({"s": ns, "c": base64.b64encode(nn).decode()})
-        conn.execute("UPDATE correo_adjuntos SET contenido = ?, sobre = ?, nombre_cifrado = ? WHERE id = ?", (nuevo, sobre, nombre, a["id"]))
+        conn.execute("UPDATE correo_adjuntos SET contenido = ?, sobre = ?, nombre_cifrado = ? WHERE id = ?", (_objetos.preparar(conn, None, "correo_adjuntos", a["id"], nuevo), sobre, nombre, a["id"]))
         hechos += 1
     return hechos

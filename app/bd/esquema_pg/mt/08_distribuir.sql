@@ -176,6 +176,7 @@ SELECT create_distributed_table('notas', 'tenant_id', colocate_with => 'abogados
 SELECT create_distributed_table('notas_adjuntos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('notas_participantes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('notificaciones', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('objetos_almacenados', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('obligaciones_evidencias', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('oficinas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('partes_tiempo', 'tenant_id', colocate_with => 'abogados_ajustes');

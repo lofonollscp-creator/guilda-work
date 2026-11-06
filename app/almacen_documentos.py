@@ -15,7 +15,7 @@ import hashlib
 import json
 from typing import Protocol
 
-from . import acceso, db, nucleo
+from . import acceso, almacen_objetos as _objetos, db, nucleo
 
 ORIGENES = ("subida", "correo", "portal", "generado")
 
@@ -85,9 +85,10 @@ def _sellar(tenant_id: int, contenido: bytes) -> tuple[bytes, int, str | None]:
 
 
 def _abrir(tenant_id: int, fila, usuario_id: int | None = None, via: str = "persona", tabla: str = "documentos") -> bytes:
+    guardado = _objetos.contenido(tabla, fila["id"], fila["contenido"])          # el de la columna o, si vive en el almacén de objetos, el de allí
     if not fila["cifrado"]:
-        return bytes(fila["contenido"])
-    contenido = _activo().abrir(tenant_id, bytes(fila["contenido"]), fila["sobre"] or "")
+        return guardado
+    contenido = _activo().abrir(tenant_id, guardado, fila["sobre"] or "")
     from .cifrado_despacho import canal_actual, registrar_acceso
     registrar_acceso(tenant_id, usuario_id, fila["id"], canal_actual() or via, tabla)
     if hashlib.sha256(contenido).hexdigest() != fila["hash_sha256"]:
@@ -108,9 +109,9 @@ def sellar_pendientes(tenant_id: int) -> int:
         hechos = 0
         for tabla in TABLAS_CON_CONTENIDO:
             for f in conn.execute(f"SELECT id, contenido FROM {tabla} WHERE tenant_id = ? AND cifrado = 0", (tenant_id,)).fetchall():
-                sellado, sobre = cifrador.sellar(tenant_id, bytes(f["contenido"]))
+                sellado, sobre = cifrador.sellar(tenant_id, _objetos.contenido(tabla, f["id"], f["contenido"], conn))
                 if sobre:
-                    conn.execute(f"UPDATE {tabla} SET contenido = ?, cifrado = 1, sobre = ? WHERE id = ?", (sellado, sobre, f["id"]))
+                    conn.execute(f"UPDATE {tabla} SET contenido = ?, cifrado = 1, sobre = ? WHERE id = ?", (_objetos.preparar(conn, tenant_id, tabla, f["id"], sellado), sobre, f["id"]))
                     hechos += 1
         conn.commit()
         if hechos:
@@ -163,13 +164,13 @@ def resellar(tenant_id: int, abrir_antiguo, sellar_nuevo, en_la_misma_transaccio
         hechos = 0
         for tabla in TABLAS_CON_CONTENIDO:
             for f in conn.execute(f"SELECT id, contenido, sobre, nombre_cifrado FROM {tabla} WHERE tenant_id = ? AND cifrado = 1", (tenant_id,)).fetchall():
-                nuevo, sobre = sellar_nuevo(abrir_antiguo(bytes(f["contenido"]), f["sobre"]))
+                nuevo, sobre = sellar_nuevo(abrir_antiguo(_objetos.contenido(tabla, f["id"], f["contenido"], conn), f["sobre"]))
                 nombre = f["nombre_cifrado"]
                 if nombre:
                     n = json.loads(nombre)
                     nn, ns = sellar_nuevo(abrir_antiguo(base64.b64decode(n["c"]), n["s"]))
                     nombre = json.dumps({"s": ns, "c": base64.b64encode(nn).decode()})
-                conn.execute(f"UPDATE {tabla} SET contenido = ?, sobre = ?, nombre_cifrado = ? WHERE id = ?", (nuevo, sobre, nombre, f["id"]))
+                conn.execute(f"UPDATE {tabla} SET contenido = ?, sobre = ?, nombre_cifrado = ? WHERE id = ?", (_objetos.preparar(conn, tenant_id, tabla, f["id"], nuevo), sobre, nombre, f["id"]))
                 hechos += 1
         if en_la_misma_transaccion is not None:
             en_la_misma_transaccion(conn)
@@ -248,6 +249,7 @@ def guardar(usuario_id: int, nombre: str, tipo_mime: str | None, contenido: byte
             (tenant_id, cliente_id, expediente_id, nombre_col, nombre_sellado, (tipo_mime or "application/octet-stream")[:100], len(contenido), (categoria or "").strip()[:60] or None,
              guardado, huella, cifrado, sobre, origen, mensaje_correo_id, usuario_id, db.now_iso()),
         )
+        _objetos.ofrecer(conn, tenant_id, "documentos", cur.lastrowid, guardado, tipo_mime)          # al almacén de objetos si lo hay
         if expediente_id is not None:
             nucleo._evento(conn, expediente_id, "documento", _texto_evento(tenant_id, "Documento añadido", nombre_seguro), usuario_id)
         conn.commit()
@@ -392,6 +394,7 @@ def guardar_de_cliente_fiscal_sin_usuario(tenant_id: int, cliente_fiscal_id: int
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'subida', NULL, ?, ?, ?, ?)",
             (tenant_id, cliente_fiscal_id, nombre_col, nombre_sellado, (tipo_mime or "application/octet-stream")[:100], len(contenido), guardado, (categoria or "").strip()[:60] or None, huella,
              db.now_iso(), cifrado, sobre))
+        _objetos.ofrecer(conn, tenant_id, "cliente_documentos", cur.lastrowid, guardado, tipo_mime)
         conn.commit()
         return "ok", cur.lastrowid
     finally:

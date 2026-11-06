@@ -129,6 +129,7 @@ CREATE INDEX IF NOT EXISTS idx_notas_papelera ON notas (papelera_en);
 CREATE INDEX IF NOT EXISTS idx_notas_participantes_usuario ON notas_participantes (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_notas_usuario ON notas (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones (usuario_id, leido_en, creado_en);
+CREATE INDEX IF NOT EXISTS idx_objetos_clave ON objetos_almacenados (clave);
 CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes_tiempo (cliente_id);
 CREATE INDEX IF NOT EXISTS idx_partes_expediente ON partes_tiempo (expediente_id);
 CREATE INDEX IF NOT EXISTS idx_partes_tenant ON partes_tiempo (tenant_id, papelera_en, fecha);
@@ -216,6 +217,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_fiscal_relaciones_unica ON fiscal_relacion
 CREATE UNIQUE INDEX IF NOT EXISTS idx_justificantes_huella ON justificantes_pendientes (tenant_id, cliente_fiscal_id, huella);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_cliente_uuid ON notas (tenant_id, cliente_uuid) WHERE cliente_uuid IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_ref ON notas (tenant_id, usuario_id, referencia_externa) WHERE referencia_externa IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_objetos_fila ON objetos_almacenados (tenant_id, tabla, fila_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_avisos_unico ON portal_avisos_enviados (tenant_id, cliente_fiscal_id, destinatario, tipo, referencia);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_contactos_email ON portal_contactos (tenant_id, cliente_fiscal_id, email);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_enlaces_cliente ON portal_enlaces_subida (tenant_id, cliente_fiscal_id);

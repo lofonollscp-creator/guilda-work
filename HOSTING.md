@@ -230,6 +230,11 @@ Variables opcionales:
 | `GUILDA_VAPID_PUBLIC_KEY` | _(vacío)_ | Clave pública VAPID (base64url) para los avisos push del navegador. Sin ella los avisos push no se ofrecen. Se genera una sola vez y no se cambia (cambiarla desvincula todos los dispositivos). |
 | `GUILDA_VAPID_PRIVATE_KEY` | _(vacío)_ | Clave privada VAPID de la pareja anterior (base64url). Secreta: solo en el entorno del servidor. |
 | `GUILDA_VAPID_SUBJECT` | `mailto:gestio@guilda.cat` | Contacto (`mailto:` o URL) que se declara a los servicios push junto con las claves VAPID. |
+| `GUILDA_OBJETOS` | _(vacío)_ | Almacén de objetos para el contenido de los documentos (PDF, fotos, adjuntos): `s3` (AWS S3, MinIO o un proveedor con API S3) o `fichero` (carpeta del servidor). Vacío = todo sigue en la base de datos. Ver `docs/almacen-de-objetos.md`. |
+| `GUILDA_OBJETOS_DIR` | _(vacío)_ | Carpeta del almacén con `GUILDA_OBJETOS=fichero` (permisos solo del servicio; entra en las copias de seguridad). |
+| `GUILDA_S3_BUCKET`, `GUILDA_S3_ACCESS_KEY`, `GUILDA_S3_SECRET_KEY` | _(vacío)_ | Bucket y credenciales con `GUILDA_OBJETOS=s3` (la aplicación necesita leer y escribir, no borrar). Obligatorias con `s3`. |
+| `GUILDA_S3_ENDPOINT`, `GUILDA_S3_REGION`, `GUILDA_S3_SECURE`, `GUILDA_S3_PREFIJO` | `s3.amazonaws.com`, _(vacío)_, `1`, _(vacío)_ | Endpoint, región, TLS (1/0) y prefijo de las claves del almacén S3. |
+| `GUILDA_S3_RETENCION_DIAS`, `GUILDA_S3_RETENCION_MODO` | `0`, `GOVERNANCE` | Bloqueo de borrado (Object Lock) de cada objeto: días y modo (`GOVERNANCE` o `COMPLIANCE`, irreversible hasta que venza). El bucket debe haberse creado con Object Lock. |
 | `GUILDA_IA_ANONIMIZAR` | `1` | `1` seudonimiza los datos personales de los textos antes de enviarlos a la IA y bloquea el envío si el detector no carga; `0` lo desactiva (solo desarrollo y pruebas). |
 | `GUILDA_RETENCION_IA_DIAS` | `365` | Días que se conservan las conversaciones con el asistente de IA desde su última actividad antes de borrarse. |
 | `GUILDA_CORREO_IDLE` | `1` | Correo casi instantáneo con IMAP IDLE: una conexión en espera por cuenta IMAP que sincroniza al aviso del servidor. `0` lo desactiva (queda el auto-sync periódico). |

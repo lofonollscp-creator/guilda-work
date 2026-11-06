@@ -2330,6 +2330,8 @@ def init_db() -> None:
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
         from . import facturacion_despacho
         facturacion_despacho.crear_esquema(conn)   # relación expediente → factura de FacturaScripts (app/facturacion_despacho.py)
+        from . import almacen_objetos
+        almacen_objetos.crear_esquema(conn)     # registro de lo que vive en el almacén de objetos y no en la base (app/almacen_objetos.py)
         from . import portal_personas
         portal_personas.crear_esquema(conn)     # contactos con acceso al portal, avisos enviados, push de clientes y respuestas rápidas (app/portal_personas.py)
         from . import reglas_fiscales

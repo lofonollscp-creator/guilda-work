@@ -2196,13 +2196,17 @@ def guardar_adjuntos_correo(mensaje_id: int, adjuntos: list[dict]) -> None:
     devuelve app.correo._cuerpos()."""
     conn = _db.get_connection()
     try:
+        from . import almacen_objetos
+        dueno = conn.execute("SELECT u.tenant_id FROM correo_mensajes m JOIN correo_cuentas c ON c.id = m.cuenta_id JOIN usuarios u ON u.id = c.usuario_id WHERE m.id = ?", (mensaje_id,)).fetchone()
         for a in adjuntos:
-            conn.execute(
+            cur = conn.execute(
                 """INSERT INTO correo_adjuntos
                    (mensaje_id, nombre_archivo, tipo_mime, tamano_bytes, contenido, creado_en)
                    VALUES (?, ?, ?, ?, ?, ?)""",
                 (mensaje_id, _db._sin_nul_correo(a["nombre"]), _db._sin_nul_correo(a["tipo"]), len(a["bytes"]), a["bytes"], _db.now_iso()),
             )
+            if dueno is not None and dueno["tenant_id"] is not None:           # al almacén de objetos si lo hay (si no, o si falla, se queda en la base)
+                almacen_objetos.ofrecer(conn, dueno["tenant_id"], "correo_adjuntos", cur.lastrowid, a["bytes"], a["tipo"])
         conn.commit()
     finally:
         conn.close()

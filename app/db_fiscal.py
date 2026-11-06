@@ -922,10 +922,11 @@ def subir_documento_vencimiento(
         documento_id = cur.lastrowid
         conn.commit()
 
+        promovido = False
         try:
             from . import nextcloud
             fila = conn.execute(
-                """SELECT t.nombre AS tenant_nombre FROM vencimientos_fiscales v
+                """SELECT t.nombre AS tenant_nombre, v.tenant_id AS tenant_id FROM vencimientos_fiscales v
                    JOIN tenants t ON t.id = v.tenant_id WHERE v.id = ?""",
                 (vencimiento_id,),
             ).fetchone()
@@ -937,8 +938,14 @@ def subir_documento_vencimiento(
                     (ruta, documento_id),
                 )
                 conn.commit()
+                promovido = True
         except Exception:
             pass  # se queda como BLOB local, comportamiento de siempre
+        if not promovido:                  # si hay almacén de objetos (app/almacen_objetos.py), el contenido va allí; si no hay o falla, se queda en la base
+            from . import almacen_objetos
+            inquilino = conn.execute("SELECT tenant_id FROM vencimientos_fiscales WHERE id = ?", (vencimiento_id,)).fetchone()
+            if inquilino is not None and almacen_objetos.ofrecer(conn, inquilino["tenant_id"], "vencimientos_fiscales_documentos", documento_id, contenido, tipo_mime):
+                conn.commit()
         return documento_id
     finally:
         conn.close()
@@ -954,7 +961,8 @@ def contenido_documento_vencimiento(documento: sqlite3.Row) -> bytes:
     if documento["ruta_nextcloud"]:
         from . import nextcloud
         return nextcloud.descargar_archivo(documento["ruta_nextcloud"])
-    return documento["contenido"]
+    from . import almacen_objetos
+    return almacen_objetos.contenido("vencimientos_fiscales_documentos", documento["id"], documento["contenido"]) or documento["contenido"]
 
 
 def listar_documentos_vencimiento(
@@ -1294,6 +1302,8 @@ def archivar_documento_cliente(
              len(contenido), guardado, (categoria or "").strip()[:60] or None, origen, mensaje_correo_id,
              (asunto_origen or "").strip()[:200] or None, usuario_id, huella, _db.now_iso(), cifrado, sobre),
         )
+        from . import almacen_objetos
+        almacen_objetos.ofrecer(conn, u["tenant_id"], "cliente_documentos", cur.lastrowid, guardado, tipo_mime)       # al almacén de objetos si lo hay (el sellado, si lo hay, ya está hecho)
         conn.commit()
         return "ok", cur.lastrowid
     finally:
