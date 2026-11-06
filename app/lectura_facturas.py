@@ -172,6 +172,38 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int) -> list[str]:
     return avisos
 
 
+def previsualizar(usuario_id: int, contenido: bytes, tipo_mime: str) -> dict:
+    """Lo que la IA lee de UNA foto o PDF, para enseñárselo a quien lo va a subir antes de enviarlo. No guarda nada y no da nada por bueno: es una ayuda para que la persona vea si se lee bien.
+    {emisor, nif, numero, fecha, total, avisos}. `ValueError` con un mensaje legible si no se pudo leer o el despacho ha agotado su tope de IA. Cuenta como una consulta de IA del despacho."""
+    from . import ia_consumo
+    if not configurada(usuario_id):
+        raise ValueError("La lectura previa no está disponible ahora mismo.")
+    try:
+        ia_consumo.reservar(usuario_id)
+    except ia_consumo.LimiteIA:
+        raise ValueError("La lectura previa no está disponible ahora mismo.") from None
+    try:
+        datos = _json_de(ia_asistente.completar_partes(usuario_id, PROMPT, _partes({"tipo_mime": tipo_mime, "contenido": contenido})))
+    except ia_asistente.ErrorIA:
+        raise ValueError("No se ha podido leer esta factura. Puedes enviarla igualmente: tu gestoría la leerá.") from None
+    except (ValueError, KeyError, TypeError):
+        raise ValueError("No se ha podido leer esta factura. Puedes enviarla igualmente: tu gestoría la leerá.") from None
+    avisos: list[str] = []
+    total = _num(datos.get("total"))
+    try:
+        fecha = fc._fecha(datos.get("fecha"), "fecha") if datos.get("fecha") else ""
+    except ValueError:
+        fecha, _a = "", avisos.append("fecha")
+    if not fecha:
+        avisos.append("fecha")
+    if total in ("", "0.00"):
+        avisos.append("total")
+    nif = fc._nif(datos.get("emisor_nif"))
+    if not _texto(datos.get("emisor_nombre"), 100) and not nif:
+        avisos.append("emisor")
+    return {"emisor": _texto(datos.get("emisor_nombre"), 100), "nif": nif, "numero": _texto(datos.get("numero"), fc.MAX_NUMERO), "fecha": fecha, "total": total, "avisos": sorted(set(avisos))}
+
+
 def _duplicado(tenant_id: int, f: dict, numero: str, nif: str) -> list[str]:
     """Otra factura viva de este titular con el mismo número y el mismo NIF de la contraparte (aviso en el panel de evidencias, no en las notas)."""
     if not numero or not nif:

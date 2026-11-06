@@ -592,6 +592,7 @@ def entrar_ver_como(token: str):
         abort(404)
     session["ver_como"] = datos
     db.registrar_auditoria(None, "ver_como.inicio", f"{datos['admin']} entra como usuario {datos['usuario_id']} ({datos['email']})")
+    ver_como.avisar_al_despacho(datos)                                  # constancia en la auditoría del despacho y aviso a su dirección
     return redirect(url_for("inicio"))
 
 

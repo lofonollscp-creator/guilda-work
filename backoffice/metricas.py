@@ -179,6 +179,9 @@ ETAPAS = (
 )
 
 
+DIAS_A_MEDIAS = 7            # un despacho activo con la puesta en marcha sin acabar pasada una semana desde el alta «se ha quedado a medias»
+
+
 def journey() -> dict:
     """Etapa alcanzada por cada tenant y totales del embudo."""
     conn = plataforma.get_connection()
@@ -201,9 +204,15 @@ def journey() -> dict:
         logros = {"creado": True, "usuarios": bool(ids), "plan": bool(t["plan_id"]), "uso": bool(ultima), "recurrente": reciente, "pago": pago}
         alcanzadas = sum(1 for k, _ in ETAPAS if logros[k])
         siguiente = next((n for k, n in ETAPAS if not logros[k]), None)
-        filas.append({**t, "logros": logros, "alcanzadas": alcanzadas, "siguiente": siguiente, "ultima": ultima, "puesta": onboarding_despacho.resumen(t["id"])})
+        puesta = onboarding_despacho.resumen(t["id"])
+        try:
+            dias_alta = (datetime.now() - datetime.fromisoformat(t["creado_en"])).days
+        except (TypeError, ValueError):
+            dias_alta = 0
+        filas.append({**t, "logros": logros, "alcanzadas": alcanzadas, "siguiente": siguiente, "ultima": ultima, "puesta": puesta, "dias_alta": dias_alta,
+                      "a_medias": bool(t["activo"]) and not puesta["completo"] and dias_alta >= DIAS_A_MEDIAS})
     totales = [{"clave": k, "nombre": n, "n": sum(1 for f in filas if f["logros"][k])} for k, n in ETAPAS]
-    return {"filas": filas, "totales": totales, "n": len(filas)}
+    return {"filas": filas, "totales": totales, "n": len(filas), "a_medias": sum(1 for f in filas if f["a_medias"])}
 
 
 # --- Notas internas del equipo de Guilda sobre un tenant ---------------------

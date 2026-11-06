@@ -402,6 +402,8 @@ ALTER TABLE portal_contactos ADD CONSTRAINT fk_portal_contactos_tenant_id FOREIG
 ALTER TABLE portal_enlaces_subida ADD CONSTRAINT fk_portal_enlaces_subida_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_recordatorios_config ADD CONSTRAINT fk_portal_recordatorios_config_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_respuestas_rapidas ADD CONSTRAINT fk_portal_respuestas_rapidas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_segundo_factor ADD CONSTRAINT fk_portal_segundo_factor_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_sesiones ADD CONSTRAINT fk_portal_sesiones_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_suscripciones_push ADD CONSTRAINT fk_portal_suscripciones_push_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE proyecto_miembros ADD CONSTRAINT fk_proyecto_miembros_categoria_id FOREIGN KEY (tenant_id, categoria_id) REFERENCES categorias (tenant_id, id) ON DELETE CASCADE;
 ALTER TABLE proyecto_miembros ADD CONSTRAINT fk_proyecto_miembros_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);

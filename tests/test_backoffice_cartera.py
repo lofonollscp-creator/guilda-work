@@ -269,3 +269,32 @@ def test_exportacion_incluye_tareas_compartidas_correo_de_equipo_y_fichajes():
     for clave in ("tareas_lista", "comentarios_tareas", "correo_equipo_asignaciones", "correo_equipo_notas_internas", "fichajes"):
         assert clave in datos
     assert len(datos["fichajes"]) == 1
+
+
+# --- K6: despachos que se han quedado a medias ------------------------------------------------------------------------------------------------------
+
+def test_a_medias_es_un_despacho_activo_con_la_puesta_sin_acabar_pasada_una_semana():
+    from backoffice import metricas
+    from app import db
+    nuevo, viejo = db.crear_tenant("Alta reciente"), db.crear_tenant("Alta antigua")
+    conn = db.get_connection()
+    conn.execute("UPDATE tenants SET creado_en = ? WHERE id = ?", ((__import__("datetime").datetime.now() - __import__("datetime").timedelta(days=20)).isoformat(timespec="seconds"), viejo))
+    conn.commit(); conn.close()
+    filas = {f["nombre"]: f for f in metricas.journey()["filas"]}
+    assert filas["Alta reciente"]["a_medias"] is False and filas["Alta antigua"]["a_medias"] is True and filas["Alta antigua"]["dias_alta"] >= 20
+    assert metricas.journey()["a_medias"] >= 1
+
+
+def test_el_filtro_y_el_aviso_masivo_de_los_que_estan_a_medias(bo):
+    from app import comunicados, db
+    from tests.test_backoffice_app import entrar, post
+    viejo = db.crear_tenant("Despacho a medias")
+    conn = db.get_connection()
+    conn.execute("UPDATE tenants SET creado_en = '2026-01-01T00:00:00' WHERE id = ?", (viejo,)); conn.commit(); conn.close()
+    entrar(bo)
+    assert "A MEDIAS" in bo.get("/journey?solo=a_medias").get_data(as_text=True)
+    assert post(bo, "/journey/avisar-a-medias").status_code == 302
+    avisos = [c for c in comunicados.listar() if c["tenant_id"] == viejo and "puesta en marcha" in c["titulo"]]
+    assert len(avisos) == 1
+    post(bo, "/journey/avisar-a-medias")                                  # repetirlo no duplica el aviso
+    assert len([c for c in comunicados.listar() if c["tenant_id"] == viejo and "puesta en marcha" in c["titulo"]]) == 1

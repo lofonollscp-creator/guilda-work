@@ -113,6 +113,32 @@ def enviar_enlace_portal(email_destino: str, url_enlace: str, tenant_id: int | N
     _enviar(email_destino, _asunto(_("Tu enlace de acceso a Guilda Work"), tenant_id), plano, html)
 
 
+def enviar_aviso_dispositivo_nuevo(email_destino: str, dispositivo: str, cuando: str, url_cuenta: str, tenant_id: int | None = None) -> None:
+    """Aviso de seguridad: alguien ha entrado al portal con este email desde un dispositivo que no se conocía. Va siempre, sea cual sea la preferencia de avisos."""
+    plano, html = _construir(tenant_id,
+        _("Nuevo acceso a tu portal"),
+        [_("Hemos detectado un acceso a tu portal de cliente desde un dispositivo que no conocíamos: %(dispositivo)s, el %(cuando)s.", dispositivo=dispositivo, cuando=cuando),
+         _("Si has sido tú, no tienes que hacer nada.")],
+        boton=(_("Ver mis sesiones"), url_cuenta),
+        aviso=_("Si no has sido tú, entra en Mi cuenta, cierra las demás sesiones y avisa a tu gestoría."),
+        preencabezado=_("Un dispositivo nuevo ha entrado a tu portal"),
+    )
+    _enviar(email_destino, _asunto(_("Nuevo acceso a tu portal"), tenant_id), plano, html)
+
+
+def enviar_aviso_acceso_soporte(email_destino: str, usuario_email: str, motivo: str, hasta: str, tenant_id: int | None = None) -> None:
+    """Aviso a la dirección del despacho: el equipo de soporte de Guilda Work ha entrado, solo para mirar, como una de sus personas. Siempre dice por qué."""
+    plano, html = _construir(tenant_id,
+        _("Soporte ha entrado en tu cuenta para mirar"),
+        [_("El equipo de soporte de Guilda Work ha entrado como %(usuario)s, en solo lectura, hasta las %(hasta)s.", usuario=usuario_email, hasta=hasta),
+         _("No ha podido cambiar nada. Queda anotado en la auditoría de tu despacho.")],
+        cita=motivo or None,
+        aviso=_("Si no esperabas este acceso, contesta a este correo."),
+        preencabezado=_("Soporte ha entrado en solo lectura"),
+    )
+    _enviar(email_destino, _asunto(_("Soporte ha entrado en tu cuenta para mirar"), tenant_id), plano, html)
+
+
 def enviar_solicitud_documento(email_destino: str, descripcion: str, url_portal: str, tenant_id: int | None = None) -> None:
     """Aviso de que el equipo pide un documento concreto para un
     vencimiento (app/rutas_fiscal.py:editar_vencimiento) -- mismo

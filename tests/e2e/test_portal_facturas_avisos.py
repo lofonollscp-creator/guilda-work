@@ -54,3 +54,34 @@ def test_avisos_al_elegir_facturas(servidor, abrir, entrar_como_equipo, chromium
     assert not nueva.locator("#aviso-cierre").is_visible()
     assert not errores
     ctx.close()
+
+
+def test_la_foto_se_recorta_y_se_aligera_antes_de_subirla(servidor, abrir, entrar_como_equipo, chromium):
+    t = db.crear_tenant("Despacho portal recorte")
+    pagina, _ = abrir()
+    entrar_como_equipo(pagina, "portal-recorte@ejemplo.com", despacho=t, direccion=True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = db.crear_cliente_fiscal(t, "Cliente Recorte", email="recorte@ejemplo.com")
+    ctx = chromium.new_context(viewport={"width": 390, "height": 800})
+    errores = []
+    nueva = ctx.new_page()
+    nueva.on("pageerror", lambda e: errores.append(str(e)))
+    nueva.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(c, '127.0.0.1')}")
+    nueva.goto(f"{servidor.url}/portal/facturas")
+    nueva.wait_for_load_state("networkidle")
+
+    def pagina_sobre_mesa(x, y):
+        if 150 <= x < 650 and 100 <= y < 500:
+            return 20 if (y % 20 < 4 and 180 < x < 620) else 245
+        return 80
+    foto = _png(800, 600, pagina_sobre_mesa)
+    nueva.set_input_files("#form-subida input[type=file]", [{"name": "ticket.png", "mimeType": "image/png", "buffer": foto}])
+    nueva.wait_for_function("document.getElementById('avisos-subida').innerText.includes('recortado')")
+    datos = nueva.evaluate("""async () => { const f = document.querySelector('#form-subida input[type=file]').files[0]; const b = await createImageBitmap(f); return {tipo: f.type, nombre: f.name, ancho: b.width, alto: b.height, bytes: f.size}; }""")
+    assert datos["tipo"] == "image/jpeg" and datos["nombre"] == "ticket.jpg"
+    assert datos["ancho"] < 600 and datos["alto"] < 480 and datos["ancho"] > 480, datos          # recortada a la hoja (500x400) más un pequeño margen
+    assert nueva.locator("#usar-originales").is_visible()
+    nueva.check("#usar-originales")
+    nueva.wait_for_function("document.querySelector('#form-subida input[type=file]').files[0].type === 'image/png'")
+    assert not errores
+    ctx.close()

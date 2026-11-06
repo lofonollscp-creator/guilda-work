@@ -1505,6 +1505,16 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_segundo_factor": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_sesiones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_suscripciones_push": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
@@ -1581,6 +1591,11 @@
  "salud_alertas": {
   "clase": "local",
   "motivo": "alertas de salud globales",
+  "via": []
+ },
+ "salud_silencios": {
+  "clase": "local",
+  "motivo": "silencios de las alertas de salud globales",
   "via": []
  },
  "solicitudes_acceso_portal": {

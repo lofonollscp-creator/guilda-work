@@ -342,7 +342,34 @@ def borrar_nota_tenant(tenant_id: int, nota_id: int):
 @bp.route("/journey")
 @auth.login_required
 def journey():
-    return render_template("journey.html", j=metricas.journey(), etapas=metricas.ETAPAS)
+    j = metricas.journey()
+    solo = request.args.get("solo", "")
+    if solo == "a_medias":
+        j = {**j, "filas": [f for f in j["filas"] if f["a_medias"]]}
+    return render_template("journey.html", j=j, etapas=metricas.ETAPAS, solo=solo, dias_a_medias=metricas.DIAS_A_MEDIAS)
+
+
+def _publicar_aviso_de_puesta_en_marcha(tenant_id: int) -> str | None:
+    """Publica el comunicado con los pasos que faltan. Devuelve el motivo por el que no lo hizo (ya completo, ya hay un aviso activo) o None si lo publicó."""
+    resumen = onboarding_despacho.resumen(tenant_id)
+    if resumen["completo"]:
+        return "Este despacho ya ha completado la puesta en marcha."
+    titulo = "¿Te ayudamos con la puesta en marcha?"
+    if any(c["tenant_id"] == tenant_id and c["titulo"] == titulo and c["estado"] == "activo" for c in comunicados.listar()):
+        return "Ya hay un aviso de puesta en marcha activo para este despacho."
+    faltan = [p["etiqueta"].lower() for p in resumen["pasos"] if not p["hecho"]]
+    comunicados.crear(titulo, "Te faltan: " + "; ".join(faltan) + ". Escríbenos si necesitas ayuda.", "info", tenant_id)
+    auth.auditar("onboarding.avisar", f"tenant {tenant_id}: faltan {len(faltan)} paso(s)")
+    return None
+
+
+@bp.route("/journey/avisar-a-medias", methods=["POST"])
+@auth.login_required
+def avisar_a_medias():
+    """Un aviso de puesta en marcha a cada despacho que se ha quedado a medias (y aún no tiene uno activo)."""
+    avisados = sum(1 for f in metricas.journey()["filas"] if f["a_medias"] and _publicar_aviso_de_puesta_en_marcha(f["id"]) is None)
+    flash(f"Avisos publicados: {avisados}." if avisados else "No hay ningún despacho a medias sin aviso.", "ok")
+    return redirect(url_for("rutas.journey", solo="a_medias"))
 
 
 @bp.route("/tenants/<int:tenant_id>/renombrar", methods=["POST"])
@@ -745,17 +772,10 @@ def actividad():
 def avisar_puesta_en_marcha(tenant_id: int):
     """Publica un comunicado para este despacho con los pasos de puesta en marcha que le faltan."""
     _tenant_o_404(tenant_id)
-    resumen = onboarding_despacho.resumen(tenant_id)
-    if resumen["completo"]:
-        flash("Este despacho ya ha completado la puesta en marcha.", "error")
+    motivo = _publicar_aviso_de_puesta_en_marcha(tenant_id)
+    if motivo:
+        flash(motivo, "error")
         return _volver_a_tenant(tenant_id)
-    titulo = "¿Te ayudamos con la puesta en marcha?"
-    if any(c["tenant_id"] == tenant_id and c["titulo"] == titulo and c["estado"] == "activo" for c in comunicados.listar()):
-        flash("Ya hay un aviso de puesta en marcha activo para este despacho.", "error")
-        return _volver_a_tenant(tenant_id)
-    faltan = [p["etiqueta"].lower() for p in resumen["pasos"] if not p["hecho"]]
-    comunicados.crear(titulo, "Te faltan: " + "; ".join(faltan) + ". Escríbenos si necesitas ayuda.", "info", tenant_id)
-    auth.auditar("onboarding.avisar", f"tenant {tenant_id}: faltan {len(faltan)} paso(s)")
     flash("Aviso publicado: el despacho lo verá como banner en la plataforma.", "ok")
     return _volver_a_tenant(tenant_id)
 

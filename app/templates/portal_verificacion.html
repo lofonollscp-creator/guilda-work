@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Portal de cliente') }} — Guilda Work</title>
+  <meta property="og:title" content="{{ _('Portal de cliente') }} — Guilda Work">
+  <meta property="og:description" content="Gestión diaria, correo, tareas y calendario fiscal para tu gestoría, en un mismo sitio.">
+  <meta property="og:image" content="{{ url_for('static', filename='og-image.png', _external=True) }}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="{{ url_for('static', filename='og-image.png', _external=True) }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('Verificación en dos pasos') }}</h1>
+      {% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+      <p class="auth-alterna">{{ _('Escribe el código de 6 cifras de tu aplicación de autenticación. Si no tienes el móvil a mano, usa uno de tus códigos de recuperación.') }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.verificacion') }}">
+        <div class="correo-form-campo">
+          <label for="portal-codigo">{{ _('Código') }}</label>
+          <input type="text" id="portal-codigo" name="codigo" required autofocus autocomplete="one-time-code" inputmode="numeric" maxlength="12">
+        </div>
+        <button type="submit" class="btn btn-primary auth-submit">{{ _('Entrar') }}</button>
+      </form>
+      <p class="auth-alterna"><a href="{{ url_for('portal_cliente.entrar') }}">{{ _('Volver') }}</a></p>
+    </div>
+  </main>
+</body>
+</html>

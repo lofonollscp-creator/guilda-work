@@ -22,7 +22,18 @@
 <section class="tarjeta"><h2>{{ grupo }}</h2>
   <ul class="lista-salud">
     {% for i in items %}
-    <li><span class="punto punto-{{ i.estado }}" role="img" aria-label="{{ i.estado }}"></span><div><strong>{{ i.titulo }}</strong><div class="muted">{{ i.detalle }}</div></div></li>
+    <li><span class="punto punto-{{ i.estado }}" role="img" aria-label="{{ i.estado }}"></span><div><strong>{{ i.titulo }}</strong><div class="muted">{{ i.detalle }}</div>
+      {% if i.silencio %}<div class="muted"><span class="insignia">SILENCIADO</span> hasta {{ i.silencio.hasta|replace('T', ' ') }}: {{ i.silencio.motivo }} ({{ i.silencio.por }})
+        <form method="post" action="{{ url_for('rutas.salud_quitar_silencio') }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="clave" value="{{ i.clave }}"><button type="submit" class="boton">Quitar silencio</button></form></div>{% endif %}
+      {% if i.asignado_a %}<div class="muted">Se ocupa: <strong>{{ i.asignado_a }}</strong></div>{% endif %}
+      {% if i.estado in ('rojo', 'ambar') %}<details class="acciones-punto"><summary>Acusar o asignar</summary>
+        <form method="post" action="{{ url_for('rutas.salud_silenciar') }}" class="herramientas"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="clave" value="{{ i.clave }}">
+          <input type="text" name="motivo" placeholder="Motivo (ya lo sabemos, se arregla el jueves…)" minlength="5" maxlength="200" required aria-label="Motivo del silencio de {{ i.titulo }}">
+          <select name="dias" aria-label="Días de silencio"><option value="1">1 día</option><option value="3">3 días</option><option value="7">7 días</option><option value="30">30 días</option></select>
+          <button type="submit" class="boton">Silenciar el correo</button></form>
+        <form method="post" action="{{ url_for('rutas.salud_asignar') }}" class="herramientas"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="clave" value="{{ i.clave }}">
+          <input type="text" name="asignado_a" value="{{ i.asignado_a or '' }}" maxlength="80" placeholder="Quién se ocupa" aria-label="Quién se ocupa de {{ i.titulo }}"><button type="submit" class="boton">Asignar</button></form>
+      </details>{% endif %}</div></li>
     {% endfor %}
   </ul></section>
 {% endfor %}

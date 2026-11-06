@@ -23,7 +23,7 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_metricas, portal_personas, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_lectura_previa, portal_metricas, portal_personas, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -294,6 +294,7 @@ def recordatorios():
         vista_previa=_vista_previa_recordatorio(config), smtp_configurado=notificaciones_email.configurado(),
         max_antes=db.MAX_AVISOS_ANTES, max_despues=db.MAX_AVISOS_DESPUES, correo_facturas=portal_subida_rapida.direccion_base(g.tenant_id), respuestas=portal_respuestas.listar(g.tenant_id),
         error_correo=(request.args.get("error_correo") or "")[:200] or None, error_respuesta=(request.args.get("error_respuesta") or "")[:200] or None,
+        lectura_previa=portal_lectura_previa.activa(g.tenant_id), guardado_lectura=request.args.get("guardado_lectura"),
         guardado_correo=request.args.get("guardado_correo"), guardado_respuesta=request.args.get("guardado_respuesta"), max_respuestas=portal_respuestas.MAX_RESPUESTAS,
     )
 
@@ -309,6 +310,16 @@ def guardar_correo_facturas():
     except ValueError as e:
         return redirect(url_for("fiscal.recordatorios", error_correo=_(str(e))[:200]) + "#correo-facturas")
     return redirect(url_for("fiscal.recordatorios", guardado_correo=1) + "#correo-facturas")
+
+
+@fiscal_bp.route("/recordatorios/lectura-previa", methods=["POST"])
+@login_required
+def guardar_lectura_previa():
+    """Encender o apagar que el cliente vea, antes de enviar una factura, lo que la IA lee de ella."""
+    if g.tenant_id is None:
+        abort(404)
+    portal_lectura_previa.fijar(g.tenant_id, request.form.get("activa") == "1")
+    return redirect(url_for("fiscal.recordatorios", guardado_lectura=1) + "#lectura-previa")
 
 
 @fiscal_bp.route("/respuestas-rapidas", methods=["POST"])

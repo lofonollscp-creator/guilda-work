@@ -83,6 +83,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "clientes_fiscales", "portal_bienvenida_en", "TEXT")
     db._asegurar_columna(conn, "clientes_fiscales_accesos", "email", "TEXT")
     db._asegurar_columna(conn, "portal_recordatorios_config", "correo_facturas", "TEXT")
+    db._asegurar_columna(conn, "portal_recordatorios_config", "lectura_previa", "INTEGER NOT NULL DEFAULT 0")
 
 
 def limpio(email: str | None) -> str:
@@ -201,6 +202,8 @@ def quitar(cliente, contacto_id: int) -> str:
         conn.execute("UPDATE portal_contactos SET baja_en = ? WHERE id = ?", (_ahora(), contacto_id))
         conn.execute("DELETE FROM portal_suscripciones_push WHERE cliente_fiscal_id = ? AND email = ?", (cliente["id"], f["email"]))
         conn.commit()
+        from . import portal_seguridad
+        portal_seguridad.quitar_a(cliente, f["email"])
         return f["email"]
     finally:
         conn.close()

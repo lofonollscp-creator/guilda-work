@@ -9,6 +9,12 @@
     <div class="barra-progreso"><span style="width: {{ (e.n * 100 // j.n) if j.n else 0 }}%"></span></div></div>
   {% endfor %}
 </div>
+<div class="herramientas">
+  <a class="boton {{ 'boton-primario' if not solo }}" href="{{ url_for('rutas.journey') }}">Todos</a>
+  <a class="boton {{ 'boton-primario' if solo == 'a_medias' }}" href="{{ url_for('rutas.journey', solo='a_medias') }}">A medias ({{ j.a_medias }})</a>
+  <small class="muted">«A medias»: despacho activo con la puesta en marcha sin acabar pasados {{ dias_a_medias }} días desde el alta.</small>
+  {% if j.a_medias %}<form method="post" action="{{ url_for('rutas.avisar_a_medias') }}" class="en-linea"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">Avisar a todos los que están a medias</button></form>{% endif %}
+</div>
 <div class="tabla-caja">
   <table class="tabla">
     <thead><tr><th>Tenant</th>{% for k, n in etapas %}<th>{{ n }}</th>{% endfor %}<th>Puesta en marcha</th><th>Siguiente paso</th><th>Última actividad</th></tr></thead>
@@ -16,7 +22,7 @@
       {% for f in j.filas %}
       <tr><td><a href="{{ url_for('rutas.tenant', tenant_id=f.id) }}"><strong>{{ f.nombre }}</strong></a>{% if not f.activo %} <span class="insignia insignia-riesgo">SUSPENDIDO</span>{% endif %}</td>
         {% for k, n in etapas %}<td>{% if f.logros[k] %}<span class="ok">✓</span>{% else %}<span class="muted">—</span>{% endif %}</td>{% endfor %}
-        <td>{{ f.puesta.hechos }}/{{ f.puesta.total }} <small class="muted">{{ f.puesta.siguiente or 'Completa' }}</small></td>
+        <td>{{ f.puesta.hechos }}/{{ f.puesta.total }} <small class="muted">{{ f.puesta.siguiente or 'Completa' }}</small>{% if f.a_medias %} <span class="insignia insignia-riesgo">A MEDIAS · {{ f.dias_alta }} d</span>{% endif %}</td>
         <td>{{ f.siguiente or 'Completo' }}</td><td>{{ f.ultima|hace }}</td></tr>
       {% else %}<tr><td colspan="10" class="vacio">Todavía no hay tenants.</td></tr>{% endfor %}
     </tbody>

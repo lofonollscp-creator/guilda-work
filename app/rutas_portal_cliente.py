@@ -18,8 +18,9 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_personas, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_lectura_previa, portal_personas, portal_seguridad, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
+from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
 portal_bp = Blueprint("portal_cliente", __name__, url_prefix="/portal")
@@ -30,14 +31,15 @@ MAX_ARCHIVOS_POR_SUBIDA = 10
 
 DIAS_SESION_RECORDADA = 30
 # Con el perfil «consulta» solo se mira: estas son las únicas acciones que se permiten (sus propias preferencias y salir).
-_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista"}
+_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cerrar_sesion_remota", "portal_cliente.cerrar_otras_sesiones", "portal_cliente.segundo_factor_iniciar", "portal_cliente.segundo_factor_confirmar", "portal_cliente.segundo_factor_quitar", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista"}
 # Lo que solo hace el perfil «completo»: decidir en nombre del cliente y gestionar a quién más se deja entrar.
 _SOLO_PERFIL_COMPLETO = {"portal_cliente.conformidad", "portal_cliente.pagar_vencimiento", "portal_cliente.firma_vencimiento", "portal_cliente.anadir_contacto", "portal_cliente.cambiar_perfil_contacto", "portal_cliente.quitar_contacto",
                          "portal_cliente.renovar_enlace_subida"}
 
 
-def _cerrar_sesion_del_portal() -> None:
-    for clave in ("cliente_fiscal_id", "portal_email", "portal_hasta"):
+def _cerrar_sesion_del_portal(tenant_id: int | None = None) -> None:
+    portal_seguridad.cerrar_esta(tenant_id if tenant_id is not None else g.get("portal_tenant_id"), session.get("portal_sid"))
+    for clave in ("cliente_fiscal_id", "portal_email", "portal_hasta", "portal_sid"):
         session.pop(clave, None)
 
 
@@ -52,11 +54,14 @@ def _resolver_cliente_actual():
         cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
         rol = portal_personas.rol_de(cliente, g.portal_email) if cliente is not None else None
         caducada = bool(session.get("portal_hasta")) and session["portal_hasta"] < datetime.now().isoformat(timespec="seconds")
-        if rol is None or caducada:
-            _cerrar_sesion_del_portal()                          # la ficha ya no existe, la persona perdió el acceso o la sesión recordada caducó
+        valida = portal_seguridad.sesion_valida(cliente["tenant_id"], session.get("portal_sid")) if rol is not None and not caducada else None
+        if rol is None or caducada or valida is False:
+            _cerrar_sesion_del_portal(cliente["tenant_id"] if cliente is not None else None)                          # la ficha ya no existe, la persona perdió el acceso, la sesión recordada caducó o la cerraron desde otro dispositivo
             g.cliente_fiscal_id = None
         else:
             g.portal_rol, g.portal_tenant_id = rol, cliente["tenant_id"]
+            if valida is None:                                   # una sesión de antes de existir el registro: se anota ahora, sin avisar de nada
+                session["portal_sid"] = portal_seguridad.abrir_sesion(cliente, g.portal_email or cliente["email"], request.headers.get("User-Agent"), request.remote_addr)[0]
     if g.vista_previa and request.method not in ("GET", "HEAD", "OPTIONS") and request.endpoint != "portal_cliente.salir":
         abort(403)
     if g.portal_rol == "consulta" and request.method not in ("GET", "HEAD", "OPTIONS") and request.endpoint not in _ACCIONES_DE_CONSULTA:
@@ -196,17 +201,57 @@ def entrar_con_token(token: str):
     if cliente is None or cliente_fiscal_id not in suyas:                  # le quitaron el acceso entre pedir el enlace y abrirlo
         return render_template("portal_entrar.html", enviado=False, enlace_invalido=True)
     pedida = request.args.get("c", type=int)
-    session["cliente_fiscal_id"] = pedida if pedida in suyas else cliente_fiscal_id
+    elegida = pedida if pedida in suyas else cliente_fiscal_id
+    entrada = db.obtener_cliente_fiscal_por_id(elegida)
+    destino = destino_seguro(request.args.get("siguiente"))
+    if portal_seguridad.activo(entrada, email):                            # con segundo factor, la entrada no se completa hasta dar el código
+        session["portal_2fa"] = {"c": elegida, "email": email, "r": request.args.get("r") == "1", "siguiente": destino, "hasta": (datetime.now() + timedelta(minutes=10)).isoformat(timespec="seconds")}
+        return redirect(url_for("portal_cliente.verificacion"))
+    return _completar_entrada(elegida, email, request.args.get("r") == "1", destino)
+
+
+def _completar_entrada(cliente_id: int, email: str, recordar: bool, destino: str | None):
+    """Abre la sesión del portal (cookie + registro), avisa si es un dispositivo nuevo y lleva a donde pidió."""
+    entrada = db.obtener_cliente_fiscal_por_id(cliente_id)
+    session.pop("portal_2fa", None)
+    session["cliente_fiscal_id"] = cliente_id
     session["portal_email"] = email
-    if request.args.get("r") == "1":                                       # «mantener la sesión en este dispositivo»
+    if recordar:                                                           # «mantener la sesión en este dispositivo»
         session.permanent = True
         session["portal_hasta"] = (datetime.now() + timedelta(days=DIAS_SESION_RECORDADA)).isoformat(timespec="seconds")
     else:
         session.pop("portal_hasta", None)
-    entrada = db.obtener_cliente_fiscal_por_id(session["cliente_fiscal_id"])
+    session["portal_sid"], nuevo = portal_seguridad.abrir_sesion(entrada, email, request.headers.get("User-Agent"), request.remote_addr)
     portal_personas.registrar_acceso(entrada, email)
-    auditoria.registrar(entrada["tenant_id"], None, "portal.entrada", "cliente_fiscal", entrada["id"], {"quien": email, "recordada": request.args.get("r") == "1"})
-    return redirect(destino_seguro(request.args.get("siguiente")) or url_for("portal_cliente.dashboard"))
+    auditoria.registrar(entrada["tenant_id"], None, "portal.entrada", "cliente_fiscal", entrada["id"], {"quien": email, "recordada": recordar, "dispositivo": portal_seguridad.dispositivo_de(request.headers.get("User-Agent")), "nuevo": nuevo})
+    if nuevo:
+        try:
+            notificaciones_email.enviar_aviso_dispositivo_nuevo(email, portal_seguridad.dispositivo_de(request.headers.get("User-Agent")), datetime.now().strftime("%d/%m/%Y %H:%M"),
+                                                                url_for("portal_cliente.cuenta", _external=True) + "#seguridad", tenant_id=entrada["tenant_id"])
+        except ErrorNotificacionesEmail:
+            pass
+    return redirect(destino or url_for("portal_cliente.dashboard"))
+
+
+@portal_bp.route("/verificacion", methods=["GET", "POST"])
+@limiter.limit("10/hour", methods=["POST"])
+def verificacion():
+    """El segundo paso de la entrada para quien tiene activado el segundo factor: el código de su aplicación (o uno de recuperación)."""
+    pendiente = session.get("portal_2fa")
+    if not pendiente or pendiente.get("hasta", "") < datetime.now().isoformat(timespec="seconds"):
+        session.pop("portal_2fa", None)
+        return redirect(url_for("portal_cliente.entrar"))
+    cliente = db.obtener_cliente_fiscal_por_id(pendiente["c"])
+    if cliente is None or portal_personas.rol_de(cliente, pendiente["email"]) is None:
+        session.pop("portal_2fa", None)
+        return redirect(url_for("portal_cliente.entrar"))
+    error = None
+    if request.method == "POST":
+        if portal_seguridad.verificar(cliente, pendiente["email"], request.form.get("codigo", "")):
+            return _completar_entrada(pendiente["c"], pendiente["email"], pendiente["r"], pendiente.get("siguiente"))
+        error = _("El código no es correcto.")
+        auditoria.registrar(cliente["tenant_id"], None, "portal.segundo_factor_fallido", "cliente_fiscal", cliente["id"], {"quien": pendiente["email"]})
+    return render_template("portal_verificacion.html", error=error), (401 if error else 200)
 
 
 @portal_bp.route("/salir", methods=["POST"])
@@ -453,7 +498,7 @@ def facturas():
         except ValueError as e:
             error = str(e)
     error = error or (request.args.get("error") or "")[:200] or None
-    return render_template("portal_facturas.html", cliente=cliente, tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
+    return render_template("portal_facturas.html", cliente=cliente, lectura_previa=g.portal_rol != "consulta" and not g.get("vista_previa") and portal_lectura_previa.disponible(cliente), tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
                            datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), con_informe=verticales.esta_activo(cliente["tenant_id"], "fiscal"), justificantes_pendientes=len(justificantes.pendientes_del_cliente(cliente["id"])), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
                            max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
 
@@ -494,6 +539,24 @@ def comprobar_archivos():
     cliente = _cliente_con_facturas()
     huellas = (request.get_json(silent=True) or {}).get("huellas")
     return {"repetidas": facturas_portal.archivos_ya_enviados(cliente["id"], huellas if isinstance(huellas, list) else [])}
+
+
+@portal_bp.route("/facturas/leer-previa", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour")
+def leer_previa():
+    """Lo que la IA lee de la foto o el PDF que el cliente acaba de elegir, antes de enviarlo (solo si el despacho lo ha activado). No guarda nada."""
+    cliente = _cliente_con_facturas()
+    if g.get("vista_previa") or g.portal_rol == "consulta" or not portal_lectura_previa.disponible(cliente):
+        return {"disponible": False}, 404
+    archivo = request.files.get("archivo")
+    if archivo is None:
+        return {"error": _("Falta el archivo.")}, 400
+    datos = archivo.read(portal_lectura_previa.MAX_BYTES + 1)
+    try:
+        return {"disponible": True, "lectura": portal_lectura_previa.leer(cliente, datos, (archivo.mimetype or "").lower())}
+    except ValueError as e:
+        return {"disponible": True, "error": _(str(e))}, 422
 
 
 @portal_bp.route("/facturas/informe.pdf")
@@ -739,9 +802,75 @@ def cuenta():
     if portal_subida_rapida.activa_para(cliente) and g.portal_rol != "consulta" and not previa:
         enlace = portal_subida_rapida.url(cliente, _base_publica())
         subida = {"url": enlace, "qr": qr.svg(enlace, _("Código QR para subir facturas desde el móvil")), "correo": portal_subida_rapida.direccion_de(cliente)}
-    return render_template("portal_cuenta.html", cliente=cliente, yo=yo, avisos=portal_personas.avisos_de(cliente, yo), niveles=portal_personas.NIVELES_AVISO, personas=portal_personas.listar(cliente), roles=portal_personas.ROLES,
+    seguridad = None
+    if not previa:
+        sid = session.get("portal_sid")
+        seguridad = {"sesiones": portal_seguridad.listar(cliente, yo, sid), "segundo_factor": portal_seguridad.activo(cliente, yo), "codigos": portal_seguridad.codigos_restantes(cliente, yo)}
+        pendiente = portal_seguridad.secreto_pendiente(cliente, yo)
+        if pendiente and not seguridad["segundo_factor"]:
+            uri = portal_seguridad.uri_totp(yo, pendiente)
+            seguridad["alta"] = {"secreto": pendiente, "qr": qr.svg(uri, _("Código QR para añadir la cuenta a tu aplicación de autenticación"))}
+    return render_template("portal_cuenta.html", cliente=cliente, yo=yo, seguridad=seguridad, codigos_nuevos=session.pop("portal_codigos_nuevos", None), avisos=portal_personas.avisos_de(cliente, yo), niveles=portal_personas.NIVELES_AVISO, personas=portal_personas.listar(cliente), roles=portal_personas.ROLES,
                            puede_gestionar=g.portal_rol == "completo" and not previa, subida=subida, push_disponible=portal_push.disponible() and not previa, push_activo=portal_push.tiene(cliente, yo) if not previa else 0,
                            portal_seccion="cuenta", guardado=request.args.get("guardado"), error=(request.args.get("error") or "")[:200] or None, max_contactos=portal_personas.MAX_CONTACTOS)
+
+
+def _yo(cliente) -> str:
+    return g.get("portal_email") or portal_personas.limpio(cliente["email"])
+
+
+@portal_bp.route("/sesiones/<int:sesion_id>/cerrar", methods=["POST"])
+@cliente_login_required
+def cerrar_sesion_remota(sesion_id: int):
+    cliente = _cliente_actual_o_salir()
+    if portal_seguridad.cerrar(cliente, _yo(cliente), sesion_id):
+        auditoria.registrar(cliente["tenant_id"], None, "portal.sesion_cerrada", "cliente_fiscal", cliente["id"], {"quien": _yo(cliente)})
+    return redirect(url_for("portal_cliente.cuenta", guardado="sesion") + "#seguridad")
+
+
+@portal_bp.route("/sesiones/cerrar-otras", methods=["POST"])
+@cliente_login_required
+def cerrar_otras_sesiones():
+    cliente = _cliente_actual_o_salir()
+    n = portal_seguridad.cerrar_otras(cliente, _yo(cliente), session.get("portal_sid"))
+    auditoria.registrar(cliente["tenant_id"], None, "portal.sesiones_cerradas", "cliente_fiscal", cliente["id"], {"quien": _yo(cliente), "cuantas": n})
+    return redirect(url_for("portal_cliente.cuenta", guardado="sesiones") + "#seguridad")
+
+
+@portal_bp.route("/segundo-factor/iniciar", methods=["POST"])
+@cliente_login_required
+def segundo_factor_iniciar():
+    cliente = _cliente_actual_o_salir()
+    try:
+        portal_seguridad.iniciar_alta(cliente, _yo(cliente))
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]) + "#seguridad")
+    return redirect(url_for("portal_cliente.cuenta") + "#seguridad")
+
+
+@portal_bp.route("/segundo-factor/confirmar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("20/hour", methods=["POST"])
+def segundo_factor_confirmar():
+    cliente = _cliente_actual_o_salir()
+    try:
+        codigos = portal_seguridad.confirmar_alta(cliente, _yo(cliente), request.form.get("codigo", ""))
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]) + "#seguridad")
+    auditoria.registrar(cliente["tenant_id"], None, "portal.segundo_factor_activado", "cliente_fiscal", cliente["id"], {"quien": _yo(cliente)})
+    session["portal_codigos_nuevos"] = codigos
+    return redirect(url_for("portal_cliente.cuenta", guardado="segundo-factor") + "#seguridad")
+
+
+@portal_bp.route("/segundo-factor/quitar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("20/hour", methods=["POST"])
+def segundo_factor_quitar():
+    cliente = _cliente_actual_o_salir()
+    if not portal_seguridad.desactivar(cliente, _yo(cliente), request.form.get("codigo", "")):
+        return redirect(url_for("portal_cliente.cuenta", error=_("El código no es correcto.")) + "#seguridad")
+    auditoria.registrar(cliente["tenant_id"], None, "portal.segundo_factor_quitado", "cliente_fiscal", cliente["id"], {"quien": _yo(cliente)})
+    return redirect(url_for("portal_cliente.cuenta", guardado="segundo-factor-quitado") + "#seguridad")
 
 
 @portal_bp.route("/preferencias", methods=["POST"])

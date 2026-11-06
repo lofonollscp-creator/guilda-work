@@ -1,4 +1,4 @@
-// Avisos al elegir facturas en el portal: archivos que no valen, repetidos y fotos borrosas. Solo avisan, nunca bloquean el envío.
+// Al elegir facturas en el portal: recorta y aligera las fotos, avisa de archivos que no valen, repetidos y fotos borrosas y, si el despacho lo ha activado, enseña lo que lee la IA. Solo avisa, nunca bloquea el envío.
 (function () {
   var form = document.getElementById('form-subida');
   if (!form) return;
@@ -52,9 +52,85 @@
     });
   }
 
-  entrada.addEventListener('change', function () {
-    lista.textContent = '';
-    var archivos = Array.prototype.slice.call(entrada.files || []);
+
+  var originales = [];                       // los archivos tal como se eligieron, por si prefiere enviarlos sin tocar
+  var usarOriginales = document.getElementById('usar-originales');
+  var ANCHO_MAX = 2200;
+
+  function euros(t) { var n = parseFloat(t); return isNaN(n) ? t : n.toFixed(2).replace('.', ',') + ' €'; }
+  function mb(n) { return (n / 1048576).toFixed(1).replace('.', ','); }
+
+  // Recorta los márgenes (la mesa, la sombra) y reduce la foto: se busca el rectángulo que contiene todo lo que difiere del color de los bordes. Si no está claro, se deja como está.
+  function optimizar(archivo) {
+    return new Promise(function (resolver) {
+      if (archivo.type.indexOf('image/') !== 0 || archivo.type === 'image/gif') return resolver(null);
+      var url = URL.createObjectURL(archivo), img = new Image();
+      img.onload = function () {
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, ANCHO_MAX / Math.max(w, h));
+          var pw = Math.max(1, Math.round(w * k)), ph = Math.max(1, Math.round(h * k));
+          var c = document.createElement('canvas'); c.width = pw; c.height = ph;
+          var ctx = c.getContext('2d', { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0, pw, ph);
+          var d = ctx.getImageData(0, 0, pw, ph).data;
+          var paso = Math.max(1, Math.floor(Math.max(pw, ph) / 400)), bordes = [0, 0, 0], nb = 0, x, y;
+          function px(xx, yy) { var i = (yy * pw + xx) * 4; return [d[i], d[i + 1], d[i + 2]]; }
+          for (x = 0; x < pw; x += paso) for (var e = 0; e < 3; e++) { var a = px(x, e), b = px(x, ph - 1 - e); for (var q = 0; q < 3; q++) bordes[q] += a[q] + b[q]; nb += 2; }
+          for (y = 0; y < ph; y += paso) for (var f = 0; f < 3; f++) { var a2 = px(f, y), b2 = px(pw - 1 - f, y); for (var q2 = 0; q2 < 3; q2++) bordes[q2] += a2[q2] + b2[q2]; nb += 2; }
+          bordes = bordes.map(function (v) { return v / nb; });
+          var minx = pw, maxx = 0, miny = ph, maxy = 0, umbral = 48;
+          for (y = 0; y < ph; y += paso) for (x = 0; x < pw; x += paso) {
+            var p = px(x, y);
+            if (Math.abs(p[0] - bordes[0]) + Math.abs(p[1] - bordes[1]) + Math.abs(p[2] - bordes[2]) > umbral) { if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
+          }
+          var recortada = false, m = Math.round(Math.max(pw, ph) * 0.02);
+          if (maxx > minx && maxy > miny) {
+            var cx = Math.max(0, minx - m), cy = Math.max(0, miny - m), cw = Math.min(pw, maxx + m) - cx, ch = Math.min(ph, maxy + m) - cy, area = (cw * ch) / (pw * ph);
+            if (area < 0.9 && area > 0.3) {                 // recorta solo si quita bastante y deja una factura razonable
+              var c2 = document.createElement('canvas'); c2.width = cw; c2.height = ch;
+              c2.getContext('2d').drawImage(c, cx, cy, cw, ch, 0, 0, cw, ch);
+              c = c2; recortada = true;
+            }
+          }
+          var reducida = k < 1;
+          if (!recortada && !reducida) { URL.revokeObjectURL(url); return resolver(null); }
+          c.toBlob(function (blob) {
+            URL.revokeObjectURL(url);
+            if (!blob || blob.size >= archivo.size && !recortada) return resolver(null);
+            var nombre = archivo.name.replace(/\.[^.]+$/, '') + '.jpg';
+            resolver({ archivo: new File([blob], nombre, { type: 'image/jpeg', lastModified: Date.now() }), recortada: recortada, antes: archivo.size, despues: blob.size });
+          }, 'image/jpeg', 0.86);
+        } catch (er) { URL.revokeObjectURL(url); resolver(null); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolver(null); };
+      img.src = url;
+    });
+  }
+
+  function poner(archivos) {
+    try { var dt = new DataTransfer(); archivos.forEach(function (a) { dt.items.add(a); }); entrada.files = dt.files; return true; } catch (e) { return false; }
+  }
+
+  // Lo que lee la IA de cada archivo (solo si el despacho lo ha activado): se enseña para que la persona vea si la foto se lee bien.
+  function lecturaPrevia(archivo) {
+    var url = form.getAttribute('data-url-leer');
+    if (!url || archivo.size > MAX || TIPOS.indexOf(archivo.type) < 0) return Promise.resolve();
+    var li = document.createElement('li'); li.className = 'portal-lectura'; li.textContent = texto('leyendo', { nombre: archivo.name }); lista.appendChild(li);
+    var datos = new FormData(); datos.append('archivo', archivo);
+    return fetch(url, { method: 'POST', credentials: 'same-origin', body: datos }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); }).then(function (r) {
+      if (!r.ok || !r.j.lectura) { li.textContent = r.j.error ? texto('nolee', { nombre: archivo.name }) : ''; if (!li.textContent) li.remove(); return; }
+      var l = r.j.lectura, partes = [];
+      if (l.emisor || l.nif) partes.push((l.emisor || '') + (l.nif ? ' (' + l.nif + ')' : ''));
+      if (l.numero) partes.push(texto('numero', { v: l.numero }));
+      if (l.fecha) partes.push(l.fecha.split('-').reverse().join('/'));
+      if (l.total && l.total !== '0.00') partes.push(euros(l.total));
+      var dudas = (l.avisos || []).map(function (a) { return texto('falta-' + a, {}); }).filter(Boolean);
+      li.textContent = texto('lee', { nombre: archivo.name, datos: partes.join(' · ') || '—' }) + (dudas.length ? ' ' + dudas.join(' ') : '');
+      if (dudas.length) li.classList.add('portal-lectura-dudosa');
+    }).catch(function () { li.remove(); });
+  }
+
+  function revisar(archivos) {
     var vistos = {};
     var porHuella = {};
     var tareas = archivos.map(function (a) {
@@ -73,6 +149,30 @@
         .then(function (r) { return r.ok ? r.json() : { repetidas: {} }; })
         .then(function (r) { Object.keys(r.repetidas || {}).forEach(function (h) { avisar(texto('repetida', { nombre: porHuella[h] || '', fecha: r.repetidas[h] })); }); });
     }).catch(function () {});
+  }
+
+  function procesar() {
+    var quiere = !(usarOriginales && usarOriginales.checked);
+    return Promise.all(originales.map(function (a) { return quiere ? optimizar(a) : Promise.resolve(null); })).then(function (res) {
+      var finales = originales.map(function (a, i) { return res[i] ? res[i].archivo : a; });
+      var cambiado = res.some(Boolean);
+      if ((cambiado || !quiere) && !poner(finales)) finales = originales.slice();
+      res.forEach(function (r, i) { if (r) avisar(texto(r.recortada ? 'recortada' : 'reducida', { nombre: originales[i].name, antes: mb(r.antes), despues: mb(r.despues) })); });
+      if (usarOriginales && usarOriginales.parentNode) usarOriginales.parentNode.hidden = !cambiado && !usarOriginales.checked;
+      revisar(finales);
+      return finales.reduce(function (p, a) { return p.then(function () { return lecturaPrevia(a); }); }, Promise.resolve());
+    }).catch(function () {});
+  }
+
+  entrada.addEventListener('change', function () {
+    lista.textContent = '';
+    originales = Array.prototype.slice.call(entrada.files || []);
+    procesar();
+  });
+  if (usarOriginales) usarOriginales.addEventListener('change', function () {
+    if (!originales.length) return;
+    lista.textContent = '';
+    procesar();
   });
 
   var fecha = document.getElementById('fecha-factura'), aviso = document.getElementById('aviso-cierre');

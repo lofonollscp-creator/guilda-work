@@ -150,3 +150,37 @@ def test_backoffice_mantenimiento_y_ver_como(bo):
     acciones = bo.get("/actividad").get_data(as_text=True)
     assert "ver_como.emitir" in acciones and "mantenimiento.activar" in acciones
     assert "Ver como este usuario" in bo.get(f"/usuarios/{u}").get_data(as_text=True)
+
+
+def test_soporte_entra_y_el_despacho_lo_sabe_en_su_auditoria_y_por_correo(cliente, monkeypatch):
+    from app import auditoria, notificaciones_email
+    enviados = []
+    monkeypatch.setattr(notificaciones_email, "configurado", lambda: True)
+    monkeypatch.setattr(notificaciones_email, "_enviar", lambda dest, asunto, cuerpo, html=None: enviados.append((dest, asunto, cuerpo)))
+    t = db.crear_tenant("Despacho avisado")
+    direccion = db.crear_usuario_vinculado_a_kratos("direccion@ejemplo.com", "k-dir")
+    db.asignar_tenant(direccion, t)
+    conn = db.get_connection(); conn.execute("UPDATE usuarios SET supervisor_tenant = 1 WHERE id = ?", (direccion,)); conn.commit(); conn.close()
+    u = db.crear_usuario_vinculado_a_kratos("persona@ejemplo.com", "k-per")
+    db.asignar_tenant(u, t)
+    tok = ver_como.crear_enlace(u, "jorge", "Ticket 91: no le salen las facturas")
+    assert cliente.get(f"/soporte/ver-como/{tok}").status_code == 302
+    assert [d for d, a, c in enviados] == ["direccion@ejemplo.com"]
+    assert "persona@ejemplo.com" in enviados[0][2] and "Ticket 91" in enviados[0][2] and "solo lectura" in enviados[0][2]
+    eventos = [e for e in auditoria.listar(t) if e["accion"] == "soporte.ver_como"]
+    assert len(eventos) == 1 and eventos[0]["detalle"]["soporte"] == "jorge" and "Ticket 91" in eventos[0]["detalle"]["motivo"]
+
+
+def test_si_el_correo_falla_soporte_entra_igualmente(cliente, monkeypatch):
+    from app import notificaciones_email
+    def roto(*a, **k):
+        raise notificaciones_email.ErrorNotificacionesEmail("sin SMTP")
+    monkeypatch.setattr(notificaciones_email, "configurado", lambda: True)
+    monkeypatch.setattr(notificaciones_email, "_enviar", roto)
+    t = db.crear_tenant("Despacho sin correo")
+    direccion = db.crear_usuario_vinculado_a_kratos("dir2@ejemplo.com", "k-dir2")
+    db.asignar_tenant(direccion, t)
+    conn = db.get_connection(); conn.execute("UPDATE usuarios SET supervisor_tenant = 1 WHERE id = ?", (direccion,)); conn.commit(); conn.close()
+    u = db.crear_usuario_vinculado_a_kratos("persona2@ejemplo.com", "k-per2")
+    db.asignar_tenant(u, t)
+    assert cliente.get(f"/soporte/ver-como/{ver_como.crear_enlace(u, 'jorge', 'motivo válido')}").status_code == 302

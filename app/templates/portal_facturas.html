@@ -81,7 +81,14 @@
     <section class="dash-panel">
       <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
       <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>
-      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}"
+      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}"{% if lectura_previa %} data-url-leer="{{ url_for('portal_cliente.leer_previa') }}"{% endif %}
+            data-txt-recortada="{{ _('«%(nombre)s» se ha recortado y aligerado (de %(antes)s MB a %(despues)s MB).', nombre='%(nombre)s', antes='%(antes)s', despues='%(despues)s') }}"
+            data-txt-reducida="{{ _('«%(nombre)s» se ha aligerado (de %(antes)s MB a %(despues)s MB).', nombre='%(nombre)s', antes='%(antes)s', despues='%(despues)s') }}"
+            data-txt-leyendo="{{ _('Leyendo «%(nombre)s»…', nombre='%(nombre)s') }}"
+            data-txt-lee="{{ _('«%(nombre)s»: leemos %(datos)s.', nombre='%(nombre)s', datos='%(datos)s') }}"
+            data-txt-nolee="{{ _('«%(nombre)s»: no hemos podido leerla aquí. Puedes enviarla igualmente: tu gestoría la leerá.', nombre='%(nombre)s') }}"
+            data-txt-numero="{{ _('factura nº %(v)s', v='%(v)s') }}"
+            data-txt-falta-fecha="{{ _('No se ve bien la fecha.') }}" data-txt-falta-total="{{ _('No se ve bien el total.') }}" data-txt-falta-emisor="{{ _('No se ve quién la emite.') }}"
             data-txt-borrosa="{{ _('«%(nombre)s» parece borrosa: si puedes, hazla de nuevo con más luz y sin moverte.', nombre='%(nombre)s') }}"
             data-txt-repetida="{{ _('«%(nombre)s» ya la enviaste el %(fecha)s.', nombre='%(nombre)s', fecha='%(fecha)s') }}"
             data-txt-doble="{{ _('«%(nombre)s» está elegida dos veces.', nombre='%(nombre)s') }}"
@@ -93,6 +100,7 @@
           <option value="emitida">{{ _('Las he hecho yo a mis clientes (ventas)') }}</option>
         </select>
         <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" aria-label="{{ _('Fotos o PDF de las facturas') }}">
+        <label class="portal-recordar" hidden><input type="checkbox" id="usar-originales"> {{ _('Enviar las fotos tal como las hice, sin recortar ni aligerar') }}</label>
         <ul id="avisos-subida" class="portal-avisos" aria-live="polite"></ul>
         <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Subir facturas') }}</button></div>
       </form>

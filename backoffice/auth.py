@@ -70,7 +70,9 @@ CREATE TABLE IF NOT EXISTS auditoria (
     accion TEXT NOT NULL,
     detalle TEXT,
     ip TEXT,
-    creado_en TEXT NOT NULL
+    creado_en TEXT NOT NULL,
+    hash_previo TEXT,
+    hash TEXT
 );
 CREATE TABLE IF NOT EXISTS cobros (
     id INTEGER PRIMARY KEY,
@@ -162,6 +164,9 @@ def conectar():
     ):
         if columna not in existentes:
             conn.execute(f"ALTER TABLE admins ADD COLUMN {columna} {tipo}")
+    if "hash" not in {f[1] for f in conn.execute("PRAGMA table_info(auditoria)")}:       # cadena de integridad de la auditoría (auditar / verificar_cadena)
+        conn.execute("ALTER TABLE auditoria ADD COLUMN hash_previo TEXT")
+        conn.execute("ALTER TABLE auditoria ADD COLUMN hash TEXT")
     conn.commit()
     return conn
 
@@ -389,22 +394,51 @@ def obtener_admin(admin_id: int) -> sqlite3.Row | None:
         conn.close()
 
 
+def _hash_auditoria(previo: str | None, admin_usuario, accion, detalle, ip, creado_en) -> str:
+    return hashlib.sha256("|".join([previo or "", str(admin_usuario or ""), accion, str(detalle or ""), str(ip or ""), creado_en]).encode()).hexdigest()
+
+
 def auditar(accion: str, detalle: str | None = None) -> None:
-    """Registro de acciones del backoffice (quién, qué, desde qué IP). Nunca
-    rompe la acción que audita."""
+    """Registro de acciones del backoffice (quién, qué, desde qué IP). Cada apunte lleva el hash del anterior (cadena de integridad: `verificar_cadena`).
+    Nunca rompe la acción que audita."""
     try:
         conn = conectar()
         try:
             admin = g.get("admin")
+            from app import bd
+            if bd.MOTOR == "postgres":
+                conn.execute("SELECT pg_advisory_xact_lock(7101)")        # un apunte cada vez: la cadena no admite dos «últimos»
+            else:
+                conn.execute("BEGIN IMMEDIATE")
+            previo = (conn.execute("SELECT hash FROM auditoria WHERE hash IS NOT NULL ORDER BY id DESC LIMIT 1").fetchone() or {"hash": None})["hash"]
+            usuario, ip, cuando = (admin["usuario"] if admin else None), ip_cliente(), _ahora()
             conn.execute(
-                "INSERT INTO auditoria (admin_id, admin_usuario, accion, detalle, ip, creado_en) VALUES (?, ?, ?, ?, ?, ?)",
-                (admin["id"] if admin else None, admin["usuario"] if admin else None, accion, detalle, ip_cliente(), _ahora()),
+                "INSERT INTO auditoria (admin_id, admin_usuario, accion, detalle, ip, creado_en, hash_previo, hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (admin["id"] if admin else None, usuario, accion, detalle, ip, cuando, previo, _hash_auditoria(previo, usuario, accion, detalle, ip, cuando)),
             )
             conn.commit()
         finally:
             conn.close()
     except Exception:  # noqa: BLE001
         pass
+
+
+def verificar_cadena() -> dict:
+    """Recorre los apuntes con hash en orden y comprueba que cada uno encadena con el anterior y que su contenido no ha cambiado.
+    {ok, comprobados, sin_hash (anteriores a la cadena), rota_en (id del primer apunte que no cuadra, o None)}.
+    Detecta cambios y borrados en medio; un borrado de los últimos apuntes no se puede detectar desde aquí."""
+    conn = conectar()
+    try:
+        sin_hash = conn.execute("SELECT COUNT(*) AS n FROM auditoria WHERE hash IS NULL").fetchone()["n"]
+        previo, comprobados, rota = None, 0, None
+        for f in conn.execute("SELECT id, admin_usuario, accion, detalle, ip, creado_en, hash_previo, hash FROM auditoria WHERE hash IS NOT NULL ORDER BY id"):
+            if comprobados and f["hash_previo"] != previo or f["hash"] != _hash_auditoria(f["hash_previo"], f["admin_usuario"], f["accion"], f["detalle"], f["ip"], f["creado_en"]):
+                rota = f["id"]
+                break
+            previo, comprobados = f["hash"], comprobados + 1
+        return {"ok": rota is None, "comprobados": comprobados, "sin_hash": sin_hash, "rota_en": rota}
+    finally:
+        conn.close()
 
 
 def listar_auditoria(limite: int = 200) -> list[sqlite3.Row]:

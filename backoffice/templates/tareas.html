@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Tareas periódicas{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Tareas periódicas</h1><p class="muted">Lo que la plataforma hace sola (correo, recordatorios, vigilancia…): cuándo pasó por última vez y cómo acabó. Las que son seguras de repetir se pueden relanzar a mano; el resto las gobierna el planificador.</p></header>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Tarea</th><th>Estado</th><th>Última pasada correcta</th><th>Último error</th><th>Cada</th><th></th></tr></thead>
+  <tbody>
+  {% for t in tareas %}
+    <tr>
+      <td><strong>{{ t.etiqueta }}</strong><br><small class="mono muted">{{ t.nombre }}</small></td>
+      <td><span class="punto punto-{{ t.estado }}" role="img" aria-label="{{ t.estado }}"></span> <small class="muted">{{ t.detalle }}</small></td>
+      <td>{{ t.ultimo_ok|replace('T', ' ') if t.ultimo_ok else '—' }}</td>
+      <td>{{ t.ultimo_error|replace('T', ' ') if t.ultimo_error else '—' }}</td>
+      <td>{% if t.intervalo_segundos %}{% if t.intervalo_segundos >= 3600 %}{{ (t.intervalo_segundos / 3600)|round(1)|string|replace('.0', '') }} h{% elif t.intervalo_segundos >= 60 %}{{ (t.intervalo_segundos / 60)|round|int }} min{% else %}{{ t.intervalo_segundos }} s{% endif %}{% else %}—{% endif %}</td>
+      <td>{% if t.en_marcha %}<span class="insignia">EN CURSO</span>{% elif t.relanzable %}<form method="post" action="{{ url_for('rutas.tarea_relanzar', nombre=t.nombre) }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button type="submit" class="boton">Relanzar ahora</button></form>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

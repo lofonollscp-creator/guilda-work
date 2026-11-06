@@ -2334,6 +2334,10 @@ def init_db() -> None:
         almacen_objetos.crear_esquema(conn)     # registro de lo que vive en el almacén de objetos y no en la base (app/almacen_objetos.py)
         from . import portal_personas
         portal_personas.crear_esquema(conn)     # contactos con acceso al portal, avisos enviados, push de clientes y respuestas rápidas (app/portal_personas.py)
+        from . import portal_seguridad
+        portal_seguridad.crear_esquema(conn)    # sesiones del portal y segundo factor opcional de cada persona (app/portal_seguridad.py)
+        from . import salud_silencios
+        salud_silencios.crear_esquema(conn)     # acuse, silencio y responsable de los puntos del panel de salud (app/salud_silencios.py)
         from . import reglas_fiscales
         reglas_fiscales.crear_esquema(conn)     # catálogo global de reglas fiscales, sembrado con los valores del código (app/reglas_fiscales.py)
         from . import marca

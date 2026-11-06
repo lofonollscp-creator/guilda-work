@@ -383,7 +383,14 @@ def vigilar(ahora: datetime | None = None) -> list[str]:
     claves avisadas (vacío si no hay nada nuevo o no se pudo enviar)."""
     ahora = ahora or datetime.now()
     dia = ahora.strftime("%Y-%m-%d")
-    nuevos = [i for i in panel(ahora) if i["estado"] == ROJO and not db.alerta_salud_enviada(i["clave"], dia)]
+    from . import salud_silencios
+    items = panel(ahora)
+    try:
+        salud_silencios.levantar_los_resueltos({i["clave"] for i in items if i["estado"] == ROJO}, ahora)      # lo arreglado o caducado vuelve a avisar si falla otra vez
+        callados = salud_silencios.activos(ahora)
+    except Exception:  # noqa: BLE001 -- sin la tabla de silencios (base antigua) se avisa de todo, como antes
+        callados = set()
+    nuevos = [i for i in items if i["estado"] == ROJO and i["clave"] not in callados and not db.alerta_salud_enviada(i["clave"], dia)]
     if not nuevos:
         return []
     # El correo va siempre en español y sin contexto de petición (lo manda un hilo).

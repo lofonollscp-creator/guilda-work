@@ -21546,3 +21546,153 @@ msgstr "Aucune sauvegarde des documents n'a encore été exécutée."
 
 msgid "Última copia completa hace %(hace)s (%(n)s documentos nuevos)."
 msgstr "Dernière sauvegarde complète il y a %(hace)s (%(n)s nouveaux documents)."
+
+msgid "Escribe el código de 6 cifras de tu aplicación de autenticación. Si no tienes el móvil a mano, usa uno de tus códigos de recuperación."
+msgstr "Saisissez le code à 6 chiffres de votre application d'authentification. Si vous n'avez pas votre téléphone sous la main, utilisez l'un de vos codes de récupération."
+
+msgid "El código no es correcto."
+msgstr "Le code n'est pas correct."
+
+msgid "El segundo factor ya está activado."
+msgstr "La double vérification est déjà activée."
+
+msgid "No hay ningún alta en curso."
+msgstr "Aucune activation en cours."
+
+msgid "El código no es correcto. Comprueba la hora de tu móvil e inténtalo de nuevo."
+msgstr "Le code n'est pas correct. Vérifiez l'heure de votre téléphone et réessayez."
+
+msgid "Código QR para añadir la cuenta a tu aplicación de autenticación"
+msgstr "Code QR pour ajouter le compte à votre application d'authentification"
+
+msgid "Seguridad de tu cuenta"
+msgstr "Sécurité de votre compte"
+
+msgid "Guarda estos códigos de recuperación en un lugar seguro. Cada uno sirve una vez y no volverán a mostrarse."
+msgstr "Conservez ces codes de récupération en lieu sûr. Chacun ne sert qu'une fois et ils ne seront plus affichés."
+
+msgid "Sesiones abiertas"
+msgstr "Sessions ouvertes"
+
+msgid "Este dispositivo"
+msgstr "Cet appareil"
+
+msgid "Última actividad"
+msgstr "Dernière activité"
+
+msgid "No hay sesiones registradas."
+msgstr "Aucune session enregistrée."
+
+msgid "Cerrar todas las demás sesiones"
+msgstr "Fermer toutes les autres sessions"
+
+msgid "Si ves un dispositivo que no reconoces, ciérralo y avisa a tu gestoría. Te escribiremos siempre que alguien entre desde un dispositivo nuevo."
+msgstr "Si vous voyez un appareil que vous ne reconnaissez pas, fermez-le et prévenez votre cabinet. Nous vous écrirons chaque fois que quelqu'un se connecte depuis un nouvel appareil."
+
+msgid "Está activada: al entrar, además del enlace del correo, te pediremos un código de tu aplicación de autenticación."
+msgstr "Elle est activée : à la connexion, en plus du lien reçu par courriel, nous vous demanderons un code de votre application d'authentification."
+
+msgid "Códigos de recuperación sin usar: %(n)s."
+msgstr "Codes de récupération inutilisés : %(n)s."
+
+msgid "Código para desactivarla"
+msgstr "Code pour la désactiver"
+
+msgid "Escanea este código con una aplicación de autenticación (Google Authenticator, Microsoft Authenticator, Aegis…) y escribe el código de 6 cifras que te muestre."
+msgstr "Scannez ce code avec une application d'authentification (Google Authenticator, Microsoft Authenticator, Aegis…) et saisissez le code à 6 chiffres affiché."
+
+msgid "Si no puedes escanearlo, introduce esta clave a mano:"
+msgstr "Si vous ne pouvez pas le scanner, saisissez cette clé à la main :"
+
+msgid "Añade una capa más de seguridad: además del enlace del correo, te pediremos un código de una aplicación de autenticación de tu móvil."
+msgstr "Ajoutez une couche de sécurité : en plus du lien reçu par courriel, nous vous demanderons un code d'une application d'authentification sur votre téléphone."
+
+msgid "Activar la verificación en dos pasos"
+msgstr "Activer la vérification en deux étapes"
+
+msgid "Nuevo acceso a tu portal"
+msgstr "Nouvelle connexion à votre portail"
+
+msgid "Hemos detectado un acceso a tu portal de cliente desde un dispositivo que no conocíamos: %(dispositivo)s, el %(cuando)s."
+msgstr "Nous avons détecté une connexion à votre portail client depuis un appareil inconnu : %(dispositivo)s, le %(cuando)s."
+
+msgid "Si has sido tú, no tienes que hacer nada."
+msgstr "Si c'était vous, vous n'avez rien à faire."
+
+msgid "Ver mis sesiones"
+msgstr "Voir mes sessions"
+
+msgid "Si no has sido tú, entra en Mi cuenta, cierra las demás sesiones y avisa a tu gestoría."
+msgstr "Si ce n'était pas vous, allez dans Mon compte, fermez les autres sessions et prévenez votre cabinet."
+
+msgid "Un dispositivo nuevo ha entrado a tu portal"
+msgstr "Un nouvel appareil s'est connecté à votre portail"
+
+msgid "Lectura previa de facturas"
+msgstr "Lecture préalable des factures"
+
+msgid "Si la activas, al elegir una factura en el portal el cliente ve qué datos lee la IA (emisor, número, fecha y total) antes de enviarla, y se da cuenta de una foto cortada o ilegible. Se lee con el modelo y la clave de la persona que lleva al cliente y cuenta como una consulta de IA del despacho. La factura sale hacia ese modelo antes de que nadie del despacho la haya visto; no se guarda nada hasta que el cliente la envía."
+msgstr "Si vous l'activez, en choisissant une facture dans le portail le client voit quelles données lit l'IA (émetteur, numéro, date et total) avant de l'envoyer, et remarque une photo coupée ou illisible. La lecture se fait avec le modèle et la clé de la personne qui suit le client et compte comme une requête d'IA du cabinet. La facture part vers ce modèle avant que quiconque du cabinet l'ait vue ; rien n'est enregistré tant que le client ne l'envoie pas."
+
+msgid "Enseñar a los clientes lo que se lee de su factura antes de enviarla"
+msgstr "Montrer aux clients ce qui est lu sur leur facture avant l'envoi"
+
+msgid "Enviar las fotos tal como las hice, sin recortar ni aligerar"
+msgstr "Envoyer les photos telles que je les ai prises, sans recadrer ni alléger"
+
+msgid "«%(nombre)s» se ha recortado y aligerado (de %(antes)s MB a %(despues)s MB)."
+msgstr "« %(nombre)s » a été recadrée et allégée (de %(antes)s Mo à %(despues)s Mo)."
+
+msgid "«%(nombre)s» se ha aligerado (de %(antes)s MB a %(despues)s MB)."
+msgstr "« %(nombre)s » a été allégée (de %(antes)s Mo à %(despues)s Mo)."
+
+msgid "Leyendo «%(nombre)s»…"
+msgstr "Lecture de « %(nombre)s »…"
+
+msgid "«%(nombre)s»: leemos %(datos)s."
+msgstr "« %(nombre)s » : nous lisons %(datos)s."
+
+msgid "«%(nombre)s»: no hemos podido leerla aquí. Puedes enviarla igualmente: tu gestoría la leerá."
+msgstr "« %(nombre)s » : nous n'avons pas pu la lire ici. Vous pouvez l'envoyer quand même : votre cabinet la lira."
+
+msgid "factura nº %(v)s"
+msgstr "facture n° %(v)s"
+
+msgid "No se ve bien la fecha."
+msgstr "La date n'est pas lisible."
+
+msgid "No se ve bien el total."
+msgstr "Le total n'est pas lisible."
+
+msgid "No se ve quién la emite."
+msgstr "On ne voit pas qui l'émet."
+
+msgid "Falta el archivo."
+msgstr "Le fichier est manquant."
+
+msgid "La lectura previa no está disponible."
+msgstr "La lecture préalable n'est pas disponible."
+
+msgid "Ese archivo no se puede leer aquí."
+msgstr "Ce fichier ne peut pas être lu ici."
+
+msgid "La lectura previa no está disponible ahora mismo."
+msgstr "La lecture préalable n'est pas disponible pour le moment."
+
+msgid "No se ha podido leer esta factura. Puedes enviarla igualmente: tu gestoría la leerá."
+msgstr "Nous n'avons pas pu lire cette facture. Vous pouvez l'envoyer quand même : votre cabinet la lira."
+
+msgid "Soporte ha entrado en tu cuenta para mirar"
+msgstr "Le support a consulté votre compte"
+
+msgid "El equipo de soporte de Guilda Work ha entrado como %(usuario)s, en solo lectura, hasta las %(hasta)s."
+msgstr "L'équipe de support de Guilda Work s'est connectée en tant que %(usuario)s, en lecture seule, jusqu'à %(hasta)s."
+
+msgid "No ha podido cambiar nada. Queda anotado en la auditoría de tu despacho."
+msgstr "Il n'a rien pu modifier. C'est consigné dans le journal d'audit de votre cabinet."
+
+msgid "Si no esperabas este acceso, contesta a este correo."
+msgstr "Si vous n'attendiez pas cet accès, répondez à ce courriel."
+
+msgid "Soporte ha entrado en solo lectura"
+msgstr "Le support s'est connecté en lecture seule"

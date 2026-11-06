@@ -81,6 +81,51 @@
       {% endif %}
     </section>
 
+    {% if seguridad is not none %}
+    <section class="portal-cuenta-bloque" id="seguridad" aria-labelledby="cuenta-seguridad">
+      <h2 id="cuenta-seguridad">{{ _('Seguridad de tu cuenta') }}</h2>
+      {% if codigos_nuevos %}
+      <div class="portal-peticion" role="status">
+        <strong>{{ _('Guarda estos códigos de recuperación en un lugar seguro. Cada uno sirve una vez y no volverán a mostrarse.') }}</strong>
+        <ul class="portal-codigos">{% for c in codigos_nuevos %}<li><code>{{ c }}</code></li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+      <h3>{{ _('Sesiones abiertas') }}</h3>
+      <ul class="portal-personas">
+        {% for s in seguridad.sesiones %}
+        <li class="portal-persona">
+          <div class="portal-persona-datos"><strong>{{ s.dispositivo }}</strong>{% if s.actual %} <span class="pill">{{ _('Este dispositivo') }}</span>{% endif %}<span class="muted">{{ _('Última actividad') }}: {{ s.ultimo_uso_en|replace('T', ' ') }}{% if s.ip %} · {{ s.ip }}{% endif %}</span></div>
+          {% if not s.actual %}<form method="post" action="{{ url_for('portal_cliente.cerrar_sesion_remota', sesion_id=s.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Cerrar sesión') }}</button></form>{% endif %}
+        </li>
+        {% else %}<li class="muted">{{ _('No hay sesiones registradas.') }}</li>{% endfor %}
+      </ul>
+      {% if seguridad.sesiones|length > 1 %}
+      <form method="post" action="{{ url_for('portal_cliente.cerrar_otras_sesiones') }}"><button type="submit" class="btn btn-ghost">{{ _('Cerrar todas las demás sesiones') }}</button></form>
+      {% endif %}
+      <p class="muted">{{ _('Si ves un dispositivo que no reconoces, ciérralo y avisa a tu gestoría. Te escribiremos siempre que alguien entre desde un dispositivo nuevo.') }}</p>
+
+      <h3>{{ _('Verificación en dos pasos') }}</h3>
+      {% if seguridad.segundo_factor %}
+      <p>{{ _('Está activada: al entrar, además del enlace del correo, te pediremos un código de tu aplicación de autenticación.') }} <span class="muted">{{ _('Códigos de recuperación sin usar: %(n)s.', n=seguridad.codigos) }}</span></p>
+      <form method="post" action="{{ url_for('portal_cliente.segundo_factor_quitar') }}" class="portal-cuenta-form">
+        <div class="correo-form-campo"><label for="sf-quitar">{{ _('Código para desactivarla') }}</label><input type="text" id="sf-quitar" name="codigo" required autocomplete="one-time-code" inputmode="numeric" maxlength="12"></div>
+        <button type="submit" class="btn btn-ghost">{{ _('Desactivar') }}</button>
+      </form>
+      {% elif seguridad.alta %}
+      <p>{{ _('Escanea este código con una aplicación de autenticación (Google Authenticator, Microsoft Authenticator, Aegis…) y escribe el código de 6 cifras que te muestre.') }}</p>
+      <div class="portal-qr">{{ seguridad.alta.qr|safe }}</div>
+      <p class="muted">{{ _('Si no puedes escanearlo, introduce esta clave a mano:') }} <code class="portal-dir">{{ seguridad.alta.secreto }}</code></p>
+      <form method="post" action="{{ url_for('portal_cliente.segundo_factor_confirmar') }}" class="portal-cuenta-form">
+        <div class="correo-form-campo"><label for="sf-codigo">{{ _('Código') }}</label><input type="text" id="sf-codigo" name="codigo" required autocomplete="one-time-code" inputmode="numeric" maxlength="6"></div>
+        <button type="submit" class="btn btn-primary">{{ _('Activar') }}</button>
+      </form>
+      {% else %}
+      <p>{{ _('Añade una capa más de seguridad: además del enlace del correo, te pediremos un código de una aplicación de autenticación de tu móvil.') }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.segundo_factor_iniciar') }}"><button type="submit" class="btn btn-ghost">{{ _('Activar la verificación en dos pasos') }}</button></form>
+      {% endif %}
+    </section>
+    {% endif %}
+
     <section class="portal-cuenta-bloque" aria-labelledby="cuenta-app">
       <h2 id="cuenta-app">{{ _('Tenerlo siempre a mano') }}</h2>
       <p>{{ _('Puedes añadir el portal a la pantalla de inicio del móvil como si fuera una app. En el iPhone: Compartir y «Añadir a pantalla de inicio»; en Android: las opciones del navegador y «Instalar aplicación».') }}</p>

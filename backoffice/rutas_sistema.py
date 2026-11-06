@@ -10,11 +10,12 @@ import os
 from flask import Response, abort, flash, g, redirect, render_template, request, url_for
 
 from app import db as plataforma
+from app import salud_silencios, tareas_periodicas
 from app import cobro_contabilidad, comunicados, eventos, ia_consumo, mantenimiento, ver_como, herramientas, salud, uptime_kuma
 
 from app import almacen_objetos
 
-from . import aprovisionamiento, almacen, auth, cartera, cuotas, datos, dependencias, diagnostico, seguimiento
+from . import aprovisionamiento, almacen, auditoria_global, auth, cartera, cuotas, datos, dependencias, diagnostico, seguimiento
 from .rutas import _tenant_o_404, bp
 
 
@@ -209,12 +210,61 @@ def enviar_alertas():
 @bp.route("/salud")
 @auth.login_required
 def salud_vista():
-    items = salud.panel()
+    items = salud_silencios.anotar(salud.panel())
     grupos: dict[str, list] = {}
     for i in items:
         grupos.setdefault(i["grupo"], []).append(i)
     from app import notificaciones_email
     return render_template("salud.html", grupos=grupos, general=salud.peor_estado(items), correo=notificaciones_email.estado_configuracion())
+
+
+@bp.route("/tareas")
+@auth.login_required
+def tareas_vista():
+    return render_template("tareas.html", tareas=tareas_periodicas.listar())
+
+
+@bp.route("/tareas/<nombre>/relanzar", methods=["POST"])
+@auth.login_required
+def tarea_relanzar(nombre: str):
+    if tareas_periodicas.relanzar(nombre):
+        auth.auditar("tarea.relanzar", nombre)
+        flash("Pasada lanzada en segundo plano: en un momento verás aquí su resultado.", "ok")
+    else:
+        flash("Esa tarea no se puede relanzar a mano o ya hay una pasada en curso.", "error")
+    return redirect(url_for("rutas.tareas_vista"))
+
+
+@bp.route("/salud/silenciar", methods=["POST"])
+@auth.login_required
+def salud_silenciar():
+    clave = request.form.get("clave", "")[:120]
+    try:
+        hasta = salud_silencios.silenciar(clave, request.form.get("dias", type=int) or 0, request.form.get("motivo", ""), g.admin["usuario"])
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("salud.silenciar", f"{clave} hasta {hasta}: {request.form.get('motivo', '').strip()[:150]}")
+        flash("Silenciado: no se enviará correo por este punto hasta esa fecha, o antes si se arregla y vuelve a fallar.", "ok")
+    return redirect(url_for("rutas.salud_vista"))
+
+
+@bp.route("/salud/silencio/quitar", methods=["POST"])
+@auth.login_required
+def salud_quitar_silencio():
+    clave = request.form.get("clave", "")[:120]
+    salud_silencios.quitar_silencio(clave, g.admin["usuario"])
+    auth.auditar("salud.silencio_quitado", clave)
+    return redirect(url_for("rutas.salud_vista"))
+
+
+@bp.route("/salud/asignar", methods=["POST"])
+@auth.login_required
+def salud_asignar():
+    clave = request.form.get("clave", "")[:120]
+    salud_silencios.asignar(clave, request.form.get("asignado_a", ""), g.admin["usuario"])
+    auth.auditar("salud.asignar", f"{clave}: {request.form.get('asignado_a', '').strip()[:80] or 'nadie'}")
+    return redirect(url_for("rutas.salud_vista"))
 
 
 @bp.route("/salud/probar-correo", methods=["POST"])
@@ -277,6 +327,40 @@ def hacer_copia():
         auth.auditar("copia.crear")
         flash("Copia de seguridad creada y verificada.", "ok")
     return redirect(url_for("rutas.copias"))
+
+
+def _filtros_auditoria() -> dict:
+    return {"tenant_id": request.args.get("tenant_id", type=int), "accion": request.args.get("accion", ""), "actor": request.args.get("actor", ""),
+            "desde": request.args.get("desde", ""), "hasta": request.args.get("hasta", "")}
+
+
+@bp.route("/auditoria")
+@auth.login_required
+def auditoria_vista():
+    filtros = _filtros_auditoria()
+    antes = request.args.get("antes", type=int)
+    filas = auditoria_global.buscar(**filtros, antes_de_id=antes, limite=auditoria_global.LIMITE_PAGINA + 1)
+    hay_mas = len(filas) > auditoria_global.LIMITE_PAGINA
+    filas = filas[:auditoria_global.LIMITE_PAGINA]
+    return render_template("auditoria.html", filas=filas, filtros=filtros, filtros_url={k: v for k, v in filtros.items() if v}, tenants=plataforma.listar_tenants(), cadena=auth.verificar_cadena(), propias=auth.listar_auditoria(30),
+                           siguiente=filas[-1]["id"] if hay_mas else None)
+
+
+@bp.route("/auditoria.csv")
+@auth.login_required
+def auditoria_csv():
+    filas = auditoria_global.buscar(**_filtros_auditoria(), limite=auditoria_global.LIMITE_EXPORTACION)
+    auth.auditar("auditoria.exportar", f"{len(filas)} eventos de despachos")
+    return Response(auditoria_global.a_csv(filas), mimetype="text/csv", headers={"Content-Disposition": 'attachment; filename="auditoria-despachos.csv"', "X-Content-Type-Options": "nosniff"})
+
+
+@bp.route("/auditoria/backoffice.csv")
+@auth.login_required
+def auditoria_backoffice_csv():
+    filas = auditoria_global.acciones_del_backoffice()
+    auth.auditar("auditoria.exportar", f"{len(filas)} acciones del backoffice")
+    return Response(auditoria_global.a_csv(filas, ("id", "creado_en", "admin_usuario", "accion", "detalle", "ip", "hash_previo", "hash")), mimetype="text/csv",
+                    headers={"Content-Disposition": 'attachment; filename="auditoria-backoffice.csv"', "X-Content-Type-Options": "nosniff"})
 
 
 @bp.route("/cuotas")

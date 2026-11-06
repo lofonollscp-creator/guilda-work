@@ -514,6 +514,12 @@ CREATE POLICY aislamiento ON portal_recordatorios_config USING (tenant_id = null
 ALTER TABLE portal_respuestas_rapidas ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON portal_respuestas_rapidas;
 CREATE POLICY aislamiento ON portal_respuestas_rapidas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE portal_segundo_factor ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_segundo_factor;
+CREATE POLICY aislamiento ON portal_segundo_factor USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE portal_sesiones ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_sesiones;
+CREATE POLICY aislamiento ON portal_sesiones USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE portal_suscripciones_push ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON portal_suscripciones_push;
 CREATE POLICY aislamiento ON portal_suscripciones_push USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

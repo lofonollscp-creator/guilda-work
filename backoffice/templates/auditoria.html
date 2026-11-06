@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Auditoría{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Auditoría</h1><p class="muted">Lo que ha pasado en todos los despachos y lo que hemos hecho nosotros desde el backoffice. Solo lectura.</p></header>
+
+<section class="tarjeta">
+  <h2>Acciones del backoffice</h2>
+  {% if cadena.ok %}<p><span class="insignia insignia-ok">Cadena íntegra</span> {{ cadena.comprobados }} apuntes encadenados{% if cadena.sin_hash %} · {{ cadena.sin_hash }} anteriores a la cadena{% endif %}. Cada apunte lleva el hash del anterior: si alguien cambia o borra uno por en medio, se rompe.</p>
+  {% else %}<p><span class="insignia insignia-riesgo">Cadena rota</span> El apunte {{ cadena.rota_en }} no cuadra con el anterior o su contenido ha cambiado. Revísalo cuanto antes.</p>{% endif %}
+  <p><a class="boton" href="{{ url_for('rutas.auditoria_backoffice_csv') }}">{{ icono('download') }} Exportar a CSV</a></p>
+  <div class="tabla-caja"><table class="tabla">
+    <thead><tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Detalle</th><th>IP</th></tr></thead>
+    <tbody>{% for r in propias %}<tr><td>{{ r.creado_en|replace('T', ' ') }}</td><td>{{ r.admin_usuario or '—' }}</td><td class="mono">{{ r.accion }}</td><td>{{ r.detalle or '' }}</td><td class="mono">{{ r.ip or '' }}</td></tr>
+      {% else %}<tr><td colspan="5" class="vacio">Todavía no hay acciones.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="tarjeta">
+  <h2>Eventos de los despachos</h2>
+  <form method="get" action="{{ url_for('rutas.auditoria_vista') }}" class="herramientas">
+    <label>Despacho <select name="tenant_id"><option value="">Todos</option>{% for t in tenants %}<option value="{{ t.id }}" {{ 'selected' if filtros.tenant_id == t.id }}>{{ t.nombre }}</option>{% endfor %}</select></label>
+    <label>Acción <input type="text" name="accion" value="{{ filtros.accion }}" placeholder="portal.entrada"></label>
+    <label>Persona <input type="text" name="actor" value="{{ filtros.actor }}" placeholder="email"></label>
+    <label>Desde <input type="date" name="desde" value="{{ filtros.desde }}"></label>
+    <label>Hasta <input type="date" name="hasta" value="{{ filtros.hasta }}"></label>
+    <button type="submit" class="boton boton-primario">Buscar</button>
+    <a class="boton" href="{{ url_for('rutas.auditoria_csv', **filtros_url) }}">{{ icono('download') }} Exportar a CSV</a>
+  </form>
+  <div class="tabla-caja"><table class="tabla">
+    <thead><tr><th>Fecha</th><th>Despacho</th><th>Persona</th><th>Acción</th><th>Sobre</th><th>Detalle</th></tr></thead>
+    <tbody>{% for f in filas %}<tr><td>{{ f.creado_en|replace('T', ' ') }}</td><td>{{ f.despacho or '—' }}</td><td>{{ f.actor or '—' }}</td><td class="mono">{{ f.accion }}</td><td>{{ f.entidad }}{% if f.entidad_id %} #{{ f.entidad_id }}{% endif %}</td><td>{{ f.detalle or '' }}</td></tr>
+      {% else %}<tr><td colspan="6" class="vacio">Ningún evento con esos filtros.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% if siguiente %}<p><a class="boton" href="{{ url_for('rutas.auditoria_vista', antes=siguiente, **filtros_url) }}">Más antiguos</a></p>{% endif %}
+</section>
+{% endblock %}

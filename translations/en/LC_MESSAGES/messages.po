@@ -21461,3 +21461,153 @@ msgstr "No document backup has run yet."
 
 msgid "Última copia completa hace %(hace)s (%(n)s documentos nuevos)."
 msgstr "Last complete backup %(hace)s ago (%(n)s new documents)."
+
+msgid "Escribe el código de 6 cifras de tu aplicación de autenticación. Si no tienes el móvil a mano, usa uno de tus códigos de recuperación."
+msgstr "Enter the 6-digit code from your authenticator app. If you don't have your phone at hand, use one of your recovery codes."
+
+msgid "El código no es correcto."
+msgstr "The code is not correct."
+
+msgid "El segundo factor ya está activado."
+msgstr "Two-step verification is already on."
+
+msgid "No hay ningún alta en curso."
+msgstr "There is no setup in progress."
+
+msgid "El código no es correcto. Comprueba la hora de tu móvil e inténtalo de nuevo."
+msgstr "The code is not correct. Check your phone's clock and try again."
+
+msgid "Código QR para añadir la cuenta a tu aplicación de autenticación"
+msgstr "QR code to add the account to your authenticator app"
+
+msgid "Seguridad de tu cuenta"
+msgstr "Your account security"
+
+msgid "Guarda estos códigos de recuperación en un lugar seguro. Cada uno sirve una vez y no volverán a mostrarse."
+msgstr "Keep these recovery codes somewhere safe. Each works once and they will not be shown again."
+
+msgid "Sesiones abiertas"
+msgstr "Open sessions"
+
+msgid "Este dispositivo"
+msgstr "This device"
+
+msgid "Última actividad"
+msgstr "Last activity"
+
+msgid "No hay sesiones registradas."
+msgstr "No sessions recorded."
+
+msgid "Cerrar todas las demás sesiones"
+msgstr "Sign out of all other sessions"
+
+msgid "Si ves un dispositivo que no reconoces, ciérralo y avisa a tu gestoría. Te escribiremos siempre que alguien entre desde un dispositivo nuevo."
+msgstr "If you see a device you don't recognise, sign it out and tell your advisory firm. We will always email you when someone signs in from a new device."
+
+msgid "Está activada: al entrar, además del enlace del correo, te pediremos un código de tu aplicación de autenticación."
+msgstr "It is on: when you sign in, besides the email link, we will ask for a code from your authenticator app."
+
+msgid "Códigos de recuperación sin usar: %(n)s."
+msgstr "Unused recovery codes: %(n)s."
+
+msgid "Código para desactivarla"
+msgstr "Code to turn it off"
+
+msgid "Escanea este código con una aplicación de autenticación (Google Authenticator, Microsoft Authenticator, Aegis…) y escribe el código de 6 cifras que te muestre."
+msgstr "Scan this code with an authenticator app (Google Authenticator, Microsoft Authenticator, Aegis…) and enter the 6-digit code it shows."
+
+msgid "Si no puedes escanearlo, introduce esta clave a mano:"
+msgstr "If you can't scan it, enter this key by hand:"
+
+msgid "Añade una capa más de seguridad: además del enlace del correo, te pediremos un código de una aplicación de autenticación de tu móvil."
+msgstr "Add another layer of security: besides the email link, we will ask for a code from an authenticator app on your phone."
+
+msgid "Activar la verificación en dos pasos"
+msgstr "Turn on two-step verification"
+
+msgid "Nuevo acceso a tu portal"
+msgstr "New sign-in to your portal"
+
+msgid "Hemos detectado un acceso a tu portal de cliente desde un dispositivo que no conocíamos: %(dispositivo)s, el %(cuando)s."
+msgstr "We detected a sign-in to your client portal from a device we didn't know: %(dispositivo)s, on %(cuando)s."
+
+msgid "Si has sido tú, no tienes que hacer nada."
+msgstr "If it was you, you don't need to do anything."
+
+msgid "Ver mis sesiones"
+msgstr "View my sessions"
+
+msgid "Si no has sido tú, entra en Mi cuenta, cierra las demás sesiones y avisa a tu gestoría."
+msgstr "If it wasn't you, go to My account, sign out of the other sessions and tell your advisory firm."
+
+msgid "Un dispositivo nuevo ha entrado a tu portal"
+msgstr "A new device has signed in to your portal"
+
+msgid "Lectura previa de facturas"
+msgstr "Invoice preview reading"
+
+msgid "Si la activas, al elegir una factura en el portal el cliente ve qué datos lee la IA (emisor, número, fecha y total) antes de enviarla, y se da cuenta de una foto cortada o ilegible. Se lee con el modelo y la clave de la persona que lleva al cliente y cuenta como una consulta de IA del despacho. La factura sale hacia ese modelo antes de que nadie del despacho la haya visto; no se guarda nada hasta que el cliente la envía."
+msgstr "If you turn it on, when a client picks an invoice in the portal they see what data the AI reads from it (issuer, number, date and total) before sending it, and notice a cropped or unreadable photo. It is read with the model and key of the person who looks after the client and counts as one AI query for your firm. The invoice goes to that model before anyone at your firm has seen it; nothing is saved until the client sends it."
+
+msgid "Enseñar a los clientes lo que se lee de su factura antes de enviarla"
+msgstr "Show clients what is read from their invoice before sending it"
+
+msgid "Enviar las fotos tal como las hice, sin recortar ni aligerar"
+msgstr "Send the photos as I took them, without cropping or lightening"
+
+msgid "«%(nombre)s» se ha recortado y aligerado (de %(antes)s MB a %(despues)s MB)."
+msgstr "“%(nombre)s” has been cropped and lightened (from %(antes)s MB to %(despues)s MB)."
+
+msgid "«%(nombre)s» se ha aligerado (de %(antes)s MB a %(despues)s MB)."
+msgstr "“%(nombre)s” has been lightened (from %(antes)s MB to %(despues)s MB)."
+
+msgid "Leyendo «%(nombre)s»…"
+msgstr "Reading “%(nombre)s”…"
+
+msgid "«%(nombre)s»: leemos %(datos)s."
+msgstr "“%(nombre)s”: we read %(datos)s."
+
+msgid "«%(nombre)s»: no hemos podido leerla aquí. Puedes enviarla igualmente: tu gestoría la leerá."
+msgstr "“%(nombre)s”: we couldn't read it here. You can still send it: your advisory firm will read it."
+
+msgid "factura nº %(v)s"
+msgstr "invoice no. %(v)s"
+
+msgid "No se ve bien la fecha."
+msgstr "The date isn't clear."
+
+msgid "No se ve bien el total."
+msgstr "The total isn't clear."
+
+msgid "No se ve quién la emite."
+msgstr "The issuer isn't visible."
+
+msgid "Falta el archivo."
+msgstr "The file is missing."
+
+msgid "La lectura previa no está disponible."
+msgstr "Preview reading is not available."
+
+msgid "Ese archivo no se puede leer aquí."
+msgstr "That file can't be read here."
+
+msgid "La lectura previa no está disponible ahora mismo."
+msgstr "Preview reading is not available right now."
+
+msgid "No se ha podido leer esta factura. Puedes enviarla igualmente: tu gestoría la leerá."
+msgstr "We couldn't read this invoice. You can still send it: your advisory firm will read it."
+
+msgid "Soporte ha entrado en tu cuenta para mirar"
+msgstr "Support has looked into your account"
+
+msgid "El equipo de soporte de Guilda Work ha entrado como %(usuario)s, en solo lectura, hasta las %(hasta)s."
+msgstr "The Guilda Work support team signed in as %(usuario)s, read-only, until %(hasta)s."
+
+msgid "No ha podido cambiar nada. Queda anotado en la auditoría de tu despacho."
+msgstr "It could not change anything. It is recorded in your firm's audit log."
+
+msgid "Si no esperabas este acceso, contesta a este correo."
+msgstr "If you weren't expecting this access, reply to this email."
+
+msgid "Soporte ha entrado en solo lectura"
+msgstr "Support signed in read-only"
