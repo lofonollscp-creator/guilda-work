@@ -34,6 +34,7 @@
     <select id="cliente-destino" name="cliente_fiscal_id">{% for c in hilo_cliente.vinculados %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select>
     {% else %}<input type="hidden" name="cliente_fiscal_id" value="{{ hilo_cliente.vinculados[0].id }}">{% endif %}
     <label class="sr-only" for="cliente-respuesta">{{ _('Respuesta para el cliente') }}</label>
+    {% with cliente_fiscal_id=hilo_cliente.vinculados[0].id, destino='cliente-respuesta' %}{% include '_respuestas_rapidas.html' %}{% endwith %}
     <textarea id="cliente-respuesta" name="texto" rows="2" maxlength="1000" required placeholder="{{ _('Respuesta para el cliente (la verá en su portal y le llegará un correo)') }}"></textarea>
     <div class="comentario-acciones">{{ boton(_('Contestar al cliente'), 'secundario', tipo='submit') }}</div>
   </form>

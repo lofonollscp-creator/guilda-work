@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo_pagina %}{% endblock %} — Guilda Work</title>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="manifest" href="{{ url_for('portal_cliente.manifiesto') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+  <meta name="theme-color" content="#f5f6f8">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
 </head>
@@ -23,6 +26,17 @@
       </div>
     </header>
 
+    {% if portal_otros_clientes %}
+    <form method="post" action="{{ url_for('portal_cliente.cambiar_titular') }}" class="portal-cambiar-titular">
+      <label for="portal-cambiar-titular">{{ _('Estás viendo:') }}</label>
+      <select id="portal-cambiar-titular" name="cliente_id">
+        <option value="{{ portal_cliente.id }}" selected>{{ portal_cliente.nombre }}</option>
+        {% for c in portal_otros_clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-ghost">{{ _('Cambiar') }}</button>
+    </form>
+    {% endif %}
+
     <nav class="portal-nav" aria-label="{{ _('Secciones del portal') }}">
       <a href="{{ url_for('portal_cliente.dashboard') }}" {% if portal_seccion == 'inicio' %}aria-current="page"{% endif %}>{{ _('Inicio') }}</a>
       {% if portal_facturas %}
@@ -31,6 +45,8 @@
       <a href="{{ url_for('portal_cliente.impuestos') }}" {% if portal_seccion == 'impuestos' %}aria-current="page"{% endif %}>{{ _('Impuestos') }}</a>
       <a href="{{ url_for('portal_cliente.mensajes') }}" {% if portal_seccion == 'mensajes' %}aria-current="page"{% endif %}>{{ _('Mensajes') }}{% if portal_insignia_mensajes %} <span class="portal-nav-insignia" title="{{ _('Mensajes sin leer') }}">{{ portal_insignia_mensajes }}</span>{% endif %}</a>
       <a href="{{ url_for('portal_cliente.carpeta') }}" {% if portal_seccion == 'carpeta' %}aria-current="page"{% endif %}>{{ _('Carpeta') }}</a>
+      <a href="{{ url_for('portal_cliente.buscar') }}" {% if portal_seccion == 'buscar' %}aria-current="page"{% endif %} aria-label="{{ _('Buscar en el portal') }}">{{ _('Buscar') }}</a>
+      <a href="{{ url_for('portal_cliente.cuenta') }}" {% if portal_seccion == 'cuenta' %}aria-current="page"{% endif %}>{{ _('Mi cuenta') }}</a>
       {% if not vista_previa %}<form method="post" action="{{ url_for('portal_cliente.salir') }}" class="portal-nav-salir"><button type="submit" class="portal-nav-salir-boton">{{ _('Salir') }}</button></form>{% endif %}
     </nav>
 
@@ -38,6 +54,7 @@
     {% block contenido %}{% endblock %}
     </div>
   </div>
+  {% if portal_cliente and not vista_previa %}<script src="{{ url_for('static', filename='sw_registro.js') }}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -109,6 +109,11 @@ def zip_del_anio(cliente: dict, anio: int) -> bytes:
             pdf = pdf_resumen(cliente, r["id"])
             if pdf:
                 añadir(f"resumenes/303-{anio}-{r['periodo']}.pdf", pdf)
+        try:
+            from . import portal_informe_anual
+            añadir(f"informe-anual-{anio}.pdf", portal_informe_anual.generar(cliente, anio))
+        except Exception:  # noqa: BLE001 -- el informe es un añadido: si falla, el ZIP sale igualmente
+            pass
         if omitidos:
             z.writestr("LEEME.txt", "No han cabido en este ZIP (descárgalos uno a uno desde tu portal):\n" + "\n".join(omitidos) + "\n")
     return buf.getvalue()

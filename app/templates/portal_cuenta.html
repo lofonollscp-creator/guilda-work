@@ -1,0 +1,91 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mi cuenta') }}{% endblock %}
+{% block titulo %}{{ _('Mi cuenta') }}{% endblock %}
+{% block subtitulo %}{{ yo }} · {{ cliente.nombre }}{% endblock %}
+{% block contenido %}
+    {% if guardado %}<p class="portal-peticion" role="status"><strong>{{ _('Guardado.') }}</strong></p>{% endif %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    {% if portal_rol == 'consulta' %}<p class="muted">{{ _('Tu perfil es de solo consulta: puedes mirar todo, pero no enviar ni firmar nada.') }}</p>{% endif %}
+
+    <section class="portal-cuenta-bloque" aria-labelledby="cuenta-avisos">
+      <h2 id="cuenta-avisos">{{ _('Qué avisos quieres recibir') }}</h2>
+      <form method="post" action="{{ url_for('portal_cliente.guardar_preferencias') }}" class="portal-cuenta-form">
+        {% set textos = {'todo': (_('Un correo por cada novedad'), _('Te escribimos en cuanto tu gestoría te pide algo o te contesta.')), 'resumen': (_('Un resumen cada lunes'), _('Un solo correo a la semana con lo que tienes pendiente. Si no hay nada, no te escribimos.')), 'urgente': (_('Solo lo urgente'), _('Únicamente lo que corre prisa: plazos a punto de vencer.'))} %}
+        {% for n in niveles %}
+        <label class="portal-opcion"><input type="radio" name="avisos" value="{{ n }}" {% if avisos == n %}checked{% endif %}> <span><strong>{{ textos[n][0] }}</strong> <small class="muted">{{ textos[n][1] }}</small></span></label>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+      </form>
+      <p class="muted">{{ _('Siempre puedes ver todo lo pendiente entrando al portal; estos ajustes son solo para ti.') }}</p>
+    </section>
+
+    {% if push_disponible %}
+    <section class="portal-cuenta-bloque" aria-labelledby="cuenta-push">
+      <h2 id="cuenta-push">{{ _('Avisos en este dispositivo') }}</h2>
+      <p>{{ _('Recibe una notificación en el móvil o el navegador cuando tu gestoría necesite una respuesta tuya: una factura que corregir, un documento por firmar, un modelo por revisar o un mensaje.') }}</p>
+      <p class="muted" id="push-estado" role="status" data-activos="{{ push_activo }}" data-txt-activado="{{ _('Los avisos están activados en este dispositivo.') }}" data-txt-desactivado="{{ _('Los avisos están desactivados en este dispositivo.') }}" data-txt-no-disponible="{{ _('Este navegador no permite avisos. En el iPhone, primero añade el portal a la pantalla de inicio.') }}" data-txt-denegado="{{ _('Has bloqueado las notificaciones de este sitio en el navegador.') }}"></p>
+      <button type="button" class="btn btn-ghost" id="push-activar" hidden>{{ _('Activar avisos') }}</button>
+      <button type="button" class="btn btn-ghost" id="push-desactivar" hidden>{{ _('Desactivar avisos') }}</button>
+    </section>
+    {% endif %}
+
+    {% if subida %}
+    <section class="portal-cuenta-bloque" id="movil" aria-labelledby="cuenta-movil">
+      <h2 id="cuenta-movil">{{ _('Subir facturas desde el móvil') }}</h2>
+      <p>{{ _('Escanea este código con la cámara del móvil y podrás fotografiar o elegir tus facturas y tiquets sin tener que entrar al portal.') }}</p>
+      <div class="portal-qr">{{ subida.qr|safe }}</div>
+      <p class="portal-dir"><a href="{{ subida.url }}">{{ subida.url }}</a></p>
+      {% if subida.correo %}<p>{{ _('También puedes reenviar una factura recibida por correo a esta dirección:') }} <strong class="portal-dir">{{ subida.correo }}</strong></p>{% endif %}
+      <p class="muted">{{ _('El enlace y la dirección son solo tuyos: quien los tenga puede subir facturas a tu nombre, pero no ver nada. Si crees que otra persona los tiene, renuévalos.') }}</p>
+      {% if puede_gestionar %}
+      <form method="post" action="{{ url_for('portal_cliente.renovar_enlace_subida') }}"><button type="submit" class="btn btn-ghost">{{ _('Renovar enlace y dirección') }}</button></form>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="portal-cuenta-bloque" id="personas" aria-labelledby="cuenta-personas">
+      <h2 id="cuenta-personas">{{ _('Personas con acceso') }}</h2>
+      <ul class="portal-personas">
+        {% for p in personas %}
+        <li class="portal-persona">
+          <div class="portal-persona-datos"><strong>{{ p.nombre or p.email }}</strong> {% if p.es_titular %}<span class="pill">{{ _('Titular') }}</span>{% endif %}<span class="muted">{{ p.email }}</span></div>
+          {% if p.es_titular %}
+          <span class="muted">{{ _('Acceso completo') }}</span>
+          {% elif puede_gestionar %}
+          <form method="post" action="{{ url_for('portal_cliente.cambiar_perfil_contacto', contacto_id=p.id) }}" class="portal-persona-form">
+            <label class="sr-only" for="rol-{{ p.id }}">{{ _('Perfil') }}</label>
+            <select id="rol-{{ p.id }}" name="rol">
+              {% for r in roles %}<option value="{{ r }}" {% if p.rol == r %}selected{% endif %}>{{ {'completo': _('Acceso completo'), 'administracion': _('Administración'), 'consulta': _('Solo consulta')}[r] }}</option>{% endfor %}
+            </select>
+            <button type="submit" class="btn btn-ghost">{{ _('Cambiar') }}</button>
+          </form>
+          <form method="post" action="{{ url_for('portal_cliente.quitar_contacto', contacto_id=p.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Quitar acceso') }}</button></form>
+          {% else %}
+          <span class="muted">{{ {'completo': _('Acceso completo'), 'administracion': _('Administración'), 'consulta': _('Solo consulta')}[p.rol] }}</span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="muted">{{ _('Acceso completo: todo, también firmar, pagar y dar la conformidad. Administración: subir documentos y facturas y escribir, pero no firmar, pagar ni dar la conformidad. Solo consulta: mirar.') }}</p>
+      {% if puede_gestionar and personas|length <= max_contactos %}
+      <form method="post" action="{{ url_for('portal_cliente.anadir_contacto') }}" class="portal-cuenta-form">
+        <h3>{{ _('Dar acceso a otra persona') }}</h3>
+        <div class="correo-form-campo"><label for="contacto-nombre">{{ _('Nombre') }}</label><input type="text" id="contacto-nombre" name="nombre" maxlength="120" autocomplete="off"></div>
+        <div class="correo-form-campo"><label for="contacto-email">{{ _('Email') }}</label><input type="email" id="contacto-email" name="email" required maxlength="200" autocomplete="off"></div>
+        <div class="correo-form-campo"><label for="contacto-rol">{{ _('Perfil') }}</label>
+          <select id="contacto-rol" name="rol">
+            <option value="administracion">{{ _('Administración') }}</option><option value="consulta">{{ _('Solo consulta') }}</option><option value="completo">{{ _('Acceso completo') }}</option>
+          </select></div>
+        <button type="submit" class="btn btn-primary">{{ _('Dar acceso') }}</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="portal-cuenta-bloque" aria-labelledby="cuenta-app">
+      <h2 id="cuenta-app">{{ _('Tenerlo siempre a mano') }}</h2>
+      <p>{{ _('Puedes añadir el portal a la pantalla de inicio del móvil como si fuera una app. En el iPhone: Compartir y «Añadir a pantalla de inicio»; en Android: las opciones del navegador y «Instalar aplicación».') }}</p>
+      <button type="button" class="btn btn-ghost" id="instalar-app" hidden>{{ _('Instalar el portal') }}</button>
+      <p class="muted">{{ _('Al pedir tu enlace de acceso puedes marcar «Mantener la sesión abierta en este dispositivo» para no tener que pedirlo cada vez.') }}</p>
+    </section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='portal_cuenta.js') }}" defer></script>{% endblock %}

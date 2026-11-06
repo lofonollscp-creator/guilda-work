@@ -12,7 +12,8 @@
     {% if not c.documentos and not c.resumenes and not c.trimestres and not c.honorarios %}
     <p class="empty-lane">{{ _('Todavía no hay nada en la carpeta de este año.') }}</p>
     {% else %}
-    <p><a class="btn btn-primary" href="{{ url_for('portal_cliente.carpeta_zip', anio=anio) }}">{{ _('Descargar todo el año (ZIP)') }}</a></p>
+    <p><a class="btn btn-primary" href="{{ url_for('portal_cliente.carpeta_zip', anio=anio) }}">{{ _('Descargar todo el año (ZIP)') }}</a>
+      <a class="btn btn-ghost" href="{{ url_for('portal_cliente.carpeta_informe', anio=anio) }}">{{ _('Informe del año (PDF)') }}</a></p>
 
     {% if c.documentos %}
     <section class="ds-mt-24" aria-labelledby="car-docs">

@@ -76,22 +76,19 @@ def pedir(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, movimientos: 
 
 
 def _avisar_al_cliente(tenant_id: int, cliente_fiscal_id: int, cuantos: int) -> bool:
-    from . import notificaciones_email as ne, portal_recordatorios
+    from . import portal_avisos, portal_recordatorios
     cliente = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
-    url = portal_recordatorios.url_portal("/portal/justificantes")
-    if cliente is None or not cliente["email"] or not url or not ne.configurado():
+    if cliente is None:
         return False
     _ = portal_recordatorios._
-    try:
-        with portal_recordatorios._en_idioma(cliente["idioma"] if "idioma" in cliente.keys() else "es"):
-            ne.enviar_aviso_portal(cliente["email"], _("Tu gestoría necesita que le expliques unos movimientos del banco"),
-                                   [_("Hola, %(nombre)s.", nombre=cliente["nombre"]),
-                                    _("Al preparar tus impuestos hay movimientos de tu banco para los que tu gestoría no tiene factura o justificante."),
-                                    _("Entra y cuéntanos qué son: puedes subir la factura, indicar que es un tiquet o que es algo personal.")],
-                                   _("Ver los movimientos"), url, tenant_id=tenant_id)
-        return True
-    except ne.ErrorNotificacionesEmail:
-        return False
+
+    def texto():
+        return {"asunto": _("Tu gestoría necesita que le expliques unos movimientos del banco"), "boton": _("Ver los movimientos"),
+                "lineas": [_("Hola, %(nombre)s.", nombre=cliente["nombre"]),
+                           _("Al preparar tus impuestos hay movimientos de tu banco para los que tu gestoría no tiene factura o justificante."),
+                           _("Entra y cuéntanos qué son: puedes subir la factura, indicar que es un tiquet o que es algo personal.")],
+                "push": _("Tu gestoría necesita que le expliques unos movimientos del banco.")}
+    return portal_avisos.avisar(cliente, "/portal/justificantes", texto, accion="subir") > 0
 
 
 def listar(tenant_id: int, usuario_id: int, *, cliente_fiscal_id: int | None = None, estado: str | None = None, limite: int = 500) -> list[dict]:

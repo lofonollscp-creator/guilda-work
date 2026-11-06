@@ -8,7 +8,7 @@ from datetime import date, datetime
 
 from flask import url_for
 
-from . import db, facturas_portal, verticales
+from . import db, facturas_portal, tareas_trabajo, verticales
 from .facturas_portal import etiqueta_trimestre
 
 DIAS_AVISO_FACTURAS = 21
@@ -30,6 +30,23 @@ def _cuando(dias: int | None) -> str:
     if dias == 0:
         return _("vence hoy")
     return _("vence mañana") if dias == 1 else _("vence en %(n)s días", n=dias)
+
+
+def datos(cliente, rol: str = "completo", hoy: date | None = None) -> dict:
+    """Todo lo que necesita la portada (y el resumen semanal por correo) de este cliente, calculado de una vez: sus vencimientos, lo que se le ha pedido, sus certificados, el trabajo en curso y «Para hacer».
+    Con un perfil que no es `completo` no aparece lo que solo puede hacer el titular (firmar, pagar, dar la conformidad)."""
+    from . import certificados
+    vencimientos = db.listar_vencimientos_fiscales(cliente["tenant_id"], cliente_fiscal_id=cliente["id"], sin_internos=True)
+    # Peticiones de documento concreto todavía sin resolver -- "sin resolver" es "no hay ningún documento subido para ese vencimiento todavía", no un campo aparte que haya que mantener sincronizado.
+    solicitudes = [v for v in vencimientos if v["documento_solicitado"] and not db.listar_documentos_vencimiento(v["id"], origen="cliente")]
+    visibles = certificados.visibles_para_cliente(cliente["id"])
+    trabajo = tareas_trabajo.tareas_para_cliente(cliente["tenant_id"], cliente["id"])
+    con_facturas = verticales.esta_activo(cliente["tenant_id"], "contabilizacion")
+    puntos = para_hacer(cliente, vencimientos, solicitudes, visibles, trabajo, con_facturas, hoy)
+    if rol != "completo":
+        puntos = [p for p in puntos if not p["clave"].startswith(("firma-", "conformidad-")) and p["clave"] != "honorarios"]
+    return {"vencimientos": vencimientos, "solicitudes": solicitudes, "certificados": visibles, "trabajo": trabajo, "con_facturas": con_facturas, "para_hacer": puntos,
+            "presentados": sum(1 for v in vencimientos if v["estado"] == "presentado"), "proximo_pendiente": next((v for v in vencimientos if v["estado"] != "presentado"), None)}
 
 
 def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, con_facturas: bool, hoy: date | None = None) -> list[dict]:

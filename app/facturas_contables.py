@@ -1501,7 +1501,7 @@ def para_recordar(tenant_id: int, usuario_id: int, trimestre: str) -> list[dict]
 
 def recordar(tenant_id: int, usuario_id: int, cliente_ids: list[int], trimestre: str, fecha_limite: str | None, url_portal: str) -> dict:
     """Escribe a los clientes elegidos para pedirles las facturas del trimestre. Devuelve {enviados, omitidos: [(nombre, motivo)]}. `ValueError` si el correo saliente no está configurado."""
-    from . import notificaciones_email as ne, portal_recordatorios
+    from . import notificaciones_email as ne, portal_avisos, portal_recordatorios
     rango_del_trimestre(trimestre)
     fecha_limite = _fecha(fecha_limite, "Fecha límite") if str(fecha_limite or "").strip() else None
     if not ne.configurado():
@@ -1517,10 +1517,11 @@ def recordar(tenant_id: int, usuario_id: int, cliente_ids: list[int], trimestre:
         elif c["reciente"]:
             omitidos.append((c["nombre"], f"ya se le recordó hace menos de {DIAS_ENTRE_RECORDATORIOS} días"))
         else:
-            try:
-                ne.enviar_recordatorio_facturas(c["email"], c["nombre"], trimestre, fecha_limite, portal_recordatorios.con_destino(url_portal, f"/portal/facturas?trimestre={trimestre}"), tenant_id=tenant_id)
-            except ne.ErrorNotificacionesEmail as e:
-                omitidos.append((c["nombre"], str(e)[:120]))
+            ficha = db.obtener_cliente_fiscal(tenant_id, cid)
+            enlace = portal_recordatorios.con_destino(url_portal, f"/portal/facturas?trimestre={trimestre}", cid)
+            fallos: list[str] = []
+            if portal_avisos.correo_directo(ficha, lambda e: ne.enviar_recordatorio_facturas(e, c["nombre"], trimestre, fecha_limite, enlace, tenant_id=tenant_id), urgente=True, accion="subir", errores=fallos) == 0:
+                omitidos.append((c["nombre"], fallos[0] if fallos else "nadie con acceso quiere recibir este aviso"))
                 continue
             conn = db.get_connection()
             try:

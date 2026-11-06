@@ -125,6 +125,7 @@
   {% else %}<p class="muted">{{ _('Todavía no hay mensajes. El cliente los verá en su portal.') }}</p>{% endif %}
   <form method="post" action="{{ url_for('contabilidad.mensaje', factura_id=f.id) }}" class="edit-form">
     <label for="mensaje-texto">{{ _('Escribir al cliente') }}</label>
+    {% with cliente_fiscal_id=f.cliente_fiscal_id, destino='mensaje-texto' %}{% include '_respuestas_rapidas.html' %}{% endwith %}
     <textarea id="mensaje-texto" name="texto" rows="3" maxlength="1000" required class="ds-ancho-total"></textarea>
     <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button></div>
   </form>

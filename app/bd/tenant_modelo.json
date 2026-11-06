@@ -1475,7 +1475,32 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_avisos_enviados": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_contactos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_enlaces_subida": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_recordatorios_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_respuestas_rapidas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_suscripciones_push": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
   "via": []

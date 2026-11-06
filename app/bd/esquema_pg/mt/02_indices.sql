@@ -137,6 +137,9 @@ CREATE INDEX IF NOT EXISTS idx_plantilla_items_plantilla ON plantilla_tareas_ite
 CREATE INDEX IF NOT EXISTS idx_plantillas_categoria ON plantillas (categoria_id);
 CREATE INDEX IF NOT EXISTS idx_plazos_expediente ON plazos (expediente_id, estado, papelera_en, fecha_limite);
 CREATE INDEX IF NOT EXISTS idx_plazos_tenant ON plazos (tenant_id, papelera_en, estado, fecha_limite);
+CREATE INDEX IF NOT EXISTS idx_portal_contactos_buscar ON portal_contactos (email);
+CREATE INDEX IF NOT EXISTS idx_portal_enlaces_token ON portal_enlaces_subida (token);
+CREATE INDEX IF NOT EXISTS idx_portal_respuestas_tenant ON portal_respuestas_rapidas (tenant_id, titulo);
 CREATE INDEX IF NOT EXISTS idx_proyecto_miembros_usuario ON proyecto_miembros (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_proyecto_notas_categoria ON proyecto_notas (categoria_id, fijada, id);
 CREATE INDEX IF NOT EXISTS idx_proyecto_plantillas_tenant ON proyecto_plantillas (tenant_id);
@@ -213,6 +216,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_fiscal_relaciones_unica ON fiscal_relacion
 CREATE UNIQUE INDEX IF NOT EXISTS idx_justificantes_huella ON justificantes_pendientes (tenant_id, cliente_fiscal_id, huella);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_cliente_uuid ON notas (tenant_id, cliente_uuid) WHERE cliente_uuid IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_ref ON notas (tenant_id, usuario_id, referencia_externa) WHERE referencia_externa IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_avisos_unico ON portal_avisos_enviados (tenant_id, cliente_fiscal_id, destinatario, tipo, referencia);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_contactos_email ON portal_contactos (tenant_id, cliente_fiscal_id, email);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_enlaces_cliente ON portal_enlaces_subida (tenant_id, cliente_fiscal_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_push_endpoint ON portal_suscripciones_push (tenant_id, cliente_fiscal_id, endpoint);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_clientes_principal ON tarea_clientes (tenant_id, tarea_id) WHERE principal = 1;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_revisiones_una_pendiente ON tarea_revisiones (tenant_id, tarea_id) WHERE estado = 'pendiente';
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tareas_outlook_ref ON tareas_outlook (tenant_id, usuario_id, referencia_externa) WHERE referencia_externa IS NOT NULL;

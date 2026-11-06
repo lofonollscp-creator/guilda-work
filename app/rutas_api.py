@@ -1136,12 +1136,11 @@ def editar_vencimiento_fiscal(vencimiento_id: int):
     if nuevo and nuevo != vencimiento["documento_solicitado"]:
         # Como en la web: la petición NUEVA de un documento avisa al cliente por correo (best-effort).
         cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
-        if cliente is not None and cliente["email"]:
-            from . import notificaciones_email as _ne
-            try:
-                _ne.enviar_solicitud_documento(cliente["email"], nuevo, portal_recordatorios.con_destino(url_for("portal_cliente.entrar", _external=True), f"/portal/vencimientos/{vencimiento_id}/documentos"), tenant_id=g.tenant_id)
-            except _ne.ErrorNotificacionesEmail:
-                pass
+        if cliente is not None:
+            from . import notificaciones_email as _ne, portal_avisos
+            enlace = portal_recordatorios.con_destino(url_for("portal_cliente.entrar", _external=True), f"/portal/vencimientos/{vencimiento_id}/documentos", cliente["id"])
+            portal_avisos.correo_directo(cliente, lambda e: _ne.enviar_solicitud_documento(e, nuevo, enlace, tenant_id=g.tenant_id), accion="subir",
+                                         push=("Tu gestoría te pide un documento", nuevo, f"/portal/vencimientos/{vencimiento_id}/documentos"))
     return _ok(_dict(db.obtener_vencimiento_fiscal(g.tenant_id, vencimiento_id)))
 
 

@@ -17,8 +17,8 @@ from datetime import date, datetime, timedelta
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import antivirus, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_vista_previa, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
+from . import portal_buzon, portal_busqueda, portal_personas, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
@@ -28,12 +28,57 @@ _MINUTOS_COOLDOWN_ENVIO = 2
 MAX_ARCHIVOS_POR_SUBIDA = 10
 
 
+DIAS_SESION_RECORDADA = 30
+# Con el perfil «consulta» solo se mira: estas son las únicas acciones que se permiten (sus propias preferencias y salir).
+_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista"}
+# Lo que solo hace el perfil «completo»: decidir en nombre del cliente y gestionar a quién más se deja entrar.
+_SOLO_PERFIL_COMPLETO = {"portal_cliente.conformidad", "portal_cliente.pagar_vencimiento", "portal_cliente.firma_vencimiento", "portal_cliente.anadir_contacto", "portal_cliente.cambiar_perfil_contacto", "portal_cliente.quitar_contacto",
+                         "portal_cliente.renovar_enlace_subida"}
+
+
+def _cerrar_sesion_del_portal() -> None:
+    for clave in ("cliente_fiscal_id", "portal_email", "portal_hasta"):
+        session.pop(clave, None)
+
+
 @portal_bp.before_request
 def _resolver_cliente_actual():
     g.vista_previa = portal_vista_previa.activa(session)               # el equipo mirando el portal de un cliente: solo lectura
     g.cliente_fiscal_id = session.get("cliente_fiscal_id")
+    g.portal_email = session.get("portal_email")
+    g.portal_rol = "completo"
+    g.portal_tenant_id = None
+    if g.cliente_fiscal_id and not g.vista_previa:
+        cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+        rol = portal_personas.rol_de(cliente, g.portal_email) if cliente is not None else None
+        caducada = bool(session.get("portal_hasta")) and session["portal_hasta"] < datetime.now().isoformat(timespec="seconds")
+        if rol is None or caducada:
+            _cerrar_sesion_del_portal()                          # la ficha ya no existe, la persona perdió el acceso o la sesión recordada caducó
+            g.cliente_fiscal_id = None
+        else:
+            g.portal_rol, g.portal_tenant_id = rol, cliente["tenant_id"]
     if g.vista_previa and request.method not in ("GET", "HEAD", "OPTIONS") and request.endpoint != "portal_cliente.salir":
         abort(403)
+    if g.portal_rol == "consulta" and request.method not in ("GET", "HEAD", "OPTIONS") and request.endpoint not in _ACCIONES_DE_CONSULTA:
+        return _sin_permiso()
+    if g.portal_rol != "completo" and request.endpoint in _SOLO_PERFIL_COMPLETO:
+        return _sin_permiso()
+
+
+def _sin_permiso():
+    return render_template("portal_sin_permiso.html", portal_seccion="inicio"), 403
+
+
+@portal_bp.after_request
+def _auditar_lo_que_hace_el_cliente(respuesta):
+    """Cada cosa que una persona hace en el portal (un POST que sale bien) queda en la auditoría con quién fue: el titular o uno de sus contactos."""
+    try:
+        if (request.method == "POST" and g.get("cliente_fiscal_id") and g.get("portal_tenant_id") and not g.get("vista_previa") and respuesta.status_code < 400
+                and request.endpoint not in ("portal_cliente.salir", "portal_cliente.entrar", "portal_cliente.comprobar_archivos")):
+            auditoria.registrar(g.portal_tenant_id, None, "portal.accion", "cliente_fiscal", g.cliente_fiscal_id, {"quien": g.portal_email or "titular", "pantalla": (request.endpoint or "").split(".")[-1]})
+    except Exception:  # noqa: BLE001 -- la auditoría nunca debe romper la respuesta
+        pass
+    return respuesta
 
 
 @portal_bp.context_processor
@@ -45,8 +90,11 @@ def _menu_del_portal():
     if cliente is None:
         return {}
     con_facturas = verticales.esta_activo(cliente["tenant_id"], "contabilizacion")
+    email = g.get("portal_email") or cliente["email"]
+    otras = [c for c in portal_personas.clientes_de(email) if c["id"] != cliente["id"]] if not g.get("vista_previa") else []
     return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
-            "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente)}
+            "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
+            "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa")}
 
 
 def cliente_login_required(vista):
@@ -96,40 +144,68 @@ def destino_seguro(valor: str | None) -> str | None:
     return v
 
 
+def _ficha_pedida(email: str):
+    """La ficha a la que llevar a esa persona al entrar: la que pide el enlace (`c`) si es suya; si no, la primera de las suyas."""
+    suyas = portal_personas.clientes_de(email)
+    pedida = request.values.get("c", type=int)
+    return next((c for c in suyas if c["id"] == pedida), suyas[0] if suyas else None)
+
+
 @portal_bp.route("/entrar", methods=["GET", "POST"])
 @limiter.limit("10/hour")
 def entrar():
     siguiente = destino_seguro(request.values.get("siguiente"))
     if request.method == "GET" and siguiente and g.cliente_fiscal_id:
+        pedida = request.args.get("c", type=int)
+        if pedida and pedida != g.cliente_fiscal_id:                  # el enlace es de otra de sus sociedades: se cambia a ella si es suya
+            email = g.get("portal_email") or (db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id) or {"email": ""})["email"]
+            if any(c["id"] == pedida for c in portal_personas.clientes_de(email)):
+                session["cliente_fiscal_id"] = pedida
         return redirect(siguiente)
     if request.method == "POST":
-        email = (request.form.get("email") or "").strip()
+        email = portal_personas.limpio(request.form.get("email"))
         if email and "@" in email:
-            for cliente in db.clientes_fiscales_por_email(email):
-                ultimo_envio = db.ultimo_acceso_solicitado_en(cliente["id"])
+            cliente = _ficha_pedida(email)
+            if cliente is not None:
+                ultimo_envio = db.ultimo_acceso_solicitado_a(email)
                 # Cooldown por email (no solo el rate-limit por IP de arriba):
                 # sin esto, alguien con la IP de otro (o varias IPs) podría
                 # seguir mandando enlaces a un email ajeno sin parar.
-                if ultimo_envio and datetime.fromisoformat(ultimo_envio) > datetime.now() - timedelta(minutes=_MINUTOS_COOLDOWN_ENVIO):
-                    continue
-                token = db.crear_acceso_cliente_fiscal(cliente["id"], request.remote_addr)
-                enlace = url_for("portal_cliente.entrar_con_token", token=token, siguiente=siguiente, _external=True)
-                try:
-                    enviar_enlace_portal(cliente["email"], enlace, tenant_id=cliente["tenant_id"])
-                except ErrorNotificacionesEmail:
-                    pass
+                if not (ultimo_envio and datetime.fromisoformat(ultimo_envio) > datetime.now() - timedelta(minutes=_MINUTOS_COOLDOWN_ENVIO)):
+                    token = db.crear_acceso_cliente_fiscal(cliente["id"], request.remote_addr, email=email)
+                    enlace = url_for("portal_cliente.entrar_con_token", token=token, siguiente=siguiente, c=request.form.get("c", type=int) or None, r="1" if request.form.get("recordar") else None, _external=True)
+                    try:
+                        enviar_enlace_portal(email, enlace, tenant_id=cliente["tenant_id"])
+                    except ErrorNotificacionesEmail:
+                        pass
         # Mismo mensaje exista o no el email -- no confirmar si un email
         # concreto está asociado a algún cliente.
         return render_template("portal_entrar.html", enviado=True)
-    return render_template("portal_entrar.html", enviado=False, siguiente=siguiente)
+    return render_template("portal_entrar.html", enviado=False, siguiente=siguiente, ficha=request.args.get("c", type=int))
 
 
 @portal_bp.route("/entrar/<token>")
 def entrar_con_token(token: str):
-    cliente_fiscal_id = db.consumir_acceso_cliente_fiscal(token)
-    if cliente_fiscal_id is None:
+    acceso = db.consumir_acceso_portal(token)
+    if acceso is None:
         return render_template("portal_entrar.html", enviado=False, enlace_invalido=True)
-    session["cliente_fiscal_id"] = cliente_fiscal_id
+    cliente_fiscal_id, email = acceso
+    cliente = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
+    email = portal_personas.limpio(email) or (portal_personas.limpio(cliente["email"]) if cliente is not None else "")
+    suyas = {c["id"] for c in portal_personas.clientes_de(email)}
+    if cliente is None or cliente_fiscal_id not in suyas:                  # le quitaron el acceso entre pedir el enlace y abrirlo
+        return render_template("portal_entrar.html", enviado=False, enlace_invalido=True)
+    pedida = request.args.get("c", type=int)
+    session["cliente_fiscal_id"] = pedida if pedida in suyas else cliente_fiscal_id
+    session["portal_email"] = email
+    if request.args.get("r") == "1":                                       # «mantener la sesión en este dispositivo»
+        session.permanent = True
+        session["portal_hasta"] = (datetime.now() + timedelta(days=DIAS_SESION_RECORDADA)).isoformat(timespec="seconds")
+    else:
+        session.pop("portal_hasta", None)
+    entrada = db.obtener_cliente_fiscal_por_id(session["cliente_fiscal_id"])
+    portal_personas.registrar_acceso(entrada, email)
+    auditoria.registrar(entrada["tenant_id"], None, "portal.entrada", "cliente_fiscal", entrada["id"], {"quien": email, "recordada": request.args.get("r") == "1"})
     return redirect(destino_seguro(request.args.get("siguiente")) or url_for("portal_cliente.dashboard"))
 
 
@@ -138,8 +214,20 @@ def salir():
     if g.get("vista_previa"):
         portal_vista_previa.salir(session)
         return redirect(url_for("fiscal.clientes"))
-    session.pop("cliente_fiscal_id", None)
+    _cerrar_sesion_del_portal()
     return redirect(url_for("portal_cliente.entrar"))
+
+
+@portal_bp.route("/cambiar-titular", methods=["POST"])
+@cliente_login_required
+def cambiar_titular():
+    """Pasa a otra de las fichas a las que da acceso el mismo email (varias sociedades). Se comprueba contra la base, no contra la sesión."""
+    actual = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    email = g.get("portal_email") or (actual["email"] if actual is not None else "")
+    elegida = request.form.get("cliente_id", type=int)
+    if any(c["id"] == elegida for c in portal_personas.clientes_de(email)):
+        session["cliente_fiscal_id"] = elegida
+    return redirect(url_for("portal_cliente.dashboard"))
 
 
 @portal_bp.route("/")
@@ -147,26 +235,18 @@ def salir():
 def dashboard():
     cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
     if cliente is None:
-        session.pop("cliente_fiscal_id", None)
+        _cerrar_sesion_del_portal()
         return redirect(url_for("portal_cliente.entrar"))
-    vencimientos = db.listar_vencimientos_fiscales(cliente["tenant_id"], cliente_fiscal_id=cliente["id"], sin_internos=True)
-    # Peticiones de documento concreto (app/rutas_fiscal.py:editar_vencimiento) todavía sin resolver -- "sin resolver" es "no hay ningún documento subido para ese vencimiento todavía",
-    # no un campo aparte que haya que mantener sincronizado.
-    solicitudes_pendientes = [v for v in vencimientos if v["documento_solicitado"] and not db.listar_documentos_vencimiento(v["id"], origen="cliente")]
-    # Resumen para el anillo de progreso: cuántos están presentados sobre el total, y cuál es el próximo pendiente (vencimientos ya viene ordenado por fecha_limite ascendente).
-    presentados = sum(1 for v in vencimientos if v["estado"] == "presentado")
-    proximo_pendiente = next((v for v in vencimientos if v["estado"] != "presentado"), None)
+    d = portal_inicio.datos(cliente, g.portal_rol)
     from . import certificados
     cfg_cert = certificados.config(cliente["tenant_id"])
-    certificados_visibles = certificados.visibles_para_cliente(cliente["id"])
-    trabajo = tareas_trabajo.tareas_para_cliente(cliente["tenant_id"], cliente["id"])
-    con_facturas = verticales.esta_activo(cliente["tenant_id"], "contabilizacion")
     return render_template(
-        "portal_dashboard.html", cliente=cliente, vencimientos=vencimientos, certificados=certificados_visibles, tipos_certificado=certificados.TIPOS_CERTIFICADO,
+        "portal_dashboard.html", cliente=cliente, vencimientos=d["vencimientos"], certificados=d["certificados"], tipos_certificado=certificados.TIPOS_CERTIFICADO,
         instrucciones_certificado=cfg_cert["instrucciones"], ayuda_enviada=request.args.get("ayuda"), portal_seccion="inicio",
-        para_hacer=portal_inicio.para_hacer(cliente, vencimientos, solicitudes_pendientes, certificados_visibles, trabajo, con_facturas),
-        presentados=presentados, proximo_pendiente=proximo_pendiente, trabajo_en_curso=trabajo,
+        para_hacer=d["para_hacer"], presentados=d["presentados"], proximo_pendiente=d["proximo_pendiente"], trabajo_en_curso=portal_estado.enriquecer(d["trabajo"], cliente["tenant_id"]),
+        plazos=portal_plazos.proximos(cliente, d["vencimientos"], g.portal_rol),
         aviso=(request.args.get("aviso") or "")[:200] or None, max_caracteres=tareas_trabajo.MAX_CARACTERES_COMENTARIO,
+        bienvenida=not g.get("vista_previa") and not portal_personas.bienvenida_vista(cliente, g.get("portal_email")),
     )
 
 
@@ -176,14 +256,14 @@ def impuestos():
     """Todos sus modelos por año, con el estado de cada uno y el acceso a sus documentos y mensajes."""
     cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
     if cliente is None:
-        session.pop("cliente_fiscal_id", None)
+        _cerrar_sesion_del_portal()
         return redirect(url_for("portal_cliente.entrar"))
     vencimientos = db.listar_vencimientos_fiscales(cliente["tenant_id"], cliente_fiscal_id=cliente["id"], sin_internos=True)
     # Agrupados por año, el más reciente primero, para que un cliente con varios años de histórico no vea todo mezclado; dentro de cada año se mantiene el orden por fecha límite.
     por_anio: dict[str, list] = {}
     for v in vencimientos:
         por_anio.setdefault(v["fecha_limite"][:4], []).append(v)
-    return render_template("portal_impuestos.html", cobros=portal_pagos.cobros(cliente, vencimientos), firmas={v["id"] for v in portal_firma.pendientes(vencimientos)}, pago=request.args.get("pago"),
+    return render_template("portal_impuestos.html", situacion=portal_situacion.calcular(cliente), cobros=portal_pagos.cobros(cliente, vencimientos), firmas={v["id"] for v in portal_firma.pendientes(vencimientos)}, pago=request.args.get("pago"),
                            error=(request.args.get("error") or "")[:200] or None, cliente=cliente, por_anio=por_anio, anios_ordenados=sorted(por_anio, reverse=True), vencimientos=vencimientos, portal_seccion="impuestos",
                            sin_leer={m["vencimiento_id"]: m["n"] for m in db.mensajes_sin_leer_para_cliente(cliente["id"])})
 
@@ -312,7 +392,7 @@ def comentar_tarea(tarea_id: int):
     """El cliente escribe en una tarea que se le enseña y en la que el despacho le deja comentar (ver app/tareas_trabajo.py). Cualquier otra cosa es un 404: ni se confirma que la tarea exista."""
     cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
     if cliente is None:
-        session.pop("cliente_fiscal_id", None)
+        _cerrar_sesion_del_portal()
         return redirect(url_for("portal_cliente.entrar"))
     try:
         archivos = [(a.filename, a.read(tareas_trabajo.MAX_ADJUNTO_CLIENTE_BYTES + 1)) for a in request.files.getlist("archivos")[:tareas_trabajo.MAX_ADJUNTOS_POR_COMENTARIO + 1] if a and a.filename]
@@ -583,7 +663,7 @@ def carpeta():
     """Justificantes, constancias, informes trimestrales y resúmenes de modelos presentados de un año, con un ZIP para descargarlo todo."""
     cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
     if cliente is None:
-        session.pop("cliente_fiscal_id", None)
+        _cerrar_sesion_del_portal()
         return redirect(url_for("portal_cliente.entrar"))
     anios = portal_carpeta.anios_disponibles(cliente)
     anio = request.args.get("anio", type=int)
@@ -599,6 +679,16 @@ def carpeta_zip(anio: int):
     if cliente is None or anio not in portal_carpeta.anios_disponibles(cliente):
         abort(404)
     return Response(portal_carpeta.zip_del_anio(cliente, anio), mimetype="application/zip", headers={"Content-Disposition": f'attachment; filename="carpeta-{anio}.zip"', "X-Content-Type-Options": "nosniff"})
+
+
+@portal_bp.route("/carpeta/informe-<int:anio>.pdf")
+@cliente_login_required
+def carpeta_informe(anio: int):
+    """El informe del año: lo presentado, lo firmado, los honorarios y lo que el cliente envió, en un PDF."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None or anio not in portal_carpeta.anios_disponibles(cliente):
+        abort(404)
+    return Response(portal_informe_anual.generar(cliente, anio), mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="informe-{anio}.pdf"', "X-Content-Type-Options": "nosniff"})
 
 
 @portal_bp.route("/carpeta/resumen/<int:declaracion_id>.pdf")
@@ -619,6 +709,187 @@ def mensajes():
     """Todas las conversaciones con la gestoría en una lista: sobre un modelo, sobre una factura o sobre un trabajo en curso."""
     cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
     if cliente is None:
-        session.pop("cliente_fiscal_id", None)
+        _cerrar_sesion_del_portal()
         return redirect(url_for("portal_cliente.entrar"))
     return render_template("portal_mensajes.html", cliente=cliente, conversaciones=portal_buzon.conversaciones(cliente), portal_seccion="mensajes", con_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"))
+
+
+# --- Mi cuenta: avisos, personas con acceso, móvil ----------------------------------------------------------------------------------------------------------
+
+def _base_publica() -> str:
+    import os
+    return (os.environ.get("GUILDA_URL_PUBLICA", "").strip() or request.host_url).rstrip("/")
+
+
+def _cliente_actual_o_salir():
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None:
+        abort(404)
+    return cliente
+
+
+@portal_bp.route("/cuenta")
+@cliente_login_required
+def cuenta():
+    """Lo que cada persona ajusta de su acceso: qué avisos recibe, quién más puede entrar, el móvil (subir facturas, avisos, instalar) y su sesión."""
+    cliente = _cliente_actual_o_salir()
+    yo = g.get("portal_email") or portal_personas.limpio(cliente["email"])
+    previa = bool(g.get("vista_previa"))
+    subida = None
+    if portal_subida_rapida.activa_para(cliente) and g.portal_rol != "consulta" and not previa:
+        enlace = portal_subida_rapida.url(cliente, _base_publica())
+        subida = {"url": enlace, "qr": qr.svg(enlace, _("Código QR para subir facturas desde el móvil")), "correo": portal_subida_rapida.direccion_de(cliente)}
+    return render_template("portal_cuenta.html", cliente=cliente, yo=yo, avisos=portal_personas.avisos_de(cliente, yo), niveles=portal_personas.NIVELES_AVISO, personas=portal_personas.listar(cliente), roles=portal_personas.ROLES,
+                           puede_gestionar=g.portal_rol == "completo" and not previa, subida=subida, push_disponible=portal_push.disponible() and not previa, push_activo=portal_push.tiene(cliente, yo) if not previa else 0,
+                           portal_seccion="cuenta", guardado=request.args.get("guardado"), error=(request.args.get("error") or "")[:200] or None, max_contactos=portal_personas.MAX_CONTACTOS)
+
+
+@portal_bp.route("/preferencias", methods=["POST"])
+@cliente_login_required
+def guardar_preferencias():
+    cliente = _cliente_actual_o_salir()
+    try:
+        portal_personas.fijar_avisos(cliente, g.get("portal_email"), request.form.get("avisos", ""))
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]))
+    return redirect(url_for("portal_cliente.cuenta", guardado="avisos"))
+
+
+@portal_bp.route("/preferencias/<token>", methods=["GET", "POST"])
+@limiter.limit("60/hour")
+def preferencias_por_enlace(token: str):
+    """El enlace del pie de cada correo: cambiar cuánto avisamos a esta persona sin tener que entrar al portal. El enlace va firmado y solo sirve para eso."""
+    leido = portal_personas.leer_token_preferencias(token)
+    if leido is None:
+        return render_template("portal_preferencias.html", invalido=True), 404
+    cliente, email = leido
+    guardado = False
+    if request.method == "POST":
+        try:
+            portal_personas.fijar_avisos(cliente, email, request.form.get("avisos", ""))
+            guardado = True
+        except ValueError:
+            pass
+    return render_template("portal_preferencias.html", invalido=False, cliente=cliente, email=email, avisos=portal_personas.avisos_de(cliente, email), niveles=portal_personas.NIVELES_AVISO, guardado=guardado)
+
+
+@portal_bp.route("/contactos", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour", methods=["POST"])
+def anadir_contacto():
+    cliente = _cliente_actual_o_salir()
+    try:
+        portal_personas.anadir(cliente, request.form.get("email", ""), request.form.get("nombre", ""), request.form.get("rol", ""))
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]) + "#personas")
+    return redirect(url_for("portal_cliente.cuenta", guardado="persona") + "#personas")
+
+
+@portal_bp.route("/contactos/<int:contacto_id>/perfil", methods=["POST"])
+@cliente_login_required
+def cambiar_perfil_contacto(contacto_id: int):
+    cliente = _cliente_actual_o_salir()
+    try:
+        portal_personas.cambiar_rol(cliente, contacto_id, request.form.get("rol", ""))
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]) + "#personas")
+    return redirect(url_for("portal_cliente.cuenta", guardado="persona") + "#personas")
+
+
+@portal_bp.route("/contactos/<int:contacto_id>/quitar", methods=["POST"])
+@cliente_login_required
+def quitar_contacto(contacto_id: int):
+    cliente = _cliente_actual_o_salir()
+    try:
+        portal_personas.quitar(cliente, contacto_id)
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]) + "#personas")
+    return redirect(url_for("portal_cliente.cuenta", guardado="quitada") + "#personas")
+
+
+@portal_bp.route("/bienvenida", methods=["POST"])
+@cliente_login_required
+def bienvenida_vista():
+    portal_personas.marcar_bienvenida(_cliente_actual_o_salir(), g.get("portal_email"))
+    return redirect(url_for("portal_cliente.dashboard"))
+
+
+# --- Avisos en el móvil (Web Push) --------------------------------------------------------------------------------------------------------------------------
+
+@portal_bp.route("/push/clave")
+@cliente_login_required
+def push_clave():
+    from . import push
+    return {"clave": push.VAPID_PUBLICA if portal_push.disponible() else ""}
+
+
+@portal_bp.route("/push/suscribir", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour", methods=["POST"])
+def push_suscribir():
+    try:
+        portal_push.suscribir(_cliente_actual_o_salir(), g.get("portal_email"), request.get_json(silent=True) or {})
+    except ValueError as e:
+        return {"error": _(str(e))}, 400
+    return {"ok": True}
+
+
+@portal_bp.route("/push/baja", methods=["POST"])
+@cliente_login_required
+def push_baja():
+    portal_push.dar_de_baja(_cliente_actual_o_salir(), str((request.get_json(silent=True) or {}).get("endpoint") or ""))
+    return {"ok": True}
+
+
+# --- Subir facturas desde el móvil con un enlace (sin entrar) -------------------------------------------------------------------------------------------------
+
+@portal_bp.route("/subida/<token>", methods=["GET", "POST"])
+@limiter.limit("60/hour")
+def subida_rapida(token: str):
+    """La página a la que lleva el código QR: elegir o fotografiar facturas y tiquets y enviarlos. El enlace es un secreto del cliente que solo sirve para subir (no se ve nada de su portal)."""
+    cliente = portal_subida_rapida.cliente_por_token(token)
+    if cliente is None or not portal_subida_rapida.activa_para(cliente):
+        abort(404)
+    error = enviadas = None
+    if request.method == "POST":
+        try:
+            archivos = [(a.filename, a.mimetype, a.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos")[:facturas_contables.MAX_ARCHIVOS_POR_SUBIDA + 1] if a and a.filename]
+            if len(archivos) > facturas_contables.MAX_ARCHIVOS_POR_SUBIDA:
+                raise ValueError(_("Puedes enviar hasta %(n)s archivos a la vez.", n=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA))
+            if not archivos:
+                raise ValueError(_("Elige al menos una foto o un PDF."))
+            subidas = facturas_contables.subir_desde_portal(cliente["id"], "emitida" if request.form.get("tipo") == "emitida" else "recibida", archivos, nota="Subida desde el móvil con el enlace rápido, pendiente de leer.")
+            auditoria.registrar(cliente["tenant_id"], None, "portal.subida_rapida", "cliente_fiscal", cliente["id"], {"archivos": len(subidas)})
+            enviadas = len(subidas)
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("portal_subida_rapida.html", cliente=cliente, token=token, error=error, enviadas=enviadas, max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
+
+
+@portal_bp.route("/subida/renovar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("10/hour", methods=["POST"])
+def renovar_enlace_subida():
+    portal_subida_rapida.renovar(_cliente_actual_o_salir())
+    return redirect(url_for("portal_cliente.cuenta", guardado="enlace") + "#movil")
+
+
+# --- Buscar ------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@portal_bp.route("/buscar")
+@cliente_login_required
+def buscar():
+    cliente = _cliente_actual_o_salir()
+    return render_template("portal_buscar.html", cliente=cliente, r=portal_busqueda.buscar(cliente, request.args.get("q", "")), portal_seccion="buscar")
+
+
+# --- Instalar el portal como una app --------------------------------------------------------------------------------------------------------------------------
+
+@portal_bp.route("/manifest.webmanifest")
+def manifiesto():
+    """El portal instalable en el móvil: arranca en su portada y no se sale de /portal/."""
+    import json
+    cuerpo = {"name": "Guilda Work", "short_name": "Mi gestoría", "description": _("Tu portal de cliente: lo que tienes que hacer, tus facturas e impuestos y tus mensajes."), "start_url": "/portal/", "scope": "/portal/", "display": "standalone",
+              "background_color": "#f5f6f8", "theme_color": "#f5f6f8", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"}, {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                                                                                {"src": "/static/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}]}
+    return Response(json.dumps(cuerpo, ensure_ascii=False), mimetype="application/manifest+json")

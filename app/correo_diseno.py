@@ -49,6 +49,7 @@ def construir(
     titulo: str, parrafos: list[str] | tuple[str, ...] = (), *, boton: tuple[str, str] | None = None, codigo: str | None = None,
     cita: str | None = None, preformateado: str | None = None, bloques_html: str | None = None, aviso: str | None = None, pie: str | None = None,
     preencabezado: str = "", html_crudo: bool = False, plano: str | None = None, idioma: str = "es", marca: dict | None = None,
+    enlace_baja: tuple[str, str] | None = None,
 ) -> tuple[str, str]:
     """Plano + HTML de un correo. `html_crudo=True` deja pasar `titulo`, `codigo` y `parrafos` SIN escapar (solo para las plantillas de Kratos,
     donde llevan marcas `{{ .RecoveryCode }}` que Kratos sustituye; nunca con texto de usuarios)."""
@@ -74,6 +75,8 @@ def construir(
         plano += [f"{boton[0]}: {boton[1]}", ""]
     if aviso:
         plano += [aviso, ""]
+    if enlace_baja:
+        plano += [f"{enlace_baja[0]}: {enlace_baja[1]}", ""]
     plano += ["--", pie or pie_defecto]
     texto_plano = plano_fijo if plano_fijo is not None else "\n".join(plano) + "\n"
 
@@ -112,6 +115,9 @@ def construir(
         )
     if aviso:
         bloques.append(f'<p style="margin:8px 0 0;padding-top:18px;border-top:1px solid {BORDE};font-size:13px;line-height:1.55;color:{TEXTO_APAGADO};">{esc(aviso).replace(chr(10), "<br>") if not html_crudo else aviso}</p>')
+
+    if enlace_baja:                                                              # «cambiar los avisos que recibes»: el enlace de preferencias de quien recibe el correo
+        bloques.append(f'<p style="margin:10px 0 0;font-size:12px;line-height:1.55;color:{TEXTO_APAGADO};"><a href="{escape(enlace_baja[1], quote=True)}" target="_blank" style="color:{TEXTO_APAGADO};text-decoration:underline;">{escape(enlace_baja[0])}</a></p>')
 
     cuerpo = "\n".join(bloques)
     pre = escape(preencabezado or titulo) if not html_crudo else (preencabezado or titulo)

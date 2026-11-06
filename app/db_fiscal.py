@@ -755,6 +755,18 @@ def clientes_fiscales_por_email(email: str) -> list[sqlite3.Row]:
         conn.close()
 
 
+def ultimo_acceso_solicitado_a(email: str) -> str | None:
+    """`creado_en` del último enlace que pidió esta persona (el cooldown es por email, no por ficha: dos contactos de la misma ficha no se bloquean entre sí)."""
+    conn = _db.get_connection()
+    try:
+        fila = conn.execute("SELECT creado_en FROM clientes_fiscales_accesos WHERE LOWER(email) = ? ORDER BY id DESC LIMIT 1", (email.strip().lower(),)).fetchone()
+        if fila is None:                                                     # enlaces anteriores a los contactos: sin email, solo con la ficha
+            fila = conn.execute("SELECT a.creado_en FROM clientes_fiscales_accesos a JOIN clientes_fiscales c ON c.id = a.cliente_fiscal_id WHERE a.email IS NULL AND LOWER(c.email) = ? ORDER BY a.id DESC LIMIT 1", (email.strip().lower(),)).fetchone()
+        return fila["creado_en"] if fila else None
+    finally:
+        conn.close()
+
+
 def ultimo_acceso_solicitado_en(cliente_fiscal_id: int) -> str | None:
     """`creado_en` de la última solicitud de enlace de este cliente,
     exista o no la fila -- usado para el cooldown de 2 minutos por email
@@ -771,18 +783,19 @@ def ultimo_acceso_solicitado_en(cliente_fiscal_id: int) -> str | None:
         conn.close()
 
 
-def crear_acceso_cliente_fiscal(cliente_fiscal_id: int, ip_solicitante: str | None) -> str:
+def crear_acceso_cliente_fiscal(cliente_fiscal_id: int, ip_solicitante: str | None, email: str | None = None) -> str:
+    """`email`: la persona que pidió el enlace (el titular o uno de sus contactos); sin él, el del titular de la ficha."""
     token = secrets.token_urlsafe(32)
     ahora = _db.datetime.now()
     conn = _db.get_connection()
     try:
         conn.execute(
             "INSERT INTO clientes_fiscales_accesos "
-            "(cliente_fiscal_id, token, creado_en, expira_en, ip_solicitante) VALUES (?, ?, ?, ?, ?)",
+            "(cliente_fiscal_id, token, creado_en, expira_en, ip_solicitante, email) VALUES (?, ?, ?, ?, ?, ?)",
             (
                 cliente_fiscal_id, token, ahora.isoformat(timespec="seconds"),
                 (ahora + _db.timedelta(minutes=_db._MINUTOS_VIDA_ACCESO_PORTAL)).isoformat(timespec="seconds"),
-                ip_solicitante,
+                ip_solicitante, (email or "").strip().lower() or None,
             ),
         )
         conn.commit()
@@ -792,7 +805,13 @@ def crear_acceso_cliente_fiscal(cliente_fiscal_id: int, ip_solicitante: str | No
 
 
 def consumir_acceso_cliente_fiscal(token: str) -> int | None:
-    """Valida y marca usado el token en la MISMA transacción (BEGIN
+    """Solo la ficha; ver `consumir_acceso_portal` para saber también quién entró."""
+    r = _db.consumir_acceso_portal(token)
+    return r[0] if r else None
+
+
+def consumir_acceso_portal(token: str) -> tuple[int, str | None] | None:
+    """(ficha, email de la persona que pidió el enlace) o None. Valida y marca usado el token en la MISMA transacción (BEGIN
     IMMEDIATE) -- mismo cuidado de sección crítica que fichar() en
     fichajes: sin esto, dos peticiones casi simultáneas con el mismo
     token (el enlace abierto dos veces, p.ej. precarga del cliente de
@@ -804,7 +823,7 @@ def consumir_acceso_cliente_fiscal(token: str) -> int | None:
     try:
         conn.execute("BEGIN IMMEDIATE")
         fila = conn.execute(
-            "SELECT id, cliente_fiscal_id, expira_en, usado_en FROM clientes_fiscales_accesos WHERE token = ?",
+            "SELECT id, cliente_fiscal_id, expira_en, usado_en, email FROM clientes_fiscales_accesos WHERE token = ?",
             (token,),
         ).fetchone()
         if fila is None or fila["usado_en"] is not None:
@@ -818,7 +837,7 @@ def consumir_acceso_cliente_fiscal(token: str) -> int | None:
             (_db.now_iso(), fila["id"]),
         )
         conn.commit()
-        return fila["cliente_fiscal_id"]
+        return fila["cliente_fiscal_id"], fila["email"]
     except BaseException:
         conn.rollback()
         raise

@@ -104,6 +104,43 @@
   </div>
 </form>
 
+<section class="proyecto-bloque ds-max-640 ds-mt-24" id="contactos-portal" aria-labelledby="contactos-portal-titulo">
+  <h2 id="contactos-portal-titulo">{{ _('Personas con acceso al portal') }}</h2>
+  <p class="muted">{{ _('Además del titular (el email de arriba), puedes dar acceso a su administrativa, a su asesor externo… Cada una entra con su propio email y elige cuánto quiere que le avisemos. Acceso completo: todo, también firmar, pagar y dar la conformidad. Administración: subir y escribir, sin firmar, pagar ni dar la conformidad. Solo consulta: mirar.') }}</p>
+  {% if error_contacto %}<div class="ia-error" role="alert">{{ error_contacto }}</div>{% endif %}
+  {% if personas_portal %}
+  <ul class="log-list">
+    {% for p in personas_portal %}
+    <li class="log-item">
+      <span class="log-text">{{ p.nombre or p.email }} <span class="muted">{{ p.email }}</span></span>
+      <form method="post" action="{{ url_for('fiscal.cambiar_perfil_contacto_portal', cliente_id=cliente.id, contacto_id=p.id) }}" class="portal-persona-form">
+        <label class="sr-only" for="rol-p-{{ p.id }}">{{ _('Perfil') }}</label>
+        <select id="rol-p-{{ p.id }}" name="rol">
+          {% for r in roles_portal %}<option value="{{ r }}" {% if p.rol == r %}selected{% endif %}>{{ {'completo': _('Acceso completo'), 'administracion': _('Administración'), 'consulta': _('Solo consulta')}[r] }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ghost">{{ _('Cambiar') }}</button>
+      </form>
+      <form method="post" action="{{ url_for('fiscal.quitar_contacto_portal', cliente_id=cliente.id, contacto_id=p.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Quitar acceso') }}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{{ _('Todavía no hay más personas con acceso.') }}</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('fiscal.anadir_contacto_portal', cliente_id=cliente.id) }}" class="edit-form">
+    <label>{{ _('Nombre') }} <input type="text" name="nombre" maxlength="120" autocomplete="off"></label>
+    <label>{{ _('Email') }} <input type="email" name="email" required maxlength="200" autocomplete="off"></label>
+    <label>{{ _('Perfil') }}
+      <select name="rol">
+        <option value="administracion">{{ _('Administración') }}</option>
+        <option value="consulta">{{ _('Solo consulta') }}</option>
+        <option value="completo">{{ _('Acceso completo') }}</option>
+      </select>
+    </label>
+    <button type="submit" class="btn btn-primary">{{ _('Dar acceso') }}</button>
+  </form>
+</section>
+
 <form class="edit-form-delete" method="post" action="{{ url_for('fiscal.eliminar_cliente', cliente_id=cliente.id) }}"
       data-confirmar-envio="{{ _('¿Eliminar este cliente fiscal? Se moverá a la papelera.') }}">
   <button type="submit" class="btn btn-stop"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-trash-2"></use></svg> {{ _('Eliminar cliente') }}</button>

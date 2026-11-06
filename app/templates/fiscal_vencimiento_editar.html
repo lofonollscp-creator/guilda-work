@@ -172,9 +172,9 @@
   </ul>
   {% endif %}
   <form method="post" action="{{ url_for('fiscal.responder_mensaje_vencimiento', vencimiento_id=vencimiento.id) }}" class="quick-card">
-    <label>{{ _('Responder') }}
-      <textarea name="texto" rows="2" required></textarea>
-    </label>
+    <label for="respuesta-vencimiento">{{ _('Responder') }}</label>
+    {% with cliente_fiscal_id=vencimiento.cliente_fiscal_id, destino='respuesta-vencimiento' %}{% include '_respuestas_rapidas.html' %}{% endwith %}
+    <textarea id="respuesta-vencimiento" name="texto" rows="2" required></textarea>
     <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
   </form>
 </section>

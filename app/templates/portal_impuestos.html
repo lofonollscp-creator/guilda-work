@@ -6,6 +6,34 @@
     {% if pago == 'ok' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: hemos recibido tu pago. En unos instantes aparecerá como pagado.') }}</strong></p>
     {% elif pago == 'cancelado' %}<p class="portal-peticion" role="status"><strong>{{ _('El pago se ha cancelado: no se ha cobrado nada.') }}</strong></p>{% endif %}
     {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+    {% if situacion %}
+    {% macro eur(c) %}{{ '%.2f €'|format(c / 100) }}{% endmacro %}
+    <section class="portal-situacion" aria-labelledby="portal-situacion-titulo">
+      <h2 id="portal-situacion-titulo">{{ _('Tu situación, trimestre a trimestre') }}</h2>
+      <p class="muted">{{ _('Una estimación con las facturas que tu gestoría ya ha revisado. No es tu declaración: es para que veas cómo vas.') }}</p>
+      <svg class="portal-grafica" viewBox="0 0 {{ situacion.ancho }} {{ situacion.alto }}" role="img" aria-label="{{ _('Ingresos y gastos de los últimos trimestres') }}">
+        {% for b in situacion.barras %}<rect class="portal-barra-{{ b.clase }}{{ ' actual' if b.actual }}" x="{{ b.x }}" y="{{ b.y }}" width="{{ b.ancho }}" height="{{ b.alto }}"><title>{{ b.trimestre }}: {{ eur(b.valor) }}</title></rect>{% endfor %}
+        {% for t in situacion.trimestres %}<text class="portal-grafica-eje" x="{{ (loop.index0 * situacion.ancho_grupo + situacion.ancho_grupo / 2)|round(1) }}" y="{{ situacion.alto - 4 }}" text-anchor="middle">{{ t.etiqueta }}</text>{% endfor %}
+      </svg>
+      <p class="portal-leyenda"><span class="portal-leyenda-ingreso">{{ _('Ingresos') }}</span> <span class="portal-leyenda-gasto">{{ _('Gastos') }}</span></p>
+      <div class="table-wrap">
+      <table class="portal-tabla-situacion">
+        <caption class="sr-only">{{ _('Resumen por trimestre') }}</caption>
+        <thead><tr><th scope="col">{{ _('Trimestre') }}</th><th scope="col">{{ _('Ingresos') }}</th><th scope="col">{{ _('Gastos') }}</th><th scope="col">{{ _('IVA estimado') }}</th></tr></thead>
+        <tbody>
+          {% for t in situacion.trimestres|reverse %}
+          <tr><th scope="row">{{ t.etiqueta }}</th><td>{{ eur(t.ingresos) }}</td><td>{{ eur(t.gastos) }}</td><td>{{ eur(t.iva_estimado) }}{% if t.iva_estimado > 0 %} <small class="muted">{{ _('a pagar') }}</small>{% elif t.iva_estimado < 0 %} <small class="muted">{{ _('a compensar') }}</small>{% endif %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% if situacion.anterior and situacion.anterior.facturas %}
+      {% set a = situacion.actual %}{% set b = situacion.anterior %}
+      <p>{{ _('Este trimestre (%(t)s) llevas %(ing)s de ingresos y %(gas)s de gastos; en el mismo trimestre del año pasado (%(ta)s) fueron %(ing_a)s y %(gas_a)s.', t=a.etiqueta, ing=eur(a.ingresos), gas=eur(a.gastos), ta=b.etiqueta, ing_a=eur(b.ingresos), gas_a=eur(b.gastos)) }}</p>
+      {% endif %}
+      {% if situacion.pendientes %}<p class="muted">{{ ngettext('Hay %(n)s factura pendiente de tratar que todavía no cuenta aquí.', 'Hay %(n)s facturas pendientes de tratar que todavía no cuentan aquí.', situacion.pendientes, n=situacion.pendientes) }}</p>{% endif %}
+    </section>
+    {% endif %}
     {% if not vencimientos %}
     <p class="empty-lane">{{ _('Todavía no hay vencimientos registrados.') }}</p>
     {% else %}

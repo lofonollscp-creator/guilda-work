@@ -1,0 +1,12 @@
+{# Selector de respuestas rápidas del despacho para el cuadro de texto `destino` (id). Se incluye con {% with cliente_fiscal_id=…, destino='…' %}. #}
+{% set rr = respuestas_rapidas(cliente_fiscal_id) %}
+{% if rr %}
+<div class="respuestas-rapidas-fila">
+  <label class="sr-only" for="{{ destino }}-rr">{{ _('Respuesta rápida') }}</label>
+  <select id="{{ destino }}-rr" class="respuestas-rapidas" data-destino="{{ destino }}">
+    <option value="">{{ _('Respuesta rápida…') }}</option>
+    {% for r in rr %}<option value="{{ r.texto }}">{{ r.titulo }}</option>{% endfor %}
+  </select>
+</div>
+<script src="{{ url_for('static', filename='respuestas_rapidas.js') }}" defer></script>
+{% endif %}

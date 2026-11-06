@@ -31,6 +31,12 @@ def test_portal_en_movil(servidor, abrir, entrar_como_equipo, chromium):
     v = db.crear_vencimiento_fiscal(t, cid, "303", "2026-T3", hoy[:8] + "28", usuario_id=uid)
     db.crear_mensaje_vencimiento(v, "empleado", "¿Nos mandas el extracto del banco del trimestre completo, por favor, con todos los movimientos?", usuario_id=uid)
     justificantes.pedir(t, uid, cid, [{"fecha": hoy, "importe": -31240, "concepto": LARGO + " " + LARGO}])
+    from app import portal_personas, portal_subida_rapida
+    conn = db.get_connection(); conn.execute("UPDATE clientes_fiscales SET email = 'titular-movil@ejemplo.com' WHERE id = ?", (cid,)); conn.commit(); conn.close()
+    ficha = db.obtener_cliente_fiscal_por_id(cid)
+    portal_personas.anadir(ficha, "administracion-con-un-nombre-de-correo-larguisimo@despacho-de-ejemplo-muy-largo.com", LARGO, "administracion")
+    portal_subida_rapida.guardar_direccion_base(t, "facturas@despacho-de-ejemplo-muy-largo.com")
+    token = portal_subida_rapida.token_de(ficha)
 
     medidas = {}
 
@@ -55,9 +61,10 @@ def test_portal_en_movil(servidor, abrir, entrar_como_equipo, chromium):
     # 2) el cliente con su enlace
     ctx = chromium.new_context(viewport={"width": 360, "height": 800})
     pg = ctx.new_page()
-    pg.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(cid, '127.0.0.1')}")
+    pg.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(cid, '127.0.0.1', email='titular-movil@ejemplo.com')}")
     for ruta, etiqueta in (("/portal/", "inicio"), ("/portal/facturas", "facturas"), (f"/portal/facturas/{f}", "factura"), ("/portal/impuestos", "impuestos"), ("/portal/mensajes", "mensajes"),
-                           ("/portal/carpeta", "carpeta"), ("/portal/justificantes", "justificantes"), (f"/portal/vencimientos/{v}/mensajes", "mensajes-modelo")):
+                           ("/portal/carpeta", "carpeta"), ("/portal/justificantes", "justificantes"), (f"/portal/vencimientos/{v}/mensajes", "mensajes-modelo"),
+                           ("/portal/cuenta", "cuenta"), ("/portal/buscar?q=construcciones", "buscar"), (f"/portal/subida/{token}", "subida-rapida")):
         medir(pg, ruta, etiqueta)
     ctx.close()
     problemas = {k: m for k, m in medidas.items() if any(m.get(c) for c in ("desborde", "fuera_de_caja", "solapes", "pagina", "pequenos", "sin_nombre"))}

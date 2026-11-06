@@ -396,7 +396,12 @@ ALTER TABLE plazos ADD CONSTRAINT fk_plazos_expediente_id FOREIGN KEY (tenant_id
 ALTER TABLE plazos ADD CONSTRAINT fk_plazos_responsable_id FOREIGN KEY (responsable_id) REFERENCES usuarios (id);
 ALTER TABLE plazos ADD CONSTRAINT fk_plazos_revisado_por FOREIGN KEY (revisado_por) REFERENCES usuarios (id);
 ALTER TABLE plazos ADD CONSTRAINT fk_plazos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
+ALTER TABLE portal_avisos_enviados ADD CONSTRAINT fk_portal_avisos_enviados_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_contactos ADD CONSTRAINT fk_portal_contactos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_enlaces_subida ADD CONSTRAINT fk_portal_enlaces_subida_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_recordatorios_config ADD CONSTRAINT fk_portal_recordatorios_config_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_respuestas_rapidas ADD CONSTRAINT fk_portal_respuestas_rapidas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_suscripciones_push ADD CONSTRAINT fk_portal_suscripciones_push_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE proyecto_miembros ADD CONSTRAINT fk_proyecto_miembros_categoria_id FOREIGN KEY (tenant_id, categoria_id) REFERENCES categorias (tenant_id, id) ON DELETE CASCADE;
 ALTER TABLE proyecto_miembros ADD CONSTRAINT fk_proyecto_miembros_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE proyecto_miembros ADD CONSTRAINT fk_proyecto_miembros_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);

@@ -36,7 +36,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .bd import contexto as contexto_bd
 from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
-from . import acceso, acento, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_recordatorios, proyecto_plantillas, salud
+from . import acceso, acento, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_avisos, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_juridico, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -215,6 +215,17 @@ def _vence(valor, completada=False):
 
 
 app.add_template_filter(_vence, "vence")
+
+
+def _respuestas_rapidas_para(cliente_fiscal_id=None):
+    """Las respuestas rápidas del despacho de la persona, con el nombre del cliente ya puesto (para los selectores de las conversaciones del portal)."""
+    if not g.get("tenant_id"):
+        return []
+    from . import portal_respuestas
+    return portal_respuestas.para_cliente(g.tenant_id, db.obtener_cliente_fiscal(g.tenant_id, cliente_fiscal_id) if cliente_fiscal_id else None)
+
+
+app.add_template_global(_respuestas_rapidas_para, "respuestas_rapidas")
 
 
 def _msg_kratos(mensaje) -> str:
@@ -2561,7 +2572,8 @@ def _recordatorios_portal_servidor():
     while True:
         try:
             enviados = portal_recordatorios.procesar_recordatorios()
-            salud.registrar_ok("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, f"{enviados} enviado(s)")
+            otros = portal_avisos.procesar()                       # recordatorios escalonados de lo que espera al cliente y resumen de los lunes
+            salud.registrar_ok("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, f"{enviados} enviado(s), {otros['recordatorios']} de seguimiento, {otros['resumenes']} resumen(es)")
         except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en los recordatorios del portal")
             salud.registrar_error("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, f"{type(e).__name__}: {e}")

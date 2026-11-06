@@ -23,7 +23,7 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, fiscal_identidad, honorarios, obligaciones, portal_recordatorios, portal_vista_previa
+from . import acceso, auditoria, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_metricas, portal_personas, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -292,8 +292,97 @@ def recordatorios():
     return render_template(
         "fiscal_recordatorios.html", config=config, error=error, guardado=guardado, marcas=notificaciones_email.MARCAS_PLANTILLA,
         vista_previa=_vista_previa_recordatorio(config), smtp_configurado=notificaciones_email.configurado(),
-        max_antes=db.MAX_AVISOS_ANTES, max_despues=db.MAX_AVISOS_DESPUES,
+        max_antes=db.MAX_AVISOS_ANTES, max_despues=db.MAX_AVISOS_DESPUES, correo_facturas=portal_subida_rapida.direccion_base(g.tenant_id), respuestas=portal_respuestas.listar(g.tenant_id),
+        error_correo=(request.args.get("error_correo") or "")[:200] or None, error_respuesta=(request.args.get("error_respuesta") or "")[:200] or None,
+        guardado_correo=request.args.get("guardado_correo"), guardado_respuesta=request.args.get("guardado_respuesta"), max_respuestas=portal_respuestas.MAX_RESPUESTAS,
     )
+
+
+@fiscal_bp.route("/recordatorios/correo-facturas", methods=["POST"])
+@login_required
+def guardar_correo_facturas():
+    """La dirección del despacho que recibe las facturas que los clientes reenvían por correo (facturas+secreto@despacho)."""
+    if g.tenant_id is None:
+        abort(404)
+    try:
+        portal_subida_rapida.guardar_direccion_base(g.tenant_id, request.form.get("correo_facturas", ""))
+    except ValueError as e:
+        return redirect(url_for("fiscal.recordatorios", error_correo=_(str(e))[:200]) + "#correo-facturas")
+    return redirect(url_for("fiscal.recordatorios", guardado_correo=1) + "#correo-facturas")
+
+
+@fiscal_bp.route("/respuestas-rapidas", methods=["POST"])
+@login_required
+def crear_respuesta_rapida():
+    if g.tenant_id is None:
+        abort(404)
+    try:
+        portal_respuestas.crear(g.tenant_id, g.usuario_id, request.form.get("titulo", ""), request.form.get("texto", ""))
+    except ValueError as e:
+        return redirect(url_for("fiscal.recordatorios", error_respuesta=_(str(e))[:200]) + "#respuestas-rapidas")
+    return redirect(url_for("fiscal.recordatorios", guardado_respuesta=1) + "#respuestas-rapidas")
+
+
+@fiscal_bp.route("/respuestas-rapidas/<int:respuesta_id>/borrar", methods=["POST"])
+@login_required
+def borrar_respuesta_rapida(respuesta_id: int):
+    if g.tenant_id is None:
+        abort(404)
+    portal_respuestas.borrar(g.tenant_id, respuesta_id)
+    return redirect(url_for("fiscal.recordatorios") + "#respuestas-rapidas")
+
+
+@fiscal_bp.route("/portal-actividad")
+@login_required
+def portal_actividad():
+    """Qué clientes entran al portal, cuáles no responden a los avisos y cuánto tardan en contestar."""
+    if g.tenant_id is None:
+        abort(404)
+    return render_template("fiscal_portal_actividad.html", filas=portal_metricas.filas(g.tenant_id, g.usuario_id), dias_sin_entrar=portal_metricas.DIAS_SIN_ENTRAR)
+
+
+def _cliente_para_contactos(cliente_id: int):
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None or not acceso.puede_ver_cliente(g.tenant_id, g.usuario_id, cliente_id):
+        abort(404)
+    return cliente
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/contactos", methods=["POST"])
+@login_required
+def anadir_contacto_portal(cliente_id: int):
+    """Da acceso al portal de este cliente a otra persona (su administrativa, su asesor…) con un perfil."""
+    cliente = _cliente_para_contactos(cliente_id)
+    try:
+        portal_personas.anadir(cliente, request.form.get("email", ""), request.form.get("nombre", ""), request.form.get("rol", ""), por=g.usuario_id)
+        auditoria.registrar(g.tenant_id, g.usuario_id, "portal.contacto_alta", "cliente_fiscal", cliente_id, {"email": portal_personas.limpio(request.form.get("email")), "rol": request.form.get("rol")})
+    except ValueError as e:
+        return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id, error_contacto=_(str(e))[:200]) + "#contactos-portal")
+    return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id) + "#contactos-portal")
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/contactos/<int:contacto_id>/perfil", methods=["POST"])
+@login_required
+def cambiar_perfil_contacto_portal(cliente_id: int, contacto_id: int):
+    cliente = _cliente_para_contactos(cliente_id)
+    try:
+        portal_personas.cambiar_rol(cliente, contacto_id, request.form.get("rol", ""))
+        auditoria.registrar(g.tenant_id, g.usuario_id, "portal.contacto_perfil", "cliente_fiscal", cliente_id, {"contacto": contacto_id, "rol": request.form.get("rol")})
+    except ValueError as e:
+        return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id, error_contacto=_(str(e))[:200]) + "#contactos-portal")
+    return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id) + "#contactos-portal")
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/contactos/<int:contacto_id>/quitar", methods=["POST"])
+@login_required
+def quitar_contacto_portal(cliente_id: int, contacto_id: int):
+    cliente = _cliente_para_contactos(cliente_id)
+    try:
+        email = portal_personas.quitar(cliente, contacto_id)
+        auditoria.registrar(g.tenant_id, g.usuario_id, "portal.contacto_baja", "cliente_fiscal", cliente_id, {"email": email})
+    except ValueError as e:
+        return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id, error_contacto=_(str(e))[:200]) + "#contactos-portal")
+    return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id) + "#contactos-portal")
 
 
 ETIQUETAS_ACCESO = {
@@ -449,6 +538,7 @@ def editar_cliente(cliente_id: int):
         paises_con_calendario=PAISES_CON_CALENDARIO,
         perfil=db.perfil_fiscal_de_cliente(cliente), perfil_tipos=perfil_fiscal.TIPOS, perfil_atributos=perfil_fiscal.ATRIBUTOS,
         modelos_sugeridos=perfil_fiscal.modelos_para_perfil(db.perfil_fiscal_de_cliente(cliente)),
+        personas_portal=[p for p in portal_personas.listar(cliente) if not p["es_titular"]], roles_portal=portal_personas.ROLES, error_contacto=(request.args.get("error_contacto") or "")[:200] or None,
     )
 
 
@@ -838,13 +928,10 @@ def editar_vencimiento(vencimiento_id: int):
         # debe romper el guardado del vencimiento.
         if documento_solicitado and documento_solicitado != vencimiento["documento_solicitado"]:
             cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
-            if cliente is not None and cliente["email"]:
-                try:
-                    enviar_solicitud_documento(
-                        cliente["email"], documento_solicitado, portal_recordatorios.con_destino(url_for("portal_cliente.entrar", _external=True), f"/portal/vencimientos/{vencimiento_id}/documentos"), tenant_id=g.tenant_id,
-                    )
-                except ErrorNotificacionesEmail:
-                    pass
+            if cliente is not None:
+                enlace = portal_recordatorios.con_destino(url_for("portal_cliente.entrar", _external=True), f"/portal/vencimientos/{vencimiento_id}/documentos", cliente["id"])
+                portal_avisos.correo_directo(cliente, lambda e: enviar_solicitud_documento(e, documento_solicitado, enlace, tenant_id=g.tenant_id), accion="subir",
+                                             push=(_("Tu gestoría te pide un documento"), documento_solicitado, f"/portal/vencimientos/{vencimiento_id}/documentos"))
         return redirect(url_for("fiscal.vencimientos"))
     db.marcar_mensajes_leidos(vencimiento_id, "empleado")
     usuarios_tenant = [db.obtener_usuario(uid) for uid in db.usuarios_de_tenant(g.tenant_id)]
@@ -977,8 +1064,8 @@ def cobrar_stripe_vencimiento(vencimiento_id: int):
                 url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, _external=True),
                 metadata={"vencimiento_id": vencimiento_id},
             )
-            enviar_enlace_pago(cliente["email"], concepto, url_checkout, tenant_id=g.tenant_id)
-        except (stripe_pagos.ErrorStripe, ErrorNotificacionesEmail):
+            portal_avisos.correo_directo(cliente, lambda e: enviar_enlace_pago(e, concepto, url_checkout, tenant_id=g.tenant_id), accion="decidir")
+        except stripe_pagos.ErrorStripe:
             pass
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
 
@@ -997,11 +1084,10 @@ def responder_mensaje_vencimiento(vencimiento_id: int):
         # igual que el resto del portal) y nunca debe romper la respuesta
         # del empleado si el SMTP falla puntualmente.
         cliente = db.obtener_cliente_fiscal(g.tenant_id, vencimiento["cliente_fiscal_id"])
-        if cliente is not None and cliente["email"]:
-            try:
-                enviar_respuesta_portal(cliente["email"], texto, url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id)
-            except ErrorNotificacionesEmail:
-                pass
+        if cliente is not None:
+            enlace = portal_recordatorios.con_destino(url_for("portal_cliente.entrar", _external=True), f"/portal/vencimientos/{vencimiento_id}/mensajes", cliente["id"])
+            portal_avisos.correo_directo(cliente, lambda e: enviar_respuesta_portal(e, texto, enlace, tenant_id=g.tenant_id),
+                                         push=(_("Tienes un mensaje de tu gestoría"), texto, f"/portal/vencimientos/{vencimiento_id}/mensajes"))
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id))
 
 

@@ -19,8 +19,9 @@ MODELOS_DEL_TRIMESTRE = ("303", "130", "131", "115", "111")
 
 # --- El despacho devuelve la factura ------------------------------------------------------------------------------------------------------------------
 
-def devolver(tenant_id: int, usuario_id: int, factura_id: int, motivo: str) -> None:
-    """Saca del circuito una factura que anotó el cliente y le dice por qué, para que la corrija o la vuelva a enviar. Solo las del portal, y mientras no estén exportadas."""
+def devolver(tenant_id: int, usuario_id: int, factura_id: int, motivo: str) -> bool:
+    """Saca del circuito una factura que anotó el cliente y le dice por qué, para que la corrija o la vuelva a enviar. Solo las del portal, y mientras no estén exportadas.
+    Avisa al cliente (correo con el botón que lleva a la factura y, si lo tiene activado, un aviso en el móvil) a quien tenga acceso para corregirla. Devuelve si salió algún correo."""
     motivo = re.sub(r"\s+", " ", motivo or "").strip()
     if not motivo:
         raise ValueError("Explica al cliente qué ha de corregir.")
@@ -43,6 +44,28 @@ def devolver(tenant_id: int, usuario_id: int, factura_id: int, motivo: str) -> N
         conn.commit()
     finally:
         conn.close()
+    return _avisar_devolucion(f, factura_id, motivo)
+
+
+def _avisar_devolucion(f: dict, factura_id: int, motivo: str) -> bool:
+    """Nunca rompe la devolución, que ya está hecha: un fallo de correo solo significa que el cliente se entera al entrar."""
+    try:
+        from . import portal_avisos, portal_recordatorios
+        cliente = db.obtener_cliente_fiscal_por_id(f["cliente_fiscal_id"])
+        if cliente is None:
+            return False
+        trimestre = fc.trimestre_de(f["fecha"])
+        _ = portal_recordatorios._
+        tercero = f.get("tercero_nombre") or ""
+
+        def texto():
+            return {"asunto": _("Tu gestoría te devuelve una factura: %(tercero)s", tercero=tercero), "boton": _("Corregir la factura"),
+                    "lineas": [_("Hola, %(nombre)s.", nombre=cliente["nombre"]), _("Tu gestoría no ha podido tratar esta factura y te explica por qué:"), motivo,
+                               _("Puedes volver a enviarla corregida o darla por vista desde tu portal.")],
+                    "push": _("Tienes una factura por corregir: %(tercero)s", tercero=tercero)}
+        return portal_avisos.avisar(cliente, f"/portal/facturas?trimestre={trimestre}", texto, accion="subir") > 0
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def _eventos(conn, tenant_id: int, ids: list[int]) -> dict[int, dict]:

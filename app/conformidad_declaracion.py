@@ -58,22 +58,20 @@ def pedir(tenant_id: int, usuario_id: int, declaracion_id: int) -> dict:
 
 
 def _avisar_por_correo(tenant_id: int, d: dict) -> bool:
-    from . import notificaciones_email as ne, portal_recordatorios
+    from . import portal_avisos, portal_recordatorios
     cliente = db.obtener_cliente_fiscal_por_id(d["cliente_fiscal_id"])
-    base = portal_recordatorios.url_portal(f"/portal/declaraciones/{d['id']}")
-    if cliente is None or not cliente["email"] or not base or not ne.configurado():
+    if cliente is None:
         return False
     periodo = f"{d['periodo']} {d['ejercicio']}"
-    try:
-        with portal_recordatorios._en_idioma(cliente["idioma"] if "idioma" in cliente.keys() else "es"):
-            ne.enviar_aviso_portal(cliente["email"], portal_recordatorios._("Revisa tu modelo 303 de %(periodo)s", periodo=periodo),
-                                   [portal_recordatorios._("Hola, %(nombre)s.", nombre=cliente["nombre"]),
-                                    portal_recordatorios._("Tu gestoría ha preparado tu modelo 303 de %(periodo)s y quiere que lo veas antes de presentarlo.", periodo=periodo),
-                                    portal_recordatorios._("Si todo está bien, pulsa «De acuerdo»; si falta algo o no cuadra, dínoslo desde ahí.")],
-                                   portal_recordatorios._("Revisar mi modelo 303"), base, tenant_id=tenant_id)
-        return True
-    except ne.ErrorNotificacionesEmail:
-        return False
+    _ = portal_recordatorios._
+
+    def texto():
+        return {"asunto": _("Revisa tu modelo 303 de %(periodo)s", periodo=periodo), "boton": _("Revisar mi modelo 303"),
+                "lineas": [_("Hola, %(nombre)s.", nombre=cliente["nombre"]),
+                           _("Tu gestoría ha preparado tu modelo 303 de %(periodo)s y quiere que lo veas antes de presentarlo.", periodo=periodo),
+                           _("Si todo está bien, pulsa «De acuerdo»; si falta algo o no cuadra, dínoslo desde ahí.")],
+                "push": _("Tu modelo 303 de %(periodo)s espera tu revisión.", periodo=periodo)}
+    return portal_avisos.avisar(cliente, f"/portal/declaraciones/{d['id']}", texto, accion="decidir") > 0
 
 
 def pendientes_del_cliente(cliente_fiscal_id: int) -> list[dict]:

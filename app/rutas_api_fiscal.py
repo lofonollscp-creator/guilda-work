@@ -288,13 +288,12 @@ def responder_mensaje_vencimiento(vencimiento_id: int):
     db.marcar_mensajes_leidos(vencimiento_id, "empleado")
     cliente = db.obtener_cliente_fiscal(g.tenant_id, v["cliente_fiscal_id"])
     avisado = False
-    if cliente is not None and cliente["email"]:
+    if cliente is not None:
         from flask import url_for
-        try:
-            notificaciones_email.enviar_respuesta_portal(cliente["email"], texto, url_for("portal_cliente.entrar", _external=True), tenant_id=g.tenant_id)
-            avisado = True
-        except notificaciones_email.ErrorNotificacionesEmail:
-            pass
+        from . import portal_avisos, portal_recordatorios
+        enlace = portal_recordatorios.con_destino(url_for("portal_cliente.entrar", _external=True), f"/portal/vencimientos/{v['id']}/mensajes", cliente["id"])
+        avisado = portal_avisos.correo_directo(cliente, lambda e: notificaciones_email.enviar_respuesta_portal(e, texto, enlace, tenant_id=g.tenant_id),
+                                               push=("Tienes un mensaje de tu gestoría", texto, f"/portal/vencimientos/{v['id']}/mensajes")) > 0
     return _ok({"mensajes": _dicts(db.listar_mensajes_vencimiento(vencimiento_id)), "cliente_avisado_por_correo": avisado}, 201)
 
 

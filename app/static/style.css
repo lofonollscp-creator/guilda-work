@@ -5309,3 +5309,64 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
   .portal-carpeta-info { flex: 1 1 calc(100% - 64px); }
   .portal-carpeta-iconos { margin-left: auto; }
 }
+
+/* --- Portal de cliente: Mi cuenta, personas con acceso, plazos, panel de situación, búsqueda y subida desde el móvil --- */
+.portal-recordar { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 14px; font-size: 0.92em; color: var(--portal-muted); }
+.portal-recordar input { margin-top: 3px; }
+.portal-cambiar-titular { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.portal-cambiar-titular select { min-height: 44px; max-width: 100%; }
+.portal-bienvenida, .portal-plazos, .portal-cuenta-bloque, .portal-situacion, .portal-resultados { margin: 0 0 var(--space-5); padding: 16px 18px; border: 1px solid var(--portal-line); border-radius: 18px; background: var(--portal-card); }
+.portal-bienvenida { border-color: var(--portal-accent); background: var(--portal-accent-bg); }
+.portal-bienvenida h2, .portal-plazos h2, .portal-cuenta-bloque h2, .portal-situacion h2, .portal-resultados h2 { margin: 0 0 10px; font-size: 1.15em; }
+.portal-bienvenida-pasos { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 8px; }
+.portal-bienvenida-pasos span { display: block; color: var(--portal-muted); }
+.portal-bienvenida-acciones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.portal-plazos-lista, .portal-personas, .portal-resultados-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.portal-plazo { padding: 12px 14px; border: 1px solid var(--portal-line); border-left-width: 6px; border-radius: 14px; border-left-color: var(--warning, #f5a524); }
+.portal-plazo.urgente { border-left-color: var(--danger, #e5484d); }
+.portal-plazo.en-orden { border-left-color: var(--success, #4caf50); }
+.portal-plazo-cab { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; align-items: baseline; margin: 0 0 6px; }
+.portal-plazo-faltan { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.portal-plazo-faltan a { display: inline-block; min-height: 32px; line-height: 32px; }
+.portal-fases { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; padding: 0; }
+.portal-fase { padding: 3px 12px; border-radius: 999px; border: 1px solid var(--portal-line); font-size: 0.85em; color: var(--portal-muted); }
+.portal-fase.hecha { border-color: var(--success, #4caf50); color: var(--portal-ink); }
+.portal-fase.actual { border-color: var(--portal-accent); background: var(--portal-accent-bg); color: var(--portal-ink); font-weight: 700; }
+.portal-fase-detalle { display: block; margin: 0 0 6px; }
+.portal-cuenta-form { display: grid; gap: 10px; margin: 0 0 10px; }
+.portal-opcion { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--portal-line); border-radius: 12px; min-height: 44px; }
+.portal-opcion span { display: grid; gap: 2px; }
+.portal-persona { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--portal-line); border-radius: 12px; }
+.portal-persona-datos { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.portal-persona-form { display: flex; gap: 6px; align-items: center; }
+.portal-persona select, .portal-cuenta-form select { min-height: 44px; }
+.portal-qr svg { width: min(100%, 260px); height: auto; border-radius: 12px; border: 1px solid var(--portal-line); }
+.portal-dir, .portal-dir a { overflow-wrap: anywhere; word-break: break-all; }
+.portal-plazo .portal-estado { white-space: normal; }
+.portal-buscar { display: flex; gap: 8px; margin: 0 0 16px; }
+.portal-buscar input[type="search"] { flex: 1 1 auto; min-width: 0; min-height: 44px; }
+.portal-resultados-lista a { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; min-height: 44px; padding: 8px 4px; text-decoration: none; overflow-wrap: anywhere; }
+.portal-tipo { border: 0; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+.portal-tipo label { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+.portal-grafica { width: 100%; height: auto; max-height: 220px; }
+.portal-barra-ingreso { fill: var(--portal-accent); opacity: 0.55; }
+.portal-barra-gasto { fill: var(--danger, #e5484d); opacity: 0.45; }
+.portal-barra-ingreso.actual, .portal-barra-gasto.actual { opacity: 1; }
+.portal-grafica-eje { fill: var(--portal-muted); font-size: 11px; }
+.portal-leyenda { display: flex; gap: 14px; margin: 0 0 10px; font-size: 0.88em; }
+.portal-leyenda-ingreso::before, .portal-leyenda-gasto::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 3px; background: var(--portal-accent); }
+.portal-leyenda-gasto::before { background: var(--danger, #e5484d); }
+.portal-tabla-situacion { width: 100%; border-collapse: collapse; }
+.portal-tabla-situacion th, .portal-tabla-situacion td { padding: 8px 10px; border-bottom: 1px solid var(--portal-line); text-align: right; }
+.portal-tabla-situacion th:first-child, .portal-tabla-situacion tbody th { text-align: left; }
+@media (max-width: 480px) {
+  .portal-persona-form { flex-wrap: wrap; }
+  .portal-tabla-situacion th, .portal-tabla-situacion td { padding: 6px 4px; font-size: 0.9em; }
+}
+.portal-persona-datos .pill { justify-self: start; }
+.portal-resumen .log-item { flex-wrap: wrap; align-items: flex-start; }
+.portal-resumen .log-item .log-text { flex: 1 1 14em; min-width: 0; overflow-wrap: anywhere; }
+.portal-resumen .log-item .portal-fases, .portal-resumen .log-item .portal-fase-detalle, .portal-resumen .log-item .portal-hilo, .portal-resumen .log-item .portal-subir { flex: 1 1 100%; min-width: 0; }
+.portal-resumen > div { min-width: 0; flex: 1 1 0; }
+.portal-resumen .log-item form.portal-subir { display: block; }
+.portal-resumen .log-item form.portal-subir textarea { width: 100%; }

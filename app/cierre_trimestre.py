@@ -61,23 +61,20 @@ def etiqueta(trimestre: str) -> str:
 
 
 def _avisar_al_cliente(tenant_id: int, cliente_fiscal_id: int, trimestre: str) -> bool:
-    from . import notificaciones_email as ne, portal_recordatorios
+    from . import portal_avisos, portal_recordatorios
     cliente = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
-    url = portal_recordatorios.url_portal(f"/portal/facturas?trimestre={trimestre}")
-    if cliente is None or not cliente["email"] or not url or not ne.configurado():
+    if cliente is None:
         return False
     et = etiqueta(trimestre)
     _ = portal_recordatorios._
-    try:
-        with portal_recordatorios._en_idioma(cliente["idioma"] if "idioma" in cliente.keys() else "es"):
-            lineas = [_("Hola, %(nombre)s.", nombre=cliente["nombre"]), _("Tu gestoría ha cerrado el trimestre %(t)s: todas tus facturas de ese periodo están ya tratadas.", t=et)]
-            if verticales.esta_activo(tenant_id, "fiscal"):
-                lineas.append(_("Tienes a tu disposición el informe del trimestre en tu portal."))
-            lineas.append(_("Si te falta alguna factura de ese periodo, escríbenos desde el portal."))
-            ne.enviar_aviso_portal(cliente["email"], _("Hemos cerrado el trimestre %(t)s", t=et), lineas, _("Ver mi trimestre"), url, tenant_id=tenant_id)
-        return True
-    except ne.ErrorNotificacionesEmail:
-        return False
+
+    def texto():
+        lineas = [_("Hola, %(nombre)s.", nombre=cliente["nombre"]), _("Tu gestoría ha cerrado el trimestre %(t)s: todas tus facturas de ese periodo están ya tratadas.", t=et)]
+        if verticales.esta_activo(tenant_id, "fiscal"):
+            lineas.append(_("Tienes a tu disposición el informe del trimestre en tu portal."))
+        lineas.append(_("Si te falta alguna factura de ese periodo, escríbenos desde el portal."))
+        return {"asunto": _("Hemos cerrado el trimestre %(t)s", t=et), "lineas": lineas, "boton": _("Ver mi trimestre"), "push": _("Hemos cerrado el trimestre %(t)s", t=et)}
+    return portal_avisos.avisar(cliente, f"/portal/facturas?trimestre={trimestre}", texto) > 0
 
 
 def informe_pdf(tenant_id: int, cliente_fiscal_id: int, trimestre: str) -> bytes | None:

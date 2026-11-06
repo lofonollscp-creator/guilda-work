@@ -11,7 +11,7 @@ from tests.e2e.test_capturas_web import _sembrar
 
 CARPETA = os.environ.get("GUILDA_BARRIDO")
 pytestmark = pytest.mark.skipif(not CARPETA, reason="GUILDA_BARRIDO sin definir")
-EXCLUIR = ("salir", "logout", "descargar", "export", "pdf", "csv", "static", "adjunto", "archivo", "borrar", "eliminar", "enviar")
+EXCLUIR = ("salir", "logout", "descargar", "export", "pdf", "csv", "static", "adjunto", "archivo", "borrar", "eliminar", "enviar", "manifest", "push", "comprobar")
 
 
 def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
@@ -58,13 +58,33 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     conn.execute("UPDATE vencimientos_fiscales SET documenso_documento_id = 'env_barrido' WHERE id = ?", (v303,))
     conn.commit(); conn.close()
     db.subir_documento_vencimiento(v303, "justificante-presentacion-303-con-un-nombre-muy-largo-de-archivo.pdf", "application/pdf", b"%PDF-1.4\n%%EOF", origen="justificante")
+    from app import portal_personas, portal_subida_rapida
+    ficha = db.obtener_cliente_fiscal_por_id(ids["cliente"])
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes_fiscales SET email = ? WHERE id = ?", ("titular-barrido@ejemplo.com", ids["cliente"]))
+    conn.commit(); conn.close()
+    ficha = db.obtener_cliente_fiscal_por_id(ids["cliente"])
+    portal_personas.anadir(ficha, "administracion-con-un-nombre-de-correo-larguisimo@despacho-de-ejemplo-muy-largo.com", "Ana María Fernández-Villanueva de la Vera y Soto", "administracion")
+    portal_personas.anadir(ficha, "asesor@ejemplo.com", "Asesor externo", "consulta")
+    from app.db_fiscal import crear_cliente_fiscal
+    crear_cliente_fiscal(t, "Segunda sociedad del mismo dueño, Sociedad Limitada Profesional", nif="B87654321", email="titular-barrido@ejemplo.com")
+    token_subida = portal_subida_rapida.token_de(ficha)
+    portal_subida_rapida.guardar_direccion_base(t, "facturas@despacho-de-ejemplo-muy-largo.com")
+    token_preferencias = portal_personas.token_preferencias(ids["cliente"], "titular-barrido@ejemplo.com")
+    for i, (fecha, tipo, total) in enumerate((("2026-02-10", "recibida", "121,00"), ("2026-03-10", "emitida", "242,00"), ("2025-08-10", "recibida", "60,50"), (hoy, "emitida", "363,00"))):
+        fid = fc.crear_desde_portal(ids["cliente"], {"tipo": tipo, "fecha": fecha, "numero": f"S-{i}", "tercero_nombre": "Proveedor de la situación", "tercero_nif": "B11111111", "total": total, "pct_iva": "21"})
+        conn = db.get_connection(); conn.execute("UPDATE facturas_contables SET estado = 'revisada' WHERE id = ?", (fid,)); conn.commit(); conn.close()
+    conn = db.get_connection()
+    conn.execute("UPDATE vencimientos_fiscales SET documento_solicitado = 'Extracto bancario completo del trimestre con todos los movimientos' WHERE id = ?", (v303,))
+    conn.execute("INSERT INTO tareas_outlook (usuario_id, asunto, estado, porcentaje_completado, creada_en, actualizada_en, cliente_fiscal_id, visible_cliente, comentarios_cliente) VALUES (?, 'Preparar la declaración de la renta con un asunto bastante largo para ver cómo se parte', 'esperando', 40, '2026-10-01T10:00:00', '2026-11-03T09:00:00', ?, 1, 1)", (uid, ids["cliente"]))
+    conn.commit(); conn.close()
     if os.environ.get("GUILDA_TEXTOS_LARGOS"):
         conn = db.get_connection()
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
-    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes"]
+    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")
@@ -97,7 +117,7 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     # cliente del portal con su enlace
     ctx = chromium.new_context(viewport={"width": 1280, "height": 800})
     pg = ctx.new_page()
-    pg.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(ids['cliente'], '127.0.0.1')}")
+    pg.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(ids['cliente'], '127.0.0.1', email='titular-barrido@ejemplo.com')}")
     pg.wait_for_load_state("load")
     informe["entrada"] = {"final": pg.url.replace(servidor.url, "")}
     recorrer(pg, rutas, "portal:")

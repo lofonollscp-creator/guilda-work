@@ -4,6 +4,21 @@
 {% block subtitulo %}{{ _('Tu expediente fiscal.') }}{% endblock %}
 {% block contenido %}
     {% if ayuda_enviada %}<p class="portal-peticion" role="status"><strong>{{ _('Hemos avisado a tu gestoría de que necesitas ayuda con tu certificado. Se pondrá en contacto contigo.') }}</strong></p>{% endif %}
+    {% if bienvenida %}
+    <section class="portal-bienvenida" aria-labelledby="portal-bienvenida-titulo">
+      <h2 id="portal-bienvenida-titulo">{{ _('Así funciona tu portal') }}</h2>
+      <ol class="portal-bienvenida-pasos">
+        <li><strong>{{ _('Mira «Para hacer»') }}</strong> <span>{{ _('Todo lo que tu gestoría necesita de ti aparece ahí, con su botón. Si no hay nada, estás al día.') }}</span></li>
+        {% if portal_facturas and portal_puede_subir %}<li><strong>{{ _('Sube tus facturas con una foto') }}</strong> <span>{{ _('En Facturas, o desde el móvil con el código QR de «Mi cuenta»: no tienes que teclear nada.') }}</span></li>{% endif %}
+        <li><strong>{{ _('Elige cuánto quieres que te avisemos') }}</strong> <span>{{ _('Un correo por cada novedad, un resumen cada lunes o solo lo urgente. Lo cambias cuando quieras en «Mi cuenta».') }}</span></li>
+      </ol>
+      <div class="portal-bienvenida-acciones">
+        <a class="btn btn-ghost" href="{{ url_for('portal_cliente.cuenta') }}">{{ _('Ir a Mi cuenta') }}</a>
+        <form method="post" action="{{ url_for('portal_cliente.bienvenida_vista') }}"><button type="submit" class="btn btn-primary">{{ _('Entendido') }}</button></form>
+      </div>
+    </section>
+    {% endif %}
+
     <section class="portal-hoy" aria-labelledby="portal-hoy-titulo">
       <h2 id="portal-hoy-titulo">{{ _('Para hacer') }}</h2>
       {% if para_hacer %}
@@ -22,6 +37,29 @@
       <p class="portal-hoy-vacio">{{ _('Estás al día: ahora mismo tu gestoría no necesita nada de ti.') }}</p>
       {% endif %}
     </section>
+
+    {% if plazos %}
+    <section class="portal-plazos" aria-labelledby="portal-plazos-titulo">
+      <h2 id="portal-plazos-titulo">{{ _('Plazos y lo que falta') }}</h2>
+      <ul class="portal-plazos-lista">
+        {% for p in plazos %}
+        <li class="portal-plazo {{ 'urgente' if p.urgente }} {{ 'en-orden' if p.en_orden }}">
+          <div class="portal-plazo-cab">
+            <strong>{{ p.modelo }} {{ p.periodo }}</strong>
+            <span class="muted">{{ p.fecha_limite|fecha_dia }} · {% if p.dias is none %}{% elif p.dias < 0 %}{{ _('venció hace %(n)s días', n=-p.dias) if p.dias < -1 else _('venció ayer') }}{% elif p.dias == 0 %}{{ _('vence hoy') }}{% elif p.dias == 1 %}{{ _('vence mañana') }}{% else %}{{ _('vence en %(n)s días', n=p.dias) }}{% endif %}</span>
+          </div>
+          {% if p.en_orden %}
+          <span class="portal-estado ok">{{ _('Todo en orden: tu gestoría no necesita nada más de ti.') }}</span>
+          {% else %}
+          <ul class="portal-plazo-faltan">
+            {% for f in p.faltan %}<li><a href="{{ f.url }}">{{ f.texto }}</a></li>{% endfor %}
+          </ul>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
 
     {% for c in certificados %}
     <section id="certificado{{ '' if loop.first else '-' ~ c.id }}" class="portal-certificado portal-certificado-{{ c.estado }}" aria-label="{{ _('Tu certificado digital') }}">
@@ -73,6 +111,10 @@
             <span class="log-text">{{ t.asunto }}</span>
             {% if t.fecha_vencimiento %}<span class="log-duration">{{ _('Fecha prevista: %(fecha)s', fecha=t.fecha_vencimiento|fecha_dia) }}</span>{% endif %}
             <span class="pill">{{ _(t.estado_texto) }}</span>
+            <ol class="portal-fases" aria-label="{{ _('Cómo va este trabajo') }}">
+              {% for f in t.fases %}<li class="portal-fase {{ f.estado }}" {% if f.estado == 'actual' %}aria-current="step"{% endif %}>{{ f.texto }}</li>{% endfor %}
+            </ol>
+            <span class="muted portal-fase-detalle">{% if t.pausa %}{{ t.pausa }} · {% endif %}{% if t.responsable %}{{ _('Lo lleva %(nombre)s', nombre=t.responsable) }}{% endif %}{% if t.actualizada_en %}{% if t.responsable %} · {% endif %}{{ _('Última novedad: %(fecha)s', fecha=t.actualizada_en|fecha_dia) }}{% endif %}</span>
             {% if t.comentarios or t.puede_comentar %}
             <div class="portal-hilo">
               {% for m in t.comentarios %}

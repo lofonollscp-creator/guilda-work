@@ -1169,15 +1169,12 @@ def avisar_por_correo_comentario_cliente(destinatario_id: int, tarea_id: int, as
 
 def avisar_respuesta_al_cliente(tenant_id: int | None, cliente_fiscal_id: int, texto: str, url_entrada: str) -> bool:
     """Correo al cliente avisando de que tiene una respuesta (con el enlace de entrada al portal, como en los mensajes de los vencimientos). True si salió; un fallo o la falta de correo nunca estropea la respuesta, que ya está guardada."""
-    from . import notificaciones_email
+    from . import notificaciones_email, portal_avisos
     cliente = db.obtener_cliente_fiscal(tenant_id, cliente_fiscal_id) if tenant_id else None
-    if cliente is None or not cliente["email"]:
+    if cliente is None:
         return False
-    try:
-        notificaciones_email.enviar_respuesta_portal(cliente["email"], (texto or "").strip(), url_entrada, tenant_id=tenant_id)
-    except notificaciones_email.ErrorNotificacionesEmail:
-        return False
-    return True
+    return portal_avisos.correo_directo(cliente, lambda e: notificaciones_email.enviar_respuesta_portal(e, (texto or "").strip(), url_entrada, tenant_id=tenant_id),
+                                        push=("Tu gestoría te ha respondido", (texto or "").strip(), "/portal/")) > 0
 
 
 def ocultar_comentario_de_cliente(usuario_id: int, comentario_id: int) -> int | None:

@@ -1,0 +1,8 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Sin permiso') }}{% endblock %}
+{% block titulo %}{{ _('Tu perfil no puede hacer esto') }}{% endblock %}
+{% block subtitulo %}{{ portal_cliente.nombre if portal_cliente }}{% endblock %}
+{% block contenido %}
+    <p>{{ _('Esta acción la hace quien tiene el acceso completo: firmar, pagar, dar la conformidad de un modelo o gestionar quién entra. Pídesela a esa persona o a tu gestoría.') }}</p>
+    <p><a class="btn btn-primary" href="{{ url_for('portal_cliente.dashboard') }}">{{ _('Volver al inicio') }}</a></p>
+{% endblock %}

@@ -11,24 +11,33 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from . import db, notificaciones, notificaciones_email
+from . import db, notificaciones, notificaciones_email, portal_avisos, portal_personas
 
 logger = logging.getLogger("guilda")
 
 DIAS_ANTES = (7, 2)
 
 
-def con_destino(url: str | None, destino: str | None) -> str | None:
-    """El enlace de entrada al portal con la pantalla a la que debe llevar al cliente cuando entre (p. ej. `/portal/facturas?trimestre=2026-T2`). Sin destino o sin enlace, tal cual."""
+def con_destino(url: str | None, destino: str | None, cliente_id: int | None = None) -> str | None:
+    """El enlace de entrada al portal con la pantalla a la que debe llevar al cliente cuando entre (p. ej. `/portal/facturas?trimestre=2026-T2`). Sin destino o sin enlace, tal cual.
+    `cliente_id`: la ficha a la que pertenece ese destino, para quien entra con un mismo email a varias sociedades."""
     if not url or not destino:
         return url
     from urllib.parse import quote
-    return f"{url}{'&' if '?' in url else '?'}siguiente={quote(destino, safe='')}"
+    c = f"&c={int(cliente_id)}" if cliente_id else ""
+    return f"{url}{'&' if '?' in url else '?'}siguiente={quote(destino, safe='')}{c}"
 
 
-def url_portal(destino: str | None = None) -> str | None:
+def url_portal(destino: str | None = None, cliente_id: int | None = None) -> str | None:
     base = os.environ.get("GUILDA_URL_PUBLICA", "").strip().rstrip("/")
-    return con_destino(f"{base}/portal/entrar" if base else None, destino)
+    return con_destino(f"{base}/portal/entrar" if base else None, destino, cliente_id)
+
+
+def url_preferencias(cliente_id: int, email: str) -> str | None:
+    """El enlace del pie de cada correo para cambiar los avisos sin tener que entrar (firmado, vale un año)."""
+    from . import portal_personas
+    base = os.environ.get("GUILDA_URL_PUBLICA", "").strip().rstrip("/")
+    return f"{base}/portal/preferencias/{portal_personas.token_preferencias(cliente_id, email)}" if base else None
 
 
 def _(mensaje: str, **valores) -> str:
@@ -101,14 +110,19 @@ def procesar_recordatorios(hoy: datetime | None = None) -> int:
             objetivo = (hoy + timedelta(days=dias)).strftime("%Y-%m-%d")
             for v in db.vencimientos_para_recordatorio_portal(objetivo, dias, tenant["id"]):
                 try:
+                    cliente = db.obtener_cliente_fiscal_por_id(v["cliente_fiscal_id"])
+                    # A quién: cada persona recibe esto según lo que eligió (el aviso de última hora, a 2 días o menos, llega también a quien solo quiere lo urgente).
+                    destinatarios = portal_personas.destinatarios(cliente, urgente=dias <= 2, accion="subir") if cliente is not None else [v["cliente_email"].strip()]
                     with _en_idioma(v["cliente_idioma"]):
-                        notificaciones_email.enviar_recordatorio_vencimiento(
-                            v["cliente_email"].strip(), v["cliente_nombre"], v["modelo"], v["periodo"], v["fecha_limite"],
-                            dias, url_portal(f"/portal/vencimientos/{v['id']}/documentos"), v["tenant_nombre"], v["documento_solicitado"], plantilla=plantilla, tenant_id=tenant["id"],
-                        )
+                        n = portal_avisos.correo_a(cliente, destinatarios, lambda e: notificaciones_email.enviar_recordatorio_vencimiento(
+                            e, v["cliente_nombre"], v["modelo"], v["periodo"], v["fecha_limite"],
+                            dias, url_portal(f"/portal/vencimientos/{v['id']}/documentos", v["cliente_fiscal_id"]), v["tenant_nombre"], v["documento_solicitado"], plantilla=plantilla, tenant_id=tenant["id"],
+                        )) if destinatarios else 0
+                    if destinatarios and n == 0:
+                        continue                                         # todos los envíos fallaron: se reintenta en la próxima vuelta
                 except Exception:  # noqa: BLE001 -- un cliente con el buzón roto no debe frenar al resto
                     logger.exception("No se pudo enviar el recordatorio del vencimiento %s", v["id"])
                     continue
-                db.marcar_recordatorio_portal_enviado(v["id"], dias)
-                enviados += 1
+                db.marcar_recordatorio_portal_enviado(v["id"], dias)       # sin destinatarios (todos en «resumen») también se marca: el resumen semanal ya lo recoge
+                enviados += n
     return enviados

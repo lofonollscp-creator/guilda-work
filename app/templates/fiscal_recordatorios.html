@@ -8,6 +8,7 @@
   </div>
 </header>
 <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos') }}">&larr; {{ _('Volver a los vencimientos') }}</a>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.portal_actividad') }}">{{ _('Actividad del portal') }}</a>
 
 {% if not smtp_configurado %}<div class="ia-error ds-mt-16">{{ _('El correo del portal no está configurado en el servidor: no se enviarán recordatorios a los clientes (los avisos internos al equipo sí).') }}</div>{% endif %}
 {% if error %}<div class="ia-error ds-mt-16" role="alert">{{ error }}</div>{% endif %}
@@ -32,6 +33,37 @@
   <label class="proyecto-form-ancha">{{ _('Mensaje') }} <textarea name="cuerpo" rows="8" maxlength="2000">{{ config.cuerpo }}</textarea></label>
   <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
 </form>
+
+<section class="proyecto-bloque ds-max-720 ds-mt-24" id="correo-facturas" aria-labelledby="correo-facturas-titulo">
+  <h2 id="correo-facturas-titulo">{{ _('Facturas por correo') }}</h2>
+  <p class="muted">{{ _('Si indicas una dirección de tu despacho (por ejemplo facturas@tudespacho.com), cada cliente tendrá la suya propia en su portal (facturas+código@tudespacho.com) para reenviar ahí las facturas que recibe. Las fotos y PDF que lleguen entran como facturas por leer. El buzón de esa dirección debe estar conectado en el correo de alguien del equipo, y tu servidor de correo tiene que aceptar direcciones con «+».') }}</p>
+  {% if error_correo %}<div class="ia-error" role="alert">{{ error_correo }}</div>{% endif %}
+  {% if guardado_correo %}<p class="muted" role="status">{{ _('Guardado.') }}</p>{% endif %}
+  <form method="post" action="{{ url_for('fiscal.guardar_correo_facturas') }}" class="proyecto-form">
+    <label>{{ _('Dirección que recibe las facturas') }} <input type="email" name="correo_facturas" value="{{ correo_facturas }}" maxlength="200" placeholder="facturas@tudespacho.com"></label>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+</section>
+
+<section class="proyecto-bloque ds-max-720 ds-mt-24" id="respuestas-rapidas" aria-labelledby="respuestas-titulo">
+  <h2 id="respuestas-titulo">{{ _('Respuestas rápidas') }}</h2>
+  <p class="muted">{{ _('Frases hechas para contestar a tus clientes en un clic desde las conversaciones del portal. Puedes usar {cliente} y {despacho}; se editan antes de enviar.') }}</p>
+  {% if error_respuesta %}<div class="ia-error" role="alert">{{ error_respuesta }}</div>{% endif %}
+  {% if guardado_respuesta %}<p class="muted" role="status">{{ _('Guardada.') }}</p>{% endif %}
+  {% if respuestas %}
+  <ul class="log-list">
+    {% for r in respuestas %}
+    <li class="log-item"><span class="log-text"><strong>{{ r.titulo }}</strong> — {{ r.texto }}</span>
+      <form method="post" action="{{ url_for('fiscal.borrar_respuesta_rapida', respuesta_id=r.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Borrar') }}</button></form></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="{{ url_for('fiscal.crear_respuesta_rapida') }}" class="proyecto-form">
+    <label>{{ _('Título') }} <input type="text" name="titulo" maxlength="60" required></label>
+    <label class="proyecto-form-ancha">{{ _('Texto') }} <textarea name="texto" rows="3" maxlength="1000" required></textarea></label>
+    <button type="submit" class="btn btn-primary">{{ _('Añadir respuesta') }}</button>
+  </form>
+</section>
 
 {% if vista_previa %}
 <section class="proyecto-bloque ds-max-720 ds-mt-24">

@@ -12,6 +12,8 @@ ellas, configurado() devuelve False y enviar_enlace_portal() lanza
 ErrorNotificacionesEmail con un mensaje legible -- el llamante debe
 capturarlo (ver app/rutas_portal_cliente.py) y mostrar que el portal no
 está configurado todavía, en vez de dejar pasar un 500 en crudo."""
+import contextlib
+import contextvars
 import os
 import re
 import smtplib
@@ -47,7 +49,23 @@ def _marca(tenant_id: int | None) -> dict | None:
         return None
 
 
+_preferencias_url: contextvars.ContextVar[str | None] = contextvars.ContextVar("preferencias_url_portal", default=None)
+
+
+@contextlib.contextmanager
+def con_preferencias(url: str | None):
+    """Mientras dure, los correos que se construyan llevan al pie el enlace «Cambiar los avisos que recibes» de la persona que los recibe (y la cabecera List-Unsubscribe)."""
+    marca = _preferencias_url.set(url)
+    try:
+        yield
+    finally:
+        _preferencias_url.reset(marca)
+
+
 def _construir(tenant_id: int | None, *args, **kwargs):
+    url = _preferencias_url.get()
+    if url:
+        kwargs.setdefault("enlace_baja", (_("Cambiar los avisos que recibes"), url))
     return correo_diseno.construir(*args, marca=_marca(tenant_id), **kwargs)
 
 
@@ -70,6 +88,8 @@ def _enviar(destinatario: str, asunto: str, cuerpo: str, html: str | None = None
     mensaje["Subject"] = asunto
     mensaje["From"] = PORTAL_SMTP_REMITENTE
     mensaje["To"] = destinatario
+    if _preferencias_url.get():
+        mensaje["List-Unsubscribe"] = f"<{_preferencias_url.get()}>"
     mensaje.set_content(cuerpo)
     if html:
         mensaje.add_alternative(html, subtype="html")      # multipart/alternative: texto plano + versión con el diseño de Guilda Work

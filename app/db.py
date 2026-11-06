@@ -2330,6 +2330,8 @@ def init_db() -> None:
         fiscal_base.crear_esquema(conn)       # cimientos del control fiscal: unicidades, versión, fase, oficinas y permisos (app/fiscal_base.py)
         from . import facturacion_despacho
         facturacion_despacho.crear_esquema(conn)   # relación expediente → factura de FacturaScripts (app/facturacion_despacho.py)
+        from . import portal_personas
+        portal_personas.crear_esquema(conn)     # contactos con acceso al portal, avisos enviados, push de clientes y respuestas rápidas (app/portal_personas.py)
         from . import reglas_fiscales
         reglas_fiscales.crear_esquema(conn)     # catálogo global de reglas fiscales, sembrado con los valores del código (app/reglas_fiscales.py)
         from . import marca
@@ -3182,6 +3184,8 @@ from .db_fiscal import (  # noqa: E402,F401
     ultimo_acceso_solicitado_en,
     crear_acceso_cliente_fiscal,
     consumir_acceso_cliente_fiscal,
+    consumir_acceso_portal,
+    ultimo_acceso_solicitado_a,
     crear_acceso_facturacion,
     consumir_acceso_facturacion,
     subir_documento_vencimiento,

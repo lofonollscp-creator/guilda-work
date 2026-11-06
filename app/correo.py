@@ -744,6 +744,11 @@ def _guardar_mensaje_imap(cuenta, carpeta: str, uid: str, crudo: bytes, flags: s
             destinatarios=_decodificar(mensaje.get("To")), propias=_direcciones_propias(cuenta),
         )
         _sellar_si_procede(mensaje_id)
+        if carpeta == "INBOX":
+            tenant = db.tenant_de_usuario(cuenta["usuario_id"])
+            if tenant is not None:                                   # ¿va a la dirección de facturas de un cliente (facturas+secreto@despacho)? Sus fotos y PDF entran como facturas por leer
+                from . import portal_subida_rapida
+                portal_subida_rapida.procesar_correo(tenant["id"], mensaje_id, mensaje)
         if carpeta == "INBOX" and not leido:
             try:
                 from . import correo_autorespuesta

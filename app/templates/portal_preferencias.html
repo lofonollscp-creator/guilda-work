@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{{ _('Tus avisos') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('Tus avisos') }}</h1>
+      {% if invalido %}
+      <p class="auth-alterna">{{ _('Este enlace no es válido o ya no tienes acceso al portal. Entra al portal y cambia tus avisos desde «Mi cuenta».') }}</p>
+      <p class="auth-alterna"><a href="{{ url_for('portal_cliente.entrar') }}">{{ _('Entrar al portal') }}</a></p>
+      {% else %}
+      {% if guardado %}<div class="portal-peticion" role="status">{{ _('Guardado. Ya solo te avisaremos así.') }}</div>{% endif %}
+      <p class="auth-alterna">{{ _('Elige cuánto quieres que te avisemos a %(email)s sobre %(cliente)s.', email=email, cliente=cliente.nombre) }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.preferencias_por_enlace', token=request.view_args.token) }}">
+        {% set textos = {'todo': (_('Un correo por cada novedad'), _('Te escribimos en cuanto tu gestoría te pide algo o te contesta.')), 'resumen': (_('Un resumen cada lunes'), _('Un solo correo a la semana con lo que tienes pendiente. Si no hay nada, no te escribimos.')), 'urgente': (_('Solo lo urgente'), _('Únicamente lo que corre prisa: plazos a punto de vencer.'))} %}
+        {% for n in niveles %}
+        <label class="portal-opcion"><input type="radio" name="avisos" value="{{ n }}" {% if avisos == n %}checked{% endif %}> <span><strong>{{ textos[n][0] }}</strong> <small class="muted">{{ textos[n][1] }}</small></span></label>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary auth-submit">{{ _('Guardar') }}</button>
+      </form>
+      <p class="auth-alterna"><a href="{{ url_for('portal_cliente.entrar') }}">{{ _('Entrar al portal') }}</a></p>
+      {% endif %}
+    </div>
+  </main>
+</body>
+</html>

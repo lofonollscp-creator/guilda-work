@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Actividad del portal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Actividad del portal') }}</h1>
+    <p class="subtitle">{{ _('Qué clientes entran, a cuáles se les avisa sin respuesta y cuánto tardan en contestar. Sirve para decidir a quién llamar.') }}</p>
+  </div>
+</header>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.recordatorios') }}">&larr; {{ _('Recordatorios a clientes') }}</a>
+{% if not filas %}
+<p class="empty-lane ds-mt-16">{{ _('Todavía no hay clientes con acceso al portal.') }}</p>
+{% else %}
+<p class="muted ds-mt-16">{{ _('«Ignora los avisos»: tiene algo pendiente, se le ha recordado en los últimos 30 días y no entra desde hace más de %(n)s días.', n=dias_sin_entrar) }}</p>
+<div class="table-wrap ds-mt-16">
+<table class="fiscal-table">
+  <caption class="sr-only">{{ _('Actividad del portal por cliente') }}</caption>
+  <thead><tr>
+    <th scope="col">{{ _('Cliente') }}</th><th scope="col">{{ _('Última entrada') }}</th><th scope="col">{{ _('Entradas (30 días)') }}</th><th scope="col">{{ _('Avisos (30 días)') }}</th>
+    <th scope="col">{{ _('Pendiente de él') }}</th><th scope="col">{{ _('Tarda en contestar') }}</th><th scope="col">{{ _('Situación') }}</th>
+  </tr></thead>
+  <tbody>
+    {% for f in filas %}
+    <tr>
+      <th scope="row"><a href="{{ url_for('fiscal.editar_cliente', cliente_id=f.id) }}">{{ f.nombre }}</a></th>
+      <td>{% if f.ultima_entrada %}{{ f.ultima_entrada|fecha_y_hora }}{% else %}<span class="muted">{{ _('Nunca ha entrado') }}</span>{% endif %}</td>
+      <td>{{ f.entradas_30 }}</td>
+      <td>{{ f.avisos_30 }}</td>
+      <td>{{ f.pendientes }}</td>
+      <td>{% if f.respuesta_media_dias is not none %}{{ ngettext('%(n)s día de media', '%(n)s días de media', f.respuesta_media_dias|round|int, n=f.respuesta_media_dias) }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td>{% if f.ignora %}<span class="pill semaforo-rojo">{{ _('Ignora los avisos') }}</span>{% elif f.pendientes %}<span class="pill">{{ _('Tiene pendientes') }}</span>{% else %}<span class="pill semaforo-verde">{{ _('Al día') }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}
