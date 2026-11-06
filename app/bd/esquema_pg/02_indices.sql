@@ -227,6 +227,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_peticiones_documentos ON portal_pet
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_push_endpoint ON portal_suscripciones_push(tenant_id, cliente_fiscal_id, endpoint);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_segundo_factor ON portal_segundo_factor(tenant_id, email);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_sesiones_sid ON portal_sesiones(tenant_id, sid_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_valoraciones ON portal_valoraciones(tenant_id, cliente_fiscal_id, email, tipo, referencia);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_clientes_principal ON tarea_clientes(tarea_id) WHERE principal = 1;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_revisiones_una_pendiente ON tarea_revisiones(tarea_id) WHERE estado = 'pendiente';
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tareas_outlook_ref ON tareas_outlook(usuario_id, referencia_externa) WHERE referencia_externa IS NOT NULL;

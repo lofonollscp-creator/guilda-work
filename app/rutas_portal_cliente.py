@@ -12,13 +12,15 @@ Flask sin pisarse (claves de session distintas).
 v1 deliberadamente NO incluye: auto-registro (el acceso es opt-in, un
 empleado pone el email desde /fiscal/clientes/<id>/editar), mensajería
 cliente<->gestoría, ni contraseña (solo enlace mágico)."""
+import json
 from datetime import date, datetime, timedelta
+from urllib.parse import urlencode
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_calendario, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_calendario, portal_extracto, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -660,6 +662,25 @@ def justificantes_cliente():
                            error=(request.args.get("error") or "")[:200] or None)
 
 
+@portal_bp.route("/extracto")
+@cliente_login_required
+def extracto():
+    """Cargar el extracto del banco y ver qué pagos no tienen factura ni tiquet: todo se hace en el navegador, el extracto no se envía."""
+    cliente = _cliente_con_facturas()
+    return render_template("portal_extracto.html", cliente=cliente, portal_seccion="facturas", puede_anotar=g.portal_rol != "consulta" and not g.get("vista_previa"))
+
+
+@portal_bp.route("/extracto/datos.json")
+@cliente_login_required
+@limiter.limit("60/hour")
+def extracto_datos():
+    """Lo mínimo para comparar un extracto en el navegador: fecha e importe de las facturas del cliente y de los tiquets que ya anotó."""
+    cliente = _cliente_con_facturas()
+    respuesta = Response(json.dumps(portal_extracto.datos(cliente)), mimetype="application/json")
+    respuesta.headers["Cache-Control"] = "no-store"
+    return respuesta
+
+
 @portal_bp.route("/justificantes/<int:justificante_id>", methods=["POST"])
 @cliente_login_required
 @limiter.limit("60/hour", methods=["POST"])
@@ -889,6 +910,24 @@ def calendario(cliente_id: int, token: str):
                                                                                               "Content-Disposition": 'inline; filename="plazos.ics"'})
 
 
+@portal_bp.route("/valorar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour", methods=["POST"])
+def valorar():
+    """«¿Qué tal ha ido?»: la valoración de un trámite ya resuelto. Una nota baja avisa a quien lleva al cliente."""
+    cliente = _cliente_actual_o_salir()
+    tipo, referencia = request.form.get("tipo", ""), request.form.get("referencia", "")
+    destino = url_for("portal_cliente.peticion", peticion_id=int(referencia)) if tipo == "peticion" and referencia.isdigit() else url_for("portal_cliente.dashboard")
+    try:
+        baja = portal_valoraciones.valorar(cliente, g.portal_email or cliente["email"], tipo, referencia, request.form.get("puntos"), request.form.get("comentario", ""))
+    except ValueError as e:
+        return redirect(destino + "?" + urlencode({"error": _(str(e))[:200]}))
+    if baja:
+        facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s ha valorado con nota baja un trámite", cliente=cliente["nombre"]), _("Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5.", n=portal_valoraciones.NOTA_BAJA),
+                                           url_for("fiscal.portal_actividad"), {"valoracion": tipo})
+    return redirect(destino + "?valorado=1")
+
+
 @portal_bp.route("/peticiones")
 @cliente_login_required
 def peticiones():
@@ -915,7 +954,8 @@ def peticion(peticion_id: int):
             return redirect(url_for("portal_cliente.peticion", peticion_id=peticion_id, enviado=n))
         except ValueError as e:
             error = _(str(e))
-    return render_template("portal_peticion.html", cliente=cliente, p=p, archivos=portal_peticiones.archivos(cliente, peticion_id), error=error, enviado=request.args.get("enviado", type=int),
+    puede_valorar = p["estado"] == "revisada" and g.portal_rol != "consulta" and not g.get("vista_previa") and not portal_valoraciones.ya_valorada(cliente, g.portal_email or cliente["email"], "peticion", peticion_id)
+    return render_template("portal_peticion.html", cliente=cliente, p=p, puede_valorar=puede_valorar, valorado=request.args.get("valorado"), error_valoracion=(request.args.get("error") or "")[:200] or None, archivos=portal_peticiones.archivos(cliente, peticion_id), error=error, enviado=request.args.get("enviado", type=int),
                            puede_subir=g.portal_rol != "consulta" and not g.get("vista_previa") and p["estado"] in ("pendiente", "enviada"), max_archivos=portal_peticiones.MAX_ARCHIVOS, portal_seccion="inicio")
 
 

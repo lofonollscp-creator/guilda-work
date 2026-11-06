@@ -36,7 +36,7 @@ def cliente_por_token(token: str, cliente_id: int):
 
 
 def _escapar(texto: str) -> str:
-    return texto.replace("\\", "\\\\").replace(";", "\;").replace(",", "\\,").replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
+    return texto.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
 
 
 def _plegar(linea: str) -> list[str]:

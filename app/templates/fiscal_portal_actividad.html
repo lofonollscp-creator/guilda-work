@@ -8,6 +8,15 @@
   </div>
 </header>
 <a class="btn btn-ghost" href="{{ url_for('fiscal.recordatorios') }}">&larr; {{ _('Recordatorios a clientes') }}</a>
+<section class="proyecto-bloque ds-max-720 ds-mt-16" id="satisfaccion" aria-labelledby="satisfaccion-titulo">
+  <h2 id="satisfaccion-titulo">{{ _('Satisfacción de los clientes (90 días)') }}</h2>
+  {% if valoraciones.n %}
+  <p><strong>{{ valoraciones.media }}</strong> / 5 · {{ ngettext('%(n)s valoración', '%(n)s valoraciones', valoraciones.n, n=valoraciones.n) }} · {% for k in [5, 4, 3, 2, 1] %}{{ k }}★ {{ valoraciones.reparto[k] }}{{ ' · ' if not loop.last }}{% endfor %}</p>
+  <ul class="log-list">
+    {% for v in valoraciones.ultimas %}<li class="log-item"><span class="log-text"><strong>{{ v.puntos }}/5</strong> {{ v.cliente }} <span class="muted">{{ v.creado_en|fecha_y_hora }}</span>{% if v.comentario %}<br>{{ v.comentario }}{% endif %}</span></li>{% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no hay valoraciones: los clientes puntúan un trámite cuando lo das por resuelto.') }}</p>{% endif %}
+</section>
 {% if not filas %}
 <p class="empty-lane ds-mt-16">{{ _('Todavía no hay clientes con acceso al portal.') }}</p>
 {% else %}

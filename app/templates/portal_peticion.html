@@ -33,5 +33,20 @@
       <p class="muted">{{ _('Puedes fotografiar el documento con el móvil o elegir un PDF.') }}</p>
     </section>
     {% endif %}
+    {% if valorado %}<p class="portal-peticion" role="status"><strong>{{ _('¡Gracias por tu valoración!') }}</strong></p>{% endif %}
+    {% if error_valoracion %}<p class="portal-peticion" role="alert"><strong>{{ error_valoracion }}</strong></p>{% endif %}
+    {% if puede_valorar %}
+    <section class="portal-cuenta-bloque" aria-labelledby="pet-valorar">
+      <h2 id="pet-valorar">{{ _('¿Qué tal ha ido?') }}</h2>
+      <form method="post" action="{{ url_for('portal_cliente.valorar') }}" class="portal-cuenta-form">
+        <input type="hidden" name="tipo" value="peticion"><input type="hidden" name="referencia" value="{{ p.id }}">
+        <fieldset class="portal-valoracion"><legend>{{ _('Tu valoración de 1 a 5') }}</legend>
+          {% for n in range(1, 6) %}<label class="portal-opcion"><input type="radio" name="puntos" value="{{ n }}" required> <span>{{ n }}</span></label>{% endfor %}
+        </fieldset>
+        <div class="correo-form-campo"><label for="valoracion-comentario">{{ _('Algo que quieras contarnos (opcional)') }}</label><input type="text" id="valoracion-comentario" name="comentario" maxlength="300"></div>
+        <button type="submit" class="btn btn-primary">{{ _('Enviar valoración') }}</button>
+      </form>
+    </section>
+    {% endif %}
     <p><a href="{{ url_for('portal_cliente.peticiones') }}">{{ _('Ver todo lo que te pide tu gestoría') }}</a></p>
 {% endblock %}

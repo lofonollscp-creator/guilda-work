@@ -21818,3 +21818,78 @@ msgstr "If it doesn't open by itself, copy this link into your calendar app (“
 
 msgid "El enlace es solo tuyo: quien lo tenga puede ver tus fechas límite, nada más. Si crees que otra persona lo tiene, renueva el enlace de subida desde el móvil y este se renueva con él."
 msgstr "The link is only yours: whoever has it can see your deadlines, nothing else. If you think someone else has it, renew the mobile upload link and this one renews with it."
+
+msgid "Revisar mi extracto"
+msgstr "Check my bank statement"
+
+msgid "No hemos reconocido las columnas de este archivo. Tiene que ser un CSV con una columna de fecha, otra de importe y otra de concepto."
+msgstr "We didn't recognise this file's columns. It must be a CSV with a date column, an amount column and a description column."
+
+msgid "No hemos encontrado movimientos en el archivo."
+msgstr "We found no transactions in the file."
+
+msgid "Todos los pagos de tu extracto tienen su factura o su tiquet. No falta nada."
+msgstr "Every payment in your statement has its invoice or receipt. Nothing is missing."
+
+msgid "Hemos leído %(n)s movimientos y %(k)s son pagos sin factura ni tiquet."
+msgstr "We read %(n)s transactions and %(k)s are payments with no invoice or receipt."
+
+msgid "Anotar como tiquet"
+msgstr "Record as a receipt"
+
+msgid "Tengo la factura: subirla"
+msgstr "I have the invoice: upload it"
+
+msgid "Elige el extracto de tu banco (un archivo CSV que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar."
+msgstr "Choose your bank statement (a CSV file you download from your bank's website or app) and we'll show you which payments have no invoice or receipt recorded. The file is read in your browser: it is not sent to anyone and not saved. Only what you decide to record is sent."
+
+msgid "Extracto del banco (CSV)"
+msgstr "Bank statement (CSV)"
+
+msgid "Revisar mi extracto del banco"
+msgstr "Check my bank statement"
+
+msgid "¡Gracias por tu valoración!"
+msgstr "Thanks for your rating!"
+
+msgid "¿Qué tal ha ido?"
+msgstr "How did it go?"
+
+msgid "Tu valoración de 1 a 5"
+msgstr "Your rating from 1 to 5"
+
+msgid "Algo que quieras contarnos (opcional)"
+msgstr "Anything you'd like to tell us (optional)"
+
+msgid "Enviar valoración"
+msgstr "Send rating"
+
+msgid "Satisfacción de los clientes (90 días)"
+msgstr "Client satisfaction (90 days)"
+
+msgid "%(n)s valoración"
+msgstr "%(n)s rating"
+
+msgid "%(n)s valoraciones"
+msgstr "%(n)s ratings"
+
+msgid "Todavía no hay valoraciones: los clientes puntúan un trámite cuando lo das por resuelto."
+msgstr "No ratings yet: clients rate a task when you mark it as resolved."
+
+msgid "No se puede valorar eso."
+msgstr "That can't be rated."
+
+msgid "Elige de 1 a 5 estrellas."
+msgstr "Choose 1 to 5 stars."
+
+msgid "Solo se puede valorar un trámite ya resuelto."
+msgstr "Only a resolved task can be rated."
+
+msgid "Ya has valorado este trámite. ¡Gracias!"
+msgstr "You've already rated this task. Thanks!"
+
+msgid "%(cliente)s ha valorado con nota baja un trámite"
+msgstr "%(cliente)s gave a task a low rating"
+
+msgid "Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5."
+msgstr "Worth talking to the client: they scored %(n)s or less out of 5."

@@ -1530,6 +1530,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_valoraciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "proyecto_miembros": {
   "clase": "hija",
   "motivo": "hereda el despacho de categorias (o de la persona)",

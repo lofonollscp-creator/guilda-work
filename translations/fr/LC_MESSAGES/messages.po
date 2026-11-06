@@ -21903,3 +21903,78 @@ msgstr "S'il ne s'ouvre pas tout seul, copiez ce lien dans votre application de 
 
 msgid "El enlace es solo tuyo: quien lo tenga puede ver tus fechas límite, nada más. Si crees que otra persona lo tiene, renueva el enlace de subida desde el móvil y este se renueva con él."
 msgstr "Le lien est uniquement à vous : qui l'a peut voir vos échéances, rien de plus. Si vous pensez qu'une autre personne l'a, renouvelez le lien d'envoi depuis le mobile et celui-ci se renouvelle avec lui."
+
+msgid "Revisar mi extracto"
+msgstr "Vérifier mon relevé"
+
+msgid "No hemos reconocido las columnas de este archivo. Tiene que ser un CSV con una columna de fecha, otra de importe y otra de concepto."
+msgstr "Nous n'avons pas reconnu les colonnes de ce fichier. Il doit s'agir d'un CSV avec une colonne de date, une de montant et une de libellé."
+
+msgid "No hemos encontrado movimientos en el archivo."
+msgstr "Nous n'avons trouvé aucun mouvement dans le fichier."
+
+msgid "Todos los pagos de tu extracto tienen su factura o su tiquet. No falta nada."
+msgstr "Tous les paiements de votre relevé ont leur facture ou leur ticket. Il ne manque rien."
+
+msgid "Hemos leído %(n)s movimientos y %(k)s son pagos sin factura ni tiquet."
+msgstr "Nous avons lu %(n)s mouvements et %(k)s sont des paiements sans facture ni ticket."
+
+msgid "Anotar como tiquet"
+msgstr "Noter comme ticket"
+
+msgid "Tengo la factura: subirla"
+msgstr "J'ai la facture : l'envoyer"
+
+msgid "Elige el extracto de tu banco (un archivo CSV que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar."
+msgstr "Choisissez le relevé de votre banque (un fichier CSV téléchargé depuis son site ou son appli) et nous vous montrons quels paiements n'ont ni facture ni ticket enregistré. Le fichier est lu dans votre navigateur : il n'est envoyé à personne et n'est pas conservé. Seul ce que vous décidez d'enregistrer est envoyé."
+
+msgid "Extracto del banco (CSV)"
+msgstr "Relevé bancaire (CSV)"
+
+msgid "Revisar mi extracto del banco"
+msgstr "Vérifier mon relevé bancaire"
+
+msgid "¡Gracias por tu valoración!"
+msgstr "Merci pour votre évaluation !"
+
+msgid "¿Qué tal ha ido?"
+msgstr "Comment cela s'est-il passé ?"
+
+msgid "Tu valoración de 1 a 5"
+msgstr "Votre note de 1 à 5"
+
+msgid "Algo que quieras contarnos (opcional)"
+msgstr "Quelque chose à nous dire (facultatif)"
+
+msgid "Enviar valoración"
+msgstr "Envoyer l'évaluation"
+
+msgid "Satisfacción de los clientes (90 días)"
+msgstr "Satisfaction des clients (90 jours)"
+
+msgid "%(n)s valoración"
+msgstr "%(n)s évaluation"
+
+msgid "%(n)s valoraciones"
+msgstr "%(n)s évaluations"
+
+msgid "Todavía no hay valoraciones: los clientes puntúan un trámite cuando lo das por resuelto."
+msgstr "Pas encore d'évaluations : les clients notent une démarche quand vous la marquez comme résolue."
+
+msgid "No se puede valorar eso."
+msgstr "Cela ne peut pas être évalué."
+
+msgid "Elige de 1 a 5 estrellas."
+msgstr "Choisissez de 1 à 5 étoiles."
+
+msgid "Solo se puede valorar un trámite ya resuelto."
+msgstr "Seule une démarche résolue peut être évaluée."
+
+msgid "Ya has valorado este trámite. ¡Gracias!"
+msgstr "Vous avez déjà évalué cette démarche. Merci !"
+
+msgid "%(cliente)s ha valorado con nota baja un trámite"
+msgstr "%(cliente)s a donné une note basse à une démarche"
+
+msgid "Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5."
+msgstr "Il vaut mieux parler au client : il a mis %(n)s ou moins sur 5."

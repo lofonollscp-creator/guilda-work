@@ -77,7 +77,7 @@
     </section>
     {% endif %}
 
-    <p class="muted"><a href="{{ url_for('portal_cliente.justificantes_cliente') }}">{{ _('¿Un gasto sin factura? Anota un tiquet') }}</a></p>
+    <p class="muted"><a href="{{ url_for('portal_cliente.justificantes_cliente') }}">{{ _('¿Un gasto sin factura? Anota un tiquet') }}</a> · <a href="{{ url_for('portal_cliente.extracto') }}">{{ _('Revisar mi extracto del banco') }}</a></p>
     <section class="dash-panel">
       <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
       <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>

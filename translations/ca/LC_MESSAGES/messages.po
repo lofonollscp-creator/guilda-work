@@ -21827,3 +21827,78 @@ msgstr "Si no s'obre sola, copia aquest enllaç a la teva aplicació de calendar
 
 msgid "El enlace es solo tuyo: quien lo tenga puede ver tus fechas límite, nada más. Si crees que otra persona lo tiene, renueva el enlace de subida desde el móvil y este se renueva con él."
 msgstr "L'enllaç és només teu: qui el tingui pot veure les teves dates límit, res més. Si creus que una altra persona el té, renova l'enllaç de pujada des del mòbil i aquest es renova amb ell."
+
+msgid "Revisar mi extracto"
+msgstr "Revisar el meu extracte"
+
+msgid "No hemos reconocido las columnas de este archivo. Tiene que ser un CSV con una columna de fecha, otra de importe y otra de concepto."
+msgstr "No hem reconegut les columnes d'aquest fitxer. Ha de ser un CSV amb una columna de data, una d'import i una de concepte."
+
+msgid "No hemos encontrado movimientos en el archivo."
+msgstr "No hem trobat moviments al fitxer."
+
+msgid "Todos los pagos de tu extracto tienen su factura o su tiquet. No falta nada."
+msgstr "Tots els pagaments del teu extracte tenen la seva factura o el seu tiquet. No falta res."
+
+msgid "Hemos leído %(n)s movimientos y %(k)s son pagos sin factura ni tiquet."
+msgstr "Hem llegit %(n)s moviments i %(k)s són pagaments sense factura ni tiquet."
+
+msgid "Anotar como tiquet"
+msgstr "Anotar com a tiquet"
+
+msgid "Tengo la factura: subirla"
+msgstr "Tinc la factura: pujar-la"
+
+msgid "Elige el extracto de tu banco (un archivo CSV que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar."
+msgstr "Tria l'extracte del teu banc (un fitxer CSV que descarregues des del seu web o la seva app) i t'ensenyem quins pagaments no tenen factura ni tiquet anotat. El fitxer es llegeix al teu navegador: no s'envia a ningú i no es desa. Només s'envia el que tu decideixis anotar."
+
+msgid "Extracto del banco (CSV)"
+msgstr "Extracte del banc (CSV)"
+
+msgid "Revisar mi extracto del banco"
+msgstr "Revisar el meu extracte del banc"
+
+msgid "¡Gracias por tu valoración!"
+msgstr "Gràcies per la teva valoració!"
+
+msgid "¿Qué tal ha ido?"
+msgstr "Com ha anat?"
+
+msgid "Tu valoración de 1 a 5"
+msgstr "La teva valoració d'1 a 5"
+
+msgid "Algo que quieras contarnos (opcional)"
+msgstr "Alguna cosa que vulguis explicar-nos (opcional)"
+
+msgid "Enviar valoración"
+msgstr "Enviar valoració"
+
+msgid "Satisfacción de los clientes (90 días)"
+msgstr "Satisfacció dels clients (90 dies)"
+
+msgid "%(n)s valoración"
+msgstr "%(n)s valoració"
+
+msgid "%(n)s valoraciones"
+msgstr "%(n)s valoracions"
+
+msgid "Todavía no hay valoraciones: los clientes puntúan un trámite cuando lo das por resuelto."
+msgstr "Encara no hi ha valoracions: els clients puntuen un tràmit quan el dones per resolt."
+
+msgid "No se puede valorar eso."
+msgstr "Això no es pot valorar."
+
+msgid "Elige de 1 a 5 estrellas."
+msgstr "Tria d'1 a 5 estrelles."
+
+msgid "Solo se puede valorar un trámite ya resuelto."
+msgstr "Només es pot valorar un tràmit ja resolt."
+
+msgid "Ya has valorado este trámite. ¡Gracias!"
+msgstr "Ja has valorat aquest tràmit. Gràcies!"
+
+msgid "%(cliente)s ha valorado con nota baja un trámite"
+msgstr "%(cliente)s ha valorat amb nota baixa un tràmit"
+
+msgid "Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5."
+msgstr "Convé parlar amb el client: ha puntuat %(n)s o menys sobre 5."

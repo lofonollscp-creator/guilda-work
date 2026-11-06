@@ -349,7 +349,8 @@ def portal_actividad():
     """Qué clientes entran al portal, cuáles no responden a los avisos y cuánto tardan en contestar."""
     if g.tenant_id is None:
         abort(404)
-    return render_template("fiscal_portal_actividad.html", filas=portal_metricas.filas(g.tenant_id, g.usuario_id), dias_sin_entrar=portal_metricas.DIAS_SIN_ENTRAR)
+    from . import portal_valoraciones
+    return render_template("fiscal_portal_actividad.html", filas=portal_metricas.filas(g.tenant_id, g.usuario_id), dias_sin_entrar=portal_metricas.DIAS_SIN_ENTRAR, valoraciones=portal_valoraciones.resumen(g.tenant_id))
 
 
 def _cliente_para_contactos(cliente_id: int):

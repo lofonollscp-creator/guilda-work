@@ -159,3 +159,56 @@ def test_el_equipo_de_otro_despacho_no_puede_tocar_las_peticiones(cliente):
     db.asignar_tenant(uid, t2); db.asignar_supervisor_tenant(uid, True)
     assert cliente.post(f"/fiscal/clientes/{c}/peticiones", data={"titulo": "Intruso"}).status_code == 404
     assert pp.listar(_ficha(c)) == []
+
+
+# --- L11: valoración al cerrar un trámite -----------------------------------------------------------------------------------------------------------------
+
+def test_solo_se_valora_un_tramite_resuelto_una_vez_por_persona(cliente, correo):
+    from app import portal_valoraciones as pv
+    t, u, c = _despacho("Val una vez")
+    ficha = _ficha(c)
+    pid = pp.crear(ficha, "Extracto", por=u)
+    with pytest.raises(ValueError, match="ya resuelto"):
+        pv.valorar(ficha, "titular@ejemplo.com", "peticion", pid, 5)
+    pp.revisar(ficha, pid, u)
+    for malo in (0, 6, "x", None):
+        with pytest.raises(ValueError, match="1 a 5"):
+            pv.valorar(ficha, "titular@ejemplo.com", "peticion", pid, malo)
+    with pytest.raises(ValueError, match="valorar eso"):
+        pv.valorar(ficha, "titular@ejemplo.com", "otra", pid, 5)
+    assert pv.valorar(ficha, "titular@ejemplo.com", "peticion", pid, 5, "  Muy  rápido ") is False
+    with pytest.raises(ValueError, match="Ya has valorado"):
+        pv.valorar(ficha, "TITULAR@ejemplo.com", "peticion", pid, 1)
+    assert pv.valorar(ficha, "otra@ejemplo.com", "peticion", pid, 2) is True, "otra persona sí puede, y una nota baja lo señala"
+    r = pv.resumen(t)
+    assert r["n"] == 2 and r["media"] == 3.5 and r["reparto"][5] == 1 and r["reparto"][2] == 1 and r["ultimas"][-1]["comentario"] == "Muy rápido"
+
+
+def test_el_cliente_valora_desde_el_portal_y_una_nota_baja_avisa_al_equipo(cliente, correo):
+    from app import portal_valoraciones as pv
+    t, u, c = _despacho("Val portal")
+    pid = pp.crear(_ficha(c), "Escritura", por=u)
+    _entrar(cliente, c, "titular@ejemplo.com")
+    assert "¿Qué tal ha ido?" not in _html(cliente, f"/portal/peticiones/{pid}"), "aún no está resuelta"
+    pp.revisar(_ficha(c), pid, u)
+    assert "¿Qué tal ha ido?" in _html(cliente, f"/portal/peticiones/{pid}")
+    r = cliente.post("/portal/valorar", data={"tipo": "peticion", "referencia": str(pid), "puntos": "1", "comentario": "Tardaron"})
+    assert r.status_code == 302 and "valorado=1" in r.headers["Location"]
+    pagina = _html(cliente, f"/portal/peticiones/{pid}?valorado=1")
+    assert "Gracias por tu valoración" in pagina and "¿Qué tal ha ido?" not in pagina
+    notis = db.get_connection().execute("SELECT titulo FROM notificaciones WHERE usuario_id = ?", (u,)).fetchall()
+    assert any("nota baja" in n["titulo"] for n in notis)
+    again = cliente.post("/portal/valorar", data={"tipo": "peticion", "referencia": str(pid), "puntos": "5"})
+    assert "error=" in again.headers["Location"]
+
+
+def test_el_equipo_ve_la_satisfaccion_en_la_actividad_del_portal(cliente, correo):
+    from app import portal_valoraciones as pv
+    t, u, c = _despacho("Val panel")
+    ficha = _ficha(c)
+    pid = pp.crear(ficha, "Doc", por=u); pp.revisar(ficha, pid, u)
+    pv.valorar(ficha, "titular@ejemplo.com", "peticion", pid, 4, "Bien")
+    uid = iniciar_sesion_de_prueba(cliente, "eq-val@ejemplo.com", "contrasena123")
+    db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
+    html = _html(cliente, "/fiscal/portal-actividad")
+    assert "Satisfacción de los clientes" in html and "4.0" in html and "Cliente P SL" in html and "Bien" in html
