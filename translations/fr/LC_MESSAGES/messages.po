@@ -20984,3 +20984,50 @@ msgstr "Justificatifs bancaires répondus mais non clôturés"
 
 msgid "Enseñar en su portal los honorarios confirmados de cada modelo y dejarle pagarlos con tarjeta"
 msgstr "Montrer dans son portail les honoraires confirmés de chaque modèle et lui permettre de les payer par carte"
+
+msgid "Ver su portal"
+msgstr "Voir son portail"
+
+msgid "Abre su portal en solo lectura, tal como lo ve el cliente"
+msgstr "Ouvre son portail en lecture seule, tel que le client le voit"
+
+msgid "Estás viendo el portal como lo ve %(cliente)s. Es una vista del equipo, solo de lectura."
+msgstr "Vous voyez le portail comme le voit %(cliente)s. C'est une vue de l'équipe, en lecture seule."
+
+msgid "Salir de la vista previa"
+msgstr "Quitter l'aperçu"
+
+msgid "Mensajes sin leer"
+msgstr "Messages non lus"
+
+msgid "Todas tus conversaciones con tu gestoría en un solo sitio."
+msgstr "Toutes vos conversations avec votre cabinet au même endroit."
+
+msgid "Trabajo"
+msgstr "Travail"
+
+msgid "Todavía no hay conversaciones. Cuando escribas a tu gestoría, o ella a ti, aparecerán aquí."
+msgstr "Il n'y a pas encore de conversations. Quand vous écrirez à votre cabinet, ou lui à vous, elles apparaîtront ici."
+
+msgid "Espera tu respuesta"
+msgstr "Attend votre réponse"
+
+msgid "Tu gestoría"
+msgstr "Votre cabinet"
+
+msgid "%(n)s mensaje"
+msgid_plural "%(n)s mensajes"
+msgstr[0] "%(n)s message"
+msgstr[1] "%(n)s messages"
+
+msgid "Para escribir sobre algo nuevo, abre el modelo en Impuestos o la factura en Facturas."
+msgstr "Pour écrire à propos d'un nouveau sujet, ouvrez le modèle dans Impôts ou la facture dans Factures."
+
+msgid "Facturados"
+msgstr "Facturés"
+
+msgid "Confirmados por tu gestoría"
+msgstr "Confirmés par votre cabinet"
+
+msgid "Honorarios de %(anio)s"
+msgstr "Honoraires de %(anio)s"

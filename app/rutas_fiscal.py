@@ -14,7 +14,7 @@ import io
 import json
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
@@ -23,7 +23,7 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, fiscal_identidad, honorarios, obligaciones, portal_recordatorios
+from . import acceso, fiscal_identidad, honorarios, obligaciones, portal_recordatorios, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -450,6 +450,17 @@ def editar_cliente(cliente_id: int):
         perfil=db.perfil_fiscal_de_cliente(cliente), perfil_tipos=perfil_fiscal.TIPOS, perfil_atributos=perfil_fiscal.ATRIBUTOS,
         modelos_sugeridos=perfil_fiscal.modelos_para_perfil(db.perfil_fiscal_de_cliente(cliente)),
     )
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/ver-portal", methods=["POST"])
+@login_required
+def ver_portal(cliente_id: int):
+    """Abre el portal tal como lo ve este cliente, en solo lectura y durante 30 minutos (queda en la auditoría)."""
+    try:
+        portal_vista_previa.iniciar(session, g.tenant_id, g.usuario_id, cliente_id)
+    except ValueError:
+        abort(404)
+    return redirect(url_for("portal_cliente.dashboard"))
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/eliminar", methods=["POST"])

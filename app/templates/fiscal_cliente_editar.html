@@ -5,6 +5,7 @@
   <div>
     <h1>{{ _('Editar cliente fiscal') }}</h1>
   </div>
+  <form method="post" action="{{ url_for('fiscal.ver_portal', cliente_id=cliente.id) }}"><button type="submit" class="btn btn-ghost" title="{{ _('Abre su portal en solo lectura, tal como lo ve el cliente') }}">{{ _('Ver su portal') }}</button></form>
 </header>
 {% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
 

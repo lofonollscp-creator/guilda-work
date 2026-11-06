@@ -9,7 +9,7 @@
     </nav>
     {% endif %}
 
-    {% if not c.documentos and not c.resumenes and not c.trimestres %}
+    {% if not c.documentos and not c.resumenes and not c.trimestres and not c.honorarios %}
     <p class="empty-lane">{{ _('Todavía no hay nada en la carpeta de este año.') }}</p>
     {% else %}
     <p><a class="btn btn-primary" href="{{ url_for('portal_cliente.carpeta_zip', anio=anio) }}">{{ _('Descargar todo el año (ZIP)') }}</a></p>
@@ -44,6 +44,22 @@
       <div class="portal-doc"><a href="{{ url_for('portal_cliente.carpeta_resumen', declaracion_id=r.id) }}">{{ _('Modelo 303 · %(p)s', p=r.periodo ~ ' ' ~ anio) }}</a>
         {% if r.presentada_en %}<span class="muted">{{ _('presentado el %(f)s', f=r.presentada_en[:10]|fecha_dia) }}</span>{% endif %}</div>
       {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if c.honorarios %}
+    <section class="ds-mt-24" aria-labelledby="car-honorarios">
+      <h2 id="car-honorarios">{{ _('Honorarios de %(anio)s', anio=anio) }}</h2>
+      <div class="table-wrap"><table class="historial-table">
+        <thead><tr><th>{{ _('Modelo') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Estado') }}</th></tr></thead>
+        <tbody>{% for h in c.honorarios %}
+          <tr>
+            <td><a href="{{ url_for('portal_cliente.impuestos') }}#vencimiento-{{ h.vencimiento_id }}">{{ h.modelo }} {{ h.periodo }}</a></td>
+            <td>{{ h.concepto }}</td>
+            <td class="mono">{{ '%.2f'|format(h.importe / 100) }} €</td>
+            <td>{% if h.pagado %}<span class="portal-estado ok">{{ _('Pagado') }}</span>{% elif h.estado == 'facturado' %}<span class="portal-estado warn">{{ _('Facturado') }}{% if h.referencia %} · {{ h.referencia }}{% endif %}</span>{% else %}<span class="portal-estado warn">{{ _('Confirmado') }}</span>{% endif %}</td>
+          </tr>{% endfor %}</tbody>
+      </table></div>
     </section>
     {% endif %}
     {% endif %}

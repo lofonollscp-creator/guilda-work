@@ -69,6 +69,7 @@
     {% if c.nif %}<span class="pill">{{ c.nif }}</span>{% endif %}
     {% if c.pais and c.pais != 'ES' %}<span class="pill" title="{{ _('País de tributación') }}">{{ c.pais }}</span>{% endif %}
     <a class="btn btn-ghost" href="{{ url_for('fiscal.generar_vencimientos', cliente_id=c.id) }}">{{ _('Generar vencimientos') }}</a>
+    <form method="post" action="{{ url_for('fiscal.ver_portal', cliente_id=c.id) }}"><button type="submit" class="btn btn-ghost" title="{{ _('Abre su portal en solo lectura, tal como lo ve el cliente') }}">{{ _('Ver su portal') }}</button></form>
     <a class="log-edit" href="{{ url_for('fiscal.editar_cliente', cliente_id=c.id) }}" title="{{ _('Editar') }}" aria-label="{{ _('Editar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg></a>
     <form action="{{ url_for('fiscal.eliminar_cliente', cliente_id=c.id) }}" method="post"
           data-confirmar-envio="{{ _('¿Eliminar este cliente fiscal? Se moverá a la papelera.') }}">

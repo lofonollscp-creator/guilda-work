@@ -31,7 +31,7 @@ def cobros(cliente: dict, vencimientos) -> dict[int, dict]:
         if not a or a["estado"] == "anulado" or not a["importe_centimos"]:
             continue
         pagado = _pagado(v["id"]) >= a["importe_centimos"]
-        res[v["id"]] = {"importe": a["importe_centimos"], "concepto": a["concepto"], "pagado": pagado, "puede_pagar": pagos_ok and not pagado}
+        res[v["id"]] = {"importe": a["importe_centimos"], "concepto": a["concepto"], "estado": a["estado"], "referencia": a["referencia_factura"] or "", "pagado": pagado, "puede_pagar": pagos_ok and not pagado}
     return res
 
 
@@ -56,3 +56,23 @@ def crear_pago(cliente: dict, vencimiento_id: int, url_exito: str, url_cancelar:
         return stripe_pagos.crear_sesion_pago(cuenta, c["importe"], f"{c['concepto']} — {cliente['nombre']}"[:120], url_exito, url_cancelar, metadata={"vencimiento_id": v["id"]})
     except stripe_pagos.ErrorStripe:
         raise ValueError("No hemos podido abrir el pago ahora mismo. Inténtalo de nuevo en unos minutos.") from None
+
+
+def del_anio(cliente: dict, anio: int) -> list[dict]:
+    """Los honorarios confirmados o facturados de los modelos de ese año (por la fecha límite del modelo), con si están pagados. Vacío si el despacho no le ha activado los honorarios."""
+    if not cliente["portal_honorarios"]:
+        return []
+    conn = db.get_connection()
+    try:
+        filas = [dict(f) for f in conn.execute("SELECT h.vencimiento_id, h.concepto, h.importe_centimos, h.estado, h.referencia_factura, v.modelo, v.periodo, v.fecha_limite FROM honorarios_aplicados h JOIN vencimientos_fiscales v "
+                                               "ON v.id = h.vencimiento_id WHERE h.tenant_id = ? AND h.cliente_fiscal_id = ? AND h.estado != 'anulado' AND v.papelera_en IS NULL ORDER BY v.fecha_limite, h.id",
+                                               (cliente["tenant_id"], cliente["id"]))]
+    finally:
+        conn.close()
+    res = []
+    for f in filas:
+        if (f["fecha_limite"] or "")[:4] != str(anio):
+            continue
+        res.append({"vencimiento_id": f["vencimiento_id"], "modelo": f["modelo"], "periodo": f["periodo"], "concepto": f["concepto"], "importe": f["importe_centimos"], "estado": f["estado"],
+                    "referencia": f["referencia_factura"] or "", "pagado": _pagado(f["vencimiento_id"]) >= f["importe_centimos"]})
+    return res

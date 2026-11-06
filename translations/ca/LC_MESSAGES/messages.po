@@ -20908,3 +20908,50 @@ msgstr "Justificants del banc contestats sense tancar"
 
 msgid "Enseñar en su portal los honorarios confirmados de cada modelo y dejarle pagarlos con tarjeta"
 msgstr "Ensenyar al seu portal els honoraris confirmats de cada model i deixar-li pagar-los amb targeta"
+
+msgid "Ver su portal"
+msgstr "Veure el seu portal"
+
+msgid "Abre su portal en solo lectura, tal como lo ve el cliente"
+msgstr "Obre el seu portal en només lectura, tal com el veu el client"
+
+msgid "Estás viendo el portal como lo ve %(cliente)s. Es una vista del equipo, solo de lectura."
+msgstr "Estàs veient el portal com el veu %(cliente)s. És una vista de l'equip, només de lectura."
+
+msgid "Salir de la vista previa"
+msgstr "Sortir de la vista prèvia"
+
+msgid "Mensajes sin leer"
+msgstr "Missatges sense llegir"
+
+msgid "Todas tus conversaciones con tu gestoría en un solo sitio."
+msgstr "Totes les teves converses amb la teva gestoria en un sol lloc."
+
+msgid "Trabajo"
+msgstr "Feina"
+
+msgid "Todavía no hay conversaciones. Cuando escribas a tu gestoría, o ella a ti, aparecerán aquí."
+msgstr "Encara no hi ha converses. Quan escriguis a la teva gestoria, o ella a tu, apareixeran aquí."
+
+msgid "Espera tu respuesta"
+msgstr "Espera la teva resposta"
+
+msgid "Tu gestoría"
+msgstr "La teva gestoria"
+
+msgid "%(n)s mensaje"
+msgid_plural "%(n)s mensajes"
+msgstr[0] "%(n)s missatge"
+msgstr[1] "%(n)s missatges"
+
+msgid "Para escribir sobre algo nuevo, abre el modelo en Impuestos o la factura en Facturas."
+msgstr "Per escriure sobre una cosa nova, obre el model a Impostos o la factura a Factures."
+
+msgid "Facturados"
+msgstr "Facturats"
+
+msgid "Confirmados por tu gestoría"
+msgstr "Confirmats per la teva gestoria"
+
+msgid "Honorarios de %(anio)s"
+msgstr "Honoraris de %(anio)s"

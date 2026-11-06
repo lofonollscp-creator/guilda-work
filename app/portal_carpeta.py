@@ -8,7 +8,7 @@ import io
 import re
 import zipfile
 
-from . import cierre_trimestre, db, facturas_contables as fc, facturas_portal, verticales
+from . import cierre_trimestre, db, facturas_contables as fc, facturas_portal, portal_pagos, verticales
 from .vencimientos_fiscales import MODELOS_INTERNOS
 
 MAX_ZIP_BYTES = 60 * 1024 * 1024
@@ -55,7 +55,7 @@ def contenido(cliente: dict, anio: int) -> dict:
             if d["origen"] in ORIGENES:
                 documentos.append({"vencimiento_id": v["id"], "modelo": v["modelo"], "periodo": v["periodo"], "id": d["id"], "nombre": d["nombre_archivo"], "origen": d["origen"], "tamano": d["tamano_bytes"], "fecha": (d["creado_en"] or "")[:10]})
     resumenes = _resumenes(cliente, anio)
-    return {"anio": anio, "documentos": documentos, "resumenes": resumenes, "trimestres": _trimestres_con_datos(cliente, anio, resumenes)}
+    return {"anio": anio, "documentos": documentos, "resumenes": resumenes, "trimestres": _trimestres_con_datos(cliente, anio, resumenes), "honorarios": portal_pagos.del_anio(cliente, anio)}
 
 
 def pdf_resumen(cliente: dict, declaracion_id: int) -> bytes | None:

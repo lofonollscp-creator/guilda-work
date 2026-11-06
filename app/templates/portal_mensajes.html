@@ -1,0 +1,25 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mensajes') }}{% endblock %}
+{% block titulo %}{{ _('Mensajes') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }} · {{ _('Todas tus conversaciones con tu gestoría en un solo sitio.') }}{% endblock %}
+{% block contenido %}
+    {% set tipos = {'modelo': _('Modelo'), 'factura': _('Factura'), 'tarea': _('Trabajo')} %}
+    {% if not conversaciones %}
+    <p class="empty-lane">{{ _('Todavía no hay conversaciones. Cuando escribas a tu gestoría, o ella a ti, aparecerán aquí.') }}</p>
+    {% else %}
+    <ul class="portal-buzon">
+      {% for c in conversaciones %}
+      <li class="portal-buzon-item {{ 'sin-leer' if c.sin_leer }}">
+        <a href="{{ c.url }}">
+          <span class="portal-buzon-cab"><span class="pill">{{ tipos[c.tipo] }}</span> <strong>{{ c.titulo }}</strong>
+            {% if c.sin_leer %}<span class="portal-nav-insignia" title="{{ _('Mensajes sin leer') }}">{{ c.sin_leer }}</span>{% endif %}
+            {% if c.espera_respuesta and not c.sin_leer %}<span class="portal-estado warn">{{ _('Espera tu respuesta') }}</span>{% endif %}</span>
+          <span class="portal-buzon-texto">{{ _('Tú') if c.ultimo_autor == 'cliente' else _('Tu gestoría') }}: {{ c.ultimo_texto[:140] }}{% if c.ultimo_texto|length > 140 %}…{% endif %}</span>
+          <span class="muted">{{ c.ultimo_en|fecha_y_hora }} · {{ ngettext('%(n)s mensaje', '%(n)s mensajes', c.mensajes, n=c.mensajes) }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <p class="muted">{{ _('Para escribir sobre algo nuevo, abre el modelo en Impuestos o la factura en Facturas.') }}</p>
+{% endblock %}

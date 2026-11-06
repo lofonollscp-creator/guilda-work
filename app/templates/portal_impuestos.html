@@ -33,6 +33,7 @@
     {% if v.id in cobros %}{% set c = cobros[v.id] %}
     <p class="portal-carpeta-extra">
       <strong>{{ _('Honorarios') }}: <span class="mono">{{ '%.2f'|format(c.importe / 100) }} €</span></strong>
+      <span class="muted">{{ c.concepto }} · {{ _('Facturados') if c.estado == 'facturado' else _('Confirmados por tu gestoría') }}{% if c.referencia %} · {{ c.referencia }}{% endif %}</span>
       {% if c.pagado %}<span class="portal-estado ok">{{ _('Pagado') }}</span>
       {% elif c.puede_pagar %}<form method="post" action="{{ url_for('portal_cliente.pagar_vencimiento', vencimiento_id=v.id) }}" class="form-en-linea"><button type="submit" class="btn btn-primary">{{ _('Pagar con tarjeta') }}</button></form>
       {% else %}<span class="muted">{{ _('Tu gestoría te indicará cómo pagarlo.') }}</span>{% endif %}

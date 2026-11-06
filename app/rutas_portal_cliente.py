@@ -18,7 +18,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_vista_previa, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
@@ -30,7 +30,10 @@ MAX_ARCHIVOS_POR_SUBIDA = 10
 
 @portal_bp.before_request
 def _resolver_cliente_actual():
+    g.vista_previa = portal_vista_previa.activa(session)               # el equipo mirando el portal de un cliente: solo lectura
     g.cliente_fiscal_id = session.get("cliente_fiscal_id")
+    if g.vista_previa and request.method not in ("GET", "HEAD", "OPTIONS") and request.endpoint != "portal_cliente.salir":
+        abort(403)
 
 
 @portal_bp.context_processor
@@ -42,7 +45,8 @@ def _menu_del_portal():
     if cliente is None:
         return {}
     con_facturas = verticales.esta_activo(cliente["tenant_id"], "contabilizacion")
-    return {"portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0}
+    return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
+            "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente)}
 
 
 def cliente_login_required(vista):
@@ -131,6 +135,9 @@ def entrar_con_token(token: str):
 
 @portal_bp.route("/salir", methods=["POST"])
 def salir():
+    if g.get("vista_previa"):
+        portal_vista_previa.salir(session)
+        return redirect(url_for("fiscal.clientes"))
     session.pop("cliente_fiscal_id", None)
     return redirect(url_for("portal_cliente.entrar"))
 
@@ -288,7 +295,8 @@ def mensajes_vencimiento(vencimiento_id: int):
                     datos={"tipo": "portal_mensaje_nuevo", "vencimiento_id": vencimiento_id},
                 )
         return redirect(url_for("portal_cliente.mensajes_vencimiento", vencimiento_id=vencimiento_id))
-    db.marcar_mensajes_leidos(vencimiento_id, "cliente")
+    if not g.get("vista_previa"):
+        db.marcar_mensajes_leidos(vencimiento_id, "cliente")
     return render_template(
         "portal_vencimiento_mensajes.html",
         vencimiento=vencimiento, portal_seccion="impuestos", mensajes=db.listar_mensajes_vencimiento(vencimiento_id),
@@ -432,7 +440,8 @@ def factura(factura_id: int):
     f = facturas_portal.detalle_del_cliente(cliente["id"], factura_id)
     if f is None:
         abort(404)
-    facturas_portal.marcar_leidos(cliente["tenant_id"], factura_id, "cliente")
+    if not g.get("vista_previa"):
+        facturas_portal.marcar_leidos(cliente["tenant_id"], factura_id, "cliente")
     return render_template("portal_factura.html", cliente=cliente, f=f, mensajes=facturas_portal.mensajes(cliente["tenant_id"], factura_id), portal_seccion="facturas",
                            textos=facturas_contables.TEXTO_ESTADO_PORTAL, etiqueta=facturas_portal.etiqueta_trimestre, max_mensaje=facturas_portal.MAX_MENSAJE,
                            error=(request.args.get("error") or "")[:200] or None)
@@ -600,3 +609,16 @@ def carpeta_resumen(declaracion_id: int):
     if pdf is None:
         abort(404)
     return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="resumen-303-{declaracion_id}.pdf"', "X-Content-Type-Options": "nosniff"})
+
+
+# --- El buzón único -------------------------------------------------------------------------------------------------------------------------------------------
+
+@portal_bp.route("/mensajes")
+@cliente_login_required
+def mensajes():
+    """Todas las conversaciones con la gestoría en una lista: sobre un modelo, sobre una factura o sobre un trabajo en curso."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None:
+        session.pop("cliente_fiscal_id", None)
+        return redirect(url_for("portal_cliente.entrar"))
+    return render_template("portal_mensajes.html", cliente=cliente, conversaciones=portal_buzon.conversaciones(cliente), portal_seccion="mensajes", con_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"))

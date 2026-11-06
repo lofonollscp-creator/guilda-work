@@ -5291,3 +5291,21 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .portal-cliente-shell .historial-table td a { display: inline-flex; align-items: center; min-height: 32px; min-width: 32px; }
 .portal-carpeta-extra { margin: -6px 0 14px; padding: 10px 16px; border: 1px solid var(--portal-line); border-top: 0; border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: var(--portal-card); display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .portal-doc a { display: inline-flex; align-items: center; min-height: 32px; }
+.portal-vista-previa { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 16px; padding: 10px 14px; border: 1px solid var(--portal-warn-ink); border-radius: var(--radius-lg); background: var(--portal-warn-bg); color: var(--portal-warn-ink); font-weight: 600; overflow-wrap: anywhere; }
+.portal-vista-previa span { flex: 1 1 260px; min-width: 0; }
+.portal-solo-lectura button, .portal-solo-lectura input, .portal-solo-lectura textarea, .portal-solo-lectura select { pointer-events: none; opacity: 0.55; }
+.portal-buzon { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 10px; }
+.portal-buzon-item a { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; min-height: 44px; border: 1px solid var(--portal-line); border-radius: var(--radius-lg); background: var(--portal-card); color: var(--portal-ink); text-decoration: none; overflow-wrap: anywhere; }
+.portal-buzon-item a:hover { border-color: var(--portal-accent); }
+.portal-buzon-item.sin-leer a { border-left: 6px solid var(--danger, #e5484d); }
+.portal-buzon-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.portal-buzon-texto { color: var(--portal-muted); }
+.portal-nav-salir { margin-left: auto; }
+.portal-nav-salir-boton { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid transparent; background: transparent; color: var(--portal-muted); font: inherit; font-weight: 700; cursor: pointer; }
+.portal-nav-salir-boton:hover { border-color: var(--portal-line); color: var(--portal-ink); }
+/* En móvil el modelo ocupa su fila y el estado y los iconos pasan debajo (el texto del modelo no se parte en cuatro líneas). */
+@media (max-width: 480px) {
+  .portal-carpeta { flex-wrap: wrap; }
+  .portal-carpeta-info { flex: 1 1 calc(100% - 64px); }
+  .portal-carpeta-iconos { margin-left: auto; }
+}

@@ -20899,3 +20899,50 @@ msgstr "Bank receipts answered but not closed"
 
 msgid "Enseñar en su portal los honorarios confirmados de cada modelo y dejarle pagarlos con tarjeta"
 msgstr "Show confirmed fees for each tax form in their portal and let them pay by card"
+
+msgid "Ver su portal"
+msgstr "View their portal"
+
+msgid "Abre su portal en solo lectura, tal como lo ve el cliente"
+msgstr "Opens their portal read-only, as the client sees it"
+
+msgid "Estás viendo el portal como lo ve %(cliente)s. Es una vista del equipo, solo de lectura."
+msgstr "You are viewing the portal as %(cliente)s sees it. It is a team view, read-only."
+
+msgid "Salir de la vista previa"
+msgstr "Exit the preview"
+
+msgid "Mensajes sin leer"
+msgstr "Unread messages"
+
+msgid "Todas tus conversaciones con tu gestoría en un solo sitio."
+msgstr "All your conversations with your accountant in one place."
+
+msgid "Trabajo"
+msgstr "Task"
+
+msgid "Todavía no hay conversaciones. Cuando escribas a tu gestoría, o ella a ti, aparecerán aquí."
+msgstr "There are no conversations yet. When you write to your accountant, or they to you, they'll show up here."
+
+msgid "Espera tu respuesta"
+msgstr "Waiting for your reply"
+
+msgid "Tu gestoría"
+msgstr "Your accountant"
+
+msgid "%(n)s mensaje"
+msgid_plural "%(n)s mensajes"
+msgstr[0] "%(n)s message"
+msgstr[1] "%(n)s messages"
+
+msgid "Para escribir sobre algo nuevo, abre el modelo en Impuestos o la factura en Facturas."
+msgstr "To write about something new, open the tax form under Taxes or the invoice under Invoices."
+
+msgid "Facturados"
+msgstr "Invoiced"
+
+msgid "Confirmados por tu gestoría"
+msgstr "Confirmed by your accountant"
+
+msgid "Honorarios de %(anio)s"
+msgstr "Fees for %(anio)s"
