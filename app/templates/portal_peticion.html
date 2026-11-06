@@ -1,0 +1,37 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ p.titulo }}{% endblock %}
+{% block titulo %}{{ p.titulo }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }}{% endblock %}
+{% block contenido %}
+    {% if enviado %}<p class="portal-peticion" role="status"><strong>{{ _('Recibido. Tu gestoría lo revisará y te avisará si falta algo.') }}</strong></p>{% endif %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    <section class="portal-cuenta-bloque" aria-labelledby="pet-detalle">
+      <h2 id="pet-detalle">{{ _('Qué te pide tu gestoría') }}</h2>
+      {% if p.descripcion %}<p>{{ p.descripcion }}</p>{% endif %}
+      <p class="muted">
+        {% if p.estado == 'pendiente' %}{{ _('Pendiente') }}{% elif p.estado == 'enviada' %}{{ _('Enviado: tu gestoría lo está revisando.') }}{% elif p.estado == 'revisada' %}{{ _('Revisada: ya está resuelto.') }}{% else %}{{ _('Cancelada') }}{% endif %}
+        {% if p.fecha_limite %} · {{ _('Fecha límite') }}: {{ p.fecha_limite }}{% if p.vencida %} ({{ _('vencida') }}){% endif %}{% endif %}
+      </p>
+      {% if p.nota and p.estado == 'pendiente' %}<p class="portal-peticion"><strong>{{ _('Tu gestoría dice') }}:</strong> {{ p.nota }}</p>{% endif %}
+    </section>
+    {% if archivos %}
+    <section class="portal-cuenta-bloque" aria-labelledby="pet-archivos">
+      <h2 id="pet-archivos">{{ _('Lo que has enviado') }}</h2>
+      <ul class="portal-personas">
+        {% for a in archivos %}<li class="portal-persona"><div class="portal-persona-datos"><strong>{{ a.nombre }}</strong><span class="muted">{{ a.creado_en[:16]|replace('T', ' ') }}</span></div></li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+    {% if puede_subir %}
+    <section class="portal-cuenta-bloque" aria-labelledby="pet-subir">
+      <h2 id="pet-subir">{{ _('Enviar el documento') }}</h2>
+      <form method="post" enctype="multipart/form-data" class="portal-cuenta-form">
+        <div class="correo-form-campo"><label for="pet-archivos-campo">{{ _('Archivos (hasta %(n)s, de 8 MB cada uno)', n=max_archivos) }}</label>
+          <input type="file" id="pet-archivos-campo" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx,.doc,.docx"></div>
+        <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+      </form>
+      <p class="muted">{{ _('Puedes fotografiar el documento con el móvil o elegir un PDF.') }}</p>
+    </section>
+    {% endif %}
+    <p><a href="{{ url_for('portal_cliente.peticiones') }}">{{ _('Ver todo lo que te pide tu gestoría') }}</a></p>
+{% endblock %}

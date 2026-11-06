@@ -43,6 +43,17 @@
     </section>
     {% endif %}
 
+    {% if agenda %}
+    <section class="portal-cuenta-bloque" id="agenda" aria-labelledby="cuenta-agenda">
+      <h2 id="cuenta-agenda">{{ _('Tus plazos en tu agenda') }}</h2>
+      <p>{{ _('Añade este calendario a la agenda de tu móvil u ordenador y verás ahí las fechas límite de tus impuestos y de lo que te pide tu gestoría, siempre al día y con un aviso dos días antes.') }}</p>
+      <p><a class="btn btn-primary" href="{{ agenda.webcal }}">{{ _('Añadir a mi agenda') }}</a></p>
+      <p class="muted">{{ _('Si no se abre sola, copia este enlace en tu aplicación de calendario («añadir calendario por dirección»):') }}</p>
+      <p class="portal-dir"><code>{{ agenda.https }}</code></p>
+      <p class="muted">{{ _('El enlace es solo tuyo: quien lo tenga puede ver tus fechas límite, nada más. Si crees que otra persona lo tiene, renueva el enlace de subida desde el móvil y este se renueva con él.') }}</p>
+    </section>
+    {% endif %}
+
     <section class="portal-cuenta-bloque" id="personas" aria-labelledby="cuenta-personas">
       <h2 id="cuenta-personas">{{ _('Personas con acceso') }}</h2>
       <ul class="portal-personas">

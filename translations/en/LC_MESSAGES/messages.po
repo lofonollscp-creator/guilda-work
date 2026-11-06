@@ -21659,3 +21659,162 @@ msgstr ". Threshold: %(umbral)s USD."
 
 msgid "Lo que más cuesta: %(servicios)s."
 msgstr "Biggest costs: %(servicios)s."
+
+msgid "Lo que te pide tu gestoría"
+msgstr "What your advisory firm asks of you"
+
+msgid "Enviado: tu gestoría lo está revisando."
+msgstr "Sent: your advisory firm is reviewing it."
+
+msgid "vencida"
+msgstr "overdue"
+
+msgid "Sin fecha límite"
+msgstr "No deadline"
+
+msgid "Tu gestoría dice"
+msgstr "Your advisory firm says"
+
+msgid "No tienes nada pendiente: tu gestoría no te ha pedido ningún documento."
+msgstr "Nothing is pending: your advisory firm hasn't asked you for any document."
+
+msgid "Ya resueltas"
+msgstr "Already resolved"
+
+msgid "Recibido. Tu gestoría lo revisará y te avisará si falta algo."
+msgstr "Received. Your advisory firm will review it and let you know if anything is missing."
+
+msgid "Qué te pide tu gestoría"
+msgstr "What your advisory firm asks"
+
+msgid "Revisada: ya está resuelto."
+msgstr "Reviewed: it's resolved."
+
+msgid "Lo que has enviado"
+msgstr "What you've sent"
+
+msgid "Enviar el documento"
+msgstr "Send the document"
+
+msgid "Archivos (hasta %(n)s, de 8 MB cada uno)"
+msgstr "Files (up to %(n)s, 8 MB each)"
+
+msgid "Puedes fotografiar el documento con el móvil o elegir un PDF."
+msgstr "You can photograph the document with your phone or choose a PDF."
+
+msgid "Ver todo lo que te pide tu gestoría"
+msgstr "See everything your advisory firm asks"
+
+msgid "Peticiones de documentos"
+msgstr "Document requests"
+
+msgid "Pídele al cliente un documento concreto, con fecha límite si la hay. Lo verá en su portal, recibirá los recordatorios de siempre y tú lo revisas aquí cuando lo envíe."
+msgstr "Ask the client for a specific document, with a deadline if there is one. They will see it in their portal, get the usual reminders, and you review it here when they send it."
+
+msgid "Enviada: por revisar"
+msgstr "Sent: to review"
+
+msgid "Dar por revisada"
+msgstr "Mark as reviewed"
+
+msgid "Qué falta"
+msgstr "What's missing"
+
+msgid "Pedir de nuevo"
+msgstr "Ask again"
+
+msgid "Todavía no le has pedido ningún documento."
+msgstr "You haven't asked for any document yet."
+
+msgid "Pedir un documento"
+msgstr "Ask for a document"
+
+msgid "Qué necesitas"
+msgstr "What you need"
+
+msgid "Extracto bancario del 3T"
+msgstr "Bank statement for Q3"
+
+msgid "Detalle (opcional)"
+msgstr "Details (optional)"
+
+msgid "Fecha límite (opcional)"
+msgstr "Deadline (optional)"
+
+msgid "Avisarle ahora por correo"
+msgstr "Notify them now by email"
+
+msgid "Pedir"
+msgstr "Ask"
+
+msgid "Tu gestoría te pide: %(titulo)s"
+msgstr "Your advisory firm asks you for: %(titulo)s"
+
+msgid "Tu gestoría sigue esperando un documento: %(titulo)s"
+msgstr "Your advisory firm is still waiting for a document: %(titulo)s"
+
+msgid "Falta un documento que pidió tu gestoría."
+msgstr "A document your advisory firm asked for is missing."
+
+msgid "Tu gestoría te pidió «%(titulo)s» y todavía no lo ha recibido."
+msgstr "Your advisory firm asked you for “%(titulo)s” and hasn't received it yet."
+
+msgid "Fecha límite: %(fecha)s."
+msgstr "Deadline: %(fecha)s."
+
+msgid "%(cliente)s ha enviado lo que le pedías"
+msgstr "%(cliente)s has sent what you asked for"
+
+msgid "«%(titulo)s»: %(n)s archivo(s) por revisar."
+msgstr "“%(titulo)s”: %(n)s file(s) to review."
+
+msgid "Esa petición ya no admite este cambio."
+msgstr "That request no longer accepts this change."
+
+msgid "Tu gestoría necesita algo más"
+msgstr "Your advisory firm needs something more"
+
+msgid "Escribe qué documento necesitas (mínimo 3 caracteres)."
+msgstr "Write which document you need (at least 3 characters)."
+
+msgid "La fecha límite no es válida."
+msgstr "The deadline is not valid."
+
+msgid "Este cliente ya tiene demasiadas peticiones abiertas: cierra alguna antes de pedir más."
+msgstr "This client already has too many open requests: close some before asking for more."
+
+msgid "Esta petición ya no está abierta."
+msgstr "This request is no longer open."
+
+msgid "Elige al menos un archivo."
+msgstr "Choose at least one file."
+
+msgid "Demasiados archivos de una vez: sube menos y repite."
+msgstr "Too many files at once: upload fewer and repeat."
+
+msgid "Solo PDF, imágenes, hojas de cálculo o documentos de texto, de hasta 8 MB cada uno."
+msgstr "Only PDFs, images, spreadsheets or text documents, up to 8 MB each."
+
+msgid "Se ha alcanzado el máximo de documentos de este cliente: avisa a tu gestoría."
+msgstr "The maximum number of documents for this client has been reached: tell your advisory firm."
+
+msgid "No se ha podido guardar ningún archivo (¿ya estaban enviados?)."
+msgstr "No file could be saved (were they already sent?)."
+
+msgid "Explica qué falta (mínimo 5 caracteres): lo verá el cliente."
+msgstr "Explain what is missing (at least 5 characters): the client will see it."
+
+msgid "Tus plazos en tu agenda"
+msgstr "Your deadlines in your calendar"
+
+msgid "Añade este calendario a la agenda de tu móvil u ordenador y verás ahí las fechas límite de tus impuestos y de lo que te pide tu gestoría, siempre al día y con un aviso dos días antes."
+msgstr "Add this calendar to your phone or computer's calendar app and you'll see your tax deadlines and what your advisory firm asks for, always up to date and with a reminder two days before."
+
+msgid "Añadir a mi agenda"
+msgstr "Add to my calendar"
+
+msgid "Si no se abre sola, copia este enlace en tu aplicación de calendario («añadir calendario por dirección»):"
+msgstr "If it doesn't open by itself, copy this link into your calendar app (“add calendar by URL”):"
+
+msgid "El enlace es solo tuyo: quien lo tenga puede ver tus fechas límite, nada más. Si crees que otra persona lo tiene, renueva el enlace de subida desde el móvil y este se renueva con él."
+msgstr "The link is only yours: whoever has it can see your deadlines, nothing else. If you think someone else has it, renew the mobile upload link and this one renews with it."

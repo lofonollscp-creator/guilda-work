@@ -104,6 +104,40 @@
   </div>
 </form>
 
+<section class="proyecto-bloque ds-max-640 ds-mt-24" id="peticiones" aria-labelledby="peticiones-titulo">
+  <h2 id="peticiones-titulo">{{ _('Peticiones de documentos') }}</h2>
+  <p class="muted">{{ _('Pídele al cliente un documento concreto, con fecha límite si la hay. Lo verá en su portal, recibirá los recordatorios de siempre y tú lo revisas aquí cuando lo envíe.') }}</p>
+  {% if error_peticion %}<div class="ia-error" role="alert">{{ error_peticion }}</div>{% endif %}
+  {% if peticiones %}
+  <ul class="log-list">
+    {% for p in peticiones %}
+    <li class="log-item">
+      <span class="log-text"><strong>{{ p.titulo }}</strong> <span class="muted">{{ {'pendiente': _('Pendiente'), 'enviada': _('Enviada: por revisar'), 'revisada': _('Revisada'), 'cancelada': _('Cancelada')}[p.estado] }}{% if p.fecha_limite %} · {{ p.fecha_limite }}{% endif %}{% if p.vencida %} · {{ _('vencida') }}{% endif %}</span>
+        {% if p.nota %}<br><span class="muted">{{ p.nota }}</span>{% endif %}
+        {% for a in peticiones_archivos.get(p.id, []) %}<br><a href="{{ url_for('fiscal.descargar_documento_cliente', cliente_id=cliente.id, documento_id=a.documento_id) }}">{{ a.nombre }}</a>{% endfor %}</span>
+      {% if p.estado in ('pendiente', 'enviada') %}
+      <form method="post" action="{{ url_for('fiscal.resolver_peticion_documento', cliente_id=cliente.id, peticion_id=p.id, accion='revisar') }}" class="portal-persona-form"><button type="submit" class="btn btn-ghost">{{ _('Dar por revisada') }}</button></form>
+      <form method="post" action="{{ url_for('fiscal.resolver_peticion_documento', cliente_id=cliente.id, peticion_id=p.id, accion='cancelar') }}" class="portal-persona-form"><button type="submit" class="btn btn-ghost">{{ _('Cancelar') }}</button></form>
+      {% endif %}
+      {% if p.estado in ('enviada', 'revisada') %}
+      <form method="post" action="{{ url_for('fiscal.resolver_peticion_documento', cliente_id=cliente.id, peticion_id=p.id, accion='reabrir') }}" class="portal-persona-form">
+        <label class="sr-only" for="pet-nota-{{ p.id }}">{{ _('Qué falta') }}</label><input type="text" id="pet-nota-{{ p.id }}" name="nota" maxlength="300" placeholder="{{ _('Qué falta') }}" required>
+        <button type="submit" class="btn btn-ghost">{{ _('Pedir de nuevo') }}</button></form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _('Todavía no le has pedido ningún documento.') }}</p>{% endif %}
+  <form method="post" action="{{ url_for('fiscal.crear_peticion_documento', cliente_id=cliente.id) }}" class="edit-form">
+    <h3>{{ _('Pedir un documento') }}</h3>
+    <div class="correo-form-campo"><label for="pet-titulo">{{ _('Qué necesitas') }}</label><input type="text" id="pet-titulo" name="titulo" maxlength="120" required placeholder="{{ _('Extracto bancario del 3T') }}"></div>
+    <div class="correo-form-campo"><label for="pet-desc">{{ _('Detalle (opcional)') }}</label><input type="text" id="pet-desc" name="descripcion" maxlength="600"></div>
+    <div class="correo-form-campo"><label for="pet-limite">{{ _('Fecha límite (opcional)') }}</label><input type="date" id="pet-limite" name="fecha_limite"></div>
+    <label><input type="checkbox" name="avisar" value="1" checked> {{ _('Avisarle ahora por correo') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Pedir') }}</button>
+  </form>
+</section>
+
 <section class="proyecto-bloque ds-max-640 ds-mt-24" id="contactos-portal" aria-labelledby="contactos-portal-titulo">
   <h2 id="contactos-portal-titulo">{{ _('Personas con acceso al portal') }}</h2>
   <p class="muted">{{ _('Además del titular (el email de arriba), puedes dar acceso a su administrativa, a su asesor externo… Cada una entra con su propio email y elige cuánto quiere que le avisemos. Acceso completo: todo, también firmar, pagar y dar la conformidad. Administración: subir y escribir, sin firmar, pagar ni dar la conformidad. Solo consulta: mirar.') }}</p>

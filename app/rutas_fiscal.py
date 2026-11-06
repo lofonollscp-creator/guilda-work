@@ -23,7 +23,7 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_lectura_previa, portal_metricas, portal_personas, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -359,6 +359,57 @@ def _cliente_para_contactos(cliente_id: int):
     return cliente
 
 
+def _volver_a_peticiones(cliente_id: int, error: str | None = None):
+    return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id, **({"error_peticion": error[:200]} if error else {})) + "#peticiones")
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/peticiones", methods=["POST"])
+@login_required
+def crear_peticion_documento(cliente_id: int):
+    """Le pide al cliente un documento concreto, con fecha límite opcional: lo verá en su portal y recibirá los recordatorios."""
+    cliente = _cliente_para_contactos(cliente_id)
+    try:
+        pid = portal_peticiones.crear(cliente, request.form.get("titulo", ""), request.form.get("descripcion", ""), request.form.get("fecha_limite"), por=g.usuario_id)
+    except ValueError as e:
+        return _volver_a_peticiones(cliente_id, _(str(e)))
+    auditoria.registrar(g.tenant_id, g.usuario_id, "portal.peticion_creada", "portal_peticion", pid, {"cliente": cliente_id, "titulo": request.form.get("titulo", "")[:80]})
+    if request.form.get("avisar") == "1":
+        enlace = portal_recordatorios.url_portal(f"/portal/peticiones/{pid}", cliente_id)
+        if enlace and portal_peticiones.obtener(cliente, pid):
+            try:
+                portal_avisos.correo_directo(cliente, lambda e: enviar_solicitud_documento(e, request.form.get("titulo", "")[:120], enlace, tenant_id=g.tenant_id), accion="subir",
+                                             push=(_("Tu gestoría te pide un documento"), request.form.get("titulo", "")[:100], f"/portal/peticiones/{pid}"))
+            except ErrorNotificacionesEmail:
+                pass
+    return _volver_a_peticiones(cliente_id)
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/peticiones/<int:peticion_id>/<accion>", methods=["POST"])
+@login_required
+def resolver_peticion_documento(cliente_id: int, peticion_id: int, accion: str):
+    """Da por revisada una petición, la reabre con una nota (qué falta) o la cancela."""
+    cliente = _cliente_para_contactos(cliente_id)
+    if accion not in ("revisar", "reabrir", "cancelar"):
+        abort(404)
+    try:
+        ok = (portal_peticiones.reabrir(cliente, peticion_id, g.usuario_id, request.form.get("nota", "")) if accion == "reabrir" else
+              portal_peticiones.revisar(cliente, peticion_id, g.usuario_id, request.form.get("nota", "")) if accion == "revisar" else portal_peticiones.cancelar(cliente, peticion_id, g.usuario_id))
+    except ValueError as e:
+        return _volver_a_peticiones(cliente_id, _(str(e)))
+    if not ok:
+        return _volver_a_peticiones(cliente_id, _("Esa petición ya no admite este cambio."))
+    auditoria.registrar(g.tenant_id, g.usuario_id, f"portal.peticion_{accion}", "portal_peticion", peticion_id, {"cliente": cliente_id})
+    if accion == "reabrir":
+        enlace = portal_recordatorios.url_portal(f"/portal/peticiones/{peticion_id}", cliente_id)
+        if enlace:
+            try:
+                portal_avisos.correo_directo(cliente, lambda e: enviar_solicitud_documento(e, request.form.get("nota", "")[:200], enlace, tenant_id=g.tenant_id), accion="subir",
+                                             push=(_("Tu gestoría necesita algo más"), request.form.get("nota", "")[:100], f"/portal/peticiones/{peticion_id}"))
+            except ErrorNotificacionesEmail:
+                pass
+    return _volver_a_peticiones(cliente_id)
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/contactos", methods=["POST"])
 @login_required
 def anadir_contacto_portal(cliente_id: int):
@@ -549,6 +600,8 @@ def editar_cliente(cliente_id: int):
         paises_con_calendario=PAISES_CON_CALENDARIO,
         perfil=db.perfil_fiscal_de_cliente(cliente), perfil_tipos=perfil_fiscal.TIPOS, perfil_atributos=perfil_fiscal.ATRIBUTOS,
         modelos_sugeridos=perfil_fiscal.modelos_para_perfil(db.perfil_fiscal_de_cliente(cliente)),
+        peticiones=portal_peticiones.listar(cliente), peticiones_archivos={p["id"]: portal_peticiones.archivos(cliente, p["id"]) for p in portal_peticiones.listar(cliente) if p["archivos"]},
+        error_peticion=(request.args.get("error_peticion") or "")[:200] or None,
         personas_portal=[p for p in portal_personas.listar(cliente) if not p["es_titular"]], roles_portal=portal_personas.ROLES, error_contacto=(request.args.get("error_contacto") or "")[:200] or None,
     )
 

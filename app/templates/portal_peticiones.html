@@ -1,0 +1,31 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Lo que te pide tu gestoría') }}{% endblock %}
+{% block titulo %}{{ _('Lo que te pide tu gestoría') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }}{% endblock %}
+{% block contenido %}
+    {% set abiertas = lista|selectattr('estado', 'in', ['pendiente', 'enviada'])|list %}
+    {% set cerradas = lista|selectattr('estado', 'in', ['revisada', 'cancelada'])|list %}
+    <section class="portal-cuenta-bloque" aria-labelledby="pet-abiertas">
+      <h2 id="pet-abiertas">{{ _('Pendiente') }}</h2>
+      {% if abiertas %}
+      <ul class="portal-personas">
+        {% for p in abiertas %}
+        <li class="portal-persona">
+          <div class="portal-persona-datos"><strong><a href="{{ url_for('portal_cliente.peticion', peticion_id=p.id) }}">{{ p.titulo }}</a></strong>
+            <span class="muted">{% if p.estado == 'enviada' %}{{ _('Enviado: tu gestoría lo está revisando.') }}{% elif p.fecha_limite %}{{ _('Fecha límite') }}: {{ p.fecha_limite }}{% if p.vencida %} · <strong>{{ _('vencida') }}</strong>{% endif %}{% else %}{{ _('Sin fecha límite') }}{% endif %}</span>
+            {% if p.nota and p.estado == 'pendiente' %}<span class="muted">{{ _('Tu gestoría dice') }}: {{ p.nota }}</span>{% endif %}</div>
+          {% if p.estado == 'pendiente' and puede_subir %}<a class="btn btn-primary" href="{{ url_for('portal_cliente.peticion', peticion_id=p.id) }}">{{ _('Subir') }}</a>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="muted">{{ _('No tienes nada pendiente: tu gestoría no te ha pedido ningún documento.') }}</p>{% endif %}
+    </section>
+    {% if cerradas %}
+    <section class="portal-cuenta-bloque" aria-labelledby="pet-cerradas">
+      <h2 id="pet-cerradas">{{ _('Ya resueltas') }}</h2>
+      <ul class="portal-personas">
+        {% for p in cerradas %}<li class="portal-persona"><div class="portal-persona-datos"><a href="{{ url_for('portal_cliente.peticion', peticion_id=p.id) }}">{{ p.titulo }}</a><span class="muted">{{ _('Revisada') if p.estado == 'revisada' else _('Cancelada') }}{% if p.revisada_en %} · {{ p.revisada_en[:10] }}{% endif %}</span></div></li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+{% endblock %}

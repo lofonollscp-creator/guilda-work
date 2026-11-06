@@ -18,7 +18,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_lectura_previa, portal_personas, portal_seguridad, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_calendario, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -802,6 +802,11 @@ def cuenta():
     if portal_subida_rapida.activa_para(cliente) and g.portal_rol != "consulta" and not previa:
         enlace = portal_subida_rapida.url(cliente, _base_publica())
         subida = {"url": enlace, "qr": qr.svg(enlace, _("Código QR para subir facturas desde el móvil")), "correo": portal_subida_rapida.direccion_de(cliente)}
+    agenda = None
+    if not previa and g.portal_rol != "consulta":
+        ruta = url_for("portal_cliente.calendario", cliente_id=cliente["id"], token=portal_calendario.token_de(cliente))
+        base = _base_publica()
+        agenda = {"https": f"{base.rstrip('/')}{ruta}", "webcal": "webcal://" + f"{base.rstrip('/')}{ruta}".split("://", 1)[-1]}
     seguridad = None
     if not previa:
         sid = session.get("portal_sid")
@@ -810,7 +815,7 @@ def cuenta():
         if pendiente and not seguridad["segundo_factor"]:
             uri = portal_seguridad.uri_totp(yo, pendiente)
             seguridad["alta"] = {"secreto": pendiente, "qr": qr.svg(uri, _("Código QR para añadir la cuenta a tu aplicación de autenticación"))}
-    return render_template("portal_cuenta.html", cliente=cliente, yo=yo, seguridad=seguridad, codigos_nuevos=session.pop("portal_codigos_nuevos", None), avisos=portal_personas.avisos_de(cliente, yo), niveles=portal_personas.NIVELES_AVISO, personas=portal_personas.listar(cliente), roles=portal_personas.ROLES,
+    return render_template("portal_cuenta.html", cliente=cliente, yo=yo, seguridad=seguridad, agenda=agenda, codigos_nuevos=session.pop("portal_codigos_nuevos", None), avisos=portal_personas.avisos_de(cliente, yo), niveles=portal_personas.NIVELES_AVISO, personas=portal_personas.listar(cliente), roles=portal_personas.ROLES,
                            puede_gestionar=g.portal_rol == "completo" and not previa, subida=subida, push_disponible=portal_push.disponible() and not previa, push_activo=portal_push.tiene(cliente, yo) if not previa else 0,
                            portal_seccion="cuenta", guardado=request.args.get("guardado"), error=(request.args.get("error") or "")[:200] or None, max_contactos=portal_personas.MAX_CONTACTOS)
 
@@ -871,6 +876,53 @@ def segundo_factor_quitar():
         return redirect(url_for("portal_cliente.cuenta", error=_("El código no es correcto.")) + "#seguridad")
     auditoria.registrar(cliente["tenant_id"], None, "portal.segundo_factor_quitado", "cliente_fiscal", cliente["id"], {"quien": _yo(cliente)})
     return redirect(url_for("portal_cliente.cuenta", guardado="segundo-factor-quitado") + "#seguridad")
+
+
+@portal_bp.route("/calendario/<int:cliente_id>/<token>.ics")
+@limiter.limit("240/hour")
+def calendario(cliente_id: int, token: str):
+    """El calendario de plazos del cliente para su agenda. Sin sesión: lo abre la aplicación de calendario con el enlace secreto de Mi cuenta."""
+    cliente = portal_calendario.cliente_por_token(token, cliente_id)
+    if cliente is None:
+        abort(404)
+    return Response(portal_calendario.contenido(cliente), mimetype="text/calendar", headers={"Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff",
+                                                                                              "Content-Disposition": 'inline; filename="plazos.ics"'})
+
+
+@portal_bp.route("/peticiones")
+@cliente_login_required
+def peticiones():
+    """Lo que la gestoría le ha pedido al cliente, con su fecha límite y lo que ya ha enviado."""
+    cliente = _cliente_actual_o_salir()
+    return render_template("portal_peticiones.html", cliente=cliente, lista=portal_peticiones.listar(cliente), portal_seccion="inicio", puede_subir=g.portal_rol != "consulta" and not g.get("vista_previa"))
+
+
+@portal_bp.route("/peticiones/<int:peticion_id>", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def peticion(peticion_id: int):
+    cliente = _cliente_actual_o_salir()
+    p = portal_peticiones.obtener(cliente, peticion_id)
+    if p is None:
+        abort(404)
+    error = None
+    if request.method == "POST":
+        ficheros = [(f.filename or "archivo", (f.mimetype or "").lower(), f.read(portal_peticiones.MAX_BYTES + 1)) for f in request.files.getlist("archivos") if f and f.filename]
+        try:
+            n = portal_peticiones.subir(cliente, peticion_id, ficheros, g.portal_email or "titular")
+            auditoria.registrar(cliente["tenant_id"], None, "portal.peticion_enviada", "portal_peticion", peticion_id, {"quien": g.portal_email or "titular", "archivos": n})
+            portal_peticiones_avisar_equipo(cliente, p, n)
+            return redirect(url_for("portal_cliente.peticion", peticion_id=peticion_id, enviado=n))
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("portal_peticion.html", cliente=cliente, p=p, archivos=portal_peticiones.archivos(cliente, peticion_id), error=error, enviado=request.args.get("enviado", type=int),
+                           puede_subir=g.portal_rol != "consulta" and not g.get("vista_previa") and p["estado"] in ("pendiente", "enviada"), max_archivos=portal_peticiones.MAX_ARCHIVOS, portal_seccion="inicio")
+
+
+def portal_peticiones_avisar_equipo(cliente, p: dict, n: int) -> None:
+    """Cuando el cliente envía lo pedido, lo sabe quien lleva al cliente."""
+    facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s ha enviado lo que le pedías", cliente=cliente["nombre"]), _("«%(titulo)s»: %(n)s archivo(s) por revisar.", titulo=p["titulo"], n=n),
+                                       url_for("fiscal.editar_cliente", cliente_id=cliente["id"]) + "#peticiones", {"peticion": p["id"]})
 
 
 @portal_bp.route("/preferencias", methods=["POST"])

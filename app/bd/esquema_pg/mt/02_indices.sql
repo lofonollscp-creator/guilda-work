@@ -140,6 +140,7 @@ CREATE INDEX IF NOT EXISTS idx_plazos_expediente ON plazos (expediente_id, estad
 CREATE INDEX IF NOT EXISTS idx_plazos_tenant ON plazos (tenant_id, papelera_en, estado, fecha_limite);
 CREATE INDEX IF NOT EXISTS idx_portal_contactos_buscar ON portal_contactos (email);
 CREATE INDEX IF NOT EXISTS idx_portal_enlaces_token ON portal_enlaces_subida (token);
+CREATE INDEX IF NOT EXISTS idx_portal_peticiones_cliente ON portal_peticiones (tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_respuestas_tenant ON portal_respuestas_rapidas (tenant_id, titulo);
 CREATE INDEX IF NOT EXISTS idx_portal_sesiones_persona ON portal_sesiones (tenant_id, email, revocada_en);
 CREATE INDEX IF NOT EXISTS idx_proyecto_miembros_usuario ON proyecto_miembros (usuario_id);
@@ -222,6 +223,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_objetos_fila ON objetos_almacenados (tenan
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_avisos_unico ON portal_avisos_enviados (tenant_id, cliente_fiscal_id, destinatario, tipo, referencia);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_contactos_email ON portal_contactos (tenant_id, cliente_fiscal_id, email);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_enlaces_cliente ON portal_enlaces_subida (tenant_id, cliente_fiscal_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_peticiones_documentos ON portal_peticiones_documentos (tenant_id, peticion_id, documento_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_push_endpoint ON portal_suscripciones_push (tenant_id, cliente_fiscal_id, endpoint);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_segundo_factor ON portal_segundo_factor (tenant_id, email);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_sesiones_sid ON portal_sesiones (tenant_id, sid_hash);

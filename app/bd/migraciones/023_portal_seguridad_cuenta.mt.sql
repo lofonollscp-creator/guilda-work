@@ -41,5 +41,47 @@ DROP POLICY IF EXISTS aislamiento ON portal_sesiones;
 CREATE POLICY aislamiento ON portal_sesiones USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 GRANT SELECT, INSERT, UPDATE, DELETE ON portal_sesiones TO guilda_app, guilda_plataforma;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO guilda_app, guilda_plataforma;
+DO $$ BEGIN
+  IF (SELECT column_default FROM information_schema.columns WHERE table_name = 'portal_peticiones' AND column_name = 'tenant_id' AND table_schema = current_schema()) IS NULL THEN
+    ALTER TABLE portal_peticiones ALTER COLUMN tenant_id SET DEFAULT nullif(current_setting('app.tenant_id', true), '')::bigint;
+  END IF;
+  IF COALESCE((SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'portal_peticiones'::regclass AND contype = 'p'), '') NOT LIKE '%tenant_id%' THEN
+    ALTER TABLE portal_peticiones DROP CONSTRAINT IF EXISTS portal_peticiones_pkey;
+    ALTER TABLE portal_peticiones ADD CONSTRAINT portal_peticiones_pkey PRIMARY KEY (tenant_id, id);
+  END IF;
+END $$;
+DO $fk$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'citus') THEN
+    EXECUTE $q$ALTER TABLE portal_peticiones DROP CONSTRAINT IF EXISTS fk_portal_peticiones_tenant_id$q$;
+    EXECUTE $q$ALTER TABLE portal_peticiones ADD CONSTRAINT fk_portal_peticiones_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE$q$;
+  END IF;
+END $fk$;
+-- aislamiento por despacho (RLS) y permisos
+ALTER TABLE portal_peticiones ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_peticiones;
+CREATE POLICY aislamiento ON portal_peticiones USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+GRANT SELECT, INSERT, UPDATE, DELETE ON portal_peticiones TO guilda_app, guilda_plataforma;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO guilda_app, guilda_plataforma;
+DO $$ BEGIN
+  IF (SELECT column_default FROM information_schema.columns WHERE table_name = 'portal_peticiones_documentos' AND column_name = 'tenant_id' AND table_schema = current_schema()) IS NULL THEN
+    ALTER TABLE portal_peticiones_documentos ALTER COLUMN tenant_id SET DEFAULT nullif(current_setting('app.tenant_id', true), '')::bigint;
+  END IF;
+  IF COALESCE((SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'portal_peticiones_documentos'::regclass AND contype = 'p'), '') NOT LIKE '%tenant_id%' THEN
+    ALTER TABLE portal_peticiones_documentos DROP CONSTRAINT IF EXISTS portal_peticiones_documentos_pkey;
+    ALTER TABLE portal_peticiones_documentos ADD CONSTRAINT portal_peticiones_documentos_pkey PRIMARY KEY (tenant_id, id);
+  END IF;
+END $$;
+DO $fk$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'citus') THEN
+    EXECUTE $q$ALTER TABLE portal_peticiones_documentos DROP CONSTRAINT IF EXISTS fk_portal_peticiones_documentos_tenant_id$q$;
+    EXECUTE $q$ALTER TABLE portal_peticiones_documentos ADD CONSTRAINT fk_portal_peticiones_documentos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE$q$;
+  END IF;
+END $fk$;
+-- aislamiento por despacho (RLS) y permisos
+ALTER TABLE portal_peticiones_documentos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_peticiones_documentos;
+CREATE POLICY aislamiento ON portal_peticiones_documentos USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+GRANT SELECT, INSERT, UPDATE, DELETE ON portal_peticiones_documentos TO guilda_app, guilda_plataforma;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO guilda_app, guilda_plataforma;
 -- tabla global del vigilante de salud (sin despacho): solo permisos
 GRANT SELECT, INSERT, UPDATE, DELETE ON salud_silencios TO guilda_app, guilda_plataforma;

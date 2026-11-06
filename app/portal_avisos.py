@@ -108,6 +108,13 @@ def _esperas(cliente, hoy: date, ahora: datetime) -> list[dict]:
                         "texto": lambda v=v: {"asunto": pr._("Tienes un documento por firmar: %(m)s", m=f"{v['modelo']} {v['periodo']}"), "boton": pr._("Firmar el documento"),
                                               "lineas": [pr._("Hola, %(nombre)s.", nombre=cliente["nombre"]), pr._("Tu gestoría te envió un documento a firmar y todavía no consta tu firma."), pr._("Te lleva directo a la página de firma.")],
                                               "push": pr._("Tienes un documento por firmar.")}})
+    from . import portal_peticiones
+    for pet in portal_peticiones.pendientes_del_cliente(cliente["id"])[:10]:
+        esperas.append({"tipo": "peticion", "referencia": str(pet["id"]), "desde": pet["creado_en"], "destino": f"/portal/peticiones/{pet['id']}", "accion": "subir",
+                        "texto": lambda pet=pet: {"asunto": pr._("Tu gestoría sigue esperando un documento: %(titulo)s", titulo=pet["titulo"]), "boton": pr._("Subir el documento"),
+                                                  "lineas": [pr._("Hola, %(nombre)s.", nombre=cliente["nombre"]), pr._("Tu gestoría te pidió «%(titulo)s» y todavía no lo ha recibido.", titulo=pet["titulo"]),
+                                                             pr._("Fecha límite: %(fecha)s.", fecha=pet["fecha_limite"]) if pet["fecha_limite"] else "", pet["nota"] or ""],
+                                                  "push": pr._("Falta un documento que pidió tu gestoría.")}})
     if verticales.esta_activo(cliente["tenant_id"], "fiscal"):
         from . import conformidad_declaracion
         for p in conformidad_declaracion.pendientes_del_cliente(cliente["id"]):

@@ -21668,3 +21668,162 @@ msgstr ". Llindar: %(umbral)s USD."
 
 msgid "Lo que más cuesta: %(servicios)s."
 msgstr "El que més costa: %(servicios)s."
+
+msgid "Lo que te pide tu gestoría"
+msgstr "El que et demana la teva gestoria"
+
+msgid "Enviado: tu gestoría lo está revisando."
+msgstr "Enviat: la teva gestoria ho està revisant."
+
+msgid "vencida"
+msgstr "vençuda"
+
+msgid "Sin fecha límite"
+msgstr "Sense data límit"
+
+msgid "Tu gestoría dice"
+msgstr "La teva gestoria diu"
+
+msgid "No tienes nada pendiente: tu gestoría no te ha pedido ningún documento."
+msgstr "No tens res pendent: la teva gestoria no t'ha demanat cap document."
+
+msgid "Ya resueltas"
+msgstr "Ja resoltes"
+
+msgid "Recibido. Tu gestoría lo revisará y te avisará si falta algo."
+msgstr "Rebut. La teva gestoria ho revisarà i t'avisarà si falta alguna cosa."
+
+msgid "Qué te pide tu gestoría"
+msgstr "Què et demana la teva gestoria"
+
+msgid "Revisada: ya está resuelto."
+msgstr "Revisada: ja està resolt."
+
+msgid "Lo que has enviado"
+msgstr "El que has enviat"
+
+msgid "Enviar el documento"
+msgstr "Enviar el document"
+
+msgid "Archivos (hasta %(n)s, de 8 MB cada uno)"
+msgstr "Fitxers (fins a %(n)s, de 8 MB cadascun)"
+
+msgid "Puedes fotografiar el documento con el móvil o elegir un PDF."
+msgstr "Pots fotografiar el document amb el mòbil o triar un PDF."
+
+msgid "Ver todo lo que te pide tu gestoría"
+msgstr "Veure tot el que et demana la teva gestoria"
+
+msgid "Peticiones de documentos"
+msgstr "Peticions de documents"
+
+msgid "Pídele al cliente un documento concreto, con fecha límite si la hay. Lo verá en su portal, recibirá los recordatorios de siempre y tú lo revisas aquí cuando lo envíe."
+msgstr "Demana al client un document concret, amb data límit si n'hi ha. El veurà al seu portal, rebrà els recordatoris de sempre i tu ho revises aquí quan l'enviï."
+
+msgid "Enviada: por revisar"
+msgstr "Enviada: per revisar"
+
+msgid "Dar por revisada"
+msgstr "Donar per revisada"
+
+msgid "Qué falta"
+msgstr "Què falta"
+
+msgid "Pedir de nuevo"
+msgstr "Tornar a demanar"
+
+msgid "Todavía no le has pedido ningún documento."
+msgstr "Encara no li has demanat cap document."
+
+msgid "Pedir un documento"
+msgstr "Demanar un document"
+
+msgid "Qué necesitas"
+msgstr "Què necessites"
+
+msgid "Extracto bancario del 3T"
+msgstr "Extracte bancari del 3T"
+
+msgid "Detalle (opcional)"
+msgstr "Detall (opcional)"
+
+msgid "Fecha límite (opcional)"
+msgstr "Data límit (opcional)"
+
+msgid "Avisarle ahora por correo"
+msgstr "Avisar-lo ara per correu"
+
+msgid "Pedir"
+msgstr "Demanar"
+
+msgid "Tu gestoría te pide: %(titulo)s"
+msgstr "La teva gestoria et demana: %(titulo)s"
+
+msgid "Tu gestoría sigue esperando un documento: %(titulo)s"
+msgstr "La teva gestoria continua esperant un document: %(titulo)s"
+
+msgid "Falta un documento que pidió tu gestoría."
+msgstr "Falta un document que va demanar la teva gestoria."
+
+msgid "Tu gestoría te pidió «%(titulo)s» y todavía no lo ha recibido."
+msgstr "La teva gestoria et va demanar «%(titulo)s» i encara no l'ha rebut."
+
+msgid "Fecha límite: %(fecha)s."
+msgstr "Data límit: %(fecha)s."
+
+msgid "%(cliente)s ha enviado lo que le pedías"
+msgstr "%(cliente)s ha enviat el que li demanaves"
+
+msgid "«%(titulo)s»: %(n)s archivo(s) por revisar."
+msgstr "«%(titulo)s»: %(n)s fitxer(s) per revisar."
+
+msgid "Esa petición ya no admite este cambio."
+msgstr "Aquesta petició ja no admet aquest canvi."
+
+msgid "Tu gestoría necesita algo más"
+msgstr "La teva gestoria necessita alguna cosa més"
+
+msgid "Escribe qué documento necesitas (mínimo 3 caracteres)."
+msgstr "Escriu quin document necessites (mínim 3 caràcters)."
+
+msgid "La fecha límite no es válida."
+msgstr "La data límit no és vàlida."
+
+msgid "Este cliente ya tiene demasiadas peticiones abiertas: cierra alguna antes de pedir más."
+msgstr "Aquest client ja té massa peticions obertes: tanca'n alguna abans de demanar-ne més."
+
+msgid "Esta petición ya no está abierta."
+msgstr "Aquesta petició ja no està oberta."
+
+msgid "Elige al menos un archivo."
+msgstr "Tria almenys un fitxer."
+
+msgid "Demasiados archivos de una vez: sube menos y repite."
+msgstr "Massa fitxers alhora: puja'n menys i repeteix."
+
+msgid "Solo PDF, imágenes, hojas de cálculo o documentos de texto, de hasta 8 MB cada uno."
+msgstr "Només PDF, imatges, fulls de càlcul o documents de text, de fins a 8 MB cadascun."
+
+msgid "Se ha alcanzado el máximo de documentos de este cliente: avisa a tu gestoría."
+msgstr "S'ha assolit el màxim de documents d'aquest client: avisa la teva gestoria."
+
+msgid "No se ha podido guardar ningún archivo (¿ya estaban enviados?)."
+msgstr "No s'ha pogut desar cap fitxer (potser ja estaven enviats?)."
+
+msgid "Explica qué falta (mínimo 5 caracteres): lo verá el cliente."
+msgstr "Explica què falta (mínim 5 caràcters): ho veurà el client."
+
+msgid "Tus plazos en tu agenda"
+msgstr "Els teus terminis a la teva agenda"
+
+msgid "Añade este calendario a la agenda de tu móvil u ordenador y verás ahí las fechas límite de tus impuestos y de lo que te pide tu gestoría, siempre al día y con un aviso dos días antes."
+msgstr "Afegeix aquest calendari a l'agenda del mòbil o de l'ordinador i hi veuràs les dates límit dels teus impostos i del que et demana la teva gestoria, sempre al dia i amb un avís dos dies abans."
+
+msgid "Añadir a mi agenda"
+msgstr "Afegir a la meva agenda"
+
+msgid "Si no se abre sola, copia este enlace en tu aplicación de calendario («añadir calendario por dirección»):"
+msgstr "Si no s'obre sola, copia aquest enllaç a la teva aplicació de calendari («afegir calendari per adreça»):"
+
+msgid "El enlace es solo tuyo: quien lo tenga puede ver tus fechas límite, nada más. Si crees que otra persona lo tiene, renueva el enlace de subida desde el móvil y este se renueva con él."
+msgstr "L'enllaç és només teu: qui el tingui pot veure les teves dates límit, res més. Si creus que una altra persona el té, renova l'enllaç de pujada des del mòbil i aquest es renova amb ell."

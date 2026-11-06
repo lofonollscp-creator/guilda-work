@@ -70,6 +70,11 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
                        "titulo": _("Tu gestoría necesita: %(doc)s", doc=v["documento_solicitado"]),
                        "detalle": f"{v['modelo']} {etiqueta_trimestre(v['periodo']) if facturas_portal._trimestre_de_periodo(v['periodo']) else v['periodo']} · {_cuando(dias)}".strip(" ·")})
 
+    from . import portal_peticiones
+    for pet in portal_peticiones.pendientes_del_cliente(cliente["id"])[:10]:
+        puntos.append({"clave": f"peticion-{pet['id']}", "urgente": pet["dias"] is not None and pet["dias"] <= 7, "accion": _("Subir documento"), "url": url_for("portal_cliente.peticion", peticion_id=pet["id"]),
+                       "titulo": _("Tu gestoría te pide: %(titulo)s", titulo=pet["titulo"]), "detalle": (pet["nota"] + " · " if pet["nota"] else "") + _cuando(pet["dias"])})
+
     from . import portal_firma, portal_pagos
     for v in portal_firma.pendientes(vencimientos):
         puntos.append({"clave": f"firma-{v['id']}", "urgente": False, "accion": _("Firmar"), "url": url_for("portal_cliente.firma_vencimiento", vencimiento_id=v["id"]),

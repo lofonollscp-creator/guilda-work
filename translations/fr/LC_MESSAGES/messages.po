@@ -21744,3 +21744,162 @@ msgstr ". Seuil : %(umbral)s USD."
 
 msgid "Lo que más cuesta: %(servicios)s."
 msgstr "Ce qui coûte le plus : %(servicios)s."
+
+msgid "Lo que te pide tu gestoría"
+msgstr "Ce que votre cabinet vous demande"
+
+msgid "Enviado: tu gestoría lo está revisando."
+msgstr "Envoyé : votre cabinet est en train de le vérifier."
+
+msgid "vencida"
+msgstr "échue"
+
+msgid "Sin fecha límite"
+msgstr "Sans date limite"
+
+msgid "Tu gestoría dice"
+msgstr "Votre cabinet dit"
+
+msgid "No tienes nada pendiente: tu gestoría no te ha pedido ningún documento."
+msgstr "Rien n'est en attente : votre cabinet ne vous a demandé aucun document."
+
+msgid "Ya resueltas"
+msgstr "Déjà résolues"
+
+msgid "Recibido. Tu gestoría lo revisará y te avisará si falta algo."
+msgstr "Reçu. Votre cabinet le vérifiera et vous préviendra s'il manque quelque chose."
+
+msgid "Qué te pide tu gestoría"
+msgstr "Ce que votre cabinet demande"
+
+msgid "Revisada: ya está resuelto."
+msgstr "Vérifiée : c'est réglé."
+
+msgid "Lo que has enviado"
+msgstr "Ce que vous avez envoyé"
+
+msgid "Enviar el documento"
+msgstr "Envoyer le document"
+
+msgid "Archivos (hasta %(n)s, de 8 MB cada uno)"
+msgstr "Fichiers (jusqu'à %(n)s, 8 Mo chacun)"
+
+msgid "Puedes fotografiar el documento con el móvil o elegir un PDF."
+msgstr "Vous pouvez photographier le document avec votre téléphone ou choisir un PDF."
+
+msgid "Ver todo lo que te pide tu gestoría"
+msgstr "Voir tout ce que votre cabinet vous demande"
+
+msgid "Peticiones de documentos"
+msgstr "Demandes de documents"
+
+msgid "Pídele al cliente un documento concreto, con fecha límite si la hay. Lo verá en su portal, recibirá los recordatorios de siempre y tú lo revisas aquí cuando lo envíe."
+msgstr "Demandez au client un document précis, avec une date limite s'il y en a une. Il le verra dans son portail, recevra les rappels habituels et vous le vérifiez ici quand il l'envoie."
+
+msgid "Enviada: por revisar"
+msgstr "Envoyée : à vérifier"
+
+msgid "Dar por revisada"
+msgstr "Marquer comme vérifiée"
+
+msgid "Qué falta"
+msgstr "Ce qui manque"
+
+msgid "Pedir de nuevo"
+msgstr "Redemander"
+
+msgid "Todavía no le has pedido ningún documento."
+msgstr "Vous ne lui avez encore demandé aucun document."
+
+msgid "Pedir un documento"
+msgstr "Demander un document"
+
+msgid "Qué necesitas"
+msgstr "Ce dont vous avez besoin"
+
+msgid "Extracto bancario del 3T"
+msgstr "Relevé bancaire du T3"
+
+msgid "Detalle (opcional)"
+msgstr "Détail (facultatif)"
+
+msgid "Fecha límite (opcional)"
+msgstr "Date limite (facultative)"
+
+msgid "Avisarle ahora por correo"
+msgstr "Le prévenir maintenant par courriel"
+
+msgid "Pedir"
+msgstr "Demander"
+
+msgid "Tu gestoría te pide: %(titulo)s"
+msgstr "Votre cabinet vous demande : %(titulo)s"
+
+msgid "Tu gestoría sigue esperando un documento: %(titulo)s"
+msgstr "Votre cabinet attend toujours un document : %(titulo)s"
+
+msgid "Falta un documento que pidió tu gestoría."
+msgstr "Il manque un document demandé par votre cabinet."
+
+msgid "Tu gestoría te pidió «%(titulo)s» y todavía no lo ha recibido."
+msgstr "Votre cabinet vous a demandé « %(titulo)s » et ne l'a pas encore reçu."
+
+msgid "Fecha límite: %(fecha)s."
+msgstr "Date limite : %(fecha)s."
+
+msgid "%(cliente)s ha enviado lo que le pedías"
+msgstr "%(cliente)s a envoyé ce que vous aviez demandé"
+
+msgid "«%(titulo)s»: %(n)s archivo(s) por revisar."
+msgstr "« %(titulo)s » : %(n)s fichier(s) à vérifier."
+
+msgid "Esa petición ya no admite este cambio."
+msgstr "Cette demande n'accepte plus ce changement."
+
+msgid "Tu gestoría necesita algo más"
+msgstr "Votre cabinet a besoin de quelque chose de plus"
+
+msgid "Escribe qué documento necesitas (mínimo 3 caracteres)."
+msgstr "Écrivez quel document vous faut (3 caractères minimum)."
+
+msgid "La fecha límite no es válida."
+msgstr "La date limite n'est pas valide."
+
+msgid "Este cliente ya tiene demasiadas peticiones abiertas: cierra alguna antes de pedir más."
+msgstr "Ce client a déjà trop de demandes ouvertes : fermez-en avant d'en demander d'autres."
+
+msgid "Esta petición ya no está abierta."
+msgstr "Cette demande n'est plus ouverte."
+
+msgid "Elige al menos un archivo."
+msgstr "Choisissez au moins un fichier."
+
+msgid "Demasiados archivos de una vez: sube menos y repite."
+msgstr "Trop de fichiers à la fois : envoyez-en moins et recommencez."
+
+msgid "Solo PDF, imágenes, hojas de cálculo o documentos de texto, de hasta 8 MB cada uno."
+msgstr "Uniquement des PDF, images, tableurs ou documents texte, de 8 Mo maximum chacun."
+
+msgid "Se ha alcanzado el máximo de documentos de este cliente: avisa a tu gestoría."
+msgstr "Le nombre maximal de documents de ce client est atteint : prévenez votre cabinet."
+
+msgid "No se ha podido guardar ningún archivo (¿ya estaban enviados?)."
+msgstr "Aucun fichier n'a pu être enregistré (étaient-ils déjà envoyés ?)."
+
+msgid "Explica qué falta (mínimo 5 caracteres): lo verá el cliente."
+msgstr "Expliquez ce qui manque (5 caractères minimum) : le client le verra."
+
+msgid "Tus plazos en tu agenda"
+msgstr "Vos échéances dans votre agenda"
+
+msgid "Añade este calendario a la agenda de tu móvil u ordenador y verás ahí las fechas límite de tus impuestos y de lo que te pide tu gestoría, siempre al día y con un aviso dos días antes."
+msgstr "Ajoutez ce calendrier à l'agenda de votre téléphone ou de votre ordinateur et vous y verrez les échéances de vos impôts et ce que demande votre cabinet, toujours à jour et avec un rappel deux jours avant."
+
+msgid "Añadir a mi agenda"
+msgstr "Ajouter à mon agenda"
+
+msgid "Si no se abre sola, copia este enlace en tu aplicación de calendario («añadir calendario por dirección»):"
+msgstr "S'il ne s'ouvre pas tout seul, copiez ce lien dans votre application de calendrier (« ajouter un agenda par adresse ») :"
+
+msgid "El enlace es solo tuyo: quien lo tenga puede ver tus fechas límite, nada más. Si crees que otra persona lo tiene, renueva el enlace de subida desde el móvil y este se renueva con él."
+msgstr "Le lien est uniquement à vous : qui l'a peut voir vos échéances, rien de plus. Si vous pensez qu'une autre personne l'a, renouvelez le lien d'envoi depuis le mobile et celui-ci se renouvelle avec lui."
