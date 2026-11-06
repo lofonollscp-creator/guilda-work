@@ -21452,3 +21452,12 @@ msgstr "Each firm can have up to 50 quick replies."
 
 msgid "Escribe una dirección de correo válida, sin «+» (por ejemplo facturas@tudespacho.com)."
 msgstr "Enter a valid email address, without “+” (for example invoices@yourfirm.com)."
+
+msgid "Copia de los documentos del almacén de objetos (Restic)"
+msgstr "Backup of the object store documents (Restic)"
+
+msgid "Todavía no se ha ejecutado ninguna copia de los documentos."
+msgstr "No document backup has run yet."
+
+msgid "Última copia completa hace %(hace)s (%(n)s documentos nuevos)."
+msgstr "Last complete backup %(hace)s ago (%(n)s new documents)."

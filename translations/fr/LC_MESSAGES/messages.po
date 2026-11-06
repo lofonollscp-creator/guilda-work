@@ -21537,3 +21537,12 @@ msgstr "Chaque cabinet peut avoir jusqu'à 50 réponses rapides."
 
 msgid "Escribe una dirección de correo válida, sin «+» (por ejemplo facturas@tudespacho.com)."
 msgstr "Saisissez une adresse e-mail valide, sans « + » (par exemple factures@moncabinet.com)."
+
+msgid "Copia de los documentos del almacén de objetos (Restic)"
+msgstr "Sauvegarde des documents du magasin d'objets (Restic)"
+
+msgid "Todavía no se ha ejecutado ninguna copia de los documentos."
+msgstr "Aucune sauvegarde des documents n'a encore été exécutée."
+
+msgid "Última copia completa hace %(hace)s (%(n)s documentos nuevos)."
+msgstr "Dernière sauvegarde complète il y a %(hace)s (%(n)s nouveaux documents)."

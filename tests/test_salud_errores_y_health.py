@@ -122,6 +122,25 @@ def test_la_copia_externa_pasa_de_verde_a_ambar_y_rojo_con_la_edad(tmp_path, mon
     assert nunca["estado"] == salud.ROJO
 
 
+def test_la_copia_de_los_documentos_solo_sale_con_bucket_y_sigue_los_mismos_umbrales(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path)
+    monkeypatch.delenv("GUILDA_OBJETOS", raising=False)
+    assert "restic_objetos" not in {i["clave"] for i in salud.panel(AHORA)}
+    monkeypatch.setenv("GUILDA_OBJETOS", "s3")
+    assert {i["clave"]: i for i in salud.panel(AHORA)}["restic_objetos"]["estado"] == salud.GRIS
+
+    def estado(horas, errores=(), nuevos=23):
+        (tmp_path / "restic_objetos_estado.json").write_text(json.dumps({"ultimo_ok": (AHORA - timedelta(hours=horas)).isoformat(), "nuevos": nuevos, "errores": list(errores)}), encoding="utf-8")
+        return {i["clave"]: i for i in salud.panel(AHORA)}["restic_objetos"]
+    assert estado(5)["estado"] == salud.VERDE and "23 documentos nuevos" in estado(5)["detalle"]
+    assert estado(40)["estado"] == salud.AMBAR
+    assert estado(24 * 4)["estado"] == salud.ROJO
+    assert estado(5, ["espejo"])["estado"] == salud.AMBAR
+    (tmp_path / "restic_objetos_estado.json").write_text(json.dumps({"ultimo_ok": None, "errores": ["restic backup"]}), encoding="utf-8")
+    assert {i["clave"]: i for i in salud.panel(AHORA)}["restic_objetos"]["estado"] == salud.ROJO
+
+
 # --- prueba de restauración ---------------------------------------------------------------------------------------------------
 
 def _estado_restauracion(tmp_path, monkeypatch, contenido=None):

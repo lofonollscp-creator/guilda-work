@@ -131,18 +131,16 @@ RESTIC_VERDE_HORAS = 36
 RESTIC_ROJO_DIAS = 3
 
 
-def _estado_copia_externa(ahora: datetime) -> dict:
-    """Copia de Restic en otro disco (scripts/backup_restic.sh deja su estado en data/backups/restic_estado.json). Sin fichero =
-    gris («no configurada»): en un entorno de desarrollo no tiene por qué existir."""
-    titulo = _("Copia de seguridad en otro disco (Restic)")
-    ruta = db.BACKUPS_DIR / "restic_estado.json"
+def _estado_restic_fichero(ahora: datetime, fichero: str, clave: str, titulo: str, sin_ejecutar: str, resumen) -> dict:
+    """Estado de una copia de Restic a partir del JSON que deja su script: `ultimo_ok` (la última pasada sin errores), `errores` de la última y lo que cuente `resumen(estado)`."""
+    ruta = db.BACKUPS_DIR / fichero
     if not ruta.exists():
-        return _item("Copias de seguridad", "restic", titulo, GRIS, _("Todavía no se ha ejecutado ninguna copia con Restic."))
+        return _item("Copias de seguridad", clave, titulo, GRIS, sin_ejecutar)
     estado = json.loads(ruta.read_text(encoding="utf-8"))
     ultimo_ok = estado.get("ultimo_ok")
     errores = estado.get("errores") or []
     if not ultimo_ok:
-        return _item("Copias de seguridad", "restic", titulo, ROJO, _("Ninguna copia se ha completado: %(errores)s.", errores=", ".join(errores) or "—"))
+        return _item("Copias de seguridad", clave, titulo, ROJO, _("Ninguna copia se ha completado: %(errores)s.", errores=", ".join(errores) or "—"))
     edad = (ahora - datetime.fromisoformat(ultimo_ok).replace(tzinfo=None)).total_seconds()
     if edad > RESTIC_ROJO_DIAS * 86400:
         item_estado = ROJO
@@ -150,10 +148,24 @@ def _estado_copia_externa(ahora: datetime) -> dict:
         item_estado = AMBAR
     else:
         item_estado = VERDE
-    detalle = _("Última copia completa hace %(hace)s (%(n)s objetivos).", hace=_legible(edad), n=estado.get("objetivos", "?"))
+    detalle = resumen(estado, _legible(edad))
     if errores:
         detalle += " " + _("Con fallos en la última pasada: %(errores)s.", errores=", ".join(errores))
-    return _item("Copias de seguridad", "restic", titulo, item_estado, detalle)
+    return _item("Copias de seguridad", clave, titulo, item_estado, detalle)
+
+
+def _estado_copia_externa(ahora: datetime) -> dict:
+    """Copia de Restic en otro disco (scripts/backup_restic.sh deja su estado en data/backups/restic_estado.json). Sin fichero =
+    gris («no configurada»): en un entorno de desarrollo no tiene por qué existir."""
+    return _estado_restic_fichero(ahora, "restic_estado.json", "restic", _("Copia de seguridad en otro disco (Restic)"), _("Todavía no se ha ejecutado ninguna copia con Restic."),
+                                  lambda e, hace: _("Última copia completa hace %(hace)s (%(n)s objetivos).", hace=hace, n=e.get("objetivos", "?")))
+
+
+def _estado_copia_documentos(ahora: datetime) -> dict:
+    """Copia a Restic de los documentos del almacén de objetos (scripts/backup_objetos_restic.sh → data/backups/restic_objetos_estado.json)."""
+    return _estado_restic_fichero(ahora, "restic_objetos_estado.json", "restic_objetos", _("Copia de los documentos del almacén de objetos (Restic)"),
+                                  _("Todavía no se ha ejecutado ninguna copia de los documentos."),
+                                  lambda e, hace: _("Última copia completa hace %(hace)s (%(n)s documentos nuevos).", hace=hace, n=e.get("nuevos") if e.get("nuevos") is not None else "?"))
 
 
 RESTAURACION_VERDE_DIAS = 40
@@ -337,6 +349,8 @@ def panel(ahora: datetime | None = None) -> list[dict]:
 
     _seguro("Copias de seguridad", "backup", _("Última copia de seguridad"), lambda: _estado_backup(ahora))
     _seguro("Copias de seguridad", "restic", _("Copia de seguridad en otro disco (Restic)"), lambda: _estado_copia_externa(ahora))
+    if os.environ.get("GUILDA_OBJETOS") == "s3" or (db.BACKUPS_DIR / "restic_objetos_estado.json").exists():      # solo si hay bucket que copiar
+        _seguro("Copias de seguridad", "restic_objetos", _("Copia de los documentos del almacén de objetos (Restic)"), lambda: _estado_copia_documentos(ahora))
     _seguro("Copias de seguridad", "restauracion", _("Prueba de restauración de la copia"), lambda: _estado_prueba_restauracion(ahora))
     if _motor_postgres():
         from . import salud_postgres

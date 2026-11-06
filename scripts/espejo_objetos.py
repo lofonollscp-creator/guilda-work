@@ -6,7 +6,7 @@ nada del espejo aunque el objeto desaparezca del bucket. Cada descarga se compru
 
 Variables: las GUILDA_S3_* de /etc/guilda-work.env y GUILDA_OBJETOS_ESPEJO (carpeta de destino, ruta absoluta).
 Uso: .venv/bin/python scripts/espejo_objetos.py [--verificar]   (con --verificar vuelve a comprobar también lo que ya estaba en el espejo)
-Termina con código 1 si algún objeto falla; escribe un resumen JSON en GUILDA_OBJETOS_ESPEJO_ESTADO si se indica."""
+Termina con código 1 si algún objeto falla; escribe un resumen JSON en GUILDA_OBJETOS_ESPEJO_ESTADO si se indica (lo recoge backup_objetos_restic.sh para el panel Salud)."""
 from __future__ import annotations
 
 import hashlib

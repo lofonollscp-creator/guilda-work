@@ -19,21 +19,52 @@ case "$RESTIC_REPOSITORY" in /*) ;; *) echo "RESTIC_REPOSITORY debe ser una ruta
 IMAGEN="${RESTIC_IMAGEN:-restic/restic@sha256:9940e6c7421ab3a21ee9fdc4e91596d04c792b600d31b102696c75cbf3ac4481}"
 REPO_APP="${GUILDA_REPO:-/home/guilda/guilda-work}"
 export GUILDA_OBJETOS_ESPEJO="${GUILDA_OBJETOS_ESPEJO:-$(dirname "$RESTIC_REPOSITORY")/objetos-espejo}"
-export GUILDA_OBJETOS_ESPEJO_ESTADO="${GUILDA_OBJETOS_ESPEJO_ESTADO:-$REPO_APP/data/backups/restic_objetos_estado.json}"
+ESTADO="${GUILDA_OBJETOS_ESTADO:-$REPO_APP/data/backups/restic_objetos_estado.json}"      # lo lee el panel Salud (app/salud.py)
+RESUMEN_ESPEJO="$(mktemp /var/tmp/restic-objetos.XXXXXX)"
+trap 'rm -f "$RESUMEN_ESPEJO"' EXIT INT TERM
+export GUILDA_OBJETOS_ESPEJO_ESTADO="$RESUMEN_ESPEJO"
+INICIO="$(date -Is)"
+
+# Deja el estado para el panel Salud y sale con el código dado. `ultimo_ok` solo avanza si no hubo errores (un intento fallido no pisa la última copia buena).
+terminar() {
+  local codigo="$1"; shift
+  mkdir -p "$(dirname "$ESTADO")"
+  python3 -I - "$ESTADO" "$RESUMEN_ESPEJO" "$INICIO" "$@" <<'PY'
+import json, sys
+ruta, espejo, inicio, *errores = sys.argv[1:]
+try:
+    resumen = json.load(open(espejo))
+except Exception:
+    resumen = {}
+errores = [e for e in errores if e] + list(resumen.get("errores") or [])
+fin = __import__("datetime").datetime.now().astimezone().isoformat(timespec="seconds")
+estado = {"inicio": inicio, "fin": fin, "nuevos": resumen.get("nuevos"), "ya_estaban": resumen.get("ya_estaban"), "errores": errores[:20]}
+if not errores:
+    estado["ultimo_ok"] = fin
+else:
+    try:
+        estado["ultimo_ok"] = json.load(open(ruta)).get("ultimo_ok")
+    except Exception:
+        estado["ultimo_ok"] = None
+json.dump(estado, open(ruta, "w"), indent=1)
+PY
+  chown --reference="$REPO_APP/data" "$ESTADO" 2>/dev/null || true
+  exit "$codigo"
+}
 
 # El espejo y el repositorio deben estar en otro disco, no en el principal (ver backup_restic.sh).
 _existente="$GUILDA_OBJETOS_ESPEJO"; while [ ! -e "$_existente" ]; do _existente="$(dirname "$_existente")"; done
 if [ "$(findmnt -n -o TARGET -T "$_existente" 2>/dev/null)" = "/" ] && [ "${RESTIC_PERMITIR_MISMO_DISCO:-0}" != "1" ]; then
-  echo "El espejo $GUILDA_OBJETOS_ESPEJO está en el disco principal (¿segundo disco sin montar?). No se hace la copia." >&2; exit 1
+  echo "El espejo $GUILDA_OBJETOS_ESPEJO está en el disco principal (¿segundo disco sin montar?). No se hace la copia." >&2; terminar 1 "espejo en el disco principal"
 fi
 
 echo "== Espejo del bucket en $GUILDA_OBJETOS_ESPEJO =="
-"$REPO_APP/.venv/bin/python" -I "$REPO_APP/scripts/espejo_objetos.py" || { echo "El espejo terminó con errores; no se copia a Restic." >&2; exit 1; }
+"$REPO_APP/.venv/bin/python" -I "$REPO_APP/scripts/espejo_objetos.py" || { echo "El espejo terminó con errores; no se copia a Restic." >&2; terminar 1 "espejo"; }
 
 _restic() { docker run --rm -v restic-cache:/cache -v "$RESTIC_REPOSITORY:$RESTIC_REPOSITORY" -v "$GUILDA_OBJETOS_ESPEJO:/objetos:ro" -e RESTIC_REPOSITORY -e RESTIC_PASSWORD "$IMAGEN" "$@"; }
 echo "== Restic: copia del espejo =="
-_restic backup /objetos --tag objetos --host guilda-work -q || { echo "FALLO: restic backup" >&2; exit 1; }
-_restic forget --prune --group-by host,tags --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --keep-yearly 6 --tag objetos --host guilda-work -q || { echo "FALLO: forget" >&2; exit 1; }
-if [ "$(date +%u)" = "7" ]; then _restic check --read-data-subset=3% -q || { echo "FALLO: check" >&2; exit 1; }; fi
-chown --reference="$REPO_APP/data" "$GUILDA_OBJETOS_ESPEJO_ESTADO" 2>/dev/null || true
+_restic backup /objetos --tag objetos --host guilda-work -q || { echo "FALLO: restic backup" >&2; terminar 1 "restic backup"; }
+_restic forget --prune --group-by host,tags --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --keep-yearly 6 --tag objetos --host guilda-work -q || { echo "FALLO: forget" >&2; terminar 1 "forget"; }
+if [ "$(date +%u)" = "7" ]; then _restic check --read-data-subset=3% -q || { echo "FALLO: check" >&2; terminar 1 "check"; }; fi
 echo "Terminado."
+terminar 0

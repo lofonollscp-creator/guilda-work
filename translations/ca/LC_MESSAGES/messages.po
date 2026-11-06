@@ -21461,3 +21461,12 @@ msgstr "Cada despatx pot tenir fins a 50 respostes ràpides."
 
 msgid "Escribe una dirección de correo válida, sin «+» (por ejemplo facturas@tudespacho.com)."
 msgstr "Escriu una adreça de correu vàlida, sense «+» (per exemple factures@eldespatx.com)."
+
+msgid "Copia de los documentos del almacén de objetos (Restic)"
+msgstr "Còpia dels documents del magatzem d'objectes (Restic)"
+
+msgid "Todavía no se ha ejecutado ninguna copia de los documentos."
+msgstr "Encara no s'ha executat cap còpia dels documents."
+
+msgid "Última copia completa hace %(hace)s (%(n)s documentos nuevos)."
+msgstr "Última còpia completa fa %(hace)s (%(n)s documents nous)."
