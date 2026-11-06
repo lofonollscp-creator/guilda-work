@@ -2061,6 +2061,8 @@ def init_db() -> None:
         # Recordatorios automáticos por correo de los vencimientos próximos
         # (activos por defecto; el cliente puede quedar fuera desde su ficha).
         _asegurar_columna(conn, "clientes_fiscales", "recordatorios_portal", "INTEGER NOT NULL DEFAULT 1")
+        # El cliente ve en su portal los honorarios confirmados de sus modelos y puede pagarlos (apagado por defecto; lo decide el despacho cliente a cliente).
+        _asegurar_columna(conn, "clientes_fiscales", "portal_honorarios", "INTEGER NOT NULL DEFAULT 0")
         # Idioma de los correos que se le mandan al cliente (es/ca/en/fr).
         _asegurar_columna(conn, "clientes_fiscales", "idioma", "TEXT NOT NULL DEFAULT 'es'")
         # Quién subió el documento: 'cliente' (portal), 'justificante'
@@ -2085,6 +2087,7 @@ def init_db() -> None:
         # id del envelope de Documenso una vez enviado a firma, para
         # poder consultar su estado/descargarlo sin volver a crearlo.
         _asegurar_columna(conn, "vencimientos_fiscales", "documenso_documento_id", "TEXT")
+        _asegurar_columna(conn, "vencimientos_fiscales", "documenso_firmado_en", "TEXT")           # cuándo se supo que el cliente firmó el documento enviado a firma
         # Portal de cliente -- pedir un documento concreto
         # (app/rutas_fiscal.py:editar_vencimiento,
         # app/rutas_portal_cliente.py): texto libre que el empleado rellena
@@ -2625,7 +2628,7 @@ CHECKLIST_MAX_CARACTERES = 200
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
-    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "idioma", "perfil_fiscal", "oficina_id", "nif_duplicado_autorizado",
+    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "portal_honorarios", "idioma", "perfil_fiscal", "oficina_id", "nif_duplicado_autorizado",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
@@ -2633,7 +2636,7 @@ MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {
 }
 TAMANO_MAXIMO_DOCUMENTO_VENCIMIENTO = 8 * 1024 * 1024
 CAMPOS_VENCIMIENTO_FISCAL = (
-    "usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas", "documenso_documento_id",
+    "usuario_id", "modelo", "periodo", "fecha_limite", "estado", "notas", "documenso_documento_id", "documenso_firmado_en",
     "documento_solicitado",
 )
 

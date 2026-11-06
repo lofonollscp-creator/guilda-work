@@ -92,6 +92,11 @@
     {{ _('Enviar al cliente recordatorios por correo 7 y 2 días antes de cada vencimiento (necesita su email)') }}
   </label>
 
+  <label class="checkbox-label">
+    <input type="checkbox" name="portal_honorarios" {% if cliente.portal_honorarios %}checked{% endif %}>
+    {{ _('Enseñar en su portal los honorarios confirmados de cada modelo y dejarle pagarlos con tarjeta') }}
+  </label>
+
   <div class="edit-form-actions">
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
     <a class="btn btn-ghost" href="{{ url_for('fiscal.clientes') }}">{{ _('Cancelar') }}</a>

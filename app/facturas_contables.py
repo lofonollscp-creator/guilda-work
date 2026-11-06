@@ -195,6 +195,27 @@ CREATE TABLE IF NOT EXISTS facturas_contables_mensajes (
     leido_en TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_mensajes ON facturas_contables_mensajes(tenant_id, factura_id, id);
+CREATE TABLE IF NOT EXISTS justificantes_pendientes (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    cliente_fiscal_id INTEGER NOT NULL,
+    origen TEXT NOT NULL CHECK (origen IN ('extracto', 'cliente')),
+    fecha TEXT NOT NULL,
+    importe_centimos INTEGER NOT NULL,
+    concepto TEXT NOT NULL,
+    estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'con_factura', 'tiquet', 'personal', 'no_se', 'resuelto', 'descartado')),
+    factura_id INTEGER,
+    documento_id INTEGER,
+    comentario TEXT,
+    huella TEXT NOT NULL,
+    pedido_por INTEGER,
+    creado_en TEXT NOT NULL,
+    respondido_en TEXT,
+    resuelto_por INTEGER,
+    resuelto_en TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_justificantes_huella ON justificantes_pendientes(tenant_id, cliente_fiscal_id, huella);
+CREATE INDEX IF NOT EXISTS idx_justificantes_cliente ON justificantes_pendientes(tenant_id, cliente_fiscal_id, estado);
 """
 # Tipo de operación de cada línea (campo «subtipo» del enlace de a3, posiciones 100-101). La importación (06) necesita el número de DUA y no se ofrece.
 OPERACIONES = {
@@ -1520,7 +1541,7 @@ def borrar_datos_de_tenant(conn, tenant_id: int) -> None:
     conn.execute("UPDATE facturas_contables SET lote_id = NULL WHERE tenant_id = ?", (tenant_id,))
     for tabla in ("facturas_contables_lineas",):
         conn.execute(f"DELETE FROM {tabla} WHERE factura_id IN (SELECT id FROM facturas_contables WHERE tenant_id = ?)", (tenant_id,))
-    for tabla in ("facturas_contables_mensajes", "facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan", "contabilidad_reglas", "contabilidad_cierres"):
+    for tabla in ("justificantes_pendientes", "facturas_contables_mensajes", "facturas_contables", "contabilidad_lotes", "contabilidad_terceros", "contabilidad_clientes", "contabilidad_recordatorios", "contabilidad_despacho", "contabilidad_plan", "contabilidad_reglas", "contabilidad_cierres"):
         conn.execute(f"DELETE FROM {tabla} WHERE tenant_id = ?", (tenant_id,))
     from . import cobro_contabilidad
     cobro_contabilidad.borrar_datos_de_tenant(conn, tenant_id)

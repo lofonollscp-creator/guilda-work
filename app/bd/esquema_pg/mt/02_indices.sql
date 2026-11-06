@@ -116,6 +116,7 @@ CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_demandas ON inmobiliaria_demandas (tenant_id, estado, operacion);
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_inmuebles ON inmobiliaria_inmuebles (tenant_id, municipio);
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_visitas ON inmobiliaria_visitas (tenant_id, estado, fecha_hora);
+CREATE INDEX IF NOT EXISTS idx_justificantes_cliente ON justificantes_pendientes (tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_marketing_envios ON marketing_envios (tenant_id, estado, creado_en);
 CREATE INDEX IF NOT EXISTS idx_marketing_rebotes ON marketing_rebotes (tenant_id, email, recibido_en);
 CREATE INDEX IF NOT EXISTS idx_mcp_auditoria_fecha ON mcp_auditoria (creado_en);
@@ -209,6 +210,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_fichajes_cliente_uuid ON fichajes (tenant_
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fiscal_casillas ON fiscal_casillas (tenant_id, declaracion_id, casilla);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fiscal_perfiles_vigencia ON fiscal_perfiles (tenant_id, cliente_fiscal_id, vigente_desde);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_fiscal_relaciones_unica ON fiscal_relaciones (tenant_id, desde_cliente_id, hasta_cliente_id, tipo, vigente_desde);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_justificantes_huella ON justificantes_pendientes (tenant_id, cliente_fiscal_id, huella);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_cliente_uuid ON notas (tenant_id, cliente_uuid) WHERE cliente_uuid IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_notas_ref ON notas (tenant_id, usuario_id, referencia_externa) WHERE referencia_externa IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tarea_clientes_principal ON tarea_clientes (tenant_id, tarea_id) WHERE principal = 1;

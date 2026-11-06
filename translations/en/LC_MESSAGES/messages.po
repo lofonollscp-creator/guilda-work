@@ -20586,3 +20586,316 @@ msgstr "Close quarter %(t)s step by step"
 
 msgid "vencido hace %(n)s días"
 msgstr "overdue by %(n)s days"
+
+msgid "Elige una opción."
+msgstr "Choose an option."
+
+msgid "Ese movimiento ya no está pendiente."
+msgstr "That transaction is no longer pending."
+
+msgid "Sube la factura (foto o PDF)."
+msgstr "Upload the invoice (photo or PDF)."
+
+msgid "Indica la fecha del gasto."
+msgstr "Enter the date of the expense."
+
+msgid "La fecha del gasto no puede ser futura."
+msgstr "The expense date can't be in the future."
+
+msgid "Indica el importe del gasto."
+msgstr "Enter the amount of the expense."
+
+msgid "Indica en qué fue el gasto."
+msgstr "Say what the expense was for."
+
+msgid "Tienes muchos tiquets pendientes de revisar: espera a que tu gestoría los procese."
+msgstr "You have many receipts awaiting review: wait for your accountant to process them."
+
+msgid "Ya anotaste ese gasto."
+msgstr "You already entered that expense."
+
+msgid "Ese modelo no existe."
+msgstr "That tax form doesn't exist."
+
+msgid "No hay nada que pagar por este modelo."
+msgstr "There is nothing to pay for this tax form."
+
+msgid "Este pago ya está hecho."
+msgstr "This payment has already been made."
+
+msgid "Tu gestoría todavía no tiene activados los pagos con tarjeta."
+msgstr "Your accountant hasn't enabled card payments yet."
+
+msgid "No hemos podido abrir el pago ahora mismo. Inténtalo de nuevo en unos minutos."
+msgstr "We couldn't open the payment right now. Try again in a few minutes."
+
+msgid "Tu gestoría necesita que le expliques unos movimientos del banco"
+msgstr "Your accountant needs you to explain some bank transactions"
+
+msgid "Al preparar tus impuestos hay movimientos de tu banco para los que tu gestoría no tiene factura o justificante."
+msgstr "While preparing your taxes there are bank transactions for which your accountant has no invoice or receipt."
+
+msgid "Entra y cuéntanos qué son: puedes subir la factura, indicar que es un tiquet o que es algo personal."
+msgstr "Log in and tell us what they are: you can upload the invoice, say it's a receipt or that it's personal."
+
+msgid "Ver los movimientos"
+msgstr "View the transactions"
+
+msgid "Contestar"
+msgstr "Answer"
+
+msgid "Tu gestoría pregunta por %(n)s movimiento de tu banco"
+msgid_plural "Tu gestoría pregunta por %(n)s movimientos de tu banco"
+msgstr[0] "Your accountant is asking about %(n)s bank transaction"
+msgstr[1] "Your accountant is asking about %(n)s bank transactions"
+
+msgid "Tu gestoría pregunta por %(n)s movimiento de tu banco."
+msgid_plural "Tu gestoría pregunta por %(n)s movimientos de tu banco."
+msgstr[0] "Your accountant is asking about %(n)s bank transaction."
+msgstr[1] "Your accountant is asking about %(n)s bank transactions."
+
+msgid "Cuéntale qué son: puedes subir la factura, decir que es un tiquet o que es personal."
+msgstr "Tell them what they are: you can upload the invoice, say it's a receipt or that it's personal."
+
+msgid "Firmar"
+msgstr "Sign"
+
+msgid "Tienes un documento por firmar: %(m)s"
+msgstr "You have a document to sign: %(m)s"
+
+msgid "Te lleva directo a la página de firma."
+msgstr "It takes you straight to the signing page."
+
+msgid "Tienes %(n)s pago de honorarios pendiente"
+msgid_plural "Tienes %(n)s pagos de honorarios pendientes"
+msgstr[0] "You have %(n)s fee payment pending"
+msgstr[1] "You have %(n)s fee payments pending"
+
+msgid "¿Un gasto sin factura? Anota un tiquet"
+msgstr "An expense with no invoice? Enter a receipt"
+
+msgid "Movimientos del banco"
+msgstr "Bank transactions"
+
+msgid "Cuéntale a tu gestoría qué son estos movimientos para que pueda cuadrar tus impuestos."
+msgstr "Tell your accountant what these transactions are so they can balance your taxes."
+
+msgid "Tiquet anotado: tu gestoría lo verá."
+msgstr "Receipt entered: your accountant will see it."
+
+msgid "Gracias: tu gestoría ya tiene tu respuesta."
+msgstr "Thanks: your accountant has your answer."
+
+msgid "Pendientes de explicar"
+msgstr "To be explained"
+
+msgid "No tienes ningún movimiento pendiente."
+msgstr "You have no pending transactions."
+
+msgid "Foto o PDF de la factura o del tiquet (opcional salvo para subir la factura)"
+msgstr "Photo or PDF of the invoice or receipt (optional unless uploading the invoice)"
+
+msgid "Subir la factura"
+msgstr "Upload the invoice"
+
+msgid "Es un tiquet, no tengo factura"
+msgstr "It's a receipt, I have no invoice"
+
+msgid "Es personal, no es del negocio"
+msgstr "It's personal, not business"
+
+msgid "No sé qué es"
+msgstr "I don't know what it is"
+
+msgid "Anotar un tiquet"
+msgstr "Enter a receipt"
+
+msgid "Para un gasto del negocio del que no tienes factura. Tu gestoría decidirá cómo tratarlo."
+msgstr "For a business expense you have no invoice for. Your accountant will decide how to treat it."
+
+msgid "Fecha del gasto"
+msgstr "Expense date"
+
+msgid "¿En qué fue?"
+msgstr "What was it for?"
+
+msgid "Foto del tiquet (opcional)"
+msgstr "Photo of the receipt (optional)"
+
+msgid "Anotar tiquet"
+msgstr "Enter receipt"
+
+msgid "Ya contestados"
+msgstr "Already answered"
+
+msgid "Tu respuesta"
+msgstr "Your answer"
+
+msgid "Factura subida"
+msgstr "Invoice uploaded"
+
+msgid "Tiquet"
+msgstr "Receipt"
+
+msgid "Personal"
+msgstr "Personal"
+
+msgid "Firmar un documento"
+msgstr "Sign a document"
+
+msgid "Documento pendiente de tu firma"
+msgstr "Document awaiting your signature"
+
+msgid "Tu gestoría te ha enviado un documento para firmar."
+msgstr "Your accountant has sent you a document to sign."
+
+msgid "Se abre la página de firma electrónica segura de Documenso: no hace falta que busques el correo."
+msgstr "The secure Documenso e-signature page opens: no need to look for the email."
+
+msgid "Firmar ahora"
+msgstr "Sign now"
+
+msgid "Tienes un documento pendiente de firma."
+msgstr "You have a document awaiting signature."
+
+msgid "Busca el correo de Documenso con el enlace de firma o pídeselo a tu gestoría."
+msgstr "Look for the Documenso email with the signing link or ask your accountant."
+
+msgid "Gracias: tu gestoría ya tiene el documento firmado."
+msgstr "Thanks: your accountant has the signed document."
+
+msgid "El documento se rechazó. Escribe a tu gestoría si quieres que te lo envíe de nuevo."
+msgstr "The document was rejected. Write to your accountant if you want it sent again."
+
+msgid "Ahora mismo no podemos comprobar el estado de la firma. Inténtalo más tarde o escribe a tu gestoría."
+msgstr "We can't check the signature status right now. Try later or write to your accountant."
+
+msgid "Gracias: hemos recibido tu pago. En unos instantes aparecerá como pagado."
+msgstr "Thanks: we've received your payment. It will show as paid in a moment."
+
+msgid "El pago se ha cancelado: no se ha cobrado nada."
+msgstr "The payment was cancelled: nothing has been charged."
+
+msgid "Firmar el documento de este modelo"
+msgstr "Sign this form's document"
+
+msgid "Pagado"
+msgstr "Paid"
+
+msgid "Pagar con tarjeta"
+msgstr "Pay by card"
+
+msgid "Tu gestoría te indicará cómo pagarlo."
+msgstr "Your accountant will tell you how to pay."
+
+msgid "Carpeta"
+msgstr "Folder"
+
+msgid "Mi carpeta de %(anio)s"
+msgstr "My %(anio)s folder"
+
+msgid "Todo lo que tu gestoría te ha dejado de este año, en un solo sitio."
+msgstr "Everything your accountant has left you this year, in one place."
+
+msgid "Todavía no hay nada en la carpeta de este año."
+msgstr "There is nothing in this year's folder yet."
+
+msgid "Descargar todo el año (ZIP)"
+msgstr "Download the whole year (ZIP)"
+
+msgid "Justificantes y constancias de presentación"
+msgstr "Receipts and filing confirmations"
+
+msgid "Informes de los trimestres"
+msgstr "Quarterly reports"
+
+msgid "Informe del %(t)s"
+msgstr "Report for %(t)s"
+
+msgid "Resúmenes de los modelos 303 presentados"
+msgstr "Summaries of filed form 303s"
+
+msgid "Modelo 303 · %(p)s"
+msgstr "Form 303 · %(p)s"
+
+msgid "presentado el %(f)s"
+msgstr "filed on %(f)s"
+
+msgid "Pedir al cliente"
+msgstr "Ask the client"
+
+msgid "Pedir justificante de este movimiento"
+msgstr "Ask for a receipt for this transaction"
+
+msgid "Al pedirlos solo se guardan la fecha, el importe y el concepto de los movimientos marcados; el extracto no se guarda."
+msgstr "When requested, only the date, amount and description of the ticked transactions are saved; the statement is not stored."
+
+msgid "Pedir justificantes al cliente"
+msgstr "Ask the client for receipts"
+
+msgid "Justificantes del banco"
+msgstr "Bank receipts"
+
+msgid "Movimientos del banco sin factura que has preguntado al cliente, y los tiquets que él mismo anota. Se piden desde la conciliación bancaria de Guilda Fiscal."
+msgstr "Bank transactions without an invoice that you've asked the client about, and the receipts they enter themselves. They are requested from Guilda Fiscal's bank reconciliation."
+
+msgid "Pedido %(n)s justificante."
+msgid_plural "Pedidos %(n)s justificantes."
+msgstr[0] "Requested %(n)s receipt."
+msgstr[1] "Requested %(n)s receipts."
+
+msgid "%(n)s ya estaba pedido."
+msgid_plural "%(n)s ya estaban pedidos."
+msgstr[0] "%(n)s was already requested."
+msgstr[1] "%(n)s were already requested."
+
+msgid "No hemos podido avisarle por correo (sin correo saliente o sin email en su ficha): lo verá al entrar a su portal."
+msgstr "We couldn't email them (no outgoing mail or no email on file): they'll see it when they log in to their portal."
+
+msgid "Esperando al cliente"
+msgstr "Waiting on the client"
+
+msgid "Ha subido la factura"
+msgstr "Uploaded the invoice"
+
+msgid "Es un tiquet"
+msgstr "It's a receipt"
+
+msgid "Dice que es personal"
+msgstr "Says it's personal"
+
+msgid "No sabe qué es"
+msgstr "Doesn't know what it is"
+
+msgid "Descartado"
+msgstr "Discarded"
+
+msgid "No hay justificantes"
+msgstr "No receipts"
+
+msgid "Cuando pidas a un cliente que explique movimientos de su banco, o él anote un tiquet, aparecerán aquí."
+msgstr "When you ask a client to explain bank transactions, or they enter a receipt, they'll show up here."
+
+msgid "Tiquet del cliente"
+msgstr "Client's receipt"
+
+msgid "Qué dice"
+msgstr "What they say"
+
+msgid "Ver la factura"
+msgstr "View the invoice"
+
+msgid "Descargar el archivo"
+msgstr "Download the file"
+
+msgid "Volver a pedir"
+msgstr "Request again"
+
+msgid "Movimientos del banco sin explicar por el cliente"
+msgstr "Bank transactions not explained by the client"
+
+msgid "Justificantes del banco contestados sin cerrar"
+msgstr "Bank receipts answered but not closed"
+
+msgid "Enseñar en su portal los honorarios confirmados de cada modelo y dejarle pagarlos con tarjeta"
+msgstr "Show confirmed fees for each tax form in their portal and let them pay by card"

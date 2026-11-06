@@ -158,6 +158,7 @@ SELECT create_distributed_table('jur_ejecuciones', 'tenant_id', colocate_with =>
 SELECT create_distributed_table('jur_fragmentos_privados', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('jur_fuente_despacho', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('jur_informes', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('justificantes_pendientes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('laboral_config', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('mantenimiento', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('marketing_contactos', 'tenant_id', colocate_with => 'abogados_ajustes');

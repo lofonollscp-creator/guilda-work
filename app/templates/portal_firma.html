@@ -1,0 +1,24 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Firmar un documento') }}{% endblock %}
+{% block titulo %}{{ vencimiento.modelo }} — {{ vencimiento.periodo }}{% endblock %}
+{% block subtitulo %}{{ _('Documento pendiente de tu firma') }}{% endblock %}
+{% block contenido %}
+    <a class="portal-volver" href="{{ url_for('portal_cliente.impuestos') }}">&larr; {{ _('Volver a mis impuestos') }}</a>
+    <section class="portal-tablero" aria-labelledby="firma-titulo">
+      <h2 id="firma-titulo">{{ _('Firma') }}</h2>
+      {% if firma.estado == 'por_firmar' and firma.enlace %}
+      <p class="portal-tablero-frase">{{ _('Tu gestoría te ha enviado un documento para firmar.') }}</p>
+      <p class="muted">{{ _('Se abre la página de firma electrónica segura de Documenso: no hace falta que busques el correo.') }}</p>
+      <a class="btn btn-primary" href="{{ firma.enlace }}" rel="noopener noreferrer">{{ _('Firmar ahora') }}</a>
+      {% elif firma.estado == 'por_firmar' %}
+      <p class="portal-tablero-frase">{{ _('Tienes un documento pendiente de firma.') }}</p>
+      <p class="muted">{{ _('Busca el correo de Documenso con el enlace de firma o pídeselo a tu gestoría.') }}</p>
+      {% elif firma.estado == 'firmado' %}
+      <p><span class="portal-estado ok">{{ _('Firmado') }}</span> {{ _('Gracias: tu gestoría ya tiene el documento firmado.') }}</p>
+      {% elif firma.estado == 'rechazado' %}
+      <p><span class="portal-estado ko">{{ _('Rechazado') }}</span> {{ _('El documento se rechazó. Escribe a tu gestoría si quieres que te lo envíe de nuevo.') }}</p>
+      {% else %}
+      <p class="muted">{{ _('Ahora mismo no podemos comprobar el estado de la firma. Inténtalo más tarde o escribe a tu gestoría.') }}</p>
+      {% endif %}
+    </section>
+{% endblock %}

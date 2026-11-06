@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Justificantes del banco') }} — Guilda Work{% endblock %}
+{% block content %}
+{% set estados = {'pendiente': (_('Esperando al cliente'), 'ambar'), 'con_factura': (_('Ha subido la factura'), 'azul'), 'tiquet': (_('Es un tiquet'), 'azul'), 'personal': (_('Dice que es personal'), 'azul'),
+                  'no_se': (_('No sabe qué es'), 'rojo'), 'resuelto': (_('Resuelto'), 'verde'), 'descartado': (_('Descartado'), '')} %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Justificantes del banco') }}</h1>
+    <p class="subtitle">{{ _('Movimientos del banco sin factura que has preguntado al cliente, y los tiquets que él mismo anota. Se piden desde la conciliación bancaria de Guilda Fiscal.') }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Volver a las facturas') }}</a>
+</header>
+{{ aviso_error(error) }}
+{% if pedidos is not none %}<p class="dash-panel" role="status"><strong>{{ ngettext('Pedido %(n)s justificante.', 'Pedidos %(n)s justificantes.', pedidos, n=pedidos) }}</strong>
+  {% if repetidos %}{{ ngettext('%(n)s ya estaba pedido.', '%(n)s ya estaban pedidos.', repetidos, n=repetidos) }}{% endif %}
+  {% if pedidos %}{% if avisado %}{{ _('Hemos avisado al cliente por correo.') }}{% else %}{{ _('No hemos podido avisarle por correo (sin correo saliente o sin email en su ficha): lo verá al entrar a su portal.') }}{% endif %}{% endif %}</p>{% endif %}
+
+<form class="filters" method="get">
+  <label>{{ _('Cliente') }}
+    <select name="cliente_id"><option value="">{{ _('Todos') }}</option>{% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if c.id == cliente_id }}>{{ c.nombre }}</option>{% endfor %}</select></label>
+  <label>{{ _('Estado') }}
+    <select name="estado"><option value="">{{ _('Todos') }}</option>{% for e, n in estados.items() %}<option value="{{ e }}" {{ 'selected' if e == estado }}>{{ n[0] }}</option>{% endfor %}</select></label>
+  <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
+</form>
+
+{% if not filas %}
+{{ estado_vacio(_('No hay justificantes'), _('Cuando pidas a un cliente que explique movimientos de su banco, o él anote un tiquet, aparecerán aquí.')) }}
+{% else %}
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Qué dice') }}</th><th></th></tr></thead>
+  <tbody>
+  {% for j in filas %}
+    <tr>
+      <td class="mono">{{ j.fecha }}</td>
+      <td>{{ j.cliente_nombre }}</td>
+      <td>{{ j.concepto }}{% if j.origen == 'cliente' %} <span class="pill">{{ _('Tiquet del cliente') }}</span>{% endif %}</td>
+      <td class="mono">{{ '%.2f'|format(j.importe_centimos / 100) }} €</td>
+      <td><span class="pildora-v2 {{ estados[j.estado][1] }}">{{ estados[j.estado][0] }}</span></td>
+      <td>{% if j.comentario %}{{ j.comentario }}<br>{% endif %}
+        {% if j.factura_id %}<a href="{{ url_for('contabilidad.ver', factura_id=j.factura_id) }}">{{ _('Ver la factura') }}</a>{% endif %}
+        {% if j.documento_id %}<a href="{{ url_for('contabilidad.justificante_archivo', justificante_id=j.id) }}">{{ _('Descargar el archivo') }}</a>{% endif %}</td>
+      <td>
+        <form method="post" action="{{ url_for('contabilidad.justificante_estado', justificante_id=j.id) }}" class="ds-fila">
+          <input type="hidden" name="cliente_id" value="{{ cliente_id or '' }}"><input type="hidden" name="filtro" value="{{ estado or '' }}">
+          {% if j.estado in ('con_factura', 'tiquet', 'personal', 'no_se') %}<button type="submit" name="estado" value="resuelto" class="btn btn-ghost btn-sm">{{ _('Resuelto') }}</button><button type="submit" name="estado" value="pendiente" class="btn btn-ghost btn-sm">{{ _('Volver a pedir') }}</button>{% endif %}
+          {% if j.estado == 'pendiente' %}<button type="submit" name="estado" value="descartado" class="btn btn-ghost btn-sm">{{ _('Descartar') }}</button>{% endif %}
+          {% if j.estado in ('resuelto', 'descartado') %}<button type="submit" name="estado" value="pendiente" class="btn btn-ghost btn-sm">{{ _('Volver a pedir') }}</button>{% endif %}
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

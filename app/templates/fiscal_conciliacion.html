@@ -36,9 +36,16 @@
 
 <section class="dash-panel ds-mt-16">
   <h2>{{ _('Movimientos del banco sin factura') }}</h2>
-  {% if r.movimientos_sin_factura %}<div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th><th></th></tr></thead><tbody>
-    {% for s in r.movimientos_sin_factura %}{% set m = s.movimiento %}<tr><td>{{ m.fecha.strftime('%d/%m/%Y') }}</td><td>{{ m.concepto }}</td><td>{{ euros(m.importe) }}</td>
+  {% if r.movimientos_sin_factura %}
+  {% if puede_pedir_justificantes %}<form method="post" action="{{ url_for('guilda_fiscal.pedir_justificantes', cliente_id=c.id) }}">{% endif %}
+  <div class="table-wrap"><table class="fiscal-table"><thead><tr>{% if puede_pedir_justificantes %}<th><span class="sr-only">{{ _('Pedir al cliente') }}</span></th>{% endif %}<th>{{ _('Fecha') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th><th></th></tr></thead><tbody>
+    {% for s in r.movimientos_sin_factura %}{% set m = s.movimiento %}<tr>
+      {% if puede_pedir_justificantes %}<td><input type="checkbox" name="mov" value="{{ m.fecha.isoformat() }}|{{ m.importe }}|{{ m.concepto }}" aria-label="{{ _('Pedir justificante de este movimiento') }}" {{ 'checked' if not s.sin_factura_esperable }}></td>{% endif %}
+      <td>{{ m.fecha.strftime('%d/%m/%Y') }}</td><td>{{ m.concepto }}</td><td>{{ euros(m.importe) }}</td>
       <td>{% if s.sin_factura_esperable %}<span class="pill semaforo-gris">{{ _('Normalmente no lleva factura') }}</span>{% else %}<span class="pill semaforo-ambar">{{ _('Pedir la factura') }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  {% if puede_pedir_justificantes %}
+  <p class="muted">{{ _('Al pedirlos solo se guardan la fecha, el importe y el concepto de los movimientos marcados; el extracto no se guarda.') }}</p>
+  <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Pedir justificantes al cliente') }}</button></div></form>{% endif %}
   {% else %}<p class="muted">{{ _('Todos los movimientos tienen factura.') }}</p>{% endif %}
 </section>
 

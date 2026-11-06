@@ -47,13 +47,24 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     decl = fn.calcular_declaracion(t, uid, fn.crear_instantanea(t, uid, ids["cliente"], ejercicio=2026, periodo="2T")["id"])["id"]
     fn.revisar_declaracion(t, uid, decl)
     conformidad_declaracion.pedir(t, uid, decl)
+    from app import justificantes
+    justificantes.pedir(t, uid, ids["cliente"], [{"fecha": hoy, "importe": -31240, "concepto": "PAGO TARJETA FERRETERIA HERMANOS FERNANDEZ-VILLANUEVA DE LA VERA SOCIEDAD LIMITADA PROFESIONAL"}, {"fecha": hoy, "importe": 150000, "concepto": "TRANSFERENCIA CLIENTE X"}])
+    j0 = justificantes.pendientes_del_cliente(ids["cliente"])[0]["id"]
+    justificantes.responder(ids["cliente"], j0, "no_se", "No recuerdo qué era esto, lo miro y te cuento con más calma la semana que viene, gracias")
+    conn = db.get_connection()
+    conn.execute("UPDATE clientes_fiscales SET portal_honorarios = 1 WHERE id = ?", (ids["cliente"],))
+    conn.execute("INSERT INTO honorarios_aplicados (tenant_id, vencimiento_id, cliente_fiscal_id, regla_nombre, concepto, importe_centimos, estado, confirmado_en) VALUES (?, ?, ?, 'Fija', 'Honorarios 303', 4500, 'confirmado', ?)",
+                 (t, v303, ids["cliente"], db.now_iso()))
+    conn.execute("UPDATE vencimientos_fiscales SET documenso_documento_id = 'env_barrido' WHERE id = ?", (v303,))
+    conn.commit(); conn.close()
+    db.subir_documento_vencimiento(v303, "justificante-presentacion-303-con-un-nombre-muy-largo-de-archivo.pdf", "application/pdf", b"%PDF-1.4\n%%EOF", origen="justificante")
     if os.environ.get("GUILDA_TEXTOS_LARGOS"):
         conn = db.get_connection()
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
-    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}"]
+    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")

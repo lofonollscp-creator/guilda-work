@@ -20671,3 +20671,316 @@ msgstr "Clôturer le trimestre %(t)s pas à pas"
 
 msgid "vencido hace %(n)s días"
 msgstr "échu depuis %(n)s jours"
+
+msgid "Elige una opción."
+msgstr "Choisissez une option."
+
+msgid "Ese movimiento ya no está pendiente."
+msgstr "Ce mouvement n'est plus en attente."
+
+msgid "Sube la factura (foto o PDF)."
+msgstr "Envoyez la facture (photo ou PDF)."
+
+msgid "Indica la fecha del gasto."
+msgstr "Indiquez la date de la dépense."
+
+msgid "La fecha del gasto no puede ser futura."
+msgstr "La date de la dépense ne peut pas être future."
+
+msgid "Indica el importe del gasto."
+msgstr "Indiquez le montant de la dépense."
+
+msgid "Indica en qué fue el gasto."
+msgstr "Indiquez à quoi correspond la dépense."
+
+msgid "Tienes muchos tiquets pendientes de revisar: espera a que tu gestoría los procese."
+msgstr "Vous avez beaucoup de tickets en attente : patientez le temps que votre cabinet les traite."
+
+msgid "Ya anotaste ese gasto."
+msgstr "Vous avez déjà saisi cette dépense."
+
+msgid "Ese modelo no existe."
+msgstr "Ce modèle n'existe pas."
+
+msgid "No hay nada que pagar por este modelo."
+msgstr "Il n'y a rien à payer pour ce modèle."
+
+msgid "Este pago ya está hecho."
+msgstr "Ce paiement est déjà effectué."
+
+msgid "Tu gestoría todavía no tiene activados los pagos con tarjeta."
+msgstr "Votre cabinet n'a pas encore activé les paiements par carte."
+
+msgid "No hemos podido abrir el pago ahora mismo. Inténtalo de nuevo en unos minutos."
+msgstr "Nous n'avons pas pu ouvrir le paiement pour le moment. Réessayez dans quelques minutes."
+
+msgid "Tu gestoría necesita que le expliques unos movimientos del banco"
+msgstr "Votre cabinet a besoin que vous lui expliquiez des mouvements bancaires"
+
+msgid "Al preparar tus impuestos hay movimientos de tu banco para los que tu gestoría no tiene factura o justificante."
+msgstr "En préparant vos impôts, des mouvements de votre banque n'ont ni facture ni justificatif chez votre cabinet."
+
+msgid "Entra y cuéntanos qué son: puedes subir la factura, indicar que es un tiquet o que es algo personal."
+msgstr "Connectez-vous et dites-nous ce que c'est : vous pouvez envoyer la facture, indiquer que c'est un ticket ou que c'est personnel."
+
+msgid "Ver los movimientos"
+msgstr "Voir les mouvements"
+
+msgid "Contestar"
+msgstr "Répondre"
+
+msgid "Tu gestoría pregunta por %(n)s movimiento de tu banco"
+msgid_plural "Tu gestoría pregunta por %(n)s movimientos de tu banco"
+msgstr[0] "Votre cabinet vous interroge sur %(n)s mouvement de votre banque"
+msgstr[1] "Votre cabinet vous interroge sur %(n)s mouvements de votre banque"
+
+msgid "Tu gestoría pregunta por %(n)s movimiento de tu banco."
+msgid_plural "Tu gestoría pregunta por %(n)s movimientos de tu banco."
+msgstr[0] "Votre cabinet vous interroge sur %(n)s mouvement de votre banque."
+msgstr[1] "Votre cabinet vous interroge sur %(n)s mouvements de votre banque."
+
+msgid "Cuéntale qué son: puedes subir la factura, decir que es un tiquet o que es personal."
+msgstr "Dites-lui ce que c'est : vous pouvez envoyer la facture, dire que c'est un ticket ou que c'est personnel."
+
+msgid "Firmar"
+msgstr "Signer"
+
+msgid "Tienes un documento por firmar: %(m)s"
+msgstr "Vous avez un document à signer : %(m)s"
+
+msgid "Te lleva directo a la página de firma."
+msgstr "Cela vous mène directement à la page de signature."
+
+msgid "Tienes %(n)s pago de honorarios pendiente"
+msgid_plural "Tienes %(n)s pagos de honorarios pendientes"
+msgstr[0] "Vous avez %(n)s paiement d'honoraires en attente"
+msgstr[1] "Vous avez %(n)s paiements d'honoraires en attente"
+
+msgid "¿Un gasto sin factura? Anota un tiquet"
+msgstr "Une dépense sans facture ? Saisissez un ticket"
+
+msgid "Movimientos del banco"
+msgstr "Mouvements bancaires"
+
+msgid "Cuéntale a tu gestoría qué son estos movimientos para que pueda cuadrar tus impuestos."
+msgstr "Dites à votre cabinet ce que sont ces mouvements pour qu'il puisse équilibrer vos impôts."
+
+msgid "Tiquet anotado: tu gestoría lo verá."
+msgstr "Ticket saisi : votre cabinet le verra."
+
+msgid "Gracias: tu gestoría ya tiene tu respuesta."
+msgstr "Merci : votre cabinet a votre réponse."
+
+msgid "Pendientes de explicar"
+msgstr "À expliquer"
+
+msgid "No tienes ningún movimiento pendiente."
+msgstr "Vous n'avez aucun mouvement en attente."
+
+msgid "Foto o PDF de la factura o del tiquet (opcional salvo para subir la factura)"
+msgstr "Photo ou PDF de la facture ou du ticket (facultatif sauf pour envoyer la facture)"
+
+msgid "Subir la factura"
+msgstr "Envoyer la facture"
+
+msgid "Es un tiquet, no tengo factura"
+msgstr "C'est un ticket, je n'ai pas de facture"
+
+msgid "Es personal, no es del negocio"
+msgstr "C'est personnel, pas professionnel"
+
+msgid "No sé qué es"
+msgstr "Je ne sais pas ce que c'est"
+
+msgid "Anotar un tiquet"
+msgstr "Saisir un ticket"
+
+msgid "Para un gasto del negocio del que no tienes factura. Tu gestoría decidirá cómo tratarlo."
+msgstr "Pour une dépense professionnelle sans facture. Votre cabinet décidera comment la traiter."
+
+msgid "Fecha del gasto"
+msgstr "Date de la dépense"
+
+msgid "¿En qué fue?"
+msgstr "À quoi correspondait-elle ?"
+
+msgid "Foto del tiquet (opcional)"
+msgstr "Photo du ticket (facultatif)"
+
+msgid "Anotar tiquet"
+msgstr "Saisir le ticket"
+
+msgid "Ya contestados"
+msgstr "Déjà répondus"
+
+msgid "Tu respuesta"
+msgstr "Votre réponse"
+
+msgid "Factura subida"
+msgstr "Facture envoyée"
+
+msgid "Tiquet"
+msgstr "Ticket"
+
+msgid "Personal"
+msgstr "Personnel"
+
+msgid "Firmar un documento"
+msgstr "Signer un document"
+
+msgid "Documento pendiente de tu firma"
+msgstr "Document en attente de votre signature"
+
+msgid "Tu gestoría te ha enviado un documento para firmar."
+msgstr "Votre cabinet vous a envoyé un document à signer."
+
+msgid "Se abre la página de firma electrónica segura de Documenso: no hace falta que busques el correo."
+msgstr "La page de signature électronique sécurisée de Documenso s'ouvre : inutile de chercher le courriel."
+
+msgid "Firmar ahora"
+msgstr "Signer maintenant"
+
+msgid "Tienes un documento pendiente de firma."
+msgstr "Vous avez un document en attente de signature."
+
+msgid "Busca el correo de Documenso con el enlace de firma o pídeselo a tu gestoría."
+msgstr "Cherchez le courriel de Documenso avec le lien de signature ou demandez-le à votre cabinet."
+
+msgid "Gracias: tu gestoría ya tiene el documento firmado."
+msgstr "Merci : votre cabinet a le document signé."
+
+msgid "El documento se rechazó. Escribe a tu gestoría si quieres que te lo envíe de nuevo."
+msgstr "Le document a été refusé. Écrivez à votre cabinet si vous voulez qu'il vous le renvoie."
+
+msgid "Ahora mismo no podemos comprobar el estado de la firma. Inténtalo más tarde o escribe a tu gestoría."
+msgstr "Nous ne pouvons pas vérifier l'état de la signature pour le moment. Réessayez plus tard ou écrivez à votre cabinet."
+
+msgid "Gracias: hemos recibido tu pago. En unos instantes aparecerá como pagado."
+msgstr "Merci : nous avons reçu votre paiement. Il apparaîtra comme payé dans un instant."
+
+msgid "El pago se ha cancelado: no se ha cobrado nada."
+msgstr "Le paiement a été annulé : rien n'a été débité."
+
+msgid "Firmar el documento de este modelo"
+msgstr "Signer le document de ce modèle"
+
+msgid "Pagado"
+msgstr "Payé"
+
+msgid "Pagar con tarjeta"
+msgstr "Payer par carte"
+
+msgid "Tu gestoría te indicará cómo pagarlo."
+msgstr "Votre cabinet vous indiquera comment payer."
+
+msgid "Carpeta"
+msgstr "Dossier"
+
+msgid "Mi carpeta de %(anio)s"
+msgstr "Mon dossier %(anio)s"
+
+msgid "Todo lo que tu gestoría te ha dejado de este año, en un solo sitio."
+msgstr "Tout ce que votre cabinet vous a laissé cette année, au même endroit."
+
+msgid "Todavía no hay nada en la carpeta de este año."
+msgstr "Il n'y a encore rien dans le dossier de cette année."
+
+msgid "Descargar todo el año (ZIP)"
+msgstr "Télécharger toute l'année (ZIP)"
+
+msgid "Justificantes y constancias de presentación"
+msgstr "Justificatifs et attestations de dépôt"
+
+msgid "Informes de los trimestres"
+msgstr "Rapports des trimestres"
+
+msgid "Informe del %(t)s"
+msgstr "Rapport du %(t)s"
+
+msgid "Resúmenes de los modelos 303 presentados"
+msgstr "Résumés des modèles 303 déposés"
+
+msgid "Modelo 303 · %(p)s"
+msgstr "Modèle 303 · %(p)s"
+
+msgid "presentado el %(f)s"
+msgstr "déposé le %(f)s"
+
+msgid "Pedir al cliente"
+msgstr "Demander au client"
+
+msgid "Pedir justificante de este movimiento"
+msgstr "Demander un justificatif pour ce mouvement"
+
+msgid "Al pedirlos solo se guardan la fecha, el importe y el concepto de los movimientos marcados; el extracto no se guarda."
+msgstr "Lors de la demande, seuls la date, le montant et le libellé des mouvements cochés sont enregistrés ; le relevé n'est pas conservé."
+
+msgid "Pedir justificantes al cliente"
+msgstr "Demander des justificatifs au client"
+
+msgid "Justificantes del banco"
+msgstr "Justificatifs bancaires"
+
+msgid "Movimientos del banco sin factura que has preguntado al cliente, y los tiquets que él mismo anota. Se piden desde la conciliación bancaria de Guilda Fiscal."
+msgstr "Mouvements bancaires sans facture sur lesquels vous avez interrogé le client, et les tickets qu'il saisit lui-même. Ils se demandent depuis le rapprochement bancaire de Guilda Fiscal."
+
+msgid "Pedido %(n)s justificante."
+msgid_plural "Pedidos %(n)s justificantes."
+msgstr[0] "%(n)s justificatif demandé."
+msgstr[1] "%(n)s justificatifs demandés."
+
+msgid "%(n)s ya estaba pedido."
+msgid_plural "%(n)s ya estaban pedidos."
+msgstr[0] "%(n)s était déjà demandé."
+msgstr[1] "%(n)s étaient déjà demandés."
+
+msgid "No hemos podido avisarle por correo (sin correo saliente o sin email en su ficha): lo verá al entrar a su portal."
+msgstr "Nous n'avons pas pu le prévenir par courriel (pas de courrier sortant ou pas d'email dans sa fiche) : il le verra en se connectant à son portail."
+
+msgid "Esperando al cliente"
+msgstr "En attente du client"
+
+msgid "Ha subido la factura"
+msgstr "A envoyé la facture"
+
+msgid "Es un tiquet"
+msgstr "C'est un ticket"
+
+msgid "Dice que es personal"
+msgstr "Dit que c'est personnel"
+
+msgid "No sabe qué es"
+msgstr "Ne sait pas ce que c'est"
+
+msgid "Descartado"
+msgstr "Écarté"
+
+msgid "No hay justificantes"
+msgstr "Aucun justificatif"
+
+msgid "Cuando pidas a un cliente que explique movimientos de su banco, o él anote un tiquet, aparecerán aquí."
+msgstr "Lorsque vous demandez à un client d'expliquer des mouvements bancaires, ou qu'il saisit un ticket, ils apparaîtront ici."
+
+msgid "Tiquet del cliente"
+msgstr "Ticket du client"
+
+msgid "Qué dice"
+msgstr "Ce qu'il dit"
+
+msgid "Ver la factura"
+msgstr "Voir la facture"
+
+msgid "Descargar el archivo"
+msgstr "Télécharger le fichier"
+
+msgid "Volver a pedir"
+msgstr "Redemander"
+
+msgid "Movimientos del banco sin explicar por el cliente"
+msgstr "Mouvements bancaires non expliqués par le client"
+
+msgid "Justificantes del banco contestados sin cerrar"
+msgstr "Justificatifs bancaires répondus mais non clôturés"
+
+msgid "Enseñar en su portal los honorarios confirmados de cada modelo y dejarle pagarlos con tarjeta"
+msgstr "Montrer dans son portail les honoraires confirmés de chaque modèle et lui permettre de les payer par carte"

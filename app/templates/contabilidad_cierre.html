@@ -10,7 +10,9 @@
   'duplicadas': _('Posibles facturas duplicadas'),
   'sin_exportar': _('Revisadas sin exportar a a3'),
   'a3': _('Configuración de a3 del cliente'),
-  'devueltas': _('Devueltas al cliente sin respuesta') } %}
+  'devueltas': _('Devueltas al cliente sin respuesta'),
+  'justificantes_sin_contestar': _('Movimientos del banco sin explicar por el cliente'),
+  'justificantes_por_cerrar': _('Justificantes del banco contestados sin cerrar') } %}
 <header class="page-header">
   <div>
     <h1>{{ _('Cerrar el trimestre %(t)s', t=etiqueta) }}</h1>
@@ -35,6 +37,7 @@
       {{ textos[p.clave] }}{% if p.cuantos and p.clave != 'sin_facturas' %} · <strong>{{ p.cuantos }}</strong>{% endif %}
       {% if p.estado != 'ok' and p.filtro %}<a href="{{ url_for('contabilidad.lista', cliente_id=cliente_id, trimestre=trimestre, estado=p.filtro.estado) }}">{{ _('Ver') }}</a>{% endif %}
       {% if p.clave == 'sin_facturas' and p.estado == 'aviso' %}<span class="muted">{{ _('No hay ninguna factura en este trimestre: ¿el cliente no tuvo actividad?') }}</span>{% endif %}
+      {% if p.clave.startswith('justificantes') and p.estado != 'ok' %}<a href="{{ url_for('contabilidad.justificantes', cliente_id=cliente_id) }}">{{ _('Ver') }}</a>{% endif %}
       {% if p.clave == 'a3' and p.estado == 'pendiente' %}<a href="{{ url_for('contabilidad.configuracion', cliente_id=cliente_id) }}">{{ _('Configurar') }}</a>{% endif %}
     </li>
     {% endfor %}

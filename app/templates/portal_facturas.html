@@ -17,6 +17,8 @@
       {% endfor %}
     </nav>
 
+    {% if justificantes_pendientes %}<p class="portal-peticion" role="note"><strong>{{ ngettext('Tu gestoría pregunta por %(n)s movimiento de tu banco.', 'Tu gestoría pregunta por %(n)s movimientos de tu banco.', justificantes_pendientes, n=justificantes_pendientes) }}</strong>
+      <a href="{{ url_for('portal_cliente.justificantes_cliente') }}">{{ _('Contestar') }}</a></p>{% endif %}
     <section class="portal-tablero portal-tablero-{{ t.situacion }}" aria-labelledby="tablero-titulo">
       <h2 id="tablero-titulo">{{ etiqueta(t.trimestre) }}</h2>
       <p class="portal-tablero-frase">
@@ -75,6 +77,7 @@
     </section>
     {% endif %}
 
+    <p class="muted"><a href="{{ url_for('portal_cliente.justificantes_cliente') }}">{{ _('¿Un gasto sin factura? Anota un tiquet') }}</a></p>
     <section class="dash-panel">
       <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
       <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>

@@ -1,0 +1,68 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Movimientos del banco') }}{% endblock %}
+{% block titulo %}{{ _('Movimientos del banco') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }} · {{ _('Cuéntale a tu gestoría qué son estos movimientos para que pueda cuadrar tus impuestos.') }}{% endblock %}
+{% block contenido %}
+    <a class="portal-volver" href="{{ url_for('portal_cliente.facturas') }}">&larr; {{ _('Volver a mis facturas') }}</a>
+    {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+    {% if contestado == 'tiquet_anotado' %}<p class="portal-peticion" role="status"><strong>{{ _('Tiquet anotado: tu gestoría lo verá.') }}</strong></p>
+    {% elif contestado %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: tu gestoría ya tiene tu respuesta.') }}</strong></p>{% endif %}
+
+    <section class="portal-devueltas" aria-labelledby="just-pendientes">
+      <h2 id="just-pendientes">{{ _('Pendientes de explicar') }}</h2>
+      {% if not pendientes %}
+      <p class="portal-hoy-vacio">{{ _('No tienes ningún movimiento pendiente.') }}</p>
+      {% endif %}
+      {% for j in pendientes %}
+      <article class="portal-devuelta" id="justificante-{{ j.id }}">
+        <header>
+          <strong class="mono">{{ '%.2f'|format(j.importe_centimos / 100) }} €</strong>
+          <span class="muted">{{ j.fecha|fecha_dia }}</span>
+        </header>
+        <p class="portal-devuelta-motivo">{{ j.concepto }}</p>
+        <form method="post" action="{{ url_for('portal_cliente.contestar_justificante', justificante_id=j.id) }}" enctype="multipart/form-data" class="portal-devuelta-form">
+          <label for="just-arch-{{ j.id }}">{{ _('Foto o PDF de la factura o del tiquet (opcional salvo para subir la factura)') }}</label>
+          <input type="file" id="just-arch-{{ j.id }}" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp">
+          <label for="just-com-{{ j.id }}">{{ _('Comentario (opcional)') }}</label>
+          <input type="text" id="just-com-{{ j.id }}" name="comentario" maxlength="{{ max_comentario }}" class="ds-ancho-total">
+          <button type="submit" name="accion" value="factura" class="btn btn-primary">{{ _('Subir la factura') }}</button>
+          <button type="submit" name="accion" value="tiquet" class="btn btn-ghost">{{ _('Es un tiquet, no tengo factura') }}</button>
+          <button type="submit" name="accion" value="personal" class="btn btn-ghost">{{ _('Es personal, no es del negocio') }}</button>
+          <button type="submit" name="accion" value="no_se" class="btn btn-ghost">{{ _('No sé qué es') }}</button>
+        </form>
+      </article>
+      {% endfor %}
+    </section>
+
+    <details class="dash-panel portal-anotar" id="tiquet">
+      <summary><h2>{{ _('Anotar un tiquet') }}</h2></summary>
+      <p class="muted">{{ _('Para un gasto del negocio del que no tienes factura. Tu gestoría decidirá cómo tratarlo.') }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.anotar_tiquet') }}" enctype="multipart/form-data" class="edit-form">
+        <div class="fila-campos">
+          <label>{{ _('Fecha del gasto') }}<input type="date" name="fecha" max="{{ hoy }}" required></label>
+          <label>{{ _('Importe') }}<input type="text" name="importe" inputmode="decimal" placeholder="12,50" required></label>
+        </div>
+        <label>{{ _('¿En qué fue?') }}<input type="text" name="concepto" maxlength="140" required></label>
+        <label>{{ _('Foto del tiquet (opcional)') }}<input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" capture="environment"></label>
+        <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Anotar tiquet') }}</button></div>
+      </form>
+    </details>
+
+    {% if contestados %}
+    <section class="ds-mt-24" aria-labelledby="just-hechos">
+      <h2 id="just-hechos">{{ _('Ya contestados') }}</h2>
+      <div class="table-wrap"><table class="historial-table">
+        <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Tu respuesta') }}</th></tr></thead>
+        <tbody>{% for j in contestados %}
+          <tr>
+            <td class="mono">{{ j.fecha }}</td>
+            <td>{{ j.concepto }}</td>
+            <td class="mono">{{ '%.2f'|format(j.importe_centimos / 100) }} €</td>
+            <td>{% if j.estado == 'con_factura' %}{% if j.factura_id %}<a href="{{ url_for('portal_cliente.factura', factura_id=j.factura_id) }}">{{ _('Factura subida') }}</a>{% else %}{{ _('Factura subida') }}{% endif %}
+                {% elif j.estado == 'tiquet' %}{{ _('Tiquet') }}{% elif j.estado == 'personal' %}{{ _('Personal') }}{% elif j.estado == 'no_se' %}{{ _('No sé qué es') }}{% else %}{{ _('Resuelto') }}{% endif %}
+                {% if j.comentario %}<br><span class="muted">{{ j.comentario }}</span>{% endif %}</td>
+          </tr>{% endfor %}</tbody>
+      </table></div>
+    </section>
+    {% endif %}
+{% endblock %}

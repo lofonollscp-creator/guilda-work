@@ -415,6 +415,9 @@ CREATE POLICY aislamiento ON jur_fuente_despacho USING (tenant_id = nullif(curre
 ALTER TABLE jur_informes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON jur_informes;
 CREATE POLICY aislamiento ON jur_informes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE justificantes_pendientes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON justificantes_pendientes;
+CREATE POLICY aislamiento ON justificantes_pendientes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE laboral_config ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON laboral_config;
 CREATE POLICY aislamiento ON laboral_config USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

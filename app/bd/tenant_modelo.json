@@ -1252,6 +1252,11 @@
   "motivo": "corpus jurídico compartido (sin despacho)",
   "via": []
  },
+ "justificantes_pendientes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "laboral_config": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

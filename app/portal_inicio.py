@@ -53,6 +53,16 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
                        "titulo": _("Tu gestoría necesita: %(doc)s", doc=v["documento_solicitado"]),
                        "detalle": f"{v['modelo']} {etiqueta_trimestre(v['periodo']) if facturas_portal._trimestre_de_periodo(v['periodo']) else v['periodo']} · {_cuando(dias)}".strip(" ·")})
 
+    from . import portal_firma, portal_pagos
+    for v in portal_firma.pendientes(vencimientos):
+        puntos.append({"clave": f"firma-{v['id']}", "urgente": False, "accion": _("Firmar"), "url": url_for("portal_cliente.firma_vencimiento", vencimiento_id=v["id"]),
+                       "titulo": _("Tienes un documento por firmar: %(m)s", m=f"{v['modelo']} {v['periodo']}"), "detalle": _("Te lleva directo a la página de firma.")})
+    por_pagar = [(vid, c) for vid, c in portal_pagos.cobros(cliente, vencimientos).items() if not c["pagado"]]
+    if por_pagar:
+        total = sum(c["importe"] for _vid, c in por_pagar)
+        puntos.append({"clave": "honorarios", "urgente": False, "accion": _("Ver"), "url": url_for("portal_cliente.impuestos") + f"#vencimiento-{por_pagar[0][0]}",
+                       "titulo": ngettext("Tienes %(n)s pago de honorarios pendiente", "Tienes %(n)s pagos de honorarios pendientes", len(por_pagar), n=len(por_pagar)), "detalle": f"{total / 100:.2f} €"})
+
     if verticales.esta_activo(cliente["tenant_id"], "fiscal"):
         from . import conformidad_declaracion
         from .fiscal_resumen_pdf import frase_resultado
@@ -67,6 +77,12 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
             puntos.append({"clave": f"factura-{f['id']}", "urgente": True, "accion": _("Corregir"),
                            "url": url_for("portal_cliente.facturas", trimestre=f["trimestre"]) + f"#factura-{f['id']}",
                            "titulo": _("Tu gestoría te devuelve una factura: %(tercero)s", tercero=f["tercero_nombre"]), "detalle": f["devuelta"] or ""})
+        from . import justificantes
+        sin_explicar = justificantes.pendientes_del_cliente(cliente["id"])
+        if sin_explicar:
+            puntos.append({"clave": "justificantes", "urgente": False, "accion": _("Contestar"), "url": url_for("portal_cliente.justificantes_cliente"),
+                           "titulo": ngettext("Tu gestoría pregunta por %(n)s movimiento de tu banco", "Tu gestoría pregunta por %(n)s movimientos de tu banco", len(sin_explicar), n=len(sin_explicar)),
+                           "detalle": _("Cuéntale qué son: puedes subir la factura, decir que es un tiquet o que es personal.")})
         for m in facturas_portal.sin_leer_para_cliente(cliente["id"])[:5]:
             puntos.append({"clave": f"factura-mensaje-{m['factura_id']}", "urgente": False, "accion": _("Leer"), "url": url_for("portal_cliente.factura", factura_id=m["factura_id"]) + "#mensajes",
                            "titulo": ngettext("Tienes %(n)s mensaje nuevo sobre una factura", "Tienes %(n)s mensajes nuevos sobre una factura", m["n"], n=m["n"]),

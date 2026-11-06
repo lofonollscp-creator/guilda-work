@@ -435,6 +435,7 @@ def editar_cliente(cliente_id: int):
                     email=(request.form.get("email") or "").strip() or None,
                     pais=pais,
                     recordatorios_portal=1 if request.form.get("recordatorios_portal") else 0,
+                    portal_honorarios=1 if request.form.get("portal_honorarios") else 0,
                     idioma=request.form.get("idioma") if request.form.get("idioma") in ("es", "ca", "en", "fr") else "es",
                 )
             except fiscal_identidad.ClienteDuplicado as e:
@@ -929,7 +930,7 @@ def enviar_a_firma_vencimiento(vencimiento_id: int):
             documento_id = resultado.get("id") or resultado.get("envelopeId")
             if documento_id:
                 documenso.enviar_a_firma(api_key, documento_id)
-                db.editar_vencimiento_fiscal(g.tenant_id, vencimiento_id, documenso_documento_id=documento_id)
+                db.editar_vencimiento_fiscal(g.tenant_id, vencimiento_id, documenso_documento_id=documento_id, documenso_firmado_en=None)
                 eventos.emitir(
                     "documento.enviado_a_firma", g.tenant_id,
                     {"vencimiento_id": vencimiento_id, "cliente_fiscal_id": cliente["id"]},

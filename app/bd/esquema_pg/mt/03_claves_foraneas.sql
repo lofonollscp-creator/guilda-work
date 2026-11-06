@@ -335,6 +335,7 @@ ALTER TABLE jur_relaciones ADD CONSTRAINT fk_jur_relaciones_destino_documento_id
 ALTER TABLE jur_relaciones ADD CONSTRAINT fk_jur_relaciones_documento_id FOREIGN KEY (documento_id) REFERENCES jur_documentos (id) ON DELETE CASCADE;
 ALTER TABLE jur_sync_runs ADD CONSTRAINT fk_jur_sync_runs_fuente_id FOREIGN KEY (fuente_id) REFERENCES jur_fuentes (id) ON DELETE CASCADE;
 ALTER TABLE jur_versiones ADD CONSTRAINT fk_jur_versiones_documento_id FOREIGN KEY (documento_id) REFERENCES jur_documentos (id) ON DELETE CASCADE;
+ALTER TABLE justificantes_pendientes ADD CONSTRAINT fk_justificantes_pendientes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE laboral_config ADD CONSTRAINT fk_laboral_config_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE mantenimiento ADD CONSTRAINT fk_mantenimiento_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE marketing_contactos ADD CONSTRAINT fk_marketing_contactos_cliente_id FOREIGN KEY (tenant_id, cliente_id) REFERENCES clientes (tenant_id, id);

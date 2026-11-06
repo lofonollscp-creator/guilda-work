@@ -1,0 +1,50 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Carpeta') }}{% endblock %}
+{% block titulo %}{{ _('Mi carpeta de %(anio)s', anio=anio) }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }} · {{ _('Todo lo que tu gestoría te ha dejado de este año, en un solo sitio.') }}{% endblock %}
+{% block contenido %}
+    {% if anios|length > 1 %}
+    <nav class="portal-trimestres" aria-label="{{ _('Año') }}">
+      {% for a in anios %}<a href="{{ url_for('portal_cliente.carpeta', anio=a) }}" {% if a == anio %}aria-current="page"{% endif %}>{{ a }}</a>{% endfor %}
+    </nav>
+    {% endif %}
+
+    {% if not c.documentos and not c.resumenes and not c.trimestres %}
+    <p class="empty-lane">{{ _('Todavía no hay nada en la carpeta de este año.') }}</p>
+    {% else %}
+    <p><a class="btn btn-primary" href="{{ url_for('portal_cliente.carpeta_zip', anio=anio) }}">{{ _('Descargar todo el año (ZIP)') }}</a></p>
+
+    {% if c.documentos %}
+    <section class="ds-mt-24" aria-labelledby="car-docs">
+      <h2 id="car-docs">{{ _('Justificantes y constancias de presentación') }}</h2>
+      {% for d in c.documentos %}
+      <div class="portal-doc">
+        <a href="{{ url_for('portal_cliente.descargar_documento', vencimiento_id=d.vencimiento_id, documento_id=d.id) }}">{{ d.nombre }}</a>
+        <span class="pill">{{ _('Justificante oficial') if d.origen == 'justificante' else _('Constancia de presentación') }}</span>
+        <span class="muted">{{ d.modelo }} {{ d.periodo }}</span>
+        <span class="peso">{{ (d.tamano / 1024) | round | int }} KB</span>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if c.trimestres %}
+    <section class="ds-mt-24" aria-labelledby="car-informes">
+      <h2 id="car-informes">{{ _('Informes de los trimestres') }}</h2>
+      {% for t in c.trimestres %}
+      <div class="portal-doc"><a href="{{ url_for('portal_cliente.informe_trimestre', trimestre=t) }}">{{ _('Informe del %(t)s', t=t[-1] ~ 'T ' ~ t[:4]) }}</a></div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if c.resumenes %}
+    <section class="ds-mt-24" aria-labelledby="car-resumenes">
+      <h2 id="car-resumenes">{{ _('Resúmenes de los modelos 303 presentados') }}</h2>
+      {% for r in c.resumenes %}
+      <div class="portal-doc"><a href="{{ url_for('portal_cliente.carpeta_resumen', declaracion_id=r.id) }}">{{ _('Modelo 303 · %(p)s', p=r.periodo ~ ' ' ~ anio) }}</a>
+        {% if r.presentada_en %}<span class="muted">{{ _('presentado el %(f)s', f=r.presentada_en[:10]|fecha_dia) }}</span>{% endif %}</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    {% endif %}
+{% endblock %}

@@ -1049,6 +1049,7 @@ class ClienteFiscal {
   final String? espocrmCuentaId;
   final String? email;
   final int? recordatoriosPortal;
+  final int? portalHonorarios;
   final String? idioma;
   final String? facturascriptsClienteCodigo;
   final String? pais;
@@ -1059,7 +1060,7 @@ class ClienteFiscal {
   final int? version;
   final int? oficinaId;
   final int? responsableId;
-  const ClienteFiscal({required this.id, this.tenantId, this.nombre, this.nif, this.notas, this.creadoEn, this.papeleraEn, this.referenciaExterna, this.modelosFiscales, this.generacionAutomatica, this.espocrmCuentaId, this.email, this.recordatoriosPortal, this.idioma, this.facturascriptsClienteCodigo, this.pais, this.perfilFiscal, this.clienteId, this.nifNormalizado, this.nifDuplicadoAutorizado, this.version, this.oficinaId, this.responsableId, });
+  const ClienteFiscal({required this.id, this.tenantId, this.nombre, this.nif, this.notas, this.creadoEn, this.papeleraEn, this.referenciaExterna, this.modelosFiscales, this.generacionAutomatica, this.espocrmCuentaId, this.email, this.recordatoriosPortal, this.portalHonorarios, this.idioma, this.facturascriptsClienteCodigo, this.pais, this.perfilFiscal, this.clienteId, this.nifNormalizado, this.nifDuplicadoAutorizado, this.version, this.oficinaId, this.responsableId, });
   factory ClienteFiscal.fromJson(Map<String, dynamic> j) => ClienteFiscal(
     id: (j['id'] as num).toInt(),
     tenantId: j['tenant_id'] == null ? null : (j['tenant_id'] as num).toInt(),
@@ -1074,6 +1075,7 @@ class ClienteFiscal {
     espocrmCuentaId: j['espocrm_cuenta_id'] == null ? null : j['espocrm_cuenta_id'] as String,
     email: j['email'] == null ? null : j['email'] as String,
     recordatoriosPortal: j['recordatorios_portal'] == null ? null : (j['recordatorios_portal'] as num).toInt(),
+    portalHonorarios: j['portal_honorarios'] == null ? null : (j['portal_honorarios'] as num).toInt(),
     idioma: j['idioma'] == null ? null : j['idioma'] as String,
     facturascriptsClienteCodigo: j['facturascripts_cliente_codigo'] == null ? null : j['facturascripts_cliente_codigo'] as String,
     pais: j['pais'] == null ? null : j['pais'] as String,
@@ -1099,6 +1101,7 @@ class ClienteFiscal {
     'espocrm_cuenta_id': ?espocrmCuentaId,
     'email': ?email,
     'recordatorios_portal': ?recordatoriosPortal,
+    'portal_honorarios': ?portalHonorarios,
     'idioma': ?idioma,
     'facturascripts_cliente_codigo': ?facturascriptsClienteCodigo,
     'pais': ?pais,
@@ -1110,9 +1113,9 @@ class ClienteFiscal {
     'oficina_id': ?oficinaId,
     'responsable_id': ?responsableId,
   };
-  ClienteFiscal copyWith({int? id, int? tenantId, String? nombre, String? nif, String? notas, String? creadoEn, String? papeleraEn, String? referenciaExterna, String? modelosFiscales, int? generacionAutomatica, String? espocrmCuentaId, String? email, int? recordatoriosPortal, String? idioma, String? facturascriptsClienteCodigo, String? pais, String? perfilFiscal, int? clienteId, String? nifNormalizado, String? nifDuplicadoAutorizado, int? version, int? oficinaId, int? responsableId, }) => ClienteFiscal(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, modelosFiscales: modelosFiscales ?? this.modelosFiscales, generacionAutomatica: generacionAutomatica ?? this.generacionAutomatica, espocrmCuentaId: espocrmCuentaId ?? this.espocrmCuentaId, email: email ?? this.email, recordatoriosPortal: recordatoriosPortal ?? this.recordatoriosPortal, idioma: idioma ?? this.idioma, facturascriptsClienteCodigo: facturascriptsClienteCodigo ?? this.facturascriptsClienteCodigo, pais: pais ?? this.pais, perfilFiscal: perfilFiscal ?? this.perfilFiscal, clienteId: clienteId ?? this.clienteId, nifNormalizado: nifNormalizado ?? this.nifNormalizado, nifDuplicadoAutorizado: nifDuplicadoAutorizado ?? this.nifDuplicadoAutorizado, version: version ?? this.version, oficinaId: oficinaId ?? this.oficinaId, responsableId: responsableId ?? this.responsableId, );
-  @override bool operator ==(Object other) => other is ClienteFiscal && other.id == id && other.tenantId == tenantId && other.nombre == nombre && other.nif == nif && other.notas == notas && other.creadoEn == creadoEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.modelosFiscales == modelosFiscales && other.generacionAutomatica == generacionAutomatica && other.espocrmCuentaId == espocrmCuentaId && other.email == email && other.recordatoriosPortal == recordatoriosPortal && other.idioma == idioma && other.facturascriptsClienteCodigo == facturascriptsClienteCodigo && other.pais == pais && other.perfilFiscal == perfilFiscal && other.clienteId == clienteId && other.nifNormalizado == nifNormalizado && other.nifDuplicadoAutorizado == nifDuplicadoAutorizado && other.version == version && other.oficinaId == oficinaId && other.responsableId == responsableId;
-  @override int get hashCode => Object.hashAll([id, tenantId, nombre, nif, notas, creadoEn, papeleraEn, referenciaExterna, modelosFiscales, generacionAutomatica, espocrmCuentaId, email, recordatoriosPortal, idioma, facturascriptsClienteCodigo, pais, perfilFiscal, clienteId, nifNormalizado, nifDuplicadoAutorizado, version, oficinaId, responsableId]);
+  ClienteFiscal copyWith({int? id, int? tenantId, String? nombre, String? nif, String? notas, String? creadoEn, String? papeleraEn, String? referenciaExterna, String? modelosFiscales, int? generacionAutomatica, String? espocrmCuentaId, String? email, int? recordatoriosPortal, int? portalHonorarios, String? idioma, String? facturascriptsClienteCodigo, String? pais, String? perfilFiscal, int? clienteId, String? nifNormalizado, String? nifDuplicadoAutorizado, int? version, int? oficinaId, int? responsableId, }) => ClienteFiscal(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, modelosFiscales: modelosFiscales ?? this.modelosFiscales, generacionAutomatica: generacionAutomatica ?? this.generacionAutomatica, espocrmCuentaId: espocrmCuentaId ?? this.espocrmCuentaId, email: email ?? this.email, recordatoriosPortal: recordatoriosPortal ?? this.recordatoriosPortal, portalHonorarios: portalHonorarios ?? this.portalHonorarios, idioma: idioma ?? this.idioma, facturascriptsClienteCodigo: facturascriptsClienteCodigo ?? this.facturascriptsClienteCodigo, pais: pais ?? this.pais, perfilFiscal: perfilFiscal ?? this.perfilFiscal, clienteId: clienteId ?? this.clienteId, nifNormalizado: nifNormalizado ?? this.nifNormalizado, nifDuplicadoAutorizado: nifDuplicadoAutorizado ?? this.nifDuplicadoAutorizado, version: version ?? this.version, oficinaId: oficinaId ?? this.oficinaId, responsableId: responsableId ?? this.responsableId, );
+  @override bool operator ==(Object other) => other is ClienteFiscal && other.id == id && other.tenantId == tenantId && other.nombre == nombre && other.nif == nif && other.notas == notas && other.creadoEn == creadoEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.modelosFiscales == modelosFiscales && other.generacionAutomatica == generacionAutomatica && other.espocrmCuentaId == espocrmCuentaId && other.email == email && other.recordatoriosPortal == recordatoriosPortal && other.portalHonorarios == portalHonorarios && other.idioma == idioma && other.facturascriptsClienteCodigo == facturascriptsClienteCodigo && other.pais == pais && other.perfilFiscal == perfilFiscal && other.clienteId == clienteId && other.nifNormalizado == nifNormalizado && other.nifDuplicadoAutorizado == nifDuplicadoAutorizado && other.version == version && other.oficinaId == oficinaId && other.responsableId == responsableId;
+  @override int get hashCode => Object.hashAll([id, tenantId, nombre, nif, notas, creadoEn, papeleraEn, referenciaExterna, modelosFiscales, generacionAutomatica, espocrmCuentaId, email, recordatoriosPortal, portalHonorarios, idioma, facturascriptsClienteCodigo, pais, perfilFiscal, clienteId, nifNormalizado, nifDuplicadoAutorizado, version, oficinaId, responsableId]);
 }
 
 class ClienteFiscalDetalle {
@@ -1129,6 +1132,7 @@ class ClienteFiscalDetalle {
   final String? espocrmCuentaId;
   final String? email;
   final int? recordatoriosPortal;
+  final int? portalHonorarios;
   final String? idioma;
   final String? facturascriptsClienteCodigo;
   final String? pais;
@@ -1139,7 +1143,7 @@ class ClienteFiscalDetalle {
   final int? version;
   final int? oficinaId;
   final int? responsableId;
-  const ClienteFiscalDetalle({required this.id, this.tenantId, this.nombre, this.nif, this.notas, this.creadoEn, this.papeleraEn, this.referenciaExterna, this.modelosFiscales, this.generacionAutomatica, this.espocrmCuentaId, this.email, this.recordatoriosPortal, this.idioma, this.facturascriptsClienteCodigo, this.pais, this.perfilFiscal, this.clienteId, this.nifNormalizado, this.nifDuplicadoAutorizado, this.version, this.oficinaId, this.responsableId, });
+  const ClienteFiscalDetalle({required this.id, this.tenantId, this.nombre, this.nif, this.notas, this.creadoEn, this.papeleraEn, this.referenciaExterna, this.modelosFiscales, this.generacionAutomatica, this.espocrmCuentaId, this.email, this.recordatoriosPortal, this.portalHonorarios, this.idioma, this.facturascriptsClienteCodigo, this.pais, this.perfilFiscal, this.clienteId, this.nifNormalizado, this.nifDuplicadoAutorizado, this.version, this.oficinaId, this.responsableId, });
   factory ClienteFiscalDetalle.fromJson(Map<String, dynamic> j) => ClienteFiscalDetalle(
     id: (j['id'] as num).toInt(),
     tenantId: j['tenant_id'] == null ? null : (j['tenant_id'] as num).toInt(),
@@ -1154,6 +1158,7 @@ class ClienteFiscalDetalle {
     espocrmCuentaId: j['espocrm_cuenta_id'] == null ? null : j['espocrm_cuenta_id'] as String,
     email: j['email'] == null ? null : j['email'] as String,
     recordatoriosPortal: j['recordatorios_portal'] == null ? null : (j['recordatorios_portal'] as num).toInt(),
+    portalHonorarios: j['portal_honorarios'] == null ? null : (j['portal_honorarios'] as num).toInt(),
     idioma: j['idioma'] == null ? null : j['idioma'] as String,
     facturascriptsClienteCodigo: j['facturascripts_cliente_codigo'] == null ? null : j['facturascripts_cliente_codigo'] as String,
     pais: j['pais'] == null ? null : j['pais'] as String,
@@ -1179,6 +1184,7 @@ class ClienteFiscalDetalle {
     'espocrm_cuenta_id': ?espocrmCuentaId,
     'email': ?email,
     'recordatorios_portal': ?recordatoriosPortal,
+    'portal_honorarios': ?portalHonorarios,
     'idioma': ?idioma,
     'facturascripts_cliente_codigo': ?facturascriptsClienteCodigo,
     'pais': ?pais,
@@ -1190,9 +1196,9 @@ class ClienteFiscalDetalle {
     'oficina_id': ?oficinaId,
     'responsable_id': ?responsableId,
   };
-  ClienteFiscalDetalle copyWith({int? id, int? tenantId, String? nombre, String? nif, String? notas, String? creadoEn, String? papeleraEn, String? referenciaExterna, List<String>? modelosFiscales, int? generacionAutomatica, String? espocrmCuentaId, String? email, int? recordatoriosPortal, String? idioma, String? facturascriptsClienteCodigo, String? pais, String? perfilFiscal, int? clienteId, String? nifNormalizado, String? nifDuplicadoAutorizado, int? version, int? oficinaId, int? responsableId, }) => ClienteFiscalDetalle(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, modelosFiscales: modelosFiscales ?? this.modelosFiscales, generacionAutomatica: generacionAutomatica ?? this.generacionAutomatica, espocrmCuentaId: espocrmCuentaId ?? this.espocrmCuentaId, email: email ?? this.email, recordatoriosPortal: recordatoriosPortal ?? this.recordatoriosPortal, idioma: idioma ?? this.idioma, facturascriptsClienteCodigo: facturascriptsClienteCodigo ?? this.facturascriptsClienteCodigo, pais: pais ?? this.pais, perfilFiscal: perfilFiscal ?? this.perfilFiscal, clienteId: clienteId ?? this.clienteId, nifNormalizado: nifNormalizado ?? this.nifNormalizado, nifDuplicadoAutorizado: nifDuplicadoAutorizado ?? this.nifDuplicadoAutorizado, version: version ?? this.version, oficinaId: oficinaId ?? this.oficinaId, responsableId: responsableId ?? this.responsableId, );
-  @override bool operator ==(Object other) => other is ClienteFiscalDetalle && other.id == id && other.tenantId == tenantId && other.nombre == nombre && other.nif == nif && other.notas == notas && other.creadoEn == creadoEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.modelosFiscales == modelosFiscales && other.generacionAutomatica == generacionAutomatica && other.espocrmCuentaId == espocrmCuentaId && other.email == email && other.recordatoriosPortal == recordatoriosPortal && other.idioma == idioma && other.facturascriptsClienteCodigo == facturascriptsClienteCodigo && other.pais == pais && other.perfilFiscal == perfilFiscal && other.clienteId == clienteId && other.nifNormalizado == nifNormalizado && other.nifDuplicadoAutorizado == nifDuplicadoAutorizado && other.version == version && other.oficinaId == oficinaId && other.responsableId == responsableId;
-  @override int get hashCode => Object.hashAll([id, tenantId, nombre, nif, notas, creadoEn, papeleraEn, referenciaExterna, modelosFiscales, generacionAutomatica, espocrmCuentaId, email, recordatoriosPortal, idioma, facturascriptsClienteCodigo, pais, perfilFiscal, clienteId, nifNormalizado, nifDuplicadoAutorizado, version, oficinaId, responsableId]);
+  ClienteFiscalDetalle copyWith({int? id, int? tenantId, String? nombre, String? nif, String? notas, String? creadoEn, String? papeleraEn, String? referenciaExterna, List<String>? modelosFiscales, int? generacionAutomatica, String? espocrmCuentaId, String? email, int? recordatoriosPortal, int? portalHonorarios, String? idioma, String? facturascriptsClienteCodigo, String? pais, String? perfilFiscal, int? clienteId, String? nifNormalizado, String? nifDuplicadoAutorizado, int? version, int? oficinaId, int? responsableId, }) => ClienteFiscalDetalle(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, modelosFiscales: modelosFiscales ?? this.modelosFiscales, generacionAutomatica: generacionAutomatica ?? this.generacionAutomatica, espocrmCuentaId: espocrmCuentaId ?? this.espocrmCuentaId, email: email ?? this.email, recordatoriosPortal: recordatoriosPortal ?? this.recordatoriosPortal, portalHonorarios: portalHonorarios ?? this.portalHonorarios, idioma: idioma ?? this.idioma, facturascriptsClienteCodigo: facturascriptsClienteCodigo ?? this.facturascriptsClienteCodigo, pais: pais ?? this.pais, perfilFiscal: perfilFiscal ?? this.perfilFiscal, clienteId: clienteId ?? this.clienteId, nifNormalizado: nifNormalizado ?? this.nifNormalizado, nifDuplicadoAutorizado: nifDuplicadoAutorizado ?? this.nifDuplicadoAutorizado, version: version ?? this.version, oficinaId: oficinaId ?? this.oficinaId, responsableId: responsableId ?? this.responsableId, );
+  @override bool operator ==(Object other) => other is ClienteFiscalDetalle && other.id == id && other.tenantId == tenantId && other.nombre == nombre && other.nif == nif && other.notas == notas && other.creadoEn == creadoEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.modelosFiscales == modelosFiscales && other.generacionAutomatica == generacionAutomatica && other.espocrmCuentaId == espocrmCuentaId && other.email == email && other.recordatoriosPortal == recordatoriosPortal && other.portalHonorarios == portalHonorarios && other.idioma == idioma && other.facturascriptsClienteCodigo == facturascriptsClienteCodigo && other.pais == pais && other.perfilFiscal == perfilFiscal && other.clienteId == clienteId && other.nifNormalizado == nifNormalizado && other.nifDuplicadoAutorizado == nifDuplicadoAutorizado && other.version == version && other.oficinaId == oficinaId && other.responsableId == responsableId;
+  @override int get hashCode => Object.hashAll([id, tenantId, nombre, nif, notas, creadoEn, papeleraEn, referenciaExterna, modelosFiscales, generacionAutomatica, espocrmCuentaId, email, recordatoriosPortal, portalHonorarios, idioma, facturascriptsClienteCodigo, pais, perfilFiscal, clienteId, nifNormalizado, nifDuplicadoAutorizado, version, oficinaId, responsableId]);
 }
 
 class ClientesDeTarea {
@@ -5732,6 +5738,7 @@ class Vencimiento {
   final String? papeleraEn;
   final String? recordatorioEnviadoEn;
   final String? documensoDocumentoId;
+  final String? documensoFirmadoEn;
   final String? documentoSolicitado;
   final String? fase;
   final String? faseMotivo;
@@ -5742,7 +5749,7 @@ class Vencimiento {
   final int? rectificaA;
   final int? trabajadorId;
   final String? clienteNombre;
-  const Vencimiento({required this.id, this.tenantId, this.clienteFiscalId, this.usuarioId, this.modelo, this.periodo, this.fechaLimite, this.estado, this.notas, this.creadoEn, this.actualizadoEn, this.papeleraEn, this.recordatorioEnviadoEn, this.documensoDocumentoId, this.documentoSolicitado, this.fase, this.faseMotivo, this.presentadaTarde, this.bloqueada, this.bloqueoMotivo, this.version, this.rectificaA, this.trabajadorId, this.clienteNombre, });
+  const Vencimiento({required this.id, this.tenantId, this.clienteFiscalId, this.usuarioId, this.modelo, this.periodo, this.fechaLimite, this.estado, this.notas, this.creadoEn, this.actualizadoEn, this.papeleraEn, this.recordatorioEnviadoEn, this.documensoDocumentoId, this.documensoFirmadoEn, this.documentoSolicitado, this.fase, this.faseMotivo, this.presentadaTarde, this.bloqueada, this.bloqueoMotivo, this.version, this.rectificaA, this.trabajadorId, this.clienteNombre, });
   factory Vencimiento.fromJson(Map<String, dynamic> j) => Vencimiento(
     id: (j['id'] as num).toInt(),
     tenantId: j['tenant_id'] == null ? null : (j['tenant_id'] as num).toInt(),
@@ -5758,6 +5765,7 @@ class Vencimiento {
     papeleraEn: j['papelera_en'] == null ? null : j['papelera_en'] as String,
     recordatorioEnviadoEn: j['recordatorio_enviado_en'] == null ? null : j['recordatorio_enviado_en'] as String,
     documensoDocumentoId: j['documenso_documento_id'] == null ? null : j['documenso_documento_id'] as String,
+    documensoFirmadoEn: j['documenso_firmado_en'] == null ? null : j['documenso_firmado_en'] as String,
     documentoSolicitado: j['documento_solicitado'] == null ? null : j['documento_solicitado'] as String,
     fase: j['fase'] == null ? null : j['fase'] as String,
     faseMotivo: j['fase_motivo'] == null ? null : j['fase_motivo'] as String,
@@ -5784,6 +5792,7 @@ class Vencimiento {
     'papelera_en': ?papeleraEn,
     'recordatorio_enviado_en': ?recordatorioEnviadoEn,
     'documenso_documento_id': ?documensoDocumentoId,
+    'documenso_firmado_en': ?documensoFirmadoEn,
     'documento_solicitado': ?documentoSolicitado,
     'fase': ?fase,
     'fase_motivo': ?faseMotivo,
@@ -5795,9 +5804,9 @@ class Vencimiento {
     'trabajador_id': ?trabajadorId,
     'cliente_nombre': ?clienteNombre,
   };
-  Vencimiento copyWith({int? id, int? tenantId, int? clienteFiscalId, int? usuarioId, String? modelo, String? periodo, String? fechaLimite, String? estado, String? notas, String? creadoEn, String? actualizadoEn, String? papeleraEn, String? recordatorioEnviadoEn, String? documensoDocumentoId, String? documentoSolicitado, String? fase, String? faseMotivo, int? presentadaTarde, int? bloqueada, String? bloqueoMotivo, int? version, int? rectificaA, int? trabajadorId, String? clienteNombre, }) => Vencimiento(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, usuarioId: usuarioId ?? this.usuarioId, modelo: modelo ?? this.modelo, periodo: periodo ?? this.periodo, fechaLimite: fechaLimite ?? this.fechaLimite, estado: estado ?? this.estado, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, actualizadoEn: actualizadoEn ?? this.actualizadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, recordatorioEnviadoEn: recordatorioEnviadoEn ?? this.recordatorioEnviadoEn, documensoDocumentoId: documensoDocumentoId ?? this.documensoDocumentoId, documentoSolicitado: documentoSolicitado ?? this.documentoSolicitado, fase: fase ?? this.fase, faseMotivo: faseMotivo ?? this.faseMotivo, presentadaTarde: presentadaTarde ?? this.presentadaTarde, bloqueada: bloqueada ?? this.bloqueada, bloqueoMotivo: bloqueoMotivo ?? this.bloqueoMotivo, version: version ?? this.version, rectificaA: rectificaA ?? this.rectificaA, trabajadorId: trabajadorId ?? this.trabajadorId, clienteNombre: clienteNombre ?? this.clienteNombre, );
-  @override bool operator ==(Object other) => other is Vencimiento && other.id == id && other.tenantId == tenantId && other.clienteFiscalId == clienteFiscalId && other.usuarioId == usuarioId && other.modelo == modelo && other.periodo == periodo && other.fechaLimite == fechaLimite && other.estado == estado && other.notas == notas && other.creadoEn == creadoEn && other.actualizadoEn == actualizadoEn && other.papeleraEn == papeleraEn && other.recordatorioEnviadoEn == recordatorioEnviadoEn && other.documensoDocumentoId == documensoDocumentoId && other.documentoSolicitado == documentoSolicitado && other.fase == fase && other.faseMotivo == faseMotivo && other.presentadaTarde == presentadaTarde && other.bloqueada == bloqueada && other.bloqueoMotivo == bloqueoMotivo && other.version == version && other.rectificaA == rectificaA && other.trabajadorId == trabajadorId && other.clienteNombre == clienteNombre;
-  @override int get hashCode => Object.hashAll([id, tenantId, clienteFiscalId, usuarioId, modelo, periodo, fechaLimite, estado, notas, creadoEn, actualizadoEn, papeleraEn, recordatorioEnviadoEn, documensoDocumentoId, documentoSolicitado, fase, faseMotivo, presentadaTarde, bloqueada, bloqueoMotivo, version, rectificaA, trabajadorId, clienteNombre]);
+  Vencimiento copyWith({int? id, int? tenantId, int? clienteFiscalId, int? usuarioId, String? modelo, String? periodo, String? fechaLimite, String? estado, String? notas, String? creadoEn, String? actualizadoEn, String? papeleraEn, String? recordatorioEnviadoEn, String? documensoDocumentoId, String? documensoFirmadoEn, String? documentoSolicitado, String? fase, String? faseMotivo, int? presentadaTarde, int? bloqueada, String? bloqueoMotivo, int? version, int? rectificaA, int? trabajadorId, String? clienteNombre, }) => Vencimiento(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, usuarioId: usuarioId ?? this.usuarioId, modelo: modelo ?? this.modelo, periodo: periodo ?? this.periodo, fechaLimite: fechaLimite ?? this.fechaLimite, estado: estado ?? this.estado, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, actualizadoEn: actualizadoEn ?? this.actualizadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, recordatorioEnviadoEn: recordatorioEnviadoEn ?? this.recordatorioEnviadoEn, documensoDocumentoId: documensoDocumentoId ?? this.documensoDocumentoId, documensoFirmadoEn: documensoFirmadoEn ?? this.documensoFirmadoEn, documentoSolicitado: documentoSolicitado ?? this.documentoSolicitado, fase: fase ?? this.fase, faseMotivo: faseMotivo ?? this.faseMotivo, presentadaTarde: presentadaTarde ?? this.presentadaTarde, bloqueada: bloqueada ?? this.bloqueada, bloqueoMotivo: bloqueoMotivo ?? this.bloqueoMotivo, version: version ?? this.version, rectificaA: rectificaA ?? this.rectificaA, trabajadorId: trabajadorId ?? this.trabajadorId, clienteNombre: clienteNombre ?? this.clienteNombre, );
+  @override bool operator ==(Object other) => other is Vencimiento && other.id == id && other.tenantId == tenantId && other.clienteFiscalId == clienteFiscalId && other.usuarioId == usuarioId && other.modelo == modelo && other.periodo == periodo && other.fechaLimite == fechaLimite && other.estado == estado && other.notas == notas && other.creadoEn == creadoEn && other.actualizadoEn == actualizadoEn && other.papeleraEn == papeleraEn && other.recordatorioEnviadoEn == recordatorioEnviadoEn && other.documensoDocumentoId == documensoDocumentoId && other.documensoFirmadoEn == documensoFirmadoEn && other.documentoSolicitado == documentoSolicitado && other.fase == fase && other.faseMotivo == faseMotivo && other.presentadaTarde == presentadaTarde && other.bloqueada == bloqueada && other.bloqueoMotivo == bloqueoMotivo && other.version == version && other.rectificaA == rectificaA && other.trabajadorId == trabajadorId && other.clienteNombre == clienteNombre;
+  @override int get hashCode => Object.hashAll([id, tenantId, clienteFiscalId, usuarioId, modelo, periodo, fechaLimite, estado, notas, creadoEn, actualizadoEn, papeleraEn, recordatorioEnviadoEn, documensoDocumentoId, documensoFirmadoEn, documentoSolicitado, fase, faseMotivo, presentadaTarde, bloqueada, bloqueoMotivo, version, rectificaA, trabajadorId, clienteNombre]);
 }
 
 class VersionJuridica {

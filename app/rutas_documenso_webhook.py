@@ -8,7 +8,7 @@ import os
 
 from flask import Blueprint, Response, request
 
-from . import documentos_firma
+from . import documentos_firma, portal_firma
 
 documenso_webhook_bp = Blueprint("documenso_webhook", __name__, url_prefix="/webhooks")
 
@@ -30,4 +30,5 @@ def recibir():
         return Response(status=401)
     for ident in _ids_del_aviso(request.get_json(silent=True)):
         documentos_firma.refrescar_por_documenso(ident)
+        portal_firma.marcar_por_documenso(ident)                       # y, si es un documento enviado desde un vencimiento, deja constancia de que el cliente firmó
     return Response("ok", status=200)

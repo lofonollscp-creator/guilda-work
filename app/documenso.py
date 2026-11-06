@@ -159,6 +159,25 @@ def estado_documento(api_key: str, documento_id: str) -> str:
     return str(cuerpo.get("status") or "").upper()
 
 
+def obtener_documento(api_key: str, documento_id: str) -> dict:
+    """El documento (envelope) tal como lo devuelve Documenso: `status` y `recipients` (con `email`, `role`, `signingStatus` y `token`)."""
+    if not api_key:
+        raise ErrorDocumenso("Este tenant no tiene un token de Documenso configurado todavía.")
+    estado, cuerpo = _peticion_json(f"/envelope/{documento_id}", api_key)
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorDocumenso(f"No se ha podido consultar el documento {documento_id} de Documenso: {mensaje}")
+    return cuerpo
+
+
+def enlace_de_firma(documento: dict, email: str, base: str | None = None) -> str | None:
+    """La página de firma de ese firmante, si aún no ha firmado: `<Documenso>/sign/<token>` (Documenso no devuelve la URL al consultar, solo el token del destinatario)."""
+    for r in documento.get("recipients", []):
+        if r.get("role") == "SIGNER" and str(r.get("email") or "").strip().lower() == (email or "").strip().lower() and r.get("signingStatus") == "NOT_SIGNED" and r.get("token"):
+            return f"{(base or DOCUMENSO_URL).rstrip('/')}/sign/{r['token']}"
+    return None
+
+
 def enviar_a_firma(api_key: str, documento_id: str) -> dict:
     """Distribuye un documento en borrador — manda el email de firma a
     cada destinatario."""

@@ -12,13 +12,13 @@ Flask sin pisarse (claves de session distintas).
 v1 deliberadamente NO incluye: auto-registro (el acceso es opt-in, un
 empleado pone el email desde /fiscal/clientes/<id>/editar), mensajería
 cliente<->gestoría, ni contraseña (solo enlace mágico)."""
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
 from . import antivirus, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import cierre_trimestre, conformidad_declaracion, facturas_contables, facturas_portal, portal_inicio
+from . import cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
 
@@ -176,7 +176,8 @@ def impuestos():
     por_anio: dict[str, list] = {}
     for v in vencimientos:
         por_anio.setdefault(v["fecha_limite"][:4], []).append(v)
-    return render_template("portal_impuestos.html", cliente=cliente, por_anio=por_anio, anios_ordenados=sorted(por_anio, reverse=True), vencimientos=vencimientos, portal_seccion="impuestos",
+    return render_template("portal_impuestos.html", cobros=portal_pagos.cobros(cliente, vencimientos), firmas={v["id"] for v in portal_firma.pendientes(vencimientos)}, pago=request.args.get("pago"),
+                           error=(request.args.get("error") or "")[:200] or None, cliente=cliente, por_anio=por_anio, anios_ordenados=sorted(por_anio, reverse=True), vencimientos=vencimientos, portal_seccion="impuestos",
                            sin_leer={m["vencimiento_id"]: m["n"] for m in db.mensajes_sin_leer_para_cliente(cliente["id"])})
 
 
@@ -365,7 +366,7 @@ def facturas():
             error = str(e)
     error = error or (request.args.get("error") or "")[:200] or None
     return render_template("portal_facturas.html", cliente=cliente, tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
-                           datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), con_informe=verticales.esta_activo(cliente["tenant_id"], "fiscal"), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
+                           datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), con_informe=verticales.esta_activo(cliente["tenant_id"], "fiscal"), justificantes_pendientes=len(justificantes.pendientes_del_cliente(cliente["id"])), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
                            max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
 
 
@@ -411,7 +412,9 @@ def comprobar_archivos():
 @cliente_login_required
 def informe_trimestre():
     """El informe del trimestre (el que prepara Guilda Fiscal), solo para despachos que lo usan."""
-    cliente = _cliente_con_facturas()
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None:
+        abort(404)
     try:
         pdf = cierre_trimestre.informe_pdf(cliente["tenant_id"], cliente["id"], request.args.get("trimestre", ""))
     except ValueError:
@@ -486,3 +489,114 @@ def conformidad(declaracion_id: int):
     except ValueError as e:
         return redirect(url_for("portal_cliente.declaracion", declaracion_id=declaracion_id, error=_(str(e))[:200]))
     return redirect(url_for("portal_cliente.declaracion", declaracion_id=declaracion_id, respondida=resultado))
+
+
+# --- Movimientos del banco que el despacho no sabe explicar y tiquets ---------------------------------------------------------------------------------------
+
+def _archivos_del_formulario(nombre: str = "archivos") -> list[tuple[str, str | None, bytes]]:
+    return [(a.filename, a.mimetype, a.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist(nombre) if a and a.filename]
+
+
+@portal_bp.route("/justificantes")
+@cliente_login_required
+def justificantes_cliente():
+    """Los movimientos del banco por los que su gestoría pregunta, con lo que puede contestar, y el formulario para anotar un tiquet."""
+    cliente = _cliente_con_facturas()
+    todos = justificantes.del_cliente(cliente["id"])
+    return render_template("portal_justificantes.html", cliente=cliente, pendientes=[j for j in todos if j["estado"] == "pendiente"], contestados=[j for j in todos if j["estado"] != "pendiente"], portal_seccion="facturas",
+                           hoy=date.today().isoformat(), max_comentario=justificantes.MAX_COMENTARIO, max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA, contestado=request.args.get("contestado"),
+                           error=(request.args.get("error") or "")[:200] or None)
+
+
+@portal_bp.route("/justificantes/<int:justificante_id>", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def contestar_justificante(justificante_id: int):
+    cliente = _cliente_con_facturas()
+    accion = request.form.get("accion", "")
+    try:
+        justificantes.responder(cliente["id"], justificante_id, accion, request.form.get("comentario", ""), _archivos_del_formulario())
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.justificantes_cliente", error=_(str(e))[:200]) + f"#justificante-{justificante_id}")
+    return redirect(url_for("portal_cliente.justificantes_cliente", contestado=accion))
+
+
+@portal_bp.route("/justificantes/tiquet", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def anotar_tiquet():
+    cliente = _cliente_con_facturas()
+    archivos = _archivos_del_formulario("archivo")
+    try:
+        justificantes.anotar_tiquet(cliente["id"], request.form.get("fecha", ""), request.form.get("importe", ""), request.form.get("concepto", ""), archivos[0] if archivos else None)
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.justificantes_cliente", error=_(str(e))[:200]) + "#tiquet")
+    return redirect(url_for("portal_cliente.justificantes_cliente", contestado="tiquet_anotado"))
+
+
+# --- Firmar un documento y pagar los honorarios de un modelo -------------------------------------------------------------------------------------------------
+
+def _vencimiento_firma_o_404(vencimiento_id: int):
+    return _vencimiento_del_cliente_actual(vencimiento_id)
+
+
+@portal_bp.route("/vencimientos/<int:vencimiento_id>/firma")
+@cliente_login_required
+def firma_vencimiento(vencimiento_id: int):
+    """El documento que la gestoría ha enviado a firmar para este modelo, con el botón que lleva directo a la página de firma."""
+    vencimiento = _vencimiento_firma_o_404(vencimiento_id)
+    if not vencimiento["documenso_documento_id"]:
+        abort(404)
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    firma = portal_firma.consultar(cliente, vencimiento) if not vencimiento["documenso_firmado_en"] else {"estado": "firmado", "enlace": None}
+    return render_template("portal_firma.html", cliente=cliente, vencimiento=vencimiento, firma=firma, portal_seccion="impuestos")
+
+
+@portal_bp.route("/vencimientos/<int:vencimiento_id>/pagar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour", methods=["POST"])
+def pagar_vencimiento(vencimiento_id: int):
+    """Abre el pago con tarjeta de los honorarios confirmados de este modelo (en la página segura de Stripe)."""
+    _vencimiento_del_cliente_actual(vencimiento_id)
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    try:
+        url = portal_pagos.crear_pago(cliente, vencimiento_id, url_for("portal_cliente.impuestos", pago="ok", _external=True), url_for("portal_cliente.impuestos", pago="cancelado", _external=True))
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.impuestos", error=_(str(e))[:200]) + f"#vencimiento-{vencimiento_id}")
+    return redirect(url, code=303)
+
+
+# --- La carpeta del año -----------------------------------------------------------------------------------------------------------------------------------------
+
+@portal_bp.route("/carpeta")
+@cliente_login_required
+def carpeta():
+    """Justificantes, constancias, informes trimestrales y resúmenes de modelos presentados de un año, con un ZIP para descargarlo todo."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None:
+        session.pop("cliente_fiscal_id", None)
+        return redirect(url_for("portal_cliente.entrar"))
+    anios = portal_carpeta.anios_disponibles(cliente)
+    anio = request.args.get("anio", type=int)
+    if anio not in anios:
+        anio = anios[0] if anios else date.today().year
+    return render_template("portal_carpeta.html", cliente=cliente, anios=anios, c=portal_carpeta.contenido(cliente, anio), anio=anio, portal_seccion="carpeta")
+
+
+@portal_bp.route("/carpeta/<int:anio>.zip")
+@cliente_login_required
+def carpeta_zip(anio: int):
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None or anio not in portal_carpeta.anios_disponibles(cliente):
+        abort(404)
+    return Response(portal_carpeta.zip_del_anio(cliente, anio), mimetype="application/zip", headers={"Content-Disposition": f'attachment; filename="carpeta-{anio}.zip"', "X-Content-Type-Options": "nosniff"})
+
+
+@portal_bp.route("/carpeta/resumen/<int:declaracion_id>.pdf")
+@cliente_login_required
+def carpeta_resumen(declaracion_id: int):
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    pdf = portal_carpeta.pdf_resumen(cliente, declaracion_id) if cliente is not None else None
+    if pdf is None:
+        abort(404)
+    return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="resumen-303-{declaracion_id}.pdf"', "X-Content-Type-Options": "nosniff"})

@@ -13,7 +13,7 @@ from urllib.parse import quote
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _
 
-from . import acceso, conformidad_declaracion, db, honorarios, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_panel as fpn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
+from . import acceso, conformidad_declaracion, db, justificantes, honorarios, facturas_contables as fc, fiscal_conciliacion, fiscal_nucleo as fn, fiscal_panel as fpn, fiscal_recurrentes as fr, fiscal_informe_trimestral, fiscal_perfiles as fp, fiscal_resumen_pdf, verticales
 from .auth import login_required
 from .fiscal_modelos import motor_131, motor_390
 from .fiscal_modelos.apuntes import Apunte
@@ -392,7 +392,27 @@ def conciliacion(cliente_id: int):
                 resultado = fiscal_conciliacion.conciliar_extracto(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, archivo.filename, archivo.read(fiscal_conciliacion.MAX_BYTES + 1))
             except ErrorFiscal as e:
                 error = str(e)
-    return render_template("fiscal_conciliacion.html", c=c, ejercicio=ejercicio, periodo=periodo, periodos=PERIODOS, resultado=resultado, error=error)
+    return render_template("fiscal_conciliacion.html", c=c, ejercicio=ejercicio, periodo=periodo, periodos=PERIODOS, resultado=resultado, error=error,
+                           puede_pedir_justificantes=verticales.esta_activo(g.tenant_id, "contabilizacion"), pedidos=request.args.get("pedidos", type=int))
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/conciliacion/justificantes", methods=["POST"])
+@login_required
+def pedir_justificantes(cliente_id: int):
+    """Pide al cliente que explique los movimientos marcados de la conciliación (solo se guardan fecha, importe y concepto de esos)."""
+    _cliente_o_404(cliente_id)
+    if not verticales.esta_activo(g.tenant_id, "contabilizacion"):
+        abort(404)
+    movimientos = []
+    for valor in request.form.getlist("mov")[: justificantes.MAX_POR_PEDIDO + 1]:
+        fecha, _sep, resto = valor.partition("|")
+        importe, _sep, concepto = resto.partition("|")
+        movimientos.append({"fecha": fecha, "importe": importe, "concepto": concepto})
+    try:
+        r = justificantes.pedir(g.tenant_id, g.usuario_id, cliente_id, movimientos)
+    except ValueError as e:
+        return redirect(url_for("guilda_fiscal.conciliacion", cliente_id=cliente_id, error=str(e)[:300]))
+    return redirect(url_for("contabilidad.justificantes", cliente_id=cliente_id, pedidos=r["nuevos"], repetidos=r["repetidos"], avisado=1 if r["avisado"] else 0))
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/retenciones/<modelo>/fichero")

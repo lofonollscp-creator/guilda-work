@@ -8,7 +8,7 @@ from flask_babel import gettext as _
 
 from . import acceso, cobro_contabilidad, db, enlace_a3, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
-from . import cierre_trimestre, cola_contabilidad, facturas_portal
+from . import cierre_trimestre, cola_contabilidad, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
 
 contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad")
@@ -442,6 +442,36 @@ def periodo():
 def cola():
     """Qué cliente atender primero: ordenados por los días que sobran hasta su próximo plazo una vez descontado lo que cuesta despachar lo pendiente."""
     return render_template("contabilidad_cola.html", filas=cola_contabilidad.cola(g.tenant_id, g.usuario_id), ritmo=cola_contabilidad.FACTURAS_POR_DIA, subnav=None)
+
+
+@contabilidad_bp.route("/justificantes")
+@login_required
+def justificantes():
+    """Movimientos del banco y tiquets que los clientes han explicado (o que aún están esperando su respuesta)."""
+    cliente_id = request.args.get("cliente_id", type=int)
+    estado = request.args.get("estado") or None
+    return render_template("contabilidad_justificantes.html", filas=justificantes_mod.listar(g.tenant_id, g.usuario_id, cliente_fiscal_id=cliente_id, estado=estado), clientes=_clientes(), cliente_id=cliente_id,
+                           estado=estado, pedidos=request.args.get("pedidos", type=int), repetidos=request.args.get("repetidos", type=int), avisado=request.args.get("avisado", type=int), error=_error(), subnav=None)
+
+
+@contabilidad_bp.route("/justificantes/<int:justificante_id>/estado", methods=["POST"])
+@login_required
+def justificante_estado(justificante_id: int):
+    try:
+        justificantes_mod.cambiar_estado(g.tenant_id, g.usuario_id, justificante_id, request.form.get("estado", ""))
+    except ValueError as e:
+        return redirect(url_for("contabilidad.justificantes", cliente_id=request.form.get("cliente_id", type=int), error=str(e)[:300]))
+    return redirect(url_for("contabilidad.justificantes", cliente_id=request.form.get("cliente_id", type=int), estado=request.form.get("filtro") or None))
+
+
+@contabilidad_bp.route("/justificantes/<int:justificante_id>/archivo")
+@login_required
+def justificante_archivo(justificante_id: int):
+    doc = justificantes_mod.documento_de(g.tenant_id, g.usuario_id, justificante_id)
+    if doc is None:
+        abort(404)
+    nombre, tipo, contenido = doc
+    return Response(contenido, mimetype=tipo, headers={"Content-Disposition": f'attachment; filename="{nombre.replace(chr(34), "")}"', "X-Content-Type-Options": "nosniff"})
 
 
 @contabilidad_bp.route("/cierre", methods=["GET", "POST"])
