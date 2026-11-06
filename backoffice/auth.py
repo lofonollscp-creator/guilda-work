@@ -124,6 +124,13 @@ CREATE TABLE IF NOT EXISTS auditorias_dependencias (
     fecha TEXT NOT NULL,
     resultado TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS cuotas_despacho (
+    tenant_id INTEGER PRIMARY KEY,
+    almacenamiento_mb INTEGER,
+    facturas_mes INTEGER,
+    actualizado_en TEXT NOT NULL,
+    actualizado_por TEXT
+);
 CREATE TABLE IF NOT EXISTS resumenes_enviados (
     clave TEXT PRIMARY KEY,
     enviado_en TEXT NOT NULL

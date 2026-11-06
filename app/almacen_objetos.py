@@ -55,6 +55,14 @@ TABLAS = {
     "vencimientos_fiscales_documentos": {"mime": "tipo_mime"},
     "correo_adjuntos": {"mime": "tipo_mime"},
 }
+# Cómo averiguar el despacho de cada fila: (JOIN necesario, expresión del tenant). Lo usan scripts/migrar_a_objetos.py y el panel del backoffice.
+DESPACHO = {
+    "cliente_documentos": ("", "t.tenant_id"),
+    "documentos": ("", "t.tenant_id"),
+    "vencimientos_fiscales_documentos": ("JOIN vencimientos_fiscales v ON v.id = t.vencimiento_id", "v.tenant_id"),
+    "correo_adjuntos": ("JOIN correo_mensajes m ON m.id = t.mensaje_id JOIN correo_cuentas c ON c.id = m.cuenta_id JOIN usuarios u ON u.id = c.usuario_id", "u.tenant_id"),
+}
+assert set(DESPACHO) == set(TABLAS), "cada tabla del almacén necesita su forma de saber el despacho"
 _CLAVE_SEGURA = re.compile(r"^[A-Za-z0-9_./-]{1,512}$")
 
 

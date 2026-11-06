@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Cuotas y uso{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Cuotas y uso</h1><p class="muted">Lo que usa cada despacho frente a su tope. Solo avisa, no bloquea: desde el {{ aviso }} % sale en ámbar y al llegar al 100 % en rojo. Usuarios e IA se fijan en el plan y en la ficha del tenant; almacenamiento y facturas, aquí.</p></header>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Despacho</th>{% for m in metricas %}<th>{{ etiquetas[m] }}</th>{% endfor %}<th>Topes (MB · facturas/mes)</th></tr></thead>
+  <tbody>
+  {% for f in filas %}
+    <tr>
+      <td><a href="{{ url_for('rutas.tenant', tenant_id=f.tenant_id) }}"><strong>{{ f.nombre }}</strong></a>{% if f.plan %}<br><small class="muted">{{ f.plan }}</small>{% endif %}</td>
+      {% for m in metricas %}{% set c = f[m] %}
+      <td>{{ c.usado }}{% if c.limite is none %} <small class="muted">sin tope</small>{% else %} / {{ c.limite }}
+        <div class="barra-progreso"><span style="width: {{ [c.pct, 100]|min }}%"></span></div>
+        <span class="{{ 'texto-riesgo' if c.nivel == 'excedido' else ('ko' if c.nivel == 'aviso' else 'muted') }}">{{ c.pct }} %</span>{% endif %}</td>
+      {% endfor %}
+      <td><form method="post" action="{{ url_for('rutas.cuotas_guardar', tenant_id=f.tenant_id) }}" class="herramientas"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        {% set g = guardados.get(f.tenant_id, {}) %}
+        <input type="number" min="0" name="almacenamiento_mb" value="{{ g.almacenamiento_mb if g.almacenamiento_mb is not none }}" placeholder="MB" aria-label="Tope de almacenamiento en MB de {{ f.nombre }}" class="entrada-corta">
+        <input type="number" min="0" name="facturas_mes" value="{{ g.facturas_mes if g.facturas_mes is not none }}" placeholder="facturas" aria-label="Tope de facturas al mes de {{ f.nombre }}" class="entrada-corta">
+        <button type="submit" class="boton">Guardar</button></form></td>
+    </tr>
+  {% else %}<tr><td colspan="{{ metricas|length + 2 }}" class="vacio">No hay despachos.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

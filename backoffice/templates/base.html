@@ -40,12 +40,14 @@
       <p class="nav-grupo">Facturación</p>
       {{ enlace(url_for('rutas.planes'), 'Planes y extras', 'credit-card', endpoint == 'rutas.planes') }}
       {{ enlace(url_for('rutas.ingresos'), 'Ingresos', 'bar-chart-3', endpoint == 'rutas.ingresos') }}
+      {{ enlace(url_for('rutas.cuotas_vista'), 'Cuotas y uso', 'target', endpoint in ('rutas.cuotas_vista', 'rutas.cuotas_guardar')) }}
       <p class="nav-grupo">Sistema</p>
       {{ enlace(url_for('rutas.salud_vista'), 'Salud', 'circle-check-big', endpoint == 'rutas.salud_vista') }}
       {{ enlace(url_for('rutas.estado'), 'Estado del sistema', 'activity', endpoint == 'rutas.estado') }}
       {{ enlace(url_for('rutas.diagnostico_vista'), 'Diagnóstico', 'shield-check', endpoint == 'rutas.diagnostico_vista') }}
       {{ enlace(url_for('rutas.dependencias_vista'), 'Dependencias', 'puzzle', endpoint in ('rutas.dependencias_vista', 'rutas.comprobar_dependencias')) }}
       {{ enlace(url_for('rutas.copias'), 'Copias de seguridad', 'download', endpoint == 'rutas.copias') }}
+      {{ enlace(url_for('rutas.almacen_vista'), 'Almacén de documentos', 'layers', endpoint in ('rutas.almacen_vista', 'rutas.almacen_verificar')) }}
       {{ enlace(url_for('rutas.mantenimiento_vista'), 'Mantenimiento', 'settings', endpoint == 'rutas.mantenimiento_vista') }}
       {{ enlace(url_for('rutas.tokens_api'), 'Tokens de API', 'shield-check', endpoint == 'rutas.tokens_api') }}
       {{ enlace(url_for('rutas.reglas_fiscales_vista'), 'Reglas fiscales', 'circle-check-big', endpoint == 'rutas.reglas_fiscales_vista') }}

@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 
 from app import db as plataforma
 
-from . import auth, dependencias, metricas
+from . import auth, cuotas, dependencias, metricas
 from .datos import ESTADOS_RIESGO
 
 ESTADOS_RIESGO_PAGO = ESTADOS_RIESGO
@@ -244,6 +244,7 @@ def construir_resumen(ahora: datetime | None = None) -> dict:
         "en_seguimiento": silenciados, "pagos_fallidos": pagos_fallidos, "cobros_pendientes": cobros, "errores_correo": errores_correo,
         "webhooks_fallidos_7d": webhooks, "mes": hist["resumen_mes"],
         "dependencias": dependencias.ultima(),
+        "cuotas": cuotas.avisos(ahora),
     }
 
 
@@ -262,6 +263,11 @@ def texto_resumen(r: dict) -> str:
         lineas.append("TENANTS EN RIESGO")
         for f in r["riesgo"]:
             lineas.append(f"- {f['nombre']} ({f['puntos'] if f['puntos'] is not None else '—'}/100): " + "; ".join(f["motivos"]))
+        lineas.append("")
+    if r.get("cuotas"):
+        lineas.append("CUOTAS (cerca del tope o superado)")
+        for q in r["cuotas"]:
+            lineas.append(f"- {q['nombre']} [{'EXCEDIDO' if q['nivel'] == 'excedido' else 'aviso'}]: " + "; ".join(q["motivos"]))
         lineas.append("")
     if r.get("en_seguimiento"):
         lineas.append("En seguimiento (no se insiste hasta la fecha): " + ", ".join(

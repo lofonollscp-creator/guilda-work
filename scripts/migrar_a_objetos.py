@@ -26,14 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app import almacen_objetos as ao  # noqa: E402
 from app import db  # noqa: E402
 
-# Cómo averiguar el despacho de cada fila y cómo se llama su columna de tipo MIME.
-DESPACHO = {
-    "cliente_documentos": ("", "t.tenant_id"),
-    "documentos": ("", "t.tenant_id"),
-    "vencimientos_fiscales_documentos": ("JOIN vencimientos_fiscales v ON v.id = t.vencimiento_id", "v.tenant_id"),
-    "correo_adjuntos": ("JOIN correo_mensajes m ON m.id = t.mensaje_id JOIN correo_cuentas c ON c.id = m.cuenta_id JOIN usuarios u ON u.id = c.usuario_id", "u.tenant_id"),
-}
-assert set(DESPACHO) == set(ao.TABLAS), "cada tabla del almacén necesita su forma de saber el despacho"
+DESPACHO = ao.DESPACHO
 
 
 def _tablas(texto: str | None) -> list[str]:

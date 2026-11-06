@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}Almacén de documentos{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Almacén de documentos</h1><p class="muted">Dónde viven los PDF y adjuntos: en la base de datos o en el almacén de objetos (S3 o carpeta). Cada objeto guarda su huella SHA-256 y se comprueba al leerlo.</p></header>
+{% if almacen.error %}<p class="aviso aviso-error">El almacén está mal configurado: {{ almacen.error }}</p>
+{% elif not almacen.configurado %}<p class="aviso">No hay almacén de objetos activo (<code>GUILDA_OBJETOS</code> vacío): todo el contenido sigue en la base de datos.</p>{% endif %}
+<section class="rejilla rejilla-4">
+  <article class="tarjeta kpi"><header><span>En el almacén</span>{{ icono('layers') }}</header><strong>{{ r.objetos }}</strong><small>{{ r.fuera_mb }} MB · {{ almacen.nombre or 'sin almacén' }}</small></article>
+  <article class="tarjeta kpi {{ 'kpi-riesgo' if r.dentro and almacen.configurado }}"><header><span>Aún en la base</span>{{ icono('download') }}</header><strong>{{ r.dentro }}</strong><small>{{ r.dentro_mb }} MB por migrar</small></article>
+  <article class="tarjeta kpi"><header><span>Coste estimado</span>{{ icono('credit-card') }}</header><strong>{{ r.coste_mes_usd }} USD/mes</strong><small>Con {{ precio }} USD por GB y mes (S3 Standard); orientativo.</small></article>
+  <article class="tarjeta kpi {{ 'kpi-riesgo' if r.sin_verificar }}"><header><span>Sin comprobar</span>{{ icono('shield-check') }}</header><strong>{{ r.sin_verificar }}</strong><small>objetos que nunca se han leído para verificarlos</small></article>
+</section>
+{% if almacen.configurado %}
+<form method="post" action="{{ url_for('rutas.almacen_verificar') }}" class="herramientas"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <label>Objetos a comprobar <input type="number" name="n" value="50" min="1" max="{{ muestra }}" class="entrada-corta"></label>
+  <button type="submit" class="boton boton-primario">{{ icono('shield-check') }} Comprobar muestra</button>
+  <small class="muted">Lee del almacén primero los que más tiempo llevan sin comprobarse (máximo {{ muestra }} por vez).</small>
+</form>
+{% endif %}
+<h2>Por tabla</h2>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Contenido</th><th>En el almacén</th><th>MB</th><th>En la base</th><th>MB</th></tr></thead>
+  <tbody>{% for t in r.por_tabla %}<tr><td class="mono">{{ t.tabla }}</td><td>{{ t.fuera }}</td><td>{{ t.fuera_mb }}</td><td>{{ t.dentro }}</td><td>{{ t.dentro_mb }}</td></tr>{% endfor %}</tbody>
+</table></div>
+<h2>Por despacho</h2>
+<div class="tabla-caja"><table class="tabla">
+  <thead><tr><th>Despacho</th><th>En el almacén</th><th>MB</th><th>En la base</th><th>MB</th><th>Sin comprobar</th></tr></thead>
+  <tbody>{% for d in r.por_despacho %}<tr>
+    <td>{% if d.tenant_id in (0, none) %}{{ d.nombre }}{% else %}<a href="{{ url_for('rutas.tenant', tenant_id=d.tenant_id) }}"><strong>{{ d.nombre }}</strong></a>{% endif %}</td>
+    <td>{{ d.fuera }}</td><td>{{ d.fuera_mb }}</td><td>{{ d.dentro }}</td><td>{{ d.dentro_mb }}</td><td>{{ d.sin_verificar }}</td></tr>
+    {% else %}<tr><td colspan="6" class="vacio">Todavía no hay documentos con contenido.</td></tr>{% endfor %}</tbody>
+</table></div>
+<p class="muted">La retención (bloqueo de borrado) la fija el propio bucket; la aplicación no puede borrar ni acortarla. La migración se hace con <code>scripts/migrar_a_objetos.py</code>.</p>
+{% endblock %}

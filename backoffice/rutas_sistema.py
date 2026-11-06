@@ -12,7 +12,9 @@ from flask import Response, abort, flash, g, redirect, render_template, request,
 from app import db as plataforma
 from app import cobro_contabilidad, comunicados, eventos, ia_consumo, mantenimiento, ver_como, herramientas, salud, uptime_kuma
 
-from . import aprovisionamiento, auth, cartera, datos, dependencias, diagnostico, seguimiento
+from app import almacen_objetos
+
+from . import aprovisionamiento, almacen, auth, cartera, cuotas, datos, dependencias, diagnostico, seguimiento
 from .rutas import _tenant_o_404, bp
 
 
@@ -275,6 +277,52 @@ def hacer_copia():
         auth.auditar("copia.crear")
         flash("Copia de seguridad creada y verificada.", "ok")
     return redirect(url_for("rutas.copias"))
+
+
+@bp.route("/cuotas")
+@auth.login_required
+def cuotas_vista():
+    return render_template("cuotas.html", filas=cuotas.uso(), etiquetas=cuotas.ETIQUETAS, metricas=cuotas.METRICAS, aviso=cuotas.AVISO_PCT, guardados=cuotas.limites_guardados())
+
+
+@bp.route("/tenants/<int:tenant_id>/cuotas", methods=["POST"])
+@auth.login_required
+def cuotas_guardar(tenant_id: int):
+    """Topes de almacenamiento (MB) y de facturas al mes de un despacho; un campo vacío = sin tope."""
+    _tenant_o_404(tenant_id)
+    valores = []
+    for campo in ("almacenamiento_mb", "facturas_mes"):
+        texto = request.form.get(campo, "").strip()
+        if texto and not texto.isdigit():
+            flash("Los topes son números enteros (vacío = sin tope).", "error")
+            return redirect(url_for("rutas.cuotas_vista"))
+        valores.append(int(texto) if texto else None)
+    cuotas.fijar(tenant_id, valores[0], valores[1], g.admin["usuario"])
+    auth.auditar("cuotas.fijar", f"tenant {tenant_id}: almacenamiento {valores[0]} MB, facturas {valores[1]}/mes")
+    flash("Topes guardados.", "ok")
+    return redirect(url_for("rutas.cuotas_vista"))
+
+
+@bp.route("/almacen")
+@auth.login_required
+def almacen_vista():
+    return render_template("almacen.html", almacen=almacen.estado_almacen(), r=almacen.resumen(), precio=almacen.PRECIO_GB_MES_USD, muestra=almacen.MUESTRA_MAXIMA)
+
+
+@bp.route("/almacen/verificar", methods=["POST"])
+@auth.login_required
+def almacen_verificar():
+    try:
+        r = almacen.verificar_muestra(request.form.get("n", type=int) or 50)
+    except almacen_objetos.ErrorAlmacenObjetos as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("almacen.verificar", f"{r['revisados']} objetos, {len(r['problemas'])} problemas")
+        if r["problemas"]:
+            flash(f"Revisados {r['revisados']} objetos: {len(r['problemas'])} con problemas. " + " · ".join(r["problemas"][:3]), "error")
+        else:
+            flash(f"Revisados {r['revisados']} objetos: todos coinciden con su registro.", "ok")
+    return redirect(url_for("rutas.almacen_vista"))
 
 
 def _propietario_webhooks() -> int:
