@@ -8,7 +8,7 @@ import hmac
 import re
 from datetime import date, datetime, timedelta
 
-from . import db, portal_peticiones, portal_subida_rapida
+from . import db, portal_citas, portal_peticiones, portal_subida_rapida
 
 HORIZONTE_DIAS = 400
 LARGO_TOKEN = 32
@@ -59,6 +59,15 @@ def _evento(uid: str, dia: date, resumen: str, descripcion: str, marca: str) -> 
             "BEGIN:VALARM", "ACTION:DISPLAY", f"DESCRIPTION:{_escapar(resumen)}", "TRIGGER:-P2D", "END:VALARM", "END:VEVENT"]
 
 
+def _evento_con_hora(uid: str, inicio: datetime, minutos: int, resumen: str, descripcion: str, marca: str) -> list[str]:
+    """Un evento con hora (hora de Madrid, que se pasa a UTC para no depender de zonas horarias en el fichero)."""
+    from zoneinfo import ZoneInfo
+    utc = inicio.replace(tzinfo=ZoneInfo("Europe/Madrid")).astimezone(ZoneInfo("UTC"))
+    fin = utc + timedelta(minutes=minutos)
+    return ["BEGIN:VEVENT", f"UID:{uid}@guildawork", f"DTSTAMP:{marca}", f"DTSTART:{utc.strftime('%Y%m%dT%H%M%SZ')}", f"DTEND:{fin.strftime('%Y%m%dT%H%M%SZ')}", f"SUMMARY:{_escapar(resumen)}",
+            f"DESCRIPTION:{_escapar(descripcion)}", "BEGIN:VALARM", "ACTION:DISPLAY", f"DESCRIPTION:{_escapar(resumen)}", "TRIGGER:-PT1H", "END:VALARM", "END:VEVENT"]
+
+
 def contenido(cliente, ahora: datetime | None = None) -> str:
     """El texto del calendario (.ics) de ese cliente."""
     ahora = ahora or datetime.utcnow()
@@ -79,5 +88,8 @@ def contenido(cliente, ahora: datetime | None = None) -> str:
     for p in portal_peticiones.pendientes_del_cliente(cliente["id"]):
         if p["fecha_limite"]:
             lineas += _evento(f"peticion-{p['id']}", date.fromisoformat(p["fecha_limite"]), f"Subir: {p['titulo']}", f"Tu gestoría necesita este documento: {p['titulo']}.", marca)
+    nombres = {"llamada": "Llamada", "videollamada": "Videollamada", "visita": "Visita"}
+    for c in portal_citas.confirmadas_futuras(cliente):
+        lineas += _evento_con_hora(f"cita-{c['id']}", datetime.fromisoformat(c["fecha_hora"]), 30, f"{nombres[c['canal']]} con tu gestoría", f"{c['motivo']}" + (f" · {c['nota']}" if c["nota"] else ""), marca)
     lineas.append("END:VCALENDAR")
     return "\r\n".join(parte for linea in lineas for parte in _plegar(linea)) + "\r\n"

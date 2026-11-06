@@ -19,7 +19,11 @@
       <div class="portal-peticion" role="status">{{ ngettext('Recibido: %(n)s archivo. Tu gestoría lo leerá.', 'Recibidos: %(n)s archivos. Tu gestoría los leerá.', enviadas, n=enviadas) }}</div>
       {% endif %}
       {% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
-      <form method="post" enctype="multipart/form-data" action="{{ url_for('portal_cliente.subida_rapida', token=token) }}">
+      <form method="post" enctype="multipart/form-data" action="{{ url_for('portal_cliente.subida_rapida', token=token) }}" data-cola-offline
+            data-txt-guardado="{{ _('Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo.') }}"
+            data-txt-enviando="{{ _('Enviando lo que estaba guardado…') }}"
+            data-txt-enviado="{{ _('Ya se ha enviado lo que estaba guardado (%(n)s envío/s). Recarga la página para verlo.', n='%(n)s') }}"
+            data-txt-fallo="{{ _('%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos.', n='%(n)s') }}">
         <fieldset class="portal-tipo">
           <legend>{{ _('¿Qué son?') }}</legend>
           <label><input type="radio" name="tipo" value="recibida" checked> {{ _('Gastos (las que me hacen a mí)') }}</label>
@@ -30,9 +34,11 @@
           <input type="file" id="subida-archivos" name="archivos" multiple required accept="image/*,application/pdf">
           <small class="muted">{{ _('Hasta %(n)s archivos a la vez. En el móvil puedes hacer la foto en el momento.', n=max_archivos) }}</small>
         </div>
+        <p id="cola-offline" class="portal-peticion" role="status" hidden></p>
         <button type="submit" class="btn btn-primary auth-submit">{{ _('Enviar') }}</button>
       </form>
     </div>
   </main>
+  <script src="{{ url_for('static', filename='portal_cola_offline.js') }}" defer></script>
 </body>
 </html>

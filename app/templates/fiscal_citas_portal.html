@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Citas pedidas desde el portal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Citas pedidas desde el portal') }}</h1>
+  <p class="subtitle">{{ _('Lo que piden tus clientes y las citas ya confirmadas. Al confirmar o rechazar, el cliente recibe el aviso.') }}</p></div></header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+{% if not citas %}<p class="empty-lane ds-mt-16">{{ _('No hay citas pendientes ni próximas.') }}</p>
+{% else %}
+<ul class="log-list ds-mt-16">
+  {% for c in citas %}
+  <li class="log-item">
+    <span class="log-text"><strong>{{ c.cliente }}</strong> · {{ {'llamada': _('Llamada'), 'videollamada': _('Videollamada'), 'visita': _('Visita')}[c.canal] }} · {{ c.motivo }}
+      <br><span class="muted">{% if c.estado == 'solicitada' %}{{ _('Pedida') }} {{ c.creado_en|fecha_y_hora }}{% if c.preferencias %} · {{ _('Le viene bien') }}: {{ c.preferencias }}{% endif %}{% else %}{{ _('Confirmada') }}: {{ c.fecha_hora|replace('T', ' ') }}{% if c.nota %} · {{ c.nota }}{% endif %}{% endif %}</span></span>
+    {% if c.estado == 'solicitada' %}
+    <form method="post" action="{{ url_for('fiscal.resolver_cita_portal', cita_id=c.id, accion='confirmar') }}" class="portal-persona-form">
+      <label class="sr-only" for="cita-fecha-{{ c.id }}">{{ _('Día y hora') }}</label><input type="datetime-local" id="cita-fecha-{{ c.id }}" name="fecha_hora" min="{{ ahora }}" required>
+      <label class="sr-only" for="cita-nota-{{ c.id }}">{{ _('Nota para el cliente') }}</label><input type="text" id="cita-nota-{{ c.id }}" name="nota" maxlength="300" placeholder="{{ _('Dónde, con quién o enlace') }}">
+      <button type="submit" class="btn btn-primary">{{ _('Confirmar') }}</button></form>
+    {% endif %}
+    <form method="post" action="{{ url_for('fiscal.resolver_cita_portal', cita_id=c.id, accion='rechazar') }}" class="portal-persona-form">
+      <label class="sr-only" for="cita-motivo-{{ c.id }}">{{ _('Motivo') }}</label><input type="text" id="cita-motivo-{{ c.id }}" name="nota" maxlength="300" placeholder="{{ _('Motivo') }}" required>
+      <button type="submit" class="btn btn-ghost">{{ _('Rechazar') }}</button></form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

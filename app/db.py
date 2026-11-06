@@ -2336,6 +2336,8 @@ def init_db() -> None:
         portal_personas.crear_esquema(conn)     # contactos con acceso al portal, avisos enviados, push de clientes y respuestas rápidas (app/portal_personas.py)
         from . import portal_seguridad
         portal_seguridad.crear_esquema(conn)    # sesiones del portal y segundo factor opcional de cada persona (app/portal_seguridad.py)
+        from . import portal_citas
+        portal_citas.crear_esquema(conn)         # citas que los clientes piden a la gestoría desde el portal (app/portal_citas.py)
         from . import portal_valoraciones
         portal_valoraciones.crear_esquema(conn)  # valoración de los clientes al cerrar un trámite (app/portal_valoraciones.py)
         from . import portal_peticiones

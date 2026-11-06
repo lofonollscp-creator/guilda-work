@@ -21893,3 +21893,225 @@ msgstr "%(cliente)s gave a task a low rating"
 
 msgid "Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5."
 msgstr "Worth talking to the client: they scored %(n)s or less out of 5."
+
+msgid "Mis firmas"
+msgstr "My signatures"
+
+msgid "Pendiente de firmar"
+msgstr "Waiting to be signed"
+
+msgid "Tu gestoría te lo envió para que lo firmes."
+msgstr "Your advisory firm sent it for you to sign."
+
+msgid "No tienes ningún documento pendiente de firma."
+msgstr "You have no documents waiting to be signed."
+
+msgid "Ya firmados"
+msgstr "Already signed"
+
+msgid "Mis honorarios"
+msgstr "My fees"
+
+msgid "Tu gestoría no tiene activados los honorarios en tu portal."
+msgstr "Your advisory firm hasn't turned on fees in your portal."
+
+msgid "Pendiente de pago"
+msgstr "Awaiting payment"
+
+msgid "No tienes nada pendiente de pago."
+msgstr "You have nothing awaiting payment."
+
+msgid "Pagados"
+msgstr "Paid"
+
+msgid "Pagado el"
+msgstr "Paid on"
+
+msgid "Recibo"
+msgstr "Receipt"
+
+msgid "Mis honorarios y recibos"
+msgstr "My fees and receipts"
+
+msgid "Lo que me pide mi gestoría"
+msgstr "What my advisory firm asks of me"
+
+msgid "Recibo de pago %(n)s"
+msgstr "Payment receipt %(n)s"
+
+msgid "Recibo de pago"
+msgstr "Payment receipt"
+
+msgid "Número %(n)s"
+msgstr "Number %(n)s"
+
+msgid "Justificante informativo del pago de tus honorarios. La factura de los honorarios es la que emite tu gestoría."
+msgstr "Informative proof of payment of your fees. The fee invoice is the one your advisory firm issues."
+
+msgid "Importe pagado"
+msgstr "Amount paid"
+
+msgid "Fecha del pago"
+msgstr "Payment date"
+
+msgid "Forma de pago"
+msgstr "Payment method"
+
+msgid "Tarjeta (pago seguro de Stripe)"
+msgstr "Card (secure Stripe payment)"
+
+msgid "Factura de los honorarios"
+msgstr "Fee invoice"
+
+msgid "Mis citas"
+msgstr "My appointments"
+
+msgid "Hemos avisado a tu gestoría. Te escribirá para confirmar la cita."
+msgstr "We've told your advisory firm. They'll write to confirm the appointment."
+
+msgid "Pedir una cita"
+msgstr "Request an appointment"
+
+msgid "¿Cómo la prefieres?"
+msgstr "How would you prefer it?"
+
+msgid "Una llamada"
+msgstr "A phone call"
+
+msgid "Una videollamada"
+msgstr "A video call"
+
+msgid "Una visita a la oficina"
+msgstr "A visit to the office"
+
+msgid "¿Para qué es?"
+msgstr "What is it for?"
+
+msgid "Dudas sobre mi declaración de la renta"
+msgstr "Questions about my income tax return"
+
+msgid "¿Cuándo te viene bien? (opcional)"
+msgstr "When suits you? (optional)"
+
+msgid "Martes o jueves por la mañana"
+msgstr "Tuesday or Thursday morning"
+
+msgid "Pedir la cita"
+msgstr "Request the appointment"
+
+msgid "Tu gestoría te confirmará un día y una hora. Si la añades a tu agenda desde Mi cuenta, la verás ahí."
+msgstr "Your advisory firm will confirm a day and time. If you add the calendar to your agenda from My account, you'll see it there."
+
+msgid "Tus citas"
+msgstr "Your appointments"
+
+msgid "Pedida: esperando a que tu gestoría la confirme."
+msgstr "Requested: waiting for your advisory firm to confirm."
+
+msgid "Confirmada"
+msgstr "Confirmed"
+
+msgid "Tu gestoría no puede atenderla."
+msgstr "Your advisory firm can't take it."
+
+msgid "Todavía no has pedido ninguna cita."
+msgstr "You haven't requested any appointment yet."
+
+msgid "Citas pedidas desde el portal"
+msgstr "Appointments requested from the portal"
+
+msgid "Lo que piden tus clientes y las citas ya confirmadas. Al confirmar o rechazar, el cliente recibe el aviso."
+msgstr "What your clients ask for and the appointments already confirmed. When you confirm or decline, the client is notified."
+
+msgid "No hay citas pendientes ni próximas."
+msgstr "No pending or upcoming appointments."
+
+msgid "Pedida"
+msgstr "Requested"
+
+msgid "Le viene bien"
+msgstr "Suits them"
+
+msgid "Día y hora"
+msgstr "Day and time"
+
+msgid "Nota para el cliente"
+msgstr "Note for the client"
+
+msgid "Dónde, con quién o enlace"
+msgstr "Where, with whom or link"
+
+msgid "llamada"
+msgstr "phone call"
+
+msgid "videollamada"
+msgstr "video call"
+
+msgid "visita"
+msgstr "visit"
+
+msgid "Tu cita está confirmada"
+msgstr "Your appointment is confirmed"
+
+msgid "Tu gestoría no puede atender la cita que pediste"
+msgstr "Your advisory firm can't take the appointment you requested"
+
+msgid "Tu gestoría ha confirmado tu %(canal)s para el %(cuando)s."
+msgstr "Your advisory firm has confirmed your %(canal)s for %(cuando)s."
+
+msgid "Ya la tienes en tu calendario de plazos si lo has añadido a tu agenda."
+msgstr "It's already in your deadlines calendar if you've added it to your agenda."
+
+msgid "Tu gestoría no puede atender la %(canal)s que pediste. Puedes pedir otra desde tu portal."
+msgstr "Your advisory firm can't take the %(canal)s you requested. You can request another from your portal."
+
+msgid "Si necesitas cambiarla, hazlo desde tu portal."
+msgstr "If you need to change it, do it from your portal."
+
+msgid "Ver mis citas"
+msgstr "View my appointments"
+
+msgid "Tu gestoría ha respondido a tu cita"
+msgstr "Your advisory firm has replied to your appointment"
+
+msgid "No puede atenderla"
+msgstr "Can't take it"
+
+msgid "%(cliente)s pide una cita"
+msgstr "%(cliente)s requests an appointment"
+
+msgid "Citas pedidas"
+msgstr "Requested appointments"
+
+msgid "Elige cómo quieres la cita."
+msgstr "Choose how you want the appointment."
+
+msgid "Cuéntanos para qué es la cita (mínimo 5 caracteres)."
+msgstr "Tell us what the appointment is for (at least 5 characters)."
+
+msgid "Ya tienes varias citas pidiéndose: espera a que tu gestoría las confirme."
+msgstr "You already have several appointments requested: wait for your advisory firm to confirm them."
+
+msgid "Indica el día y la hora de la cita."
+msgstr "Enter the day and time of the appointment."
+
+msgid "La cita no puede ser en el pasado."
+msgstr "The appointment can't be in the past."
+
+msgid "Explica el motivo (mínimo 5 caracteres): lo verá el cliente."
+msgstr "Explain the reason (at least 5 characters): the client will see it."
+
+msgid "Esa cita ya no admite este cambio."
+msgstr "That appointment no longer accepts this change."
+
+msgid "Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo."
+msgstr "No connection: your invoices have been saved on this device and will be sent automatically when the connection returns. Don't close the tab if you can avoid it."
+
+msgid "Enviando lo que estaba guardado…"
+msgstr "Sending what was saved…"
+
+msgid "Ya se ha enviado lo que estaba guardado (%(n)s envío/s). Recarga la página para verlo."
+msgstr "What was saved has been sent (%(n)s submission/s). Reload the page to see it."
+
+msgid "%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos."
+msgstr "%(n)s submission/s couldn't be made: upload those files again."

@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_calendario, portal_extracto, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -739,6 +739,33 @@ def pagar_vencimiento(vencimiento_id: int):
     return redirect(url, code=303)
 
 
+@portal_bp.route("/firmas")
+@cliente_login_required
+def firmas():
+    """Los documentos que tiene por firmar y los que ya firmó."""
+    cliente = _cliente_actual_o_salir()
+    return render_template("portal_firmas.html", cliente=cliente, f=portal_firmas_honorarios.firmas(cliente), portal_seccion="impuestos", puede_decidir=g.portal_rol == "completo" and not g.get("vista_previa"))
+
+
+@portal_bp.route("/honorarios")
+@cliente_login_required
+def honorarios_cliente():
+    """Los honorarios de su gestoría: lo pendiente de pagar y lo pagado, con el recibo de cada pago."""
+    cliente = _cliente_actual_o_salir()
+    return render_template("portal_honorarios.html", cliente=cliente, h=portal_firmas_honorarios.honorarios(cliente) if cliente["portal_honorarios"] else None, portal_seccion="impuestos",
+                           puede_decidir=g.portal_rol == "completo" and not g.get("vista_previa"))
+
+
+@portal_bp.route("/honorarios/<int:vencimiento_id>/recibo.pdf")
+@cliente_login_required
+def recibo_honorarios(vencimiento_id: int):
+    cliente = _cliente_actual_o_salir()
+    pdf = portal_firmas_honorarios.recibo_pdf(cliente, vencimiento_id) if cliente["portal_honorarios"] else None
+    if pdf is None:
+        abort(404)
+    return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="recibo-{vencimiento_id}.pdf"', "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
+
+
 # --- La carpeta del año -----------------------------------------------------------------------------------------------------------------------------------------
 
 @portal_bp.route("/carpeta")
@@ -926,6 +953,34 @@ def valorar():
         facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s ha valorado con nota baja un trámite", cliente=cliente["nombre"]), _("Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5.", n=portal_valoraciones.NOTA_BAJA),
                                            url_for("fiscal.portal_actividad"), {"valoracion": tipo})
     return redirect(destino + "?valorado=1")
+
+
+@portal_bp.route("/citas", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("20/hour", methods=["POST"])
+def citas():
+    """Pedir una llamada, una videollamada o una visita a la gestoría, y ver las citas pedidas y confirmadas."""
+    cliente = _cliente_actual_o_salir()
+    error = None
+    if request.method == "POST":
+        try:
+            cid = portal_citas.solicitar(cliente, g.portal_email or cliente["email"], request.form.get("canal", ""), request.form.get("motivo", ""), request.form.get("preferencias", ""))
+            auditoria.registrar(cliente["tenant_id"], None, "portal.cita_pedida", "portal_cita", cid, {"quien": g.portal_email or "titular", "canal": request.form.get("canal", "")})
+            facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s pide una cita", cliente=cliente["nombre"]), request.form.get("motivo", "")[:100], url_for("fiscal.citas_portal"), {"cita": cid})
+            return redirect(url_for("portal_cliente.citas", pedida=1))
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("portal_citas.html", cliente=cliente, lista=portal_citas.listar(cliente), canales=portal_citas.CANALES, error=error, pedida=request.args.get("pedida"), portal_seccion="inicio",
+                           puede_pedir=g.portal_rol != "consulta" and not g.get("vista_previa"), hoy=datetime.now().isoformat(timespec="minutes"))
+
+
+@portal_bp.route("/citas/<int:cita_id>/cancelar", methods=["POST"])
+@cliente_login_required
+def cancelar_cita(cita_id: int):
+    cliente = _cliente_actual_o_salir()
+    if portal_citas.cancelar(cliente, g.portal_email or cliente["email"], cita_id):
+        auditoria.registrar(cliente["tenant_id"], None, "portal.cita_cancelada", "portal_cita", cita_id, {"quien": g.portal_email or "titular"})
+    return redirect(url_for("portal_cliente.citas"))
 
 
 @portal_bp.route("/peticiones")

@@ -1,0 +1,24 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mis firmas') }}{% endblock %}
+{% block titulo %}{{ _('Mis firmas') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }}{% endblock %}
+{% block contenido %}
+    <section class="portal-cuenta-bloque" aria-labelledby="firmas-pendientes">
+      <h2 id="firmas-pendientes">{{ _('Pendiente de firmar') }}</h2>
+      {% if f.pendientes %}
+      <ul class="portal-personas">
+        {% for d in f.pendientes %}<li class="portal-persona"><div class="portal-persona-datos"><strong>{{ _('Modelo') }} {{ d.modelo }} · {{ d.periodo }}</strong><span class="muted">{{ _('Tu gestoría te lo envió para que lo firmes.') }}</span></div>
+          {% if puede_decidir %}<a class="btn btn-primary" href="{{ url_for('portal_cliente.firma_vencimiento', vencimiento_id=d.id) }}">{{ _('Firmar') }}</a>{% endif %}</li>{% endfor %}
+      </ul>
+      {% else %}<p class="muted">{{ _('No tienes ningún documento pendiente de firma.') }}</p>{% endif %}
+    </section>
+    {% if f.firmadas %}
+    <section class="portal-cuenta-bloque" aria-labelledby="firmas-hechas">
+      <h2 id="firmas-hechas">{{ _('Ya firmados') }}</h2>
+      <ul class="portal-personas">
+        {% for d in f.firmadas %}<li class="portal-persona"><div class="portal-persona-datos"><strong>{{ _('Modelo') }} {{ d.modelo }} · {{ d.periodo }}</strong><span class="muted">{{ _('Firmado el') }} {{ d.firmado_en[:10] }}</span></div></li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+    <p><a href="{{ url_for('portal_cliente.impuestos') }}">{{ _('Volver a mis impuestos') }}</a></p>
+{% endblock %}

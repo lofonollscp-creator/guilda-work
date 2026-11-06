@@ -140,6 +140,19 @@ def enviar_informe_mensual(email_destino: str, despacho: str, etiqueta_mes: str,
     _enviar(email_destino, _asunto(_("Resumen de %(mes)s", mes=etiqueta_mes), tenant_id), plano, html)
 
 
+def enviar_cita_resuelta(email_destino: str, confirmada: bool, canal: str, cuando: str, nota: str, url_portal: str, tenant_id: int | None = None) -> None:
+    """Aviso al cliente de lo que ha decidido su gestoría sobre la cita que pidió."""
+    nombres = {"llamada": _("llamada"), "videollamada": _("videollamada"), "visita": _("visita")}
+    if confirmada:
+        titulo = _("Tu cita está confirmada")
+        lineas = [_("Tu gestoría ha confirmado tu %(canal)s para el %(cuando)s.", canal=nombres.get(canal, canal), cuando=cuando), _("Ya la tienes en tu calendario de plazos si lo has añadido a tu agenda.")]
+    else:
+        titulo = _("Tu gestoría no puede atender la cita que pediste")
+        lineas = [_("Tu gestoría no puede atender la %(canal)s que pediste. Puedes pedir otra desde tu portal.", canal=nombres.get(canal, canal))]
+    plano, html = _construir(tenant_id, titulo, lineas, cita=nota or None, boton=(_("Ver mis citas"), url_portal), aviso=_("Si necesitas cambiarla, hazlo desde tu portal."), preencabezado=titulo)
+    _enviar(email_destino, _asunto(titulo, tenant_id), plano, html)
+
+
 def enviar_aviso_acceso_soporte(email_destino: str, usuario_email: str, motivo: str, hasta: str, tenant_id: int | None = None) -> None:
     """Aviso a la dirección del despacho: el equipo de soporte de Guilda Work ha entrado, solo para mirar, como una de sus personas. Siempre dice por qué."""
     plano, html = _construir(tenant_id,

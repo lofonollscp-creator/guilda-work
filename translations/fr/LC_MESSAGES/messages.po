@@ -21978,3 +21978,225 @@ msgstr "%(cliente)s a donné une note basse à une démarche"
 
 msgid "Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5."
 msgstr "Il vaut mieux parler au client : il a mis %(n)s ou moins sur 5."
+
+msgid "Mis firmas"
+msgstr "Mes signatures"
+
+msgid "Pendiente de firmar"
+msgstr "À signer"
+
+msgid "Tu gestoría te lo envió para que lo firmes."
+msgstr "Votre cabinet vous l'a envoyé pour que vous le signiez."
+
+msgid "No tienes ningún documento pendiente de firma."
+msgstr "Vous n'avez aucun document à signer."
+
+msgid "Ya firmados"
+msgstr "Déjà signés"
+
+msgid "Mis honorarios"
+msgstr "Mes honoraires"
+
+msgid "Tu gestoría no tiene activados los honorarios en tu portal."
+msgstr "Votre cabinet n'a pas activé les honoraires dans votre portail."
+
+msgid "Pendiente de pago"
+msgstr "En attente de paiement"
+
+msgid "No tienes nada pendiente de pago."
+msgstr "Vous n'avez rien à payer."
+
+msgid "Pagados"
+msgstr "Payés"
+
+msgid "Pagado el"
+msgstr "Payé le"
+
+msgid "Recibo"
+msgstr "Reçu"
+
+msgid "Mis honorarios y recibos"
+msgstr "Mes honoraires et reçus"
+
+msgid "Lo que me pide mi gestoría"
+msgstr "Ce que mon cabinet me demande"
+
+msgid "Recibo de pago %(n)s"
+msgstr "Reçu de paiement %(n)s"
+
+msgid "Recibo de pago"
+msgstr "Reçu de paiement"
+
+msgid "Número %(n)s"
+msgstr "Numéro %(n)s"
+
+msgid "Justificante informativo del pago de tus honorarios. La factura de los honorarios es la que emite tu gestoría."
+msgstr "Justificatif informatif du paiement de vos honoraires. La facture des honoraires est celle qu'émet votre cabinet."
+
+msgid "Importe pagado"
+msgstr "Montant payé"
+
+msgid "Fecha del pago"
+msgstr "Date du paiement"
+
+msgid "Forma de pago"
+msgstr "Mode de paiement"
+
+msgid "Tarjeta (pago seguro de Stripe)"
+msgstr "Carte (paiement sécurisé Stripe)"
+
+msgid "Factura de los honorarios"
+msgstr "Facture des honoraires"
+
+msgid "Mis citas"
+msgstr "Mes rendez-vous"
+
+msgid "Hemos avisado a tu gestoría. Te escribirá para confirmar la cita."
+msgstr "Nous avons prévenu votre cabinet. Il vous écrira pour confirmer le rendez-vous."
+
+msgid "Pedir una cita"
+msgstr "Demander un rendez-vous"
+
+msgid "¿Cómo la prefieres?"
+msgstr "Comment la préférez-vous ?"
+
+msgid "Una llamada"
+msgstr "Un appel"
+
+msgid "Una videollamada"
+msgstr "Un appel vidéo"
+
+msgid "Una visita a la oficina"
+msgstr "Une visite au bureau"
+
+msgid "¿Para qué es?"
+msgstr "C'est pour quoi ?"
+
+msgid "Dudas sobre mi declaración de la renta"
+msgstr "Questions sur ma déclaration de revenus"
+
+msgid "¿Cuándo te viene bien? (opcional)"
+msgstr "Quand cela vous convient-il ? (facultatif)"
+
+msgid "Martes o jueves por la mañana"
+msgstr "Mardi ou jeudi matin"
+
+msgid "Pedir la cita"
+msgstr "Demander le rendez-vous"
+
+msgid "Tu gestoría te confirmará un día y una hora. Si la añades a tu agenda desde Mi cuenta, la verás ahí."
+msgstr "Votre cabinet vous confirmera un jour et une heure. Si vous ajoutez le calendrier à votre agenda depuis Mon compte, vous l'y verrez."
+
+msgid "Tus citas"
+msgstr "Vos rendez-vous"
+
+msgid "Pedida: esperando a que tu gestoría la confirme."
+msgstr "Demandé : en attente de confirmation par votre cabinet."
+
+msgid "Confirmada"
+msgstr "Confirmé"
+
+msgid "Tu gestoría no puede atenderla."
+msgstr "Votre cabinet ne peut pas la prendre."
+
+msgid "Todavía no has pedido ninguna cita."
+msgstr "Vous n'avez encore demandé aucun rendez-vous."
+
+msgid "Citas pedidas desde el portal"
+msgstr "Rendez-vous demandés depuis le portail"
+
+msgid "Lo que piden tus clientes y las citas ya confirmadas. Al confirmar o rechazar, el cliente recibe el aviso."
+msgstr "Ce que demandent vos clients et les rendez-vous déjà confirmés. En confirmant ou refusant, le client est prévenu."
+
+msgid "No hay citas pendientes ni próximas."
+msgstr "Aucun rendez-vous en attente ni à venir."
+
+msgid "Pedida"
+msgstr "Demandé"
+
+msgid "Le viene bien"
+msgstr "Lui convient"
+
+msgid "Día y hora"
+msgstr "Jour et heure"
+
+msgid "Nota para el cliente"
+msgstr "Note pour le client"
+
+msgid "Dónde, con quién o enlace"
+msgstr "Où, avec qui ou lien"
+
+msgid "llamada"
+msgstr "appel"
+
+msgid "videollamada"
+msgstr "appel vidéo"
+
+msgid "visita"
+msgstr "visite"
+
+msgid "Tu cita está confirmada"
+msgstr "Votre rendez-vous est confirmé"
+
+msgid "Tu gestoría no puede atender la cita que pediste"
+msgstr "Votre cabinet ne peut pas prendre le rendez-vous demandé"
+
+msgid "Tu gestoría ha confirmado tu %(canal)s para el %(cuando)s."
+msgstr "Votre cabinet a confirmé votre %(canal)s pour le %(cuando)s."
+
+msgid "Ya la tienes en tu calendario de plazos si lo has añadido a tu agenda."
+msgstr "Elle est déjà dans votre calendrier d'échéances si vous l'avez ajouté à votre agenda."
+
+msgid "Tu gestoría no puede atender la %(canal)s que pediste. Puedes pedir otra desde tu portal."
+msgstr "Votre cabinet ne peut pas prendre le %(canal)s demandé. Vous pouvez en demander un autre depuis votre portail."
+
+msgid "Si necesitas cambiarla, hazlo desde tu portal."
+msgstr "Si vous devez la modifier, faites-le depuis votre portail."
+
+msgid "Ver mis citas"
+msgstr "Voir mes rendez-vous"
+
+msgid "Tu gestoría ha respondido a tu cita"
+msgstr "Votre cabinet a répondu à votre rendez-vous"
+
+msgid "No puede atenderla"
+msgstr "Ne peut pas la prendre"
+
+msgid "%(cliente)s pide una cita"
+msgstr "%(cliente)s demande un rendez-vous"
+
+msgid "Citas pedidas"
+msgstr "Rendez-vous demandés"
+
+msgid "Elige cómo quieres la cita."
+msgstr "Choisissez comment vous voulez le rendez-vous."
+
+msgid "Cuéntanos para qué es la cita (mínimo 5 caracteres)."
+msgstr "Dites-nous à quoi sert le rendez-vous (5 caractères minimum)."
+
+msgid "Ya tienes varias citas pidiéndose: espera a que tu gestoría las confirme."
+msgstr "Vous avez déjà plusieurs rendez-vous demandés : attendez que votre cabinet les confirme."
+
+msgid "Indica el día y la hora de la cita."
+msgstr "Indiquez le jour et l'heure du rendez-vous."
+
+msgid "La cita no puede ser en el pasado."
+msgstr "Le rendez-vous ne peut pas être dans le passé."
+
+msgid "Explica el motivo (mínimo 5 caracteres): lo verá el cliente."
+msgstr "Expliquez le motif (5 caractères minimum) : le client le verra."
+
+msgid "Esa cita ya no admite este cambio."
+msgstr "Ce rendez-vous n'accepte plus ce changement."
+
+msgid "Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo."
+msgstr "Pas de connexion : vos factures ont été enregistrées sur cet appareil et seront envoyées automatiquement au retour de la connexion. Ne fermez pas l'onglet si possible."
+
+msgid "Enviando lo que estaba guardado…"
+msgstr "Envoi de ce qui était enregistré…"
+
+msgid "Ya se ha enviado lo que estaba guardado (%(n)s envío/s). Recarga la página para verlo."
+msgstr "Ce qui était enregistré a été envoyé (%(n)s envoi/s). Rechargez la page pour le voir."
+
+msgid "%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos."
+msgstr "%(n)s envoi/s n'a pas pu être fait : renvoyez ces fichiers."

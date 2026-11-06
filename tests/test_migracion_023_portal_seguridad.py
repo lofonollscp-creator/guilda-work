@@ -6,7 +6,7 @@ from tests import pg_ayudas
 
 psycopg = pytest.importorskip("psycopg")
 pytestmark = [pytest.mark.solo_sqlite, pytest.mark.skipif(not pg_ayudas.URL, reason="sin GUILDA_TEST_PG_URL")]
-TABLAS = ("portal_sesiones", "portal_segundo_factor", "portal_peticiones", "portal_peticiones_documentos", "portal_valoraciones")
+TABLAS = ("portal_sesiones", "portal_segundo_factor", "portal_peticiones", "portal_peticiones_documentos", "portal_valoraciones", "portal_citas")
 
 
 @pytest.fixture(params=["multitenant", "citus"])

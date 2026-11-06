@@ -7,7 +7,7 @@
     <p class="subtitle">{{ _('Qué clientes entran, a cuáles se les avisa sin respuesta y cuánto tardan en contestar. Sirve para decidir a quién llamar.') }}</p>
   </div>
 </header>
-<a class="btn btn-ghost" href="{{ url_for('fiscal.recordatorios') }}">&larr; {{ _('Recordatorios a clientes') }}</a>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.recordatorios') }}">&larr; {{ _('Recordatorios a clientes') }}</a> <a class="btn btn-ghost" href="{{ url_for('fiscal.citas_portal') }}">{{ _('Citas pedidas') }}</a>
 <section class="proyecto-bloque ds-max-720 ds-mt-16" id="satisfaccion" aria-labelledby="satisfaccion-titulo">
   <h2 id="satisfaccion-titulo">{{ _('Satisfacción de los clientes (90 días)') }}</h2>
   {% if valoraciones.n %}

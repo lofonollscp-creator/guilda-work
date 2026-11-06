@@ -6,6 +6,7 @@
     {% if pago == 'ok' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: hemos recibido tu pago. En unos instantes aparecerá como pagado.') }}</strong></p>
     {% elif pago == 'cancelado' %}<p class="portal-peticion" role="status"><strong>{{ _('El pago se ha cancelado: no se ha cobrado nada.') }}</strong></p>{% endif %}
     {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+    <p class="muted"><a href="{{ url_for('portal_cliente.firmas') }}">{{ _('Mis firmas') }}</a>{% if cliente.portal_honorarios %} · <a href="{{ url_for('portal_cliente.honorarios_cliente') }}">{{ _('Mis honorarios y recibos') }}</a>{% endif %} · <a href="{{ url_for('portal_cliente.peticiones') }}">{{ _('Lo que me pide mi gestoría') }}</a> · <a href="{{ url_for('portal_cliente.citas') }}">{{ _('Pedir una cita') }}</a></p>
     {% if situacion %}
     {% macro eur(c) %}{{ '%.2f €'|format(c / 100) }}{% endmacro %}
     <section class="portal-situacion" aria-labelledby="portal-situacion-titulo">

@@ -81,7 +81,11 @@
     <section class="dash-panel">
       <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
       <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>
-      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}"{% if lectura_previa %} data-url-leer="{{ url_for('portal_cliente.leer_previa') }}"{% endif %}
+      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-cola-offline data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}"{% if lectura_previa %} data-url-leer="{{ url_for('portal_cliente.leer_previa') }}"{% endif %}
+            data-txt-guardado="{{ _('Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo.') }}"
+            data-txt-enviando="{{ _('Enviando lo que estaba guardado…') }}"
+            data-txt-enviado="{{ _('Ya se ha enviado lo que estaba guardado (%(n)s envío/s). Recarga la página para verlo.', n='%(n)s') }}"
+            data-txt-fallo="{{ _('%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos.', n='%(n)s') }}"
             data-txt-recortada="{{ _('«%(nombre)s» se ha recortado y aligerado (de %(antes)s MB a %(despues)s MB).', nombre='%(nombre)s', antes='%(antes)s', despues='%(despues)s') }}"
             data-txt-reducida="{{ _('«%(nombre)s» se ha aligerado (de %(antes)s MB a %(despues)s MB).', nombre='%(nombre)s', antes='%(antes)s', despues='%(despues)s') }}"
             data-txt-leyendo="{{ _('Leyendo «%(nombre)s»…', nombre='%(nombre)s') }}"
@@ -101,6 +105,7 @@
         </select>
         <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" aria-label="{{ _('Fotos o PDF de las facturas') }}">
         <label class="portal-recordar" hidden><input type="checkbox" id="usar-originales"> {{ _('Enviar las fotos tal como las hice, sin recortar ni aligerar') }}</label>
+        <p id="cola-offline" class="portal-peticion" role="status" hidden></p>
         <ul id="avisos-subida" class="portal-avisos" aria-live="polite"></ul>
         <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Subir facturas') }}</button></div>
       </form>
@@ -160,4 +165,4 @@
       {% endif %}
     </section>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='portal_facturas_subida.js') }}"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='portal_facturas_subida.js') }}"></script><script src="{{ url_for('static', filename='portal_cola_offline.js') }}" defer></script>{% endblock %}

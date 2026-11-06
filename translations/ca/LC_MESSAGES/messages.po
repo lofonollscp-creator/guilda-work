@@ -21902,3 +21902,225 @@ msgstr "%(cliente)s ha valorat amb nota baixa un tràmit"
 
 msgid "Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5."
 msgstr "Convé parlar amb el client: ha puntuat %(n)s o menys sobre 5."
+
+msgid "Mis firmas"
+msgstr "Les meves signatures"
+
+msgid "Pendiente de firmar"
+msgstr "Pendent de signar"
+
+msgid "Tu gestoría te lo envió para que lo firmes."
+msgstr "La teva gestoria te'l va enviar perquè el signis."
+
+msgid "No tienes ningún documento pendiente de firma."
+msgstr "No tens cap document pendent de signatura."
+
+msgid "Ya firmados"
+msgstr "Ja signats"
+
+msgid "Mis honorarios"
+msgstr "Els meus honoraris"
+
+msgid "Tu gestoría no tiene activados los honorarios en tu portal."
+msgstr "La teva gestoria no té activats els honoraris al teu portal."
+
+msgid "Pendiente de pago"
+msgstr "Pendent de pagament"
+
+msgid "No tienes nada pendiente de pago."
+msgstr "No tens res pendent de pagament."
+
+msgid "Pagados"
+msgstr "Pagats"
+
+msgid "Pagado el"
+msgstr "Pagat el"
+
+msgid "Recibo"
+msgstr "Rebut"
+
+msgid "Mis honorarios y recibos"
+msgstr "Els meus honoraris i rebuts"
+
+msgid "Lo que me pide mi gestoría"
+msgstr "El que em demana la meva gestoria"
+
+msgid "Recibo de pago %(n)s"
+msgstr "Rebut de pagament %(n)s"
+
+msgid "Recibo de pago"
+msgstr "Rebut de pagament"
+
+msgid "Número %(n)s"
+msgstr "Número %(n)s"
+
+msgid "Justificante informativo del pago de tus honorarios. La factura de los honorarios es la que emite tu gestoría."
+msgstr "Justificant informatiu del pagament dels teus honoraris. La factura dels honoraris és la que emet la teva gestoria."
+
+msgid "Importe pagado"
+msgstr "Import pagat"
+
+msgid "Fecha del pago"
+msgstr "Data del pagament"
+
+msgid "Forma de pago"
+msgstr "Forma de pagament"
+
+msgid "Tarjeta (pago seguro de Stripe)"
+msgstr "Targeta (pagament segur de Stripe)"
+
+msgid "Factura de los honorarios"
+msgstr "Factura dels honoraris"
+
+msgid "Mis citas"
+msgstr "Les meves cites"
+
+msgid "Hemos avisado a tu gestoría. Te escribirá para confirmar la cita."
+msgstr "Hem avisat la teva gestoria. T'escriurà per confirmar la cita."
+
+msgid "Pedir una cita"
+msgstr "Demanar una cita"
+
+msgid "¿Cómo la prefieres?"
+msgstr "Com la prefereixes?"
+
+msgid "Una llamada"
+msgstr "Una trucada"
+
+msgid "Una videollamada"
+msgstr "Una videotrucada"
+
+msgid "Una visita a la oficina"
+msgstr "Una visita a l'oficina"
+
+msgid "¿Para qué es?"
+msgstr "Per a què és?"
+
+msgid "Dudas sobre mi declaración de la renta"
+msgstr "Dubtes sobre la meva declaració de la renda"
+
+msgid "¿Cuándo te viene bien? (opcional)"
+msgstr "Quan et va bé? (opcional)"
+
+msgid "Martes o jueves por la mañana"
+msgstr "Dimarts o dijous al matí"
+
+msgid "Pedir la cita"
+msgstr "Demanar la cita"
+
+msgid "Tu gestoría te confirmará un día y una hora. Si la añades a tu agenda desde Mi cuenta, la verás ahí."
+msgstr "La teva gestoria et confirmarà un dia i una hora. Si afegeixes el calendari a la teva agenda des de El meu compte, la veuràs allà."
+
+msgid "Tus citas"
+msgstr "Les teves cites"
+
+msgid "Pedida: esperando a que tu gestoría la confirme."
+msgstr "Demanada: esperant que la teva gestoria la confirmi."
+
+msgid "Confirmada"
+msgstr "Confirmada"
+
+msgid "Tu gestoría no puede atenderla."
+msgstr "La teva gestoria no la pot atendre."
+
+msgid "Todavía no has pedido ninguna cita."
+msgstr "Encara no has demanat cap cita."
+
+msgid "Citas pedidas desde el portal"
+msgstr "Cites demanades des del portal"
+
+msgid "Lo que piden tus clientes y las citas ya confirmadas. Al confirmar o rechazar, el cliente recibe el aviso."
+msgstr "El que demanen els teus clients i les cites ja confirmades. En confirmar o rebutjar, el client rep l'avís."
+
+msgid "No hay citas pendientes ni próximas."
+msgstr "No hi ha cites pendents ni properes."
+
+msgid "Pedida"
+msgstr "Demanada"
+
+msgid "Le viene bien"
+msgstr "Li va bé"
+
+msgid "Día y hora"
+msgstr "Dia i hora"
+
+msgid "Nota para el cliente"
+msgstr "Nota per al client"
+
+msgid "Dónde, con quién o enlace"
+msgstr "On, amb qui o enllaç"
+
+msgid "llamada"
+msgstr "trucada"
+
+msgid "videollamada"
+msgstr "videotrucada"
+
+msgid "visita"
+msgstr "visita"
+
+msgid "Tu cita está confirmada"
+msgstr "La teva cita està confirmada"
+
+msgid "Tu gestoría no puede atender la cita que pediste"
+msgstr "La teva gestoria no pot atendre la cita que vas demanar"
+
+msgid "Tu gestoría ha confirmado tu %(canal)s para el %(cuando)s."
+msgstr "La teva gestoria ha confirmat la teva %(canal)s per al %(cuando)s."
+
+msgid "Ya la tienes en tu calendario de plazos si lo has añadido a tu agenda."
+msgstr "Ja la tens al teu calendari de terminis si l'has afegit a la teva agenda."
+
+msgid "Tu gestoría no puede atender la %(canal)s que pediste. Puedes pedir otra desde tu portal."
+msgstr "La teva gestoria no pot atendre la %(canal)s que vas demanar. Pots demanar-ne una altra des del teu portal."
+
+msgid "Si necesitas cambiarla, hazlo desde tu portal."
+msgstr "Si necessites canviar-la, fes-ho des del teu portal."
+
+msgid "Ver mis citas"
+msgstr "Veure les meves cites"
+
+msgid "Tu gestoría ha respondido a tu cita"
+msgstr "La teva gestoria ha respost a la teva cita"
+
+msgid "No puede atenderla"
+msgstr "No la pot atendre"
+
+msgid "%(cliente)s pide una cita"
+msgstr "%(cliente)s demana una cita"
+
+msgid "Citas pedidas"
+msgstr "Cites demanades"
+
+msgid "Elige cómo quieres la cita."
+msgstr "Tria com vols la cita."
+
+msgid "Cuéntanos para qué es la cita (mínimo 5 caracteres)."
+msgstr "Explica'ns per a què és la cita (mínim 5 caràcters)."
+
+msgid "Ya tienes varias citas pidiéndose: espera a que tu gestoría las confirme."
+msgstr "Ja tens diverses cites demanades: espera que la teva gestoria les confirmi."
+
+msgid "Indica el día y la hora de la cita."
+msgstr "Indica el dia i l'hora de la cita."
+
+msgid "La cita no puede ser en el pasado."
+msgstr "La cita no pot ser en el passat."
+
+msgid "Explica el motivo (mínimo 5 caracteres): lo verá el cliente."
+msgstr "Explica el motiu (mínim 5 caràcters): ho veurà el client."
+
+msgid "Esa cita ya no admite este cambio."
+msgstr "Aquesta cita ja no admet aquest canvi."
+
+msgid "Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo."
+msgstr "Sense connexió: les teves factures s'han desat en aquest dispositiu i s'enviaran soles quan torni la connexió. No tanquis la pestanya si pots evitar-ho."
+
+msgid "Enviando lo que estaba guardado…"
+msgstr "Enviant el que estava desat…"
+
+msgid "Ya se ha enviado lo que estaba guardado (%(n)s envío/s). Recarga la página para verlo."
+msgstr "Ja s'ha enviat el que estava desat (%(n)s enviament/s). Recarrega la pàgina per veure-ho."
+
+msgid "%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos."
+msgstr "%(n)s enviament/s no s'ha pogut fer: torna a pujar aquests fitxers."

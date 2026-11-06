@@ -1,0 +1,30 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mis honorarios') }}{% endblock %}
+{% block titulo %}{{ _('Mis honorarios') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }}{% endblock %}
+{% block contenido %}
+    {% macro eur(c) %}{{ '%.2f €'|format(c / 100) }}{% endmacro %}
+    {% if h is none %}
+    <p class="muted">{{ _('Tu gestoría no tiene activados los honorarios en tu portal.') }}</p>
+    {% else %}
+    <section class="portal-cuenta-bloque" aria-labelledby="hon-pendientes">
+      <h2 id="hon-pendientes">{{ _('Pendiente de pago') }}{% if h.debe %} · {{ eur(h.debe) }}{% endif %}</h2>
+      {% if h.pendientes %}
+      <ul class="portal-personas">
+        {% for x in h.pendientes %}<li class="portal-persona"><div class="portal-persona-datos"><strong>{{ x.concepto or (x.modelo ~ ' ' ~ x.periodo) }}</strong><span class="muted">{{ x.modelo }} {{ x.periodo }} · {{ eur(x.importe) }}{% if x.referencia %} · {{ x.referencia }}{% endif %}</span></div>
+          {% if x.puede_pagar and puede_decidir %}<form method="post" action="{{ url_for('portal_cliente.pagar_vencimiento', vencimiento_id=x.vencimiento_id) }}"><button type="submit" class="btn btn-primary">{{ _('Pagar con tarjeta') }}</button></form>{% endif %}</li>{% endfor %}
+      </ul>
+      {% else %}<p class="muted">{{ _('No tienes nada pendiente de pago.') }}</p>{% endif %}
+    </section>
+    {% if h.pagados %}
+    <section class="portal-cuenta-bloque" aria-labelledby="hon-pagados">
+      <h2 id="hon-pagados">{{ _('Pagados') }}</h2>
+      <ul class="portal-personas">
+        {% for x in h.pagados %}<li class="portal-persona"><div class="portal-persona-datos"><strong>{{ x.concepto or (x.modelo ~ ' ' ~ x.periodo) }}</strong><span class="muted">{{ x.modelo }} {{ x.periodo }} · {{ eur(x.importe) }}{% if x.pagado_en %} · {{ _('Pagado el') }} {{ x.pagado_en[:10] }}{% endif %}</span></div>
+          {% if x.pago_id %}<a class="btn btn-ghost" href="{{ url_for('portal_cliente.recibo_honorarios', vencimiento_id=x.vencimiento_id) }}">{{ _('Recibo') }}</a>{% endif %}</li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+    {% endif %}
+    <p><a href="{{ url_for('portal_cliente.impuestos') }}">{{ _('Volver a mis impuestos') }}</a></p>
+{% endblock %}

@@ -1485,6 +1485,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_citas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_contactos": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

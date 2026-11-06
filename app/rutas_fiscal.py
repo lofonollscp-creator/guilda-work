@@ -23,7 +23,7 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -351,6 +351,42 @@ def portal_actividad():
         abort(404)
     from . import portal_valoraciones
     return render_template("fiscal_portal_actividad.html", filas=portal_metricas.filas(g.tenant_id, g.usuario_id), dias_sin_entrar=portal_metricas.DIAS_SIN_ENTRAR, valoraciones=portal_valoraciones.resumen(g.tenant_id))
+
+
+@fiscal_bp.route("/citas-portal")
+@login_required
+def citas_portal():
+    """Las citas que piden los clientes desde el portal y las ya confirmadas que aún no han pasado."""
+    if g.tenant_id is None:
+        abort(404)
+    return render_template("fiscal_citas_portal.html", citas=portal_citas.del_despacho(g.tenant_id), error=(request.args.get("error") or "")[:200] or None, ahora=datetime.now().isoformat(timespec="minutes"))
+
+
+@fiscal_bp.route("/citas-portal/<int:cita_id>/<accion>", methods=["POST"])
+@login_required
+def resolver_cita_portal(cita_id: int, accion: str):
+    """Confirma la cita con día y hora o la rechaza con una nota; el cliente recibe el aviso."""
+    if g.tenant_id is None or accion not in ("confirmar", "rechazar"):
+        abort(404)
+    previa = portal_citas.obtener(g.tenant_id, cita_id)
+    if previa is None:
+        abort(404)
+    try:
+        cita = (portal_citas.confirmar(g.tenant_id, cita_id, request.form.get("fecha_hora", ""), request.form.get("nota", ""), g.usuario_id) if accion == "confirmar"
+                else portal_citas.rechazar(g.tenant_id, cita_id, request.form.get("nota", ""), g.usuario_id))
+    except ValueError as e:
+        return redirect(url_for("fiscal.citas_portal", error=_(str(e))[:200]))
+    auditoria.registrar(g.tenant_id, g.usuario_id, f"portal.cita_{accion}", "portal_cita", cita_id, {"cliente": previa["cliente_fiscal_id"]})
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, previa["cliente_fiscal_id"])
+    enlace = portal_recordatorios.url_portal("/portal/citas", previa["cliente_fiscal_id"])
+    if cliente is not None and enlace:
+        cuando = cita["fecha_hora"].replace("T", " a las ") if accion == "confirmar" else ""
+        try:
+            portal_avisos.correo_directo(cliente, lambda e: notificaciones_email.enviar_cita_resuelta(e, accion == "confirmar", cita["canal"], cuando, cita["nota"], enlace, tenant_id=g.tenant_id), urgente=True, accion="decidir",
+                                         push=(_("Tu gestoría ha respondido a tu cita"), cuando or _("No puede atenderla"), "/portal/citas"))
+        except ErrorNotificacionesEmail:
+            pass
+    return redirect(url_for("fiscal.citas_portal"))
 
 
 def _cliente_para_contactos(cliente_id: int):

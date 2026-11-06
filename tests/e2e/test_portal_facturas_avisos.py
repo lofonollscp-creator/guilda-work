@@ -85,3 +85,31 @@ def test_la_foto_se_recorta_y_se_aligera_antes_de_subirla(servidor, abrir, entra
     nueva.wait_for_function("document.querySelector('#form-subida input[type=file]').files[0].type === 'image/png'")
     assert not errores
     ctx.close()
+
+
+def test_sin_conexion_la_subida_se_guarda_y_se_envia_sola_al_volver(servidor, abrir, entrar_como_equipo, chromium):
+    t = db.crear_tenant("Despacho portal offline")
+    pagina, _ = abrir()
+    entrar_como_equipo(pagina, "portal-offline@ejemplo.com", despacho=t, direccion=True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = db.crear_cliente_fiscal(t, "Cliente Offline", email="offline@ejemplo.com")
+    ctx = chromium.new_context(viewport={"width": 390, "height": 800})
+    errores = []
+    nueva = ctx.new_page()
+    nueva.on("pageerror", lambda e: errores.append(str(e)))
+    nueva.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(c, '127.0.0.1')}")
+    nueva.goto(f"{servidor.url}/portal/facturas")
+    nueva.wait_for_load_state("networkidle")
+    ctx.set_offline(True)
+    nueva.set_input_files("#form-subida input[type=file]", [{"name": "sin-red.pdf", "mimeType": "application/pdf", "buffer": PDF + b"offline"}])
+    nueva.click("#form-subida button[type=submit]")
+    nueva.wait_for_function("document.getElementById('cola-offline').innerText.includes('Sin conexión')")
+    assert nueva.evaluate("async () => (await window.__colaOffline.todos()).length") == 1
+    assert db.get_connection().execute("SELECT COUNT(*) FROM facturas_contables WHERE cliente_fiscal_id = ?", (c,)).fetchone()[0] == 0
+    ctx.set_offline(False)
+    nueva.wait_for_function("document.getElementById('cola-offline').innerText.includes('Ya se ha enviado')", timeout=20000)
+    assert nueva.evaluate("async () => (await window.__colaOffline.todos()).length") == 0
+    fila = db.get_connection().execute("SELECT origen, estado FROM facturas_contables WHERE cliente_fiscal_id = ?", (c,)).fetchone()
+    assert fila["origen"] == "portal" and fila["estado"] == "pendiente"
+    assert not errores
+    ctx.close()

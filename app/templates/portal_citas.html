@@ -1,0 +1,37 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mis citas') }}{% endblock %}
+{% block titulo %}{{ _('Mis citas') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }}{% endblock %}
+{% block contenido %}
+    {% if pedida %}<p class="portal-peticion" role="status"><strong>{{ _('Hemos avisado a tu gestoría. Te escribirá para confirmar la cita.') }}</strong></p>{% endif %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    {% if puede_pedir %}
+    <section class="portal-cuenta-bloque" aria-labelledby="cita-pedir">
+      <h2 id="cita-pedir">{{ _('Pedir una cita') }}</h2>
+      <form method="post" class="portal-cuenta-form">
+        <div class="correo-form-campo"><label for="cita-canal">{{ _('¿Cómo la prefieres?') }}</label>
+          <select id="cita-canal" name="canal">{% for c in canales %}<option value="{{ c }}">{{ {'llamada': _('Una llamada'), 'videollamada': _('Una videollamada'), 'visita': _('Una visita a la oficina')}[c] }}</option>{% endfor %}</select></div>
+        <div class="correo-form-campo"><label for="cita-motivo">{{ _('¿Para qué es?') }}</label><input type="text" id="cita-motivo" name="motivo" maxlength="200" required placeholder="{{ _('Dudas sobre mi declaración de la renta') }}"></div>
+        <div class="correo-form-campo"><label for="cita-pref">{{ _('¿Cuándo te viene bien? (opcional)') }}</label><input type="text" id="cita-pref" name="preferencias" maxlength="200" placeholder="{{ _('Martes o jueves por la mañana') }}"></div>
+        <button type="submit" class="btn btn-primary">{{ _('Pedir la cita') }}</button>
+      </form>
+      <p class="muted">{{ _('Tu gestoría te confirmará un día y una hora. Si la añades a tu agenda desde Mi cuenta, la verás ahí.') }}</p>
+    </section>
+    {% endif %}
+    <section class="portal-cuenta-bloque" aria-labelledby="cita-lista">
+      <h2 id="cita-lista">{{ _('Tus citas') }}</h2>
+      {% if lista %}
+      <ul class="portal-personas">
+        {% for c in lista %}
+        <li class="portal-persona">
+          <div class="portal-persona-datos"><strong>{{ {'llamada': _('Llamada'), 'videollamada': _('Videollamada'), 'visita': _('Visita')}[c.canal] }} · {{ c.motivo }}</strong>
+            <span class="muted">{% if c.estado == 'solicitada' %}{{ _('Pedida: esperando a que tu gestoría la confirme.') }}{% if c.preferencias %} ({{ c.preferencias }}){% endif %}
+              {% elif c.estado == 'confirmada' %}{{ _('Confirmada') }}: {{ c.fecha_hora|replace('T', ' ') }}{% elif c.estado == 'rechazada' %}{{ _('Tu gestoría no puede atenderla.') }}{% else %}{{ _('Cancelada') }}{% endif %}</span>
+            {% if c.nota %}<span class="muted">{{ _('Tu gestoría dice') }}: {{ c.nota }}</span>{% endif %}</div>
+          {% if puede_pedir and (c.estado == 'solicitada' or (c.estado == 'confirmada' and c.fecha_hora >= hoy)) %}<form method="post" action="{{ url_for('portal_cliente.cancelar_cita', cita_id=c.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Cancelar') }}</button></form>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="muted">{{ _('Todavía no has pedido ninguna cita.') }}</p>{% endif %}
+    </section>
+{% endblock %}

@@ -138,6 +138,7 @@ CREATE INDEX IF NOT EXISTS idx_plantilla_items_plantilla ON plantilla_tareas_ite
 CREATE INDEX IF NOT EXISTS idx_plantillas_categoria ON plantillas(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_plazos_expediente ON plazos(expediente_id, estado, papelera_en, fecha_limite);
 CREATE INDEX IF NOT EXISTS idx_plazos_tenant ON plazos(tenant_id, papelera_en, estado, fecha_limite);
+CREATE INDEX IF NOT EXISTS idx_portal_citas_cliente ON portal_citas(tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_contactos_buscar ON portal_contactos(email);
 CREATE INDEX IF NOT EXISTS idx_portal_enlaces_token ON portal_enlaces_subida(token);
 CREATE INDEX IF NOT EXISTS idx_portal_peticiones_cliente ON portal_peticiones(tenant_id, cliente_fiscal_id, estado);

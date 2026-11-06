@@ -187,6 +187,7 @@ SELECT create_distributed_table('plantillas_cliente', 'tenant_id', colocate_with
 SELECT create_distributed_table('plantillas_tareas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('plazos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_avisos_enviados', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('portal_citas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_contactos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_enlaces_subida', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_peticiones', 'tenant_id', colocate_with => 'abogados_ajustes');
