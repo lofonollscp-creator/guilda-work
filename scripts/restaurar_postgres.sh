@@ -29,6 +29,10 @@ while [ $# -gt 0 ]; do
   esac; shift
 done
 WAL="${WAL:-$DESTINO/wal}"
+# Durante la recuperación PostgreSQL EXIGE que estos parámetros sean iguales o mayores que los de producción (docker-compose.postgres-app.yml), o aborta («recovery aborted because of insufficient
+# parameter settings»: lo descubrió el ensayo mensual con max_connections=100 frente a 200). Si cambias uno en producción, cámbialo aquí o con la variable.
+PARAMETROS_PRIMARIO=(-c "max_connections=${PG_MAX_CONNECTIONS:-200}" -c "max_prepared_transactions=${PG_MAX_PREPARED:-400}" -c "max_worker_processes=${PG_MAX_WORKERS:-8}"
+                     -c "max_wal_senders=${PG_MAX_WAL_SENDERS:-10}" -c "max_locks_per_transaction=${PG_MAX_LOCKS:-64}" -c "max_replication_slots=${PG_MAX_SLOTS:-20}")
 
 preparar_volumen() {   # $1 = nombre del volumen
   local volumen="$1" base
@@ -69,13 +73,16 @@ case "$accion" in
     preparar_volumen "$NOMBRE-datos" || exit 1
     docker run -d --name "$NOMBRE" --memory "$MEMORIA" --shm-size 256m -p "127.0.0.1:$PUERTO:5432" \
       -v "$NOMBRE-datos:/var/lib/postgresql/data" -v "$WAL:/backup/wal:ro" "$IMAGEN" \
-      postgres -c shared_preload_libraries=citus,pg_stat_statements -c wal_level=logical -c archive_mode=off -c max_connections=100 -c hot_standby=on >/dev/null || exit 1
+      postgres -c shared_preload_libraries=citus,pg_stat_statements -c wal_level=logical -c archive_mode=off -c hot_standby=on "${PARAMETROS_PRIMARIO[@]}" >/dev/null || exit 1
     echo -n "Reproduciendo WAL"
     for _ in $(seq 1 600); do
       if docker exec "$NOMBRE" psql -X -U guilda -d postgres -At -c "select not pg_is_in_recovery()" 2>/dev/null | grep -q t; then
         echo; echo "Instancia lista en $(( $(date +%s) - inicio )) s: postgresql://guilda:<contraseña>@127.0.0.1:$PUERTO/postgres"
         docker exec "$NOMBRE" psql -X -U guilda -d postgres -At -c "select 'recuperada hasta: '||coalesce(pg_last_xact_replay_timestamp()::text, '(sin transacciones reproducidas)')" 2>/dev/null
         exit 0
+      fi
+      if [ "$(docker inspect -f '{{.State.Running}}' "$NOMBRE" 2>/dev/null)" != "true" ]; then
+        echo; echo "La instancia se paró durante la recuperación: $(docker logs "$NOMBRE" 2>&1 | grep -E 'FATAL|DETAIL|HINT' | tail -3 | tr '\n' ' ')" >&2; exit 1
       fi
       echo -n "."; sleep 1
     done

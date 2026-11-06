@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -1012,6 +1012,71 @@ def peticion(peticion_id: int):
     puede_valorar = p["estado"] == "revisada" and g.portal_rol != "consulta" and not g.get("vista_previa") and not portal_valoraciones.ya_valorada(cliente, g.portal_email or cliente["email"], "peticion", peticion_id)
     return render_template("portal_peticion.html", cliente=cliente, p=p, puede_valorar=puede_valorar, valorado=request.args.get("valorado"), error_valoracion=(request.args.get("error") or "")[:200] or None, archivos=portal_peticiones.archivos(cliente, peticion_id), error=error, enviado=request.args.get("enviado", type=int),
                            puede_subir=g.portal_rol != "consulta" and not g.get("vista_previa") and p["estado"] in ("pendiente", "enviada"), max_archivos=portal_peticiones.MAX_ARCHIVOS, portal_seccion="inicio")
+
+
+def _puede_escribir() -> bool:
+    return g.portal_rol != "consulta" and not g.get("vista_previa")
+
+
+def _conversacion_avisar_equipo(cliente, cid: int, asunto: str, texto: str, nueva: bool) -> None:
+    """Cuando el cliente escribe (o abre un hilo), lo sabe quien lleva al cliente."""
+    titulo = _("%(cliente)s te ha escrito: %(asunto)s", cliente=cliente["nombre"], asunto=asunto[:80]) if nueva else _("%(cliente)s ha contestado: %(asunto)s", cliente=cliente["nombre"], asunto=asunto[:80])
+    facturas_contables.avisar_al_equipo(cliente, titulo, texto, url_for("fiscal.editar_cliente", cliente_id=cliente["id"]) + f"#conversacion-{cid}", {"conversacion": cid})
+
+
+@portal_bp.route("/conversaciones/nueva", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("20/hour", methods=["POST"])
+def conversacion_nueva():
+    """Abre una conversación con la gestoría sobre cualquier cosa (o sobre una petición de documentos, con `?peticion=`)."""
+    cliente = _cliente_actual_o_salir()
+    if not _puede_escribir():
+        abort(403)
+    peticion_id = request.values.get("peticion", type=int)
+    p = portal_peticiones.obtener(cliente, peticion_id) if peticion_id else None
+    if peticion_id and p is None:
+        abort(404)
+    error = None
+    asunto = request.form.get("asunto", "") if request.method == "POST" else (_("Sobre: %(titulo)s", titulo=p["titulo"]) if p else "")
+    texto = request.form.get("texto", "")
+    if request.method == "POST":
+        try:
+            cid = portal_conversaciones.iniciar(cliente, asunto, texto, "cliente", g.portal_email or cliente["email"] or "", peticion_id=p["id"] if p else None)
+            auditoria.registrar(cliente["tenant_id"], None, "portal.conversacion_abierta", "portal_conversacion", cid, {"quien": g.portal_email or "titular"})
+            _conversacion_avisar_equipo(cliente, cid, asunto, texto, True)
+            return redirect(url_for("portal_cliente.conversacion", conversacion_id=cid, enviado=1))
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("portal_conversacion_nueva.html", cliente=cliente, asunto=asunto, texto=texto, error=error, peticion=p, max_asunto=portal_conversaciones.MAX_ASUNTO, max_texto=portal_conversaciones.MAX_TEXTO,
+                           portal_seccion="mensajes")
+
+
+@portal_bp.route("/conversaciones/<int:conversacion_id>", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def conversacion(conversacion_id: int):
+    cliente = _cliente_actual_o_salir()
+    c = portal_conversaciones.obtener(cliente, conversacion_id)
+    if c is None:
+        abort(404)
+    error = None
+    if request.method == "POST":
+        if not _puede_escribir():
+            abort(403)
+        texto = request.form.get("texto", "")
+        try:
+            portal_conversaciones.responder(cliente, conversacion_id, texto, "cliente", g.portal_email or cliente["email"] or "")
+            auditoria.registrar(cliente["tenant_id"], None, "portal.conversacion_respuesta", "portal_conversacion", conversacion_id, {"quien": g.portal_email or "titular"})
+            _conversacion_avisar_equipo(cliente, conversacion_id, c["asunto"], texto, False)
+            return redirect(url_for("portal_cliente.conversacion", conversacion_id=conversacion_id, enviado=1) + "#ultimo")
+        except ValueError as e:
+            error = _(str(e))
+    if not g.get("vista_previa"):
+        portal_conversaciones.marcar_leida(cliente, conversacion_id, "cliente")
+        c = portal_conversaciones.obtener(cliente, conversacion_id)
+    peticion = portal_peticiones.obtener(cliente, c["peticion_id"]) if c["peticion_id"] else None
+    return render_template("portal_conversacion.html", cliente=cliente, c=c, peticion=peticion, error=error, enviado=request.args.get("enviado"), puede_escribir=_puede_escribir(),
+                           max_texto=portal_conversaciones.MAX_TEXTO, portal_seccion="mensajes")
 
 
 def portal_peticiones_avisar_equipo(cliente, p: dict, n: int) -> None:

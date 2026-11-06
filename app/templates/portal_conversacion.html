@@ -1,0 +1,25 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ c.asunto }}{% endblock %}
+{% block titulo %}{{ c.asunto }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }}{% if c.estado == 'cerrada' %} · {{ _('Conversación cerrada') }}{% endif %}{% endblock %}
+{% block contenido %}
+    {% if enviado %}<p class="portal-peticion" role="status"><strong>{{ _('Enviado. Tu gestoría recibirá un aviso.') }}</strong></p>{% endif %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    {% if peticion %}<p class="muted">{{ _('Sobre tu petición') }}: <a href="{{ url_for('portal_cliente.peticion', peticion_id=peticion.id) }}">{{ peticion.titulo }}</a></p>{% endif %}
+    <section class="portal-conversacion" aria-labelledby="conv-hilo">
+      <h2 id="conv-hilo" class="sr-only">{{ _('Mensajes') }}</h2>
+      <div class="portal-hilo">
+        {% for m in c.mensajes %}
+        <div class="portal-msg {{ 'cliente' if m.de == 'cliente' else 'gestoria' }}"{% if loop.last %} id="ultimo"{% endif %}>{{ m.texto }}<span class="fecha">{{ _('Tú') if m.de == 'cliente' else _('Tu gestoría') }} · {{ m.creado_en|fecha_y_hora }}</span></div>
+        {% endfor %}
+      </div>
+      {% if puede_escribir %}
+      <form method="post" action="{{ url_for('portal_cliente.conversacion', conversacion_id=c.id) }}" class="portal-subir">
+        <label for="conv-respuesta">{{ _('Escribe un mensaje') if c.estado == 'abierta' else _('Escribe para reabrir la conversación') }}</label>
+        <textarea id="conv-respuesta" class="ds-ancho-total ds-mb-3" name="texto" rows="3" maxlength="{{ max_texto }}" required></textarea>
+        <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+      </form>
+      {% endif %}
+    </section>
+    <p><a href="{{ url_for('portal_cliente.mensajes') }}">{{ _('Volver a los mensajes') }}</a></p>
+{% endblock %}

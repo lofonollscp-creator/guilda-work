@@ -206,3 +206,10 @@ label { display: grid; gap: 6px; font-weight: 600; font-size: .86rem; margin-bot
 .paleta-tipo { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--apagado); min-width: 56px; }
 .paleta-ayuda { margin: 8px 4px 0; font-size: .78rem; }
 .fila-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+
+/* Histórico de salud: una casilla por día (el peor estado de ese día) y una línea con la tendencia del valor */
+.tendencia { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.tira { display: inline-flex; gap: 2px; }
+.casilla { width: 6px; height: 14px; border-radius: 2px; background: var(--borde); }
+.casilla-verde { background: var(--ok); } .casilla-ambar { background: var(--aviso); } .casilla-rojo { background: var(--riesgo); } .casilla-gris { background: var(--texto-suave, #9aa3ad); }
+.chispa { width: 120px; height: 28px; color: var(--texto-suave, #6b7480); }

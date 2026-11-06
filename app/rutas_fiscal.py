@@ -23,7 +23,7 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -447,6 +447,75 @@ def resolver_peticion_documento(cliente_id: int, peticion_id: int, accion: str):
     return _volver_a_peticiones(cliente_id)
 
 
+def _autor_actual() -> str:
+    """El correo de quien escribe en nombre del despacho (se guarda con el mensaje; el cliente solo ve «Tu gestoría»)."""
+    u = db.obtener_usuario(g.usuario_id)
+    return (u["email"] if u else "") or str(g.usuario_id)
+
+
+def _volver_a_conversaciones(cliente_id: int, error: str | None = None, ancla: str = "conversaciones"):
+    return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id, **({"error_conversacion": error[:200]} if error else {})) + f"#{ancla}")
+
+
+def _avisar_cliente_conversacion(cliente, cid: int, asunto: str, texto: str) -> None:
+    """Le avisa al cliente (correo según lo que haya elegido recibir y, si lo tiene, aviso en el móvil) de que su gestoría le ha escrito. Un fallo del correo no estropea el mensaje."""
+    enlace = portal_recordatorios.url_portal(f"/portal/conversaciones/{cid}", cliente["id"])
+    if not enlace:
+        return
+    try:
+        portal_avisos.correo_directo(cliente, lambda e: notificaciones_email.enviar_mensaje_gestoria(e, asunto, texto, enlace, tenant_id=g.tenant_id),
+                                     push=(_("Tu gestoría te ha escrito"), texto[:100], f"/portal/conversaciones/{cid}"))
+    except ErrorNotificacionesEmail:
+        pass
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/conversaciones", methods=["POST"])
+@login_required
+def crear_conversacion_portal(cliente_id: int):
+    """La gestoría abre una conversación con el cliente (que la verá en los mensajes de su portal)."""
+    cliente = _cliente_para_contactos(cliente_id)
+    asunto, texto = request.form.get("asunto", ""), request.form.get("texto", "")
+    try:
+        cid = portal_conversaciones.iniciar(cliente, asunto, texto, "despacho", _autor_actual())
+    except ValueError as e:
+        return _volver_a_conversaciones(cliente_id, _(str(e)))
+    auditoria.registrar(g.tenant_id, g.usuario_id, "portal.conversacion_abierta", "portal_conversacion", cid, {"cliente": cliente_id, "asunto": asunto[:80]})
+    if request.form.get("avisar") == "1":
+        _avisar_cliente_conversacion(cliente, cid, " ".join(asunto.split())[:120], texto)
+    return _volver_a_conversaciones(cliente_id, ancla=f"conversacion-{cid}")
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/conversaciones/<int:conversacion_id>/<accion>", methods=["POST"])
+@login_required
+def resolver_conversacion_portal(cliente_id: int, conversacion_id: int, accion: str):
+    """Contesta (`responder`, con aviso al cliente), marca como leída, cierra o reabre una conversación."""
+    cliente = _cliente_para_contactos(cliente_id)
+    if accion not in ("responder", "leida", "cerrar", "reabrir"):
+        abort(404)
+    c = portal_conversaciones.obtener(cliente, conversacion_id)
+    if c is None:
+        abort(404)
+    ancla = f"conversacion-{conversacion_id}"
+    if accion == "responder":
+        texto = request.form.get("texto", "")
+        try:
+            ok = portal_conversaciones.responder(cliente, conversacion_id, texto, "despacho", _autor_actual())
+        except ValueError as e:
+            return _volver_a_conversaciones(cliente_id, _(str(e)), ancla)
+        if not ok:
+            return _volver_a_conversaciones(cliente_id, _("Esa conversación está cerrada: reábrela para escribir."), ancla)
+        portal_conversaciones.marcar_leida(cliente, conversacion_id, "equipo")
+        auditoria.registrar(g.tenant_id, g.usuario_id, "portal.conversacion_respuesta", "portal_conversacion", conversacion_id, {"cliente": cliente_id})
+        _avisar_cliente_conversacion(cliente, conversacion_id, c["asunto"], texto)
+    elif accion == "leida":
+        portal_conversaciones.marcar_leida(cliente, conversacion_id, "equipo")
+    else:
+        if not portal_conversaciones.cambiar_estado(cliente, conversacion_id, abierta=(accion == "reabrir"), por=g.usuario_id):
+            return _volver_a_conversaciones(cliente_id, _("Esa conversación ya estaba así."), ancla)
+        auditoria.registrar(g.tenant_id, g.usuario_id, f"portal.conversacion_{accion}", "portal_conversacion", conversacion_id, {"cliente": cliente_id})
+    return _volver_a_conversaciones(cliente_id, ancla=ancla)
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/contactos", methods=["POST"])
 @login_required
 def anadir_contacto_portal(cliente_id: int):
@@ -639,6 +708,7 @@ def editar_cliente(cliente_id: int):
         modelos_sugeridos=perfil_fiscal.modelos_para_perfil(db.perfil_fiscal_de_cliente(cliente)),
         peticiones=portal_peticiones.listar(cliente), peticiones_archivos={p["id"]: portal_peticiones.archivos(cliente, p["id"]) for p in portal_peticiones.listar(cliente) if p["archivos"]},
         error_peticion=(request.args.get("error_peticion") or "")[:200] or None,
+        conversaciones=[{**h, "detalle": portal_conversaciones.obtener(cliente, h["id"])} for h in portal_conversaciones.listar(cliente)], error_conversacion=(request.args.get("error_conversacion") or "")[:200] or None,
         personas_portal=[p for p in portal_personas.listar(cliente) if not p["es_titular"]], roles_portal=portal_personas.ROLES, error_contacto=(request.args.get("error_contacto") or "")[:200] or None,
     )
 

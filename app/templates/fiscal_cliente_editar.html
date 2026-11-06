@@ -138,6 +138,46 @@
   </form>
 </section>
 
+<section class="proyecto-bloque ds-max-640 ds-mt-24" id="conversaciones" aria-labelledby="conversaciones-titulo">
+  <h2 id="conversaciones-titulo">{{ _('Conversaciones con el cliente') }}</h2>
+  <p class="muted">{{ _('Hilos libres con el cliente, aparte de los de cada modelo o factura. Los ve en los mensajes de su portal y tú recibes un aviso cuando escribe.') }}</p>
+  {% if error_conversacion %}<div class="ia-error" role="alert">{{ error_conversacion }}</div>{% endif %}
+  {% for h in conversaciones %}
+  <details class="conversacion-equipo" id="conversacion-{{ h.id }}"{% if h.sin_leer_equipo %} open{% endif %}>
+    <summary><strong>{{ h.asunto }}</strong>
+      {% if h.sin_leer_equipo %}<span class="pill">{{ ngettext('%(n)s sin leer', '%(n)s sin leer', h.sin_leer_equipo, n=h.sin_leer_equipo) }}</span>{% endif %}
+      {% if h.estado == 'cerrada' %}<span class="muted">{{ _('Cerrada') }}</span>{% endif %}
+      <span class="muted">{{ h.actualizado_en[:16]|replace('T', ' ') }} · {{ ngettext('%(n)s mensaje', '%(n)s mensajes', h.mensajes, n=h.mensajes) }}</span></summary>
+    <div class="portal-hilo">
+      {% for m in h.detalle.mensajes %}
+      <div class="portal-msg {{ 'cliente' if m.de == 'cliente' else 'gestoria' }}">{{ m.texto }}<span class="fecha">{{ _('Cliente') if m.de == 'cliente' else (m.autor or _('Despacho')) }} · {{ m.creado_en[:16]|replace('T', ' ') }}</span></div>
+      {% endfor %}
+    </div>
+    {% if h.estado == 'abierta' %}
+    <form method="post" action="{{ url_for('fiscal.resolver_conversacion_portal', cliente_id=cliente.id, conversacion_id=h.id, accion='responder') }}" class="edit-form">
+      <label class="sr-only" for="conv-resp-{{ h.id }}">{{ _('Respuesta para el cliente') }}</label>
+      {% with cliente_fiscal_id=cliente.id, destino='conv-resp-' ~ h.id %}{% include '_respuestas_rapidas.html' %}{% endwith %}
+      <textarea id="conv-resp-{{ h.id }}" name="texto" rows="3" maxlength="2000" required></textarea>
+      <button type="submit" class="btn btn-primary">{{ _('Responder') }}</button>
+    </form>
+    {% endif %}
+    <div class="herramientas">
+      {% if h.sin_leer_equipo %}<form method="post" action="{{ url_for('fiscal.resolver_conversacion_portal', cliente_id=cliente.id, conversacion_id=h.id, accion='leida') }}" class="portal-persona-form"><button type="submit" class="btn btn-ghost">{{ _('Marcar como leída') }}</button></form>{% endif %}
+      <form method="post" action="{{ url_for('fiscal.resolver_conversacion_portal', cliente_id=cliente.id, conversacion_id=h.id, accion='cerrar' if h.estado == 'abierta' else 'reabrir') }}" class="portal-persona-form"><button type="submit" class="btn btn-ghost">{{ _('Cerrar la conversación') if h.estado == 'abierta' else _('Reabrir') }}</button></form>
+    </div>
+  </details>
+  {% else %}<p class="muted">{{ _('Todavía no hay conversaciones con este cliente.') }}</p>{% endfor %}
+  <form method="post" action="{{ url_for('fiscal.crear_conversacion_portal', cliente_id=cliente.id) }}" class="edit-form">
+    <h3>{{ _('Escribirle al cliente') }}</h3>
+    <div class="correo-form-campo"><label for="conv-asunto">{{ _('Asunto') }}</label><input type="text" id="conv-asunto" name="asunto" minlength="3" maxlength="120" required></div>
+    <div class="correo-form-campo"><label for="conv-nueva-texto">{{ _('Mensaje') }}</label>
+      {% with cliente_fiscal_id=cliente.id, destino='conv-nueva-texto' %}{% include '_respuestas_rapidas.html' %}{% endwith %}
+      <textarea id="conv-nueva-texto" name="texto" rows="4" maxlength="2000" required></textarea></div>
+    <label><input type="checkbox" name="avisar" value="1" checked> {{ _('Avisarle ahora por correo') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
+  </form>
+</section>
+
 <section class="proyecto-bloque ds-max-640 ds-mt-24" id="contactos-portal" aria-labelledby="contactos-portal-titulo">
   <h2 id="contactos-portal-titulo">{{ _('Personas con acceso al portal') }}</h2>
   <p class="muted">{{ _('Además del titular (el email de arriba), puedes dar acceso a su administrativa, a su asesor externo… Cada una entra con su propio email y elige cuánto quiere que le avisemos. Acceso completo: todo, también firmar, pagar y dar la conformidad. Administración: subir y escribir, sin firmar, pagar ni dar la conformidad. Solo consulta: mirar.') }}</p>

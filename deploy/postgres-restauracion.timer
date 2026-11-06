@@ -1,0 +1,11 @@
+# Una vez al mes (día 2, 04:30 + hasta 30 min de margen; la prueba de Restic va el día 1). Persistent=true: si el servidor estaba apagado, se recupera al arrancar.
+[Unit]
+Description=Guilda Work - ensayo mensual de restauración de la base de datos
+
+[Timer]
+OnCalendar=*-*-02 04:30:00
+RandomizedDelaySec=1800
+Persistent=true
+
+[Install]
+WantedBy=timers.target

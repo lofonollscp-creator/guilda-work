@@ -140,6 +140,8 @@ CREATE INDEX IF NOT EXISTS idx_plazos_expediente ON plazos (expediente_id, estad
 CREATE INDEX IF NOT EXISTS idx_plazos_tenant ON plazos (tenant_id, papelera_en, estado, fecha_limite);
 CREATE INDEX IF NOT EXISTS idx_portal_citas_cliente ON portal_citas (tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_contactos_buscar ON portal_contactos (email);
+CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_cliente ON portal_conversaciones (tenant_id, cliente_fiscal_id, estado);
+CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_mensajes ON portal_conversaciones_mensajes (tenant_id, conversacion_id, id);
 CREATE INDEX IF NOT EXISTS idx_portal_enlaces_token ON portal_enlaces_subida (token);
 CREATE INDEX IF NOT EXISTS idx_portal_peticiones_cliente ON portal_peticiones (tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_respuestas_tenant ON portal_respuestas_rapidas (tenant_id, titulo);
@@ -149,6 +151,7 @@ CREATE INDEX IF NOT EXISTS idx_proyecto_notas_categoria ON proyecto_notas (categ
 CREATE INDEX IF NOT EXISTS idx_proyecto_plantillas_tenant ON proyecto_plantillas (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_proyecto_secciones_categoria ON proyecto_secciones (categoria_id, orden);
 CREATE INDEX IF NOT EXISTS idx_registro_rgpd_tenant ON registro_rgpd (tenant_id, id DESC);
+CREATE INDEX IF NOT EXISTS idx_salud_historial_momento ON salud_historial (momento);
 CREATE INDEX IF NOT EXISTS idx_tarea_actividad_tarea ON tarea_actividad (tarea_id, id);
 CREATE INDEX IF NOT EXISTS idx_tarea_adjuntos_tarea ON tarea_adjuntos (tarea_id);
 CREATE INDEX IF NOT EXISTS idx_tarea_checklist_tarea ON tarea_checklist (tarea_outlook_id);

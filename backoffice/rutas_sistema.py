@@ -10,7 +10,7 @@ import os
 from flask import Response, abort, flash, g, redirect, render_template, request, url_for
 
 from app import db as plataforma
-from app import salud_silencios, tareas_periodicas
+from app import salud_historial, salud_silencios, tareas_periodicas
 from app import cobro_contabilidad, comunicados, eventos, ia_consumo, mantenimiento, ver_como, herramientas, salud, uptime_kuma
 
 from app import almacen_objetos
@@ -211,11 +211,20 @@ def enviar_alertas():
 @auth.login_required
 def salud_vista():
     items = salud_silencios.anotar(salud.panel())
+    dias = request.args.get("dias", salud_historial.DIAS_POR_DEFECTO, type=int)
+    dias = dias if dias in (7, 30, 90) else salud_historial.DIAS_POR_DEFECTO
+    try:
+        tendencias = salud_historial.tendencias(items, dias)
+        incidencias = salud_historial.incidencias(dias)[:15]
+    except Exception:  # noqa: BLE001 -- base sin la tabla de histórico (aún sin migrar): el panel sigue funcionando sin tendencias
+        tendencias, incidencias = {}, []
+    titulos = {i["clave"]: i["titulo"] for i in items}
     grupos: dict[str, list] = {}
     for i in items:
+        i["tendencia"] = tendencias.get(i["clave"])
         grupos.setdefault(i["grupo"], []).append(i)
     from app import notificaciones_email
-    return render_template("salud.html", grupos=grupos, general=salud.peor_estado(items), correo=notificaciones_email.estado_configuracion())
+    return render_template("salud.html", grupos=grupos, general=salud.peor_estado(items), correo=notificaciones_email.estado_configuracion(), dias=dias, incidencias=incidencias, titulos=titulos)
 
 
 @bp.route("/tareas")
@@ -399,6 +408,16 @@ def rgpd_atender(solicitud_id: int):
 @auth.login_required
 def cuotas_vista():
     return render_template("cuotas.html", filas=cuotas.uso(), etiquetas=cuotas.ETIQUETAS, metricas=cuotas.METRICAS, aviso=cuotas.AVISO_PCT, guardados=cuotas.limites_guardados())
+
+
+@bp.route("/tenants/<int:tenant_id>/cuotas/avisar", methods=["POST"])
+@auth.login_required
+def cuotas_avisar(tenant_id: int):
+    """Manda ya a la dirección del despacho el aviso de las cuotas que ha pasado (aunque ya se le avisara este mes)."""
+    n = cuotas.avisar_despachos(tenant_id=tenant_id, forzar=True)
+    auth.auditar("cuotas.avisar", f"tenant {tenant_id}: {n} correo(s)")
+    flash(f"Aviso enviado a {n} persona(s) de la dirección." if n else "Este despacho no está por encima del 80 % de ningún tope, o no tiene a nadie en la dirección con correo.")
+    return redirect(url_for("rutas.cuotas_vista"))
 
 
 @bp.route("/tenants/<int:tenant_id>/cuotas", methods=["POST"])

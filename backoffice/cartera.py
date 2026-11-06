@@ -497,6 +497,7 @@ def paso_periodico(ahora: datetime | None = None, enviar=None) -> dict:
         ("cobros", refrescar_cobros_pendientes),
         ("resumen", lambda: resumen_semanal_si_toca(ahora, enviar=enviar)),
         ("informes", lambda: informes_mensuales_si_toca(ahora)),
+        ("cuotas", lambda: cuotas.avisar_despachos(ahora)),
         ("vigilancia", lambda: vigilar_app(ahora)),
         ("dependencias", lambda: dependencias.auditar_si_toca(ahora)),
     ):

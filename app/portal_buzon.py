@@ -4,7 +4,7 @@ No cambia dónde viven los mensajes (cada hilo sigue en su sitio, con su aviso a
 como «espera tu respuesta» cuando el último mensaje es de la gestoría."""
 from __future__ import annotations
 
-from . import db, tareas_trabajo, verticales
+from . import db, portal_conversaciones, tareas_trabajo, verticales
 from .vencimientos_fiscales import MODELOS_INTERNOS
 
 MAX_FILAS = 500
@@ -20,7 +20,7 @@ def sin_leer_total(cliente: dict) -> int:
         if verticales.esta_activo(cliente["tenant_id"], "contabilizacion"):
             n += conn.execute("SELECT COUNT(*) FROM facturas_contables_mensajes m JOIN facturas_contables x ON x.id = m.factura_id AND x.tenant_id = m.tenant_id WHERE m.tenant_id = ? AND x.cliente_fiscal_id = ? "
                               "AND m.autor = 'empleado' AND m.leido_en IS NULL", (cliente["tenant_id"], cliente["id"])).fetchone()[0]
-        return n
+        return n + portal_conversaciones.sin_leer_cliente(cliente)
     finally:
         conn.close()
 
@@ -55,7 +55,8 @@ def conversaciones(cliente: dict) -> list[dict]:
             ult = t["comentarios"][-1]
             hilos.append({"tipo": "tarea", "ref": t["id"], "titulo": t["asunto"], "url": url_for("portal_cliente.dashboard") + f"#tarea-{t['id']}", "mensajes": len(t["comentarios"]), "sin_leer": 0,
                           "ultimo_texto": ult["texto"], "ultimo_autor": "cliente" if ult["autor"] == "cliente" else "gestoria", "ultimo_en": ult["creado_en"]})
+    hilos += portal_conversaciones.para_el_buzon(cliente)
     for h in hilos:
-        h["espera_respuesta"] = h["ultimo_autor"] == "gestoria"
+        h["espera_respuesta"] = h["ultimo_autor"] == "gestoria" and not h.get("cerrada")
     hilos.sort(key=lambda h: h["ultimo_en"], reverse=True)
     return hilos[:MAX_FILAS]

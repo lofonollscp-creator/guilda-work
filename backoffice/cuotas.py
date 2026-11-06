@@ -85,3 +85,61 @@ def avisos(ahora: datetime | None = None) -> list[dict]:
         motivos = [f"{ETIQUETAS[m]}: {f[m]['usado']} de {f[m]['limite']} ({f[m]['pct']} %)" for m in METRICAS if f[m]["nivel"] != "ok"]
         salida.append({"tenant_id": f["tenant_id"], "nombre": f["nombre"], "nivel": f["peor"], "motivos": motivos})
     return salida
+
+
+def _activado() -> bool:
+    import os
+    return os.environ.get("GUILDA_AVISOS_CUOTA", "").strip().lower() in ("1", "true", "si", "sí", "yes")
+
+
+def _reservar(clave: str) -> bool:
+    """Apunta el aviso antes de enviarlo (un fallo no se reintenta cada pasada). False si ya estaba apuntado."""
+    bo = auth.conectar()
+    try:
+        if bo.execute("SELECT 1 FROM resumenes_enviados WHERE clave = ?", (clave,)).fetchone():
+            return False
+        bo.execute("INSERT INTO resumenes_enviados (clave, enviado_en) VALUES (?, ?)", (clave, auth._ahora()))
+        bo.commit()
+        return True
+    finally:
+        bo.close()
+
+
+def _direccion(tenant_id: int) -> list[str]:
+    conn = plataforma.get_connection()
+    try:
+        return sorted({r["email"] for r in conn.execute("SELECT u.email FROM usuarios u WHERE " + plataforma.sql_supervisor(), (tenant_id, tenant_id)).fetchall() if r["email"]})
+    finally:
+        conn.close()
+
+
+def avisar_despachos(ahora: datetime | None = None, enviar=None, tenant_id: int | None = None, forzar: bool = False) -> int:
+    """Avisa a la dirección de cada despacho que haya pasado del 80 % (o del 100 %) de un tope de su plan: un correo por despacho con lo nuevo, y como mucho una vez al mes por límite y nivel
+    (si pasa del 80 % al 100 % se avisa otra vez). Solo si `GUILDA_AVISOS_CUOTA=1`, salvo `forzar` (el botón de la ficha). Devuelve cuántos correos salieron."""
+    import os
+    from app import notificaciones_email
+    if not forzar and not _activado():
+        return 0
+    ahora = ahora or datetime.now()
+    mes = ahora.strftime("%Y-%m")
+    url = os.environ.get("GUILDA_URL_PUBLICA", "").rstrip("/") or "https://app.guildawork.com"
+    total = 0
+    for f in uso(ahora):
+        if tenant_id is not None and f["tenant_id"] != tenant_id:
+            continue
+        metricas = []
+        for m in METRICAS:
+            c = f[m]
+            if c["nivel"] == "ok" or c["limite"] is None:
+                continue
+            if forzar or _reservar(f"cuota-{f['tenant_id']}-{m}-{c['nivel']}-{mes}"):
+                metricas.append({"metrica": m, **{k: c[k] for k in ("usado", "limite", "pct", "nivel")}})
+        if not metricas:
+            continue
+        for destino in _direccion(f["tenant_id"]):
+            try:
+                (enviar or notificaciones_email.enviar_aviso_cuota)(destino, f["nombre"], metricas, url, tenant_id=f["tenant_id"])
+                total += 1
+            except Exception:  # noqa: BLE001 -- un destino que falla no frena a los demás
+                continue
+    return total

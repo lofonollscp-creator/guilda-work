@@ -140,6 +140,27 @@ def enviar_informe_mensual(email_destino: str, despacho: str, etiqueta_mes: str,
     _enviar(email_destino, _asunto(_("Resumen de %(mes)s", mes=etiqueta_mes), tenant_id), plano, html)
 
 
+def enviar_aviso_cuota(email_destino: str, despacho: str, metricas: list[dict], url_app: str, tenant_id: int | None = None) -> None:
+    """Aviso a la dirección del despacho de que se acerca (o ha superado) el tope de su plan. `metricas`: [{metrica, usado, limite, pct, nivel}]."""
+    nombres = {"usuarios": _("Usuarios"), "almacenamiento": _("Almacenamiento de documentos (MB)"), "facturas": _("Facturas procesadas este mes"), "ia": _("Consultas de IA este mes")}
+    excedido = any(m["nivel"] == "excedido" for m in metricas)
+    titulo = _("Has llegado al tope de tu plan") if excedido else _("Te acercas al tope de tu plan")
+    lineas = [_("Esto es lo que usa %(despacho)s frente a lo incluido en su plan:", despacho=despacho)]
+    lineas += [_("%(nombre)s: %(usado)s de %(limite)s (%(pct)s %%)", nombre=nombres.get(m["metrica"], m["metrica"]), usado=m["usado"], limite=m["limite"], pct=m["pct"]) for m in metricas]
+    lineas.append(_("Guilda Work sigue funcionando con normalidad. Si necesitas más capacidad, escríbenos y lo ampliamos."))
+    plano, html = _construir(tenant_id, titulo, lineas, boton=(_("Abrir Guilda Work"), url_app), aviso=_("Te avisamos una vez al mes por cada límite. Si prefieres no recibir estos avisos, escríbenos."), preencabezado=titulo)
+    _enviar(email_destino, _asunto(titulo, tenant_id), plano, html)
+
+
+def enviar_mensaje_gestoria(email_destino: str, asunto: str, texto: str, url_portal: str, tenant_id: int | None = None) -> None:
+    """Aviso al cliente de que su gestoría le ha escrito en una conversación del portal (app/portal_conversaciones.py): enseña un extracto y enlaza al hilo."""
+    titulo = _("Tu gestoría te ha escrito")
+    extracto = " ".join(texto.split())[:240]
+    plano, html = _construir(tenant_id, titulo, [_("Tienes un mensaje nuevo en tu portal, en la conversación «%(asunto)s».", asunto=asunto)], cita=extracto, boton=(_("Leer y contestar"), url_portal),
+                             aviso=_("Entra al portal de cliente con tu email: te mandaremos un enlace de acceso."), preencabezado=extracto)
+    _enviar(email_destino, _asunto(titulo, tenant_id), plano, html)
+
+
 def enviar_cita_resuelta(email_destino: str, confirmada: bool, canal: str, cuando: str, nota: str, url_portal: str, tenant_id: int | None = None) -> None:
     """Aviso al cliente de lo que ha decidido su gestoría sobre la cita que pidió."""
     nombres = {"llamada": _("llamada"), "videollamada": _("videollamada"), "visita": _("visita")}

@@ -2342,8 +2342,12 @@ def init_db() -> None:
         portal_valoraciones.crear_esquema(conn)  # valoración de los clientes al cerrar un trámite (app/portal_valoraciones.py)
         from . import portal_peticiones
         portal_peticiones.crear_esquema(conn)   # peticiones de documentos de la gestoría a sus clientes (app/portal_peticiones.py)
+        from . import portal_conversaciones
+        portal_conversaciones.crear_esquema(conn)    # conversaciones libres cliente-gestoría del portal (app/portal_conversaciones.py)
         from . import salud_silencios
         salud_silencios.crear_esquema(conn)     # acuse, silencio y responsable de los puntos del panel de salud (app/salud_silencios.py)
+        from . import salud_historial
+        salud_historial.crear_esquema(conn)     # histórico de cada punto del panel de salud (app/salud_historial.py)
         from . import reglas_fiscales
         reglas_fiscales.crear_esquema(conn)     # catálogo global de reglas fiscales, sembrado con los valores del código (app/reglas_fiscales.py)
         from . import marca

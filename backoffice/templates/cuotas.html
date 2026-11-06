@@ -18,7 +18,9 @@
         {% set g = guardados.get(f.tenant_id, {}) %}
         <input type="number" min="0" name="almacenamiento_mb" value="{{ g.almacenamiento_mb if g.almacenamiento_mb is not none }}" placeholder="MB" aria-label="Tope de almacenamiento en MB de {{ f.nombre }}" class="entrada-corta">
         <input type="number" min="0" name="facturas_mes" value="{{ g.facturas_mes if g.facturas_mes is not none }}" placeholder="facturas" aria-label="Tope de facturas al mes de {{ f.nombre }}" class="entrada-corta">
-        <button type="submit" class="boton">Guardar</button></form></td>
+        <button type="submit" class="boton">Guardar</button></form>
+        {% if f.peor != 'ok' %}<form method="post" action="{{ url_for('rutas.cuotas_avisar', tenant_id=f.tenant_id) }}" class="herramientas"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <button type="submit" class="boton" aria-label="Avisar a la dirección de {{ f.nombre }}">Avisar a la dirección</button></form>{% endif %}</td>
     </tr>
   {% else %}<tr><td colspan="{{ metricas|length + 2 }}" class="vacio">No hay despachos.</td></tr>{% endfor %}
   </tbody>

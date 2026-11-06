@@ -89,13 +89,18 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     cita = portal_citas.solicitar(ficha_p, "titular-barrido@ejemplo.com", "videollamada", "Planificar el cierre del ejercicio y revisar las deducciones pendientes de la sociedad", "Martes o jueves por la mañana, mejor temprano")
     cita2 = portal_citas.solicitar(ficha_p, "titular-barrido@ejemplo.com", "visita", "Firmar unos documentos")
     portal_citas.confirmar(t, cita2, (datetime.now() + timedelta(days=4)).replace(hour=10, minute=0).isoformat(timespec="minutes"), "En la oficina de la calle Mayor, planta 2", uid)
+    from app import portal_conversaciones
+    conv = portal_conversaciones.iniciar(ficha_p, "Cambio de domicilio fiscal de la sociedad con efectos desde el próximo trimestre", "Nos mudamos a unas oficinas nuevas y necesitamos saber qué documentos hay que presentar y en qué plazo para no perder ninguna notificación", "cliente", "titular-barrido@ejemplo.com", peticion_id=pet_abierta)
+    portal_conversaciones.responder(ficha_p, conv, "Hola. Hay que presentar el modelo 036 en el plazo de un mes desde el cambio. Si nos mandas la escritura o el contrato de alquiler de las nuevas oficinas lo preparamos nosotros", "despacho", "equipo@despacho.com")
+    conv_cerrada = portal_conversaciones.iniciar(ficha_p, "Duda resuelta sobre el IVA", "¿Puedo deducir la factura del restaurante?", "despacho", "equipo@despacho.com")
+    portal_conversaciones.cambiar_estado(ficha_p, conv_cerrada, abierta=False, por=uid)
     if os.environ.get("GUILDA_TEXTOS_LARGOS"):
         conn = db.get_connection()
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
-    rutas += [f"/portal/peticiones/{pet_abierta}", f"/portal/peticiones/{pet_cerrada}", f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
+    rutas += [f"/portal/conversaciones/nueva?peticion={pet_abierta}", f"/portal/conversaciones/{conv}", f"/portal/conversaciones/{conv_cerrada}", f"/portal/peticiones/{pet_abierta}", f"/portal/peticiones/{pet_cerrada}", f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")

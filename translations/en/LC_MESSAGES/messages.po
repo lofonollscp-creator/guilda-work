@@ -23408,3 +23408,126 @@ msgstr "The note cannot be empty or exceed 2000 characters."
 
 msgid "Cuenta brevemente qué se habló o se acordó."
 msgstr "Briefly say what was discussed or agreed."
+
+msgid "Esa conversación está cerrada: reábrela para escribir."
+msgstr "That conversation is closed: reopen it to write."
+
+msgid "Tu gestoría te ha escrito"
+msgstr "Your accountancy firm has written to you"
+
+msgid "Esa conversación ya estaba así."
+msgstr "That conversation was already like that."
+
+msgid "%(cliente)s te ha escrito: %(asunto)s"
+msgstr "%(cliente)s has written to you: %(asunto)s"
+
+msgid "%(cliente)s ha contestado: %(asunto)s"
+msgstr "%(cliente)s has replied: %(asunto)s"
+
+msgid "Sobre: %(titulo)s"
+msgstr "About: %(titulo)s"
+
+msgid "Almacenamiento de documentos (MB)"
+msgstr "Document storage (MB)"
+
+msgid "Facturas procesadas este mes"
+msgstr "Invoices processed this month"
+
+msgid "Consultas de IA este mes"
+msgstr "AI queries this month"
+
+msgid "Has llegado al tope de tu plan"
+msgstr "You have reached your plan limit"
+
+msgid "Te acercas al tope de tu plan"
+msgstr "You are approaching your plan limit"
+
+msgid "Esto es lo que usa %(despacho)s frente a lo incluido en su plan:"
+msgstr "This is what %(despacho)s is using compared with what its plan includes:"
+
+msgid "%(nombre)s: %(usado)s de %(limite)s (%(pct)s %%)"
+msgstr "%(nombre)s: %(usado)s of %(limite)s (%(pct)s %%)"
+
+msgid "Guilda Work sigue funcionando con normalidad. Si necesitas más capacidad, escríbenos y lo ampliamos."
+msgstr "Guilda Work keeps working as normal. If you need more capacity, write to us and we will extend it."
+
+msgid "Te avisamos una vez al mes por cada límite. Si prefieres no recibir estos avisos, escríbenos."
+msgstr "We notify you once a month for each limit. If you would rather not receive these notices, write to us."
+
+msgid "Tienes un mensaje nuevo en tu portal, en la conversación «%(asunto)s»."
+msgstr "You have a new message in your portal, in the conversation “%(asunto)s”."
+
+msgid "Leer y contestar"
+msgstr "Read and reply"
+
+msgid "Ensayo de restauración de la base de datos"
+msgstr "Database restore rehearsal"
+
+msgid "Último ensayo correcto hace %(hace)s: restaurada en %(seg)s s y con las mismas filas que producción."
+msgstr "Last successful rehearsal %(hace)s ago: restored in %(seg)s s with the same rows as production."
+
+msgid "Todavía no se ha hecho ningún ensayo de restauración de la base de datos."
+msgstr "No database restore rehearsal has been done yet."
+
+msgid "El último ensayo falló en: %(fallos)s."
+msgstr "The last rehearsal failed at: %(fallos)s."
+
+msgid "Conversación cerrada"
+msgstr "Conversation closed"
+
+msgid "Enviado. Tu gestoría recibirá un aviso."
+msgstr "Sent. Your accountancy firm will get a notice."
+
+msgid "Sobre tu petición"
+msgstr "About your request"
+
+msgid "Escribe para reabrir la conversación"
+msgstr "Write to reopen the conversation"
+
+msgid "Volver a los mensajes"
+msgstr "Back to messages"
+
+msgid "Escribe a tu gestoría sobre lo que necesites."
+msgstr "Write to your accountancy firm about anything you need."
+
+msgid "Tu gestoría recibirá un aviso y te contestará aquí mismo."
+msgstr "Your accountancy firm will get a notice and reply right here."
+
+msgid "También puedes escribir desde un modelo, en Impuestos, o desde una factura, en Facturas."
+msgstr "You can also write from a tax return, under Taxes, or from an invoice, under Invoices."
+
+msgid "Preguntar a tu gestoría sobre esta petición"
+msgstr "Ask your accountancy firm about this request"
+
+msgid "Conversaciones con el cliente"
+msgstr "Conversations with the client"
+
+msgid "Hilos libres con el cliente, aparte de los de cada modelo o factura. Los ve en los mensajes de su portal y tú recibes un aviso cuando escribe."
+msgstr "Free-form threads with the client, apart from those on each return or invoice. They see them in their portal messages and you get a notice when they write."
+
+msgid "Marcar como leída"
+msgstr "Mark as read"
+
+msgid "Cerrar la conversación"
+msgstr "Close the conversation"
+
+msgid "Todavía no hay conversaciones con este cliente."
+msgstr "There are no conversations with this client yet."
+
+msgid "Escribirle al cliente"
+msgstr "Write to the client"
+
+msgid "Quién escribe no es válido."
+msgstr "Who is writing is not valid."
+
+msgid "Escribe el asunto de la conversación (mínimo 3 caracteres)."
+msgstr "Write the conversation subject (minimum 3 characters)."
+
+msgid "Hay demasiadas conversaciones abiertas: cierra o espera a que se resuelvan algunas."
+msgstr "There are too many open conversations: close some or wait for some to be resolved."
+
+msgid "Sube de 1 a 10 archivos de una vez (`archivos`)."
+msgstr "Upload 1 to 10 files at a time (`archivos`)."
+
+msgid "`como` debe ser \"cliente\" o \"contraparte\"."
+msgstr "`como` must be \"cliente\" or \"contraparte\"."

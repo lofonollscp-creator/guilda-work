@@ -23493,3 +23493,126 @@ msgstr "La note ne peut pas être vide ni dépasser 2000 caractères."
 
 msgid "Cuenta brevemente qué se habló o se acordó."
 msgstr "Expliquez brièvement ce qui a été dit ou convenu."
+
+msgid "Esa conversación está cerrada: reábrela para escribir."
+msgstr "Cette conversation est fermée : rouvrez-la pour écrire."
+
+msgid "Tu gestoría te ha escrito"
+msgstr "Votre cabinet vous a écrit"
+
+msgid "Esa conversación ya estaba así."
+msgstr "Cette conversation était déjà dans cet état."
+
+msgid "%(cliente)s te ha escrito: %(asunto)s"
+msgstr "%(cliente)s vous a écrit : %(asunto)s"
+
+msgid "%(cliente)s ha contestado: %(asunto)s"
+msgstr "%(cliente)s a répondu : %(asunto)s"
+
+msgid "Sobre: %(titulo)s"
+msgstr "À propos de : %(titulo)s"
+
+msgid "Almacenamiento de documentos (MB)"
+msgstr "Stockage de documents (Mo)"
+
+msgid "Facturas procesadas este mes"
+msgstr "Factures traitées ce mois-ci"
+
+msgid "Consultas de IA este mes"
+msgstr "Requêtes d'IA ce mois-ci"
+
+msgid "Has llegado al tope de tu plan"
+msgstr "Vous avez atteint la limite de votre forfait"
+
+msgid "Te acercas al tope de tu plan"
+msgstr "Vous approchez de la limite de votre forfait"
+
+msgid "Esto es lo que usa %(despacho)s frente a lo incluido en su plan:"
+msgstr "Voici ce que %(despacho)s utilise par rapport à ce qu'inclut son forfait :"
+
+msgid "%(nombre)s: %(usado)s de %(limite)s (%(pct)s %%)"
+msgstr "%(nombre)s : %(usado)s sur %(limite)s (%(pct)s %%)"
+
+msgid "Guilda Work sigue funcionando con normalidad. Si necesitas más capacidad, escríbenos y lo ampliamos."
+msgstr "Guilda Work continue de fonctionner normalement. Si vous avez besoin de plus de capacité, écrivez-nous et nous l'augmenterons."
+
+msgid "Te avisamos una vez al mes por cada límite. Si prefieres no recibir estos avisos, escríbenos."
+msgstr "Nous vous prévenons une fois par mois pour chaque limite. Si vous préférez ne pas recevoir ces avis, écrivez-nous."
+
+msgid "Tienes un mensaje nuevo en tu portal, en la conversación «%(asunto)s»."
+msgstr "Vous avez un nouveau message dans votre portail, dans la conversation « %(asunto)s »."
+
+msgid "Leer y contestar"
+msgstr "Lire et répondre"
+
+msgid "Ensayo de restauración de la base de datos"
+msgstr "Test de restauration de la base de données"
+
+msgid "Último ensayo correcto hace %(hace)s: restaurada en %(seg)s s y con las mismas filas que producción."
+msgstr "Dernier test réussi il y a %(hace)s : restauration en %(seg)s s avec les mêmes lignes qu'en production."
+
+msgid "Todavía no se ha hecho ningún ensayo de restauración de la base de datos."
+msgstr "Aucun test de restauration de la base de données n'a encore été fait."
+
+msgid "El último ensayo falló en: %(fallos)s."
+msgstr "Le dernier test a échoué sur : %(fallos)s."
+
+msgid "Conversación cerrada"
+msgstr "Conversation fermée"
+
+msgid "Enviado. Tu gestoría recibirá un aviso."
+msgstr "Envoyé. Votre cabinet recevra un avis."
+
+msgid "Sobre tu petición"
+msgstr "À propos de votre demande"
+
+msgid "Escribe para reabrir la conversación"
+msgstr "Écrivez pour rouvrir la conversation"
+
+msgid "Volver a los mensajes"
+msgstr "Retour aux messages"
+
+msgid "Escribe a tu gestoría sobre lo que necesites."
+msgstr "Écrivez à votre cabinet pour tout ce dont vous avez besoin."
+
+msgid "Tu gestoría recibirá un aviso y te contestará aquí mismo."
+msgstr "Votre cabinet recevra un avis et vous répondra ici même."
+
+msgid "También puedes escribir desde un modelo, en Impuestos, o desde una factura, en Facturas."
+msgstr "Vous pouvez aussi écrire depuis un modèle, dans Impôts, ou depuis une facture, dans Factures."
+
+msgid "Preguntar a tu gestoría sobre esta petición"
+msgstr "Poser une question à votre cabinet sur cette demande"
+
+msgid "Conversaciones con el cliente"
+msgstr "Conversations avec le client"
+
+msgid "Hilos libres con el cliente, aparte de los de cada modelo o factura. Los ve en los mensajes de su portal y tú recibes un aviso cuando escribe."
+msgstr "Fils libres avec le client, en plus de ceux de chaque modèle ou facture. Il les voit dans les messages de son portail et vous êtes prévenu quand il écrit."
+
+msgid "Marcar como leída"
+msgstr "Marquer comme lue"
+
+msgid "Cerrar la conversación"
+msgstr "Fermer la conversation"
+
+msgid "Todavía no hay conversaciones con este cliente."
+msgstr "Il n'y a pas encore de conversations avec ce client."
+
+msgid "Escribirle al cliente"
+msgstr "Écrire au client"
+
+msgid "Quién escribe no es válido."
+msgstr "L'auteur du message n'est pas valide."
+
+msgid "Escribe el asunto de la conversación (mínimo 3 caracteres)."
+msgstr "Saisissez l'objet de la conversation (3 caractères minimum)."
+
+msgid "Hay demasiadas conversaciones abiertas: cierra o espera a que se resuelvan algunas."
+msgstr "Il y a trop de conversations ouvertes : fermez-en ou attendez que certaines soient résolues."
+
+msgid "Sube de 1 a 10 archivos de una vez (`archivos`)."
+msgstr "Téléversez de 1 à 10 fichiers à la fois (`archivos`)."
+
+msgid "`como` debe ser \"cliente\" o \"contraparte\"."
+msgstr "`como` doit être \"cliente\" ou \"contraparte\"."

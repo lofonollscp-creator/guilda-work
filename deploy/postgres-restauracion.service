@@ -1,0 +1,16 @@
+# Ensayo mensual de restauración de la base de datos (scripts/ensayo_restauracion_pg.py). Se instala junto a postgres-restauracion.timer
+# en /etc/systemd/system/ y se activa el TIMER. Como root: usa Docker y lee las copias de GUILDA_PG_BACKUPS.
+[Unit]
+Description=Guilda Work - ensayo de restauración de la base de datos
+After=docker.service
+Requires=docker.service
+RequiresMountsFor=/mnt/HC_Volume_106540289
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/guilda/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/guilda/guilda-work/scripts/ensayo_restauracion_pg.py
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=1h

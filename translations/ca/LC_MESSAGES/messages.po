@@ -23417,3 +23417,126 @@ msgstr "La nota no pot estar buida ni superar els 2000 caràcters."
 
 msgid "Cuenta brevemente qué se habló o se acordó."
 msgstr "Explica breument què es va parlar o es va acordar."
+
+msgid "Esa conversación está cerrada: reábrela para escribir."
+msgstr "Aquesta conversa està tancada: reobre-la per escriure."
+
+msgid "Tu gestoría te ha escrito"
+msgstr "La teva gestoria t'ha escrit"
+
+msgid "Esa conversación ya estaba así."
+msgstr "Aquesta conversa ja estava així."
+
+msgid "%(cliente)s te ha escrito: %(asunto)s"
+msgstr "%(cliente)s t'ha escrit: %(asunto)s"
+
+msgid "%(cliente)s ha contestado: %(asunto)s"
+msgstr "%(cliente)s ha contestat: %(asunto)s"
+
+msgid "Sobre: %(titulo)s"
+msgstr "Sobre: %(titulo)s"
+
+msgid "Almacenamiento de documentos (MB)"
+msgstr "Emmagatzematge de documents (MB)"
+
+msgid "Facturas procesadas este mes"
+msgstr "Factures processades aquest mes"
+
+msgid "Consultas de IA este mes"
+msgstr "Consultes d'IA aquest mes"
+
+msgid "Has llegado al tope de tu plan"
+msgstr "Has arribat al topall del teu pla"
+
+msgid "Te acercas al tope de tu plan"
+msgstr "T'apropes al topall del teu pla"
+
+msgid "Esto es lo que usa %(despacho)s frente a lo incluido en su plan:"
+msgstr "Això és el que fa servir %(despacho)s respecte al que inclou el seu pla:"
+
+msgid "%(nombre)s: %(usado)s de %(limite)s (%(pct)s %%)"
+msgstr "%(nombre)s: %(usado)s de %(limite)s (%(pct)s %%)"
+
+msgid "Guilda Work sigue funcionando con normalidad. Si necesitas más capacidad, escríbenos y lo ampliamos."
+msgstr "Guilda Work continua funcionant amb normalitat. Si necessites més capacitat, escriu-nos i l'ampliem."
+
+msgid "Te avisamos una vez al mes por cada límite. Si prefieres no recibir estos avisos, escríbenos."
+msgstr "T'avisem un cop al mes per cada límit. Si prefereixes no rebre aquests avisos, escriu-nos."
+
+msgid "Tienes un mensaje nuevo en tu portal, en la conversación «%(asunto)s»."
+msgstr "Tens un missatge nou al teu portal, a la conversa «%(asunto)s»."
+
+msgid "Leer y contestar"
+msgstr "Llegir i contestar"
+
+msgid "Ensayo de restauración de la base de datos"
+msgstr "Assaig de restauració de la base de dades"
+
+msgid "Último ensayo correcto hace %(hace)s: restaurada en %(seg)s s y con las mismas filas que producción."
+msgstr "Últim assaig correcte fa %(hace)s: restaurada en %(seg)s s i amb les mateixes files que producció."
+
+msgid "Todavía no se ha hecho ningún ensayo de restauración de la base de datos."
+msgstr "Encara no s'ha fet cap assaig de restauració de la base de dades."
+
+msgid "El último ensayo falló en: %(fallos)s."
+msgstr "L'últim assaig ha fallat a: %(fallos)s."
+
+msgid "Conversación cerrada"
+msgstr "Conversa tancada"
+
+msgid "Enviado. Tu gestoría recibirá un aviso."
+msgstr "Enviat. La teva gestoria rebrà un avís."
+
+msgid "Sobre tu petición"
+msgstr "Sobre la teva petició"
+
+msgid "Escribe para reabrir la conversación"
+msgstr "Escriu per reobrir la conversa"
+
+msgid "Volver a los mensajes"
+msgstr "Tornar als missatges"
+
+msgid "Escribe a tu gestoría sobre lo que necesites."
+msgstr "Escriu a la teva gestoria sobre el que necessitis."
+
+msgid "Tu gestoría recibirá un aviso y te contestará aquí mismo."
+msgstr "La teva gestoria rebrà un avís i et contestarà aquí mateix."
+
+msgid "También puedes escribir desde un modelo, en Impuestos, o desde una factura, en Facturas."
+msgstr "També pots escriure des d'un model, a Impostos, o des d'una factura, a Factures."
+
+msgid "Preguntar a tu gestoría sobre esta petición"
+msgstr "Preguntar a la teva gestoria sobre aquesta petició"
+
+msgid "Conversaciones con el cliente"
+msgstr "Converses amb el client"
+
+msgid "Hilos libres con el cliente, aparte de los de cada modelo o factura. Los ve en los mensajes de su portal y tú recibes un aviso cuando escribe."
+msgstr "Fils lliures amb el client, a part dels de cada model o factura. Els veu als missatges del seu portal i tu reps un avís quan escriu."
+
+msgid "Marcar como leída"
+msgstr "Marcar com a llegida"
+
+msgid "Cerrar la conversación"
+msgstr "Tancar la conversa"
+
+msgid "Todavía no hay conversaciones con este cliente."
+msgstr "Encara no hi ha converses amb aquest client."
+
+msgid "Escribirle al cliente"
+msgstr "Escriure al client"
+
+msgid "Quién escribe no es válido."
+msgstr "Qui escriu no és vàlid."
+
+msgid "Escribe el asunto de la conversación (mínimo 3 caracteres)."
+msgstr "Escriu l'assumpte de la conversa (mínim 3 caràcters)."
+
+msgid "Hay demasiadas conversaciones abiertas: cierra o espera a que se resuelvan algunas."
+msgstr "Hi ha massa converses obertes: tanca'n o espera que se'n resolguin algunes."
+
+msgid "Sube de 1 a 10 archivos de una vez (`archivos`)."
+msgstr "Puja d'1 a 10 fitxers alhora (`archivos`)."
+
+msgid "`como` debe ser \"cliente\" o \"contraparte\"."
+msgstr "`como` ha de ser \"cliente\" o \"contraparte\"."

@@ -49,6 +49,7 @@ LOCAL = {
     "latidos": "latidos de procesos globales",
     "salud_alertas": "alertas de salud globales",
     "salud_silencios": "silencios y responsables de las alertas de salud globales",
+    "salud_historial": "histórico de estado y valores de los puntos de salud globales",
     "leads_contacto": "formulario público de la web de Guilda (aún sin despacho)",
     "ayuda_valoraciones": "votos anónimos del centro de ayuda público (plataforma)",
     "ayuda_busquedas_vacias": "búsquedas sin resultado del centro de ayuda público (plataforma)",

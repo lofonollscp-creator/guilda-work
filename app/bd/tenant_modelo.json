@@ -1500,6 +1500,16 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_conversaciones": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_conversaciones_mensajes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_peticiones": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
@@ -1616,6 +1626,11 @@
  "salud_silencios": {
   "clase": "local",
   "motivo": "silencios y responsables de las alertas de salud globales",
+  "via": []
+ },
+ "salud_historial": {
+  "clase": "local",
+  "motivo": "histórico de estado y valores de los puntos de salud globales",
   "via": []
  },
  "solicitudes_acceso_portal": {

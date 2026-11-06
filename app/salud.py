@@ -85,8 +85,9 @@ def registrar_error(nombre: str, intervalo_segundos: int, detalle: str) -> None:
         logger.debug("No se pudo escribir el latido %s", nombre, exc_info=True)
 
 
-def _item(grupo: str, clave: str, titulo: str, estado: str, detalle: str) -> dict:
-    return {"grupo": grupo, "clave": clave, "titulo": titulo, "estado": estado, "detalle": detalle}
+def _item(grupo: str, clave: str, titulo: str, estado: str, detalle: str, valor: float | None = None) -> dict:
+    """`valor` es la medida numérica del punto (si la tiene): se guarda en el histórico para dibujar su tendencia (app/salud_historial.py)."""
+    return {"grupo": grupo, "clave": clave, "titulo": titulo, "estado": estado, "detalle": detalle, "valor": valor}
 
 
 def _legible(segundos: float) -> str:
@@ -185,7 +186,7 @@ def _estado_gasto_aws(ahora: datetime) -> dict:
     detalle += _(". Umbral: %(umbral)s USD.", umbral=f"{umbral:.0f}")
     if d["servicios"]:
         detalle += " " + _("Lo que más cuesta: %(servicios)s.", servicios=", ".join(f"{n} {v:.2f}" for n, v in d["servicios"][:3]))
-    return _item("Servidor", "aws_gasto", titulo, {"ok": VERDE, "aviso": AMBAR, "excedido": ROJO}[aws_costes.nivel(d, umbral)], detalle)
+    return _item("Servidor", "aws_gasto", titulo, {"ok": VERDE, "aviso": AMBAR, "excedido": ROJO}[aws_costes.nivel(d, umbral)], detalle, d["gasto_usd"])
 
 
 RESTAURACION_VERDE_DIAS = 40
@@ -211,7 +212,7 @@ def _estado_disco() -> dict:
     libre = uso.free / uso.total * 100
     estado = VERDE if libre >= DISCO_AMBAR_PORCENTAJE else (AMBAR if libre >= DISCO_ROJO_PORCENTAJE else ROJO)
     return _item("Servidor", "disco", _("Espacio libre en disco"), estado,
-                 _("%(libre)s %% libre (%(gb)s GB de %(total)s GB).", libre=f"{libre:.0f}", gb=f"{uso.free / 1024**3:.1f}", total=f"{uso.total / 1024**3:.0f}"))
+                 _("%(libre)s %% libre (%(gb)s GB de %(total)s GB).", libre=f"{libre:.0f}", gb=f"{uso.free / 1024**3:.1f}", total=f"{uso.total / 1024**3:.0f}"), round(libre, 1))
 
 
 def _estado_bd() -> dict:
@@ -219,7 +220,7 @@ def _estado_bd() -> dict:
     wal = db.DB_PATH.with_name(db.DB_PATH.name + "-wal")
     if wal.exists():
         tamano += wal.stat().st_size
-    return _item("Servidor", "bd", _("Tamaño de la base de datos"), VERDE, _("%(mb)s MB.", mb=f"{tamano / 1024 / 1024:.1f}"))
+    return _item("Servidor", "bd", _("Tamaño de la base de datos"), VERDE, _("%(mb)s MB.", mb=f"{tamano / 1024 / 1024:.1f}"), round(tamano / 1024 / 1024, 1))
 
 
 def _estado_errores(ahora: datetime) -> dict:
@@ -230,7 +231,7 @@ def _estado_errores(ahora: datetime) -> dict:
     detalle = _("%(n)s error(es) 5xx en los últimos %(min)s min.", n=n, min=ERRORES_VENTANA_MIN)
     if r["ruta"] and n:
         detalle += " " + _("Más repetido: %(ruta)s (%(veces)s).", ruta=r["ruta"], veces=r["repeticiones"])
-    return _item("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), estado, detalle)
+    return _item("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), estado, detalle, n)
 
 
 def _estado_correo(ahora: datetime) -> list[dict]:
@@ -353,6 +354,21 @@ def _motor_postgres() -> bool:
     return bd.MOTOR == "postgres"
 
 
+def _estado_ensayo_restauracion_pg(ahora: datetime) -> dict:
+    """Ensayo mensual de restauración de la base de datos (scripts/ensayo_restauracion_pg.py): la copia base más reciente y el WAL se restauran en una instancia aparte y se comparan las filas con producción."""
+    titulo = _("Ensayo de restauración de la base de datos")
+    ruta = db.BACKUPS_DIR / "pg_estado_restauracion.json"
+    if not ruta.exists():
+        return _item("Copias de seguridad", "restauracion_pg", titulo, GRIS, _("Todavía no se ha hecho ningún ensayo de restauración de la base de datos."))
+    estado = json.loads(ruta.read_text(encoding="utf-8"))
+    if not estado.get("ok"):
+        fallos = sorted(k for k, v in (estado.get("comprobaciones") or {}).items() if v != "ok")
+        return _item("Copias de seguridad", "restauracion_pg", titulo, ROJO, _("El último ensayo falló en: %(fallos)s.", fallos=", ".join(fallos) or estado.get("error") or "?"))
+    edad = (ahora - datetime.fromisoformat(estado["ultimo_ok"]).replace(tzinfo=None)).total_seconds()
+    detalle = _("Último ensayo correcto hace %(hace)s: restaurada en %(seg)s s y con las mismas filas que producción.", hace=_legible(edad), seg=estado.get("segundos_restauracion") or estado.get("segundos") or "?")
+    return _item("Copias de seguridad", "restauracion_pg", titulo, VERDE if edad <= RESTAURACION_VERDE_DIAS * 86400 else AMBAR, detalle, round(estado.get("segundos_restauracion") or 0))
+
+
 def panel(ahora: datetime | None = None) -> list[dict]:
     """Todos los elementos del panel, cada comprobación aislada: si una falla,
     sale en gris y el resto sigue."""
@@ -373,6 +389,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
         _seguro("Copias de seguridad", "restic_objetos", _("Copia de los documentos del almacén de objetos (Restic)"), lambda: _estado_copia_documentos(ahora))
     _seguro("Copias de seguridad", "restauracion", _("Prueba de restauración de la copia"), lambda: _estado_prueba_restauracion(ahora))
     if _motor_postgres():
+        _seguro("Copias de seguridad", "restauracion_pg", _("Ensayo de restauración de la base de datos"), lambda: _estado_ensayo_restauracion_pg(ahora))
         from . import salud_postgres
         _seguro("Base de datos", "postgres", "Base de datos PostgreSQL", salud_postgres.panel_items)
     _seguro("Servidor", "aws_gasto", _("Gasto de AWS este mes"), lambda: _estado_gasto_aws(ahora))
@@ -406,6 +423,11 @@ def vigilar(ahora: datetime | None = None) -> list[str]:
     dia = ahora.strftime("%Y-%m-%d")
     from . import salud_silencios
     items = panel(ahora)
+    try:
+        from . import salud_historial
+        salud_historial.registrar(items, ahora)       # el histórico nunca debe impedir el aviso
+    except Exception:  # noqa: BLE001
+        logger.exception("No se pudo guardar el histórico de salud")
     try:
         salud_silencios.levantar_los_resueltos({i["clave"] for i in items if i["estado"] == ROJO}, ahora)      # lo arreglado o caducado vuelve a avisar si falla otra vez
         callados = salud_silencios.activos(ahora)

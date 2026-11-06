@@ -33,6 +33,7 @@
       <p class="muted">{{ _('Puedes fotografiar el documento con el móvil o elegir un PDF.') }}</p>
     </section>
     {% endif %}
+    {% if puede_subir %}<p><a href="{{ url_for('portal_cliente.conversacion_nueva', peticion=p.id) }}">{{ _('Preguntar a tu gestoría sobre esta petición') }}</a></p>{% endif %}
     {% if valorado %}<p class="portal-peticion" role="status"><strong>{{ _('¡Gracias por tu valoración!') }}</strong></p>{% endif %}
     {% if error_valoracion %}<p class="portal-peticion" role="alert"><strong>{{ error_valoracion }}</strong></p>{% endif %}
     {% if puede_valorar %}
