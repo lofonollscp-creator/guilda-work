@@ -22124,3 +22124,15 @@ msgstr "Ja s'ha enviat el que estava desat (%(n)s enviament/s). Recarrega la pà
 
 msgid "%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos."
 msgstr "%(n)s enviament/s no s'ha pogut fer: torna a pujar aquests fitxers."
+
+msgid "Aspecto"
+msgstr "Aspecte"
+
+msgid "El de mi dispositivo"
+msgstr "El del meu dispositiu"
+
+msgid "Tamaño de la letra"
+msgstr "Mida de la lletra"
+
+msgid "Se guarda solo en este navegador."
+msgstr "Només es desa en aquest navegador."

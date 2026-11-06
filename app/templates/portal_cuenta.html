@@ -93,6 +93,21 @@
     </section>
 
     {% if seguridad is not none %}
+    <section class="portal-cuenta-bloque" id="aspecto" aria-labelledby="cuenta-aspecto">
+      <h2 id="cuenta-aspecto">{{ _('Aspecto') }}</h2>
+      <fieldset class="portal-valoracion"><legend>{{ _('Tema') }}</legend>
+        <label class="portal-opcion"><input type="radio" name="aspecto-tema" value="system"> <span>{{ _('El de mi dispositivo') }}</span></label>
+        <label class="portal-opcion"><input type="radio" name="aspecto-tema" value="light"> <span>{{ _('Claro') }}</span></label>
+        <label class="portal-opcion"><input type="radio" name="aspecto-tema" value="dark"> <span>{{ _('Oscuro') }}</span></label>
+      </fieldset>
+      <fieldset class="portal-valoracion"><legend>{{ _('Tamaño de la letra') }}</legend>
+        <label class="portal-opcion"><input type="radio" name="aspecto-letra" value="normal"> <span>{{ _('Normal') }}</span></label>
+        <label class="portal-opcion"><input type="radio" name="aspecto-letra" value="grande"> <span>{{ _('Grande') }}</span></label>
+        <label class="portal-opcion"><input type="radio" name="aspecto-letra" value="muy-grande"> <span>{{ _('Muy grande') }}</span></label>
+      </fieldset>
+      <p class="muted">{{ _('Se guarda solo en este navegador.') }}</p>
+    </section>
+
     <section class="portal-cuenta-bloque" id="seguridad" aria-labelledby="cuenta-seguridad">
       <h2 id="cuenta-seguridad">{{ _('Seguridad de tu cuenta') }}</h2>
       {% if codigos_nuevos %}

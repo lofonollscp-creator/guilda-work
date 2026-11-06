@@ -22200,3 +22200,15 @@ msgstr "Ce qui était enregistré a été envoyé (%(n)s envoi/s). Rechargez la 
 
 msgid "%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos."
 msgstr "%(n)s envoi/s n'a pas pu être fait : renvoyez ces fichiers."
+
+msgid "Aspecto"
+msgstr "Apparence"
+
+msgid "El de mi dispositivo"
+msgstr "Celui de mon appareil"
+
+msgid "Tamaño de la letra"
+msgstr "Taille du texte"
+
+msgid "Se guarda solo en este navegador."
+msgstr "Cela n'est enregistré que dans ce navigateur."

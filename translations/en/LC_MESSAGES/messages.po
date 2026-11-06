@@ -22115,3 +22115,15 @@ msgstr "What was saved has been sent (%(n)s submission/s). Reload the page to se
 
 msgid "%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos."
 msgstr "%(n)s submission/s couldn't be made: upload those files again."
+
+msgid "Aspecto"
+msgstr "Appearance"
+
+msgid "El de mi dispositivo"
+msgstr "My device's"
+
+msgid "Tamaño de la letra"
+msgstr "Text size"
+
+msgid "Se guarda solo en este navegador."
+msgstr "It is saved only in this browser."
