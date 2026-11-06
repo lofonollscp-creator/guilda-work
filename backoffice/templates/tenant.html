@@ -57,6 +57,13 @@
       <button type="submit" class="boton boton-primario">Guardar límite</button>
     </form>
     {% if ia_historial %}<p class="muted">Histórico: {% for h in ia_historial %}{{ h.mes }}: {{ h.usadas }}{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}
+    <h3>Informe mensual</h3>
+    <p class="muted">El resumen del mes (facturas, vencimientos, uso del portal) que se manda a quienes dirigen el despacho. Se envía solo el día 1 si <code>GUILDA_INFORME_MENSUAL=1</code>; aquí puedes mandarlo ahora.</p>
+    <form method="post" action="{{ url_for('rutas.informe_mensual_enviar', tenant_id=t.id) }}" class="formulario fila-form">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <label>Mes (AAAA-MM, vacío = el anterior)<input type="text" name="mes" maxlength="7" pattern="\d{4}-\d{2}" placeholder="2026-10"></label>
+      <button type="submit" class="boton">Enviar el informe ahora</button>
+    </form>
     <h3>Datos fiscales y zona horaria</h3>
     <form method="post" action="{{ url_for('rutas.guardar_datos_tenant', tenant_id=t.id) }}" class="formulario">
       <input type="hidden" name="_csrf" value="{{ csrf_token() }}">

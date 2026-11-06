@@ -43,6 +43,7 @@
       {{ enlace(url_for('rutas.cuotas_vista'), 'Cuotas y uso', 'target', endpoint in ('rutas.cuotas_vista', 'rutas.cuotas_guardar')) }}
       <p class="nav-grupo">Sistema</p>
       {{ enlace(url_for('rutas.salud_vista'), 'Salud', 'circle-check-big', endpoint == 'rutas.salud_vista') }}
+      {{ enlace(url_for('rutas.rgpd_vista'), 'RGPD', 'shield-check', endpoint in ('rutas.rgpd_vista', 'rutas.rgpd_registrar', 'rutas.rgpd_atender')) }}
       {{ enlace(url_for('rutas.tareas_vista'), 'Tareas periódicas', 'activity', endpoint in ('rutas.tareas_vista', 'rutas.tarea_relanzar')) }}
       {{ enlace(url_for('rutas.auditoria_vista'), 'Auditoría', 'shield-check', endpoint == 'rutas.auditoria_vista') }}
       {{ enlace(url_for('rutas.estado'), 'Estado del sistema', 'activity', endpoint == 'rutas.estado') }}

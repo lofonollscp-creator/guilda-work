@@ -168,6 +168,26 @@ def _estado_copia_documentos(ahora: datetime) -> dict:
                                   lambda e, hace: _("Última copia completa hace %(hace)s (%(n)s documentos nuevos).", hace=hace, n=e.get("nuevos") if e.get("nuevos") is not None else "?"))
 
 
+def _estado_gasto_aws(ahora: datetime) -> dict:
+    """Gasto del mes en AWS frente al umbral (app/aws_costes.py). Sin claves de costes sale en gris: no es obligatorio tener AWS."""
+    from . import aws_costes
+    titulo = _("Gasto de AWS este mes")
+    if not aws_costes.configurado():
+        return _item("Servidor", "aws_gasto", titulo, GRIS, _("Sin configurar (GUILDA_AWS_COSTES_ACCESS_KEY / GUILDA_AWS_COSTES_SECRET_KEY)."))
+    try:
+        d = aws_costes.gasto(ahora.date())
+    except aws_costes.ErrorCostes as e:
+        return _item("Servidor", "aws_gasto", titulo, AMBAR, _("No se ha podido consultar el gasto: %(error)s", error=str(e)))
+    umbral = aws_costes.umbral_usd()
+    detalle = _("%(gasto)s USD gastados en %(mes)s", gasto=f"{d['gasto_usd']:.2f}", mes=d["mes"])
+    if d["previsto_usd"] is not None:
+        detalle += " " + _("(previsión a fin de mes: %(prev)s USD)", prev=f"{d['previsto_usd']:.2f}")
+    detalle += _(". Umbral: %(umbral)s USD.", umbral=f"{umbral:.0f}")
+    if d["servicios"]:
+        detalle += " " + _("Lo que más cuesta: %(servicios)s.", servicios=", ".join(f"{n} {v:.2f}" for n, v in d["servicios"][:3]))
+    return _item("Servidor", "aws_gasto", titulo, {"ok": VERDE, "aviso": AMBAR, "excedido": ROJO}[aws_costes.nivel(d, umbral)], detalle)
+
+
 RESTAURACION_VERDE_DIAS = 40
 
 
@@ -355,6 +375,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     if _motor_postgres():
         from . import salud_postgres
         _seguro("Base de datos", "postgres", "Base de datos PostgreSQL", salud_postgres.panel_items)
+    _seguro("Servidor", "aws_gasto", _("Gasto de AWS este mes"), lambda: _estado_gasto_aws(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
     _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))

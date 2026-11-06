@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 
 from app import db as plataforma
 
-from . import auth, cuotas, dependencias, metricas
+from . import auth, cuotas, dependencias, metricas, rgpd
 from .datos import ESTADOS_RIESGO
 
 ESTADOS_RIESGO_PAGO = ESTADOS_RIESGO
@@ -245,6 +245,7 @@ def construir_resumen(ahora: datetime | None = None) -> dict:
         "webhooks_fallidos_7d": webhooks, "mes": hist["resumen_mes"],
         "dependencias": dependencias.ultima(),
         "cuotas": cuotas.avisos(ahora),
+        "rgpd": rgpd.vencidas_o_por_vencer(ahora),
     }
 
 
@@ -263,6 +264,11 @@ def texto_resumen(r: dict) -> str:
         lineas.append("TENANTS EN RIESGO")
         for f in r["riesgo"]:
             lineas.append(f"- {f['nombre']} ({f['puntos'] if f['puntos'] is not None else '—'}/100): " + "; ".join(f["motivos"]))
+        lineas.append("")
+    if r.get("rgpd"):
+        lineas.append("RGPD (solicitudes abiertas que vencen pronto o han vencido)")
+        for q in r["rgpd"]:
+            lineas.append(f"- {q['despacho']}: {q['etiqueta']} — " + (f"VENCIDA hace {-q['dias_restantes']} día(s)" if q["nivel"] == "vencida" else f"quedan {q['dias_restantes']} día(s)"))
         lineas.append("")
     if r.get("cuotas"):
         lineas.append("CUOTAS (cerca del tope o superado)")
@@ -305,6 +311,68 @@ def enviar_resumen(r: dict | None = None) -> None:
     notificaciones_email.enviar_alerta_interna(
         f"Guilda Work · resumen semanal ({r['cartera']['riesgo']} en riesgo)", texto_resumen(r),
     )
+
+
+MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+
+
+def enviar_informe_mensual(tenant_id: int, mes: str, enviar=None) -> int:
+    """El informe del mes (AAAA-MM) a quienes dirigen ese despacho. Devuelve cuántos correos salieron (0 si no hay nada que contar o nadie a quien escribir)."""
+    import os
+    from app import informe_mensual, notificaciones_email
+    d = informe_mensual.datos(tenant_id, mes)
+    if not informe_mensual.hay_algo_que_contar(d):
+        return 0
+    conn = plataforma.get_connection()
+    try:
+        nombre = conn.execute("SELECT nombre FROM tenants WHERE id = ?", (tenant_id,)).fetchone()["nombre"]
+        destinos = sorted({r["email"] for r in conn.execute("SELECT u.email FROM usuarios u WHERE " + plataforma.sql_supervisor(), (tenant_id, tenant_id)).fetchall() if r["email"]})
+    finally:
+        conn.close()
+    etiqueta = f"{MESES[int(mes[5:7]) - 1]} de {mes[:4]}"
+    url = os.environ.get("GUILDA_URL_PUBLICA", "").rstrip("/") or "https://app.guildawork.com"
+    n = 0
+    for destino in destinos:
+        try:
+            (enviar or notificaciones_email.enviar_informe_mensual)(destino, nombre, etiqueta, d, url, tenant_id=tenant_id)
+            n += 1
+        except Exception:  # noqa: BLE001 -- un destino que falla no frena a los demás
+            continue
+    return n
+
+
+def informes_mensuales_si_toca(ahora: datetime | None = None, hora_minima: int = 8, enviar=None) -> int:
+    """Los primeros días de cada mes (a partir de las 8:00), el informe del mes anterior a cada despacho activo y una sola vez por despacho y mes. Solo si `GUILDA_INFORME_MENSUAL=1`.
+    Devuelve cuántos correos salieron."""
+    import os
+    from app import informe_mensual
+    if os.environ.get("GUILDA_INFORME_MENSUAL", "").strip().lower() not in ("1", "true", "si", "sí", "yes"):
+        return 0
+    ahora = ahora or datetime.now()
+    if ahora.day > 5 or ahora.hour < hora_minima:
+        return 0
+    mes = informe_mensual.mes_anterior(ahora.date())
+    conn = plataforma.get_connection()
+    try:
+        tenants = [t["id"] for t in conn.execute("SELECT id FROM tenants WHERE id > 0 AND activo = 1 ORDER BY id").fetchall()]
+    finally:
+        conn.close()
+    total = 0
+    for tid in tenants:
+        clave = f"informe-{tid}-{mes}"
+        bo = auth.conectar()
+        try:
+            if bo.execute("SELECT 1 FROM resumenes_enviados WHERE clave = ?", (clave,)).fetchone():
+                continue
+            bo.execute("INSERT INTO resumenes_enviados (clave, enviado_en) VALUES (?, ?)", (clave, auth._ahora()))
+            bo.commit()                         # se reserva antes de enviar: un fallo no se reintenta cada 10 minutos
+        finally:
+            bo.close()
+        try:
+            total += enviar_informe_mensual(tid, mes, enviar=enviar)
+        except Exception:  # noqa: BLE001
+            continue
+    return total
 
 
 def _clave_semana(ahora: datetime) -> str:
@@ -428,6 +496,7 @@ def paso_periodico(ahora: datetime | None = None, enviar=None) -> dict:
         ("salud", lambda: _historial_salud(ahora)),
         ("cobros", refrescar_cobros_pendientes),
         ("resumen", lambda: resumen_semanal_si_toca(ahora, enviar=enviar)),
+        ("informes", lambda: informes_mensuales_si_toca(ahora)),
         ("vigilancia", lambda: vigilar_app(ahora)),
         ("dependencias", lambda: dependencias.auditar_si_toca(ahora)),
     ):

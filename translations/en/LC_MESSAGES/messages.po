@@ -21611,3 +21611,51 @@ msgstr "If you weren't expecting this access, reply to this email."
 
 msgid "Soporte ha entrado en solo lectura"
 msgstr "Support signed in read-only"
+
+msgid "Así ha ido %(mes)s en %(despacho)s."
+msgstr "This is how %(mes)s went at %(despacho)s."
+
+msgid "Facturas: han entrado %(n)s (%(portal)s por el portal); %(revisadas)s revisadas y %(pendientes)s pendientes de leer."
+msgstr "Invoices: %(n)s came in (%(portal)s via the portal); %(revisadas)s reviewed and %(pendientes)s waiting to be read."
+
+msgid "Vencimientos fiscales: %(presentados)s presentados en plazo, %(fuera)s fuera de plazo y %(vencidos)s vencidos sin presentar hoy."
+msgstr "Tax deadlines: %(presentados)s filed on time, %(fuera)s filed late and %(vencidos)s overdue and not filed today."
+
+msgid "Portal de clientes: %(entradas)s entradas de %(personas)s persona(s)."
+msgstr "Client portal: %(entradas)s sign-ins by %(personas)s person(s)."
+
+msgid "%(n)s cliente(s) con email no han entrado al portal en los últimos dos meses: %(nombres)s."
+msgstr "%(n)s client(s) with an email haven't signed in to the portal in the last two months: %(nombres)s."
+
+msgid "Resumen de %(mes)s"
+msgstr "Summary for %(mes)s"
+
+msgid "Abrir Guilda Work"
+msgstr "Open Guilda Work"
+
+msgid "Te llega una vez al mes. Si prefieres no recibirlo, escríbenos y lo quitamos."
+msgstr "It reaches you once a month. If you'd rather not get it, write to us and we'll stop it."
+
+msgid "Cómo ha ido el mes en tu despacho"
+msgstr "How the month went at your firm"
+
+msgid "Gasto de AWS este mes"
+msgstr "AWS spend this month"
+
+msgid "Sin configurar (GUILDA_AWS_COSTES_ACCESS_KEY / GUILDA_AWS_COSTES_SECRET_KEY)."
+msgstr "Not configured (GUILDA_AWS_COSTES_ACCESS_KEY / GUILDA_AWS_COSTES_SECRET_KEY)."
+
+msgid "No se ha podido consultar el gasto: %(error)s"
+msgstr "Could not fetch the spend: %(error)s"
+
+msgid "%(gasto)s USD gastados en %(mes)s"
+msgstr "%(gasto)s USD spent in %(mes)s"
+
+msgid "(previsión a fin de mes: %(prev)s USD)"
+msgstr "(forecast for month end: %(prev)s USD)"
+
+msgid ". Umbral: %(umbral)s USD."
+msgstr ". Threshold: %(umbral)s USD."
+
+msgid "Lo que más cuesta: %(servicios)s."
+msgstr "Biggest costs: %(servicios)s."

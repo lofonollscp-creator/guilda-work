@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icono %}
+{% block titulo %}RGPD{% endblock %}
+{% block contenido %}
+<header class="cabecera"><h1>Solicitudes RGPD</h1><p class="muted">Derechos de las personas sobre sus datos, con su plazo de {{ plazo }} días (art. 12.3). Aquí solo se lleva el control del plazo: atender la solicitud sobre los datos de un despacho le corresponde al propio despacho como responsable; Guilda lo asiste. No se muestra ningún dato de sus clientes.</p></header>
+
+<section class="tarjeta">
+  <h2>Abiertas</h2>
+  <div class="tabla-caja"><table class="tabla">
+    <thead><tr><th>Despacho</th><th>Tipo</th><th>Quién y qué</th><th>Recibida</th><th>Plazo</th><th>Atender</th></tr></thead>
+    <tbody>{% for s in r.abiertas %}<tr>
+      <td><a href="{{ url_for('rutas.tenant', tenant_id=s.tenant_id) }}"><strong>{{ s.despacho }}</strong></a></td>
+      <td>{{ s.etiqueta }}</td><td>{{ s.persona or '' }}{% if s.persona and s.detalle %} — {% endif %}{{ s.detalle }}</td><td>{{ s.creado_en|replace('T', ' ')|truncate(16, True, '') }}</td>
+      <td>{% if s.nivel == 'vencida' %}<span class="insignia insignia-riesgo">VENCIDA hace {{ -s.dias_restantes }} d</span>{% elif s.nivel == 'aviso' %}<span class="insignia">Quedan {{ s.dias_restantes }} d</span>{% else %}<span class="muted">{{ s.dias_restantes }} d</span>{% endif %}</td>
+      <td><form method="post" action="{{ url_for('rutas.rgpd_atender', solicitud_id=s.id) }}" class="herramientas"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input type="text" name="nota" placeholder="Qué se ha hecho" minlength="5" maxlength="200" required aria-label="Qué se ha hecho con la solicitud de {{ s.despacho }}"><button type="submit" class="boton">Atendida</button></form></td>
+    </tr>{% else %}<tr><td colspan="6" class="vacio">No hay solicitudes abiertas.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="tarjeta">
+  <h2>Anotar una solicitud recibida por otra vía</h2>
+  <form method="post" action="{{ url_for('rutas.rgpd_registrar') }}" class="herramientas"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label>Despacho <select name="tenant_id" required>{% for t in tenants %}<option value="{{ t.id }}">{{ t.nombre }}</option>{% endfor %}</select></label>
+    <label>Tipo <select name="tipo" required>{% for k, n in tipos.items() %}<option value="{{ k }}">{{ n }}</option>{% endfor %}</select></label>
+    <label>Quién <input type="text" name="quien" maxlength="120" placeholder="nombre o email"></label>
+    <label>Qué pide <input type="text" name="detalle" maxlength="200" placeholder="resumen de la solicitud" required></label>
+    <button type="submit" class="boton boton-primario">Anotar</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2>Atendidas (últimas 30)</h2>
+  <div class="tabla-caja"><table class="tabla">
+    <thead><tr><th>Despacho</th><th>Tipo</th><th>Recibida</th><th>Atendida</th><th>Nota</th></tr></thead>
+    <tbody>{% for s in r.atendidas %}<tr><td>{{ s.despacho }}</td><td>{{ s.etiqueta }}</td><td>{{ s.creado_en|replace('T', ' ')|truncate(16, True, '') }}</td><td>{{ s.atendida_en|replace('T', ' ')|truncate(16, True, '') }}</td><td>{{ s.nota }}</td></tr>
+      {% else %}<tr><td colspan="5" class="vacio">Todavía no hay solicitudes atendidas.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

@@ -15,7 +15,7 @@ from app import cobro_contabilidad, comunicados, eventos, ia_consumo, mantenimie
 
 from app import almacen_objetos
 
-from . import aprovisionamiento, almacen, auditoria_global, auth, cartera, cuotas, datos, dependencias, diagnostico, seguimiento
+from . import aprovisionamiento, almacen, auditoria_global, auth, cartera, cuotas, rgpd, datos, dependencias, diagnostico, seguimiento
 from .rutas import _tenant_o_404, bp
 
 
@@ -363,6 +363,38 @@ def auditoria_backoffice_csv():
                     headers={"Content-Disposition": 'attachment; filename="auditoria-backoffice.csv"', "X-Content-Type-Options": "nosniff"})
 
 
+@bp.route("/rgpd")
+@auth.login_required
+def rgpd_vista():
+    return render_template("rgpd.html", r=rgpd.solicitudes(), tipos=rgpd.TIPOS, tenants=plataforma.listar_tenants(), plazo=rgpd.PLAZO_DIAS)
+
+
+@bp.route("/rgpd/registrar", methods=["POST"])
+@auth.login_required
+def rgpd_registrar():
+    try:
+        sid = rgpd.registrar(request.form.get("tenant_id", type=int) or 0, request.form.get("tipo", ""), request.form.get("quien", ""), request.form.get("detalle", ""))
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("rgpd.registrar", f"solicitud #{sid} ({request.form.get('tipo', '')}) del despacho {request.form.get('tenant_id', '')}")
+        flash(f"Solicitud anotada: hay {rgpd.PLAZO_DIAS} días para atenderla.", "ok")
+    return redirect(url_for("rutas.rgpd_vista"))
+
+
+@bp.route("/rgpd/<int:solicitud_id>/atender", methods=["POST"])
+@auth.login_required
+def rgpd_atender(solicitud_id: int):
+    try:
+        rgpd.atender(solicitud_id, request.form.get("nota", ""), g.admin["usuario"])
+    except ValueError as e:
+        flash(str(e), "error")
+    else:
+        auth.auditar("rgpd.atender", f"solicitud #{solicitud_id}")
+        flash("Solicitud atendida.", "ok")
+    return redirect(url_for("rutas.rgpd_vista"))
+
+
 @bp.route("/cuotas")
 @auth.login_required
 def cuotas_vista():
@@ -385,6 +417,22 @@ def cuotas_guardar(tenant_id: int):
     auth.auditar("cuotas.fijar", f"tenant {tenant_id}: almacenamiento {valores[0]} MB, facturas {valores[1]}/mes")
     flash("Topes guardados.", "ok")
     return redirect(url_for("rutas.cuotas_vista"))
+
+
+@bp.route("/tenants/<int:tenant_id>/informe-mensual", methods=["POST"])
+@auth.login_required
+def informe_mensual_enviar(tenant_id: int):
+    """Manda ahora a la dirección del despacho el informe del mes anterior (o del mes AAAA-MM indicado)."""
+    from app import informe_mensual
+    _tenant_o_404(tenant_id)
+    mes = (request.form.get("mes") or "").strip() or informe_mensual.mes_anterior(__import__("datetime").date.today())
+    if len(mes) != 7 or not mes[:4].isdigit() or mes[4] != "-" or not mes[5:].isdigit() or not 1 <= int(mes[5:]) <= 12:
+        flash("El mes debe tener el formato AAAA-MM.", "error")
+    else:
+        n = cartera.enviar_informe_mensual(tenant_id, mes)
+        auth.auditar("informe_mensual.enviar", f"tenant {tenant_id}, {mes}: {n} correo(s)")
+        flash(f"Informe de {mes} enviado a {n} persona(s)." if n else "No se ha enviado nada: el despacho no tuvo actividad ese mes o no hay nadie de dirección con email.", "ok" if n else "error")
+    return redirect(url_for("rutas.tenant", tenant_id=tenant_id))
 
 
 @bp.route("/almacen")

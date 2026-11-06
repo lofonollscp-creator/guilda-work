@@ -126,6 +126,20 @@ def enviar_aviso_dispositivo_nuevo(email_destino: str, dispositivo: str, cuando:
     _enviar(email_destino, _asunto(_("Nuevo acceso a tu portal"), tenant_id), plano, html)
 
 
+def enviar_informe_mensual(email_destino: str, despacho: str, etiqueta_mes: str, d: dict, url_app: str, tenant_id: int | None = None) -> None:
+    """El resumen del mes para la dirección del despacho (app/informe_mensual.py)."""
+    f, v, p, s = d["facturas"], d["vencimientos"], d["portal"], d["clientes_sin_entrar"]
+    lineas = [_("Así ha ido %(mes)s en %(despacho)s.", mes=etiqueta_mes, despacho=despacho),
+              _("Facturas: han entrado %(n)s (%(portal)s por el portal); %(revisadas)s revisadas y %(pendientes)s pendientes de leer.", n=f["recibidas"], portal=f["por_portal"], revisadas=f["revisadas"], pendientes=f["pendientes"]),
+              _("Vencimientos fiscales: %(presentados)s presentados en plazo, %(fuera)s fuera de plazo y %(vencidos)s vencidos sin presentar hoy.", presentados=v["presentados"], fuera=v["fuera_plazo"], vencidos=v["vencidos"]),
+              _("Portal de clientes: %(entradas)s entradas de %(personas)s persona(s).", entradas=p["entradas"], personas=p["personas"])]
+    if s["total"]:
+        lineas.append(_("%(n)s cliente(s) con email no han entrado al portal en los últimos dos meses: %(nombres)s.", n=s["total"], nombres=", ".join(s["nombres"]) + ("…" if s["total"] > len(s["nombres"]) else "")))
+    plano, html = _construir(tenant_id, _("Resumen de %(mes)s", mes=etiqueta_mes), lineas, boton=(_("Abrir Guilda Work"), url_app),
+                             aviso=_("Te llega una vez al mes. Si prefieres no recibirlo, escríbenos y lo quitamos."), preencabezado=_("Cómo ha ido el mes en tu despacho"))
+    _enviar(email_destino, _asunto(_("Resumen de %(mes)s", mes=etiqueta_mes), tenant_id), plano, html)
+
+
 def enviar_aviso_acceso_soporte(email_destino: str, usuario_email: str, motivo: str, hasta: str, tenant_id: int | None = None) -> None:
     """Aviso a la dirección del despacho: el equipo de soporte de Guilda Work ha entrado, solo para mirar, como una de sus personas. Siempre dice por qué."""
     plano, html = _construir(tenant_id,
