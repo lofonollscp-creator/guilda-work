@@ -2,6 +2,7 @@
 from datetime import date
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
+from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
 from . import acceso, auditoria, avisos, control_expedientes, db, nucleo, obligaciones, panel_fiscal, traspasos, verticales
@@ -44,7 +45,7 @@ def flujo():
         try:
             obligaciones.guardar_config(g.tenant_id, g.usuario_id, flujo_estricto="flujo_estricto" in request.form, exigir_justificante="exigir_justificante" in request.form)
         except ValueError as e:
-            return _volver("control_fiscal.flujo", error=str(e))
+            return _volver("control_fiscal.flujo", error=_(str(e)))
         return _volver("control_fiscal.flujo", aviso="guardado")
     return render_template("fiscal_flujo.html", cfg=obligaciones.config(g.tenant_id), error=request.args.get("error"), aviso=request.args.get("aviso"))
 
@@ -70,7 +71,7 @@ def _accion(destino_ok: str, funcion, *a, **kw):
     try:
         funcion(g.tenant_id, g.usuario_id, *a, **kw)
     except ValueError as e:
-        return _volver("control_fiscal.oficinas", error=str(e))
+        return _volver("control_fiscal.oficinas", error=_(str(e)))
     acceso.invalidar(g.tenant_id)
     return _volver("control_fiscal.oficinas", aviso=destino_ok)
 
@@ -161,7 +162,7 @@ def _traspaso(destino_ok: str, funcion, *a, **kw):
     try:
         funcion(g.tenant_id, g.usuario_id, *a, **kw)
     except (ValueError, traspasos.ConflictoDeVersion) as e:
-        return _volver("control_fiscal.traspasos_pantalla", error=str(e))
+        return _volver("control_fiscal.traspasos_pantalla", error=_(str(e)))
     return _volver("control_fiscal.traspasos_pantalla", aviso=destino_ok)
 
 
@@ -209,7 +210,7 @@ def avisos_pantalla():
             avisos.guardar_config(g.tenant_id, g.usuario_id, activo="activo" in f, dias_antes=f.get("dias_antes", ""), escalar_horas_urgente=f.get("escalar_horas_urgente"),
                                   escalar_horas_atencion=f.get("escalar_horas_atencion"), reenviar_horas=f.get("reenviar_horas"), max_reenvios=f.get("max_reenvios"), dias_certificados=f.get("dias_certificados") or None)
         except ValueError as e:
-            return _volver("control_fiscal.avisos_pantalla", error=str(e))
+            return _volver("control_fiscal.avisos_pantalla", error=_(str(e)))
         return _volver("control_fiscal.avisos_pantalla", aviso="hecho")
     estado = request.args.get("estado", "abierta")
     estado = estado if estado in avisos.ESTADOS else "abierta"
@@ -224,7 +225,7 @@ def avisos_acusar(alerta_id: int):
     try:
         avisos.acusar(g.tenant_id, g.usuario_id, alerta_id, request.form.get("nota"))
     except ValueError as e:
-        return _volver("control_fiscal.avisos_pantalla", error=str(e))
+        return _volver("control_fiscal.avisos_pantalla", error=_(str(e)))
     return _volver("control_fiscal.avisos_pantalla", aviso="acusado")
 
 
@@ -252,7 +253,7 @@ def expediente_nuevo():
         nuevo = control_expedientes.crear(g.tenant_id, g.usuario_id, f.get("cliente_id", type=int) or 0, f.get("tipo", ""), f.get("titulo", ""), prioridad=f.get("prioridad") or "normal",
                                           fecha_objetivo=f.get("fecha_objetivo") or None, revisor_id=f.get("revisor_id", type=int) or None, descripcion=f.get("descripcion"))
     except ValueError as e:
-        return redirect(url_for("control_fiscal.expedientes_lista", error=str(e)[:200]))
+        return redirect(url_for("control_fiscal.expedientes_lista", error=_(str(e))[:200]))
     return _a_expediente(nuevo)
 
 
@@ -262,7 +263,7 @@ def expediente_de_obligacion(vencimiento_id: int):
     try:
         r = control_expedientes.abrir_desde_obligacion(g.tenant_id, g.usuario_id, vencimiento_id)
     except ValueError as e:
-        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)[:200]))
+        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=_(str(e))[:200]))
     return _a_expediente(r["id"])
 
 
@@ -272,7 +273,7 @@ def expediente_de_certificado(certificado_id: int):
     try:
         r = control_expedientes.abrir_desde_certificado(g.tenant_id, g.usuario_id, certificado_id)
     except ValueError as e:
-        return redirect(url_for("certificados.detalle", certificado_id=certificado_id, error=str(e)[:200]))
+        return redirect(url_for("certificados.detalle", certificado_id=certificado_id, error=_(str(e))[:200]))
     return _a_expediente(r["id"])
 
 

@@ -118,7 +118,7 @@ def nueva():
             fid = fc.crear(g.tenant_id, g.usuario_id, cliente_id, _datos_del_formulario(), _lineas_del_formulario(), documento_id=_adjunto_del_formulario(cliente_id))
             _elegir_fiscal(fid)
         except ValueError as e:
-            return render_template("contabilidad_factura.html", f=None, datos=_datos_del_formulario(), lineas=_lineas_del_formulario(), cliente_id=cliente_id, clientes=_clientes(), error=str(e), cfg=None), 400
+            return render_template("contabilidad_factura.html", f=None, datos=_datos_del_formulario(), lineas=_lineas_del_formulario(), cliente_id=cliente_id, clientes=_clientes(), error=_(str(e)), cfg=None), 400
         return redirect(url_for("contabilidad.ver", factura_id=fid))
     datos = {"tipo": request.args.get("tipo") or "recibida", "fecha": date.today().isoformat()}
     return render_template("contabilidad_factura.html", f=None, datos=datos, lineas=[{"pct_iva": "21"}], cliente_id=cliente_id, clientes=_clientes(), error=_error(), cfg=None)
@@ -137,7 +137,7 @@ def ver(factura_id: int):
             _elegir_fiscal(factura_id)
         except ValueError as e:
             return render_template("contabilidad_factura.html", f=f, datos=_datos_del_formulario(), lineas=_lineas_del_formulario(), cliente_id=f["cliente_fiscal_id"], clientes=_clientes(),
-                                   error=str(e), cfg=cfg), 400
+                                   error=_(str(e)), cfg=cfg), 400
         return redirect(url_for("contabilidad.ver", factura_id=factura_id))
     lineas = [{"base": f"{l['base_centimos'] / 100:.2f}".replace(".", ","), "pct_iva": f"{l['pct_iva'] / 100:g}", "cuota_iva": f"{l['cuota_iva'] / 100:.2f}".replace(".", ","),
                "pct_recargo": f"{l['pct_recargo'] / 100:g}" if l["pct_recargo"] else "", "pct_retencion": f"{l['pct_retencion'] / 100:g}" if l["pct_retencion"] else "",
@@ -220,7 +220,7 @@ def subir():
         archivos = [(a.filename, a.mimetype, a.read(fc.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
         fc.subir_archivos(g.tenant_id, g.usuario_id, cliente_id, request.form.get("tipo", ""), archivos)
     except ValueError as e:
-        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, error=str(e)[:300]))
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, error=_(str(e))[:300]))
     return redirect(url_for("contabilidad.lista", cliente_id=cliente_id))
 
 
@@ -233,8 +233,8 @@ def leer(factura_id: int):
         avisos = lectura_facturas.leer(g.tenant_id, g.usuario_id, factura_id)
     except ValueError as e:
         if quiere_json:
-            return jsonify(ok=False, error=str(e)[:300]), 200
-        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]))
+            return jsonify(ok=False, error=_(str(e))[:300]), 200
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=_(str(e))[:300]))
     if quiere_json:
         return jsonify(ok=True, avisos=avisos)
     return redirect(url_for("contabilidad.ver", factura_id=factura_id))
@@ -246,7 +246,7 @@ def estado(factura_id: int):
     try:
         fc.cambiar_estado(g.tenant_id, g.usuario_id, factura_id, request.form.get("estado", ""))
     except ValueError as e:
-        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]))
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=_(str(e))[:300]))
     return redirect(request.form.get("volver") or url_for("contabilidad.ver", factura_id=factura_id))
 
 
@@ -257,7 +257,7 @@ def mensaje(factura_id: int):
     try:
         facturas_portal.escribir_como_despacho(g.tenant_id, g.usuario_id, factura_id, request.form.get("texto", ""))
     except ValueError as e:
-        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]) + "#mensajes")
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=_(str(e))[:300]) + "#mensajes")
     return redirect(url_for("contabilidad.ver", factura_id=factura_id) + "#mensajes")
 
 
@@ -268,7 +268,7 @@ def devolver(factura_id: int):
     try:
         facturas_portal.devolver(g.tenant_id, g.usuario_id, factura_id, request.form.get("motivo", ""))
     except ValueError as e:
-        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=str(e)[:300]))
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=_(str(e))[:300]))
     return redirect(url_for("contabilidad.ver", factura_id=factura_id))
 
 
@@ -398,7 +398,7 @@ def copiar_configuracion(cliente_id: int):
         else:
             fc.copiar_configuracion(g.tenant_id, g.usuario_id, request.form.get("origen", type=int) or 0, cliente_id)
     except ValueError as e:
-        return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id, error=str(e)[:300]))
+        return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id, error=_(str(e))[:300]))
     return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id))
 
 
@@ -433,7 +433,7 @@ def periodo():
         else:
             fc.cerrar_periodo(g.tenant_id, g.usuario_id, cliente_id, trimestre)
     except ValueError as e:
-        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=_(str(e))[:300]))
     return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre))
 
 
@@ -460,7 +460,7 @@ def justificante_estado(justificante_id: int):
     try:
         justificantes_mod.cambiar_estado(g.tenant_id, g.usuario_id, justificante_id, request.form.get("estado", ""))
     except ValueError as e:
-        return redirect(url_for("contabilidad.justificantes", cliente_id=request.form.get("cliente_id", type=int), error=str(e)[:300]))
+        return redirect(url_for("contabilidad.justificantes", cliente_id=request.form.get("cliente_id", type=int), error=_(str(e))[:300]))
     return redirect(url_for("contabilidad.justificantes", cliente_id=request.form.get("cliente_id", type=int), estado=request.form.get("filtro") or None))
 
 
@@ -486,8 +486,8 @@ def cierre():
             hecho = cierre_trimestre.cerrar(g.tenant_id, g.usuario_id, cliente_id, trimestre, forzar=bool(request.form.get("forzar")))
         c = cierre_trimestre.checklist(g.tenant_id, g.usuario_id, cliente_id, trimestre)
     except ValueError as e:
-        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, error=str(e)[:300])) if request.method == "GET" else \
-            redirect(url_for("contabilidad.cierre", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, error=_(str(e))[:300])) if request.method == "GET" else \
+            redirect(url_for("contabilidad.cierre", cliente_id=cliente_id, trimestre=trimestre, error=_(str(e))[:300]))
     cliente = next((x for x in _clientes() if x["id"] == cliente_id), None)
     return render_template("contabilidad_cierre.html", c=c, cliente=cliente, cliente_id=cliente_id, trimestre=trimestre, etiqueta=cierre_trimestre.etiqueta(trimestre), hecho=hecho, error=error or _error(),
                            con_fiscal=verticales.esta_activo(g.tenant_id, "fiscal"), subnav=None)
@@ -502,7 +502,7 @@ def exportar():
         desde, hasta = fc.rango_del_trimestre(trimestre) if trimestre else (None, None)
         r = fc.exportar(g.tenant_id, g.usuario_id, cliente_id, desde=desde, hasta=hasta, confirmar_cerrado=request.form.get("confirmo_cerrado") == "1")
     except ValueError as e:
-        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=_(str(e))[:300]))
     return _descarga(r["contenido"])
 
 
@@ -516,7 +516,7 @@ def comprobar():
         desde, hasta = fc.rango_del_trimestre(trimestre) if trimestre else (None, None)
         informe = fc.comprobar_exportacion(g.tenant_id, g.usuario_id, cliente_id, desde=desde, hasta=hasta)
     except ValueError as e:
-        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=str(e)[:300]))
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=_(str(e))[:300]))
     return render_template("contabilidad_chequeo.html", informe=informe, titulo=_("Pre-chequeo de la exportación"), cliente_id=cliente_id, trimestre=trimestre or "")
 
 

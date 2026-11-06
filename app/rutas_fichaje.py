@@ -13,6 +13,7 @@ por querystring (`?tenant_id=`).
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
 from . import ausencias, bolsa_horas, db, fichaje_export, turnos
@@ -98,7 +99,7 @@ def marcar():
     try:
         db.fichar(g.usuario_id, g.tenant_id, tipo, origen="web", latitud=latitud, longitud=longitud)
     except ValueError as e:
-        return redirect(url_for("fichaje.panel", error=str(e)))
+        return redirect(url_for("fichaje.panel", error=_(str(e))))
     return redirect(url_for("fichaje.panel"))
 
 
@@ -247,7 +248,7 @@ def admin_corregir(usuario_id: int):
             creado_por=g.usuario_id, corrige_a=corrige_a, nota=nota, marca_tiempo=marca_tiempo,
         )
     except ValueError as e:
-        return redirect(url_for("fichaje.admin_detalle", usuario_id=usuario_id, error=str(e), **volver))
+        return redirect(url_for("fichaje.admin_detalle", usuario_id=usuario_id, error=_(str(e)), **volver))
     return redirect(url_for("fichaje.admin_detalle", usuario_id=usuario_id, **volver))
 
 
@@ -361,7 +362,7 @@ def solicitar_ausencia():
         ausencias.solicitar(g.tenant_id, g.usuario_id, request.form.get("tipo", ""), request.form.get("desde", ""), request.form.get("hasta") or None,
                             motivo=request.form.get("motivo"), medio_dia="medio_dia" in request.form)
     except ValueError as e:
-        return redirect(url_for("fichaje.mis_ausencias", error=str(e)))
+        return redirect(url_for("fichaje.mis_ausencias", error=_(str(e))))
     return redirect(url_for("fichaje.mis_ausencias", aviso="solicitada"))
 
 
@@ -374,7 +375,7 @@ def cancelar_ausencia(ausencia_id: int):
     try:
         ausencias.cancelar(g.tenant_id, g.usuario_id, ausencia_id)
     except ValueError as e:
-        return redirect(url_for(destino, error=str(e)))
+        return redirect(url_for(destino, error=_(str(e))))
     return redirect(url_for(destino, aviso="cancelada"))
 
 
@@ -399,7 +400,7 @@ def resolver_ausencia(ausencia_id: int):
     try:
         ausencias.resolver(g.tenant_id, g.usuario_id, ausencia_id, request.form.get("decision") == "aprobar", request.form.get("comentario"))
     except ValueError as e:
-        return redirect(url_for("fichaje.ausencias_equipo", error=str(e)))
+        return redirect(url_for("fichaje.ausencias_equipo", error=_(str(e))))
     return redirect(url_for("fichaje.ausencias_equipo", aviso="resuelta"))
 
 
@@ -412,7 +413,7 @@ def registrar_ausencia_de_otra_persona():
         ausencias.solicitar(g.tenant_id, request.form.get("usuario_id", type=int) or 0, request.form.get("tipo", ""), request.form.get("desde", ""), request.form.get("hasta") or None,
                             motivo=request.form.get("motivo"), medio_dia="medio_dia" in request.form, por=g.usuario_id)
     except ValueError as e:
-        return redirect(url_for("fichaje.ausencias_equipo", error=str(e)))
+        return redirect(url_for("fichaje.ausencias_equipo", error=_(str(e))))
     return redirect(url_for("fichaje.ausencias_equipo", aviso="registrada"))
 
 
@@ -428,7 +429,7 @@ def ajustes_ausencias():
         else:
             ausencias.fijar_dias_anuales(g.tenant_id, request.form.get("dias_vacaciones", ""))
     except ValueError as e:
-        return redirect(url_for("fichaje.ausencias_equipo", error=str(e)))
+        return redirect(url_for("fichaje.ausencias_equipo", error=_(str(e))))
     return redirect(url_for("fichaje.ausencias_equipo", aviso="guardado"))
 
 
@@ -468,7 +469,7 @@ def guardar_semana_de_turnos():
     try:
         n = turnos.asignar_semana(g.tenant_id, g.usuario_id, request.form.get("usuario_id", type=int) or 0, lunes, por_dia)
     except ValueError as e:
-        return _volver_a_turnos(lunes, error=str(e))
+        return _volver_a_turnos(lunes, error=_(str(e)))
     return _volver_a_turnos(lunes, aviso=f"guardado-{n}")
 
 
@@ -481,7 +482,7 @@ def copiar_semana_de_turnos():
     try:
         n = turnos.copiar_semana(g.tenant_id, g.usuario_id, request.form.get("desde_lunes", ""), destino, sobrescribir="sobrescribir" in request.form)
     except ValueError as e:
-        return _volver_a_turnos(request.form.get("desde_lunes"), error=str(e))
+        return _volver_a_turnos(request.form.get("desde_lunes"), error=_(str(e)))
     return _volver_a_turnos(destino, aviso=f"copiado-{n}")
 
 
@@ -493,7 +494,7 @@ def crear_tipo_de_turno():
     try:
         turnos.crear_tipo(g.tenant_id, g.usuario_id, request.form.get("nombre", ""), request.form.get("inicio", ""), request.form.get("fin", ""), request.form.get("color"))
     except ValueError as e:
-        return _volver_a_turnos(request.form.get("lunes"), error=str(e))
+        return _volver_a_turnos(request.form.get("lunes"), error=_(str(e)))
     return _volver_a_turnos(request.form.get("lunes"), aviso="tipo-creado")
 
 
@@ -505,7 +506,7 @@ def archivar_tipo_de_turno(turno_id: int):
     try:
         turnos.archivar_tipo(g.tenant_id, g.usuario_id, turno_id)
     except ValueError as e:
-        return _volver_a_turnos(request.form.get("lunes"), error=str(e))
+        return _volver_a_turnos(request.form.get("lunes"), error=_(str(e)))
     return _volver_a_turnos(request.form.get("lunes"), aviso="tipo-archivado")
 
 
@@ -537,5 +538,5 @@ def ajustar_bolsa_de_horas():
         horas = float((request.form.get("horas") or "0").replace(",", "."))
         bolsa_horas.anadir_ajuste(g.tenant_id, g.usuario_id, request.form.get("usuario_id", type=int) or 0, signo * round(horas * 60), request.form.get("motivo", ""), request.form.get("fecha") or None)
     except ValueError as e:
-        return redirect(url_for("fichaje.mi_bolsa_de_horas", error=str(e)))
+        return redirect(url_for("fichaje.mi_bolsa_de_horas", error=_(str(e))))
     return redirect(url_for("fichaje.mi_bolsa_de_horas", aviso="ajustada"))

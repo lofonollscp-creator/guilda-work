@@ -37,7 +37,7 @@ def _accion(f, aviso: str):
     try:
         f()
     except (ValueError, cd.ClaveIncorrecta, cd.DemasiadosIntentos) as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(aviso=aviso)
 
 
@@ -53,7 +53,7 @@ def activar():
     try:
         clave = cd.activar(t, g.usuario_id, request.form.get("frase") or "", request.form.get("nivel") or "medio")
     except ValueError as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     # La clave de recuperación solo se enseña en esta respuesta: no se guarda en claro en ningún sitio ni viaja en una dirección.
     resp = render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], servicio=None, alcances_servicio=cd.ALCANCES_SERVICIO, max_dias_servicio=cd.MAX_DIAS_SERVICIO, correo=correo_cifrado.estado(t), niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave)
     return resp, 200, {"Cache-Control": "no-store"}
@@ -93,7 +93,7 @@ def activar_correo():
     try:
         r = correo_cifrado.activar(t, g.usuario_id, request.form.get("nivel") or None)
     except ValueError as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(aviso=_("Correo cifrado activado: %(n)s mensajes protegidos.", n=r["sellados"]))
 
 
@@ -106,7 +106,7 @@ def nivel():
     try:
         r = cd.cambiar_nivel(t, g.usuario_id, request.form.get("nivel") or "")
     except (ValueError, cd.DespachoBloqueado) as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(aviso=_("Nivel cambiado: %(d)s documentos y %(n)s mensajes actualizados.", d=r["documentos"], n=r["correos"]))
 
 
@@ -119,7 +119,7 @@ def desactivar_correo():
     try:
         n = correo_cifrado.desactivar(t, g.usuario_id)
     except (ValueError, cd.DespachoBloqueado) as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(aviso=_("Correo cifrado desactivado: %(n)s mensajes descifrados.", n=n))
 
 
@@ -132,7 +132,7 @@ def activar_servicio():
     try:
         cd.activar_servicio(t, g.usuario_id, request.form.getlist("alcances"), request.form.get("dias", type=int) or 0)
     except (ValueError, cd.DespachoBloqueado) as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(aviso=_("Tareas programadas autorizadas."))
 
 
@@ -155,7 +155,7 @@ def rotar():
     try:
         clave = cd.rotar_clave(t, g.usuario_id, request.form.get("frase") or "")
     except (ValueError, cd.ClaveIncorrecta, cd.DemasiadosIntentos, cd.ContenidoAlterado) as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return render_template("seguridad_cifrado.html", e=cd.estado(t), accesos=[], concesiones=[], servicio=None, alcances_servicio=cd.ALCANCES_SERVICIO, max_dias_servicio=cd.MAX_DIAS_SERVICIO, correo=correo_cifrado.estado(t), niveles=cd.NIVELES, frase_minima=cd.FRASE_MINIMA, error=None, aviso=None, clave=clave), 200, {"Cache-Control": "no-store"}
 
 
@@ -194,7 +194,7 @@ def vaciar_papelera():
     try:
         r = rgpd.vaciar_papelera(t, g.usuario_id, request.form.get("dias", type=int) if request.form.get("dias") not in (None, "") else -1)
     except ValueError as e:
-        return redirect(url_for("seguridad.privacidad", error=str(e)))
+        return redirect(url_for("seguridad.privacidad", error=_(str(e))))
     aviso = _("Papelera vaciada: %(d)s documentos, %(p)s plazos y %(h)s partes de horas.", d=r["documentos"], p=r["plazos"], h=r["partes_tiempo"])
     if r.get("trabajadores_cliente"):
         aviso += " " + _("También %(n)s trabajadores de clientes.", n=r["trabajadores_cliente"])

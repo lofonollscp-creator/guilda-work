@@ -1718,7 +1718,7 @@ def procesar_importacion():
         else:
             resumen = importador.importar_json(g.usuario_id, contenido)
     except importador.ErrorImportacion as e:
-        return render_template("importar.html", resumen=None, error=str(e))
+        return render_template("importar.html", resumen=None, error=_(str(e)))
 
     return render_template("importar.html", resumen=resumen, error=None)
 

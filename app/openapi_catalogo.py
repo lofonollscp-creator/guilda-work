@@ -559,7 +559,7 @@ ESQUEMAS.update({
 RESPUESTAS.update({
     "provision_asunto_api": ("ProvisionAsunto", False), "partes_asunto_api": ("ParteAsunto", True), "agenda_vistas_api": ("VistaAgenda", True), "comprobar_conflicto_api": ("ResultadoConflicto", False),
     "listar_inmuebles_api": ("InmuebleResumen", True), "cruces_demanda_api": ("CruceDemanda", True), "agenda_visitas_api": ("VisitaAgenda", True), "resumen_agencia_api": ("ResumenAgencia", False),
-    "mensajes_asunto_api": ("HiloMensajes", False), "mensajes_inmueble_api": ("HiloMensajes", False), "responder_asunto_api": ("Identificador", False), "responder_inmueble_api": ("Identificador", False),
+    "mensajes_asunto_api": ("HiloMensajes", False), "mensajes_inmueble_api": ("HiloMensajes", False), "responder_asunto_api": ("Identificador", False), "resultado_visita_api": ("Identificador", False), "estado_vista_api": ("Identificador", False), "responder_inmueble_api": ("Identificador", False),
     "comprobar_certificado_api": ("Certificado", False),
 })
 
@@ -593,8 +593,9 @@ ESQUEMAS.update({
                                                            "subcuentas_nuevas": {"type": "array", "items": {"type": "object", "properties": {"tipo": _S, "nif": _S, "cuenta": _S, "nombre": _SN}}}}},
     "ExportacionContable": {"type": "object", "properties": {"lote": {**_I, "description": "Descárgalo con GET /contabilidad/lotes/{id}/fichero."}, "cliente": _S, "facturas": _I, "registros": _I,
                                                             "avisos": {"type": "array", "items": _S}}},
+    "SubidaArchivosContables": {"type": "object", "properties": {"ids": {"type": "array", "items": _I, "description": "Facturas creadas, pendientes de leer."}, "repetidas": {**_I, "description": "Archivos que ya estaban enviados y no se anotan otra vez."}}},
 })
-RESPUESTAS.update({"listar_facturas_contables_api": ("FacturaContable", True), "ver_factura_contable_api": ("FacturaContableDetalle", False), "anotar_factura_contable_api": ("FacturaContableDetalle", False),
+RESPUESTAS.update({"subir_archivos_contables_api": ("SubidaArchivosContables", False), "listar_facturas_contables_api": ("FacturaContable", True), "ver_factura_contable_api": ("FacturaContableDetalle", False), "anotar_factura_contable_api": ("FacturaContableDetalle", False),
                    "estado_factura_contable_api": ("FacturaContableDetalle", False), "leer_factura_contable_api": ("FacturaContableDetalle", False), "resumen_contabilidad_api": ("ResumenContabilidad", False),
                    "comprobar_exportacion_api": ("ChequeoExportacion", False), "exportar_contabilidad_api": ("ExportacionContable", False)})
 BINARIAS["fichero_del_lote_api"] = "application/octet-stream"

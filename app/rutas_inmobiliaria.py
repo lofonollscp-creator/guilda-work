@@ -83,7 +83,7 @@ def fase(inmueble_id: int):
     try:
         nucleo.cambiar_estado_expediente(g.tenant_id, g.usuario_id, x["id"], request.form.get("estado", ""), _sup())
     except ValueError as e:
-        return redirect(url_for("inmobiliaria.tablero", error=str(e)[:300]))
+        return redirect(url_for("inmobiliaria.tablero", error=_(str(e))[:300]))
     return redirect(url_for("inmobiliaria.tablero", operacion=request.form.get("operacion") or None))
 
 
@@ -364,7 +364,7 @@ def demanda_estado(demanda_id: int):
     try:
         inmobiliaria.cambiar_estado_demanda(g.tenant_id, demanda_id, request.form.get("estado", ""))
     except ValueError as e:
-        return redirect(url_for("inmobiliaria.demanda", demanda_id=demanda_id, error=str(e)[:300]))
+        return redirect(url_for("inmobiliaria.demanda", demanda_id=demanda_id, error=_(str(e))[:300]))
     return redirect(url_for("inmobiliaria.demanda", demanda_id=demanda_id))
 
 
@@ -374,7 +374,7 @@ def demanda_visita(demanda_id: int):
     try:
         inmobiliaria.crear_visita(g.tenant_id, g.usuario_id, _entero(request.form.get("inmueble_id")) or 0, request.form.get("fecha_hora", ""), demanda_id=demanda_id, supervisor=_sup())
     except ValueError as e:
-        return redirect(url_for("inmobiliaria.demanda", demanda_id=demanda_id, error=str(e)[:300]))
+        return redirect(url_for("inmobiliaria.demanda", demanda_id=demanda_id, error=_(str(e))[:300]))
     return redirect(url_for("inmobiliaria.demanda", demanda_id=demanda_id))
 
 
@@ -408,7 +408,7 @@ def ajustes():
             inmobiliaria.guardar_ajustes(t, iva_pct=f.get("iva_pct"), comision_venta_pct=f.get("comision_venta_pct", ""), comision_alquiler_meses=f.get("comision_alquiler_meses", ""),
                                          minimo_centimos=nucleo.importe_a_centimos(f.get("minimo") or "0"), plantillas={k: f.get(f"plantilla_{k}", "") for k in inmobiliaria.CAMPOS_PLANTILLA})
         except ValueError as e:
-            return redirect(url_for("inmobiliaria.ajustes", error=str(e)[:300]))
+            return redirect(url_for("inmobiliaria.ajustes", error=_(str(e))[:300]))
         return redirect(url_for("inmobiliaria.ajustes", guardado=1))
     return render_template("inmobiliaria_ajustes.html", a=inmobiliaria.obtener_ajustes(t), tipos_contrato=inmobiliaria.TIPOS_CONTRATO, puede_editar=_sup(), error=_err(), guardado=request.args.get("guardado"), seccion="ajustes")
 

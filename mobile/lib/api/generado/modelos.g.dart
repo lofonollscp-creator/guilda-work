@@ -5201,6 +5201,23 @@ class Sincronizacion {
   @override int get hashCode => Object.hashAll([cursor, hayMas, reiniciar, cambios, eliminados]);
 }
 
+class SubidaArchivosContables {
+  final List<int>? ids;
+  final int? repetidas;
+  const SubidaArchivosContables({this.ids, this.repetidas, });
+  factory SubidaArchivosContables.fromJson(Map<String, dynamic> j) => SubidaArchivosContables(
+    ids: j['ids'] == null ? null : (j['ids'] as List).map((e) => (e as num).toInt()).toList(),
+    repetidas: j['repetidas'] == null ? null : (j['repetidas'] as num).toInt(),
+  );
+  Map<String, dynamic> toJson() => {
+    if (ids != null) 'ids': ids!.map((e) => e).toList(),
+    'repetidas': ?repetidas,
+  };
+  SubidaArchivosContables copyWith({List<int>? ids, int? repetidas, }) => SubidaArchivosContables(ids: ids ?? this.ids, repetidas: repetidas ?? this.repetidas, );
+  @override bool operator ==(Object other) => other is SubidaArchivosContables && other.ids == ids && other.repetidas == repetidas;
+  @override int get hashCode => Object.hashAll([ids, repetidas]);
+}
+
 class SubtareasDeTarea {
   final List<Map<String, dynamic>>? subtareas;
   final Map<String, dynamic>? progreso;

@@ -127,3 +127,25 @@ def test_comprobar_certificado_por_api(cliente):
     resp = cliente.post(f"/api/v1/certificados/{r['id']}/comprobar", headers=h)
     assert resp.status_code == 400 and resp.get_json()["codigo"] == "certificado_no_valido"
     assert cliente.post(f"/api/v1/certificados/{r['id']}/comprobar").status_code == 401
+
+
+def test_resultado_de_visita_y_estado_de_senalamiento_por_api(cliente):
+    h, t, u = _despacho(cliente, "agenciaresultado@ejemplo.com", "inmobiliaria")
+    prop = nucleo.crear_cliente(t, "Propietario", nif="12345678Z")
+    i, x = im.crear_inmueble(t, u, prop, "venta", "Calle Dos 2", municipio="Madrid", tipo="piso", precio="200.000")
+    v = im.crear_visita(t, u, i, (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%dT12:00"), visitante="Visitante")
+    r = cliente.post(f"/api/v1/inmobiliaria/visitas/{v}/resultado", json={"estado": "realizada", "valoracion": 4, "interes": "alto", "comentario": "Le gustó"}, headers=h)
+    assert r.status_code == 200 and r.get_json()["data"]["id"] == v
+    assert cliente.get("/api/v1/inmobiliaria/visitas", headers=h).get_json()["data"] == []          # ya no está prevista
+    assert cliente.post(f"/api/v1/inmobiliaria/visitas/{v}/resultado", json={"estado": "rara"}, headers=h).status_code == 400
+    assert cliente.post(f"/api/v1/inmobiliaria/visitas/{v}/resultado", json={"estado": "realizada", "valoracion": 9}, headers=h).status_code == 400
+    assert cliente.post("/api/v1/inmobiliaria/visitas/99999/resultado", json={"estado": "realizada"}, headers=h).status_code in (400, 404)
+
+    h2, t2, u2 = _despacho(cliente, "bufeteestado@ejemplo.com", "abogados")
+    c = nucleo.crear_cliente(t2, "Cliente Dos", nif="B12345678")
+    x = nucleo.crear_expediente(t2, u2, c, "Reclamación", tipo="procedimiento_judicial")
+    vista = ab.crear_vista(t2, u2, x, (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%dT10:00"), "juicio", "Sala 1")
+    assert cliente.post(f"/api/v1/abogados/vistas/{vista}/estado", json={"estado": "celebrada"}, headers=h2).status_code == 200
+    assert cliente.get("/api/v1/abogados/vistas?dias=10", headers=h2).get_json()["data"] == []
+    assert cliente.post(f"/api/v1/abogados/vistas/{vista}/estado", json={"estado": "nunca"}, headers=h2).status_code == 400
+    assert cliente.post(f"/api/v1/abogados/vistas/{vista}/estado", json={"estado": "celebrada"}, headers=h).status_code == 404      # otro despacho / sin módulo

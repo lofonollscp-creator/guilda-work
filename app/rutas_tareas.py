@@ -1249,7 +1249,7 @@ def crear_regla_vencimiento():
             estimacion_min=quickadd.duracion_a_minutos(request.form.get("estimacion")), prioridad=request.form.get("prioridad", "normal"),
         )
     except ValueError as e:
-        return redirect(url_for("tareas.recurrentes", error=str(e)))
+        return redirect(url_for("tareas.recurrentes", error=_(str(e))))
     db.generar_tareas_por_vencimiento(regla_id=regla_id)
     return redirect(url_for("tareas.recurrentes"))
 
@@ -1325,7 +1325,7 @@ def importar_archivo():
         else:
             resumen = outlook_ics.importar_ics(g.usuario_id, contenido)
     except outlook_ics.ErrorSincronizacionOutlook as e:
-        return render_template("tareas_outlook_sync.html", resumen=None, error=str(e))
+        return render_template("tareas_outlook_sync.html", resumen=None, error=_(str(e)))
 
     return render_template("tareas_outlook_sync.html", resumen=resumen, error=None)
 
@@ -1366,7 +1366,7 @@ def automatizaciones_nueva():
     try:
         automatizaciones.crear_regla(g.tenant_id, g.usuario_id, p["nombre"], p["disparador"], p["condiciones"], p["acciones"])
     except ValueError as e:
-        return redirect(url_for("tareas.automatizaciones_lista", error=str(e)))
+        return redirect(url_for("tareas.automatizaciones_lista", error=_(str(e))))
     return redirect(url_for("tareas.automatizaciones_lista"))
 
 
@@ -1413,7 +1413,7 @@ def automatizaciones_regla_nueva():
         condiciones, acciones = automatizaciones.formulario_a_regla(request.form, disparador)
         automatizaciones.crear_regla(g.tenant_id, g.usuario_id, request.form.get("nombre", ""), disparador, condiciones, acciones, activa=bool(request.form.get("activa")))
     except ValueError as e:
-        return _pagina_constructor(_valores_de_formulario(request.form, disparador), error=str(e))
+        return _pagina_constructor(_valores_de_formulario(request.form, disparador), error=_(str(e)))
     return redirect(url_for("tareas.automatizaciones_lista"))
 
 
@@ -1431,7 +1431,7 @@ def automatizaciones_regla_editar(regla_id: int):
         condiciones, acciones = automatizaciones.formulario_a_regla(request.form, regla["disparador"])      # el disparador no se cambia: lo guardado manda
         automatizaciones.cambiar_regla(g.tenant_id, g.usuario_id, regla_id, nombre=request.form.get("nombre", ""), condiciones=condiciones, acciones=acciones, activa=bool(request.form.get("activa")))
     except ValueError as e:
-        return _pagina_constructor(_valores_de_formulario(request.form, regla["disparador"]), regla_id, error=str(e))
+        return _pagina_constructor(_valores_de_formulario(request.form, regla["disparador"]), regla_id, error=_(str(e)))
     return redirect(url_for("tareas.automatizaciones_lista"))
 
 
@@ -1452,7 +1452,7 @@ def automatizaciones_cambiar(regla_id: int):
     try:
         automatizaciones.cambiar_regla(g.tenant_id, g.usuario_id, regla_id, **cambios)
     except ValueError as e:
-        return redirect(url_for("tareas.automatizaciones_lista", error=str(e)))
+        return redirect(url_for("tareas.automatizaciones_lista", error=_(str(e))))
     return redirect(url_for("tareas.automatizaciones_lista"))
 
 

@@ -22127,3 +22127,1284 @@ msgstr "Text size"
 
 msgid "Se guarda solo en este navegador."
 msgstr "It is saved only in this browser."
+
+msgid "Solo los custodios de certificados y los supervisores del despacho pueden hacer esto."
+msgstr "Only certificate custodians and office supervisors can do this."
+
+msgid "Solo un supervisor del despacho puede designar custodios."
+msgstr "Only an office supervisor can appoint custodians."
+
+msgid "Esa huella no corresponde a ningún certificado del archivo."
+msgstr "That fingerprint does not match any certificate in the archive."
+
+msgid "Indica sujeto, emisor y número de serie."
+msgstr "Enter the subject, issuer and serial number."
+
+msgid "Indica la evidencia de la que salen estos datos (por ejemplo, «captura del portal del emisor, 13/10/2026»)."
+msgstr "Enter the evidence these details come from (for example, “screenshot of the issuer's portal, 13/10/2026”)."
+
+msgid "Dimensión o resultado no válidos."
+msgstr "Invalid dimension or result."
+
+msgid "No existe ese certificado."
+msgstr "That certificate does not exist."
+
+msgid "Este certificado se dio de alta a mano: no hay archivo que comprobar. Impórtalo para poder hacerlo automáticamente."
+msgstr "This certificate was added manually: there is no file to check. Import it to be able to check it automatically."
+
+msgid "Estado operativo no válido."
+msgstr "Invalid operating status."
+
+msgid "Un certificado sustituido o archivado ya no se puede reactivar: importa el vigente."
+msgstr "A replaced or archived certificate can no longer be reactivated: import the current one."
+
+msgid "No se puede autorizar un certificado caducado."
+msgstr "An expired certificate cannot be authorised."
+
+msgid "Indica el motivo."
+msgstr "Enter the reason."
+
+msgid "Servicio no válido."
+msgstr "Invalid service."
+
+msgid "Indica la autorización o representación que permite este uso."
+msgstr "Enter the authorisation or representation that allows this use."
+
+msgid "La autorización no puede acabar antes de empezar."
+msgstr "The authorisation cannot end before it starts."
+
+msgid "No existe esa renovación."
+msgstr "That renewal does not exist."
+
+msgid "Primero pasa la renovación a «en gestión» (o «pendiente del titular»)."
+msgstr "First move the renewal to “in progress” (or “waiting for the holder”)."
+
+msgid "Ese es el mismo certificado que se quiere renovar."
+msgstr "That is the same certificate that is being renewed."
+
+msgid "El resultado debe ser «correcta» o «fallida»."
+msgstr "The result must be “successful” or “failed”."
+
+msgid "Falta el certificado nuevo."
+msgstr "The new certificate is missing."
+
+msgid "Elige un tipo de certificado."
+msgstr "Choose a certificate type."
+
+msgid "Indica cuándo caduca (o la fecha de emisión, para que la calculemos)."
+msgstr "Enter when it expires (or the issue date, so we can work it out)."
+
+msgid "La caducidad no puede ser anterior a la emisión."
+msgstr "The expiry date cannot be earlier than the issue date."
+
+msgid "Ese certificado ya está sustituido o archivado."
+msgstr "That certificate has already been replaced or archived."
+
+msgid "La nueva caducidad tiene que ser posterior a la del certificado actual."
+msgstr "The new expiry date must be later than that of the current certificate."
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar los avisos a clientes."
+msgstr "Only the office management (supervisors) can change the notices sent to clients."
+
+msgid "Para usar tu propio texto rellena el asunto y el mensaje (o deja los dos vacíos)."
+msgstr "To use your own text, fill in both the subject and the message (or leave both empty)."
+
+msgid "Este certificado no está asociado a un cliente."
+msgstr "This certificate is not linked to a client."
+
+msgid "El cliente no tiene correo en su ficha: añádelo para poder avisarle."
+msgstr "The client has no email on their record: add one so you can notify them."
+
+msgid "El correo saliente no está configurado en el servidor."
+msgstr "Outgoing email is not configured on the server."
+
+msgid "El archivo no es un certificado público válido (se esperaba PEM o DER)."
+msgstr "The file is not a valid public certificate (PEM or DER expected)."
+
+msgid "El certificado que se sustituye no existe."
+msgstr "The certificate being replaced does not exist."
+
+msgid "Las fechas deben tener el formato AAAA-MM-DD."
+msgstr "Dates must use the format YYYY-MM-DD."
+
+msgid "No existe ese cliente en tu despacho."
+msgstr "That client does not exist in your office."
+
+msgid "Ese uso ya está registrado para este certificado."
+msgstr "That use is already registered for this certificate."
+
+msgid "No existe ese uso activo."
+msgstr "That active use does not exist."
+
+msgid "Ese certificado ya tiene una renovación en curso."
+msgstr "That certificate already has a renewal in progress."
+
+msgid "Valida primero el certificado nuevo."
+msgstr "Validate the new certificate first."
+
+msgid "Ese uso no es un servicio activo del certificado que se renueva."
+msgstr "That use is not an active service of the certificate being renewed."
+
+msgid "Esa renovación ya está terminada."
+msgstr "That renewal is already finished."
+
+msgid "Para marcar «obtenido» hay que importar el certificado nuevo (solo la parte pública)."
+msgstr "To mark it as “obtained” you must import the new certificate (public part only)."
+
+msgid "Este certificado no tiene servicios registrados: confirma expresamente que no hay nada que implantar."
+msgstr "This certificate has no registered services: expressly confirm that there is nothing to deploy."
+
+msgid "Indica a quién pertenece: elige un cliente o escribe el nombre del titular."
+msgstr "Enter who it belongs to: choose a client or type the holder's name."
+
+msgid "El NIF/CIF/NIE no tiene un formato válido."
+msgstr "The NIF/CIF/NIE does not have a valid format."
+
+msgid "Este certificado se importó de un archivo: su titular, tipo, fechas y serie salen del propio certificado y no se editan."
+msgstr "This certificate was imported from a file: its holder, type, dates and serial come from the certificate itself and cannot be edited."
+
+msgid "Ese certificado renovado ya está apuntado."
+msgstr "That renewed certificate is already recorded."
+
+msgid "Tipo de titular no válido."
+msgstr "Invalid holder type."
+
+msgid "El titular no puede quedar vacío."
+msgstr "The holder cannot be empty."
+
+msgid "El reparto debe sumar el 100 %."
+msgstr "The split must add up to 100%."
+
+msgid "Algún valor está fuera de rango (IVA 0-30 %, comisión de venta 0-25 %, alquiler hasta 12 mensualidades)."
+msgstr "A value is out of range (VAT 0–30%, sales commission 0–25%, rent up to 12 months)."
+
+msgid "Elige si es una venta o un alquiler."
+msgstr "Choose whether it is a sale or a rental."
+
+msgid "Tipo de inmueble no válido."
+msgstr "Invalid property type."
+
+msgid "Indica la dirección del inmueble."
+msgstr "Enter the property address."
+
+msgid "Certificado energético no válido."
+msgstr "Invalid energy certificate."
+
+msgid "Inmueble no encontrado."
+msgstr "Property not found."
+
+msgid "El precio debe ser mayor que cero."
+msgstr "The price must be greater than zero."
+
+msgid "Elige si busca comprar o alquilar."
+msgstr "Choose whether they want to buy or rent."
+
+msgid "El presupuesto mínimo no puede ser mayor que el máximo."
+msgstr "The minimum budget cannot be higher than the maximum."
+
+msgid "Interés no válido."
+msgstr "Invalid interest."
+
+msgid "Visita no encontrada."
+msgstr "Visit not found."
+
+msgid "El importe de la oferta debe ser mayor que cero."
+msgstr "The offer amount must be greater than zero."
+
+msgid "Oferta no encontrada."
+msgstr "Offer not found."
+
+msgid "Tipo de contrato no válido."
+msgstr "Invalid contract type."
+
+msgid "Indica el nombre de la otra parte."
+msgstr "Enter the other party's name."
+
+msgid "No se pudo guardar el contrato."
+msgstr "The contract could not be saved."
+
+msgid "Contrato no encontrado."
+msgstr "Contract not found."
+
+msgid "La base de la comisión debe ser mayor que cero."
+msgstr "The commission base must be greater than zero."
+
+msgid "Porcentaje o IVA fuera de rango."
+msgstr "Percentage or VAT out of range."
+
+msgid "No se pudo guardar la foto."
+msgstr "The photo could not be saved."
+
+msgid "IVA, comisión y mínimo deben ser números."
+msgstr "VAT, commission and minimum must be numbers."
+
+msgid "Una plantilla de contrato es demasiado larga."
+msgstr "A contract template is too long."
+
+msgid "Demanda no encontrada."
+msgstr "Request not found."
+
+msgid "La fecha y la hora de la visita no son válidas."
+msgstr "The date and time of the visit are not valid."
+
+msgid "Indica quién hace la visita."
+msgstr "Enter who is making the visit."
+
+msgid "La valoración debe ser de 1 a 5."
+msgstr "The rating must be from 1 to 5."
+
+msgid "Indica quién hace la oferta."
+msgstr "Enter who is making the offer."
+
+msgid "El porcentaje y el IVA deben ser números."
+msgstr "The percentage and VAT must be numbers."
+
+msgid "Calcula antes la comisión."
+msgstr "Calculate the commission first."
+
+msgid "El archivo no es una imagen válida."
+msgstr "The file is not a valid image."
+
+msgid "La dirección no puede quedar vacía."
+msgstr "The address cannot be empty."
+
+msgid "La serie de las minutas son hasta 8 letras o números (por ejemplo M)."
+msgstr "The invoice series can be up to 8 letters or digits (for example M)."
+
+msgid "Algún valor está fuera de rango (IVA y retención 0-30 %, bloque 0-60 min)."
+msgstr "A value is out of range (VAT and withholding 0–30%, block 0–60 min)."
+
+msgid "La hoja de encargo es demasiado larga."
+msgstr "The engagement letter is too long."
+
+msgid "Rol no válido."
+msgstr "Invalid role."
+
+msgid "Indica el nombre de la parte."
+msgstr "Enter the party's name."
+
+msgid "Tipo de vista no válido."
+msgstr "Invalid hearing type."
+
+msgid "Señalamiento no encontrado."
+msgstr "Hearing date not found."
+
+msgid "El plazo debe estar entre 1 y 366."
+msgstr "The period must be between 1 and 366."
+
+msgid "Tipo de resolución no válido."
+msgstr "Invalid ruling type."
+
+msgid "Tipo de movimiento no válido."
+msgstr "Invalid movement type."
+
+msgid "El importe debe ser mayor que cero."
+msgstr "The amount must be greater than zero."
+
+msgid "Indica el concepto."
+msgstr "Enter the description."
+
+msgid "Minuta no encontrada."
+msgstr "Fee note not found."
+
+msgid "La minuta ya está emitida: no se puede modificar."
+msgstr "The fee note has already been issued: it cannot be changed."
+
+msgid "Tipo de línea no válido."
+msgstr "Invalid line type."
+
+msgid "IVA y retención entre 0 y 30 %."
+msgstr "VAT and withholding between 0 and 30%."
+
+msgid "No se pudo guardar la hoja de encargo."
+msgstr "The engagement letter could not be saved."
+
+msgid "IVA, retención, bloque de minutos y provisión mínima deben ser números."
+msgstr "VAT, withholding, minute block and minimum retainer must be numbers."
+
+msgid "La cuantía no puede ser negativa."
+msgstr "The amount in dispute cannot be negative."
+
+msgid "La fecha y la hora de la vista no son válidas."
+msgstr "The date and time of the hearing are not valid."
+
+msgid "No hay horas facturables ni suplidos pendientes en este asunto."
+msgstr "There are no billable hours or pending disbursements on this matter."
+
+msgid "El IVA y la retención deben ser números."
+msgstr "VAT and withholding must be numbers."
+
+msgid "La minuta no tiene líneas."
+msgstr "The fee note has no lines."
+
+msgid "El total de la minuta debe ser mayor que cero."
+msgstr "The fee note total must be greater than zero."
+
+msgid "Esa minuta no admite este cambio."
+msgstr "That fee note does not allow this change."
+
+msgid "Jurisdicción no válida."
+msgstr "Invalid jurisdiction."
+
+msgid "La cuantía no es un importe válido."
+msgstr "The amount in dispute is not a valid amount."
+
+msgid "Los importes se escriben en positivo; para un abono marca «Es un abono»."
+msgstr "Enter amounts as positive numbers; for a credit note tick “This is a credit note”."
+
+msgid "El importe es demasiado grande."
+msgstr "The amount is too large."
+
+msgid "Un porcentaje debe estar entre 0 y 100."
+msgstr "A percentage must be between 0 and 100."
+
+msgid "Elige un trimestre válido."
+msgstr "Choose a valid quarter."
+
+msgid "El código de empresa de a3 tiene como máximo 5 dígitos."
+msgstr "The a3 company code has at most 5 digits."
+
+msgid "Los dígitos de las subcuentas deben estar entre 4 y 12."
+msgstr "Sub-account digits must be between 4 and 12."
+
+msgid "Elige un régimen de IVA de la lista."
+msgstr "Choose a VAT regime from the list."
+
+msgid "La retención por defecto debe estar entre 0 y 60 %."
+msgstr "The default withholding must be between 0 and 60%."
+
+msgid "Indica si la regla es de un proveedor o de un cliente."
+msgstr "Say whether the rule is for a supplier or a customer."
+
+msgid "Indica el NIF del proveedor o cliente al que se aplica la regla."
+msgstr "Enter the tax ID of the supplier or customer the rule applies to."
+
+msgid "La cuenta de gasto o ingreso debe tener entre 3 y 12 dígitos."
+msgstr "The expense or income account must have between 3 and 12 digits."
+
+msgid "Añade al menos una línea con la base imponible y el IVA."
+msgstr "Add at least one line with the taxable base and VAT."
+
+msgid "Indica si es una factura emitida o recibida."
+msgstr "Say whether it is an issued or a received invoice."
+
+msgid "Indica el nombre del proveedor o cliente de la factura."
+msgstr "Enter the name of the invoice's supplier or customer."
+
+msgid "Indica el número de factura."
+msgstr "Enter the invoice number."
+
+msgid "Esa factura ya se exportó: no se puede cambiar. Si hace falta corregirla, reábrela antes."
+msgstr "That invoice has already been exported: it cannot be changed. If it needs correcting, reopen it first."
+
+msgid "Indica antes el código de empresa de a3 de este cliente."
+msgstr "First enter this client's a3 company code."
+
+msgid "No hay facturas revisadas pendientes de exportar en ese periodo."
+msgstr "There are no reviewed invoices waiting to be exported in that period."
+
+msgid "Tienes muchas facturas pendientes de revisar: espera a que el despacho las procese."
+msgstr "You have many invoices waiting for review: wait for the office to process them."
+
+msgid "Indica el total de la factura."
+msgstr "Enter the invoice total."
+
+msgid "Indica si son facturas emitidas o recibidas."
+msgstr "Say whether they are issued or received invoices."
+
+msgid "El correo saliente de la plataforma no está configurado: no se puede avisar a los clientes."
+msgstr "The platform's outgoing email is not configured: clients cannot be notified."
+
+msgid "Los dígitos de las subcuentas deben ser un número."
+msgstr "Sub-account digits must be a number."
+
+msgid "Solo se puede revisar una factura pendiente."
+msgstr "Only a pending invoice can be reviewed."
+
+msgid "Esta factura ya tiene un apunte en Guilda Fiscal: anúlalo antes de sacarla."
+msgstr "This invoice already has an entry in Guilda Fiscal: cancel it before removing the invoice."
+
+msgid "Con tu rol solo puedes consultar los expedientes."
+msgstr "With your role you can only view cases."
+
+msgid "Solo la dirección o un revisor fiscal puede reabrir un expediente cerrado."
+msgstr "Only management or a tax reviewer can reopen a closed case."
+
+msgid "Ese tipo de expediente no existe."
+msgstr "That case type does not exist."
+
+msgid "Prioridad no válida: baja, normal, alta o urgente."
+msgstr "Invalid priority: low, normal, high or urgent."
+
+msgid "No existe esa obligación."
+msgstr "That obligation does not exist."
+
+msgid "Asocia primero el certificado a un cliente (en «Datos») para abrir su expediente."
+msgstr "First link the certificate to a client (under “Details”) to open its case."
+
+msgid "Escribe el punto de la lista."
+msgstr "Write the checklist item."
+
+msgid "El punto parece contener un secreto: no se guardan contraseñas ni claves."
+msgstr "The item seems to contain a secret: passwords and keys are not stored."
+
+msgid "No existe ese punto."
+msgstr "That item does not exist."
+
+msgid "Ya hay una versión más reciente de este documento."
+msgstr "There is already a newer version of this document."
+
+msgid "Ese archivo es idéntico a uno que ya está en el expediente."
+msgstr "That file is identical to one already in the case."
+
+msgid "No existe esa oficina."
+msgstr "That office does not exist."
+
+msgid "Esa persona no pertenece al despacho."
+msgstr "That person does not belong to the office."
+
+msgid "La nota parece contener un secreto: no se guardan contraseñas ni claves."
+msgstr "The note seems to contain a secret: passwords and keys are not stored."
+
+msgid "Solo la dirección o un revisor fiscal puede quitar un punto obligatorio."
+msgstr "Only management or a tax reviewer can remove a mandatory item."
+
+msgid "Solo la dirección o un revisor fiscal puede autorizar una excepción para cerrar."
+msgstr "Only management or a tax reviewer can authorise an exception to close."
+
+msgid "La fecha objetivo debe tener el formato AAAA-MM-DD."
+msgstr "The target date must use the format YYYY-MM-DD."
+
+msgid "El revisor no pertenece al despacho."
+msgstr "The reviewer does not belong to the office."
+
+msgid "El revisor y el responsable deben ser personas distintas."
+msgstr "The reviewer and the person in charge must be different people."
+
+msgid "La fecha debe tener el formato AAAA-MM-DD."
+msgstr "The date must use the format YYYY-MM-DD."
+
+msgid "Disparador no válido."
+msgstr "Invalid trigger."
+
+msgid "La regla necesita al menos una acción."
+msgstr "The rule needs at least one action."
+
+msgid "No se puede pedir la revisión de una tarea ya completada: elige otro estado o quita esa acción."
+msgstr "A review cannot be requested for a task that is already completed: choose another status or remove that action."
+
+msgid "La tarea ya está en revisión cuando se activa esta regla: no se puede pedir otra revisión. Elige otro estado o quita esa acción."
+msgstr "The task is already under review when this rule fires: another review cannot be requested. Choose another status or remove that action."
+
+msgid "Solo la dirección del despacho gestiona las automatizaciones."
+msgstr "Only the office management manages automations."
+
+msgid "La regla necesita un nombre."
+msgstr "The rule needs a name."
+
+msgid "Elige a qué etapa tiene que pasar la oportunidad."
+msgstr "Choose which stage the opportunity should move to."
+
+msgid "Acción no válida."
+msgstr "Invalid action."
+
+msgid "Esa acción actúa sobre la tarea del disparador, así que solo vale cuando el disparador es una tarea."
+msgstr "That action acts on the trigger's task, so it only works when the trigger is a task."
+
+msgid "El destinatario no es válido."
+msgstr "The recipient is not valid."
+
+msgid "Esa etapa no existe en tu embudo."
+msgstr "That stage does not exist in your pipeline."
+
+msgid "Ese tipo de expediente no está disponible para tu despacho."
+msgstr "That case type is not available for your office."
+
+msgid "Ese estado no existe para ese tipo de expediente."
+msgstr "That status does not exist for that case type."
+
+msgid "El cliente elegido no es de tu despacho."
+msgstr "The chosen client is not from your office."
+
+msgid "Elige a qué estado tiene que pasar la tarea."
+msgstr "Choose which status the task should move to."
+
+msgid "Elige a qué estado tiene que pasar el expediente."
+msgstr "Choose which status the case should move to."
+
+msgid "El tipo de expediente no es válido."
+msgstr "The case type is not valid."
+
+msgid "La tarea que se crea necesita un asunto."
+msgstr "The task being created needs a subject."
+
+msgid "Una de las personas elegidas no es de tu despacho."
+msgstr "One of the chosen people is not from your office."
+
+msgid "El aviso necesita un título."
+msgstr "The notice needs a title."
+
+msgid "El comentario necesita un texto."
+msgstr "The comment needs some text."
+
+msgid "El importe no es válido."
+msgstr "The amount is not valid."
+
+msgid "Indica el nombre del cliente."
+msgstr "Enter the client's name."
+
+msgid "El nombre es demasiado largo (máx. 200 caracteres)."
+msgstr "The name is too long (max. 200 characters)."
+
+msgid "El tipo de cliente debe ser «persona» o «empresa»."
+msgstr "The client type must be “person” or “company”."
+
+msgid "Idioma no válido."
+msgstr "Invalid language."
+
+msgid "Indica el nombre de la persona de contacto."
+msgstr "Enter the contact person's name."
+
+msgid "Elige dos clientes distintos."
+msgstr "Choose two different clients."
+
+msgid "Indica el título del expediente."
+msgstr "Enter the case title."
+
+msgid "Ese estado no existe para este tipo de expediente."
+msgstr "That status does not exist for this case type."
+
+msgid "Escribe la nota."
+msgstr "Write the note."
+
+msgid "Indica el nombre del festivo."
+msgstr "Enter the holiday's name."
+
+msgid "Indica qué plazo es."
+msgstr "Say which deadline it is."
+
+msgid "Describe en qué se ha empleado el tiempo."
+msgstr "Describe what the time was spent on."
+
+msgid "El tiempo debe ser mayor que cero y de menos de 24 horas."
+msgstr "The time must be greater than zero and under 24 hours."
+
+msgid "No se puede registrar tiempo de una fecha futura."
+msgstr "Time cannot be logged for a future date."
+
+msgid "Agrupa por usuario, cliente o expediente."
+msgstr "Group by user, client or case."
+
+msgid "Los avisos son números de días separados por comas (por ejemplo 7,3,1)."
+msgstr "Notices are numbers of days separated by commas (for example 7,3,1)."
+
+msgid "La revisión tiene que hacerla otra persona distinta de quien creó el plazo."
+msgstr "The review must be done by someone other than the person who created the deadline."
+
+msgid "El título no puede quedar vacío."
+msgstr "The title cannot be empty."
+
+msgid "El nombre no puede quedar vacío."
+msgstr "The name cannot be empty."
+
+msgid "Ponle un nombre a la oficina."
+msgstr "Give the office a name."
+
+msgid "Indica a una oficina o a una persona (una sola)."
+msgstr "Specify an office or a person (only one)."
+
+msgid "Nivel no válido."
+msgstr "Invalid level."
+
+msgid "Rol o alcance no válidos."
+msgstr "Invalid role or scope."
+
+msgid "Un coordinador lo es de una oficina."
+msgstr "A coordinator is the coordinator of one office."
+
+msgid "El revisor fiscal lo es de toda la organización."
+msgstr "The tax reviewer covers the whole organisation."
+
+msgid "Ya hay una oficina con ese nombre."
+msgstr "There is already an office with that name."
+
+msgid "Solo la dirección o quien coordina la oficina del cliente puede compartirlo."
+msgstr "Only management or the coordinator of the client's office can share it."
+
+msgid "No existe esa concesión."
+msgstr "That grant does not exist."
+
+msgid "Solo la dirección o quien coordina la oficina del cliente puede retirar el acceso."
+msgstr "Only management or the coordinator of the client's office can remove access."
+
+msgid "Indica la oficina o el cliente."
+msgstr "Specify the office or the client."
+
+msgid "Solo la dirección, o quien coordina la oficina (para gestores y auditores de ella), puede dar roles."
+msgstr "Only management, or the office coordinator (for that office's managers and auditors), can assign roles."
+
+msgid "Esa persona ya tiene ese rol con ese alcance."
+msgstr "That person already has that role with that scope."
+
+msgid "No existe esa membresía."
+msgstr "That membership does not exist."
+
+msgid "Solo la dirección, o quien coordina la oficina, puede retirar roles."
+msgstr "Only management, or the office coordinator, can remove roles."
+
+msgid "Solo la dirección o quien coordina esas oficinas puede mover el cliente."
+msgstr "Only management or the coordinator of those offices can move the client."
+
+msgid "La fecha de fin debe tener el formato AAAA-MM-DD."
+msgstr "The end date must use the format YYYY-MM-DD."
+
+msgid "El mes debe tener el formato AAAA-MM."
+msgstr "The month must use the format YYYY-MM."
+
+msgid "El ámbito de la tarifa debe ser general, de un plan o de un despacho."
+msgstr "The rate scope must be general, for a plan or for an office."
+
+msgid "Indica el plan o el despacho al que se aplica la tarifa."
+msgstr "Specify the plan or office the rate applies to."
+
+msgid "La unidad debe ser facturas anotadas o facturas exportadas."
+msgstr "The unit must be recorded invoices or exported invoices."
+
+msgid "Las facturas incluidas deben estar entre 0 y 10.000.000."
+msgstr "Included invoices must be between 0 and 10,000,000."
+
+msgid "El precio de cada factura de más no es válido."
+msgstr "The price of each extra invoice is not valid."
+
+msgid "El precio no es válido."
+msgstr "The price is not valid."
+
+msgid "Estado de liquidación no válido."
+msgstr "Invalid settlement status."
+
+msgid "Las facturas incluidas, el precio y el límite deben ser números."
+msgstr "Included invoices, price and limit must be numbers."
+
+msgid "El límite solo se puede poner contando facturas anotadas (no se bloquean las exportaciones)."
+msgstr "The limit can only be set by counting recorded invoices (exports are not blocked)."
+
+msgid "El límite no puede ser menor que las facturas incluidas."
+msgstr "The limit cannot be lower than the included invoices."
+
+msgid "Ese plan no existe."
+msgstr "That plan does not exist."
+
+msgid "Ese despacho no existe."
+msgstr "That office does not exist."
+
+msgid "Tu gestoría no puede recibir más facturas este mes por este medio. Avísala para que lo resuelva."
+msgstr "Your accountancy firm cannot receive more invoices this month this way. Let them know so they can sort it out."
+
+msgid "El precio no es un importe válido: escríbelo como 0,10."
+msgstr "The price is not a valid amount: write it like 0.10."
+
+msgid "Esa liquidación no existe: calcúlala primero."
+msgstr "That settlement does not exist: calculate it first."
+
+msgid "Una liquidación ya facturada no se puede reabrir."
+msgstr "A settlement that has already been invoiced cannot be reopened."
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar el flujo de trabajo fiscal."
+msgstr "Only the office management (supervisors) can change the tax workflow."
+
+msgid "La fecha de presentación no puede estar en el futuro."
+msgstr "The filing date cannot be in the future."
+
+msgid "Fase no válida."
+msgstr "Invalid phase."
+
+msgid "Indica qué se está esperando."
+msgstr "Say what is being waited for."
+
+msgid "Este despacho trabaja con flujo estricto: la obligación tiene que estar aprobada antes de presentarla. Hazlo desde su ficha."
+msgstr "This office uses a strict workflow: the obligation must be approved before it is filed. Do it from its record."
+
+msgid "La fecha de presentación no es válida (usa AAAA-MM-DD o AAAA-MM-DDTHH:MM)."
+msgstr "The filing date is not valid (use YYYY-MM-DD or YYYY-MM-DDTHH:MM)."
+
+msgid "Con tu rol solo puedes consultar esta obligación."
+msgstr "With your role you can only view this obligation."
+
+msgid "Solo la dirección o el revisor fiscal puede aprobar o declarar una obligación «no aplica» o «anulada»."
+msgstr "Only management or the tax reviewer can approve an obligation or mark it “not applicable” or “cancelled”."
+
+msgid "Indica la justificación."
+msgstr "Enter the justification."
+
+msgid "Solo se bloquea una obligación en trabajo."
+msgstr "Only an obligation in progress can be blocked."
+
+msgid "Solo quien revisa puede devolver una obligación en revisión."
+msgstr "Only the reviewer can send back an obligation under review."
+
+msgid "Indica por qué se devuelve a preparación."
+msgstr "Say why it is being sent back to preparation."
+
+msgid "Este despacho exige un justificante para presentar: sube el justificante oficial."
+msgstr "This office requires a receipt to file: upload the official receipt."
+
+msgid "El documento indicado no pertenece a esta obligación."
+msgstr "The indicated document does not belong to this obligation."
+
+msgid "No se puede cerrar sin la evidencia de la presentación."
+msgstr "It cannot be closed without evidence of the filing."
+
+msgid "Este despacho exige el justificante oficial para cerrar: súbelo antes."
+msgstr "This office requires the official receipt to close: upload it first."
+
+msgid "Este despacho exige el justificante oficial para presentar: adjúntalo al marcar la obligación como presentada."
+msgstr "This office requires the official receipt to file: attach it when marking the obligation as filed."
+
+msgid "El importe debe estar entre 0 y 1.000.000 €."
+msgstr "The amount must be between 0 and €1,000,000."
+
+msgid "El nombre del plan es obligatorio."
+msgstr "The plan name is required."
+
+msgid "El plan no existe."
+msgstr "The plan does not exist."
+
+msgid "El nombre del extra es obligatorio."
+msgstr "The add-on name is required."
+
+msgid "Módulo de negocio desconocido."
+msgstr "Unknown business module."
+
+msgid "El extra no existe."
+msgstr "The add-on does not exist."
+
+msgid "Indica un email de facturación válido."
+msgstr "Enter a valid billing email."
+
+msgid "Asigna un plan al tenant antes de activar la suscripción."
+msgstr "Assign a plan to the tenant before activating the subscription."
+
+msgid "El plan todavía no está sincronizado con Stripe (hazlo en Planes y extras)."
+msgstr "The plan is not yet synced with Stripe (do it under Plans and add-ons)."
+
+msgid "Elige un extra del catálogo."
+msgstr "Choose an add-on from the catalogue."
+
+msgid "Indica un email de contacto válido para Stripe."
+msgstr "Enter a valid contact email for Stripe."
+
+msgid "Indica el concepto del cobro (máx. 200 caracteres)."
+msgstr "Enter the charge description (max. 200 characters)."
+
+msgid "Indica un importe mayor que cero."
+msgstr "Enter an amount greater than zero."
+
+msgid "El importe no es un número válido."
+msgstr "The amount is not a valid number."
+
+msgid "El cobro no existe."
+msgstr "The charge does not exist."
+
+msgid "Escribe el concepto de la factura."
+msgstr "Write the invoice description."
+
+msgid "El importe total es demasiado grande."
+msgstr "The total amount is too large."
+
+msgid "Este despacho no tiene FacturaScripts configurado."
+msgstr "This office does not have FacturaScripts configured."
+
+msgid "Vincula primero al cliente con FacturaScripts desde su ficha fiscal."
+msgstr "First link the client to FacturaScripts from their tax record."
+
+msgid "Elige al menos un parte de horas."
+msgstr "Choose at least one timesheet entry."
+
+msgid "Alguna de esas horas ya se ha facturado o no es de este expediente."
+msgstr "Some of those hours have already been invoiced or are not from this case."
+
+msgid "Hay horas sin tarifa: fija la tarifa por hora de quien las registró o quítalas de la selección."
+msgstr "Some hours have no rate: set the hourly rate of whoever logged them or remove them from the selection."
+
+msgid "Solo la dirección, la coordinación o quien lleva el expediente puede preparar la proforma."
+msgstr "Only management, the coordinator or whoever handles the case can prepare the pro forma."
+
+msgid "El importe no es válido: escríbelo como 1.234,56."
+msgstr "The amount is not valid: write it like 1,234.56."
+
+msgid "Escribe el concepto de cada línea."
+msgstr "Write the description of each line."
+
+msgid "El concepto es demasiado largo (máx. 200 caracteres)."
+msgstr "The description is too long (max. 200 characters)."
+
+msgid "Alguna de esas horas ya se ha facturado."
+msgstr "Some of those hours have already been invoiced."
+
+msgid "El despacho «Plataforma» es interno y no se puede borrar."
+msgstr "The “Platform” office is internal and cannot be deleted."
+
+msgid "Huso horario no válido"
+msgstr "Invalid time zone"
+
+msgid "Permisos de token no válidos."
+msgstr "Invalid token permissions."
+
+msgid "La persona no existe."
+msgstr "The person does not exist."
+
+msgid "La persona no pertenece a ese despacho."
+msgstr "The person does not belong to that office."
+
+msgid "El despacho no existe."
+msgstr "The office does not exist."
+
+msgid "La fecha de caducidad ya ha pasado."
+msgstr "The expiry date has already passed."
+
+msgid "La fecha de caducidad no es válida."
+msgstr "The expiry date is not valid."
+
+msgid "No existe ese traspaso."
+msgstr "That handover does not exist."
+
+msgid "Esa persona ya es la responsable del cliente."
+msgstr "That person is already responsible for the client."
+
+msgid "Ese cliente ya tiene un traspaso pendiente de aceptar."
+msgstr "That client already has a handover waiting to be accepted."
+
+msgid "Solo quien lo recibe (o la dirección) puede aceptarlo."
+msgstr "Only the recipient (or management) can accept it."
+
+msgid "Solo la dirección o quien coordina la oficina del cliente puede cambiar el responsable."
+msgstr "Only management or the coordinator of the client's office can change the person in charge."
+
+msgid "Hay un traspaso pendiente de aceptar: resuélvelo antes."
+msgstr "There is a handover waiting to be accepted: resolve it first."
+
+msgid "Solo quien lo recibe (o la dirección) puede rechazarlo."
+msgstr "Only the recipient (or management) can reject it."
+
+msgid "Cuenta por qué se rechaza, para que quien lo propuso pueda resolverlo."
+msgstr "Explain why it is being rejected, so the person who proposed it can sort it out."
+
+msgid "Solo quien lo propuso (o la dirección) puede cancelarlo."
+msgstr "Only the proposer (or management) can cancel it."
+
+msgid "Contacto no encontrado."
+msgstr "Contact not found."
+
+msgid "Indica el nombre del grupo."
+msgstr "Enter the group name."
+
+msgid "Grupo no encontrado."
+msgstr "Group not found."
+
+msgid "Este mensaje no tiene una dirección de remitente válida."
+msgstr "This message does not have a valid sender address."
+
+msgid "Indica el nombre del contacto."
+msgstr "Enter the contact's name."
+
+msgid "El correo no es válido."
+msgstr "The email is not valid."
+
+msgid "Ya hay un contacto con ese correo."
+msgstr "There is already a contact with that email."
+
+msgid "Ya hay un grupo con ese nombre."
+msgstr "There is already a group with that name."
+
+msgid "Ponle un nombre al turno."
+msgstr "Give the shift a name."
+
+msgid "El turno no puede empezar y acabar a la misma hora."
+msgstr "The shift cannot start and end at the same time."
+
+msgid "Solo quien gestiona el fichaje puede organizar los turnos."
+msgstr "Only the person who manages time tracking can organise shifts."
+
+msgid "Ese turno no existe o está archivado."
+msgstr "That shift does not exist or is archived."
+
+msgid "Elige lunes como primer día de cada semana."
+msgstr "Choose Monday as the first day of each week."
+
+msgid "Elige dos semanas distintas."
+msgstr "Choose two different weeks."
+
+msgid "Ya hay un turno con ese nombre."
+msgstr "There is already a shift with that name."
+
+msgid "No existe ese turno."
+msgstr "That shift does not exist."
+
+msgid "Permiso desconocido."
+msgstr "Unknown permission."
+
+msgid "Indica el nombre de la organización (máx. 120 caracteres)."
+msgstr "Enter the organisation name (max. 120 characters)."
+
+msgid "Indica un nombre válido (máx. 120 caracteres)."
+msgstr "Enter a valid name (max. 120 characters)."
+
+msgid "Módulo desconocido."
+msgstr "Unknown module."
+
+msgid "El usuario no existe."
+msgstr "The user does not exist."
+
+msgid "Ya existe un usuario con ese email."
+msgstr "A user with that email already exists."
+
+msgid "El tenant no existe."
+msgstr "The tenant does not exist."
+
+msgid "Ya existe un tenant con ese nombre."
+msgstr "A tenant with that name already exists."
+
+msgid "El módulo Contabilización de facturas no está activo en este despacho."
+msgstr "The Invoice posting module is not active in this office."
+
+msgid "Tu perfil solo permite consultar: no puedes cambiar facturas."
+msgstr "Your profile is read-only: you cannot change invoices."
+
+msgid "`estado` debe ser pendiente, revisada, exportada o descartada."
+msgstr "`estado` must be pendiente, revisada, exportada or descartada."
+
+msgid "`tipo` debe ser emitida o recibida."
+msgstr "`tipo` must be emitida or recibida."
+
+msgid "No existe esa factura."
+msgstr "That invoice does not exist."
+
+msgid "Indica al menos una línea con la base imponible (`lineas`)."
+msgstr "Provide at least one line with the taxable base (`lineas`)."
+
+msgid "No existe ese fichero."
+msgstr "That file does not exist."
+
+msgid "Indica al menos una condición: remitente o asunto."
+msgstr "Enter at least one condition: sender or subject."
+
+msgid "La categoría elegida no existe."
+msgstr "The chosen category does not exist."
+
+msgid "Para archivar los adjuntos en el expediente, elige el cliente."
+msgstr "To file the attachments in the case, choose the client."
+
+msgid "Elige al menos una acción para la regla."
+msgstr "Choose at least one action for the rule."
+
+msgid "Esa cuenta no existe."
+msgstr "That account does not exist."
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar el recordatorio de nóminas."
+msgstr "Only the office management (supervisors) can change the payroll reminder."
+
+msgid "Día del recordatorio: indica un número entre 1 y 31."
+msgstr "Reminder day: enter a number between 1 and 31."
+
+msgid "Para activar el recordatorio indica el día del mes."
+msgstr "To turn on the reminder, enter the day of the month."
+
+msgid "Estado de nómina no válido."
+msgstr "Invalid payroll status."
+
+msgid "Indica el nombre del trabajador."
+msgstr "Enter the employee's name."
+
+msgid "La jornada son horas a la semana (por ejemplo 40)."
+msgstr "Working time is hours per week (for example 40)."
+
+msgid "Periodo no válido (AAAA-MM)."
+msgstr "Invalid period (YYYY-MM)."
+
+msgid "Esa factura ya se exportó: no se puede cambiar."
+msgstr "That invoice has already been exported: it cannot be changed."
+
+msgid "Esta factura no tiene archivo adjunto que leer."
+msgstr "This invoice has no attached file to read."
+
+msgid "Para leer facturas con IA hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "To read invoices with AI you need a vision model and your OpenRouter key, in the AI Assistant settings."
+
+msgid "No se encuentra el archivo de la factura."
+msgstr "The invoice file cannot be found."
+
+msgid "Los documentos del despacho están cifrados y bloqueados: desbloquéalos para leer la factura."
+msgstr "The office's documents are encrypted and locked: unlock them to read the invoice."
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar los avisos."
+msgstr "Only the office management (supervisors) can change the notices."
+
+msgid "Indica entre 1 y 5 plazos de aviso, en días (por ejemplo 7, 3, 1)."
+msgstr "Enter 1 to 5 notice periods, in days (for example 7, 3, 1)."
+
+msgid "Indica entre 1 y 6 plazos de aviso para los certificados, en días (por ejemplo 30, 15, 7, 1)."
+msgstr "Enter 1 to 6 notice periods for certificates, in days (for example 30, 15, 7, 1)."
+
+msgid "No existe ese aviso."
+msgstr "That notice does not exist."
+
+msgid "Este aviso ya está resuelto: no hace falta acusarlo."
+msgstr "This notice is already resolved: there is no need to acknowledge it."
+
+msgid "Este aviso ya está acusado."
+msgstr "This notice has already been acknowledged."
+
+msgid "Indica el nombre de la plantilla."
+msgstr "Enter the template name."
+
+msgid "El nombre es demasiado largo (máx. 80 caracteres)."
+msgstr "The name is too long (max. 80 characters)."
+
+msgid "Tipo de cliente no válido."
+msgstr "Invalid client type."
+
+msgid "La plantilla de tareas no existe."
+msgstr "The task template does not exist."
+
+msgid "La plantilla de tareas debe estar compartida con el despacho para que la apliquen todas las personas."
+msgstr "The task template must be shared with the office so everyone can apply it."
+
+msgid "Ya hay una plantilla con ese nombre."
+msgstr "There is already a template with that name."
+
+msgid "Tipo de modelo desconocido."
+msgstr "Unknown form type."
+
+msgid "Indica el nombre del modelo."
+msgstr "Enter the form name."
+
+msgid "El código del modelo solo puede llevar letras, números, guion y guion bajo (máximo 12)."
+msgstr "The form code can only contain letters, numbers, hyphens and underscores (max. 12)."
+
+msgid "Indica el país con su código de 2 letras (por ejemplo ES)."
+msgstr "Enter the country with its 2-letter code (for example ES)."
+
+msgid "Esa versión no existe."
+msgstr "That version does not exist."
+
+msgid "Ya hay una versión más reciente aprobada."
+msgstr "A newer version has already been approved."
+
+msgid "Elige un plazo válido."
+msgstr "Choose a valid period."
+
+msgid "Elige el tipo de solicitud."
+msgstr "Choose the request type."
+
+msgid "Describe la solicitud (quién la hace y qué pide)."
+msgstr "Describe the request (who makes it and what they ask)."
+
+msgid "Escribe qué se ha hecho (mínimo 5 caracteres): queda anotado."
+msgstr "Write what was done (minimum 5 characters): it is recorded."
+
+msgid "Esa solicitud no existe o ya está atendida."
+msgstr "That request does not exist or has already been handled."
+
+msgid "Pide como mucho dos años de una vez."
+msgstr "Ask for two years at most at a time."
+
+msgid "Solo quien gestiona el fichaje puede ajustar la bolsa de horas."
+msgstr "Only the person who manages time tracking can adjust the hours bank."
+
+msgid "El ajuste debe ser distinto de cero y de menos de 200 horas."
+msgstr "The adjustment must be non-zero and under 200 hours."
+
+msgid "Indica el motivo del ajuste."
+msgstr "Enter the reason for the adjustment."
+
+msgid "Indica los minutos (positivos suman, negativos restan)."
+msgstr "Enter the minutes (positive adds, negative subtracts)."
+
+msgid "El cifrado de este despacho ya está activado."
+msgstr "Encryption is already turned on for this office."
+
+msgid "Nivel de reserva no válido."
+msgstr "Invalid confidentiality level."
+
+msgid "El cifrado de este despacho no está activado."
+msgstr "Encryption is not turned on for this office."
+
+msgid "Tipo de concesión no válido."
+msgstr "Invalid grant type."
+
+msgid "Elige al menos una tarea."
+msgstr "Choose at least one task."
+
+msgid "El comunicado necesita un título."
+msgstr "The announcement needs a title."
+
+msgid "La fecha de fin es anterior a la de inicio."
+msgstr "The end date is earlier than the start date."
+
+msgid "Un movimiento tiene un importe no válido."
+msgstr "A transaction has an invalid amount."
+
+msgid "Elige al menos un movimiento."
+msgstr "Choose at least one transaction."
+
+msgid "Un movimiento no tiene fecha o importe válidos."
+msgstr "A transaction has no valid date or amount."
+
+msgid "No encontrado."
+msgstr "Not found."
+
+msgid "La fecha de fin ya ha pasado."
+msgstr "The end date has already passed."
+
+msgid "Ya hay un mantenimiento activo para ese ámbito."
+msgstr "There is already active maintenance for that scope."
+
+msgid "La fecha de fin no es válida."
+msgstr "The end date is not valid."
+
+msgid "El logo pesa demasiado (máximo 400 KB)."
+msgstr "The logo is too large (maximum 400 KB)."
+
+msgid "El color tiene que ser un código como #1a73e8."
+msgstr "The colour must be a code like #1a73e8."
+
+msgid "No se ha podido leer la imagen: sube un PNG, JPEG o WebP."
+msgstr "The image could not be read: upload a PNG, JPEG or WebP."
+
+msgid "El logo tiene que ser PNG, JPEG o WebP."
+msgstr "The logo must be PNG, JPEG or WebP."
+
+msgid "Regla desconocida."
+msgstr "Unknown rule."
+
+msgid "Unidad: elige días hábiles, naturales o meses."
+msgstr "Unit: choose working days, calendar days or months."
+
+msgid "Por ahora solo se pide la conformidad del modelo 303."
+msgstr "For now only the 303 return is sent for approval."
+
+msgid "Solo se puede pedir la conformidad de una declaración revisada o exportada."
+msgstr "Approval can only be requested for a reviewed or exported return."
+
+msgid "La declaración tiene bloqueos: no se enseña al cliente."
+msgstr "The return has blockers: it is not shown to the client."
+
+msgid "La fecha final no puede ser anterior a la inicial."
+msgstr "The end date cannot be earlier than the start date."
+
+msgid "Para activar la respuesta automática escribe el asunto y el mensaje."
+msgstr "To turn on the automatic reply, write the subject and the message."
+
+msgid "Primero hay que activar el cifrado de documentos del despacho: el correo usa la misma clave."
+msgstr "First turn on the office's document encryption: email uses the same key."
+
+msgid "El correo cifrado ya está activado."
+msgstr "Encrypted email is already turned on."
+
+msgid "Explica al cliente qué ha de corregir."
+msgstr "Tell the client what to correct."
+
+msgid "Solo se pueden devolver las facturas que ha enviado el cliente desde su portal."
+msgstr "Only invoices the client sent from their portal can be returned."
+
+msgid "Solo se puede devolver una factura pendiente o revisada."
+msgstr "Only a pending or reviewed invoice can be returned."
+
+msgid "Este enlace no admite mensajes."
+msgstr "This link does not accept messages."
+
+msgid "No hay ningún enlace activo que admita mensajes: crea uno con «permitir mensajes»."
+msgstr "There is no active link that accepts messages: create one with “allow messages”."
+
+msgid "Has enviado muchos mensajes hoy. Inténtalo mañana o llama al despacho."
+msgstr "You have sent a lot of messages today. Try again tomorrow or call the office."
+
+msgid "Indica el motivo (mínimo 5 caracteres): queda registrado."
+msgstr "Enter the reason (minimum 5 characters): it is recorded."
+
+msgid "No se puede ver como un administrador."
+msgstr "You cannot view as an administrator."
+
+msgid "Escribe el motivo de la excepción: queda en el historial del despacho."
+msgstr "Write the reason for the exception: it stays in the office history."
+
+msgid "Los días de prueba van de 1 a 365."
+msgstr "Trial days range from 1 to 365."
+
+msgid "La contraseña actual no es correcta."
+msgstr "The current password is not correct."
+
+msgid "Las dos contraseñas nuevas no coinciden."
+msgstr "The two new passwords do not match."
+
+msgid "La contraseña nueva tiene que ser distinta de la actual."
+msgstr "The new password must be different from the current one."
+
+msgid "La plantilla de cliente no existe."
+msgstr "The client template does not exist."
+
+msgid "Este cliente ya tiene gestión fiscal."
+msgstr "This client already has tax management."
+
+msgid "Este trimestre ya está cerrado."
+msgstr "This quarter is already closed."
+
+msgid "Quedan puntos pendientes: resuélvelos o cierra el trimestre dejando constancia."
+msgstr "There are items outstanding: resolve them or close the quarter leaving a record."
+
+msgid "Ese dominio no es válido."
+msgstr "That domain is not valid."
+
+msgid "El selector DKIM no es válido."
+msgstr "The DKIM selector is not valid."
+
+msgid "El título no puede estar vacío."
+msgstr "The title cannot be empty."
+
+msgid "El atajo necesita un título y un texto."
+msgstr "The shortcut needs a title and a text."
+
+msgid "El límite debe ser un número entre 0 y 1.000.000, o ilimitado."
+msgstr "The limit must be a number between 0 and 1,000,000, or unlimited."
+
+msgid "La fecha de inicio no puede ser posterior a la de fin."
+msgstr "The start date cannot be later than the end date."
+
+msgid "Las fechas tienen que ser AAAA-MM-DD."
+msgstr "Dates must be YYYY-MM-DD."
+
+msgid "Escribe el motivo (mínimo 5 caracteres): queda anotado."
+msgstr "Write the reason (minimum 5 characters): it is recorded."
+
+msgid "Elige 1, 3, 7 o 30 días."
+msgstr "Choose 1, 3, 7 or 30 days."
+
+msgid "Usuario no válido (letras, números y . _ - @)."
+msgstr "Invalid username (letters, numbers and . _ - @)."
+
+msgid "El código no es correcto. Comprueba la hora del móvil y vuelve a probar."
+msgstr "The code is not correct. Check your phone's clock and try again."
+
+msgid "Acción de IA desconocida."
+msgstr "Unknown AI action."
+
+msgid "Para usar tu propio texto rellena el asunto y el cuerpo (o deja los dos vacíos)."
+msgstr "To use your own text, fill in both the subject and the body (or leave both empty)."
+
+msgid "Indica el email de quien firma."
+msgstr "Enter the signer's email."
+
+msgid "No tienes acceso a este cliente."
+msgstr "You do not have access to this client."
+
+msgid "Los orígenes CORS no admiten comodines: indica cada origen exacto."
+msgstr "CORS origins do not allow wildcards: enter each exact origin."
+
+msgid "Los topes no pueden ser negativos."
+msgstr "Caps cannot be negative."
+
+msgid "La nota no puede estar vacía ni superar 2000 caracteres."
+msgstr "The note cannot be empty or exceed 2000 characters."
+
+msgid "Cuenta brevemente qué se habló o se acordó."
+msgstr "Briefly say what was discussed or agreed."

@@ -22136,3 +22136,1284 @@ msgstr "Mida de la lletra"
 
 msgid "Se guarda solo en este navegador."
 msgstr "Només es desa en aquest navegador."
+
+msgid "Solo los custodios de certificados y los supervisores del despacho pueden hacer esto."
+msgstr "Només els custodis de certificats i els supervisors del despatx poden fer això."
+
+msgid "Solo un supervisor del despacho puede designar custodios."
+msgstr "Només un supervisor del despatx pot designar custodis."
+
+msgid "Esa huella no corresponde a ningún certificado del archivo."
+msgstr "Aquesta empremta no correspon a cap certificat de l'arxiu."
+
+msgid "Indica sujeto, emisor y número de serie."
+msgstr "Indica subjecte, emissor i número de sèrie."
+
+msgid "Indica la evidencia de la que salen estos datos (por ejemplo, «captura del portal del emisor, 13/10/2026»)."
+msgstr "Indica l'evidència de la qual surten aquestes dades (per exemple, «captura del portal de l'emissor, 13/10/2026»)."
+
+msgid "Dimensión o resultado no válidos."
+msgstr "Dimensió o resultat no vàlids."
+
+msgid "No existe ese certificado."
+msgstr "No existeix aquest certificat."
+
+msgid "Este certificado se dio de alta a mano: no hay archivo que comprobar. Impórtalo para poder hacerlo automáticamente."
+msgstr "Aquest certificat es va donar d'alta a mà: no hi ha cap arxiu que comprovar. Importa'l per poder-ho fer automàticament."
+
+msgid "Estado operativo no válido."
+msgstr "Estat operatiu no vàlid."
+
+msgid "Un certificado sustituido o archivado ya no se puede reactivar: importa el vigente."
+msgstr "Un certificat substituït o arxivat ja no es pot reactivar: importa el vigent."
+
+msgid "No se puede autorizar un certificado caducado."
+msgstr "No es pot autoritzar un certificat caducat."
+
+msgid "Indica el motivo."
+msgstr "Indica el motiu."
+
+msgid "Servicio no válido."
+msgstr "Servei no vàlid."
+
+msgid "Indica la autorización o representación que permite este uso."
+msgstr "Indica l'autorització o representació que permet aquest ús."
+
+msgid "La autorización no puede acabar antes de empezar."
+msgstr "L'autorització no pot acabar abans de començar."
+
+msgid "No existe esa renovación."
+msgstr "No existeix aquesta renovació."
+
+msgid "Primero pasa la renovación a «en gestión» (o «pendiente del titular»)."
+msgstr "Primer passa la renovació a «en gestió» (o «pendent del titular»)."
+
+msgid "Ese es el mismo certificado que se quiere renovar."
+msgstr "Aquest és el mateix certificat que es vol renovar."
+
+msgid "El resultado debe ser «correcta» o «fallida»."
+msgstr "El resultat ha de ser «correcta» o «fallida»."
+
+msgid "Falta el certificado nuevo."
+msgstr "Falta el certificat nou."
+
+msgid "Elige un tipo de certificado."
+msgstr "Tria un tipus de certificat."
+
+msgid "Indica cuándo caduca (o la fecha de emisión, para que la calculemos)."
+msgstr "Indica quan caduca (o la data d'emissió, perquè la calculem)."
+
+msgid "La caducidad no puede ser anterior a la emisión."
+msgstr "La caducitat no pot ser anterior a l'emissió."
+
+msgid "Ese certificado ya está sustituido o archivado."
+msgstr "Aquest certificat ja està substituït o arxivat."
+
+msgid "La nueva caducidad tiene que ser posterior a la del certificado actual."
+msgstr "La nova caducitat ha de ser posterior a la del certificat actual."
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar los avisos a clientes."
+msgstr "Només la direcció del despatx (supervisors) pot canviar els avisos als clients."
+
+msgid "Para usar tu propio texto rellena el asunto y el mensaje (o deja los dos vacíos)."
+msgstr "Per fer servir el teu propi text omple l'assumpte i el missatge (o deixa'ls tots dos buits)."
+
+msgid "Este certificado no está asociado a un cliente."
+msgstr "Aquest certificat no està associat a cap client."
+
+msgid "El cliente no tiene correo en su ficha: añádelo para poder avisarle."
+msgstr "El client no té correu a la fitxa: afegeix-lo per poder avisar-lo."
+
+msgid "El correo saliente no está configurado en el servidor."
+msgstr "El correu sortint no està configurat al servidor."
+
+msgid "El archivo no es un certificado público válido (se esperaba PEM o DER)."
+msgstr "El fitxer no és un certificat públic vàlid (s'esperava PEM o DER)."
+
+msgid "El certificado que se sustituye no existe."
+msgstr "El certificat que se substitueix no existeix."
+
+msgid "Las fechas deben tener el formato AAAA-MM-DD."
+msgstr "Les dates han de tenir el format AAAA-MM-DD."
+
+msgid "No existe ese cliente en tu despacho."
+msgstr "No existeix aquest client al teu despatx."
+
+msgid "Ese uso ya está registrado para este certificado."
+msgstr "Aquest ús ja està registrat per a aquest certificat."
+
+msgid "No existe ese uso activo."
+msgstr "No existeix aquest ús actiu."
+
+msgid "Ese certificado ya tiene una renovación en curso."
+msgstr "Aquest certificat ja té una renovació en curs."
+
+msgid "Valida primero el certificado nuevo."
+msgstr "Valida primer el certificat nou."
+
+msgid "Ese uso no es un servicio activo del certificado que se renueva."
+msgstr "Aquest ús no és un servei actiu del certificat que es renova."
+
+msgid "Esa renovación ya está terminada."
+msgstr "Aquesta renovació ja està acabada."
+
+msgid "Para marcar «obtenido» hay que importar el certificado nuevo (solo la parte pública)."
+msgstr "Per marcar «obtingut» cal importar el certificat nou (només la part pública)."
+
+msgid "Este certificado no tiene servicios registrados: confirma expresamente que no hay nada que implantar."
+msgstr "Aquest certificat no té serveis registrats: confirma expressament que no hi ha res a implantar."
+
+msgid "Indica a quién pertenece: elige un cliente o escribe el nombre del titular."
+msgstr "Indica a qui pertany: tria un client o escriu el nom del titular."
+
+msgid "El NIF/CIF/NIE no tiene un formato válido."
+msgstr "El NIF/CIF/NIE no té un format vàlid."
+
+msgid "Este certificado se importó de un archivo: su titular, tipo, fechas y serie salen del propio certificado y no se editan."
+msgstr "Aquest certificat es va importar d'un fitxer: el titular, el tipus, les dates i la sèrie surten del propi certificat i no s'editen."
+
+msgid "Ese certificado renovado ya está apuntado."
+msgstr "Aquest certificat renovat ja està apuntat."
+
+msgid "Tipo de titular no válido."
+msgstr "Tipus de titular no vàlid."
+
+msgid "El titular no puede quedar vacío."
+msgstr "El titular no pot quedar buit."
+
+msgid "El reparto debe sumar el 100 %."
+msgstr "El repartiment ha de sumar el 100 %."
+
+msgid "Algún valor está fuera de rango (IVA 0-30 %, comisión de venta 0-25 %, alquiler hasta 12 mensualidades)."
+msgstr "Algun valor està fora de rang (IVA 0-30 %, comissió de venda 0-25 %, lloguer fins a 12 mensualitats)."
+
+msgid "Elige si es una venta o un alquiler."
+msgstr "Tria si és una venda o un lloguer."
+
+msgid "Tipo de inmueble no válido."
+msgstr "Tipus d'immoble no vàlid."
+
+msgid "Indica la dirección del inmueble."
+msgstr "Indica l'adreça de l'immoble."
+
+msgid "Certificado energético no válido."
+msgstr "Certificat energètic no vàlid."
+
+msgid "Inmueble no encontrado."
+msgstr "Immoble no trobat."
+
+msgid "El precio debe ser mayor que cero."
+msgstr "El preu ha de ser més gran que zero."
+
+msgid "Elige si busca comprar o alquilar."
+msgstr "Tria si busca comprar o llogar."
+
+msgid "El presupuesto mínimo no puede ser mayor que el máximo."
+msgstr "El pressupost mínim no pot ser més gran que el màxim."
+
+msgid "Interés no válido."
+msgstr "Interès no vàlid."
+
+msgid "Visita no encontrada."
+msgstr "Visita no trobada."
+
+msgid "El importe de la oferta debe ser mayor que cero."
+msgstr "L'import de l'oferta ha de ser més gran que zero."
+
+msgid "Oferta no encontrada."
+msgstr "Oferta no trobada."
+
+msgid "Tipo de contrato no válido."
+msgstr "Tipus de contracte no vàlid."
+
+msgid "Indica el nombre de la otra parte."
+msgstr "Indica el nom de l'altra part."
+
+msgid "No se pudo guardar el contrato."
+msgstr "No s'ha pogut desar el contracte."
+
+msgid "Contrato no encontrado."
+msgstr "Contracte no trobat."
+
+msgid "La base de la comisión debe ser mayor que cero."
+msgstr "La base de la comissió ha de ser més gran que zero."
+
+msgid "Porcentaje o IVA fuera de rango."
+msgstr "Percentatge o IVA fora de rang."
+
+msgid "No se pudo guardar la foto."
+msgstr "No s'ha pogut desar la foto."
+
+msgid "IVA, comisión y mínimo deben ser números."
+msgstr "IVA, comissió i mínim han de ser números."
+
+msgid "Una plantilla de contrato es demasiado larga."
+msgstr "Una plantilla de contracte és massa llarga."
+
+msgid "Demanda no encontrada."
+msgstr "Demanda no trobada."
+
+msgid "La fecha y la hora de la visita no son válidas."
+msgstr "La data i l'hora de la visita no són vàlides."
+
+msgid "Indica quién hace la visita."
+msgstr "Indica qui fa la visita."
+
+msgid "La valoración debe ser de 1 a 5."
+msgstr "La valoració ha de ser d'1 a 5."
+
+msgid "Indica quién hace la oferta."
+msgstr "Indica qui fa l'oferta."
+
+msgid "El porcentaje y el IVA deben ser números."
+msgstr "El percentatge i l'IVA han de ser números."
+
+msgid "Calcula antes la comisión."
+msgstr "Calcula abans la comissió."
+
+msgid "El archivo no es una imagen válida."
+msgstr "El fitxer no és una imatge vàlida."
+
+msgid "La dirección no puede quedar vacía."
+msgstr "L'adreça no pot quedar buida."
+
+msgid "La serie de las minutas son hasta 8 letras o números (por ejemplo M)."
+msgstr "La sèrie de les minutes són fins a 8 lletres o números (per exemple M)."
+
+msgid "Algún valor está fuera de rango (IVA y retención 0-30 %, bloque 0-60 min)."
+msgstr "Algun valor està fora de rang (IVA i retenció 0-30 %, bloc 0-60 min)."
+
+msgid "La hoja de encargo es demasiado larga."
+msgstr "El full d'encàrrec és massa llarg."
+
+msgid "Rol no válido."
+msgstr "Rol no vàlid."
+
+msgid "Indica el nombre de la parte."
+msgstr "Indica el nom de la part."
+
+msgid "Tipo de vista no válido."
+msgstr "Tipus de vista no vàlid."
+
+msgid "Señalamiento no encontrado."
+msgstr "Assenyalament no trobat."
+
+msgid "El plazo debe estar entre 1 y 366."
+msgstr "El termini ha d'estar entre 1 i 366."
+
+msgid "Tipo de resolución no válido."
+msgstr "Tipus de resolució no vàlid."
+
+msgid "Tipo de movimiento no válido."
+msgstr "Tipus de moviment no vàlid."
+
+msgid "El importe debe ser mayor que cero."
+msgstr "L'import ha de ser més gran que zero."
+
+msgid "Indica el concepto."
+msgstr "Indica el concepte."
+
+msgid "Minuta no encontrada."
+msgstr "Minuta no trobada."
+
+msgid "La minuta ya está emitida: no se puede modificar."
+msgstr "La minuta ja està emesa: no es pot modificar."
+
+msgid "Tipo de línea no válido."
+msgstr "Tipus de línia no vàlid."
+
+msgid "IVA y retención entre 0 y 30 %."
+msgstr "IVA i retenció entre 0 i 30 %."
+
+msgid "No se pudo guardar la hoja de encargo."
+msgstr "No s'ha pogut desar el full d'encàrrec."
+
+msgid "IVA, retención, bloque de minutos y provisión mínima deben ser números."
+msgstr "IVA, retenció, bloc de minuts i provisió mínima han de ser números."
+
+msgid "La cuantía no puede ser negativa."
+msgstr "La quantia no pot ser negativa."
+
+msgid "La fecha y la hora de la vista no son válidas."
+msgstr "La data i l'hora de la vista no són vàlides."
+
+msgid "No hay horas facturables ni suplidos pendientes en este asunto."
+msgstr "No hi ha hores facturables ni suplerts pendents en aquest assumpte."
+
+msgid "El IVA y la retención deben ser números."
+msgstr "L'IVA i la retenció han de ser números."
+
+msgid "La minuta no tiene líneas."
+msgstr "La minuta no té línies."
+
+msgid "El total de la minuta debe ser mayor que cero."
+msgstr "El total de la minuta ha de ser més gran que zero."
+
+msgid "Esa minuta no admite este cambio."
+msgstr "Aquesta minuta no admet aquest canvi."
+
+msgid "Jurisdicción no válida."
+msgstr "Jurisdicció no vàlida."
+
+msgid "La cuantía no es un importe válido."
+msgstr "La quantia no és un import vàlid."
+
+msgid "Los importes se escriben en positivo; para un abono marca «Es un abono»."
+msgstr "Els imports s'escriuen en positiu; per a un abonament marca «És un abonament»."
+
+msgid "El importe es demasiado grande."
+msgstr "L'import és massa gran."
+
+msgid "Un porcentaje debe estar entre 0 y 100."
+msgstr "Un percentatge ha d'estar entre 0 i 100."
+
+msgid "Elige un trimestre válido."
+msgstr "Tria un trimestre vàlid."
+
+msgid "El código de empresa de a3 tiene como máximo 5 dígitos."
+msgstr "El codi d'empresa d'a3 té com a màxim 5 dígits."
+
+msgid "Los dígitos de las subcuentas deben estar entre 4 y 12."
+msgstr "Els dígits de les subcomptes han d'estar entre 4 i 12."
+
+msgid "Elige un régimen de IVA de la lista."
+msgstr "Tria un règim d'IVA de la llista."
+
+msgid "La retención por defecto debe estar entre 0 y 60 %."
+msgstr "La retenció per defecte ha d'estar entre 0 i 60 %."
+
+msgid "Indica si la regla es de un proveedor o de un cliente."
+msgstr "Indica si la regla és d'un proveïdor o d'un client."
+
+msgid "Indica el NIF del proveedor o cliente al que se aplica la regla."
+msgstr "Indica el NIF del proveïdor o client al qual s'aplica la regla."
+
+msgid "La cuenta de gasto o ingreso debe tener entre 3 y 12 dígitos."
+msgstr "El compte de despesa o ingrés ha de tenir entre 3 i 12 dígits."
+
+msgid "Añade al menos una línea con la base imponible y el IVA."
+msgstr "Afegeix almenys una línia amb la base imposable i l'IVA."
+
+msgid "Indica si es una factura emitida o recibida."
+msgstr "Indica si és una factura emesa o rebuda."
+
+msgid "Indica el nombre del proveedor o cliente de la factura."
+msgstr "Indica el nom del proveïdor o client de la factura."
+
+msgid "Indica el número de factura."
+msgstr "Indica el número de factura."
+
+msgid "Esa factura ya se exportó: no se puede cambiar. Si hace falta corregirla, reábrela antes."
+msgstr "Aquesta factura ja es va exportar: no es pot canviar. Si cal corregir-la, reobre-la abans."
+
+msgid "Indica antes el código de empresa de a3 de este cliente."
+msgstr "Indica abans el codi d'empresa d'a3 d'aquest client."
+
+msgid "No hay facturas revisadas pendientes de exportar en ese periodo."
+msgstr "No hi ha factures revisades pendents d'exportar en aquest període."
+
+msgid "Tienes muchas facturas pendientes de revisar: espera a que el despacho las procese."
+msgstr "Tens moltes factures pendents de revisar: espera que el despatx les processi."
+
+msgid "Indica el total de la factura."
+msgstr "Indica el total de la factura."
+
+msgid "Indica si son facturas emitidas o recibidas."
+msgstr "Indica si són factures emeses o rebudes."
+
+msgid "El correo saliente de la plataforma no está configurado: no se puede avisar a los clientes."
+msgstr "El correu sortint de la plataforma no està configurat: no es pot avisar els clients."
+
+msgid "Los dígitos de las subcuentas deben ser un número."
+msgstr "Els dígits de les subcomptes han de ser un número."
+
+msgid "Solo se puede revisar una factura pendiente."
+msgstr "Només es pot revisar una factura pendent."
+
+msgid "Esta factura ya tiene un apunte en Guilda Fiscal: anúlalo antes de sacarla."
+msgstr "Aquesta factura ja té un apunt a Guilda Fiscal: anul·la'l abans de treure-la."
+
+msgid "Con tu rol solo puedes consultar los expedientes."
+msgstr "Amb el teu rol només pots consultar els expedients."
+
+msgid "Solo la dirección o un revisor fiscal puede reabrir un expediente cerrado."
+msgstr "Només la direcció o un revisor fiscal pot reobrir un expedient tancat."
+
+msgid "Ese tipo de expediente no existe."
+msgstr "Aquest tipus d'expedient no existeix."
+
+msgid "Prioridad no válida: baja, normal, alta o urgente."
+msgstr "Prioritat no vàlida: baixa, normal, alta o urgent."
+
+msgid "No existe esa obligación."
+msgstr "No existeix aquesta obligació."
+
+msgid "Asocia primero el certificado a un cliente (en «Datos») para abrir su expediente."
+msgstr "Associa primer el certificat a un client (a «Dades») per obrir-ne l'expedient."
+
+msgid "Escribe el punto de la lista."
+msgstr "Escriu el punt de la llista."
+
+msgid "El punto parece contener un secreto: no se guardan contraseñas ni claves."
+msgstr "El punt sembla contenir un secret: no es desen contrasenyes ni claus."
+
+msgid "No existe ese punto."
+msgstr "No existeix aquest punt."
+
+msgid "Ya hay una versión más reciente de este documento."
+msgstr "Ja hi ha una versió més recent d'aquest document."
+
+msgid "Ese archivo es idéntico a uno que ya está en el expediente."
+msgstr "Aquest fitxer és idèntic a un que ja és a l'expedient."
+
+msgid "No existe esa oficina."
+msgstr "No existeix aquesta oficina."
+
+msgid "Esa persona no pertenece al despacho."
+msgstr "Aquesta persona no pertany al despatx."
+
+msgid "La nota parece contener un secreto: no se guardan contraseñas ni claves."
+msgstr "La nota sembla contenir un secret: no es desen contrasenyes ni claus."
+
+msgid "Solo la dirección o un revisor fiscal puede quitar un punto obligatorio."
+msgstr "Només la direcció o un revisor fiscal pot treure un punt obligatori."
+
+msgid "Solo la dirección o un revisor fiscal puede autorizar una excepción para cerrar."
+msgstr "Només la direcció o un revisor fiscal pot autoritzar una excepció per tancar."
+
+msgid "La fecha objetivo debe tener el formato AAAA-MM-DD."
+msgstr "La data objectiu ha de tenir el format AAAA-MM-DD."
+
+msgid "El revisor no pertenece al despacho."
+msgstr "El revisor no pertany al despatx."
+
+msgid "El revisor y el responsable deben ser personas distintas."
+msgstr "El revisor i el responsable han de ser persones diferents."
+
+msgid "La fecha debe tener el formato AAAA-MM-DD."
+msgstr "La data ha de tenir el format AAAA-MM-DD."
+
+msgid "Disparador no válido."
+msgstr "Disparador no vàlid."
+
+msgid "La regla necesita al menos una acción."
+msgstr "La regla necessita almenys una acció."
+
+msgid "No se puede pedir la revisión de una tarea ya completada: elige otro estado o quita esa acción."
+msgstr "No es pot demanar la revisió d'una tasca ja completada: tria un altre estat o treu aquesta acció."
+
+msgid "La tarea ya está en revisión cuando se activa esta regla: no se puede pedir otra revisión. Elige otro estado o quita esa acción."
+msgstr "La tasca ja és en revisió quan s'activa aquesta regla: no es pot demanar una altra revisió. Tria un altre estat o treu aquesta acció."
+
+msgid "Solo la dirección del despacho gestiona las automatizaciones."
+msgstr "Només la direcció del despatx gestiona les automatitzacions."
+
+msgid "La regla necesita un nombre."
+msgstr "La regla necessita un nom."
+
+msgid "Elige a qué etapa tiene que pasar la oportunidad."
+msgstr "Tria a quina etapa ha de passar l'oportunitat."
+
+msgid "Acción no válida."
+msgstr "Acció no vàlida."
+
+msgid "Esa acción actúa sobre la tarea del disparador, así que solo vale cuando el disparador es una tarea."
+msgstr "Aquesta acció actua sobre la tasca del disparador, així que només val quan el disparador és una tasca."
+
+msgid "El destinatario no es válido."
+msgstr "El destinatari no és vàlid."
+
+msgid "Esa etapa no existe en tu embudo."
+msgstr "Aquesta etapa no existeix al teu embut."
+
+msgid "Ese tipo de expediente no está disponible para tu despacho."
+msgstr "Aquest tipus d'expedient no està disponible per al teu despatx."
+
+msgid "Ese estado no existe para ese tipo de expediente."
+msgstr "Aquest estat no existeix per a aquest tipus d'expedient."
+
+msgid "El cliente elegido no es de tu despacho."
+msgstr "El client triat no és del teu despatx."
+
+msgid "Elige a qué estado tiene que pasar la tarea."
+msgstr "Tria a quin estat ha de passar la tasca."
+
+msgid "Elige a qué estado tiene que pasar el expediente."
+msgstr "Tria a quin estat ha de passar l'expedient."
+
+msgid "El tipo de expediente no es válido."
+msgstr "El tipus d'expedient no és vàlid."
+
+msgid "La tarea que se crea necesita un asunto."
+msgstr "La tasca que es crea necessita un assumpte."
+
+msgid "Una de las personas elegidas no es de tu despacho."
+msgstr "Una de les persones triades no és del teu despatx."
+
+msgid "El aviso necesita un título."
+msgstr "L'avís necessita un títol."
+
+msgid "El comentario necesita un texto."
+msgstr "El comentari necessita un text."
+
+msgid "El importe no es válido."
+msgstr "L'import no és vàlid."
+
+msgid "Indica el nombre del cliente."
+msgstr "Indica el nom del client."
+
+msgid "El nombre es demasiado largo (máx. 200 caracteres)."
+msgstr "El nom és massa llarg (màx. 200 caràcters)."
+
+msgid "El tipo de cliente debe ser «persona» o «empresa»."
+msgstr "El tipus de client ha de ser «persona» o «empresa»."
+
+msgid "Idioma no válido."
+msgstr "Idioma no vàlid."
+
+msgid "Indica el nombre de la persona de contacto."
+msgstr "Indica el nom de la persona de contacte."
+
+msgid "Elige dos clientes distintos."
+msgstr "Tria dos clients diferents."
+
+msgid "Indica el título del expediente."
+msgstr "Indica el títol de l'expedient."
+
+msgid "Ese estado no existe para este tipo de expediente."
+msgstr "Aquest estat no existeix per a aquest tipus d'expedient."
+
+msgid "Escribe la nota."
+msgstr "Escriu la nota."
+
+msgid "Indica el nombre del festivo."
+msgstr "Indica el nom del festiu."
+
+msgid "Indica qué plazo es."
+msgstr "Indica quin termini és."
+
+msgid "Describe en qué se ha empleado el tiempo."
+msgstr "Descriu en què s'ha emprat el temps."
+
+msgid "El tiempo debe ser mayor que cero y de menos de 24 horas."
+msgstr "El temps ha de ser més gran que zero i de menys de 24 hores."
+
+msgid "No se puede registrar tiempo de una fecha futura."
+msgstr "No es pot registrar temps d'una data futura."
+
+msgid "Agrupa por usuario, cliente o expediente."
+msgstr "Agrupa per usuari, client o expedient."
+
+msgid "Los avisos son números de días separados por comas (por ejemplo 7,3,1)."
+msgstr "Els avisos són números de dies separats per comes (per exemple 7,3,1)."
+
+msgid "La revisión tiene que hacerla otra persona distinta de quien creó el plazo."
+msgstr "La revisió l'ha de fer una altra persona diferent de qui va crear el termini."
+
+msgid "El título no puede quedar vacío."
+msgstr "El títol no pot quedar buit."
+
+msgid "El nombre no puede quedar vacío."
+msgstr "El nom no pot quedar buit."
+
+msgid "Ponle un nombre a la oficina."
+msgstr "Posa un nom a l'oficina."
+
+msgid "Indica a una oficina o a una persona (una sola)."
+msgstr "Indica una oficina o una persona (només una)."
+
+msgid "Nivel no válido."
+msgstr "Nivell no vàlid."
+
+msgid "Rol o alcance no válidos."
+msgstr "Rol o abast no vàlids."
+
+msgid "Un coordinador lo es de una oficina."
+msgstr "Un coordinador ho és d'una oficina."
+
+msgid "El revisor fiscal lo es de toda la organización."
+msgstr "El revisor fiscal ho és de tota l'organització."
+
+msgid "Ya hay una oficina con ese nombre."
+msgstr "Ja hi ha una oficina amb aquest nom."
+
+msgid "Solo la dirección o quien coordina la oficina del cliente puede compartirlo."
+msgstr "Només la direcció o qui coordina l'oficina del client pot compartir-lo."
+
+msgid "No existe esa concesión."
+msgstr "No existeix aquesta concessió."
+
+msgid "Solo la dirección o quien coordina la oficina del cliente puede retirar el acceso."
+msgstr "Només la direcció o qui coordina l'oficina del client pot retirar l'accés."
+
+msgid "Indica la oficina o el cliente."
+msgstr "Indica l'oficina o el client."
+
+msgid "Solo la dirección, o quien coordina la oficina (para gestores y auditores de ella), puede dar roles."
+msgstr "Només la direcció, o qui coordina l'oficina (per a gestors i auditors d'aquesta), pot donar rols."
+
+msgid "Esa persona ya tiene ese rol con ese alcance."
+msgstr "Aquesta persona ja té aquest rol amb aquest abast."
+
+msgid "No existe esa membresía."
+msgstr "No existeix aquesta pertinença."
+
+msgid "Solo la dirección, o quien coordina la oficina, puede retirar roles."
+msgstr "Només la direcció, o qui coordina l'oficina, pot retirar rols."
+
+msgid "Solo la dirección o quien coordina esas oficinas puede mover el cliente."
+msgstr "Només la direcció o qui coordina aquestes oficines pot moure el client."
+
+msgid "La fecha de fin debe tener el formato AAAA-MM-DD."
+msgstr "La data de fi ha de tenir el format AAAA-MM-DD."
+
+msgid "El mes debe tener el formato AAAA-MM."
+msgstr "El mes ha de tenir el format AAAA-MM."
+
+msgid "El ámbito de la tarifa debe ser general, de un plan o de un despacho."
+msgstr "L'àmbit de la tarifa ha de ser general, d'un pla o d'un despatx."
+
+msgid "Indica el plan o el despacho al que se aplica la tarifa."
+msgstr "Indica el pla o el despatx al qual s'aplica la tarifa."
+
+msgid "La unidad debe ser facturas anotadas o facturas exportadas."
+msgstr "La unitat ha de ser factures anotades o factures exportades."
+
+msgid "Las facturas incluidas deben estar entre 0 y 10.000.000."
+msgstr "Les factures incloses han d'estar entre 0 i 10.000.000."
+
+msgid "El precio de cada factura de más no es válido."
+msgstr "El preu de cada factura de més no és vàlid."
+
+msgid "El precio no es válido."
+msgstr "El preu no és vàlid."
+
+msgid "Estado de liquidación no válido."
+msgstr "Estat de liquidació no vàlid."
+
+msgid "Las facturas incluidas, el precio y el límite deben ser números."
+msgstr "Les factures incloses, el preu i el límit han de ser números."
+
+msgid "El límite solo se puede poner contando facturas anotadas (no se bloquean las exportaciones)."
+msgstr "El límit només es pot posar comptant factures anotades (no es bloquegen les exportacions)."
+
+msgid "El límite no puede ser menor que las facturas incluidas."
+msgstr "El límit no pot ser menor que les factures incloses."
+
+msgid "Ese plan no existe."
+msgstr "Aquest pla no existeix."
+
+msgid "Ese despacho no existe."
+msgstr "Aquest despatx no existeix."
+
+msgid "Tu gestoría no puede recibir más facturas este mes por este medio. Avísala para que lo resuelva."
+msgstr "La teva gestoria no pot rebre més factures aquest mes per aquest mitjà. Avisa-la perquè ho resolgui."
+
+msgid "El precio no es un importe válido: escríbelo como 0,10."
+msgstr "El preu no és un import vàlid: escriu-lo com 0,10."
+
+msgid "Esa liquidación no existe: calcúlala primero."
+msgstr "Aquesta liquidació no existeix: calcula-la primer."
+
+msgid "Una liquidación ya facturada no se puede reabrir."
+msgstr "Una liquidació ja facturada no es pot reobrir."
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar el flujo de trabajo fiscal."
+msgstr "Només la direcció del despatx (supervisors) pot canviar el flux de treball fiscal."
+
+msgid "La fecha de presentación no puede estar en el futuro."
+msgstr "La data de presentació no pot ser en el futur."
+
+msgid "Fase no válida."
+msgstr "Fase no vàlida."
+
+msgid "Indica qué se está esperando."
+msgstr "Indica què s'està esperant."
+
+msgid "Este despacho trabaja con flujo estricto: la obligación tiene que estar aprobada antes de presentarla. Hazlo desde su ficha."
+msgstr "Aquest despatx treballa amb flux estricte: l'obligació ha d'estar aprovada abans de presentar-la. Fes-ho des de la seva fitxa."
+
+msgid "La fecha de presentación no es válida (usa AAAA-MM-DD o AAAA-MM-DDTHH:MM)."
+msgstr "La data de presentació no és vàlida (fes servir AAAA-MM-DD o AAAA-MM-DDTHH:MM)."
+
+msgid "Con tu rol solo puedes consultar esta obligación."
+msgstr "Amb el teu rol només pots consultar aquesta obligació."
+
+msgid "Solo la dirección o el revisor fiscal puede aprobar o declarar una obligación «no aplica» o «anulada»."
+msgstr "Només la direcció o el revisor fiscal pot aprovar o declarar una obligació «no aplica» o «anul·lada»."
+
+msgid "Indica la justificación."
+msgstr "Indica la justificació."
+
+msgid "Solo se bloquea una obligación en trabajo."
+msgstr "Només es bloqueja una obligació en treball."
+
+msgid "Solo quien revisa puede devolver una obligación en revisión."
+msgstr "Només qui revisa pot tornar una obligació en revisió."
+
+msgid "Indica por qué se devuelve a preparación."
+msgstr "Indica per què es torna a preparació."
+
+msgid "Este despacho exige un justificante para presentar: sube el justificante oficial."
+msgstr "Aquest despatx exigeix un justificant per presentar: puja el justificant oficial."
+
+msgid "El documento indicado no pertenece a esta obligación."
+msgstr "El document indicat no pertany a aquesta obligació."
+
+msgid "No se puede cerrar sin la evidencia de la presentación."
+msgstr "No es pot tancar sense l'evidència de la presentació."
+
+msgid "Este despacho exige el justificante oficial para cerrar: súbelo antes."
+msgstr "Aquest despatx exigeix el justificant oficial per tancar: puja'l abans."
+
+msgid "Este despacho exige el justificante oficial para presentar: adjúntalo al marcar la obligación como presentada."
+msgstr "Aquest despatx exigeix el justificant oficial per presentar: adjunta'l en marcar l'obligació com a presentada."
+
+msgid "El importe debe estar entre 0 y 1.000.000 €."
+msgstr "L'import ha d'estar entre 0 i 1.000.000 €."
+
+msgid "El nombre del plan es obligatorio."
+msgstr "El nom del pla és obligatori."
+
+msgid "El plan no existe."
+msgstr "El pla no existeix."
+
+msgid "El nombre del extra es obligatorio."
+msgstr "El nom de l'extra és obligatori."
+
+msgid "Módulo de negocio desconocido."
+msgstr "Mòdul de negoci desconegut."
+
+msgid "El extra no existe."
+msgstr "L'extra no existeix."
+
+msgid "Indica un email de facturación válido."
+msgstr "Indica un correu de facturació vàlid."
+
+msgid "Asigna un plan al tenant antes de activar la suscripción."
+msgstr "Assigna un pla al tenant abans d'activar la subscripció."
+
+msgid "El plan todavía no está sincronizado con Stripe (hazlo en Planes y extras)."
+msgstr "El pla encara no està sincronitzat amb Stripe (fes-ho a Plans i extres)."
+
+msgid "Elige un extra del catálogo."
+msgstr "Tria un extra del catàleg."
+
+msgid "Indica un email de contacto válido para Stripe."
+msgstr "Indica un correu de contacte vàlid per a Stripe."
+
+msgid "Indica el concepto del cobro (máx. 200 caracteres)."
+msgstr "Indica el concepte del cobrament (màx. 200 caràcters)."
+
+msgid "Indica un importe mayor que cero."
+msgstr "Indica un import més gran que zero."
+
+msgid "El importe no es un número válido."
+msgstr "L'import no és un número vàlid."
+
+msgid "El cobro no existe."
+msgstr "El cobrament no existeix."
+
+msgid "Escribe el concepto de la factura."
+msgstr "Escriu el concepte de la factura."
+
+msgid "El importe total es demasiado grande."
+msgstr "L'import total és massa gran."
+
+msgid "Este despacho no tiene FacturaScripts configurado."
+msgstr "Aquest despatx no té FacturaScripts configurat."
+
+msgid "Vincula primero al cliente con FacturaScripts desde su ficha fiscal."
+msgstr "Vincula primer el client amb FacturaScripts des de la seva fitxa fiscal."
+
+msgid "Elige al menos un parte de horas."
+msgstr "Tria almenys un full d'hores."
+
+msgid "Alguna de esas horas ya se ha facturado o no es de este expediente."
+msgstr "Alguna d'aquestes hores ja s'ha facturat o no és d'aquest expedient."
+
+msgid "Hay horas sin tarifa: fija la tarifa por hora de quien las registró o quítalas de la selección."
+msgstr "Hi ha hores sense tarifa: fixa la tarifa per hora de qui les va registrar o treu-les de la selecció."
+
+msgid "Solo la dirección, la coordinación o quien lleva el expediente puede preparar la proforma."
+msgstr "Només la direcció, la coordinació o qui porta l'expedient pot preparar la proforma."
+
+msgid "El importe no es válido: escríbelo como 1.234,56."
+msgstr "L'import no és vàlid: escriu-lo com 1.234,56."
+
+msgid "Escribe el concepto de cada línea."
+msgstr "Escriu el concepte de cada línia."
+
+msgid "El concepto es demasiado largo (máx. 200 caracteres)."
+msgstr "El concepte és massa llarg (màx. 200 caràcters)."
+
+msgid "Alguna de esas horas ya se ha facturado."
+msgstr "Alguna d'aquestes hores ja s'ha facturat."
+
+msgid "El despacho «Plataforma» es interno y no se puede borrar."
+msgstr "El despatx «Plataforma» és intern i no es pot esborrar."
+
+msgid "Huso horario no válido"
+msgstr "Fus horari no vàlid"
+
+msgid "Permisos de token no válidos."
+msgstr "Permisos de testimoni no vàlids."
+
+msgid "La persona no existe."
+msgstr "La persona no existeix."
+
+msgid "La persona no pertenece a ese despacho."
+msgstr "La persona no pertany a aquest despatx."
+
+msgid "El despacho no existe."
+msgstr "El despatx no existeix."
+
+msgid "La fecha de caducidad ya ha pasado."
+msgstr "La data de caducitat ja ha passat."
+
+msgid "La fecha de caducidad no es válida."
+msgstr "La data de caducitat no és vàlida."
+
+msgid "No existe ese traspaso."
+msgstr "No existeix aquest traspàs."
+
+msgid "Esa persona ya es la responsable del cliente."
+msgstr "Aquesta persona ja és la responsable del client."
+
+msgid "Ese cliente ya tiene un traspaso pendiente de aceptar."
+msgstr "Aquest client ja té un traspàs pendent d'acceptar."
+
+msgid "Solo quien lo recibe (o la dirección) puede aceptarlo."
+msgstr "Només qui el rep (o la direcció) pot acceptar-lo."
+
+msgid "Solo la dirección o quien coordina la oficina del cliente puede cambiar el responsable."
+msgstr "Només la direcció o qui coordina l'oficina del client pot canviar el responsable."
+
+msgid "Hay un traspaso pendiente de aceptar: resuélvelo antes."
+msgstr "Hi ha un traspàs pendent d'acceptar: resol-lo abans."
+
+msgid "Solo quien lo recibe (o la dirección) puede rechazarlo."
+msgstr "Només qui el rep (o la direcció) pot rebutjar-lo."
+
+msgid "Cuenta por qué se rechaza, para que quien lo propuso pueda resolverlo."
+msgstr "Explica per què es rebutja, perquè qui el va proposar pugui resoldre-ho."
+
+msgid "Solo quien lo propuso (o la dirección) puede cancelarlo."
+msgstr "Només qui el va proposar (o la direcció) pot cancel·lar-lo."
+
+msgid "Contacto no encontrado."
+msgstr "Contacte no trobat."
+
+msgid "Indica el nombre del grupo."
+msgstr "Indica el nom del grup."
+
+msgid "Grupo no encontrado."
+msgstr "Grup no trobat."
+
+msgid "Este mensaje no tiene una dirección de remitente válida."
+msgstr "Aquest missatge no té una adreça de remitent vàlida."
+
+msgid "Indica el nombre del contacto."
+msgstr "Indica el nom del contacte."
+
+msgid "El correo no es válido."
+msgstr "El correu no és vàlid."
+
+msgid "Ya hay un contacto con ese correo."
+msgstr "Ja hi ha un contacte amb aquest correu."
+
+msgid "Ya hay un grupo con ese nombre."
+msgstr "Ja hi ha un grup amb aquest nom."
+
+msgid "Ponle un nombre al turno."
+msgstr "Posa un nom al torn."
+
+msgid "El turno no puede empezar y acabar a la misma hora."
+msgstr "El torn no pot començar i acabar a la mateixa hora."
+
+msgid "Solo quien gestiona el fichaje puede organizar los turnos."
+msgstr "Només qui gestiona el fitxatge pot organitzar els torns."
+
+msgid "Ese turno no existe o está archivado."
+msgstr "Aquest torn no existeix o està arxivat."
+
+msgid "Elige lunes como primer día de cada semana."
+msgstr "Tria dilluns com a primer dia de cada setmana."
+
+msgid "Elige dos semanas distintas."
+msgstr "Tria dues setmanes diferents."
+
+msgid "Ya hay un turno con ese nombre."
+msgstr "Ja hi ha un torn amb aquest nom."
+
+msgid "No existe ese turno."
+msgstr "No existeix aquest torn."
+
+msgid "Permiso desconocido."
+msgstr "Permís desconegut."
+
+msgid "Indica el nombre de la organización (máx. 120 caracteres)."
+msgstr "Indica el nom de l'organització (màx. 120 caràcters)."
+
+msgid "Indica un nombre válido (máx. 120 caracteres)."
+msgstr "Indica un nom vàlid (màx. 120 caràcters)."
+
+msgid "Módulo desconocido."
+msgstr "Mòdul desconegut."
+
+msgid "El usuario no existe."
+msgstr "L'usuari no existeix."
+
+msgid "Ya existe un usuario con ese email."
+msgstr "Ja existeix un usuari amb aquest correu."
+
+msgid "El tenant no existe."
+msgstr "El tenant no existeix."
+
+msgid "Ya existe un tenant con ese nombre."
+msgstr "Ja existeix un tenant amb aquest nom."
+
+msgid "El módulo Contabilización de facturas no está activo en este despacho."
+msgstr "El mòdul Comptabilització de factures no està actiu en aquest despatx."
+
+msgid "Tu perfil solo permite consultar: no puedes cambiar facturas."
+msgstr "El teu perfil només permet consultar: no pots canviar factures."
+
+msgid "`estado` debe ser pendiente, revisada, exportada o descartada."
+msgstr "`estado` ha de ser pendiente, revisada, exportada o descartada."
+
+msgid "`tipo` debe ser emitida o recibida."
+msgstr "`tipo` ha de ser emitida o recibida."
+
+msgid "No existe esa factura."
+msgstr "No existeix aquesta factura."
+
+msgid "Indica al menos una línea con la base imponible (`lineas`)."
+msgstr "Indica almenys una línia amb la base imposable (`lineas`)."
+
+msgid "No existe ese fichero."
+msgstr "No existeix aquest fitxer."
+
+msgid "Indica al menos una condición: remitente o asunto."
+msgstr "Indica almenys una condició: remitent o assumpte."
+
+msgid "La categoría elegida no existe."
+msgstr "La categoria triada no existeix."
+
+msgid "Para archivar los adjuntos en el expediente, elige el cliente."
+msgstr "Per arxivar els adjunts a l'expedient, tria el client."
+
+msgid "Elige al menos una acción para la regla."
+msgstr "Tria almenys una acció per a la regla."
+
+msgid "Esa cuenta no existe."
+msgstr "Aquest compte no existeix."
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar el recordatorio de nóminas."
+msgstr "Només la direcció del despatx (supervisors) pot canviar el recordatori de nòmines."
+
+msgid "Día del recordatorio: indica un número entre 1 y 31."
+msgstr "Dia del recordatori: indica un número entre 1 i 31."
+
+msgid "Para activar el recordatorio indica el día del mes."
+msgstr "Per activar el recordatori indica el dia del mes."
+
+msgid "Estado de nómina no válido."
+msgstr "Estat de nòmina no vàlid."
+
+msgid "Indica el nombre del trabajador."
+msgstr "Indica el nom del treballador."
+
+msgid "La jornada son horas a la semana (por ejemplo 40)."
+msgstr "La jornada són hores a la setmana (per exemple 40)."
+
+msgid "Periodo no válido (AAAA-MM)."
+msgstr "Període no vàlid (AAAA-MM)."
+
+msgid "Esa factura ya se exportó: no se puede cambiar."
+msgstr "Aquesta factura ja es va exportar: no es pot canviar."
+
+msgid "Esta factura no tiene archivo adjunto que leer."
+msgstr "Aquesta factura no té cap fitxer adjunt per llegir."
+
+msgid "Para leer facturas con IA hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA."
+msgstr "Per llegir factures amb IA cal un model amb visió i la teva clau d'OpenRouter, a Ajustos de l'Assistent IA."
+
+msgid "No se encuentra el archivo de la factura."
+msgstr "No es troba el fitxer de la factura."
+
+msgid "Los documentos del despacho están cifrados y bloqueados: desbloquéalos para leer la factura."
+msgstr "Els documents del despatx estan xifrats i bloquejats: desbloqueja'ls per llegir la factura."
+
+msgid "Solo la dirección del despacho (supervisores) puede cambiar los avisos."
+msgstr "Només la direcció del despatx (supervisors) pot canviar els avisos."
+
+msgid "Indica entre 1 y 5 plazos de aviso, en días (por ejemplo 7, 3, 1)."
+msgstr "Indica entre 1 i 5 terminis d'avís, en dies (per exemple 7, 3, 1)."
+
+msgid "Indica entre 1 y 6 plazos de aviso para los certificados, en días (por ejemplo 30, 15, 7, 1)."
+msgstr "Indica entre 1 i 6 terminis d'avís per als certificats, en dies (per exemple 30, 15, 7, 1)."
+
+msgid "No existe ese aviso."
+msgstr "No existeix aquest avís."
+
+msgid "Este aviso ya está resuelto: no hace falta acusarlo."
+msgstr "Aquest avís ja està resolt: no cal acusar-ne recepció."
+
+msgid "Este aviso ya está acusado."
+msgstr "Aquest avís ja té acusament de recepció."
+
+msgid "Indica el nombre de la plantilla."
+msgstr "Indica el nom de la plantilla."
+
+msgid "El nombre es demasiado largo (máx. 80 caracteres)."
+msgstr "El nom és massa llarg (màx. 80 caràcters)."
+
+msgid "Tipo de cliente no válido."
+msgstr "Tipus de client no vàlid."
+
+msgid "La plantilla de tareas no existe."
+msgstr "La plantilla de tasques no existeix."
+
+msgid "La plantilla de tareas debe estar compartida con el despacho para que la apliquen todas las personas."
+msgstr "La plantilla de tasques ha d'estar compartida amb el despatx perquè l'apliquin totes les persones."
+
+msgid "Ya hay una plantilla con ese nombre."
+msgstr "Ja hi ha una plantilla amb aquest nom."
+
+msgid "Tipo de modelo desconocido."
+msgstr "Tipus de model desconegut."
+
+msgid "Indica el nombre del modelo."
+msgstr "Indica el nom del model."
+
+msgid "El código del modelo solo puede llevar letras, números, guion y guion bajo (máximo 12)."
+msgstr "El codi del model només pot portar lletres, números, guió i guió baix (màxim 12)."
+
+msgid "Indica el país con su código de 2 letras (por ejemplo ES)."
+msgstr "Indica el país amb el seu codi de 2 lletres (per exemple ES)."
+
+msgid "Esa versión no existe."
+msgstr "Aquesta versió no existeix."
+
+msgid "Ya hay una versión más reciente aprobada."
+msgstr "Ja hi ha una versió més recent aprovada."
+
+msgid "Elige un plazo válido."
+msgstr "Tria un termini vàlid."
+
+msgid "Elige el tipo de solicitud."
+msgstr "Tria el tipus de sol·licitud."
+
+msgid "Describe la solicitud (quién la hace y qué pide)."
+msgstr "Descriu la sol·licitud (qui la fa i què demana)."
+
+msgid "Escribe qué se ha hecho (mínimo 5 caracteres): queda anotado."
+msgstr "Escriu què s'ha fet (mínim 5 caràcters): queda anotat."
+
+msgid "Esa solicitud no existe o ya está atendida."
+msgstr "Aquesta sol·licitud no existeix o ja està atesa."
+
+msgid "Pide como mucho dos años de una vez."
+msgstr "Demana com a molt dos anys alhora."
+
+msgid "Solo quien gestiona el fichaje puede ajustar la bolsa de horas."
+msgstr "Només qui gestiona el fitxatge pot ajustar la borsa d'hores."
+
+msgid "El ajuste debe ser distinto de cero y de menos de 200 horas."
+msgstr "L'ajust ha de ser diferent de zero i de menys de 200 hores."
+
+msgid "Indica el motivo del ajuste."
+msgstr "Indica el motiu de l'ajust."
+
+msgid "Indica los minutos (positivos suman, negativos restan)."
+msgstr "Indica els minuts (els positius sumen, els negatius resten)."
+
+msgid "El cifrado de este despacho ya está activado."
+msgstr "El xifratge d'aquest despatx ja està activat."
+
+msgid "Nivel de reserva no válido."
+msgstr "Nivell de reserva no vàlid."
+
+msgid "El cifrado de este despacho no está activado."
+msgstr "El xifratge d'aquest despatx no està activat."
+
+msgid "Tipo de concesión no válido."
+msgstr "Tipus de concessió no vàlid."
+
+msgid "Elige al menos una tarea."
+msgstr "Tria almenys una tasca."
+
+msgid "El comunicado necesita un título."
+msgstr "El comunicat necessita un títol."
+
+msgid "La fecha de fin es anterior a la de inicio."
+msgstr "La data de fi és anterior a la d'inici."
+
+msgid "Un movimiento tiene un importe no válido."
+msgstr "Un moviment té un import no vàlid."
+
+msgid "Elige al menos un movimiento."
+msgstr "Tria almenys un moviment."
+
+msgid "Un movimiento no tiene fecha o importe válidos."
+msgstr "Un moviment no té data o import vàlids."
+
+msgid "No encontrado."
+msgstr "No trobat."
+
+msgid "La fecha de fin ya ha pasado."
+msgstr "La data de fi ja ha passat."
+
+msgid "Ya hay un mantenimiento activo para ese ámbito."
+msgstr "Ja hi ha un manteniment actiu per a aquest àmbit."
+
+msgid "La fecha de fin no es válida."
+msgstr "La data de fi no és vàlida."
+
+msgid "El logo pesa demasiado (máximo 400 KB)."
+msgstr "El logo pesa massa (màxim 400 KB)."
+
+msgid "El color tiene que ser un código como #1a73e8."
+msgstr "El color ha de ser un codi com #1a73e8."
+
+msgid "No se ha podido leer la imagen: sube un PNG, JPEG o WebP."
+msgstr "No s'ha pogut llegir la imatge: puja un PNG, JPEG o WebP."
+
+msgid "El logo tiene que ser PNG, JPEG o WebP."
+msgstr "El logo ha de ser PNG, JPEG o WebP."
+
+msgid "Regla desconocida."
+msgstr "Regla desconeguda."
+
+msgid "Unidad: elige días hábiles, naturales o meses."
+msgstr "Unitat: tria dies hàbils, naturals o mesos."
+
+msgid "Por ahora solo se pide la conformidad del modelo 303."
+msgstr "De moment només es demana la conformitat del model 303."
+
+msgid "Solo se puede pedir la conformidad de una declaración revisada o exportada."
+msgstr "Només es pot demanar la conformitat d'una declaració revisada o exportada."
+
+msgid "La declaración tiene bloqueos: no se enseña al cliente."
+msgstr "La declaració té bloquejos: no es mostra al client."
+
+msgid "La fecha final no puede ser anterior a la inicial."
+msgstr "La data final no pot ser anterior a la inicial."
+
+msgid "Para activar la respuesta automática escribe el asunto y el mensaje."
+msgstr "Per activar la resposta automàtica escriu l'assumpte i el missatge."
+
+msgid "Primero hay que activar el cifrado de documentos del despacho: el correo usa la misma clave."
+msgstr "Primer cal activar el xifratge de documents del despatx: el correu fa servir la mateixa clau."
+
+msgid "El correo cifrado ya está activado."
+msgstr "El correu xifrat ja està activat."
+
+msgid "Explica al cliente qué ha de corregir."
+msgstr "Explica al client què ha de corregir."
+
+msgid "Solo se pueden devolver las facturas que ha enviado el cliente desde su portal."
+msgstr "Només es poden tornar les factures que ha enviat el client des del seu portal."
+
+msgid "Solo se puede devolver una factura pendiente o revisada."
+msgstr "Només es pot tornar una factura pendent o revisada."
+
+msgid "Este enlace no admite mensajes."
+msgstr "Aquest enllaç no admet missatges."
+
+msgid "No hay ningún enlace activo que admita mensajes: crea uno con «permitir mensajes»."
+msgstr "No hi ha cap enllaç actiu que admeti missatges: crea'n un amb «permetre missatges»."
+
+msgid "Has enviado muchos mensajes hoy. Inténtalo mañana o llama al despacho."
+msgstr "Has enviat molts missatges avui. Torna-ho a provar demà o truca al despatx."
+
+msgid "Indica el motivo (mínimo 5 caracteres): queda registrado."
+msgstr "Indica el motiu (mínim 5 caràcters): queda registrat."
+
+msgid "No se puede ver como un administrador."
+msgstr "No es pot veure com un administrador."
+
+msgid "Escribe el motivo de la excepción: queda en el historial del despacho."
+msgstr "Escriu el motiu de l'excepció: queda a l'historial del despatx."
+
+msgid "Los días de prueba van de 1 a 365."
+msgstr "Els dies de prova van d'1 a 365."
+
+msgid "La contraseña actual no es correcta."
+msgstr "La contrasenya actual no és correcta."
+
+msgid "Las dos contraseñas nuevas no coinciden."
+msgstr "Les dues contrasenyes noves no coincideixen."
+
+msgid "La contraseña nueva tiene que ser distinta de la actual."
+msgstr "La contrasenya nova ha de ser diferent de l'actual."
+
+msgid "La plantilla de cliente no existe."
+msgstr "La plantilla de client no existeix."
+
+msgid "Este cliente ya tiene gestión fiscal."
+msgstr "Aquest client ja té gestió fiscal."
+
+msgid "Este trimestre ya está cerrado."
+msgstr "Aquest trimestre ja està tancat."
+
+msgid "Quedan puntos pendientes: resuélvelos o cierra el trimestre dejando constancia."
+msgstr "Queden punts pendents: resol-los o tanca el trimestre deixant-ne constància."
+
+msgid "Ese dominio no es válido."
+msgstr "Aquest domini no és vàlid."
+
+msgid "El selector DKIM no es válido."
+msgstr "El selector DKIM no és vàlid."
+
+msgid "El título no puede estar vacío."
+msgstr "El títol no pot estar buit."
+
+msgid "El atajo necesita un título y un texto."
+msgstr "L'accés ràpid necessita un títol i un text."
+
+msgid "El límite debe ser un número entre 0 y 1.000.000, o ilimitado."
+msgstr "El límit ha de ser un número entre 0 i 1.000.000, o il·limitat."
+
+msgid "La fecha de inicio no puede ser posterior a la de fin."
+msgstr "La data d'inici no pot ser posterior a la de fi."
+
+msgid "Las fechas tienen que ser AAAA-MM-DD."
+msgstr "Les dates han de ser AAAA-MM-DD."
+
+msgid "Escribe el motivo (mínimo 5 caracteres): queda anotado."
+msgstr "Escriu el motiu (mínim 5 caràcters): queda anotat."
+
+msgid "Elige 1, 3, 7 o 30 días."
+msgstr "Tria 1, 3, 7 o 30 dies."
+
+msgid "Usuario no válido (letras, números y . _ - @)."
+msgstr "Usuari no vàlid (lletres, números i . _ - @)."
+
+msgid "El código no es correcto. Comprueba la hora del móvil y vuelve a probar."
+msgstr "El codi no és correcte. Comprova l'hora del mòbil i torna-ho a provar."
+
+msgid "Acción de IA desconocida."
+msgstr "Acció d'IA desconeguda."
+
+msgid "Para usar tu propio texto rellena el asunto y el cuerpo (o deja los dos vacíos)."
+msgstr "Per fer servir el teu propi text omple l'assumpte i el cos (o deixa'ls tots dos buits)."
+
+msgid "Indica el email de quien firma."
+msgstr "Indica el correu de qui signa."
+
+msgid "No tienes acceso a este cliente."
+msgstr "No tens accés a aquest client."
+
+msgid "Los orígenes CORS no admiten comodines: indica cada origen exacto."
+msgstr "Els orígens CORS no admeten comodins: indica cada origen exacte."
+
+msgid "Los topes no pueden ser negativos."
+msgstr "Els topalls no poden ser negatius."
+
+msgid "La nota no puede estar vacía ni superar 2000 caracteres."
+msgstr "La nota no pot estar buida ni superar els 2000 caràcters."
+
+msgid "Cuenta brevemente qué se habló o se acordó."
+msgstr "Explica breument què es va parlar o es va acordar."

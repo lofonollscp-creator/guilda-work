@@ -243,7 +243,7 @@ def fichero_390_prueba(cliente_id: int):
     try:
         datos, nombre = fn.descargar_fichero_390(g.tenant_id, g.usuario_id, cliente_id, ejercicio)
     except ErrorFiscal as e:
-        return redirect(url_for("guilda_fiscal.resumen_anual_390", cliente_id=cliente_id, ejercicio=ejercicio, error=str(e)[:300]))
+        return redirect(url_for("guilda_fiscal.resumen_anual_390", cliente_id=cliente_id, ejercicio=ejercicio, error=_(str(e))[:300]))
     return Response(datos, mimetype="application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{nombre}"', "X-Content-Type-Options": "nosniff"})
 
 
@@ -270,7 +270,7 @@ def captura(cliente_id: int):
             archivos = [(a.filename, a.mimetype, a.read(fc.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
             ids = fc.subir_archivos(g.tenant_id, g.usuario_id, cliente_id, request.form.get("tipo", ""), archivos)
         except ValueError as e:
-            return redirect(url_for("guilda_fiscal.captura", cliente_id=cliente_id, error=str(e)[:300]))
+            return redirect(url_for("guilda_fiscal.captura", cliente_id=cliente_id, error=_(str(e))[:300]))
         session["captura_ultimo"] = cliente_id
         return redirect(url_for("guilda_fiscal.captura", cliente_id=cliente_id, subidas=len(ids)))
     session["captura_ultimo"] = cliente_id
@@ -411,7 +411,7 @@ def pedir_justificantes(cliente_id: int):
     try:
         r = justificantes.pedir(g.tenant_id, g.usuario_id, cliente_id, movimientos)
     except ValueError as e:
-        return redirect(url_for("guilda_fiscal.conciliacion", cliente_id=cliente_id, error=str(e)[:300]))
+        return redirect(url_for("guilda_fiscal.conciliacion", cliente_id=cliente_id, error=_(str(e))[:300]))
     return redirect(url_for("contabilidad.justificantes", cliente_id=cliente_id, pedidos=r["nuevos"], repetidos=r["repetidos"], avisado=1 if r["avisado"] else 0))
 
 
@@ -844,7 +844,7 @@ def pedir_conformidad(declaracion_id: int):
     except ErrorFiscal as e:
         return _atras(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id), e)
     except ValueError as e:
-        return redirect(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id, error=str(e)[:300]))
+        return redirect(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id, error=_(str(e))[:300]))
     return redirect(url_for("guilda_fiscal.declaracion", declaracion_id=declaracion_id, conformidad="avisado" if r["avisado"] else "sin_aviso"))
 
 

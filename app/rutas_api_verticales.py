@@ -84,6 +84,22 @@ def agenda_visitas_api():
     return _consulta(cv.agenda_visitas, request.args.get("dias", 7, type=int))
 
 
+@api_bp.route("/inmobiliaria/visitas/<int:visita_id>/resultado", methods=["POST"])
+@token_required
+def resultado_visita_api(visita_id: int):
+    """Anota el resultado de una visita. Cuerpo: `estado` (`realizada`, `cancelada`, `ausente` o `prevista`) y, opcionales, `valoracion` (1-5), `interes` (`alto`, `medio`, `bajo`, `ninguno`) y `comentario`."""
+    d = _body()
+    return _consulta(cv.resultado_visita, visita_id, d.get("estado"), d.get("valoracion"), d.get("interes"), d.get("comentario"))
+
+
+@api_bp.route("/abogados/vistas/<int:vista_id>/estado", methods=["POST"])
+@token_required
+def estado_vista_api(vista_id: int):
+    """Marca un señalamiento: `estado` = `celebrada`, `suspendida` o `prevista`."""
+    d = _body()
+    return _consulta(cv.estado_vista, vista_id, d.get("estado"))
+
+
 @api_bp.route("/inmobiliaria/resumen", methods=["GET"])
 @token_required
 def resumen_agencia_api():

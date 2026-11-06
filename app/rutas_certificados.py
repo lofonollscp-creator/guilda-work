@@ -3,6 +3,7 @@ el módulo de Gestoría. Nunca se sube ni se pide una clave privada: solo materi
 import base64
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
+from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
 from datetime import date, timedelta
@@ -105,7 +106,7 @@ def nuevo():
                            titular=f.get("titular"), nif=f.get("nif"), serie=f.get("serie"), custodio_id=f.get("custodio_id", type=int) or None, ubicacion=f.get("ubicacion"), notas=f.get("notas"),
                            avisar_cliente=None if av == "" else av == "1")
     except ValueError as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(r["id"], aviso="creado" if r["nuevo"] else "ya-estaba")
 
 
@@ -132,7 +133,7 @@ def renovado(certificado_id: int):
     try:
         r = ce.renovado(g.tenant_id, g.usuario_id, certificado_id, f.get("nueva_caducidad"), emitido=f.get("emitido"), serie=f.get("serie"), funciona="funciona" in f)
     except ValueError as e:
-        return _volver(certificado_id, error=str(e))
+        return _volver(certificado_id, error=_(str(e)))
     return _volver(r["id"], aviso="renovado")
 
 
@@ -210,7 +211,7 @@ def importar():
         return render_template("certificados_elegir.html", candidatos=e.candidatos, contenido_b64=base64.b64encode(datos).decode(), ubicacion=request.form.get("ubicacion", ""),
                                notas=request.form.get("notas", ""), **_ctx_textos())
     except ValueError as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(r["id"], aviso="importado" if r["nuevo"] else "ya-estaba")
 
 
@@ -241,7 +242,7 @@ def alta_manual():
         r = ce.alta_manual(g.tenant_id, g.usuario_id, sujeto=f.get("sujeto", ""), emisor=f.get("emisor", ""), numero_serie=f.get("numero_serie", ""), not_before=f.get("not_before"),
                            not_after=f.get("not_after", ""), evidencia=f.get("evidencia", ""), ubicacion_externa=f.get("ubicacion"))
     except ValueError as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(r["id"], aviso="importado" if r["nuevo"] else "ya-estaba")
 
 
@@ -275,7 +276,7 @@ def _accion(certificado_id: int, funcion, *args, aviso: str = "hecho", **kw):
     try:
         funcion(g.tenant_id, g.usuario_id, *args, **kw)
     except ValueError as e:
-        return _volver(certificado_id, error=str(e))
+        return _volver(certificado_id, error=_(str(e)))
     return _volver(certificado_id, aviso=aviso)
 
 
@@ -314,7 +315,7 @@ def vincular(certificado_id: int):
         ce.vincular(g.tenant_id, g.usuario_id, certificado_id, cliente_fiscal_id=f.get("cliente_fiscal_id", type=int) or None, servicio=f.get("servicio", ""), autorizacion=f.get("autorizacion", ""),
                     vigente_desde=f.get("desde") or None, vigente_hasta=f.get("hasta") or None)
     except ValueError as e:
-        return _volver(certificado_id, error=str(e))
+        return _volver(certificado_id, error=_(str(e)))
     return _volver(certificado_id, aviso="hecho")
 
 
@@ -325,7 +326,7 @@ def retirar_vinculo(vinculo_id: int):
     try:
         ce.retirar_vinculo(g.tenant_id, g.usuario_id, vinculo_id, request.form.get("motivo", ""))
     except ValueError as e:
-        return _volver(cid, error=str(e))
+        return _volver(cid, error=_(str(e)))
     return _volver(cid, aviso="hecho")
 
 
@@ -354,7 +355,7 @@ def nuevo_certificado(renovacion_id: int):
     except ce.EleccionRequerida:
         return _volver(cid, error="El archivo trae varios certificados finales: sube un archivo con solo el certificado nuevo.")
     except ValueError as e:
-        return _volver(cid, error=str(e))
+        return _volver(cid, error=_(str(e)))
     return redirect(url_for("certificados.detalle", certificado_id=cid, aviso="nuevo-recibido") + "#renovacion")
 
 
@@ -371,5 +372,5 @@ def custodio():
     try:
         ce.fijar_custodio_flag(g.tenant_id, g.usuario_id, request.form.get("usuario_id", type=int) or 0, request.form.get("valor") == "1")
     except ValueError as e:
-        return _volver(error=str(e))
+        return _volver(error=_(str(e)))
     return _volver(aviso="hecho")

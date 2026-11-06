@@ -113,7 +113,7 @@ def crear_cliente():
                 modelos=request.form.getlist("modelos_fiscales") or None,
             )
         except ValueError as e:  # incluye ClienteDuplicado: se explica con quién choca el NIF
-            return redirect(url_for("fiscal.clientes", error=str(e)))
+            return redirect(url_for("fiscal.clientes", error=_(str(e))))
     return redirect(url_for("fiscal.clientes"))
 
 
@@ -154,7 +154,7 @@ def crear_trabajador(cliente_id: int):
         datos = _datos_trabajador()
         trabajador_id = laboral.crear(g.tenant_id, g.usuario_id, cliente_id, datos.pop("nombre"), **datos)
     except ValueError as e:
-        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=str(e)))
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=_(str(e))))
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "trabajador_creado", f"#{trabajador_id}")
     return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
 
@@ -166,7 +166,7 @@ def editar_trabajador(cliente_id: int, trabajador_id: int):
     try:
         laboral.editar(g.tenant_id, trabajador_id, **_datos_trabajador())
     except ValueError as e:
-        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=str(e)))
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=_(str(e))))
     db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "trabajador_editado", f"#{trabajador_id}")
     return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
 
@@ -188,7 +188,7 @@ def estado_nomina(cliente_id: int, trabajador_id: int):
     try:
         laboral.fijar_estado_nomina(g.tenant_id, g.usuario_id, trabajador_id, request.form.get("periodo", ""), request.form.get("estado", ""))
     except ValueError as e:
-        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=str(e)))
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=_(str(e))))
     return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
 
 
@@ -200,7 +200,7 @@ def config_nominas(cliente_id: int):
     try:
         laboral.guardar_config(g.tenant_id, g.usuario_id, dia=request.form.get("dia"), activo=request.form.get("activo") == "1")
     except ValueError as e:
-        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=str(e)))
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral", error=_(str(e))))
     return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "laboral"))
 
 
@@ -627,7 +627,7 @@ def editar_cliente(cliente_id: int):
                     idioma=request.form.get("idioma") if request.form.get("idioma") in ("es", "ca", "en", "fr") else "es",
                 )
             except fiscal_identidad.ClienteDuplicado as e:
-                return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id, error=str(e)))
+                return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id, error=_(str(e))))
             db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "cliente_editado")
         return redirect(url_for("fiscal.clientes"))
     return render_template(
@@ -951,7 +951,7 @@ def marcar_presentado(vencimiento_id: int):
     try:
         obligaciones.exigir_para_marcar_presentado(g.tenant_id, g.usuario_id, vencimiento, con_justificante=bool(request.files.get("justificante") and request.files["justificante"].filename))
     except ValueError as e:
-        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)))
+        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=_(str(e))))
     db.marcar_presentado_vencimiento_fiscal(g.tenant_id, vencimiento_id, g.usuario_id)
     # Justificante oficial (opcional, si el formulario lo trae) y constancia
     # de presentación en PDF: ambos visibles para el cliente en su portal. Un
@@ -1010,7 +1010,7 @@ def editar_vencimiento(vencimiento_id: int):
         try:
             obligaciones.exigir_para_cambiar_estado(g.tenant_id, g.usuario_id, vencimiento, request.form.get("estado"))
         except ValueError as e:
-            return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)))
+            return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=_(str(e))))
         usuario_id = request.form.get("usuario_id", type=int)
         documento_solicitado = (request.form.get("documento_solicitado") or "").strip() or None
         db.editar_vencimiento_fiscal(
@@ -1088,7 +1088,7 @@ def transicion_vencimiento(vencimiento_id: int):
         obligaciones.transicionar(g.tenant_id, g.usuario_id, vencimiento_id, f.get("destino", ""), motivo=f.get("motivo"), version=f.get("version", type=int),
                                   presentacion={"presentado_en": f.get("presentado_en"), "organismo": f.get("organismo"), "referencia": f.get("referencia")} if f.get("destino") == "presentada" else None)
     except ValueError as e:                      # incluye ConflictoDeVersion
-        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)))
+        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=_(str(e))))
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, aviso="fase"))
 
 
@@ -1100,7 +1100,7 @@ def bloqueo_vencimiento(vencimiento_id: int):
     try:
         obligaciones.bloquear(g.tenant_id, g.usuario_id, vencimiento_id, request.form.get("motivo"), bloqueada=request.form.get("accion") != "quitar")
     except ValueError as e:
-        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=str(e)))
+        return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, error=_(str(e))))
     return redirect(url_for("fiscal.editar_vencimiento", vencimiento_id=vencimiento_id, aviso="bloqueo"))
 
 

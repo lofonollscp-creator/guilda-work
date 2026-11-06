@@ -84,6 +84,20 @@ def agenda_visitas(t, u, sup, dias=7) -> list[dict]:
     return [_campos(v, ("id", "inmueble_id", "fecha_hora", "direccion", "municipio", "visitante_nombre", "agente_nombre")) for v in filas]
 
 
+def resultado_visita(t, u, sup, visita_id, estado, valoracion=None, interes=None, comentario=None) -> dict:
+    """Anota cómo fue una visita (realizada, cancelada o no se presentó), con valoración 1-5, interés y comentario; queda en el historial del inmueble."""
+    exigir_modulo(t, "inmobiliaria")
+    inmobiliaria.registrar_resultado_visita(t, u, int(visita_id), estado or "", valoracion, interes, comentario, supervisor=sup)
+    return {"id": int(visita_id)}
+
+
+def estado_vista(t, u, sup, vista_id, estado) -> dict:
+    """Marca un señalamiento como celebrado, suspendido o de nuevo previsto; queda en el historial del asunto."""
+    exigir_modulo(t, "abogados")
+    abogados.cambiar_estado_vista(t, u, int(vista_id), estado or "", supervisor=sup)
+    return {"id": int(vista_id)}
+
+
 def resumen_agencia(t, u, sup) -> dict:
     exigir_modulo(t, "inmobiliaria")
     r = inmobiliaria.resumen(t, u, sup)

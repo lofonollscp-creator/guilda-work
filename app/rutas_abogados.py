@@ -76,7 +76,7 @@ def ajustes():
             abogados.guardar_ajustes(t, serie=f.get("serie", ""), iva_pct=f.get("iva_pct"), irpf_pct=f.get("irpf_pct"), bloque_minutos=f.get("bloque_minutos"),
                                      provision_minima_centimos=abogados._importe(f.get("provision_minima") or "0"), plantilla_encargo=f.get("plantilla_encargo"))
         except ValueError as e:
-            return redirect(url_for("abogados.ajustes", error=str(e)[:300]))
+            return redirect(url_for("abogados.ajustes", error=_(str(e))[:300]))
         return redirect(url_for("abogados.ajustes", guardado=1))
     return render_template("abogados_ajustes.html", a=abogados.obtener_ajustes(t), puede_editar=_sup(), error=error, guardado=request.args.get("guardado"), subnav="abogados")
 
@@ -141,7 +141,7 @@ def _accion_minuta(minuta_id: int, f):
     try:
         f()
     except ValueError as e:
-        return redirect(url_for("abogados.minuta", minuta_id=minuta_id, error=str(e)[:300]))
+        return redirect(url_for("abogados.minuta", minuta_id=minuta_id, error=_(str(e))[:300]))
     return redirect(url_for("abogados.minuta", minuta_id=minuta_id))
 
 
@@ -184,7 +184,7 @@ def minuta_eliminar(minuta_id: int):
     try:
         abogados.eliminar_borrador(g.tenant_id, minuta_id)
     except ValueError as e:
-        return redirect(url_for("abogados.minuta", minuta_id=minuta_id, error=str(e)[:300]))
+        return redirect(url_for("abogados.minuta", minuta_id=minuta_id, error=_(str(e))[:300]))
     return redirect(url_for("abogados.minutas"))
 
 

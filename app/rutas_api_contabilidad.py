@@ -55,6 +55,19 @@ def anotar_factura_contable_api():
     return resultado
 
 
+@api_bp.route("/contabilidad/facturas/archivos", methods=["POST"])
+@token_required
+def subir_archivos_contables_api():
+    """Sube de 1 a 10 fotos o PDF de facturas de un cliente (multipart: `cliente_fiscal_id`, `tipo` emitida o recibida y `archivos`). Quedan pendientes de leer: no hay que rellenar nada.
+    Responde 201 con los `ids` creados y las `repetidas` (archivos que ya estaban enviados)."""
+    from . import facturas_contables as fc
+    archivos = [(a.filename, a.mimetype, a.read(fc.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
+    resultado = _consulta(cc.subir_archivos, request.form.get("cliente_fiscal_id", type=int), request.form.get("tipo", ""), archivos)
+    if isinstance(resultado, tuple) and resultado[1] == 200:
+        return resultado[0], 201
+    return resultado
+
+
 @api_bp.route("/contabilidad/facturas/<int:factura_id>/estado", methods=["POST"])
 @token_required
 def estado_factura_contable_api(factura_id: int):

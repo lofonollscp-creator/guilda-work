@@ -32,7 +32,7 @@ def proforma(expediente_id: int):
     try:
         pdf = fd.proforma_pdf(g.tenant_id, g.usuario_id, _supervisor(), expediente_id, _lineas_del_formulario())
     except ValueError as e:
-        return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, error=str(e)[:200]) + "#facturacion")
+        return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, error=_(str(e))[:200]) + "#facturacion")
     return Response(pdf, mimetype="application/pdf", headers={"Content-Disposition": "inline; filename=proforma-sin-validez-fiscal.pdf"})
 
 
@@ -49,7 +49,7 @@ def facturar(expediente_id: int):
     except fd.facturascripts.ErrorFacturaScripts as e:
         return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, error=_("FacturaScripts no ha podido crear la factura: %(motivo)s", motivo=str(e)[:150])) + "#facturacion")
     except ValueError as e:
-        return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, error=str(e)[:200]) + "#facturacion")
+        return redirect(url_for("expedientes.ficha", expediente_id=expediente_id, error=_(str(e))[:200]) + "#facturacion")
     return redirect(destino + "#facturacion")
 
 
@@ -67,7 +67,7 @@ def facturar_horas(expediente_id: int):
     except fd.facturascripts.ErrorFacturaScripts as e:
         return volver(error=_("FacturaScripts no ha podido crear la factura: %(motivo)s", motivo=str(e)[:150]))
     except ValueError as e:
-        return volver(error=str(e)[:200])
+        return volver(error=_(str(e))[:200])
     return volver()
 
 

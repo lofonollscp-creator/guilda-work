@@ -50,7 +50,7 @@ def subir():
     try:
         ident = imp.preparar(t, g.usuario_id, archivo.filename, archivo.read(imp.MAX_BYTES + 1))
     except imp.ErrorImportacion as e:
-        return redirect(url_for("importar_clientes.inicio", error=str(e)))
+        return redirect(url_for("importar_clientes.inicio", error=_(str(e))))
     return redirect(url_for("importar_clientes.revisar", ident=ident))
 
 

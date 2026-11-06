@@ -163,7 +163,7 @@ def crear_buzon():
     try:
         r = correo_buzones.alta_buzon(g.usuario_id, request.form.get("nombre", ""), request.form.get("persona_id", type=int))
     except correo_buzones.ErrorBuzon as e:
-        return cuentas(error=str(e))
+        return cuentas(error=_(str(e)))
     return redirect(url_for("correo.cuentas", aviso=_("Buzón %(e)s creado y conectado.", e=r["email"])))
 
 
@@ -177,7 +177,7 @@ def diagnostico_dominio():
     try:
         return cuentas(diagnostico=correo_dominio.diagnosticar(dominio, request.args.get("selector")))
     except ValueError as e:
-        return cuentas(error=str(e))
+        return cuentas(error=_(str(e)))
     except dns_simple.ErrorDNS as e:
         return cuentas(error=_("No se ha podido consultar el DNS: %(e)s", e=e))
 
@@ -264,7 +264,7 @@ def crear_cuenta():
             smtp_tls=request.form.get("smtp_tls") == "on",
         )
     except correo.ErrorCorreo as e:
-        return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=str(e))
+        return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=_(str(e)))
     return redirect(url_for("correo.cuentas"))
 
 
@@ -289,7 +289,7 @@ def editar_cuenta(cuenta_id: int):
             contrasena=request.form.get("contrasena", "") or None,
         )
     except correo.ErrorCorreo as e:
-        return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=str(e))
+        return render_template("correo_cuentas.html", cuentas=db.listar_cuentas_correo(g.usuario_id), error=_(str(e)))
     return redirect(url_for("correo.cuentas"))
 
 
@@ -845,7 +845,7 @@ def crear_carpeta():
     try:
         completo = correo.crear_carpeta(g.usuario_id, cuenta_id, request.form.get("nombre", ""), request.form.get("dentro_de") or None)
     except correo.ErrorCorreo as e:
-        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, aviso=str(e)))
+        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, aviso=_(str(e))))
     return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=completo, aviso=_("Carpeta creada.")))
 
 
@@ -859,7 +859,7 @@ def renombrar_carpeta():
     try:
         nuevo = correo.renombrar_carpeta(g.usuario_id, cuenta_id, carpeta, request.form.get("nombre", ""))
     except correo.ErrorCorreo as e:
-        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=carpeta, aviso=str(e)))
+        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=carpeta, aviso=_(str(e))))
     return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=nuevo, aviso=_("Carpeta renombrada.")))
 
 
@@ -873,7 +873,7 @@ def eliminar_carpeta():
     try:
         correo.eliminar_carpeta(g.usuario_id, cuenta_id, carpeta)
     except correo.ErrorCorreo as e:
-        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=carpeta, aviso=str(e)))
+        return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, carpeta=carpeta, aviso=_(str(e))))
     return redirect(url_for("correo.bandeja", cuenta_id=cuenta_id, aviso=_("Carpeta eliminada.")))
 
 
@@ -1073,7 +1073,7 @@ def enviar():
     except correo.ErrorCorreo as e:
         return _render_redactar(
             cuenta_id=cuenta_id, destinatarios=destinatarios, cc=cc, bcc=bcc, asunto=asunto,
-            cuerpo_html=cuerpo_html, en_respuesta_a=en_respuesta_a, error=str(e), borrador_id=borrador_id,
+            cuerpo_html=cuerpo_html, en_respuesta_a=en_respuesta_a, error=_(str(e)), borrador_id=borrador_id,
         )
     if borrador_id is not None:
         db.eliminar_borrador_correo(g.usuario_id, borrador_id)
@@ -1363,7 +1363,7 @@ def crear_categoria():
     try:
         correo.crear_categoria(g.usuario_id, request.form.get("nombre", ""), request.form.get("color", "#7c8ba1"))
     except correo.ErrorCorreo as e:
-        return _render_ajustes(error=str(e))
+        return _render_ajustes(error=_(str(e)))
     return redirect(url_for("correo.ajustes"))
 
 
@@ -1398,7 +1398,7 @@ def crear_plantilla():
             request.form.get("cuerpo", ""), request.form.get("modelo"),
         )
     except correo.ErrorCorreo as e:
-        return _render_ajustes(error=str(e))
+        return _render_ajustes(error=_(str(e)))
     return redirect(url_for("correo.ajustes"))
 
 
@@ -1415,7 +1415,7 @@ def crear_remitente_confiable():
     try:
         correo.confiar_en_remitente(g.usuario_id, request.form.get("direccion", ""))
     except correo.ErrorCorreo as e:
-        return _render_ajustes(error=str(e))
+        return _render_ajustes(error=_(str(e)))
     return redirect(url_for("correo.ajustes"))
 
 
@@ -1436,7 +1436,7 @@ def crear_regla_categoria():
             request.form.get("categoria_id", type=int),
         )
     except correo.ErrorCorreo as e:
-        return _render_ajustes(error=str(e))
+        return _render_ajustes(error=_(str(e)))
     return redirect(url_for("correo.ajustes"))
 
 
@@ -1518,7 +1518,7 @@ def crear_regla_avanzada():
             archivar_adjuntos=request.form.get("archivar_adjuntos") == "on",
         )
     except ValueError as e:
-        return _render_ajustes(error=str(e))
+        return _render_ajustes(error=_(str(e)))
     return redirect(url_for("correo.ajustes"))
 
 
@@ -1552,7 +1552,7 @@ def guardar_autorespuesta():
         correo_autorespuesta.guardar(g.usuario_id, cuenta_id, activa=request.form.get("activa") == "on", desde=request.form.get("desde"), hasta=request.form.get("hasta"),
                                      asunto=request.form.get("asunto", ""), cuerpo=request.form.get("cuerpo", ""))
     except ValueError as e:
-        return _render_ajustes(error=str(e))
+        return _render_ajustes(error=_(str(e)))
     return redirect(url_for("correo.ajustes"))
 
 
@@ -1565,7 +1565,7 @@ def crear_identidad():
     try:
         correo.crear_identidad(g.usuario_id, cuenta_id, request.form.get("nombre", ""), request.form.get("direccion", ""))
     except correo.ErrorCorreo as e:
-        return _render_ajustes(error=str(e))
+        return _render_ajustes(error=_(str(e)))
     return redirect(url_for("correo.ajustes"))
 
 

@@ -131,7 +131,7 @@ def activar_gestion_fiscal(cliente_id: int):
             plantilla_id=request.form.get("plantilla_id") or None, usuario_id=g.usuario_id,
         )
     except ValueError as e:
-        return redirect(url_for("clientes.ficha", cliente_id=cliente_id, error=str(e)))
+        return redirect(url_for("clientes.ficha", cliente_id=cliente_id, error=_(str(e))))
     return redirect(url_for("clientes.ficha", cliente_id=cliente_id))
 
 
@@ -152,7 +152,7 @@ def plantillas():
                 generacion_automatica=bool(request.form.get("generacion_automatica")), plantilla_tareas_id=tp, etiquetas=request.form.get("etiquetas", ""),
             )
         except ValueError as e:
-            return redirect(url_for("clientes.plantillas", error=str(e)))
+            return redirect(url_for("clientes.plantillas", error=_(str(e))))
         return redirect(url_for("clientes.plantillas"))
     return render_template(
         "clientes_plantillas.html", plantillas=plantillas_cliente.listar(t), plantillas_tareas=[p for p in db.listar_plantillas_tareas(g.usuario_id) if p["compartida"]],

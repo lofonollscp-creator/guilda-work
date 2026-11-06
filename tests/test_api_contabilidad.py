@@ -144,3 +144,33 @@ def test_el_documento_openapi_incluye_las_rutas(cliente):
                  "/api/v1/contabilidad/clientes/{cliente_fiscal_id}/exportar", "/api/v1/contabilidad/lotes/{lote_id}/fichero"):
         assert ruta in spec["paths"], ruta
     assert "requestBody" in spec["paths"]["/api/v1/contabilidad/facturas"]["post"]
+
+
+def test_subir_archivos_deja_las_facturas_por_leer_y_avisa_de_las_repetidas(cliente):
+    import io
+    h, t, u, c = _despacho(cliente, "apiarchivos@ejemplo.com")
+    png = b"\x89PNG\r\n\x1a\n" + b"0" * 64
+
+    def subir(*nombres, tipo="recibida", cliente_id=c):
+        datos = {"cliente_fiscal_id": str(cliente_id), "tipo": tipo, "archivos": [(io.BytesIO(png + n.encode()), n) for n in nombres]}
+        return cliente.post("/api/v1/contabilidad/facturas/archivos", data=datos, headers=h, content_type="multipart/form-data")
+
+    r = subir("a.png", "b.png")
+    assert r.status_code == 201, r.get_json()
+    d = r.get_json()["data"]
+    assert len(d["ids"]) == 2 and d["repetidas"] == 0
+    f = cliente.get(f"/api/v1/contabilidad/facturas/{d['ids'][0]}", headers=h).get_json()["data"]
+    assert f["estado"] == "pendiente"
+    otra = subir("a.png")                                                     # ya estaba: no se anota otra vez
+    assert otra.status_code == 201 and otra.get_json()["data"]["ids"] == [] and otra.get_json()["data"]["repetidas"] == 1
+    assert subir().status_code == 400                                         # sin archivos
+    assert subir(*[f"{i}.png" for i in range(11)]).status_code == 400         # más de 10
+    assert subir("c.png", cliente_id=999999).status_code in (400, 404)        # cliente que no es del despacho
+
+
+def test_subir_archivos_sin_el_modulo_es_404(cliente):
+    import io
+    h, t, u, c = _despacho(cliente, "apiarchsin@ejemplo.com", modulo=False)
+    r = cliente.post("/api/v1/contabilidad/facturas/archivos", data={"cliente_fiscal_id": str(c), "tipo": "recibida", "archivos": [(io.BytesIO(b"x"), "a.png")]}, headers=h,
+                     content_type="multipart/form-data")
+    assert r.status_code == 404

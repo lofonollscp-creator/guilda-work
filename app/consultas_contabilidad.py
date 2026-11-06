@@ -86,6 +86,15 @@ def anotar_factura(tenant_id: int, usuario_id: int, datos: dict) -> dict:
     return ver_factura(tenant_id, usuario_id, fid)
 
 
+def subir_archivos(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, archivos: list[tuple[str, str | None, bytes]]) -> dict:
+    """Sube de 1 a 10 fotos o PDF de facturas de un cliente sin teclear nada: quedan pendientes de leer (con IA o a mano). Devuelve los ids creados y cuántos archivos ya estaban enviados."""
+    _exigir_escritura(tenant_id, usuario_id)
+    if not archivos or len(archivos) > fc.MAX_ARCHIVOS_POR_SUBIDA:
+        raise ValueError("Sube de 1 a 10 archivos de una vez (`archivos`).")
+    ids = fc.subir_archivos(tenant_id, usuario_id, int(cliente_fiscal_id or 0), tipo, archivos)
+    return {"ids": list(ids), "repetidas": getattr(ids, "repetidas", 0)}
+
+
 def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, estado: str) -> dict:
     """Pasa una factura a revisada, la reabre (pendiente) o la descarta."""
     _exigir_escritura(tenant_id, usuario_id)
