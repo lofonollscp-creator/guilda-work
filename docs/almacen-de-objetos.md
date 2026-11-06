@@ -37,7 +37,7 @@ El dato para decidir el plazo de conservación es legal, no técnico: el Código
 2. Crear el bucket **con Object Lock activado** (solo se puede al crearlo; activa también el versionado), bloqueo de acceso público total y cifrado SSE-S3 (o SSE-KMS).
 3. Ciclo de vida (opcional, ahorra): pasar a *Glacier Instant Retrieval* lo que tenga más de un año (sigue siendo accesible al instante); borrar versiones antiguas no actuales a los N meses.
 4. Dos usuarios IAM:
-   - **aplicación**: `s3:PutObject`, `s3:GetObject`, `s3:GetObjectVersion`, `s3:ListBucket`, `s3:PutObjectRetention` solo sobre el bucket (sin `DeleteObject*`).
+   - **aplicación**: `s3:PutObject`, `s3:GetObject`, `s3:GetObjectVersion`, `s3:ListBucket` solo sobre el bucket (si defines `GUILDA_S3_RETENCION_*` la app fija la retención por objeto y necesita además `s3:PutObjectRetention`; con la retención por defecto del bucket no hace falta) (sin `DeleteObject*`).
    - **mantenimiento** (solo para `limpiar`, sin guardarlo en el servicio): además `s3:DeleteObject` y `s3:DeleteObjectVersion`.
 5. Alertas de facturación y de errores 4xx/5xx.
 
@@ -70,6 +70,7 @@ set -a; . /etc/guilda-work.env; set +a
 ## Copias de seguridad y recuperación
 
 - La base ya no contiene los bytes de los documentos: **una copia de la base sola no basta**. El almacén necesita su propia protección: versionado + Object Lock (frente a borrados y ransomware) y, si queréis, replicación a otra región o a otro proveedor.
+- **Copia fuera de AWS (Restic)**: con `GUILDA_OBJETOS=s3`, `scripts/backup_objetos_restic.sh` (timer `deploy/restic-objetos.timer`, 03:40) hace un espejo incremental del bucket en `objetos-espejo`, junto al repositorio de Restic (segundo disco), y lo copia con la etiqueta `objetos` (retención 7 diarias, 4 semanales, 6 mensuales, 6 anuales). Cada objeto se comprueba contra el hash de su clave al bajarlo y el espejo nunca borra. Estado en `data/backups/restic_objetos_estado.json`. Restaurar: `restic restore latest --tag objetos --target <carpeta>` y volcar a un bucket nuevo.
 - Con `GUILDA_OBJETOS=fichero`, la carpeta debe entrar en las copias de seguridad (Restic) junto con la base, y restaurarse juntas.
 - La copia/restauración de UN despacho (`app/bd/despacho_copia.py`) lleva el registro (`objetos_almacenados`) pero no los objetos: al restaurar en otra base, los objetos tienen que seguir accesibles en el mismo almacén.
 - Restaurar la base a un instante anterior puede dejar objetos sin registro (los recoge `limpiar`) o registros que apuntan a objetos aún presentes: nunca al revés mientras no se borre nada a mano.

@@ -1,0 +1,11 @@
+# Timer de restic-objetos.service: cada noche a las 03:40, después de la copia general de las 03:00 (y su margen aleatorio de 30 min).
+[Unit]
+Description=Guilda Work - copia diaria de los documentos del bucket S3 (ver restic-objetos.service)
+
+[Timer]
+OnCalendar=*-*-* 03:40:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target
