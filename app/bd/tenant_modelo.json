@@ -1615,7 +1615,7 @@
  },
  "salud_silencios": {
   "clase": "local",
-  "motivo": "silencios de las alertas de salud globales",
+  "motivo": "silencios y responsables de las alertas de salud globales",
   "via": []
  },
  "solicitudes_acceso_portal": {

@@ -78,13 +78,24 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     conn.execute("UPDATE vencimientos_fiscales SET documento_solicitado = 'Extracto bancario completo del trimestre con todos los movimientos' WHERE id = ?", (v303,))
     conn.execute("INSERT INTO tareas_outlook (usuario_id, asunto, estado, porcentaje_completado, creada_en, actualizada_en, cliente_fiscal_id, visible_cliente, comentarios_cliente) VALUES (?, 'Preparar la declaración de la renta con un asunto bastante largo para ver cómo se parte', 'esperando', 40, '2026-10-01T10:00:00', '2026-11-03T09:00:00', ?, 1, 1)", (uid, ids["cliente"]))
     conn.commit(); conn.close()
+    from app import portal_citas, portal_peticiones, portal_valoraciones
+    from datetime import datetime, timedelta
+    ficha_p = db.obtener_cliente_fiscal_por_id(ids["cliente"])
+    pet_abierta = portal_peticiones.crear(ficha_p, "Extracto bancario completo del trimestre con todos los movimientos de todas las cuentas de la sociedad", "Necesitamos el de la cuenta principal y el de la de impuestos, en PDF o en CSV, con todos los movimientos del trimestre", (date.today() + timedelta(days=5)).isoformat(), por=uid)
+    pet_cerrada = portal_peticiones.crear(ficha_p, "Escritura de constitución", por=uid)
+    portal_peticiones.revisar(ficha_p, pet_cerrada, uid)
+    portal_peticiones.reabrir(ficha_p, pet_cerrada, uid, "Falta la última página con las firmas de todos los socios, por favor súbela completa")
+    portal_peticiones.revisar(ficha_p, pet_cerrada, uid)
+    cita = portal_citas.solicitar(ficha_p, "titular-barrido@ejemplo.com", "videollamada", "Planificar el cierre del ejercicio y revisar las deducciones pendientes de la sociedad", "Martes o jueves por la mañana, mejor temprano")
+    cita2 = portal_citas.solicitar(ficha_p, "titular-barrido@ejemplo.com", "visita", "Firmar unos documentos")
+    portal_citas.confirmar(t, cita2, (datetime.now() + timedelta(days=4)).replace(hour=10, minute=0).isoformat(timespec="minutes"), "En la oficina de la calle Mayor, planta 2", uid)
     if os.environ.get("GUILDA_TEXTOS_LARGOS"):
         conn = db.get_connection()
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
-    rutas += [f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
+    rutas += [f"/portal/peticiones/{pet_abierta}", f"/portal/peticiones/{pet_cerrada}", f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")

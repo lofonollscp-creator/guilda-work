@@ -12,6 +12,7 @@ AVISO_DIAS = 7
 TIPOS = {"solicitud_baja": "Baja de cuenta", "solicitud_acceso": "Acceso a los datos", "solicitud_rectificacion": "Rectificación", "solicitud_supresion": "Supresión",
          "solicitud_oposicion": "Oposición", "solicitud_limitacion": "Limitación", "solicitud_portabilidad": "Portabilidad"}
 ATENDIDA = "atendida"
+assert set(TIPOS) | {ATENDIDA} == {"solicitud_baja", "solicitud_acceso", "solicitud_rectificacion", "solicitud_supresion", "solicitud_oposicion", "solicitud_limitacion", "solicitud_portabilidad", "atendida"}, "la consulta de solicitudes lista los tipos a mano"
 
 
 def _fecha(texto: str) -> datetime:
@@ -25,7 +26,7 @@ def solicitudes(ahora: datetime | None = None) -> dict:
     conn = plataforma.get_connection()
     try:
         filas = conn.execute("SELECT r.id, r.tenant_id, r.usuario_id, r.tipo, r.detalle, r.creado_en, t.nombre AS despacho, u.email AS persona FROM registro_rgpd r "
-                             "LEFT JOIN tenants t ON t.id = r.tenant_id LEFT JOIN usuarios u ON u.id = r.usuario_id WHERE r.tipo LIKE 'solicitud_%' OR r.tipo = ? ORDER BY r.id", (ATENDIDA,)).fetchall()
+                             "LEFT JOIN tenants t ON t.id = r.tenant_id LEFT JOIN usuarios u ON u.id = r.usuario_id WHERE r.tipo IN ('solicitud_baja', 'solicitud_acceso', 'solicitud_rectificacion', 'solicitud_supresion', 'solicitud_oposicion', 'solicitud_limitacion', 'solicitud_portabilidad', 'atendida') ORDER BY r.id").fetchall()
     finally:
         conn.close()
     cerradas: dict[int, dict] = {}

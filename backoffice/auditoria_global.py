@@ -24,7 +24,7 @@ def buscar(*, tenant_id: int | None = None, accion: str = "", actor: str = "", d
     if tenant_id:
         donde.append("a.tenant_id = ?"); p.append(tenant_id)
     if accion.strip():
-        donde.append("a.accion LIKE ? ESCAPE '\\'"); p.append(_como(accion.strip()))
+        donde.append("LOWER(a.accion) LIKE ? ESCAPE '\\'"); p.append(_como(accion.strip().lower()))
     if actor.strip():
         donde.append("LOWER(u.email) LIKE ? ESCAPE '\\'"); p.append(_como(actor.strip().lower()))
     if desde:
