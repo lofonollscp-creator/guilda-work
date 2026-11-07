@@ -364,6 +364,9 @@ CREATE POLICY aislamiento ON ia_proveedores_despacho USING (tenant_id = nullif(c
 ALTER TABLE ia_soporte_uso ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON ia_soporte_uso;
 CREATE POLICY aislamiento ON ia_soporte_uso USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE ia_trabajos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON ia_trabajos;
+CREATE POLICY aislamiento ON ia_trabajos USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE ia_uso_proveedor ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON ia_uso_proveedor;
 CREATE POLICY aislamiento ON ia_uso_proveedor USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

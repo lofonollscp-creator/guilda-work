@@ -72,6 +72,9 @@ if __name__ == "__main__":
     # Motor de avisos del control fiscal: alertas con acuse y escalado (app/avisos.py); solo actúa en los despachos que lo activan.
     threading.Thread(target=avisos.bucle, daemon=True).start()
     threading.Thread(target=_precargar_proteccion_de_datos, daemon=True).start()
+    # Cola de trabajos de IA en segundo plano: «leer todas las facturas» y la comparación de modelos (app/ia_trabajos.py); los manejadores se registran al importar lectura_facturas.
+    from app import ia_trabajos, lectura_facturas as _lectura_facturas  # noqa: F401
+    ia_trabajos.bucle()
     threading.Thread(target=retencion.bucle, daemon=True).start()
     # Asistente jurídico: sincroniza las fuentes habilitadas y purga adjuntos vencidos; apagado salvo LEGAL_AI_ENABLED=1 y LEGAL_AI_SYNC=1 (app/juridico/trabajador.py).
     from app.juridico import trabajador as _trabajador_juridico

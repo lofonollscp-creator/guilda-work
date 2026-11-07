@@ -1091,6 +1091,11 @@ def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str,
         conn.close()
     if nuevo == "revisada" and aprender:
         try:
+            from . import lectura_calidad
+            lectura_calidad.anotar_correcciones(tenant_id, factura_id, obtener(tenant_id, usuario_id, factura_id))      # qué cambió la persona respecto de lo que leyó el sistema
+        except Exception:  # noqa: BLE001 -- medir no puede impedir revisar
+            logger.warning("No se pudo anotar la calidad de la lectura", exc_info=True)
+        try:
             aprender_regla(tenant_id, usuario_id, f)
         except Exception:  # noqa: BLE001 -- aprender es un extra: nunca debe impedir revisar
             logger.warning("No se pudo aprender la regla del proveedor", exc_info=True)

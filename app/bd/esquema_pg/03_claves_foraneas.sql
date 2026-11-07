@@ -211,6 +211,7 @@ ALTER TABLE ia_config_despacho ADD CONSTRAINT fk_ia_config_despacho_tenant_id FO
 ALTER TABLE ia_consumo ADD CONSTRAINT fk_ia_consumo_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_proveedores_despacho ADD CONSTRAINT fk_ia_proveedores_despacho_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;
+ALTER TABLE ia_trabajos ADD CONSTRAINT fk_ia_trabajos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_uso_proveedor ADD CONSTRAINT fk_ia_uso_proveedor_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE inmobiliaria_ajustes ADD CONSTRAINT fk_inmobiliaria_ajustes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE inmobiliaria_comisiones ADD CONSTRAINT fk_inmobiliaria_comisiones_inmueble_id FOREIGN KEY (inmueble_id) REFERENCES inmobiliaria_inmuebles (id) ON DELETE CASCADE;

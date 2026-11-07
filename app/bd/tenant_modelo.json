@@ -1525,6 +1525,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "ia_trabajos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_conversaciones": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

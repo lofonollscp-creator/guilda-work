@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Comparar modelos de IA') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Comparar modelos de IA') }}</h1>
+    <p class="subtitle">{{ _('Prueba varios modelos con facturas de tu despacho que ya revisaste y mira cuál acierta más, cuánto tarda y cuánto cuesta. No cambia ninguna factura.') }}</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.calidad') }}">‹ {{ _('Calidad de la lectura') }}</a>
+</header>
+{% if error %}<div class="ia-error" role="alert">{{ error }}</div>{% endif %}
+
+<section class="dash-panel">
+  {% if modelos|length < 2 %}
+  <p class="muted">{{ _('Hacen falta al menos dos modelos configurados (el tuyo y los del despacho) en Ajustes del Asistente IA.') }}</p>
+  {% elif not muestra %}
+  <p class="muted">{{ _('Todavía no hay facturas leídas con IA y revisadas a mano con las que comparar.') }}</p>
+  {% else %}
+  <form method="post" class="edit-form">
+    <fieldset><legend>{{ _('Modelos a comparar') }}</legend>
+      {% for m in modelos %}<label class="checkbox-label"><input type="checkbox" name="modelo" value="{{ m.indice }}" checked> {{ m.nombre }} <span class="muted">({{ _('clave personal') if m.origen == 'usuario' else _('clave del despacho') }})</span></label>{% endfor %}
+    </fieldset>
+    <label for="cmp-n">{{ _('Facturas de la muestra') }}</label>
+    <select id="cmp-n" name="n"><option value="5">5</option><option value="10" selected>10</option><option value="20" {{ 'disabled' if muestra < 20 }}>20</option></select>
+    <p class="muted">{{ ngettext('Hay %(n)s factura disponible.', 'Hay %(n)s facturas disponibles.', muestra, n=muestra) }} {{ _('Cada modelo lee cada factura con la imagen del documento: tienen un coste en tu cuenta de cada proveedor.') }}</p>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Comparar') }}</button></div>
+  </form>
+  {% endif %}
+</section>
+
+{% if r %}
+<section class="dash-panel ds-mt-24" id="resultado-comparacion" data-url="{{ url_for('contabilidad.comparar_estado', lote=lote) }}" data-terminado="{{ 1 if r.progreso.terminado else 0 }}">
+  <h2>{{ _('Resultado') }}</h2>
+  <p class="muted" role="status">{{ _('%(hechas)s de %(total)s facturas probadas', hechas=r.progreso.hechas + r.progreso.errores, total=r.progreso.total) }}{% if not r.progreso.terminado %} · {{ _('sigue en marcha: recarga en unos segundos') }}{% endif %}</p>
+  {% if r.modelos %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Modelo') }}</th><th>{{ _('Acierto') }}</th>{% for c in etiquetas %}<th>{{ etiquetas[c] }}</th>{% endfor %}<th>{{ _('Segundos') }}</th><th>{{ _('Coste por factura (USD)') }}</th><th>{{ _('Fallos') }}</th></tr></thead>
+    <tbody>{% for m in r.modelos %}<tr>
+      <td>{{ m.nombre }}{% if m.nombre == r.mejor %} <span class="pill">{{ _('El que más acierta') }}</span>{% endif %}</td>
+      <td>{% if m.acierto_pct is not none %}<span class="confianza confianza-{{ 'alta' if m.acierto_pct >= 90 else ('media' if m.acierto_pct >= 70 else 'baja') }}">{{ m.acierto_pct }} %</span>{% else %}—{% endif %}</td>
+      {% for c in etiquetas %}<td>{% if m.campos.get(c) is not none %}{{ m.campos[c] }} %{% else %}—{% endif %}</td>{% endfor %}
+      <td>{{ m.segundos_medios if m.segundos_medios is not none else '—' }}</td>
+      <td>{% if m.coste_medio_usd is not none %}{{ '%.5f'|format(m.coste_medio_usd) }}{% else %}{{ _('sin tarifa') }}{% endif %}</td><td>{{ m.errores }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  {% if r.progreso.fallos %}<p class="muted">{{ _('Algunas facturas no se pudieron probar: %(e)s', e=r.progreso.fallos[0].error) }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

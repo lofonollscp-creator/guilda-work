@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Calidad de la lectura de facturas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><h1>{{ _('Calidad de la lectura de facturas') }}</h1>
+    <p class="subtitle">{{ _('Cuánto acierta la lectura, qué corrigen las personas y cuánto cuesta. Se mide al revisar cada factura: lo corregido cuenta como fallo.') }}</p></div>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.comparar') }}">{{ _('Comparar modelos de IA') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Volver a las facturas') }}</a></div>
+</header>
+
+<form method="get" class="ds-fila ds-envolver">
+  <label for="calidad-desde">{{ _('Desde') }}</label><input type="date" id="calidad-desde" name="desde" value="{{ desde }}">
+  <button type="submit" class="btn btn-ghost">{{ _('Ver') }}</button>
+</form>
+
+{% if not r.total %}
+<p class="empty-lane">{{ _('Todavía no hay facturas leídas en este periodo.') }}</p>
+{% else %}
+<section class="dash-panel">
+  <h2>{{ _('Resumen') }}</h2>
+  <dl class="portal-tablero-cifras">
+    <div><dt>{{ _('Facturas leídas') }}</dt><dd>{{ r.total }}</dd></div>
+    <div><dt>{{ _('Revisadas solas por la IA') }}</dt><dd>{{ r.auto }}</dd></div>
+    <div><dt>{{ _('Esperan revisión') }}</dt><dd>{{ r.pendientes_de_revisar }}</dd></div>
+    <div><dt>{{ _('Mediana hasta revisar') }}</dt><dd>{% if r.horas_hasta_revisar is not none %}{{ r.horas_hasta_revisar }} h{% else %}—{% endif %}</dd></div>
+    <div><dt>{{ _('Coste de la IA (USD)') }}</dt><dd>{{ '%.2f'|format(r.coste_usd) }}</dd></div>
+    <div><dt>{{ _('Coste por factura (USD)') }}</dt><dd>{% if r.coste_por_factura is not none %}{{ '%.4f'|format(r.coste_por_factura) }}{% else %}—{% endif %}</dd></div>
+  </dl>
+  {% if r.sin_tarifa %}<p class="muted">{{ _('Algunos modelos no tienen tarifa conocida: su coste no está incluido.') }}</p>{% endif %}
+</section>
+
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Por fuente de la lectura') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Fuente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Confianza media') }}</th><th>{{ _('Revisadas por personas') }}</th><th>{{ _('Sin corregir nada') }}</th></tr></thead>
+    <tbody>{% for clave, d in r.por_fuente.items() %}<tr><td>{{ fuentes.get(clave, clave) }}</td><td>{{ d.facturas }}</td><td>{% if d.confianza_media is not none %}{{ d.confianza_media }} %{% else %}—{% endif %}</td>
+      <td>{{ d.revisadas }}</td><td>{% if d.pct_sin_correcciones is not none %}{{ d.pct_sin_correcciones }} %{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Acierto por dato') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Dato') }}</th><th>{{ _('Revisadas') }}</th><th>{{ _('Corregidas') }}</th><th>{{ _('Acierto') }}</th></tr></thead>
+    <tbody>{% for c, d in r.campos.items() %}<tr><td>{{ etiquetas[c] }}</td><td>{{ d.revisadas }}</td><td>{{ d.corregidas }}</td>
+      <td>{% if d.pct_acierto is not none %}<span class="confianza confianza-{{ 'alta' if d.pct_acierto >= 90 else ('media' if d.pct_acierto >= 70 else 'baja') }}">{{ d.pct_acierto }} %</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+{% if r.proveedores %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Proveedores y clientes que más se corrigen') }}</h2>
+  <p class="muted">{{ _('Una regla para ellos (cuenta, IVA, tipo de operación) ahorra esas correcciones.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Proveedor o cliente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Datos corregidos') }}</th></tr></thead>
+    <tbody>{% for p in r.proveedores %}<tr><td>{{ p.nombre }}</td><td>{{ p.facturas }}</td><td>{{ p.correcciones }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

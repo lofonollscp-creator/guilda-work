@@ -6,7 +6,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, cobro_contabilidad, db, enlace_a3, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
+from . import acceso, cobro_contabilidad, db, enlace_a3, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
 from . import cierre_trimestre, cola_contabilidad, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
@@ -122,6 +122,47 @@ def nueva():
         return redirect(url_for("contabilidad.ver", factura_id=fid))
     datos = {"tipo": request.args.get("tipo") or "recibida", "fecha": date.today().isoformat()}
     return render_template("contabilidad_factura.html", f=None, datos=datos, lineas=[{"pct_iva": "21"}], cliente_id=cliente_id, clientes=_clientes(), error=_error(), cfg=None)
+
+
+@contabilidad_bp.route("/calidad")
+@login_required
+def calidad():
+    """Cómo va la lectura de facturas: acierto por dato, de dónde sale cada lectura, qué proveedores se corrigen más y cuánto cuesta. Solo para la dirección del despacho."""
+    if not ia_despacho.es_direccion(g.usuario_id):
+        abort(403)
+    desde = request.args.get("desde") or ""
+    try:
+        date.fromisoformat(desde)
+    except ValueError:
+        desde = date.today().replace(day=1).isoformat()
+    return render_template("contabilidad_calidad.html", r=lectura_calidad.resumen(g.tenant_id, desde), desde=desde, etiquetas=lectura_calidad.ETIQUETAS,
+                           fuentes={"xml": _("Factura electrónica (XML)"), "texto": _("Texto del PDF"), "imagen": _("Imagen del documento")})
+
+
+@contabilidad_bp.route("/comparar", methods=["GET", "POST"])
+@login_required
+def comparar():
+    """Compara varios modelos de IA sobre facturas de este despacho que ya se revisaron: acierto por dato, tiempo y coste. Solo para la dirección."""
+    if not ia_despacho.es_direccion(g.usuario_id):
+        abort(403)
+    error = None
+    if request.method == "POST":
+        try:
+            lote, _n = ia_comparador.lanzar(g.tenant_id, g.usuario_id, request.form.get("n", 10, type=int), [int(i) for i in request.form.getlist("modelo") if i.isdigit()])
+            return redirect(url_for("contabilidad.comparar", lote=lote))
+        except ValueError as e:
+            error = _(str(e))
+    lote = (request.args.get("lote") or "")[:32]
+    return render_template("contabilidad_comparar.html", modelos=ia_comparador.modelos_disponibles(g.usuario_id), muestra=len(ia_comparador.muestra_posible(g.tenant_id, g.usuario_id, ia_comparador.MUESTRA_MAXIMA)),
+                           lote=lote, r=ia_comparador.resultado(g.tenant_id, lote) if lote else None, error=error, etiquetas=lectura_calidad.ETIQUETAS)
+
+
+@contabilidad_bp.route("/comparar/<lote>.json")
+@login_required
+def comparar_estado(lote: str):
+    if not ia_despacho.es_direccion(g.usuario_id):
+        abort(403)
+    return jsonify(ia_comparador.resultado(g.tenant_id, lote[:32]))
 
 
 @contabilidad_bp.route("/<int:factura_id>", methods=["GET", "POST"])
@@ -287,6 +328,23 @@ def subir():
     except ValueError as e:
         return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, error=_(str(e))[:300]))
     return redirect(url_for("contabilidad.lista", cliente_id=cliente_id))
+
+
+@contabilidad_bp.route("/leer-todas", methods=["POST"])
+@login_required
+def leer_todas():
+    """Pone en la cola de fondo la lectura de todas las facturas por leer (de un cliente, o de todos los que ve la persona) y devuelve el lote para seguir el avance."""
+    if not lectura_facturas.configurada(g.usuario_id):
+        return jsonify({"ok": False, "error": _("Hace falta un modelo y una clave de IA, en Ajustes del Asistente IA.")}), 400
+    lote, n = lectura_facturas.encolar_pendientes(g.tenant_id, g.usuario_id, request.form.get("cliente_id", type=int) or None)
+    return jsonify({"ok": True, "lote": lote, "total": n})
+
+
+@contabilidad_bp.route("/lectura/<lote>")
+@login_required
+def progreso_lectura(lote: str):
+    """El avance de un lote de lecturas en segundo plano."""
+    return jsonify(ia_trabajos.progreso(g.tenant_id, lote[:32]))
 
 
 @contabilidad_bp.route("/<int:factura_id>/leer", methods=["POST"])

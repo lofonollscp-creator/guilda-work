@@ -24034,3 +24034,161 @@ msgid "Otra cosa pendiente"
 msgid_plural "Otras %(n)s cosas pendientes"
 msgstr[0] "Une autre chose en attente"
 msgstr[1] "%(n)s autres choses en attente"
+
+msgid "Calidad de la lectura de facturas"
+msgstr "Qualité de la lecture des factures"
+
+msgid "Cuánto acierta la lectura, qué corrigen las personas y cuánto cuesta. Se mide al revisar cada factura: lo corregido cuenta como fallo."
+msgstr "Quelle est la précision de la lecture, ce que les personnes corrigent et ce que cela coûte. On le mesure à la révision de chaque facture : ce qui est corrigé compte comme une erreur."
+
+msgid "Comparar modelos de IA"
+msgstr "Comparer des modèles d'IA"
+
+msgid "Todavía no hay facturas leídas en este periodo."
+msgstr "Il n'y a pas encore de factures lues sur cette période."
+
+msgid "Facturas leídas"
+msgstr "Factures lues"
+
+msgid "Revisadas solas por la IA"
+msgstr "Révisées seules par l'IA"
+
+msgid "Esperan revisión"
+msgstr "En attente de révision"
+
+msgid "Mediana hasta revisar"
+msgstr "Médiane avant révision"
+
+msgid "Coste de la IA (USD)"
+msgstr "Coût de l'IA (USD)"
+
+msgid "Coste por factura (USD)"
+msgstr "Coût par facture (USD)"
+
+msgid "Algunos modelos no tienen tarifa conocida: su coste no está incluido."
+msgstr "Certains modèles n'ont pas de tarif connu : leur coût n'est pas inclus."
+
+msgid "Por fuente de la lectura"
+msgstr "Par source de la lecture"
+
+msgid "Confianza media"
+msgstr "Confiance moyenne"
+
+msgid "Revisadas por personas"
+msgstr "Révisées par des personnes"
+
+msgid "Sin corregir nada"
+msgstr "Sans rien corriger"
+
+msgid "Acierto por dato"
+msgstr "Précision par donnée"
+
+msgid "Corregidas"
+msgstr "Corrigées"
+
+msgid "Acierto"
+msgstr "Précision"
+
+msgid "Proveedores y clientes que más se corrigen"
+msgstr "Fournisseurs et clients les plus corrigés"
+
+msgid "Una regla para ellos (cuenta, IVA, tipo de operación) ahorra esas correcciones."
+msgstr "Une règle pour eux (compte, TVA, type d'opération) évite ces corrections."
+
+msgid "Proveedor o cliente"
+msgstr "Fournisseur ou client"
+
+msgid "Datos corregidos"
+msgstr "Données corrigées"
+
+msgid "Prueba varios modelos con facturas de tu despacho que ya revisaste y mira cuál acierta más, cuánto tarda y cuánto cuesta. No cambia ninguna factura."
+msgstr "Testez plusieurs modèles sur des factures de votre cabinet déjà révisées et voyez lequel est le plus précis, combien de temps il met et combien il coûte. Aucune facture n'est modifiée."
+
+msgid "Calidad de la lectura"
+msgstr "Qualité de la lecture"
+
+msgid "Hacen falta al menos dos modelos configurados (el tuyo y los del despacho) en Ajustes del Asistente IA."
+msgstr "Il faut au moins deux modèles configurés (le vôtre et ceux du cabinet) dans les réglages de l'Assistant IA."
+
+msgid "Todavía no hay facturas leídas con IA y revisadas a mano con las que comparar."
+msgstr "Il n'y a pas encore de factures lues avec l'IA et révisées à la main pour comparer."
+
+msgid "Modelos a comparar"
+msgstr "Modèles à comparer"
+
+msgid "clave personal"
+msgstr "clé personnelle"
+
+msgid "clave del despacho"
+msgstr "clé du cabinet"
+
+msgid "Facturas de la muestra"
+msgstr "Factures de l'échantillon"
+
+msgid "Cada modelo lee cada factura con la imagen del documento: tienen un coste en tu cuenta de cada proveedor."
+msgstr "Chaque modèle lit chaque facture à partir de l'image du document : cela a un coût sur votre compte chez chaque fournisseur."
+
+msgid "Comparar"
+msgstr "Comparer"
+
+msgid "%(hechas)s de %(total)s facturas probadas"
+msgstr "%(hechas)s factures testées sur %(total)s"
+
+msgid "sigue en marcha: recarga en unos segundos"
+msgstr "toujours en cours : rechargez dans quelques secondes"
+
+msgid "Segundos"
+msgstr "Secondes"
+
+msgid "Fallos"
+msgstr "Échecs"
+
+msgid "El que más acierta"
+msgstr "Le plus précis"
+
+msgid "sin tarifa"
+msgstr "sans tarif"
+
+msgid "Algunas facturas no se pudieron probar: %(e)s"
+msgstr "Certaines factures n'ont pas pu être testées : %(e)s"
+
+msgid "Leyendo en segundo plano: %(hechas)s de %(total)s"
+msgstr "Lecture en arrière-plan : %(hechas)s sur %(total)s"
+
+msgid "Terminado: %(hechas)s leídas, %(errores)s con error."
+msgstr "Terminé : %(hechas)s lues, %(errores)s en erreur."
+
+msgid "No se pudo empezar."
+msgstr "Impossible de démarrer."
+
+msgid "Avance de la lectura"
+msgstr "Progression de la lecture"
+
+msgid "La lectura se hace en segundo plano: puedes seguir trabajando o cerrar la página. Después revisa cada factura con el documento delante: la IA puede equivocarse."
+msgstr "La lecture se fait en arrière-plan : vous pouvez continuer à travailler ou fermer la page. Révisez ensuite chaque facture avec le document sous les yeux : l'IA peut se tromper."
+
+msgid "Para leerlas con IA hace falta un modelo con visión y una clave (tuya o del despacho: OpenRouter, OpenAI, Claude…), en Ajustes del Asistente IA."
+msgstr "Pour les lire avec l'IA, il faut un modèle avec vision et une clé (la vôtre ou celle du cabinet : OpenRouter, OpenAI, Claude…), dans les réglages de l'Assistant IA."
+
+msgid "Texto del PDF"
+msgstr "Texte du PDF"
+
+msgid "Imagen del documento"
+msgstr "Image du document"
+
+msgid "Hace falta un modelo y una clave de IA, en Ajustes del Asistente IA."
+msgstr "Il faut un modèle et une clé d'IA, dans les réglages de l'Assistant IA."
+
+msgid "Elige al menos dos modelos para compararlos."
+msgstr "Choisissez au moins deux modèles pour les comparer."
+
+msgid "La factura de la muestra ya no existe."
+msgstr "La facture de l'échantillon n'existe plus."
+
+msgid "No se encuentra el documento de la factura."
+msgstr "Le document de la facture est introuvable."
+
+msgid "Hay %(n)s factura disponible."
+msgid_plural "Hay %(n)s facturas disponibles."
+msgstr[0] "Il y a %(n)s facture disponible."
+msgstr[1] "Il y a %(n)s factures disponibles."

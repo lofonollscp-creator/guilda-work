@@ -10,7 +10,7 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 
-from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, lectura_confianza, lectura_evidencias, pdf_facturas, qr_facturas, segmentacion_pdf, vies
+from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_evidencias, pdf_facturas, qr_facturas, segmentacion_pdf, vies
 
 PROMPT = """Eres un asistente de contabilidad en España. Recibes la foto o el PDF de UNA factura. Devuelve SOLO un objeto JSON, sin texto alrededor, con estos campos (null si no aparece o no se lee):
 {"emisor_nombre": str, "emisor_nif": str, "receptor_nombre": str, "receptor_nif": str, "numero": str, "fecha": "AAAA-MM-DD", "fecha_operacion": "AAAA-MM-DD",
@@ -144,6 +144,11 @@ def configurada(usuario_id: int) -> bool:
 
 
 MAX_TEXTO_PDF = 24000
+CODIGOS_PASAJEROS = (None, 408, 409, 425, 429, 500, 502, 503, 504)
+
+
+class LecturaTransitoria(ValueError):
+    """La lectura falló por algo pasajero (el proveedor de IA está saturado o caído): en la cola de fondo se reintenta; leída a mano, se enseña el mismo aviso de siempre."""
 
 
 def _texto_del_pdf(contenido: bytes, mime: str) -> str:
@@ -287,8 +292,9 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
                 raise ValueError("no se vieron los importes")
         except ia_asistente.ErrorIA as e:
             _marcar_fallida(tenant_id, f, "el modelo no pudo leerlo" + (" (¿tiene visión el modelo elegido?)" if e.codigo_http == 400 else ""))
-            raise ValueError("No se pudo leer: " + ("el modelo elegido no admite imágenes o PDF; elige uno con visión en Ajustes del Asistente IA." if e.codigo_http == 400
-                                                    else "falló la consulta a la IA o se agotó el tope mensual.")) from None
+            clase = LecturaTransitoria if e.codigo_http in CODIGOS_PASAJEROS and "tope" not in str(e).lower() else ValueError
+            raise clase("No se pudo leer: " + ("el modelo elegido no admite imágenes o PDF; elige uno con visión en Ajustes del Asistente IA." if e.codigo_http == 400
+                                               else "falló la consulta a la IA o se agotó el tope mensual.")) from None
         except (ValueError, KeyError, TypeError) as e:
             _marcar_fallida(tenant_id, f, "la IA no devolvió datos legibles")
             raise ValueError(f"No se pudo leer la factura ({e}). Rellena los datos a mano.") from None
@@ -322,6 +328,7 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
                                                                        "qr": qr}, ensure_ascii=False), puntos["global"], fuente, factura_id, tenant_id))
         auditoria.registrar(tenant_id, usuario_id, "factura_contable.leida_xml" if fuente == "xml" else "factura_contable.leida_ia", "factura_contable", factura_id,
                             {"avisos": len(avisos), "fuente": fuente, "confianza": puntos["global"]}, conn=conn)
+        lectura_calidad.guardar_lo_leido(conn, tenant_id, factura_id, fc.obtener(tenant_id, usuario_id, factura_id))
         conn.commit()
     finally:
         conn.close()
@@ -449,3 +456,28 @@ def pendientes_de_leer(tenant_id: int, usuario_id: int, cliente_fiscal_id: int |
     finally:
         conn.close()
     return [r["id"] for r in filas if acceso.puede_ver_cliente(tenant_id, usuario_id, r["cliente_fiscal_id"])]
+
+
+def _trabajo_de_lectura(trabajo: dict) -> dict:
+    """El trabajo «lectura» de la cola de fondo: lee una factura (un fallo pasajero del proveedor se reintenta; lo demás la deja marcada como fallida)."""
+    try:
+        avisos = leer(trabajo["tenant_id"], trabajo["usuario_id"], trabajo["referencia"])
+    except LecturaTransitoria as e:
+        raise ia_trabajos.Transitorio(str(e)) from None
+    return {"avisos": len(avisos)}
+
+
+ia_trabajos.registrar_manejador("lectura", _trabajo_de_lectura)
+
+
+def encolar_pendientes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None) -> tuple[str, int]:
+    """Pone en la cola de fondo la lectura de todas las facturas por leer que esta persona puede ver. Devuelve (lote, cuántas)."""
+    ids = pendientes_de_leer(tenant_id, usuario_id, cliente_fiscal_id)
+    proveedor = None
+    try:
+        c = ia_asistente.candidatos(usuario_id, "facturas")
+        proveedor = c[0]["proveedor"] if c else None
+    except Exception:  # noqa: BLE001
+        pass
+    lote = ia_trabajos.encolar(tenant_id, usuario_id, "lectura", ids, datos={"proveedor": proveedor})
+    return lote, ia_trabajos.progreso(tenant_id, lote)["total"]                       # solo las que de verdad entran: las que ya estaban en la cola no se repiten

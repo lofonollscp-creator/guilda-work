@@ -23949,3 +23949,161 @@ msgid "Otra cosa pendiente"
 msgid_plural "Otras %(n)s cosas pendientes"
 msgstr[0] "One other thing pending"
 msgstr[1] "%(n)s other things pending"
+
+msgid "Calidad de la lectura de facturas"
+msgstr "Invoice reading quality"
+
+msgid "Cuánto acierta la lectura, qué corrigen las personas y cuánto cuesta. Se mide al revisar cada factura: lo corregido cuenta como fallo."
+msgstr "How accurate the reading is, what people correct and what it costs. It is measured when each invoice is reviewed: what gets corrected counts as a miss."
+
+msgid "Comparar modelos de IA"
+msgstr "Compare AI models"
+
+msgid "Todavía no hay facturas leídas en este periodo."
+msgstr "There are no invoices read in this period yet."
+
+msgid "Facturas leídas"
+msgstr "Invoices read"
+
+msgid "Revisadas solas por la IA"
+msgstr "Reviewed by the AI on its own"
+
+msgid "Esperan revisión"
+msgstr "Awaiting review"
+
+msgid "Mediana hasta revisar"
+msgstr "Median time to review"
+
+msgid "Coste de la IA (USD)"
+msgstr "AI cost (USD)"
+
+msgid "Coste por factura (USD)"
+msgstr "Cost per invoice (USD)"
+
+msgid "Algunos modelos no tienen tarifa conocida: su coste no está incluido."
+msgstr "Some models have no known rate: their cost is not included."
+
+msgid "Por fuente de la lectura"
+msgstr "By reading source"
+
+msgid "Confianza media"
+msgstr "Average confidence"
+
+msgid "Revisadas por personas"
+msgstr "Reviewed by people"
+
+msgid "Sin corregir nada"
+msgstr "With nothing corrected"
+
+msgid "Acierto por dato"
+msgstr "Accuracy by field"
+
+msgid "Corregidas"
+msgstr "Corrected"
+
+msgid "Acierto"
+msgstr "Accuracy"
+
+msgid "Proveedores y clientes que más se corrigen"
+msgstr "Suppliers and customers corrected most"
+
+msgid "Una regla para ellos (cuenta, IVA, tipo de operación) ahorra esas correcciones."
+msgstr "A rule for them (account, VAT, operation type) saves those corrections."
+
+msgid "Proveedor o cliente"
+msgstr "Supplier or customer"
+
+msgid "Datos corregidos"
+msgstr "Fields corrected"
+
+msgid "Prueba varios modelos con facturas de tu despacho que ya revisaste y mira cuál acierta más, cuánto tarda y cuánto cuesta. No cambia ninguna factura."
+msgstr "Try several models on invoices from your office that you have already reviewed and see which one is most accurate, how long it takes and what it costs. It does not change any invoice."
+
+msgid "Calidad de la lectura"
+msgstr "Reading quality"
+
+msgid "Hacen falta al menos dos modelos configurados (el tuyo y los del despacho) en Ajustes del Asistente IA."
+msgstr "At least two models must be configured (yours and the office's) in the AI Assistant settings."
+
+msgid "Todavía no hay facturas leídas con IA y revisadas a mano con las que comparar."
+msgstr "There are no invoices read with AI and reviewed by hand to compare with yet."
+
+msgid "Modelos a comparar"
+msgstr "Models to compare"
+
+msgid "clave personal"
+msgstr "personal key"
+
+msgid "clave del despacho"
+msgstr "office key"
+
+msgid "Facturas de la muestra"
+msgstr "Invoices in the sample"
+
+msgid "Cada modelo lee cada factura con la imagen del documento: tienen un coste en tu cuenta de cada proveedor."
+msgstr "Each model reads each invoice from the document image: this has a cost on your account with each provider."
+
+msgid "Comparar"
+msgstr "Compare"
+
+msgid "%(hechas)s de %(total)s facturas probadas"
+msgstr "%(hechas)s of %(total)s invoices tested"
+
+msgid "sigue en marcha: recarga en unos segundos"
+msgstr "still running: reload in a few seconds"
+
+msgid "Segundos"
+msgstr "Seconds"
+
+msgid "Fallos"
+msgstr "Failures"
+
+msgid "El que más acierta"
+msgstr "The most accurate"
+
+msgid "sin tarifa"
+msgstr "no rate"
+
+msgid "Algunas facturas no se pudieron probar: %(e)s"
+msgstr "Some invoices could not be tested: %(e)s"
+
+msgid "Leyendo en segundo plano: %(hechas)s de %(total)s"
+msgstr "Reading in the background: %(hechas)s of %(total)s"
+
+msgid "Terminado: %(hechas)s leídas, %(errores)s con error."
+msgstr "Done: %(hechas)s read, %(errores)s with errors."
+
+msgid "No se pudo empezar."
+msgstr "It could not be started."
+
+msgid "Avance de la lectura"
+msgstr "Reading progress"
+
+msgid "La lectura se hace en segundo plano: puedes seguir trabajando o cerrar la página. Después revisa cada factura con el documento delante: la IA puede equivocarse."
+msgstr "Reading happens in the background: you can keep working or close the page. Then review each invoice with the document in front of you: the AI can make mistakes."
+
+msgid "Para leerlas con IA hace falta un modelo con visión y una clave (tuya o del despacho: OpenRouter, OpenAI, Claude…), en Ajustes del Asistente IA."
+msgstr "To read them with AI you need a vision model and a key (yours or the office's: OpenRouter, OpenAI, Claude…), in the AI Assistant settings."
+
+msgid "Texto del PDF"
+msgstr "PDF text"
+
+msgid "Imagen del documento"
+msgstr "Document image"
+
+msgid "Hace falta un modelo y una clave de IA, en Ajustes del Asistente IA."
+msgstr "A model and an AI key are needed, in the AI Assistant settings."
+
+msgid "Elige al menos dos modelos para compararlos."
+msgstr "Choose at least two models to compare them."
+
+msgid "La factura de la muestra ya no existe."
+msgstr "The sample invoice no longer exists."
+
+msgid "No se encuentra el documento de la factura."
+msgstr "The invoice document cannot be found."
+
+msgid "Hay %(n)s factura disponible."
+msgid_plural "Hay %(n)s facturas disponibles."
+msgstr[0] "There is %(n)s invoice available."
+msgstr[1] "There are %(n)s invoices available."
