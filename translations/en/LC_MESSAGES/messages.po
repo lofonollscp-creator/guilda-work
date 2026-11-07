@@ -24128,3 +24128,24 @@ msgstr "Choose CSV or Excel."
 
 msgid "No hay facturas revisadas que descargar en ese periodo."
 msgstr "There are no reviewed invoices to download in that period."
+
+msgid "Puedes descargar una copia de lo tuyo que hay en el portal: tus datos de contacto, conversaciones, peticiones, citas, avisos, facturas y los documentos que has enviado."
+msgstr "You can download a copy of what is yours in the portal: your contact details, conversations, requests, appointments, notices, invoices and the documents you have sent."
+
+msgid "Quiero que se supriman mis datos"
+msgstr "I want my data to be deleted"
+
+msgid "Tu gestoría es la responsable de tus datos: le enviaremos tu solicitud y te contestará qué puede suprimir y qué debe conservar por obligación legal (por ejemplo, la contabilidad)."
+msgstr "Your accountancy firm is responsible for your data: we will send it your request and it will tell you what it can delete and what it must keep by legal obligation (for example, the accounts)."
+
+msgid "Quiero enviar esta solicitud a mi gestoría"
+msgstr "I want to send this request to my accountancy firm"
+
+msgid "Enviar la solicitud"
+msgstr "Send the request"
+
+msgid "Solicitud de supresión de mis datos (RGPD)"
+msgstr "Request to delete my data (GDPR)"
+
+msgid "Solicitud de supresión de datos"
+msgstr "Data deletion request"

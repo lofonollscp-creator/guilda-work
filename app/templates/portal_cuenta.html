@@ -152,6 +152,22 @@
     </section>
     {% endif %}
 
+    {% if portal_rol == 'completo' and not vista_previa %}
+    <section class="portal-cuenta-bloque" id="tus-datos" aria-labelledby="cuenta-datos">
+      <h2 id="cuenta-datos">{{ _('Tus datos') }}</h2>
+      <p>{{ _('Puedes descargar una copia de lo tuyo que hay en el portal: tus datos de contacto, conversaciones, peticiones, citas, avisos, facturas y los documentos que has enviado.') }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.descargar_mis_datos') }}"><button type="submit" class="btn btn-ghost">{{ _('Descargar mis datos') }}</button></form>
+      <details class="ds-mt-16">
+        <summary>{{ _('Quiero que se supriman mis datos') }}</summary>
+        <p class="muted">{{ _('Tu gestoría es la responsable de tus datos: le enviaremos tu solicitud y te contestará qué puede suprimir y qué debe conservar por obligación legal (por ejemplo, la contabilidad).') }}</p>
+        <form method="post" action="{{ url_for('portal_cliente.pedir_supresion') }}">
+          <label class="checkbox-label"><input type="checkbox" name="confirmo" value="1" required> {{ _('Quiero enviar esta solicitud a mi gestoría') }}</label>
+          <button type="submit" class="btn btn-ghost">{{ _('Enviar la solicitud') }}</button>
+        </form>
+      </details>
+    </section>
+    {% endif %}
+
     <section class="portal-cuenta-bloque" aria-labelledby="cuenta-app">
       <h2 id="cuenta-app">{{ _('Tenerlo siempre a mano') }}</h2>
       <p>{{ _('Puedes añadir el portal a la pantalla de inicio del móvil como si fuera una app. En el iPhone: Compartir y «Añadir a pantalla de inicio»; en Android: las opciones del navegador y «Instalar aplicación».') }}</p>

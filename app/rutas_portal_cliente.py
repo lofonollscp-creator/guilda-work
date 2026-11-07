@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -1028,6 +1028,41 @@ def _conversacion_avisar_equipo(cliente, cid: int, asunto: str, texto: str, nuev
     """Cuando el cliente escribe (o abre un hilo), lo sabe quien lleva al cliente."""
     titulo = _("%(cliente)s te ha escrito: %(asunto)s", cliente=cliente["nombre"], asunto=asunto[:80]) if nueva else _("%(cliente)s ha contestado: %(asunto)s", cliente=cliente["nombre"], asunto=asunto[:80])
     facturas_contables.avisar_al_equipo(cliente, titulo, texto, url_for("fiscal.editar_cliente", cliente_id=cliente["id"]) + f"#conversacion-{cid}", {"conversacion": cid})
+
+
+@portal_bp.route("/mis-datos", methods=["POST"])
+@cliente_login_required
+@limiter.limit("3/hour")
+def descargar_mis_datos():
+    """Una copia de los datos de este cliente en un ZIP (solo el titular o quien tiene acceso completo; nunca desde la vista previa del despacho)."""
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa") or g.portal_rol != "completo":
+        abort(403)
+    contenido = portal_datos.zip_de_mis_datos(cliente, g.portal_email or cliente["email"] or "")
+    auditoria.registrar(cliente["tenant_id"], None, "portal.datos_descargados", "cliente_fiscal", cliente["id"], {"quien": g.portal_email or "titular", "bytes": len(contenido)})
+    r = Response(contenido, mimetype="application/zip")
+    r.headers.set("Content-Disposition", "attachment", filename="mis-datos.zip")
+    r.headers.set("X-Content-Type-Options", "nosniff")
+    r.headers.set("Cache-Control", "no-store")
+    return r
+
+
+@portal_bp.route("/pedir-supresion", methods=["POST"])
+@cliente_login_required
+@limiter.limit("3/day")
+def pedir_supresion():
+    """El cliente pide la supresión de sus datos: se abre una conversación con su gestoría (que es quien responde de ellos) y se avisa al equipo."""
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa") or g.portal_rol != "completo" or request.form.get("confirmo") != "1":
+        abort(403)
+    email = g.portal_email or cliente["email"] or ""
+    try:
+        cid = portal_datos.pedir_supresion(cliente, email)
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]) + "#tus-datos")
+    auditoria.registrar(cliente["tenant_id"], None, "portal.supresion_solicitada", "cliente_fiscal", cliente["id"], {"quien": email, "conversacion": cid})
+    _conversacion_avisar_equipo(cliente, cid, _("Solicitud de supresión de mis datos (RGPD)"), _("Solicitud de supresión de datos"), True)
+    return redirect(url_for("portal_cliente.conversacion", conversacion_id=cid, enviado=1))
 
 
 @portal_bp.route("/avisos")

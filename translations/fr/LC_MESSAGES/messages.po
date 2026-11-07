@@ -24213,3 +24213,24 @@ msgstr "Choisissez CSV ou Excel."
 
 msgid "No hay facturas revisadas que descargar en ese periodo."
 msgstr "Il n'y a aucune facture révisée à télécharger sur cette période."
+
+msgid "Puedes descargar una copia de lo tuyo que hay en el portal: tus datos de contacto, conversaciones, peticiones, citas, avisos, facturas y los documentos que has enviado."
+msgstr "Vous pouvez télécharger une copie de vos données dans le portail : coordonnées, conversations, demandes, rendez-vous, avis, factures et documents envoyés."
+
+msgid "Quiero que se supriman mis datos"
+msgstr "Je souhaite que mes données soient supprimées"
+
+msgid "Tu gestoría es la responsable de tus datos: le enviaremos tu solicitud y te contestará qué puede suprimir y qué debe conservar por obligación legal (por ejemplo, la contabilidad)."
+msgstr "Votre cabinet est responsable de vos données : nous lui transmettrons votre demande et il vous dira ce qu'il peut supprimer et ce qu'il doit conserver par obligation légale (par exemple, la comptabilité)."
+
+msgid "Quiero enviar esta solicitud a mi gestoría"
+msgstr "Je veux envoyer cette demande à mon cabinet"
+
+msgid "Enviar la solicitud"
+msgstr "Envoyer la demande"
+
+msgid "Solicitud de supresión de mis datos (RGPD)"
+msgstr "Demande de suppression de mes données (RGPD)"
+
+msgid "Solicitud de supresión de datos"
+msgstr "Demande de suppression de données"
