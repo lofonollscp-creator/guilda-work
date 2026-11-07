@@ -6,7 +6,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import acceso, cobro_contabilidad, db, enlace_a3, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
+from . import acceso, cobro_contabilidad, db, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
 from . import cierre_trimestre, cola_contabilidad, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
@@ -627,6 +627,37 @@ def exportar():
     except ValueError as e:
         return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=_(str(e))[:300]))
     return _descarga(r["contenido"])
+
+
+@contabilidad_bp.route("/exportar-otro-programa", methods=["POST"])
+@login_required
+def exportar_otro_programa():
+    """Descarga las facturas revisadas de un cliente en CSV o Excel, para llevarlas a un programa que no es a3. No las marca como exportadas ni necesita la configuración de a3."""
+    cliente_id = request.form.get("cliente_id", type=int)
+    trimestre = request.form.get("trimestre") or None
+    formato = request.form.get("formato", "csv")
+    try:
+        if formato not in ("csv", "xlsx"):
+            raise ValueError("Elige CSV o Excel.")
+        cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id) if cliente_id else None
+        if cliente is None:
+            raise ValueError("Cliente no encontrado.")
+        desde, hasta = fc.rango_del_trimestre(trimestre) if trimestre else (None, None)
+        filas = exportacion_generica.filas(g.tenant_id, g.usuario_id, cliente_id, desde, hasta)
+        if not filas:
+            raise ValueError("No hay facturas revisadas que descargar en ese periodo.")
+    except ValueError as e:
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, trimestre=trimestre, error=_(str(e))[:300]))
+    nombre = f"facturas-{(trimestre or 'todas').replace(' ', '')}"
+    if formato == "xlsx":
+        contenido, mime = exportacion_generica.a_xlsx(filas), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    else:
+        contenido, mime = exportacion_generica.a_csv(filas), "text/csv; charset=utf-8"
+    r = Response(contenido, mimetype=mime)
+    r.headers.set("Content-Disposition", "attachment", filename=f"{nombre}.{formato}")
+    r.headers.set("X-Content-Type-Options", "nosniff")
+    r.headers.set("Cache-Control", "no-store")
+    return r
 
 
 @contabilidad_bp.route("/comprobar", methods=["POST"])

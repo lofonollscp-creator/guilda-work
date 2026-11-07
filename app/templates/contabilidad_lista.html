@@ -87,6 +87,16 @@
 
 {% if cliente_id %}
 <section class="dash-panel">
+  <div class="dash-panel-cab"><h2>{{ _('Descargar para otro programa') }}</h2></div>
+  <form method="post" action="{{ url_for('contabilidad.exportar_otro_programa') }}" class="ds-fila">
+    <input type="hidden" name="cliente_id" value="{{ cliente_id }}">
+    <label>{{ _('Facturas revisadas de') }} <select name="trimestre"><option value="">{{ _('Todas las fechas') }}</option>{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ t }}</option>{% endfor %}</select></label>
+    <label>{{ _('Formato') }} <select name="formato"><option value="csv">{{ _('CSV (para importar)') }}</option><option value="xlsx">{{ _('Excel (libro de IVA)') }}</option></select></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Descargar') }}</button>
+  </form>
+  <p class="muted">{{ _('Una fila por cada tipo de IVA de cada factura revisada, con base, cuota, retención, cuenta y tipo de operación. No las marca como exportadas ni usa la configuración de a3: sirve para llevarlas a cualquier otro programa.') }}</p>
+</section>
+<section class="dash-panel">
   <div class="dash-panel-cab"><h2>{{ _('Subir facturas para leerlas con IA') }}</h2></div>
   <form method="post" action="{{ url_for('contabilidad.subir') }}" enctype="multipart/form-data" class="ds-fila">
     <input type="hidden" name="cliente_id" value="{{ cliente_id }}">

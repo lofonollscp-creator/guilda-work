@@ -24107,3 +24107,24 @@ msgid "Hay %(n)s factura disponible."
 msgid_plural "Hay %(n)s facturas disponibles."
 msgstr[0] "There is %(n)s invoice available."
 msgstr[1] "There are %(n)s invoices available."
+
+msgid "Descargar para otro programa"
+msgstr "Download for another program"
+
+msgid "Formato"
+msgstr "Format"
+
+msgid "CSV (para importar)"
+msgstr "CSV (to import)"
+
+msgid "Excel (libro de IVA)"
+msgstr "Excel (VAT ledger)"
+
+msgid "Una fila por cada tipo de IVA de cada factura revisada, con base, cuota, retención, cuenta y tipo de operación. No las marca como exportadas ni usa la configuración de a3: sirve para llevarlas a cualquier otro programa."
+msgstr "One row for each VAT rate of each reviewed invoice, with base, tax, withholding, account and operation type. It does not mark them as exported or use the a3 settings: it is for taking them to any other program."
+
+msgid "Elige CSV o Excel."
+msgstr "Choose CSV or Excel."
+
+msgid "No hay facturas revisadas que descargar en ese periodo."
+msgstr "There are no reviewed invoices to download in that period."
