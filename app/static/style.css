@@ -5430,3 +5430,22 @@ html[data-letra="muy-grande"] .portal-cliente-shell { zoom: 1.3; }
 .portal-pasos li.hecho { background: rgba(46, 160, 67, 0.2); color: #1a7f37; }
 .portal-pasos li.actual { background: rgba(217, 130, 43, 0.22); color: #9a5b0b; font-weight: 600; }
 @media (prefers-color-scheme: dark) { .portal-pasos li.hecho { color: #56d364; } .portal-pasos li.actual { color: #e3b341; } }
+
+/* Portal, inicio: una sola cosa principal y el resto recogido */
+.portal-hoy-principal { border: 1px solid var(--border); border-left-width: 6px; border-left-color: var(--portal-accent, var(--accent, #7c8ba1)); border-radius: 14px; padding: 18px 20px; margin: 0 0 12px; }
+.portal-hoy-principal.urgente { border-left-color: #cf222e; }
+.portal-hoy-principal h3 { margin: 4px 0 6px; font-size: 1.25rem; }
+.portal-hoy-etiqueta { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted, #6b7480); }
+.portal-hoy-boton { margin-top: 8px; min-height: 44px; padding-inline: 22px; font-size: 1rem; }
+.portal-hoy-otras { margin: 0 0 12px; }
+.portal-hoy-otras > summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
+.portal-al-dia { border: 1px solid rgba(46, 160, 67, 0.4); background: rgba(46, 160, 67, 0.08); border-radius: 14px; padding: 16px 20px; }
+.portal-al-dia p { margin: 2px 0; }
+
+/* Portal: centro de avisos */
+.portal-avisos-lista { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 8px; }
+.portal-aviso-item { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; }
+.portal-aviso-item.nuevo { border-left: 5px solid var(--portal-accent, var(--accent, #7c8ba1)); }
+.portal-aviso-item > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.portal-aviso-item time { white-space: nowrap; font-size: 0.8rem; }
+.portal-adjunto { display: inline-block; margin: 6px 8px 0 0; font-size: 0.9rem; word-break: break-all; }

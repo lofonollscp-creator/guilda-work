@@ -127,6 +127,12 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
                        "titulo": ngettext("Tienes %(n)s mensaje nuevo de tu gestoría", "Tienes %(n)s mensajes nuevos de tu gestoría", m["n"], n=m["n"]),
                        "detalle": f"{m['modelo']} · {m['periodo']}"})
 
+    from . import portal_conversaciones
+    for h in portal_conversaciones.listar(cliente, "abierta")[:5]:
+        if h["sin_leer_cliente"]:
+            puntos.append({"clave": f"conversacion-{h['id']}", "urgente": False, "accion": _("Leer"), "url": url_for("portal_cliente.conversacion", conversacion_id=h["id"]),
+                           "titulo": _("Tu gestoría te ha escrito: %(asunto)s", asunto=h["asunto"]), "detalle": h["ultimo_texto"][:140]})
+
     for t in trabajo:
         if t["puede_comentar"] and t["comentarios"] and t["comentarios"][-1]["autor"] != "cliente":
             puntos.append({"clave": f"tarea-{t['id']}", "urgente": False, "accion": _("Responder"), "url": url_for("portal_cliente.dashboard") + f"#tarea-{t['id']}",

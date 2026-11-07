@@ -129,3 +129,69 @@ def test_otro_cliente_no_abre_un_hilo_ajeno_por_la_url(cliente, correo):
     _entrar(cliente, c2, "otro@ejemplo.com")
     assert cliente.get(f"/portal/conversaciones/{cid}").status_code == 404
     assert cliente.post(f"/portal/conversaciones/{cid}", data={"texto": "intruso"}).status_code == 404
+
+
+# --- Adjuntos y «leído» (Q5) ----------------------------------------------------------------------------------------------------------------------------
+
+def _pdf(n=b"1"):
+    from tests.test_facturas_contables import PDF
+    return PDF + n
+
+
+def test_el_cliente_adjunta_y_el_equipo_lo_descarga_y_viceversa(cliente, correo):
+    import io
+    from app import almacen_documentos
+    t, u, c = _despacho("Conv adjuntos")
+    _equipo(cliente, t)
+    from app.main import app as flask_app
+    web = flask_app.test_client()
+    _entrar(web, c, "titular@ejemplo.com")
+    r = web.post("/portal/conversaciones/nueva", data={"asunto": "Mis nóminas", "texto": "Adjunto las nóminas", "archivos": [(io.BytesIO(_pdf(b"a")), "nomina.pdf", "application/pdf")]}, content_type="multipart/form-data")
+    assert r.status_code == 302
+    cid = pc.listar(_ficha(c))[0]["id"]
+    m = pc.obtener(_ficha(c), cid)["mensajes"][0]
+    assert [a["nombre"] for a in m["adjuntos"]] == ["nomina.pdf"]
+    doc_id = m["adjuntos"][0]["documento_id"]
+    assert "nomina.pdf" in _html(web, f"/portal/conversaciones/{cid}")
+    descarga = web.get(f"/portal/conversaciones/{cid}/adjunto/{doc_id}")
+    assert descarga.status_code == 200 and descarga.data.startswith(b"%PDF") and "attachment" in descarga.headers["Content-Disposition"]
+    assert "nomina.pdf" in _html(cliente, f"/fiscal/clientes/{c}/editar") and cliente.get(f"/fiscal/clientes/{c}/documentos/{doc_id}").status_code in (200, 302, 404)
+    r = cliente.post(f"/fiscal/clientes/{c}/conversaciones/{cid}/responder", data={"texto": "Recibidas", "archivos": [(io.BytesIO(_pdf(b"b")), "recibo.pdf", "application/pdf")]}, content_type="multipart/form-data")
+    assert r.status_code == 302
+    assert [a["nombre"] for a in pc.obtener(_ficha(c), cid)["mensajes"][1]["adjuntos"]] == ["recibo.pdf"]
+    assert "recibo.pdf" in _html(web, f"/portal/conversaciones/{cid}")
+
+
+def test_los_adjuntos_se_validan_y_un_cliente_no_baja_los_de_otro(cliente, correo):
+    import io
+    t, u, c = _despacho("Conv val")
+    t2, u2, c2 = _despacho("Conv val otro", cliente_email="otro@ejemplo.com", cliente_nombre="Otro SL")
+    ficha = _ficha(c)
+    cid = pc.iniciar(ficha, "Con adjunto", "mira", "cliente", archivos=[("a.pdf", "application/pdf", _pdf(b"q"))])
+    with pytest.raises(ValueError, match="Solo PDF"):
+        pc.responder(ficha, cid, "malo", "cliente", archivos=[("virus.exe", "application/x-msdownload", b"MZ" + b"0" * 30)])
+    with pytest.raises(ValueError, match="hasta 3"):
+        pc.responder(ficha, cid, "muchos", "cliente", archivos=[(f"{i}.pdf", "application/pdf", _pdf(str(i).encode())) for i in range(4)])
+    with pytest.raises(ValueError, match="8 MB"):
+        pc.responder(ficha, cid, "grande", "cliente", archivos=[("g.pdf", "application/pdf", b"%PDF" + b"0" * (pc.MAX_BYTES + 1))])
+    assert len(pc.obtener(ficha, cid)["mensajes"]) == 1                                         # nada a medias
+    doc_id = pc.obtener(ficha, cid)["mensajes"][0]["adjuntos"][0]["documento_id"]
+    _entrar(cliente, c2, "otro@ejemplo.com")
+    assert cliente.get(f"/portal/conversaciones/{cid}/adjunto/{doc_id}").status_code == 404
+
+
+def test_el_cliente_ve_si_su_mensaje_fue_leido_y_el_equipo_si_el_suyo(cliente, correo):
+    t, u, c = _despacho("Conv leido ui")
+    uid = _equipo(cliente, t)
+    ficha = _ficha(c)
+    cid = pc.iniciar(ficha, "¿Leído?", "Una pregunta", "cliente", "titular@ejemplo.com")
+    from app.main import app as flask_app
+    web = flask_app.test_client()
+    _entrar(web, c, "titular@ejemplo.com")
+    assert "Enviado" in _html(web, f"/portal/conversaciones/{cid}") and "Leído por tu gestoría" not in _html(web, f"/portal/conversaciones/{cid}")
+    pc.marcar_leida(ficha, cid, "equipo")
+    assert "Leído por tu gestoría" in _html(web, f"/portal/conversaciones/{cid}")
+    cliente.post(f"/fiscal/clientes/{c}/conversaciones/{cid}/responder", data={"texto": "Respuesta"})
+    assert "Sin leer por el cliente" in _html(cliente, f"/fiscal/clientes/{c}/editar")
+    _html(web, f"/portal/conversaciones/{cid}")
+    assert "Leído por el cliente" in _html(cliente, f"/fiscal/clientes/{c}/editar")

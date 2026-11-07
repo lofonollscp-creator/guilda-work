@@ -35,10 +35,23 @@ CREATE TABLE IF NOT EXISTS portal_conversaciones_mensajes (
     leido_equipo INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_mensajes ON portal_conversaciones_mensajes(tenant_id, conversacion_id, id);
+
+CREATE TABLE IF NOT EXISTS portal_conversaciones_adjuntos (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    mensaje_id INTEGER NOT NULL,
+    documento_id INTEGER NOT NULL,
+    creado_en TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_adjuntos ON portal_conversaciones_adjuntos(tenant_id, mensaje_id);
 """
 
 MAX_ASUNTO, MAX_TEXTO = 120, 2000
 MAX_ABIERTAS = 20
+MAX_ADJUNTOS = 3
+MAX_BYTES = 8 * 1024 * 1024
+MIME = ("application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "text/csv", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 LADOS = ("cliente", "despacho")
 
 
@@ -60,7 +73,7 @@ def _texto(texto: str | None) -> str:
     return t[:MAX_TEXTO]
 
 
-def iniciar(cliente, asunto: str, texto: str, de: str, autor: str = "", peticion_id: int | None = None) -> int:
+def iniciar(cliente, asunto: str, texto: str, de: str, autor: str = "", peticion_id: int | None = None, archivos: list | None = None, usuario_id: int | None = None) -> int:
     """Abre un hilo con su primer mensaje. `de`: «cliente» o «despacho»; `autor`: quien escribe (correo o nombre). `ValueError` con un mensaje legible si falta algo o hay demasiados hilos abiertos."""
     if de not in LADOS:
         raise ValueError("Quién escribe no es válido.")
@@ -70,6 +83,7 @@ def iniciar(cliente, asunto: str, texto: str, de: str, autor: str = "", peticion
     texto = _texto(texto)
     if not texto:
         raise ValueError("Escribe el mensaje.")
+    guardados = _guardar_archivos(cliente, archivos, de, usuario_id, asunto)
     ahora = _ahora()
     conn = db.get_connection()
     try:
@@ -81,19 +95,58 @@ def iniciar(cliente, asunto: str, texto: str, de: str, autor: str = "", peticion
         cur = conn.execute("INSERT INTO portal_conversaciones (tenant_id, cliente_fiscal_id, asunto, peticion_id, iniciada_por, creado_en, actualizado_en) VALUES (?, ?, ?, ?, ?, ?, ?)",
                            (cliente["tenant_id"], cliente["id"], asunto, peticion_id, de, ahora, ahora))
         cid = cur.lastrowid
-        _insertar(conn, cliente["tenant_id"], cid, de, autor, texto, ahora)
+        mid = _insertar(conn, cliente["tenant_id"], cid, de, autor, texto, ahora)
+        _enlazar(conn, cliente["tenant_id"], mid, guardados, ahora)
         conn.commit()
         return cid
     finally:
         conn.close()
 
 
-def _insertar(conn, tenant_id: int, cid: int, de: str, autor: str, texto: str, ahora: str) -> None:
-    conn.execute("INSERT INTO portal_conversaciones_mensajes (tenant_id, conversacion_id, de, autor, texto, creado_en, leido_cliente, leido_equipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+def _insertar(conn, tenant_id: int, cid: int, de: str, autor: str, texto: str, ahora: str) -> int:
+    cur = conn.execute("INSERT INTO portal_conversaciones_mensajes (tenant_id, conversacion_id, de, autor, texto, creado_en, leido_cliente, leido_equipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                  (tenant_id, cid, de, _limpio(autor, 120), texto, ahora, 1 if de == "cliente" else 0, 1 if de == "despacho" else 0))
+    return cur.lastrowid
 
 
-def responder(cliente, cid: int, texto: str, de: str, autor: str = "") -> bool:
+def _guardar_archivos(cliente, archivos, de: str, usuario_id: int | None, asunto: str) -> list[int]:
+    """Valida y guarda en los documentos del cliente los archivos adjuntos a un mensaje (hasta 3 de 8 MB). Los del cliente pasan por el antivirus. Devuelve los ids de documento; `ValueError` si algo no vale
+    (y no se ha guardado nada: se comprueban todos antes)."""
+    validos = [a for a in (archivos or []) if a and a[2]]
+    if not validos:
+        return []
+    from . import almacen_documentos, antivirus
+    if len(validos) > MAX_ADJUNTOS:
+        raise ValueError("Puedes adjuntar hasta 3 archivos por mensaje.")
+    for nombre, mime, contenido in validos:
+        if (mime or "").lower().split(";")[0] not in MIME or len(contenido) > MAX_BYTES:
+            raise ValueError("Solo PDF, imágenes, hojas de cálculo o documentos de texto, de hasta 8 MB cada uno.")
+    if de == "cliente":
+        for nombre, mime, contenido in validos:
+            antivirus.exigir_limpio(nombre, contenido, cliente["tenant_id"], cliente["id"])
+    ids = []
+    for nombre, mime, contenido in validos:
+        mime = (mime or "").lower().split(";")[0]
+        categoria = f"Conversación: {asunto}"[:80]
+        if de == "cliente" or usuario_id is None:
+            resultado, doc = almacen_documentos.guardar_de_cliente_fiscal_sin_usuario(cliente["tenant_id"], cliente["id"], nombre, mime, contenido, categoria)
+        else:
+            resultado, doc = almacen_documentos.guardar_de_cliente_fiscal(usuario_id, cliente["id"], nombre, mime, contenido, categoria=categoria)
+        if resultado == "limite":
+            raise ValueError("Se ha alcanzado el máximo de documentos de este cliente.")
+        if resultado in ("ok", "duplicado") and doc is not None:
+            ids.append(doc)
+    if not ids:
+        raise ValueError("No se ha podido guardar el archivo adjunto.")
+    return ids
+
+
+def _enlazar(conn, tenant_id: int, mensaje_id: int, documentos: list[int], ahora: str) -> None:
+    for d in documentos:
+        conn.execute("INSERT INTO portal_conversaciones_adjuntos (tenant_id, mensaje_id, documento_id, creado_en) VALUES (?, ?, ?, ?)", (tenant_id, mensaje_id, d, ahora))
+
+
+def responder(cliente, cid: int, texto: str, de: str, autor: str = "", archivos: list | None = None, usuario_id: int | None = None) -> bool:
     """Añade un mensaje. Una respuesta del cliente reabre un hilo cerrado; el equipo no escribe en uno cerrado (primero lo reabre). False si el hilo no existe o no admite el mensaje."""
     if de not in LADOS:
         raise ValueError("Quién escribe no es válido.")
@@ -103,10 +156,12 @@ def responder(cliente, cid: int, texto: str, de: str, autor: str = "") -> bool:
     ahora = _ahora()
     conn = db.get_connection()
     try:
-        c = conn.execute("SELECT estado FROM portal_conversaciones WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?", (cid, cliente["tenant_id"], cliente["id"])).fetchone()
+        c = conn.execute("SELECT estado, asunto FROM portal_conversaciones WHERE id = ? AND tenant_id = ? AND cliente_fiscal_id = ?", (cid, cliente["tenant_id"], cliente["id"])).fetchone()
         if c is None or (c["estado"] == "cerrada" and de == "despacho"):
             return False
-        _insertar(conn, cliente["tenant_id"], cid, de, autor, texto, ahora)
+        guardados = _guardar_archivos(cliente, archivos, de, usuario_id, c["asunto"])
+        mid = _insertar(conn, cliente["tenant_id"], cid, de, autor, texto, ahora)
+        _enlazar(conn, cliente["tenant_id"], mid, guardados, ahora)
         conn.execute("UPDATE portal_conversaciones SET actualizado_en = ?, estado = 'abierta', cerrada_en = NULL, cerrada_por = NULL WHERE id = ? AND tenant_id = ?", (ahora, cid, cliente["tenant_id"]))
         conn.commit()
         return True
@@ -124,6 +179,18 @@ def obtener(cliente, cid: int) -> dict | None:
         d = dict(c)
         d["mensajes"] = [dict(m) for m in conn.execute("SELECT id, de, autor, texto, creado_en, leido_cliente, leido_equipo FROM portal_conversaciones_mensajes WHERE tenant_id = ? AND conversacion_id = ? ORDER BY id",
                                                         (cliente["tenant_id"], cid))]
+        for m in d["mensajes"]:
+            m["adjuntos"] = [dict(a) for a in conn.execute(
+                "SELECT a.documento_id, c.nombre_archivo AS nombre, c.nombre_cifrado, c.tipo_mime, c.tamano_bytes FROM portal_conversaciones_adjuntos a JOIN cliente_documentos c ON c.id = a.documento_id AND c.tenant_id = a.tenant_id "
+                "WHERE a.tenant_id = ? AND a.mensaje_id = ? ORDER BY a.id", (cliente["tenant_id"], m["id"]))]
+            for a in m["adjuntos"]:
+                cifrado = a.pop("nombre_cifrado", None)
+                if cifrado:
+                    try:
+                        from . import cifrado_despacho
+                        a["nombre"] = cifrado_despacho.abrir_nombre(cliente["tenant_id"], cifrado) or a["nombre"]
+                    except Exception:  # noqa: BLE001 -- con el despacho bloqueado se enseña el nombre genérico
+                        pass
         return d
     finally:
         conn.close()
@@ -204,3 +271,16 @@ def para_el_buzon(cliente) -> list[dict]:
     from flask import url_for
     return [{"tipo": "conversacion", "ref": h["id"], "titulo": h["asunto"], "url": url_for("portal_cliente.conversacion", conversacion_id=h["id"]), "mensajes": h["mensajes"], "sin_leer": h["sin_leer_cliente"],
              "ultimo_texto": h["ultimo_texto"], "ultimo_autor": "cliente" if h["ultimo_de"] == "cliente" else "gestoria", "ultimo_en": h["ultimo_en"], "cerrada": h["estado"] == "cerrada"} for h in listar(cliente)]
+
+
+def adjunto_de(cliente, cid: int, documento_id: int) -> dict | None:
+    """El documento adjunto a un mensaje de ESTA conversación de este cliente (con su contenido), o None. Es lo que descarga quien está en la conversación."""
+    from . import almacen_documentos
+    conn = db.get_connection()
+    try:
+        ok = conn.execute("SELECT 1 FROM portal_conversaciones_adjuntos a JOIN portal_conversaciones_mensajes m ON m.id = a.mensaje_id AND m.tenant_id = a.tenant_id "
+                          "JOIN portal_conversaciones c ON c.id = m.conversacion_id AND c.tenant_id = m.tenant_id WHERE a.tenant_id = ? AND a.documento_id = ? AND c.id = ? AND c.cliente_fiscal_id = ?",
+                          (cliente["tenant_id"], documento_id, cid, cliente["id"])).fetchone()
+    finally:
+        conn.close()
+    return almacen_documentos.leer_de_cliente_fiscal(cliente["tenant_id"], cliente["id"], documento_id) if ok else None

@@ -150,14 +150,16 @@
       <span class="muted">{{ h.actualizado_en[:16]|replace('T', ' ') }} · {{ ngettext('%(n)s mensaje', '%(n)s mensajes', h.mensajes, n=h.mensajes) }}</span></summary>
     <div class="portal-hilo">
       {% for m in h.detalle.mensajes %}
-      <div class="portal-msg {{ 'cliente' if m.de == 'cliente' else 'gestoria' }}">{{ m.texto }}<span class="fecha">{{ _('Cliente') if m.de == 'cliente' else (m.autor or _('Despacho')) }} · {{ m.creado_en[:16]|replace('T', ' ') }}</span></div>
+      <div class="portal-msg {{ 'cliente' if m.de == 'cliente' else 'gestoria' }}">{{ m.texto }}
+        {% for a in m.adjuntos %}<a class="portal-adjunto" href="{{ url_for('fiscal.descargar_documento_cliente', cliente_id=cliente.id, documento_id=a.documento_id) }}">&#128206; {{ a.nombre }}</a>{% endfor %}<span class="fecha">{{ _('Cliente') if m.de == 'cliente' else (m.autor or _('Despacho')) }} · {{ m.creado_en[:16]|replace('T', ' ') }}{% if m.de == 'despacho' %} · {{ _('Leído por el cliente') if m.leido_cliente else _('Sin leer por el cliente') }}{% endif %}</span></div>
       {% endfor %}
     </div>
     {% if h.estado == 'abierta' %}
-    <form method="post" action="{{ url_for('fiscal.resolver_conversacion_portal', cliente_id=cliente.id, conversacion_id=h.id, accion='responder') }}" class="edit-form">
+    <form method="post" enctype="multipart/form-data" action="{{ url_for('fiscal.resolver_conversacion_portal', cliente_id=cliente.id, conversacion_id=h.id, accion='responder') }}" class="edit-form">
       <label class="sr-only" for="conv-resp-{{ h.id }}">{{ _('Respuesta para el cliente') }}</label>
       {% with cliente_fiscal_id=cliente.id, destino='conv-resp-' ~ h.id %}{% include '_respuestas_rapidas.html' %}{% endwith %}
       <textarea id="conv-resp-{{ h.id }}" name="texto" rows="3" maxlength="2000" required></textarea>
+      <label class="sr-only" for="conv-resp-arch-{{ h.id }}">{{ _('Adjuntar archivos (hasta 3, de 8 MB cada uno)') }}</label><input type="file" id="conv-resp-arch-{{ h.id }}" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx,.doc,.docx">
       <button type="submit" class="btn btn-primary">{{ _('Responder') }}</button>
     </form>
     {% endif %}
@@ -167,12 +169,13 @@
     </div>
   </details>
   {% else %}<p class="muted">{{ _('Todavía no hay conversaciones con este cliente.') }}</p>{% endfor %}
-  <form method="post" action="{{ url_for('fiscal.crear_conversacion_portal', cliente_id=cliente.id) }}" class="edit-form">
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('fiscal.crear_conversacion_portal', cliente_id=cliente.id) }}" class="edit-form">
     <h3>{{ _('Escribirle al cliente') }}</h3>
     <div class="correo-form-campo"><label for="conv-asunto">{{ _('Asunto') }}</label><input type="text" id="conv-asunto" name="asunto" minlength="3" maxlength="120" required></div>
     <div class="correo-form-campo"><label for="conv-nueva-texto">{{ _('Mensaje') }}</label>
       {% with cliente_fiscal_id=cliente.id, destino='conv-nueva-texto' %}{% include '_respuestas_rapidas.html' %}{% endwith %}
       <textarea id="conv-nueva-texto" name="texto" rows="4" maxlength="2000" required></textarea></div>
+    <div class="correo-form-campo"><label for="conv-nueva-arch">{{ _('Adjuntar archivos (hasta 3, de 8 MB cada uno)') }}</label><input type="file" id="conv-nueva-arch" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx,.doc,.docx"></div>
     <label><input type="checkbox" name="avisar" value="1" checked> {{ _('Avisarle ahora por correo') }}</label>
     <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
   </form>

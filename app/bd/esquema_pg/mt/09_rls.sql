@@ -526,6 +526,12 @@ CREATE POLICY aislamiento ON portal_conversaciones_mensajes USING (tenant_id = n
 ALTER TABLE portal_enlaces_subida ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON portal_enlaces_subida;
 CREATE POLICY aislamiento ON portal_enlaces_subida USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE portal_novedades ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_novedades;
+CREATE POLICY aislamiento ON portal_novedades USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE portal_novedades_lectura ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_novedades_lectura;
+CREATE POLICY aislamiento ON portal_novedades_lectura USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE portal_peticiones ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON portal_peticiones;
 CREATE POLICY aislamiento ON portal_peticiones USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

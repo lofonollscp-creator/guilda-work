@@ -2345,6 +2345,8 @@ def init_db() -> None:
         portal_peticiones.crear_esquema(conn)   # peticiones de documentos de la gestoría a sus clientes (app/portal_peticiones.py)
         from . import portal_conversaciones
         portal_conversaciones.crear_esquema(conn)    # conversaciones libres cliente-gestoría del portal (app/portal_conversaciones.py)
+        from . import portal_novedades
+        portal_novedades.crear_esquema(conn)         # centro de avisos del portal (app/portal_novedades.py)
         from . import salud_silencios
         salud_silencios.crear_esquema(conn)     # acuse, silencio y responsable de los puntos del panel de salud (app/salud_silencios.py)
         from . import ia_despacho, ia_uso

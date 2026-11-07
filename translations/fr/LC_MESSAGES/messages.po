@@ -23969,3 +23969,68 @@ msgstr "Pour réunir des pages en une seule facture, tous les fichiers doivent �
 
 msgid "No se han podido juntar las fotos en una sola factura: prueba con menos fotos o más pequeñas."
 msgstr "Les photos n'ont pas pu être réunies en une seule facture : essayez avec moins de photos ou des photos plus petites."
+
+msgid "Todo lo que ha pasado, por si no viste el correo o la notificación."
+msgstr "Tout ce qui s'est passé, au cas où vous n'auriez pas vu l'e-mail ou la notification."
+
+msgid "Todavía no hay avisos. Cuando tu gestoría te escriba, te pida algo o te devuelva una factura, aparecerá aquí."
+msgstr "Il n'y a pas encore d'avis. Quand votre cabinet vous écrira, vous demandera quelque chose ou vous renverra une facture, cela apparaîtra ici."
+
+msgid "¿Cómo quieres que te avisemos?"
+msgstr "Comment souhaitez-vous que nous vous prévenions ?"
+
+msgid "Ahora: un correo por cada novedad."
+msgstr "Actuellement : un e-mail pour chaque nouveauté."
+
+msgid "Ahora: solo lo urgente."
+msgstr "Actuellement : uniquement l'urgent."
+
+msgid "Ahora: un resumen cada lunes."
+msgstr "Actuellement : un résumé chaque lundi."
+
+msgid "Cambiar mis avisos"
+msgstr "Modifier mes avis"
+
+msgid "Avisos nuevos"
+msgstr "Nouveaux avis"
+
+msgid "Lo siguiente que tienes que hacer"
+msgstr "La prochaine chose à faire"
+
+msgid "Estás al día"
+msgstr "Vous êtes à jour"
+
+msgid "Ahora mismo tu gestoría no necesita nada de ti."
+msgstr "Pour le moment, votre cabinet n'a besoin de rien de votre part."
+
+msgid "Lo próximo: %(modelo)s el %(fecha)s."
+msgstr "À venir : %(modelo)s le %(fecha)s."
+
+msgid "Leído por tu gestoría"
+msgstr "Lu par votre cabinet"
+
+msgid "Adjuntar archivos (hasta 3, de 8 MB cada uno)"
+msgstr "Joindre des fichiers (3 maximum, 8 Mo chacun)"
+
+msgid "Leído por el cliente"
+msgstr "Lu par le client"
+
+msgid "Sin leer por el cliente"
+msgstr "Pas encore lu par le client"
+
+msgid "Tu gestoría te ha escrito: %(asunto)s"
+msgstr "Votre cabinet vous a écrit : %(asunto)s"
+
+msgid "Puedes adjuntar hasta 3 archivos por mensaje."
+msgstr "Vous pouvez joindre jusqu'à 3 fichiers par message."
+
+msgid "No se ha podido guardar el archivo adjunto."
+msgstr "Le fichier joint n'a pas pu être enregistré."
+
+msgid "Se ha alcanzado el máximo de documentos de este cliente."
+msgstr "Le nombre maximal de documents de ce client est atteint."
+
+msgid "Otra cosa pendiente"
+msgid_plural "Otras %(n)s cosas pendientes"
+msgstr[0] "Une autre chose en attente"
+msgstr[1] "%(n)s autres choses en attente"

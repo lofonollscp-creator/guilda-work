@@ -5,12 +5,14 @@
 {% block contenido %}
     {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
     {% if peticion %}<p class="muted">{{ _('Sobre tu petición') }}: <strong>{{ peticion.titulo }}</strong></p>{% endif %}
-    <form method="post" class="portal-cuenta-form" action="{{ url_for('portal_cliente.conversacion_nueva') }}">
+    <form method="post" enctype="multipart/form-data" class="portal-cuenta-form" action="{{ url_for('portal_cliente.conversacion_nueva') }}">
       {% if peticion %}<input type="hidden" name="peticion" value="{{ peticion.id }}">{% endif %}
       <div class="correo-form-campo"><label for="conv-asunto">{{ _('Asunto') }}</label>
         <input type="text" id="conv-asunto" class="ds-ancho-total" name="asunto" value="{{ asunto }}" minlength="3" maxlength="{{ max_asunto }}" required></div>
       <div class="correo-form-campo"><label for="conv-texto">{{ _('Mensaje') }}</label>
         <textarea id="conv-texto" class="ds-ancho-total ds-mb-3" name="texto" rows="6" maxlength="{{ max_texto }}" required>{{ texto }}</textarea></div>
+      <div class="correo-form-campo"><label for="conv-archivos">{{ _('Adjuntar archivos (hasta 3, de 8 MB cada uno)') }}</label>
+        <input type="file" id="conv-archivos" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx,.doc,.docx"></div>
       <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
       <a class="btn" href="{{ url_for('portal_cliente.mensajes') }}">{{ _('Cancelar') }}</a>
     </form>

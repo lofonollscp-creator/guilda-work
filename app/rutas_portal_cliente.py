@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -100,7 +100,7 @@ def _menu_del_portal():
     email = g.get("portal_email") or cliente["email"]
     otras = [c for c in portal_personas.clientes_de(email) if c["id"] != cliente["id"]] if not g.get("vista_previa") else []
     return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
-            "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
+            "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
             "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa")}
 
 
@@ -1016,6 +1016,10 @@ def peticion(peticion_id: int):
                            puede_subir=g.portal_rol != "consulta" and not g.get("vista_previa") and p["estado"] in ("pendiente", "enviada"), max_archivos=portal_peticiones.MAX_ARCHIVOS, portal_seccion="inicio")
 
 
+def _archivos_del_formulario() -> list[tuple[str, str, bytes]]:
+    return [(f.filename or "archivo", (f.mimetype or "").lower(), f.read(portal_conversaciones.MAX_BYTES + 1)) for f in request.files.getlist("archivos")[:portal_conversaciones.MAX_ADJUNTOS + 1] if f and f.filename]
+
+
 def _puede_escribir() -> bool:
     return g.portal_rol != "consulta" and not g.get("vista_previa")
 
@@ -1024,6 +1028,19 @@ def _conversacion_avisar_equipo(cliente, cid: int, asunto: str, texto: str, nuev
     """Cuando el cliente escribe (o abre un hilo), lo sabe quien lleva al cliente."""
     titulo = _("%(cliente)s te ha escrito: %(asunto)s", cliente=cliente["nombre"], asunto=asunto[:80]) if nueva else _("%(cliente)s ha contestado: %(asunto)s", cliente=cliente["nombre"], asunto=asunto[:80])
     facturas_contables.avisar_al_equipo(cliente, titulo, texto, url_for("fiscal.editar_cliente", cliente_id=cliente["id"]) + f"#conversacion-{cid}", {"conversacion": cid})
+
+
+@portal_bp.route("/avisos")
+@cliente_login_required
+def avisos():
+    """El centro de avisos: todo lo que ha pasado para esta persona, lo nuevo primero y marcado. Al abrirlo, lo que se ve pasa a leído."""
+    cliente = _cliente_actual_o_salir()
+    email = g.get("portal_email") or cliente["email"] or ""
+    lista = portal_novedades.listar(cliente, email)
+    if not g.get("vista_previa"):
+        portal_novedades.marcar_leidas(cliente, email)
+    persona = next((p for p in portal_personas.listar(cliente) if p["email"] == email.lower()), None)
+    return render_template("portal_avisos.html", cliente=cliente, avisos=lista, avisos_correo=(persona or {}).get("avisos"), portal_seccion="avisos")
 
 
 @portal_bp.route("/conversaciones/nueva", methods=["GET", "POST"])
@@ -1043,7 +1060,7 @@ def conversacion_nueva():
     texto = request.form.get("texto", "")
     if request.method == "POST":
         try:
-            cid = portal_conversaciones.iniciar(cliente, asunto, texto, "cliente", g.portal_email or cliente["email"] or "", peticion_id=p["id"] if p else None)
+            cid = portal_conversaciones.iniciar(cliente, asunto, texto, "cliente", g.portal_email or cliente["email"] or "", peticion_id=p["id"] if p else None, archivos=_archivos_del_formulario())
             auditoria.registrar(cliente["tenant_id"], None, "portal.conversacion_abierta", "portal_conversacion", cid, {"quien": g.portal_email or "titular"})
             _conversacion_avisar_equipo(cliente, cid, asunto, texto, True)
             return redirect(url_for("portal_cliente.conversacion", conversacion_id=cid, enviado=1))
@@ -1067,7 +1084,7 @@ def conversacion(conversacion_id: int):
             abort(403)
         texto = request.form.get("texto", "")
         try:
-            portal_conversaciones.responder(cliente, conversacion_id, texto, "cliente", g.portal_email or cliente["email"] or "")
+            portal_conversaciones.responder(cliente, conversacion_id, texto, "cliente", g.portal_email or cliente["email"] or "", archivos=_archivos_del_formulario())
             auditoria.registrar(cliente["tenant_id"], None, "portal.conversacion_respuesta", "portal_conversacion", conversacion_id, {"quien": g.portal_email or "titular"})
             _conversacion_avisar_equipo(cliente, conversacion_id, c["asunto"], texto, False)
             return redirect(url_for("portal_cliente.conversacion", conversacion_id=conversacion_id, enviado=1) + "#ultimo")
@@ -1085,6 +1102,23 @@ def portal_peticiones_avisar_equipo(cliente, p: dict, n: int) -> None:
     """Cuando el cliente envía lo pedido, lo sabe quien lleva al cliente."""
     facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s ha enviado lo que le pedías", cliente=cliente["nombre"]), _("«%(titulo)s»: %(n)s archivo(s) por revisar.", titulo=p["titulo"], n=n),
                                        url_for("fiscal.editar_cliente", cliente_id=cliente["id"]) + "#peticiones", {"peticion": p["id"]})
+
+
+@portal_bp.route("/conversaciones/<int:conversacion_id>/adjunto/<int:documento_id>")
+@cliente_login_required
+def adjunto_de_conversacion(conversacion_id: int, documento_id: int):
+    """Descarga un archivo adjunto a un mensaje de una conversación del propio cliente (nunca de otra)."""
+    cliente = _cliente_actual_o_salir()
+    try:
+        doc = portal_conversaciones.adjunto_de(cliente, conversacion_id, documento_id)
+    except Exception:  # noqa: BLE001 -- despacho cifrado y bloqueado
+        abort(503)
+    if doc is None:
+        abort(404)
+    respuesta = Response(bytes(doc["contenido"]), mimetype=doc["tipo_mime"])
+    respuesta.headers.set("Content-Disposition", "attachment", filename=doc["nombre_archivo"])
+    respuesta.headers.set("X-Content-Type-Options", "nosniff")
+    return respuesta
 
 
 @portal_bp.route("/preferencias", methods=["POST"])

@@ -447,6 +447,10 @@ def resolver_peticion_documento(cliente_id: int, peticion_id: int, accion: str):
     return _volver_a_peticiones(cliente_id)
 
 
+def _adjuntos_conversacion() -> list[tuple[str, str, bytes]]:
+    return [(f.filename or "archivo", (f.mimetype or "").lower(), f.read(portal_conversaciones.MAX_BYTES + 1)) for f in request.files.getlist("archivos")[:portal_conversaciones.MAX_ADJUNTOS + 1] if f and f.filename]
+
+
 def _autor_actual() -> str:
     """El correo de quien escribe en nombre del despacho (se guarda con el mensaje; el cliente solo ve «Tu gestoría»)."""
     u = db.obtener_usuario(g.usuario_id)
@@ -476,7 +480,7 @@ def crear_conversacion_portal(cliente_id: int):
     cliente = _cliente_para_contactos(cliente_id)
     asunto, texto = request.form.get("asunto", ""), request.form.get("texto", "")
     try:
-        cid = portal_conversaciones.iniciar(cliente, asunto, texto, "despacho", _autor_actual())
+        cid = portal_conversaciones.iniciar(cliente, asunto, texto, "despacho", _autor_actual(), archivos=_adjuntos_conversacion(), usuario_id=g.usuario_id)
     except ValueError as e:
         return _volver_a_conversaciones(cliente_id, _(str(e)))
     auditoria.registrar(g.tenant_id, g.usuario_id, "portal.conversacion_abierta", "portal_conversacion", cid, {"cliente": cliente_id, "asunto": asunto[:80]})
@@ -499,7 +503,7 @@ def resolver_conversacion_portal(cliente_id: int, conversacion_id: int, accion: 
     if accion == "responder":
         texto = request.form.get("texto", "")
         try:
-            ok = portal_conversaciones.responder(cliente, conversacion_id, texto, "despacho", _autor_actual())
+            ok = portal_conversaciones.responder(cliente, conversacion_id, texto, "despacho", _autor_actual(), archivos=_adjuntos_conversacion(), usuario_id=g.usuario_id)
         except ValueError as e:
             return _volver_a_conversaciones(cliente_id, _(str(e)), ancla)
         if not ok:

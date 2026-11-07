@@ -140,9 +140,11 @@ CREATE INDEX IF NOT EXISTS idx_plazos_expediente ON plazos(expediente_id, estado
 CREATE INDEX IF NOT EXISTS idx_plazos_tenant ON plazos(tenant_id, papelera_en, estado, fecha_limite);
 CREATE INDEX IF NOT EXISTS idx_portal_citas_cliente ON portal_citas(tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_contactos_buscar ON portal_contactos(email);
+CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_adjuntos ON portal_conversaciones_adjuntos(tenant_id, mensaje_id);
 CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_cliente ON portal_conversaciones(tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_mensajes ON portal_conversaciones_mensajes(tenant_id, conversacion_id, id);
 CREATE INDEX IF NOT EXISTS idx_portal_enlaces_token ON portal_enlaces_subida(token);
+CREATE INDEX IF NOT EXISTS idx_portal_novedades_cliente ON portal_novedades(tenant_id, cliente_fiscal_id, creado_en);
 CREATE INDEX IF NOT EXISTS idx_portal_peticiones_cliente ON portal_peticiones(tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_respuestas_tenant ON portal_respuestas_rapidas(tenant_id, titulo);
 CREATE INDEX IF NOT EXISTS idx_portal_sesiones_persona ON portal_sesiones(tenant_id, email, revocada_en);

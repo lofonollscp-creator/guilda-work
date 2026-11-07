@@ -22,19 +22,35 @@
     <section class="portal-hoy" aria-labelledby="portal-hoy-titulo">
       <h2 id="portal-hoy-titulo">{{ _('Para hacer') }}</h2>
       {% if para_hacer %}
-      <ul class="portal-hoy-lista">
-        {% for p in para_hacer %}
-        <li class="portal-hoy-item {{ 'urgente' if p.urgente }}">
-          <div class="portal-hoy-texto">
-            <strong>{{ p.titulo }}</strong>
-            {% if p.detalle %}<span>{{ p.detalle }}</span>{% endif %}
-          </div>
-          <a class="btn {{ 'btn-primary' if p.urgente else 'btn-ghost' }}" href="{{ p.url }}">{{ p.accion }}</a>
-        </li>
-        {% endfor %}
-      </ul>
+      {% set principal = para_hacer[0] %}
+      <article class="portal-hoy-principal {{ 'urgente' if principal.urgente }}" aria-labelledby="portal-principal-titulo">
+        <p class="portal-hoy-etiqueta">{{ _('Lo siguiente que tienes que hacer') }}</p>
+        <h3 id="portal-principal-titulo">{{ principal.titulo }}</h3>
+        {% if principal.detalle %}<p>{{ principal.detalle }}</p>{% endif %}
+        <a class="btn btn-primary portal-hoy-boton" href="{{ principal.url }}">{{ principal.accion }}</a>
+      </article>
+      {% if para_hacer|length > 1 %}
+      <details class="portal-hoy-otras">
+        <summary>{{ ngettext('Otra cosa pendiente', 'Otras %(n)s cosas pendientes', para_hacer|length - 1, n=para_hacer|length - 1) }}</summary>
+        <ul class="portal-hoy-lista">
+          {% for p in para_hacer[1:] %}
+          <li class="portal-hoy-item {{ 'urgente' if p.urgente }}">
+            <div class="portal-hoy-texto">
+              <strong>{{ p.titulo }}</strong>
+              {% if p.detalle %}<span>{{ p.detalle }}</span>{% endif %}
+            </div>
+            <a class="btn {{ 'btn-primary' if p.urgente else 'btn-ghost' }}" href="{{ p.url }}">{{ p.accion }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </details>
+      {% endif %}
       {% else %}
-      <p class="portal-hoy-vacio">{{ _('Estás al día: ahora mismo tu gestoría no necesita nada de ti.') }}</p>
+      <div class="portal-hoy-vacio portal-al-dia" role="status">
+        <p><strong>&#10003; {{ _('Estás al día') }}</strong></p>
+        <p>{{ _('Ahora mismo tu gestoría no necesita nada de ti.') }}</p>
+        {% if plazos %}{% set siguiente = plazos[0] %}<p class="muted">{{ _('Lo próximo: %(modelo)s el %(fecha)s.', modelo=siguiente.modelo ~ ' ' ~ siguiente.periodo, fecha=siguiente.fecha_limite|fecha_dia) }}</p>{% endif %}
+      </div>
       {% endif %}
     </section>
 

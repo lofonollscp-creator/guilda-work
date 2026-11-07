@@ -10,13 +10,17 @@
       <h2 id="conv-hilo" class="sr-only">{{ _('Mensajes') }}</h2>
       <div class="portal-hilo">
         {% for m in c.mensajes %}
-        <div class="portal-msg {{ 'cliente' if m.de == 'cliente' else 'gestoria' }}"{% if loop.last %} id="ultimo"{% endif %}>{{ m.texto }}<span class="fecha">{{ _('Tú') if m.de == 'cliente' else _('Tu gestoría') }} · {{ m.creado_en|fecha_y_hora }}</span></div>
+        <div class="portal-msg {{ 'cliente' if m.de == 'cliente' else 'gestoria' }}"{% if loop.last %} id="ultimo"{% endif %}>{{ m.texto }}
+          {% for a in m.adjuntos %}<a class="portal-adjunto" href="{{ url_for('portal_cliente.adjunto_de_conversacion', conversacion_id=c.id, documento_id=a.documento_id) }}">&#128206; {{ a.nombre }}</a>{% endfor %}
+          <span class="fecha">{{ _('Tú') if m.de == 'cliente' else _('Tu gestoría') }} · {{ m.creado_en|fecha_y_hora }}{% if m.de == 'cliente' %} · {{ _('Leído por tu gestoría') if m.leido_equipo else _('Enviado') }}{% endif %}</span></div>
         {% endfor %}
       </div>
       {% if puede_escribir %}
-      <form method="post" action="{{ url_for('portal_cliente.conversacion', conversacion_id=c.id) }}" class="portal-subir">
+      <form method="post" enctype="multipart/form-data" action="{{ url_for('portal_cliente.conversacion', conversacion_id=c.id) }}" class="portal-subir">
         <label for="conv-respuesta">{{ _('Escribe un mensaje') if c.estado == 'abierta' else _('Escribe para reabrir la conversación') }}</label>
         <textarea id="conv-respuesta" class="ds-ancho-total ds-mb-3" name="texto" rows="3" maxlength="{{ max_texto }}" required></textarea>
+        <label for="conv-respuesta-archivos" class="muted">{{ _('Adjuntar archivos (hasta 3, de 8 MB cada uno)') }}</label>
+        <input type="file" id="conv-respuesta-archivos" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx,.doc,.docx" class="ds-mb-3">
         <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
       </form>
       {% endif %}

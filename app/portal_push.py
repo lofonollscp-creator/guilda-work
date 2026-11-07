@@ -65,6 +65,11 @@ def tiene(cliente, email: str | None) -> int:
 def enviar(cliente, titulo: str, cuerpo: str, destino: str, accion: str | None = None) -> int:
     """Manda el aviso a los dispositivos de las personas de esta ficha que pueden actuar sobre él (`accion`, como en `portal_personas.destinatarios`). Devuelve a cuántos llegó.
     Nunca lanza: un aviso que no sale no debe romper lo que lo provoca."""
+    try:
+        from . import portal_novedades
+        portal_novedades.anotar(cliente, titulo, cuerpo, destino)          # el aviso queda también en el centro de avisos del portal, haya o no notificaciones en el móvil
+    except Exception:  # noqa: BLE001
+        pass
     if not disponible():
         return 0
     permitidos = {p["email"] for p in portal_personas.listar(cliente) if p["rol"] in portal_personas.PERFILES_QUE_PUEDEN[accion]}

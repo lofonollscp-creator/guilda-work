@@ -23884,3 +23884,68 @@ msgstr "To join pages into one invoice, all the files must be photos."
 
 msgid "No se han podido juntar las fotos en una sola factura: prueba con menos fotos o más pequeñas."
 msgstr "The photos could not be joined into one invoice: try fewer or smaller photos."
+
+msgid "Todo lo que ha pasado, por si no viste el correo o la notificación."
+msgstr "Everything that has happened, in case you missed the email or the notification."
+
+msgid "Todavía no hay avisos. Cuando tu gestoría te escriba, te pida algo o te devuelva una factura, aparecerá aquí."
+msgstr "There are no notices yet. When your accountancy firm writes to you, asks for something or returns an invoice, it will appear here."
+
+msgid "¿Cómo quieres que te avisemos?"
+msgstr "How would you like us to notify you?"
+
+msgid "Ahora: un correo por cada novedad."
+msgstr "Now: one email for each update."
+
+msgid "Ahora: solo lo urgente."
+msgstr "Now: only what is urgent."
+
+msgid "Ahora: un resumen cada lunes."
+msgstr "Now: a summary every Monday."
+
+msgid "Cambiar mis avisos"
+msgstr "Change my notices"
+
+msgid "Avisos nuevos"
+msgstr "New notices"
+
+msgid "Lo siguiente que tienes que hacer"
+msgstr "The next thing you need to do"
+
+msgid "Estás al día"
+msgstr "You are up to date"
+
+msgid "Ahora mismo tu gestoría no necesita nada de ti."
+msgstr "Right now your accountancy firm needs nothing from you."
+
+msgid "Lo próximo: %(modelo)s el %(fecha)s."
+msgstr "Coming up: %(modelo)s on %(fecha)s."
+
+msgid "Leído por tu gestoría"
+msgstr "Read by your accountancy firm"
+
+msgid "Adjuntar archivos (hasta 3, de 8 MB cada uno)"
+msgstr "Attach files (up to 3, 8 MB each)"
+
+msgid "Leído por el cliente"
+msgstr "Read by the client"
+
+msgid "Sin leer por el cliente"
+msgstr "Not yet read by the client"
+
+msgid "Tu gestoría te ha escrito: %(asunto)s"
+msgstr "Your accountancy firm has written to you: %(asunto)s"
+
+msgid "Puedes adjuntar hasta 3 archivos por mensaje."
+msgstr "You can attach up to 3 files per message."
+
+msgid "No se ha podido guardar el archivo adjunto."
+msgstr "The attached file could not be saved."
+
+msgid "Se ha alcanzado el máximo de documentos de este cliente."
+msgstr "The maximum number of documents for this client has been reached."
+
+msgid "Otra cosa pendiente"
+msgid_plural "Otras %(n)s cosas pendientes"
+msgstr[0] "One other thing pending"
+msgstr[1] "%(n)s other things pending"

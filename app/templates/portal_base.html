@@ -46,6 +46,7 @@
       {% endif %}
       <a href="{{ url_for('portal_cliente.impuestos') }}" {% if portal_seccion == 'impuestos' %}aria-current="page"{% endif %}>{{ _('Impuestos') }}</a>
       <a href="{{ url_for('portal_cliente.mensajes') }}" {% if portal_seccion == 'mensajes' %}aria-current="page"{% endif %}>{{ _('Mensajes') }}{% if portal_insignia_mensajes %} <span class="portal-nav-insignia" title="{{ _('Mensajes sin leer') }}">{{ portal_insignia_mensajes }}</span>{% endif %}</a>
+      <a href="{{ url_for('portal_cliente.avisos') }}" {% if portal_seccion == 'avisos' %}aria-current="page"{% endif %}>{{ _('Avisos') }}{% if portal_insignia_avisos %} <span class="portal-nav-insignia" title="{{ _('Avisos nuevos') }}">{{ portal_insignia_avisos }}</span>{% endif %}</a>
       <a href="{{ url_for('portal_cliente.carpeta') }}" {% if portal_seccion == 'carpeta' %}aria-current="page"{% endif %}>{{ _('Carpeta') }}</a>
       <a href="{{ url_for('portal_cliente.buscar') }}" {% if portal_seccion == 'buscar' %}aria-current="page"{% endif %} aria-label="{{ _('Buscar en el portal') }}">{{ _('Buscar') }}</a>
       <a href="{{ url_for('portal_cliente.cuenta') }}" {% if portal_seccion == 'cuenta' %}aria-current="page"{% endif %}>{{ _('Mi cuenta') }}</a>

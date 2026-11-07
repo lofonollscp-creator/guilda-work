@@ -1,0 +1,25 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Avisos') }}{% endblock %}
+{% block titulo %}{{ _('Avisos') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }} · {{ _('Todo lo que ha pasado, por si no viste el correo o la notificación.') }}{% endblock %}
+{% block contenido %}
+    {% if not avisos %}
+    <p class="empty-lane">{{ _('Todavía no hay avisos. Cuando tu gestoría te escriba, te pida algo o te devuelva una factura, aparecerá aquí.') }}</p>
+    {% else %}
+    <ul class="portal-avisos-lista">
+      {% for a in avisos %}
+      <li class="portal-aviso-item {{ 'nuevo' if a.nuevo }}">
+        <div>
+          <strong>{% if a.url %}<a href="{{ a.url }}">{{ a.titulo }}</a>{% else %}{{ a.titulo }}{% endif %}</strong>
+          {% if a.nuevo %}<span class="pill">{{ _('Nuevo') }}</span>{% endif %}
+          {% if a.detalle %}<span class="muted">{{ a.detalle }}</span>{% endif %}
+        </div>
+        <time class="muted" datetime="{{ a.creado_en }}">{{ a.creado_en|fecha_y_hora }}</time>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <p class="muted">{{ _('¿Cómo quieres que te avisemos?') }}
+      {% if avisos_correo %}{{ {'todo': _('Ahora: un correo por cada novedad.'), 'urgente': _('Ahora: solo lo urgente.'), 'resumen': _('Ahora: un resumen cada lunes.')}.get(avisos_correo, '') }}{% endif %}
+      <a href="{{ url_for('portal_cliente.cuenta') }}#cuenta-avisos">{{ _('Cambiar mis avisos') }}</a></p>
+{% endblock %}

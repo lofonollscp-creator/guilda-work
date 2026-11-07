@@ -1515,6 +1515,16 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_novedades": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_novedades_lectura": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_conversaciones": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
