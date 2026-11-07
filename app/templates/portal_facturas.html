@@ -65,7 +65,7 @@
         <form method="post" action="{{ url_for('portal_cliente.reenviar_factura', factura_id=f.id) }}" enctype="multipart/form-data" class="portal-devuelta-form">
           <input type="hidden" name="trimestre" value="{{ t.trimestre }}">
           <label for="reenvio-{{ f.id }}">{{ _('Sube la factura corregida (foto o PDF)') }}</label>
-          <input type="file" id="reenvio-{{ f.id }}" name="archivos" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" required>
+          <input type="file" id="reenvio-{{ f.id }}" name="archivos" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" required data-auto-enviar>
           <button type="submit" class="btn btn-primary">{{ _('Enviar de nuevo') }}</button>
         </form>
         <form method="post" action="{{ url_for('portal_cliente.factura_entendida', factura_id=f.id) }}">
@@ -95,6 +95,8 @@
             data-txt-falta-fecha="{{ _('No se ve bien la fecha.') }}" data-txt-falta-total="{{ _('No se ve bien el total.') }}" data-txt-falta-emisor="{{ _('No se ve quién la emite.') }}"
             data-txt-borrosa="{{ _('«%(nombre)s» parece borrosa: si puedes, hazla de nuevo con más luz y sin moverte.', nombre='%(nombre)s') }}"
             data-txt-repetida="{{ _('«%(nombre)s» ya la enviaste el %(fecha)s.', nombre='%(nombre)s', fecha='%(fecha)s') }}"
+            data-txt-reflejos="{{ _('«%(nombre)s» tiene zonas quemadas por reflejos o flash: si puedes, hazla de nuevo sin que le dé la luz de frente.', nombre='%(nombre)s') }}"
+            data-txt-oscura="{{ _('«%(nombre)s» está muy oscura: si puedes, hazla de nuevo con más luz.', nombre='%(nombre)s') }}"
             data-txt-doble="{{ _('«%(nombre)s» está elegida dos veces.', nombre='%(nombre)s') }}"
             data-txt-grande="{{ _('«%(nombre)s» pesa más de 8 MB y no se podrá subir.', nombre='%(nombre)s') }}"
             data-txt-tipo="{{ _('«%(nombre)s» no es una imagen ni un PDF y no se podrá subir.', nombre='%(nombre)s') }}">
@@ -104,6 +106,7 @@
           <option value="emitida">{{ _('Las he hecho yo a mis clientes (ventas)') }}</option>
         </select>
         <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" aria-label="{{ _('Fotos o PDF de las facturas') }}">
+        <label class="portal-recordar" data-misma-factura hidden><input type="checkbox" name="misma_factura" value="1"> {{ _('Estas fotos son las páginas de una misma factura (se juntan en un solo PDF, en el orden elegido)') }}</label>
         <label class="portal-recordar" hidden><input type="checkbox" id="usar-originales"> {{ _('Enviar las fotos tal como las hice, sin recortar ni aligerar') }}</label>
         <p id="cola-offline" class="portal-peticion" role="status" hidden></p>
         <ul id="avisos-subida" class="portal-avisos" aria-live="polite"></ul>
@@ -154,9 +157,11 @@
             <td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
             <td>
               {% if f.estado == 'descartada' and f.devuelta is not none %}
-                {% if f.atendida %}<span class="portal-estado ok">{{ _('Reenviada') }}</span>{% else %}<span class="portal-estado ko">{{ _('Para corregir') }}</span>{% endif %}
+                {% if f.atendida %}<span class="portal-estado ok">{{ _('Reenviada') }}</span>{% else %}<span class="portal-estado ko">{{ _('Para corregir') }}</span> <a href="#factura-{{ f.id }}">{{ _('Corregir ahora') }}</a>{% endif %}
               {% else %}
                 <span class="portal-estado {{ {'exportada': 'ok', 'revisada': 'ok', 'pendiente': 'warn', 'descartada': 'ko'}[f.estado] }}">{{ textos[f.estado] }}</span>
+                {% set nombres_pasos = {'recibida': _('Recibida'), 'leida': _('Leída'), 'revisada': _('Revisada'), 'contabilizada': _('Contabilizada')} %}
+                <ol class="portal-pasos" aria-label="{{ _('Progreso de la factura') }}">{% for p in f.pasos %}<li class="{{ 'hecho' if p.hecho }} {{ 'actual' if p.actual }}"{% if p.actual %} aria-current="step"{% endif %}>{{ nombres_pasos[p.clave] }}<span class="sr-only"> ({{ _('hecho') if p.hecho else (_('ahora') if p.actual else _('pendiente')) }})</span></li>{% endfor %}</ol>
               {% endif %}
             </td>
           </tr>{% endfor %}</tbody>

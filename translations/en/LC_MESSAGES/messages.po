@@ -23845,3 +23845,42 @@ msgstr "See in the document"
 
 msgid "Si el PDF tiene texto, leerlo primero como texto (más barato y rápido); si no cuadra, se vuelve a leer con la imagen"
 msgstr "If the PDF has text, read it as text first (cheaper and faster); if it does not add up, it is read again from the image"
+
+msgid "«%(nombre)s» tiene zonas quemadas por reflejos o flash: si puedes, hazla de nuevo sin que le dé la luz de frente."
+msgstr "“%(nombre)s” has areas washed out by glare or flash: if you can, take it again without the light hitting it head-on."
+
+msgid "«%(nombre)s» está muy oscura: si puedes, hazla de nuevo con más luz."
+msgstr "“%(nombre)s” is very dark: if you can, take it again with more light."
+
+msgid "Estas fotos son las páginas de una misma factura (se juntan en un solo PDF, en el orden elegido)"
+msgstr "These photos are the pages of one invoice (they are joined into a single PDF, in the order chosen)"
+
+msgid "Corregir ahora"
+msgstr "Fix it now"
+
+msgid "Leída"
+msgstr "Read"
+
+msgid "Progreso de la factura"
+msgstr "Invoice progress"
+
+msgid "hecho"
+msgstr "done"
+
+msgid "ahora"
+msgstr "now"
+
+msgid "pendiente"
+msgstr "pending"
+
+msgid "Si son varias fotos de una misma factura (varias páginas), márcalo y se juntan en un solo PDF"
+msgstr "If they are several photos of one invoice (several pages), tick this and they are joined into a single PDF"
+
+msgid "Si un PDF contiene varias facturas, separarlas y leer cada una"
+msgstr "If a PDF contains several invoices, split them and read each one"
+
+msgid "Para juntar páginas en una sola factura, todos los archivos deben ser fotos."
+msgstr "To join pages into one invoice, all the files must be photos."
+
+msgid "No se han podido juntar las fotos en una sola factura: prueba con menos fotos o más pequeñas."
+msgstr "The photos could not be joined into one invoice: try fewer or smaller photos."

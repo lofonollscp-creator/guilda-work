@@ -486,10 +486,12 @@ def facturas():
     if request.method == "POST" and request.form.get("modo") == "archivos":
         try:
             archivos = [(a.filename, a.mimetype, a.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos") if a and a.filename]
+            if request.form.get("misma_factura") == "1":
+                archivos = facturas_contables.unir_paginas(archivos)
             subidas = facturas_contables.subir_desde_portal(cliente["id"], request.form.get("tipo", ""), archivos)
             return redirect(url_for("portal_cliente.facturas", anotada=1, trimestre=destino, repetidas=subidas.repetidas or None))
         except ValueError as e:
-            error = str(e)
+            error = _(str(e))
     elif request.method == "POST":
         datos = {c: request.form.get(c, "") for c in ("tipo", "fecha", "numero", "tercero_nombre", "tercero_nif", "total", "pct_iva", "complicada")}
         archivo = request.files.get("archivo")
@@ -1199,6 +1201,8 @@ def subida_rapida(token: str):
                 raise ValueError(_("Puedes enviar hasta %(n)s archivos a la vez.", n=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA))
             if not archivos:
                 raise ValueError(_("Elige al menos una foto o un PDF."))
+            if request.form.get("misma_factura") == "1":
+                archivos = facturas_contables.unir_paginas(archivos)
             subidas = facturas_contables.subir_desde_portal(cliente["id"], "emitida" if request.form.get("tipo") == "emitida" else "recibida", archivos, nota="Subida desde el móvil con el enlace rápido, pendiente de leer.")
             auditoria.registrar(cliente["tenant_id"], None, "portal.subida_rapida", "cliente_fiscal", cliente["id"], {"archivos": len(subidas)})
             enviadas = len(subidas)

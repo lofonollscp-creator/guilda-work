@@ -32,6 +32,7 @@
         <div class="correo-form-campo">
           <label for="subida-archivos">{{ _('Fotos o PDF') }}</label>
           <input type="file" id="subida-archivos" name="archivos" multiple required accept="image/*,application/pdf">
+          <label class="portal-recordar"><input type="checkbox" name="misma_factura" value="1"> {{ _('Si son varias fotos de una misma factura (varias páginas), márcalo y se juntan en un solo PDF') }}</label>
           <small class="muted">{{ _('Hasta %(n)s archivos a la vez. En el móvil puedes hacer la foto en el momento.', n=max_archivos) }}</small>
         </div>
         <p id="cola-offline" class="portal-peticion" role="status" hidden></p>

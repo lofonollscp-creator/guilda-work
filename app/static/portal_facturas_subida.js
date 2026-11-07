@@ -1,5 +1,9 @@
 // Al elegir facturas en el portal: recorta y aligera las fotos, avisa de archivos que no valen, repetidos y fotos borrosas y, si el despacho lo ha activado, enseña lo que lee la IA. Solo avisa, nunca bloquea el envío.
 (function () {
+  // Una factura devuelta se corrige en un toque: al elegir el archivo corregido se envía solo (el botón sigue ahí por si no funciona el envío automático).
+  document.querySelectorAll('input[data-auto-enviar]').forEach(function (campo) {
+    campo.addEventListener('change', function () { if (campo.files && campo.files.length && campo.form && campo.form.reportValidity()) campo.form.submit(); });
+  });
   var form = document.getElementById('form-subida');
   if (!form) return;
   var entrada = form.querySelector('input[type=file]');
@@ -52,6 +56,37 @@
     });
   }
 
+  // Luz de la foto reducida: demasiadas zonas «quemadas» (blanco puro sin nada de texto: reflejos o flash) o una media muy baja (casi a oscuras). Es una pista, no un veredicto.
+  function luz(archivo) {
+    return new Promise(function (resolver) {
+      var url = URL.createObjectURL(archivo);
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var ancho = Math.min(320, img.naturalWidth), alto = Math.max(1, Math.round(img.naturalHeight * ancho / img.naturalWidth));
+          var c = document.createElement('canvas');
+          c.width = ancho; c.height = alto;
+          var ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, ancho, alto);
+          var d = ctx.getImageData(0, 0, ancho, alto).data, bloque = 8, quemados = 0, total = 0, suma = 0;
+          for (var by = 0; by + bloque <= alto; by += bloque) for (var bx = 0; bx + bloque <= ancho; bx += bloque) {
+            var m = 0, m2 = 0;
+            for (var y = by; y < by + bloque; y++) for (var x = bx; x < bx + bloque; x++) {
+              var i = (y * ancho + x) * 4, l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+              m += l; m2 += l * l;
+            }
+            m /= bloque * bloque; m2 = m2 / (bloque * bloque) - m * m;
+            suma += m; total++;
+            if (m >= 252 && m2 < 3) quemados++;
+          }
+          resolver(total ? { quemado: quemados / total, media: suma / total } : null);
+        } catch (e) { resolver(null); }
+        URL.revokeObjectURL(url);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolver(null); };
+      img.src = url;
+    });
+  }
 
   var originales = [];                       // los archivos tal como se eligieron, por si prefiere enviarlos sin tocar
   var usarOriginales = document.getElementById('usar-originales');
@@ -140,6 +175,11 @@
       if (a.size > MAX) avisar(texto('grande', { nombre: a.name }));
       var pasos = [huella(a).then(function (h) { if (h) porHuella[h] = a.name; })];
       if (a.type.indexOf('image/') === 0) pasos.push(nitidez(a).then(function (v) { if (v !== null && v < UMBRAL_BORROSA) avisar(texto('borrosa', { nombre: a.name })); }));
+      if (a.type.indexOf('image/') === 0) pasos.push(luz(a).then(function (v) {
+        if (!v) return;
+        if (v.quemado > 0.18) avisar(texto('reflejos', { nombre: a.name }));
+        else if (v.media < 70) avisar(texto('oscura', { nombre: a.name }));
+      }));
       return Promise.all(pasos);
     });
     Promise.all(tareas).then(function () {
@@ -164,9 +204,18 @@
     }).catch(function () {});
   }
 
+  var juntar = form.querySelector('[data-misma-factura]');
+  function ofrecerJuntar(archivos) {
+    if (!juntar) return;
+    var fotos = archivos.filter(function (a) { return a.type.indexOf('image/') === 0; });
+    var todasFotos = fotos.length === archivos.length;
+    juntar.hidden = !(archivos.length > 1 && todasFotos);
+    if (juntar.hidden) { var marca = juntar.querySelector('input'); if (marca) marca.checked = false; }
+  }
   entrada.addEventListener('change', function () {
     lista.textContent = '';
     originales = Array.prototype.slice.call(entrada.files || []);
+    ofrecerJuntar(originales);
     procesar();
   });
   if (usarOriginales) usarOriginales.addEventListener('change', function () {

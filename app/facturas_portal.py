@@ -108,7 +108,20 @@ def facturas_del_cliente(cliente_fiscal_id: int, limite: int = 500) -> list[dict
         f["devuelta"] = ev["motivo"] if ev else None
         f["devuelta_en"] = ev["en"] if ev else None
         f["atendida"] = bool(ev and ev["atendida"])
+        f["pasos"] = pasos_de(f)
     return filas
+
+
+PASOS = ("recibida", "leida", "revisada", "contabilizada")
+
+
+def pasos_de(f: dict) -> list[dict]:
+    """Las cuatro etapas de una factura para el cliente (recibida → leída → revisada → contabilizada): cuáles están hechas y cuál es la actual. Una factura devuelta o descartada no tiene camino."""
+    if f["estado"] == "descartada":
+        return []
+    hechas = {"recibida": True, "leida": f.get("lectura") not in ("pendiente", "fallida") or f["estado"] != "pendiente", "revisada": f["estado"] in ("revisada", "exportada"), "contabilizada": f["estado"] == "exportada"}
+    actual = next((p for p in PASOS if not hechas[p]), None)
+    return [{"clave": p, "hecho": hechas[p], "actual": p == actual} for p in PASOS]
 
 
 def devueltas_sin_atender(cliente_fiscal_id: int) -> list[dict]:

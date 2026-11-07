@@ -10,7 +10,7 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 
-from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, lectura_confianza, lectura_evidencias, pdf_facturas, qr_facturas, vies
+from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, lectura_confianza, lectura_evidencias, pdf_facturas, qr_facturas, segmentacion_pdf, vies
 
 PROMPT = """Eres un asistente de contabilidad en España. Recibes la foto o el PDF de UNA factura. Devuelve SOLO un objeto JSON, sin texto alrededor, con estos campos (null si no aparece o no se lee):
 {"emisor_nombre": str, "emisor_nif": str, "receptor_nombre": str, "receptor_nif": str, "numero": str, "fecha": "AAAA-MM-DD", "fecha_operacion": "AAAA-MM-DD",
@@ -244,7 +244,7 @@ def _leer_con_ia(usuario_id: int, doc: dict, f: dict, cliente_nif: str, qr: dict
     return _procesar(_json_de(respuesta), f, cliente_nif, texto, qr), "imagen", texto, notas
 
 
-def leer(tenant_id: int, usuario_id: int, factura_id: int) -> list[str]:
+def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True) -> list[str]:
     """Lee el archivo adjunto de la factura y rellena sus datos. Devuelve los avisos a mostrar (cosas que revisar). `ValueError` con un mensaje legible si no se pudo.
     Orden: 1) factura electrónica (XML o PDF con XML incrustado): lectura exacta, sin IA; 2) QR de VeriFactu o TicketBAI, que corrige la lectura donde discrepa; 3) IA, con el texto del PDF si es
     fiable y, si no, con la imagen. Cada dato lleva su confianza, y si el despacho lo decide la IA da por revisadas las facturas seguras (app/lectura_confianza.py)."""
@@ -268,6 +268,10 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int) -> list[str]:
     contenido, mime = bytes(doc["contenido"]), (doc.get("tipo_mime") or "").lower().split(";")[0]
     config = ia_despacho.config(tenant_id)
     estructurada = facturas_estructuradas.extraer(contenido, mime, doc.get("nombre_archivo") or "")
+    if separar and not estructurada and config["separar_pdf"] and mime == "application/pdf" and configurada(usuario_id):
+        grupos = segmentacion_pdf.segmentar(usuario_id, contenido)
+        if grupos:
+            return _separar_y_leer(tenant_id, usuario_id, f, doc, grupos)
     qr = None
     notas_lectura: list[str] = []
     texto = ""
@@ -322,6 +326,34 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int) -> list[str]:
     finally:
         conn.close()
     _revisar_sola_si_procede(tenant_id, usuario_id, factura_id, config, puntos["global"], avisos, comprobaciones)
+    return avisos
+
+
+def _separar_y_leer(tenant_id: int, usuario_id: int, f: dict, doc: dict, grupos: list[list[int]]) -> list[str]:
+    """Un PDF con varias facturas: la factura original se queda con las primeras páginas, las demás pasan a ser facturas nuevas (con su propio PDF) y todas se leen. El PDF original no se borra
+    de los documentos del cliente. Si alguna de las nuevas no se puede leer, queda «por leer» y se avisa; no se pierde ninguna."""
+    partes = segmentacion_pdf.partir(bytes(doc["contenido"]), grupos)
+    cliente = db.obtener_cliente_fiscal(tenant_id, f["cliente_fiscal_id"])
+    base = (doc.get("nombre_archivo") or "factura.pdf").rsplit(".", 1)[0]
+    nuevos_ids = []
+    for i, pdf in enumerate(partes[1:], 2):
+        doc_id = fc.adjuntar(tenant_id, f["cliente_fiscal_id"], usuario_id, f"{base}-{i}.pdf", "application/pdf", pdf)
+        nuevos_ids.append(fc._crear_borrador(tenant_id, usuario_id, cliente, f["tipo"], doc_id, f.get("origen") or "despacho", f"Separada de un PDF con {len(partes)} facturas ({doc.get('nombre_archivo') or 'PDF'}), pendiente de leer."))
+    primero = fc.adjuntar(tenant_id, f["cliente_fiscal_id"], usuario_id, f"{base}-1.pdf", "application/pdf", partes[0])
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE facturas_contables SET documento_id = ? WHERE id = ? AND tenant_id = ?", (primero, f["id"], tenant_id))
+        auditoria.registrar(tenant_id, usuario_id, "factura_contable.pdf_separado", "factura_contable", f["id"], {"facturas": len(partes), "nuevas": nuevos_ids}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    avisos = [f"El PDF tenía {len(partes)} facturas (páginas {'; '.join('-'.join(str(p) for p in (g[0], g[-1])) if len(g) > 1 else str(g[0]) for g in grupos)}): se han separado y cada una es ahora una factura."]
+    avisos += leer(tenant_id, usuario_id, f["id"], separar=False)
+    for fid in nuevos_ids:
+        try:
+            leer(tenant_id, usuario_id, fid, separar=False)
+        except ValueError as e:
+            avisos.append(f"La factura separada {fid} no se pudo leer ({e}): queda por leer.")
     return avisos
 
 

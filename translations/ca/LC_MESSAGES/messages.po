@@ -23854,3 +23854,42 @@ msgstr "Veure al document"
 
 msgid "Si el PDF tiene texto, leerlo primero como texto (más barato y rápido); si no cuadra, se vuelve a leer con la imagen"
 msgstr "Si el PDF té text, llegir-lo primer com a text (més barat i ràpid); si no quadra, es torna a llegir amb la imatge"
+
+msgid "«%(nombre)s» tiene zonas quemadas por reflejos o flash: si puedes, hazla de nuevo sin que le dé la luz de frente."
+msgstr "«%(nombre)s» té zones cremades per reflexos o flaix: si pots, fes-la de nou sense que li doni la llum de front."
+
+msgid "«%(nombre)s» está muy oscura: si puedes, hazla de nuevo con más luz."
+msgstr "«%(nombre)s» és molt fosca: si pots, fes-la de nou amb més llum."
+
+msgid "Estas fotos son las páginas de una misma factura (se juntan en un solo PDF, en el orden elegido)"
+msgstr "Aquestes fotos són les pàgines d'una mateixa factura (es ajunten en un sol PDF, en l'ordre triat)"
+
+msgid "Corregir ahora"
+msgstr "Corregir ara"
+
+msgid "Leída"
+msgstr "Llegida"
+
+msgid "Progreso de la factura"
+msgstr "Progrés de la factura"
+
+msgid "hecho"
+msgstr "fet"
+
+msgid "ahora"
+msgstr "ara"
+
+msgid "pendiente"
+msgstr "pendent"
+
+msgid "Si son varias fotos de una misma factura (varias páginas), márcalo y se juntan en un solo PDF"
+msgstr "Si són diverses fotos d'una mateixa factura (diverses pàgines), marca-ho i s'ajunten en un sol PDF"
+
+msgid "Si un PDF contiene varias facturas, separarlas y leer cada una"
+msgstr "Si un PDF conté diverses factures, separar-les i llegir-ne cadascuna"
+
+msgid "Para juntar páginas en una sola factura, todos los archivos deben ser fotos."
+msgstr "Per ajuntar pàgines en una sola factura, tots els fitxers han de ser fotos."
+
+msgid "No se han podido juntar las fotos en una sola factura: prueba con menos fotos o más pequeñas."
+msgstr "No s'han pogut ajuntar les fotos en una sola factura: prova amb menys fotos o més petites."

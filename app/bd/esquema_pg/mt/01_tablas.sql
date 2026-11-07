@@ -1939,6 +1939,7 @@ CREATE TABLE IF NOT EXISTS ia_config_despacho (
     facturas_modo text NOT NULL DEFAULT 'compartida',
     umbral_confianza bigint NOT NULL DEFAULT 90,
     lectura_texto bigint NOT NULL DEFAULT 1,
+    separar_pdf bigint NOT NULL DEFAULT 1,
     actualizado_por bigint,
     actualizado_en text NOT NULL,
     PRIMARY KEY (tenant_id),

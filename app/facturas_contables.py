@@ -1365,6 +1365,21 @@ def crear_desde_portal(cliente_fiscal_id: int, datos: dict, archivo: tuple[str, 
 MAX_ARCHIVOS_POR_SUBIDA = 10
 
 
+def unir_paginas(archivos: list[tuple[str, str | None, bytes]]) -> list[tuple[str, str | None, bytes]]:
+    """Las fotos de UNA misma factura (varias páginas, en el orden elegido) pasan a ser un solo PDF; así se lee y se revisa como una factura y no como tantas facturas como fotos. `ValueError` si alguna
+    no es una imagen o no se pueden juntar."""
+    from . import pdf_facturas
+    archivos = [a for a in archivos if a and a[2]]
+    if len(archivos) < 2:
+        return archivos
+    if any((a[1] or "").lower().split(";")[0] not in ("image/png", "image/jpeg", "image/webp", "image/gif") for a in archivos):
+        raise ValueError("Para juntar páginas en una sola factura, todos los archivos deben ser fotos.")
+    pdf = pdf_facturas.imagenes_a_pdf([a[2] for a in archivos])
+    if pdf is None:
+        raise ValueError("No se han podido juntar las fotos en una sola factura: prueba con menos fotos o más pequeñas.")
+    return [("factura.pdf", "application/pdf", pdf)]
+
+
 def _crear_borrador(tenant_id: int, usuario_id: int | None, f, tipo: str, documento_id: int, origen: str, nota: str) -> int:
     """Una factura que es solo el archivo, a la espera de que alguien (o la IA) la lea: datos de relleno que `problemas` marca hasta entonces."""
     ahora = db.now_iso()
@@ -1472,7 +1487,7 @@ def listar_del_cliente(cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
     conn = db.get_connection()
     try:
         filas = [dict(f) for f in conn.execute(
-            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, estado, origen, documento_id FROM facturas_contables WHERE cliente_fiscal_id = ? ORDER BY fecha DESC, id DESC LIMIT ?",
+            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, estado, origen, documento_id, lectura FROM facturas_contables WHERE cliente_fiscal_id = ? ORDER BY fecha DESC, id DESC LIMIT ?",
             (cliente_fiscal_id, limite))]
     finally:
         conn.close()

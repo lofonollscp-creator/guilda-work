@@ -67,3 +67,26 @@ def pagina_a_imagen(contenido: bytes, indice: int, lado: int = LADO_MAXIMO) -> b
     except Exception:  # noqa: BLE001
         logger.warning("No se pudo renderizar una página del PDF", exc_info=True)
         return None
+
+
+def imagenes_a_pdf(imagenes: list[bytes], limite_bytes: int = 7_500_000) -> bytes | None:
+    """Varias fotos (las páginas de UNA factura, en orden) como un solo PDF de menos de `limite_bytes`, o None si alguna no es una imagen válida. Respeta la orientación de la foto (EXIF) y, si el PDF
+    se pasa de peso, reduce la resolución por pasos hasta que cabe."""
+    try:
+        from PIL import Image, ImageOps
+        paginas = [ImageOps.exif_transpose(Image.open(io.BytesIO(b))).convert("RGB") for b in imagenes[:MAX_PAGINAS]]
+        if not paginas:
+            return None
+        for lado, calidad in ((2400, 85), (1800, 78), (1400, 68)):
+            reducidas = []
+            for pagina in paginas:
+                copia = pagina.copy()
+                copia.thumbnail((lado, lado))
+                reducidas.append(copia)
+            salida = io.BytesIO()
+            reducidas[0].save(salida, "PDF", save_all=True, append_images=reducidas[1:], resolution=150.0, quality=calidad)
+            if salida.tell() <= limite_bytes:
+                return salida.getvalue()
+    except Exception:  # noqa: BLE001
+        logger.warning("No se pudieron juntar las fotos en un PDF", exc_info=True)
+    return None

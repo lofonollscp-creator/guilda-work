@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS ia_config_despacho (
     facturas_modo TEXT NOT NULL DEFAULT 'compartida' CHECK (facturas_modo IN ('compartida', 'auto')),
     umbral_confianza INTEGER NOT NULL DEFAULT 90,
     lectura_texto INTEGER NOT NULL DEFAULT 1,
+    separar_pdf INTEGER NOT NULL DEFAULT 1,
     actualizado_por INTEGER,
     actualizado_en TEXT NOT NULL
 );
@@ -61,14 +62,15 @@ def config(tenant_id: int) -> dict:
     """Las normas del despacho (con sus valores por defecto si la dirección aún no ha tocado nada)."""
     conn = db.get_connection()
     try:
-        f = conn.execute("SELECT solo_ue, claves_personales, facturas_modo, umbral_confianza, lectura_texto FROM ia_config_despacho WHERE tenant_id = ?", (tenant_id,)).fetchone()
+        f = conn.execute("SELECT solo_ue, claves_personales, facturas_modo, umbral_confianza, lectura_texto, separar_pdf FROM ia_config_despacho WHERE tenant_id = ?", (tenant_id,)).fetchone()
     finally:
         conn.close()
     return {"solo_ue": bool(f["solo_ue"]), "claves_personales": bool(f["claves_personales"]), "facturas_modo": f["facturas_modo"], "umbral_confianza": f["umbral_confianza"],
-            "lectura_texto": bool(f["lectura_texto"])} if f else {"solo_ue": False, "claves_personales": True, "facturas_modo": "compartida", "umbral_confianza": 90, "lectura_texto": True}
+            "lectura_texto": bool(f["lectura_texto"]), "separar_pdf": bool(f["separar_pdf"])} if f else {"solo_ue": False, "claves_personales": True, "facturas_modo": "compartida", "umbral_confianza": 90,
+                                                                                                                  "lectura_texto": True, "separar_pdf": True}
 
 
-def guardar_config(tenant_id: int, *, solo_ue: bool, claves_personales: bool, facturas_modo: str, umbral_confianza: int, lectura_texto: bool = True, por: int | None = None) -> None:
+def guardar_config(tenant_id: int, *, solo_ue: bool, claves_personales: bool, facturas_modo: str, umbral_confianza: int, lectura_texto: bool = True, separar_pdf: bool = True, por: int | None = None) -> None:
     if facturas_modo not in MODOS_FACTURAS:
         raise ValueError("El modo de lectura de facturas no es válido.")
     try:
@@ -79,10 +81,10 @@ def guardar_config(tenant_id: int, *, solo_ue: bool, claves_personales: bool, fa
         raise ValueError("El umbral de confianza debe estar entre 50 y 100.")
     conn = db.get_connection()
     try:
-        conn.execute("INSERT INTO ia_config_despacho (tenant_id, solo_ue, claves_personales, facturas_modo, umbral_confianza, lectura_texto, actualizado_por, actualizado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+        conn.execute("INSERT INTO ia_config_despacho (tenant_id, solo_ue, claves_personales, facturas_modo, umbral_confianza, lectura_texto, separar_pdf, actualizado_por, actualizado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
                      "ON CONFLICT (tenant_id) DO UPDATE SET solo_ue = excluded.solo_ue, claves_personales = excluded.claves_personales, facturas_modo = excluded.facturas_modo, "
-                     "umbral_confianza = excluded.umbral_confianza, lectura_texto = excluded.lectura_texto, actualizado_por = excluded.actualizado_por, actualizado_en = excluded.actualizado_en",
-                     (tenant_id, int(solo_ue), int(claves_personales), facturas_modo, umbral, int(lectura_texto), por, _ahora()))
+                     "umbral_confianza = excluded.umbral_confianza, lectura_texto = excluded.lectura_texto, separar_pdf = excluded.separar_pdf, actualizado_por = excluded.actualizado_por, actualizado_en = excluded.actualizado_en",
+                     (tenant_id, int(solo_ue), int(claves_personales), facturas_modo, umbral, int(lectura_texto), int(separar_pdf), por, _ahora()))
         conn.commit()
     finally:
         conn.close()
