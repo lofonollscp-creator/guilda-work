@@ -24149,3 +24149,150 @@ msgstr "Request to delete my data (GDPR)"
 
 msgid "Solicitud de supresión de datos"
 msgstr "Data deletion request"
+
+msgid "Cuestionarios"
+msgstr "Questionnaires"
+
+msgid "Preguntas cortas que tu gestoría necesita que contestes."
+msgstr "Short questions your accountancy firm needs you to answer."
+
+msgid "Tu gestoría no te ha mandado ningún cuestionario."
+msgstr "Your accountancy firm has not sent you any questionnaire."
+
+msgid "Por contestar"
+msgstr "To answer"
+
+msgid "Contestado"
+msgstr "Answered"
+
+msgid "Recibido por tu gestoría"
+msgstr "Received by your accountancy firm"
+
+msgid "Recibido. Tu gestoría revisará tus respuestas."
+msgstr "Received. Your accountancy firm will review your answers."
+
+msgid "Enviar mis respuestas"
+msgstr "Send my answers"
+
+msgid "Los campos marcados con * son obligatorios."
+msgstr "Fields marked with * are required."
+
+msgid "Tus respuestas"
+msgstr "Your answers"
+
+msgid "Si te has equivocado, díselo a tu gestoría y te lo reabrirá."
+msgstr "If you made a mistake, tell your accountancy firm and they will reopen it."
+
+msgid "Escribir a mi gestoría"
+msgstr "Write to my accountancy firm"
+
+msgid "Este cuestionario ya no admite respuestas."
+msgstr "This questionnaire no longer accepts answers."
+
+msgid "Volver a los cuestionarios"
+msgstr "Back to the questionnaires"
+
+msgid "Cuestionarios para el cliente"
+msgstr "Questionnaires for the client"
+
+msgid "Preguntas cortas que el cliente contesta en su portal; sus respuestas quedan aquí. Elige una plantilla o escribe las tuyas."
+msgstr "Short questions the client answers in their portal; their answers are kept here. Choose a template or write your own."
+
+msgid "Contestado: por revisar"
+msgstr "Answered: to review"
+
+msgid "preguntas"
+msgstr "questions"
+
+msgid "Dar por recibido"
+msgstr "Mark as received"
+
+msgid "Pedir que lo rehaga"
+msgstr "Ask them to redo it"
+
+msgid "Todavía no le has mandado ningún cuestionario."
+msgstr "You have not sent them any questionnaire yet."
+
+msgid "Mandar un cuestionario"
+msgstr "Send a questionnaire"
+
+msgid "Uno propio (escribo las preguntas)"
+msgstr "My own (I write the questions)"
+
+msgid "Escribir uno propio"
+msgstr "Write my own"
+
+msgid "Explicación para el cliente (opcional)"
+msgstr "Explanation for the client (optional)"
+
+msgid "Preguntas (una por línea)"
+msgstr "Questions (one per line)"
+
+msgid "¿Cuántos hijos tiene? | numero *"
+msgstr "How many children do they have? | numero *"
+
+msgid "Después de «|» el tipo: texto, si_no, numero o fecha. Un «*» al final la hace obligatoria."
+msgstr "After “|” the type: texto, si_no, numero or fecha. A “*” at the end makes it required."
+
+msgid "Mandar"
+msgstr "Send"
+
+msgid "%(cliente)s ha contestado: %(titulo)s"
+msgstr "%(cliente)s has answered: %(titulo)s"
+
+msgid "Cuestionario contestado, pendiente de revisar."
+msgstr "Questionnaire answered, waiting for review."
+
+msgid "Ese cuestionario ya no admite este cambio."
+msgstr "That questionnaire no longer allows this change."
+
+msgid "Tu gestoría te pide que contestes unas preguntas"
+msgstr "Your accountancy firm asks you to answer some questions"
+
+msgid "Para preparar bien tus trámites necesitamos que contestes un cuestionario corto: «%(t)s»."
+msgstr "To prepare your paperwork properly we need you to answer a short questionnaire: “%(t)s”."
+
+msgid "Contestar el cuestionario"
+msgstr "Answer the questionnaire"
+
+msgid "Tu gestoría te pide que contestes: %(titulo)s"
+msgstr "Your accountancy firm asks you to answer: %(titulo)s"
+
+msgid "Falta contestar: «%(p)s»"
+msgstr "Please answer: “%(p)s”"
+
+msgid "«%(p)s»: escribe un número."
+msgstr "“%(p)s”: enter a number."
+
+msgid "«%(p)s»: contesta sí o no."
+msgstr "“%(p)s”: answer yes or no."
+
+msgid "«%(p)s»: elige una fecha válida."
+msgstr "“%(p)s”: choose a valid date."
+
+msgid "«%(p)s»: elige una de las opciones."
+msgstr "“%(p)s”: choose one of the options."
+
+msgid "Escribe al menos una pregunta."
+msgstr "Write at least one question."
+
+msgid "Como máximo 40 preguntas."
+msgstr "At most 40 questions."
+
+msgid "Ponle un título al cuestionario (mínimo 3 caracteres)."
+msgstr "Give the questionnaire a title (minimum 3 characters)."
+
+msgid "Esa plantilla no existe."
+msgstr "That template does not exist."
+
+msgid "El tipo de pregunta debe ser texto, si_no, numero o fecha."
+msgstr "The question type must be texto, si_no, numero or fecha."
+
+msgid "Una pregunta no es válida."
+msgstr "A question is not valid."
+
+msgid "Hay demasiados cuestionarios abiertos con este cliente."
+msgstr "There are too many open questionnaires with this client."
+
+msgid "Una pregunta de opciones necesita al menos dos."
+msgstr "A multiple-choice question needs at least two options."

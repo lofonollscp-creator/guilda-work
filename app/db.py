@@ -2345,6 +2345,8 @@ def init_db() -> None:
         portal_peticiones.crear_esquema(conn)   # peticiones de documentos de la gestoría a sus clientes (app/portal_peticiones.py)
         from . import portal_conversaciones
         portal_conversaciones.crear_esquema(conn)    # conversaciones libres cliente-gestoría del portal (app/portal_conversaciones.py)
+        from . import portal_cuestionarios
+        portal_cuestionarios.crear_esquema(conn)    # cuestionarios del cliente (app/portal_cuestionarios.py)
         from . import ia_trabajos
         ia_trabajos.crear_esquema(conn)             # cola de trabajos de IA en segundo plano (app/ia_trabajos.py)
         from . import portal_novedades

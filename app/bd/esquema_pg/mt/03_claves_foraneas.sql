@@ -406,6 +406,7 @@ ALTER TABLE portal_citas ADD CONSTRAINT fk_portal_citas_tenant_id FOREIGN KEY (t
 ALTER TABLE portal_contactos ADD CONSTRAINT fk_portal_contactos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_conversaciones ADD CONSTRAINT fk_portal_conversaciones_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_conversaciones_mensajes ADD CONSTRAINT fk_portal_conversaciones_mensajes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_cuestionarios ADD CONSTRAINT fk_portal_cuestionarios_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_enlaces_subida ADD CONSTRAINT fk_portal_enlaces_subida_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_novedades ADD CONSTRAINT fk_portal_novedades_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_novedades_lectura ADD CONSTRAINT fk_portal_novedades_lectura_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;

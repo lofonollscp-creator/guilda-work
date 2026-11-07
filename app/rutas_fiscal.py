@@ -23,7 +23,7 @@ from .auth import login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -520,6 +520,50 @@ def resolver_conversacion_portal(cliente_id: int, conversacion_id: int, accion: 
     return _volver_a_conversaciones(cliente_id, ancla=ancla)
 
 
+@fiscal_bp.route("/clientes/<int:cliente_id>/cuestionarios", methods=["POST"])
+@login_required
+def crear_cuestionario_portal(cliente_id: int):
+    """Le manda al cliente un cuestionario (de una plantilla o escrito aquí, una pregunta por línea) para que lo conteste en su portal."""
+    cliente = _cliente_para_contactos(cliente_id)
+    plantilla = request.form.get("plantilla", "")
+    try:
+        if plantilla and plantilla != "propio":
+            qid = portal_cuestionarios.desde_plantilla(cliente, plantilla, g.usuario_id, request.form.get("fecha_limite") or None)
+        else:
+            qid = portal_cuestionarios.crear(cliente, request.form.get("titulo", ""), portal_cuestionarios.preguntas_desde_texto(request.form.get("preguntas", "")), request.form.get("descripcion", ""),
+                                             request.form.get("fecha_limite") or None, g.usuario_id)
+    except ValueError as e:
+        return _volver_a_conversaciones(cliente_id, _(str(e)), "cuestionarios")
+    auditoria.registrar(g.tenant_id, g.usuario_id, "portal.cuestionario_enviado", "portal_cuestionario", qid, {"cliente": cliente_id})
+    if request.form.get("avisar") == "1":
+        c = portal_cuestionarios.obtener(cliente, qid)
+        enlace = portal_recordatorios.url_portal(f"/portal/cuestionarios/{qid}", cliente_id)
+        if enlace:
+            try:
+                portal_avisos.correo_directo(cliente, lambda e: notificaciones_email.enviar_cuestionario(e, c["titulo"], c["descripcion"], enlace, tenant_id=g.tenant_id), accion="subir",
+                                             push=(_("Tu gestoría te pide que contestes unas preguntas"), c["titulo"][:100], f"/portal/cuestionarios/{qid}"))
+            except ErrorNotificacionesEmail:
+                pass
+    return _volver_a_conversaciones(cliente_id, ancla=f"cuestionario-{qid}")
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/cuestionarios/<int:cuestionario_id>/<accion>", methods=["POST"])
+@login_required
+def resolver_cuestionario_portal(cliente_id: int, cuestionario_id: int, accion: str):
+    """Da por recibido un cuestionario contestado, lo reabre para que el cliente lo rehaga, o lo cancela."""
+    cliente = _cliente_para_contactos(cliente_id)
+    cambios = {"recibido": (("respondido",), "recibido"), "reabrir": (("respondido", "recibido"), "pendiente"), "cancelar": (("pendiente", "respondido"), "cancelado")}
+    if accion not in cambios:
+        abort(404)
+    if portal_cuestionarios.obtener(cliente, cuestionario_id) is None:
+        abort(404)
+    ok = portal_cuestionarios.cambiar(cliente, cuestionario_id, *cambios[accion])
+    if not ok:
+        return _volver_a_conversaciones(cliente_id, _("Ese cuestionario ya no admite este cambio."), f"cuestionario-{cuestionario_id}")
+    auditoria.registrar(g.tenant_id, g.usuario_id, f"portal.cuestionario_{accion}", "portal_cuestionario", cuestionario_id, {"cliente": cliente_id})
+    return _volver_a_conversaciones(cliente_id, ancla=f"cuestionario-{cuestionario_id}")
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/contactos", methods=["POST"])
 @login_required
 def anadir_contacto_portal(cliente_id: int):
@@ -712,7 +756,8 @@ def editar_cliente(cliente_id: int):
         modelos_sugeridos=perfil_fiscal.modelos_para_perfil(db.perfil_fiscal_de_cliente(cliente)),
         peticiones=portal_peticiones.listar(cliente), peticiones_archivos={p["id"]: portal_peticiones.archivos(cliente, p["id"]) for p in portal_peticiones.listar(cliente) if p["archivos"]},
         error_peticion=(request.args.get("error_peticion") or "")[:200] or None,
-        conversaciones=[{**h, "detalle": portal_conversaciones.obtener(cliente, h["id"])} for h in portal_conversaciones.listar(cliente)], error_conversacion=(request.args.get("error_conversacion") or "")[:200] or None,
+        conversaciones=[{**h, "detalle": portal_conversaciones.obtener(cliente, h["id"])} for h in portal_conversaciones.listar(cliente)],
+        cuestionarios=portal_cuestionarios.listar(cliente), plantillas_cuestionario={k: v["titulo"] for k, v in portal_cuestionarios.PLANTILLAS.items()}, error_conversacion=(request.args.get("error_conversacion") or "")[:200] or None,
         personas_portal=[p for p in portal_personas.listar(cliente) if not p["es_titular"]], roles_portal=portal_personas.ROLES, error_contacto=(request.args.get("error_contacto") or "")[:200] or None,
     )
 

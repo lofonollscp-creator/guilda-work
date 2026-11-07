@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -1028,6 +1028,38 @@ def _conversacion_avisar_equipo(cliente, cid: int, asunto: str, texto: str, nuev
     """Cuando el cliente escribe (o abre un hilo), lo sabe quien lleva al cliente."""
     titulo = _("%(cliente)s te ha escrito: %(asunto)s", cliente=cliente["nombre"], asunto=asunto[:80]) if nueva else _("%(cliente)s ha contestado: %(asunto)s", cliente=cliente["nombre"], asunto=asunto[:80])
     facturas_contables.avisar_al_equipo(cliente, titulo, texto, url_for("fiscal.editar_cliente", cliente_id=cliente["id"]) + f"#conversacion-{cid}", {"conversacion": cid})
+
+
+@portal_bp.route("/cuestionarios")
+@cliente_login_required
+def cuestionarios():
+    cliente = _cliente_actual_o_salir()
+    return render_template("portal_cuestionarios.html", cliente=cliente, lista=portal_cuestionarios.listar(cliente), portal_seccion="inicio")
+
+
+@portal_bp.route("/cuestionarios/<int:cuestionario_id>", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("60/hour", methods=["POST"])
+def cuestionario(cuestionario_id: int):
+    cliente = _cliente_actual_o_salir()
+    c = portal_cuestionarios.obtener(cliente, cuestionario_id)
+    if c is None:
+        abort(404)
+    error = None
+    puede = _puede_escribir() and c["estado"] == "pendiente"
+    if request.method == "POST":
+        if not puede:
+            abort(403)
+        try:
+            if portal_cuestionarios.responder(cliente, cuestionario_id, request.form, g.portal_email or cliente["email"] or ""):
+                auditoria.registrar(cliente["tenant_id"], None, "portal.cuestionario_respondido", "portal_cuestionario", cuestionario_id, {"quien": g.portal_email or "titular"})
+                facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s ha contestado: %(titulo)s", cliente=cliente["nombre"], titulo=c["titulo"][:80]), _("Cuestionario contestado, pendiente de revisar."),
+                                                    url_for("fiscal.editar_cliente", cliente_id=cliente["id"]) + f"#cuestionario-{cuestionario_id}", {"cuestionario": cuestionario_id})
+                return redirect(url_for("portal_cliente.cuestionario", cuestionario_id=cuestionario_id, enviado=1))
+            error = _("Este cuestionario ya no admite respuestas.")
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("portal_cuestionario.html", cliente=cliente, c=c, puede=puede, error=error, enviado=request.args.get("enviado"), valores=request.form if request.method == "POST" else {}, portal_seccion="inicio")
 
 
 @portal_bp.route("/mis-datos", methods=["POST"])

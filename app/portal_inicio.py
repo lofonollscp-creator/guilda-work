@@ -127,6 +127,11 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
                        "titulo": ngettext("Tienes %(n)s mensaje nuevo de tu gestoría", "Tienes %(n)s mensajes nuevos de tu gestoría", m["n"], n=m["n"]),
                        "detalle": f"{m['modelo']} · {m['periodo']}"})
 
+    from . import portal_cuestionarios
+    for q in portal_cuestionarios.pendientes_del_cliente(cliente["id"])[:5]:
+        puntos.append({"clave": f"cuestionario-{q['id']}", "urgente": q["dias"] is not None and q["dias"] <= 7, "accion": _("Contestar"), "url": url_for("portal_cliente.cuestionario", cuestionario_id=q["id"]),
+                       "titulo": _("Tu gestoría te pide que contestes: %(titulo)s", titulo=q["titulo"]), "detalle": _cuando(q["dias"])})
+
     from . import portal_conversaciones
     for h in portal_conversaciones.listar(cliente, "abierta")[:5]:
         if h["sin_leer_cliente"]:

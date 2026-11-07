@@ -24234,3 +24234,150 @@ msgstr "Demande de suppression de mes données (RGPD)"
 
 msgid "Solicitud de supresión de datos"
 msgstr "Demande de suppression de données"
+
+msgid "Cuestionarios"
+msgstr "Questionnaires"
+
+msgid "Preguntas cortas que tu gestoría necesita que contestes."
+msgstr "Questions courtes auxquelles votre cabinet a besoin que vous répondiez."
+
+msgid "Tu gestoría no te ha mandado ningún cuestionario."
+msgstr "Votre cabinet ne vous a envoyé aucun questionnaire."
+
+msgid "Por contestar"
+msgstr "À remplir"
+
+msgid "Contestado"
+msgstr "Répondu"
+
+msgid "Recibido por tu gestoría"
+msgstr "Reçu par votre cabinet"
+
+msgid "Recibido. Tu gestoría revisará tus respuestas."
+msgstr "Reçu. Votre cabinet va réviser vos réponses."
+
+msgid "Enviar mis respuestas"
+msgstr "Envoyer mes réponses"
+
+msgid "Los campos marcados con * son obligatorios."
+msgstr "Les champs marqués d'un * sont obligatoires."
+
+msgid "Tus respuestas"
+msgstr "Vos réponses"
+
+msgid "Si te has equivocado, díselo a tu gestoría y te lo reabrirá."
+msgstr "Si vous vous êtes trompé, dites-le à votre cabinet et il le rouvrira."
+
+msgid "Escribir a mi gestoría"
+msgstr "Écrire à mon cabinet"
+
+msgid "Este cuestionario ya no admite respuestas."
+msgstr "Ce questionnaire n'accepte plus de réponses."
+
+msgid "Volver a los cuestionarios"
+msgstr "Retour aux questionnaires"
+
+msgid "Cuestionarios para el cliente"
+msgstr "Questionnaires pour le client"
+
+msgid "Preguntas cortas que el cliente contesta en su portal; sus respuestas quedan aquí. Elige una plantilla o escribe las tuyas."
+msgstr "Questions courtes auxquelles le client répond dans son portail ; ses réponses sont conservées ici. Choisissez un modèle ou écrivez les vôtres."
+
+msgid "Contestado: por revisar"
+msgstr "Répondu : à réviser"
+
+msgid "preguntas"
+msgstr "questions"
+
+msgid "Dar por recibido"
+msgstr "Marquer comme reçu"
+
+msgid "Pedir que lo rehaga"
+msgstr "Demander de le refaire"
+
+msgid "Todavía no le has mandado ningún cuestionario."
+msgstr "Vous ne lui avez encore envoyé aucun questionnaire."
+
+msgid "Mandar un cuestionario"
+msgstr "Envoyer un questionnaire"
+
+msgid "Uno propio (escribo las preguntas)"
+msgstr "Un questionnaire personnalisé (j'écris les questions)"
+
+msgid "Escribir uno propio"
+msgstr "Écrire le mien"
+
+msgid "Explicación para el cliente (opcional)"
+msgstr "Explication pour le client (facultatif)"
+
+msgid "Preguntas (una por línea)"
+msgstr "Questions (une par ligne)"
+
+msgid "¿Cuántos hijos tiene? | numero *"
+msgstr "Combien d'enfants a-t-il ? | numero *"
+
+msgid "Después de «|» el tipo: texto, si_no, numero o fecha. Un «*» al final la hace obligatoria."
+msgstr "Après « | » le type : texto, si_no, numero ou fecha. Un « * » à la fin la rend obligatoire."
+
+msgid "Mandar"
+msgstr "Envoyer"
+
+msgid "%(cliente)s ha contestado: %(titulo)s"
+msgstr "%(cliente)s a répondu : %(titulo)s"
+
+msgid "Cuestionario contestado, pendiente de revisar."
+msgstr "Questionnaire rempli, en attente de révision."
+
+msgid "Ese cuestionario ya no admite este cambio."
+msgstr "Ce questionnaire n'admet plus ce changement."
+
+msgid "Tu gestoría te pide que contestes unas preguntas"
+msgstr "Votre cabinet vous demande de répondre à quelques questions"
+
+msgid "Para preparar bien tus trámites necesitamos que contestes un cuestionario corto: «%(t)s»."
+msgstr "Pour bien préparer vos démarches, nous avons besoin que vous remplissiez un court questionnaire : « %(t)s »."
+
+msgid "Contestar el cuestionario"
+msgstr "Répondre au questionnaire"
+
+msgid "Tu gestoría te pide que contestes: %(titulo)s"
+msgstr "Votre cabinet vous demande de répondre : %(titulo)s"
+
+msgid "Falta contestar: «%(p)s»"
+msgstr "Veuillez répondre à : « %(p)s »"
+
+msgid "«%(p)s»: escribe un número."
+msgstr "« %(p)s » : saisissez un nombre."
+
+msgid "«%(p)s»: contesta sí o no."
+msgstr "« %(p)s » : répondez oui ou non."
+
+msgid "«%(p)s»: elige una fecha válida."
+msgstr "« %(p)s » : choisissez une date valide."
+
+msgid "«%(p)s»: elige una de las opciones."
+msgstr "« %(p)s » : choisissez l'une des options."
+
+msgid "Escribe al menos una pregunta."
+msgstr "Écrivez au moins une question."
+
+msgid "Como máximo 40 preguntas."
+msgstr "40 questions au maximum."
+
+msgid "Ponle un título al cuestionario (mínimo 3 caracteres)."
+msgstr "Donnez un titre au questionnaire (3 caractères minimum)."
+
+msgid "Esa plantilla no existe."
+msgstr "Ce modèle n'existe pas."
+
+msgid "El tipo de pregunta debe ser texto, si_no, numero o fecha."
+msgstr "Le type de question doit être texto, si_no, numero ou fecha."
+
+msgid "Una pregunta no es válida."
+msgstr "Une question n'est pas valide."
+
+msgid "Hay demasiados cuestionarios abiertos con este cliente."
+msgstr "Il y a trop de questionnaires ouverts avec ce client."
+
+msgid "Una pregunta de opciones necesita al menos dos."
+msgstr "Une question à choix multiples nécessite au moins deux options."

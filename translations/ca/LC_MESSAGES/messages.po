@@ -24158,3 +24158,150 @@ msgstr "Sol·licitud de supressió de les meves dades (RGPD)"
 
 msgid "Solicitud de supresión de datos"
 msgstr "Sol·licitud de supressió de dades"
+
+msgid "Cuestionarios"
+msgstr "Qüestionaris"
+
+msgid "Preguntas cortas que tu gestoría necesita que contestes."
+msgstr "Preguntes curtes que la teva gestoria necessita que contestis."
+
+msgid "Tu gestoría no te ha mandado ningún cuestionario."
+msgstr "La teva gestoria no t'ha enviat cap qüestionari."
+
+msgid "Por contestar"
+msgstr "Per contestar"
+
+msgid "Contestado"
+msgstr "Contestat"
+
+msgid "Recibido por tu gestoría"
+msgstr "Rebut per la teva gestoria"
+
+msgid "Recibido. Tu gestoría revisará tus respuestas."
+msgstr "Rebut. La teva gestoria revisarà les teves respostes."
+
+msgid "Enviar mis respuestas"
+msgstr "Enviar les meves respostes"
+
+msgid "Los campos marcados con * son obligatorios."
+msgstr "Els camps marcats amb * són obligatoris."
+
+msgid "Tus respuestas"
+msgstr "Les teves respostes"
+
+msgid "Si te has equivocado, díselo a tu gestoría y te lo reabrirá."
+msgstr "Si t'has equivocat, digues-ho a la teva gestoria i te'l reobrirà."
+
+msgid "Escribir a mi gestoría"
+msgstr "Escriure a la meva gestoria"
+
+msgid "Este cuestionario ya no admite respuestas."
+msgstr "Aquest qüestionari ja no admet respostes."
+
+msgid "Volver a los cuestionarios"
+msgstr "Tornar als qüestionaris"
+
+msgid "Cuestionarios para el cliente"
+msgstr "Qüestionaris per al client"
+
+msgid "Preguntas cortas que el cliente contesta en su portal; sus respuestas quedan aquí. Elige una plantilla o escribe las tuyas."
+msgstr "Preguntes curtes que el client contesta al seu portal; les seves respostes queden aquí. Tria una plantilla o escriu les teves."
+
+msgid "Contestado: por revisar"
+msgstr "Contestat: per revisar"
+
+msgid "preguntas"
+msgstr "preguntes"
+
+msgid "Dar por recibido"
+msgstr "Donar per rebut"
+
+msgid "Pedir que lo rehaga"
+msgstr "Demanar que el refaci"
+
+msgid "Todavía no le has mandado ningún cuestionario."
+msgstr "Encara no li has enviat cap qüestionari."
+
+msgid "Mandar un cuestionario"
+msgstr "Enviar un qüestionari"
+
+msgid "Uno propio (escribo las preguntas)"
+msgstr "Un de propi (escric les preguntes)"
+
+msgid "Escribir uno propio"
+msgstr "Escriure'n un de propi"
+
+msgid "Explicación para el cliente (opcional)"
+msgstr "Explicació per al client (opcional)"
+
+msgid "Preguntas (una por línea)"
+msgstr "Preguntes (una per línia)"
+
+msgid "¿Cuántos hijos tiene? | numero *"
+msgstr "Quants fills té? | numero *"
+
+msgid "Después de «|» el tipo: texto, si_no, numero o fecha. Un «*» al final la hace obligatoria."
+msgstr "Després de «|» el tipus: texto, si_no, numero o fecha. Un «*» al final la fa obligatòria."
+
+msgid "Mandar"
+msgstr "Enviar"
+
+msgid "%(cliente)s ha contestado: %(titulo)s"
+msgstr "%(cliente)s ha contestat: %(titulo)s"
+
+msgid "Cuestionario contestado, pendiente de revisar."
+msgstr "Qüestionari contestat, pendent de revisar."
+
+msgid "Ese cuestionario ya no admite este cambio."
+msgstr "Aquest qüestionari ja no admet aquest canvi."
+
+msgid "Tu gestoría te pide que contestes unas preguntas"
+msgstr "La teva gestoria et demana que contestis unes preguntes"
+
+msgid "Para preparar bien tus trámites necesitamos que contestes un cuestionario corto: «%(t)s»."
+msgstr "Per preparar bé els teus tràmits necessitem que contestis un qüestionari curt: «%(t)s»."
+
+msgid "Contestar el cuestionario"
+msgstr "Contestar el qüestionari"
+
+msgid "Tu gestoría te pide que contestes: %(titulo)s"
+msgstr "La teva gestoria et demana que contestis: %(titulo)s"
+
+msgid "Falta contestar: «%(p)s»"
+msgstr "Falta contestar: «%(p)s»"
+
+msgid "«%(p)s»: escribe un número."
+msgstr "«%(p)s»: escriu un número."
+
+msgid "«%(p)s»: contesta sí o no."
+msgstr "«%(p)s»: contesta sí o no."
+
+msgid "«%(p)s»: elige una fecha válida."
+msgstr "«%(p)s»: tria una data vàlida."
+
+msgid "«%(p)s»: elige una de las opciones."
+msgstr "«%(p)s»: tria una de les opcions."
+
+msgid "Escribe al menos una pregunta."
+msgstr "Escriu almenys una pregunta."
+
+msgid "Como máximo 40 preguntas."
+msgstr "Com a màxim 40 preguntes."
+
+msgid "Ponle un título al cuestionario (mínimo 3 caracteres)."
+msgstr "Posa un títol al qüestionari (mínim 3 caràcters)."
+
+msgid "Esa plantilla no existe."
+msgstr "Aquesta plantilla no existeix."
+
+msgid "El tipo de pregunta debe ser texto, si_no, numero o fecha."
+msgstr "El tipus de pregunta ha de ser texto, si_no, numero o fecha."
+
+msgid "Una pregunta no es válida."
+msgstr "Una pregunta no és vàlida."
+
+msgid "Hay demasiados cuestionarios abiertos con este cliente."
+msgstr "Hi ha massa qüestionaris oberts amb aquest client."
+
+msgid "Una pregunta de opciones necesita al menos dos."
+msgstr "Una pregunta d'opcions necessita almenys dues opcions."

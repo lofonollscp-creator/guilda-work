@@ -144,6 +144,7 @@ CREATE INDEX IF NOT EXISTS idx_portal_citas_cliente ON portal_citas (tenant_id, 
 CREATE INDEX IF NOT EXISTS idx_portal_contactos_buscar ON portal_contactos (email);
 CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_cliente ON portal_conversaciones (tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_conversaciones_mensajes ON portal_conversaciones_mensajes (tenant_id, conversacion_id, id);
+CREATE INDEX IF NOT EXISTS idx_portal_cuestionarios_cliente ON portal_cuestionarios (tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_enlaces_token ON portal_enlaces_subida (token);
 CREATE INDEX IF NOT EXISTS idx_portal_novedades_cliente ON portal_novedades (tenant_id, cliente_fiscal_id, creado_en);
 CREATE INDEX IF NOT EXISTS idx_portal_peticiones_cliente ON portal_peticiones (tenant_id, cliente_fiscal_id, estado);

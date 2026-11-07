@@ -1,0 +1,22 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Cuestionarios') }}{% endblock %}
+{% block titulo %}{{ _('Cuestionarios') }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }} · {{ _('Preguntas cortas que tu gestoría necesita que contestes.') }}{% endblock %}
+{% block contenido %}
+    {% if not lista %}
+    <p class="empty-lane">{{ _('Tu gestoría no te ha mandado ningún cuestionario.') }}</p>
+    {% else %}
+    <ul class="portal-buzon">
+      {% for q in lista %}
+      <li class="portal-buzon-item {{ 'sin-leer' if q.estado == 'pendiente' }}">
+        <a href="{{ url_for('portal_cliente.cuestionario', cuestionario_id=q.id) }}">
+          <span class="portal-buzon-cab"><strong>{{ q.titulo }}</strong>
+            <span class="portal-estado {{ 'warn' if q.estado == 'pendiente' else 'ok' }}">{{ {'pendiente': _('Por contestar'), 'respondido': _('Contestado'), 'recibido': _('Recibido por tu gestoría'), 'cancelado': _('Cancelado')}[q.estado] }}</span></span>
+          {% if q.descripcion %}<span class="portal-buzon-texto">{{ q.descripcion }}</span>{% endif %}
+          <span class="muted">{{ q.creado_en[:10]|fecha_dia }}{% if q.fecha_limite and q.estado == 'pendiente' %} · {{ _('Fecha límite') }}: {{ q.fecha_limite|fecha_dia }}{% endif %}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+{% endblock %}

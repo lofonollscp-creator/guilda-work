@@ -1,0 +1,41 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ c.titulo }}{% endblock %}
+{% block titulo %}{{ c.titulo }}{% endblock %}
+{% block subtitulo %}{{ cliente.nombre }}{% endblock %}
+{% block contenido %}
+    {% if enviado %}<p class="portal-peticion" role="status"><strong>{{ _('Recibido. Tu gestoría revisará tus respuestas.') }}</strong></p>{% endif %}
+    {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+    {% if c.descripcion %}<p>{{ c.descripcion }}</p>{% endif %}
+    {% if c.fecha_limite and c.estado == 'pendiente' %}<p class="muted">{{ _('Fecha límite') }}: {{ c.fecha_limite|fecha_dia }}</p>{% endif %}
+    {% if puede %}
+    <form method="post" class="portal-cuenta-form" action="{{ url_for('portal_cliente.cuestionario', cuestionario_id=c.id) }}">
+      {% for q in c.preguntas %}
+      <div class="correo-form-campo">
+        {% if q.tipo == 'si_no' %}
+        <fieldset><legend>{{ q.texto }}{% if q.obligatoria %} *{% endif %}</legend>
+          <label><input type="radio" name="{{ q.id }}" value="si" {{ 'checked' if valores.get(q.id) == 'si' }}> {{ _('Sí') }}</label>
+          <label><input type="radio" name="{{ q.id }}" value="no" {{ 'checked' if valores.get(q.id) == 'no' }}> {{ _('No') }}</label></fieldset>
+        {% else %}
+        <label for="cq-{{ q.id }}">{{ q.texto }}{% if q.obligatoria %} *{% endif %}</label>
+        {% if q.tipo == 'opcion' %}<select id="cq-{{ q.id }}" name="{{ q.id }}"><option value="">—</option>{% for o in q.opciones %}<option value="{{ o }}" {{ 'selected' if valores.get(q.id) == o }}>{{ o }}</option>{% endfor %}</select>
+        {% elif q.tipo == 'fecha' %}<input type="date" id="cq-{{ q.id }}" name="{{ q.id }}" value="{{ valores.get(q.id, '') }}">
+        {% elif q.tipo == 'numero' %}<input type="text" inputmode="decimal" id="cq-{{ q.id }}" name="{{ q.id }}" value="{{ valores.get(q.id, '') }}">
+        {% else %}<textarea id="cq-{{ q.id }}" class="ds-ancho-total" name="{{ q.id }}" rows="2" maxlength="1000">{{ valores.get(q.id, '') }}</textarea>{% endif %}
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">{{ _('Enviar mis respuestas') }}</button>
+      <p class="muted">{{ _('Los campos marcados con * son obligatorios.') }}</p>
+    </form>
+    {% else %}
+    {% if c.respuestas is not none %}
+    <section class="portal-cuenta-bloque"><h2>{{ _('Tus respuestas') }}</h2>
+      <dl class="visor-xml-dl">
+        {% for q in c.preguntas %}{% if c.respuestas.get(q.id) %}<dt>{{ q.texto }}</dt><dd>{% if q.tipo == 'si_no' %}{{ _('Sí') if c.respuestas[q.id] == 'si' else _('No') }}{% else %}{{ c.respuestas[q.id] }}{% endif %}</dd>{% endif %}{% endfor %}
+      </dl>
+      <p class="muted">{{ _('Si te has equivocado, díselo a tu gestoría y te lo reabrirá.') }} <a href="{{ url_for('portal_cliente.conversacion_nueva') }}">{{ _('Escribir a mi gestoría') }}</a></p>
+    </section>
+    {% else %}<p class="muted">{{ _('Este cuestionario ya no admite respuestas.') }}</p>{% endif %}
+    {% endif %}
+    <p><a href="{{ url_for('portal_cliente.cuestionarios') }}">{{ _('Volver a los cuestionarios') }}</a></p>
+{% endblock %}

@@ -161,6 +161,14 @@ def enviar_mensaje_gestoria(email_destino: str, asunto: str, texto: str, url_por
     _enviar(email_destino, _asunto(titulo, tenant_id), plano, html)
 
 
+def enviar_cuestionario(email_destino: str, titulo_cuestionario: str, descripcion: str, url_portal: str, tenant_id: int | None = None) -> None:
+    """Aviso al cliente de que su gestoría le pide que conteste un cuestionario corto en el portal (app/portal_cuestionarios.py)."""
+    titulo = _("Tu gestoría te pide que contestes unas preguntas")
+    plano, html = _construir(tenant_id, titulo, [_("Para preparar bien tus trámites necesitamos que contestes un cuestionario corto: «%(t)s».", t=titulo_cuestionario)], cita=descripcion or None,
+                             boton=(_("Contestar el cuestionario"), url_portal), aviso=_("Entra al portal de cliente con tu email: te mandaremos un enlace de acceso."), preencabezado=titulo_cuestionario)
+    _enviar(email_destino, _asunto(titulo, tenant_id), plano, html)
+
+
 def enviar_cita_resuelta(email_destino: str, confirmada: bool, canal: str, cuando: str, nota: str, url_portal: str, tenant_id: int | None = None) -> None:
     """Aviso al cliente de lo que ha decidido su gestoría sobre la cita que pidió."""
     nombres = {"llamada": _("llamada"), "videollamada": _("videollamada"), "visita": _("visita")}

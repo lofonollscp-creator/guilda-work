@@ -181,6 +181,40 @@
   </form>
 </section>
 
+<section class="proyecto-bloque ds-max-640 ds-mt-24" id="cuestionarios" aria-labelledby="cuestionarios-titulo">
+  <h2 id="cuestionarios-titulo">{{ _('Cuestionarios para el cliente') }}</h2>
+  <p class="muted">{{ _('Preguntas cortas que el cliente contesta en su portal; sus respuestas quedan aquí. Elige una plantilla o escribe las tuyas.') }}</p>
+  {% if error_conversacion %}<div class="ia-error" role="alert">{{ error_conversacion }}</div>{% endif %}
+  {% for q in cuestionarios %}
+  <details class="conversacion-equipo" id="cuestionario-{{ q.id }}"{% if q.estado == 'respondido' %} open{% endif %}>
+    <summary><strong>{{ q.titulo }}</strong> <span class="muted">{{ {'pendiente': _('Esperando al cliente'), 'respondido': _('Contestado: por revisar'), 'recibido': _('Recibido'), 'cancelado': _('Cancelado')}[q.estado] }}{% if q.respondido_en %} · {{ q.respondido_en[:16]|replace('T', ' ') }}{% endif %}</span></summary>
+    {% if q.respuestas is not none %}
+    <dl>{% for p in q.preguntas %}<dt>{{ p.texto }}</dt><dd>{% if q.respuestas.get(p.id) %}{% if p.tipo == 'si_no' %}{{ _('Sí') if q.respuestas[p.id] == 'si' else _('No') }}{% else %}{{ q.respuestas[p.id] }}{% endif %}{% else %}<span class="muted">{{ _('Sin contestar') }}</span>{% endif %}</dd>{% endfor %}</dl>
+    {% else %}<p class="muted">{{ q.preguntas|length }} {{ _('preguntas') }}{% if q.fecha_limite %} · {{ _('Fecha límite') }}: {{ q.fecha_limite }}{% endif %}</p>{% endif %}
+    <div class="herramientas">
+      {% if q.estado == 'respondido' %}<form method="post" action="{{ url_for('fiscal.resolver_cuestionario_portal', cliente_id=cliente.id, cuestionario_id=q.id, accion='recibido') }}" class="portal-persona-form"><button type="submit" class="btn btn-primary">{{ _('Dar por recibido') }}</button></form>{% endif %}
+      {% if q.estado in ('respondido', 'recibido') %}<form method="post" action="{{ url_for('fiscal.resolver_cuestionario_portal', cliente_id=cliente.id, cuestionario_id=q.id, accion='reabrir') }}" class="portal-persona-form"><button type="submit" class="btn btn-ghost">{{ _('Pedir que lo rehaga') }}</button></form>{% endif %}
+      {% if q.estado in ('pendiente', 'respondido') %}<form method="post" action="{{ url_for('fiscal.resolver_cuestionario_portal', cliente_id=cliente.id, cuestionario_id=q.id, accion='cancelar') }}" class="portal-persona-form"><button type="submit" class="btn btn-ghost">{{ _('Cancelar') }}</button></form>{% endif %}
+    </div>
+  </details>
+  {% else %}<p class="muted">{{ _('Todavía no le has mandado ningún cuestionario.') }}</p>{% endfor %}
+  <form method="post" action="{{ url_for('fiscal.crear_cuestionario_portal', cliente_id=cliente.id) }}" class="edit-form">
+    <h3>{{ _('Mandar un cuestionario') }}</h3>
+    <div class="correo-form-campo"><label for="cu-plantilla">{{ _('Plantilla') }}</label>
+      <select id="cu-plantilla" name="plantilla">{% for k, t in plantillas_cuestionario.items() %}<option value="{{ k }}">{{ t }}</option>{% endfor %}<option value="propio">{{ _('Uno propio (escribo las preguntas)') }}</option></select></div>
+    <details><summary>{{ _('Escribir uno propio') }}</summary>
+      <div class="correo-form-campo"><label for="cu-titulo">{{ _('Título') }}</label><input type="text" id="cu-titulo" name="titulo" maxlength="120"></div>
+      <div class="correo-form-campo"><label for="cu-descripcion">{{ _('Explicación para el cliente (opcional)') }}</label><input type="text" id="cu-descripcion" name="descripcion" maxlength="400"></div>
+      <div class="correo-form-campo"><label for="cu-preguntas">{{ _('Preguntas (una por línea)') }}</label>
+        <textarea id="cu-preguntas" name="preguntas" rows="5" placeholder="{{ _('¿Cuántos hijos tiene? | numero *') }}"></textarea>
+        <p class="muted">{{ _('Después de «|» el tipo: texto, si_no, numero o fecha. Un «*» al final la hace obligatoria.') }}</p></div>
+    </details>
+    <div class="correo-form-campo"><label for="cu-limite">{{ _('Fecha límite (opcional)') }}</label><input type="date" id="cu-limite" name="fecha_limite"></div>
+    <label><input type="checkbox" name="avisar" value="1" checked> {{ _('Avisarle ahora por correo') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Mandar') }}</button>
+  </form>
+</section>
+
 <section class="proyecto-bloque ds-max-640 ds-mt-24" id="contactos-portal" aria-labelledby="contactos-portal-titulo">
   <h2 id="contactos-portal-titulo">{{ _('Personas con acceso al portal') }}</h2>
   <p class="muted">{{ _('Además del titular (el email de arriba), puedes dar acceso a su administrativa, a su asesor externo… Cada una entra con su propio email y elige cuánto quiere que le avisemos. Acceso completo: todo, también firmar, pagar y dar la conformidad. Administración: subir y escribir, sin firmar, pagar ni dar la conformidad. Solo consulta: mirar.') }}</p>
