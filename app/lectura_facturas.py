@@ -104,11 +104,8 @@ def _a_factura(datos: dict, f: dict, cliente_nif: str) -> tuple[str, dict, list[
 
 
 def configurada(usuario_id: int) -> bool:
-    """¿Puede este usuario leer facturas con IA (tiene modelo y clave de OpenRouter)?"""
-    try:
-        return bool(db.obtener_preferencias_ia(usuario_id)["modelo"].strip() and ia_asistente.obtener_api_keys(usuario_id))
-    except Exception:
-        return False
+    """¿Puede este usuario leer facturas con IA (tiene modelo y clave, suya o del despacho: OpenRouter, OpenAI, Claude…)?"""
+    return ia_asistente.disponible(usuario_id, "facturas")
 
 
 def leer(tenant_id: int, usuario_id: int, factura_id: int) -> list[str]:

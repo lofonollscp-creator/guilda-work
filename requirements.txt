@@ -46,3 +46,7 @@ argon2-cffi>=23
 
 # Almacén de objetos S3 (app/almacen_objetos.py): el SDK firma las peticiones (SigV4) y sirve para AWS S3, MinIO y proveedores con API S3. Solo hace falta con GUILDA_OBJETOS=s3.
 minio>=7.2
+# Lectura de facturas (app/pdf_facturas.py): texto de las páginas con capa de texto (pypdf, puro Python) y página a imagen para los proveedores de IA que no leen PDF o para el visor
+# (pypdfium2, rueda binaria autocontenida, licencia Apache/BSD).
+pypdf>=5.0
+pypdfium2>=4.30

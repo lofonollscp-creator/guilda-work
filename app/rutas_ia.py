@@ -6,7 +6,10 @@ from flask import (
     Blueprint, Response, abort, g, jsonify, redirect, render_template, request, stream_with_context, url_for,
 )
 
-from . import db, ia_asistente as asistente, ia_atajos, ia_consumo, ia_soporte
+from flask_babel import gettext as _
+
+from . import db, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_proveedores, ia_soporte, ia_uso
+from .ia_errores import ErrorIA
 from .auth import login_required
 
 ia_bp = Blueprint("ia", __name__, url_prefix="/ia")
@@ -59,7 +62,7 @@ def enviar_mensaje():
         resultado = asistente.procesar_turno(g.usuario_id, datos.get("texto", ""))
         return jsonify({"ok": True, **resultado})
     except asistente.ErrorIA as e:
-        return jsonify({"ok": False, "error": str(e)})
+        return jsonify({"ok": False, "error": _(str(e))})
 
 
 _ADJUNTO_TAMANO_MAXIMO_BYTES = 1 * 1024 * 1024  # 1 MB -- son ficheros de texto/CSV pequeños, no documentos grandes
@@ -118,7 +121,7 @@ def confirmar():
         resultado = asistente.confirmar_pendiente(g.usuario_id, bool(datos.get("aceptar")))
         return jsonify({"ok": True, **resultado})
     except asistente.ErrorIA as e:
-        return jsonify({"ok": False, "error": str(e)})
+        return jsonify({"ok": False, "error": _(str(e))})
 
 
 # --- Variantes en streaming (asistente de voz, Fase V1 del plan
@@ -198,7 +201,7 @@ def renombrar_conversacion(conversacion_id: int):
     try:
         encontrada = db.renombrar_conversacion_ia(g.usuario_id, conversacion_id, titulo)
     except ValueError as e:
-        return jsonify({"ok": False, "error": str(e)}), 400
+        return jsonify({"ok": False, "error": _(str(e))}), 400
     if not encontrada:
         abort(404)
     return "", 204
@@ -218,21 +221,130 @@ def modelos():
     """Modelos gratuitos de OpenRouter (ver ia_asistente.listar_modelos_gratuitos),
     usado tanto por el <select> de /ia/ajustes como por el datalist de
     proveedor=openrouter en /historial (informes)."""
-    return jsonify(asistente.listar_modelos_gratuitos())
+    proveedor = request.args.get("proveedor", "openrouter")
+    if proveedor == "openrouter":
+        return jsonify(asistente.listar_modelos_gratuitos())
+    try:
+        prov = ia_proveedores.obtener(proveedor)
+    except ValueError:
+        abort(404)
+    claves = ia_claves.de_usuario(proveedor, g.usuario_id) or (ia_claves.de_despacho(proveedor, g.tenant_id) if g.tenant_id else [])
+    if prov.pide_clave and not claves:
+        return jsonify({"modelos": [], "sugeridos": list(prov.modelos_sugeridos), "error": _("Añade antes una clave de este proveedor para poder listar sus modelos.")})
+    try:
+        return jsonify({"modelos": ia_proveedores.listar_modelos(proveedor, claves[0] if claves else "", _url_del_despacho(proveedor)), "sugeridos": list(prov.modelos_sugeridos)})
+    except ErrorIA as e:
+        return jsonify({"modelos": [], "sugeridos": list(prov.modelos_sugeridos), "error": _(str(e))[:200]})
+
+
+def _url_del_despacho(proveedor: str) -> str | None:
+    if not g.tenant_id:
+        return None
+    return next((p["url_base"] for p in ia_despacho.listar(g.tenant_id) if p["id"] == proveedor and p["url_base"]), None)
 
 
 @ia_bp.route("/ajustes")
 @login_required
 def ajustes():
+    preferencias = db.obtener_preferencias_ia(g.usuario_id)
+    proveedor = preferencias["proveedor_ia"] if "proveedor_ia" in preferencias.keys() else "openrouter"
+    direccion = bool(g.tenant_id) and ia_despacho.es_direccion(g.usuario_id)
     return render_template(
         "ia_ajustes.html",
-        preferencias=db.obtener_preferencias_ia(g.usuario_id),
+        preferencias=preferencias,
+        proveedor_elegido=proveedor,
+        proveedores=[ia_proveedores.obtener(p) for p in ia_proveedores.ORDEN if ia_despacho.permitido(g.tenant_id, p) or p == proveedor],
+        claves_propias={p: len(ia_claves.de_usuario(p, g.usuario_id)) for p in ia_proveedores.ORDEN},
         modelos_sugeridos=asistente.listar_modelos_gratuitos(),
         num_claves_configuradas=len(asistente.obtener_api_keys(g.usuario_id)),
         atajos_propios=db.listar_atajos_ia(g.usuario_id),
         consumo=ia_consumo.estado(g.tenant_id) if g.tenant_id else None,
+        despacho=ia_despacho.listar(g.tenant_id) if g.tenant_id else [],
+        normas=ia_despacho.config(g.tenant_id) if g.tenant_id else None,
+        uso=ia_uso.resumen(g.tenant_id) if g.tenant_id else None,
+        es_direccion=direccion,
         error=request.args.get("error"),
+        aviso=request.args.get("aviso"),
     )
+
+
+def _exigir_direccion() -> None:
+    if not g.tenant_id or not ia_despacho.es_direccion(g.usuario_id):
+        abort(403)
+
+
+def _lineas(texto: str) -> list[str]:
+    return [c.strip() for c in (texto or "").splitlines() if c.strip()]
+
+
+@ia_bp.route("/ajustes/despacho/<proveedor>", methods=["POST"])
+@login_required
+def guardar_proveedor_despacho(proveedor: str):
+    """La dirección activa un proveedor para todo el despacho: modelo del asistente y de las facturas, dirección propia (Ollama) y claves compartidas."""
+    _exigir_direccion()
+    try:
+        ia_proveedores.obtener(proveedor)
+    except ValueError:
+        abort(404)
+    try:
+        ia_despacho.guardar(g.tenant_id, proveedor, activo=request.form.get("activo") == "on", modelo_asistente=request.form.get("modelo_asistente", ""),
+                            modelo_facturas=request.form.get("modelo_facturas", ""), url_base=request.form.get("url_base", ""), claves_nuevas=_lineas(request.form.get("claves", "")),
+                            borrar_claves=request.form.get("borrar_claves") == "on", por=g.usuario_id)
+    except ValueError as e:
+        return redirect(url_for("ia.ajustes", error=_(str(e))) + f"#proveedor-{proveedor}")
+    from . import auditoria
+    auditoria.registrar(g.tenant_id, g.usuario_id, "ia.proveedor_despacho", "ia_proveedor", None, {"proveedor": proveedor, "activo": request.form.get("activo") == "on"})
+    return redirect(url_for("ia.ajustes", aviso=_("Guardado.")) + f"#proveedor-{proveedor}")
+
+
+@ia_bp.route("/ajustes/despacho/<proveedor>/mover/<sentido>", methods=["POST"])
+@login_required
+def mover_proveedor_despacho(proveedor: str, sentido: str):
+    _exigir_direccion()
+    if sentido not in ("arriba", "abajo"):
+        abort(404)
+    ia_despacho.mover(g.tenant_id, proveedor, arriba=(sentido == "arriba"))
+    return redirect(url_for("ia.ajustes") + f"#proveedor-{proveedor}")
+
+
+@ia_bp.route("/ajustes/despacho/normas", methods=["POST"])
+@login_required
+def guardar_normas_despacho():
+    _exigir_direccion()
+    try:
+        ia_despacho.guardar_config(g.tenant_id, solo_ue=request.form.get("solo_ue") == "on", claves_personales=request.form.get("claves_personales") == "on",
+                                   facturas_modo=request.form.get("facturas_modo", "compartida"), umbral_confianza=request.form.get("umbral_confianza", 90), por=g.usuario_id)
+    except ValueError as e:
+        return redirect(url_for("ia.ajustes", error=_(str(e))) + "#normas")
+    from . import auditoria
+    auditoria.registrar(g.tenant_id, g.usuario_id, "ia.normas_despacho", "ia_config", None, {})
+    return redirect(url_for("ia.ajustes", aviso=_("Guardado.")) + "#normas")
+
+
+@ia_bp.route("/ajustes/probar", methods=["POST"])
+@login_required
+def probar_clave():
+    """Comprueba una clave y un modelo con una consulta mínima (no cuenta en el límite de IA). Usa la clave escrita en el formulario o, si está vacía, la guardada (`ambito` = usuario o despacho)."""
+    proveedor, modelo = request.form.get("proveedor", ""), request.form.get("modelo", "").strip()
+    ambito = request.form.get("ambito", "usuario")
+    try:
+        prov = ia_proveedores.obtener(proveedor)
+        url = ia_proveedores.url_valida(request.form.get("url_base", "")) if request.form.get("url_base", "").strip() else _url_del_despacho(proveedor)
+    except ValueError as e:
+        return jsonify({"ok": False, "error": _(str(e))})
+    if ambito == "despacho":
+        _exigir_direccion()
+    if not ia_despacho.permitido(g.tenant_id, proveedor):
+        return jsonify({"ok": False, "error": _("El despacho no admite este proveedor (solo UE o tu propia red).")})
+    escritas = _lineas(request.form.get("clave", ""))
+    guardadas = ia_claves.de_despacho(proveedor, g.tenant_id) if ambito == "despacho" and g.tenant_id else (asistente.obtener_api_keys(g.usuario_id) if proveedor == "openrouter" else ia_claves.de_usuario(proveedor, g.usuario_id))
+    clave = (escritas or guardadas or [""])[0]
+    if prov.pide_clave and not clave:
+        return jsonify({"ok": False, "error": _("No hay ninguna clave que probar.")})
+    if not modelo:
+        return jsonify({"ok": False, "error": _("Indica un modelo para probar.")})
+    motivo = ia_proveedores.probar(proveedor, modelo, clave, url)
+    return jsonify({"ok": not motivo, "error": _(motivo) if motivo else "", "mensaje": _("Funciona: la clave y el modelo responden.") if not motivo else ""})
 
 
 @ia_bp.route("/ajustes/atajos", methods=["POST"])
@@ -241,7 +353,7 @@ def crear_atajo():
     try:
         db.crear_atajo_ia(g.usuario_id, request.form.get("titulo", ""), request.form.get("prompt", ""))
     except ValueError as e:
-        return redirect(url_for("ia.ajustes", error=str(e)))
+        return redirect(url_for("ia.ajustes", error=_(str(e))))
     return redirect(url_for("ia.ajustes"))
 
 
@@ -258,17 +370,33 @@ def guardar_ajustes():
     modelo = request.form.get("modelo", "").strip()
     if not modelo:
         modelo = request.form.get("modelo_personalizado", "").strip()
+    proveedor = request.form.get("proveedor", "openrouter")
+    try:
+        ia_proveedores.obtener(proveedor)
+    except ValueError:
+        return redirect(url_for("ia.ajustes", error=_("Proveedor de IA no válido.")))
+    if not ia_despacho.permitido(g.tenant_id, proveedor):
+        return redirect(url_for("ia.ajustes", error=_("El despacho solo admite proveedores de la UE o de tu propia red: este manda los datos fuera.")))
+    if g.tenant_id and not ia_despacho.config(g.tenant_id)["claves_personales"] and (_lineas(request.form.get("api_keys", "")) or proveedor != "openrouter"):
+        return redirect(url_for("ia.ajustes", error=_("La dirección del despacho no permite claves personales: se usan las del despacho.")))
     db.guardar_preferencias_ia(
         g.usuario_id,
         modelo=modelo,
         modo_autonomo=request.form.get("modo_autonomo") == "on",
         solo_lectura=request.form.get("solo_lectura") == "on",
     )
+    db.guardar_proveedor_ia(g.usuario_id, proveedor)
 
     nuevas_claves = request.form.get("api_keys", "").splitlines()
     if any(c.strip() for c in nuevas_claves):
-        asistente.guardar_api_keys(g.usuario_id, nuevas_claves)
+        if proveedor == "openrouter":
+            asistente.guardar_api_keys(g.usuario_id, nuevas_claves)
+        else:
+            ia_claves.guardar_de_usuario(proveedor, g.usuario_id, nuevas_claves)
     if request.form.get("borrar_api_keys") == "on":
-        asistente.borrar_api_key(g.usuario_id)
+        if proveedor == "openrouter":
+            asistente.borrar_api_key(g.usuario_id)
+        else:
+            ia_claves.borrar_de_usuario(proveedor, g.usuario_id)
 
-    return redirect(url_for("ia.ajustes"))
+    return redirect(url_for("ia.ajustes", aviso=_("Guardado.")))

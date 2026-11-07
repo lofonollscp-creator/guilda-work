@@ -23,9 +23,12 @@ import urllib.error
 import urllib.request
 from collections.abc import Iterator
 
+import itertools
+
 import keyring
 
-from . import anonimizar, ayuda, db, ia_consumo, ia_fuentes, ia_soporte, ia_herramientas as herramientas
+from . import anonimizar, ayuda, db, ia_claves, ia_consumo, ia_despacho, ia_fuentes, ia_proveedores, ia_soporte, ia_uso, ia_herramientas as herramientas
+from .ia_errores import ErrorIA
 
 SERVICIO_KEYRING_IA = "guilda-work-ia"
 CLAVE_API_OPENROUTER = "openrouter-api-key"
@@ -173,17 +176,6 @@ def mensaje_de_error(e: Exception) -> str:
     return MENSAJE_ERROR_INTERNO
 
 
-class ErrorIA(Exception):
-    """Error legible para mostrar en el chat cuando el asistente falla.
-    `codigo_http` solo se rellena si el error viene de una respuesta HTTP
-    real de OpenRouter (None en errores de red/timeout/parseo) -- lo usa
-    _post_json_con_fallback para decidir si vale la pena probar otra clave."""
-
-    def __init__(self, mensaje: str, codigo_http: int | None = None):
-        super().__init__(mensaje)
-        self.codigo_http = codigo_http
-
-
 def _clave_keyring_api(usuario_id: int) -> str:
     return f"{CLAVE_API_OPENROUTER}-usuario-{usuario_id}"
 
@@ -197,36 +189,17 @@ _CODIGOS_FALLBACK = {401, 402, 403, 429}
 
 
 def guardar_api_keys(usuario_id: int, claves: list[str]) -> None:
-    """Guarda la lista de claves en orden de preferencia (la primera se
-    prueba primero; si falla por un motivo propio de esa clave, se pasa a
-    la siguiente, ver _post_json_con_fallback). Lista vacía = borrar todo."""
-    claves = [c.strip() for c in claves if c.strip()]
-    if claves:
-        keyring.set_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id), json.dumps(claves))
-    else:
-        borrar_api_key(usuario_id)
+    """Guarda la lista de claves de OpenRouter de la persona en orden de preferencia (la primera se prueba primero; si falla por un motivo propio de esa clave, se pasa a la siguiente, ver
+    _post_json_con_fallback). Lista vacía = borrar todo. Las de otros proveedores están en app/ia_claves.py."""
+    ia_claves.guardar_de_usuario("openrouter", usuario_id, claves)
 
 
 def obtener_api_keys(usuario_id: int) -> list[str]:
-    valor = keyring.get_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id))
-    if not valor:
-        return []
-    try:
-        datos = json.loads(valor)
-        if isinstance(datos, list):
-            return [str(c) for c in datos if c]
-    except (json.JSONDecodeError, TypeError):
-        pass
-    # Guardado antes de soportar varias claves: una sola clave en texto
-    # plano (no JSON) -- se trata como lista de una.
-    return [valor]
+    return ia_claves.de_usuario("openrouter", usuario_id)
 
 
 def borrar_api_key(usuario_id: int) -> None:
-    try:
-        keyring.delete_password(SERVICIO_KEYRING_IA, _clave_keyring_api(usuario_id))
-    except keyring.errors.PasswordDeleteError:
-        pass
+    ia_claves.borrar_de_usuario("openrouter", usuario_id)
 
 
 def _post_json(url: str, payload: dict, api_key: str, timeout: int = TIMEOUT_SEGUNDOS) -> dict:
@@ -343,6 +316,130 @@ def _post_json_con_fallback(url: str, payload: dict, claves: list[str], timeout:
                 raise
             ultimo_error = e
     raise ultimo_error
+
+
+# --- Quién responde: claves propias, claves del despacho y OpenRouter ------------------------------------------------------------------------------------
+# Para cada consulta se arma la lista de «candidatos» en este orden: 1) los de la propia persona (su proveedor, su modelo y sus claves: van primero), 2) los del despacho, en el orden
+# que fijó la dirección. Se prueba cada uno hasta que uno responde; el resto de la aplicación habla siempre el formato de OpenRouter/OpenAI (app/ia_proveedores.py traduce).
+# OpenRouter conserva su ruta de siempre (`_post_json_con_fallback`) y sigue siendo lo predeterminado: quien no toque nada funciona exactamente igual.
+
+def _tenant_de(usuario_id: int) -> int | None:
+    try:
+        u = db.obtener_usuario(usuario_id)
+        return u["tenant_id"] if u else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def candidatos(usuario_id: int, tarea: str = "asistente") -> list[dict]:
+    """Los proveedores que pueden responder a esta persona en esa tarea («asistente» o «facturas»), en orden de prueba: {proveedor, modelo, claves, url_base, origen}."""
+    prefs = db.obtener_preferencias_ia(usuario_id)
+    modelo = (prefs["modelo"] or "").strip()
+    try:
+        proveedor = prefs["proveedor_ia"] or "openrouter"
+    except (KeyError, IndexError):
+        proveedor = "openrouter"
+    tenant_id = _tenant_de(usuario_id)
+    lista: list[dict] = []
+    if modelo and proveedor in ia_proveedores.PROVEEDORES and ia_despacho.permitido(tenant_id, proveedor) and (tenant_id is None or ia_despacho.config(tenant_id)["claves_personales"]):
+        claves = obtener_api_keys(usuario_id) if proveedor == "openrouter" else ia_claves.de_usuario(proveedor, usuario_id)
+        if claves or not ia_proveedores.obtener(proveedor).pide_clave:
+            lista.append({"proveedor": proveedor, "modelo": modelo, "claves": claves or [""], "url_base": None, "origen": "usuario"})
+    return lista + ia_despacho.candidatos(tenant_id, tarea)
+
+
+def disponible(usuario_id: int, tarea: str = "asistente") -> bool:
+    """¿Puede esta persona usar la IA para esa tarea (tiene modelo y clave, suya o del despacho)?"""
+    try:
+        return bool(candidatos(usuario_id, tarea))
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _sin_candidatos(usuario_id: int) -> ErrorIA:
+    if not (db.obtener_preferencias_ia(usuario_id)["modelo"] or "").strip() and not ia_despacho.candidatos(_tenant_de(usuario_id), "asistente"):
+        return ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
+    return ErrorIA("No hay ninguna clave de API configurada (ni tuya ni del despacho). Añádela en Ajustes del Asistente IA.")
+
+
+def _con_claves(c: dict, payload: dict, timeout: int) -> dict:
+    """Una consulta a un proveedor que no es OpenRouter: prueba sus claves en orden mientras el fallo sea de la clave (sin saldo, inválida, límite)."""
+    ultimo: ErrorIA | None = None
+    for clave in c["claves"]:
+        try:
+            return ia_proveedores.llamar(c["proveedor"], c["modelo"], payload, clave, c["url_base"], timeout)
+        except ErrorIA as e:
+            if e.codigo_http not in _CODIGOS_FALLBACK:
+                raise
+            ultimo = e
+    raise ultimo
+
+
+def _llamar(usuario_id: int, tarea: str, payload: dict, timeout: int = TIMEOUT_SEGUNDOS, cands: list[dict] | None = None) -> dict:
+    """Manda la consulta (`payload` sin `model`) al primer candidato que responda y devuelve la respuesta con forma de OpenAI. Anota el uso. Si todos fallan, el error es el del primero."""
+    cands = cands if cands is not None else candidatos(usuario_id, tarea)
+    if not cands:
+        raise _sin_candidatos(usuario_id)
+    primero: ErrorIA | None = None
+    for c in cands:
+        try:
+            if c["proveedor"] == "openrouter":
+                extra = (timeout,) if timeout != TIMEOUT_SEGUNDOS else ()
+                respuesta = _post_json_con_fallback(OPENROUTER_URL, {**payload, "model": c["modelo"]}, c["claves"], *extra)
+            else:
+                respuesta = _con_claves(c, payload, timeout)
+        except ErrorIA as e:
+            primero = primero or e
+            continue
+        ia_uso.registrar(_tenant_de(usuario_id), c["proveedor"], c["modelo"], tarea, c["origen"], respuesta.get("usage") if isinstance(respuesta, dict) else None)
+        return respuesta
+    raise primero
+
+
+def _stream_de(c: dict, payload: dict) -> Iterator[dict]:
+    if c["proveedor"] == "openrouter":
+        yield from _post_json_stream_con_fallback(OPENROUTER_URL, {**payload, "model": c["modelo"]}, c["claves"])
+        return
+    ultimo: ErrorIA | None = None
+    for clave in c["claves"]:
+        flujo = ia_proveedores.llamar_stream(c["proveedor"], c["modelo"], payload, clave, c["url_base"])
+        try:
+            primero = next(flujo)
+        except StopIteration:
+            return
+        except ErrorIA as e:
+            if e.codigo_http not in _CODIGOS_FALLBACK:
+                raise
+            ultimo = e
+            continue
+        yield from itertools.chain([primero], flujo)
+        return
+    raise ultimo
+
+
+def _llamar_stream(usuario_id: int, tarea: str, payload: dict) -> Iterator[dict]:
+    """Como `_llamar`, en streaming. Se cambia de candidato solo si el fallo llega al abrir la conexión (antes del primer trozo); a mitad del flujo ya no tiene sentido."""
+    cands = candidatos(usuario_id, tarea)
+    if not cands:
+        raise _sin_candidatos(usuario_id)
+    primero: ErrorIA | None = None
+    for c in cands:
+        flujo = _stream_de(c, payload)
+        try:
+            inicial = next(flujo)
+        except StopIteration:
+            return
+        except ErrorIA as e:
+            primero = primero or e
+            continue
+        uso = None
+        for trozo in itertools.chain([inicial], flujo):
+            if isinstance(trozo, dict) and trozo.get("usage"):
+                uso = trozo["usage"]
+            yield trozo
+        ia_uso.registrar(_tenant_de(usuario_id), c["proveedor"], c["modelo"], tarea, c["origen"], uso)
+        return
+    raise primero
 
 
 # --- Listado de modelos gratuitos de OpenRouter -----------------------------
@@ -557,33 +654,27 @@ def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
     """Llamada puntual al modelo del usuario, sin herramientas ni historial
     (la usan las acciones de IA del correo). Lanza ErrorIA si no hay modelo
     o clave configurados."""
-    modelo = db.obtener_preferencias_ia(usuario_id)["modelo"]
-    claves = obtener_api_keys(usuario_id)
-    if not modelo.strip():
-        raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
-    if not claves:
-        raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
+    cands = candidatos(usuario_id, "asistente")
+    if not cands:
+        raise _sin_candidatos(usuario_id)
     _reservar_uso(usuario_id)
     sp, enviados = _envio_protegido(usuario_id, [{"role": "system", "content": sistema}, {"role": "user", "content": contenido}])
-    respuesta = _post_json_con_fallback(OPENROUTER_URL, {"model": modelo, "messages": enviados}, claves)
+    respuesta = _llamar(usuario_id, "asistente", {"messages": enviados}, cands=cands)
     try:
         return (sp.restaurar(respuesta["choices"][0]["message"].get("content")) or "").strip()
     except (KeyError, IndexError, AttributeError) as e:
         raise ErrorIA(f"Respuesta inesperada de OpenRouter: {respuesta}") from e
 
 
-def completar_partes(usuario_id: int, sistema: str, partes: list[dict], timeout: int = 90) -> str:
+def completar_partes(usuario_id: int, sistema: str, partes: list[dict], timeout: int = 90, tarea: str = "facturas") -> str:
     """Como `completar_texto`, pero el mensaje del usuario puede llevar imágenes o PDF (partes `text`, `image_url` o `file` en el formato de OpenRouter). Usa la clave y el modelo del
     usuario, que debe ser un modelo capaz de leer imágenes. Cuenta una consulta en el consumo del despacho."""
-    modelo = db.obtener_preferencias_ia(usuario_id)["modelo"]
-    claves = obtener_api_keys(usuario_id)
-    if not modelo.strip():
-        raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
-    if not claves:
-        raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
+    cands = candidatos(usuario_id, tarea)
+    if not cands:
+        raise _sin_candidatos(usuario_id)
     _reservar_uso(usuario_id)
     sp, enviados = _envio_protegido(usuario_id, [{"role": "system", "content": sistema}, {"role": "user", "content": partes}])   # las imágenes y PDF no se pueden proteger: solo las partes de texto
-    respuesta = _post_json_con_fallback(OPENROUTER_URL, {"model": modelo, "temperature": 0, "messages": enviados}, claves, timeout)
+    respuesta = _llamar(usuario_id, tarea, {"temperature": 0, "messages": enviados}, timeout, cands=cands)
     try:
         return (sp.restaurar(respuesta["choices"][0]["message"].get("content")) or "").strip()
     except (KeyError, IndexError, AttributeError, TypeError) as e:
@@ -595,12 +686,8 @@ def _continuar_conversacion(usuario_id: int) -> dict:
     modelo = preferencias["modelo"]
     modo_autonomo = bool(preferencias["modo_autonomo"])
     solo_lectura = bool(preferencias["solo_lectura"])
-    claves = obtener_api_keys(usuario_id)
-
-    if not modelo.strip():
-        raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
-    if not claves:
-        raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
+    if not candidatos(usuario_id, "asistente"):
+        raise _sin_candidatos(usuario_id)
 
     ids_antes = {m["id"] for m in db.listar_mensajes_ia(usuario_id)}
 
@@ -617,11 +704,7 @@ def _continuar_conversacion(usuario_id: int) -> dict:
 
         mensajes_api = _mensajes_para_openrouter(usuario_id)
         sp, mensajes_envio = _envio_protegido(usuario_id, mensajes_api)
-        respuesta = _post_json_con_fallback(
-            OPENROUTER_URL,
-            {"model": modelo, "messages": mensajes_envio, "tools": _herramientas_para(solo_lectura, mensajes_api)},
-            claves,
-        )
+        respuesta = _llamar(usuario_id, "asistente", {"messages": mensajes_envio, "tools": _herramientas_para(solo_lectura, mensajes_api)})
         try:
             mensaje = _restaurar_respuesta(sp, respuesta["choices"][0]["message"])
         except (KeyError, IndexError) as e:
@@ -723,12 +806,8 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
     modelo = preferencias["modelo"]
     modo_autonomo = bool(preferencias["modo_autonomo"])
     solo_lectura = bool(preferencias["solo_lectura"])
-    claves = obtener_api_keys(usuario_id)
-
-    if not modelo.strip():
-        raise ErrorIA("No hay ningún modelo configurado. Elige uno en Ajustes del Asistente IA.")
-    if not claves:
-        raise ErrorIA("No hay ninguna clave de API de OpenRouter configurada. Añádela en Ajustes del Asistente IA.")
+    if not candidatos(usuario_id, "asistente"):
+        raise _sin_candidatos(usuario_id)
 
     for _ in range(MAX_ITERACIONES_HERRAMIENTAS):
         tool_call_id_pendiente = _tool_call_id_pendiente(usuario_id)
@@ -741,14 +820,14 @@ def _continuar_conversacion_stream(usuario_id: int) -> Iterator[dict]:
         mensajes_api = _mensajes_para_openrouter(usuario_id)
         sp, mensajes_envio = _envio_protegido(usuario_id, mensajes_api)
         restaurador = anonimizar.RestauradorEnStream(sp)
-        payload = {"model": modelo, "messages": mensajes_envio, "tools": _herramientas_para(solo_lectura, mensajes_api)}
+        payload = {"messages": mensajes_envio, "tools": _herramientas_para(solo_lectura, mensajes_api)}
         contenido_acumulado = ""
         # Los tool_calls llegan troceados por índice a lo largo de varios
         # chunks (id/nombre/argumentos incompletos hasta que termina el
         # stream) -- se van concatenando aquí antes de poder ejecutarlos.
         tool_calls_acumulados: dict[int, dict] = {}
 
-        for chunk in _post_json_stream_con_fallback(OPENROUTER_URL, payload, claves):
+        for chunk in _llamar_stream(usuario_id, "asistente", payload):
             try:
                 delta = chunk["choices"][0].get("delta", {})
             except (KeyError, IndexError, TypeError):

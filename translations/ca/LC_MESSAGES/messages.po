@@ -23540,3 +23540,218 @@ msgstr "Puja d'1 a 10 fitxers alhora (`archivos`)."
 
 msgid "`como` debe ser \"cliente\" o \"contraparte\"."
 msgstr "`como` ha de ser \"cliente\" o \"contraparte\"."
+
+msgid "Añade antes una clave de este proveedor para poder listar sus modelos."
+msgstr "Afegeix abans una clau d'aquest proveïdor per poder llistar-ne els models."
+
+msgid "El despacho no admite este proveedor (solo UE o tu propia red)."
+msgstr "El despatx no admet aquest proveïdor (només UE o la teva pròpia xarxa)."
+
+msgid "No hay ninguna clave que probar."
+msgstr "No hi ha cap clau per provar."
+
+msgid "Indica un modelo para probar."
+msgstr "Indica un model per provar."
+
+msgid "Funciona: la clave y el modelo responden."
+msgstr "Funciona: la clau i el model responen."
+
+msgid "El despacho solo admite proveedores de la UE o de tu propia red: este manda los datos fuera."
+msgstr "El despatx només admet proveïdors de la UE o de la teva pròpia xarxa: aquest envia les dades fora."
+
+msgid "La dirección del despacho no permite claves personales: se usan las del despacho."
+msgstr "La direcció del despatx no permet claus personals: s'usen les del despatx."
+
+msgid "Proveedor de IA no válido."
+msgstr "Proveïdor d'IA no vàlid."
+
+msgid "Tu proveedor y modelo"
+msgstr "El teu proveïdor i model"
+
+msgid "Por defecto se usa OpenRouter, con modelos gratuitos. Si pones aquí tu propia clave de OpenAI (ChatGPT), Claude u otro proveedor, se usará primero la tuya y, si falla, las del despacho."
+msgstr "Per defecte s'usa OpenRouter, amb models gratuïts. Si hi poses la teva pròpia clau d'OpenAI (ChatGPT), Claude o un altre proveïdor, s'usarà primer la teva i, si falla, les del despatx."
+
+msgid "o cualquier otro id de modelo de OpenRouter, incluidos los de pago"
+msgstr "o qualsevol altre id de model d'OpenRouter, inclosos els de pagament"
+
+msgid "ej. gpt-4o-mini, claude-sonnet-5-5, mistralai/mistral-large"
+msgstr "ex. gpt-4o-mini, claude-sonnet-5-5, mistralai/mistral-large"
+
+msgid "Ver los modelos de mi cuenta"
+msgstr "Veure els models del meu compte"
+
+msgid "Tus claves de API de este proveedor (una por línea, en orden de preferencia)"
+msgstr "Les teves claus d'API d'aquest proveïdor (una per línia, per ordre de preferència)"
+
+msgid "Deja en blanco para no cambiar las que ya tienes guardadas"
+msgstr "Deixa en blanc per no canviar les que ja tens desades"
+
+msgid "Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente. Las claves se guardan cifradas, nunca en la base de datos, y no se vuelven a mostrar."
+msgstr "Es prova primer la primera línia. Si falla per un motiu propi d'aquesta clau (sense crèdit, invàlida, límit de peticions assolit), es passa automàticament a la següent. Les claus es desen xifrades, mai a la base de dades, i no es tornen a mostrar."
+
+msgid "Borrar todas mis claves de este proveedor"
+msgstr "Esborrar totes les meves claus d'aquest proveïdor"
+
+msgid "Probar clave y modelo"
+msgstr "Provar clau i model"
+
+msgid "IA de tu despacho"
+msgstr "IA del teu despatx"
+
+msgid "Las claves del despacho las usa todo el equipo cuando una persona no tiene las suyas, o las suyas fallan. Se prueban en este orden."
+msgstr "Les claus del despatx les fa servir tot l'equip quan una persona no té les seves, o les seves fallen. Es proven en aquest ordre."
+
+msgid "El despacho no tiene proveedores de IA propios: se usa OpenRouter."
+msgstr "El despatx no té proveïdors d'IA propis: s'usa OpenRouter."
+
+msgid "Solo la dirección del despacho puede cambiar esto."
+msgstr "Només la direcció del despatx pot canviar això."
+
+msgid "UE"
+msgstr "UE"
+
+msgid "tu red"
+msgstr "la teva xarxa"
+
+msgid "Bloqueado por la norma «solo proveedores de la UE o de tu red»."
+msgstr "Bloquejat per la norma «només proveïdors de la UE o de la teva xarxa»."
+
+msgid "Usar este proveedor en el despacho"
+msgstr "Fer servir aquest proveïdor al despatx"
+
+msgid "Modelo del asistente"
+msgstr "Model de l'assistent"
+
+msgid "Modelo para leer facturas"
+msgstr "Model per llegir factures"
+
+msgid "el mismo del asistente"
+msgstr "el mateix de l'assistent"
+
+msgid "Dirección del servidor (opcional)"
+msgstr "Adreça del servidor (opcional)"
+
+msgid "Claves del despacho (una por línea)"
+msgstr "Claus del despatx (una per línia)"
+
+msgid "Todavía no hay ninguna clave guardada."
+msgstr "Encara no hi ha cap clau desada."
+
+msgid "Borrar las claves guardadas"
+msgstr "Esborrar les claus desades"
+
+msgid "Probar antes"
+msgstr "Provar abans"
+
+msgid "Probar después"
+msgstr "Provar després"
+
+msgid "Normas del despacho"
+msgstr "Normes del despatx"
+
+msgid "Solo proveedores de la UE o de nuestra propia red (los datos no salen de Europa)"
+msgstr "Només proveïdors de la UE o de la nostra pròpia xarxa (les dades no surten d'Europa)"
+
+msgid "Permitir que cada persona use sus propias claves (van antes que las del despacho)"
+msgstr "Permetre que cada persona faci servir les seves pròpies claus (van abans que les del despatx)"
+
+msgid "Al leer facturas con IA"
+msgstr "En llegir factures amb IA"
+
+msgid "La IA propone y una persona siempre revisa"
+msgstr "La IA proposa i una persona sempre revisa"
+
+msgid "La IA decide sola cuando está segura; una persona revisa el resto"
+msgstr "La IA decideix sola quan n'està segura; una persona revisa la resta"
+
+msgid "Confianza mínima para que decida sola (%%)"
+msgstr "Confiança mínima perquè decideixi sola (%%)"
+
+msgid "Aunque la IA decida sola, siempre puedes abrir la factura, ver los datos junto al documento y corregirlos."
+msgstr "Encara que la IA decideixi sola, sempre pots obrir la factura, veure les dades al costat del document i corregir-les."
+
+msgid "Guardar normas"
+msgstr "Desar normes"
+
+msgid "Uso este mes por proveedor (estimado)"
+msgstr "Ús aquest mes per proveïdor (estimat)"
+
+msgid "Tokens"
+msgstr "Tokens"
+
+msgid "Coste (USD)"
+msgstr "Cost (USD)"
+
+msgid "Otras"
+msgstr "Altres"
+
+msgid "%(n)s sin tarifa conocida"
+msgstr "%(n)s sense tarifa coneguda"
+
+msgid "Es una estimación con las tarifas públicas de cada modelo. La cifra real es la que te cobra cada proveedor."
+msgstr "És una estimació amb les tarifes públiques de cada model. La xifra real és la que et cobra cada proveïdor."
+
+msgid "El predeterminado: incluye modelos gratuitos. Las claves de OpenRouter personales siguen funcionando como hasta ahora."
+msgstr "El predeterminat: inclou models gratuïts. Les claus d'OpenRouter personals continuen funcionant com fins ara."
+
+msgid "Necesita un modelo con visión (gpt-4o o posterior) para leer facturas."
+msgstr "Necessita un model amb visió (gpt-4o o posterior) per llegir factures."
+
+msgid "Claude lee PDF e imágenes de forma nativa: muy buena opción para facturas."
+msgstr "Claude llegeix PDF i imatges de manera nativa: molt bona opció per a factures."
+
+msgid "Las páginas de los PDF se envían como imágenes."
+msgstr "Les pàgines dels PDF s'envien com a imatges."
+
+msgid "Empresa europea. Para facturas usa un modelo con visión (Pixtral)."
+msgstr "Empresa europea. Per a factures fes servir un model amb visió (Pixtral)."
+
+msgid "Un modelo en tu propia red: los datos no salen de ella. Indica la dirección de tu servidor Ollama."
+msgstr "Un model a la teva pròpia xarxa: les dades no en surten. Indica l'adreça del teu servidor Ollama."
+
+msgid "El modo de lectura de facturas no es válido."
+msgstr "El mode de lectura de factures no és vàlid."
+
+msgid "El nombre del modelo no es válido (sin espacios, máximo 120 caracteres)."
+msgstr "El nom del model no és vàlid (sense espais, màxim 120 caràcters)."
+
+msgid "Solo se puede cambiar la dirección en Ollama y en los proveedores compatibles con OpenAI."
+msgstr "Només es pot canviar l'adreça a Ollama i als proveïdors compatibles amb OpenAI."
+
+msgid "Para activar este proveedor añade antes su clave de API."
+msgstr "Per activar aquest proveïdor afegeix abans la seva clau d'API."
+
+msgid "Indica al menos un modelo (para el asistente o para las facturas)."
+msgstr "Indica almenys un model (per a l'assistent o per a les factures)."
+
+msgid "El umbral de confianza debe ser un número."
+msgstr "El llindar de confiança ha de ser un número."
+
+msgid "El umbral de confianza debe estar entre 50 y 100."
+msgstr "El llindar de confiança ha d'estar entre 50 i 100."
+
+msgid "Una de las claves no parece válida (muy corta o con espacios)."
+msgstr "Una de les claus no sembla vàlida (massa curta o amb espais)."
+
+msgid "La dirección del servidor no es válida (por ejemplo http://localhost:11434/v1)."
+msgstr "L'adreça del servidor no és vàlida (per exemple http://localhost:11434/v1)."
+
+msgid "El proveedor no acepta la clave (revisa que esté completa y activa)."
+msgstr "El proveïdor no accepta la clau (revisa que estigui completa i activa)."
+
+msgid "La clave no tiene saldo o crédito."
+msgstr "La clau no té saldo o crèdit."
+
+msgid "El modelo no existe para esa clave (revisa el nombre)."
+msgstr "El model no existeix per a aquesta clau (revisa el nom)."
+
+msgid "El proveedor ha limitado las consultas de esa clave; inténtalo en un rato."
+msgstr "El proveïdor ha limitat les consultes d'aquesta clau; torna-ho a provar d'aquí una estona."
+
+msgid "No hay ninguna clave de API configurada (ni tuya ni del despacho). Añádela en Ajustes del Asistente IA."
+msgstr "No hi ha cap clau d'API configurada (ni teva ni del despatx). Afegeix-la a Ajustos de l'Assistent IA."
+
+msgid "Hay %(n)s clave guardada: %(lista)s. Deja en blanco para no cambiarla."
+msgid_plural "Hay %(n)s claves guardadas: %(lista)s. Deja en blanco para no cambiarlas."
+msgstr[0] "Hi ha %(n)s clau desada: %(lista)s. Deixa en blanc per no canviar-la."
+msgstr[1] "Hi ha %(n)s claus desades: %(lista)s. Deixa en blanc per no canviar-les."

@@ -48,6 +48,17 @@ def guardar_preferencias_ia(usuario_id: int, modelo: str, modo_autonomo: bool, s
 
 # --- IA local (Ollama/LM Studio): recordar el último proveedor/modelo usado --
 
+def guardar_proveedor_ia(usuario_id: int, proveedor: str) -> None:
+    """El proveedor de IA que usa esta persona para su asistente y la lectura de facturas (OpenRouter por defecto)."""
+    conn = _db.get_connection()
+    try:
+        conn.execute("INSERT INTO ia_preferencias (usuario_id) VALUES (?) ON CONFLICT DO NOTHING", (usuario_id,))
+        conn.execute("UPDATE ia_preferencias SET proveedor_ia = ? WHERE usuario_id = ?", (proveedor, usuario_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def obtener_preferencias_ia_local(usuario_id: int) -> sqlite3.Row:
     conn = _db.get_connection()
     try:

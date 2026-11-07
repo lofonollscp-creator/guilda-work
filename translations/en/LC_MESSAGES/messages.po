@@ -23531,3 +23531,218 @@ msgstr "Upload 1 to 10 files at a time (`archivos`)."
 
 msgid "`como` debe ser \"cliente\" o \"contraparte\"."
 msgstr "`como` must be \"cliente\" or \"contraparte\"."
+
+msgid "Añade antes una clave de este proveedor para poder listar sus modelos."
+msgstr "First add a key for this provider so its models can be listed."
+
+msgid "El despacho no admite este proveedor (solo UE o tu propia red)."
+msgstr "The office does not allow this provider (EU or your own network only)."
+
+msgid "No hay ninguna clave que probar."
+msgstr "There is no key to test."
+
+msgid "Indica un modelo para probar."
+msgstr "Enter a model to test."
+
+msgid "Funciona: la clave y el modelo responden."
+msgstr "It works: the key and the model respond."
+
+msgid "El despacho solo admite proveedores de la UE o de tu propia red: este manda los datos fuera."
+msgstr "The office only allows EU providers or your own network: this one sends data outside."
+
+msgid "La dirección del despacho no permite claves personales: se usan las del despacho."
+msgstr "The office management does not allow personal keys: the office's keys are used."
+
+msgid "Proveedor de IA no válido."
+msgstr "Invalid AI provider."
+
+msgid "Tu proveedor y modelo"
+msgstr "Your provider and model"
+
+msgid "Por defecto se usa OpenRouter, con modelos gratuitos. Si pones aquí tu propia clave de OpenAI (ChatGPT), Claude u otro proveedor, se usará primero la tuya y, si falla, las del despacho."
+msgstr "OpenRouter is used by default, with free models. If you enter your own OpenAI (ChatGPT), Claude or other provider key here, yours is used first and, if it fails, the office's."
+
+msgid "o cualquier otro id de modelo de OpenRouter, incluidos los de pago"
+msgstr "or any other OpenRouter model id, including paid ones"
+
+msgid "ej. gpt-4o-mini, claude-sonnet-5-5, mistralai/mistral-large"
+msgstr "e.g. gpt-4o-mini, claude-sonnet-5-5, mistralai/mistral-large"
+
+msgid "Ver los modelos de mi cuenta"
+msgstr "See the models on my account"
+
+msgid "Tus claves de API de este proveedor (una por línea, en orden de preferencia)"
+msgstr "Your API keys for this provider (one per line, in order of preference)"
+
+msgid "Deja en blanco para no cambiar las que ya tienes guardadas"
+msgstr "Leave blank to keep the ones you already have saved"
+
+msgid "Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente. Las claves se guardan cifradas, nunca en la base de datos, y no se vuelven a mostrar."
+msgstr "The first line is tried first. If it fails for a reason specific to that key (no credit, invalid, request limit reached), the next one is used automatically. Keys are stored encrypted, never in the database, and are never shown again."
+
+msgid "Borrar todas mis claves de este proveedor"
+msgstr "Delete all my keys for this provider"
+
+msgid "Probar clave y modelo"
+msgstr "Test key and model"
+
+msgid "IA de tu despacho"
+msgstr "Your office's AI"
+
+msgid "Las claves del despacho las usa todo el equipo cuando una persona no tiene las suyas, o las suyas fallan. Se prueban en este orden."
+msgstr "The office's keys are used by the whole team when a person has none of their own, or theirs fail. They are tried in this order."
+
+msgid "El despacho no tiene proveedores de IA propios: se usa OpenRouter."
+msgstr "The office has no AI providers of its own: OpenRouter is used."
+
+msgid "Solo la dirección del despacho puede cambiar esto."
+msgstr "Only the office management can change this."
+
+msgid "UE"
+msgstr "EU"
+
+msgid "tu red"
+msgstr "your network"
+
+msgid "Bloqueado por la norma «solo proveedores de la UE o de tu red»."
+msgstr "Blocked by the rule “EU providers or your own network only”."
+
+msgid "Usar este proveedor en el despacho"
+msgstr "Use this provider in the office"
+
+msgid "Modelo del asistente"
+msgstr "Assistant model"
+
+msgid "Modelo para leer facturas"
+msgstr "Model for reading invoices"
+
+msgid "el mismo del asistente"
+msgstr "same as the assistant"
+
+msgid "Dirección del servidor (opcional)"
+msgstr "Server address (optional)"
+
+msgid "Claves del despacho (una por línea)"
+msgstr "Office keys (one per line)"
+
+msgid "Todavía no hay ninguna clave guardada."
+msgstr "No key is saved yet."
+
+msgid "Borrar las claves guardadas"
+msgstr "Delete the saved keys"
+
+msgid "Probar antes"
+msgstr "Try earlier"
+
+msgid "Probar después"
+msgstr "Try later"
+
+msgid "Normas del despacho"
+msgstr "Office rules"
+
+msgid "Solo proveedores de la UE o de nuestra propia red (los datos no salen de Europa)"
+msgstr "Only EU providers or our own network (data does not leave Europe)"
+
+msgid "Permitir que cada persona use sus propias claves (van antes que las del despacho)"
+msgstr "Allow each person to use their own keys (they come before the office's)"
+
+msgid "Al leer facturas con IA"
+msgstr "When reading invoices with AI"
+
+msgid "La IA propone y una persona siempre revisa"
+msgstr "The AI proposes and a person always reviews"
+
+msgid "La IA decide sola cuando está segura; una persona revisa el resto"
+msgstr "The AI decides on its own when it is sure; a person reviews the rest"
+
+msgid "Confianza mínima para que decida sola (%%)"
+msgstr "Minimum confidence for it to decide on its own (%%)"
+
+msgid "Aunque la IA decida sola, siempre puedes abrir la factura, ver los datos junto al documento y corregirlos."
+msgstr "Even if the AI decides on its own, you can always open the invoice, see the data next to the document and correct it."
+
+msgid "Guardar normas"
+msgstr "Save rules"
+
+msgid "Uso este mes por proveedor (estimado)"
+msgstr "Usage this month by provider (estimated)"
+
+msgid "Tokens"
+msgstr "Tokens"
+
+msgid "Coste (USD)"
+msgstr "Cost (USD)"
+
+msgid "Otras"
+msgstr "Other"
+
+msgid "%(n)s sin tarifa conocida"
+msgstr "%(n)s without a known rate"
+
+msgid "Es una estimación con las tarifas públicas de cada modelo. La cifra real es la que te cobra cada proveedor."
+msgstr "This is an estimate using each model's public rates. The real figure is what each provider charges you."
+
+msgid "El predeterminado: incluye modelos gratuitos. Las claves de OpenRouter personales siguen funcionando como hasta ahora."
+msgstr "The default: it includes free models. Personal OpenRouter keys keep working as before."
+
+msgid "Necesita un modelo con visión (gpt-4o o posterior) para leer facturas."
+msgstr "It needs a vision model (gpt-4o or later) to read invoices."
+
+msgid "Claude lee PDF e imágenes de forma nativa: muy buena opción para facturas."
+msgstr "Claude reads PDFs and images natively: a very good choice for invoices."
+
+msgid "Las páginas de los PDF se envían como imágenes."
+msgstr "PDF pages are sent as images."
+
+msgid "Empresa europea. Para facturas usa un modelo con visión (Pixtral)."
+msgstr "A European company. For invoices use a vision model (Pixtral)."
+
+msgid "Un modelo en tu propia red: los datos no salen de ella. Indica la dirección de tu servidor Ollama."
+msgstr "A model on your own network: data does not leave it. Enter your Ollama server address."
+
+msgid "El modo de lectura de facturas no es válido."
+msgstr "The invoice reading mode is not valid."
+
+msgid "El nombre del modelo no es válido (sin espacios, máximo 120 caracteres)."
+msgstr "The model name is not valid (no spaces, maximum 120 characters)."
+
+msgid "Solo se puede cambiar la dirección en Ollama y en los proveedores compatibles con OpenAI."
+msgstr "The address can only be changed for Ollama and OpenAI-compatible providers."
+
+msgid "Para activar este proveedor añade antes su clave de API."
+msgstr "To turn this provider on, first add its API key."
+
+msgid "Indica al menos un modelo (para el asistente o para las facturas)."
+msgstr "Enter at least one model (for the assistant or for invoices)."
+
+msgid "El umbral de confianza debe ser un número."
+msgstr "The confidence threshold must be a number."
+
+msgid "El umbral de confianza debe estar entre 50 y 100."
+msgstr "The confidence threshold must be between 50 and 100."
+
+msgid "Una de las claves no parece válida (muy corta o con espacios)."
+msgstr "One of the keys does not look valid (too short or with spaces)."
+
+msgid "La dirección del servidor no es válida (por ejemplo http://localhost:11434/v1)."
+msgstr "The server address is not valid (for example http://localhost:11434/v1)."
+
+msgid "El proveedor no acepta la clave (revisa que esté completa y activa)."
+msgstr "The provider does not accept the key (check that it is complete and active)."
+
+msgid "La clave no tiene saldo o crédito."
+msgstr "The key has no balance or credit."
+
+msgid "El modelo no existe para esa clave (revisa el nombre)."
+msgstr "The model does not exist for that key (check the name)."
+
+msgid "El proveedor ha limitado las consultas de esa clave; inténtalo en un rato."
+msgstr "The provider has limited that key's requests; try again in a while."
+
+msgid "No hay ninguna clave de API configurada (ni tuya ni del despacho). Añádela en Ajustes del Asistente IA."
+msgstr "No API key is configured (neither yours nor the office's). Add one in the AI Assistant settings."
+
+msgid "Hay %(n)s clave guardada: %(lista)s. Deja en blanco para no cambiarla."
+msgid_plural "Hay %(n)s claves guardadas: %(lista)s. Deja en blanco para no cambiarlas."
+msgstr[0] "There is %(n)s saved key: %(lista)s. Leave blank to keep it."
+msgstr[1] "There are %(n)s saved keys: %(lista)s. Leave blank to keep them."

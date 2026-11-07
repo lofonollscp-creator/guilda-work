@@ -5383,3 +5383,10 @@ html[data-letra="grande"] .portal-cliente-shell { zoom: 1.15; }
 html[data-letra="muy-grande"] .portal-cliente-shell { zoom: 1.3; }
 .portal-cuenta-form .correo-form-campo { min-width: 0; }
 .portal-cuenta-form input[type="file"], .portal-cuenta-form input[type="text"], .portal-cuenta-form select { max-width: 100%; box-sizing: border-box; }
+
+/* Ajustes de IA: una tarjeta por proveedor del despacho */
+.ia-proveedor { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 0 0 14px; }
+.ia-proveedor.activo { border-color: var(--accent, #7c8ba1); }
+.ia-proveedor h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.ia-probar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.ia-proveedor .ia-form-row > .correo-form-campo { flex: 1 1 220px; }

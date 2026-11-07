@@ -1500,6 +1500,21 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "ia_proveedores_despacho": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "ia_config_despacho": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "ia_uso_proveedor": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_conversaciones": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

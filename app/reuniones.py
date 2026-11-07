@@ -265,10 +265,7 @@ def papelera(tenant_id: int, usuario_id: int, reunion_id: int) -> None:
 # --- Acta con IA ----------------------------------------------------------------------------------------------------------
 
 def configurada(usuario_id: int) -> bool:
-    try:
-        return bool(db.obtener_preferencias_ia(usuario_id)["modelo"].strip() and ia_asistente.obtener_api_keys(usuario_id))
-    except Exception:  # noqa: BLE001
-        return False
+    return ia_asistente.disponible(usuario_id, "asistente")
 
 
 def _sistema(plantilla: str) -> str:

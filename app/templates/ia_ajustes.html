@@ -21,12 +21,24 @@
   </section>
   {% endif %}
 
-  <section class="correo-ajustes-seccion">
-    <h2>{{ _('Modelo (OpenRouter)') }}</h2>
-    <form method="post" action="{{ url_for('ia.guardar_ajustes') }}" class="correo-form-seccion">
+  {% if aviso %}<p class="ia-aviso" role="status">{{ aviso }}</p>{% endif %}
+  {% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+
+  <section class="correo-ajustes-seccion" id="tu-proveedor">
+    <h2>{{ _('Tu proveedor y modelo') }}</h2>
+    <p class="muted">{{ _('Por defecto se usa OpenRouter, con modelos gratuitos. Si pones aquí tu propia clave de OpenAI (ChatGPT), Claude u otro proveedor, se usará primero la tuya y, si falla, las del despacho.') }}</p>
+    <form method="post" action="{{ url_for('ia.guardar_ajustes') }}" class="correo-form-seccion" data-ia-proveedor-form data-ambito="usuario" data-url-probar="{{ url_for('ia.probar_clave') }}" data-url-modelos="{{ url_for('ia.modelos') }}">
       <div class="correo-form-campo">
-        <label>{{ _('Modelo sugerido') }}</label>
-        <select name="modelo" aria-label="{{ _('Modelo sugerido') }}">
+        <label for="ia-proveedor">{{ _('Proveedor') }}</label>
+        <select name="proveedor" id="ia-proveedor" data-ia-proveedor>
+          {% for p in proveedores %}<option value="{{ p.id }}" data-claves="{{ claves_propias[p.id] }}" data-ejemplo="{{ p.ejemplo_clave }}" {% if proveedor_elegido == p.id %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}
+        </select>
+        <p class="muted" data-ia-ayuda>{% for p in proveedores %}{% if proveedor_elegido == p.id %}{{ p.ayuda }}{% endif %}{% endfor %}</p>
+      </div>
+
+      <div class="correo-form-campo" data-ia-solo-openrouter>
+        <label for="ia-modelo-sugerido">{{ _('Modelo sugerido') }}</label>
+        <select name="modelo" id="ia-modelo-sugerido">
           <option value="">— {{ _('elegir uno de la lista (solo modelos gratuitos), o usar el campo de abajo') }} —</option>
           {% for m in modelos_sugeridos %}
           <option value="{{ m.id }}" {% if preferencias.modelo == m.id %}selected{% endif %}>{{ m.nombre }}</option>
@@ -37,21 +49,26 @@
         {% endif %}
       </div>
       <div class="correo-form-campo">
-        <label>{{ _('O escribe cualquier otro id de modelo de OpenRouter (incluye modelos de pago)') }}</label>
-        <input type="text" name="modelo_personalizado" placeholder="{{ _('ej. mistralai/mistral-large') }}"
+        <label for="ia-modelo-propio">{{ _('Modelo') }} <span data-ia-solo-openrouter>({{ _('o cualquier otro id de modelo de OpenRouter, incluidos los de pago') }})</span></label>
+        <input type="text" name="modelo_personalizado" id="ia-modelo-propio" list="ia-modelos-lista" autocomplete="off" placeholder="{{ _('ej. gpt-4o-mini, claude-sonnet-5-5, mistralai/mistral-large') }}"
                value="{{ preferencias.modelo if preferencias.modelo not in modelos_sugeridos|map(attribute='id')|list else '' }}">
+        <datalist id="ia-modelos-lista"></datalist>
+        <button type="button" class="btn btn-ghost" data-ia-cargar-modelos>{{ _('Ver los modelos de mi cuenta') }}</button>
       </div>
 
       <div class="correo-form-campo">
-        <label>{{ _('Claves de API de OpenRouter (una por línea, en orden de preferencia)') }}</label>
-        <textarea name="api_keys" rows="3" placeholder="{{ ngettext('Ya tienes %(num)s clave guardada — deja en blanco para no cambiarlas', 'Ya tienes %(num)s claves guardadas — deja en blanco para no cambiarlas', num_claves_configuradas) if num_claves_configuradas else _('sk-or-...\nsk-or-... (clave de reserva, opcional)') }}" aria-label="{{ _('Claves de API de OpenRouter (una por línea, en orden de preferencia)') }}"></textarea>
-        <p class="ia-aviso">{{ _('Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente.') }}</p>
+        <label for="ia-claves">{{ _('Tus claves de API de este proveedor (una por línea, en orden de preferencia)') }}</label>
+        <textarea name="api_keys" id="ia-claves" rows="3" autocomplete="off" spellcheck="false" placeholder="{{ _('Deja en blanco para no cambiar las que ya tienes guardadas') }}"></textarea>
+        <p class="muted" data-ia-estado-claves></p>
+        <p class="ia-aviso">{{ _('Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente. Las claves se guardan cifradas, nunca en la base de datos, y no se vuelven a mostrar.') }}</p>
       </div>
-      {% if num_claves_configuradas %}
-      <label class="correo-form-checkbox">
-        <input type="checkbox" name="borrar_api_keys"> {{ _('Borrar todas las claves guardadas') }}
+      <label class="correo-form-checkbox" data-ia-borrar>
+        <input type="checkbox" name="borrar_api_keys"> {{ _('Borrar todas mis claves de este proveedor') }}
       </label>
-      {% endif %}
+      <div class="ia-probar">
+        <button type="button" class="btn btn-ghost" data-ia-probar>{{ _('Probar clave y modelo') }}</button>
+        <span class="muted" role="status" data-ia-resultado></span>
+      </div>
 
       <label class="correo-form-checkbox">
         <input type="checkbox" name="modo_autonomo" {% if preferencias.modo_autonomo %}checked{% endif %}>
@@ -70,10 +87,89 @@
     </form>
   </section>
 
+  {% if despacho %}
+  <section class="correo-ajustes-seccion" id="ia-despacho">
+    <h2>{{ _('IA de tu despacho') }}</h2>
+    <p class="muted">{{ _('Las claves del despacho las usa todo el equipo cuando una persona no tiene las suyas, o las suyas fallan. Se prueban en este orden.') }}</p>
+    {% if not es_direccion %}
+    <ul class="log-list">
+      {% for p in despacho if p.activo %}
+      <li class="log-item"><span class="log-text"><strong>{{ p.nombre }}</strong>{% if p.modelo_asistente %} · {{ p.modelo_asistente }}{% endif %}</span></li>
+      {% else %}<li class="log-item"><span class="log-text muted">{{ _('El despacho no tiene proveedores de IA propios: se usa OpenRouter.') }}</span></li>{% endfor %}
+    </ul>
+    <p class="muted">{{ _('Solo la dirección del despacho puede cambiar esto.') }}</p>
+    {% else %}
+    {% for p in despacho %}
+    <form method="post" action="{{ url_for('ia.guardar_proveedor_despacho', proveedor=p.id) }}" class="ia-proveedor {{ 'activo' if p.activo }}" id="proveedor-{{ p.id }}" data-ia-proveedor-form data-ambito="despacho"
+          data-proveedor="{{ p.id }}" data-url-probar="{{ url_for('ia.probar_clave') }}" data-url-modelos="{{ url_for('ia.modelos') }}">
+      <h3>{{ p.nombre }} <span class="muted">{{ {'ue': _('UE'), 'local': _('tu red'), 'global': ''}[p.region] }}</span>
+        {% if p.activo %}<span class="pill">{{ _('Activo') }}</span>{% endif %}</h3>
+      <p class="muted">{{ p.ayuda }}</p>
+      {% if not p.permitido %}<p class="ia-aviso">{{ _('Bloqueado por la norma «solo proveedores de la UE o de tu red».') }}</p>{% endif %}
+      <label class="correo-form-checkbox"><input type="checkbox" name="activo" {% if p.activo %}checked{% endif %}> {{ _('Usar este proveedor en el despacho') }}</label>
+      <div class="ia-form-row">
+        <div class="correo-form-campo"><label for="ma-{{ p.id }}">{{ _('Modelo del asistente') }}</label>
+          <input type="text" id="ma-{{ p.id }}" name="modelo_asistente" value="{{ p.modelo_asistente }}" list="sug-{{ p.id }}" autocomplete="off" maxlength="120"></div>
+        <div class="correo-form-campo"><label for="mf-{{ p.id }}">{{ _('Modelo para leer facturas') }}</label>
+          <input type="text" id="mf-{{ p.id }}" name="modelo_facturas" value="{{ p.modelo_facturas }}" list="sug-{{ p.id }}" autocomplete="off" maxlength="120" placeholder="{{ _('el mismo del asistente') }}"></div>
+      </div>
+      <datalist id="sug-{{ p.id }}">{% for m in p.modelos_sugeridos %}<option value="{{ m }}">{% endfor %}</datalist>
+      {% if p.id in ('ollama', 'openai', 'mistral', 'gemini') %}
+      <div class="correo-form-campo"><label for="url-{{ p.id }}">{{ _('Dirección del servidor (opcional)') }}</label>
+        <input type="url" id="url-{{ p.id }}" name="url_base" value="{{ p.url_base }}" placeholder="{{ p.url_por_defecto }}" maxlength="200"></div>
+      {% endif %}
+      {% if p.pide_clave %}
+      <div class="correo-form-campo"><label for="cl-{{ p.id }}">{{ _('Claves del despacho (una por línea)') }}</label>
+        <textarea id="cl-{{ p.id }}" name="claves" rows="2" autocomplete="off" spellcheck="false" placeholder="{{ p.ejemplo_clave }}"></textarea>
+        <p class="muted">{% if p.claves %}{{ ngettext('Hay %(n)s clave guardada: %(lista)s. Deja en blanco para no cambiarla.', 'Hay %(n)s claves guardadas: %(lista)s. Deja en blanco para no cambiarlas.', p.claves|length, n=p.claves|length, lista=p.claves|join(', ')) }}{% else %}{{ _('Todavía no hay ninguna clave guardada.') }}{% endif %}</p></div>
+      {% if p.claves %}<label class="correo-form-checkbox"><input type="checkbox" name="borrar_claves"> {{ _('Borrar las claves guardadas') }}</label>{% endif %}
+      {% endif %}
+      <div class="ia-probar">
+        <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+        <button type="button" class="btn btn-ghost" data-ia-probar>{{ _('Probar clave y modelo') }}</button>
+        {% if p.activo %}
+        <button type="submit" class="btn btn-ghost" formaction="{{ url_for('ia.mover_proveedor_despacho', proveedor=p.id, sentido='arriba') }}" aria-label="{{ _('Probar antes') }}">&uarr;</button>
+        <button type="submit" class="btn btn-ghost" formaction="{{ url_for('ia.mover_proveedor_despacho', proveedor=p.id, sentido='abajo') }}" aria-label="{{ _('Probar después') }}">&darr;</button>
+        {% endif %}
+        <span class="muted" role="status" data-ia-resultado></span>
+      </div>
+    </form>
+    {% endfor %}
+
+    <form method="post" action="{{ url_for('ia.guardar_normas_despacho') }}" class="correo-form-seccion" id="normas">
+      <h3>{{ _('Normas del despacho') }}</h3>
+      <label class="correo-form-checkbox"><input type="checkbox" name="solo_ue" {% if normas.solo_ue %}checked{% endif %}> {{ _('Solo proveedores de la UE o de nuestra propia red (los datos no salen de Europa)') }}</label>
+      <label class="correo-form-checkbox"><input type="checkbox" name="claves_personales" {% if normas.claves_personales %}checked{% endif %}> {{ _('Permitir que cada persona use sus propias claves (van antes que las del despacho)') }}</label>
+      <div class="correo-form-campo"><label for="ia-modo-facturas">{{ _('Al leer facturas con IA') }}</label>
+        <select name="facturas_modo" id="ia-modo-facturas">
+          <option value="compartida" {% if normas.facturas_modo == 'compartida' %}selected{% endif %}>{{ _('La IA propone y una persona siempre revisa') }}</option>
+          <option value="auto" {% if normas.facturas_modo == 'auto' %}selected{% endif %}>{{ _('La IA decide sola cuando está segura; una persona revisa el resto') }}</option>
+        </select></div>
+      <div class="correo-form-campo"><label for="ia-umbral">{{ _('Confianza mínima para que decida sola (%%)') }}</label>
+        <input type="number" id="ia-umbral" name="umbral_confianza" min="50" max="100" value="{{ normas.umbral_confianza }}"></div>
+      <p class="ia-aviso">{{ _('Aunque la IA decida sola, siempre puedes abrir la factura, ver los datos junto al documento y corregirlos.') }}</p>
+      <button type="submit" class="btn btn-primary">{{ _('Guardar normas') }}</button>
+    </form>
+
+    {% if uso and uso.filas %}
+    <h3>{{ _('Uso este mes por proveedor (estimado)') }}</h3>
+    <div class="tabla-caja"><table class="tabla">
+      <thead><tr><th>{{ _('Proveedor') }}</th><th>{{ _('Para') }}</th><th>{{ _('Clave') }}</th><th>{{ _('Consultas') }}</th><th>{{ _('Tokens') }}</th><th>{{ _('Coste (USD)') }}</th></tr></thead>
+      <tbody>
+        {% for f in uso.filas %}<tr><td>{{ f.proveedor }}</td><td>{{ {'asistente': _('Asistente'), 'facturas': _('Facturas'), 'otras': _('Otras')}[f.tarea] }}</td><td>{{ _('Despacho') if f.origen == 'despacho' else _('Personal') }}</td>
+          <td>{{ f.llamadas }}</td><td>{{ f.tokens_entrada + f.tokens_salida }}</td><td>{{ '%.4f'|format(f.coste_usd) }}{% if f.llamadas_sin_tarifa %} <span class="muted">({{ _('%(n)s sin tarifa conocida', n=f.llamadas_sin_tarifa) }})</span>{% endif %}</td></tr>{% endfor %}
+      </tbody>
+      <tfoot><tr><th colspan="3">{{ _('Total') }}</th><th>{{ uso.total_llamadas }}</th><th></th><th>{{ '%.4f'|format(uso.total_usd) }}</th></tr></tfoot>
+    </table></div>
+    <p class="muted">{{ _('Es una estimación con las tarifas públicas de cada modelo. La cifra real es la que te cobra cada proveedor.') }}</p>
+    {% endif %}
+    {% endif %}
+  </section>
+  {% endif %}
+
   <section class="correo-ajustes-seccion">
     <h2>{{ _('Atajos de prompts') }}</h2>
     <p class="muted">{{ _('Aparecen sobre el cuadro de texto del chat. Con un clic se envía el texto. Máximo 20 propios.') }}</p>
-    {% if error %}<p class="ia-error">{{ error }}</p>{% endif %}
     {% if atajos_propios %}
     <ul class="log-list">
       {% for a in atajos_propios %}
@@ -96,4 +192,5 @@
     </form>
   </section>
 </div>
+<script src="{{ url_for('static', filename='ia_ajustes.js') }}" defer></script>
 {% endblock %}

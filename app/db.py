@@ -2156,6 +2156,7 @@ def init_db() -> None:
         # migración del singleton, ya que esta es la que crea/asegura la
         # propia tabla ia_preferencias en primer lugar.
         _asegurar_columna(conn, "ia_preferencias", "proveedor_local", "TEXT NOT NULL DEFAULT 'ollama'")
+        _asegurar_columna(conn, "ia_preferencias", "proveedor_ia", "TEXT NOT NULL DEFAULT 'openrouter'")
         _asegurar_columna(conn, "ia_preferencias", "modelo_local", "TEXT NOT NULL DEFAULT ''")
         # Modo solo lectura del asistente: al modelo solo se le ofrecen (y solo
         # se ejecutan) las herramientas de lectura.
@@ -2346,6 +2347,9 @@ def init_db() -> None:
         portal_conversaciones.crear_esquema(conn)    # conversaciones libres cliente-gestoría del portal (app/portal_conversaciones.py)
         from . import salud_silencios
         salud_silencios.crear_esquema(conn)     # acuse, silencio y responsable de los puntos del panel de salud (app/salud_silencios.py)
+        from . import ia_despacho, ia_uso
+        ia_despacho.crear_esquema(conn)         # proveedores de IA con clave del despacho y sus normas (app/ia_despacho.py)
+        ia_uso.crear_esquema(conn)              # uso y coste de la IA por proveedor (app/ia_uso.py)
         from . import salud_historial
         salud_historial.crear_esquema(conn)     # histórico de cada punto del panel de salud (app/salud_historial.py)
         from . import reglas_fiscales
@@ -3431,6 +3435,7 @@ from .db_proyectos import (  # noqa: E402,F401
 from .db_ia import (  # noqa: E402,F401
     obtener_preferencias_ia,
     guardar_preferencias_ia,
+    guardar_proveedor_ia,
     obtener_preferencias_ia_local,
     guardar_preferencias_ia_local,
     _titulo_desde_texto,

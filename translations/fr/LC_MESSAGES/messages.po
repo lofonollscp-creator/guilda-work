@@ -23616,3 +23616,218 @@ msgstr "Téléversez de 1 à 10 fichiers à la fois (`archivos`)."
 
 msgid "`como` debe ser \"cliente\" o \"contraparte\"."
 msgstr "`como` doit être \"cliente\" ou \"contraparte\"."
+
+msgid "Añade antes una clave de este proveedor para poder listar sus modelos."
+msgstr "Ajoutez d'abord une clé de ce fournisseur pour pouvoir lister ses modèles."
+
+msgid "El despacho no admite este proveedor (solo UE o tu propia red)."
+msgstr "Le cabinet n'autorise pas ce fournisseur (UE ou votre propre réseau uniquement)."
+
+msgid "No hay ninguna clave que probar."
+msgstr "Il n'y a aucune clé à tester."
+
+msgid "Indica un modelo para probar."
+msgstr "Indiquez un modèle à tester."
+
+msgid "Funciona: la clave y el modelo responden."
+msgstr "Ça fonctionne : la clé et le modèle répondent."
+
+msgid "El despacho solo admite proveedores de la UE o de tu propia red: este manda los datos fuera."
+msgstr "Le cabinet n'admet que des fournisseurs de l'UE ou de votre propre réseau : celui-ci envoie les données à l'extérieur."
+
+msgid "La dirección del despacho no permite claves personales: se usan las del despacho."
+msgstr "La direction du cabinet n'autorise pas les clés personnelles : celles du cabinet sont utilisées."
+
+msgid "Proveedor de IA no válido."
+msgstr "Fournisseur d'IA non valide."
+
+msgid "Tu proveedor y modelo"
+msgstr "Votre fournisseur et modèle"
+
+msgid "Por defecto se usa OpenRouter, con modelos gratuitos. Si pones aquí tu propia clave de OpenAI (ChatGPT), Claude u otro proveedor, se usará primero la tuya y, si falla, las del despacho."
+msgstr "OpenRouter est utilisé par défaut, avec des modèles gratuits. Si vous saisissez ici votre propre clé OpenAI (ChatGPT), Claude ou autre, la vôtre est utilisée en premier et, en cas d'échec, celles du cabinet."
+
+msgid "o cualquier otro id de modelo de OpenRouter, incluidos los de pago"
+msgstr "ou tout autre identifiant de modèle OpenRouter, y compris payants"
+
+msgid "ej. gpt-4o-mini, claude-sonnet-5-5, mistralai/mistral-large"
+msgstr "ex. gpt-4o-mini, claude-sonnet-5-5, mistralai/mistral-large"
+
+msgid "Ver los modelos de mi cuenta"
+msgstr "Voir les modèles de mon compte"
+
+msgid "Tus claves de API de este proveedor (una por línea, en orden de preferencia)"
+msgstr "Vos clés d'API pour ce fournisseur (une par ligne, par ordre de préférence)"
+
+msgid "Deja en blanco para no cambiar las que ya tienes guardadas"
+msgstr "Laissez vide pour conserver celles déjà enregistrées"
+
+msgid "Se prueba primero la primera línea. Si falla por un motivo propio de esa clave (sin crédito, inválida, límite de peticiones alcanzado), se pasa automáticamente a la siguiente. Las claves se guardan cifradas, nunca en la base de datos, y no se vuelven a mostrar."
+msgstr "La première ligne est essayée en premier. Si elle échoue pour une raison propre à cette clé (sans crédit, invalide, limite de requêtes atteinte), la suivante est utilisée automatiquement. Les clés sont stockées chiffrées, jamais dans la base de données, et ne sont plus affichées."
+
+msgid "Borrar todas mis claves de este proveedor"
+msgstr "Supprimer toutes mes clés de ce fournisseur"
+
+msgid "Probar clave y modelo"
+msgstr "Tester la clé et le modèle"
+
+msgid "IA de tu despacho"
+msgstr "IA de votre cabinet"
+
+msgid "Las claves del despacho las usa todo el equipo cuando una persona no tiene las suyas, o las suyas fallan. Se prueban en este orden."
+msgstr "Les clés du cabinet sont utilisées par toute l'équipe quand une personne n'a pas les siennes, ou que les siennes échouent. Elles sont essayées dans cet ordre."
+
+msgid "El despacho no tiene proveedores de IA propios: se usa OpenRouter."
+msgstr "Le cabinet n'a pas de fournisseur d'IA propre : OpenRouter est utilisé."
+
+msgid "Solo la dirección del despacho puede cambiar esto."
+msgstr "Seule la direction du cabinet peut modifier ceci."
+
+msgid "UE"
+msgstr "UE"
+
+msgid "tu red"
+msgstr "votre réseau"
+
+msgid "Bloqueado por la norma «solo proveedores de la UE o de tu red»."
+msgstr "Bloqué par la règle « fournisseurs de l'UE ou de votre réseau uniquement »."
+
+msgid "Usar este proveedor en el despacho"
+msgstr "Utiliser ce fournisseur dans le cabinet"
+
+msgid "Modelo del asistente"
+msgstr "Modèle de l'assistant"
+
+msgid "Modelo para leer facturas"
+msgstr "Modèle pour lire les factures"
+
+msgid "el mismo del asistente"
+msgstr "le même que l'assistant"
+
+msgid "Dirección del servidor (opcional)"
+msgstr "Adresse du serveur (facultatif)"
+
+msgid "Claves del despacho (una por línea)"
+msgstr "Clés du cabinet (une par ligne)"
+
+msgid "Todavía no hay ninguna clave guardada."
+msgstr "Aucune clé n'est encore enregistrée."
+
+msgid "Borrar las claves guardadas"
+msgstr "Supprimer les clés enregistrées"
+
+msgid "Probar antes"
+msgstr "Essayer plus tôt"
+
+msgid "Probar después"
+msgstr "Essayer plus tard"
+
+msgid "Normas del despacho"
+msgstr "Règles du cabinet"
+
+msgid "Solo proveedores de la UE o de nuestra propia red (los datos no salen de Europa)"
+msgstr "Uniquement des fournisseurs de l'UE ou de notre propre réseau (les données ne quittent pas l'Europe)"
+
+msgid "Permitir que cada persona use sus propias claves (van antes que las del despacho)"
+msgstr "Permettre à chaque personne d'utiliser ses propres clés (elles passent avant celles du cabinet)"
+
+msgid "Al leer facturas con IA"
+msgstr "Lors de la lecture des factures avec l'IA"
+
+msgid "La IA propone y una persona siempre revisa"
+msgstr "L'IA propose et une personne révise toujours"
+
+msgid "La IA decide sola cuando está segura; una persona revisa el resto"
+msgstr "L'IA décide seule quand elle est sûre ; une personne révise le reste"
+
+msgid "Confianza mínima para que decida sola (%%)"
+msgstr "Confiance minimale pour qu'elle décide seule (%%)"
+
+msgid "Aunque la IA decida sola, siempre puedes abrir la factura, ver los datos junto al documento y corregirlos."
+msgstr "Même si l'IA décide seule, vous pouvez toujours ouvrir la facture, voir les données à côté du document et les corriger."
+
+msgid "Guardar normas"
+msgstr "Enregistrer les règles"
+
+msgid "Uso este mes por proveedor (estimado)"
+msgstr "Utilisation ce mois-ci par fournisseur (estimée)"
+
+msgid "Tokens"
+msgstr "Tokens"
+
+msgid "Coste (USD)"
+msgstr "Coût (USD)"
+
+msgid "Otras"
+msgstr "Autres"
+
+msgid "%(n)s sin tarifa conocida"
+msgstr "%(n)s sans tarif connu"
+
+msgid "Es una estimación con las tarifas públicas de cada modelo. La cifra real es la que te cobra cada proveedor."
+msgstr "C'est une estimation avec les tarifs publics de chaque modèle. Le montant réel est celui que vous facture chaque fournisseur."
+
+msgid "El predeterminado: incluye modelos gratuitos. Las claves de OpenRouter personales siguen funcionando como hasta ahora."
+msgstr "Le fournisseur par défaut : il inclut des modèles gratuits. Les clés OpenRouter personnelles continuent de fonctionner comme avant."
+
+msgid "Necesita un modelo con visión (gpt-4o o posterior) para leer facturas."
+msgstr "Il faut un modèle avec vision (gpt-4o ou ultérieur) pour lire les factures."
+
+msgid "Claude lee PDF e imágenes de forma nativa: muy buena opción para facturas."
+msgstr "Claude lit les PDF et les images nativement : un très bon choix pour les factures."
+
+msgid "Las páginas de los PDF se envían como imágenes."
+msgstr "Les pages des PDF sont envoyées sous forme d'images."
+
+msgid "Empresa europea. Para facturas usa un modelo con visión (Pixtral)."
+msgstr "Entreprise européenne. Pour les factures, utilisez un modèle avec vision (Pixtral)."
+
+msgid "Un modelo en tu propia red: los datos no salen de ella. Indica la dirección de tu servidor Ollama."
+msgstr "Un modèle sur votre propre réseau : les données n'en sortent pas. Indiquez l'adresse de votre serveur Ollama."
+
+msgid "El modo de lectura de facturas no es válido."
+msgstr "Le mode de lecture des factures n'est pas valide."
+
+msgid "El nombre del modelo no es válido (sin espacios, máximo 120 caracteres)."
+msgstr "Le nom du modèle n'est pas valide (sans espaces, 120 caractères maximum)."
+
+msgid "Solo se puede cambiar la dirección en Ollama y en los proveedores compatibles con OpenAI."
+msgstr "L'adresse ne peut être modifiée que pour Ollama et les fournisseurs compatibles OpenAI."
+
+msgid "Para activar este proveedor añade antes su clave de API."
+msgstr "Pour activer ce fournisseur, ajoutez d'abord sa clé d'API."
+
+msgid "Indica al menos un modelo (para el asistente o para las facturas)."
+msgstr "Indiquez au moins un modèle (pour l'assistant ou pour les factures)."
+
+msgid "El umbral de confianza debe ser un número."
+msgstr "Le seuil de confiance doit être un nombre."
+
+msgid "El umbral de confianza debe estar entre 50 y 100."
+msgstr "Le seuil de confiance doit être compris entre 50 et 100."
+
+msgid "Una de las claves no parece válida (muy corta o con espacios)."
+msgstr "L'une des clés ne semble pas valide (trop courte ou avec des espaces)."
+
+msgid "La dirección del servidor no es válida (por ejemplo http://localhost:11434/v1)."
+msgstr "L'adresse du serveur n'est pas valide (par exemple http://localhost:11434/v1)."
+
+msgid "El proveedor no acepta la clave (revisa que esté completa y activa)."
+msgstr "Le fournisseur n'accepte pas la clé (vérifiez qu'elle est complète et active)."
+
+msgid "La clave no tiene saldo o crédito."
+msgstr "La clé n'a ni solde ni crédit."
+
+msgid "El modelo no existe para esa clave (revisa el nombre)."
+msgstr "Le modèle n'existe pas pour cette clé (vérifiez le nom)."
+
+msgid "El proveedor ha limitado las consultas de esa clave; inténtalo en un rato."
+msgstr "Le fournisseur a limité les requêtes de cette clé ; réessayez dans un moment."
+
+msgid "No hay ninguna clave de API configurada (ni tuya ni del despacho). Añádela en Ajustes del Asistente IA."
+msgstr "Aucune clé d'API n'est configurée (ni la vôtre ni celle du cabinet). Ajoutez-en une dans les réglages de l'Assistant IA."
+
+msgid "Hay %(n)s clave guardada: %(lista)s. Deja en blanco para no cambiarla."
+msgid_plural "Hay %(n)s claves guardadas: %(lista)s. Deja en blanco para no cambiarlas."
+msgstr[0] "Il y a %(n)s clé enregistrée : %(lista)s. Laissez vide pour la conserver."
+msgstr[1] "Il y a %(n)s clés enregistrées : %(lista)s. Laissez vide pour les conserver."

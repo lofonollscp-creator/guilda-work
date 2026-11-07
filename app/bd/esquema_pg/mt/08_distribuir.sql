@@ -134,11 +134,14 @@ SELECT create_distributed_table('honorarios_aplicados', 'tenant_id', colocate_wi
 SELECT create_distributed_table('honorarios_reglas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_adjuntos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_atajos', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('ia_config_despacho', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_consumo', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_conversaciones', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_mensajes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_preferencias', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('ia_proveedores_despacho', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('ia_soporte_uso', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('ia_uso_proveedor', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('informes_tareas_suscripciones', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('inmobiliaria_ajustes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('inmobiliaria_comisiones', 'tenant_id', colocate_with => 'abogados_ajustes');
