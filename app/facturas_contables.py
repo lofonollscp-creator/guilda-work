@@ -5,6 +5,7 @@ Ciclo de vida: `pendiente` (anotada, sin revisar) → `revisada` (el despacho ha
 ese lote). `descartada` la saca del circuito sin borrarla. Cada exportación es un lote guardado con su contenido para poder descargarlo de nuevo."""
 from __future__ import annotations
 
+import logging
 import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
@@ -14,6 +15,8 @@ from dataclasses import replace
 from flask_babel import lazy_gettext as _l
 
 from . import acceso, antivirus, auditoria, db, enlace_a3, verticales
+
+logger = logging.getLogger("guilda")
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS contabilidad_clientes (
@@ -262,6 +265,9 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "lectura", "TEXT")           # NULL = escrita a mano · pendiente = solo el archivo, por leer · ia = leída por la IA · fallida
     db._asegurar_columna(conn, "facturas_contables", "lectura_error", "TEXT")
     db._asegurar_columna(conn, "facturas_contables", "lectura_evidencia", "TEXT")      # de dónde sacó la IA cada dato (migración 008)
+    db._asegurar_columna(conn, "facturas_contables", "lectura_confianza", "INTEGER")        # 0-100, lo que merece la lectura (app/lectura_confianza.py)
+    db._asegurar_columna(conn, "facturas_contables", "lectura_fuente", "TEXT")             # xml · texto (capa de texto del PDF) · imagen
+    db._asegurar_columna(conn, "facturas_contables", "revision_auto", "INTEGER NOT NULL DEFAULT 0")     # 1 = la dio por revisada la IA (modo «decide sola»), sin que la mirara una persona
     db._asegurar_columna(conn, "facturas_contables", "incluir_en_fiscal", "INTEGER NOT NULL DEFAULT 1")      # 1 = cuenta para Guilda Fiscal (modelos de impuestos); 0 = solo contabilidad
 
 
@@ -786,7 +792,7 @@ def borrar_regla(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, regla_
         conn.close()
 
 
-def sugerencias_de_reglas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, minimo: int = 2) -> list[dict]:
+def sugerencias_de_reglas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, minimo: int = 2, solo_revisadas: bool = False) -> list[dict]:
     """Los proveedores y clientes con al menos `minimo` facturas y sin regla, con lo que tienen en común todas sus facturas (cuenta, IVA, retención, tipo de operación). Solo cuenta lo que
     coincide en todas: un tercero cuyas facturas llevan IVA distinto no propone IVA."""
     _cliente(tenant_id, usuario_id, cliente_fiscal_id)
@@ -794,7 +800,7 @@ def sugerencias_de_reglas(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     try:
         filas = conn.execute("SELECT x.id, x.tipo, x.tercero_nif, x.tercero_nombre, x.concepto, x.criterio_caja, l.cuenta, l.subtipo, l.pct_iva, l.pct_retencion FROM facturas_contables x "
                              "JOIN facturas_contables_lineas l ON l.factura_id = x.id WHERE x.cliente_fiscal_id = ? AND x.tenant_id = ? AND x.estado != 'descartada' AND x.tercero_nif IS NOT NULL "
-                             "ORDER BY x.id", (cliente_fiscal_id, tenant_id)).fetchall()
+                             + ("AND x.estado IN ('revisada', 'exportada') AND x.revision_auto = 0 " if solo_revisadas else "") + "ORDER BY x.id", (cliente_fiscal_id, tenant_id)).fetchall()
         con_regla = {(r["tipo"], r["nif"]) for r in conn.execute("SELECT tipo, nif FROM contabilidad_reglas WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))}
     finally:
         conn.close()
@@ -812,6 +818,21 @@ def sugerencias_de_reglas(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
                     "pct_retencion": comun("pct_retencion") or None, "subtipo": comun("subtipo"), "criterio_caja": 1 if tipo == "proveedor" and all(f["criterio_caja"] for f in lineas) else 0,
                     "concepto": next(iter(conceptos)) if len(conceptos) == 1 else None})
     return sorted(res, key=lambda r: (-r["facturas"], r["nombre"].lower()))
+
+
+def aprender_regla(tenant_id: int, usuario_id: int, f: dict) -> bool:
+    """Aprende de lo que corrigen las personas: cuando una persona da por revisada una factura y ese proveedor o cliente ya tiene al menos dos facturas REVISADAS A MANO con la misma cuenta, IVA,
+    retención o tipo de operación (y aún no tiene regla), se crea su regla marcada como «aprendida» para que la próxima factura salga ya rellena. Las revisadas solas por la IA no enseñan nada.
+    Una regla creada a mano nunca se pisa. Devuelve si creó una."""
+    nif = _nif(f.get("tercero_nif"))
+    if not nif:
+        return False
+    tipo = _tipo_tercero(f["tipo"])
+    sugerencia = next((x for x in sugerencias_de_reglas(tenant_id, usuario_id, f["cliente_fiscal_id"], minimo=2, solo_revisadas=True) if x["tipo"] == tipo and x["nif"] == nif), None)
+    if not sugerencia or not (sugerencia["cuenta_linea"] or sugerencia["pct_iva"] is not None or sugerencia["pct_retencion"] or sugerencia["subtipo"] not in (None, "01")):      # el «01» es lo de siempre: no enseña nada
+        return False
+    guardar_regla(tenant_id, usuario_id, f["cliente_fiscal_id"], tipo, sugerencia, aprendida=True)
+    return True
 
 
 def crear_reglas_sugeridas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, claves: list[tuple[str, str]]) -> int:
@@ -1048,7 +1069,7 @@ def problemas(tenant_id: int, f: dict) -> list[str]:
     return res
 
 
-def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str) -> None:
+def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str, aprender: bool = True) -> None:
     """`revisada` (solo si no hay problemas), `pendiente` (reabrir; una exportada solo si se reabre aposta), `descartada`."""
     f = obtener(tenant_id, usuario_id, factura_id)
     if f is None:
@@ -1068,6 +1089,11 @@ def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str)
         conn.commit()
     finally:
         conn.close()
+    if nuevo == "revisada" and aprender:
+        try:
+            aprender_regla(tenant_id, usuario_id, f)
+        except Exception:  # noqa: BLE001 -- aprender es un extra: nunca debe impedir revisar
+            logger.warning("No se pudo aprender la regla del proveedor", exc_info=True)
 
 
 # --- Facturas repetidas ---------------------------------------------------------------------------------------------------------------------------------
@@ -1273,7 +1299,7 @@ def comprobar_lote(tenant_id: int, usuario_id: int, lote_id: int) -> dict | None
 # --- Subida desde el portal del cliente ------------------------------------------------------------------------------------------------------------------
 
 MAX_PENDIENTES_DEL_PORTAL = 300
-MIME_ADJUNTO = {"image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf"}
+MIME_ADJUNTO = {"image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf", "application/xml", "text/xml"}      # el XML es la factura electrónica (Facturae, UBL): se lee sin IA
 MAX_ADJUNTO_BYTES = 8 * 1024 * 1024
 TEXTO_ESTADO_PORTAL = {"pendiente": _l("Recibida: el despacho la revisará"), "revisada": _l("Revisada por el despacho"), "exportada": _l("Contabilizada"),
                        "descartada": _l("No válida: el despacho te contactará")}

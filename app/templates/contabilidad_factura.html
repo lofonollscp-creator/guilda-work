@@ -21,6 +21,61 @@
   <small>{{ _('Si es la misma, descarta una de las dos antes de exportar.') }}</small></div>
 {% endif %}
 
+{% set conf = (evidencia.confianza if evidencia and evidencia.confianza else {}) %}
+{% macro punto_confianza(campo) %}{% if conf.get(campo) is not none %}{% set pc = conf[campo] %}<span class="confianza confianza-{{ 'alta' if pc >= 90 else ('media' if pc >= 70 else 'baja') }}" title="{{ _('Confianza de la lectura: %(p)s %%', p=pc) }}">{{ pc }} %</span>{% endif %}{% endmacro %}
+{% if f and f.lectura in ('ia', 'xml') and evidencia %}
+<div class="lectura-resumen lectura-{{ 'alta' if (f.lectura_confianza or 0) >= 90 else ('media' if (f.lectura_confianza or 0) >= 70 else 'baja') }}" role="status">
+  <strong>{% if f.revision_auto %}{{ _('Revisada automáticamente por la IA') }}{% elif f.lectura == 'xml' %}{{ _('Leída de la factura electrónica (datos exactos)') }}{% else %}{{ _('Leída con IA: falta tu revisión') }}{% endif %}</strong>
+  · {{ {'xml': _('Fuente: archivo XML'), 'texto': _('Fuente: texto del PDF'), 'imagen': _('Fuente: imagen del documento')}.get(f.lectura_fuente, '') }}
+  {% if f.lectura_confianza is not none %}· <span class="confianza confianza-{{ 'alta' if f.lectura_confianza >= 90 else ('media' if f.lectura_confianza >= 70 else 'baja') }}">{{ _('Confianza %(p)s %%', p=f.lectura_confianza) }}</span>{% endif %}
+  {% if f.revision_auto %}<small>{{ _('Compruébala con el documento a la vista; si algo no está bien, corrígela o pulsa «Reabrir».') }}</small>{% endif %}
+  {% if evidencia.motivos %}<small>{{ _('Por qué no es total:') }} {{ evidencia.motivos|join('; ') }}.</small>{% endif %}
+</div>
+{% endif %}
+
+<div class="revision-visor {{ 'con-documento' if visor }}" data-visor-revision>
+{% if visor %}
+<aside class="visor-documento" aria-label="{{ _('Documento de la factura') }}">
+  {% if visor.tipo in ('imagen', 'pdf') %}
+  <div class="visor-barra" role="toolbar" aria-label="{{ _('Controles del visor') }}">
+    {% if visor.tipo == 'pdf' and visor.paginas > 1 %}
+    <button type="button" class="btn btn-ghost" data-visor-pagina="-1" aria-label="{{ _('Página anterior') }}">‹</button>
+    <span data-visor-estado aria-live="polite">1 / {{ visor.paginas }}</span>
+    <button type="button" class="btn btn-ghost" data-visor-pagina="1" aria-label="{{ _('Página siguiente') }}">›</button>
+    {% endif %}
+    <button type="button" class="btn btn-ghost" data-visor-zoom="-1" aria-label="{{ _('Alejar') }}">−</button>
+    <button type="button" class="btn btn-ghost" data-visor-zoom="1" aria-label="{{ _('Acercar') }}">+</button>
+    <button type="button" class="btn btn-ghost" data-visor-zoom="0">{{ _('Ajustar') }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.descargar_documento_cliente', cliente_id=f.cliente_fiscal_id, documento_id=f.documento_id) }}">{{ _('Abrir el original') }}</a>
+  </div>
+  <div class="visor-lienzo" data-visor-lienzo tabindex="0" aria-label="{{ _('Página de la factura (usa las flechas para moverte)') }}">
+    <div class="visor-hoja" data-visor-hoja>
+      <img data-visor-imagen data-paginas="{{ visor.paginas }}" data-url="{{ (url_for('contabilidad.imagen', factura_id=f.id) if visor.tipo == 'imagen' else url_for('contabilidad.pagina', factura_id=f.id, numero=0)) }}"
+           data-tipo="{{ visor.tipo }}" src="{{ url_for('contabilidad.imagen', factura_id=f.id) if visor.tipo == 'imagen' else url_for('contabilidad.pagina', factura_id=f.id, numero=1) }}" alt="{{ _('Factura adjunta') }}">
+      <div class="visor-caja" data-visor-caja hidden></div>
+    </div>
+  </div>
+  {% elif visor.tipo == 'xml' %}
+  <div class="visor-xml">
+    <h2>{{ _('Factura electrónica (XML)') }}</h2>
+    <p class="muted">{{ _('Este archivo no tiene imagen: es la propia factura en formato electrónico. Estos son los datos exactos que contiene.') }}</p>
+    {% if visor.datos %}<dl>
+      <dt>{{ _('Emisor') }}</dt><dd>{{ visor.datos.emisor_nombre }} · {{ visor.datos.emisor_nif }}</dd>
+      <dt>{{ _('Receptor') }}</dt><dd>{{ visor.datos.receptor_nombre }} · {{ visor.datos.receptor_nif }}</dd>
+      <dt>{{ _('Número y fecha') }}</dt><dd>{{ visor.datos.numero }} · {{ visor.datos.fecha }}</dd>
+      {% for l in visor.datos.lineas %}<dt>{{ _('Base %(n)s', n=loop.index) }}</dt><dd>{{ l.base }} € · {{ _('IVA') }} {{ l.pct_iva }} % = {{ l.cuota_iva }} €{% if l.pct_retencion %} · {{ _('retención') }} {{ l.pct_retencion }} %{% endif %}</dd>{% endfor %}
+      <dt>{{ _('Total') }}</dt><dd>{{ visor.datos.total }} €</dd>
+    </dl>{% else %}<p class="ia-aviso">{{ _('No se ha podido interpretar este XML como factura electrónica.') }}</p>{% endif %}
+    <a class="btn btn-ghost" href="{{ url_for('fiscal.descargar_documento_cliente', cliente_id=f.cliente_fiscal_id, documento_id=f.documento_id) }}">{{ _('Descargar el XML') }}</a>
+  </div>
+  {% elif visor.get('bloqueado') %}
+  <p class="ia-aviso">{{ _('Los documentos del despacho están cifrados y bloqueados: desbloquéalos para ver la factura aquí.') }}</p>
+  {% else %}
+  <p class="muted">{{ _('Este tipo de archivo no se puede enseñar aquí.') }} <a href="{{ url_for('fiscal.descargar_documento_cliente', cliente_id=f.cliente_fiscal_id, documento_id=f.documento_id) }}">{{ _('Ver la factura adjunta') }}</a></p>
+  {% endif %}
+</aside>
+{% endif %}
+<div class="revision-datos">
 <form method="post" class="edit-form" enctype="multipart/form-data" {% if f %}action="{{ url_for('contabilidad.ver', factura_id=f.id) }}"{% else %}action="{{ url_for('contabilidad.nueva') }}"{% endif %}>
   {% if not f %}
   <label for="c-cliente">{{ _('Cliente del despacho') }}</label>
@@ -29,13 +84,13 @@
   <select id="c-tipo" name="tipo"><option value="recibida" {{ 'selected' if datos.tipo == 'recibida' }}>{{ _('Recibida (gasto, de un proveedor)') }}</option><option value="emitida" {{ 'selected' if datos.tipo == 'emitida' }}>{{ _('Emitida (ingreso, a un cliente)') }}</option></select>
   {% else %}<input type="hidden" name="tipo" value="{{ f.tipo }}">{% endif %}
   <div class="fila-campos">
-    <label>{{ _('Fecha de la factura') }}<input type="date" name="fecha" value="{{ datos.fecha }}" required></label>
+    <label>{{ _('Fecha de la factura') }} {{ punto_confianza('fecha') }}<input type="date" name="fecha" value="{{ datos.fecha }}" required data-evidencia-campo="fecha"></label>
     <label>{{ _('Fecha de operación (si es distinta)') }}<input type="date" name="fecha_operacion" value="{{ datos.fecha_operacion if datos.fecha_operacion != datos.fecha else '' }}"></label>
-    <label>{{ _('Número de factura') }}<input type="text" name="numero" value="{{ datos.numero }}" maxlength="40" required></label>
+    <label>{{ _('Número de factura') }} {{ punto_confianza('numero') }}<input type="text" name="numero" value="{{ datos.numero }}" maxlength="40" required data-evidencia-campo="numero"></label>
   </div>
   <div class="fila-campos">
     <label>{{ _('Nombre del proveedor / cliente') }}<input type="text" name="tercero_nombre" value="{{ datos.tercero_nombre }}" maxlength="100" required></label>
-    <label>{{ _('NIF / CIF') }}<input type="text" name="tercero_nif" value="{{ datos.tercero_nif }}" maxlength="20"></label>
+    <label>{{ _('NIF / CIF') }} {{ punto_confianza('receptor_nif' if (datos.tipo or 'recibida') == 'emitida' else 'emisor_nif') }}<input type="text" name="tercero_nif" value="{{ datos.tercero_nif }}" maxlength="20" data-evidencia-campo="{{ 'receptor_nif' if (datos.tipo or 'recibida') == 'emitida' else 'emisor_nif' }}"></label>
     <label>{{ _('Subcuenta en a3 (si ya existe)') }}<input type="text" name="tercero_cuenta" value="{{ datos.tercero_cuenta }}" maxlength="12" inputmode="numeric"></label>
   </div>
   {% if periodo_cerrado %}<p class="muted"><span class="pill prioridad-alta">{{ _('Periodo cerrado') }}</span> {{ f.trimestre }} · {{ periodo_cerrado.detalle }}. {{ _('Para exportarla habrá que confirmar el cierre.') }}</p>{% endif %}
@@ -50,15 +105,15 @@
     <label>{{ _('Fecha de la factura que rectifica') }}<input type="date" name="rectifica_fecha" value="{{ datos.rectifica_fecha }}"></label>
   </div>
 
-  <h2 class="ds-mt-16">{{ _('Importes') }}</h2>
+  <h2 class="ds-mt-16">{{ _('Importes') }} {{ punto_confianza('base') }}</h2>
   <div class="table-wrap"><table class="historial-table">
     <thead><tr><th>{{ _('Base imponible') }}</th><th>{{ _('Tipo de IVA') }} %</th><th>{{ _('Cuota IVA') }}</th><th>{{ _('Recargo') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Cuenta de gasto/ingreso') }}</th><th>{{ _('Tipo de operación') }}</th></tr></thead>
     <tbody>
     {% for i in range([lineas|length + 1, 3]|max if lineas|length < 8 else 8) %}{% set l = lineas[i] if i < lineas|length else {} %}
       <tr>
-        <td><input type="text" name="base_{{ i }}" value="{{ l.base or '' }}" inputmode="decimal" placeholder="1.000,00" aria-label="{{ _('Base imponible') }}"></td>
+        <td><input type="text" name="base_{{ i }}" value="{{ l.base or '' }}" inputmode="decimal" placeholder="1.000,00" aria-label="{{ _('Base imponible') }}" data-evidencia-campo="base"></td>
         <td><input type="text" name="pct_iva_{{ i }}" value="{{ l.pct_iva or '' }}" list="tipos-iva" size="5" aria-label="{{ _('Tipo de IVA') }}"></td>
-        <td><input type="text" name="cuota_iva_{{ i }}" value="{{ l.cuota_iva or '' }}" inputmode="decimal" placeholder="{{ _('automática') }}" aria-label="{{ _('Cuota IVA') }}"></td>
+        <td><input type="text" name="cuota_iva_{{ i }}" value="{{ l.cuota_iva or '' }}" inputmode="decimal" placeholder="{{ _('automática') }}" aria-label="{{ _('Cuota IVA') }}" data-evidencia-campo="iva"></td>
         <td><input type="text" name="pct_recargo_{{ i }}" value="{{ l.pct_recargo or '' }}" size="5" aria-label="{{ _('Recargo') }}"></td>
         <td><input type="text" name="pct_retencion_{{ i }}" value="{{ l.pct_retencion or '' }}" size="5" aria-label="{{ _('Retención') }}"></td>
         <td><input type="text" name="cuenta_{{ i }}" value="{{ l.cuenta or '' }}" inputmode="numeric" maxlength="12" placeholder="{{ _('por defecto') }}" aria-label="{{ _('Cuenta') }}"></td>
@@ -76,33 +131,38 @@
   <label>{{ _('Notas internas') }}<textarea name="notas" rows="3">{{ datos.notas }}</textarea></label>
   <label>{{ _('Factura escaneada o fotografiada (PDF o imagen)') }}<input type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"></label>
   {% if f and f.documento_id %}<p><a href="{{ url_for('fiscal.descargar_documento_cliente', cliente_id=f.cliente_fiscal_id, documento_id=f.documento_id) }}">{{ _('Ver la factura adjunta') }}</a></p>{% endif %}
-  {% if f %}<p class="muted">{{ _('Total de la factura: %(t)s €', t='%.2f'|format(f.total_centimos / 100)) }}</p>{% endif %}
+  {% if f %}<p class="muted" data-evidencia-campo="total" tabindex="-1">{{ _('Total de la factura: %(t)s €', t='%.2f'|format(f.total_centimos / 100)) }} {{ punto_confianza('total') }}</p>{% endif %}
   <div class="ds-fila"><button type="submit" class="btn btn-primary" {{ 'disabled' if f and f.estado == 'exportada' }}>{{ _('Guardar') }}</button></div>
 </form>
 
-{% if f and f.lectura == 'ia' %}
+{% if f and f.lectura in ('ia', 'xml') %}
 {% set etiquetas = {'numero': _('Número de factura'), 'fecha': _('Fecha'), 'emisor_nif': _('NIF del emisor'), 'receptor_nif': _('NIF del receptor'), 'total': _('Total'), 'base': _('Base imponible'), 'iva': _('Cuota de IVA')} %}
 <section class="dash-panel ds-mt-24" id="evidencias-lectura">
-  <h2>{{ _('Evidencias de la lectura con IA') }}</h2>
+  <h2>{{ _('Evidencias de la lectura') }}</h2>
   <p class="muted">{{ _('La IA propone y tú validas: esto solo te ahorra buscar. Cada cita se contrasta con el valor que se le atribuye, pero los recuadros sobre la imagen son aproximados. Nada se da por bueno hasta que marques la factura como revisada.') }}</p>
-  {% if not evidencia or not evidencia.campos %}<p class="muted">{{ _('Esta lectura no trae evidencias (el modelo no las dio): comprueba cada dato con la factura delante.') }}</p>{% endif %}
+  {% if f.lectura == 'xml' %}<p class="muted">{{ _('Los datos salen de la factura electrónica tal como los escribió quien la emitió: no hay nada que contrastar con una imagen. Sí se hacen las comprobaciones de siempre (NIF, IVA, duplicados).') }}</p>
+  {% elif not evidencia or not evidencia.campos %}<p class="muted">{{ _('Esta lectura no trae evidencias (el modelo no las dio): comprueba cada dato con la factura delante.') }}</p>{% endif %}
   <div class="ds-fila ds-envolver" data-evidencias>
-    {% if imagen_en_linea %}<div data-evidencia-imagen><img src="{{ url_for('contabilidad.imagen', factura_id=f.id) }}" alt="{{ _('Factura adjunta') }}"><div data-evidencia-caja hidden></div></div>{% endif %}
     {% if evidencia and evidencia.campos %}<div class="table-wrap"><table class="historial-table">
       <thead><tr><th>{{ _('Dato') }}</th><th>{{ _('Valor leído') }}</th><th>{{ _('Lo que cita la factura') }}</th><th></th></tr></thead>
       <tbody>{% for campo, e in evidencia.campos.items() %}<tr>
         <td>{{ etiquetas.get(campo, campo) }}</td><td>{{ e.valor }}</td><td>«{{ e.texto }}» {% if e.coherente %}<span class="pill semaforo-verde">{{ _('Coincide') }}</span>{% else %}<span class="pill semaforo-ambar">{{ _('No coincide con el valor') }}</span>{% endif %}</td>
-        <td>{% if e.caja and imagen_en_linea %}<button type="button" class="btn btn-ghost" data-evidencia-ver="{{ e.caja|join(',') }}">{{ _('Ver en la imagen') }}</button>{% endif %}</td></tr>{% endfor %}</tbody>
+        <td>{% if e.caja and visor and visor.tipo in ('imagen', 'pdf') %}<button type="button" class="btn btn-ghost" data-evidencia-ver="{{ e.caja|join(',') }}">{{ _('Ver en el documento') }}</button>{% endif %}</td></tr>{% endfor %}</tbody>
     </table></div>{% endif %}
   </div>
   {% if evidencia and evidencia.verificaciones %}<h3>{{ _('Comprobaciones propias') }}</h3><ul>{% for v in evidencia.verificaciones %}<li>{{ v }}</li>{% endfor %}</ul>{% elif evidencia %}<p class="muted">{{ _('Las comprobaciones propias (NIF, IVA de cada línea, fecha, duplicados) no han encontrado nada.') }}</p>{% endif %}
 </section>
-<script src="{{ url_for('static', filename='contabilidad_evidencia.js') }}" defer></script>
+{% endif %}
+</div>{# cierra .revision-datos #}
+</div>{# cierra .revision-visor #}
+{% if visor and visor.tipo in ('imagen', 'pdf') %}
+<script type="application/json" id="visor-evidencias">{{ (visor_evidencias or {})|tojson }}</script>
+<script src="{{ url_for('static', filename='contabilidad_visor.js') }}" defer></script>
 {% endif %}
 {% if f %}
 <section class="ds-mt-24"><h2>{{ _('Revisión') }}</h2>
   <div class="ds-fila">
-    {% if f.documento_id and f.estado != 'exportada' %}<form method="post" action="{{ url_for('contabilidad.leer', factura_id=f.id) }}"><button type="submit" class="btn btn-ghost" {{ 'disabled' if not ia_lista }} title="{{ _('Lee el archivo adjunto y rellena los datos; sustituye lo escrito') if ia_lista else _('Hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA') }}">{{ _('Leer con IA') }}</button></form>{% endif %}
+    {% if f.documento_id and f.estado != 'exportada' %}<form method="post" action="{{ url_for('contabilidad.leer', factura_id=f.id) }}"><button type="submit" class="btn btn-ghost" {{ 'disabled' if not (ia_lista or (visor and visor.tipo == 'xml')) }} title="{{ _('Lee el archivo adjunto y rellena los datos; sustituye lo escrito') if (ia_lista or (visor and visor.tipo == 'xml')) else _('Hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA') }}">{{ _('Leer con IA') }}</button></form>{% endif %}
     {% if f.estado == 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="revisada"><button type="submit" class="btn btn-primary">{{ _('Marcar como revisada') }}</button></form>{% endif %}
     {% if f.estado != 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="pendiente"><button type="submit" class="btn btn-ghost">{{ _('Reabrir') }}</button></form>{% endif %}
     {% if f.estado in ('pendiente', 'revisada') %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="descartada"><button type="submit" class="btn btn-ghost">{{ _('Descartar') }}</button></form>{% endif %}

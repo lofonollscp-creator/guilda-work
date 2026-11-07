@@ -50,3 +50,6 @@ minio>=7.2
 # (pypdfium2, rueda binaria autocontenida, licencia Apache/BSD).
 pypdf>=5.0
 pypdfium2>=4.30
+# Lectura de QR de facturas y tickets (VeriFactu, TicketBAI) y control de calidad de las fotos subidas (app/qr_facturas.py, app/calidad_imagen.py); cv2 sin interfaz gráfica.
+opencv-python-headless>=4.9
+numpy>=1.26

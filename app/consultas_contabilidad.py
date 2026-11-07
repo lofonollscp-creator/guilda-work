@@ -24,7 +24,7 @@ def _euros(centimos: int | None) -> float | None:
 def _resumen(f: dict) -> dict:
     return {"id": f["id"], "cliente_fiscal_id": f["cliente_fiscal_id"], "cliente": f.get("cliente_nombre"), "tipo": f["tipo"], "abono": bool(f["abono"]), "fecha": f["fecha"], "trimestre": fc.trimestre_de(f["fecha"]),
             "numero": f["numero"], "tercero": f["tercero_nombre"], "nif": f["tercero_nif"], "total": _euros(f["total_centimos"]), "estado": f["estado"], "origen": f["origen"], "lectura": f.get("lectura"),
-            "tiene_archivo": bool(f.get("documento_id"))}
+            "tiene_archivo": bool(f.get("documento_id")), "lectura_fuente": f.get("lectura_fuente"), "lectura_confianza": f.get("lectura_confianza"), "revision_auto": bool(f.get("revision_auto"))}
 
 
 def listar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, estado: str | None = None, tipo: str | None = None, trimestre: str | None = None, limite: int = 50) -> list[dict]:

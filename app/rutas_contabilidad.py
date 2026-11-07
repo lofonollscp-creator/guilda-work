@@ -149,8 +149,8 @@ def ver(factura_id: int):
     facturas_portal.marcar_leidos(g.tenant_id, factura_id, "empleado")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
                            mensajes=mensajes, duplicados=fc.posibles_duplicados(g.tenant_id, g.usuario_id, factura_id),
-                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), evidencia=lectura_facturas.evidencia_de(f) if f.get("lectura") == "ia" else None,
-                           imagen_en_linea=(f.get("documento_id") is not None and _es_imagen(f)), regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]), periodo_cerrado=fc.periodos_cerrados(g.tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"]),
+                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), evidencia=lectura_facturas.evidencia_de(f) if f.get("lectura") in ("ia", "xml") else None, visor=_visor_de(f), visor_evidencias=_evidencias_para_el_visor(f),
+                           imagen_en_linea=False, regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]), periodo_cerrado=fc.periodos_cerrados(g.tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"]),
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
 
 
@@ -162,6 +162,71 @@ def _es_imagen(f: dict) -> bool:
 
 
 IMAGENES_EN_LINEA = ("image/png", "image/jpeg", "image/webp", "image/gif")
+MIME_XML = ("application/xml", "text/xml")
+LADO_PAGINA = 1500                                  # píxeles del lado mayor de cada página del visor: legible con zoom sin pesar de más
+
+
+def _evidencias_para_el_visor(f: dict) -> dict:
+    """{campo: {caja, coherente}} de las evidencias con recuadro, para que el visor las dibuje al pasar por cada campo."""
+    e = lectura_facturas.evidencia_de(f) if f.get("lectura") in ("ia", "xml") else None
+    return {c: {"caja": v["caja"], "coherente": v["coherente"]} for c, v in ((e or {}).get("campos") or {}).items() if v.get("caja")}
+
+
+def _visor_de(f: dict) -> dict | None:
+    """Lo que enseña el visor de la pantalla de revisión junto a los datos: `imagen` (una foto), `pdf` (sus páginas renderizadas), `xml` (factura electrónica: no hay imagen, se enseñan sus datos exactos) u
+    `otro` (solo descarga). None si la factura no tiene archivo."""
+    if not f.get("documento_id"):
+        return None
+    from . import almacen_documentos, facturas_estructuradas, pdf_facturas
+    from .cifrado_despacho import DespachoBloqueado
+    meta = almacen_documentos.datos_de_cliente_fiscal(g.tenant_id, f["cliente_fiscal_id"], f["documento_id"])
+    if not meta:
+        return None
+    mime = (meta.get("tipo_mime") or "").lower().split(";")[0]
+    visor = {"tipo": "otro", "mime": mime, "paginas": 1, "nombre": meta.get("nombre_archivo") or ""}
+    if mime in IMAGENES_EN_LINEA:
+        visor["tipo"] = "imagen"
+    elif mime == "application/pdf" or mime in MIME_XML:
+        try:
+            doc = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, f["cliente_fiscal_id"], f["documento_id"], g.usuario_id)
+        except DespachoBloqueado:
+            return {**visor, "bloqueado": True}
+        if doc is not None:
+            contenido = bytes(doc["contenido"])
+            if mime in MIME_XML:
+                r = facturas_estructuradas.extraer(contenido, mime)
+                visor.update(tipo="xml", datos=r["datos"] if r else None, formato=r["formato"] if r else None)
+            else:
+                n = pdf_facturas.numero_de_paginas(contenido)
+                if n:
+                    visor.update(tipo="pdf", paginas=min(n, pdf_facturas.MAX_PAGINAS))
+    return visor
+
+
+@contabilidad_bp.route("/<int:factura_id>/pagina/<int:numero>")
+@login_required
+def pagina(factura_id: int, numero: int):
+    """Una página del PDF de la factura como imagen, para el visor de la pantalla de revisión (el navegador no tiene por qué tener visor de PDF, y así los recuadros de la IA encajan igual)."""
+    from . import almacen_documentos, pdf_facturas
+    from .cifrado_despacho import DespachoBloqueado
+    f = fc.obtener(g.tenant_id, g.usuario_id, factura_id)
+    if f is None or not f.get("documento_id") or not 1 <= numero <= pdf_facturas.MAX_PAGINAS:
+        abort(404)
+    try:
+        doc = almacen_documentos.leer_de_cliente_fiscal(g.tenant_id, f["cliente_fiscal_id"], f["documento_id"], g.usuario_id)
+    except DespachoBloqueado:
+        abort(404)
+    if doc is None or ((doc.get("tipo_mime") or "").lower().split(";")[0] != "application/pdf"):
+        abort(404)
+    png = pdf_facturas.pagina_a_imagen(bytes(doc["contenido"]), numero - 1, LADO_PAGINA)
+    if png is None:
+        abort(404)
+    r = Response(png, mimetype="image/png")
+    r.headers["Content-Disposition"] = "inline"
+    r.headers["X-Content-Type-Options"] = "nosniff"
+    r.headers["Cache-Control"] = "private, max-age=120"
+    r.headers["Content-Security-Policy"] = "default-src 'none'; img-src 'self'; sandbox"
+    return r
 
 
 @contabilidad_bp.route("/<int:factura_id>/imagen")

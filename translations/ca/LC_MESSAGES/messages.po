@@ -23755,3 +23755,102 @@ msgid "Hay %(n)s clave guardada: %(lista)s. Deja en blanco para no cambiarla."
 msgid_plural "Hay %(n)s claves guardadas: %(lista)s. Deja en blanco para no cambiarlas."
 msgstr[0] "Hi ha %(n)s clau desada: %(lista)s. Deixa en blanc per no canviar-la."
 msgstr[1] "Hi ha %(n)s claus desades: %(lista)s. Deixa en blanc per no canviar-les."
+
+msgid "Confianza de la lectura: %(p)s %%"
+msgstr "Confiança de la lectura: %(p)s %%"
+
+msgid "Revisada automáticamente por la IA"
+msgstr "Revisada automàticament per la IA"
+
+msgid "Leída de la factura electrónica (datos exactos)"
+msgstr "Llegida de la factura electrònica (dades exactes)"
+
+msgid "Leída con IA: falta tu revisión"
+msgstr "Llegida amb IA: falta la teva revisió"
+
+msgid "Fuente: archivo XML"
+msgstr "Font: fitxer XML"
+
+msgid "Fuente: texto del PDF"
+msgstr "Font: text del PDF"
+
+msgid "Fuente: imagen del documento"
+msgstr "Font: imatge del document"
+
+msgid "Confianza %(p)s %%"
+msgstr "Confiança %(p)s %%"
+
+msgid "Compruébala con el documento a la vista; si algo no está bien, corrígela o pulsa «Reabrir»."
+msgstr "Comprova-la amb el document a la vista; si alguna cosa no està bé, corregeix-la o prem «Reobrir»."
+
+msgid "Por qué no es total:"
+msgstr "Per què no és total:"
+
+msgid "Documento de la factura"
+msgstr "Document de la factura"
+
+msgid "Controles del visor"
+msgstr "Controls del visor"
+
+msgid "Página anterior"
+msgstr "Pàgina anterior"
+
+msgid "Página siguiente"
+msgstr "Pàgina següent"
+
+msgid "Alejar"
+msgstr "Allunyar"
+
+msgid "Acercar"
+msgstr "Acostar"
+
+msgid "Ajustar"
+msgstr "Ajustar"
+
+msgid "Abrir el original"
+msgstr "Obrir l'original"
+
+msgid "Página de la factura (usa las flechas para moverte)"
+msgstr "Pàgina de la factura (fes servir les fletxes per moure't)"
+
+msgid "Factura electrónica (XML)"
+msgstr "Factura electrònica (XML)"
+
+msgid "Este archivo no tiene imagen: es la propia factura en formato electrónico. Estos son los datos exactos que contiene."
+msgstr "Aquest fitxer no té imatge: és la pròpia factura en format electrònic. Aquestes són les dades exactes que conté."
+
+msgid "Receptor"
+msgstr "Receptor"
+
+msgid "Número y fecha"
+msgstr "Número i data"
+
+msgid "Base %(n)s"
+msgstr "Base %(n)s"
+
+msgid "retención"
+msgstr "retenció"
+
+msgid "No se ha podido interpretar este XML como factura electrónica."
+msgstr "No s'ha pogut interpretar aquest XML com a factura electrònica."
+
+msgid "Descargar el XML"
+msgstr "Descarregar l'XML"
+
+msgid "Los documentos del despacho están cifrados y bloqueados: desbloquéalos para ver la factura aquí."
+msgstr "Els documents del despatx estan xifrats i bloquejats: desbloqueja'ls per veure la factura aquí."
+
+msgid "Este tipo de archivo no se puede enseñar aquí."
+msgstr "Aquest tipus de fitxer no es pot mostrar aquí."
+
+msgid "Evidencias de la lectura"
+msgstr "Evidències de la lectura"
+
+msgid "Los datos salen de la factura electrónica tal como los escribió quien la emitió: no hay nada que contrastar con una imagen. Sí se hacen las comprobaciones de siempre (NIF, IVA, duplicados)."
+msgstr "Les dades surten de la factura electrònica tal com les va escriure qui la va emetre: no hi ha res a contrastar amb una imatge. Sí que es fan les comprovacions de sempre (NIF, IVA, duplicats)."
+
+msgid "Ver en el documento"
+msgstr "Veure al document"
+
+msgid "Si el PDF tiene texto, leerlo primero como texto (más barato y rápido); si no cuadra, se vuelve a leer con la imagen"
+msgstr "Si el PDF té text, llegir-lo primer com a text (més barat i ràpid); si no quadra, es torna a llegir amb la imatge"

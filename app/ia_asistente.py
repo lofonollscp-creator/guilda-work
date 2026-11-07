@@ -23,6 +23,8 @@ import urllib.error
 import urllib.request
 from collections.abc import Iterator
 
+import contextlib
+import contextvars
 import itertools
 
 import keyring
@@ -634,8 +636,23 @@ def _pendiente_dict(tool_call: dict, usuario_id: int | None = None) -> dict:
     return pendiente
 
 
+_sin_consumo: contextvars.ContextVar = contextvars.ContextVar("guilda_ia_sin_consumo", default=False)
+
+
+@contextlib.contextmanager
+def sin_consumo():
+    """Dentro del bloque las consultas no suman al límite mensual: para la segunda vuelta de una misma tarea (leer el texto de una factura y, si no cuadra, su imagen cuentan como UNA consulta)."""
+    testigo = _sin_consumo.set(True)
+    try:
+        yield
+    finally:
+        _sin_consumo.reset(testigo)
+
+
 def _reservar_uso(usuario_id: int) -> None:
     """Cuenta una consulta al modelo en el consumo mensual del despacho; ErrorIA si ha agotado su tope."""
+    if _sin_consumo.get():
+        return
     try:
         ia_consumo.reservar(usuario_id)
     except ia_consumo.LimiteIA as e:

@@ -2474,7 +2474,10 @@ class FacturaContable {
   final String? origen;
   final String? lectura;
   final bool? tieneArchivo;
-  const FacturaContable({this.id, this.clienteFiscalId, this.cliente, this.tipo, this.abono, this.fecha, this.trimestre, this.numero, this.tercero, this.nif, this.total, this.estado, this.origen, this.lectura, this.tieneArchivo, });
+  final String? lecturaFuente;
+  final int? lecturaConfianza;
+  final bool? revisionAuto;
+  const FacturaContable({this.id, this.clienteFiscalId, this.cliente, this.tipo, this.abono, this.fecha, this.trimestre, this.numero, this.tercero, this.nif, this.total, this.estado, this.origen, this.lectura, this.tieneArchivo, this.lecturaFuente, this.lecturaConfianza, this.revisionAuto, });
   factory FacturaContable.fromJson(Map<String, dynamic> j) => FacturaContable(
     id: j['id'] == null ? null : (j['id'] as num).toInt(),
     clienteFiscalId: j['cliente_fiscal_id'] == null ? null : (j['cliente_fiscal_id'] as num).toInt(),
@@ -2491,6 +2494,9 @@ class FacturaContable {
     origen: j['origen'] == null ? null : j['origen'] as String,
     lectura: j['lectura'] == null ? null : j['lectura'] as String,
     tieneArchivo: j['tiene_archivo'] == null ? null : _aBool(j['tiene_archivo']),
+    lecturaFuente: j['lectura_fuente'] == null ? null : j['lectura_fuente'] as String,
+    lecturaConfianza: j['lectura_confianza'] == null ? null : (j['lectura_confianza'] as num).toInt(),
+    revisionAuto: j['revision_auto'] == null ? null : _aBool(j['revision_auto']),
   );
   Map<String, dynamic> toJson() => {
     'id': ?id,
@@ -2508,10 +2514,13 @@ class FacturaContable {
     'origen': ?origen,
     'lectura': ?lectura,
     'tiene_archivo': ?tieneArchivo,
+    'lectura_fuente': ?lecturaFuente,
+    'lectura_confianza': ?lecturaConfianza,
+    'revision_auto': ?revisionAuto,
   };
-  FacturaContable copyWith({int? id, int? clienteFiscalId, String? cliente, FacturaContableTipo? tipo, bool? abono, String? fecha, String? trimestre, String? numero, String? tercero, String? nif, double? total, FacturaContableEstado? estado, String? origen, String? lectura, bool? tieneArchivo, }) => FacturaContable(id: id ?? this.id, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, cliente: cliente ?? this.cliente, tipo: tipo ?? this.tipo, abono: abono ?? this.abono, fecha: fecha ?? this.fecha, trimestre: trimestre ?? this.trimestre, numero: numero ?? this.numero, tercero: tercero ?? this.tercero, nif: nif ?? this.nif, total: total ?? this.total, estado: estado ?? this.estado, origen: origen ?? this.origen, lectura: lectura ?? this.lectura, tieneArchivo: tieneArchivo ?? this.tieneArchivo, );
-  @override bool operator ==(Object other) => other is FacturaContable && other.id == id && other.clienteFiscalId == clienteFiscalId && other.cliente == cliente && other.tipo == tipo && other.abono == abono && other.fecha == fecha && other.trimestre == trimestre && other.numero == numero && other.tercero == tercero && other.nif == nif && other.total == total && other.estado == estado && other.origen == origen && other.lectura == lectura && other.tieneArchivo == tieneArchivo;
-  @override int get hashCode => Object.hashAll([id, clienteFiscalId, cliente, tipo, abono, fecha, trimestre, numero, tercero, nif, total, estado, origen, lectura, tieneArchivo]);
+  FacturaContable copyWith({int? id, int? clienteFiscalId, String? cliente, FacturaContableTipo? tipo, bool? abono, String? fecha, String? trimestre, String? numero, String? tercero, String? nif, double? total, FacturaContableEstado? estado, String? origen, String? lectura, bool? tieneArchivo, String? lecturaFuente, int? lecturaConfianza, bool? revisionAuto, }) => FacturaContable(id: id ?? this.id, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, cliente: cliente ?? this.cliente, tipo: tipo ?? this.tipo, abono: abono ?? this.abono, fecha: fecha ?? this.fecha, trimestre: trimestre ?? this.trimestre, numero: numero ?? this.numero, tercero: tercero ?? this.tercero, nif: nif ?? this.nif, total: total ?? this.total, estado: estado ?? this.estado, origen: origen ?? this.origen, lectura: lectura ?? this.lectura, tieneArchivo: tieneArchivo ?? this.tieneArchivo, lecturaFuente: lecturaFuente ?? this.lecturaFuente, lecturaConfianza: lecturaConfianza ?? this.lecturaConfianza, revisionAuto: revisionAuto ?? this.revisionAuto, );
+  @override bool operator ==(Object other) => other is FacturaContable && other.id == id && other.clienteFiscalId == clienteFiscalId && other.cliente == cliente && other.tipo == tipo && other.abono == abono && other.fecha == fecha && other.trimestre == trimestre && other.numero == numero && other.tercero == tercero && other.nif == nif && other.total == total && other.estado == estado && other.origen == origen && other.lectura == lectura && other.tieneArchivo == tieneArchivo && other.lecturaFuente == lecturaFuente && other.lecturaConfianza == lecturaConfianza && other.revisionAuto == revisionAuto;
+  @override int get hashCode => Object.hashAll([id, clienteFiscalId, cliente, tipo, abono, fecha, trimestre, numero, tercero, nif, total, estado, origen, lectura, tieneArchivo, lecturaFuente, lecturaConfianza, revisionAuto]);
 }
 
 class FacturaContableDetalle {
@@ -2530,6 +2539,9 @@ class FacturaContableDetalle {
   final String? origen;
   final String? lectura;
   final bool? tieneArchivo;
+  final String? lecturaFuente;
+  final int? lecturaConfianza;
+  final bool? revisionAuto;
   final String? fechaOperacion;
   final String? concepto;
   final String? referencia;
@@ -2544,7 +2556,7 @@ class FacturaContableDetalle {
   final String? periodoCerrado;
   final List<Map<String, dynamic>>? lineas;
   final List<String>? avisosDeLaLectura;
-  const FacturaContableDetalle({this.id, this.clienteFiscalId, this.cliente, this.tipo, this.abono, this.fecha, this.trimestre, this.numero, this.tercero, this.nif, this.total, this.estado, this.origen, this.lectura, this.tieneArchivo, this.fechaOperacion, this.concepto, this.referencia, this.subcuentaTercero, this.rectificaNumero, this.rectificaFecha, this.criterioCaja, this.suplidos, this.notas, this.lecturaError, this.problemas, this.periodoCerrado, this.lineas, this.avisosDeLaLectura, });
+  const FacturaContableDetalle({this.id, this.clienteFiscalId, this.cliente, this.tipo, this.abono, this.fecha, this.trimestre, this.numero, this.tercero, this.nif, this.total, this.estado, this.origen, this.lectura, this.tieneArchivo, this.lecturaFuente, this.lecturaConfianza, this.revisionAuto, this.fechaOperacion, this.concepto, this.referencia, this.subcuentaTercero, this.rectificaNumero, this.rectificaFecha, this.criterioCaja, this.suplidos, this.notas, this.lecturaError, this.problemas, this.periodoCerrado, this.lineas, this.avisosDeLaLectura, });
   factory FacturaContableDetalle.fromJson(Map<String, dynamic> j) => FacturaContableDetalle(
     id: j['id'] == null ? null : (j['id'] as num).toInt(),
     clienteFiscalId: j['cliente_fiscal_id'] == null ? null : (j['cliente_fiscal_id'] as num).toInt(),
@@ -2561,6 +2573,9 @@ class FacturaContableDetalle {
     origen: j['origen'] == null ? null : j['origen'] as String,
     lectura: j['lectura'] == null ? null : j['lectura'] as String,
     tieneArchivo: j['tiene_archivo'] == null ? null : _aBool(j['tiene_archivo']),
+    lecturaFuente: j['lectura_fuente'] == null ? null : j['lectura_fuente'] as String,
+    lecturaConfianza: j['lectura_confianza'] == null ? null : (j['lectura_confianza'] as num).toInt(),
+    revisionAuto: j['revision_auto'] == null ? null : _aBool(j['revision_auto']),
     fechaOperacion: j['fecha_operacion'] == null ? null : j['fecha_operacion'] as String,
     concepto: j['concepto'] == null ? null : j['concepto'] as String,
     referencia: j['referencia'] == null ? null : j['referencia'] as String,
@@ -2592,6 +2607,9 @@ class FacturaContableDetalle {
     'origen': ?origen,
     'lectura': ?lectura,
     'tiene_archivo': ?tieneArchivo,
+    'lectura_fuente': ?lecturaFuente,
+    'lectura_confianza': ?lecturaConfianza,
+    'revision_auto': ?revisionAuto,
     'fecha_operacion': ?fechaOperacion,
     'concepto': ?concepto,
     'referencia': ?referencia,
@@ -2607,9 +2625,9 @@ class FacturaContableDetalle {
     if (lineas != null) 'lineas': lineas!.map((e) => e).toList(),
     if (avisosDeLaLectura != null) 'avisos_de_la_lectura': avisosDeLaLectura!.map((e) => e).toList(),
   };
-  FacturaContableDetalle copyWith({int? id, int? clienteFiscalId, String? cliente, String? tipo, bool? abono, String? fecha, String? trimestre, String? numero, String? tercero, String? nif, double? total, String? estado, String? origen, String? lectura, bool? tieneArchivo, String? fechaOperacion, String? concepto, String? referencia, String? subcuentaTercero, String? rectificaNumero, String? rectificaFecha, bool? criterioCaja, double? suplidos, String? notas, String? lecturaError, List<String>? problemas, String? periodoCerrado, List<Map<String, dynamic>>? lineas, List<String>? avisosDeLaLectura, }) => FacturaContableDetalle(id: id ?? this.id, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, cliente: cliente ?? this.cliente, tipo: tipo ?? this.tipo, abono: abono ?? this.abono, fecha: fecha ?? this.fecha, trimestre: trimestre ?? this.trimestre, numero: numero ?? this.numero, tercero: tercero ?? this.tercero, nif: nif ?? this.nif, total: total ?? this.total, estado: estado ?? this.estado, origen: origen ?? this.origen, lectura: lectura ?? this.lectura, tieneArchivo: tieneArchivo ?? this.tieneArchivo, fechaOperacion: fechaOperacion ?? this.fechaOperacion, concepto: concepto ?? this.concepto, referencia: referencia ?? this.referencia, subcuentaTercero: subcuentaTercero ?? this.subcuentaTercero, rectificaNumero: rectificaNumero ?? this.rectificaNumero, rectificaFecha: rectificaFecha ?? this.rectificaFecha, criterioCaja: criterioCaja ?? this.criterioCaja, suplidos: suplidos ?? this.suplidos, notas: notas ?? this.notas, lecturaError: lecturaError ?? this.lecturaError, problemas: problemas ?? this.problemas, periodoCerrado: periodoCerrado ?? this.periodoCerrado, lineas: lineas ?? this.lineas, avisosDeLaLectura: avisosDeLaLectura ?? this.avisosDeLaLectura, );
-  @override bool operator ==(Object other) => other is FacturaContableDetalle && other.id == id && other.clienteFiscalId == clienteFiscalId && other.cliente == cliente && other.tipo == tipo && other.abono == abono && other.fecha == fecha && other.trimestre == trimestre && other.numero == numero && other.tercero == tercero && other.nif == nif && other.total == total && other.estado == estado && other.origen == origen && other.lectura == lectura && other.tieneArchivo == tieneArchivo && other.fechaOperacion == fechaOperacion && other.concepto == concepto && other.referencia == referencia && other.subcuentaTercero == subcuentaTercero && other.rectificaNumero == rectificaNumero && other.rectificaFecha == rectificaFecha && other.criterioCaja == criterioCaja && other.suplidos == suplidos && other.notas == notas && other.lecturaError == lecturaError && other.problemas == problemas && other.periodoCerrado == periodoCerrado && other.lineas == lineas && other.avisosDeLaLectura == avisosDeLaLectura;
-  @override int get hashCode => Object.hashAll([id, clienteFiscalId, cliente, tipo, abono, fecha, trimestre, numero, tercero, nif, total, estado, origen, lectura, tieneArchivo, fechaOperacion, concepto, referencia, subcuentaTercero, rectificaNumero, rectificaFecha, criterioCaja, suplidos, notas, lecturaError, problemas, periodoCerrado, lineas, avisosDeLaLectura]);
+  FacturaContableDetalle copyWith({int? id, int? clienteFiscalId, String? cliente, String? tipo, bool? abono, String? fecha, String? trimestre, String? numero, String? tercero, String? nif, double? total, String? estado, String? origen, String? lectura, bool? tieneArchivo, String? lecturaFuente, int? lecturaConfianza, bool? revisionAuto, String? fechaOperacion, String? concepto, String? referencia, String? subcuentaTercero, String? rectificaNumero, String? rectificaFecha, bool? criterioCaja, double? suplidos, String? notas, String? lecturaError, List<String>? problemas, String? periodoCerrado, List<Map<String, dynamic>>? lineas, List<String>? avisosDeLaLectura, }) => FacturaContableDetalle(id: id ?? this.id, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, cliente: cliente ?? this.cliente, tipo: tipo ?? this.tipo, abono: abono ?? this.abono, fecha: fecha ?? this.fecha, trimestre: trimestre ?? this.trimestre, numero: numero ?? this.numero, tercero: tercero ?? this.tercero, nif: nif ?? this.nif, total: total ?? this.total, estado: estado ?? this.estado, origen: origen ?? this.origen, lectura: lectura ?? this.lectura, tieneArchivo: tieneArchivo ?? this.tieneArchivo, lecturaFuente: lecturaFuente ?? this.lecturaFuente, lecturaConfianza: lecturaConfianza ?? this.lecturaConfianza, revisionAuto: revisionAuto ?? this.revisionAuto, fechaOperacion: fechaOperacion ?? this.fechaOperacion, concepto: concepto ?? this.concepto, referencia: referencia ?? this.referencia, subcuentaTercero: subcuentaTercero ?? this.subcuentaTercero, rectificaNumero: rectificaNumero ?? this.rectificaNumero, rectificaFecha: rectificaFecha ?? this.rectificaFecha, criterioCaja: criterioCaja ?? this.criterioCaja, suplidos: suplidos ?? this.suplidos, notas: notas ?? this.notas, lecturaError: lecturaError ?? this.lecturaError, problemas: problemas ?? this.problemas, periodoCerrado: periodoCerrado ?? this.periodoCerrado, lineas: lineas ?? this.lineas, avisosDeLaLectura: avisosDeLaLectura ?? this.avisosDeLaLectura, );
+  @override bool operator ==(Object other) => other is FacturaContableDetalle && other.id == id && other.clienteFiscalId == clienteFiscalId && other.cliente == cliente && other.tipo == tipo && other.abono == abono && other.fecha == fecha && other.trimestre == trimestre && other.numero == numero && other.tercero == tercero && other.nif == nif && other.total == total && other.estado == estado && other.origen == origen && other.lectura == lectura && other.tieneArchivo == tieneArchivo && other.lecturaFuente == lecturaFuente && other.lecturaConfianza == lecturaConfianza && other.revisionAuto == revisionAuto && other.fechaOperacion == fechaOperacion && other.concepto == concepto && other.referencia == referencia && other.subcuentaTercero == subcuentaTercero && other.rectificaNumero == rectificaNumero && other.rectificaFecha == rectificaFecha && other.criterioCaja == criterioCaja && other.suplidos == suplidos && other.notas == notas && other.lecturaError == lecturaError && other.problemas == problemas && other.periodoCerrado == periodoCerrado && other.lineas == lineas && other.avisosDeLaLectura == avisosDeLaLectura;
+  @override int get hashCode => Object.hashAll([id, clienteFiscalId, cliente, tipo, abono, fecha, trimestre, numero, tercero, nif, total, estado, origen, lectura, tieneArchivo, lecturaFuente, lecturaConfianza, revisionAuto, fechaOperacion, concepto, referencia, subcuentaTercero, rectificaNumero, rectificaFecha, criterioCaja, suplidos, notas, lecturaError, problemas, periodoCerrado, lineas, avisosDeLaLectura]);
 }
 
 class Fichaje {
@@ -4299,15 +4317,17 @@ class PreferenciasIA {
   final String? modelo;
   final int? modoAutonomo;
   final String? proveedorLocal;
+  final String? proveedorIa;
   final String? modeloLocal;
   final int? soloLectura;
   final int? apiKeysConfiguradas;
-  const PreferenciasIA({this.usuarioId, this.modelo, this.modoAutonomo, this.proveedorLocal, this.modeloLocal, this.soloLectura, this.apiKeysConfiguradas, });
+  const PreferenciasIA({this.usuarioId, this.modelo, this.modoAutonomo, this.proveedorLocal, this.proveedorIa, this.modeloLocal, this.soloLectura, this.apiKeysConfiguradas, });
   factory PreferenciasIA.fromJson(Map<String, dynamic> j) => PreferenciasIA(
     usuarioId: j['usuario_id'] == null ? null : (j['usuario_id'] as num).toInt(),
     modelo: j['modelo'] == null ? null : j['modelo'] as String,
     modoAutonomo: j['modo_autonomo'] == null ? null : (j['modo_autonomo'] as num).toInt(),
     proveedorLocal: j['proveedor_local'] == null ? null : j['proveedor_local'] as String,
+    proveedorIa: j['proveedor_ia'] == null ? null : j['proveedor_ia'] as String,
     modeloLocal: j['modelo_local'] == null ? null : j['modelo_local'] as String,
     soloLectura: j['solo_lectura'] == null ? null : (j['solo_lectura'] as num).toInt(),
     apiKeysConfiguradas: j['api_keys_configuradas'] == null ? null : (j['api_keys_configuradas'] as num).toInt(),
@@ -4317,13 +4337,14 @@ class PreferenciasIA {
     'modelo': ?modelo,
     'modo_autonomo': ?modoAutonomo,
     'proveedor_local': ?proveedorLocal,
+    'proveedor_ia': ?proveedorIa,
     'modelo_local': ?modeloLocal,
     'solo_lectura': ?soloLectura,
     'api_keys_configuradas': ?apiKeysConfiguradas,
   };
-  PreferenciasIA copyWith({int? usuarioId, String? modelo, int? modoAutonomo, String? proveedorLocal, String? modeloLocal, int? soloLectura, int? apiKeysConfiguradas, }) => PreferenciasIA(usuarioId: usuarioId ?? this.usuarioId, modelo: modelo ?? this.modelo, modoAutonomo: modoAutonomo ?? this.modoAutonomo, proveedorLocal: proveedorLocal ?? this.proveedorLocal, modeloLocal: modeloLocal ?? this.modeloLocal, soloLectura: soloLectura ?? this.soloLectura, apiKeysConfiguradas: apiKeysConfiguradas ?? this.apiKeysConfiguradas, );
-  @override bool operator ==(Object other) => other is PreferenciasIA && other.usuarioId == usuarioId && other.modelo == modelo && other.modoAutonomo == modoAutonomo && other.proveedorLocal == proveedorLocal && other.modeloLocal == modeloLocal && other.soloLectura == soloLectura && other.apiKeysConfiguradas == apiKeysConfiguradas;
-  @override int get hashCode => Object.hashAll([usuarioId, modelo, modoAutonomo, proveedorLocal, modeloLocal, soloLectura, apiKeysConfiguradas]);
+  PreferenciasIA copyWith({int? usuarioId, String? modelo, int? modoAutonomo, String? proveedorLocal, String? proveedorIa, String? modeloLocal, int? soloLectura, int? apiKeysConfiguradas, }) => PreferenciasIA(usuarioId: usuarioId ?? this.usuarioId, modelo: modelo ?? this.modelo, modoAutonomo: modoAutonomo ?? this.modoAutonomo, proveedorLocal: proveedorLocal ?? this.proveedorLocal, proveedorIa: proveedorIa ?? this.proveedorIa, modeloLocal: modeloLocal ?? this.modeloLocal, soloLectura: soloLectura ?? this.soloLectura, apiKeysConfiguradas: apiKeysConfiguradas ?? this.apiKeysConfiguradas, );
+  @override bool operator ==(Object other) => other is PreferenciasIA && other.usuarioId == usuarioId && other.modelo == modelo && other.modoAutonomo == modoAutonomo && other.proveedorLocal == proveedorLocal && other.proveedorIa == proveedorIa && other.modeloLocal == modeloLocal && other.soloLectura == soloLectura && other.apiKeysConfiguradas == apiKeysConfiguradas;
+  @override int get hashCode => Object.hashAll([usuarioId, modelo, modoAutonomo, proveedorLocal, proveedorIa, modeloLocal, soloLectura, apiKeysConfiguradas]);
 }
 
 class Presentacion {

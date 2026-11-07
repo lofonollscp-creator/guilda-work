@@ -90,7 +90,7 @@
   <form method="post" action="{{ url_for('contabilidad.subir') }}" enctype="multipart/form-data" class="ds-fila">
     <input type="hidden" name="cliente_id" value="{{ cliente_id }}">
     <select name="tipo" aria-label="{{ _('Tipo') }}"><option value="recibida">{{ _('Recibidas') }}</option><option value="emitida">{{ _('Emitidas') }}</option></select>
-    <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" aria-label="{{ _('Fotos o PDF de las facturas') }}">
+    <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.xml" aria-label="{{ _('Fotos o PDF de las facturas') }}">
     <button type="submit" class="btn btn-ghost">{{ _('Subir') }}</button>
   </form>
   <p class="muted">{{ _('Hasta %(n)s archivos de 8 MB cada vez. Quedan «por leer» hasta que la IA (o tú) rellene sus datos.', n=max_archivos) }}</p>

@@ -49,3 +49,21 @@ def paginas_a_imagenes(contenido: bytes, maximo: int = MAX_PAGINAS, lado: int = 
     except Exception:  # noqa: BLE001
         logger.warning("No se pudo renderizar el PDF a imágenes", exc_info=True)
         return None
+
+
+def pagina_a_imagen(contenido: bytes, indice: int, lado: int = LADO_MAXIMO) -> bytes | None:
+    """La página `indice` (desde 0) como PNG, o None si no existe o no se puede renderizar."""
+    try:
+        import pypdfium2 as pdfium
+        pdf = pdfium.PdfDocument(contenido)
+        if not 0 <= indice < len(pdf):
+            return None
+        pagina = pdf[indice]
+        ancho, alto = pagina.get_size()
+        escala = min(4.0, max(0.5, lado / max(ancho, alto)))
+        salida = io.BytesIO()
+        pagina.render(scale=escala).to_pil().convert("RGB").save(salida, "PNG", optimize=True)
+        return salida.getvalue()
+    except Exception:  # noqa: BLE001
+        logger.warning("No se pudo renderizar una página del PDF", exc_info=True)
+        return None

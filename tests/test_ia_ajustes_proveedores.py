@@ -77,7 +77,7 @@ def test_errores_de_validacion_vuelven_a_la_pantalla_con_mensaje(equipo):
 def test_las_normas_se_guardan_y_aplican(equipo):
     cliente, t, d = equipo
     cliente.post("/ia/ajustes/despacho/normas", data={"solo_ue": "on", "facturas_modo": "auto", "umbral_confianza": "95"})
-    assert dz.config(t) == {"solo_ue": True, "claves_personales": False, "facturas_modo": "auto", "umbral_confianza": 95}
+    assert dz.config(t) == {"solo_ue": True, "claves_personales": False, "facturas_modo": "auto", "umbral_confianza": 95, "lectura_texto": False}
     r = cliente.post("/ia/ajustes", data={"proveedor": "openai", "modelo_personalizado": "gpt-4o"}, follow_redirects=True)
     assert "solo admite proveedores de la UE" in r.get_data(as_text=True)
     r = cliente.post("/ia/ajustes", data={"proveedor": "openrouter", "modelo_personalizado": "x/y"}, follow_redirects=True)

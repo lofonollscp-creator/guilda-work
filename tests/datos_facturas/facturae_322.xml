@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fe:Facturae xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:fe="http://www.facturae.gob.es/formato/Versiones/Facturaev3_2_2.xml">
+  <FileHeader><SchemaVersion>3.2.2</SchemaVersion><Modality>I</Modality><InvoiceIssuerType>EM</InvoiceIssuerType><Batch><BatchIdentifier>A-2026-0001</BatchIdentifier><InvoicesCount>1</InvoicesCount>
+    <TotalInvoicesAmount><TotalAmount>1210.00</TotalAmount></TotalInvoicesAmount></Batch></FileHeader>
+  <Parties>
+    <SellerParty><TaxIdentification><PersonTypeCode>J</PersonTypeCode><ResidenceTypeCode>R</ResidenceTypeCode><TaxIdentificationNumber>ESB87654323</TaxIdentificationNumber></TaxIdentification>
+      <LegalEntity><CorporateName>Papelería Sol, S.L.</CorporateName></LegalEntity></SellerParty>
+    <BuyerParty><TaxIdentification><PersonTypeCode>F</PersonTypeCode><ResidenceTypeCode>R</ResidenceTypeCode><TaxIdentificationNumber>12345678Z</TaxIdentificationNumber></TaxIdentification>
+      <Individual><Name>María</Name><FirstSurname>García</FirstSurname><SecondSurname>López</SecondSurname></Individual></BuyerParty>
+  </Parties>
+  <Invoices><Invoice>
+    <InvoiceHeader><InvoiceNumber>000123</InvoiceNumber><InvoiceSeriesCode>A-</InvoiceSeriesCode><InvoiceDocumentType>FC</InvoiceDocumentType><InvoiceClass>OO</InvoiceClass></InvoiceHeader>
+    <InvoiceIssueData><IssueDate>2026-10-15</IssueDate><OperationDate>2026-10-10</OperationDate><InvoiceCurrencyCode>EUR</InvoiceCurrencyCode></InvoiceIssueData>
+    <TaxesOutputs>
+      <Tax><TaxTypeCode>01</TaxTypeCode><TaxRate>21.00</TaxRate><TaxableBase><TotalAmount>800.00</TotalAmount></TaxableBase><TaxAmount><TotalAmount>168.00</TotalAmount></TaxAmount></Tax>
+      <Tax><TaxTypeCode>01</TaxTypeCode><TaxRate>10.00</TaxRate><TaxableBase><TotalAmount>200.00</TotalAmount></TaxableBase><TaxAmount><TotalAmount>20.00</TotalAmount></TaxAmount></Tax>
+    </TaxesOutputs>
+    <TaxesWithheld><Tax><TaxTypeCode>04</TaxTypeCode><TaxRate>15.00</TaxRate><TaxableBase><TotalAmount>1000.00</TotalAmount></TaxableBase><TaxAmount><TotalAmount>150.00</TotalAmount></TaxAmount></Tax></TaxesWithheld>
+    <InvoiceTotals><TotalGrossAmount>1000.00</TotalGrossAmount><TotalGrossAmountBeforeTaxes>1000.00</TotalGrossAmountBeforeTaxes><TotalTaxOutputs>188.00</TotalTaxOutputs><TotalTaxesWithheld>150.00</TotalTaxesWithheld>
+      <InvoiceTotal>1038.00</InvoiceTotal><TotalOutstandingAmount>1038.00</TotalOutstandingAmount><TotalExecutableAmount>1038.00</TotalExecutableAmount></InvoiceTotals>
+    <Items><InvoiceLine><ItemDescription>Material de oficina y papelería del trimestre</ItemDescription><Quantity>1</Quantity><UnitPriceWithoutTax>1000</UnitPriceWithoutTax><TotalCost>1000</TotalCost><GrossAmount>1000</GrossAmount></InvoiceLine></Items>
+  </Invoice></Invoices>
+</fe:Facturae>

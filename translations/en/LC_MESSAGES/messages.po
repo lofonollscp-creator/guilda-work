@@ -23746,3 +23746,102 @@ msgid "Hay %(n)s clave guardada: %(lista)s. Deja en blanco para no cambiarla."
 msgid_plural "Hay %(n)s claves guardadas: %(lista)s. Deja en blanco para no cambiarlas."
 msgstr[0] "There is %(n)s saved key: %(lista)s. Leave blank to keep it."
 msgstr[1] "There are %(n)s saved keys: %(lista)s. Leave blank to keep them."
+
+msgid "Confianza de la lectura: %(p)s %%"
+msgstr "Reading confidence: %(p)s %%"
+
+msgid "Revisada automáticamente por la IA"
+msgstr "Reviewed automatically by the AI"
+
+msgid "Leída de la factura electrónica (datos exactos)"
+msgstr "Read from the electronic invoice (exact data)"
+
+msgid "Leída con IA: falta tu revisión"
+msgstr "Read with AI: it needs your review"
+
+msgid "Fuente: archivo XML"
+msgstr "Source: XML file"
+
+msgid "Fuente: texto del PDF"
+msgstr "Source: PDF text"
+
+msgid "Fuente: imagen del documento"
+msgstr "Source: document image"
+
+msgid "Confianza %(p)s %%"
+msgstr "Confidence %(p)s %%"
+
+msgid "Compruébala con el documento a la vista; si algo no está bien, corrígela o pulsa «Reabrir»."
+msgstr "Check it with the document in view; if something is wrong, correct it or press “Reopen”."
+
+msgid "Por qué no es total:"
+msgstr "Why it is not total:"
+
+msgid "Documento de la factura"
+msgstr "Invoice document"
+
+msgid "Controles del visor"
+msgstr "Viewer controls"
+
+msgid "Página anterior"
+msgstr "Previous page"
+
+msgid "Página siguiente"
+msgstr "Next page"
+
+msgid "Alejar"
+msgstr "Zoom out"
+
+msgid "Acercar"
+msgstr "Zoom in"
+
+msgid "Ajustar"
+msgstr "Fit"
+
+msgid "Abrir el original"
+msgstr "Open the original"
+
+msgid "Página de la factura (usa las flechas para moverte)"
+msgstr "Invoice page (use the arrow keys to move around)"
+
+msgid "Factura electrónica (XML)"
+msgstr "Electronic invoice (XML)"
+
+msgid "Este archivo no tiene imagen: es la propia factura en formato electrónico. Estos son los datos exactos que contiene."
+msgstr "This file has no image: it is the invoice itself in electronic format. These are the exact data it contains."
+
+msgid "Receptor"
+msgstr "Recipient"
+
+msgid "Número y fecha"
+msgstr "Number and date"
+
+msgid "Base %(n)s"
+msgstr "Base %(n)s"
+
+msgid "retención"
+msgstr "withholding"
+
+msgid "No se ha podido interpretar este XML como factura electrónica."
+msgstr "This XML could not be read as an electronic invoice."
+
+msgid "Descargar el XML"
+msgstr "Download the XML"
+
+msgid "Los documentos del despacho están cifrados y bloqueados: desbloquéalos para ver la factura aquí."
+msgstr "The office's documents are encrypted and locked: unlock them to see the invoice here."
+
+msgid "Este tipo de archivo no se puede enseñar aquí."
+msgstr "This type of file cannot be shown here."
+
+msgid "Evidencias de la lectura"
+msgstr "Reading evidence"
+
+msgid "Los datos salen de la factura electrónica tal como los escribió quien la emitió: no hay nada que contrastar con una imagen. Sí se hacen las comprobaciones de siempre (NIF, IVA, duplicados)."
+msgstr "The data comes from the electronic invoice exactly as its issuer wrote it: there is nothing to check against an image. The usual checks (tax ID, VAT, duplicates) are still done."
+
+msgid "Ver en el documento"
+msgstr "See in the document"
+
+msgid "Si el PDF tiene texto, leerlo primero como texto (más barato y rápido); si no cuadra, se vuelve a leer con la imagen"
+msgstr "If the PDF has text, read it as text first (cheaper and faster); if it does not add up, it is read again from the image"

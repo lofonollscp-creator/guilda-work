@@ -23831,3 +23831,102 @@ msgid "Hay %(n)s clave guardada: %(lista)s. Deja en blanco para no cambiarla."
 msgid_plural "Hay %(n)s claves guardadas: %(lista)s. Deja en blanco para no cambiarlas."
 msgstr[0] "Il y a %(n)s clé enregistrée : %(lista)s. Laissez vide pour la conserver."
 msgstr[1] "Il y a %(n)s clés enregistrées : %(lista)s. Laissez vide pour les conserver."
+
+msgid "Confianza de la lectura: %(p)s %%"
+msgstr "Confiance de la lecture : %(p)s %%"
+
+msgid "Revisada automáticamente por la IA"
+msgstr "Révisée automatiquement par l'IA"
+
+msgid "Leída de la factura electrónica (datos exactos)"
+msgstr "Lue depuis la facture électronique (données exactes)"
+
+msgid "Leída con IA: falta tu revisión"
+msgstr "Lue avec l'IA : elle attend votre révision"
+
+msgid "Fuente: archivo XML"
+msgstr "Source : fichier XML"
+
+msgid "Fuente: texto del PDF"
+msgstr "Source : texte du PDF"
+
+msgid "Fuente: imagen del documento"
+msgstr "Source : image du document"
+
+msgid "Confianza %(p)s %%"
+msgstr "Confiance %(p)s %%"
+
+msgid "Compruébala con el documento a la vista; si algo no está bien, corrígela o pulsa «Reabrir»."
+msgstr "Vérifiez-la avec le document sous les yeux ; si quelque chose ne va pas, corrigez-la ou appuyez sur « Rouvrir »."
+
+msgid "Por qué no es total:"
+msgstr "Pourquoi elle n'est pas totale :"
+
+msgid "Documento de la factura"
+msgstr "Document de la facture"
+
+msgid "Controles del visor"
+msgstr "Contrôles de la visionneuse"
+
+msgid "Página anterior"
+msgstr "Page précédente"
+
+msgid "Página siguiente"
+msgstr "Page suivante"
+
+msgid "Alejar"
+msgstr "Dézoomer"
+
+msgid "Acercar"
+msgstr "Zoomer"
+
+msgid "Ajustar"
+msgstr "Ajuster"
+
+msgid "Abrir el original"
+msgstr "Ouvrir l'original"
+
+msgid "Página de la factura (usa las flechas para moverte)"
+msgstr "Page de la facture (utilisez les flèches pour vous déplacer)"
+
+msgid "Factura electrónica (XML)"
+msgstr "Facture électronique (XML)"
+
+msgid "Este archivo no tiene imagen: es la propia factura en formato electrónico. Estos son los datos exactos que contiene."
+msgstr "Ce fichier n'a pas d'image : c'est la facture elle-même au format électronique. Voici les données exactes qu'il contient."
+
+msgid "Receptor"
+msgstr "Destinataire"
+
+msgid "Número y fecha"
+msgstr "Numéro et date"
+
+msgid "Base %(n)s"
+msgstr "Base %(n)s"
+
+msgid "retención"
+msgstr "retenue"
+
+msgid "No se ha podido interpretar este XML como factura electrónica."
+msgstr "Ce XML n'a pas pu être interprété comme une facture électronique."
+
+msgid "Descargar el XML"
+msgstr "Télécharger le XML"
+
+msgid "Los documentos del despacho están cifrados y bloqueados: desbloquéalos para ver la factura aquí."
+msgstr "Les documents du cabinet sont chiffrés et verrouillés : déverrouillez-les pour voir la facture ici."
+
+msgid "Este tipo de archivo no se puede enseñar aquí."
+msgstr "Ce type de fichier ne peut pas être affiché ici."
+
+msgid "Evidencias de la lectura"
+msgstr "Preuves de la lecture"
+
+msgid "Los datos salen de la factura electrónica tal como los escribió quien la emitió: no hay nada que contrastar con una imagen. Sí se hacen las comprobaciones de siempre (NIF, IVA, duplicados)."
+msgstr "Les données proviennent de la facture électronique telles que son émetteur les a écrites : il n'y a rien à confronter à une image. Les contrôles habituels (NIF, TVA, doublons) sont tout de même faits."
+
+msgid "Ver en el documento"
+msgstr "Voir dans le document"
+
+msgid "Si el PDF tiene texto, leerlo primero como texto (más barato y rápido); si no cuadra, se vuelve a leer con la imagen"
+msgstr "Si le PDF contient du texte, le lire d'abord comme texte (moins cher et plus rapide) ; si cela ne cadre pas, il est relu avec l'image"

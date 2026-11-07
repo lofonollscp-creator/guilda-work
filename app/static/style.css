@@ -5390,3 +5390,36 @@ html[data-letra="muy-grande"] .portal-cliente-shell { zoom: 1.3; }
 .ia-proveedor h3 { margin: 0 0 6px; font-size: 1.05rem; }
 .ia-probar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
 .ia-proveedor .ia-form-row > .correo-form-campo { flex: 1 1 220px; }
+
+/* Revisión de facturas: el documento a la vista junto a los datos extraídos */
+.revision-visor { display: block; }
+.revision-visor.con-documento { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
+.visor-documento { position: sticky; top: 12px; max-height: calc(100vh - 24px); display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg, transparent); overflow: hidden; }
+.visor-barra { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 8px; border-bottom: 1px solid var(--border); }
+.visor-barra .btn { min-width: 36px; }
+.visor-lienzo { overflow: auto; flex: 1 1 auto; min-height: 280px; padding: 8px; background: rgba(127, 127, 127, 0.08); }
+.visor-lienzo:focus-visible { outline: 2px solid var(--accent, #7c8ba1); outline-offset: -2px; }
+.visor-hoja { position: relative; margin: 0 auto; transition: width 0.12s; }
+.visor-hoja img { display: block; width: 100%; height: auto; background: #fff; }
+.visor-caja { position: absolute; border: 3px solid #d9822b; background: rgba(217, 130, 43, 0.18); border-radius: 3px; pointer-events: none; }
+.visor-xml { padding: 14px 16px; overflow: auto; }
+.visor-xml dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; }
+.visor-xml dt { font-weight: 600; }
+.visor-xml dd { margin: 0; }
+.confianza { display: inline-block; font-size: 0.75rem; font-weight: 600; line-height: 1; padding: 3px 7px; border-radius: 999px; vertical-align: middle; }
+.confianza-alta { background: rgba(46, 160, 67, 0.18); color: #1a7f37; }
+.confianza-media { background: rgba(217, 130, 43, 0.2); color: #9a5b0b; }
+.confianza-baja { background: rgba(207, 34, 46, 0.16); color: #b3261e; }
+.lectura-resumen { border: 1px solid var(--border); border-left-width: 5px; border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.lectura-resumen.lectura-alta { border-left-color: #2ea043; }
+.lectura-resumen.lectura-media { border-left-color: #d9822b; }
+.lectura-resumen.lectura-baja { border-left-color: #cf222e; }
+.lectura-resumen small { flex-basis: 100%; }
+@media (prefers-color-scheme: dark) {
+  .confianza-alta { color: #56d364; } .confianza-media { color: #e3b341; } .confianza-baja { color: #ff7b72; }
+}
+@media (max-width: 1100px) {
+  .revision-visor.con-documento { grid-template-columns: minmax(0, 1fr); }
+  .visor-documento { position: static; max-height: none; }
+  .visor-lienzo { max-height: 70vh; }
+}
