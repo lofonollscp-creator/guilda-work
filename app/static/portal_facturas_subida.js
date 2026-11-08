@@ -146,11 +146,17 @@
     try { var dt = new DataTransfer(); archivos.forEach(function (a) { dt.items.add(a); }); entrada.files = dt.files; return true; } catch (e) { return false; }
   }
 
+  // Una línea que brilla mientras se espera la lectura; es solo decoración (el texto «leyendo…» ya lo dice) y se va al sustituir el contenido del elemento.
+  function esqueleto() {
+    var e = document.createElement('span'); e.className = 'portal-esqueleto'; e.setAttribute('aria-hidden', 'true');
+    return e;
+  }
+
   // Lo que lee la IA de cada archivo (solo si el despacho lo ha activado): se enseña para que la persona vea si la foto se lee bien.
   function lecturaPrevia(archivo) {
     var url = form.getAttribute('data-url-leer');
     if (!url || archivo.size > MAX || TIPOS.indexOf(archivo.type) < 0) return Promise.resolve();
-    var li = document.createElement('li'); li.className = 'portal-lectura'; li.textContent = texto('leyendo', { nombre: archivo.name }); lista.appendChild(li);
+    var li = document.createElement('li'); li.className = 'portal-lectura'; li.textContent = texto('leyendo', { nombre: archivo.name }); li.appendChild(esqueleto()); lista.appendChild(li);
     var datos = new FormData(); datos.append('archivo', archivo);
     return fetch(url, { method: 'POST', credentials: 'same-origin', body: datos }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); }).then(function (r) {
       if (!r.ok || !r.j.lectura) { li.textContent = r.j.error ? texto('nolee', { nombre: archivo.name }) : ''; if (!li.textContent) li.remove(); return; }

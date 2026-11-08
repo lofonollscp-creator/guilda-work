@@ -94,13 +94,16 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     portal_conversaciones.responder(ficha_p, conv, "Hola. Hay que presentar el modelo 036 en el plazo de un mes desde el cambio. Si nos mandas la escritura o el contrato de alquiler de las nuevas oficinas lo preparamos nosotros", "despacho", "equipo@despacho.com")
     conv_cerrada = portal_conversaciones.iniciar(ficha_p, "Duda resuelta sobre el IVA", "¿Puedo deducir la factura del restaurante?", "despacho", "equipo@despacho.com")
     portal_conversaciones.cambiar_estado(ficha_p, conv_cerrada, abierta=False, por=uid)
+    from app import portal_cuestionarios
+    cuest = portal_cuestionarios.desde_plantilla(ficha_p, sorted(portal_cuestionarios.PLANTILLAS)[0], por=uid, fecha_limite=(date.today() + timedelta(days=5)).isoformat())
+    cuest_largo = portal_cuestionarios.crear(ficha_p, "Cuestionario con un título larguísimo sobre el cambio de domicilio fiscal y de actividad de la sociedad", portal_cuestionarios.preguntas_desde_texto("¿Cuál es el nuevo domicilio completo de la sociedad, con calle, número, piso, código postal y municipio?\n¿Desde qué fecha exacta tiene efecto el cambio?"), por=uid)
     if os.environ.get("GUILDA_TEXTOS_LARGOS"):
         conn = db.get_connection()
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
-    rutas += [f"/portal/conversaciones/nueva?peticion={pet_abierta}", f"/portal/conversaciones/{conv}", f"/portal/conversaciones/{conv_cerrada}", f"/portal/peticiones/{pet_abierta}", f"/portal/peticiones/{pet_cerrada}", f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
+    rutas += [f"/portal/cuestionarios/{cuest}", f"/portal/cuestionarios/{cuest_largo}", f"/portal/conversaciones/nueva?peticion={pet_abierta}", f"/portal/conversaciones/{conv}", f"/portal/conversaciones/{conv_cerrada}", f"/portal/peticiones/{pet_abierta}", f"/portal/peticiones/{pet_cerrada}", f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")

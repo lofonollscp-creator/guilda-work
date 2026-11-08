@@ -5385,6 +5385,12 @@ a.atajos-ayuda-boton { display: inline-flex; align-items: center; justify-conten
 .portal-codigos code { font-size: 1rem; }
 .portal-lectura { list-style: none; }
 .portal-lectura-dudosa { font-weight: 600; }
+.portal-esqueleto, .visor-hoja.cargando::before { display: block; border-radius: 7px; background: linear-gradient(90deg, rgba(127, 127, 127, 0.12) 25%, rgba(127, 127, 127, 0.24) 50%, rgba(127, 127, 127, 0.12) 75%); background-size: 200% 100%; animation: portal-brillo 1.3s ease-in-out infinite; }
+.portal-esqueleto { height: 10px; width: 70%; margin-top: 6px; }
+.visor-hoja.cargando::before { content: ""; position: absolute; inset: 0; min-height: 320px; z-index: 1; pointer-events: none; }
+.visor-hoja.cargando { min-height: 320px; }
+@keyframes portal-brillo { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .portal-esqueleto, .visor-hoja.cargando::before { animation: none; } }
 .portal-valoracion { display: flex; flex-wrap: wrap; gap: 8px 16px; border: 0; padding: 0; margin: 0 0 8px; }
 .portal-valoracion legend { padding: 0; margin-bottom: 4px; }
 .portal-saltar { position: absolute; left: 8px; top: -48px; z-index: 100; padding: 10px 14px; background: var(--primary); color: #fff; border-radius: var(--radius-sm); text-decoration: none; }

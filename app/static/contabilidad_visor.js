@@ -13,6 +13,11 @@
   var evidencias = {};
   try { evidencias = JSON.parse((document.getElementById('visor-evidencias') || {}).textContent || '{}'); } catch (e) { evidencias = {}; }
 
+  // Mientras llega la imagen (o la página siguiente) la hoja enseña un esqueleto en vez de un hueco en blanco.
+  function esperar() { if (!imagen.complete) hoja.classList.add('cargando'); }
+  function listo() { hoja.classList.remove('cargando'); }
+  imagen.addEventListener('load', listo); imagen.addEventListener('error', listo);
+  esperar();
   function aplicarZoom() { hoja.style.width = (zoom * 100) + '%'; }
   function ocultarCaja() { caja.hidden = true; }
   function dibujar(c) {
@@ -27,6 +32,7 @@
     pagina = Math.max(1, Math.min(paginas, n));
     ocultarCaja();
     if (esPdf) imagen.src = imagen.dataset.url.replace(/\/0$/, '/' + pagina);
+    esperar();
     imagen.alt = 'Página ' + pagina + ' de ' + paginas;
     if (estado) estado.textContent = pagina + ' / ' + paginas;
     lienzo.scrollTop = 0;
