@@ -131,7 +131,7 @@
 
     {% elif seccion == 'modulos' %}
     <h2>Módulos de negocio</h2>
-    <p class="muted">Gestoría, Gabinete de abogados, Inmobiliaria y Contabilización de facturas. Se activan solos si el despacho tiene el extra de pago vinculado; aquí se puede forzar a mano (p. ej. una prueba gratuita). Un cambio tarda hasta 30 s en verse.</p>
+    <p class="muted">Gestoría, Gabinete de abogados, Inmobiliaria y Contabilización de facturas. Se activan solos si el despacho tiene el extra de pago vinculado; aquí se puede forzar a mano como <strong>excepción al plan</strong> (p. ej. una prueba gratuita). Hace falta un motivo: queda en el historial. Un cambio tarda hasta 30 s en verse.</p>
     <div class="rejilla rejilla-modulos">
       {% for v in verticales %}
       <form method="post" action="{{ url_for('rutas.alternar_vertical', tenant_id=t.id, vertical_id=v.id) }}" class="tarjeta modulo">
@@ -139,12 +139,23 @@
         <div class="modulo-cab"><strong>{{ v.nombre }}</strong>
           <button type="submit" class="interruptor {{ 'on' if v.activo }}" role="switch" aria-checked="{{ 'true' if v.activo else 'false' }}" aria-label="{{ v.nombre }}"></button></div>
         <p class="muted">{{ v.descripcion }}</p>
-        <p class="modulo-estado">{% if v.motivo == 'manual' %}Ajuste manual{% if v.hasta %} hasta {{ v.hasta[:10] }}{% endif %}{% elif v.motivo == 'extra' %}Por su extra de pago{% elif v.motivo == 'defecto' %}Incluido por defecto{% else %}No incluido{% endif %}</p>
+        <p class="modulo-estado">{% if v.motivo == 'manual' %}Excepción al plan{% if v.hasta %} hasta {{ v.hasta[:10] }}{% endif %}{% if v.caducada %} (caducada){% endif %}{% elif v.motivo == 'extra' %}Por su extra de pago{% elif v.motivo == 'defecto' %}Incluido por defecto{% else %}No incluido{% endif %}</p>
+        {% if v.motivo == 'manual' and v.excepcion_motivo %}<p class="muted">Motivo: {{ v.excepcion_motivo }}{% if v.excepcion_por %} · {{ v.excepcion_por }}{% endif %}</p>{% endif %}
         {% if v.uso %}<p class="muted modulo-uso">Uso este mes: {% for etiqueta, valor in v.uso %}{{ etiqueta }}: <strong>{{ valor }}</strong>{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}
-        {% if v.motivo == 'manual' %}<div class="modulo-pie"><button type="submit" class="boton" name="accion" value="auto">Volver a automático</button></div>{% endif %}
+        <label class="muted" for="motivo-{{ v.id }}">Motivo de la excepción</label>
+        <input type="text" id="motivo-{{ v.id }}" name="motivo" maxlength="300" placeholder="Obligatorio para activar, desactivar o probar">
+        <div class="modulo-pie">
+          {% if not v.activo %}<input type="number" name="dias" min="1" max="365" placeholder="Días" aria-label="Días de prueba" style="width: 6em"><button type="submit" class="boton" name="accion" value="prueba">Probar unos días</button>{% endif %}
+          {% if v.motivo == 'manual' %}<button type="submit" class="boton" name="accion" value="auto">Volver al plan</button>{% endif %}
+        </div>
       </form>
       {% endfor %}
     </div>
+    {% if historial_verticales %}
+    <h3>Historial de excepciones</h3>
+    <div class="tabla-envoltorio"><table class="tabla"><thead><tr><th>Cuándo</th><th>Módulo</th><th>Acción</th><th>Hasta</th><th>Motivo</th><th>Quién</th></tr></thead>
+      <tbody>{% for h in historial_verticales %}<tr><td>{{ h.creado_en[:16]|replace('T', ' ') }}</td><td>{{ h.nombre }}</td><td>{{ {'activar': 'Activar', 'desactivar': 'Desactivar', 'prueba': 'Prueba', 'volver_al_plan': 'Volver al plan'}.get(h.accion, h.accion) }}</td><td>{{ h.activo_hasta[:10] if h.activo_hasta else '—' }}</td><td>{{ h.motivo }}</td><td>{{ h.por }}</td></tr>{% endfor %}</tbody></table></div>
+    {% endif %}
     <h2>Herramientas conectadas</h2>
     <p class="muted">Qué herramientas ve este tenant. Los módulos desactivados quedan ocultos para sus usuarios.</p>
     <div class="rejilla rejilla-modulos">

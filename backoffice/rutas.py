@@ -252,7 +252,7 @@ def tenant(tenant_id: int):
     if seccion == "personal":
         extra = {"personal": datos.personal_tenant(tenant_id)}
     if seccion == "modulos":
-        extra = {"verticales": verticales.estado_para_backoffice(tenant_id)}
+        extra = {"verticales": verticales.estado_para_backoffice(tenant_id), "historial_verticales": verticales.historial_de(tenant_id)}
     if seccion == "suscripcion":
         facturas, error_facturas = facturacion.facturas(tenant_id) if facturacion.configurado() else ([], None)
         extra = {
@@ -412,20 +412,28 @@ def alternar_modulo(tenant_id: int, modulo_id: str):
 @bp.route("/tenants/<int:tenant_id>/verticales/<vertical_id>", methods=["POST"])
 @auth.login_required
 def alternar_vertical(tenant_id: int, vertical_id: str):
-    """Activa o desactiva a mano un módulo de negocio (Gestoría, Gabinete de abogados, Inmobiliaria) para un despacho; «auto» vuelve a lo que le toque por defecto o por sus extras."""
+    """Una EXCEPCIÓN al plan de un despacho para un módulo de negocio (Gestoría, Gabinete de abogados, Inmobiliaria…): activar, desactivar o probar unos días. Exige un motivo, que queda en el historial
+    del despacho junto con quién lo hizo. «auto» (Volver al plan) quita la excepción y vuelve a lo que le toque por defecto o por sus extras."""
     _tenant_o_404(tenant_id)
+    if vertical_id not in verticales.VERTICALES:
+        abort(400, "Módulo de negocio desconocido.")
     accion = request.form.get("accion", "alternar")
+    motivo, por = request.form.get("motivo", ""), g.admin["usuario"]
     try:
         if accion == "auto":
-            verticales.quitar_ajuste_manual(tenant_id, vertical_id)
+            verticales.quitar_ajuste_manual(tenant_id, vertical_id, motivo=motivo, por=por)
             texto = "ajuste manual quitado"
+        elif accion == "prueba":
+            hasta = verticales.prueba_de_dias(tenant_id, vertical_id, int(request.form.get("dias") or 0), motivo=motivo, por=por)
+            texto = f"prueba hasta {hasta}"
         else:
             activo = not next((e["activo"] for e in verticales.estado_para_backoffice(tenant_id) if e["id"] == vertical_id), False)
-            verticales.fijar_activo(tenant_id, vertical_id, activo)
+            verticales.fijar_activo(tenant_id, vertical_id, activo, motivo=motivo, por=por)
             texto = "activado" if activo else "desactivado"
     except ValueError as e:
-        abort(400, str(e))
-    auth.auditar("tenant.vertical", f"tenant {tenant_id}: {vertical_id} {texto}")
+        flash(str(e), "error")
+        return _volver_a_tenant(tenant_id, "modulos")
+    auth.auditar("tenant.vertical", f"tenant {tenant_id}: {vertical_id} {texto} ({' '.join(motivo.split())[:80]})")
     return _volver_a_tenant(tenant_id, "modulos")
 
 

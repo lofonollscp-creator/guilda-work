@@ -125,8 +125,9 @@ def test_el_calendario_de_la_api_trae_lo_mismo_que_el_de_la_web(cliente):
         d = r.get_json()["data"]
         por_dia = {x["fecha"]: [t["asunto"] for t in x["tareas"]] for x in d["dias"] if x["tareas"]}
         assert "C4 sin fecha" not in str(por_dia)
-        assert sorted(por_dia.get(hoy.isoformat(), [])) == ["C1 vence hoy", "C2 empieza hoy"]
-        assert "C3 mañana" in por_dia.get((hoy + timedelta(days=1)).isoformat(), []) or vista in ("dia",) or hoy.weekday() == 6 and vista == "semana_laboral"
+        fin_de_semana = hoy.weekday() >= 5 and vista == "semana_laboral"                     # la semana laboral no enseña ni el sábado ni el domingo
+        assert fin_de_semana or sorted(por_dia.get(hoy.isoformat(), [])) == ["C1 vence hoy", "C2 empieza hoy"]
+        assert "C3 mañana" in por_dia.get((hoy + timedelta(days=1)).isoformat(), []) or vista in ("dia",) or fin_de_semana or hoy.weekday() == 6 and vista == "semana"     # en domingo, mañana ya es la semana siguiente
         html = cliente.get("/tareas/calendario", query_string={"vista": vista, "fecha": hoy.isoformat()}).get_data(as_text=True)
         web = sorted(set(re.findall(r'href="/tareas/\d+(?:/editar)?"[^>]*>\s*(C\d [^<]*?)\s*</a>', html)))
         api_todas = sorted({t["asunto"] for x in d["dias"] for t in x["tareas"] if t["asunto"].startswith("C")})
