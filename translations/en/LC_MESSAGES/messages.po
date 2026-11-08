@@ -23655,8 +23655,8 @@ msgstr "The AI proposes and a person always reviews"
 msgid "La IA decide sola cuando está segura; una persona revisa el resto"
 msgstr "The AI decides on its own when it is sure; a person reviews the rest"
 
-msgid "Confianza mínima para que decida sola (%%)"
-msgstr "Minimum confidence for it to decide on its own (%%)"
+msgid "Confianza mínima para que decida sola (de 50 a 100)"
+msgstr "Minimum confidence for it to decide on its own (50 to 100)"
 
 msgid "Aunque la IA decida sola, siempre puedes abrir la factura, ver los datos junto al documento y corregirlos."
 msgstr "Even if the AI decides on its own, you can always open the invoice, see the data next to the document and correct it."
@@ -24296,3 +24296,36 @@ msgstr "There are too many open questionnaires with this client."
 
 msgid "Una pregunta de opciones necesita al menos dos."
 msgstr "A multiple-choice question needs at least two options."
+
+msgid "Avisar a tu gestoría"
+msgstr "Tell your accountant"
+
+msgid "Tus datos de contacto están completos"
+msgstr "Your contact details are complete"
+
+msgid "Necesitamos tu NIF y tu correo. Si falta alguno, díselo a tu gestoría."
+msgstr "We need your tax ID and your email. If either is missing, let your accountant know."
+
+msgid "Subir una factura"
+msgstr "Upload an invoice"
+
+msgid "Has subido tu primera factura"
+msgstr "You have uploaded your first invoice"
+
+msgid "Con una foto basta: la leemos nosotros."
+msgstr "A photo is enough: we read it for you."
+
+msgid "Has escrito a tu gestoría"
+msgstr "You have written to your accountant"
+
+msgid "Cuéntale cualquier duda: te contestará aquí y te avisaremos."
+msgstr "Tell them any question: they will reply here and we will notify you."
+
+msgid "Para empezar"
+msgstr "To get started"
+
+msgid "%(h)s de %(t)s"
+msgstr "%(h)s of %(t)s"
+
+msgid "Progreso de los primeros pasos"
+msgstr "Progress of the first steps"

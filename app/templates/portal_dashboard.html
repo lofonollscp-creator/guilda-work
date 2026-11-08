@@ -7,6 +7,21 @@
     {% if bienvenida %}
     <section class="portal-bienvenida" aria-labelledby="portal-bienvenida-titulo">
       <h2 id="portal-bienvenida-titulo">{{ _('Así funciona tu portal') }}</h2>
+      {% if primeros_pasos %}
+      <div class="portal-empezar" role="group" aria-labelledby="portal-empezar-titulo">
+        <p id="portal-empezar-titulo" class="portal-empezar-cab"><strong>{{ _('Para empezar') }}</strong> <span class="muted">{{ _('%(h)s de %(t)s', h=primeros_resumen.hechos, t=primeros_resumen.total) }}</span></p>
+        <progress class="portal-empezar-barra" max="{{ primeros_resumen.total }}" value="{{ primeros_resumen.hechos }}" aria-label="{{ _('Progreso de los primeros pasos') }}">{{ primeros_resumen.hechos }}/{{ primeros_resumen.total }}</progress>
+        <ul class="portal-empezar-lista">
+          {% for p in primeros_pasos %}
+          <li class="{{ 'hecho' if p.hecho }}">
+            <span class="portal-empezar-marca" aria-hidden="true">{{ '✓' if p.hecho else '○' }}</span>
+            <span class="portal-empezar-texto"><strong>{{ p.titulo }}</strong><span>{{ p.detalle }}</span></span>
+            {% if p.hecho %}<span class="sr-only">{{ _('Hecho') }}</span>{% elif p.clave == primeros_resumen.siguiente.clave %}<a class="btn btn-primary" href="{{ p.url }}">{{ p.accion }}</a>{% else %}<a class="btn btn-ghost" href="{{ p.url }}">{{ p.accion }}</a>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
       <ol class="portal-bienvenida-pasos">
         <li><strong>{{ _('Mira «Para hacer»') }}</strong> <span>{{ _('Todo lo que tu gestoría necesita de ti aparece ahí, con su botón. Si no hay nada, estás al día.') }}</span></li>
         {% if portal_facturas and portal_puede_subir %}<li><strong>{{ _('Sube tus facturas con una foto') }}</strong> <span>{{ _('En Facturas, o desde el móvil con el código QR de «Mi cuenta»: no tienes que teclear nada.') }}</span></li>{% endif %}

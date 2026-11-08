@@ -23664,8 +23664,8 @@ msgstr "La IA proposa i una persona sempre revisa"
 msgid "La IA decide sola cuando está segura; una persona revisa el resto"
 msgstr "La IA decideix sola quan n'està segura; una persona revisa la resta"
 
-msgid "Confianza mínima para que decida sola (%%)"
-msgstr "Confiança mínima perquè decideixi sola (%%)"
+msgid "Confianza mínima para que decida sola (de 50 a 100)"
+msgstr "Confiança mínima perquè decideixi sola (de 50 a 100)"
 
 msgid "Aunque la IA decida sola, siempre puedes abrir la factura, ver los datos junto al documento y corregirlos."
 msgstr "Encara que la IA decideixi sola, sempre pots obrir la factura, veure les dades al costat del document i corregir-les."
@@ -24305,3 +24305,36 @@ msgstr "Hi ha massa qüestionaris oberts amb aquest client."
 
 msgid "Una pregunta de opciones necesita al menos dos."
 msgstr "Una pregunta d'opcions necessita almenys dues opcions."
+
+msgid "Avisar a tu gestoría"
+msgstr "Avisar la teva gestoria"
+
+msgid "Tus datos de contacto están completos"
+msgstr "Les teves dades de contacte estan completes"
+
+msgid "Necesitamos tu NIF y tu correo. Si falta alguno, díselo a tu gestoría."
+msgstr "Necessitem el teu NIF i el teu correu. Si en falta algun, digues-ho a la teva gestoria."
+
+msgid "Subir una factura"
+msgstr "Pujar una factura"
+
+msgid "Has subido tu primera factura"
+msgstr "Has pujat la teva primera factura"
+
+msgid "Con una foto basta: la leemos nosotros."
+msgstr "Amb una foto n'hi ha prou: la llegim nosaltres."
+
+msgid "Has escrito a tu gestoría"
+msgstr "Has escrit a la teva gestoria"
+
+msgid "Cuéntale cualquier duda: te contestará aquí y te avisaremos."
+msgstr "Explica-li qualsevol dubte: et respondrà aquí i t'avisarem."
+
+msgid "Para empezar"
+msgstr "Per començar"
+
+msgid "%(h)s de %(t)s"
+msgstr "%(h)s de %(t)s"
+
+msgid "Progreso de los primeros pasos"
+msgstr "Progrés dels primers passos"

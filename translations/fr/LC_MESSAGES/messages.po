@@ -23740,8 +23740,8 @@ msgstr "L'IA propose et une personne révise toujours"
 msgid "La IA decide sola cuando está segura; una persona revisa el resto"
 msgstr "L'IA décide seule quand elle est sûre ; une personne révise le reste"
 
-msgid "Confianza mínima para que decida sola (%%)"
-msgstr "Confiance minimale pour qu'elle décide seule (%%)"
+msgid "Confianza mínima para que decida sola (de 50 a 100)"
+msgstr "Confiance minimale pour qu'elle décide seule (de 50 à 100)"
 
 msgid "Aunque la IA decida sola, siempre puedes abrir la factura, ver los datos junto al documento y corregirlos."
 msgstr "Même si l'IA décide seule, vous pouvez toujours ouvrir la facture, voir les données à côté du document et les corriger."
@@ -24381,3 +24381,36 @@ msgstr "Il y a trop de questionnaires ouverts avec ce client."
 
 msgid "Una pregunta de opciones necesita al menos dos."
 msgstr "Une question à choix multiples nécessite au moins deux options."
+
+msgid "Avisar a tu gestoría"
+msgstr "Prévenir votre cabinet"
+
+msgid "Tus datos de contacto están completos"
+msgstr "Vos coordonnées sont complètes"
+
+msgid "Necesitamos tu NIF y tu correo. Si falta alguno, díselo a tu gestoría."
+msgstr "Nous avons besoin de votre NIF et de votre e-mail. S'il en manque un, dites-le à votre cabinet."
+
+msgid "Subir una factura"
+msgstr "Téléverser une facture"
+
+msgid "Has subido tu primera factura"
+msgstr "Vous avez téléversé votre première facture"
+
+msgid "Con una foto basta: la leemos nosotros."
+msgstr "Une photo suffit : nous la lisons pour vous."
+
+msgid "Has escrito a tu gestoría"
+msgstr "Vous avez écrit à votre cabinet"
+
+msgid "Cuéntale cualquier duda: te contestará aquí y te avisaremos."
+msgstr "Posez-lui n'importe quelle question : elle répondra ici et nous vous préviendrons."
+
+msgid "Para empezar"
+msgstr "Pour commencer"
+
+msgid "%(h)s de %(t)s"
+msgstr "%(h)s sur %(t)s"
+
+msgid "Progreso de los primeros pasos"
+msgstr "Progression des premières étapes"

@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -287,13 +287,16 @@ def dashboard():
     d = portal_inicio.datos(cliente, g.portal_rol)
     from . import certificados
     cfg_cert = certificados.config(cliente["tenant_id"])
+    bienvenida = not g.get("vista_previa") and not portal_personas.bienvenida_vista(cliente, g.get("portal_email"))
+    primeros = portal_primeros_pasos.pasos(cliente, d["con_facturas"], g.portal_rol != "consulta", g.portal_rol != "consulta") if bienvenida else []
+    resumen_primeros = portal_primeros_pasos.resumen(primeros)
     return render_template(
         "portal_dashboard.html", cliente=cliente, vencimientos=d["vencimientos"], certificados=d["certificados"], tipos_certificado=certificados.TIPOS_CERTIFICADO,
         instrucciones_certificado=cfg_cert["instrucciones"], ayuda_enviada=request.args.get("ayuda"), portal_seccion="inicio",
         para_hacer=d["para_hacer"], presentados=d["presentados"], proximo_pendiente=d["proximo_pendiente"], trabajo_en_curso=portal_estado.enriquecer(d["trabajo"], cliente["tenant_id"]),
         plazos=portal_plazos.proximos(cliente, d["vencimientos"], g.portal_rol),
         aviso=(request.args.get("aviso") or "")[:200] or None, max_caracteres=tareas_trabajo.MAX_CARACTERES_COMENTARIO,
-        bienvenida=not g.get("vista_previa") and not portal_personas.bienvenida_vista(cliente, g.get("portal_email")),
+        bienvenida=bienvenida and not resumen_primeros["completo"], primeros_pasos=primeros, primeros_resumen=resumen_primeros,
     )
 
 
@@ -1016,7 +1019,7 @@ def peticion(peticion_id: int):
                            puede_subir=g.portal_rol != "consulta" and not g.get("vista_previa") and p["estado"] in ("pendiente", "enviada"), max_archivos=portal_peticiones.MAX_ARCHIVOS, portal_seccion="inicio")
 
 
-def _archivos_del_formulario() -> list[tuple[str, str, bytes]]:
+def _adjuntos_de_conversacion() -> list[tuple[str, str, bytes]]:
     return [(f.filename or "archivo", (f.mimetype or "").lower(), f.read(portal_conversaciones.MAX_BYTES + 1)) for f in request.files.getlist("archivos")[:portal_conversaciones.MAX_ADJUNTOS + 1] if f and f.filename]
 
 
@@ -1127,7 +1130,7 @@ def conversacion_nueva():
     texto = request.form.get("texto", "")
     if request.method == "POST":
         try:
-            cid = portal_conversaciones.iniciar(cliente, asunto, texto, "cliente", g.portal_email or cliente["email"] or "", peticion_id=p["id"] if p else None, archivos=_archivos_del_formulario())
+            cid = portal_conversaciones.iniciar(cliente, asunto, texto, "cliente", g.portal_email or cliente["email"] or "", peticion_id=p["id"] if p else None, archivos=_adjuntos_de_conversacion())
             auditoria.registrar(cliente["tenant_id"], None, "portal.conversacion_abierta", "portal_conversacion", cid, {"quien": g.portal_email or "titular"})
             _conversacion_avisar_equipo(cliente, cid, asunto, texto, True)
             return redirect(url_for("portal_cliente.conversacion", conversacion_id=cid, enviado=1))
@@ -1151,7 +1154,7 @@ def conversacion(conversacion_id: int):
             abort(403)
         texto = request.form.get("texto", "")
         try:
-            portal_conversaciones.responder(cliente, conversacion_id, texto, "cliente", g.portal_email or cliente["email"] or "", archivos=_archivos_del_formulario())
+            portal_conversaciones.responder(cliente, conversacion_id, texto, "cliente", g.portal_email or cliente["email"] or "", archivos=_adjuntos_de_conversacion())
             auditoria.registrar(cliente["tenant_id"], None, "portal.conversacion_respuesta", "portal_conversacion", conversacion_id, {"quien": g.portal_email or "titular"})
             _conversacion_avisar_equipo(cliente, conversacion_id, c["asunto"], texto, False)
             return redirect(url_for("portal_cliente.conversacion", conversacion_id=conversacion_id, enviado=1) + "#ultimo")

@@ -97,7 +97,7 @@ def test_el_panel_y_la_imagen_en_linea_desde_la_web(cliente, modelo):  # noqa: F
     fid = fc.subir_archivos(t, uid, c, "recibida", [("f.png", "image/png", png)])[0]
     lf.leer(t, uid, fid)
     html = cliente.get(f"/contabilidad/{fid}").get_data(as_text=True)
-    assert 'id="evidencias-lectura"' in html and "Ver en la imagen" in html and f"/contabilidad/{fid}/imagen" in html and "TOTAL 121,00" in html and "Coincide" in html
+    assert 'id="evidencias-lectura"' in html and "Ver en el documento" in html and f"/contabilidad/{fid}/imagen" in html and "data-visor-imagen" in html and "TOTAL 121,00" in html and "Coincide" in html
     assert 'data-evidencia-ver="0.6,0.8,0.9,0.85"' in html
     r = cliente.get(f"/contabilidad/{fid}/imagen")
     assert r.status_code == 200 and r.mimetype == "image/png" and r.data == png and r.headers["X-Content-Type-Options"] == "nosniff" and "sandbox" in r.headers["Content-Security-Policy"]
@@ -106,5 +106,5 @@ def test_el_panel_y_la_imagen_en_linea_desde_la_web(cliente, modelo):  # noqa: F
     lf.leer(t, uid, pdf)
     assert cliente.get(f"/contabilidad/{pdf}/imagen").status_code == 404
     html = cliente.get(f"/contabilidad/{pdf}").get_data(as_text=True)
-    assert 'id="evidencias-lectura"' in html and "data-evidencia-ver" not in html and "/imagen" not in html
+    assert 'id="evidencias-lectura"' in html and "data-evidencia-ver" not in html and f"/contabilidad/{pdf}/imagen" not in html
     assert cliente.get("/contabilidad/999999/imagen").status_code == 404
