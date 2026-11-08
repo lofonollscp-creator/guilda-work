@@ -149,6 +149,13 @@
         <input type="number" id="ia-umbral" name="umbral_confianza" min="50" max="100" value="{{ normas.umbral_confianza }}"></div>
       <label class="correo-form-checkbox"><input type="checkbox" name="separar_pdf" {% if normas.separar_pdf %}checked{% endif %}> {{ _('Si un PDF contiene varias facturas, separarlas y leer cada una') }}</label>
       <label class="correo-form-checkbox"><input type="checkbox" name="lectura_texto" {% if normas.lectura_texto %}checked{% endif %}> {{ _('Si el PDF tiene texto, leerlo primero como texto (más barato y rápido); si no cuadra, se vuelve a leer con la imagen') }}</label>
+      <div class="correo-form-campo"><label for="ia-ocr">{{ _('Reconocimiento de texto en el servidor (OCR local)') }}</label>
+        <select id="ia-ocr" name="ocr_local">
+          <option value="no" {% if normas.ocr_local == 'no' %}selected{% endif %}>{{ _('No usarlo') }}</option>
+          <option value="respaldo" {% if normas.ocr_local == 'respaldo' %}selected{% endif %}>{{ _('De respaldo: solo si el modelo no puede leer la imagen') }}</option>
+          <option value="solo_local" {% if normas.ocr_local == 'solo_local' %}selected{% endif %}>{{ _('Nada sale del servidor: solo OCR propio y modelos locales') }}</option>
+        </select>
+        <small class="muted">{{ _('El OCR es más lento y se equivoca más que un modelo con visión, así que sus lecturas las revisa siempre una persona.') }}{% if not ocr_disponible %} {{ _('Ahora mismo no está instalado en el servidor.') }}{% endif %}</small></div>
       <p class="ia-aviso">{{ _('Aunque la IA decida sola, siempre puedes abrir la factura, ver los datos junto al documento y corregirlos.') }}</p>
       <button type="submit" class="btn btn-primary">{{ _('Guardar normas') }}</button>
     </form>

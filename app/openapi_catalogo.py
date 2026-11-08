@@ -576,7 +576,7 @@ ESQUEMAS.update({
     "FacturaContable": {"type": "object", "properties": {"id": _I, "cliente_fiscal_id": _I, "cliente": _SN, "tipo": {"type": "string", "enum": ["emitida", "recibida"]}, "abono": _B, "fecha": _S, "trimestre": _S,
                                                        "numero": _S, "tercero": _S, "nif": _SN, "total": _N, "estado": {"type": "string", "enum": ["pendiente", "revisada", "exportada", "descartada"]},
                                                        "origen": _S, "lectura": _SN, "tiene_archivo": _B,
-                                                       "lectura_fuente": {**_SN, "description": "De dónde salió la lectura: xml (factura electrónica, exacta), texto (capa de texto del PDF) o imagen."},
+                                                       "lectura_fuente": {**_SN, "description": "De dónde salió la lectura: xml (factura electrónica, exacta), texto (capa de texto del PDF), imagen u ocr (texto reconocido en el servidor)."},
                                                        "lectura_confianza": {"type": "integer", "nullable": True, "description": "0-100: lo que merece la lectura. Por debajo de 90 conviene revisarla."},
                                                        "revision_auto": {**_B, "description": "True si la dio por revisada la IA (modo «decide sola») sin que la mirara una persona."}}},
     "FacturaContableDetalle": {"type": "object", "properties": {"id": _I, "cliente_fiscal_id": _I, "cliente": _SN, "tipo": _S, "abono": _B, "fecha": _S, "trimestre": _S, "numero": _S, "tercero": _S, "nif": _SN,

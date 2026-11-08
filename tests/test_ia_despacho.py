@@ -109,14 +109,14 @@ def test_normas_solo_ue_y_sin_claves_personales(despacho):
 
 def test_config_valida_modo_y_umbral(despacho):
     t, u, _ = despacho
-    assert dz.config(t) == {"solo_ue": False, "claves_personales": True, "facturas_modo": "compartida", "umbral_confianza": 90, "lectura_texto": True, "separar_pdf": True}
+    assert dz.config(t) == {"solo_ue": False, "claves_personales": True, "facturas_modo": "compartida", "umbral_confianza": 90, "lectura_texto": True, "separar_pdf": True, "ocr_local": "respaldo"}
     with pytest.raises(ValueError, match="modo"):
         dz.guardar_config(t, solo_ue=False, claves_personales=True, facturas_modo="otro", umbral_confianza=90)
     for malo in (10, 101, "x"):
         with pytest.raises(ValueError, match="umbral"):
             dz.guardar_config(t, solo_ue=False, claves_personales=True, facturas_modo="auto", umbral_confianza=malo)
     dz.guardar_config(t, solo_ue=True, claves_personales=False, facturas_modo="auto", umbral_confianza=95, lectura_texto=False, por=u)
-    assert dz.config(t) == {"solo_ue": True, "claves_personales": False, "facturas_modo": "auto", "umbral_confianza": 95, "lectura_texto": False, "separar_pdf": True}
+    assert dz.config(t) == {"solo_ue": True, "claves_personales": False, "facturas_modo": "auto", "umbral_confianza": 95, "lectura_texto": False, "separar_pdf": True, "ocr_local": "respaldo"}
 
 
 def _openai_ok(texto="hecho", entrada=1000, salida=200):

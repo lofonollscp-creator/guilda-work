@@ -77,7 +77,7 @@ def test_errores_de_validacion_vuelven_a_la_pantalla_con_mensaje(equipo):
 def test_las_normas_se_guardan_y_aplican(equipo):
     cliente, t, d = equipo
     cliente.post("/ia/ajustes/despacho/normas", data={"solo_ue": "on", "facturas_modo": "auto", "umbral_confianza": "95"})
-    assert dz.config(t) == {"solo_ue": True, "claves_personales": False, "facturas_modo": "auto", "umbral_confianza": 95, "lectura_texto": False, "separar_pdf": False}
+    assert dz.config(t) == {"solo_ue": True, "claves_personales": False, "facturas_modo": "auto", "umbral_confianza": 95, "lectura_texto": False, "separar_pdf": False, "ocr_local": "respaldo"}
     r = cliente.post("/ia/ajustes", data={"proveedor": "openai", "modelo_personalizado": "gpt-4o"}, follow_redirects=True)
     assert "solo admite proveedores de la UE" in r.get_data(as_text=True)
     r = cliente.post("/ia/ajustes", data={"proveedor": "openrouter", "modelo_personalizado": "x/y"}, follow_redirects=True)
@@ -112,3 +112,13 @@ def test_listar_modelos_de_un_proveedor(equipo, monkeypatch):
     monkeypatch.setattr(pv, "listar_modelos", lambda proveedor, clave, url=None, timeout=15: ["gpt-4o", "gpt-4o-mini"])
     assert cliente.get("/ia/modelos?proveedor=openai").get_json()["modelos"] == ["gpt-4o", "gpt-4o-mini"]
     assert cliente.get("/ia/modelos?proveedor=inventado").status_code == 404
+
+
+def test_el_modo_de_ocr_local_se_elige_en_las_normas_y_se_rechaza_lo_invalido(equipo):
+    cliente, t, d = equipo
+    html = cliente.get("/ia/ajustes").get_data(as_text=True)
+    assert 'name="ocr_local"' in html and "Nada sale del servidor" in html
+    cliente.post("/ia/ajustes/despacho/normas", data={"facturas_modo": "compartida", "umbral_confianza": "90", "ocr_local": "solo_local"})
+    assert dz.config(t)["ocr_local"] == "solo_local"
+    html = cliente.post("/ia/ajustes/despacho/normas", data={"facturas_modo": "compartida", "umbral_confianza": "90", "ocr_local": "siempre"}, follow_redirects=True).get_data(as_text=True)
+    assert "OCR" in html and dz.config(t)["ocr_local"] == "solo_local"

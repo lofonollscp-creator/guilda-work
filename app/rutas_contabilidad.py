@@ -136,7 +136,7 @@ def calidad():
     except ValueError:
         desde = date.today().replace(day=1).isoformat()
     return render_template("contabilidad_calidad.html", r=lectura_calidad.resumen(g.tenant_id, desde), desde=desde, etiquetas=lectura_calidad.ETIQUETAS,
-                           fuentes={"xml": _("Factura electrónica (XML)"), "texto": _("Texto del PDF"), "imagen": _("Imagen del documento")})
+                           fuentes={"xml": _("Factura electrónica (XML)"), "texto": _("Texto del PDF"), "imagen": _("Imagen del documento"), "ocr": _("Texto reconocido en el servidor (OCR)")})
 
 
 @contabilidad_bp.route("/comparar", methods=["GET", "POST"])

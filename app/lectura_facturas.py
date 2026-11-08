@@ -10,7 +10,7 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 
-from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_evidencias, pdf_facturas, qr_facturas, segmentacion_pdf, vies
+from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_evidencias, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, vies
 
 PROMPT = """Eres un asistente de contabilidad en España. Recibes la foto o el PDF de UNA factura. Devuelve SOLO un objeto JSON, sin texto alrededor, con estos campos (null si no aparece o no se lee):
 {"emisor_nombre": str, "emisor_nif": str, "receptor_nombre": str, "receptor_nif": str, "numero": str, "fecha": "AAAA-MM-DD", "fecha_operacion": "AAAA-MM-DD",
@@ -228,8 +228,38 @@ def _puerta_del_texto(r: dict, texto: str, cliente_nif: str) -> bool:
     return all(lectura_evidencias.coherente(c, texto, v[c]) for c in ("numero", "fecha", "total") if v[c]) and all(v[c] for c in ("numero", "fecha", "total"))
 
 
-def _leer_con_ia(usuario_id: int, doc: dict, f: dict, cliente_nif: str, qr: dict | None, usar_texto: bool) -> tuple[dict, str, str, list[str]]:
-    """(resultado, fuente, texto, notas). Primero el texto del PDF si lo hay y el despacho lo permite; solo se acepta si pasa la puerta de calidad. Si no, la imagen o el PDF tal cual."""
+def _leer_texto(usuario_id: int, texto: str, f: dict, cliente_nif: str, qr: dict | None, encabezado: str) -> dict:
+    respuesta = ia_asistente.completar_partes(usuario_id, PROMPT_TEXTO, [{"type": "text", "text": encabezado + texto[:MAX_TEXTO_PDF]}])
+    return _procesar(_json_de(respuesta), f, cliente_nif, texto, qr)
+
+
+def _leer_solo_local(usuario_id: int, doc: dict, f: dict, cliente_nif: str, qr: dict | None) -> tuple[dict, str, str, list[str]]:
+    """Modo «nada sale del servidor»: el documento se convierte en texto aquí (su capa de texto o OCR local) y solo ese texto llega al modelo, que por norma es local. Nunca se manda la imagen."""
+    mime = (doc.get("tipo_mime") or "").lower().split(";")[0]
+    texto = _texto_del_pdf(doc["contenido"], mime)
+    if not _texto_suficiente(texto):
+        texto = ocr_local.texto_de(doc["contenido"], mime)
+    if not _texto_suficiente(texto):
+        raise ValueError("No se pudo reconocer el texto del documento en el servidor (hace falta un archivo legible y Tesseract instalado). Rellena los datos a mano.")
+    r = _leer_texto(usuario_id, texto, f, cliente_nif, qr, "Extrae los datos de esta factura.\n\nTEXTO DEL DOCUMENTO (reconocido en el servidor; puede tener erratas):\n")
+    return r, "ocr", texto, ["Lectura local: el documento no ha salido del servidor y el texto puede tener erratas; revísala con el documento delante."]
+
+
+def _rescatar_con_ocr(usuario_id: int, doc: dict, f: dict, cliente_nif: str, qr: dict | None, notas: list[str], motivo: str):
+    """Respaldo: si el modelo no pudo con la imagen, se reconoce el texto en local y se le pasa solo ese texto. None si no hay OCR o no reconoce nada."""
+    mime = (doc.get("tipo_mime") or "").lower().split(";")[0]
+    texto = ocr_local.texto_de(doc["contenido"], mime)
+    if not _texto_suficiente(texto):
+        return None
+    r = _leer_texto(usuario_id, texto, f, cliente_nif, qr, "Extrae los datos de esta factura.\n\nTEXTO RECONOCIDO POR OCR (puede tener erratas):\n")
+    return r, "ocr", texto, notas + [f"{motivo}: se ha leído el texto del documento con OCR local, que puede tener erratas. Revisa los datos con el documento delante."]
+
+
+def _leer_con_ia(usuario_id: int, doc: dict, f: dict, cliente_nif: str, qr: dict | None, usar_texto: bool, ocr: str = "respaldo") -> tuple[dict, str, str, list[str]]:
+    """(resultado, fuente, texto, notas). Primero el texto del PDF si lo hay y el despacho lo permite; solo se acepta si pasa la puerta de calidad. Si no, la imagen o el PDF tal cual.
+    Con OCR «solo_local» no se manda nunca la imagen; con «respaldo», si el modelo no puede con ella, se le da el texto reconocido en local."""
+    if ocr == "solo_local":
+        return _leer_solo_local(usuario_id, doc, f, cliente_nif, qr)
     mime = (doc.get("tipo_mime") or "").lower().split(";")[0]
     texto = _texto_del_pdf(doc["contenido"], mime)
     notas: list[str] = []
@@ -244,9 +274,28 @@ def _leer_con_ia(usuario_id: int, doc: dict, f: dict, cliente_nif: str, qr: dict
             notas.append("Se leyó primero el texto del PDF, pero algo no cuadraba: se ha vuelto a leer con la imagen del documento.")
         except (ia_asistente.ErrorIA, ValueError, KeyError, TypeError):
             notas.append("No se pudo leer solo con el texto del PDF: se ha leído con la imagen del documento.")
-    with ia_asistente.sin_consumo() if ya_contada else contextlib.nullcontext():
-        respuesta = ia_asistente.completar_partes(usuario_id, PROMPT, _partes(doc))
-    return _procesar(_json_de(respuesta), f, cliente_nif, texto, qr), "imagen", texto, notas
+    r, fallo = None, None
+    try:
+        with ia_asistente.sin_consumo() if ya_contada else contextlib.nullcontext():
+            respuesta = ia_asistente.completar_partes(usuario_id, PROMPT, _partes(doc))
+        r = _procesar(_json_de(respuesta), f, cliente_nif, texto, qr)
+        motivo = "No se vieron los importes en la imagen"
+        if r["lineas"] or ocr != "respaldo":
+            return r, "imagen", texto, notas
+    except ia_asistente.ErrorIA as e:
+        if ocr != "respaldo" or e.codigo_http != 400:
+            raise
+        motivo, fallo = "El modelo elegido no admite imágenes", e
+    except (ValueError, KeyError, TypeError) as e:
+        if ocr != "respaldo":
+            raise
+        motivo, fallo = "El modelo no devolvió datos legibles de la imagen", e
+    rescate = _rescatar_con_ocr(usuario_id, doc, f, cliente_nif, qr, notas, motivo)
+    if rescate is not None:
+        return rescate
+    if fallo is not None:
+        raise fallo                                                # sin OCR que lo salve, el aviso de siempre
+    return r, "imagen", texto, notas
 
 
 def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True) -> list[str]:
@@ -284,10 +333,12 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
         r, fuente = _procesar(estructurada["datos"], f, cliente_nif, "", None), "xml"
     else:
         if not configurada(usuario_id):
+            if config["ocr_local"] == "solo_local":
+                raise ValueError("Tu despacho ha decidido que nada salga del servidor: para leer facturas hace falta un modelo local (Ollama), en Ajustes del Asistente IA.")
             raise ValueError("Para leer facturas con IA hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA.")
         qr = qr_facturas.leer(contenido, mime)
         try:
-            r, fuente, texto, notas_lectura = _leer_con_ia(usuario_id, doc, f, cliente_nif, qr, config["lectura_texto"])
+            r, fuente, texto, notas_lectura = _leer_con_ia(usuario_id, doc, f, cliente_nif, qr, config["lectura_texto"], config["ocr_local"])
             if not r["lineas"]:
                 raise ValueError("no se vieron los importes")
         except ia_asistente.ErrorIA as e:
@@ -313,13 +364,13 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
         avisos += lectura_evidencias.avisos_de_evidencia(evidencias, ("numero", "fecha", "total", r["campo_contraparte"]))
     comprobaciones = r["comprobaciones"] + _duplicado(tenant_id, f, nuevos["numero"], r["contraparte_nif"])
     from .fiscal_modelos.validacion_apuntes import nif_espanol_valido
-    puntos = lectura_confianza.puntuar(datos=datos, valores=valores, evidencias=evidencias, fuente=fuente, texto_documento=texto, qr=qr, campo_contraparte=r["campo_contraparte"],
+    puntos = lectura_confianza.puntuar(datos=datos, valores=valores, evidencias=evidencias, fuente=fuente, texto_documento="" if fuente == "ocr" else texto, qr=qr, campo_contraparte=r["campo_contraparte"],
                                        nif_invalido=bool(r["contraparte_nif"] and nif_espanol_valido(r["contraparte_nif"]) is False), cuadra=_cuadra(lineas, nuevos.get("suplidos") or "", valores["total"]),
                                        comprobaciones=comprobaciones, avisos=avisos)
     origen_texto = {"xml": "Leída de la factura electrónica (XML): datos exactos, no son una lectura aproximada.", "texto": "Leída con IA a partir del texto del PDF: revisa los datos con la factura delante.",
-                    "imagen": "Leída con IA: revisa los datos con la factura delante."}[fuente]
+                    "imagen": "Leída con IA: revisa los datos con la factura delante.", "ocr": "Leída con IA a partir del texto reconocido en el servidor (OCR local): revisa los datos con la factura delante."}[fuente]
     marca = origen_texto + (" " + " ".join(avisos) if avisos else "")
-    nuevos["notas"] = ((f.get("notas") or "").split("Leída con IA:")[0].split("Leída de la factura electrónica")[0].strip() + "\n" + marca).strip()
+    nuevos["notas"] = (re.split(r"Leída (?:con IA|de la factura electrónica)", f.get("notas") or "")[0].strip() + "\n" + marca).strip()
     fc.actualizar(tenant_id, usuario_id, factura_id, nuevos, lineas)
     conn = db.get_connection()
     try:
@@ -332,7 +383,8 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
         conn.commit()
     finally:
         conn.close()
-    _revisar_sola_si_procede(tenant_id, usuario_id, factura_id, config, puntos["global"], avisos, comprobaciones)
+    if fuente != "ocr":                                           # un texto de OCR puede traer erratas que nadie contrasta: lo revisa siempre una persona
+        _revisar_sola_si_procede(tenant_id, usuario_id, factura_id, config, puntos["global"], avisos, comprobaciones)
     return avisos
 
 

@@ -1895,10 +1895,12 @@ CREATE TABLE IF NOT EXISTS ia_config_despacho (
     umbral_confianza bigint NOT NULL DEFAULT 90,
     lectura_texto bigint NOT NULL DEFAULT 1,
     separar_pdf bigint NOT NULL DEFAULT 1,
+    ocr_local text NOT NULL DEFAULT 'respaldo',
     actualizado_por bigint,
     actualizado_en text NOT NULL,
     PRIMARY KEY (tenant_id),
-    CHECK (facturas_modo IN ('compartida', 'auto'))
+    CHECK (facturas_modo IN ('compartida', 'auto')),
+    CHECK (ocr_local IN ('no', 'respaldo', 'solo_local'))
 );
 
 CREATE TABLE IF NOT EXISTS ia_consumo (

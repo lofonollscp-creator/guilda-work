@@ -26,7 +26,7 @@
 {% if f and f.lectura in ('ia', 'xml') and evidencia %}
 <div class="lectura-resumen lectura-{{ 'alta' if (f.lectura_confianza or 0) >= 90 else ('media' if (f.lectura_confianza or 0) >= 70 else 'baja') }}" role="status">
   <strong>{% if f.revision_auto %}{{ _('Revisada automáticamente por la IA') }}{% elif f.lectura == 'xml' %}{{ _('Leída de la factura electrónica (datos exactos)') }}{% else %}{{ _('Leída con IA: falta tu revisión') }}{% endif %}</strong>
-  · {{ {'xml': _('Fuente: archivo XML'), 'texto': _('Fuente: texto del PDF'), 'imagen': _('Fuente: imagen del documento')}.get(f.lectura_fuente, '') }}
+  · {{ {'xml': _('Fuente: archivo XML'), 'texto': _('Fuente: texto del PDF'), 'imagen': _('Fuente: imagen del documento'), 'ocr': _('Fuente: texto reconocido en el servidor (OCR)')}.get(f.lectura_fuente, '') }}
   {% if f.lectura_confianza is not none %}· <span class="confianza confianza-{{ 'alta' if f.lectura_confianza >= 90 else ('media' if f.lectura_confianza >= 70 else 'baja') }}">{{ _('Confianza %(p)s %%', p=f.lectura_confianza) }}</span>{% endif %}
   {% if f.revision_auto %}<small>{{ _('Compruébala con el documento a la vista; si algo no está bien, corrígela o pulsa «Reabrir».') }}</small>{% endif %}
   {% if evidencia.motivos %}<small>{{ _('Por qué no es total:') }} {{ evidencia.motivos|join('; ') }}.</small>{% endif %}

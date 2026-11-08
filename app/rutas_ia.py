@@ -8,7 +8,7 @@ from flask import (
 
 from flask_babel import gettext as _
 
-from . import db, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_proveedores, ia_soporte, ia_uso
+from . import db, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_proveedores, ia_soporte, ia_uso, ocr_local
 from .ia_errores import ErrorIA
 from .auth import login_required
 
@@ -260,7 +260,7 @@ def ajustes():
         atajos_propios=db.listar_atajos_ia(g.usuario_id),
         consumo=ia_consumo.estado(g.tenant_id) if g.tenant_id else None,
         despacho=ia_despacho.listar(g.tenant_id) if g.tenant_id else [],
-        normas=ia_despacho.config(g.tenant_id) if g.tenant_id else None,
+        normas=ia_despacho.config(g.tenant_id) if g.tenant_id else None, ocr_disponible=ocr_local.disponible(),
         uso=ia_uso.resumen(g.tenant_id) if g.tenant_id else None,
         es_direccion=direccion,
         error=request.args.get("error"),
@@ -314,7 +314,7 @@ def guardar_normas_despacho():
     try:
         ia_despacho.guardar_config(g.tenant_id, solo_ue=request.form.get("solo_ue") == "on", claves_personales=request.form.get("claves_personales") == "on",
                                    facturas_modo=request.form.get("facturas_modo", "compartida"), umbral_confianza=request.form.get("umbral_confianza", 90),
-                                   lectura_texto=request.form.get("lectura_texto") == "on", separar_pdf=request.form.get("separar_pdf") == "on", por=g.usuario_id)
+                                   lectura_texto=request.form.get("lectura_texto") == "on", separar_pdf=request.form.get("separar_pdf") == "on", ocr_local=request.form.get("ocr_local", "respaldo"), por=g.usuario_id)
     except ValueError as e:
         return redirect(url_for("ia.ajustes", error=_(str(e))) + "#normas")
     from . import auditoria

@@ -24414,3 +24414,27 @@ msgstr "%(h)s sur %(t)s"
 
 msgid "Progreso de los primeros pasos"
 msgstr "Progression des premières étapes"
+
+msgid "Reconocimiento de texto en el servidor (OCR local)"
+msgstr "Reconnaissance de texte sur le serveur (OCR local)"
+
+msgid "No usarlo"
+msgstr "Ne pas l'utiliser"
+
+msgid "De respaldo: solo si el modelo no puede leer la imagen"
+msgstr "En secours : seulement si le modèle ne peut pas lire l'image"
+
+msgid "Nada sale del servidor: solo OCR propio y modelos locales"
+msgstr "Rien ne quitte le serveur : OCR interne et modèles locaux uniquement"
+
+msgid "El OCR es más lento y se equivoca más que un modelo con visión, así que sus lecturas las revisa siempre una persona."
+msgstr "L'OCR est plus lent et se trompe plus qu'un modèle avec vision : une personne relit donc toujours ses lectures."
+
+msgid "Ahora mismo no está instalado en el servidor."
+msgstr "Il n'est pas installé sur le serveur pour le moment."
+
+msgid "Fuente: texto reconocido en el servidor (OCR)"
+msgstr "Source : texte reconnu sur le serveur (OCR)"
+
+msgid "Texto reconocido en el servidor (OCR)"
+msgstr "Texte reconnu sur le serveur (OCR)"

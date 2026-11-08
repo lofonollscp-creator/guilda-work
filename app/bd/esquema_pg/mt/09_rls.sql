@@ -523,6 +523,9 @@ CREATE POLICY aislamiento ON portal_contactos USING (tenant_id = nullif(current_
 ALTER TABLE portal_conversaciones ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON portal_conversaciones;
 CREATE POLICY aislamiento ON portal_conversaciones USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE portal_conversaciones_adjuntos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_conversaciones_adjuntos;
+CREATE POLICY aislamiento ON portal_conversaciones_adjuntos USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE portal_conversaciones_mensajes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON portal_conversaciones_mensajes;
 CREATE POLICY aislamiento ON portal_conversaciones_mensajes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

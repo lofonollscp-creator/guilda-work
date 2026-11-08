@@ -347,7 +347,10 @@ def candidatos(usuario_id: int, tarea: str = "asistente") -> list[dict]:
         claves = obtener_api_keys(usuario_id) if proveedor == "openrouter" else ia_claves.de_usuario(proveedor, usuario_id)
         if claves or not ia_proveedores.obtener(proveedor).pide_clave:
             lista.append({"proveedor": proveedor, "modelo": modelo, "claves": claves or [""], "url_base": None, "origen": "usuario"})
-    return lista + ia_despacho.candidatos(tenant_id, tarea)
+    lista += ia_despacho.candidatos(tenant_id, tarea)
+    if tarea == "facturas" and tenant_id is not None and ia_despacho.config(tenant_id)["ocr_local"] == "solo_local":
+        lista = [c for c in lista if ia_proveedores.obtener(c["proveedor"]).region == "local"]       # «nada sale del servidor»: ni una factura llega a un proveedor externo
+    return lista
 
 
 def disponible(usuario_id: int, tarea: str = "asistente") -> bool:
