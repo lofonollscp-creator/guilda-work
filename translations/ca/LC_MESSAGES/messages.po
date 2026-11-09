@@ -25715,3 +25715,30 @@ msgstr "Errors de JavaScript (últims 14 dies)"
 
 msgid "Veces"
 msgstr "Vegades"
+
+msgid "Mis trabajadores"
+msgstr "Els meus treballadors"
+
+msgid "Tu plantilla tal como la tiene tu gestoría."
+msgstr "La teva plantilla tal com la té la teva gestoria."
+
+msgid "Si algo no cuadra, díselo a tu gestoría. Las nóminas que te deje tu gestoría están en «Documentos», carpeta «Trabajadores y Seguridad Social»."
+msgstr "Si alguna cosa no quadra, digues-ho a la teva gestoria. Les nòmines que et deixi la teva gestoria són a «Documents», carpeta «Treballadors i Seguretat Social»."
+
+msgid "Ver las nóminas y documentos laborales"
+msgstr "Veure les nòmines i els documents laborals"
+
+msgid "Tu gestoría todavía no tiene trabajadores apuntados."
+msgstr "La teva gestoria encara no té treballadors apuntats."
+
+msgid "alta el %(f)s"
+msgstr "alta el %(f)s"
+
+msgid "baja el %(f)s"
+msgstr "baixa el %(f)s"
+
+msgid "De alta"
+msgstr "D'alta"
+
+msgid "Pedir su baja"
+msgstr "Demanar-ne la baixa"

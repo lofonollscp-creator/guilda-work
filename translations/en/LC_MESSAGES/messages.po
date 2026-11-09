@@ -25706,3 +25706,30 @@ msgstr "JavaScript errors (last 14 days)"
 
 msgid "Veces"
 msgstr "Times"
+
+msgid "Mis trabajadores"
+msgstr "My employees"
+
+msgid "Tu plantilla tal como la tiene tu gestoría."
+msgstr "Your staff as your accountant has them."
+
+msgid "Si algo no cuadra, díselo a tu gestoría. Las nóminas que te deje tu gestoría están en «Documentos», carpeta «Trabajadores y Seguridad Social»."
+msgstr "If something does not add up, tell your accountant. The payslips your accountant leaves for you are in “Documents”, folder “Employees and social security”."
+
+msgid "Ver las nóminas y documentos laborales"
+msgstr "See payslips and employment documents"
+
+msgid "Tu gestoría todavía no tiene trabajadores apuntados."
+msgstr "Your accountant has no employees recorded yet."
+
+msgid "alta el %(f)s"
+msgstr "started on %(f)s"
+
+msgid "baja el %(f)s"
+msgstr "left on %(f)s"
+
+msgid "De alta"
+msgstr "Active"
+
+msgid "Pedir su baja"
+msgstr "Request their departure"

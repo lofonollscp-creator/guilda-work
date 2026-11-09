@@ -25791,3 +25791,30 @@ msgstr "Erreurs JavaScript (14 derniers jours)"
 
 msgid "Veces"
 msgstr "Fois"
+
+msgid "Mis trabajadores"
+msgstr "Mes salariés"
+
+msgid "Tu plantilla tal como la tiene tu gestoría."
+msgstr "Votre effectif tel que votre cabinet l'a enregistré."
+
+msgid "Si algo no cuadra, díselo a tu gestoría. Las nóminas que te deje tu gestoría están en «Documentos», carpeta «Trabajadores y Seguridad Social»."
+msgstr "Si quelque chose ne va pas, dites-le à votre cabinet. Les fiches de paie que votre cabinet vous laisse sont dans « Documents », dossier « Salariés et sécurité sociale »."
+
+msgid "Ver las nóminas y documentos laborales"
+msgstr "Voir les fiches de paie et documents du personnel"
+
+msgid "Tu gestoría todavía no tiene trabajadores apuntados."
+msgstr "Votre cabinet n'a pas encore de salariés enregistrés."
+
+msgid "alta el %(f)s"
+msgstr "embauché le %(f)s"
+
+msgid "baja el %(f)s"
+msgstr "parti le %(f)s"
+
+msgid "De alta"
+msgstr "En poste"
+
+msgid "Pedir su baja"
+msgstr "Demander son départ"

@@ -1,0 +1,18 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mis trabajadores') }}{% endblock %}
+{% block titulo %}{{ _('Mis trabajadores') }}{% endblock %}
+{% block subtitulo %}{{ _('Tu plantilla tal como la tiene tu gestoría.') }}{% endblock %}
+{% block contenido %}
+    <p class="muted">{{ _('Si algo no cuadra, díselo a tu gestoría. Las nóminas que te deje tu gestoría están en «Documentos», carpeta «Trabajadores y Seguridad Social».') }}
+      <a href="{{ url_for('portal_cliente.mis_documentos', carpeta='laboral') }}">{{ _('Ver las nóminas y documentos laborales') }}</a></p>
+    {% if puede_pedir %}<p><a class="btn btn-primary" href="{{ url_for('portal_cliente.gestion', clave='alta-trabajador') }}">{{ _('Dar de alta a un trabajador') }}</a></p>{% endif %}
+    {% if not trabajadores %}<p class="muted" role="status">{{ _('Tu gestoría todavía no tiene trabajadores apuntados.') }}</p>{% endif %}
+    <ul class="portal-personas">
+      {% for t in trabajadores %}
+      <li class="portal-persona"><div class="portal-persona-datos"><strong>{{ t.nombre }}</strong>
+        <span class="muted">{{ t.puesto or '—' }}{% if t.tipo_contrato %} · {{ tipos.get(t.tipo_contrato, t.tipo_contrato) }}{% endif %}{% if t.fecha_alta %} · {{ _('alta el %(f)s', f=t.fecha_alta|fecha_dia) }}{% endif %}{% if t.fecha_baja %} · {{ _('baja el %(f)s', f=t.fecha_baja|fecha_dia) }}{% endif %}</span></div>
+        <span class="portal-estado {{ 'ko' if t.de_baja else 'ok' }}">{{ _('De baja') if t.de_baja else _('De alta') }}</span>
+        {% if puede_pedir and not t.de_baja %}<a class="btn btn-ghost" href="{{ url_for('portal_cliente.gestion', clave='baja-trabajador', nombre=t.nombre) }}">{{ _('Pedir su baja') }}</a>{% endif %}</li>
+      {% endfor %}
+    </ul>
+{% endblock %}

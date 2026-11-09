@@ -180,3 +180,18 @@ def test_un_certificado_por_caducar_ofrece_la_guia_para_renovarlo_sin_pedir_el_a
     _entrar(cliente, c, "titular@ejemplo.com")
     html = _html(cliente, "/portal/")
     assert "Cómo renovarlo, paso a paso" in html and "no se admite" in html
+
+
+def test_mis_trabajadores_solo_sale_con_plantilla_y_ofrece_alta_y_baja_con_el_nombre_ya_escrito(cliente, correo):
+    from app import laboral
+    t, u, c = _despacho("Trabajadores")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    assert "/portal/trabajadores" not in _html(cliente, "/portal/")
+    laboral.crear(t, u, c, "Ana Pérez Gómez", puesto="Dependienta", tipo_contrato="indefinido", fecha_alta="2025-03-01")
+    laboral.crear(t, u, c, "Luis Antiguo", puesto="Peón", fecha_alta="2020-01-01", fecha_baja="2024-12-31")
+    assert "/portal/trabajadores" in _html(cliente, "/portal/")
+    html = _html(cliente, "/portal/trabajadores")
+    assert "Ana Pérez Gómez" in html and "Dependienta" in html and "De alta" in html and "Luis Antiguo" in html and "De baja" in html
+    assert html.count("Pedir su baja") == 1 and "gestiones/baja-trabajador?nombre=Ana" in html
+    assert 'value="Ana Pérez Gómez"' in _html(cliente, "/portal/gestiones/baja-trabajador?nombre=Ana Pérez Gómez")
+    assert "Tu gestoría todavía no tiene trabajadores" not in html

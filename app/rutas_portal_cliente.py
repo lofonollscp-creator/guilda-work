@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_negocio, portal_telemetria, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_negocio, portal_telemetria, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -102,7 +102,17 @@ def _menu_del_portal():
     return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
             "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
             "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"),
-            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
+            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
+
+
+def _tiene_trabajadores(cliente) -> bool:
+    """¿Tiene este cliente trabajadores de alta apuntados? Una consulta ligera: se pregunta en cada pantalla del portal para enseñar o no «Mis trabajadores»."""
+    conn = db.get_connection()
+    try:
+        return conn.execute("SELECT 1 FROM trabajadores_cliente WHERE tenant_id = ? AND cliente_fiscal_id = ? AND papelera_en IS NULL AND (fecha_baja IS NULL OR fecha_baja >= ?) LIMIT 1",
+                            (cliente["tenant_id"], cliente["id"], date.today().isoformat())).fetchone() is not None
+    finally:
+        conn.close()
 
 
 def cliente_login_required(vista):
@@ -1450,6 +1460,15 @@ def dossier_verificar(codigo: str = ""):
     return _sin_rastro(Response(render_template("portal_dossier_verificar.html", d=d, codigo=codigo.strip().upper()[:20], consultado=bool(codigo)), 200 if (d or not codigo) else 404))
 
 
+@portal_bp.route("/trabajadores")
+@cliente_login_required
+def trabajadores():
+    """«Mis trabajadores»: la plantilla del cliente tal como la tiene su gestoría (puesto, contrato, alta y baja), con atajos para pedir un alta o una baja y a su carpeta de nóminas."""
+    cliente = _cliente_actual_o_salir()
+    lista = [t for t in laboral.listar(cliente["tenant_id"], cliente["id"]) if not t["papelera_en"]]
+    return render_template("portal_trabajadores.html", cliente=cliente, trabajadores=lista, tipos=dict(laboral.TIPOS_CONTRATO), puede_pedir=_puede_escribir(), portal_seccion="documentos")
+
+
 @portal_bp.route("/gestiones")
 @cliente_login_required
 def gestiones():
@@ -1470,7 +1489,8 @@ def gestion(clave: str):
         abort(404)
     if not _puede_escribir():
         abort(403)
-    error, valores = None, {}
+    error = None
+    valores = {c["id"]: (request.args.get(c["id"], "")[:120] if c["tipo"] == "texto" else "") for c in g_["campos"]}           # un atajo (p. ej. «Pedir la baja» de un trabajador) puede traer el nombre ya escrito
     if request.method == "POST":
         valores = {c["id"]: request.form.get(c["id"], "") for c in g_["campos"]}
         try:
