@@ -435,6 +435,24 @@ def _revisar_sola_si_procede(tenant_id: int, usuario_id: int, factura_id: int, c
     return True
 
 
+def previsualizar_gratis(contenido: bytes, tipo_mime: str) -> dict | None:
+    """Lo que se lee SIN IA (factura electrónica o QR de VeriFactu/TicketBAI), con la misma forma que `previsualizar`, o None si el archivo no trae nada de eso. Es exacto, instantáneo, no cuesta nada y el
+    documento no sale del servidor: por eso se ofrece aunque el despacho no tenga activada la lectura previa con IA."""
+    est = facturas_estructuradas.extraer(contenido, tipo_mime)
+    if est:
+        d = est["datos"]
+        try:
+            fecha = fc._fecha(d.get("fecha"), "fecha") if d.get("fecha") else ""
+        except ValueError:
+            fecha = ""
+        total = _num(d.get("total"))
+        return {"emisor": _texto(d.get("emisor_nombre"), 100), "nif": fc._nif(d.get("emisor_nif")), "numero": _texto(d.get("numero"), fc.MAX_NUMERO), "fecha": fecha, "total": total, "avisos": [], "fuente": "xml"}
+    qr = qr_facturas.leer(contenido, tipo_mime)
+    if qr:
+        return {"emisor": "", "nif": fc._nif(qr.get("nif")), "numero": _texto(qr.get("numero"), fc.MAX_NUMERO), "fecha": qr.get("fecha") or "", "total": _num(qr.get("total")), "avisos": [], "fuente": "qr"}
+    return None
+
+
 def previsualizar(usuario_id: int, contenido: bytes, tipo_mime: str) -> dict:
     """Lo que la IA lee de UNA foto o PDF, para enseñárselo a quien lo va a subir antes de enviarlo. No guarda nada y no da nada por bueno: es una ayuda para que la persona vea si se lee bien.
     {emisor, nif, numero, fecha, total, avisos}. `ValueError` con un mensaje legible si no se pudo leer o el despacho ha agotado su tope de IA. Cuenta como una consulta de IA del despacho."""

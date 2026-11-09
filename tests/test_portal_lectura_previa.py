@@ -107,9 +107,31 @@ def test_archivos_que_no_son_facturas_o_demasiado_grandes_se_rechazan(cliente, i
     assert ia == []
 
 
-def test_la_pagina_de_facturas_solo_ofrece_la_lectura_si_esta_activa(cliente, ia, correo):
+def test_la_pagina_de_facturas_siempre_pregunta_y_el_servidor_decide_que_ofrece(cliente, ia, correo):
     t, u, c = _despacho("LP pagina")
     _entrar(cliente, c, "titular@ejemplo.com")
-    assert "data-url-leer" not in cliente.get("/portal/facturas").get_data(as_text=True)
+    assert "data-url-leer" in cliente.get("/portal/facturas").get_data(as_text=True)          # la página lo pide siempre: lo exacto (XML, QR) se ofrece a todos
+    assert _subir(cliente).status_code == 404 and ia == []                                      # una foto normal, con la IA apagada, no se lee
     plp.fijar(t, True)
-    assert "data-url-leer" in cliente.get("/portal/facturas").get_data(as_text=True)
+    assert _subir(cliente).status_code == 200
+
+
+def test_una_factura_electronica_se_lee_gratis_aunque_la_lectura_con_ia_este_apagada(cliente, ia, correo):
+    from pathlib import Path
+    t, u, c = _despacho("LP gratis")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    xml = (Path(__file__).parent / "datos_facturas" / "facturae_322.xml").read_bytes()
+    r = _subir(cliente, "factura.xml", xml, "application/xml")
+    assert r.status_code == 200 and ia == []                                                   # ni una consulta a la IA
+    lectura = r.get_json()["lectura"]
+    assert lectura["fuente"] == "xml" and lectura["numero"] == "A-000123" and lectura["total"] == "1038.00" and lectura["nif"] == "B87654323"
+
+
+def test_con_la_lectura_con_ia_encendida_lo_exacto_se_lee_primero_y_sin_gastar_ia(cliente, ia, correo):
+    from pathlib import Path
+    t, u, c = _despacho("LP exacto primero")
+    plp.fijar(t, True)
+    _entrar(cliente, c, "titular@ejemplo.com")
+    xml = (Path(__file__).parent / "datos_facturas" / "facturae_322.xml").read_bytes()
+    r = _subir(cliente, "factura.xml", xml, "application/xml")
+    assert r.status_code == 200 and r.get_json()["lectura"]["fuente"] == "xml" and ia == []

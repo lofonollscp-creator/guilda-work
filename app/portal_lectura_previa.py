@@ -6,7 +6,8 @@ from __future__ import annotations
 
 from . import db, lectura_facturas, verticales
 
-TIPOS = ("image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf")
+TIPOS_XML = ("application/xml", "text/xml")                                # la factura electrónica (Facturae, UBL): se lee sin IA
+TIPOS = ("image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf") + TIPOS_XML
 MAX_BYTES = 8 * 1024 * 1024
 
 
@@ -47,10 +48,22 @@ def disponible(cliente) -> bool:
     return bool(cliente is not None and verticales.esta_activo(cliente["tenant_id"], "contabilizacion") and activa(cliente["tenant_id"]) and lector_de(cliente) is not None)
 
 
+def leer_gratis(cliente, contenido: bytes, tipo_mime: str) -> dict | None:
+    """Lo que trae el propio archivo (factura electrónica o QR), sin IA: lo ve cualquier cliente con facturas, tenga o no activada la lectura previa. None si no trae nada de eso."""
+    if cliente is None or not verticales.esta_activo(cliente["tenant_id"], "contabilizacion") or tipo_mime not in TIPOS or not contenido or len(contenido) > MAX_BYTES:
+        return None
+    return lectura_facturas.previsualizar_gratis(contenido, tipo_mime)
+
+
 def leer(cliente, contenido: bytes, tipo_mime: str) -> dict:
-    """Lo que lee la IA de ese archivo. `ValueError` con un mensaje apto para el cliente si no se puede."""
+    """Lo que se lee de ese archivo: primero lo exacto (XML, QR) y, si no hay, lo que lee la IA. `ValueError` con un mensaje apto para el cliente si no se puede."""
     if not disponible(cliente):
         raise ValueError("La lectura previa no está disponible.")
     if tipo_mime not in TIPOS or not contenido or len(contenido) > MAX_BYTES:
         raise ValueError("Ese archivo no se puede leer aquí.")
+    exacta = lectura_facturas.previsualizar_gratis(contenido, tipo_mime)
+    if exacta:
+        return exacta
+    if tipo_mime in TIPOS_XML:
+        raise ValueError("Ese archivo no es una factura electrónica que podamos leer aquí. Puedes enviarlo igualmente: tu gestoría lo mirará.")
     return lectura_facturas.previsualizar(lector_de(cliente), contenido, tipo_mime)

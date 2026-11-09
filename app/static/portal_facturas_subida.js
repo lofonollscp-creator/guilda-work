@@ -8,7 +8,7 @@
   if (!form) return;
   var entrada = form.querySelector('input[type=file]');
   var lista = document.getElementById('avisos-subida');
-  var TIPOS = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+  var TIPOS = ['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/xml', 'text/xml'];
   var MAX = 8 * 1024 * 1024;
   var UMBRAL_BORROSA = 60;
 

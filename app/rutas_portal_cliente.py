@@ -608,12 +608,15 @@ def enderezar_foto():
 def leer_previa():
     """Lo que la IA lee de la foto o el PDF que el cliente acaba de elegir, antes de enviarlo (solo si el despacho lo ha activado). No guarda nada."""
     cliente = _cliente_con_facturas()
-    if g.get("vista_previa") or g.portal_rol == "consulta" or not portal_lectura_previa.disponible(cliente):
+    if g.get("vista_previa") or g.portal_rol == "consulta":
         return {"disponible": False}, 404
     archivo = request.files.get("archivo")
     if archivo is None:
         return {"error": _("Falta el archivo.")}, 400
     datos = archivo.read(portal_lectura_previa.MAX_BYTES + 1)
+    if not portal_lectura_previa.disponible(cliente):                  # sin lectura con IA: solo lo que trae el propio archivo (factura electrónica o QR)
+        gratis = portal_lectura_previa.leer_gratis(cliente, datos, (archivo.mimetype or "").lower())
+        return ({"disponible": True, "lectura": gratis}, 200) if gratis else ({"disponible": False}, 404)
     try:
         return {"disponible": True, "lectura": portal_lectura_previa.leer(cliente, datos, (archivo.mimetype or "").lower())}
     except ValueError as e:

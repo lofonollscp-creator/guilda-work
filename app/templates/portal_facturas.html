@@ -81,7 +81,7 @@
     <section class="dash-panel">
       <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
       <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>
-      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-cola-offline data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}" data-url-enderezar="{{ url_for('portal_cliente.enderezar_foto') }}"{% if lectura_previa %} data-url-leer="{{ url_for('portal_cliente.leer_previa') }}"{% endif %}
+      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-cola-offline data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}" data-url-enderezar="{{ url_for('portal_cliente.enderezar_foto') }}" data-url-leer="{{ url_for('portal_cliente.leer_previa') }}"
             data-txt-guardado="{{ _('Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo.') }}"
             data-txt-subiendo="{{ _('Subiendo… %(p)s de 100', p='%(p)s') }}" data-txt-progreso="{{ _('Progreso de la subida') }}"
             data-txt-corte="{{ _('Se ha cortado la conexión: tus facturas se han guardado en este dispositivo y se enviarán solas en cuanto se pueda. No cierres la pestaña si puedes evitarlo.') }}"
@@ -109,7 +109,7 @@
           <option value="recibida">{{ _('Me las han hecho a mí (compras y gastos)') }}</option>
           <option value="emitida">{{ _('Las he hecho yo a mis clientes (ventas)') }}</option>
         </select>
-        <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" aria-label="{{ _('Fotos o PDF de las facturas') }}">
+        <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.xml" aria-label="{{ _('Fotos o PDF de las facturas') }}">
         <label class="portal-recordar" data-misma-factura hidden><input type="checkbox" name="misma_factura" value="1"> {{ _('Estas fotos son las páginas de una misma factura (se juntan en un solo PDF, en el orden elegido)') }}</label>
         <label class="portal-recordar" hidden><input type="checkbox" id="usar-originales"> {{ _('Enviar las fotos tal como las hice, sin recortar ni aligerar') }}</label>
         <p id="cola-offline" class="portal-peticion" role="status" hidden></p>
