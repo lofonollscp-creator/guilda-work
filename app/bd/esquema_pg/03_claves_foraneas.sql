@@ -321,6 +321,9 @@ ALTER TABLE plazos ADD CONSTRAINT fk_plazos_responsable_id FOREIGN KEY (responsa
 ALTER TABLE plazos ADD CONSTRAINT fk_plazos_revisado_por FOREIGN KEY (revisado_por) REFERENCES usuarios (id);
 ALTER TABLE plazos ADD CONSTRAINT fk_plazos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE portal_avisos_enviados ADD CONSTRAINT fk_portal_avisos_enviados_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_canales_config ADD CONSTRAINT fk_portal_canales_config_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_canales_envios ADD CONSTRAINT fk_portal_canales_envios_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_canales_personas ADD CONSTRAINT fk_portal_canales_personas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_citas ADD CONSTRAINT fk_portal_citas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_contactos ADD CONSTRAINT fk_portal_contactos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_conversaciones ADD CONSTRAINT fk_portal_conversaciones_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;

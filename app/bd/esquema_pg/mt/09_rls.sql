@@ -514,6 +514,15 @@ CREATE POLICY aislamiento ON plazos USING (tenant_id = nullif(current_setting('a
 ALTER TABLE portal_avisos_enviados ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON portal_avisos_enviados;
 CREATE POLICY aislamiento ON portal_avisos_enviados USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE portal_canales_config ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_canales_config;
+CREATE POLICY aislamiento ON portal_canales_config USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE portal_canales_envios ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_canales_envios;
+CREATE POLICY aislamiento ON portal_canales_envios USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE portal_canales_personas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON portal_canales_personas;
+CREATE POLICY aislamiento ON portal_canales_personas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE portal_citas ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON portal_citas;
 CREATE POLICY aislamiento ON portal_citas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

@@ -2338,7 +2338,8 @@ def init_db() -> None:
         almacen_objetos.crear_esquema(conn)     # registro de lo que vive en el almacén de objetos y no en la base (app/almacen_objetos.py)
         from . import portal_personas
         portal_personas.crear_esquema(conn)     # contactos con acceso al portal, avisos enviados, push de clientes y respuestas rápidas (app/portal_personas.py)
-        from . import portal_seguridad
+        from . import portal_canales, portal_seguridad
+        portal_canales.crear_esquema(conn)      # SMS y WhatsApp de los avisos del portal (app/portal_canales.py)
         portal_seguridad.crear_esquema(conn)    # sesiones del portal y segundo factor opcional de cada persona (app/portal_seguridad.py)
         from . import portal_passkeys
         portal_passkeys.crear_esquema(conn)     # passkeys (WebAuthn) para entrar al portal sin esperar el correo (app/portal_passkeys.py)

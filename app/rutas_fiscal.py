@@ -12,6 +12,7 @@ import calendar
 import csv
 import io
 import json
+import os
 from datetime import date, datetime, timedelta
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
@@ -23,7 +24,7 @@ from .auth import limiter, login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_canales, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -394,7 +395,9 @@ def portal_adopcion_panel():
     return render_template("fiscal_portal_adopcion.html", r=r, q=q, pagina=pagina, paginas=paginas, total_filas=len(filas), embudo_activo=portal_adopcion.embudo_activo(g.tenant_id), filtro=filtro,
                            invitados=request.args.get("invitados", type=int), fallos=request.args.get("fallos", type=int), guardado=request.args.get("guardado"),
                            en_cola=request.args.get("en_cola", type=int), cola=portal_invitaciones.pendientes(g.tenant_id),
-                           salud_activa=portal_telemetria.activa(g.tenant_id), salud=portal_telemetria.resumen(g.tenant_id), asistente_activo=portal_asistente.activo(g.tenant_id))
+                           salud_activa=portal_telemetria.activa(g.tenant_id), salud=portal_telemetria.resumen(g.tenant_id), asistente_activo=portal_asistente.activo(g.tenant_id),
+                           canales_cfg=portal_canales.config(g.tenant_id), canales_hay_token=bool(portal_canales.ia_claves.de_despacho(portal_canales.SERVICIO_TOKEN, g.tenant_id)), canales_mes=portal_canales.envios_del_mes(g.tenant_id),
+                           canales_error=(request.args.get("canales_error") or "")[:200] or None, canales_url=f"{os.environ.get('GUILDA_URL_PUBLICA', '').rstrip('/') or request.host_url.rstrip('/')}/portal/canales/twilio/{g.tenant_id}")
 
 
 @fiscal_bp.route("/portal-adopcion/asistente", methods=["POST"])
@@ -404,6 +407,34 @@ def portal_adopcion_asistente():
         abort(404)
     portal_asistente.fijar(g.tenant_id, request.form.get("activo") == "1")
     return redirect(url_for("fiscal.portal_adopcion_panel", guardado=1) + "#asistente")
+
+
+@fiscal_bp.route("/portal-adopcion/canales", methods=["POST"])
+@login_required
+def portal_adopcion_canales():
+    """La cuenta de Twilio del despacho para avisar a sus clientes por SMS y WhatsApp (opcional; el token se guarda en el almacén de credenciales, no en la base)."""
+    if g.tenant_id is None:
+        abort(404)
+    f = request.form
+    try:
+        portal_canales.guardar_config(g.tenant_id, account_sid=f.get("account_sid", ""), token=f.get("token", ""), remitente_sms=f.get("remitente_sms", ""), remitente_whatsapp=f.get("remitente_whatsapp", ""),
+                                      whatsapp_content_sid=f.get("whatsapp_content_sid", ""), sms_activo=f.get("sms_activo") == "1", whatsapp_activo=f.get("whatsapp_activo") == "1")
+    except portal_canales.ErrorCanal as e:
+        return redirect(url_for("fiscal.portal_adopcion_panel", canales_error=_(str(e))[:200]) + "#canales")
+    auditoria.registrar(g.tenant_id, g.usuario_id, "portal.canales_config", "tenant", g.tenant_id, {"sms": f.get("sms_activo") == "1", "whatsapp": f.get("whatsapp_activo") == "1"})
+    return redirect(url_for("fiscal.portal_adopcion_panel", guardado=1) + "#canales")
+
+
+@fiscal_bp.route("/portal-adopcion/canales/probar", methods=["POST"])
+@login_required
+def portal_adopcion_canales_probar():
+    if g.tenant_id is None:
+        abort(404)
+    try:
+        portal_canales.probar(g.tenant_id, request.form.get("canal", ""), request.form.get("telefono", ""))
+    except portal_canales.ErrorCanal as e:
+        return redirect(url_for("fiscal.portal_adopcion_panel", canales_error=_(str(e))[:200]) + "#canales")
+    return redirect(url_for("fiscal.portal_adopcion_panel", guardado=1) + "#canales")
 
 
 @fiscal_bp.route("/portal-adopcion/salud", methods=["POST"])

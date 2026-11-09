@@ -25892,3 +25892,114 @@ msgstr "The assistant is not available right now. Write to your accountant."
 
 msgid "El asistente no ha podido responder ahora mismo. Inténtalo de nuevo o escribe a tu gestoría."
 msgstr "The assistant could not answer right now. Try again or write to your accountant."
+
+msgid "Avisos por SMS o WhatsApp"
+msgstr "SMS or WhatsApp alerts"
+
+msgid "Recibe un mensaje corto en tu móvil cuando tu gestoría necesite una respuesta tuya. Nunca incluye importes ni datos de tus facturas: solo el aviso y un enlace al portal. Puedes darte de baja cuando quieras, aquí o contestando BAJA al mensaje."
+msgstr "Get a short message on your phone when your firm needs a reply from you. It never includes amounts or invoice details: just the alert and a link to the portal. You can opt out at any time, here or by replying STOP to the message."
+
+msgid "Avisos activados en %(tel)s por %(canal)s."
+msgstr "Alerts turned on for %(tel)s via %(canal)s."
+
+msgid "WhatsApp"
+msgstr "WhatsApp"
+
+msgid "SMS"
+msgstr "SMS"
+
+msgid "Dejar de recibir avisos en este móvil"
+msgstr "Stop receiving alerts on this phone"
+
+msgid "Tu móvil"
+msgstr "Your mobile number"
+
+msgid "Canal"
+msgstr "Channel"
+
+msgid "Enviarme un código"
+msgstr "Send me a code"
+
+msgid "Código recibido"
+msgstr "Code received"
+
+msgid "Avisos por SMS y WhatsApp"
+msgstr "SMS and WhatsApp alerts"
+
+msgid "Opcional. Además del correo y las notificaciones del móvil, tus clientes pueden recibir un mensaje corto por SMS o WhatsApp cuando necesiten actuar. Usa tu propia cuenta de Twilio, así que los mensajes los cobra Twilio a tu despacho. Cada persona lo activa por su cuenta en el portal y confirma su móvil con un código; puede darse de baja cuando quiera. Los mensajes llevan solo el aviso y un enlace, sin importes ni datos. Máximo 5 al día por persona y 300 al día por despacho. Para WhatsApp necesitas una plantilla aprobada en Twilio con una variable."
+msgstr "Optional. Besides email and phone notifications, your clients can get a short SMS or WhatsApp message when they need to act. It uses your own Twilio account, so Twilio bills your firm for the messages. Each person turns it on themselves in the portal and confirms their mobile with a code; they can opt out whenever they like. Messages carry only the alert and a link, with no amounts or data. At most 5 a day per person and 300 a day per firm. For WhatsApp you need a template approved in Twilio with one variable."
+
+msgid "Account SID de Twilio"
+msgstr "Twilio Account SID"
+
+msgid "Token de autenticación"
+msgstr "Authentication token"
+
+msgid "Guardado; déjalo vacío para conservarlo"
+msgstr "Saved; leave empty to keep it"
+
+msgid "Activar SMS"
+msgstr "Turn on SMS"
+
+msgid "Remitente de los SMS (número de Twilio o nombre)"
+msgstr "SMS sender (Twilio number or name)"
+
+msgid "Activar WhatsApp"
+msgstr "Turn on WhatsApp"
+
+msgid "Número de WhatsApp de Twilio (con prefijo)"
+msgstr "Twilio WhatsApp number (with country code)"
+
+msgid "Content SID de la plantilla de WhatsApp (empieza por HX)"
+msgstr "WhatsApp template Content SID (starts with HX)"
+
+msgid "Para que quien conteste BAJA o STOP deje de recibir avisos, en Twilio indica esta dirección como webhook de mensajes entrantes:"
+msgstr "So that anyone who replies STOP stops receiving alerts, set this address in Twilio as the incoming-messages webhook:"
+
+msgid "Mensajes enviados este mes: %(sms)s SMS y %(wa)s de WhatsApp."
+msgstr "Messages sent this month: %(sms)s SMS and %(wa)s WhatsApp."
+
+msgid "Enviar un mensaje de prueba a"
+msgstr "Send a test message to"
+
+msgid "Enviar prueba"
+msgstr "Send test"
+
+msgid "Tu código de confirmación del portal es %(c)s. Caduca en 10 minutos."
+msgstr "Your portal confirmation code is %(c)s. It expires in 10 minutes."
+
+msgid "El código no es correcto o ha caducado."
+msgstr "The code is incorrect or has expired."
+
+msgid "Mensaje de prueba de tu portal de clientes."
+msgstr "Test message from your client portal."
+
+msgid "El Account SID de Twilio no es válido (empieza por AC y tiene 34 caracteres)."
+msgstr "The Twilio Account SID is not valid (it starts with AC and is 34 characters long)."
+
+msgid "Falta el token de autenticación de Twilio."
+msgstr "The Twilio authentication token is missing."
+
+msgid "Indica el remitente de los SMS (un número de Twilio o un nombre)."
+msgstr "Enter the SMS sender (a Twilio number or a name)."
+
+msgid "Para WhatsApp indica el número de WhatsApp de Twilio (con prefijo, +34…) y el Content SID de tu plantilla aprobada (empieza por HX)."
+msgstr "For WhatsApp, enter the Twilio WhatsApp number (with country code, +34…) and the Content SID of your approved template (starts with HX)."
+
+msgid "Ese canal no está disponible."
+msgstr "That channel is not available."
+
+msgid "Escribe un móvil válido, con prefijo si no es de España (por ejemplo, +33…)."
+msgstr "Enter a valid mobile number, with country code if it is not Spanish (for example, +33…)."
+
+msgid "Has pedido demasiados códigos. Espera un rato antes de pedir otro."
+msgstr "You have asked for too many codes. Wait a while before asking for another."
+
+msgid "No se ha podido enviar el código ahora mismo. Revisa el móvil o inténtalo más tarde."
+msgstr "The code could not be sent right now. Check the number or try again later."
+
+msgid "Elige un canal activado y escribe un móvil válido."
+msgstr "Choose an enabled channel and enter a valid mobile number."
+
+msgid "Twilio no ha aceptado el mensaje. Revisa la cuenta, el remitente y la plantilla."
+msgstr "Twilio did not accept the message. Check the account, the sender and the template."

@@ -90,6 +90,41 @@
   </form>
 </section>
 
+<section class="proyecto-bloque ds-mt-24" id="canales" aria-labelledby="adop-canales">
+  <h2 id="adop-canales">{{ _('Avisos por SMS y WhatsApp') }}</h2>
+  <p class="muted">{{ _('Opcional. Además del correo y las notificaciones del móvil, tus clientes pueden recibir un mensaje corto por SMS o WhatsApp cuando necesiten actuar. Usa tu propia cuenta de Twilio, así que los mensajes los cobra Twilio a tu despacho. Cada persona lo activa por su cuenta en el portal y confirma su móvil con un código; puede darse de baja cuando quiera. Los mensajes llevan solo el aviso y un enlace, sin importes ni datos. Máximo 5 al día por persona y 300 al día por despacho. Para WhatsApp necesitas una plantilla aprobada en Twilio con una variable.') }}</p>
+  {% if canales_error %}<p class="error" role="alert">{{ canales_error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('fiscal.portal_adopcion_canales') }}" class="proyecto-form">
+    <label for="canales-sid">{{ _('Account SID de Twilio') }}</label>
+    <input type="text" id="canales-sid" name="account_sid" value="{{ canales_cfg.account_sid }}" autocomplete="off">
+    <label for="canales-token">{{ _('Token de autenticación') }}</label>
+    <input type="password" id="canales-token" name="token" autocomplete="new-password" placeholder="{{ _('Guardado; déjalo vacío para conservarlo') if canales_hay_token else '' }}">
+    <label><input type="checkbox" name="sms_activo" value="1" {{ 'checked' if canales_cfg.sms_activo }}> {{ _('Activar SMS') }}</label>
+    <label for="canales-rsms">{{ _('Remitente de los SMS (número de Twilio o nombre)') }}</label>
+    <input type="text" id="canales-rsms" name="remitente_sms" value="{{ canales_cfg.remitente_sms }}" autocomplete="off">
+    <label><input type="checkbox" name="whatsapp_activo" value="1" {{ 'checked' if canales_cfg.whatsapp_activo }}> {{ _('Activar WhatsApp') }}</label>
+    <label for="canales-rwa">{{ _('Número de WhatsApp de Twilio (con prefijo)') }}</label>
+    <input type="text" id="canales-rwa" name="remitente_whatsapp" value="{{ canales_cfg.remitente_whatsapp }}" autocomplete="off">
+    <label for="canales-cs">{{ _('Content SID de la plantilla de WhatsApp (empieza por HX)') }}</label>
+    <input type="text" id="canales-cs" name="whatsapp_content_sid" value="{{ canales_cfg.whatsapp_content_sid }}" autocomplete="off">
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+  <p class="muted">{{ _('Para que quien conteste BAJA o STOP deje de recibir avisos, en Twilio indica esta dirección como webhook de mensajes entrantes:') }} <strong class="portal-dir">{{ canales_url }}</strong></p>
+  {% if canales_cfg.sms_activo or canales_cfg.whatsapp_activo %}
+  <p>{{ _('Mensajes enviados este mes: %(sms)s SMS y %(wa)s de WhatsApp.', sms=canales_mes.get('sms', 0), wa=canales_mes.get('whatsapp', 0)) }}</p>
+  <form method="post" action="{{ url_for('fiscal.portal_adopcion_canales_probar') }}" class="ds-fila">
+    <label for="canales-prueba-tel">{{ _('Enviar un mensaje de prueba a') }}</label>
+    <input type="tel" id="canales-prueba-tel" name="telefono" required>
+    <label for="canales-prueba-canal">{{ _('Canal') }}</label>
+    <select id="canales-prueba-canal" name="canal">
+      {% if canales_cfg.sms_activo %}<option value="sms">{{ _('SMS') }}</option>{% endif %}
+      {% if canales_cfg.whatsapp_activo %}<option value="whatsapp">{{ _('WhatsApp') }}</option>{% endif %}
+    </select>
+    <button type="submit" class="btn btn-ghost">{{ _('Enviar prueba') }}</button>
+  </form>
+  {% endif %}
+</section>
+
 <section class="proyecto-bloque ds-mt-24" id="salud" aria-labelledby="adop-salud">
   <h2 id="adop-salud">{{ _('Salud del portal') }}</h2>
   <p class="muted">{{ _('Opcional. Mide cuánto tarda en cargar cada pantalla y qué errores de JavaScript ocurren en los navegadores de tus clientes, para detectar un problema antes de que alguien llame. Solo guarda contadores por día y pantalla: nada de quién es la persona, su cliente, su navegador ni lo que hay en la página. Está apagado salvo que lo enciendas.') }}</p>

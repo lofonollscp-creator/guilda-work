@@ -70,6 +70,8 @@ def enviar(cliente, titulo: str, cuerpo: str, destino: str, accion: str | None =
         portal_novedades.anotar(cliente, titulo, cuerpo, destino)          # el aviso queda también en el centro de avisos del portal, haya o no notificaciones en el móvil
     except Exception:  # noqa: BLE001
         pass
+    from . import portal_canales
+    portal_canales.enviar(cliente, titulo, destino, accion, urgente)       # SMS o WhatsApp a quien los haya confirmado (no hace nada si el despacho no los ha activado)
     if not disponible():
         return 0
     from . import portal_silencio

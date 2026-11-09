@@ -48,6 +48,35 @@
     </section>
     {% endif %}
 
+    {% if canales %}
+    <section class="portal-cuenta-bloque" id="cuenta-canales-bloque" aria-labelledby="cuenta-canales">
+      <h2 id="cuenta-canales">{{ _('Avisos por SMS o WhatsApp') }}</h2>
+      <p>{{ _('Recibe un mensaje corto en tu móvil cuando tu gestoría necesite una respuesta tuya. Nunca incluye importes ni datos de tus facturas: solo el aviso y un enlace al portal. Puedes darte de baja cuando quieras, aquí o contestando BAJA al mensaje.') }}</p>
+      {% if mi_movil and mi_movil.verificado_en %}
+      <p role="status"><strong>{{ _('Avisos activados en %(tel)s por %(canal)s.', tel=mi_movil.telefono, canal=(_('WhatsApp') if mi_movil.canal == 'whatsapp' else _('SMS'))) }}</strong></p>
+      <form method="post" action="{{ url_for('portal_cliente.movil_quitar') }}"><button type="submit" class="btn btn-ghost">{{ _('Dejar de recibir avisos en este móvil') }}</button></form>
+      {% else %}
+      <form method="post" action="{{ url_for('portal_cliente.movil_pedir_codigo') }}" class="ds-fila">
+        <label for="movil-telefono">{{ _('Tu móvil') }}</label>
+        <input type="tel" id="movil-telefono" name="telefono" inputmode="tel" autocomplete="tel" required value="{{ mi_movil.telefono if mi_movil else '' }}">
+        <label for="movil-canal">{{ _('Canal') }}</label>
+        <select id="movil-canal" name="canal">
+          {% if 'sms' in canales %}<option value="sms">{{ _('SMS') }}</option>{% endif %}
+          {% if 'whatsapp' in canales %}<option value="whatsapp">{{ _('WhatsApp') }}</option>{% endif %}
+        </select>
+        <button type="submit" class="btn btn-ghost">{{ _('Enviarme un código') }}</button>
+      </form>
+      {% if mi_movil %}
+      <form method="post" action="{{ url_for('portal_cliente.movil_verificar') }}" class="ds-fila">
+        <label for="movil-codigo">{{ _('Código recibido') }}</label>
+        <input type="text" id="movil-codigo" name="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+        <button type="submit" class="btn">{{ _('Confirmar') }}</button>
+      </form>
+      {% endif %}
+      {% endif %}
+    </section>
+    {% endif %}
+
     {% if subida %}
     <section class="portal-cuenta-bloque" id="movil" aria-labelledby="cuenta-movil">
       <h2 id="cuenta-movil">{{ _('Subir facturas desde el móvil') }}</h2>

@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -33,7 +33,7 @@ MAX_ARCHIVOS_POR_SUBIDA = 10
 
 DIAS_SESION_RECORDADA = 30
 # Con el perfil «consulta» solo se mira: estas son las únicas acciones que se permiten (sus propias preferencias y salir).
-_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cerrar_sesion_remota", "portal_cliente.cerrar_otras_sesiones", "portal_cliente.segundo_factor_iniciar", "portal_cliente.segundo_factor_confirmar", "portal_cliente.segundo_factor_quitar", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista", "portal_cliente.passkey_registro_opciones", "portal_cliente.passkey_registro_verificar", "portal_cliente.passkey_quitar", "portal_cliente.guardar_silencio", "portal_cliente.telemetria"}
+_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cerrar_sesion_remota", "portal_cliente.cerrar_otras_sesiones", "portal_cliente.segundo_factor_iniciar", "portal_cliente.segundo_factor_confirmar", "portal_cliente.segundo_factor_quitar", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista", "portal_cliente.passkey_registro_opciones", "portal_cliente.passkey_registro_verificar", "portal_cliente.passkey_quitar", "portal_cliente.guardar_silencio", "portal_cliente.telemetria", "portal_cliente.movil_pedir_codigo", "portal_cliente.movil_verificar", "portal_cliente.movil_quitar"}
 # Lo que solo hace el perfil «completo»: decidir en nombre del cliente y gestionar a quién más se deja entrar.
 _SOLO_PERFIL_COMPLETO = {"portal_cliente.conformidad", "portal_cliente.pagar_vencimiento", "portal_cliente.firma_vencimiento", "portal_cliente.anadir_contacto", "portal_cliente.cambiar_perfil_contacto", "portal_cliente.quitar_contacto",
                          "portal_cliente.renovar_enlace_subida"}
@@ -1078,6 +1078,7 @@ def cuenta():
             seguridad["alta"] = {"secreto": pendiente, "qr": qr.svg(uri, _("Código QR para añadir la cuenta a tu aplicación de autenticación"))}
     return render_template("portal_cuenta.html", cliente=cliente, yo=yo, seguridad=seguridad, agenda=agenda, codigos_nuevos=session.pop("portal_codigos_nuevos", None), avisos=portal_personas.avisos_de(cliente, yo), niveles=portal_personas.NIVELES_AVISO, personas=portal_personas.listar(cliente), roles=portal_personas.ROLES,
                            puede_gestionar=g.portal_rol == "completo" and not previa, subida=subida, push_disponible=portal_push.disponible() and not previa, push_activo=portal_push.tiene(cliente, yo) if not previa else 0,
+                           canales=portal_canales.disponibles(cliente['tenant_id']) if not previa else [], mi_movil=portal_canales.de_persona(cliente, yo) if not previa else None,
                            silencio=portal_silencio.obtener(cliente, yo), portal_seccion="cuenta", guardado=request.args.get("guardado"), error=(request.args.get("error") or "")[:200] or None, max_contactos=portal_personas.MAX_CONTACTOS)
 
 
@@ -1681,6 +1682,57 @@ def guardar_silencio():
     except ValueError as e:
         return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]) + "#cuenta-push")
     return redirect(url_for("portal_cliente.cuenta", guardado="silencio") + "#cuenta-push")
+
+
+@portal_bp.route("/cuenta/movil/codigo", methods=["POST"])
+@cliente_login_required
+@limiter.limit("10/hour")
+def movil_pedir_codigo():
+    """Apunta el móvil de esta persona para los avisos por SMS o WhatsApp y le manda un código para confirmarlo."""
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa"):
+        abort(403)
+    try:
+        portal_canales.pedir_codigo(cliente, _yo(cliente), request.form.get("telefono", ""), request.form.get("canal", ""))
+    except portal_canales.ErrorCanal as e:
+        return redirect(url_for("portal_cliente.cuenta", error=_(str(e))[:200]) + "#cuenta-canales")
+    return redirect(url_for("portal_cliente.cuenta", guardado="movil_codigo") + "#cuenta-canales")
+
+
+@portal_bp.route("/cuenta/movil/verificar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("20/hour")
+def movil_verificar():
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa"):
+        abort(403)
+    if not portal_canales.verificar(cliente, _yo(cliente), request.form.get("codigo", "")):
+        return redirect(url_for("portal_cliente.cuenta", error=_("El código no es correcto o ha caducado.")) + "#cuenta-canales")
+    return redirect(url_for("portal_cliente.cuenta", guardado="movil") + "#cuenta-canales")
+
+
+@portal_bp.route("/cuenta/movil/quitar", methods=["POST"])
+@cliente_login_required
+def movil_quitar():
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa"):
+        abort(403)
+    portal_canales.baja(cliente, _yo(cliente))
+    return redirect(url_for("portal_cliente.cuenta", guardado="movil_baja") + "#cuenta-canales")
+
+
+@portal_bp.route("/canales/twilio/<int:tenant_id>", methods=["POST"])
+@limiter.limit("120/minute")
+def canales_twilio(tenant_id: int):
+    """Los mensajes que llegan a los números del despacho: quien contesta «BAJA» o «STOP» deja de recibir avisos. Sin sesión: se autentica con la firma de Twilio."""
+    tokens = portal_canales.ia_claves.de_despacho(portal_canales.SERVICIO_TOKEN, tenant_id)
+    firma = request.headers.get("X-Twilio-Signature", "")
+    url = f"{_base_publica()}{request.path}"
+    if not tokens or not portal_canales.firma_valida(tokens[0], url, request.form.to_dict(), firma):
+        abort(403)
+    if (request.form.get("Body") or "").strip().lower().strip(".!") in portal_canales.PALABRAS_BAJA:
+        portal_canales.baja_por_telefono(tenant_id, request.form.get("From", ""))
+    return Response("<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response/>", mimetype="text/xml")
 
 
 @portal_bp.route("/preferencias", methods=["POST"])

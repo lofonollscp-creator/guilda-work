@@ -1545,6 +1545,21 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_canales_config": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_canales_envios": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "portal_canales_personas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_telemetria_diaria": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
