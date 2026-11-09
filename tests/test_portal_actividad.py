@@ -135,3 +135,35 @@ def test_mi_cuenta_enseña_los_datos_que_tiene_la_gestoria_y_ofrece_pedir_el_cam
     _entrar(cliente, c, "titular@ejemplo.com")
     html = _html(cliente, "/portal/cuenta")
     assert "Tus datos en tu gestoría" in html and "B12345678" in html and "titular@ejemplo.com" in html and "/portal/gestiones/cambio-datos" in html
+
+
+def test_cada_factura_explica_quien_la_tiene_cuanto_suele_tardar_y_avisa_si_se_retrasa(cliente, correo):
+    from datetime import datetime, timedelta
+    from app import facturas_portal as fp
+    t, u, c = _despacho("Explicar")
+    ficha = _ficha(c)
+    hace = lambda d: (datetime.now() - timedelta(days=d)).isoformat(timespec="seconds")
+    ids = [fc.subir_archivos(t, u, c, "recibida", [(f"a{i}.pdf", "application/pdf", PDF + bytes([i]))])[0] for i in range(7)]
+    conn = db.get_connection()
+    for i, fid in enumerate(ids[:5]):                                                           # cinco ya revisadas en 2 días: la mediana es 2
+        conn.execute("UPDATE facturas_contables SET estado = 'revisada', creado_en = ?, revisado_en = ? WHERE id = ?", (hace(10 + i), hace(8 + i), fid))
+    conn.execute("UPDATE facturas_contables SET creado_en = ? WHERE id = ?", (hace(1), ids[5]))     # reciente
+    conn.execute("UPDATE facturas_contables SET creado_en = ? WHERE id = ?", (hace(9), ids[6]))     # lleva mucho
+    conn.commit(); conn.close()
+    assert fp.mediana_dias_de_revision(t) == 2
+    por_id = {f["id"]: f for f in fp.facturas_del_cliente(c)}
+    assert "Tu gestoría ya la tiene" in por_id[ids[5]]["explicacion"] and "Suele tardar unos 2 días" in por_id[ids[5]]["explicacion"] and por_id[ids[5]]["retraso"] is False
+    assert "Lleva 9 días esperando" in por_id[ids[6]]["explicacion"] and por_id[ids[6]]["retraso"] is True
+    assert por_id[ids[0]]["explicacion"].startswith("Revisada por tu gestoría")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    html = _html(cliente, "/portal/facturas")
+    assert "Lleva 9 días esperando" in html and "Avisar a mi gestoría" in html and "/portal/conversaciones/nueva?tema=" in html
+
+
+def test_con_pocas_facturas_revisadas_no_se_promete_ningun_plazo(cliente, correo):
+    from app import facturas_portal as fp
+    t, u, c = _despacho("Explicar poco")
+    fc.subir_archivos(t, u, c, "recibida", [("x.pdf", "application/pdf", PDF + b"x")])
+    assert fp.mediana_dias_de_revision(t) is None
+    f = fp.facturas_del_cliente(c)[0]
+    assert f["explicacion"] == "Tu gestoría ya la tiene. Ahora toca leerla y revisarla." and "Suele tardar" not in f["explicacion"]

@@ -177,6 +177,7 @@
                 <span class="portal-estado {{ {'exportada': 'ok', 'revisada': 'ok', 'pendiente': 'warn', 'descartada': 'ko'}[f.estado] }}">{{ textos[f.estado] }}</span>
                 {% set nombres_pasos = {'recibida': _('Recibida'), 'leida': _('Leída'), 'revisada': _('Revisada'), 'contabilizada': _('Contabilizada')} %}
                 <ol class="portal-pasos" aria-label="{{ _('Progreso de la factura') }}">{% for p in f.pasos %}<li class="{{ 'hecho' if p.hecho }} {{ 'actual' if p.actual }}"{% if p.actual %} aria-current="step"{% endif %}>{{ nombres_pasos[p.clave] }}<span class="sr-only"> ({{ _('hecho') if p.hecho else (_('ahora') if p.actual else _('pendiente')) }})</span></li>{% endfor %}</ol>
+                {% if f.explicacion %}<p class="muted portal-explicacion">{{ f.explicacion }}{% if f.retraso %} <a href="{{ url_for('portal_cliente.conversacion_nueva', tema=_('mi factura %(n)s', n=f.numero if f.numero != '(por leer)' else f.tercero_nombre)) }}">{{ _('Avisar a mi gestoría') }}</a>{% endif %}</p>{% endif %}
               {% endif %}
             </td>
           </tr>{% endfor %}</tbody>

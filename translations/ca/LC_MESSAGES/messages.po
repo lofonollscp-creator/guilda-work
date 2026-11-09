@@ -25400,3 +25400,31 @@ msgstr "El teu document «%(nombre)s» caduca aviat"
 
 msgid "Tu documento «%(nombre)s» ha caducado"
 msgstr "El teu document «%(nombre)s» ha caducat"
+
+msgid "Suele tardar %(n)s día."
+msgid_plural "Suele tardar unos %(n)s días."
+msgstr[0] "Sol trigar %(n)s dia."
+msgstr[1] "Sol trigar uns %(n)s dies."
+
+msgid "Contabilizada: ya cuenta en tus impuestos del trimestre."
+msgstr "Comptabilitzada: ja compta als teus impostos del trimestre."
+
+msgid "Revisada por tu gestoría. Entrará en la contabilidad de tu trimestre."
+msgstr "Revisada per la teva gestoria. Entrarà a la comptabilitat del teu trimestre."
+
+msgid "Lleva %(n)s día esperando, más de lo habitual. Si tienes prisa, escribe a tu gestoría."
+msgid_plural "Lleva %(n)s días esperando, más de lo habitual. Si tienes prisa, escribe a tu gestoría."
+msgstr[0] "Fa %(n)s dia que espera, més del que és habitual. Si tens pressa, escriu a la teva gestoria."
+msgstr[1] "Fa %(n)s dies que espera, més del que és habitual. Si tens pressa, escriu a la teva gestoria."
+
+msgid "Tu gestoría ya la tiene. Ahora toca leerla y revisarla."
+msgstr "La teva gestoria ja la té. Ara toca llegir-la i revisar-la."
+
+msgid "Ya está leída. Falta que alguien de tu gestoría la revise."
+msgstr "Ja està llegida. Falta que algú de la teva gestoria la revisi."
+
+msgid "mi factura %(n)s"
+msgstr "la meva factura %(n)s"
+
+msgid "Avisar a mi gestoría"
+msgstr "Avisar la meva gestoria"

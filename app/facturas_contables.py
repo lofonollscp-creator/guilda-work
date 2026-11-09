@@ -1492,7 +1492,7 @@ def listar_del_cliente(cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
     conn = db.get_connection()
     try:
         filas = [dict(f) for f in conn.execute(
-            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, estado, origen, documento_id, lectura FROM facturas_contables WHERE cliente_fiscal_id = ? ORDER BY fecha DESC, id DESC LIMIT ?",
+            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, estado, origen, documento_id, lectura, creado_en FROM facturas_contables WHERE cliente_fiscal_id = ? ORDER BY fecha DESC, id DESC LIMIT ?",
             (cliente_fiscal_id, limite))]
     finally:
         conn.close()

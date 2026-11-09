@@ -25391,3 +25391,31 @@ msgstr "Your document “%(nombre)s” expires soon"
 
 msgid "Tu documento «%(nombre)s» ha caducado"
 msgstr "Your document “%(nombre)s” has expired"
+
+msgid "Suele tardar %(n)s día."
+msgid_plural "Suele tardar unos %(n)s días."
+msgstr[0] "It usually takes %(n)s day."
+msgstr[1] "It usually takes about %(n)s days."
+
+msgid "Contabilizada: ya cuenta en tus impuestos del trimestre."
+msgstr "Booked: it already counts in your taxes for the quarter."
+
+msgid "Revisada por tu gestoría. Entrará en la contabilidad de tu trimestre."
+msgstr "Reviewed by your accountant. It will go into your quarter's accounts."
+
+msgid "Lleva %(n)s día esperando, más de lo habitual. Si tienes prisa, escribe a tu gestoría."
+msgid_plural "Lleva %(n)s días esperando, más de lo habitual. Si tienes prisa, escribe a tu gestoría."
+msgstr[0] "It has been waiting %(n)s day, longer than usual. If you are in a hurry, write to your accountant."
+msgstr[1] "It has been waiting %(n)s days, longer than usual. If you are in a hurry, write to your accountant."
+
+msgid "Tu gestoría ya la tiene. Ahora toca leerla y revisarla."
+msgstr "Your accountant has it. Next it needs to be read and reviewed."
+
+msgid "Ya está leída. Falta que alguien de tu gestoría la revise."
+msgstr "It has been read. Someone at your accountant's still needs to review it."
+
+msgid "mi factura %(n)s"
+msgstr "my invoice %(n)s"
+
+msgid "Avisar a mi gestoría"
+msgstr "Notify my accountant"

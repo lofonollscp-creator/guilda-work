@@ -109,7 +109,59 @@ def facturas_del_cliente(cliente_fiscal_id: int, limite: int = 500) -> list[dict
         f["devuelta_en"] = ev["en"] if ev else None
         f["atendida"] = bool(ev and ev["atendida"])
         f["pasos"] = pasos_de(f)
+    mediana = mediana_dias_de_revision(cliente["tenant_id"])
+    for f in filas:
+        f["explicacion"], f["retraso"] = explicar(f, mediana)
     return filas
+
+
+MUESTRAS_MINIMAS = 5
+
+
+def mediana_dias_de_revision(tenant_id: int, hoy: date | None = None) -> int | None:
+    """Los días que suele tardar este despacho en revisar una factura (mediana de las de los últimos 90 días), o None si aún hay pocas para saberlo."""
+    from datetime import datetime, timedelta
+    desde = ((hoy or date.today()) - timedelta(days=90)).isoformat()
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT creado_en, revisado_en FROM facturas_contables WHERE tenant_id = ? AND revisado_en IS NOT NULL AND estado IN ('revisada', 'exportada') AND revisado_en >= ? LIMIT 1000", (tenant_id, desde)).fetchall()
+    finally:
+        conn.close()
+    dias = []
+    for f in filas:
+        try:
+            dias.append(max(0, (datetime.fromisoformat(f["revisado_en"][:19]) - datetime.fromisoformat(f["creado_en"][:19])).days))
+        except (ValueError, TypeError):
+            continue
+    if len(dias) < MUESTRAS_MINIMAS:
+        return None
+    dias.sort()
+    return dias[len(dias) // 2]
+
+
+def explicar(f: dict, mediana: int | None, hoy: date | None = None) -> tuple[str, bool]:
+    """(frase, con_retraso): qué le pasa a esta factura, quién la tiene y cuánto suele tardar. `con_retraso` si lleva esperando bastante más de lo habitual (se le ofrece avisar a la gestoría)."""
+    from datetime import datetime
+    from flask_babel import gettext as _, ngettext
+    if f["estado"] == "descartada":
+        return "", False
+    hoy = hoy or date.today()
+    tarda = (" " + ngettext("Suele tardar %(n)s día.", "Suele tardar unos %(n)s días.", max(1, mediana), n=max(1, mediana))) if mediana is not None else ""
+    if f["estado"] == "exportada":
+        return _("Contabilizada: ya cuenta en tus impuestos del trimestre."), False
+    if f["estado"] == "revisada":
+        return _("Revisada por tu gestoría. Entrará en la contabilidad de tu trimestre."), False
+    try:
+        esperando = (hoy - datetime.fromisoformat((f.get("creado_en") or "")[:10]).date()).days
+    except ValueError:
+        esperando = 0
+    retraso = mediana is not None and esperando > max(3, 2 * mediana)
+    leida = f.get("lectura") not in ("pendiente", "fallida", None)
+    if retraso:
+        return ngettext("Lleva %(n)s día esperando, más de lo habitual. Si tienes prisa, escribe a tu gestoría.", "Lleva %(n)s días esperando, más de lo habitual. Si tienes prisa, escribe a tu gestoría.", esperando, n=esperando), True
+    if leida:
+        return _("Ya está leída. Falta que alguien de tu gestoría la revise.") + tarda, False
+    return _("Tu gestoría ya la tiene. Ahora toca leerla y revisarla.") + tarda, False
 
 
 PASOS = ("recibida", "leida", "revisada", "contabilizada")

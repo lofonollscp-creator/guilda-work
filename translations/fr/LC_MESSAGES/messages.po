@@ -25476,3 +25476,31 @@ msgstr "Votre document « %(nombre)s » expire bientôt"
 
 msgid "Tu documento «%(nombre)s» ha caducado"
 msgstr "Votre document « %(nombre)s » a expiré"
+
+msgid "Suele tardar %(n)s día."
+msgid_plural "Suele tardar unos %(n)s días."
+msgstr[0] "Cela prend généralement %(n)s jour."
+msgstr[1] "Cela prend généralement environ %(n)s jours."
+
+msgid "Contabilizada: ya cuenta en tus impuestos del trimestre."
+msgstr "Comptabilisée : elle compte déjà dans vos impôts du trimestre."
+
+msgid "Revisada por tu gestoría. Entrará en la contabilidad de tu trimestre."
+msgstr "Relue par votre cabinet. Elle entrera dans la comptabilité de votre trimestre."
+
+msgid "Lleva %(n)s día esperando, más de lo habitual. Si tienes prisa, escribe a tu gestoría."
+msgid_plural "Lleva %(n)s días esperando, más de lo habitual. Si tienes prisa, escribe a tu gestoría."
+msgstr[0] "Elle attend depuis %(n)s jour, plus que d'habitude. Si vous êtes pressé, écrivez à votre cabinet."
+msgstr[1] "Elle attend depuis %(n)s jours, plus que d'habitude. Si vous êtes pressé, écrivez à votre cabinet."
+
+msgid "Tu gestoría ya la tiene. Ahora toca leerla y revisarla."
+msgstr "Votre cabinet l'a. Il reste à la lire et à la vérifier."
+
+msgid "Ya está leída. Falta que alguien de tu gestoría la revise."
+msgstr "Elle est lue. Il reste à quelqu'un de votre cabinet de la vérifier."
+
+msgid "mi factura %(n)s"
+msgstr "ma facture %(n)s"
+
+msgid "Avisar a mi gestoría"
+msgstr "Prévenir mon cabinet"
