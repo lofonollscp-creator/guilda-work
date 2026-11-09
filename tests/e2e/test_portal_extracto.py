@@ -73,3 +73,53 @@ def test_lectura_de_formatos_de_csv_habituales(servidor, abrir, entrar_como_equi
     assert nueva.evaluate("() => window.__extracto.leer('Hola;mundo\\nsin;datos').error") == "columnas"
     assert nueva.evaluate("() => window.__extracto.leer('').error") == "vacio"
     ctx.close()
+
+
+def _n43_movimiento(aammdd: str, clave: str, centimos: int, ref: str, complementario: str = "") -> str:
+    r = "22" + "    " + "0001" + aammdd + aammdd + "01" + "001" + clave + f"{centimos:014d}" + "0000000000" + ref.ljust(12)[:12] + "".ljust(16)
+    r = r.ljust(80)
+    if complementario:
+        r += "\n" + ("2301" + complementario.ljust(38)[:38] + "".ljust(38))
+    return r
+
+
+NORMA43 = "\n".join([
+    "11" + "2100" + "0001" + "0123456789" + "261101" + "261130" + "2" + f"{100000:014d}" + "978" + "3" + "CLIENTE FORMATOS".ljust(26) + "   ",
+    _n43_movimiento("261103", "1", 4550, "REF1", "COMPRA FERRETERIA SOL"),
+    _n43_movimiento("261105", "2", 250000, "REF2", "TRANSFERENCIA CLIENTE"),
+    "33" + "2100" + "0001" + "0123456789" + "000002" + f"{4550:014d}" + "000001" + f"{250000:014d}" + "2" + f"{345450:014d}" + "978",
+    "88" + "9" * 18 + "000006" + "".ljust(52),
+])
+CAMT = """<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02"><BkToCstmrStmt><Stmt>
+<Ntry><Amt Ccy="EUR">121.00</Amt><CdtDbtInd>DBIT</CdtDbtInd><BookgDt><Dt>2026-11-03</Dt></BookgDt><NtryDtls><TxDtls><RmtInf><Ustrd>PAPELERIA SOL</Ustrd></RmtInf></TxDtls></NtryDtls></Ntry>
+<Ntry><Amt Ccy="EUR">2500.00</Amt><CdtDbtInd>CRDT</CdtDbtInd><BookgDt><Dt>2026-11-07</Dt></BookgDt><AddtlNtryInf>TRANSFERENCIA</AddtlNtryInf></Ntry>
+</Stmt></BkToCstmrStmt></Document>"""
+
+
+def test_lectura_de_cuaderno_43_y_camt_053_y_su_codificacion(servidor, abrir, entrar_como_equipo, chromium):
+    t = db.crear_tenant("Despacho extracto bancario")
+    pagina, _ = abrir()
+    entrar_como_equipo(pagina, "portal-extracto3@ejemplo.com", despacho=t, direccion=True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = db.crear_cliente_fiscal(t, "Cliente Bancario", email="bancario@ejemplo.com")
+    ctx = chromium.new_context()
+    nueva = ctx.new_page()
+    errores = []
+    nueva.on("pageerror", lambda e: errores.append(str(e)))
+    nueva.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(c, '127.0.0.1')}")
+    nueva.goto(f"{servidor.url}/portal/extracto")
+    nueva.wait_for_load_state("networkidle")
+    r = nueva.evaluate("(t) => window.__extracto.leer(t)", NORMA43)
+    assert r["error"] is None and [(m["f"], m["i"]) for m in r["movimientos"]] == [("2026-11-03", -4550), ("2026-11-05", 250000)], r
+    assert "FERRETERIA" in r["movimientos"][0]["c"]
+    r = nueva.evaluate("(t) => window.__extracto.leer(t)", CAMT)
+    assert r["error"] is None and [(m["f"], m["i"]) for m in r["movimientos"]] == [("2026-11-03", -12100), ("2026-11-07", 250000)], r
+    assert "PAPELERIA" in r["movimientos"][0]["c"]
+    assert nueva.evaluate("() => window.__extracto.leer('<Document><BkToCstmrStmt><Ntry>').error") == "columnas"
+    # un fichero en Latin-1 (habitual en los Cuadernos 43) se lee igual que uno en UTF-8
+    nueva.set_input_files("#extracto-archivo", {"name": "extracto.n43", "mimeType": "text/plain", "buffer": NORMA43.replace("FERRETERIA", "FERRETERÍA").encode("latin-1")})
+    nueva.wait_for_function("document.getElementById('extracto-estado').innerText.length > 0")
+    assert "2 movimientos" in nueva.locator("#extracto-estado").inner_text()
+    assert not errores
+    ctx.close()

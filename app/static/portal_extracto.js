@@ -77,8 +77,56 @@
     return idx;
   }
 
+  // Cuaderno 43 (AEB, el formato de extracto de los bancos españoles): registros de 80 caracteres; «22» es un movimiento (fecha AAMMDD, clave 1 = debe y 2 = haber, importe de 14 cifras con 2 decimales) y «23» completa su concepto.
+  function esNorma43(texto) {
+    var l = texto.split(/\r?\n/).filter(function (x) { return x.trim(); });
+    return l.length >= 3 && /^11\d{18}/.test(l[0]) && l.some(function (x) { return /^22/.test(x) && x.length >= 42; });
+  }
+  function leerNorma43(texto) {
+    var movs = [], ultimo = null;
+    texto.split(/\r?\n/).forEach(function (r) {
+      if (/^22/.test(r) && r.length >= 42) {
+        var aa = r.substr(10, 6), cifras = r.substr(28, 14);
+        var d = fecha('20' + aa.substr(0, 2) + '-' + aa.substr(2, 2) + '-' + aa.substr(4, 2));
+        var clave = r.charAt(27);
+        if (!d || !/^\d{14}$/.test(cifras) || (clave !== '1' && clave !== '2')) { ultimo = null; return; }
+        var n = parseInt(cifras, 10);
+        ultimo = { f: d, i: clave === '1' ? -n : n, c: (r.substr(52) || '').trim() };
+        if (n) movs.push(ultimo); else ultimo = null;
+      } else if (/^23/.test(r) && ultimo) {
+        var extra = (r.substr(4, 38) + ' ' + r.substr(42, 38)).replace(/\s+/g, ' ').trim();
+        if (extra) ultimo.c = (extra + (ultimo.c ? ' ' + ultimo.c : '')).slice(0, 140);
+      }
+    });
+    return { movimientos: movs, error: movs.length ? null : 'vacio' };
+  }
+
+  // CAMT.053 (ISO 20022, XML): cada <Ntry> lleva su importe, si es cargo (DBIT) o abono (CRDT), la fecha de apunte y el texto del concepto.
+  function esCamt(texto) { return /<(\w+:)?Ntry[\s>]/.test(texto) && /<(\w+:)?BkToCstmrStmt/.test(texto); }
+  function leerCamt(texto) {
+    var doc = new DOMParser().parseFromString(texto, 'application/xml');
+    if (doc.getElementsByTagName('parsererror').length) return { movimientos: [], error: 'columnas' };
+    function hijo(nodo, nombre) { var l = nodo.getElementsByTagNameNS('*', nombre); return l.length ? (l[0].textContent || '').trim() : ''; }
+    var movs = [];
+    Array.prototype.forEach.call(doc.getElementsByTagNameNS('*', 'Ntry'), function (e) {
+      var bruto = parseFloat(hijo(e, 'Amt')), imp = isNaN(bruto) ? null : Math.round(bruto * 100), signo = hijo(e, 'CdtDbtInd'), reg = e.getElementsByTagNameNS('*', 'BookgDt')[0] || e.getElementsByTagNameNS('*', 'ValDt')[0];
+      var d = reg ? fecha(hijo(reg, 'Dt') || hijo(reg, 'DtTm')) : null;
+      if (d === null || imp === null || imp === 0) return;
+      var texto1 = [hijo(e, 'Ustrd'), hijo(e, 'Nm'), hijo(e, 'AddtlNtryInf')].filter(Boolean).join(' · ');
+      movs.push({ f: d, i: signo === 'DBIT' ? -Math.abs(imp) : Math.abs(imp), c: texto1.slice(0, 140) });
+    });
+    return { movimientos: movs, error: movs.length ? null : 'vacio' };
+  }
+
   function leer(texto) {
-    var lineas = texto.replace(/^﻿/, '').split(/\r?\n/).filter(function (l) { return l.trim(); });
+    texto = texto.replace(/^﻿/, '');
+    if (esCamt(texto)) return leerCamt(texto);
+    if (esNorma43(texto)) return leerNorma43(texto);
+    return leerCsv(texto);
+  }
+
+  function leerCsv(texto) {
+    var lineas = texto.split(/\r?\n/).filter(function (l) { return l.trim(); });
     if (lineas.length < 2) return { movimientos: [], error: 'vacio' };
     var sep = separador(lineas), filas = lineas.map(function (l) { return partir(l, sep); });
     // la cabecera real puede venir tras unas líneas de presentación del banco: la primera con al menos 3 campos y texto
@@ -135,13 +183,18 @@
     return li;
   }
 
+  // Los bancos exportan en UTF-8 o en Windows-1252/Latin-1 (sobre todo el Cuaderno 43): se prueba UTF-8 estricto y, si falla, Windows-1252.
+  function decodificar(buffer) {
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(buffer); } catch (e) { return new TextDecoder('windows-1252').decode(buffer); }
+  }
+
   entrada.addEventListener('change', function () {
     lista.textContent = ''; estado.textContent = '';
     var archivo = entrada.files && entrada.files[0];
     if (!archivo) return;
     var lector = new FileReader();
     lector.onload = function () {
-      var r = leer(String(lector.result || ''));
+      var r = leer(decodificar(lector.result));
       if (r.error === 'columnas') { estado.textContent = t('no-columnas'); return; }
       if (r.error) { estado.textContent = t('vacio'); return; }
       fetch(raiz.getAttribute('data-url-datos'), { credentials: 'same-origin' }).then(function (x) { return x.json(); }).then(function (datos) {
@@ -150,7 +203,7 @@
         faltan.sort(function (a, b) { return a.f < b.f ? 1 : -1; }).slice(0, 200).forEach(function (m) { lista.appendChild(formulario(m)); });
       }).catch(function () { estado.textContent = t('vacio'); });
     };
-    lector.readAsText(archivo, 'utf-8');
+    lector.readAsArrayBuffer(archivo);
   });
-  window.__extracto = { leer: leer, pendientes: pendientes, importe: importe, fecha: fecha };           // para las pruebas del navegador
+  window.__extracto = { leer: leer, decodificar: decodificar, pendientes: pendientes, importe: importe, fecha: fecha };           // para las pruebas del navegador
 })();

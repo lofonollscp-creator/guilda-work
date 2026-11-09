@@ -26304,3 +26304,12 @@ msgstr "Il n'y a rien à payer dans cette proposition."
 
 msgid "Marca la casilla para confirmar que aceptas la propuesta."
 msgstr "Cochez la case pour confirmer que vous acceptez la proposition."
+
+msgid "No hemos reconocido las columnas de este archivo. Tiene que ser un CSV con una columna de fecha, otra de importe y otra de concepto, o un extracto en Cuaderno 43 o CAMT.053."
+msgstr "Nous n'avons pas reconnu les colonnes de ce fichier. Il doit s'agir d'un CSV avec une colonne de date, une de montant et une de libellé, ou d'un relevé au format Norme 43 ou CAMT.053."
+
+msgid "Elige el extracto de tu banco (un archivo CSV, Cuaderno 43 o CAMT.053 que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar."
+msgstr "Choisissez le relevé de votre banque (un fichier CSV, Norme 43 ou CAMT.053 téléchargé depuis son site ou son appli) et nous vous montrons quels paiements n'ont ni facture ni ticket enregistré. Le fichier est lu dans votre navigateur : il n'est envoyé à personne et n'est pas conservé. Seul ce que vous décidez d'enregistrer est envoyé."
+
+msgid "Extracto del banco (CSV, Cuaderno 43 o CAMT.053)"
+msgstr "Relevé bancaire (CSV, Norme 43 ou CAMT.053)"

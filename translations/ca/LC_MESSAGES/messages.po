@@ -26228,3 +26228,12 @@ msgstr "No hi ha res a pagar en aquesta proposta."
 
 msgid "Marca la casilla para confirmar que aceptas la propuesta."
 msgstr "Marca la casella per confirmar que acceptes la proposta."
+
+msgid "No hemos reconocido las columnas de este archivo. Tiene que ser un CSV con una columna de fecha, otra de importe y otra de concepto, o un extracto en Cuaderno 43 o CAMT.053."
+msgstr "No hem reconegut les columnes d'aquest fitxer. Ha de ser un CSV amb una columna de data, una d'import i una de concepte, o un extracte en Quadern 43 o CAMT.053."
+
+msgid "Elige el extracto de tu banco (un archivo CSV, Cuaderno 43 o CAMT.053 que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar."
+msgstr "Tria l'extracte del teu banc (un fitxer CSV, Quadern 43 o CAMT.053 que descarregues des de la seva web o la seva app) i t'ensenyem quins pagaments no tenen factura ni tiquet anotat. El fitxer es llegeix al teu navegador: no s'envia a ningú i no es desa. Només s'envia el que tu decideixis anotar."
+
+msgid "Extracto del banco (CSV, Cuaderno 43 o CAMT.053)"
+msgstr "Extracte del banc (CSV, Quadern 43 o CAMT.053)"

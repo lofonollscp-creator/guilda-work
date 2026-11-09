@@ -26219,3 +26219,12 @@ msgstr "There is nothing to pay in this proposal."
 
 msgid "Marca la casilla para confirmar que aceptas la propuesta."
 msgstr "Tick the box to confirm that you accept the proposal."
+
+msgid "No hemos reconocido las columnas de este archivo. Tiene que ser un CSV con una columna de fecha, otra de importe y otra de concepto, o un extracto en Cuaderno 43 o CAMT.053."
+msgstr "We did not recognise the columns in this file. It must be a CSV with a date, an amount and a description column, or a statement in Norma 43 or CAMT.053."
+
+msgid "Elige el extracto de tu banco (un archivo CSV, Cuaderno 43 o CAMT.053 que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar."
+msgstr "Choose your bank statement (a CSV, Norma 43 or CAMT.053 file you download from its website or app) and we will show which payments have no invoice or receipt recorded. The file is read in your browser: it is not sent to anyone and it is not saved. Only what you decide to record is sent."
+
+msgid "Extracto del banco (CSV, Cuaderno 43 o CAMT.053)"
+msgstr "Bank statement (CSV, Norma 43 or CAMT.053)"

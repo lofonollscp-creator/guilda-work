@@ -5,13 +5,13 @@
 {% block contenido %}
     <section class="portal-cuenta-bloque" id="extracto"
              data-url-datos="{{ url_for('portal_cliente.extracto_datos') }}" data-url-tiquet="{{ url_for('portal_cliente.anotar_tiquet') }}" data-url-facturas="{{ url_for('portal_cliente.facturas') }}" data-puede-anotar="{{ 1 if puede_anotar else 0 }}"
-             data-txt-no-columnas="{{ _('No hemos reconocido las columnas de este archivo. Tiene que ser un CSV con una columna de fecha, otra de importe y otra de concepto.') }}"
+             data-txt-no-columnas="{{ _('No hemos reconocido las columnas de este archivo. Tiene que ser un CSV con una columna de fecha, otra de importe y otra de concepto, o un extracto en Cuaderno 43 o CAMT.053.') }}"
              data-txt-vacio="{{ _('No hemos encontrado movimientos en el archivo.') }}"
              data-txt-todo-bien="{{ _('Todos los pagos de tu extracto tienen su factura o su tiquet. No falta nada.') }}"
              data-txt-resumen="{{ _('Hemos leído %(n)s movimientos y %(k)s son pagos sin factura ni tiquet.', n='%(n)s', k='%(k)s') }}"
              data-txt-anotar="{{ _('Anotar como tiquet') }}" data-txt-subir="{{ _('Tengo la factura: subirla') }}" data-txt-fecha="{{ _('Fecha') }}" data-txt-importe="{{ _('Importe') }}" data-txt-concepto="{{ _('Concepto') }}">
-      <p>{{ _('Elige el extracto de tu banco (un archivo CSV que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar.') }}</p>
-      <div class="correo-form-campo"><label for="extracto-archivo">{{ _('Extracto del banco (CSV)') }}</label><input type="file" id="extracto-archivo" accept=".csv,.txt,text/csv,text/plain"></div>
+      <p>{{ _('Elige el extracto de tu banco (un archivo CSV, Cuaderno 43 o CAMT.053 que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar.') }}</p>
+      <div class="correo-form-campo"><label for="extracto-archivo">{{ _('Extracto del banco (CSV, Cuaderno 43 o CAMT.053)') }}</label><input type="file" id="extracto-archivo" accept=".csv,.txt,.n43,.c43,.xml,text/csv,text/plain,text/xml,application/xml"></div>
       <p id="extracto-estado" class="muted" role="status" aria-live="polite"></p>
       <ul id="extracto-lista" class="portal-personas"></ul>
     </section>
