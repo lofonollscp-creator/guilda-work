@@ -24,6 +24,8 @@
         {% for a in p.perfil_atributos %}{{ chip({'iva': _('IVA'), 'estimacion_directa': _('Estimación directa'), 'retenciones': _('Retenciones'), 'alquiler_local': _('Alquiler de local')}[a]) }}{% endfor %}
         {% if p.generacion_automatica %}{{ chip(_('Vencimientos automáticos')) }}{% endif %}
         {% if p.plantilla_tareas_id %}{{ chip(_('Con tareas iniciales')) }}{% endif %}
+        {% if p.peticiones %}{{ chip(ngettext('%(n)s documento que se pide al alta', '%(n)s documentos que se piden al alta', p.peticiones|length, n=p.peticiones|length)) }}{% endif %}
+        {% if p.invitar_portal %}{{ chip(_('Invita al portal')) }}{% endif %}
         {% for e in p.etiquetas %}{{ chip(e) }}{% endfor %}
       </span>
       {% if puede_gestionar and not p.de_serie %}
@@ -32,6 +34,7 @@
     </li>
     {% endfor %}
   </ul>
+  <p class="muted">{{ _('Las plantillas de serie traen una lista habitual de documentos que pedir según el tipo de cliente; son un punto de partida editable.') }}</p>
   <p class="muted">{{ _('Las plantillas de serie son un punto de partida sin validar: el perfil es una sugerencia habitual, no una regla fiscal. Los modelos que salen del perfil se siguen mostrando como propuesta editable en la ficha fiscal del cliente.') }}</p>
 </section>
 
@@ -48,6 +51,8 @@
     {% endfor %}
     <label class="checkbox-label"><input type="checkbox" name="generacion_automatica" value="1"> {{ _('Generar los vencimientos automáticamente al dar de alta al cliente') }}</label>
     {% call campo(_('Etiquetas'), 'p-etq', ayuda=_('Separadas por comas: vip, renta, autónomo.')) %}<input type="text" id="p-etq" name="etiquetas">{% endcall %}
+    {% call campo(_('Documentos que se piden al dar de alta'), 'p-peticiones', ayuda=_('Uno por línea. Al dar de alta al cliente se le abre una petición en su portal por cada línea. Si dejas esto vacío no se pide nada.')) %}<textarea id="p-peticiones" name="peticiones" rows="4" placeholder="{{ _('DNI o NIE (por las dos caras)') }}"></textarea>{% endcall %}
+    <label class="checkbox-label"><input type="checkbox" name="invitar_portal" value="1"> {{ _('Invitar al portal al dar de alta (el correo sale solo, de forma escalonada si son muchos)') }}</label>
     {% call campo(_('Tareas iniciales'), 'p-tareas', ayuda=_('Una plantilla de tareas compartida con el despacho; se aplica a nombre de quien da de alta al cliente.')) %}
       <select id="p-tareas" name="plantilla_tareas_id"><option value="">{{ _('Sin tareas') }}</option>{% for t in plantillas_tareas %}<option value="{{ t.id }}">{{ t.nombre }} ({{ t.n_tareas }})</option>{% endfor %}</select>
     {% endcall %}

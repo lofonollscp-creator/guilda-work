@@ -62,6 +62,9 @@
       <label class="checkbox-label"><input type="checkbox" name="gestion_fiscal" value="1"> {{ _('Llevar también la gestión fiscal de estos clientes') }}</label>
       <label for="i-pais">{{ _('País de tributación (si el archivo no lo indica)') }}</label>
       <select id="i-pais" name="pais">{% for p in paises %}<option value="{{ p }}">{{ _('España') if p == 'ES' else p }}</option>{% endfor %}</select>
+      <label for="i-plantilla">{{ _('Plantilla de alta (perfil, documentos que pedir, tareas iniciales)') }}</label>
+      <select id="i-plantilla" name="plantilla_id"><option value="">{{ _('Sin plantilla') }}</option>{% for p in plantillas %}<option value="{{ p.id }}">{{ p.nombre }}{% if p.peticiones %} ({{ ngettext('%(n)s documento', '%(n)s documentos', p.peticiones|length, n=p.peticiones|length) }}){% endif %}</option>{% endfor %}</select>
+      <label class="checkbox-label"><input type="checkbox" name="invitar_portal" value="1"> {{ _('Invitar al portal a los que tengan correo (los correos salen escalonados)') }}</label>
       <label for="i-perfil">{{ _('Tipo de cliente fiscal') }}</label>
       <select id="i-perfil" name="perfil_tipo"><option value="">{{ _('Sin indicar') }}</option>{% for t, nombre in (('autonomo', _('Autónomo')), ('sociedad', _('Sociedad')), ('particular', _('Particular'))) %}<option value="{{ t }}">{{ nombre }}</option>{% endfor %}</select>
       <label class="checkbox-label"><input type="checkbox" name="generacion_automatica" value="1"> {{ _('Generar los vencimientos automáticamente cada periodo') }}</label>

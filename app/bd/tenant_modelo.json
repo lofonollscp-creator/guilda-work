@@ -1535,6 +1535,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_invitaciones_cola": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_passkeys": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

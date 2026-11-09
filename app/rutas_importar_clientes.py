@@ -6,7 +6,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from . import alta_cliente, importador_clientes as imp
+from . import plantillas_cliente, alta_cliente, importador_clientes as imp
 from .auth import limiter, login_required
 from .rutas_nucleo import _supervisor, _tenant
 
@@ -82,7 +82,7 @@ def revisar(ident: str):
         return redirect(url_for("importar_clientes.inicio", error=_("Esa importación ya no está disponible: sube el archivo otra vez.")))
     return render_template(
         "clientes_importar_vista.html", ident=ident, importacion=importacion, correspondencia=corr, previa=previa, error=error, subnav="clientes", campos=imp.ETIQUETAS_CAMPO,
-        gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t), paises=alta_cliente.PAISES, max_mostradas=100, etiqueta_sugerida=_("importación") + f" {date.today().isoformat()}")
+        gestion_fiscal_disponible=alta_cliente.gestion_fiscal_disponible(t), paises=alta_cliente.PAISES, plantillas=plantillas_cliente.listar(t), max_mostradas=100, etiqueta_sugerida=_("importación") + f" {date.today().isoformat()}")
 
 
 @importar_clientes_bp.route("/<ident>", methods=["POST"])
@@ -99,5 +99,5 @@ def confirmar(ident: str):
     resultado = imp.importar(
         t, g.usuario_id, importacion, corr, omitir_duplicados=request.form.get("omitir_duplicados") == "1", gestion_fiscal=request.form.get("gestion_fiscal") == "1",
         pais=request.form.get("pais") or "ES", etiqueta_comun=request.form.get("etiqueta_comun"), perfil_tipo=request.form.get("perfil_tipo") or None,
-        generacion_automatica=request.form.get("generacion_automatica") == "1")
+        generacion_automatica=request.form.get("generacion_automatica") == "1", plantilla_id=request.form.get("plantilla_id") or None, invitar_portal=request.form.get("invitar_portal") == "1")
     return render_template("clientes_importar_resultado.html", r=resultado, archivo=importacion["nombre"], subnav="clientes")

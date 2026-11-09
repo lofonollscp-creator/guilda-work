@@ -96,8 +96,8 @@ def _con_plantilla(pl: dict | None, perfil_tipo, perfil_atributos, etiquetas, ge
     return perfil_tipo, perfil_atributos, list(dict.fromkeys([*(etiquetas or []), *pl["etiquetas"]])), bool(generacion_automatica or pl["generacion_automatica"])
 
 
-def _tras_el_alta(tenant_id: int, usuario_id: int | None, fiscal_id: int, pl: dict | None, responsable_id: int | None) -> dict:
-    """Vencimientos del año si la generación automática está activa y tareas iniciales de la plantilla. Es lo último que se hace y no deshace el alta si falla: el cliente ya
+def _tras_el_alta(tenant_id: int, usuario_id: int | None, fiscal_id: int, pl: dict | None, responsable_id: int | None, invitar_portal: bool | None = None) -> dict:
+    """Vencimientos del año si la generación automática está activa, peticiones de documentos y tareas iniciales de la plantilla, y la invitación al portal (en cola, escalonada). Es lo último que se hace y no deshace el alta si falla: el cliente ya
     existe y repetir el alta lo duplicaría; el cron diario completa los vencimientos y las tareas se pueden aplicar a mano desde Tareas."""
     res = {"vencimientos": 0, "tareas": 0}
     try:
@@ -106,6 +106,22 @@ def _tras_el_alta(tenant_id: int, usuario_id: int | None, fiscal_id: int, pl: di
             res["vencimientos"] = db.generar_vencimientos_de_cliente(ficha)
     except Exception:  # noqa: BLE001
         log.warning("Alta del cliente fiscal %s: no se han podido generar los vencimientos", fiscal_id, exc_info=True)
+    res.update({"peticiones": 0, "invitada": False})
+    try:
+        ficha = db.obtener_cliente_fiscal(tenant_id, fiscal_id)
+        if ficha is not None and pl and pl.get("peticiones"):
+            from . import portal_peticiones
+            for titulo in pl["peticiones"]:
+                try:
+                    portal_peticiones.crear(ficha, titulo, por=usuario_id)
+                    res["peticiones"] += 1
+                except ValueError:
+                    break                                          # tope de peticiones abiertas: las demás se piden a mano
+        if ficha is not None and (invitar_portal if invitar_portal is not None else bool(pl and pl.get("invitar_portal"))):
+            from . import portal_invitaciones
+            res["invitada"] = portal_invitaciones.encolar(tenant_id, fiscal_id)
+    except Exception:  # noqa: BLE001
+        log.warning("Alta del cliente fiscal %s: no se han podido abrir las peticiones iniciales o apuntar la invitación", fiscal_id, exc_info=True)
     try:
         if pl and pl["plantilla_tareas_id"] and usuario_id:
             res["tareas"] = len(db.aplicar_plantilla_tareas(usuario_id, pl["plantilla_tareas_id"], date.today().isoformat(), cliente_fiscal_id=fiscal_id, asignada_a=responsable_id))
@@ -119,7 +135,7 @@ def crear_cliente_completo(
     telefono: str | None = None, direccion: str | None = None, idioma: str | None = None, origen: str | None = None, notas: str | None = None,
     responsable_id: int | None = None, etiquetas: list[str] | None = None, pais: str = "ES", perfil_tipo: str | None = None,
     perfil_atributos: Iterable[str] = (), modelos: list[str] | None = None, generacion_automatica: bool = False, vincular_crm: bool = True,
-    plantilla_id: str | None = None, usuario_id: int | None = None,
+    plantilla_id: str | None = None, usuario_id: int | None = None, invitar_portal: bool | None = None,
 ) -> dict:
     """Crea al cliente y, con `gestion_fiscal`, su ficha fiscal enlazada. Devuelve `{cliente_id, cliente_fiscal_id, vencimientos, tareas}` (`cliente_fiscal_id` es `None` si no lleva
     gestión fiscal). Con `plantilla_id` (ver app/plantillas_cliente.py) el perfil, las etiquetas, la generación automática y las tareas iniciales salen de la plantilla, y lo que se pase
@@ -140,7 +156,7 @@ def crear_cliente_completo(
     except Exception:
         _descartar(tenant_id, cliente_id)
         raise
-    res = _tras_el_alta(tenant_id, usuario_id, fiscal_id, pl, responsable_id)
+    res = _tras_el_alta(tenant_id, usuario_id, fiscal_id, pl, responsable_id, invitar_portal)
     return {"cliente_id": cliente_id, "cliente_fiscal_id": fiscal_id, **res}
 
 

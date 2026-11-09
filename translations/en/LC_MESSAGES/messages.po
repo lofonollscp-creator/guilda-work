@@ -25195,3 +25195,60 @@ msgstr "Sign-in email"
 
 msgid "Pedir un cambio de mis datos"
 msgstr "Request a change of my details"
+
+msgid "Invita al portal"
+msgstr "Invites to the portal"
+
+msgid "Las plantillas de serie traen una lista habitual de documentos que pedir según el tipo de cliente; son un punto de partida editable."
+msgstr "The built-in templates come with a usual list of documents to ask for depending on the type of client; they are an editable starting point."
+
+msgid "Documentos que se piden al dar de alta"
+msgstr "Documents requested on registration"
+
+msgid "Uno por línea. Al dar de alta al cliente se le abre una petición en su portal por cada línea. Si dejas esto vacío no se pide nada."
+msgstr "One per line. When the client is registered, a request is opened in their portal for each line. If you leave this empty nothing is requested."
+
+msgid "DNI o NIE (por las dos caras)"
+msgstr "ID or foreigner ID (both sides)"
+
+msgid "Invitar al portal al dar de alta (el correo sale solo, de forma escalonada si son muchos)"
+msgstr "Invite to the portal on registration (the email goes out by itself, staggered if there are many)"
+
+msgid "%(n)s documento que se pide al alta"
+msgid_plural "%(n)s documentos que se piden al alta"
+msgstr[0] "%(n)s document requested on registration"
+msgstr[1] "%(n)s documents requested on registration"
+
+msgid "Plantilla de alta (perfil, documentos que pedir, tareas iniciales)"
+msgstr "Registration template (profile, documents to request, initial tasks)"
+
+msgid "Invitar al portal a los que tengan correo (los correos salen escalonados)"
+msgstr "Invite those with an email to the portal (emails go out staggered)"
+
+msgid "%(n)s documento"
+msgid_plural "%(n)s documentos"
+msgstr[0] "%(n)s document"
+msgstr[1] "%(n)s documents"
+
+msgid "%(n)s invitación al portal en cola"
+msgid_plural "%(n)s invitaciones al portal en cola"
+msgstr[0] "%(n)s portal invitation queued"
+msgstr[1] "%(n)s portal invitations queued"
+
+msgid "%(n)s petición de documentos abierta"
+msgid_plural "%(n)s peticiones de documentos abiertas"
+msgstr[0] "%(n)s document request opened"
+msgstr[1] "%(n)s document requests opened"
+
+msgid "Invitar a quienes nunca han entrado"
+msgstr "Invite those who never signed in"
+
+msgid "%(n)s invitación puesta en cola."
+msgid_plural "%(n)s invitaciones puestas en cola."
+msgstr[0] "%(n)s invitation queued."
+msgstr[1] "%(n)s invitations queued."
+
+msgid "Queda %(n)s invitación por enviar: salen escalonadas, hasta 100 por hora."
+msgid_plural "Quedan %(n)s invitaciones por enviar: salen escalonadas, hasta 100 por hora."
+msgstr[0] "%(n)s invitation left to send: they go out staggered, up to 100 per hour."
+msgstr[1] "%(n)s invitations left to send: they go out staggered, up to 100 per hour."

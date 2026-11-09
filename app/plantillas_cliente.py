@@ -26,11 +26,28 @@ CREATE TABLE IF NOT EXISTS plantillas_cliente (
     generacion_automatica INTEGER NOT NULL DEFAULT 0,
     plantilla_tareas_id INTEGER,
     etiquetas TEXT,
+    peticiones TEXT NOT NULL DEFAULT '[]',
+    invitar_portal INTEGER NOT NULL DEFAULT 0,
     creado_por INTEGER,
     creado_en TEXT NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_plantillas_cliente_nombre ON plantillas_cliente(tenant_id, lower(nombre));
 """
+
+# Lo que se suele pedir a un cliente nuevo según su tipo: al darlo de alta con una plantilla, se le abre una petición de documentos por cada línea (texto en español, el del equipo).
+PETICIONES_DE_SERIE = {
+    "autonomo": ["DNI o NIE (por las dos caras)", "Certificado digital o autorización para presentar en tu nombre", "Declaración de la Renta del último año", "Alta en el censo (modelo 036 o 037) y en el RETA"],
+    "sociedad": ["Escritura de constitución y estatutos", "NIF de la sociedad (tarjeta del CIF)", "DNI del administrador o de los socios", "Certificado digital de la sociedad o autorización", "Cuentas anuales y Impuesto de Sociedades del último año"],
+    "particular": ["DNI o NIE (por las dos caras)", "Declaración de la Renta del último año", "Certificado digital o Cl@ve"],
+}
+MAX_PETICIONES = 15
+
+
+def peticiones_limpias(valor) -> list[str]:
+    """Una lista de títulos de petición: texto (una por línea) o lista; sin vacíos ni repetidas, de hasta 120 caracteres."""
+    lineas = valor.splitlines() if isinstance(valor, str) else list(valor or [])
+    return list(dict.fromkeys(" ".join(str(l).split())[:120] for l in lineas if str(l).strip()))[:MAX_PETICIONES]
+
 
 DE_SERIE = (
     {"id": "serie:autonomo", "nombre": _l("Autónomo"), "perfil_tipo": "autonomo", "perfil_atributos": ["iva", "estimacion_directa"]},
@@ -41,10 +58,12 @@ DE_SERIE = (
 
 def crear_esquema(conn: sqlite3.Connection) -> None:
     conn.executescript(ESQUEMA)
+    db._asegurar_columna(conn, "plantillas_cliente", "peticiones", "TEXT NOT NULL DEFAULT '[]'")
+    db._asegurar_columna(conn, "plantillas_cliente", "invitar_portal", "INTEGER NOT NULL DEFAULT 0")
 
 
 def _serie(p: dict) -> dict:
-    return {**p, "de_serie": True, "generacion_automatica": False, "plantilla_tareas_id": None, "etiquetas": []}
+    return {**p, "de_serie": True, "generacion_automatica": False, "plantilla_tareas_id": None, "etiquetas": [], "peticiones": list(PETICIONES_DE_SERIE.get(p["perfil_tipo"], [])), "invitar_portal": False}
 
 
 def _fila(f) -> dict:
@@ -52,6 +71,7 @@ def _fila(f) -> dict:
         "id": str(f["id"]), "nombre": f["nombre"], "perfil_tipo": f["perfil_tipo"] or None, "perfil_atributos": json.loads(f["perfil_atributos"] or "[]"),
         "generacion_automatica": bool(f["generacion_automatica"]), "plantilla_tareas_id": f["plantilla_tareas_id"],
         "etiquetas": [e for e in (f["etiquetas"] or "").split(",") if e], "de_serie": False,
+        "peticiones": json.loads(f["peticiones"] or "[]") if "peticiones" in f.keys() else [], "invitar_portal": bool(f["invitar_portal"]) if "invitar_portal" in f.keys() else False,
     }
 
 
@@ -94,7 +114,7 @@ def _etiquetas_limpias(etiquetas) -> list[str]:
 
 
 def crear(tenant_id: int, usuario_id: int, nombre: str, *, perfil_tipo: str | None = None, perfil_atributos=(), generacion_automatica: bool = False,
-          plantilla_tareas_id: int | None = None, etiquetas=()) -> str:
+          plantilla_tareas_id: int | None = None, etiquetas=(), peticiones=(), invitar_portal: bool = False) -> str:
     """Crea una plantilla del despacho y devuelve su id (texto). `ValueError` con un mensaje legible si algo no vale."""
     nombre = (nombre or "").strip()
     if not nombre:
@@ -114,10 +134,10 @@ def crear(tenant_id: int, usuario_id: int, nombre: str, *, perfil_tipo: str | No
     try:
         try:
             cur = conn.execute(
-                "INSERT INTO plantillas_cliente (tenant_id, nombre, perfil_tipo, perfil_atributos, generacion_automatica, plantilla_tareas_id, etiquetas, creado_por, creado_en) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO plantillas_cliente (tenant_id, nombre, perfil_tipo, perfil_atributos, generacion_automatica, plantilla_tareas_id, etiquetas, peticiones, invitar_portal, creado_por, creado_en) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (tenant_id, nombre, perfil_tipo or None, json.dumps(atributos), 1 if generacion_automatica else 0, plantilla_tareas_id,
-                 ",".join(_etiquetas_limpias(etiquetas)) or None, usuario_id, db.now_iso()))
+                 ",".join(_etiquetas_limpias(etiquetas)) or None, json.dumps(peticiones_limpias(peticiones), ensure_ascii=False), 1 if invitar_portal else 0, usuario_id, db.now_iso()))
         except ErrorIntegridad:
             raise ValueError("Ya hay una plantilla con ese nombre.") from None
         conn.commit()

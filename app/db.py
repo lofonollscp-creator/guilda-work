@@ -2343,6 +2343,8 @@ def init_db() -> None:
         portal_silencio.crear_esquema(conn)     # franja de «no molestar» de los avisos al móvil (app/portal_silencio.py)
         from . import portal_compartir
         portal_compartir.crear_esquema(conn)    # enlaces temporales para compartir un documento de la carpeta (app/portal_compartir.py)
+        from . import portal_invitaciones
+        portal_invitaciones.crear_esquema(conn)  # cola escalonada de invitaciones al portal (app/portal_invitaciones.py)
         from . import portal_citas
         portal_citas.crear_esquema(conn)         # citas que los clientes piden a la gestoría desde el portal (app/portal_citas.py)
         from . import portal_valoraciones

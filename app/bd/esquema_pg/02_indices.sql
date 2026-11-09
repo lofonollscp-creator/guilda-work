@@ -149,6 +149,7 @@ CREATE INDEX IF NOT EXISTS idx_portal_cuestionarios_cliente ON portal_cuestionar
 CREATE INDEX IF NOT EXISTS idx_portal_enlaces_compartidos_cliente ON portal_enlaces_compartidos(tenant_id, cliente_fiscal_id, creado_en);
 CREATE INDEX IF NOT EXISTS idx_portal_enlaces_compartidos_huella ON portal_enlaces_compartidos(huella);
 CREATE INDEX IF NOT EXISTS idx_portal_enlaces_token ON portal_enlaces_subida(token);
+CREATE INDEX IF NOT EXISTS idx_portal_invitaciones_cola ON portal_invitaciones_cola(tenant_id, enviada_en, id);
 CREATE INDEX IF NOT EXISTS idx_portal_novedades_cliente ON portal_novedades(tenant_id, cliente_fiscal_id, creado_en);
 CREATE INDEX IF NOT EXISTS idx_portal_passkeys_credencial ON portal_passkeys(credencial_id);
 CREATE INDEX IF NOT EXISTS idx_portal_passkeys_persona ON portal_passkeys(tenant_id, cliente_fiscal_id, email);

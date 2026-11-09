@@ -61,5 +61,6 @@ def test_reenviar_la_invitacion_manda_un_enlace_nuevo_y_solo_de_su_despacho(clie
     assert r.status_code == 302 and enviados and enviados[0][0] == "nunca@ejemplo.com" and "/portal/entrar/" in enviados[0][1] and enviados[0][2] == t
     _, _, ajeno = _despacho("Adopcion ajeno", cliente_email="x@ejemplo.com")
     assert cliente.post(f"/fiscal/portal-adopcion/{ajeno}/invitar").status_code == 404
+    from app import portal_invitaciones as pi
     cliente.post("/fiscal/portal-adopcion/invitar-pendientes")
-    assert [e[0] for e in enviados].count("nunca@ejemplo.com") == 2
+    assert pi.pendientes(t) == 1                                                                  # el reenvío masivo se pone en cola: sale escalonado

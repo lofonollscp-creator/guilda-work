@@ -25280,3 +25280,60 @@ msgstr "E-mail de connexion"
 
 msgid "Pedir un cambio de mis datos"
 msgstr "Demander la modification de mes données"
+
+msgid "Invita al portal"
+msgstr "Invite au portail"
+
+msgid "Las plantillas de serie traen una lista habitual de documentos que pedir según el tipo de cliente; son un punto de partida editable."
+msgstr "Les modèles de série fournissent une liste habituelle de documents à demander selon le type de client ; c'est un point de départ modifiable."
+
+msgid "Documentos que se piden al dar de alta"
+msgstr "Documents demandés à l'inscription"
+
+msgid "Uno por línea. Al dar de alta al cliente se le abre una petición en su portal por cada línea. Si dejas esto vacío no se pide nada."
+msgstr "Un par ligne. À l'inscription du client, une demande est ouverte dans son portail pour chaque ligne. Si vous laissez vide, rien n'est demandé."
+
+msgid "DNI o NIE (por las dos caras)"
+msgstr "DNI ou NIE (recto verso)"
+
+msgid "Invitar al portal al dar de alta (el correo sale solo, de forma escalonada si son muchos)"
+msgstr "Inviter au portail à l'inscription (l'e-mail part tout seul, de façon échelonnée s'ils sont nombreux)"
+
+msgid "%(n)s documento que se pide al alta"
+msgid_plural "%(n)s documentos que se piden al alta"
+msgstr[0] "%(n)s document demandé à l'inscription"
+msgstr[1] "%(n)s documents demandés à l'inscription"
+
+msgid "Plantilla de alta (perfil, documentos que pedir, tareas iniciales)"
+msgstr "Modèle d'inscription (profil, documents à demander, tâches initiales)"
+
+msgid "Invitar al portal a los que tengan correo (los correos salen escalonados)"
+msgstr "Inviter au portail ceux qui ont un e-mail (les e-mails partent de façon échelonnée)"
+
+msgid "%(n)s documento"
+msgid_plural "%(n)s documentos"
+msgstr[0] "%(n)s document"
+msgstr[1] "%(n)s documents"
+
+msgid "%(n)s invitación al portal en cola"
+msgid_plural "%(n)s invitaciones al portal en cola"
+msgstr[0] "%(n)s invitation au portail en file"
+msgstr[1] "%(n)s invitations au portail en file"
+
+msgid "%(n)s petición de documentos abierta"
+msgid_plural "%(n)s peticiones de documentos abiertas"
+msgstr[0] "%(n)s demande de documents ouverte"
+msgstr[1] "%(n)s demandes de documents ouvertes"
+
+msgid "Invitar a quienes nunca han entrado"
+msgstr "Inviter ceux qui ne se sont jamais connectés"
+
+msgid "%(n)s invitación puesta en cola."
+msgid_plural "%(n)s invitaciones puestas en cola."
+msgstr[0] "%(n)s invitation mise en file."
+msgstr[1] "%(n)s invitations mises en file."
+
+msgid "Queda %(n)s invitación por enviar: salen escalonadas, hasta 100 por hora."
+msgid_plural "Quedan %(n)s invitaciones por enviar: salen escalonadas, hasta 100 por hora."
+msgstr[0] "Il reste %(n)s invitation à envoyer : elles partent de façon échelonnée, jusqu'à 100 par heure."
+msgstr[1] "Il reste %(n)s invitations à envoyer : elles partent de façon échelonnée, jusqu'à 100 par heure."

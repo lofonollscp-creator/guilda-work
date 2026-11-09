@@ -150,6 +150,7 @@ def plantillas():
             plantillas_cliente.crear(
                 t, g.usuario_id, request.form.get("nombre", ""), perfil_tipo=request.form.get("perfil_tipo") or None, perfil_atributos=request.form.getlist("perfil_atributos"),
                 generacion_automatica=bool(request.form.get("generacion_automatica")), plantilla_tareas_id=tp, etiquetas=request.form.get("etiquetas", ""),
+                peticiones=request.form.get("peticiones", ""), invitar_portal=bool(request.form.get("invitar_portal")),
             )
         except ValueError as e:
             return redirect(url_for("clientes.plantillas", error=_(str(e))))

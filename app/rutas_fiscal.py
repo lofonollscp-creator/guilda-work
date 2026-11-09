@@ -23,7 +23,7 @@ from .auth import limiter, login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_invitaciones, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -320,7 +320,8 @@ def portal_adopcion_panel():
         abort(404)
     r = portal_adopcion.resumen(g.tenant_id)
     return render_template("fiscal_portal_adopcion.html", r=r, embudo_activo=portal_adopcion.embudo_activo(g.tenant_id), filtro=request.args.get("estado") or "",
-                           invitados=request.args.get("invitados", type=int), fallos=request.args.get("fallos", type=int), guardado=request.args.get("guardado"))
+                           invitados=request.args.get("invitados", type=int), fallos=request.args.get("fallos", type=int), guardado=request.args.get("guardado"),
+                           en_cola=request.args.get("en_cola", type=int), cola=portal_invitaciones.pendientes(g.tenant_id))
 
 
 @fiscal_bp.route("/portal-adopcion/embudo", methods=["POST"])
@@ -349,18 +350,12 @@ def portal_adopcion_invitar(cliente_id: int):
 @login_required
 @limiter.limit("10/hour")
 def portal_adopcion_invitar_pendientes():
-    """Reenvía la invitación a todos los clientes con correo que aún no han entrado nunca (hasta 50 de una vez)."""
+    """Pone en cola la invitación de todos los clientes con correo que aún no han entrado nunca: salen escalonadas (hasta 100 por hora) para no saturar el correo."""
     if g.tenant_id is None:
         abort(404)
-    pendientes = [f for f in portal_adopcion.resumen(g.tenant_id)["clientes"] if f["estado"] == "nunca"][:portal_adopcion.MAX_INVITACIONES_A_LA_VEZ]
-    ok = fallos = 0
-    for f in pendientes:
-        cliente = db.obtener_cliente_fiscal(g.tenant_id, f["id"])
-        if cliente is not None and portal_adopcion.invitar(cliente, request.host_url, request.remote_addr):
-            ok += 1
-        else:
-            fallos += 1
-    return redirect(url_for("fiscal.portal_adopcion_panel", invitados=ok, fallos=fallos))
+    pendientes = [f for f in portal_adopcion.resumen(g.tenant_id)["clientes"] if f["estado"] == "nunca"]
+    puestas = sum(1 for f in pendientes if portal_invitaciones.encolar(g.tenant_id, f["id"]))
+    return redirect(url_for("fiscal.portal_adopcion_panel", en_cola=puestas))
 
 
 @fiscal_bp.route("/recordatorios/lectura-previa", methods=["POST"])

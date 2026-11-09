@@ -14,6 +14,9 @@
 <p class="{{ 'ia-error' if fallos else 'muted' }}" role="status">{{ ngettext('Invitación enviada a %(n)s cliente.', 'Invitación enviada a %(n)s clientes.', invitados or 0, n=invitados or 0) }}{% if fallos %} {{ ngettext('%(n)s no se ha podido enviar (sin correo o fallo del servidor de correo).', '%(n)s no se han podido enviar (sin correo o fallo del servidor de correo).', fallos, n=fallos) }}{% endif %}</p>
 {% endif %}
 
+{% if en_cola is not none %}<p class="muted" role="status">{{ ngettext('%(n)s invitación puesta en cola.', '%(n)s invitaciones puestas en cola.', en_cola, n=en_cola) }}</p>{% endif %}
+{% if cola %}<p class="muted" role="status">{{ ngettext('Queda %(n)s invitación por enviar: salen escalonadas, hasta 100 por hora.', 'Quedan %(n)s invitaciones por enviar: salen escalonadas, hasta 100 por hora.', cola, n=cola) }}</p>{% endif %}
+
 <section class="proyecto-bloque ds-mt-24" aria-labelledby="adop-resumen">
   <h2 id="adop-resumen">{{ _('Resumen') }}</h2>
   <ul class="ds-fila ds-envolver" role="list">
@@ -23,7 +26,7 @@
     <li><a class="btn {{ 'btn-primary' if filtro == 'sin_correo' else 'btn-ghost' }}" href="{{ url_for('fiscal.portal_adopcion_panel', estado='sin_correo') }}">{{ _('Sin correo: %(n)s', n=r.cuentas.sin_correo) }}</a></li>
   </ul>
   {% if r.cuentas.nunca %}
-  <form method="post" action="{{ url_for('fiscal.portal_adopcion_invitar_pendientes') }}"><button type="submit" class="btn btn-primary">{{ _('Reenviar la invitación a quienes nunca han entrado') }}</button></form>
+  <form method="post" action="{{ url_for('fiscal.portal_adopcion_invitar_pendientes') }}"><button type="submit" class="btn btn-primary">{{ _('Invitar a quienes nunca han entrado') }}</button></form>
   {% endif %}
 </section>
 

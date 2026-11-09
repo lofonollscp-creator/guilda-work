@@ -71,6 +71,9 @@ if __name__ == "__main__":
     threading.Thread(target=traspasos.bucle, daemon=True).start()
     # Motor de avisos del control fiscal: alertas con acuse y escalado (app/avisos.py); solo actúa en los despachos que lo activan.
     threading.Thread(target=avisos.bucle, daemon=True).start()
+    # Invitaciones al portal escalonadas tras un alta o una importación masiva (app/portal_invitaciones.py).
+    from app import portal_invitaciones
+    threading.Thread(target=portal_invitaciones.bucle, daemon=True).start()
     threading.Thread(target=_precargar_proteccion_de_datos, daemon=True).start()
     # Cola de trabajos de IA en segundo plano: «leer todas las facturas» y la comparación de modelos (app/ia_trabajos.py); los manejadores se registran al importar lectura_facturas.
     from app import ia_trabajos, lectura_facturas as _lectura_facturas  # noqa: F401

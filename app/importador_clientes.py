@@ -280,12 +280,12 @@ def vista_previa(tenant_id: int, importacion: dict, correspondencia: dict[int, s
 
 # --- Crear ----------------------------------------------------------------------------------------------------------------------------------------------
 def importar(tenant_id: int, usuario_id: int, importacion: dict, correspondencia: dict[int, str], *, omitir_duplicados: bool = True, gestion_fiscal: bool = False,
-             pais: str = "ES", etiqueta_comun: str | None = None, perfil_tipo: str | None = None, generacion_automatica: bool = False) -> dict:
+             pais: str = "ES", etiqueta_comun: str | None = None, perfil_tipo: str | None = None, generacion_automatica: bool = False, plantilla_id: str | None = None, invitar_portal: bool = False) -> dict:
     """Crea los clientes. Devuelve `{creados, duplicados, errores: [{n, nombre, motivo}], con_gestion_fiscal}`. Una fila que falla no detiene las demás."""
     gestion_fiscal = bool(gestion_fiscal and alta_cliente.gestion_fiscal_disponible(tenant_id))
     previa = vista_previa(tenant_id, importacion, correspondencia)
     etiqueta_comun = (etiqueta_comun or "").strip()[:60]
-    resultado = {"creados": 0, "duplicados": 0, "errores": [], "con_gestion_fiscal": 0, "etiqueta": etiqueta_comun}
+    resultado = {"creados": 0, "duplicados": 0, "errores": [], "con_gestion_fiscal": 0, "etiqueta": etiqueta_comun, "invitaciones": 0, "peticiones": 0}
     for f in previa["filas"]:
         d = f["datos"]
         if f["estado"] == "error":
@@ -300,7 +300,8 @@ def importar(tenant_id: int, usuario_id: int, importacion: dict, correspondencia
                 tenant_id, d["nombre"], gestion_fiscal=gestion_fiscal, tipo=d["tipo"] or None, nif=d["nif"] or None, email=d["email"] or None, telefono=d["telefono"] or None,
                 direccion=d["direccion"] or None, idioma=d["idioma"] or None, origen=d["origen"] or "Importación", notas=d["notas"] or None, etiquetas=etiquetas,
                 pais=(d["pais"] or pais or "ES"), perfil_tipo=(perfil_tipo or None) if gestion_fiscal else None,
-                generacion_automatica=bool(generacion_automatica and gestion_fiscal), usuario_id=usuario_id)
+                generacion_automatica=bool(generacion_automatica and gestion_fiscal), usuario_id=usuario_id,
+                plantilla_id=(plantilla_id or None) if gestion_fiscal else None, invitar_portal=True if (invitar_portal and gestion_fiscal) else None)
         except ValueError as e:
             resultado["errores"].append({"n": f["n"], "nombre": d["nombre"][:60], "motivo": str(e)[:200]})
             continue
@@ -310,6 +311,8 @@ def importar(tenant_id: int, usuario_id: int, importacion: dict, correspondencia
         resultado["creados"] += 1
         if r.get("cliente_fiscal_id"):
             resultado["con_gestion_fiscal"] += 1
+            resultado["invitaciones"] += 1 if r.get("invitada") else 0
+            resultado["peticiones"] += r.get("peticiones", 0)
     auditoria.registrar(tenant_id, usuario_id, "clientes.importados", "cliente", None,
                         {"archivo": importacion.get("nombre"), "creados": resultado["creados"], "duplicados": resultado["duplicados"], "errores": len(resultado["errores"]), "gestion_fiscal": gestion_fiscal})
     return resultado
