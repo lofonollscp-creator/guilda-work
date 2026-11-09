@@ -5463,7 +5463,9 @@ html[data-letra="muy-grande"] .portal-cliente-shell { zoom: 1.3; }
 .portal-avisos-lista { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 8px; }
 .portal-aviso-item { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; }
 .portal-aviso-item.nuevo { border-left: 5px solid var(--portal-accent, var(--accent, #7c8ba1)); }
-.portal-aviso-item > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.portal-aviso-item > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.portal-aviso-item { min-width: 0; }
+.portal-aviso-item a, .portal-aviso-item strong, .portal-aviso-item span { overflow-wrap: anywhere; min-width: 0; }
 .portal-aviso-item time { white-space: nowrap; font-size: 0.8rem; }
 .portal-adjunto { display: inline-block; margin: 6px 8px 0 0; font-size: 0.9rem; word-break: break-all; }
 .visor-xml-dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; } .visor-xml-dl dt { font-weight: 600; } .visor-xml-dl dd { margin: 0; }
@@ -5477,7 +5479,7 @@ html[data-letra="muy-grande"] .portal-cliente-shell { zoom: 1.3; }
 .portal-glosario-lista dt { font-weight: 700; margin-top: 12px; }
 .portal-glosario-lista dd { margin: 2px 0 0; color: var(--portal-muted); overflow-wrap: anywhere; }
 
-.portal-no-se { display: inline-block; margin: 6px 0 0 12px; font-size: 0.9em; color: var(--portal-muted); text-decoration: underline; }
+.portal-no-se { display: inline-flex; align-items: center; min-height: 44px; margin: 0 0 0 8px; padding-inline: 6px; font-size: 0.9em; color: var(--portal-muted); text-decoration: underline; }
 
 .portal-actividad { list-style: none; margin: 0 0 8px; padding: 0 0 0 14px; border-left: 2px solid var(--portal-border, var(--border)); display: grid; gap: 10px; }
 .portal-actividad li { display: grid; gap: 2px; position: relative; overflow-wrap: anywhere; }
@@ -5507,3 +5509,10 @@ html[data-letra="muy-grande"] .portal-cliente-shell { zoom: 1.3; }
 .portal-embudo li { display: grid; grid-template-columns: minmax(160px, 1.2fr) minmax(120px, 2fr) auto auto; gap: 8px 12px; align-items: center; }
 .portal-embudo progress { width: 100%; height: 12px; }
 @media (max-width: 640px) { .portal-embudo li { grid-template-columns: 1fr auto; } .portal-embudo progress { grid-column: 1 / -1; } }
+
+/* Barra de carga al navegar por el portal (rapidez percibida) */
+.portal-barra-carga { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 60; background: linear-gradient(90deg, transparent, var(--portal-accent), transparent); background-size: 40% 100%; background-repeat: no-repeat; }
+.portal-barra-carga[hidden] { display: none; }
+.portal-barra-carga.en-marcha { animation: portal-barra 1s ease-in-out infinite; }
+@keyframes portal-barra { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+@media (prefers-reduced-motion: reduce) { .portal-barra-carga.en-marcha { animation: none; background-size: 100% 100%; } }

@@ -33,3 +33,22 @@ def test_la_carpeta_filtra_y_abre_la_vista_previa(servidor, abrir, entrar_como_e
     nueva.keyboard.press("Escape")
     assert nueva.locator("#car-vista").evaluate("d => d.open") is False
     assert errores == []
+
+
+def test_al_navegar_aparece_la_barra_de_carga_y_la_pagina_se_marca_ocupada(servidor, abrir, entrar_como_equipo, chromium):
+    t = db.crear_tenant("Despacho portal barra")
+    pagina, _ = abrir()
+    entrar_como_equipo(pagina, "portal-barra@ejemplo.com", despacho=t, direccion=True)
+    c = db.crear_cliente_fiscal(t, "Cliente Barra", email="barra@ejemplo.com")
+    ctx = chromium.new_context(viewport={"width": 390, "height": 800})
+    nueva = ctx.new_page()
+    nueva.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(c, '127.0.0.1')}")
+    nueva.goto(f"{servidor.url}/portal/cuenta")
+    assert nueva.locator("[data-barra-carga]").is_hidden()
+    nueva.route("**/portal/impuestos", lambda ruta: (nueva.wait_for_timeout(600), ruta.continue_()))          # una respuesta lenta para poder verla
+    nueva.evaluate("document.querySelector('a[href=\"/portal/impuestos\"]').addEventListener('click', e => e.preventDefault(), { once: true, capture: false })")
+    nueva.evaluate("document.querySelector('a[href=\"/portal/impuestos\"]').click()")
+    assert nueva.locator("[data-barra-carga]").evaluate("e => e.hidden") is True                                  # un clic cancelado por otro script no la enciende
+    nueva.locator("a[href='/portal/impuestos']").first.click()
+    nueva.wait_for_url("**/portal/impuestos")
+    assert nueva.locator("#portal-contenido").get_attribute("aria-busy") is None                                  # la página nueva empieza limpia

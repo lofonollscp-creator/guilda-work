@@ -13,6 +13,7 @@
   <script src="{{ url_for('static', filename='portal_aspecto.js') }}"></script>
 </head>
 <body>
+  <div class="portal-barra-carga" data-barra-carga hidden aria-hidden="true"></div>
   <a class="portal-saltar" href="#portal-contenido">{{ _('Saltar al contenido') }}</a>
   <div class="portal-cliente-shell">
     {% if vista_previa %}
@@ -59,6 +60,7 @@
     {% block contenido %}{% endblock %}
     </main>
   </div>
+  <script src="{{ url_for('static', filename='portal_rapido.js') }}" defer></script>
   {% if portal_cliente and not vista_previa %}<script src="{{ url_for('static', filename='sw_registro.js') }}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>
