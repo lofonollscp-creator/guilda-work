@@ -25091,3 +25091,183 @@ msgstr "Cette liste"
 
 msgid "También puedes arrastrar los archivos aquí o pegar una captura con Ctrl+V."
 msgstr "Vous pouvez aussi glisser les fichiers ici ou coller une capture avec Ctrl+V."
+
+msgid "Certificado de estar al corriente de pagos"
+msgstr "Attestation de régularité des paiements"
+
+msgid "Para una subvención, un concurso, un banco o un contrato: de Hacienda o de la Seguridad Social."
+msgstr "Pour une subvention, un appel d'offres, une banque ou un contrat : du fisc ou de la sécurité sociale."
+
+msgid "Copia de un modelo presentado"
+msgstr "Copie d'un modèle déposé"
+
+msgid "El justificante o el PDF de un impuesto que ya se presentó."
+msgstr "Le justificatif ou le PDF d'un impôt déjà déposé."
+
+msgid "Cambiar mis datos"
+msgstr "Changer mes données"
+
+msgid "Domicilio, teléfono, cuenta bancaria o actividad. Tu gestoría lo comprueba y lo actualiza."
+msgstr "Adresse, téléphone, compte bancaire ou activité. Votre cabinet le vérifie et le met à jour."
+
+msgid "Contrato y alta en la Seguridad Social de una persona nueva."
+msgstr "Contrat et inscription à la sécurité sociale d'une nouvelle personne."
+
+msgid "Dar de baja a un trabajador"
+msgstr "Déclarer le départ d'un salarié"
+
+msgid "Fin de contrato, dimisión o despido: se prepara el finiquito."
+msgstr "Fin de contrat, démission ou licenciement : le solde de tout compte est préparé."
+
+msgid "Consultar una operación antes de hacerla"
+msgstr "Consulter une opération avant de la faire"
+
+msgid "Comprar un vehículo, contratar a alguien, cambiar de forma jurídica… para saber cómo afecta a tus impuestos."
+msgstr "Acheter un véhicule, embaucher quelqu'un, changer de forme juridique… pour savoir comment cela affecte vos impôts."
+
+msgid "Que me preparen una factura"
+msgstr "Me faire préparer une facture"
+
+msgid "Si tu gestoría emite tus facturas, dinos los datos y las prepara."
+msgstr "Si votre cabinet émet vos factures, donnez-nous les données et il la prépare."
+
+msgid "Justificante de ingresos"
+msgstr "Justificatif de revenus"
+
+msgid "Para un banco, un alquiler o una ayuda: un resumen de lo que has ingresado."
+msgstr "Pour une banque, une location ou une aide : un résumé de ce que vous avez perçu."
+
+msgid "¿De cuál lo necesitas?"
+msgstr "De quelle administration en avez-vous besoin ?"
+
+msgid "¿Para qué o para quién es?"
+msgstr "Pour quoi ou pour qui est-ce ?"
+
+msgid "¿Para cuándo lo necesitas?"
+msgstr "Pour quand en avez-vous besoin ?"
+
+msgid "¿Qué modelo? (por ejemplo, 303)"
+msgstr "Quel modèle ? (par exemple, 303)"
+
+msgid "¿De qué periodo? (por ejemplo, 2T 2026)"
+msgstr "Pour quelle période ? (par exemple, 2T 2026)"
+
+msgid "Algo más que quieras decirnos"
+msgstr "Autre chose que vous voulez nous dire"
+
+msgid "¿Qué cambia?"
+msgstr "Qu'est-ce qui change ?"
+
+msgid "El dato nuevo"
+msgstr "La nouvelle donnée"
+
+msgid "¿Desde cuándo?"
+msgstr "Depuis quand ?"
+
+msgid "Nombre y apellidos"
+msgstr "Nom et prénom"
+
+msgid "Fecha de inicio"
+msgstr "Date de début"
+
+msgid "Jornada y sueldo acordados"
+msgstr "Horaires et salaire convenus"
+
+msgid "Fecha de la baja"
+msgstr "Date de départ"
+
+msgid "¿Qué quieres hacer?"
+msgstr "Que voulez-vous faire ?"
+
+msgid "Cuéntanos los detalles (importes, fechas, a quién)"
+msgstr "Donnez-nous les détails (montants, dates, avec qui)"
+
+msgid "¿Para cuándo lo decides?"
+msgstr "Pour quand décidez-vous ?"
+
+msgid "Nombre y NIF del cliente"
+msgstr "Nom et NIF du client"
+
+msgid "Importe (indica si lleva IVA)"
+msgstr "Montant (indiquez si la TVA est incluse)"
+
+msgid "¿De qué periodo? (por ejemplo, el último año)"
+msgstr "Pour quelle période ? (par exemple, la dernière année)"
+
+msgid "¿Para quién es?"
+msgstr "Pour qui est-ce ?"
+
+msgid "Hacienda (AEAT)"
+msgstr "Fisc (AEAT)"
+
+msgid "Seguridad Social"
+msgstr "Sécurité sociale"
+
+msgid "Los dos"
+msgstr "Les deux"
+
+msgid "Domicilio"
+msgstr "Adresse"
+
+msgid "Cuenta bancaria (IBAN)"
+msgstr "Compte bancaire (IBAN)"
+
+msgid "Otro dato"
+msgstr "Une autre donnée"
+
+msgid "Prácticas o formación"
+msgstr "Stage ou formation"
+
+msgid "No lo sé"
+msgstr "Je ne sais pas"
+
+msgid "Fin de contrato"
+msgstr "Fin de contrat"
+
+msgid "Dimisión"
+msgstr "Démission"
+
+msgid "Despido"
+msgstr "Licenciement"
+
+msgid "Pedir algo a tu gestoría"
+msgstr "Demander quelque chose à votre cabinet"
+
+msgid "Elige lo que necesitas, rellena unos datos y tu gestoría se pone con ello."
+msgstr "Choisissez ce dont vous avez besoin, remplissez quelques informations et votre cabinet s'en occupe."
+
+msgid "Mis solicitudes"
+msgstr "Mes demandes"
+
+msgid "Respuesta nueva"
+msgstr "Nouvelle réponse"
+
+msgid "Resuelta"
+msgstr "Résolue"
+
+msgid "¿Qué necesitas?"
+msgstr "De quoi avez-vous besoin ?"
+
+msgid "Una llamada, una videollamada o una visita con tu gestoría."
+msgstr "Un appel, un appel vidéo ou une visite avec votre cabinet."
+
+msgid "Otra cosa"
+msgstr "Autre chose"
+
+msgid "Escribe a tu gestoría con tus propias palabras."
+msgstr "Écrivez à votre cabinet avec vos propres mots."
+
+msgid "Todas las gestiones"
+msgstr "Toutes les démarches"
+
+msgid "Documentos que ayuden (opcional)"
+msgstr "Documents utiles (facultatif)"
+
+msgid "Hasta %(n)s archivos."
+msgstr "Jusqu'à %(n)s fichiers."
+
+msgid "Pedir algo"
+msgstr "Demander quelque chose"
+
+msgid "¿Necesitas algo de tu gestoría? Pídelo aquí"
+msgstr "Besoin de quelque chose de votre cabinet ? Demandez-le ici"

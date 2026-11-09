@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -1310,6 +1310,42 @@ def avisos():
         portal_novedades.marcar_leidas(cliente, email)
     persona = next((p for p in portal_personas.listar(cliente) if p["email"] == email.lower()), None)
     return render_template("portal_avisos.html", cliente=cliente, avisos=lista, avisos_correo=(persona or {}).get("avisos"), portal_seccion="avisos")
+
+
+@portal_bp.route("/gestiones")
+@cliente_login_required
+def gestiones():
+    """El catálogo de gestiones que el cliente puede pedir solo (certificados, copias de modelos, cambios de datos, altas y bajas…) y «Mis solicitudes»."""
+    cliente = _cliente_actual_o_salir()
+    return render_template("portal_gestiones.html", cliente=cliente, catalogo=[portal_solicitudes.obtener(k) for k in portal_solicitudes.CATALOGO], mias=portal_solicitudes.mis_solicitudes(cliente),
+                           puede_pedir=_puede_escribir(), portal_seccion="mensajes", enviada=request.args.get("enviada"))
+
+
+@portal_bp.route("/gestiones/<clave>", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("20/hour", methods=["POST"])
+def gestion(clave: str):
+    """El formulario de una gestión; al enviarlo se abre la conversación con la gestoría con los datos ordenados."""
+    cliente = _cliente_actual_o_salir()
+    g_ = portal_solicitudes.obtener(clave)
+    if g_ is None:
+        abort(404)
+    if not _puede_escribir():
+        abort(403)
+    error, valores = None, {}
+    if request.method == "POST":
+        valores = {c["id"]: request.form.get(c["id"], "") for c in g_["campos"]}
+        try:
+            datos = portal_solicitudes.validar(clave, request.form)
+            asunto = portal_solicitudes.asunto(clave)
+            texto = portal_solicitudes.mensaje(clave, datos)
+            cid = portal_conversaciones.iniciar(cliente, asunto, texto, "cliente", g.portal_email or cliente["email"] or "", archivos=_adjuntos_de_conversacion() if g_["adjuntos"] else None)
+            auditoria.registrar(cliente["tenant_id"], None, "portal.solicitud", "portal_conversacion", cid, {"gestion": clave, "quien": g.portal_email or "titular"})
+            _conversacion_avisar_equipo(cliente, cid, asunto, texto, True)
+            return redirect(url_for("portal_cliente.conversacion", conversacion_id=cid, enviado=1))
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("portal_gestion.html", cliente=cliente, valores=valores, error=error, hoy=date.today().isoformat(), max_adjuntos=portal_conversaciones.MAX_ADJUNTOS, portal_seccion="mensajes", gestion=g_)
 
 
 @portal_bp.route("/conversaciones/nueva", methods=["GET", "POST"])

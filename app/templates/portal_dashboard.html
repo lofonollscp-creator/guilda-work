@@ -71,6 +71,7 @@
         {% if plazos %}{% set siguiente = plazos[0] %}<p class="muted">{{ _('Lo próximo: %(modelo)s el %(fecha)s.', modelo=siguiente.modelo ~ ' ' ~ siguiente.periodo, fecha=siguiente.fecha_limite|fecha_dia) }}</p>{% endif %}
       </div>
       {% endif %}
+      {% if portal_puede_subir %}<p class="portal-necesitas"><a class="btn btn-ghost" href="{{ url_for('portal_cliente.gestiones') }}">{{ _('¿Necesitas algo de tu gestoría? Pídelo aquí') }}</a></p>{% endif %}
     </section>
 
     {% if trabajo_en_curso %}

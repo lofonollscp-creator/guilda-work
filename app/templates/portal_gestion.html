@@ -1,0 +1,25 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ gestion.titulo }}{% endblock %}
+{% block titulo %}{{ gestion.titulo }}{% endblock %}
+{% block subtitulo %}{{ gestion.descripcion }}{% endblock %}
+{% block contenido %}
+    <p><a href="{{ url_for('portal_cliente.gestiones') }}">&larr; {{ _('Todas las gestiones') }}</a></p>
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    <form method="post" enctype="multipart/form-data" class="edit-form portal-cuenta-form" novalidate>
+      {% for c in gestion.campos %}
+      <div class="correo-form-campo">
+        <label for="g-{{ c.id }}">{{ c.etiqueta }}{% if not c.obligatorio %} <span class="muted">({{ _('opcional') }})</span>{% endif %}</label>
+        {% if c.tipo == 'texto' %}<input type="text" id="g-{{ c.id }}" name="{{ c.id }}" value="{{ valores.get(c.id, '') }}" maxlength="600" {{ 'required' if c.obligatorio }}>
+        {% elif c.tipo == 'largo' %}<textarea id="g-{{ c.id }}" name="{{ c.id }}" rows="4" maxlength="1200" {{ 'required' if c.obligatorio }}>{{ valores.get(c.id, '') }}</textarea>
+        {% elif c.tipo == 'fecha' %}<input type="date" id="g-{{ c.id }}" name="{{ c.id }}" value="{{ valores.get(c.id, '') }}" {{ 'required' if c.obligatorio }}>
+        {% else %}<select id="g-{{ c.id }}" name="{{ c.id }}" {{ 'required' if c.obligatorio }}><option value="">{{ _('Elige…') }}</option>{% for o in c.opciones %}<option value="{{ o }}" {{ 'selected' if valores.get(c.id) == o|string }}>{{ o }}</option>{% endfor %}</select>{% endif %}
+      </div>
+      {% endfor %}
+      {% if gestion.adjuntos %}
+      <div class="correo-form-campo"><label for="g-archivos">{{ _('Documentos que ayuden (opcional)') }}</label>
+        <input type="file" id="g-archivos" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx,.doc,.docx">
+        <small class="muted">{{ _('Hasta %(n)s archivos.', n=max_adjuntos) }}</small></div>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">{{ _('Enviar la solicitud') }}</button>
+    </form>
+{% endblock %}

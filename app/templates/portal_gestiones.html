@@ -1,0 +1,31 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Pedir algo a tu gestoría') }}{% endblock %}
+{% block titulo %}{{ _('Pedir algo a tu gestoría') }}{% endblock %}
+{% block subtitulo %}{{ _('Elige lo que necesitas, rellena unos datos y tu gestoría se pone con ello.') }}{% endblock %}
+{% block contenido %}
+    {% if mias %}
+    <section class="dash-panel" aria-labelledby="ges-mias">
+      <h2 id="ges-mias">{{ _('Mis solicitudes') }}</h2>
+      <ul class="portal-personas">
+        {% for h in mias %}
+        <li class="portal-persona"><div class="portal-persona-datos"><a href="{{ url_for('portal_cliente.conversacion', conversacion_id=h.id) }}"><strong>{{ h.titulo }}</strong></a>
+          <span class="muted">{{ h.creado_en[:10]|fecha_dia }}{% if h.sin_leer_cliente %} · {{ _('Respuesta nueva') }}{% endif %}</span></div>
+          <span class="portal-estado {{ 'ok' if h.estado == 'cerrada' else 'warn' }}">{{ _('Resuelta') if h.estado == 'cerrada' else _('En curso') }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+    <section class="dash-panel" aria-labelledby="ges-catalogo">
+      <h2 id="ges-catalogo">{{ _('¿Qué necesitas?') }}</h2>
+      <ul class="portal-gestiones" role="list">
+        {% for g in catalogo %}
+        <li><a class="portal-gestion" href="{{ url_for('portal_cliente.gestion', clave=g.clave) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#{{ g.icono }}"></use></svg>
+          <span><strong>{{ g.titulo }}</strong><small class="muted">{{ g.descripcion }}</small></span></a></li>
+        {% endfor %}
+        <li><a class="portal-gestion" href="{{ url_for('portal_cliente.citas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>
+          <span><strong>{{ _('Pedir una cita') }}</strong><small class="muted">{{ _('Una llamada, una videollamada o una visita con tu gestoría.') }}</small></span></a></li>
+        <li><a class="portal-gestion" href="{{ url_for('portal_cliente.conversacion_nueva') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-send"></use></svg>
+          <span><strong>{{ _('Otra cosa') }}</strong><small class="muted">{{ _('Escribe a tu gestoría con tus propias palabras.') }}</small></span></a></li>
+      </ul>
+    </section>
+{% endblock %}

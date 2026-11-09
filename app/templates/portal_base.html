@@ -57,6 +57,7 @@
       {% endif %}
       <a href="{{ url_for('portal_cliente.impuestos') }}" data-atajo="t" {% if portal_seccion == 'impuestos' %}aria-current="page"{% endif %}>{{ _('Impuestos') }}</a>
       <a href="{{ url_for('portal_cliente.mensajes') }}" data-atajo="m" {% if portal_seccion == 'mensajes' %}aria-current="page"{% endif %}>{{ _('Mensajes') }}{% if portal_insignia_mensajes %} <span class="portal-nav-insignia" title="{{ _('Mensajes sin leer') }}">{{ portal_insignia_mensajes }}</span>{% endif %}</a>
+      <a href="{{ url_for('portal_cliente.gestiones') }}" data-atajo="p" {% if request.endpoint in ('portal_cliente.gestiones', 'portal_cliente.gestion') %}aria-current="page"{% endif %}>{{ _('Pedir algo') }}</a>
       <a href="{{ url_for('portal_cliente.avisos') }}" data-atajo="a" {% if portal_seccion == 'avisos' %}aria-current="page"{% endif %}>{{ _('Avisos') }}{% if portal_insignia_avisos %} <span class="portal-nav-insignia" title="{{ _('Avisos nuevos') }}">{{ portal_insignia_avisos }}</span>{% endif %}</a>
       <a href="{{ url_for('portal_cliente.carpeta') }}" data-atajo="c" {% if portal_seccion == 'carpeta' %}aria-current="page"{% endif %}>{{ _('Carpeta') }}</a>
       <a href="{{ url_for('portal_cliente.buscar') }}" data-atajo="b" {% if portal_seccion == 'buscar' %}aria-current="page"{% endif %} aria-label="{{ _('Buscar en el portal') }}">{{ _('Buscar') }}</a>
@@ -77,6 +78,7 @@
         <dt><kbd>g</kbd> <kbd>f</kbd></dt><dd>{{ _('Facturas') }}</dd>
         <dt><kbd>g</kbd> <kbd>t</kbd></dt><dd>{{ _('Impuestos') }}</dd>
         <dt><kbd>g</kbd> <kbd>m</kbd></dt><dd>{{ _('Mensajes') }}</dd>
+        <dt><kbd>g</kbd> <kbd>p</kbd></dt><dd>{{ _('Pedir algo') }}</dd>
         <dt><kbd>g</kbd> <kbd>a</kbd></dt><dd>{{ _('Avisos') }}</dd>
         <dt><kbd>g</kbd> <kbd>c</kbd></dt><dd>{{ _('Carpeta') }}</dd>
         <dt><kbd>g</kbd> <kbd>u</kbd></dt><dd>{{ _('Mi cuenta') }}</dd>
@@ -96,6 +98,7 @@
     <details class="portal-tabs-mas">
       <summary><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layout-list"></use></svg><span>{{ _('Más') }}</span>{% if ins_avi %}<b class="portal-nav-insignia" aria-hidden="true">{{ ins_avi }}</b>{% endif %}</summary>
       <div class="portal-tabs-panel">
+        <a href="{{ url_for('portal_cliente.gestiones') }}">{{ _('Pedir algo') }}</a>
         <a href="{{ url_for('portal_cliente.avisos') }}">{{ _('Avisos') }}{% if ins_avi %} ({{ ins_avi }}){% endif %}</a>
         <a href="{{ url_for('portal_cliente.impuestos') }}">{{ _('Impuestos') }}</a>
         <a href="{{ url_for('portal_cliente.carpeta') }}">{{ _('Carpeta') }}</a>

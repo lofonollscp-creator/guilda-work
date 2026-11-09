@@ -25006,3 +25006,183 @@ msgstr "This list"
 
 msgid "También puedes arrastrar los archivos aquí o pegar una captura con Ctrl+V."
 msgstr "You can also drag files here or paste a screenshot with Ctrl+V."
+
+msgid "Certificado de estar al corriente de pagos"
+msgstr "Certificate of being up to date with payments"
+
+msgid "Para una subvención, un concurso, un banco o un contrato: de Hacienda o de la Seguridad Social."
+msgstr "For a grant, a tender, a bank or a contract: from the tax office or social security."
+
+msgid "Copia de un modelo presentado"
+msgstr "Copy of a filed return"
+
+msgid "El justificante o el PDF de un impuesto que ya se presentó."
+msgstr "The receipt or PDF of a tax return that was already filed."
+
+msgid "Cambiar mis datos"
+msgstr "Change my details"
+
+msgid "Domicilio, teléfono, cuenta bancaria o actividad. Tu gestoría lo comprueba y lo actualiza."
+msgstr "Address, phone, bank account or activity. Your accountant checks it and updates it."
+
+msgid "Contrato y alta en la Seguridad Social de una persona nueva."
+msgstr "Contract and social security registration of a new person."
+
+msgid "Dar de baja a un trabajador"
+msgstr "Deregister an employee"
+
+msgid "Fin de contrato, dimisión o despido: se prepara el finiquito."
+msgstr "End of contract, resignation or dismissal: the final settlement is prepared."
+
+msgid "Consultar una operación antes de hacerla"
+msgstr "Ask about an operation before doing it"
+
+msgid "Comprar un vehículo, contratar a alguien, cambiar de forma jurídica… para saber cómo afecta a tus impuestos."
+msgstr "Buying a vehicle, hiring someone, changing legal form… to know how it affects your taxes."
+
+msgid "Que me preparen una factura"
+msgstr "Have an invoice prepared for me"
+
+msgid "Si tu gestoría emite tus facturas, dinos los datos y las prepara."
+msgstr "If your accountant issues your invoices, give us the details and they prepare it."
+
+msgid "Justificante de ingresos"
+msgstr "Proof of income"
+
+msgid "Para un banco, un alquiler o una ayuda: un resumen de lo que has ingresado."
+msgstr "For a bank, a rental or a grant: a summary of what you have earned."
+
+msgid "¿De cuál lo necesitas?"
+msgstr "Which one do you need?"
+
+msgid "¿Para qué o para quién es?"
+msgstr "What or who is it for?"
+
+msgid "¿Para cuándo lo necesitas?"
+msgstr "When do you need it by?"
+
+msgid "¿Qué modelo? (por ejemplo, 303)"
+msgstr "Which return? (for example, 303)"
+
+msgid "¿De qué periodo? (por ejemplo, 2T 2026)"
+msgstr "For which period? (for example, 2Q 2026)"
+
+msgid "Algo más que quieras decirnos"
+msgstr "Anything else you want to tell us"
+
+msgid "¿Qué cambia?"
+msgstr "What changes?"
+
+msgid "El dato nuevo"
+msgstr "The new detail"
+
+msgid "¿Desde cuándo?"
+msgstr "Since when?"
+
+msgid "Nombre y apellidos"
+msgstr "Full name"
+
+msgid "Fecha de inicio"
+msgstr "Start date"
+
+msgid "Jornada y sueldo acordados"
+msgstr "Agreed hours and salary"
+
+msgid "Fecha de la baja"
+msgstr "Date of departure"
+
+msgid "¿Qué quieres hacer?"
+msgstr "What do you want to do?"
+
+msgid "Cuéntanos los detalles (importes, fechas, a quién)"
+msgstr "Tell us the details (amounts, dates, who with)"
+
+msgid "¿Para cuándo lo decides?"
+msgstr "When will you decide?"
+
+msgid "Nombre y NIF del cliente"
+msgstr "Customer's name and tax ID"
+
+msgid "Importe (indica si lleva IVA)"
+msgstr "Amount (say whether it includes VAT)"
+
+msgid "¿De qué periodo? (por ejemplo, el último año)"
+msgstr "For which period? (for example, the last year)"
+
+msgid "¿Para quién es?"
+msgstr "Who is it for?"
+
+msgid "Hacienda (AEAT)"
+msgstr "Tax office (AEAT)"
+
+msgid "Seguridad Social"
+msgstr "Social security"
+
+msgid "Los dos"
+msgstr "Both"
+
+msgid "Domicilio"
+msgstr "Address"
+
+msgid "Cuenta bancaria (IBAN)"
+msgstr "Bank account (IBAN)"
+
+msgid "Otro dato"
+msgstr "Another detail"
+
+msgid "Prácticas o formación"
+msgstr "Internship or training"
+
+msgid "No lo sé"
+msgstr "I don't know"
+
+msgid "Fin de contrato"
+msgstr "End of contract"
+
+msgid "Dimisión"
+msgstr "Resignation"
+
+msgid "Despido"
+msgstr "Dismissal"
+
+msgid "Pedir algo a tu gestoría"
+msgstr "Ask your accountant for something"
+
+msgid "Elige lo que necesitas, rellena unos datos y tu gestoría se pone con ello."
+msgstr "Choose what you need, fill in a few details and your accountant gets on with it."
+
+msgid "Mis solicitudes"
+msgstr "My requests"
+
+msgid "Respuesta nueva"
+msgstr "New reply"
+
+msgid "Resuelta"
+msgstr "Resolved"
+
+msgid "¿Qué necesitas?"
+msgstr "What do you need?"
+
+msgid "Una llamada, una videollamada o una visita con tu gestoría."
+msgstr "A call, a video call or a visit with your accountant."
+
+msgid "Otra cosa"
+msgstr "Something else"
+
+msgid "Escribe a tu gestoría con tus propias palabras."
+msgstr "Write to your accountant in your own words."
+
+msgid "Todas las gestiones"
+msgstr "All requests"
+
+msgid "Documentos que ayuden (opcional)"
+msgstr "Documents that help (optional)"
+
+msgid "Hasta %(n)s archivos."
+msgstr "Up to %(n)s files."
+
+msgid "Pedir algo"
+msgstr "Ask for something"
+
+msgid "¿Necesitas algo de tu gestoría? Pídelo aquí"
+msgstr "Need something from your accountant? Ask for it here"

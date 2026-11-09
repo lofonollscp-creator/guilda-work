@@ -25015,3 +25015,183 @@ msgstr "Aquesta llista"
 
 msgid "También puedes arrastrar los archivos aquí o pegar una captura con Ctrl+V."
 msgstr "També pots arrossegar els arxius aquí o enganxar una captura amb Ctrl+V."
+
+msgid "Certificado de estar al corriente de pagos"
+msgstr "Certificat d'estar al corrent de pagaments"
+
+msgid "Para una subvención, un concurso, un banco o un contrato: de Hacienda o de la Seguridad Social."
+msgstr "Per a una subvenció, un concurs, un banc o un contracte: d'Hisenda o de la Seguretat Social."
+
+msgid "Copia de un modelo presentado"
+msgstr "Còpia d'un model presentat"
+
+msgid "El justificante o el PDF de un impuesto que ya se presentó."
+msgstr "El justificant o el PDF d'un impost que ja es va presentar."
+
+msgid "Cambiar mis datos"
+msgstr "Canviar les meves dades"
+
+msgid "Domicilio, teléfono, cuenta bancaria o actividad. Tu gestoría lo comprueba y lo actualiza."
+msgstr "Domicili, telèfon, compte bancari o activitat. La teva gestoria ho comprova i ho actualitza."
+
+msgid "Contrato y alta en la Seguridad Social de una persona nueva."
+msgstr "Contracte i alta a la Seguretat Social d'una persona nova."
+
+msgid "Dar de baja a un trabajador"
+msgstr "Donar de baixa un treballador"
+
+msgid "Fin de contrato, dimisión o despido: se prepara el finiquito."
+msgstr "Fi de contracte, dimissió o acomiadament: es prepara el finiquit."
+
+msgid "Consultar una operación antes de hacerla"
+msgstr "Consultar una operació abans de fer-la"
+
+msgid "Comprar un vehículo, contratar a alguien, cambiar de forma jurídica… para saber cómo afecta a tus impuestos."
+msgstr "Comprar un vehicle, contractar algú, canviar de forma jurídica… per saber com afecta els teus impostos."
+
+msgid "Que me preparen una factura"
+msgstr "Que em preparin una factura"
+
+msgid "Si tu gestoría emite tus facturas, dinos los datos y las prepara."
+msgstr "Si la teva gestoria emet les teves factures, digues-nos les dades i les prepara."
+
+msgid "Justificante de ingresos"
+msgstr "Justificant d'ingressos"
+
+msgid "Para un banco, un alquiler o una ayuda: un resumen de lo que has ingresado."
+msgstr "Per a un banc, un lloguer o un ajut: un resum del que has ingressat."
+
+msgid "¿De cuál lo necesitas?"
+msgstr "De quin el necessites?"
+
+msgid "¿Para qué o para quién es?"
+msgstr "Per a què o per a qui és?"
+
+msgid "¿Para cuándo lo necesitas?"
+msgstr "Per a quan el necessites?"
+
+msgid "¿Qué modelo? (por ejemplo, 303)"
+msgstr "Quin model? (per exemple, 303)"
+
+msgid "¿De qué periodo? (por ejemplo, 2T 2026)"
+msgstr "De quin període? (per exemple, 2T 2026)"
+
+msgid "Algo más que quieras decirnos"
+msgstr "Alguna cosa més que vulguis dir-nos"
+
+msgid "¿Qué cambia?"
+msgstr "Què canvia?"
+
+msgid "El dato nuevo"
+msgstr "La dada nova"
+
+msgid "¿Desde cuándo?"
+msgstr "Des de quan?"
+
+msgid "Nombre y apellidos"
+msgstr "Nom i cognoms"
+
+msgid "Fecha de inicio"
+msgstr "Data d'inici"
+
+msgid "Jornada y sueldo acordados"
+msgstr "Jornada i sou acordats"
+
+msgid "Fecha de la baja"
+msgstr "Data de la baixa"
+
+msgid "¿Qué quieres hacer?"
+msgstr "Què vols fer?"
+
+msgid "Cuéntanos los detalles (importes, fechas, a quién)"
+msgstr "Explica'ns els detalls (imports, dates, a qui)"
+
+msgid "¿Para cuándo lo decides?"
+msgstr "Per a quan ho decideixes?"
+
+msgid "Nombre y NIF del cliente"
+msgstr "Nom i NIF del client"
+
+msgid "Importe (indica si lleva IVA)"
+msgstr "Import (indica si porta IVA)"
+
+msgid "¿De qué periodo? (por ejemplo, el último año)"
+msgstr "De quin període? (per exemple, l'últim any)"
+
+msgid "¿Para quién es?"
+msgstr "Per a qui és?"
+
+msgid "Hacienda (AEAT)"
+msgstr "Hisenda (AEAT)"
+
+msgid "Seguridad Social"
+msgstr "Seguretat Social"
+
+msgid "Los dos"
+msgstr "Els dos"
+
+msgid "Domicilio"
+msgstr "Domicili"
+
+msgid "Cuenta bancaria (IBAN)"
+msgstr "Compte bancari (IBAN)"
+
+msgid "Otro dato"
+msgstr "Una altra dada"
+
+msgid "Prácticas o formación"
+msgstr "Pràctiques o formació"
+
+msgid "No lo sé"
+msgstr "No ho sé"
+
+msgid "Fin de contrato"
+msgstr "Fi de contracte"
+
+msgid "Dimisión"
+msgstr "Dimissió"
+
+msgid "Despido"
+msgstr "Acomiadament"
+
+msgid "Pedir algo a tu gestoría"
+msgstr "Demanar quelcom a la teva gestoria"
+
+msgid "Elige lo que necesitas, rellena unos datos y tu gestoría se pone con ello."
+msgstr "Tria el que necessites, omple unes dades i la teva gestoria s'hi posa."
+
+msgid "Mis solicitudes"
+msgstr "Les meves sol·licituds"
+
+msgid "Respuesta nueva"
+msgstr "Resposta nova"
+
+msgid "Resuelta"
+msgstr "Resolta"
+
+msgid "¿Qué necesitas?"
+msgstr "Què necessites?"
+
+msgid "Una llamada, una videollamada o una visita con tu gestoría."
+msgstr "Una trucada, una videotrucada o una visita amb la teva gestoria."
+
+msgid "Otra cosa"
+msgstr "Una altra cosa"
+
+msgid "Escribe a tu gestoría con tus propias palabras."
+msgstr "Escriu a la teva gestoria amb les teves paraules."
+
+msgid "Todas las gestiones"
+msgstr "Totes les gestions"
+
+msgid "Documentos que ayuden (opcional)"
+msgstr "Documents que ajudin (opcional)"
+
+msgid "Hasta %(n)s archivos."
+msgstr "Fins a %(n)s arxius."
+
+msgid "Pedir algo"
+msgstr "Demanar quelcom"
+
+msgid "¿Necesitas algo de tu gestoría? Pídelo aquí"
+msgstr "Necessites alguna cosa de la teva gestoria? Demana-ho aquí"

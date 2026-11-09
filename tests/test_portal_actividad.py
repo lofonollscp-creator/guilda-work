@@ -95,3 +95,36 @@ def test_tras_subir_facturas_se_pregunta_si_ha_sido_facil_una_vez_y_una_nota_baj
     assert "¿Te ha resultado fácil" not in _html(cliente, "/portal/facturas?anotada=1") and "Gracias" not in _html(cliente, "/portal/facturas?anotada=1")
     assert "Ya has valorado" in cliente.post("/portal/valorar", data={"tipo": "subida", "referencia": hoy, "puntos": "5"}, follow_redirects=True).get_data(as_text=True)
     assert "No se puede valorar eso" in cliente.post("/portal/valorar", data={"tipo": "subida", "referencia": "2020-01-01", "puntos": "5"}, follow_redirects=True).get_data(as_text=True)
+
+
+def test_el_catalogo_de_gestiones_abre_la_conversacion_con_los_datos_ordenados_y_se_sigue_en_mis_solicitudes(cliente, correo):
+    from app import portal_solicitudes as ps
+    t, u, c = _despacho("Gestiones")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    assert "Certificado de estar al corriente de pagos" in _html(cliente, "/portal/gestiones") and "Mis solicitudes" not in _html(cliente, "/portal/gestiones")
+    r = cliente.post("/portal/gestiones/certificado-corriente", data={"organismo": "Hacienda (AEAT)", "destino": "Ayuntamiento, subvención de comercio", "fecha": "2026-12-01"})
+    assert r.status_code == 302 and "/portal/conversaciones/" in r.headers["Location"]
+    html = _html(cliente, r.headers["Location"])
+    assert "Solicitud: Certificado de estar al corriente de pagos" in html and "¿De cuál lo necesitas?: Hacienda (AEAT)" in html and "Ayuntamiento, subvención de comercio" in html
+    listado = _html(cliente, "/portal/gestiones")
+    assert "Mis solicitudes" in listado and "En curso" in listado and "Certificado de estar al corriente de pagos" in listado
+
+
+def test_las_gestiones_validan_lo_obligatorio_las_opciones_y_las_fechas(cliente, correo):
+    from app import portal_solicitudes as ps
+    t, u, c = _despacho("Gestiones validar")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    assert "Rellena todos los campos obligatorios" in cliente.post("/portal/gestiones/copia-modelo", data={"modelo": "303"}).get_data(as_text=True)
+    assert "Elige una de las opciones" in cliente.post("/portal/gestiones/certificado-corriente", data={"organismo": "Otro", "destino": "x"}).get_data(as_text=True)
+    assert "fecha válida" in cliente.post("/portal/gestiones/certificado-corriente", data={"organismo": "Los dos", "destino": "x", "fecha": "2026-13-45"}).get_data(as_text=True)
+    assert cliente.get("/portal/gestiones/no-existe").status_code == 404
+    for clave in ps.CATALOGO:
+        assert cliente.get(f"/portal/gestiones/{clave}").status_code == 200
+
+
+def test_quien_solo_consulta_ve_el_catalogo_pero_no_puede_pedir(cliente, correo):
+    from app import portal_personas
+    t, u, c = _despacho("Gestiones consulta")
+    portal_personas.anadir(_ficha(c), "mira@ejemplo.com", "Mira", "consulta", por=u)
+    _entrar(cliente, c, "mira@ejemplo.com")
+    assert cliente.get("/portal/gestiones").status_code == 200 and cliente.get("/portal/gestiones/copia-modelo").status_code == 403
