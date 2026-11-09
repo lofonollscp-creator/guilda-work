@@ -25575,3 +25575,18 @@ msgstr "You can now download it with your accountant's stamp."
 
 msgid "Escribe a tu gestoría para ver qué falta."
 msgstr "Write to your accountant to see what is missing."
+
+msgid "Cómo renovarlo, paso a paso"
+msgstr "How to renew it, step by step"
+
+msgid "Mira de qué tipo es y quién lo emitió (normalmente la FNMT). Si aún no ha caducado, se renueva por internet con el propio certificado vigente."
+msgstr "Check what type it is and who issued it (usually the FNMT). If it has not expired yet, it is renewed online with the current certificate itself."
+
+msgid "Si ya caducó, hay que pedir uno nuevo: se solicita por internet y se acredita tu identidad en una oficina o por videollamada, según el prestador."
+msgstr "If it has already expired, you need to request a new one: it is requested online and your identity is verified at an office or by video call, depending on the provider."
+
+msgid "Descárgalo en el mismo ordenador y navegador desde los que lo pediste, y haz una copia de seguridad en un lugar seguro."
+msgstr "Download it on the same computer and browser you requested it from, and make a backup in a safe place."
+
+msgid "No nos mandes el archivo del certificado por aquí: lleva tu clave privada y no se admite. Avisa a tu gestoría con el botón de abajo y te dirá cómo entregárselo de forma segura."
+msgstr "Do not send us the certificate file here: it carries your private key and is not accepted. Let your accountant know with the button below and they will tell you how to hand it over securely."

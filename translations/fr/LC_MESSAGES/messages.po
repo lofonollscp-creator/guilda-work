@@ -25660,3 +25660,18 @@ msgstr "Vous pouvez maintenant le télécharger avec le cachet de votre cabinet.
 
 msgid "Escribe a tu gestoría para ver qué falta."
 msgstr "Écrivez à votre cabinet pour voir ce qui manque."
+
+msgid "Cómo renovarlo, paso a paso"
+msgstr "Comment le renouveler, pas à pas"
+
+msgid "Mira de qué tipo es y quién lo emitió (normalmente la FNMT). Si aún no ha caducado, se renueva por internet con el propio certificado vigente."
+msgstr "Regardez de quel type il est et qui l'a émis (normalement la FNMT). S'il n'a pas encore expiré, il se renouvelle sur internet avec le certificat en cours de validité."
+
+msgid "Si ya caducó, hay que pedir uno nuevo: se solicita por internet y se acredita tu identidad en una oficina o por videollamada, según el prestador."
+msgstr "S'il a déjà expiré, il faut en demander un nouveau : la demande se fait sur internet et votre identité est vérifiée dans un bureau ou par appel vidéo, selon le prestataire."
+
+msgid "Descárgalo en el mismo ordenador y navegador desde los que lo pediste, y haz una copia de seguridad en un lugar seguro."
+msgstr "Téléchargez-le sur le même ordinateur et navigateur que ceux depuis lesquels vous l'avez demandé, et faites une copie de sauvegarde dans un endroit sûr."
+
+msgid "No nos mandes el archivo del certificado por aquí: lleva tu clave privada y no se admite. Avisa a tu gestoría con el botón de abajo y te dirá cómo entregárselo de forma segura."
+msgstr "Ne nous envoyez pas le fichier du certificat ici : il contient votre clé privée et n'est pas accepté. Prévenez votre cabinet avec le bouton ci-dessous et il vous dira comment le remettre en toute sécurité."

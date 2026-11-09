@@ -167,3 +167,16 @@ def test_con_pocas_facturas_revisadas_no_se_promete_ningun_plazo(cliente, correo
     assert fp.mediana_dias_de_revision(t) is None
     f = fp.facturas_del_cliente(c)[0]
     assert f["explicacion"] == "Tu gestoría ya la tiene. Ahora toca leerla y revisarla." and "Suele tardar" not in f["explicacion"]
+
+
+def test_un_certificado_por_caducar_ofrece_la_guia_para_renovarlo_sin_pedir_el_archivo(cliente, correo):
+    from datetime import date, timedelta
+    from app import certificados as ce
+    t, u, c = _despacho("Cert guia")
+    db.asignar_supervisor_tenant(u, True)
+    ce.fijar_custodio_flag(t, u, u, True)
+    ce.guardar_config(t, u, avisar_cliente=True, mostrar_en_portal=True, dias_antes="60,30,15,7", dias_despues="3")
+    ce.alta_rapida(t, u, tipo="fnmt_persona_fisica", caduca=(date.today() + timedelta(days=10)).isoformat(), cliente_fiscal_id=c)
+    _entrar(cliente, c, "titular@ejemplo.com")
+    html = _html(cliente, "/portal/")
+    assert "Cómo renovarlo, paso a paso" in html and "no se admite" in html

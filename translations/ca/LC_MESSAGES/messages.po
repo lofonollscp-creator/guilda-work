@@ -25584,3 +25584,18 @@ msgstr "Ja el pots descarregar amb el segell de la teva gestoria."
 
 msgid "Escribe a tu gestoría para ver qué falta."
 msgstr "Escriu a la teva gestoria per veure què falta."
+
+msgid "Cómo renovarlo, paso a paso"
+msgstr "Com renovar-lo, pas a pas"
+
+msgid "Mira de qué tipo es y quién lo emitió (normalmente la FNMT). Si aún no ha caducado, se renueva por internet con el propio certificado vigente."
+msgstr "Mira de quin tipus és i qui el va emetre (normalment la FNMT). Si encara no ha caducat, es renova per internet amb el mateix certificat vigent."
+
+msgid "Si ya caducó, hay que pedir uno nuevo: se solicita por internet y se acredita tu identidad en una oficina o por videollamada, según el prestador."
+msgstr "Si ja va caducar, cal demanar-ne un de nou: se sol·licita per internet i s'acredita la teva identitat en una oficina o per videotrucada, segons el prestador."
+
+msgid "Descárgalo en el mismo ordenador y navegador desde los que lo pediste, y haz una copia de seguridad en un lugar seguro."
+msgstr "Descarrega'l al mateix ordinador i navegador des dels quals el vas demanar, i fes-ne una còpia de seguretat en un lloc segur."
+
+msgid "No nos mandes el archivo del certificado por aquí: lleva tu clave privada y no se admite. Avisa a tu gestoría con el botón de abajo y te dirá cómo entregárselo de forma segura."
+msgstr "No ens enviïs l'arxiu del certificat per aquí: porta la teva clau privada i no s'admet. Avisa la teva gestoria amb el botó de sota i et dirà com lliurar-lo de forma segura."

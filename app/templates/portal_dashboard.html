@@ -162,6 +162,16 @@
         {% elif c.estado == 'pronto' %}<p>{{ _('Conviene renovarlo cuanto antes para no quedarte sin él.') }}</p>
         {% else %}<p>{{ _('Todo en orden: tu gestoría te avisará antes de que caduque.') }}</p>{% endif %}
         {% if instrucciones_certificado and c.estado != 'vigente' %}<p class="muted">{{ instrucciones_certificado }}</p>{% endif %}
+        {% if c.estado != 'vigente' %}
+        <details class="portal-que-es"><summary>{{ _('Cómo renovarlo, paso a paso') }}</summary>
+          <ol class="portal-pasos-guia">
+            <li>{{ _('Mira de qué tipo es y quién lo emitió (normalmente la FNMT). Si aún no ha caducado, se renueva por internet con el propio certificado vigente.') }}</li>
+            <li>{{ _('Si ya caducó, hay que pedir uno nuevo: se solicita por internet y se acredita tu identidad en una oficina o por videollamada, según el prestador.') }}</li>
+            <li>{{ _('Descárgalo en el mismo ordenador y navegador desde los que lo pediste, y haz una copia de seguridad en un lugar seguro.') }}</li>
+            <li>{{ _('No nos mandes el archivo del certificado por aquí: lleva tu clave privada y no se admite. Avisa a tu gestoría con el botón de abajo y te dirá cómo entregárselo de forma segura.') }}</li>
+          </ol>
+        </details>
+        {% endif %}
       </div>
       {% if c.estado != 'vigente' %}
       {% if c.ayuda_solicitada %}<span class="portal-estado ok">{{ _('Ya hemos avisado a tu gestoría') }}</span>
