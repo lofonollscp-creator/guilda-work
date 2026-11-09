@@ -46,8 +46,8 @@
       {% for k, v in (('borrador', _('Borrador')), ('enviada', _('Enviada')), ('aceptada', _('Aceptada')), ('rechazada', _('Rechazada')), ('retirada', _('Retirada'))) %}<option value="{{ k }}" {{ 'selected' if estado == k }}>{{ v }}</option>{% endfor %}
     </select><button type="submit" class="btn btn-ghost">{{ _('Filtrar') }}</button></form>
   {% if not lista %}<p class="muted">{{ _('No hay propuestas.') }}</p>{% endif %}
-  <table class="tabla-datos">
-    {% if lista %}<thead><tr><th scope="col">{{ _('Cliente') }}</th><th scope="col">{{ _('Título') }}</th><th scope="col">{{ _('Total') }}</th><th scope="col">{{ _('Estado') }}</th><th scope="col">{{ _('Acciones') }}</th></tr></thead>{% endif %}
+  {% if lista %}<table class="tabla-datos">
+    <thead><tr><th scope="col">{{ _('Cliente') }}</th><th scope="col">{{ _('Título') }}</th><th scope="col">{{ _('Total') }}</th><th scope="col">{{ _('Estado') }}</th><th scope="col">{{ _('Acciones') }}</th></tr></thead>
     <tbody>
     {% for p in lista %}
       <tr>
@@ -60,6 +60,6 @@
       </tr>
     {% endfor %}
     </tbody>
-  </table>
+  </table>{% endif %}
 </section>
 {% endblock %}
