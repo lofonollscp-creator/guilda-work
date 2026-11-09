@@ -39,7 +39,7 @@ def test_avisos_al_elegir_facturas(servidor, abrir, entrar_como_equipo, chromium
         {"name": "nitida.png", "mimeType": "image/png", "buffer": nitida},
         {"name": "notas.txt", "mimeType": "text/plain", "buffer": b"hola"},
     ])
-    nueva.wait_for_function("document.querySelectorAll('#avisos-subida li').length >= 3")
+    nueva.wait_for_function("(() => { const t = document.getElementById('avisos-subida').innerText.toLowerCase(); return t.includes('ya la enviaste') && t.includes('borrosa') && t.includes('notas.txt'); })()")
     avisos = nueva.locator("#avisos-subida").inner_text()
     assert "antes.pdf" in avisos and "ya la enviaste" in avisos.lower()
     assert "borrosa.png" in avisos and "borrosa" in avisos.lower()

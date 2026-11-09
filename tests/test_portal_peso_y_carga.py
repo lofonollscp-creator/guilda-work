@@ -31,3 +31,16 @@ def test_los_estaticos_del_portal_no_engordan_sin_avisar():
     assert (ESTATICOS / "style.css").stat().st_size <= MAX_CSS
     for f in ESTATICOS.glob("portal_*.js"):
         assert f.stat().st_size <= MAX_JS_PORTAL, f"{f.name} pesa {f.stat().st_size} bytes"
+
+
+def test_la_pantalla_sin_conexion_es_publica_igual_para_todos_y_sin_datos_de_nadie(cliente):
+    r = cliente.get("/portal/sin-conexion")
+    html = r.get_data(as_text=True)
+    assert r.status_code == 200 and "data-cola-offline" in html and 'name="modo" value="archivos"' in html and r.headers["Cache-Control"] == "no-cache"
+    assert "csrf" not in html.lower() and "portal_cliente" not in html
+
+
+def test_el_service_worker_solo_sirve_de_la_cache_la_pantalla_sin_conexion_del_portal():
+    codigo = (ESTATICOS / "sw.js").read_text(encoding="utf-8")
+    assert 'req.mode === "navigate"' in codigo and "PAGINA_OFFLINE" in codigo and "fetch(req)" in codigo                  # red primero; la caché es solo la pantalla sin datos
+    assert "cache.put(req" not in codigo.split("PAGINA_OFFLINE")[1].split("/static/")[0]                               # ninguna página del portal se guarda

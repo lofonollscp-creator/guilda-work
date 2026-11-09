@@ -40,6 +40,16 @@
     </form>
     {% endif %}
 
+    {% if not vista_previa %}
+    <div class="portal-instalar" data-instalar hidden role="region" aria-label="{{ _('Instalar la aplicación') }}"
+         data-txt-instalar="{{ _('Instala Mi gestoría en tu dispositivo: se abre como una aplicación, más rápida y con avisos.') }}"
+         data-txt-ios="{{ _('Para instalarla en tu iPhone o iPad: pulsa el botón Compartir y elige «Añadir a pantalla de inicio».') }}">
+      <span data-instalar-texto></span>
+      <button type="button" class="btn btn-primary" data-instalar-boton hidden>{{ _('Instalar') }}</button>
+      <button type="button" class="btn btn-ghost" data-instalar-cerrar>{{ _('Ahora no') }}</button>
+    </div>
+    {% endif %}
+
     <nav class="portal-nav" aria-label="{{ _('Secciones del portal') }}">
       <a href="{{ url_for('portal_cliente.dashboard') }}" {% if portal_seccion == 'inicio' %}aria-current="page"{% endif %}>{{ _('Inicio') }}</a>
       {% if portal_facturas %}
@@ -61,6 +71,29 @@
     </main>
   </div>
   <script src="{{ url_for('static', filename='portal_rapido.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='portal_instalar.js') }}" defer></script>
+
+  {% set ins_fact = portal_insignia_facturas|default(0) %}{% set ins_msg = portal_insignia_mensajes|default(0) %}{% set ins_avi = portal_insignia_avisos|default(0) %}
+  <meta name="portal-insignia" content="{{ ins_fact + ins_msg + ins_avi }}">
+  <nav class="portal-tabs" aria-label="{{ _('Navegación principal') }}">
+    <a href="{{ url_for('portal_cliente.dashboard') }}" {% if portal_seccion == 'inicio' and request.endpoint == 'portal_cliente.dashboard' %}aria-current="page"{% endif %}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-house"></use></svg><span>{{ _('Inicio') }}</span></a>
+    {% if portal_facturas %}<a href="{{ url_for('portal_cliente.facturas') }}" {% if portal_seccion == 'facturas' %}aria-current="page"{% endif %}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg><span>{{ _('Facturas') }}</span>{% if ins_fact %}<b class="portal-nav-insignia" aria-hidden="true">{{ ins_fact }}</b>{% endif %}</a>{% endif %}
+    {% if portal_facturas and portal_puede_subir %}<a class="portal-tabs-subir" href="{{ url_for('portal_cliente.facturas') }}#form-subida"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-camera"></use></svg><span>{{ _('Subir') }}</span></a>{% endif %}
+    <a href="{{ url_for('portal_cliente.mensajes') }}" {% if portal_seccion == 'mensajes' %}aria-current="page"{% endif %}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mail"></use></svg><span>{{ _('Mensajes') }}</span>{% if ins_msg %}<b class="portal-nav-insignia" aria-hidden="true">{{ ins_msg }}</b>{% endif %}</a>
+    <details class="portal-tabs-mas">
+      <summary><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-layout-list"></use></svg><span>{{ _('Más') }}</span>{% if ins_avi %}<b class="portal-nav-insignia" aria-hidden="true">{{ ins_avi }}</b>{% endif %}</summary>
+      <div class="portal-tabs-panel">
+        <a href="{{ url_for('portal_cliente.avisos') }}">{{ _('Avisos') }}{% if ins_avi %} ({{ ins_avi }}){% endif %}</a>
+        <a href="{{ url_for('portal_cliente.impuestos') }}">{{ _('Impuestos') }}</a>
+        <a href="{{ url_for('portal_cliente.carpeta') }}">{{ _('Carpeta') }}</a>
+        <a href="{{ url_for('portal_cliente.buscar') }}">{{ _('Buscar') }}</a>
+        <a href="{{ url_for('portal_cliente.glosario') }}">{{ _('Glosario') }}</a>
+        <a href="{{ url_for('portal_cliente.cuenta') }}">{{ _('Mi cuenta') }}</a>
+        {% if portal_ayuda_url %}<a href="{{ portal_ayuda_url }}" target="_blank" rel="noopener">{{ _('Ayuda') }}</a>{% endif %}
+        {% if not vista_previa %}<form method="post" action="{{ url_for('portal_cliente.salir') }}"><button type="submit" class="portal-tabs-salir">{{ _('Salir') }}</button></form>{% endif %}
+      </div>
+    </details>
+  </nav>
   {% if portal_cliente and not vista_previa %}<script src="{{ url_for('static', filename='sw_registro.js') }}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>

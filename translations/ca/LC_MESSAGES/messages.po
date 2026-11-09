@@ -24976,3 +24976,36 @@ msgstr "Sí, molt fàcil"
 
 msgid "Me ha costado"
 msgstr "M'ha costat"
+
+msgid "Instalar la aplicación"
+msgstr "Instal·lar l'aplicació"
+
+msgid "Instala Mi gestoría en tu dispositivo: se abre como una aplicación, más rápida y con avisos."
+msgstr "Instal·la La meva gestoria al teu dispositiu: s'obre com una aplicació, més ràpida i amb avisos."
+
+msgid "Para instalarla en tu iPhone o iPad: pulsa el botón Compartir y elige «Añadir a pantalla de inicio»."
+msgstr "Per instal·lar-la al teu iPhone o iPad: prem el botó Compartir i tria «Afegeix a la pantalla d'inici»."
+
+msgid "Instalar"
+msgstr "Instal·lar"
+
+msgid "Ahora no"
+msgstr "Ara no"
+
+msgid "Sin conexión"
+msgstr "Sense connexió"
+
+msgid "Ahora mismo no hay conexión a internet. Lo que ya tenías enviado está a salvo. Puedes dejar aquí tus facturas: se enviarán solas en cuanto vuelva la conexión."
+msgstr "Ara mateix no hi ha connexió a internet. El que ja tenies enviat està a salvo. Pots deixar aquí les teves factures: s'enviaran soles tan bon punt torni la connexió."
+
+msgid "Tus facturas guardadas están esperando: vuelve a entrar al portal y se enviarán solas."
+msgstr "Les teves factures desades estan esperant: torna a entrar al portal i s'enviaran soles."
+
+msgid "Guardar para enviar"
+msgstr "Desar per enviar"
+
+msgid "Volver a intentarlo"
+msgstr "Tornar-ho a provar"
+
+msgid "Mi carpeta"
+msgstr "La meva carpeta"

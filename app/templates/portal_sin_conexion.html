@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f8">
+  <title>{{ _('Sin conexión') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('Sin conexión') }}</h1>
+      <p class="auth-alterna">{{ _('Ahora mismo no hay conexión a internet. Lo que ya tenías enviado está a salvo. Puedes dejar aquí tus facturas: se enviarán solas en cuanto vuelva la conexión.') }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.facturas') }}" enctype="multipart/form-data" class="edit-form" id="form-subida" data-cola-offline data-reintento-ms="5000" data-txt-sin-sesion="{{ _('Tus facturas guardadas están esperando: vuelve a entrar al portal y se enviarán solas.') }}"
+            data-txt-guardado="{{ _('Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo.') }}"
+            data-txt-enviando="{{ _('Enviando lo que estaba guardado…') }}"
+            data-txt-enviado="{{ _('Ya se ha enviado lo que estaba guardado (%(n)s envío/s). Recarga la página para verlo.', n='%(n)s') }}"
+            data-txt-fallo="{{ _('%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos.', n='%(n)s') }}"
+            data-txt-corte="{{ _('Se ha cortado la conexión: tus facturas se han guardado en este dispositivo y se enviarán solas en cuanto se pueda. No cierres la pestaña si puedes evitarlo.') }}"
+            data-txt-subiendo="{{ _('Subiendo… %(p)s de 100', p='%(p)s') }}" data-txt-progreso="{{ _('Progreso de la subida') }}">
+        <input type="hidden" name="modo" value="archivos">
+        <label for="sc-tipo">{{ _('¿Qué facturas son?') }}</label>
+        <select id="sc-tipo" name="tipo">
+          <option value="recibida">{{ _('Me las han hecho a mí (compras y gastos)') }}</option>
+          <option value="emitida">{{ _('Las he hecho yo a mis clientes (ventas)') }}</option>
+        </select>
+        <label for="sc-archivos">{{ _('Fotos o PDF de las facturas') }}</label>
+        <input type="file" id="sc-archivos" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.xml">
+        <p id="cola-offline" class="portal-peticion" role="status" hidden></p>
+        <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar para enviar') }}</button></div>
+      </form>
+      <p class="auth-alterna"><a href="{{ url_for('portal_cliente.dashboard') }}">{{ _('Volver a intentarlo') }}</a></p>
+    </div>
+  </main>
+  <script src="{{ url_for('static', filename='portal_cola_offline.js') }}" defer></script>
+</body>
+</html>

@@ -46,9 +46,10 @@ def test_al_navegar_aparece_la_barra_de_carga_y_la_pagina_se_marca_ocupada(servi
     nueva.goto(f"{servidor.url}/portal/cuenta")
     assert nueva.locator("[data-barra-carga]").is_hidden()
     nueva.route("**/portal/impuestos", lambda ruta: (nueva.wait_for_timeout(600), ruta.continue_()))          # una respuesta lenta para poder verla
-    nueva.evaluate("document.querySelector('a[href=\"/portal/impuestos\"]').addEventListener('click', e => e.preventDefault(), { once: true, capture: false })")
-    nueva.evaluate("document.querySelector('a[href=\"/portal/impuestos\"]').click()")
+    nueva.evaluate("document.querySelector('.portal-tabs-panel a[href=\"/portal/impuestos\"]').addEventListener('click', e => e.preventDefault(), { once: true, capture: false })")
+    nueva.evaluate("document.querySelector('.portal-tabs-panel a[href=\"/portal/impuestos\"]').click()")
     assert nueva.locator("[data-barra-carga]").evaluate("e => e.hidden") is True                                  # un clic cancelado por otro script no la enciende
-    nueva.locator("a[href='/portal/impuestos']").first.click()
+    nueva.locator(".portal-tabs-mas summary").click()
+    nueva.locator(".portal-tabs-panel a[href='/portal/impuestos']").click()
     nueva.wait_for_url("**/portal/impuestos")
     assert nueva.locator("#portal-contenido").get_attribute("aria-busy") is None                                  # la página nueva empieza limpia

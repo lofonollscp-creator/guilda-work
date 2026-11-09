@@ -25052,3 +25052,36 @@ msgstr "Oui, très facile"
 
 msgid "Me ha costado"
 msgstr "C'était difficile"
+
+msgid "Instalar la aplicación"
+msgstr "Installer l'application"
+
+msgid "Instala Mi gestoría en tu dispositivo: se abre como una aplicación, más rápida y con avisos."
+msgstr "Installez Mon cabinet sur votre appareil : il s'ouvre comme une application, plus rapide et avec des notifications."
+
+msgid "Para instalarla en tu iPhone o iPad: pulsa el botón Compartir y elige «Añadir a pantalla de inicio»."
+msgstr "Pour l'installer sur votre iPhone ou iPad : touchez le bouton Partager et choisissez « Sur l'écran d'accueil »."
+
+msgid "Instalar"
+msgstr "Installer"
+
+msgid "Ahora no"
+msgstr "Pas maintenant"
+
+msgid "Sin conexión"
+msgstr "Hors connexion"
+
+msgid "Ahora mismo no hay conexión a internet. Lo que ya tenías enviado está a salvo. Puedes dejar aquí tus facturas: se enviarán solas en cuanto vuelva la conexión."
+msgstr "Il n'y a pas de connexion internet pour le moment. Ce que vous aviez déjà envoyé est en sécurité. Vous pouvez déposer ici vos factures : elles seront envoyées automatiquement dès le retour de la connexion."
+
+msgid "Tus facturas guardadas están esperando: vuelve a entrar al portal y se enviarán solas."
+msgstr "Vos factures enregistrées attendent : reconnectez-vous au portail et elles seront envoyées automatiquement."
+
+msgid "Guardar para enviar"
+msgstr "Enregistrer pour envoyer"
+
+msgid "Volver a intentarlo"
+msgstr "Réessayer"
+
+msgid "Mi carpeta"
+msgstr "Mon dossier"

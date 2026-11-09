@@ -24967,3 +24967,36 @@ msgstr "Yes, very easy"
 
 msgid "Me ha costado"
 msgstr "It was hard"
+
+msgid "Instalar la aplicación"
+msgstr "Install the app"
+
+msgid "Instala Mi gestoría en tu dispositivo: se abre como una aplicación, más rápida y con avisos."
+msgstr "Install My accountant on your device: it opens like an app, faster and with notifications."
+
+msgid "Para instalarla en tu iPhone o iPad: pulsa el botón Compartir y elige «Añadir a pantalla de inicio»."
+msgstr "To install it on your iPhone or iPad: tap the Share button and choose “Add to Home Screen”."
+
+msgid "Instalar"
+msgstr "Install"
+
+msgid "Ahora no"
+msgstr "Not now"
+
+msgid "Sin conexión"
+msgstr "No connection"
+
+msgid "Ahora mismo no hay conexión a internet. Lo que ya tenías enviado está a salvo. Puedes dejar aquí tus facturas: se enviarán solas en cuanto vuelva la conexión."
+msgstr "There is no internet connection right now. Whatever you had already sent is safe. You can leave your invoices here: they will be sent automatically as soon as the connection returns."
+
+msgid "Tus facturas guardadas están esperando: vuelve a entrar al portal y se enviarán solas."
+msgstr "Your saved invoices are waiting: sign in to the portal again and they will be sent automatically."
+
+msgid "Guardar para enviar"
+msgstr "Save to send"
+
+msgid "Volver a intentarlo"
+msgstr "Try again"
+
+msgid "Mi carpeta"
+msgstr "My folder"

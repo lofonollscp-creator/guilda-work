@@ -55,11 +55,12 @@
     if (enviando || navigator.onLine === false) return Promise.resolve();
     enviando = true;
     return todos().then(function (items) {
-      var enviados = 0, fallos = 0;
+      var enviados = 0, fallos = 0, sinSesion = false;
       return items.reduce(function (p, item) {
         return p.then(function () {
           decir(txt(form, 'enviando'), false);
           return fetch(item.url, { method: 'POST', body: formData(item), credentials: 'same-origin' }).then(function (r) {
+            if (r.redirected && /\/portal\/entrar/.test(r.url)) { sinSesion = true; return null; }      // la sesión caducó: se queda guardado hasta que vuelva a entrar
             if (r.ok) { enviados += 1; return borrar(item.id); }
             fallos += 1;                                   // el servidor lo ha rechazado (límite, tipo…): reintentarlo igual no lo arregla
             return borrar(item.id);
@@ -71,6 +72,7 @@
       }, Promise.resolve()).then(function () {
         if (enviados) decir(txt(form, 'enviado', { n: enviados }) + (fallos ? ' ' + txt(form, 'fallo', { n: fallos }) : ''), false);
         else if (fallos) decir(txt(form, 'fallo', { n: fallos }), true);
+        else if (sinSesion) decir(txt(form, 'sin-sesion') || txt(form, 'corte'), true);
         else decir('', false);
       });
     }).catch(function () {}).then(function () { enviando = false; });

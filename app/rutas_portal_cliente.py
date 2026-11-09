@@ -1556,4 +1556,17 @@ def manifiesto():
     cuerpo = {"name": "Guilda Work", "short_name": "Mi gestoría", "description": _("Tu portal de cliente: lo que tienes que hacer, tus facturas e impuestos y tus mensajes."), "start_url": "/portal/", "scope": "/portal/", "display": "standalone", "share_target": {"action": "/portal/compartir", "method": "POST", "enctype": "multipart/form-data", "params": {"files": [{"name": "archivos", "accept": ["application/pdf", "image/*"]}]}},
               "background_color": "#f5f6f8", "theme_color": "#f5f6f8", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"}, {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
                                                                                 {"src": "/static/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}]}
+    cuerpo.update({"id": "/portal/", "lang": str(get_locale() or "es")[:2], "categories": ["business", "finance", "productivity"], "display_override": ["standalone", "minimal-ui"], "orientation": "any",
+                   "shortcuts": [{"name": _("Subir una factura"), "short_name": _("Subir"), "url": "/portal/facturas#form-subida", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]},
+                                 {"name": _("Para hacer"), "short_name": _("Inicio"), "url": "/portal/", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]},
+                                 {"name": _("Mensajes"), "short_name": _("Mensajes"), "url": "/portal/mensajes", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]},
+                                 {"name": _("Mi carpeta"), "short_name": _("Carpeta"), "url": "/portal/carpeta", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]}]})
     return Response(json.dumps(cuerpo, ensure_ascii=False), mimetype="application/manifest+json")
+
+
+@portal_bp.route("/sin-conexion")
+def sin_conexion():
+    """La pantalla que el service worker enseña cuando no hay red (la guarda al instalarse): explica qué pasa y deja dejar facturas en cola para enviarlas solas al volver la conexión. Es igual para todos: no lleva datos de nadie."""
+    resp = Response(render_template("portal_sin_conexion.html"))
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
