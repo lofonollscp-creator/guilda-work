@@ -25675,3 +25675,38 @@ msgstr "Téléchargez-le sur le même ordinateur et navigateur que ceux depuis l
 
 msgid "No nos mandes el archivo del certificado por aquí: lleva tu clave privada y no se admite. Avisa a tu gestoría con el botón de abajo y te dirá cómo entregárselo de forma segura."
 msgstr "Ne nous envoyez pas le fichier du certificat ici : il contient votre clé privée et n'est pas accepté. Prévenez votre cabinet avec le bouton ci-dessous et il vous dira comment le remettre en toute sécurité."
+
+msgid "Tu negocio este trimestre (%(t)s)"
+msgstr "Votre activité ce trimestre (%(t)s)"
+
+msgid "Van %(p)s de %(t)s días. Son estimaciones con las facturas que tu gestoría ya ha revisado; no es tu declaración."
+msgstr "%(p)s jours sur %(t)s écoulés. Ce sont des estimations avec les factures que votre cabinet a déjà relues ; ce n'est pas votre déclaration."
+
+msgid "Al ritmo de ahora, este trimestre gastarás un %(n)s por ciento más que tu media de los últimos trimestres."
+msgstr "Au rythme actuel, ce trimestre vous dépenserez %(n)s pour cent de plus que votre moyenne des derniers trimestres."
+
+msgid "Al ritmo de ahora, este trimestre venderás un %(n)s por ciento menos que tu media de los últimos trimestres."
+msgstr "Au rythme actuel, ce trimestre vous vendrez %(n)s pour cent de moins que votre moyenne des derniers trimestres."
+
+msgid "Al ritmo de ahora, el IVA de este trimestre saldría a pagar unos %(n)s. Conviene tenerlo previsto."
+msgstr "Au rythme actuel, la TVA de ce trimestre serait d'environ %(n)s à payer. Il vaut mieux le prévoir."
+
+msgid "Ventas hasta hoy"
+msgstr "Ventes à ce jour"
+
+msgid "Gastos hasta hoy"
+msgstr "Dépenses à ce jour"
+
+msgid "IVA hasta hoy (repercutido menos soportado)"
+msgstr "TVA à ce jour (collectée moins déductible)"
+
+msgid "IVA previsto a final de trimestre"
+msgstr "TVA prévue en fin de trimestre"
+
+msgid "Tus mayores gastos este trimestre"
+msgstr "Vos plus grosses dépenses ce trimestre"
+
+msgid "Hay %(n)s factura sin revisar que todavía no cuenta aquí."
+msgid_plural "Hay %(n)s facturas sin revisar que todavía no cuentan aquí."
+msgstr[0] "Il y a %(n)s facture non relue qui ne compte pas encore ici."
+msgstr[1] "Il y a %(n)s factures non relues qui ne comptent pas encore ici."

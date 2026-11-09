@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_negocio, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -406,7 +406,7 @@ def impuestos():
     por_anio: dict[str, list] = {}
     for v in vencimientos:
         por_anio.setdefault(v["fecha_limite"][:4], []).append(v)
-    return render_template("portal_impuestos.html", situacion=portal_situacion.calcular(cliente), cobros=portal_pagos.cobros(cliente, vencimientos), firmas={v["id"] for v in portal_firma.pendientes(vencimientos)}, pago=request.args.get("pago"),
+    return render_template("portal_impuestos.html", negocio=portal_negocio.calcular(cliente) if verticales.esta_activo(cliente["tenant_id"], "contabilizacion") else None, situacion=portal_situacion.calcular(cliente), cobros=portal_pagos.cobros(cliente, vencimientos), firmas={v["id"] for v in portal_firma.pendientes(vencimientos)}, pago=request.args.get("pago"),
                            error=(request.args.get("error") or "")[:200] or None, cliente=cliente, por_anio=por_anio, anios_ordenados=sorted(por_anio, reverse=True), vencimientos=vencimientos, portal_seccion="impuestos",
                            sin_leer={m["vencimiento_id"]: m["n"] for m in db.mensajes_sin_leer_para_cliente(cliente["id"])})
 

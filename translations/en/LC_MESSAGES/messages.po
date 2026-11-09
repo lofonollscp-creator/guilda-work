@@ -25590,3 +25590,38 @@ msgstr "Download it on the same computer and browser you requested it from, and 
 
 msgid "No nos mandes el archivo del certificado por aquí: lleva tu clave privada y no se admite. Avisa a tu gestoría con el botón de abajo y te dirá cómo entregárselo de forma segura."
 msgstr "Do not send us the certificate file here: it carries your private key and is not accepted. Let your accountant know with the button below and they will tell you how to hand it over securely."
+
+msgid "Tu negocio este trimestre (%(t)s)"
+msgstr "Your business this quarter (%(t)s)"
+
+msgid "Van %(p)s de %(t)s días. Son estimaciones con las facturas que tu gestoría ya ha revisado; no es tu declaración."
+msgstr "%(p)s of %(t)s days have passed. These are estimates from the invoices your accountant has already reviewed; it is not your return."
+
+msgid "Al ritmo de ahora, este trimestre gastarás un %(n)s por ciento más que tu media de los últimos trimestres."
+msgstr "At the current pace, this quarter you will spend %(n)s percent more than your average of recent quarters."
+
+msgid "Al ritmo de ahora, este trimestre venderás un %(n)s por ciento menos que tu media de los últimos trimestres."
+msgstr "At the current pace, this quarter you will sell %(n)s percent less than your average of recent quarters."
+
+msgid "Al ritmo de ahora, el IVA de este trimestre saldría a pagar unos %(n)s. Conviene tenerlo previsto."
+msgstr "At the current pace, this quarter's VAT would come to about %(n)s to pay. It is worth planning for it."
+
+msgid "Ventas hasta hoy"
+msgstr "Sales to date"
+
+msgid "Gastos hasta hoy"
+msgstr "Expenses to date"
+
+msgid "IVA hasta hoy (repercutido menos soportado)"
+msgstr "VAT to date (charged minus paid)"
+
+msgid "IVA previsto a final de trimestre"
+msgstr "Expected VAT at quarter end"
+
+msgid "Tus mayores gastos este trimestre"
+msgstr "Your biggest expenses this quarter"
+
+msgid "Hay %(n)s factura sin revisar que todavía no cuenta aquí."
+msgid_plural "Hay %(n)s facturas sin revisar que todavía no cuentan aquí."
+msgstr[0] "There is %(n)s unreviewed invoice that does not count here yet."
+msgstr[1] "There are %(n)s unreviewed invoices that do not count here yet."

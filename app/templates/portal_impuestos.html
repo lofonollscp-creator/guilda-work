@@ -35,6 +35,31 @@
       {% if situacion.pendientes %}<p class="muted">{{ ngettext('Hay %(n)s factura pendiente de tratar que todavía no cuenta aquí.', 'Hay %(n)s facturas pendientes de tratar que todavía no cuentan aquí.', situacion.pendientes, n=situacion.pendientes) }}</p>{% endif %}
     </section>
     {% endif %}
+    {% if negocio %}
+    {% macro eur2(c) %}{{ '%.2f €'|format(c / 100) }}{% endmacro %}
+    <section class="portal-situacion" aria-labelledby="portal-negocio-titulo">
+      <h2 id="portal-negocio-titulo">{{ _('Tu negocio este trimestre (%(t)s)', t=negocio.etiqueta) }}</h2>
+      <p class="muted">{{ _('Van %(p)s de %(t)s días. Son estimaciones con las facturas que tu gestoría ya ha revisado; no es tu declaración.', p=negocio.dias_pasados, t=negocio.dias_totales) }}</p>
+      {% for a in negocio.avisos %}
+      <p class="portal-peticion" role="status">
+        {% if a.clave == 'gastos_altos' %}{{ _('Al ritmo de ahora, este trimestre gastarás un %(n)s por ciento más que tu media de los últimos trimestres.', n=a.pct) }}
+        {% elif a.clave == 'ventas_bajas' %}{{ _('Al ritmo de ahora, este trimestre venderás un %(n)s por ciento menos que tu media de los últimos trimestres.', n=a.pct) }}
+        {% elif a.clave == 'iva_a_pagar' %}{{ _('Al ritmo de ahora, el IVA de este trimestre saldría a pagar unos %(n)s. Conviene tenerlo previsto.', n=eur2(a.importe)) }}{% endif %}
+      </p>
+      {% endfor %}
+      <dl class="portal-datos">
+        <dt>{{ _('Ventas hasta hoy') }}</dt><dd>{{ eur2(negocio.actual.ventas) }}</dd>
+        <dt>{{ _('Gastos hasta hoy') }}</dt><dd>{{ eur2(negocio.actual.gastos) }}</dd>
+        <dt>{{ _('IVA hasta hoy (repercutido menos soportado)') }}</dt><dd>{{ eur2(negocio.iva_ahora) }}</dd>
+        {% if negocio.prevision_iva is not none %}<dt>{{ _('IVA previsto a final de trimestre') }}</dt><dd>{{ eur2(negocio.prevision_iva) }}</dd>{% endif %}
+      </dl>
+      {% if negocio.proveedores %}
+      <h3>{{ _('Tus mayores gastos este trimestre') }}</h3>
+      <ol class="portal-pasos-guia">{% for p in negocio.proveedores %}<li>{{ p.nombre }} <span class="muted">· {{ eur2(p.base) }}</span></li>{% endfor %}</ol>
+      {% endif %}
+      {% if negocio.pendientes %}<p class="muted">{{ ngettext('Hay %(n)s factura sin revisar que todavía no cuenta aquí.', 'Hay %(n)s facturas sin revisar que todavía no cuentan aquí.', negocio.pendientes, n=negocio.pendientes) }}</p>{% endif %}
+    </section>
+    {% endif %}
     {% if not vencimientos %}
     <p class="empty-lane">{{ _('Todavía no hay vencimientos registrados.') }}</p>
     {% else %}

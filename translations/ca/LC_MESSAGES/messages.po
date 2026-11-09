@@ -25599,3 +25599,38 @@ msgstr "Descarrega'l al mateix ordinador i navegador des dels quals el vas deman
 
 msgid "No nos mandes el archivo del certificado por aquí: lleva tu clave privada y no se admite. Avisa a tu gestoría con el botón de abajo y te dirá cómo entregárselo de forma segura."
 msgstr "No ens enviïs l'arxiu del certificat per aquí: porta la teva clau privada i no s'admet. Avisa la teva gestoria amb el botó de sota i et dirà com lliurar-lo de forma segura."
+
+msgid "Tu negocio este trimestre (%(t)s)"
+msgstr "El teu negoci aquest trimestre (%(t)s)"
+
+msgid "Van %(p)s de %(t)s días. Son estimaciones con las facturas que tu gestoría ya ha revisado; no es tu declaración."
+msgstr "Van %(p)s de %(t)s dies. Són estimacions amb les factures que la teva gestoria ja ha revisat; no és la teva declaració."
+
+msgid "Al ritmo de ahora, este trimestre gastarás un %(n)s por ciento más que tu media de los últimos trimestres."
+msgstr "Al ritme d'ara, aquest trimestre gastaràs un %(n)s per cent més que la teva mitjana dels últims trimestres."
+
+msgid "Al ritmo de ahora, este trimestre venderás un %(n)s por ciento menos que tu media de los últimos trimestres."
+msgstr "Al ritme d'ara, aquest trimestre vendràs un %(n)s per cent menys que la teva mitjana dels últims trimestres."
+
+msgid "Al ritmo de ahora, el IVA de este trimestre saldría a pagar unos %(n)s. Conviene tenerlo previsto."
+msgstr "Al ritme d'ara, l'IVA d'aquest trimestre sortiria a pagar uns %(n)s. Convé tenir-ho previst."
+
+msgid "Ventas hasta hoy"
+msgstr "Vendes fins avui"
+
+msgid "Gastos hasta hoy"
+msgstr "Despeses fins avui"
+
+msgid "IVA hasta hoy (repercutido menos soportado)"
+msgstr "IVA fins avui (repercutit menys suportat)"
+
+msgid "IVA previsto a final de trimestre"
+msgstr "IVA previst a final de trimestre"
+
+msgid "Tus mayores gastos este trimestre"
+msgstr "Les teves despeses més grans aquest trimestre"
+
+msgid "Hay %(n)s factura sin revisar que todavía no cuenta aquí."
+msgid_plural "Hay %(n)s facturas sin revisar que todavía no cuentan aquí."
+msgstr[0] "Hi ha %(n)s factura sense revisar que encara no compta aquí."
+msgstr[1] "Hi ha %(n)s factures sense revisar que encara no compten aquí."
