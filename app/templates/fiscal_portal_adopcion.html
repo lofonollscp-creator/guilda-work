@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Adopción del portal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Adopción del portal') }}</h1>
+    <p class="subtitle">{{ _('Qué clientes usan su portal, cuáles nunca han entrado y cuáles llevan tiempo sin hacerlo.') }}</p>
+  </div>
+</header>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.recordatorios') }}">&larr; {{ _('Recordatorios a clientes') }}</a>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.portal_actividad') }}">{{ _('Actividad del portal') }}</a>
+
+{% if invitados is not none or fallos %}
+<p class="{{ 'ia-error' if fallos else 'muted' }}" role="status">{{ ngettext('Invitación enviada a %(n)s cliente.', 'Invitación enviada a %(n)s clientes.', invitados or 0, n=invitados or 0) }}{% if fallos %} {{ ngettext('%(n)s no se ha podido enviar (sin correo o fallo del servidor de correo).', '%(n)s no se han podido enviar (sin correo o fallo del servidor de correo).', fallos, n=fallos) }}{% endif %}</p>
+{% endif %}
+
+<section class="proyecto-bloque ds-mt-24" aria-labelledby="adop-resumen">
+  <h2 id="adop-resumen">{{ _('Resumen') }}</h2>
+  <ul class="ds-fila ds-envolver" role="list">
+    <li><a class="btn {{ 'btn-primary' if filtro == 'activo' else 'btn-ghost' }}" href="{{ url_for('fiscal.portal_adopcion_panel', estado='activo') }}">{{ _('Activos (últimos 30 días): %(n)s', n=r.cuentas.activo) }}</a></li>
+    <li><a class="btn {{ 'btn-primary' if filtro == 'inactivo' else 'btn-ghost' }}" href="{{ url_for('fiscal.portal_adopcion_panel', estado='inactivo') }}">{{ _('Sin entrar hace más de 30 días: %(n)s', n=r.cuentas.inactivo) }}</a></li>
+    <li><a class="btn {{ 'btn-primary' if filtro == 'nunca' else 'btn-ghost' }}" href="{{ url_for('fiscal.portal_adopcion_panel', estado='nunca') }}">{{ _('Nunca han entrado: %(n)s', n=r.cuentas.nunca) }}</a></li>
+    <li><a class="btn {{ 'btn-primary' if filtro == 'sin_correo' else 'btn-ghost' }}" href="{{ url_for('fiscal.portal_adopcion_panel', estado='sin_correo') }}">{{ _('Sin correo: %(n)s', n=r.cuentas.sin_correo) }}</a></li>
+  </ul>
+  {% if r.cuentas.nunca %}
+  <form method="post" action="{{ url_for('fiscal.portal_adopcion_invitar_pendientes') }}"><button type="submit" class="btn btn-primary">{{ _('Reenviar la invitación a quienes nunca han entrado') }}</button></form>
+  {% endif %}
+</section>
+
+<section class="proyecto-bloque ds-mt-24" aria-labelledby="adop-clientes">
+  <h2 id="adop-clientes">{{ _('Clientes') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Correo') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Último acceso') }}</th><th><span class="sr-only">{{ _('Acciones') }}</span></th></tr></thead>
+    <tbody>
+      {% for f in r.clientes if not filtro or f.estado == filtro %}
+      <tr>
+        <td><a href="{{ url_for('fiscal.editar_cliente', cliente_id=f.id) }}">{{ f.nombre }}</a></td>
+        <td>{{ f.email or '—' }}</td>
+        <td>{{ {'activo': _('Activo'), 'inactivo': _('Hace tiempo que no entra'), 'nunca': _('Nunca ha entrado'), 'sin_correo': _('Sin correo')}[f.estado] }}</td>
+        <td>{% if f.ultimo_acceso %}{{ f.ultimo_acceso[:10]|fecha_dia }}{% else %}—{% endif %}</td>
+        <td>{% if f.email and f.estado != 'activo' %}<form method="post" action="{{ url_for('fiscal.portal_adopcion_invitar', cliente_id=f.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Reenviar invitación') }}</button></form>{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="5" class="muted">{{ _('No hay clientes.') }}</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<section class="proyecto-bloque ds-mt-24" id="embudo" aria-labelledby="adop-embudo">
+  <h2 id="adop-embudo">{{ _('Embudo de uso') }}</h2>
+  <p class="muted">{{ _('Opcional. Muestra cuántos clientes llegan a cada paso (tener acceso, entrar, subir una factura, escribirte). Son totales sin nombres y salen de lo que ya hay: no se rastrea nada nuevo de nadie. Está apagado salvo que lo enciendas.') }}</p>
+  {% if guardado %}<p class="muted" role="status">{{ _('Guardado.') }}</p>{% endif %}
+  <form method="post" action="{{ url_for('fiscal.portal_adopcion_embudo') }}" class="proyecto-form">
+    <label><input type="checkbox" name="activo" value="1" {{ 'checked' if embudo_activo }}> {{ _('Mostrar el embudo de uso del portal') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+  {% if embudo_activo %}
+  {% set e = r.embudo %}{% set total = e.con_acceso or 1 %}
+  <ol class="portal-embudo" aria-label="{{ _('Embudo de uso') }}">
+    {% for nombre, n in [(_('Con correo (se les puede invitar)'), e.con_acceso), (_('Han entrado alguna vez'), e.han_entrado), (_('Entraron en los últimos 30 días'), e.activos), (_('Han subido alguna factura'), e.han_subido), (_('Te han escrito alguna vez'), e.han_escrito)] %}
+    <li><span>{{ nombre }}</span><progress max="{{ total }}" value="{{ n }}" aria-label="{{ nombre }}">{{ n }}</progress><strong>{{ n }}</strong> <span class="muted">({{ (n * 100 / total)|round|int }} {{ _('por ciento') }})</span></li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+</section>
+{% endblock %}

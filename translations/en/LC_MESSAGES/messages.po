@@ -24888,3 +24888,82 @@ msgstr "That document cannot be shared."
 
 msgid "Ya tienes muchos enlaces activos: anula alguno antes de crear otro."
 msgstr "You already have many active links: cancel one before creating another."
+
+msgid "Adopción del portal"
+msgstr "Portal adoption"
+
+msgid "Qué clientes usan su portal, cuáles nunca han entrado y cuáles llevan tiempo sin hacerlo."
+msgstr "Which clients use their portal, which have never signed in and which have not for a while."
+
+msgid "Activos (últimos 30 días): %(n)s"
+msgstr "Active (last 30 days): %(n)s"
+
+msgid "Sin entrar hace más de 30 días: %(n)s"
+msgstr "Not signed in for over 30 days: %(n)s"
+
+msgid "Nunca han entrado: %(n)s"
+msgstr "Never signed in: %(n)s"
+
+msgid "Sin correo: %(n)s"
+msgstr "No email: %(n)s"
+
+msgid "Reenviar la invitación a quienes nunca han entrado"
+msgstr "Resend the invitation to those who never signed in"
+
+msgid "Último acceso"
+msgstr "Last access"
+
+msgid "Hace tiempo que no entra"
+msgstr "Has not signed in for a while"
+
+msgid "Reenviar invitación"
+msgstr "Resend invitation"
+
+msgid "Embudo de uso"
+msgstr "Usage funnel"
+
+msgid "Opcional. Muestra cuántos clientes llegan a cada paso (tener acceso, entrar, subir una factura, escribirte). Son totales sin nombres y salen de lo que ya hay: no se rastrea nada nuevo de nadie. Está apagado salvo que lo enciendas."
+msgstr "Optional. Shows how many clients reach each step (having access, signing in, uploading an invoice, writing to you). These are totals without names and come from what already exists: nothing new is tracked about anyone. It is off unless you turn it on."
+
+msgid "Mostrar el embudo de uso del portal"
+msgstr "Show the portal usage funnel"
+
+msgid "Con correo (se les puede invitar)"
+msgstr "With email (can be invited)"
+
+msgid "Han entrado alguna vez"
+msgstr "Have signed in at least once"
+
+msgid "Entraron en los últimos 30 días"
+msgstr "Signed in during the last 30 days"
+
+msgid "Han subido alguna factura"
+msgstr "Have uploaded an invoice"
+
+msgid "Te han escrito alguna vez"
+msgstr "Have written to you"
+
+msgid "por ciento"
+msgstr "percent"
+
+msgid "Invitación enviada a %(n)s cliente."
+msgid_plural "Invitación enviada a %(n)s clientes."
+msgstr[0] "Invitation sent to %(n)s client."
+msgstr[1] "Invitation sent to %(n)s clients."
+
+msgid "%(n)s no se ha podido enviar (sin correo o fallo del servidor de correo)."
+msgid_plural "%(n)s no se han podido enviar (sin correo o fallo del servidor de correo)."
+msgstr[0] "%(n)s could not be sent (no email or mail server error)."
+msgstr[1] "%(n)s could not be sent (no email or mail server error)."
+
+msgid "¡Gracias por contárnoslo!"
+msgstr "Thanks for telling us!"
+
+msgid "¿Te ha resultado fácil subir tus facturas?"
+msgstr "Was it easy to upload your invoices?"
+
+msgid "Sí, muy fácil"
+msgstr "Yes, very easy"
+
+msgid "Me ha costado"
+msgstr "It was hard"

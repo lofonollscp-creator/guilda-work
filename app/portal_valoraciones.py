@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS portal_valoraciones (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_portal_valoraciones ON portal_valoraciones(tenant_id, cliente_fiscal_id, email, tipo, referencia);
 """
 
-TIPOS = ("peticion",)
+TIPOS = ("peticion", "subida")                           # «subida»: ¿te ha resultado fácil subir tus facturas? (referencia = el día de la subida)
 NOTA_BAJA = 2
 MAX_COMENTARIO = 300
 
@@ -58,6 +58,14 @@ def valorar(cliente, email: str, tipo: str, referencia, puntos, comentario: str 
         p = portal_peticiones.obtener(cliente, int(referencia))
         if p is None or p["estado"] != "revisada":
             raise ValueError("Solo se puede valorar un trámite ya resuelto.")
+    if tipo == "subida":
+        from datetime import date
+        try:
+            dia = date.fromisoformat(str(referencia))
+        except ValueError:
+            raise ValueError("No se puede valorar eso.") from None
+        if not 0 <= (date.today() - dia).days <= 3:
+            raise ValueError("No se puede valorar eso.")
     if ya_valorada(cliente, email, tipo, referencia):
         raise ValueError("Ya has valorado este trámite. ¡Gracias!")
     conn = db.get_connection()

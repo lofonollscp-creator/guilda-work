@@ -79,3 +79,19 @@ def test_compartir_desde_el_movil_sube_las_facturas_como_recibidas_y_el_manifies
     assert len(lista) == 1
     assert "Se han guardado como compras y gastos" in _html(cliente, r.headers["Location"])
     assert cliente.post("/portal/compartir", data={}, content_type="multipart/form-data").status_code == 303        # sin archivos: vuelve con el aviso de siempre
+
+
+def test_tras_subir_facturas_se_pregunta_si_ha_sido_facil_una_vez_y_una_nota_baja_avisa(cliente, correo):
+    import io
+    from app import portal_valoraciones as pv
+    t, u, c = _despacho("Valoracion subida")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    cliente.post("/portal/facturas", data={"modo": "archivos", "tipo": "recibida", "archivos": [(io.BytesIO(PDF + b"val"), "a.pdf", "application/pdf")]}, content_type="multipart/form-data")
+    html = _html(cliente, "/portal/facturas?anotada=1")
+    assert "¿Te ha resultado fácil subir tus facturas?" in html and 'value="5"' in html
+    hoy = date.today().isoformat()
+    r = cliente.post("/portal/valorar", data={"tipo": "subida", "referencia": hoy, "puntos": "2"})
+    assert r.status_code == 302 and "valorado=1" in r.headers["Location"] and pv.ya_valorada(_ficha(c), "titular@ejemplo.com", "subida", hoy)
+    assert "¿Te ha resultado fácil" not in _html(cliente, "/portal/facturas?anotada=1") and "Gracias" not in _html(cliente, "/portal/facturas?anotada=1")
+    assert "Ya has valorado" in cliente.post("/portal/valorar", data={"tipo": "subida", "referencia": hoy, "puntos": "5"}, follow_redirects=True).get_data(as_text=True)
+    assert "No se puede valorar eso" in cliente.post("/portal/valorar", data={"tipo": "subida", "referencia": "2020-01-01", "puntos": "5"}, follow_redirects=True).get_data(as_text=True)

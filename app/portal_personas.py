@@ -84,6 +84,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "clientes_fiscales_accesos", "email", "TEXT")
     db._asegurar_columna(conn, "portal_recordatorios_config", "correo_facturas", "TEXT")
     db._asegurar_columna(conn, "portal_recordatorios_config", "lectura_previa", "INTEGER NOT NULL DEFAULT 0")
+    db._asegurar_columna(conn, "portal_recordatorios_config", "embudo_uso", "INTEGER NOT NULL DEFAULT 0")     # embudo de uso del portal para el despacho (app/portal_adopcion.py)
 
 
 def limpio(email: str | None) -> str:

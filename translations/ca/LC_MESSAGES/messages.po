@@ -24897,3 +24897,82 @@ msgstr "Aquest document no es pot compartir."
 
 msgid "Ya tienes muchos enlaces activos: anula alguno antes de crear otro."
 msgstr "Ja tens molts enllaços actius: anul·la'n algun abans de crear-ne un altre."
+
+msgid "Adopción del portal"
+msgstr "Adopció del portal"
+
+msgid "Qué clientes usan su portal, cuáles nunca han entrado y cuáles llevan tiempo sin hacerlo."
+msgstr "Quins clients fan servir el seu portal, quins no hi han entrat mai i quins fa temps que no ho fan."
+
+msgid "Activos (últimos 30 días): %(n)s"
+msgstr "Actius (últims 30 dies): %(n)s"
+
+msgid "Sin entrar hace más de 30 días: %(n)s"
+msgstr "Sense entrar fa més de 30 dies: %(n)s"
+
+msgid "Nunca han entrado: %(n)s"
+msgstr "No hi han entrat mai: %(n)s"
+
+msgid "Sin correo: %(n)s"
+msgstr "Sense correu: %(n)s"
+
+msgid "Reenviar la invitación a quienes nunca han entrado"
+msgstr "Reenviar la invitació als qui no hi han entrat mai"
+
+msgid "Último acceso"
+msgstr "Últim accés"
+
+msgid "Hace tiempo que no entra"
+msgstr "Fa temps que no entra"
+
+msgid "Reenviar invitación"
+msgstr "Reenviar invitació"
+
+msgid "Embudo de uso"
+msgstr "Embut d'ús"
+
+msgid "Opcional. Muestra cuántos clientes llegan a cada paso (tener acceso, entrar, subir una factura, escribirte). Son totales sin nombres y salen de lo que ya hay: no se rastrea nada nuevo de nadie. Está apagado salvo que lo enciendas."
+msgstr "Opcional. Mostra quants clients arriben a cada pas (tenir accés, entrar, pujar una factura, escriure't). Són totals sense noms i surten del que ja hi ha: no es rastreja res de nou de ningú. Està apagat tret que l'encenguis."
+
+msgid "Mostrar el embudo de uso del portal"
+msgstr "Mostrar l'embut d'ús del portal"
+
+msgid "Con correo (se les puede invitar)"
+msgstr "Amb correu (se'ls pot convidar)"
+
+msgid "Han entrado alguna vez"
+msgstr "Hi han entrat alguna vegada"
+
+msgid "Entraron en los últimos 30 días"
+msgstr "Hi han entrat en els últims 30 dies"
+
+msgid "Han subido alguna factura"
+msgstr "Han pujat alguna factura"
+
+msgid "Te han escrito alguna vez"
+msgstr "T'han escrit alguna vegada"
+
+msgid "por ciento"
+msgstr "per cent"
+
+msgid "Invitación enviada a %(n)s cliente."
+msgid_plural "Invitación enviada a %(n)s clientes."
+msgstr[0] "Invitació enviada a %(n)s client."
+msgstr[1] "Invitació enviada a %(n)s clients."
+
+msgid "%(n)s no se ha podido enviar (sin correo o fallo del servidor de correo)."
+msgid_plural "%(n)s no se han podido enviar (sin correo o fallo del servidor de correo)."
+msgstr[0] "%(n)s no s'ha pogut enviar (sense correu o error del servidor de correu)."
+msgstr[1] "%(n)s no s'han pogut enviar (sense correu o error del servidor de correu)."
+
+msgid "¡Gracias por contárnoslo!"
+msgstr "Gràcies per explicar-nos-ho!"
+
+msgid "¿Te ha resultado fácil subir tus facturas?"
+msgstr "T'ha resultat fàcil pujar les teves factures?"
+
+msgid "Sí, muy fácil"
+msgstr "Sí, molt fàcil"
+
+msgid "Me ha costado"
+msgstr "M'ha costat"

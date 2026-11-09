@@ -6,6 +6,15 @@
     {% set t = tablero %}
     {% set c = t.cuentas %}
     {% if anotada %}<p class="portal-peticion" role="status"><strong>{{ _('Factura anotada. Tu gestoría la revisará.') }}</strong>{% if request.args.get('compartido') %} {{ _('Se han guardado como compras y gastos; si son ventas, dilo a tu gestoría.') }}{% endif %}</p>{% endif %}
+    {% if request.args.get('valorado') %}<p class="muted" role="status">{{ _('¡Gracias por contárnoslo!') }}</p>
+    {% elif puede_valorar_subida %}
+    <form method="post" action="{{ url_for('portal_cliente.valorar') }}" class="portal-valoracion-rapida" aria-labelledby="val-subida">
+      <input type="hidden" name="tipo" value="subida"><input type="hidden" name="referencia" value="{{ hoy_iso }}">
+      <span id="val-subida">{{ _('¿Te ha resultado fácil subir tus facturas?') }}</span>
+      <button type="submit" name="puntos" value="5" class="btn btn-ghost">{{ _('Sí, muy fácil') }}</button>
+      <button type="submit" name="puntos" value="2" class="btn btn-ghost">{{ _('Me ha costado') }}</button>
+    </form>
+    {% endif %}
     {% if atendida == 'reenviada' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: hemos enviado la factura de nuevo a tu gestoría.') }}</strong></p>{% endif %}
     {% if atendida == 'vista' %}<p class="portal-peticion" role="status"><strong>{{ _('De acuerdo: no te pediremos nada más de esa factura.') }}</strong></p>{% endif %}
     {% if repetidas %}<p class="portal-peticion" role="status"><strong>{{ ngettext('%(n)s archivo ya lo habías enviado y no se ha duplicado.', '%(n)s archivos ya los habías enviado y no se han duplicado.', repetidas, n=repetidas) }}</strong></p>{% endif %}

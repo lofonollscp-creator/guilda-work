@@ -19,11 +19,11 @@ from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
 from . import alta_cliente, almacen_documentos, calcom, ficha_cliente as ficha_cliente_unica, laboral, informe_cliente, informes, constancia_presentacion, db, documenso, espocrm, eventos, facturascripts, nextcloud, notificaciones_email, nucleo, perfil_fiscal, stripe_pagos, verticales
-from .auth import login_required
+from .auth import limiter, login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -310,6 +310,57 @@ def guardar_correo_facturas():
     except ValueError as e:
         return redirect(url_for("fiscal.recordatorios", error_correo=_(str(e))[:200]) + "#correo-facturas")
     return redirect(url_for("fiscal.recordatorios", guardado_correo=1) + "#correo-facturas")
+
+
+@fiscal_bp.route("/portal-adopcion")
+@login_required
+def portal_adopcion_panel():
+    """Qué clientes usan el portal, cuáles nunca entraron y cuáles llevan tiempo sin hacerlo, con el reenvío de la invitación; y el embudo de uso si el despacho lo ha encendido."""
+    if g.tenant_id is None:
+        abort(404)
+    r = portal_adopcion.resumen(g.tenant_id)
+    return render_template("fiscal_portal_adopcion.html", r=r, embudo_activo=portal_adopcion.embudo_activo(g.tenant_id), filtro=request.args.get("estado") or "",
+                           invitados=request.args.get("invitados", type=int), fallos=request.args.get("fallos", type=int), guardado=request.args.get("guardado"))
+
+
+@fiscal_bp.route("/portal-adopcion/embudo", methods=["POST"])
+@login_required
+def portal_adopcion_embudo():
+    if g.tenant_id is None:
+        abort(404)
+    portal_adopcion.fijar_embudo(g.tenant_id, request.form.get("activo") == "1")
+    return redirect(url_for("fiscal.portal_adopcion_panel", guardado=1) + "#embudo")
+
+
+@fiscal_bp.route("/portal-adopcion/<int:cliente_id>/invitar", methods=["POST"])
+@login_required
+@limiter.limit("60/hour")
+def portal_adopcion_invitar(cliente_id: int):
+    if g.tenant_id is None:
+        abort(404)
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
+        abort(404)
+    ok = portal_adopcion.invitar(cliente, request.host_url, request.remote_addr)
+    return redirect(url_for("fiscal.portal_adopcion_panel", invitados=1 if ok else 0, fallos=0 if ok else 1))
+
+
+@fiscal_bp.route("/portal-adopcion/invitar-pendientes", methods=["POST"])
+@login_required
+@limiter.limit("10/hour")
+def portal_adopcion_invitar_pendientes():
+    """Reenvía la invitación a todos los clientes con correo que aún no han entrado nunca (hasta 50 de una vez)."""
+    if g.tenant_id is None:
+        abort(404)
+    pendientes = [f for f in portal_adopcion.resumen(g.tenant_id)["clientes"] if f["estado"] == "nunca"][:portal_adopcion.MAX_INVITACIONES_A_LA_VEZ]
+    ok = fallos = 0
+    for f in pendientes:
+        cliente = db.obtener_cliente_fiscal(g.tenant_id, f["id"])
+        if cliente is not None and portal_adopcion.invitar(cliente, request.host_url, request.remote_addr):
+            ok += 1
+        else:
+            fallos += 1
+    return redirect(url_for("fiscal.portal_adopcion_panel", invitados=ok, fallos=fallos))
 
 
 @fiscal_bp.route("/recordatorios/lectura-previa", methods=["POST"])

@@ -9,6 +9,7 @@
 </header>
 <a class="btn btn-ghost" href="{{ url_for('fiscal.vencimientos') }}">&larr; {{ _('Volver a los vencimientos') }}</a>
 <a class="btn btn-ghost" href="{{ url_for('fiscal.portal_actividad') }}">{{ _('Actividad del portal') }}</a>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.portal_adopcion_panel') }}">{{ _('Adopción del portal') }}</a>
 
 {% if not smtp_configurado %}<div class="ia-error ds-mt-16">{{ _('El correo del portal no está configurado en el servidor: no se enviarán recordatorios a los clientes (los avisos internos al equipo sí).') }}</div>{% endif %}
 {% if error %}<div class="ia-error ds-mt-16" role="alert">{{ error }}</div>{% endif %}

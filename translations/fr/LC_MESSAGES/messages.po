@@ -24973,3 +24973,82 @@ msgstr "Ce document ne peut pas être partagé."
 
 msgid "Ya tienes muchos enlaces activos: anula alguno antes de crear otro."
 msgstr "Vous avez déjà beaucoup de liens actifs : annulez-en un avant d'en créer un autre."
+
+msgid "Adopción del portal"
+msgstr "Adoption du portail"
+
+msgid "Qué clientes usan su portal, cuáles nunca han entrado y cuáles llevan tiempo sin hacerlo."
+msgstr "Quels clients utilisent leur portail, lesquels ne se sont jamais connectés et lesquels ne le font plus depuis un moment."
+
+msgid "Activos (últimos 30 días): %(n)s"
+msgstr "Actifs (30 derniers jours) : %(n)s"
+
+msgid "Sin entrar hace más de 30 días: %(n)s"
+msgstr "Pas connectés depuis plus de 30 jours : %(n)s"
+
+msgid "Nunca han entrado: %(n)s"
+msgstr "Jamais connectés : %(n)s"
+
+msgid "Sin correo: %(n)s"
+msgstr "Sans e-mail : %(n)s"
+
+msgid "Reenviar la invitación a quienes nunca han entrado"
+msgstr "Renvoyer l'invitation à ceux qui ne se sont jamais connectés"
+
+msgid "Último acceso"
+msgstr "Dernier accès"
+
+msgid "Hace tiempo que no entra"
+msgstr "Ne se connecte plus depuis un moment"
+
+msgid "Reenviar invitación"
+msgstr "Renvoyer l'invitation"
+
+msgid "Embudo de uso"
+msgstr "Entonnoir d'usage"
+
+msgid "Opcional. Muestra cuántos clientes llegan a cada paso (tener acceso, entrar, subir una factura, escribirte). Son totales sin nombres y salen de lo que ya hay: no se rastrea nada nuevo de nadie. Está apagado salvo que lo enciendas."
+msgstr "Facultatif. Montre combien de clients atteignent chaque étape (avoir un accès, se connecter, téléverser une facture, vous écrire). Ce sont des totaux sans noms, issus de ce qui existe déjà : rien de nouveau n'est suivi. Désactivé sauf si vous l'activez."
+
+msgid "Mostrar el embudo de uso del portal"
+msgstr "Afficher l'entonnoir d'usage du portail"
+
+msgid "Con correo (se les puede invitar)"
+msgstr "Avec e-mail (peuvent être invités)"
+
+msgid "Han entrado alguna vez"
+msgstr "Se sont connectés au moins une fois"
+
+msgid "Entraron en los últimos 30 días"
+msgstr "Connectés au cours des 30 derniers jours"
+
+msgid "Han subido alguna factura"
+msgstr "Ont téléversé une facture"
+
+msgid "Te han escrito alguna vez"
+msgstr "Vous ont écrit"
+
+msgid "por ciento"
+msgstr "pour cent"
+
+msgid "Invitación enviada a %(n)s cliente."
+msgid_plural "Invitación enviada a %(n)s clientes."
+msgstr[0] "Invitation envoyée à %(n)s client."
+msgstr[1] "Invitation envoyée à %(n)s clients."
+
+msgid "%(n)s no se ha podido enviar (sin correo o fallo del servidor de correo)."
+msgid_plural "%(n)s no se han podido enviar (sin correo o fallo del servidor de correo)."
+msgstr[0] "%(n)s n'a pas pu être envoyée (pas d'e-mail ou erreur du serveur de messagerie)."
+msgstr[1] "%(n)s n'ont pas pu être envoyées (pas d'e-mail ou erreur du serveur de messagerie)."
+
+msgid "¡Gracias por contárnoslo!"
+msgstr "Merci de nous l'avoir dit !"
+
+msgid "¿Te ha resultado fácil subir tus facturas?"
+msgstr "Cela vous a-t-il été facile de téléverser vos factures ?"
+
+msgid "Sí, muy fácil"
+msgstr "Oui, très facile"
+
+msgid "Me ha costado"
+msgstr "C'était difficile"

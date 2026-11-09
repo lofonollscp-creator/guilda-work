@@ -659,7 +659,9 @@ def facturas():
         except ValueError as e:
             error = str(e)
     error = error or (request.args.get("error") or "")[:200] or None
-    return render_template("portal_facturas.html", cliente=cliente, lectura_previa=g.portal_rol != "consulta" and not g.get("vista_previa") and portal_lectura_previa.disponible(cliente), tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
+    hoy_iso = date.today().isoformat()
+    puede_valorar_subida = bool(anotada and g.portal_rol != "consulta" and not g.get("vista_previa") and not portal_valoraciones.ya_valorada(cliente, g.portal_email or cliente["email"] or "", "subida", hoy_iso))
+    return render_template("portal_facturas.html", puede_valorar_subida=puede_valorar_subida, hoy_iso=hoy_iso, cliente=cliente, lectura_previa=g.portal_rol != "consulta" and not g.get("vista_previa") and portal_lectura_previa.disponible(cliente), tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
                            datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), con_informe=verticales.esta_activo(cliente["tenant_id"], "fiscal"), justificantes_pendientes=len(justificantes.pendientes_del_cliente(cliente["id"])), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
                            max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
 
@@ -1145,7 +1147,8 @@ def valorar():
     """«¿Qué tal ha ido?»: la valoración de un trámite ya resuelto. Una nota baja avisa a quien lleva al cliente."""
     cliente = _cliente_actual_o_salir()
     tipo, referencia = request.form.get("tipo", ""), request.form.get("referencia", "")
-    destino = url_for("portal_cliente.peticion", peticion_id=int(referencia)) if tipo == "peticion" and referencia.isdigit() else url_for("portal_cliente.dashboard")
+    destino = (url_for("portal_cliente.peticion", peticion_id=int(referencia)) if tipo == "peticion" and referencia.isdigit()
+               else url_for("portal_cliente.facturas") if tipo == "subida" else url_for("portal_cliente.dashboard"))
     try:
         baja = portal_valoraciones.valorar(cliente, g.portal_email or cliente["email"], tipo, referencia, request.form.get("puntos"), request.form.get("comentario", ""))
     except ValueError as e:

@@ -3167,6 +3167,7 @@ CREATE TABLE IF NOT EXISTS portal_recordatorios_config (
     actualizado_en text,
     correo_facturas text,
     lectura_previa bigint NOT NULL DEFAULT 0,
+    embudo_uso bigint NOT NULL DEFAULT 0,
     PRIMARY KEY (tenant_id)
 );
 
