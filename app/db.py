@@ -2073,6 +2073,9 @@ def init_db() -> None:
         # FacturaScripts desde su ficha (mismo criterio best-effort que
         # espocrm_cuenta_id de arriba).
         _asegurar_columna(conn, "clientes_fiscales", "facturascripts_cliente_codigo", "TEXT")
+        _asegurar_columna(conn, "clientes_fiscales", "ventas_portal", "INTEGER NOT NULL DEFAULT 0")          # «Mis ventas»: el cliente factura desde el portal (app/portal_ventas.py)
+        _asegurar_columna(conn, "clientes_fiscales", "facturascripts_idempresa", "INTEGER")
+        _asegurar_columna(conn, "clientes_fiscales", "facturascripts_serie", "TEXT")
         # País de tributación del cliente (app/vencimientos_fiscales.py:
         # MODELOS_POR_PAIS) -- reestructuración del calendario fiscal para
         # soportar clientes que tributan fuera de España. DEFAULT 'ES' para
@@ -2349,6 +2352,8 @@ def init_db() -> None:
         portal_dossier.crear_esquema(conn)       # dossier de actividad con validación de la gestoría (app/portal_dossier.py)
         from . import portal_telemetria
         portal_telemetria.crear_esquema(conn)    # contadores de salud del portal desde el navegador, opcionales (app/portal_telemetria.py)
+        from . import portal_ventas
+        portal_ventas.crear_esquema(conn)        # «Mis ventas»: clientes y facturas emitidas desde el portal con FacturaScripts (app/portal_ventas.py)
         from . import portal_citas
         portal_citas.crear_esquema(conn)         # citas que los clientes piden a la gestoría desde el portal (app/portal_citas.py)
         from . import portal_valoraciones
@@ -2668,7 +2673,7 @@ CHECKLIST_MAX_CARACTERES = 200
 
 CAMPOS_CLIENTE_FISCAL = (
     "nombre", "nif", "notas", "modelos_fiscales", "generacion_automatica", "espocrm_cuenta_id", "email",
-    "facturascripts_cliente_codigo", "pais", "recordatorios_portal", "portal_honorarios", "idioma", "perfil_fiscal", "oficina_id", "nif_duplicado_autorizado",
+    "facturascripts_cliente_codigo", "ventas_portal", "facturascripts_idempresa", "facturascripts_serie", "pais", "recordatorios_portal", "portal_honorarios", "idioma", "perfil_fiscal", "oficina_id", "nif_duplicado_autorizado",
 )
 _MINUTOS_VIDA_ACCESO_PORTAL = 15
 MIME_PERMITIDOS_DOCUMENTO_VENCIMIENTO = {

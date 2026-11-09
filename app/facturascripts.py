@@ -489,14 +489,13 @@ def listar_facturas(url: str, api_key: str, cliente_codigo: str | None = None, l
     return cuerpo if isinstance(cuerpo, list) else cuerpo.get("data", [])
 
 
-def crear_factura(url: str, api_key: str, cliente_codigo: str, lineas: list[dict]) -> dict:
-    """`lineas`: lista de {"descripcion": str, "cantidad": float, "precio": float}."""
+def crear_factura(url: str, api_key: str, cliente_codigo: str, lineas: list[dict], extra: dict | None = None) -> dict:
+    """`lineas`: lista de {"descripcion": str, "cantidad": float, "precio": float}. `extra`: campos de la factura que se mandan tal cual (p. ej. `idempresa`, `codserie`, `fecha` para facturar a nombre de otra
+    empresa de la misma instancia); nunca pisan `codcliente` ni `lineas`."""
     if not url or not api_key:
         raise ErrorFacturaScripts("Este tenant no tiene FacturaScripts configurado todavía.")
-    estado, cuerpo = _peticion(
-        url, api_key, "crearFacturaCliente", metodo="POST",
-        cuerpo={"codcliente": cliente_codigo, "lineas": lineas},
-    )
+    cuerpo_peticion = {**{k: v for k, v in (extra or {}).items() if v not in (None, "")}, "codcliente": cliente_codigo, "lineas": lineas}
+    estado, cuerpo = _peticion(url, api_key, "crearFacturaCliente", metodo="POST", cuerpo=cuerpo_peticion)
     if estado not in (200, 201):
         mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
         raise ErrorFacturaScripts(f"No se ha podido crear la factura en FacturaScripts: {mensaje}")
@@ -514,3 +513,14 @@ def obtener_factura(url: str, api_key: str, idfactura) -> dict | None:
         mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
         raise ErrorFacturaScripts(f"No se ha podido leer la factura de FacturaScripts: {mensaje}")
     return cuerpo.get("data", cuerpo) if isinstance(cuerpo, dict) else None
+
+
+def listar_empresas(url: str, api_key: str) -> list[dict]:
+    """Las empresas de esa instancia de FacturaScripts (para comprobar que existe la que se va a usar para facturar a nombre de un cliente)."""
+    if not url or not api_key:
+        return []
+    estado, cuerpo = _peticion(url, api_key, "empresas?limit=100")
+    if estado != 200:
+        mensaje = cuerpo.get("message") or cuerpo.get("error") or cuerpo
+        raise ErrorFacturaScripts(f"No se han podido listar las empresas de FacturaScripts: {mensaje}")
+    return cuerpo if isinstance(cuerpo, list) else cuerpo.get("data", [])

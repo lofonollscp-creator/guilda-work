@@ -25742,3 +25742,126 @@ msgstr "D'alta"
 
 msgid "Pedir su baja"
 msgstr "Demanar-ne la baixa"
+
+msgid "Factura %(n)s"
+msgstr "Factura %(n)s"
+
+msgid "Fecha: %(f)s"
+msgstr "Data: %(f)s"
+
+msgid "Cliente: %(n)s · %(nif)s"
+msgstr "Client: %(n)s · %(nif)s"
+
+msgid "Base: %(b)s · Total con IVA: %(t)s"
+msgstr "Base: %(b)s · Total amb IVA: %(t)s"
+
+msgid "Copia informativa. La factura original está en FacturaScripts."
+msgstr "Còpia informativa. La factura original és a FacturaScripts."
+
+msgid "Mis ventas"
+msgstr "Les meves vendes"
+
+msgid "Emite tus facturas a tus clientes desde aquí: las crea y guarda FacturaScripts, el programa de tu gestoría."
+msgstr "Emet les teves factures als teus clients des d'aquí: les crea i desa FacturaScripts, el programa de la teva gestoria."
+
+msgid "Factura emitida."
+msgstr "Factura emesa."
+
+msgid "Abrir la copia en PDF"
+msgstr "Obrir la còpia en PDF"
+
+msgid "Tus clientes"
+msgstr "Els teus clients"
+
+msgid "Todavía no has dado de alta a ningún cliente. Hazlo aquí para poder facturarle."
+msgstr "Encara no has donat d'alta cap client. Fes-ho aquí per poder facturar-li."
+
+msgid "Correo (opcional)"
+msgstr "Correu (opcional)"
+
+msgid "Dar de alta al cliente"
+msgstr "Donar d'alta el client"
+
+msgid "Fecha (si no, hoy)"
+msgstr "Data (si no, avui)"
+
+msgid "Línea %(n)s"
+msgstr "Línia %(n)s"
+
+msgid "Precio sin IVA"
+msgstr "Preu sense IVA"
+
+msgid "El IVA lo aplica FacturaScripts según la configuración de tu gestoría."
+msgstr "L'IVA l'aplica FacturaScripts segons la configuració de la teva gestoria."
+
+msgid "Emitir la factura"
+msgstr "Emetre la factura"
+
+msgid "Facturas emitidas"
+msgstr "Factures emeses"
+
+msgid "Todavía no has emitido ninguna."
+msgstr "Encara no n'has emès cap."
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Mis ventas en el portal (facturar con FacturaScripts)"
+msgstr "Les meves vendes al portal (facturar amb FacturaScripts)"
+
+msgid "Dejar que este cliente emita sus facturas desde el portal"
+msgstr "Deixar que aquest client emeti les seves factures des del portal"
+
+msgid "Empresa de FacturaScripts (número)"
+msgstr "Empresa de FacturaScripts (número)"
+
+msgid "Serie (opcional)"
+msgstr "Sèrie (opcional)"
+
+msgid "Las facturas las crea FacturaScripts a nombre de esa empresa. Antes de activarlo, comprueba en una instancia de pruebas que sale lo que esperas."
+msgstr "Les factures les crea FacturaScripts a nom d'aquesta empresa. Abans d'activar-ho, comprova en una instància de proves que surt el que esperes."
+
+msgid "Indica el número de la empresa de FacturaScripts."
+msgstr "Indica el número de l'empresa de FacturaScripts."
+
+msgid "Esa empresa no existe en FacturaScripts."
+msgstr "Aquesta empresa no existeix a FacturaScripts."
+
+msgid "No se ha podido comprobar la empresa en FacturaScripts: revisa que esté activo."
+msgstr "No s'ha pogut comprovar l'empresa a FacturaScripts: revisa que estigui actiu."
+
+msgid "Indica el nombre y el NIF de tu cliente."
+msgstr "Indica el nom i el NIF del teu client."
+
+msgid "Facturar desde el portal no está activado para tu cuenta."
+msgstr "Facturar des del portal no està activat per al teu compte."
+
+msgid "Has llegado al máximo de clientes."
+msgstr "Has arribat al màxim de clients."
+
+msgid "No se ha podido dar de alta al cliente ahora mismo. Inténtalo de nuevo en unos minutos."
+msgstr "No s'ha pogut donar d'alta el client ara mateix. Torna-ho a provar d'aquí a uns minuts."
+
+msgid "No se ha podido dar de alta al cliente."
+msgstr "No s'ha pogut donar d'alta el client."
+
+msgid "Escribe un número válido en la cantidad y el precio."
+msgstr "Escriu un número vàlid a la quantitat i al preu."
+
+msgid "Cada línea necesita una descripción y un precio."
+msgstr "Cada línia necessita una descripció i un preu."
+
+msgid "La cantidad y el precio deben ser positivos y razonables."
+msgstr "La quantitat i el preu han de ser positius i raonables."
+
+msgid "Añade al menos una línea."
+msgstr "Afegeix almenys una línia."
+
+msgid "Elige uno de tus clientes."
+msgstr "Tria un dels teus clients."
+
+msgid "No se ha podido emitir la factura ahora mismo. No se ha creado nada: inténtalo de nuevo en unos minutos."
+msgstr "No s'ha pogut emetre la factura ara mateix. No s'ha creat res: torna-ho a provar d'aquí a uns minuts."
+
+msgid "FacturaScripts no ha confirmado la factura. Avisa a tu gestoría antes de volver a intentarlo."
+msgstr "FacturaScripts no ha confirmat la factura. Avisa la teva gestoria abans de tornar-ho a provar."

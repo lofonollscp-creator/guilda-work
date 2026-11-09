@@ -425,6 +425,8 @@ ALTER TABLE portal_silencios ADD CONSTRAINT fk_portal_silencios_tenant_id FOREIG
 ALTER TABLE portal_suscripciones_push ADD CONSTRAINT fk_portal_suscripciones_push_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_telemetria_diaria ADD CONSTRAINT fk_portal_telemetria_diaria_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_valoraciones ADD CONSTRAINT fk_portal_valoraciones_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_ventas_clientes ADD CONSTRAINT fk_portal_ventas_clientes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_ventas_facturas ADD CONSTRAINT fk_portal_ventas_facturas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE proyecto_miembros ADD CONSTRAINT fk_proyecto_miembros_categoria_id FOREIGN KEY (tenant_id, categoria_id) REFERENCES categorias (tenant_id, id) ON DELETE CASCADE;
 ALTER TABLE proyecto_miembros ADD CONSTRAINT fk_proyecto_miembros_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE proyecto_miembros ADD CONSTRAINT fk_proyecto_miembros_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);

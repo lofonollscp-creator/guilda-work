@@ -25733,3 +25733,126 @@ msgstr "Active"
 
 msgid "Pedir su baja"
 msgstr "Request their departure"
+
+msgid "Factura %(n)s"
+msgstr "Invoice %(n)s"
+
+msgid "Fecha: %(f)s"
+msgstr "Date: %(f)s"
+
+msgid "Cliente: %(n)s · %(nif)s"
+msgstr "Customer: %(n)s · %(nif)s"
+
+msgid "Base: %(b)s · Total con IVA: %(t)s"
+msgstr "Net: %(b)s · Total with VAT: %(t)s"
+
+msgid "Copia informativa. La factura original está en FacturaScripts."
+msgstr "Informative copy. The original invoice is in FacturaScripts."
+
+msgid "Mis ventas"
+msgstr "My sales"
+
+msgid "Emite tus facturas a tus clientes desde aquí: las crea y guarda FacturaScripts, el programa de tu gestoría."
+msgstr "Issue your invoices to your customers from here: FacturaScripts, your accountant's program, creates and stores them."
+
+msgid "Factura emitida."
+msgstr "Invoice issued."
+
+msgid "Abrir la copia en PDF"
+msgstr "Open the PDF copy"
+
+msgid "Tus clientes"
+msgstr "Your customers"
+
+msgid "Todavía no has dado de alta a ningún cliente. Hazlo aquí para poder facturarle."
+msgstr "You have not added any customer yet. Do it here so you can invoice them."
+
+msgid "Correo (opcional)"
+msgstr "Email (optional)"
+
+msgid "Dar de alta al cliente"
+msgstr "Add the customer"
+
+msgid "Fecha (si no, hoy)"
+msgstr "Date (otherwise today)"
+
+msgid "Línea %(n)s"
+msgstr "Line %(n)s"
+
+msgid "Precio sin IVA"
+msgstr "Price excluding VAT"
+
+msgid "El IVA lo aplica FacturaScripts según la configuración de tu gestoría."
+msgstr "FacturaScripts applies the VAT according to your accountant's configuration."
+
+msgid "Emitir la factura"
+msgstr "Issue the invoice"
+
+msgid "Facturas emitidas"
+msgstr "Invoices issued"
+
+msgid "Todavía no has emitido ninguna."
+msgstr "You have not issued any yet."
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Mis ventas en el portal (facturar con FacturaScripts)"
+msgstr "My sales in the portal (invoice with FacturaScripts)"
+
+msgid "Dejar que este cliente emita sus facturas desde el portal"
+msgstr "Let this client issue their invoices from the portal"
+
+msgid "Empresa de FacturaScripts (número)"
+msgstr "FacturaScripts company (number)"
+
+msgid "Serie (opcional)"
+msgstr "Series (optional)"
+
+msgid "Las facturas las crea FacturaScripts a nombre de esa empresa. Antes de activarlo, comprueba en una instancia de pruebas que sale lo que esperas."
+msgstr "FacturaScripts creates the invoices in that company's name. Before turning it on, check on a test instance that you get what you expect."
+
+msgid "Indica el número de la empresa de FacturaScripts."
+msgstr "Enter the FacturaScripts company number."
+
+msgid "Esa empresa no existe en FacturaScripts."
+msgstr "That company does not exist in FacturaScripts."
+
+msgid "No se ha podido comprobar la empresa en FacturaScripts: revisa que esté activo."
+msgstr "The company could not be checked in FacturaScripts: make sure it is running."
+
+msgid "Indica el nombre y el NIF de tu cliente."
+msgstr "Enter your customer's name and tax ID."
+
+msgid "Facturar desde el portal no está activado para tu cuenta."
+msgstr "Invoicing from the portal is not turned on for your account."
+
+msgid "Has llegado al máximo de clientes."
+msgstr "You have reached the maximum number of customers."
+
+msgid "No se ha podido dar de alta al cliente ahora mismo. Inténtalo de nuevo en unos minutos."
+msgstr "The customer could not be added right now. Try again in a few minutes."
+
+msgid "No se ha podido dar de alta al cliente."
+msgstr "The customer could not be added."
+
+msgid "Escribe un número válido en la cantidad y el precio."
+msgstr "Enter a valid number in the quantity and the price."
+
+msgid "Cada línea necesita una descripción y un precio."
+msgstr "Each line needs a description and a price."
+
+msgid "La cantidad y el precio deben ser positivos y razonables."
+msgstr "The quantity and price must be positive and reasonable."
+
+msgid "Añade al menos una línea."
+msgstr "Add at least one line."
+
+msgid "Elige uno de tus clientes."
+msgstr "Choose one of your customers."
+
+msgid "No se ha podido emitir la factura ahora mismo. No se ha creado nada: inténtalo de nuevo en unos minutos."
+msgstr "The invoice could not be issued right now. Nothing was created: try again in a few minutes."
+
+msgid "FacturaScripts no ha confirmado la factura. Avisa a tu gestoría antes de volver a intentarlo."
+msgstr "FacturaScripts did not confirm the invoice. Tell your accountant before trying again."

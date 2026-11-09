@@ -158,6 +158,7 @@ CREATE INDEX IF NOT EXISTS idx_portal_passkeys_persona ON portal_passkeys (tenan
 CREATE INDEX IF NOT EXISTS idx_portal_peticiones_cliente ON portal_peticiones (tenant_id, cliente_fiscal_id, estado);
 CREATE INDEX IF NOT EXISTS idx_portal_respuestas_tenant ON portal_respuestas_rapidas (tenant_id, titulo);
 CREATE INDEX IF NOT EXISTS idx_portal_sesiones_persona ON portal_sesiones (tenant_id, email, revocada_en);
+CREATE INDEX IF NOT EXISTS idx_portal_ventas_facturas ON portal_ventas_facturas (tenant_id, cliente_fiscal_id, creada_en);
 CREATE INDEX IF NOT EXISTS idx_proyecto_miembros_usuario ON proyecto_miembros (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_proyecto_notas_categoria ON proyecto_notas (categoria_id, fijada, id);
 CREATE INDEX IF NOT EXISTS idx_proyecto_plantillas_tenant ON proyecto_plantillas (tenant_id);

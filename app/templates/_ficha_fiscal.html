@@ -20,6 +20,17 @@
     </form>
     {% endif %}
   </div>
+  {% if soy_supervisor %}
+  <details class="portal-compartir"><summary>{{ _('Mis ventas en el portal (facturar con FacturaScripts)') }}</summary>
+    <form method="post" action="{{ url_for('fiscal.ventas_portal', cliente_id=fiscal.id) }}" class="inline-form">
+      <label><input type="checkbox" name="activo" value="1" {{ 'checked' if fiscal.ventas_portal }}> {{ _('Dejar que este cliente emita sus facturas desde el portal') }}</label>
+      <label>{{ _('Empresa de FacturaScripts (número)') }} <input type="number" min="1" name="idempresa" value="{{ fiscal.facturascripts_idempresa or '' }}"></label>
+      <label>{{ _('Serie (opcional)') }} <input type="text" name="serie" maxlength="4" value="{{ fiscal.facturascripts_serie or '' }}"></label>
+      <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+    </form>
+    <p class="muted">{{ _('Las facturas las crea FacturaScripts a nombre de esa empresa. Antes de activarlo, comprueba en una instancia de pruebas que sale lo que esperas.') }}</p>
+  </details>
+  {% endif %}
 
 {% if fiscal.notas %}
 <p class="subtitle">{{ fiscal.notas }}</p>

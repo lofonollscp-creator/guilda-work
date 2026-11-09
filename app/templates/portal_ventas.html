@@ -1,0 +1,47 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mis ventas') }}{% endblock %}
+{% block titulo %}{{ _('Mis ventas') }}{% endblock %}
+{% block subtitulo %}{{ _('Emite tus facturas a tus clientes desde aquí: las crea y guarda FacturaScripts, el programa de tu gestoría.') }}{% endblock %}
+{% block contenido %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    {% if emitida %}<p class="portal-peticion" role="status"><strong>{{ _('Factura emitida.') }}</strong> <a href="{{ url_for('portal_cliente.ventas_pdf', factura_id=emitida) }}" target="_blank" rel="noopener">{{ _('Abrir la copia en PDF') }}</a></p>{% endif %}
+    {% if puede %}
+    <section class="dash-panel" id="clientes" aria-labelledby="ven-clientes">
+      <h2 id="ven-clientes">{{ _('Tus clientes') }}</h2>
+      {% if sus_clientes %}<p class="muted">{{ sus_clientes|map(attribute='nombre')|join(', ') }}</p>{% else %}<p class="muted">{{ _('Todavía no has dado de alta a ningún cliente. Hazlo aquí para poder facturarle.') }}</p>{% endif %}
+      <form method="post" action="{{ url_for('portal_cliente.ventas_cliente_nuevo') }}" class="edit-form">
+        <label for="vc-nombre">{{ _('Nombre o razón social') }}</label><input type="text" id="vc-nombre" name="nombre" required maxlength="120">
+        <label for="vc-nif">{{ _('NIF') }}</label><input type="text" id="vc-nif" name="nif" required maxlength="20">
+        <label for="vc-email">{{ _('Correo (opcional)') }}</label><input type="email" id="vc-email" name="email" maxlength="120">
+        <div class="ds-fila"><button type="submit" class="btn btn-ghost">{{ _('Dar de alta al cliente') }}</button></div>
+      </form>
+    </section>
+    {% if sus_clientes %}
+    <section class="dash-panel" id="nueva" aria-labelledby="ven-nueva">
+      <h2 id="ven-nueva">{{ _('Nueva factura') }}</h2>
+      <form method="post" action="{{ url_for('portal_cliente.ventas_emitir') }}" class="edit-form">
+        <label for="vn-cliente">{{ _('Cliente') }}</label>
+        <select id="vn-cliente" name="cliente_id" required>{% for c in sus_clientes %}<option value="{{ c.id }}">{{ c.nombre }} ({{ c.nif }})</option>{% endfor %}</select>
+        <label for="vn-fecha">{{ _('Fecha (si no, hoy)') }}</label><input type="date" id="vn-fecha" name="fecha">
+        {% for i in range(4) %}
+        <fieldset class="portal-linea"><legend>{{ _('Línea %(n)s', n=i + 1) }}</legend>
+          <label for="vn-d{{ i }}">{{ _('Concepto') }}</label><input type="text" id="vn-d{{ i }}" name="descripcion_{{ i }}" maxlength="200" {{ 'required' if i == 0 }}>
+          <label for="vn-c{{ i }}">{{ _('Cantidad') }}</label><input type="text" inputmode="decimal" id="vn-c{{ i }}" name="cantidad_{{ i }}" value="{{ '1' if i == 0 else '' }}">
+          <label for="vn-p{{ i }}">{{ _('Precio sin IVA') }}</label><input type="text" inputmode="decimal" id="vn-p{{ i }}" name="precio_{{ i }}" {{ 'required' if i == 0 }}>
+        </fieldset>
+        {% endfor %}
+        <p class="muted">{{ _('El IVA lo aplica FacturaScripts según la configuración de tu gestoría.') }}</p>
+        <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Emitir la factura') }}</button></div>
+      </form>
+    </section>
+    {% endif %}
+    {% endif %}
+    <section class="dash-panel" aria-labelledby="ven-lista">
+      <h2 id="ven-lista">{{ _('Facturas emitidas') }}</h2>
+      {% if not facturas %}<p class="muted">{{ _('Todavía no has emitido ninguna.') }}</p>{% endif %}
+      <ul class="portal-personas">{% for f in facturas %}
+        <li class="portal-persona"><div class="portal-persona-datos"><strong>{{ f.codigo or f.idfactura }}</strong> <span class="muted">{{ f.cliente_nombre }} · {{ f.fecha|fecha_dia }} · {{ '%.2f'|format(f.total_centimos / 100) }} €</span></div>
+          <a class="btn btn-ghost" href="{{ url_for('portal_cliente.ventas_pdf', factura_id=f.id) }}" target="_blank" rel="noopener">{{ _('PDF') }}</a></li>{% endfor %}
+      </ul>
+    </section>
+{% endblock %}

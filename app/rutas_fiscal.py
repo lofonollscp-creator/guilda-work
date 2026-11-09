@@ -812,6 +812,35 @@ def ver_en_espocrm(cliente_id: int):
     return redirect(espocrm.url_cuenta(cliente["espocrm_cuenta_id"]))
 
 
+@fiscal_bp.route("/clientes/<int:cliente_id>/ventas-portal", methods=["POST"])
+@login_required
+def ventas_portal(cliente_id: int):
+    """Enciende o apaga «Mis ventas» para un cliente y fija la empresa de FacturaScripts (y la serie) con la que se factura a su nombre. Antes de encender se comprueba que esa empresa existe."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None:
+        abort(404)
+    activar = request.form.get("activo") == "1"
+    idempresa = request.form.get("idempresa", type=int)
+    serie = (request.form.get("serie") or "").strip().upper()[:4] or None
+    mensaje = None
+    if activar:
+        tenant = db.obtener_tenant(g.tenant_id)
+        if not idempresa or idempresa < 1:
+            mensaje = _("Indica el número de la empresa de FacturaScripts.")
+        else:
+            try:
+                existe = any(int(e.get("idempresa", -1)) == idempresa for e in facturascripts.listar_empresas(tenant["facturascripts_url"], tenant["facturascripts_api_key"]))
+            except (facturascripts.ErrorFacturaScripts, ValueError, TypeError):
+                existe = False
+                mensaje = _("No se ha podido comprobar la empresa en FacturaScripts: revisa que esté activo.")
+            if not existe and not mensaje:
+                mensaje = _("Esa empresa no existe en FacturaScripts.")
+        if mensaje:
+            return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id, error=mensaje))
+    db.editar_cliente_fiscal(g.tenant_id, cliente_id, ventas_portal=1 if activar else 0, facturascripts_idempresa=idempresa if activar else cliente["facturascripts_idempresa"], facturascripts_serie=serie if activar else cliente["facturascripts_serie"])
+    return redirect(url_for("fiscal.ficha_cliente", cliente_id=cliente_id))
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/facturascripts/vincular", methods=["POST"])
 @login_required
 def vincular_facturascripts(cliente_id: int):
