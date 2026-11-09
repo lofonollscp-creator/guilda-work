@@ -65,5 +65,12 @@
         {% endif %}
       </div>
       {% endfor %}
+      {% if paginas > 1 %}
+      <nav class="portal-trimestres" aria-label="{{ _('Páginas') }}">
+        {% if pagina > 1 %}<a href="{{ url_for('portal_cliente.mis_documentos', carpeta=carpeta, q=q or None, pagina=pagina - 1) }}">&larr; {{ _('Anteriores') }}</a>{% endif %}
+        <span class="muted" aria-current="page">{{ _('Página %(p)s de %(t)s (%(n)s documentos)', p=pagina, t=paginas, n=total_docs) }}</span>
+        {% if pagina < paginas %}<a href="{{ url_for('portal_cliente.mis_documentos', carpeta=carpeta, q=q or None, pagina=pagina + 1) }}">{{ _('Siguientes') }} &rarr;</a>{% endif %}
+      </nav>
+      {% endif %}
     </section>
 {% endblock %}

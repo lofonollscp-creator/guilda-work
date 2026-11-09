@@ -25655,3 +25655,24 @@ msgstr "What clients are waiting for"
 
 msgid "Lo lleva"
 msgstr "Handled by"
+
+msgid "Páginas"
+msgstr "Pages"
+
+msgid "Anteriores"
+msgstr "Previous"
+
+msgid "Página %(p)s de %(t)s (%(n)s documentos)"
+msgstr "Page %(p)s of %(t)s (%(n)s documents)"
+
+msgid "Siguientes"
+msgstr "Next"
+
+msgid "Buscar un cliente"
+msgstr "Search for a client"
+
+msgid "Buscar por nombre o correo"
+msgstr "Search by name or email"
+
+msgid "Página %(p)s de %(t)s (%(n)s clientes)"
+msgstr "Page %(p)s of %(t)s (%(n)s clients)"

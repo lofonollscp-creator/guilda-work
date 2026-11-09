@@ -121,3 +121,14 @@ def test_la_gestoria_comparte_desde_la_ficha_y_el_cliente_lo_ve(cliente):
     assert resp.status_code == 302 and pd.listar(db.obtener_cliente_fiscal_por_id(c))[0]["portal_vence"] == "2027-01-31"
     assert cliente.post(f"/fiscal/clientes/{c}/documentos/{doc}/portal", data={"accion": "ocultar"}).status_code == 302 and pd.listar(db.obtener_cliente_fiscal_por_id(c)) == []
     assert cliente.post(f"/fiscal/clientes/{c}/documentos/999999/portal", data={}).status_code == 404
+
+
+def test_la_lista_de_documentos_se_pagina_para_no_crecer_con_el_volumen(cliente, correo):
+    t, u, c = _despacho("Docs paginar")
+    for i in range(120):
+        almacen_documentos.guardar_de_cliente_fiscal_sin_usuario(t, c, f"doc-{i:03d}.pdf", "application/pdf", _pdf(f"texto {i}"))
+    conn = db.get_connection(); conn.execute("UPDATE cliente_documentos SET portal_visible = 1, portal_origen = 'cliente', portal_carpeta = 'otros' WHERE cliente_fiscal_id = ?", (c,)); conn.commit(); conn.close()
+    _entrar(cliente, c, "titular@ejemplo.com")
+    p1, p3 = _html(cliente, "/portal/documentos"), _html(cliente, "/portal/documentos?pagina=3")
+    assert p1.count('class="portal-doc"') == 50 and p3.count('class="portal-doc"') == 20 and "Página 1 de 3 (120 documentos)" in p1 and "Siguientes" in p1 and "Siguientes" not in p3
+    assert _html(cliente, "/portal/documentos?pagina=99").count('class="portal-doc"') == 20                      # una página fuera de rango se ajusta a la última

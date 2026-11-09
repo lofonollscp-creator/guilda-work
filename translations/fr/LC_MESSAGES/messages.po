@@ -25740,3 +25740,24 @@ msgstr "Ce qu'attendent les clients"
 
 msgid "Lo lleva"
 msgstr "Géré par"
+
+msgid "Páginas"
+msgstr "Pages"
+
+msgid "Anteriores"
+msgstr "Précédents"
+
+msgid "Página %(p)s de %(t)s (%(n)s documentos)"
+msgstr "Page %(p)s sur %(t)s (%(n)s documents)"
+
+msgid "Siguientes"
+msgstr "Suivants"
+
+msgid "Buscar un cliente"
+msgstr "Rechercher un client"
+
+msgid "Buscar por nombre o correo"
+msgstr "Rechercher par nom ou e-mail"
+
+msgid "Página %(p)s de %(t)s (%(n)s clientes)"
+msgstr "Page %(p)s sur %(t)s (%(n)s clients)"

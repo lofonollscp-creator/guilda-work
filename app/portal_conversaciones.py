@@ -207,8 +207,12 @@ def listar(cliente, estado: str | None = None) -> list[dict]:
             "(SELECT COUNT(*) FROM portal_conversaciones_mensajes m WHERE m.tenant_id = c.tenant_id AND m.conversacion_id = c.id AND m.de = 'cliente' AND m.leido_equipo = 0) AS sin_leer_equipo "
             "FROM portal_conversaciones c WHERE c.tenant_id = ? AND c.cliente_fiscal_id = ? " + ("AND c.estado = ? " if estado else "") + "ORDER BY c.actualizado_en DESC, c.id DESC",
             (cliente["tenant_id"], cliente["id"], *([estado] if estado else [])))]
+        ultimos = {u["conversacion_id"]: u for u in conn.execute(
+            "SELECT m.conversacion_id, m.de, m.texto, m.creado_en FROM portal_conversaciones_mensajes m WHERE m.tenant_id = ? AND m.id IN (SELECT MAX(x.id) FROM portal_conversaciones_mensajes x "
+            "WHERE x.tenant_id = ? AND x.conversacion_id IN (SELECT id FROM portal_conversaciones WHERE tenant_id = ? AND cliente_fiscal_id = ?) GROUP BY x.conversacion_id)",
+            (cliente["tenant_id"], cliente["tenant_id"], cliente["tenant_id"], cliente["id"])).fetchall()}                      # el último mensaje de cada hilo de una vez, no una consulta por hilo
         for f in filas:
-            u = conn.execute("SELECT de, texto, creado_en FROM portal_conversaciones_mensajes WHERE tenant_id = ? AND conversacion_id = ? ORDER BY id DESC LIMIT 1", (cliente["tenant_id"], f["id"])).fetchone()
+            u = ultimos[f["id"]]
             f["ultimo_texto"], f["ultimo_de"], f["ultimo_en"] = u["texto"], u["de"], u["creado_en"]
         return filas
     finally:

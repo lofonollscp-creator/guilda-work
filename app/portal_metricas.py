@@ -44,18 +44,14 @@ def filas(tenant_id: int, usuario_id: int, ahora: datetime | None = None) -> lis
         devueltas = {}
         if con_facturas:
             from . import facturas_portal
-            for c in clientes:
-                if c["id"] in con_acceso:
-                    devueltas[c["id"]] = len(facturas_portal.devueltas_sin_atender(c["id"]))
+            devueltas = facturas_portal.devueltas_por_cliente(tenant_id)
     finally:
         conn.close()
-    conformidades: dict[int, list[dict]] = {}
+    conformidades: dict[int, int] = {}
     tiempos: dict[int, list[float]] = {}
     if con_fiscal:
         from . import conformidad_declaracion
-        for c in clientes:
-            if c["id"] in con_acceso:
-                conformidades[c["id"]] = conformidad_declaracion.pendientes_del_cliente(c["id"])
+        conformidades = conformidad_declaracion.pendientes_por_cliente(tenant_id)
         conn = db.get_connection()
         try:
             declaraciones = {str(f["id"]): f["cliente_fiscal_id"] for f in conn.execute("SELECT id, cliente_fiscal_id FROM fiscal_declaraciones WHERE tenant_id = ? AND modelo = '303'", (tenant_id,))}
@@ -84,7 +80,7 @@ def filas(tenant_id: int, usuario_id: int, ahora: datetime | None = None) -> lis
         if c["id"] not in con_acceso:
             continue
         e = entradas.get(c["id"], [])
-        pendientes = len(conformidades.get(c["id"], [])) + sin_explicar.get(c["id"], 0) + firmas.get(c["id"], 0) + devueltas.get(c["id"], 0)
+        pendientes = conformidades.get(c["id"], 0) + sin_explicar.get(c["id"], 0) + firmas.get(c["id"], 0) + devueltas.get(c["id"], 0)
         ultima = e[-1] if e else None
         recientes = [x for x in e if x >= desde_30]
         t = tiempos.get(c["id"], [])

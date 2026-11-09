@@ -1320,7 +1320,11 @@ def mis_documentos():
     carpeta = request.args.get("carpeta") if request.args.get("carpeta") in portal_documentos.CARPETAS else None
     q = (request.args.get("q") or "")[:80]
     puede = g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa")
-    return render_template("portal_documentos.html", cliente=cliente, docs=portal_documentos.listar(cliente, carpeta, q), cuentas=portal_documentos.cuentas(cliente), carpetas=portal_documentos.CARPETAS, carpeta=carpeta, q=q,
+    todos = portal_documentos.listar(cliente, carpeta, q)
+    por_pagina = 50
+    pagina = max(1, min(request.args.get("pagina", 1, type=int), max(1, -(-len(todos) // por_pagina))))
+    return render_template("portal_documentos.html", cliente=cliente, docs=todos[(pagina - 1) * por_pagina: pagina * por_pagina], total_docs=len(todos), pagina=pagina, paginas=max(1, -(-len(todos) // por_pagina)),
+                           cuentas=portal_documentos.cuentas(cliente), carpetas=portal_documentos.CARPETAS, carpeta=carpeta, q=q,
                            por_vencer=portal_documentos.por_vencer(cliente), puede_subir=puede, avisos=session.pop("portal_docs_avisos", None), error=(request.args.get("error") or "")[:200] or None,
                            subidos=request.args.get("subidos", type=int), portal_seccion="documentos")
 

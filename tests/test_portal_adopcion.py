@@ -64,3 +64,15 @@ def test_reenviar_la_invitacion_manda_un_enlace_nuevo_y_solo_de_su_despacho(clie
     from app import portal_invitaciones as pi
     cliente.post("/fiscal/portal-adopcion/invitar-pendientes")
     assert pi.pendientes(t) == 1                                                                  # el reenvío masivo se pone en cola: sale escalonado
+
+
+def test_el_panel_de_adopcion_pagina_y_busca_para_aguantar_miles_de_clientes(cliente):
+    from app.db_fiscal import crear_cliente_fiscal
+    uid, t, c = _web(cliente, email="adopcion-pag@ejemplo.com")
+    for i in range(230):
+        crear_cliente_fiscal(t, f"Cliente numero {i:03d}", nif=None, email=f"cli{i}@ejemplo.com")
+    html = cliente.get("/fiscal/portal-adopcion").get_data(as_text=True)
+    assert 95 <= html.count("Reenviar invitación") <= 100 and "Página 1 de 3" in html                  # una página de 100 filas (la ficha de la persona de prueba no lleva botón)
+    assert "Cliente numero 229" in cliente.get("/fiscal/portal-adopcion?pagina=3").get_data(as_text=True)
+    buscado = cliente.get("/fiscal/portal-adopcion?q=numero 150").get_data(as_text=True)
+    assert "Cliente numero 150" in buscado and "Cliente numero 151" not in buscado

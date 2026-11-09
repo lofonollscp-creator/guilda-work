@@ -176,6 +176,21 @@ def pasos_de(f: dict) -> list[dict]:
     return [{"clave": p, "hecho": hechas[p], "actual": p == actual} for p in PASOS]
 
 
+def devueltas_por_cliente(tenant_id: int) -> dict[int, int]:
+    """{cliente_fiscal_id: facturas devueltas que aún no ha atendido} de todo el despacho, en dos consultas."""
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT id, cliente_fiscal_id FROM facturas_contables WHERE tenant_id = ? AND estado = 'descartada'", (tenant_id,)).fetchall()
+        ev = _eventos(conn, tenant_id, [f["id"] for f in filas])
+    finally:
+        conn.close()
+    res: dict[int, int] = {}
+    for f in filas:
+        if f["id"] in ev and not ev[f["id"]]["atendida"]:
+            res[f["cliente_fiscal_id"]] = res.get(f["cliente_fiscal_id"], 0) + 1
+    return res
+
+
 def devueltas_sin_atender(cliente_fiscal_id: int) -> list[dict]:
     return [f for f in facturas_del_cliente(cliente_fiscal_id) if f["devuelta"] is not None and not f["atendida"]]
 

@@ -34,10 +34,16 @@
 
 <section class="proyecto-bloque ds-mt-24" aria-labelledby="adop-clientes">
   <h2 id="adop-clientes">{{ _('Clientes') }}</h2>
+  <form method="get" class="portal-glosario-buscar" role="search">
+    <label class="sr-only" for="adop-q">{{ _('Buscar un cliente') }}</label>
+    <input type="search" id="adop-q" name="q" value="{{ q }}" maxlength="60" placeholder="{{ _('Buscar por nombre o correo') }}">
+    {% if filtro %}<input type="hidden" name="estado" value="{{ filtro }}">{% endif %}
+    <button type="submit" class="btn btn-ghost">{{ _('Buscar') }}</button>
+  </form>
   <div class="table-wrap"><table class="historial-table">
     <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Correo') }}</th><th>{{ _('Estado') }}</th><th>{{ _('Último acceso') }}</th><th><span class="sr-only">{{ _('Acciones') }}</span></th></tr></thead>
     <tbody>
-      {% for f in r.clientes if not filtro or f.estado == filtro %}
+      {% for f in r.clientes %}
       <tr>
         <td><a href="{{ url_for('fiscal.editar_cliente', cliente_id=f.id) }}">{{ f.nombre }}</a></td>
         <td>{{ f.email or '—' }}</td>
@@ -48,6 +54,13 @@
       {% else %}<tr><td colspan="5" class="muted">{{ _('No hay clientes.') }}</td></tr>{% endfor %}
     </tbody>
   </table></div>
+  {% if paginas > 1 %}
+  <nav class="ds-fila ds-mt-16" aria-label="{{ _('Páginas') }}">
+    {% if pagina > 1 %}<a class="btn btn-ghost" href="{{ url_for('fiscal.portal_adopcion_panel', estado=filtro or None, q=q or None, pagina=pagina - 1) }}">&larr; {{ _('Anteriores') }}</a>{% endif %}
+    <span class="muted" aria-current="page">{{ _('Página %(p)s de %(t)s (%(n)s clientes)', p=pagina, t=paginas, n=total_filas) }}</span>
+    {% if pagina < paginas %}<a class="btn btn-ghost" href="{{ url_for('fiscal.portal_adopcion_panel', estado=filtro or None, q=q or None, pagina=pagina + 1) }}">{{ _('Siguientes') }} &rarr;</a>{% endif %}
+  </nav>
+  {% endif %}
 </section>
 
 <section class="proyecto-bloque ds-mt-24" id="embudo" aria-labelledby="adop-embudo">

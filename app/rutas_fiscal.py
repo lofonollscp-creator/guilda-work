@@ -384,7 +384,14 @@ def portal_adopcion_panel():
     if g.tenant_id is None:
         abort(404)
     r = portal_adopcion.resumen(g.tenant_id)
-    return render_template("fiscal_portal_adopcion.html", r=r, embudo_activo=portal_adopcion.embudo_activo(g.tenant_id), filtro=request.args.get("estado") or "",
+    filtro = request.args.get("estado") or ""
+    q = (request.args.get("q") or "").strip().lower()[:60]
+    filas = [f for f in r["clientes"] if (not filtro or f["estado"] == filtro) and (not q or q in f["nombre"].lower() or q in (f["email"] or "").lower())]
+    por_pagina = 100
+    paginas = max(1, -(-len(filas) // por_pagina))
+    pagina = max(1, min(request.args.get("pagina", 1, type=int), paginas))
+    r = {**r, "clientes": filas[(pagina - 1) * por_pagina: pagina * por_pagina]}
+    return render_template("fiscal_portal_adopcion.html", r=r, q=q, pagina=pagina, paginas=paginas, total_filas=len(filas), embudo_activo=portal_adopcion.embudo_activo(g.tenant_id), filtro=filtro,
                            invitados=request.args.get("invitados", type=int), fallos=request.args.get("fallos", type=int), guardado=request.args.get("guardado"),
                            en_cola=request.args.get("en_cola", type=int), cola=portal_invitaciones.pendientes(g.tenant_id))
 

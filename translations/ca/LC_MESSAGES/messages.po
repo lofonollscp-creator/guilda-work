@@ -25664,3 +25664,24 @@ msgstr "El que esperen els clients"
 
 msgid "Lo lleva"
 msgstr "Ho porta"
+
+msgid "Páginas"
+msgstr "Pàgines"
+
+msgid "Anteriores"
+msgstr "Anteriors"
+
+msgid "Página %(p)s de %(t)s (%(n)s documentos)"
+msgstr "Pàgina %(p)s de %(t)s (%(n)s documents)"
+
+msgid "Siguientes"
+msgstr "Següents"
+
+msgid "Buscar un cliente"
+msgstr "Cercar un client"
+
+msgid "Buscar por nombre o correo"
+msgstr "Cercar per nom o correu"
+
+msgid "Página %(p)s de %(t)s (%(n)s clientes)"
+msgstr "Pàgina %(p)s de %(t)s (%(n)s clients)"

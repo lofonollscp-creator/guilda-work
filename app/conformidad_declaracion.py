@@ -89,6 +89,21 @@ def pendientes_del_cliente(cliente_fiscal_id: int) -> list[dict]:
     return [{**f, "pedida_en": ev[f["id"]]["pedida_en"]} for f in filas if f["id"] in ev and ev[f["id"]]["respuesta"] is None]
 
 
+def pendientes_por_cliente(tenant_id: int) -> dict[int, int]:
+    """{cliente_fiscal_id: cuántas conformidades tiene pendientes de contestar} de todo el despacho, en dos consultas (la versión «de un cliente» no sirve para recorrer miles)."""
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT id, cliente_fiscal_id FROM fiscal_declaraciones WHERE tenant_id = ? AND modelo = '303' AND estado IN ('revisada', 'exportada')", (tenant_id,)).fetchall()
+        ev = _eventos(conn, tenant_id, [f["id"] for f in filas])
+    finally:
+        conn.close()
+    res: dict[int, int] = {}
+    for f in filas:
+        if f["id"] in ev and ev[f["id"]]["respuesta"] is None:
+            res[f["cliente_fiscal_id"]] = res.get(f["cliente_fiscal_id"], 0) + 1
+    return res
+
+
 def ver_para_cliente(cliente_fiscal_id: int, declaracion_id: int) -> dict | None:
     """La declaración tal como la ve el cliente (resumen, facturas y su respuesta), o None si no es suya o nunca se le pidió la conformidad."""
     cliente = db.obtener_cliente_fiscal_por_id(cliente_fiscal_id)
