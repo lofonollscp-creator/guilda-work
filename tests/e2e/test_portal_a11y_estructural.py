@@ -27,8 +27,8 @@ REGLAS = """() => {
 
 # Los enlaces del widget de captcha (altcha-widget) los pone un tercero y los navegadores ya aplican noopener a target=_blank: se dejan fuera de la regla.
 CON_SESION = ("/portal/", "/portal/facturas", "/portal/impuestos", "/portal/mensajes", "/portal/avisos", "/portal/carpeta", "/portal/cuenta", "/portal/glosario", "/portal/actividad", "/portal/cuestionarios",
-              "/portal/peticiones", "/portal/justificantes", "/portal/buscar", "/portal/conversaciones/nueva", "/portal/citas", "/portal/extracto")
-SIN_SESION = ("/portal/entrar", "/portal/no-puedo-entrar", "/portal/solicitar-acceso")
+              "/portal/peticiones", "/portal/justificantes", "/portal/buscar", "/portal/conversaciones/nueva", "/portal/citas", "/portal/extracto", "/portal/documentos", "/portal/gestiones", "/portal/gestiones/cambio-datos", "/portal/dossier", "/portal/trabajadores", "/portal/sin-conexion")
+SIN_SESION = ("/portal/entrar", "/portal/no-puedo-entrar", "/portal/solicitar-acceso", "/portal/verificar-dossier")
 
 
 def test_cada_pantalla_del_portal_cumple_las_reglas_estructurales(servidor, abrir, entrar_como_equipo, chromium):
