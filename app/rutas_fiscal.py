@@ -23,7 +23,7 @@ from .auth import limiter, login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_invitaciones, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_bandeja, portal_invitaciones, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -330,6 +330,18 @@ def guardar_correo_facturas():
     except ValueError as e:
         return redirect(url_for("fiscal.recordatorios", error_correo=_(str(e))[:200]) + "#correo-facturas")
     return redirect(url_for("fiscal.recordatorios", guardado_correo=1) + "#correo-facturas")
+
+
+@fiscal_bp.route("/bandeja-portal")
+@login_required
+def bandeja_portal():
+    """Todo lo que los clientes esperan que atienda el equipo, en una lista por orden de espera: mensajes, solicitudes de gestiones, documentos enviados, cuestionarios, citas y dossiers."""
+    if g.tenant_id is None:
+        abort(404)
+    tipo = request.args.get("tipo") if request.args.get("tipo") in portal_bandeja.TIPOS else None
+    solo_mios = request.args.get("mios") == "1"
+    todos = portal_bandeja.listar(g.tenant_id, g.usuario_id, solo_mios=solo_mios)
+    return render_template("fiscal_bandeja_portal.html", items=[i for i in todos if not tipo or i["tipo"] == tipo], cuentas=portal_bandeja.cuentas(todos), tipo=tipo, solo_mios=solo_mios, total=len(todos))
 
 
 @fiscal_bp.route("/dossiers")

@@ -10,6 +10,7 @@
 <a class="btn btn-ghost" href="{{ url_for('fiscal.recordatorios') }}">&larr; {{ _('Recordatorios a clientes') }}</a>
 <a class="btn btn-ghost" href="{{ url_for('fiscal.portal_actividad') }}">{{ _('Actividad del portal') }}</a>
 <a class="btn btn-ghost" href="{{ url_for('fiscal.dossiers_pendientes') }}">{{ _('Dossiers por validar') }}</a>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.bandeja_portal') }}">{{ _('Bandeja del portal') }}</a>
 
 {% if invitados is not none or fallos %}
 <p class="{{ 'ia-error' if fallos else 'muted' }}" role="status">{{ ngettext('Invitación enviada a %(n)s cliente.', 'Invitación enviada a %(n)s clientes.', invitados or 0, n=invitados or 0) }}{% if fallos %} {{ ngettext('%(n)s no se ha podido enviar (sin correo o fallo del servidor de correo).', '%(n)s no se han podido enviar (sin correo o fallo del servidor de correo).', fallos, n=fallos) }}{% endif %}</p>

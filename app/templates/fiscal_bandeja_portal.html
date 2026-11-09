@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Bandeja del portal') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Bandeja del portal') }}</h1>
+    <p class="subtitle">{{ _('Todo lo que tus clientes esperan que atiendas, por orden de espera: lo que lleva más tiempo, primero.') }}</p>
+  </div>
+</header>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.portal_adopcion_panel') }}">{{ _('Adopción del portal') }}</a>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.portal_actividad') }}">{{ _('Actividad del portal') }}</a>
+{% set nombres = {'mensaje': _('Mensajes'), 'solicitud': _('Solicitudes'), 'documentos': _('Documentos enviados'), 'cuestionario': _('Cuestionarios'), 'cita': _('Citas'), 'dossier': _('Dossiers')} %}
+<nav class="ds-fila ds-envolver ds-mt-16" aria-label="{{ _('Filtrar por tipo') }}">
+  <a class="btn {{ 'btn-primary' if not tipo else 'btn-ghost' }}" href="{{ url_for('fiscal.bandeja_portal', mios='1' if solo_mios else None) }}">{{ _('Todo (%(n)s)', n=total) }}</a>
+  {% for k, n in cuentas.items() if n %}<a class="btn {{ 'btn-primary' if tipo == k else 'btn-ghost' }}" href="{{ url_for('fiscal.bandeja_portal', tipo=k, mios='1' if solo_mios else None) }}">{{ nombres[k] }} ({{ n }})</a>{% endfor %}
+  <a class="btn {{ 'btn-primary' if solo_mios else 'btn-ghost' }}" href="{{ url_for('fiscal.bandeja_portal', tipo=tipo, mios=None if solo_mios else '1') }}" aria-pressed="{{ 'true' if solo_mios else 'false' }}">{{ _('Solo mis clientes') }}</a>
+</nav>
+{% if not items %}<p class="empty-lane ds-mt-16" role="status">{{ _('No hay nada esperando. Buen trabajo.') }}</p>
+{% else %}
+<div class="table-wrap ds-mt-16"><table class="historial-table">
+  <caption class="sr-only">{{ _('Lo que esperan los clientes') }}</caption>
+  <thead><tr><th scope="col">{{ _('Qué') }}</th><th scope="col">{{ _('Cliente') }}</th><th scope="col">{{ _('Esperando') }}</th><th scope="col">{{ _('Lo lleva') }}</th></tr></thead>
+  <tbody>{% for i in items %}
+    <tr><td><span class="pill">{{ nombres[i.tipo] }}</span> <a href="{{ i.url }}">{{ i.titulo }}</a></td><td>{{ i.cliente }}</td>
+      <td class="{{ 'texto-aviso' if i.dias >= 3 }}">{{ ngettext('%(n)s día', '%(n)s días', i.dias, n=i.dias) if i.dias else _('hoy') }}</td><td>{{ i.responsable or '—' }}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% endblock %}

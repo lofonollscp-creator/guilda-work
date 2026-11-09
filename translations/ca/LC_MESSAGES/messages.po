@@ -25634,3 +25634,33 @@ msgid "Hay %(n)s factura sin revisar que todavía no cuenta aquí."
 msgid_plural "Hay %(n)s facturas sin revisar que todavía no cuentan aquí."
 msgstr[0] "Hi ha %(n)s factura sense revisar que encara no compta aquí."
 msgstr[1] "Hi ha %(n)s factures sense revisar que encara no compten aquí."
+
+msgid "Bandeja del portal"
+msgstr "Safata del portal"
+
+msgid "Todo lo que tus clientes esperan que atiendas, por orden de espera: lo que lleva más tiempo, primero."
+msgstr "Tot el que els teus clients esperen que atenguis, per ordre d'espera: el que fa més temps, primer."
+
+msgid "Solicitudes"
+msgstr "Sol·licituds"
+
+msgid "Documentos enviados"
+msgstr "Documents enviats"
+
+msgid "Dossiers"
+msgstr "Dossiers"
+
+msgid "Todo (%(n)s)"
+msgstr "Tot (%(n)s)"
+
+msgid "Solo mis clientes"
+msgstr "Només els meus clients"
+
+msgid "No hay nada esperando. Buen trabajo."
+msgstr "No hi ha res esperant. Bona feina."
+
+msgid "Lo que esperan los clientes"
+msgstr "El que esperen els clients"
+
+msgid "Lo lleva"
+msgstr "Ho porta"

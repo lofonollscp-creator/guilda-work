@@ -25625,3 +25625,33 @@ msgid "Hay %(n)s factura sin revisar que todavía no cuenta aquí."
 msgid_plural "Hay %(n)s facturas sin revisar que todavía no cuentan aquí."
 msgstr[0] "There is %(n)s unreviewed invoice that does not count here yet."
 msgstr[1] "There are %(n)s unreviewed invoices that do not count here yet."
+
+msgid "Bandeja del portal"
+msgstr "Portal inbox"
+
+msgid "Todo lo que tus clientes esperan que atiendas, por orden de espera: lo que lleva más tiempo, primero."
+msgstr "Everything your clients are waiting for you to deal with, in order of waiting time: the longest first."
+
+msgid "Solicitudes"
+msgstr "Requests"
+
+msgid "Documentos enviados"
+msgstr "Documents sent"
+
+msgid "Dossiers"
+msgstr "Dossiers"
+
+msgid "Todo (%(n)s)"
+msgstr "All (%(n)s)"
+
+msgid "Solo mis clientes"
+msgstr "Only my clients"
+
+msgid "No hay nada esperando. Buen trabajo."
+msgstr "Nothing is waiting. Good work."
+
+msgid "Lo que esperan los clientes"
+msgstr "What clients are waiting for"
+
+msgid "Lo lleva"
+msgstr "Handled by"

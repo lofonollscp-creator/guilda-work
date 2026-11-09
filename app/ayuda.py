@@ -124,6 +124,7 @@ MAPA = {
     "fiscal.recordatorios": "trabajo-diario/recordatorios-a-clientes",
     "fiscal.portal_adopcion": "trabajo-diario/actividad-del-portal",
     "fiscal.dossier": "trabajo-diario/actividad-del-portal",
+    "fiscal.bandeja_portal": "trabajo-diario/actividad-del-portal",
     "fiscal.papelera": "datos-y-administracion/papelera",
     "contabilidad.": "contabilizacion-de-facturas/empezar",
     "contabilidad.lista": "contabilizacion-de-facturas/anotar-y-revisar-facturas",
