@@ -1900,7 +1900,12 @@ class DocumentoCliente {
   final String? creadoEn;
   final int? cifrado;
   final String? nombreCifrado;
-  const DocumentoCliente({required this.id, this.tenantId, this.clienteFiscalId, this.nombreArchivo, this.tipoMime, this.tamanoBytes, this.categoria, this.origen, this.mensajeCorreoId, this.asuntoOrigen, this.subidoPor, this.hashSha256, this.creadoEn, this.cifrado, this.nombreCifrado, });
+  final int? portalVisible;
+  final String? portalCarpeta;
+  final String? portalOrigen;
+  final String? portalVence;
+  final String? portalTexto;
+  const DocumentoCliente({required this.id, this.tenantId, this.clienteFiscalId, this.nombreArchivo, this.tipoMime, this.tamanoBytes, this.categoria, this.origen, this.mensajeCorreoId, this.asuntoOrigen, this.subidoPor, this.hashSha256, this.creadoEn, this.cifrado, this.nombreCifrado, this.portalVisible, this.portalCarpeta, this.portalOrigen, this.portalVence, this.portalTexto, });
   factory DocumentoCliente.fromJson(Map<String, dynamic> j) => DocumentoCliente(
     id: (j['id'] as num).toInt(),
     tenantId: j['tenant_id'] == null ? null : (j['tenant_id'] as num).toInt(),
@@ -1917,6 +1922,11 @@ class DocumentoCliente {
     creadoEn: j['creado_en'] == null ? null : j['creado_en'] as String,
     cifrado: j['cifrado'] == null ? null : (j['cifrado'] as num).toInt(),
     nombreCifrado: j['nombre_cifrado'] == null ? null : j['nombre_cifrado'] as String,
+    portalVisible: j['portal_visible'] == null ? null : (j['portal_visible'] as num).toInt(),
+    portalCarpeta: j['portal_carpeta'] == null ? null : j['portal_carpeta'] as String,
+    portalOrigen: j['portal_origen'] == null ? null : j['portal_origen'] as String,
+    portalVence: j['portal_vence'] == null ? null : j['portal_vence'] as String,
+    portalTexto: j['portal_texto'] == null ? null : j['portal_texto'] as String,
   );
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -1934,10 +1944,15 @@ class DocumentoCliente {
     'creado_en': ?creadoEn,
     'cifrado': ?cifrado,
     'nombre_cifrado': ?nombreCifrado,
+    'portal_visible': ?portalVisible,
+    'portal_carpeta': ?portalCarpeta,
+    'portal_origen': ?portalOrigen,
+    'portal_vence': ?portalVence,
+    'portal_texto': ?portalTexto,
   };
-  DocumentoCliente copyWith({int? id, int? tenantId, int? clienteFiscalId, String? nombreArchivo, String? tipoMime, int? tamanoBytes, String? categoria, String? origen, int? mensajeCorreoId, String? asuntoOrigen, int? subidoPor, String? hashSha256, String? creadoEn, int? cifrado, String? nombreCifrado, }) => DocumentoCliente(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, nombreArchivo: nombreArchivo ?? this.nombreArchivo, tipoMime: tipoMime ?? this.tipoMime, tamanoBytes: tamanoBytes ?? this.tamanoBytes, categoria: categoria ?? this.categoria, origen: origen ?? this.origen, mensajeCorreoId: mensajeCorreoId ?? this.mensajeCorreoId, asuntoOrigen: asuntoOrigen ?? this.asuntoOrigen, subidoPor: subidoPor ?? this.subidoPor, hashSha256: hashSha256 ?? this.hashSha256, creadoEn: creadoEn ?? this.creadoEn, cifrado: cifrado ?? this.cifrado, nombreCifrado: nombreCifrado ?? this.nombreCifrado, );
-  @override bool operator ==(Object other) => other is DocumentoCliente && other.id == id && other.tenantId == tenantId && other.clienteFiscalId == clienteFiscalId && other.nombreArchivo == nombreArchivo && other.tipoMime == tipoMime && other.tamanoBytes == tamanoBytes && other.categoria == categoria && other.origen == origen && other.mensajeCorreoId == mensajeCorreoId && other.asuntoOrigen == asuntoOrigen && other.subidoPor == subidoPor && other.hashSha256 == hashSha256 && other.creadoEn == creadoEn && other.cifrado == cifrado && other.nombreCifrado == nombreCifrado;
-  @override int get hashCode => Object.hashAll([id, tenantId, clienteFiscalId, nombreArchivo, tipoMime, tamanoBytes, categoria, origen, mensajeCorreoId, asuntoOrigen, subidoPor, hashSha256, creadoEn, cifrado, nombreCifrado]);
+  DocumentoCliente copyWith({int? id, int? tenantId, int? clienteFiscalId, String? nombreArchivo, String? tipoMime, int? tamanoBytes, String? categoria, String? origen, int? mensajeCorreoId, String? asuntoOrigen, int? subidoPor, String? hashSha256, String? creadoEn, int? cifrado, String? nombreCifrado, int? portalVisible, String? portalCarpeta, String? portalOrigen, String? portalVence, String? portalTexto, }) => DocumentoCliente(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, clienteFiscalId: clienteFiscalId ?? this.clienteFiscalId, nombreArchivo: nombreArchivo ?? this.nombreArchivo, tipoMime: tipoMime ?? this.tipoMime, tamanoBytes: tamanoBytes ?? this.tamanoBytes, categoria: categoria ?? this.categoria, origen: origen ?? this.origen, mensajeCorreoId: mensajeCorreoId ?? this.mensajeCorreoId, asuntoOrigen: asuntoOrigen ?? this.asuntoOrigen, subidoPor: subidoPor ?? this.subidoPor, hashSha256: hashSha256 ?? this.hashSha256, creadoEn: creadoEn ?? this.creadoEn, cifrado: cifrado ?? this.cifrado, nombreCifrado: nombreCifrado ?? this.nombreCifrado, portalVisible: portalVisible ?? this.portalVisible, portalCarpeta: portalCarpeta ?? this.portalCarpeta, portalOrigen: portalOrigen ?? this.portalOrigen, portalVence: portalVence ?? this.portalVence, portalTexto: portalTexto ?? this.portalTexto, );
+  @override bool operator ==(Object other) => other is DocumentoCliente && other.id == id && other.tenantId == tenantId && other.clienteFiscalId == clienteFiscalId && other.nombreArchivo == nombreArchivo && other.tipoMime == tipoMime && other.tamanoBytes == tamanoBytes && other.categoria == categoria && other.origen == origen && other.mensajeCorreoId == mensajeCorreoId && other.asuntoOrigen == asuntoOrigen && other.subidoPor == subidoPor && other.hashSha256 == hashSha256 && other.creadoEn == creadoEn && other.cifrado == cifrado && other.nombreCifrado == nombreCifrado && other.portalVisible == portalVisible && other.portalCarpeta == portalCarpeta && other.portalOrigen == portalOrigen && other.portalVence == portalVence && other.portalTexto == portalTexto;
+  @override int get hashCode => Object.hashAll([id, tenantId, clienteFiscalId, nombreArchivo, tipoMime, tamanoBytes, categoria, origen, mensajeCorreoId, asuntoOrigen, subidoPor, hashSha256, creadoEn, cifrado, nombreCifrado, portalVisible, portalCarpeta, portalOrigen, portalVence, portalTexto]);
 }
 
 class DocumentoDespacho {

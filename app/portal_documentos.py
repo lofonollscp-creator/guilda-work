@@ -154,7 +154,7 @@ def listar(cliente, carpeta: str | None = None, q: str = "") -> list[dict]:
         por_texto: set[int] = set()
         qn = _sin_tildes(q).strip()
         if qn:
-            por_texto = {f["id"] for f in conn.execute("SELECT id FROM cliente_documentos WHERE tenant_id = ? AND cliente_fiscal_id = ? AND portal_visible = 1 AND portal_texto LIKE ?",
+            por_texto = {f["id"] for f in conn.execute("SELECT id FROM cliente_documentos WHERE tenant_id = ? AND cliente_fiscal_id = ? AND portal_visible = 1 AND LOWER(portal_texto) LIKE LOWER(?)",
                                                       (cliente["tenant_id"], cliente["id"], f"%{qn}%")).fetchall()}
     finally:
         conn.close()
