@@ -22,6 +22,8 @@
         <li><a class="portal-gestion" href="{{ url_for('portal_cliente.gestion', clave=g.clave) }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#{{ g.icono }}"></use></svg>
           <span><strong>{{ g.titulo }}</strong><small class="muted">{{ g.descripcion }}</small></span></a></li>
         {% endfor %}
+        <li><a class="portal-gestion" href="{{ url_for('portal_cliente.dossier') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bar-chart-3"></use></svg>
+          <span><strong>{{ _('Dossier para el banco (al instante)') }}</strong><small class="muted">{{ _('Resumen de tu actividad con tus facturas revisadas; tu gestoría lo puede validar con su sello.') }}</small></span></a></li>
         <li><a class="portal-gestion" href="{{ url_for('portal_cliente.citas') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-calendar-days"></use></svg>
           <span><strong>{{ _('Pedir una cita') }}</strong><small class="muted">{{ _('Una llamada, una videollamada o una visita con tu gestoría.') }}</small></span></a></li>
         <li><a class="portal-gestion" href="{{ url_for('portal_cliente.conversacion_nueva') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-send"></use></svg>

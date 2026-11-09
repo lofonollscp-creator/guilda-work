@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ _('Comprobar un dossier') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('Comprobar un dossier') }}</h1>
+      <form method="get" action="{{ url_for('portal_cliente.dossier_verificar') }}" class="edit-form">
+        <label for="ver-codigo">{{ _('Código de verificación') }}</label>
+        <input type="text" id="ver-codigo" name="codigo" value="{{ codigo }}" maxlength="20" required autocomplete="off">
+        <button type="submit" class="btn btn-primary">{{ _('Comprobar') }}</button>
+      </form>
+      {% if d %}
+      <section class="portal-peticion" role="status" aria-live="polite">
+        <p><strong>&#10003; {{ _('Dossier auténtico, validado por %(d)s el %(f)s.', d=d.despacho, f=d.validado_en[:10]|fecha_dia) }}</strong></p>
+        <p>{{ d.cliente_nombre }} · {{ d.cliente_nif }}<br>{{ _('Periodo: del %(a)s al %(b)s', a=d.desde|fecha_dia, b=d.hasta|fecha_dia) }}</p>
+        <dl class="portal-datos">
+          <dt>{{ _('Ventas (base)') }}</dt><dd>{{ '%.2f'|format(d.datos.total.ventas / 100) }} €</dd>
+          <dt>{{ _('Gastos (base)') }}</dt><dd>{{ '%.2f'|format(d.datos.total.gastos / 100) }} €</dd>
+          <dt>{{ _('IVA repercutido') }}</dt><dd>{{ '%.2f'|format(d.datos.total.iva_repercutido / 100) }} €</dd>
+          <dt>{{ _('IVA soportado') }}</dt><dd>{{ '%.2f'|format(d.datos.total.iva_soportado / 100) }} €</dd>
+        </dl>
+        <p class="muted">{{ _('Compara estos totales con los del papel: si no coinciden, el documento no es auténtico.') }}</p>
+      </section>
+      {% elif consultado %}
+      <p class="ia-error" role="alert">{{ _('Ese código no existe o el dossier no está validado.') }}</p>
+      {% endif %}
+    </div>
+  </main>
+</body>
+</html>

@@ -408,6 +408,7 @@ ALTER TABLE portal_conversaciones ADD CONSTRAINT fk_portal_conversaciones_tenant
 ALTER TABLE portal_conversaciones_adjuntos ADD CONSTRAINT fk_portal_conversaciones_adjuntos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_conversaciones_mensajes ADD CONSTRAINT fk_portal_conversaciones_mensajes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_cuestionarios ADD CONSTRAINT fk_portal_cuestionarios_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_dossiers ADD CONSTRAINT fk_portal_dossiers_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_enlaces_compartidos ADD CONSTRAINT fk_portal_enlaces_compartidos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_enlaces_subida ADD CONSTRAINT fk_portal_enlaces_subida_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_invitaciones_cola ADD CONSTRAINT fk_portal_invitaciones_cola_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;

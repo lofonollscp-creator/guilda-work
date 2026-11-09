@@ -25504,3 +25504,159 @@ msgstr "ma facture %(n)s"
 
 msgid "Avisar a mi gestoría"
 msgstr "Prévenir mon cabinet"
+
+msgid "Resumen de actividad"
+msgstr "Récapitulatif d'activité"
+
+msgid "Periodo: del %(a)s al %(b)s"
+msgstr "Période : du %(a)s au %(b)s"
+
+msgid "Hecho con las facturas revisadas por su gestoría. Es un resumen informativo: no sustituye a las declaraciones presentadas ni a los justificantes oficiales."
+msgstr "Établi à partir des factures relues par son cabinet. C'est un récapitulatif informatif : il ne remplace ni les déclarations déposées ni les justificatifs officiels."
+
+msgid "Ventas (base)"
+msgstr "Ventes (base)"
+
+msgid "Gastos (base)"
+msgstr "Dépenses (base)"
+
+msgid "Resultado del IVA del periodo (repercutido menos soportado): %(r)s"
+msgstr "Résultat de TVA de la période (collectée moins déductible) : %(r)s"
+
+msgid "Modelos presentados en el periodo"
+msgstr "Modèles déposés pendant la période"
+
+msgid "Código de verificación: %(c)s"
+msgstr "Code de vérification : %(c)s"
+
+msgid "Compruébalo en: %(u)s"
+msgstr "Vérifiez-le sur : %(u)s"
+
+msgid "Validado por %(d)s el %(f)s"
+msgstr "Validé par %(d)s le %(f)s"
+
+msgid "Documento sin validar por la gestoría."
+msgstr "Document non validé par le cabinet."
+
+msgid "Dossier para el banco"
+msgstr "Dossier pour la banque"
+
+msgid "Un resumen de tu actividad (ventas, gastos e IVA) para enseñarlo a un banco, un alquiler o una ayuda."
+msgstr "Un récapitulatif de votre activité (ventes, dépenses et TVA) à montrer à une banque, un bailleur ou pour une aide."
+
+msgid "Se lo hemos pedido a tu gestoría. Te avisaremos cuando esté validado."
+msgstr "Nous l'avons demandé à votre cabinet. Nous vous préviendrons quand il sera validé."
+
+msgid "Dossier generado. Lo tienes abajo."
+msgstr "Dossier généré. Il est ci-dessous."
+
+msgid "Se hace al instante con las facturas que tu gestoría ya ha revisado. Si el banco necesita algo más serio, pide a tu gestoría que lo valide: llevará su sello y un código que cualquiera puede comprobar."
+msgstr "Il est établi instantanément à partir des factures que votre cabinet a déjà relues. Si la banque exige quelque chose de plus formel, demandez à votre cabinet de le valider : il portera son cachet et un code que n'importe qui peut vérifier."
+
+msgid "Generar uno nuevo"
+msgstr "En générer un nouveau"
+
+msgid "Los últimos 12 meses"
+msgstr "Les 12 derniers mois"
+
+msgid "El año pasado"
+msgstr "L'année dernière"
+
+msgid "Este año hasta hoy"
+msgstr "Cette année jusqu'à aujourd'hui"
+
+msgid "El último trimestre"
+msgstr "Le dernier trimestre"
+
+msgid "Generar"
+msgstr "Générer"
+
+msgid "Tus dossiers"
+msgstr "Vos dossiers"
+
+msgid "Todavía no has generado ninguno."
+msgstr "Vous n'en avez encore généré aucun."
+
+msgid "Ventas %(v)s · Gastos %(g)s"
+msgstr "Ventes %(v)s · Dépenses %(g)s"
+
+msgid "Código %(c)s"
+msgstr "Code %(c)s"
+
+msgid "Esperando a tu gestoría"
+msgstr "En attente de votre cabinet"
+
+msgid "No validado"
+msgstr "Non validé"
+
+msgid "Abrir PDF"
+msgstr "Ouvrir le PDF"
+
+msgid "Pedir que lo valide mi gestoría"
+msgstr "Demander à mon cabinet de le valider"
+
+msgid "Comprobar un dossier"
+msgstr "Vérifier un dossier"
+
+msgid "Dossier auténtico, validado por %(d)s el %(f)s."
+msgstr "Dossier authentique, validé par %(d)s le %(f)s."
+
+msgid "Compara estos totales con los del papel: si no coinciden, el documento no es auténtico."
+msgstr "Comparez ces totaux avec ceux du papier : s'ils ne correspondent pas, le document n'est pas authentique."
+
+msgid "Ese código no existe o el dossier no está validado."
+msgstr "Ce code n'existe pas ou le dossier n'est pas validé."
+
+msgid "Dossiers de actividad"
+msgstr "Dossiers d'activité"
+
+msgid "Resúmenes que tus clientes piden validar para enseñarlos a un banco o a un tercero. Al validar, llevan tu sello y un código que se comprueba en una página pública."
+msgstr "Récapitulatifs que vos clients demandent de valider pour les montrer à une banque ou à un tiers. Une fois validés, ils portent votre cachet et un code vérifiable sur une page publique."
+
+msgid "Validado. El cliente ya puede descargarlo con tu sello."
+msgstr "Validé. Le client peut maintenant le télécharger avec votre cachet."
+
+msgid "Rechazado. El cliente verá tu nota."
+msgstr "Refusé. Le client verra votre note."
+
+msgid "Ese dossier ya no estaba pendiente."
+msgstr "Ce dossier n'était plus en attente."
+
+msgid "Pendientes de validar"
+msgstr "En attente de validation"
+
+msgid "No hay ninguno pendiente."
+msgstr "Aucun n'est en attente."
+
+msgid "Nota para el cliente (si lo rechazas)"
+msgstr "Note pour le client (si vous le refusez)"
+
+msgid "Validar"
+msgstr "Valider"
+
+msgid "Dossier para el banco (al instante)"
+msgstr "Dossier pour la banque (instantané)"
+
+msgid "Resumen de tu actividad con tus facturas revisadas; tu gestoría lo puede validar con su sello."
+msgstr "Récapitulatif de votre activité avec vos factures relues ; votre cabinet peut le valider avec son cachet."
+
+msgid "Dossiers por validar"
+msgstr "Dossiers à valider"
+
+msgid "%(cliente)s pide validar un dossier de actividad"
+msgstr "%(cliente)s demande de valider un dossier d'activité"
+
+msgid "Revisa los números y valídalo con un clic: así el cliente puede enseñarlo a su banco."
+msgstr "Vérifiez les chiffres et validez-le en un clic : le client pourra ainsi le montrer à sa banque."
+
+msgid "Tu dossier de actividad está validado"
+msgstr "Votre dossier d'activité est validé"
+
+msgid "Tu dossier de actividad no se ha podido validar"
+msgstr "Votre dossier d'activité n'a pas pu être validé"
+
+msgid "Ya puedes descargarlo con el sello de tu gestoría."
+msgstr "Vous pouvez maintenant le télécharger avec le cachet de votre cabinet."
+
+msgid "Escribe a tu gestoría para ver qué falta."
+msgstr "Écrivez à votre cabinet pour voir ce qui manque."

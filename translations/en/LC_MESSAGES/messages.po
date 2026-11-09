@@ -25419,3 +25419,159 @@ msgstr "my invoice %(n)s"
 
 msgid "Avisar a mi gestoría"
 msgstr "Notify my accountant"
+
+msgid "Resumen de actividad"
+msgstr "Activity summary"
+
+msgid "Periodo: del %(a)s al %(b)s"
+msgstr "Period: from %(a)s to %(b)s"
+
+msgid "Hecho con las facturas revisadas por su gestoría. Es un resumen informativo: no sustituye a las declaraciones presentadas ni a los justificantes oficiales."
+msgstr "Made from the invoices reviewed by its accountant. It is an informative summary: it does not replace filed returns or official receipts."
+
+msgid "Ventas (base)"
+msgstr "Sales (base)"
+
+msgid "Gastos (base)"
+msgstr "Expenses (base)"
+
+msgid "Resultado del IVA del periodo (repercutido menos soportado): %(r)s"
+msgstr "VAT result for the period (charged minus paid): %(r)s"
+
+msgid "Modelos presentados en el periodo"
+msgstr "Returns filed in the period"
+
+msgid "Código de verificación: %(c)s"
+msgstr "Verification code: %(c)s"
+
+msgid "Compruébalo en: %(u)s"
+msgstr "Check it at: %(u)s"
+
+msgid "Validado por %(d)s el %(f)s"
+msgstr "Validated by %(d)s on %(f)s"
+
+msgid "Documento sin validar por la gestoría."
+msgstr "Document not validated by the accountant."
+
+msgid "Dossier para el banco"
+msgstr "Dossier for the bank"
+
+msgid "Un resumen de tu actividad (ventas, gastos e IVA) para enseñarlo a un banco, un alquiler o una ayuda."
+msgstr "A summary of your activity (sales, expenses and VAT) to show to a bank, a landlord or for a grant."
+
+msgid "Se lo hemos pedido a tu gestoría. Te avisaremos cuando esté validado."
+msgstr "We have asked your accountant. We will let you know when it is validated."
+
+msgid "Dossier generado. Lo tienes abajo."
+msgstr "Dossier generated. It is below."
+
+msgid "Se hace al instante con las facturas que tu gestoría ya ha revisado. Si el banco necesita algo más serio, pide a tu gestoría que lo valide: llevará su sello y un código que cualquiera puede comprobar."
+msgstr "It is made instantly from the invoices your accountant has already reviewed. If the bank needs something more formal, ask your accountant to validate it: it will carry their stamp and a code anyone can check."
+
+msgid "Generar uno nuevo"
+msgstr "Generate a new one"
+
+msgid "Los últimos 12 meses"
+msgstr "The last 12 months"
+
+msgid "El año pasado"
+msgstr "Last year"
+
+msgid "Este año hasta hoy"
+msgstr "This year to date"
+
+msgid "El último trimestre"
+msgstr "The last quarter"
+
+msgid "Generar"
+msgstr "Generate"
+
+msgid "Tus dossiers"
+msgstr "Your dossiers"
+
+msgid "Todavía no has generado ninguno."
+msgstr "You have not generated any yet."
+
+msgid "Ventas %(v)s · Gastos %(g)s"
+msgstr "Sales %(v)s · Expenses %(g)s"
+
+msgid "Código %(c)s"
+msgstr "Code %(c)s"
+
+msgid "Esperando a tu gestoría"
+msgstr "Waiting for your accountant"
+
+msgid "No validado"
+msgstr "Not validated"
+
+msgid "Abrir PDF"
+msgstr "Open PDF"
+
+msgid "Pedir que lo valide mi gestoría"
+msgstr "Ask my accountant to validate it"
+
+msgid "Comprobar un dossier"
+msgstr "Check a dossier"
+
+msgid "Dossier auténtico, validado por %(d)s el %(f)s."
+msgstr "Authentic dossier, validated by %(d)s on %(f)s."
+
+msgid "Compara estos totales con los del papel: si no coinciden, el documento no es auténtico."
+msgstr "Compare these totals with those on the paper: if they do not match, the document is not authentic."
+
+msgid "Ese código no existe o el dossier no está validado."
+msgstr "That code does not exist or the dossier is not validated."
+
+msgid "Dossiers de actividad"
+msgstr "Activity dossiers"
+
+msgid "Resúmenes que tus clientes piden validar para enseñarlos a un banco o a un tercero. Al validar, llevan tu sello y un código que se comprueba en una página pública."
+msgstr "Summaries your clients ask to have validated to show to a bank or a third party. Once validated they carry your stamp and a code checked on a public page."
+
+msgid "Validado. El cliente ya puede descargarlo con tu sello."
+msgstr "Validated. The client can now download it with your stamp."
+
+msgid "Rechazado. El cliente verá tu nota."
+msgstr "Rejected. The client will see your note."
+
+msgid "Ese dossier ya no estaba pendiente."
+msgstr "That dossier was no longer pending."
+
+msgid "Pendientes de validar"
+msgstr "Pending validation"
+
+msgid "No hay ninguno pendiente."
+msgstr "There are none pending."
+
+msgid "Nota para el cliente (si lo rechazas)"
+msgstr "Note for the client (if you reject it)"
+
+msgid "Validar"
+msgstr "Validate"
+
+msgid "Dossier para el banco (al instante)"
+msgstr "Dossier for the bank (instant)"
+
+msgid "Resumen de tu actividad con tus facturas revisadas; tu gestoría lo puede validar con su sello."
+msgstr "Summary of your activity with your reviewed invoices; your accountant can validate it with their stamp."
+
+msgid "Dossiers por validar"
+msgstr "Dossiers to validate"
+
+msgid "%(cliente)s pide validar un dossier de actividad"
+msgstr "%(cliente)s asks to validate an activity dossier"
+
+msgid "Revisa los números y valídalo con un clic: así el cliente puede enseñarlo a su banco."
+msgstr "Check the numbers and validate it with one click: that way the client can show it to their bank."
+
+msgid "Tu dossier de actividad está validado"
+msgstr "Your activity dossier is validated"
+
+msgid "Tu dossier de actividad no se ha podido validar"
+msgstr "Your activity dossier could not be validated"
+
+msgid "Ya puedes descargarlo con el sello de tu gestoría."
+msgstr "You can now download it with your accountant's stamp."
+
+msgid "Escribe a tu gestoría para ver qué falta."
+msgstr "Write to your accountant to see what is missing."

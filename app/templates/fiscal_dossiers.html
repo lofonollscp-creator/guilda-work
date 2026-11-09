@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Dossiers de actividad') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Dossiers de actividad') }}</h1>
+    <p class="subtitle">{{ _('Resúmenes que tus clientes piden validar para enseñarlos a un banco o a un tercero. Al validar, llevan tu sello y un código que se comprueba en una página pública.') }}</p>
+  </div>
+</header>
+<a class="btn btn-ghost" href="{{ url_for('fiscal.portal_adopcion_panel') }}">&larr; {{ _('Adopción del portal') }}</a>
+{% if hecho == 'validado' %}<p class="muted" role="status">{{ _('Validado. El cliente ya puede descargarlo con tu sello.') }}</p>
+{% elif hecho == 'rechazado' %}<p class="muted" role="status">{{ _('Rechazado. El cliente verá tu nota.') }}</p>
+{% elif hecho == 'no' %}<p class="ia-error" role="alert">{{ _('Ese dossier ya no estaba pendiente.') }}</p>{% endif %}
+<section class="proyecto-bloque ds-mt-24" aria-labelledby="dos-pend">
+  <h2 id="dos-pend">{{ _('Pendientes de validar') }}</h2>
+  {% if not pendientes %}<p class="muted">{{ _('No hay ninguno pendiente.') }}</p>{% endif %}
+  {% for d in pendientes %}
+  <article class="dash-panel">
+    <h3>{{ d.cliente_nombre }} <span class="muted">· {{ d.desde }} – {{ d.hasta }}</span></h3>
+    <div class="table-wrap"><table class="historial-table">
+      <thead><tr><th>{{ _('Trimestre') }}</th><th>{{ _('Ventas (base)') }}</th><th>{{ _('Gastos (base)') }}</th><th>{{ _('IVA repercutido') }}</th><th>{{ _('IVA soportado') }}</th><th>{{ _('Facturas') }}</th></tr></thead>
+      <tbody>{% for t in d.datos.trimestres %}<tr><td>{{ t.trimestre }}</td><td class="mono">{{ '%.2f'|format(t.ventas / 100) }} €</td><td class="mono">{{ '%.2f'|format(t.gastos / 100) }} €</td><td class="mono">{{ '%.2f'|format(t.iva_repercutido / 100) }} €</td><td class="mono">{{ '%.2f'|format(t.iva_soportado / 100) }} €</td><td>{{ t.facturas }}</td></tr>{% endfor %}
+      <tr><th scope="row">{{ _('Total') }}</th><td class="mono">{{ '%.2f'|format(d.datos.total.ventas / 100) }} €</td><td class="mono">{{ '%.2f'|format(d.datos.total.gastos / 100) }} €</td><td class="mono">{{ '%.2f'|format(d.datos.total.iva_repercutido / 100) }} €</td><td class="mono">{{ '%.2f'|format(d.datos.total.iva_soportado / 100) }} €</td><td>{{ d.datos.total.facturas }}</td></tr></tbody>
+    </table></div>
+    <form method="post" action="{{ url_for('fiscal.dossier_resolver', dossier_id=d.id) }}" class="proyecto-form">
+      <label for="nota-{{ d.id }}">{{ _('Nota para el cliente (si lo rechazas)') }}</label>
+      <input type="text" id="nota-{{ d.id }}" name="nota" maxlength="300">
+      <div class="ds-fila"><button type="submit" name="accion" value="validar" class="btn btn-primary">{{ _('Validar') }}</button><button type="submit" name="accion" value="rechazar" class="btn btn-ghost">{{ _('Rechazar') }}</button></div>
+    </form>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

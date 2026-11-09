@@ -25428,3 +25428,159 @@ msgstr "la meva factura %(n)s"
 
 msgid "Avisar a mi gestoría"
 msgstr "Avisar la meva gestoria"
+
+msgid "Resumen de actividad"
+msgstr "Resum d'activitat"
+
+msgid "Periodo: del %(a)s al %(b)s"
+msgstr "Període: del %(a)s al %(b)s"
+
+msgid "Hecho con las facturas revisadas por su gestoría. Es un resumen informativo: no sustituye a las declaraciones presentadas ni a los justificantes oficiales."
+msgstr "Fet amb les factures revisades per la seva gestoria. És un resum informatiu: no substitueix les declaracions presentades ni els justificants oficials."
+
+msgid "Ventas (base)"
+msgstr "Vendes (base)"
+
+msgid "Gastos (base)"
+msgstr "Despeses (base)"
+
+msgid "Resultado del IVA del periodo (repercutido menos soportado): %(r)s"
+msgstr "Resultat de l'IVA del període (repercutit menys suportat): %(r)s"
+
+msgid "Modelos presentados en el periodo"
+msgstr "Models presentats al període"
+
+msgid "Código de verificación: %(c)s"
+msgstr "Codi de verificació: %(c)s"
+
+msgid "Compruébalo en: %(u)s"
+msgstr "Comprova-ho a: %(u)s"
+
+msgid "Validado por %(d)s el %(f)s"
+msgstr "Validat per %(d)s el %(f)s"
+
+msgid "Documento sin validar por la gestoría."
+msgstr "Document sense validar per la gestoria."
+
+msgid "Dossier para el banco"
+msgstr "Dossier per al banc"
+
+msgid "Un resumen de tu actividad (ventas, gastos e IVA) para enseñarlo a un banco, un alquiler o una ayuda."
+msgstr "Un resum de la teva activitat (vendes, despeses i IVA) per ensenyar-lo a un banc, un lloguer o un ajut."
+
+msgid "Se lo hemos pedido a tu gestoría. Te avisaremos cuando esté validado."
+msgstr "Ho hem demanat a la teva gestoria. T'avisarem quan estigui validat."
+
+msgid "Dossier generado. Lo tienes abajo."
+msgstr "Dossier generat. El tens a sota."
+
+msgid "Se hace al instante con las facturas que tu gestoría ya ha revisado. Si el banco necesita algo más serio, pide a tu gestoría que lo valide: llevará su sello y un código que cualquiera puede comprobar."
+msgstr "Es fa a l'instant amb les factures que la teva gestoria ja ha revisat. Si el banc necessita alguna cosa més seriosa, demana a la teva gestoria que el validi: portarà el seu segell i un codi que qualsevol pot comprovar."
+
+msgid "Generar uno nuevo"
+msgstr "Generar-ne un de nou"
+
+msgid "Los últimos 12 meses"
+msgstr "Els últims 12 mesos"
+
+msgid "El año pasado"
+msgstr "L'any passat"
+
+msgid "Este año hasta hoy"
+msgstr "Aquest any fins avui"
+
+msgid "El último trimestre"
+msgstr "L'últim trimestre"
+
+msgid "Generar"
+msgstr "Generar"
+
+msgid "Tus dossiers"
+msgstr "Els teus dossiers"
+
+msgid "Todavía no has generado ninguno."
+msgstr "Encara no n'has generat cap."
+
+msgid "Ventas %(v)s · Gastos %(g)s"
+msgstr "Vendes %(v)s · Despeses %(g)s"
+
+msgid "Código %(c)s"
+msgstr "Codi %(c)s"
+
+msgid "Esperando a tu gestoría"
+msgstr "Esperant la teva gestoria"
+
+msgid "No validado"
+msgstr "No validat"
+
+msgid "Abrir PDF"
+msgstr "Obrir PDF"
+
+msgid "Pedir que lo valide mi gestoría"
+msgstr "Demanar que el validi la meva gestoria"
+
+msgid "Comprobar un dossier"
+msgstr "Comprovar un dossier"
+
+msgid "Dossier auténtico, validado por %(d)s el %(f)s."
+msgstr "Dossier autèntic, validat per %(d)s el %(f)s."
+
+msgid "Compara estos totales con los del papel: si no coinciden, el documento no es auténtico."
+msgstr "Compara aquests totals amb els del paper: si no coincideixen, el document no és autèntic."
+
+msgid "Ese código no existe o el dossier no está validado."
+msgstr "Aquest codi no existeix o el dossier no està validat."
+
+msgid "Dossiers de actividad"
+msgstr "Dossiers d'activitat"
+
+msgid "Resúmenes que tus clientes piden validar para enseñarlos a un banco o a un tercero. Al validar, llevan tu sello y un código que se comprueba en una página pública."
+msgstr "Resums que els teus clients demanen validar per ensenyar-los a un banc o a un tercer. En validar, porten el teu segell i un codi que es comprova en una pàgina pública."
+
+msgid "Validado. El cliente ya puede descargarlo con tu sello."
+msgstr "Validat. El client ja el pot descarregar amb el teu segell."
+
+msgid "Rechazado. El cliente verá tu nota."
+msgstr "Rebutjat. El client veurà la teva nota."
+
+msgid "Ese dossier ya no estaba pendiente."
+msgstr "Aquest dossier ja no estava pendent."
+
+msgid "Pendientes de validar"
+msgstr "Pendents de validar"
+
+msgid "No hay ninguno pendiente."
+msgstr "No n'hi ha cap de pendent."
+
+msgid "Nota para el cliente (si lo rechazas)"
+msgstr "Nota per al client (si el rebutges)"
+
+msgid "Validar"
+msgstr "Validar"
+
+msgid "Dossier para el banco (al instante)"
+msgstr "Dossier per al banc (a l'instant)"
+
+msgid "Resumen de tu actividad con tus facturas revisadas; tu gestoría lo puede validar con su sello."
+msgstr "Resum de la teva activitat amb les teves factures revisades; la teva gestoria el pot validar amb el seu segell."
+
+msgid "Dossiers por validar"
+msgstr "Dossiers per validar"
+
+msgid "%(cliente)s pide validar un dossier de actividad"
+msgstr "%(cliente)s demana validar un dossier d'activitat"
+
+msgid "Revisa los números y valídalo con un clic: así el cliente puede enseñarlo a su banco."
+msgstr "Revisa els números i valida'l amb un clic: així el client el pot ensenyar al seu banc."
+
+msgid "Tu dossier de actividad está validado"
+msgstr "El teu dossier d'activitat està validat"
+
+msgid "Tu dossier de actividad no se ha podido validar"
+msgstr "El teu dossier d'activitat no s'ha pogut validar"
+
+msgid "Ya puedes descargarlo con el sello de tu gestoría."
+msgstr "Ja el pots descarregar amb el segell de la teva gestoria."
+
+msgid "Escribe a tu gestoría para ver qué falta."
+msgstr "Escriu a la teva gestoria per veure què falta."

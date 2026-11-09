@@ -197,6 +197,7 @@ SELECT create_distributed_table('portal_conversaciones', 'tenant_id', colocate_w
 SELECT create_distributed_table('portal_conversaciones_adjuntos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_conversaciones_mensajes', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_cuestionarios', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('portal_dossiers', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_enlaces_compartidos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_enlaces_subida', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_invitaciones_cola', 'tenant_id', colocate_with => 'abogados_ajustes');

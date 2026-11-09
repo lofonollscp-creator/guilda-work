@@ -332,6 +332,39 @@ def guardar_correo_facturas():
     return redirect(url_for("fiscal.recordatorios", guardado_correo=1) + "#correo-facturas")
 
 
+@fiscal_bp.route("/dossiers")
+@login_required
+def dossiers_pendientes():
+    """Los dossiers de actividad que los clientes piden validar: se revisan los números y se validan o se rechazan con un clic."""
+    from . import portal_dossier
+    if g.tenant_id is None:
+        abort(404)
+    return render_template("fiscal_dossiers.html", pendientes=portal_dossier.pendientes(g.tenant_id), hecho=request.args.get("hecho"))
+
+
+@fiscal_bp.route("/dossiers/<int:dossier_id>/resolver", methods=["POST"])
+@login_required
+@limiter.limit("60/hour")
+def dossier_resolver(dossier_id: int):
+    from . import portal_dossier
+    if g.tenant_id is None:
+        abort(404)
+    try:
+        codigo = portal_dossier.resolver(g.tenant_id, dossier_id, g.usuario_id, request.form.get("accion") == "validar", request.form.get("nota", ""))
+    except ValueError:
+        return redirect(url_for("fiscal.dossiers_pendientes", hecho="no"))
+    d = portal_dossier.obtener_del_despacho(g.tenant_id, dossier_id)
+    ficha = db.obtener_cliente_fiscal(g.tenant_id, d["cliente_fiscal_id"]) if d else None
+    if ficha is not None:
+        from . import portal_avisos, portal_push
+        try:
+            portal_push.enviar(ficha, _("Tu dossier de actividad está validado") if codigo else _("Tu dossier de actividad no se ha podido validar"),
+                               _("Ya puedes descargarlo con el sello de tu gestoría.") if codigo else (d["nota"] or _("Escribe a tu gestoría para ver qué falta.")), "/portal/dossier")
+        except Exception:  # noqa: BLE001
+            pass
+    return redirect(url_for("fiscal.dossiers_pendientes", hecho="validado" if codigo else "rechazado"))
+
+
 @fiscal_bp.route("/portal-adopcion")
 @login_required
 def portal_adopcion_panel():

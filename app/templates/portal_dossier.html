@@ -1,0 +1,40 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Dossier para el banco') }}{% endblock %}
+{% block titulo %}{{ _('Dossier para el banco') }}{% endblock %}
+{% block subtitulo %}{{ _('Un resumen de tu actividad (ventas, gastos e IVA) para enseñarlo a un banco, un alquiler o una ayuda.') }}{% endblock %}
+{% block contenido %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    {% if pedido %}<p class="portal-peticion" role="status"><strong>{{ _('Se lo hemos pedido a tu gestoría. Te avisaremos cuando esté validado.') }}</strong></p>{% endif %}
+    {% if generado %}<p class="portal-peticion" role="status"><strong>{{ _('Dossier generado. Lo tienes abajo.') }}</strong></p>{% endif %}
+    <p class="muted">{{ _('Se hace al instante con las facturas que tu gestoría ya ha revisado. Si el banco necesita algo más serio, pide a tu gestoría que lo valide: llevará su sello y un código que cualquiera puede comprobar.') }}</p>
+    {% if puede %}
+    <section class="dash-panel" aria-labelledby="dos-nuevo">
+      <h2 id="dos-nuevo">{{ _('Generar uno nuevo') }}</h2>
+      <form method="post" class="edit-form">
+        <label for="dos-periodo">{{ _('Periodo') }}</label>
+        <select id="dos-periodo" name="periodo">
+          <option value="ultimo_anio">{{ _('Los últimos 12 meses') }}</option>
+          <option value="anio_anterior">{{ _('El año pasado') }}</option>
+          <option value="anio_en_curso">{{ _('Este año hasta hoy') }}</option>
+          <option value="ultimo_trimestre">{{ _('El último trimestre') }}</option>
+        </select>
+        <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Generar') }}</button></div>
+      </form>
+    </section>
+    {% endif %}
+    <section class="dash-panel" aria-labelledby="dos-lista">
+      <h2 id="dos-lista">{{ _('Tus dossiers') }}</h2>
+      {% if not lista %}<p class="muted">{{ _('Todavía no has generado ninguno.') }}</p>{% endif %}
+      <ul class="portal-personas">
+        {% for d in lista %}
+        <li class="portal-persona"><div class="portal-persona-datos"><strong>{{ d.desde|fecha_dia }} – {{ d.hasta|fecha_dia }}</strong>
+          <span class="muted">{{ _('Ventas %(v)s · Gastos %(g)s', v='%.2f'|format(d.datos.total.ventas / 100) ~ ' €', g='%.2f'|format(d.datos.total.gastos / 100) ~ ' €') }} · {{ d.creado_en[:10]|fecha_dia }}{% if d.codigo %} · {{ _('Código %(c)s', c=d.codigo) }}{% endif %}</span>
+          {% if d.estado == 'rechazado' and d.nota %}<span class="muted">{{ d.nota }}</span>{% endif %}</div>
+          <span class="portal-estado {{ 'ok' if d.estado == 'validado' else 'warn' }}">{{ {'sin_validar': _('Sin validar'), 'pendiente': _('Esperando a tu gestoría'), 'validado': _('Validado'), 'rechazado': _('No validado')}[d.estado] }}</span>
+          <a class="btn btn-ghost" href="{{ url_for('portal_cliente.dossier_pdf', dossier_id=d.id) }}" target="_blank" rel="noopener">{{ _('Abrir PDF') }}</a>
+          {% if puede and d.estado in ('sin_validar', 'rechazado') %}<form method="post" action="{{ url_for('portal_cliente.dossier_pedir_validacion', dossier_id=d.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Pedir que lo valide mi gestoría') }}</button></form>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+{% endblock %}

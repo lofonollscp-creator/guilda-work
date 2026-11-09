@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -1387,6 +1387,63 @@ def mis_documentos_borrar(documento_id: int):
     if portal_documentos.borrar(cliente, documento_id):
         auditoria.registrar(cliente["tenant_id"], None, "portal.documento_borrado", "cliente_fiscal", cliente["id"], {"quien": g.get("portal_email") or "titular", "documento": documento_id})
     return redirect(url_for("portal_cliente.mis_documentos"))
+
+
+@portal_bp.route("/dossier", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("20/hour", methods=["POST"])
+def dossier():
+    """Dossier de actividad para un banco, un alquiler o una ayuda: se genera al instante con las facturas revisadas y se puede pedir a la gestoría que lo valide."""
+    cliente = _cliente_actual_o_salir()
+    error = None
+    if request.method == "POST":
+        if g.get("vista_previa") or g.get("portal_rol", "completo") == "consulta":
+            abort(403)
+        try:
+            desde, hasta = portal_dossier.periodo(request.form.get("periodo", ""))
+            did = portal_dossier.crear(cliente, desde, hasta, g.get("portal_email") or "titular")
+            auditoria.registrar(cliente["tenant_id"], None, "portal.dossier_generado", "portal_dossier", did, {"quien": g.get("portal_email") or "titular"})
+            return redirect(url_for("portal_cliente.dossier", generado=did))
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("portal_dossier.html", cliente=cliente, lista=portal_dossier.listar(cliente), error=error, generado=request.args.get("generado", type=int), pedido=request.args.get("pedido"),
+                           puede=g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"), portal_seccion="documentos")
+
+
+@portal_bp.route("/dossier/<int:dossier_id>.pdf")
+@cliente_login_required
+def dossier_pdf(dossier_id: int):
+    cliente = _cliente_actual_o_salir()
+    d = portal_dossier.obtener(cliente, dossier_id)
+    if d is None:
+        abort(404)
+    despacho = db.obtener_tenant(cliente["tenant_id"])
+    url = f"{_base_publica()}{url_for('portal_cliente.dossier_verificar', codigo=d['codigo'])}" if d["codigo"] else None
+    cuerpo = portal_dossier.pdf(d, cliente["nombre"], cliente["nif"] or "", despacho["nombre"] if despacho else "", url)
+    return Response(cuerpo, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="resumen-de-actividad-{d["desde"]}-{d["hasta"]}.pdf"', "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
+
+
+@portal_bp.route("/dossier/<int:dossier_id>/validar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("20/hour")
+def dossier_pedir_validacion(dossier_id: int):
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa") or g.get("portal_rol", "completo") == "consulta":
+        abort(403)
+    if portal_dossier.pedir_validacion(cliente, dossier_id):
+        facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s pide validar un dossier de actividad", cliente=cliente["nombre"]), _("Revisa los números y valídalo con un clic: así el cliente puede enseñarlo a su banco."),
+                                           url_for("fiscal.dossiers_pendientes"), {"dossier": dossier_id})
+    return redirect(url_for("portal_cliente.dossier", pedido=1))
+
+
+@portal_bp.route("/verificar-dossier", methods=["GET"])
+@portal_bp.route("/verificar-dossier/<codigo>", methods=["GET"])
+@limiter.limit("60/hour")
+def dossier_verificar(codigo: str = ""):
+    """Comprobación pública de un código de dossier: enseña el cliente, el periodo y los totales que se validaron. Si el código no existe, no dice nada más."""
+    codigo = codigo or (request.args.get("codigo") or "")
+    d = portal_dossier.verificar(codigo) if codigo else None
+    return _sin_rastro(Response(render_template("portal_dossier_verificar.html", d=d, codigo=codigo.strip().upper()[:20], consultado=bool(codigo)), 200 if (d or not codigo) else 404))
 
 
 @portal_bp.route("/gestiones")
