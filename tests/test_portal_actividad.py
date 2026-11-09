@@ -43,8 +43,8 @@ def test_los_hechos_de_la_gestoria_aparecen_en_orden_y_con_su_enlace(cliente, co
 
 def test_la_actividad_es_solo_del_cliente_y_de_los_ultimos_90_dias(cliente, correo):
     t, u, c = _despacho("Actividad aislada")
-    _, _, otro = _despacho("Actividad ajena", cliente_email="otro@ejemplo.com", cliente_nombre="Otra SL")
-    _presentar(otro, t, u, "130", "2T 2026")
+    t2, u2, otro = _despacho("Actividad ajena", cliente_email="otro@ejemplo.com", cliente_nombre="Otra SL")
+    _presentar(otro, t2, u2, "130", "2T 2026")
     v = _presentar(c, t, u, "111", "1T 2020")
     conn = db.get_connection()
     conn.execute("UPDATE vencimientos_fiscales SET actualizado_en = '2020-04-10T10:00:00' WHERE id = ?", (v,))
