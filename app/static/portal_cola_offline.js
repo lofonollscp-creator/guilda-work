@@ -76,11 +76,56 @@
     }).catch(function () {}).then(function () { enviando = false; });
   }
 
+  // Con conexión el envío se hace aquí, con barra de progreso: si la red se corta a mitad, los archivos se guardan en el dispositivo y se reintentan solos (con pausas crecientes) en vez de perderse.
+  function barra(form) {
+    var b = form.querySelector('.portal-progreso');
+    if (!b) {
+      b = document.createElement('div'); b.className = 'portal-progreso'; b.setAttribute('role', 'status');
+      var p = document.createElement('progress'); p.max = 100; p.value = 0; p.setAttribute('aria-label', txt(form, 'progreso'));
+      var t = document.createElement('span');
+      b.appendChild(p); b.appendChild(t); form.appendChild(b);
+    }
+    b.hidden = false;
+    return b;
+  }
+  function enviarConProgreso(form, campos) {
+    var boton = form.querySelector('[type=submit]'), b = barra(form), xhr = new XMLHttpRequest(), datos = new FormData(form);
+    if (boton) boton.disabled = true;
+    function terminar() { if (boton) boton.disabled = false; b.hidden = true; }
+    function guardarYAvisar() {
+      guardar({ url: form.getAttribute('action') || location.pathname, campos: campos, creado: Date.now(), intentos: 0 }).then(function () {
+        terminar(); form.reset(); decir(txt(form, 'corte'), false); programarReintento(form, 1);
+      }).catch(function () { terminar(); form.submit(); });
+    }
+    xhr.upload.onprogress = function (ev) {
+      if (!ev.lengthComputable) return;
+      var pc = Math.round(ev.loaded / ev.total * 100);
+      b.querySelector('progress').value = pc; b.querySelector('span').textContent = txt(form, 'subiendo', { p: pc });
+    };
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 400) { location.href = xhr.responseURL || location.href; return; }
+      terminar(); form.submit();                            // el servidor lo ha rechazado: que el navegador enseñe su mensaje de siempre
+    };
+    xhr.onerror = xhr.ontimeout = guardarYAvisar;
+    xhr.timeout = 10 * 60 * 1000;
+    xhr.open('POST', form.getAttribute('action') || location.pathname);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.send(datos);
+  }
+  function programarReintento(form, n) {
+    setTimeout(function () {
+      vaciar(form).then(function () { return todos(); }).then(function (restantes) { if (restantes && restantes.length && n < MAX_INTENTOS) programarReintento(form, n + 1); });
+    }, Math.min((parseInt(form.getAttribute('data-reintento-ms') || '15000', 10)) * n, 120000));
+  }
+
   forms.forEach(function (form) {
     form.addEventListener('submit', function (e) {
-      if (navigator.onLine !== false) return;              // con conexión, el envío normal
       var campos = serializar(form);
       if (!campos.some(function (c) { return c.b; })) return;
+      if (navigator.onLine !== false) {                     // con conexión: envío con progreso (si el navegador sabe) o el normal
+        if (window.XMLHttpRequest && window.FormData && form.checkValidity()) { e.preventDefault(); enviarConProgreso(form, campos); }
+        return;
+      }
       e.preventDefault();
       guardar({ url: form.getAttribute('action') || location.pathname, campos: campos, creado: Date.now(), intentos: 0 }).then(function () {
         form.reset();

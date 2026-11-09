@@ -5,7 +5,7 @@
 {% block contenido %}
     {% set t = tablero %}
     {% set c = t.cuentas %}
-    {% if anotada %}<p class="portal-peticion" role="status"><strong>{{ _('Factura anotada. Tu gestoría la revisará.') }}</strong></p>{% endif %}
+    {% if anotada %}<p class="portal-peticion" role="status"><strong>{{ _('Factura anotada. Tu gestoría la revisará.') }}</strong>{% if request.args.get('compartido') %} {{ _('Se han guardado como compras y gastos; si son ventas, dilo a tu gestoría.') }}{% endif %}</p>{% endif %}
     {% if atendida == 'reenviada' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias: hemos enviado la factura de nuevo a tu gestoría.') }}</strong></p>{% endif %}
     {% if atendida == 'vista' %}<p class="portal-peticion" role="status"><strong>{{ _('De acuerdo: no te pediremos nada más de esa factura.') }}</strong></p>{% endif %}
     {% if repetidas %}<p class="portal-peticion" role="status"><strong>{{ ngettext('%(n)s archivo ya lo habías enviado y no se ha duplicado.', '%(n)s archivos ya los habías enviado y no se han duplicado.', repetidas, n=repetidas) }}</strong></p>{% endif %}
@@ -83,6 +83,8 @@
       <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>
       <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-cola-offline data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}" data-url-enderezar="{{ url_for('portal_cliente.enderezar_foto') }}"{% if lectura_previa %} data-url-leer="{{ url_for('portal_cliente.leer_previa') }}"{% endif %}
             data-txt-guardado="{{ _('Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo.') }}"
+            data-txt-subiendo="{{ _('Subiendo… %(p)s de 100', p='%(p)s') }}" data-txt-progreso="{{ _('Progreso de la subida') }}"
+            data-txt-corte="{{ _('Se ha cortado la conexión: tus facturas se han guardado en este dispositivo y se enviarán solas en cuanto se pueda. No cierres la pestaña si puedes evitarlo.') }}"
             data-txt-enviando="{{ _('Enviando lo que estaba guardado…') }}"
             data-txt-enviado="{{ _('Ya se ha enviado lo que estaba guardado (%(n)s envío/s). Recarga la página para verlo.', n='%(n)s') }}"
             data-txt-fallo="{{ _('%(n)s envío/s no se ha podido hacer: vuelve a subir esos archivos.', n='%(n)s') }}"

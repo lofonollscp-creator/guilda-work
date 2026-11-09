@@ -24769,3 +24769,15 @@ msgstr "Garder la mienne"
 
 msgid "Hecho: se enviará la enderezada."
 msgstr "Fait : la version redressée sera envoyée."
+
+msgid "Subiendo… %(p)s de 100"
+msgstr "Envoi… %(p)s sur 100"
+
+msgid "Progreso de la subida"
+msgstr "Progression de l'envoi"
+
+msgid "Se ha cortado la conexión: tus facturas se han guardado en este dispositivo y se enviarán solas en cuanto se pueda. No cierres la pestaña si puedes evitarlo."
+msgstr "La connexion s'est coupée : vos factures ont été enregistrées sur cet appareil et seront envoyées automatiquement dès que possible. Ne fermez pas l'onglet si vous pouvez l'éviter."
+
+msgid "Se han guardado como compras y gastos; si son ventas, dilo a tu gestoría."
+msgstr "Elles ont été enregistrées comme achats et dépenses ; s'il s'agit de ventes, dites-le à votre cabinet."

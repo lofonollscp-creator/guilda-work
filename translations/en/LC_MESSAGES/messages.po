@@ -24684,3 +24684,15 @@ msgstr "Keep mine"
 
 msgid "Hecho: se enviará la enderezada."
 msgstr "Done: the straightened one will be sent."
+
+msgid "Subiendo… %(p)s de 100"
+msgstr "Uploading… %(p)s of 100"
+
+msgid "Progreso de la subida"
+msgstr "Upload progress"
+
+msgid "Se ha cortado la conexión: tus facturas se han guardado en este dispositivo y se enviarán solas en cuanto se pueda. No cierres la pestaña si puedes evitarlo."
+msgstr "The connection dropped: your invoices have been saved on this device and will be sent automatically as soon as possible. Do not close the tab if you can avoid it."
+
+msgid "Se han guardado como compras y gastos; si son ventas, dilo a tu gestoría."
+msgstr "They have been saved as purchases and expenses; if they are sales, tell your accountant."

@@ -107,6 +107,7 @@ MAPA = {
     "portal_cliente.buscar": "portal-de-cliente/buscar-en-el-portal",
     "portal_cliente.calendario": "portal-de-cliente/tus-plazos-en-tu-agenda",
     "portal_cliente.subida_rapida": "portal-de-cliente/subir-facturas-desde-el-movil",
+    "portal_cliente.compartir": "portal-de-cliente/subir-facturas-desde-el-movil",
     "portal_cliente.factura": "portal-de-cliente/mis-facturas",
     "portal_cliente.citas": "portal-de-cliente/pedir-una-cita",
     "portal_cliente.declaracion": "portal-de-cliente/lo-que-te-pide-tu-gestoria",

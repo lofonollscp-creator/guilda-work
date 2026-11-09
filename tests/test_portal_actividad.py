@@ -62,3 +62,20 @@ def test_no_se_que_es_esto_abre_la_conversacion_ya_escrita(cliente, correo):
     assert "No sé qué es esto" in inicio and "tema=" in inicio
     html = _html(cliente, "/portal/conversaciones/nueva?tema=Extracto bancario del trimestre")
     assert "Necesito ayuda con: Extracto bancario del trimestre" in html and "no sé qué es esto o cómo hacerlo" in html
+
+
+def test_compartir_desde_el_movil_sube_las_facturas_como_recibidas_y_el_manifiesto_lo_anuncia(cliente, correo):
+    import io, json
+    t, u, c = _despacho("Compartir movil")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    m = json.loads(cliente.get("/portal/manifiesto.webmanifest").get_data(as_text=True)) if cliente.get("/portal/manifiesto.webmanifest").status_code == 200 else None
+    if m is None:
+        m = next(json.loads(cliente.get(r).get_data(as_text=True)) for r in ("/portal/manifest.webmanifest", "/portal/manifest.json") if cliente.get(r).status_code == 200)
+    objetivo = m["share_target"]
+    assert objetivo["action"] == "/portal/compartir" and objetivo["method"] == "POST" and objetivo["params"]["files"][0]["name"] == "archivos"
+    r = cliente.post("/portal/compartir", data={"archivos": [(io.BytesIO(PDF + b"compartida"), "factura.pdf", "application/pdf")]}, content_type="multipart/form-data")
+    assert r.status_code == 303 and "compartido=1" in r.headers["Location"]
+    lista = [f for f in fc.listar(t, u) if f["tipo"] == "recibida"]
+    assert len(lista) == 1
+    assert "Se han guardado como compras y gastos" in _html(cliente, r.headers["Location"])
+    assert cliente.post("/portal/compartir", data={}, content_type="multipart/form-data").status_code == 303        # sin archivos: vuelve con el aviso de siempre

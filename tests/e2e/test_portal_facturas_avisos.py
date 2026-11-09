@@ -113,3 +113,42 @@ def test_sin_conexion_la_subida_se_guarda_y_se_envia_sola_al_volver(servidor, ab
     assert fila["origen"] == "portal" and fila["estado"] == "pendiente"
     assert not errores
     ctx.close()
+
+
+def test_subida_con_progreso_y_reintento_si_la_red_se_corta_a_mitad(servidor, abrir, entrar_como_equipo, chromium):
+    t = db.crear_tenant("Despacho portal progreso")
+    pagina, _ = abrir()
+    entrar_como_equipo(pagina, "portal-progreso@ejemplo.com", despacho=t, direccion=True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = db.crear_cliente_fiscal(t, "Cliente Progreso", email="progreso@ejemplo.com")
+    ctx = chromium.new_context(viewport={"width": 390, "height": 800})
+    nueva = ctx.new_page()
+    nueva.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(c, '127.0.0.1')}")
+    nueva.goto(f"{servidor.url}/portal/facturas")
+    nueva.wait_for_load_state("networkidle")
+    nueva.evaluate("document.getElementById('form-subida').setAttribute('data-reintento-ms', '800')")
+    # 1) la red se corta justo al enviar: no se pierde nada, queda guardado y se reenvía solo
+    corte = {"activo": True}
+    nueva.route("**/portal/facturas", lambda ruta: ruta.abort() if corte["activo"] and ruta.request.method == "POST" else ruta.continue_())
+    nueva.set_input_files("#form-subida input[type=file]", [{"name": "corte.pdf", "mimeType": "application/pdf", "buffer": PDF + b"corte"}])
+    nueva.get_by_role("button", name="Subir facturas").click()
+    nueva.wait_for_function("document.getElementById('cola-offline').innerText.includes('cortado')", timeout=15000)
+    assert nueva.evaluate("async () => (await window.__colaOffline.todos()).length") == 1
+    corte["activo"] = False
+    nueva.wait_for_function("document.getElementById('cola-offline').innerText.includes('Ya se ha enviado')", timeout=20000)
+    assert nueva.evaluate("async () => (await window.__colaOffline.todos()).length") == 0
+    # 2) con red, el envío normal va con barra de progreso y termina en la lista
+    nueva.goto(f"{servidor.url}/portal/facturas")
+    nueva.set_input_files("#form-subida input[type=file]", [{"name": "normal.pdf", "mimeType": "application/pdf", "buffer": PDF + b"normal"}])
+    nueva.get_by_role("button", name="Subir facturas").click()
+    import time
+    limite = time.time() + 15
+    n = 0
+    while time.time() < limite and n < 2:
+        conn = db.get_connection()
+        n = conn.execute("SELECT COUNT(*) AS n FROM facturas_contables WHERE cliente_fiscal_id = ?", (c,)).fetchone()["n"]
+        conn.close()
+        time.sleep(0.3)
+    assert n == 2                                                                              # la reenviada tras el corte y la normal, ni una de más ni de menos
+    nueva.wait_for_url("**/portal/facturas**")
+    assert nueva.locator(".portal-progreso").count() == 0                                      # tras redirigir, la página nueva ya no lleva la barra

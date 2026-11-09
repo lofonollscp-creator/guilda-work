@@ -24693,3 +24693,15 @@ msgstr "Deixar la meva"
 
 msgid "Hecho: se enviará la enderezada."
 msgstr "Fet: s'enviarà l'adreçada."
+
+msgid "Subiendo… %(p)s de 100"
+msgstr "Pujant… %(p)s de 100"
+
+msgid "Progreso de la subida"
+msgstr "Progrés de la pujada"
+
+msgid "Se ha cortado la conexión: tus facturas se han guardado en este dispositivo y se enviarán solas en cuanto se pueda. No cierres la pestaña si puedes evitarlo."
+msgstr "S'ha tallat la connexió: les teves factures s'han desat en aquest dispositiu i s'enviaran soles tan bon punt es pugui. No tanquis la pestanya si ho pots evitar."
+
+msgid "Se han guardado como compras y gastos; si son ventas, dilo a tu gestoría."
+msgstr "S'han desat com a compres i despeses; si són vendes, digues-ho a la teva gestoria."

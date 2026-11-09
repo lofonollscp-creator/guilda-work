@@ -567,6 +567,23 @@ def comprobar_archivos():
     return {"repetidas": facturas_portal.archivos_ya_enviados(cliente["id"], huellas if isinstance(huellas, list) else [])}
 
 
+@portal_bp.route("/compartir", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour")
+def compartir():
+    """Destino de «Compartir con Mi gestoría» del móvil (la PWA instalada aparece en el menú de compartir del sistema): los archivos entran como facturas recibidas, igual que desde Facturas."""
+    cliente = _cliente_con_facturas()
+    if g.get("vista_previa") or g.portal_rol == "consulta":
+        abort(403)
+    try:
+        archivos = [(a.filename, a.mimetype, a.read(facturas_contables.MAX_ADJUNTO_BYTES + 1)) for a in request.files.getlist("archivos")[:facturas_contables.MAX_ARCHIVOS_POR_SUBIDA + 1] if a and a.filename]
+        subidas = facturas_contables.subir_desde_portal(cliente["id"], "recibida", archivos)
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.facturas", error=_(str(e))[:200]), 303)
+    auditoria.registrar(cliente["tenant_id"], None, "portal.compartir", "cliente_fiscal", cliente["id"], {"archivos": len(subidas)})
+    return redirect(url_for("portal_cliente.facturas", anotada=1, compartido=1, trimestre=facturas_portal.trimestre_actual(), repetidas=subidas.repetidas or None), 303)
+
+
 @portal_bp.route("/facturas/enderezar", methods=["POST"])
 @cliente_login_required
 @limiter.limit("90/hour")
@@ -1376,7 +1393,7 @@ def buscar():
 def manifiesto():
     """El portal instalable en el móvil: arranca en su portada y no se sale de /portal/."""
     import json
-    cuerpo = {"name": "Guilda Work", "short_name": "Mi gestoría", "description": _("Tu portal de cliente: lo que tienes que hacer, tus facturas e impuestos y tus mensajes."), "start_url": "/portal/", "scope": "/portal/", "display": "standalone",
+    cuerpo = {"name": "Guilda Work", "short_name": "Mi gestoría", "description": _("Tu portal de cliente: lo que tienes que hacer, tus facturas e impuestos y tus mensajes."), "start_url": "/portal/", "scope": "/portal/", "display": "standalone", "share_target": {"action": "/portal/compartir", "method": "POST", "enctype": "multipart/form-data", "params": {"files": [{"name": "archivos", "accept": ["application/pdf", "image/*"]}]}},
               "background_color": "#f5f6f8", "theme_color": "#f5f6f8", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"}, {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
                                                                                 {"src": "/static/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}]}
     return Response(json.dumps(cuerpo, ensure_ascii=False), mimetype="application/manifest+json")
