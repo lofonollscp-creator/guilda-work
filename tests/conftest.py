@@ -476,3 +476,13 @@ def uso_diferido_limpio():
     uso_diferido.reiniciar()
     yield
     uso_diferido.reiniciar()
+
+
+@pytest.fixture(autouse=True)
+def cachés_de_despacho_limpias():
+    """Con una base temporal el primer despacho es siempre el 1: lo que una prueba deje en las cachés por despacho (p. ej. si la medición de salud del portal está encendida) no debe verlo la siguiente."""
+    from app import portal_telemetria
+
+    portal_telemetria._CACHE.clear()
+    yield
+    portal_telemetria._CACHE.clear()

@@ -25676,3 +25676,33 @@ msgstr "Search by name or email"
 
 msgid "Página %(p)s de %(t)s (%(n)s clientes)"
 msgstr "Page %(p)s of %(t)s (%(n)s clients)"
+
+msgid "Salud del portal"
+msgstr "Portal health"
+
+msgid "Opcional. Mide cuánto tarda en cargar cada pantalla y qué errores de JavaScript ocurren en los navegadores de tus clientes, para detectar un problema antes de que alguien llame. Solo guarda contadores por día y pantalla: nada de quién es la persona, su cliente, su navegador ni lo que hay en la página. Está apagado salvo que lo enciendas."
+msgstr "Optional. Measures how long each screen takes to load and which JavaScript errors occur in your clients' browsers, to spot a problem before anyone calls. It only stores counters per day and screen: nothing about who the person is, their client, their browser or what is on the page. It is off unless you turn it on."
+
+msgid "Medir la salud del portal"
+msgstr "Measure portal health"
+
+msgid "Todavía no hay datos: aparecerán según los clientes vayan entrando."
+msgstr "There is no data yet: it will appear as clients sign in."
+
+msgid "Tiempo de carga (últimos 14 días, de la más lenta a la más rápida)"
+msgstr "Load time (last 14 days, slowest to fastest)"
+
+msgid "Cargas medidas"
+msgstr "Loads measured"
+
+msgid "Media"
+msgstr "Average"
+
+msgid "Máximo"
+msgstr "Maximum"
+
+msgid "Errores de JavaScript (últimos 14 días)"
+msgstr "JavaScript errors (last 14 days)"
+
+msgid "Veces"
+msgstr "Times"

@@ -86,3 +86,18 @@
     else if (k === '?') { e.preventDefault(); abrir(); }
   });
 })();
+
+// Salud del portal (solo si el despacho la ha encendido): el tiempo de carga de la pantalla (una de cada cuatro) y los primeros errores de JavaScript. Sin nada de la persona ni de la página, solo el camino.
+(function () {
+  var m = document.querySelector('meta[name=portal-telemetria]');
+  if (!m || !navigator.sendBeacon) return;
+  var url = m.content, ruta = location.pathname, enviados = 0;
+  function mandar(o) { try { navigator.sendBeacon(url, new Blob([JSON.stringify(o)], { type: 'application/json' })); } catch (e) { /* no pasa nada */ } }
+  window.addEventListener('error', function (e) { if (enviados++ < 3) mandar({ tipo: 'error', ruta: ruta, mensaje: e.message || '' }); });
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      var n = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (n && n.loadEventEnd > 0 && Math.random() < 0.25) mandar({ tipo: 'carga', ruta: ruta, ms: Math.round(n.loadEventEnd) });
+    }, 0);
+  });
+})();

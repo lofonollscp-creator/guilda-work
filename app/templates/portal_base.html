@@ -92,6 +92,7 @@
 
   {% set ins_fact = portal_insignia_facturas|default(0) %}{% set ins_msg = portal_insignia_mensajes|default(0) %}{% set ins_avi = portal_insignia_avisos|default(0) %}
   <meta name="portal-insignia" content="{{ ins_fact + ins_msg + ins_avi }}">
+  {% if portal_telemetria %}<meta name="portal-telemetria" content="{{ url_for('portal_cliente.telemetria') }}">{% endif %}
   <nav class="portal-tabs" aria-label="{{ _('Navegación principal') }}">
     <a href="{{ url_for('portal_cliente.dashboard') }}" {% if portal_seccion == 'inicio' and request.endpoint == 'portal_cliente.dashboard' %}aria-current="page"{% endif %}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-house"></use></svg><span>{{ _('Inicio') }}</span></a>
     {% if portal_facturas %}<a href="{{ url_for('portal_cliente.facturas') }}" {% if portal_seccion == 'facturas' %}aria-current="page"{% endif %}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg><span>{{ _('Facturas') }}</span>{% if ins_fact %}<b class="portal-nav-insignia" aria-hidden="true">{{ ins_fact }}</b>{% endif %}</a>{% endif %}

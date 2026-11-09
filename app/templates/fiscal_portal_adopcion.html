@@ -80,4 +80,30 @@
   </ol>
   {% endif %}
 </section>
+
+<section class="proyecto-bloque ds-mt-24" id="salud" aria-labelledby="adop-salud">
+  <h2 id="adop-salud">{{ _('Salud del portal') }}</h2>
+  <p class="muted">{{ _('Opcional. Mide cuánto tarda en cargar cada pantalla y qué errores de JavaScript ocurren en los navegadores de tus clientes, para detectar un problema antes de que alguien llame. Solo guarda contadores por día y pantalla: nada de quién es la persona, su cliente, su navegador ni lo que hay en la página. Está apagado salvo que lo enciendas.') }}</p>
+  <form method="post" action="{{ url_for('fiscal.portal_adopcion_salud') }}" class="proyecto-form">
+    <label><input type="checkbox" name="activo" value="1" {{ 'checked' if salud_activa }}> {{ _('Medir la salud del portal') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+  {% if salud_activa %}
+  {% if not salud.pantallas and not salud.errores %}<p class="muted" role="status">{{ _('Todavía no hay datos: aparecerán según los clientes vayan entrando.') }}</p>{% endif %}
+  {% if salud.pantallas %}
+  <div class="table-wrap"><table class="historial-table">
+    <caption>{{ _('Tiempo de carga (últimos 14 días, de la más lenta a la más rápida)') }}</caption>
+    <thead><tr><th scope="col">{{ _('Pantalla') }}</th><th scope="col">{{ _('Cargas medidas') }}</th><th scope="col">{{ _('Media') }}</th><th scope="col">{{ _('Máximo') }}</th></tr></thead>
+    <tbody>{% for p in salud.pantallas %}<tr><td class="mono">{{ p.ruta }}</td><td>{{ p.cargas }}</td><td class="{{ 'texto-aviso' if p.media_ms > 3000 }}">{{ p.media_ms }} ms</td><td>{{ p.max_ms }} ms</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  {% if salud.errores %}
+  <div class="table-wrap"><table class="historial-table">
+    <caption>{{ _('Errores de JavaScript (últimos 14 días)') }}</caption>
+    <thead><tr><th scope="col">{{ _('Pantalla') }}</th><th scope="col">{{ _('Error') }}</th><th scope="col">{{ _('Veces') }}</th></tr></thead>
+    <tbody>{% for e in salud.errores %}<tr><td class="mono">{{ e.ruta }}</td><td>{{ e.mensaje or '—' }}</td><td>{{ e.n }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  {% endif %}
+</section>
 {% endblock %}

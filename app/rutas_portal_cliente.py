@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_negocio, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_negocio, portal_telemetria, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -33,7 +33,7 @@ MAX_ARCHIVOS_POR_SUBIDA = 10
 
 DIAS_SESION_RECORDADA = 30
 # Con el perfil «consulta» solo se mira: estas son las únicas acciones que se permiten (sus propias preferencias y salir).
-_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cerrar_sesion_remota", "portal_cliente.cerrar_otras_sesiones", "portal_cliente.segundo_factor_iniciar", "portal_cliente.segundo_factor_confirmar", "portal_cliente.segundo_factor_quitar", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista", "portal_cliente.passkey_registro_opciones", "portal_cliente.passkey_registro_verificar", "portal_cliente.passkey_quitar", "portal_cliente.guardar_silencio"}
+_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cerrar_sesion_remota", "portal_cliente.cerrar_otras_sesiones", "portal_cliente.segundo_factor_iniciar", "portal_cliente.segundo_factor_confirmar", "portal_cliente.segundo_factor_quitar", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista", "portal_cliente.passkey_registro_opciones", "portal_cliente.passkey_registro_verificar", "portal_cliente.passkey_quitar", "portal_cliente.guardar_silencio", "portal_cliente.telemetria"}
 # Lo que solo hace el perfil «completo»: decidir en nombre del cliente y gestionar a quién más se deja entrar.
 _SOLO_PERFIL_COMPLETO = {"portal_cliente.conformidad", "portal_cliente.pagar_vencimiento", "portal_cliente.firma_vencimiento", "portal_cliente.anadir_contacto", "portal_cliente.cambiar_perfil_contacto", "portal_cliente.quitar_contacto",
                          "portal_cliente.renovar_enlace_subida"}
@@ -102,7 +102,7 @@ def _menu_del_portal():
     return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
             "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
             "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"),
-            "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
+            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
 
 
 def cliente_login_required(vista):
@@ -1736,6 +1736,17 @@ def manifiesto():
                                  {"name": _("Mensajes"), "short_name": _("Mensajes"), "url": "/portal/mensajes", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]},
                                  {"name": _("Mi carpeta"), "short_name": _("Carpeta"), "url": "/portal/carpeta", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]}]})
     return Response(json.dumps(cuerpo, ensure_ascii=False), mimetype="application/manifest+json")
+
+
+@portal_bp.route("/telemetria", methods=["POST"])
+@cliente_login_required
+@limiter.limit("240/hour")
+def telemetria():
+    """Un evento de salud del navegador (tiempo de carga o error de JavaScript), solo si el despacho lo tiene encendido. Siempre 204: el navegador no espera nada."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is not None and not g.get("vista_previa"):
+        portal_telemetria.registrar(cliente["tenant_id"], request.get_json(silent=True) or {})
+    return "", 204
 
 
 @portal_bp.route("/sin-conexion")

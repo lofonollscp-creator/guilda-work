@@ -3149,6 +3149,7 @@ CREATE TABLE IF NOT EXISTS portal_recordatorios_config (
     correo_facturas text,
     lectura_previa bigint NOT NULL DEFAULT 0,
     embudo_uso bigint NOT NULL DEFAULT 0,
+    telemetria bigint NOT NULL DEFAULT 0,
     PRIMARY KEY (tenant_id)
 );
 
@@ -3208,6 +3209,19 @@ CREATE TABLE IF NOT EXISTS portal_suscripciones_push (
     suscripcion text NOT NULL,
     creado_en text NOT NULL,
     PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS portal_telemetria_diaria (
+    tenant_id bigint,
+    dia text,
+    ruta text,
+    tipo text,
+    detalle text DEFAULT '',
+    n bigint NOT NULL DEFAULT 0,
+    suma_ms bigint NOT NULL DEFAULT 0,
+    max_ms bigint NOT NULL DEFAULT 0,
+    PRIMARY KEY (tenant_id, dia, ruta, tipo, detalle),
+    CHECK (tipo IN ('carga', 'error'))
 );
 
 CREATE TABLE IF NOT EXISTS portal_valoraciones (

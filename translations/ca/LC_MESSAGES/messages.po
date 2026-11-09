@@ -25685,3 +25685,33 @@ msgstr "Cercar per nom o correu"
 
 msgid "Página %(p)s de %(t)s (%(n)s clientes)"
 msgstr "Pàgina %(p)s de %(t)s (%(n)s clients)"
+
+msgid "Salud del portal"
+msgstr "Salut del portal"
+
+msgid "Opcional. Mide cuánto tarda en cargar cada pantalla y qué errores de JavaScript ocurren en los navegadores de tus clientes, para detectar un problema antes de que alguien llame. Solo guarda contadores por día y pantalla: nada de quién es la persona, su cliente, su navegador ni lo que hay en la página. Está apagado salvo que lo enciendas."
+msgstr "Opcional. Mesura quant triga a carregar cada pantalla i quins errors de JavaScript es produeixen als navegadors dels teus clients, per detectar un problema abans que algú truqui. Només desa comptadors per dia i pantalla: res de qui és la persona, el seu client, el seu navegador ni el que hi ha a la pàgina. Està apagat tret que l'encenguis."
+
+msgid "Medir la salud del portal"
+msgstr "Mesurar la salut del portal"
+
+msgid "Todavía no hay datos: aparecerán según los clientes vayan entrando."
+msgstr "Encara no hi ha dades: apareixeran a mesura que els clients vagin entrant."
+
+msgid "Tiempo de carga (últimos 14 días, de la más lenta a la más rápida)"
+msgstr "Temps de càrrega (últims 14 dies, de la més lenta a la més ràpida)"
+
+msgid "Cargas medidas"
+msgstr "Càrregues mesurades"
+
+msgid "Media"
+msgstr "Mitjana"
+
+msgid "Máximo"
+msgstr "Màxim"
+
+msgid "Errores de JavaScript (últimos 14 días)"
+msgstr "Errors de JavaScript (últims 14 dies)"
+
+msgid "Veces"
+msgstr "Vegades"
