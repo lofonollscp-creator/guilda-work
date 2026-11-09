@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -102,7 +102,7 @@ def _menu_del_portal():
     return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
             "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
             "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"),
-            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "portal_ventas": portal_ventas.activa_para(cliente), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
+            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "portal_ventas": portal_ventas.activa_para(cliente), "portal_asistente": portal_asistente.disponible(cliente), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
 
 
 def _tiene_trabajadores(cliente) -> bool:
@@ -1523,6 +1523,33 @@ def ventas_pdf(factura_id: int):
     if f is None:
         abort(404)
     return Response(portal_ventas.pdf(cliente, f), mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="factura-{f["codigo"] or f["idfactura"]}.pdf"', "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
+
+
+@portal_bp.route("/asistente", methods=["GET", "POST"])
+@cliente_login_required
+@limiter.limit("30/hour", methods=["POST"])
+def asistente():
+    """Preguntar al asistente del portal (si el despacho lo ha encendido): respuestas cortas con el estado del expediente y el glosario. La conversación vive solo en la sesión de esta persona."""
+    cliente = _cliente_actual_o_salir()
+    if not portal_asistente.disponible(cliente):
+        abort(404)
+    historial = session.get("portal_asistente", [])
+    error = None
+    if request.method == "POST":
+        if g.get("vista_previa") or g.get("portal_rol", "completo") == "consulta":
+            abort(403)
+        pregunta = request.form.get("pregunta", "")
+        try:
+            r = portal_asistente.preguntar(cliente, pregunta, historial, str(get_locale() or "es")[:2])
+            historial = (historial + [{"p": " ".join(pregunta.split())[:portal_asistente.MAX_PREGUNTA], "r": r}])[-portal_asistente.MAX_TURNOS:]
+            session["portal_asistente"] = historial
+            auditoria.registrar(cliente["tenant_id"], None, "portal.asistente", "cliente_fiscal", cliente["id"], {"quien": g.get("portal_email") or "titular"})
+        except ValueError as e:
+            error = _(str(e))
+    elif request.args.get("nueva"):
+        session.pop("portal_asistente", None)
+        historial = []
+    return render_template("portal_asistente.html", cliente=cliente, historial=historial, error=error, max_pregunta=portal_asistente.MAX_PREGUNTA, puede=g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"), portal_seccion="mensajes")
 
 
 @portal_bp.route("/gestiones")

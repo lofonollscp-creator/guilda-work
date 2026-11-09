@@ -25865,3 +25865,39 @@ msgstr "No s'ha pogut emetre la factura ara mateix. No s'ha creat res: torna-ho 
 
 msgid "FacturaScripts no ha confirmado la factura. Avisa a tu gestoría antes de volver a intentarlo."
 msgstr "FacturaScripts no ha confirmat la factura. Avisa la teva gestoria abans de tornar-ho a provar."
+
+msgid "Preguntar al asistente"
+msgstr "Preguntar a l'assistent"
+
+msgid "Te explica con lo que tu gestoría sabe de tu expediente. No da consejo fiscal ni legal."
+msgstr "T'ho explica amb el que la teva gestoria sap del teu expedient. No dona consell fiscal ni legal."
+
+msgid "Prueba con: «¿Qué me falta para este trimestre?», «¿Qué es el modelo 303?» o «¿Cómo van mis facturas?»."
+msgstr "Prova amb: «Què em falta per a aquest trimestre?», «Què és el model 303?» o «Com van les meves factures?»."
+
+msgid "Tu pregunta"
+msgstr "La teva pregunta"
+
+msgid "Empezar de nuevo"
+msgstr "Començar de nou"
+
+msgid "¿No te ha ayudado? Escribe a tu gestoría:"
+msgstr "No t'ha ajudat? Escriu a la teva gestoria:"
+
+msgid "Asistente para tus clientes"
+msgstr "Assistent per als teus clients"
+
+msgid "Opcional. Un asistente en el portal que responde a las preguntas de tus clientes con el estado de su expediente (plazos, lo que falta, estado de sus facturas) y el glosario. Para responder, esos estados y fechas viajan al modelo de IA que tengas configurado, con la clave del despacho (nunca importes, documentos ni mensajes). Si tienes la norma «nada sale del servidor», solo funciona con modelos locales. No da consejo fiscal ni legal. Cada pregunta cuenta como una consulta de IA de tu despacho. Está apagado salvo que lo enciendas."
+msgstr "Opcional. Un assistent al portal que respon les preguntes dels teus clients amb l'estat del seu expedient (terminis, el que falta, estat de les seves factures) i el glossari. Per respondre, aquests estats i dates viatgen al model d'IA que tinguis configurat, amb la clau del despatx (mai imports, documents ni missatges). Si tens la norma «no surt res del servidor», només funciona amb models locals. No dona consell fiscal ni legal. Cada pregunta compta com una consulta d'IA del teu despatx. Està apagat tret que l'encenguis."
+
+msgid "Ofrecer el asistente a mis clientes"
+msgstr "Oferir l'assistent als meus clients"
+
+msgid "Escribe tu pregunta."
+msgstr "Escriu la teva pregunta."
+
+msgid "El asistente no está disponible ahora mismo. Escribe a tu gestoría."
+msgstr "L'assistent no està disponible ara mateix. Escriu a la teva gestoria."
+
+msgid "El asistente no ha podido responder ahora mismo. Inténtalo de nuevo o escribe a tu gestoría."
+msgstr "L'assistent no ha pogut respondre ara mateix. Torna-ho a provar o escriu a la teva gestoria."

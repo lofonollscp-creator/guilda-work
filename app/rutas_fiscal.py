@@ -23,7 +23,7 @@ from .auth import limiter, login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_bandeja, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -394,7 +394,16 @@ def portal_adopcion_panel():
     return render_template("fiscal_portal_adopcion.html", r=r, q=q, pagina=pagina, paginas=paginas, total_filas=len(filas), embudo_activo=portal_adopcion.embudo_activo(g.tenant_id), filtro=filtro,
                            invitados=request.args.get("invitados", type=int), fallos=request.args.get("fallos", type=int), guardado=request.args.get("guardado"),
                            en_cola=request.args.get("en_cola", type=int), cola=portal_invitaciones.pendientes(g.tenant_id),
-                           salud_activa=portal_telemetria.activa(g.tenant_id), salud=portal_telemetria.resumen(g.tenant_id))
+                           salud_activa=portal_telemetria.activa(g.tenant_id), salud=portal_telemetria.resumen(g.tenant_id), asistente_activo=portal_asistente.activo(g.tenant_id))
+
+
+@fiscal_bp.route("/portal-adopcion/asistente", methods=["POST"])
+@login_required
+def portal_adopcion_asistente():
+    if g.tenant_id is None:
+        abort(404)
+    portal_asistente.fijar(g.tenant_id, request.form.get("activo") == "1")
+    return redirect(url_for("fiscal.portal_adopcion_panel", guardado=1) + "#asistente")
 
 
 @fiscal_bp.route("/portal-adopcion/salud", methods=["POST"])

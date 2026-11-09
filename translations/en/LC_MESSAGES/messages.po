@@ -25856,3 +25856,39 @@ msgstr "The invoice could not be issued right now. Nothing was created: try agai
 
 msgid "FacturaScripts no ha confirmado la factura. Avisa a tu gestoría antes de volver a intentarlo."
 msgstr "FacturaScripts did not confirm the invoice. Tell your accountant before trying again."
+
+msgid "Preguntar al asistente"
+msgstr "Ask the assistant"
+
+msgid "Te explica con lo que tu gestoría sabe de tu expediente. No da consejo fiscal ni legal."
+msgstr "It explains using what your accountant knows about your file. It does not give tax or legal advice."
+
+msgid "Prueba con: «¿Qué me falta para este trimestre?», «¿Qué es el modelo 303?» o «¿Cómo van mis facturas?»."
+msgstr "Try: “What am I missing for this quarter?”, “What is return 303?” or “How are my invoices doing?”."
+
+msgid "Tu pregunta"
+msgstr "Your question"
+
+msgid "Empezar de nuevo"
+msgstr "Start again"
+
+msgid "¿No te ha ayudado? Escribe a tu gestoría:"
+msgstr "Did it not help? Write to your accountant:"
+
+msgid "Asistente para tus clientes"
+msgstr "Assistant for your clients"
+
+msgid "Opcional. Un asistente en el portal que responde a las preguntas de tus clientes con el estado de su expediente (plazos, lo que falta, estado de sus facturas) y el glosario. Para responder, esos estados y fechas viajan al modelo de IA que tengas configurado, con la clave del despacho (nunca importes, documentos ni mensajes). Si tienes la norma «nada sale del servidor», solo funciona con modelos locales. No da consejo fiscal ni legal. Cada pregunta cuenta como una consulta de IA de tu despacho. Está apagado salvo que lo enciendas."
+msgstr "Optional. An assistant in the portal that answers your clients' questions using the state of their file (deadlines, what is missing, status of their invoices) and the glossary. To answer, those statuses and dates go to the AI model you have configured, with the office's key (never amounts, documents or messages). If you have the “nothing leaves the server” rule, it only works with local models. It does not give tax or legal advice. Each question counts as one AI query of your office. It is off unless you turn it on."
+
+msgid "Ofrecer el asistente a mis clientes"
+msgstr "Offer the assistant to my clients"
+
+msgid "Escribe tu pregunta."
+msgstr "Write your question."
+
+msgid "El asistente no está disponible ahora mismo. Escribe a tu gestoría."
+msgstr "The assistant is not available right now. Write to your accountant."
+
+msgid "El asistente no ha podido responder ahora mismo. Inténtalo de nuevo o escribe a tu gestoría."
+msgstr "The assistant could not answer right now. Try again or write to your accountant."

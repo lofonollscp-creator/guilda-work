@@ -1,0 +1,24 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Preguntar') }}{% endblock %}
+{% block titulo %}{{ _('Preguntar al asistente') }}{% endblock %}
+{% block subtitulo %}{{ _('Te explica con lo que tu gestoría sabe de tu expediente. No da consejo fiscal ni legal.') }}{% endblock %}
+{% block contenido %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    <section class="dash-panel" aria-labelledby="asi-conv" aria-live="polite">
+      <h2 id="asi-conv">{{ _('Conversación') }}</h2>
+      {% if not historial %}<p class="muted">{{ _('Prueba con: «¿Qué me falta para este trimestre?», «¿Qué es el modelo 303?» o «¿Cómo van mis facturas?».') }}</p>{% endif %}
+      {% for t in historial %}
+      <p class="portal-asistente-pregunta"><strong>{{ _('Tú') }}:</strong> {{ t.p }}</p>
+      <p class="portal-asistente-respuesta"><strong>{{ _('Asistente') }}:</strong> {{ t.r }}</p>
+      {% endfor %}
+    </section>
+    {% if puede %}
+    <form method="post" class="edit-form">
+      <label for="asi-pregunta">{{ _('Tu pregunta') }}</label>
+      <textarea id="asi-pregunta" name="pregunta" rows="3" maxlength="{{ max_pregunta }}" required></textarea>
+      <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Preguntar') }}</button>
+        {% if historial %}<a class="btn btn-ghost" href="{{ url_for('portal_cliente.asistente', nueva=1) }}">{{ _('Empezar de nuevo') }}</a>{% endif %}</div>
+    </form>
+    {% endif %}
+    <p class="muted">{{ _('¿No te ha ayudado? Escribe a tu gestoría:') }} <a href="{{ url_for('portal_cliente.conversacion_nueva') }}">{{ _('Escribir a mi gestoría') }}</a> · <a href="{{ url_for('portal_cliente.gestiones') }}">{{ _('Pedir algo') }}</a></p>
+{% endblock %}

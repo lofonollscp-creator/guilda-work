@@ -25941,3 +25941,39 @@ msgstr "La facture n'a pas pu être émise pour le moment. Rien n'a été créé
 
 msgid "FacturaScripts no ha confirmado la factura. Avisa a tu gestoría antes de volver a intentarlo."
 msgstr "FacturaScripts n'a pas confirmé la facture. Prévenez votre cabinet avant de réessayer."
+
+msgid "Preguntar al asistente"
+msgstr "Poser une question à l'assistant"
+
+msgid "Te explica con lo que tu gestoría sabe de tu expediente. No da consejo fiscal ni legal."
+msgstr "Il vous explique avec ce que votre cabinet sait de votre dossier. Il ne donne pas de conseil fiscal ni juridique."
+
+msgid "Prueba con: «¿Qué me falta para este trimestre?», «¿Qué es el modelo 303?» o «¿Cómo van mis facturas?»."
+msgstr "Essayez : « Que me manque-t-il pour ce trimestre ? », « Qu'est-ce que le modèle 303 ? » ou « Où en sont mes factures ? »."
+
+msgid "Tu pregunta"
+msgstr "Votre question"
+
+msgid "Empezar de nuevo"
+msgstr "Recommencer"
+
+msgid "¿No te ha ayudado? Escribe a tu gestoría:"
+msgstr "Cela ne vous a pas aidé ? Écrivez à votre cabinet :"
+
+msgid "Asistente para tus clientes"
+msgstr "Assistant pour vos clients"
+
+msgid "Opcional. Un asistente en el portal que responde a las preguntas de tus clientes con el estado de su expediente (plazos, lo que falta, estado de sus facturas) y el glosario. Para responder, esos estados y fechas viajan al modelo de IA que tengas configurado, con la clave del despacho (nunca importes, documentos ni mensajes). Si tienes la norma «nada sale del servidor», solo funciona con modelos locales. No da consejo fiscal ni legal. Cada pregunta cuenta como una consulta de IA de tu despacho. Está apagado salvo que lo enciendas."
+msgstr "Facultatif. Un assistant dans le portail qui répond aux questions de vos clients avec l'état de leur dossier (échéances, ce qui manque, état de leurs factures) et le glossaire. Pour répondre, ces états et dates sont transmis au modèle d'IA que vous avez configuré, avec la clé du cabinet (jamais de montants, documents ni messages). Si vous avez la règle « rien ne quitte le serveur », il ne fonctionne qu'avec des modèles locaux. Il ne donne pas de conseil fiscal ni juridique. Chaque question compte comme une requête d'IA de votre cabinet. Désactivé sauf si vous l'activez."
+
+msgid "Ofrecer el asistente a mis clientes"
+msgstr "Proposer l'assistant à mes clients"
+
+msgid "Escribe tu pregunta."
+msgstr "Écrivez votre question."
+
+msgid "El asistente no está disponible ahora mismo. Escribe a tu gestoría."
+msgstr "L'assistant n'est pas disponible pour le moment. Écrivez à votre cabinet."
+
+msgid "El asistente no ha podido responder ahora mismo. Inténtalo de nuevo o escribe a tu gestoría."
+msgstr "L'assistant n'a pas pu répondre pour le moment. Réessayez ou écrivez à votre cabinet."

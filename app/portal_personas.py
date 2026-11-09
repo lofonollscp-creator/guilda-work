@@ -86,6 +86,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "portal_recordatorios_config", "lectura_previa", "INTEGER NOT NULL DEFAULT 0")
     db._asegurar_columna(conn, "portal_recordatorios_config", "embudo_uso", "INTEGER NOT NULL DEFAULT 0")     # embudo de uso del portal para el despacho (app/portal_adopcion.py)
     db._asegurar_columna(conn, "portal_recordatorios_config", "telemetria", "INTEGER NOT NULL DEFAULT 0")     # salud del portal desde el navegador de los clientes (app/portal_telemetria.py)
+    db._asegurar_columna(conn, "portal_recordatorios_config", "asistente_cliente", "INTEGER NOT NULL DEFAULT 0")     # asistente del portal para el cliente (app/portal_asistente.py)
 
 
 def limpio(email: str | None) -> str:

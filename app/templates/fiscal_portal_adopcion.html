@@ -81,6 +81,15 @@
   {% endif %}
 </section>
 
+<section class="proyecto-bloque ds-mt-24" id="asistente" aria-labelledby="adop-asistente">
+  <h2 id="adop-asistente">{{ _('Asistente para tus clientes') }}</h2>
+  <p class="muted">{{ _('Opcional. Un asistente en el portal que responde a las preguntas de tus clientes con el estado de su expediente (plazos, lo que falta, estado de sus facturas) y el glosario. Para responder, esos estados y fechas viajan al modelo de IA que tengas configurado, con la clave del despacho (nunca importes, documentos ni mensajes). Si tienes la norma «nada sale del servidor», solo funciona con modelos locales. No da consejo fiscal ni legal. Cada pregunta cuenta como una consulta de IA de tu despacho. Está apagado salvo que lo enciendas.') }}</p>
+  <form method="post" action="{{ url_for('fiscal.portal_adopcion_asistente') }}" class="proyecto-form">
+    <label><input type="checkbox" name="activo" value="1" {{ 'checked' if asistente_activo }}> {{ _('Ofrecer el asistente a mis clientes') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+</section>
+
 <section class="proyecto-bloque ds-mt-24" id="salud" aria-labelledby="adop-salud">
   <h2 id="adop-salud">{{ _('Salud del portal') }}</h2>
   <p class="muted">{{ _('Opcional. Mide cuánto tarda en cargar cada pantalla y qué errores de JavaScript ocurren en los navegadores de tus clientes, para detectar un problema antes de que alguien llame. Solo guarda contadores por día y pantalla: nada de quién es la persona, su cliente, su navegador ni lo que hay en la página. Está apagado salvo que lo enciendas.') }}</p>

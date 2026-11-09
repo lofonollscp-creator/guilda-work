@@ -114,6 +114,7 @@ MAPA = {
     "portal_cliente.gestion": "portal-de-cliente/pedir-algo-a-tu-gestoria",
     "portal_cliente.trabajadores": "portal-de-cliente/pedir-algo-a-tu-gestoria",
     "portal_cliente.ventas": "portal-de-cliente/mis-ventas",
+    "portal_cliente.asistente": "portal-de-cliente/preguntar-al-asistente",
     "portal_cliente.mis_documentos": "portal-de-cliente/mis-documentos",
     "portal_cliente.dossier": "portal-de-cliente/dossier-para-el-banco",
     "portal_cliente.declaracion": "portal-de-cliente/lo-que-te-pide-tu-gestoria",

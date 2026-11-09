@@ -3153,6 +3153,7 @@ CREATE TABLE IF NOT EXISTS portal_recordatorios_config (
     lectura_previa bigint NOT NULL DEFAULT 0,
     embudo_uso bigint NOT NULL DEFAULT 0,
     telemetria bigint NOT NULL DEFAULT 0,
+    asistente_cliente bigint NOT NULL DEFAULT 0,
     PRIMARY KEY (tenant_id)
 );
 
