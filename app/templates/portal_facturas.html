@@ -122,6 +122,7 @@
         <input type="file" name="archivos" multiple required accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.xml" aria-label="{{ _('Fotos o PDF de las facturas') }}">
         <label class="portal-recordar" data-misma-factura hidden><input type="checkbox" name="misma_factura" value="1"> {{ _('Estas fotos son las páginas de una misma factura (se juntan en un solo PDF, en el orden elegido)') }}</label>
         <label class="portal-recordar" hidden><input type="checkbox" id="usar-originales"> {{ _('Enviar las fotos tal como las hice, sin recortar ni aligerar') }}</label>
+        <p class="muted portal-pista-pc">{{ _('También puedes arrastrar los archivos aquí o pegar una captura con Ctrl+V.') }}</p>
         <p id="cola-offline" class="portal-peticion" role="status" hidden></p>
         <ul id="avisos-subida" class="portal-avisos" aria-live="polite"></ul>
         <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Subir facturas') }}</button></div>

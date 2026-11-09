@@ -249,6 +249,27 @@
     juntar.hidden = !(archivos.length > 1 && todasFotos);
     if (juntar.hidden) { var marca = juntar.querySelector('input'); if (marca) marca.checked = false; }
   }
+  // En el ordenador: arrastrar archivos sobre el formulario o pegar una captura/foto con Ctrl+V.
+  function anadirArchivos(nuevos) {
+    var validos = nuevos.filter(function (a) { return TIPOS.indexOf(a.type) >= 0 || /\.xml$/i.test(a.name); });
+    if (!validos.length) return;
+    var actuales = Array.prototype.slice.call(entrada.files || []);
+    if (!poner(actuales.concat(validos))) return;
+    entrada.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  ['dragenter', 'dragover'].forEach(function (n) { form.addEventListener(n, function (e) { if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0) { e.preventDefault(); form.classList.add('arrastrando'); } }); });
+  ['dragleave', 'drop'].forEach(function (n) { form.addEventListener(n, function (e) { if (n === 'dragleave' && form.contains(e.relatedTarget)) return; form.classList.remove('arrastrando'); }); });
+  form.addEventListener('drop', function (e) {
+    if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    e.preventDefault();
+    anadirArchivos(Array.prototype.slice.call(e.dataTransfer.files));
+  });
+  document.addEventListener('paste', function (e) {
+    var c = e.clipboardData;
+    if (!c || !c.files || !c.files.length || /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '') && document.activeElement.type !== 'file') return;
+    anadirArchivos(Array.prototype.slice.call(c.files).map(function (a, i) { return a.name && a.name !== 'image.png' ? a : new File([a], 'captura-' + (i + 1) + '.png', { type: a.type, lastModified: Date.now() }); }));
+  });
+
   entrada.addEventListener('change', function () {
     lista.textContent = '';
     originales = Array.prototype.slice.call(entrada.files || []);

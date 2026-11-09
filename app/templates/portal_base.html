@@ -51,17 +51,17 @@
     {% endif %}
 
     <nav class="portal-nav" aria-label="{{ _('Secciones del portal') }}">
-      <a href="{{ url_for('portal_cliente.dashboard') }}" {% if portal_seccion == 'inicio' %}aria-current="page"{% endif %}>{{ _('Inicio') }}</a>
+      <a href="{{ url_for('portal_cliente.dashboard') }}" data-atajo="i" {% if portal_seccion == 'inicio' %}aria-current="page"{% endif %}>{{ _('Inicio') }}</a>
       {% if portal_facturas %}
-      <a href="{{ url_for('portal_cliente.facturas') }}" {% if portal_seccion == 'facturas' %}aria-current="page"{% endif %}>{{ _('Facturas') }}{% if portal_insignia_facturas %} <span class="portal-nav-insignia" title="{{ _('Facturas por corregir') }}">{{ portal_insignia_facturas }}</span>{% endif %}</a>
+      <a href="{{ url_for('portal_cliente.facturas') }}" data-atajo="f" {% if portal_seccion == 'facturas' %}aria-current="page"{% endif %}>{{ _('Facturas') }}{% if portal_insignia_facturas %} <span class="portal-nav-insignia" title="{{ _('Facturas por corregir') }}">{{ portal_insignia_facturas }}</span>{% endif %}</a>
       {% endif %}
-      <a href="{{ url_for('portal_cliente.impuestos') }}" {% if portal_seccion == 'impuestos' %}aria-current="page"{% endif %}>{{ _('Impuestos') }}</a>
-      <a href="{{ url_for('portal_cliente.mensajes') }}" {% if portal_seccion == 'mensajes' %}aria-current="page"{% endif %}>{{ _('Mensajes') }}{% if portal_insignia_mensajes %} <span class="portal-nav-insignia" title="{{ _('Mensajes sin leer') }}">{{ portal_insignia_mensajes }}</span>{% endif %}</a>
-      <a href="{{ url_for('portal_cliente.avisos') }}" {% if portal_seccion == 'avisos' %}aria-current="page"{% endif %}>{{ _('Avisos') }}{% if portal_insignia_avisos %} <span class="portal-nav-insignia" title="{{ _('Avisos nuevos') }}">{{ portal_insignia_avisos }}</span>{% endif %}</a>
-      <a href="{{ url_for('portal_cliente.carpeta') }}" {% if portal_seccion == 'carpeta' %}aria-current="page"{% endif %}>{{ _('Carpeta') }}</a>
-      <a href="{{ url_for('portal_cliente.buscar') }}" {% if portal_seccion == 'buscar' %}aria-current="page"{% endif %} aria-label="{{ _('Buscar en el portal') }}">{{ _('Buscar') }}</a>
-      <a href="{{ url_for('portal_cliente.cuenta') }}" {% if portal_seccion == 'cuenta' %}aria-current="page"{% endif %}>{{ _('Mi cuenta') }}</a>
-      <a href="{{ url_for('portal_cliente.glosario') }}" {% if request.endpoint == 'portal_cliente.glosario' %}aria-current="page"{% endif %}>{{ _('Glosario') }}</a>
+      <a href="{{ url_for('portal_cliente.impuestos') }}" data-atajo="t" {% if portal_seccion == 'impuestos' %}aria-current="page"{% endif %}>{{ _('Impuestos') }}</a>
+      <a href="{{ url_for('portal_cliente.mensajes') }}" data-atajo="m" {% if portal_seccion == 'mensajes' %}aria-current="page"{% endif %}>{{ _('Mensajes') }}{% if portal_insignia_mensajes %} <span class="portal-nav-insignia" title="{{ _('Mensajes sin leer') }}">{{ portal_insignia_mensajes }}</span>{% endif %}</a>
+      <a href="{{ url_for('portal_cliente.avisos') }}" data-atajo="a" {% if portal_seccion == 'avisos' %}aria-current="page"{% endif %}>{{ _('Avisos') }}{% if portal_insignia_avisos %} <span class="portal-nav-insignia" title="{{ _('Avisos nuevos') }}">{{ portal_insignia_avisos }}</span>{% endif %}</a>
+      <a href="{{ url_for('portal_cliente.carpeta') }}" data-atajo="c" {% if portal_seccion == 'carpeta' %}aria-current="page"{% endif %}>{{ _('Carpeta') }}</a>
+      <a href="{{ url_for('portal_cliente.buscar') }}" data-atajo="b" {% if portal_seccion == 'buscar' %}aria-current="page"{% endif %} aria-label="{{ _('Buscar en el portal') }}">{{ _('Buscar') }}</a>
+      <a href="{{ url_for('portal_cliente.cuenta') }}" data-atajo="u" {% if portal_seccion == 'cuenta' %}aria-current="page"{% endif %}>{{ _('Mi cuenta') }}</a>
+      <a href="{{ url_for('portal_cliente.glosario') }}" data-atajo="l" {% if request.endpoint == 'portal_cliente.glosario' %}aria-current="page"{% endif %}>{{ _('Glosario') }}</a>
       {% if portal_ayuda_url %}<a href="{{ portal_ayuda_url }}" target="_blank" rel="noopener" class="portal-nav-ayuda" aria-label="{{ _('Ayuda sobre esta pantalla (se abre en una pestaña nueva)') }}">{{ _('Ayuda') }}</a>{% endif %}
       {% if not vista_previa %}<form method="post" action="{{ url_for('portal_cliente.salir') }}" class="portal-nav-salir"><button type="submit" class="portal-nav-salir-boton">{{ _('Salir') }}</button></form>{% endif %}
     </nav>
@@ -69,9 +69,22 @@
     <main id="portal-contenido" tabindex="-1" class="portal-contenido{{ ' portal-solo-lectura' if vista_previa }}">
     {% block contenido %}{% endblock %}
     </main>
+    <p class="portal-pie muted"><button type="button" class="btn btn-ghost" data-atajos-abrir>{{ _('Atajos de teclado') }}</button></p>
+    <dialog id="portal-atajos" class="portal-vista-documento portal-atajos" aria-labelledby="portal-atajos-titulo">
+      <div class="ds-fila"><strong id="portal-atajos-titulo">{{ _('Atajos de teclado') }}</strong><button type="button" class="btn btn-ghost" data-atajos-cerrar>{{ _('Cerrar') }}</button></div>
+      <dl class="portal-glosario-lista">
+        <dt><kbd>g</kbd> <kbd>i</kbd></dt><dd>{{ _('Inicio') }}</dd>
+        <dt><kbd>g</kbd> <kbd>f</kbd></dt><dd>{{ _('Facturas') }}</dd>
+        <dt><kbd>g</kbd> <kbd>t</kbd></dt><dd>{{ _('Impuestos') }}</dd>
+        <dt><kbd>g</kbd> <kbd>m</kbd></dt><dd>{{ _('Mensajes') }}</dd>
+        <dt><kbd>g</kbd> <kbd>a</kbd></dt><dd>{{ _('Avisos') }}</dd>
+        <dt><kbd>g</kbd> <kbd>c</kbd></dt><dd>{{ _('Carpeta') }}</dd>
+        <dt><kbd>g</kbd> <kbd>u</kbd></dt><dd>{{ _('Mi cuenta') }}</dd>
+        <dt><kbd>/</kbd></dt><dd>{{ _('Buscar') }}</dd>
+        <dt><kbd>?</kbd></dt><dd>{{ _('Esta lista') }}</dd>
+      </dl>
+    </dialog>
   </div>
-  <script src="{{ url_for('static', filename='portal_rapido.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='portal_instalar.js') }}" defer></script>
 
   {% set ins_fact = portal_insignia_facturas|default(0) %}{% set ins_msg = portal_insignia_mensajes|default(0) %}{% set ins_avi = portal_insignia_avisos|default(0) %}
   <meta name="portal-insignia" content="{{ ins_fact + ins_msg + ins_avi }}">
@@ -94,6 +107,7 @@
       </div>
     </details>
   </nav>
+  <script src="{{ url_for('static', filename='portal_app.js') }}" defer></script>
   {% if portal_cliente and not vista_previa %}<script src="{{ url_for('static', filename='sw_registro.js') }}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>

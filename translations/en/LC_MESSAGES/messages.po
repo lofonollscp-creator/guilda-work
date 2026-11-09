@@ -25000,3 +25000,9 @@ msgstr "Try again"
 
 msgid "Mi carpeta"
 msgstr "My folder"
+
+msgid "Esta lista"
+msgstr "This list"
+
+msgid "También puedes arrastrar los archivos aquí o pegar una captura con Ctrl+V."
+msgstr "You can also drag files here or paste a screenshot with Ctrl+V."

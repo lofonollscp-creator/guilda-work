@@ -25085,3 +25085,9 @@ msgstr "Réessayer"
 
 msgid "Mi carpeta"
 msgstr "Mon dossier"
+
+msgid "Esta lista"
+msgstr "Cette liste"
+
+msgid "También puedes arrastrar los archivos aquí o pegar una captura con Ctrl+V."
+msgstr "Vous pouvez aussi glisser les fichiers ici ou coller une capture avec Ctrl+V."

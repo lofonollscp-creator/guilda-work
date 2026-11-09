@@ -5539,3 +5539,19 @@ html[data-letra="muy-grande"] .portal-cliente-shell { zoom: 1.3; }
 .portal-instalar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 var(--space-4, 16px); padding: 12px 14px; border: 1px solid var(--portal-accent); border-radius: 12px; background: var(--portal-accent-bg); }
 .portal-instalar[hidden] { display: none; }
 .portal-instalar > span { flex: 1 1 220px; overflow-wrap: anywhere; }
+
+/* En pantallas anchas la portada se reparte en dos columnas y el portal aprovecha el ancho */
+.portal-rejilla { display: block; }
+@media (min-width: 1100px) {
+  .portal-cliente-shell { max-width: 1120px; }
+  .portal-rejilla { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); gap: var(--space-5, 24px); align-items: start; }
+  .portal-col > section:first-child { margin-top: 0; }
+  .portal-col-lateral { position: sticky; top: 16px; }
+}
+
+.portal-pista-pc { margin: 4px 0 8px; }
+.edit-form.arrastrando { outline: 2px dashed var(--portal-accent); outline-offset: 6px; background: var(--portal-accent-bg); }
+.portal-pie { text-align: center; margin: var(--space-5, 24px) 0 0; }
+.portal-atajos { max-height: 80vh; height: auto; width: min(420px, 94vw); }
+.portal-atajos kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px solid var(--portal-line, var(--border)); border-bottom-width: 2px; border-radius: 6px; background: var(--portal-panel, var(--panel)); font: inherit; font-size: 0.85em; text-align: center; }
+@media (pointer: coarse) { .portal-pista-pc, .portal-pie { display: none; } }

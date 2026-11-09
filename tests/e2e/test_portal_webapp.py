@@ -76,3 +76,35 @@ def test_el_manifiesto_trae_accesos_directos_y_el_icono_recibe_la_insignia(servi
     nueva.goto(f"{servidor.url}/portal/")
     assert nueva.locator("meta[name=portal-insignia]").get_attribute("content") == "0"
     ctx.close()
+
+
+def test_en_el_pc_la_portada_va_a_dos_columnas_se_arrastra_y_pega_y_hay_atajos(servidor, abrir, entrar_como_equipo, chromium):
+    ctx, nueva = _entrar(servidor, abrir, entrar_como_equipo, chromium, "Webapp pc", ancho=1280)
+    errores = []
+    nueva.on("pageerror", lambda e: errores.append(str(e)))
+    nueva.goto(f"{servidor.url}/portal/")
+    a, b = nueva.locator(".portal-col-principal").bounding_box(), nueva.locator(".portal-col-lateral").bounding_box()
+    assert a["x"] + a["width"] <= b["x"] + 1 and nueva.locator(".portal-tabs").is_hidden()
+    # atajos: «g f» va a Facturas, «?» abre la lista y Esc la cierra
+    nueva.keyboard.press("g")
+    nueva.keyboard.press("f")
+    nueva.wait_for_url("**/portal/facturas")
+    nueva.keyboard.press("?")
+    assert nueva.locator("#portal-atajos").evaluate("d => d.open") is True
+    nueva.keyboard.press("Escape")
+    assert nueva.locator("#portal-atajos").evaluate("d => d.open") is False
+    # arrastrar y pegar sobre el formulario de subida
+    nueva.evaluate("""() => {
+      const dt = new DataTransfer(); dt.items.add(new File([new Uint8Array(3000)], 'arrastrada.pdf', { type: 'application/pdf' }));
+      document.getElementById('form-subida').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    }""")
+    nombres = nueva.evaluate("Array.from(document.querySelector('#form-subida input[type=file]').files).map(f => f.name)")
+    assert nombres == ["arrastrada.pdf"]
+    nueva.evaluate("""() => {
+      const dt = new DataTransfer(); dt.items.add(new File([new Uint8Array(3000)], 'image.png', { type: 'image/png' }));
+      document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+    }""")
+    nombres = nueva.evaluate("Array.from(document.querySelector('#form-subida input[type=file]').files).map(f => f.name)")
+    assert nombres[0] == "arrastrada.pdf" and len(nombres) == 2 and nombres[1].startswith("captura-")
+    assert errores == []
+    ctx.close()

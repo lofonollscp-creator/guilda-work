@@ -25009,3 +25009,9 @@ msgstr "Tornar-ho a provar"
 
 msgid "Mi carpeta"
 msgstr "La meva carpeta"
+
+msgid "Esta lista"
+msgstr "Aquesta llista"
+
+msgid "También puedes arrastrar los archivos aquí o pegar una captura con Ctrl+V."
+msgstr "També pots arrossegar els arxius aquí o enganxar una captura amb Ctrl+V."
