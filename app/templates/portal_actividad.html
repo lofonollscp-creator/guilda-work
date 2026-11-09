@@ -1,0 +1,17 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Lo que hemos hecho por ti') }}{% endblock %}
+{% block titulo %}{{ _('Lo que hemos hecho por ti') }}{% endblock %}
+{% block subtitulo %}{{ _('Los últimos 90 días, de lo más reciente a lo más antiguo.') }}{% endblock %}
+{% block contenido %}
+    {% if not eventos %}
+    <div class="portal-hoy-vacio" role="status"><p><strong>{{ _('Todavía no hay nada que enseñarte') }}</strong></p><p>{{ _('Cuando tu gestoría presente un modelo, revise tus facturas o te deje un documento, lo verás aquí.') }}</p></div>
+    {% else %}
+    <p class="muted">{{ ngettext('%(n)s cosa en los últimos 90 días.', '%(n)s cosas en los últimos 90 días.', resumen.hechos, n=resumen.hechos) }}</p>
+    <ol class="portal-actividad" aria-label="{{ _('Línea del tiempo') }}">
+      {% for e in eventos %}
+      <li class="portal-actividad-{{ e.tipo }}"><time datetime="{{ e.fecha }}">{{ e.fecha|fecha_dia }}</time>
+        <span><a href="{{ e.url }}">{{ e.titulo }}</a>{% if e.detalle %}<small class="muted"> · {{ e.detalle }}</small>{% endif %}</span></li>
+      {% endfor %}
+    </ol>
+    {% endif %}
+{% endblock %}

@@ -24705,3 +24705,55 @@ msgstr "Qu'est-ce que le modèle %(m)s ?"
 
 msgid "Ver en el glosario"
 msgstr "Voir dans le glossaire"
+
+msgid "Hemos presentado tu modelo %(m)s"
+msgstr "Nous avons déposé votre modèle %(m)s"
+
+msgid "Hemos dejado un documento en tu carpeta: %(nombre)s"
+msgstr "Nous avons déposé un document dans votre dossier : %(nombre)s"
+
+msgid "Hemos revisado %(n)s factura tuya"
+msgid_plural "Hemos revisado %(n)s facturas tuyas"
+msgstr[0] "Nous avons relu %(n)s facture de vous"
+msgstr[1] "Nous avons relu %(n)s factures de vous"
+
+msgid "Hemos recibido y revisado lo que nos mandaste: %(titulo)s"
+msgstr "Nous avons reçu et vérifié ce que vous nous avez envoyé : %(titulo)s"
+
+msgid "Hemos recibido tus respuestas: %(titulo)s"
+msgstr "Nous avons reçu vos réponses : %(titulo)s"
+
+msgid "Te hemos escrito: %(asunto)s"
+msgstr "Nous vous avons écrit : %(asunto)s"
+
+msgid "Lo que hemos hecho por ti"
+msgstr "Ce que nous avons fait pour vous"
+
+msgid "Los últimos 90 días, de lo más reciente a lo más antiguo."
+msgstr "Les 90 derniers jours, du plus récent au plus ancien."
+
+msgid "Todavía no hay nada que enseñarte"
+msgstr "Il n'y a encore rien à vous montrer"
+
+msgid "Cuando tu gestoría presente un modelo, revise tus facturas o te deje un documento, lo verás aquí."
+msgstr "Quand votre cabinet déposera un modèle, relira vos factures ou vous laissera un document, vous le verrez ici."
+
+msgid "Línea del tiempo"
+msgstr "Chronologie"
+
+msgid "%(n)s cosa en los últimos 90 días."
+msgid_plural "%(n)s cosas en los últimos 90 días."
+msgstr[0] "%(n)s élément au cours des 90 derniers jours."
+msgstr[1] "%(n)s éléments au cours des 90 derniers jours."
+
+msgid "No sé qué es esto"
+msgstr "Je ne sais pas ce que c'est"
+
+msgid "Ver todo"
+msgstr "Tout voir"
+
+msgid "Hola, no sé qué es esto o cómo hacerlo. ¿Podéis explicármelo o llamarme?"
+msgstr "Bonjour, je ne sais pas ce que c'est ni comment faire. Pouvez-vous me l'expliquer ou m'appeler ?"
+
+msgid "Necesito ayuda con: %(tema)s"
+msgstr "J'ai besoin d'aide pour : %(tema)s"

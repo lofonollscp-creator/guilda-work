@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, portal_actividad, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -297,8 +297,18 @@ def dashboard():
         para_hacer=d["para_hacer"], presentados=d["presentados"], proximo_pendiente=d["proximo_pendiente"], trabajo_en_curso=portal_estado.enriquecer(d["trabajo"], cliente["tenant_id"]),
         plazos=portal_plazos.proximos(cliente, d["vencimientos"], g.portal_rol),
         aviso=(request.args.get("aviso") or "")[:200] or None, max_caracteres=tareas_trabajo.MAX_CARACTERES_COMENTARIO,
+        actividad=portal_actividad.eventos(cliente, limite=3),
         bienvenida=bienvenida and not resumen_primeros["completo"], primeros_pasos=primeros, primeros_resumen=resumen_primeros,
     )
+
+
+@portal_bp.route("/actividad")
+@cliente_login_required
+def actividad():
+    """Lo que la gestoría ha hecho por este cliente en los últimos 90 días."""
+    cliente = _cliente_actual_o_salir()
+    ev = portal_actividad.eventos(cliente)
+    return render_template("portal_actividad.html", cliente=cliente, eventos=ev, resumen=portal_actividad.resumen(ev), portal_seccion="inicio")
 
 
 @portal_bp.route("/glosario")
@@ -1135,8 +1145,9 @@ def conversacion_nueva():
     if peticion_id and p is None:
         abort(404)
     error = None
-    asunto = request.form.get("asunto", "") if request.method == "POST" else (_("Sobre: %(titulo)s", titulo=p["titulo"]) if p else "")
-    texto = request.form.get("texto", "")
+    tema = " ".join((request.args.get("tema") or "").split())[:100]                          # «No sé qué es esto»: abre la conversación ya escrita
+    asunto = request.form.get("asunto", "") if request.method == "POST" else (_("Sobre: %(titulo)s", titulo=p["titulo"]) if p else (_("Necesito ayuda con: %(tema)s", tema=tema) if tema else ""))
+    texto = request.form.get("texto", "") if request.method == "POST" or not tema else _("Hola, no sé qué es esto o cómo hacerlo. ¿Podéis explicármelo o llamarme?")
     if request.method == "POST":
         try:
             cid = portal_conversaciones.iniciar(cliente, asunto, texto, "cliente", g.portal_email or cliente["email"] or "", peticion_id=p["id"] if p else None, archivos=_adjuntos_de_conversacion())

@@ -43,6 +43,7 @@
         <h3 id="portal-principal-titulo">{{ principal.titulo }}</h3>
         {% if principal.detalle %}<p>{{ principal.detalle }}</p>{% endif %}
         <a class="btn btn-primary portal-hoy-boton" href="{{ principal.url }}">{{ principal.accion }}</a>
+        {% if portal_puede_subir %}<a class="portal-no-se" href="{{ url_for('portal_cliente.conversacion_nueva', tema=principal.titulo) }}">{{ _('No sé qué es esto') }}</a>{% endif %}
       </article>
       {% if para_hacer|length > 1 %}
       <details class="portal-hoy-otras">
@@ -55,6 +56,7 @@
               {% if p.detalle %}<span>{{ p.detalle }}</span>{% endif %}
             </div>
             <a class="btn {{ 'btn-primary' if p.urgente else 'btn-ghost' }}" href="{{ p.url }}">{{ p.accion }}</a>
+            {% if portal_puede_subir %}<a class="portal-no-se" href="{{ url_for('portal_cliente.conversacion_nueva', tema=p.titulo) }}">{{ _('No sé qué es esto') }}</a>{% endif %}
           </li>
           {% endfor %}
         </ul>
@@ -68,6 +70,16 @@
       </div>
       {% endif %}
     </section>
+
+    {% if actividad %}
+    <section class="portal-plazos" aria-labelledby="portal-actividad-titulo">
+      <h2 id="portal-actividad-titulo">{{ _('Lo que hemos hecho por ti') }}</h2>
+      <ol class="portal-actividad">
+        {% for e in actividad %}<li class="portal-actividad-{{ e.tipo }}"><time datetime="{{ e.fecha }}">{{ e.fecha|fecha_dia }}</time> <span><a href="{{ e.url }}">{{ e.titulo }}</a></span></li>{% endfor %}
+      </ol>
+      <p><a href="{{ url_for('portal_cliente.actividad') }}">{{ _('Ver todo') }}</a></p>
+    </section>
+    {% endif %}
 
     {% if plazos %}
     <section class="portal-plazos" aria-labelledby="portal-plazos-titulo">

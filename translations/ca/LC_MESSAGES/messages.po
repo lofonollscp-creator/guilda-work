@@ -24629,3 +24629,55 @@ msgstr "Què és el model %(m)s?"
 
 msgid "Ver en el glosario"
 msgstr "Veure al glossari"
+
+msgid "Hemos presentado tu modelo %(m)s"
+msgstr "Hem presentat el teu model %(m)s"
+
+msgid "Hemos dejado un documento en tu carpeta: %(nombre)s"
+msgstr "Hem deixat un document a la teva carpeta: %(nombre)s"
+
+msgid "Hemos revisado %(n)s factura tuya"
+msgid_plural "Hemos revisado %(n)s facturas tuyas"
+msgstr[0] "Hem revisat %(n)s factura teva"
+msgstr[1] "Hem revisat %(n)s factures teves"
+
+msgid "Hemos recibido y revisado lo que nos mandaste: %(titulo)s"
+msgstr "Hem rebut i revisat el que ens vas enviar: %(titulo)s"
+
+msgid "Hemos recibido tus respuestas: %(titulo)s"
+msgstr "Hem rebut les teves respostes: %(titulo)s"
+
+msgid "Te hemos escrito: %(asunto)s"
+msgstr "T'hem escrit: %(asunto)s"
+
+msgid "Lo que hemos hecho por ti"
+msgstr "El que hem fet per tu"
+
+msgid "Los últimos 90 días, de lo más reciente a lo más antiguo."
+msgstr "Els últims 90 dies, del més recent al més antic."
+
+msgid "Todavía no hay nada que enseñarte"
+msgstr "Encara no hi ha res que ensenyar-te"
+
+msgid "Cuando tu gestoría presente un modelo, revise tus facturas o te deje un documento, lo verás aquí."
+msgstr "Quan la teva gestoria presenti un model, revisi les teves factures o et deixi un document, ho veuràs aquí."
+
+msgid "Línea del tiempo"
+msgstr "Línia del temps"
+
+msgid "%(n)s cosa en los últimos 90 días."
+msgid_plural "%(n)s cosas en los últimos 90 días."
+msgstr[0] "%(n)s cosa en els últims 90 dies."
+msgstr[1] "%(n)s coses en els últims 90 dies."
+
+msgid "No sé qué es esto"
+msgstr "No sé què és això"
+
+msgid "Ver todo"
+msgstr "Veure-ho tot"
+
+msgid "Hola, no sé qué es esto o cómo hacerlo. ¿Podéis explicármelo o llamarme?"
+msgstr "Hola, no sé què és això o com fer-ho. Podeu explicar-m'ho o trucar-me?"
+
+msgid "Necesito ayuda con: %(tema)s"
+msgstr "Necessito ajuda amb: %(tema)s"

@@ -89,6 +89,7 @@ MAPA = {
     "portal_cliente.dashboard": "portal-de-cliente/recorrer-el-portal",
     "portal_cliente.impuestos": "portal-de-cliente/recorrer-el-portal",
     "portal_cliente.glosario": "portal-de-cliente/recorrer-el-portal",
+    "portal_cliente.actividad": "portal-de-cliente/recorrer-el-portal",
     "portal_cliente.firma": "portal-de-cliente/firmar-y-pagar",
     "portal_cliente.honorarios": "portal-de-cliente/firmar-y-pagar",
     "portal_cliente.recibo_honorarios": "portal-de-cliente/firmar-y-pagar",

@@ -24620,3 +24620,55 @@ msgstr "What is return %(m)s?"
 
 msgid "Ver en el glosario"
 msgstr "See in the glossary"
+
+msgid "Hemos presentado tu modelo %(m)s"
+msgstr "We have filed your return %(m)s"
+
+msgid "Hemos dejado un documento en tu carpeta: %(nombre)s"
+msgstr "We have left a document in your folder: %(nombre)s"
+
+msgid "Hemos revisado %(n)s factura tuya"
+msgid_plural "Hemos revisado %(n)s facturas tuyas"
+msgstr[0] "We have reviewed %(n)s invoice of yours"
+msgstr[1] "We have reviewed %(n)s invoices of yours"
+
+msgid "Hemos recibido y revisado lo que nos mandaste: %(titulo)s"
+msgstr "We have received and checked what you sent us: %(titulo)s"
+
+msgid "Hemos recibido tus respuestas: %(titulo)s"
+msgstr "We have received your answers: %(titulo)s"
+
+msgid "Te hemos escrito: %(asunto)s"
+msgstr "We have written to you: %(asunto)s"
+
+msgid "Lo que hemos hecho por ti"
+msgstr "What we have done for you"
+
+msgid "Los últimos 90 días, de lo más reciente a lo más antiguo."
+msgstr "The last 90 days, most recent first."
+
+msgid "Todavía no hay nada que enseñarte"
+msgstr "There is nothing to show you yet"
+
+msgid "Cuando tu gestoría presente un modelo, revise tus facturas o te deje un documento, lo verás aquí."
+msgstr "When your accountant files a return, reviews your invoices or leaves you a document, you will see it here."
+
+msgid "Línea del tiempo"
+msgstr "Timeline"
+
+msgid "%(n)s cosa en los últimos 90 días."
+msgid_plural "%(n)s cosas en los últimos 90 días."
+msgstr[0] "%(n)s item in the last 90 days."
+msgstr[1] "%(n)s items in the last 90 days."
+
+msgid "No sé qué es esto"
+msgstr "I don't know what this is"
+
+msgid "Ver todo"
+msgstr "See all"
+
+msgid "Hola, no sé qué es esto o cómo hacerlo. ¿Podéis explicármelo o llamarme?"
+msgstr "Hello, I don't know what this is or how to do it. Could you explain it to me or call me?"
+
+msgid "Necesito ayuda con: %(tema)s"
+msgstr "I need help with: %(tema)s"
