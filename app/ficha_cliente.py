@@ -95,6 +95,8 @@ def contexto_documentos(tenant_id: int, usuario_id: int, c, cliente_fiscal, venc
            "firmas": documentos_firma.listar_de_cliente(tenant_id, c["id"]), "catalogo_firmas": documentos_firma.catalogo(tenant_id)}
     if cliente_fiscal is not None:
         ctx["expediente"] = almacen_documentos.listar_de_cliente_fiscal(tenant_id, cliente_fiscal["id"])
+        from . import portal_documentos
+        ctx["portal_carpetas"] = portal_documentos.CARPETAS
         ctx["categorias_documento"] = db.CATEGORIAS_DOCUMENTO
         ctx["soy_supervisor"] = db.es_supervisor_tenant(usuario_id)
         for v in vencimientos:

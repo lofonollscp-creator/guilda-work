@@ -25337,3 +25337,142 @@ msgid "Queda %(n)s invitación por enviar: salen escalonadas, hasta 100 por hora
 msgid_plural "Quedan %(n)s invitaciones por enviar: salen escalonadas, hasta 100 por hora."
 msgstr[0] "Il reste %(n)s invitation à envoyer : elles partent de façon échelonnée, jusqu'à 100 par heure."
 msgstr[1] "Il reste %(n)s invitations à envoyer : elles partent de façon échelonnée, jusqu'à 100 par heure."
+
+msgid "Identidad"
+msgstr "Identité"
+
+msgid "Sociedad y escrituras"
+msgstr "Société et actes"
+
+msgid "Trabajadores y Seguridad Social"
+msgstr "Salariés et sécurité sociale"
+
+msgid "Seguros"
+msgstr "Assurances"
+
+msgid "Bancos y préstamos"
+msgstr "Banques et prêts"
+
+msgid "Contratos y alquileres"
+msgstr "Contrats et locations"
+
+msgid "Impuestos y Hacienda"
+msgstr "Impôts et fisc"
+
+msgid "Otros"
+msgstr "Autres"
+
+msgid "No se pudo guardar «%(n)s»."
+msgstr "«%(n)s» n'a pas pu être enregistré."
+
+msgid "«%(n)s» ya está en tus documentos."
+msgstr "« %(n)s » est déjà dans vos documents."
+
+msgid "«%(n)s» está vacío."
+msgstr "« %(n)s » est vide."
+
+msgid "«%(n)s» pesa demasiado."
+msgstr "« %(n)s » est trop lourd."
+
+msgid "Has llegado al máximo de documentos."
+msgstr "Vous avez atteint le nombre maximal de documents."
+
+msgid "«%(n)s» contiene una clave privada y no se puede guardar aquí."
+msgstr "« %(n)s » contient une clé privée et ne peut pas être enregistré ici."
+
+msgid "Mis documentos"
+msgstr "Mes documents"
+
+msgid "Contratos, escrituras, seguros, nóminas, extractos… todo en un sitio, ordenado y a mano."
+msgstr "Contrats, actes, assurances, fiches de paie, relevés… tout au même endroit, rangé et à portée de main."
+
+msgid "Los hemos colocado en su carpeta; puedes cambiarla."
+msgstr "Nous les avons rangés dans leur dossier ; vous pouvez le changer."
+
+msgid "Caducan pronto"
+msgstr "Bientôt expirés"
+
+msgid "caducó hace %(n)s días"
+msgstr "a expiré il y a %(n)s jours"
+
+msgid "caduca hoy"
+msgstr "expire aujourd'hui"
+
+msgid "Subir documentos"
+msgstr "Téléverser des documents"
+
+msgid "Archivos (PDF, fotos, Word, Excel…)"
+msgstr "Fichiers (PDF, photos, Word, Excel…)"
+
+msgid "Elegir sola según el documento"
+msgstr "Choisir automatiquement selon le document"
+
+msgid "Caduca el (opcional, por ejemplo un seguro)"
+msgstr "Expire le (facultatif, par exemple une assurance)"
+
+msgid "Tus documentos"
+msgstr "Vos documents"
+
+msgid "Buscar en tus documentos"
+msgstr "Rechercher dans vos documents"
+
+msgid "Buscar por nombre o por lo que dice"
+msgstr "Rechercher par nom ou par contenu"
+
+msgid "Carpetas"
+msgstr "Dossiers"
+
+msgid "No hay documentos con estos filtros."
+msgstr "Aucun document avec ces filtres."
+
+msgid "Todavía no hay documentos. Sube el primero arriba o tu gestoría los irá dejando aquí."
+msgstr "Il n'y a pas encore de documents. Téléversez le premier ci-dessus ou votre cabinet les déposera ici."
+
+msgid "De tu gestoría"
+msgstr "De votre cabinet"
+
+msgid "caduca el %(f)s"
+msgstr "expire le %(f)s"
+
+msgid "Organizar"
+msgstr "Organiser"
+
+msgid "Caduca el"
+msgstr "Expire le"
+
+msgid "Borrar este documento"
+msgstr "Supprimer ce document"
+
+msgid "Se ha guardado %(n)s documento."
+msgid_plural "Se han guardado %(n)s documentos."
+msgstr[0] "%(n)s document a été enregistré."
+msgstr[1] "%(n)s documents ont été enregistrés."
+
+msgid "caduca en %(n)s día"
+msgid_plural "caduca en %(n)s días"
+msgstr[0] "expire dans %(n)s jour"
+msgstr[1] "expire dans %(n)s jours"
+
+msgid "Ocultar al cliente"
+msgstr "Masquer au client"
+
+msgid "Mostrar al cliente"
+msgstr "Montrer au client"
+
+msgid "Carpeta automática"
+msgstr "Dossier automatique"
+
+msgid "Caduca el (opcional)"
+msgstr "Expire le (facultatif)"
+
+msgid "Ver mis documentos"
+msgstr "Voir mes documents"
+
+msgid "Fecha de caducidad: %(f)s. ¿Lo has renovado? Sube el nuevo."
+msgstr "Date d'expiration : %(f)s. L'avez-vous renouvelé ? Téléversez le nouveau."
+
+msgid "Tu documento «%(nombre)s» caduca pronto"
+msgstr "Votre document « %(nombre)s » expire bientôt"
+
+msgid "Tu documento «%(nombre)s» ha caducado"
+msgstr "Votre document « %(nombre)s » a expiré"

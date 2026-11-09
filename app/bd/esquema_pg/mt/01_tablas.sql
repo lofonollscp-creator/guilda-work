@@ -568,6 +568,11 @@ CREATE TABLE IF NOT EXISTS cliente_documentos (
     cifrado bigint NOT NULL DEFAULT 0,
     sobre text,
     nombre_cifrado text,
+    portal_visible bigint NOT NULL DEFAULT 0,
+    portal_carpeta text,
+    portal_origen text,
+    portal_vence text,
+    portal_texto text,
     PRIMARY KEY (tenant_id, id),
     CHECK (origen IN ('subida', 'correo'))
 );

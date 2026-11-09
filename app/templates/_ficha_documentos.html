@@ -32,6 +32,17 @@
         <span class="muted">· {{ d.creado_en[:10] }} · {{ d.subido_por_nombre }}{% if d.origen == 'correo' %} · {{ _('del correo') }}{% if d.asunto_origen %} «{{ d.asunto_origen }}»{% endif %}{% endif %}</span>
       </span>
       <span class="log-duration">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
+      {% if d.portal_visible %}
+      <form action="{{ url_for('fiscal.documento_cliente_portal', cliente_id=fiscal.id, documento_id=d.id) }}" method="post" class="inline-form"><input type="hidden" name="accion" value="ocultar">
+        <span class="pill">{{ _('Visible para el cliente') }}</span> <button type="submit" class="btn btn-ghost">{{ _('Ocultar al cliente') }}</button></form>
+      {% elif portal_carpetas %}
+      <details class="portal-compartir"><summary>{{ _('Mostrar al cliente') }}</summary>
+        <form action="{{ url_for('fiscal.documento_cliente_portal', cliente_id=fiscal.id, documento_id=d.id) }}" method="post" class="inline-form">
+          <select name="carpeta" aria-label="{{ _('Carpeta') }}"><option value="">{{ _('Carpeta automática') }}</option>{% for k, c in portal_carpetas.items() %}<option value="{{ k }}">{{ c.nombre }}</option>{% endfor %}</select>
+          <input type="date" name="vence" aria-label="{{ _('Caduca el (opcional)') }}">
+          <button type="submit" class="btn btn-ghost">{{ _('Mostrar') }}</button>
+        </form></details>
+      {% endif %}
       {% if d.subido_por == g.usuario_id or soy_supervisor %}
       <form action="{{ url_for('fiscal.eliminar_documento_cliente', cliente_id=fiscal.id, documento_id=d.id) }}" method="post" data-confirmar-envio="{{ _('¿Eliminar este documento del expediente?') }}">
         <button type="submit" class="chip-del" title="{{ _('Eliminar') }}" aria-label="{{ _('Eliminar') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-x"></use></svg></button>

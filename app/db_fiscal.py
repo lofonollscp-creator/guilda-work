@@ -1370,7 +1370,7 @@ def listar_documentos_cliente(tenant_id: int, cliente_fiscal_id: int, limite: in
     try:
         filas = conn.execute(
             f"""SELECT d.id, d.nombre_archivo, d.nombre_cifrado, d.tipo_mime, d.tamano_bytes, d.categoria, d.origen, d.asunto_origen, d.subido_por,
-                      d.creado_en, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS subido_por_nombre
+                      d.creado_en, d.portal_visible, d.portal_carpeta, d.portal_origen, d.portal_vence, COALESCE(NULLIF(pf.nombre_mostrado, ''), u.email) AS subido_por_nombre
                FROM cliente_documentos d LEFT JOIN usuarios u ON u.id = d.subido_por LEFT JOIN usuario_perfil pf ON pf.usuario_id = d.subido_por
                WHERE d.tenant_id = ? AND d.cliente_fiscal_id = ?{extra} ORDER BY d.creado_en DESC, d.id DESC LIMIT ?""",
             (tenant_id, cliente_fiscal_id, *extra_p, max(1, min(limite, 1000))),

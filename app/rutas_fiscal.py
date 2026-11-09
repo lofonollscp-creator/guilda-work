@@ -248,6 +248,26 @@ def descargar_documento_cliente(cliente_id: int, documento_id: int):
     return respuesta
 
 
+@fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>/portal", methods=["POST"])
+@login_required
+def documento_cliente_portal(cliente_id: int, documento_id: int):
+    """Hace visible (o oculta) un documento del expediente en «Mis documentos» del portal del cliente, en la carpeta que se elija y con su caducidad opcional."""
+    from . import portal_documentos
+    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+        abort(404)
+    try:
+        if request.form.get("accion") == "ocultar":
+            ok = portal_documentos.ocultar(g.tenant_id, cliente_id, documento_id)
+        else:
+            ok = portal_documentos.compartir_con_cliente(g.tenant_id, cliente_id, documento_id, request.form.get("carpeta") or None, request.form.get("vence") or None)
+    except ValueError as e:
+        return redirect(ficha_cliente_unica.url_pestana(g.tenant_id, cliente_id, "documentos", error=_(str(e))))
+    if not ok:
+        abort(404)
+    db.registrar_acceso_cliente(g.tenant_id, cliente_id, g.usuario_id, "documento_compartido_portal" if request.form.get("accion") != "ocultar" else "documento_ocultado_portal", str(documento_id))
+    return redirect(ficha_cliente_unica.url_documentos(g.tenant_id, cliente_id))
+
+
 @fiscal_bp.route("/clientes/<int:cliente_id>/documentos/<int:documento_id>/eliminar", methods=["POST"])
 @login_required
 def eliminar_documento_cliente(cliente_id: int, documento_id: int):

@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_solicitudes, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -1310,6 +1310,83 @@ def avisos():
         portal_novedades.marcar_leidas(cliente, email)
     persona = next((p for p in portal_personas.listar(cliente) if p["email"] == email.lower()), None)
     return render_template("portal_avisos.html", cliente=cliente, avisos=lista, avisos_correo=(persona or {}).get("avisos"), portal_seccion="avisos")
+
+
+@portal_bp.route("/documentos")
+@cliente_login_required
+def mis_documentos():
+    """«Mis documentos»: contratos, escrituras, seguros, nóminas… en carpetas, con búsqueda y caducidades."""
+    cliente = _cliente_actual_o_salir()
+    carpeta = request.args.get("carpeta") if request.args.get("carpeta") in portal_documentos.CARPETAS else None
+    q = (request.args.get("q") or "")[:80]
+    puede = g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa")
+    return render_template("portal_documentos.html", cliente=cliente, docs=portal_documentos.listar(cliente, carpeta, q), cuentas=portal_documentos.cuentas(cliente), carpetas=portal_documentos.CARPETAS, carpeta=carpeta, q=q,
+                           por_vencer=portal_documentos.por_vencer(cliente), puede_subir=puede, avisos=session.pop("portal_docs_avisos", None), error=(request.args.get("error") or "")[:200] or None,
+                           subidos=request.args.get("subidos", type=int), portal_seccion="documentos")
+
+
+@portal_bp.route("/documentos/subir", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour")
+def mis_documentos_subir():
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa") or g.get("portal_rol", "completo") == "consulta":
+        abort(403)
+    try:
+        archivos = [(a.filename, a.mimetype, a.read(db.MAX_DOCUMENTO_CLIENTE_BYTES + 1)) for a in request.files.getlist("archivos")[:portal_documentos.MAX_ARCHIVOS + 1] if a and a.filename]
+        r = portal_documentos.subir(cliente, archivos, request.form.get("carpeta") or None, request.form.get("vence") or None)
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.mis_documentos", error=_(str(e))[:200]))
+    if r["avisos"]:
+        session["portal_docs_avisos"] = r["avisos"][:10]
+    if r["subidos"]:
+        auditoria.registrar(cliente["tenant_id"], None, "portal.documentos_subidos", "cliente_fiscal", cliente["id"], {"quien": g.get("portal_email") or "titular", "n": len(r["subidos"])})
+    return redirect(url_for("portal_cliente.mis_documentos", subidos=len(r["subidos"])))
+
+
+@portal_bp.route("/documentos/<int:documento_id>")
+@cliente_login_required
+def mis_documentos_descargar(documento_id: int):
+    cliente = _cliente_actual_o_salir()
+    try:
+        d = portal_documentos.abrir(cliente, documento_id)
+    except Exception:  # noqa: BLE001 -- despacho cifrado y bloqueado, almacenamiento caído…
+        abort(503)
+    if d is None:
+        abort(404)
+    tipo = (d["tipo_mime"] or "").lower().split(";")[0]
+    en_linea = request.args.get("ver") == "1" and tipo in portal_documentos.TIPOS_EN_LINEA
+    resp = Response(bytes(d["contenido"]), mimetype=tipo if tipo in portal_documentos.TIPOS_EN_LINEA else "application/octet-stream")
+    resp.headers.set("Content-Disposition", "inline" if en_linea else "attachment", filename=d["nombre_archivo"])
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["Cache-Control"] = "private, no-store"
+    return resp
+
+
+@portal_bp.route("/documentos/<int:documento_id>/organizar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour")
+def mis_documentos_organizar(documento_id: int):
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa") or g.get("portal_rol", "completo") == "consulta":
+        abort(403)
+    try:
+        portal_documentos.mover(cliente, documento_id, request.form.get("carpeta") or None, request.form.get("vence") or None)
+    except ValueError as e:
+        return redirect(url_for("portal_cliente.mis_documentos", error=_(str(e))[:200]))
+    return redirect(url_for("portal_cliente.mis_documentos", carpeta=request.form.get("volver") or None))
+
+
+@portal_bp.route("/documentos/<int:documento_id>/borrar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour")
+def mis_documentos_borrar(documento_id: int):
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa") or g.get("portal_rol", "completo") == "consulta":
+        abort(403)
+    if portal_documentos.borrar(cliente, documento_id):
+        auditoria.registrar(cliente["tenant_id"], None, "portal.documento_borrado", "cliente_fiscal", cliente["id"], {"quien": g.get("portal_email") or "titular", "documento": documento_id})
+    return redirect(url_for("portal_cliente.mis_documentos"))
 
 
 @portal_bp.route("/gestiones")

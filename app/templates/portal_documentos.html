@@ -1,0 +1,69 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Mis documentos') }}{% endblock %}
+{% block titulo %}{{ _('Mis documentos') }}{% endblock %}
+{% block subtitulo %}{{ _('Contratos, escrituras, seguros, nóminas, extractos… todo en un sitio, ordenado y a mano.') }}{% endblock %}
+{% block contenido %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    {% if subidos %}<p class="portal-peticion" role="status"><strong>{{ ngettext('Se ha guardado %(n)s documento.', 'Se han guardado %(n)s documentos.', subidos, n=subidos) }}</strong> {{ _('Los hemos colocado en su carpeta; puedes cambiarla.') }}</p>{% endif %}
+    {% for a in avisos or [] %}<p class="portal-peticion" role="alert">{{ a }}</p>{% endfor %}
+
+    {% if por_vencer %}
+    <section class="portal-plazos" aria-labelledby="doc-vencen">
+      <h2 id="doc-vencen">{{ _('Caducan pronto') }}</h2>
+      <ul class="portal-plazos-lista">{% for v in por_vencer %}
+        <li class="portal-plazo {{ 'urgente' if v.dias <= 7 }}"><strong>{{ v.nombre }}</strong> <span class="muted">{{ v.vence|fecha_dia }} · {% if v.dias < 0 %}{{ _('caducó hace %(n)s días', n=-v.dias) }}{% elif v.dias == 0 %}{{ _('caduca hoy') }}{% else %}{{ ngettext('caduca en %(n)s día', 'caduca en %(n)s días', v.dias, n=v.dias) }}{% endif %}</span></li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if puede_subir %}
+    <section class="dash-panel" aria-labelledby="doc-subir">
+      <h2 id="doc-subir">{{ _('Subir documentos') }}</h2>
+      <form method="post" action="{{ url_for('portal_cliente.mis_documentos_subir') }}" enctype="multipart/form-data" class="edit-form">
+        <label for="doc-archivos">{{ _('Archivos (PDF, fotos, Word, Excel…)') }}</label>
+        <input type="file" id="doc-archivos" name="archivos" multiple required>
+        <label for="doc-carpeta">{{ _('Carpeta') }}</label>
+        <select id="doc-carpeta" name="carpeta"><option value="">{{ _('Elegir sola según el documento') }}</option>{% for k, c in carpetas.items() %}<option value="{{ k }}">{{ c.nombre }}</option>{% endfor %}</select>
+        <label for="doc-vence">{{ _('Caduca el (opcional, por ejemplo un seguro)') }}</label>
+        <input type="date" id="doc-vence" name="vence">
+        <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Subir') }}</button></div>
+      </form>
+    </section>
+    {% endif %}
+
+    <section class="dash-panel" aria-labelledby="doc-lista">
+      <h2 id="doc-lista">{{ _('Tus documentos') }}</h2>
+      <form method="get" class="portal-glosario-buscar" role="search">
+        <label class="sr-only" for="doc-q">{{ _('Buscar en tus documentos') }}</label>
+        <input type="search" id="doc-q" name="q" value="{{ q }}" maxlength="80" placeholder="{{ _('Buscar por nombre o por lo que dice') }}">
+        {% if carpeta %}<input type="hidden" name="carpeta" value="{{ carpeta }}">{% endif %}
+        <button type="submit" class="btn btn-ghost">{{ _('Buscar') }}</button>
+      </form>
+      <nav class="portal-trimestres" aria-label="{{ _('Carpetas') }}">
+        <a href="{{ url_for('portal_cliente.mis_documentos', q=q or None) }}" {% if not carpeta %}aria-current="page"{% endif %}>{{ _('Todas') }}</a>
+        {% for k, c in carpetas.items() %}{% if cuentas[k] or carpeta == k %}<a href="{{ url_for('portal_cliente.mis_documentos', carpeta=k, q=q or None) }}" {% if carpeta == k %}aria-current="page"{% endif %}>{{ c.nombre }} ({{ cuentas[k] }})</a>{% endif %}{% endfor %}
+      </nav>
+      {% if not docs %}<p class="muted" role="status">{{ _('No hay documentos con estos filtros.') if (q or carpeta) else _('Todavía no hay documentos. Sube el primero arriba o tu gestoría los irá dejando aquí.') }}</p>{% endif %}
+      {% for d in docs %}
+      <div class="portal-doc">
+        <a href="{{ url_for('portal_cliente.mis_documentos_descargar', documento_id=d.id) }}">{{ d.nombre }}</a>
+        <span class="pill">{{ carpetas[d.carpeta].nombre }}</span>
+        {% if d.portal_origen == 'despacho' %}<span class="pill">{{ _('De tu gestoría') }}</span>{% endif %}
+        <span class="muted">{{ d.creado_en[:10]|fecha_dia }}{% if d.portal_vence %} · {{ _('caduca el %(f)s', f=d.portal_vence|fecha_dia) }}{% endif %}</span>
+        <span class="peso">{{ (d.tamano_bytes / 1024) | round | int }} KB</span>
+        {% if d.en_linea %}<a class="btn btn-ghost" href="{{ url_for('portal_cliente.mis_documentos_descargar', documento_id=d.id, ver=1) }}" target="_blank" rel="noopener">{{ _('Ver') }}</a>{% endif %}
+        {% if puede_subir %}
+        <details class="portal-compartir"><summary>{{ _('Organizar') }}</summary>
+          <form method="post" action="{{ url_for('portal_cliente.mis_documentos_organizar', documento_id=d.id) }}" class="ds-fila">
+            <input type="hidden" name="volver" value="{{ carpeta or '' }}">
+            <label>{{ _('Carpeta') }} <select name="carpeta">{% for k, c in carpetas.items() %}<option value="{{ k }}" {{ 'selected' if d.carpeta == k }}>{{ c.nombre }}</option>{% endfor %}</select></label>
+            <label>{{ _('Caduca el') }} <input type="date" name="vence" value="{{ d.portal_vence or '' }}"></label>
+            <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+          </form>
+          {% if d.borrable %}<form method="post" action="{{ url_for('portal_cliente.mis_documentos_borrar', documento_id=d.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Borrar este documento') }}</button></form>{% endif %}
+        </details>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </section>
+{% endblock %}

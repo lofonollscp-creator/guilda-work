@@ -112,6 +112,7 @@ MAPA = {
     "portal_cliente.factura": "portal-de-cliente/mis-facturas",
     "portal_cliente.citas": "portal-de-cliente/pedir-una-cita",
     "portal_cliente.gestion": "portal-de-cliente/pedir-algo-a-tu-gestoria",
+    "portal_cliente.mis_documentos": "portal-de-cliente/mis-documentos",
     "portal_cliente.declaracion": "portal-de-cliente/lo-que-te-pide-tu-gestoria",
     "portal_cliente.personas": "portal-de-cliente/personas-con-acceso",
     "portal_cliente.facturas": "portal-de-cliente/mis-facturas",

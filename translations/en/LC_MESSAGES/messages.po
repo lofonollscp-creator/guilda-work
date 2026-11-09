@@ -25252,3 +25252,142 @@ msgid "Queda %(n)s invitación por enviar: salen escalonadas, hasta 100 por hora
 msgid_plural "Quedan %(n)s invitaciones por enviar: salen escalonadas, hasta 100 por hora."
 msgstr[0] "%(n)s invitation left to send: they go out staggered, up to 100 per hour."
 msgstr[1] "%(n)s invitations left to send: they go out staggered, up to 100 per hour."
+
+msgid "Identidad"
+msgstr "Identity"
+
+msgid "Sociedad y escrituras"
+msgstr "Company and deeds"
+
+msgid "Trabajadores y Seguridad Social"
+msgstr "Employees and social security"
+
+msgid "Seguros"
+msgstr "Insurance"
+
+msgid "Bancos y préstamos"
+msgstr "Banks and loans"
+
+msgid "Contratos y alquileres"
+msgstr "Contracts and rentals"
+
+msgid "Impuestos y Hacienda"
+msgstr "Taxes and tax office"
+
+msgid "Otros"
+msgstr "Other"
+
+msgid "No se pudo guardar «%(n)s»."
+msgstr "«%(n)s» could not be saved."
+
+msgid "«%(n)s» ya está en tus documentos."
+msgstr "“%(n)s” is already in your documents."
+
+msgid "«%(n)s» está vacío."
+msgstr "“%(n)s” is empty."
+
+msgid "«%(n)s» pesa demasiado."
+msgstr "“%(n)s” is too large."
+
+msgid "Has llegado al máximo de documentos."
+msgstr "You have reached the maximum number of documents."
+
+msgid "«%(n)s» contiene una clave privada y no se puede guardar aquí."
+msgstr "“%(n)s” contains a private key and cannot be saved here."
+
+msgid "Mis documentos"
+msgstr "My documents"
+
+msgid "Contratos, escrituras, seguros, nóminas, extractos… todo en un sitio, ordenado y a mano."
+msgstr "Contracts, deeds, insurance, payslips, statements… all in one place, tidy and at hand."
+
+msgid "Los hemos colocado en su carpeta; puedes cambiarla."
+msgstr "We have put them in their folder; you can change it."
+
+msgid "Caducan pronto"
+msgstr "Expiring soon"
+
+msgid "caducó hace %(n)s días"
+msgstr "expired %(n)s days ago"
+
+msgid "caduca hoy"
+msgstr "expires today"
+
+msgid "Subir documentos"
+msgstr "Upload documents"
+
+msgid "Archivos (PDF, fotos, Word, Excel…)"
+msgstr "Files (PDF, photos, Word, Excel…)"
+
+msgid "Elegir sola según el documento"
+msgstr "Choose automatically from the document"
+
+msgid "Caduca el (opcional, por ejemplo un seguro)"
+msgstr "Expires on (optional, for example an insurance policy)"
+
+msgid "Tus documentos"
+msgstr "Your documents"
+
+msgid "Buscar en tus documentos"
+msgstr "Search your documents"
+
+msgid "Buscar por nombre o por lo que dice"
+msgstr "Search by name or by what it says"
+
+msgid "Carpetas"
+msgstr "Folders"
+
+msgid "No hay documentos con estos filtros."
+msgstr "There are no documents with these filters."
+
+msgid "Todavía no hay documentos. Sube el primero arriba o tu gestoría los irá dejando aquí."
+msgstr "There are no documents yet. Upload the first one above or your accountant will leave them here."
+
+msgid "De tu gestoría"
+msgstr "From your accountant"
+
+msgid "caduca el %(f)s"
+msgstr "expires on %(f)s"
+
+msgid "Organizar"
+msgstr "Organise"
+
+msgid "Caduca el"
+msgstr "Expires on"
+
+msgid "Borrar este documento"
+msgstr "Delete this document"
+
+msgid "Se ha guardado %(n)s documento."
+msgid_plural "Se han guardado %(n)s documentos."
+msgstr[0] "%(n)s document has been saved."
+msgstr[1] "%(n)s documents have been saved."
+
+msgid "caduca en %(n)s día"
+msgid_plural "caduca en %(n)s días"
+msgstr[0] "expires in %(n)s day"
+msgstr[1] "expires in %(n)s days"
+
+msgid "Ocultar al cliente"
+msgstr "Hide from the client"
+
+msgid "Mostrar al cliente"
+msgstr "Show to the client"
+
+msgid "Carpeta automática"
+msgstr "Automatic folder"
+
+msgid "Caduca el (opcional)"
+msgstr "Expires on (optional)"
+
+msgid "Ver mis documentos"
+msgstr "See my documents"
+
+msgid "Fecha de caducidad: %(f)s. ¿Lo has renovado? Sube el nuevo."
+msgstr "Expiry date: %(f)s. Have you renewed it? Upload the new one."
+
+msgid "Tu documento «%(nombre)s» caduca pronto"
+msgstr "Your document “%(nombre)s” expires soon"
+
+msgid "Tu documento «%(nombre)s» ha caducado"
+msgstr "Your document “%(nombre)s” has expired"

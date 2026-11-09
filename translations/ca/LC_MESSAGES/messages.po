@@ -25261,3 +25261,142 @@ msgid "Queda %(n)s invitación por enviar: salen escalonadas, hasta 100 por hora
 msgid_plural "Quedan %(n)s invitaciones por enviar: salen escalonadas, hasta 100 por hora."
 msgstr[0] "Queda %(n)s invitació per enviar: surten esglaonades, fins a 100 per hora."
 msgstr[1] "Queden %(n)s invitacions per enviar: surten esglaonades, fins a 100 per hora."
+
+msgid "Identidad"
+msgstr "Identitat"
+
+msgid "Sociedad y escrituras"
+msgstr "Societat i escriptures"
+
+msgid "Trabajadores y Seguridad Social"
+msgstr "Treballadors i Seguretat Social"
+
+msgid "Seguros"
+msgstr "Assegurances"
+
+msgid "Bancos y préstamos"
+msgstr "Bancs i préstecs"
+
+msgid "Contratos y alquileres"
+msgstr "Contractes i lloguers"
+
+msgid "Impuestos y Hacienda"
+msgstr "Impostos i Hisenda"
+
+msgid "Otros"
+msgstr "Altres"
+
+msgid "No se pudo guardar «%(n)s»."
+msgstr "No s'ha pogut desar «%(n)s»."
+
+msgid "«%(n)s» ya está en tus documentos."
+msgstr "«%(n)s» ja és als teus documents."
+
+msgid "«%(n)s» está vacío."
+msgstr "«%(n)s» és buit."
+
+msgid "«%(n)s» pesa demasiado."
+msgstr "«%(n)s» pesa massa."
+
+msgid "Has llegado al máximo de documentos."
+msgstr "Has arribat al màxim de documents."
+
+msgid "«%(n)s» contiene una clave privada y no se puede guardar aquí."
+msgstr "«%(n)s» conté una clau privada i no es pot desar aquí."
+
+msgid "Mis documentos"
+msgstr "Els meus documents"
+
+msgid "Contratos, escrituras, seguros, nóminas, extractos… todo en un sitio, ordenado y a mano."
+msgstr "Contractes, escriptures, assegurances, nòmines, extractes… tot en un lloc, ordenat i a mà."
+
+msgid "Los hemos colocado en su carpeta; puedes cambiarla."
+msgstr "Els hem col·locat a la seva carpeta; la pots canviar."
+
+msgid "Caducan pronto"
+msgstr "Caduquen aviat"
+
+msgid "caducó hace %(n)s días"
+msgstr "va caducar fa %(n)s dies"
+
+msgid "caduca hoy"
+msgstr "caduca avui"
+
+msgid "Subir documentos"
+msgstr "Pujar documents"
+
+msgid "Archivos (PDF, fotos, Word, Excel…)"
+msgstr "Arxius (PDF, fotos, Word, Excel…)"
+
+msgid "Elegir sola según el documento"
+msgstr "Triar sola segons el document"
+
+msgid "Caduca el (opcional, por ejemplo un seguro)"
+msgstr "Caduca el (opcional, per exemple una assegurança)"
+
+msgid "Tus documentos"
+msgstr "Els teus documents"
+
+msgid "Buscar en tus documentos"
+msgstr "Cercar als teus documents"
+
+msgid "Buscar por nombre o por lo que dice"
+msgstr "Cercar per nom o pel que diu"
+
+msgid "Carpetas"
+msgstr "Carpetes"
+
+msgid "No hay documentos con estos filtros."
+msgstr "No hi ha documents amb aquests filtres."
+
+msgid "Todavía no hay documentos. Sube el primero arriba o tu gestoría los irá dejando aquí."
+msgstr "Encara no hi ha documents. Puja el primer a dalt o la teva gestoria els anirà deixant aquí."
+
+msgid "De tu gestoría"
+msgstr "De la teva gestoria"
+
+msgid "caduca el %(f)s"
+msgstr "caduca el %(f)s"
+
+msgid "Organizar"
+msgstr "Organitzar"
+
+msgid "Caduca el"
+msgstr "Caduca el"
+
+msgid "Borrar este documento"
+msgstr "Esborrar aquest document"
+
+msgid "Se ha guardado %(n)s documento."
+msgid_plural "Se han guardado %(n)s documentos."
+msgstr[0] "S'ha desat %(n)s document."
+msgstr[1] "S'han desat %(n)s documents."
+
+msgid "caduca en %(n)s día"
+msgid_plural "caduca en %(n)s días"
+msgstr[0] "caduca d'aquí a %(n)s dia"
+msgstr[1] "caduca d'aquí a %(n)s dies"
+
+msgid "Ocultar al cliente"
+msgstr "Amagar al client"
+
+msgid "Mostrar al cliente"
+msgstr "Mostrar al client"
+
+msgid "Carpeta automática"
+msgstr "Carpeta automàtica"
+
+msgid "Caduca el (opcional)"
+msgstr "Caduca el (opcional)"
+
+msgid "Ver mis documentos"
+msgstr "Veure els meus documents"
+
+msgid "Fecha de caducidad: %(f)s. ¿Lo has renovado? Sube el nuevo."
+msgstr "Data de caducitat: %(f)s. L'has renovat? Puja el nou."
+
+msgid "Tu documento «%(nombre)s» caduca pronto"
+msgstr "El teu document «%(nombre)s» caduca aviat"
+
+msgid "Tu documento «%(nombre)s» ha caducado"
+msgstr "El teu document «%(nombre)s» ha caducat"
