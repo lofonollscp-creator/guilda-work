@@ -26012,3 +26012,219 @@ msgstr "Tria un canal activat i escriu un mòbil vàlid."
 
 msgid "Twilio no ha aceptado el mensaje. Revisa la cuenta, el remitente y la plantilla."
 msgstr "Twilio no ha acceptat el missatge. Revisa el compte, el remitent i la plantilla."
+
+msgid "Presupuesto informativo: no es una factura. La aceptación electrónica queda registrada con el nombre, el correo, la fecha y la huella de este contenido."
+msgstr "Pressupost informatiu: no és una factura. L'acceptació electrònica queda registrada amb el nom, el correu, la data i l'empremta d'aquest contingut."
+
+msgid "Tu gestoría te ha enviado una propuesta"
+msgstr "La teva gestoria t'ha enviat una proposta"
+
+msgid "Ver la propuesta"
+msgstr "Veure la proposta"
+
+msgid "Válida hasta el %(f)s"
+msgstr "Vàlida fins al %(f)s"
+
+msgid "Importe a pagar al aceptar: %(i)s"
+msgstr "Import a pagar en acceptar: %(i)s"
+
+msgid "Huella del contenido (SHA-256): %(h)s"
+msgstr "Empremta del contingut (SHA-256): %(h)s"
+
+msgid "Puedes aceptarla o rechazarla desde el portal."
+msgstr "Pots acceptar-la o rebutjar-la des del portal."
+
+msgid "Aceptada por %(n)s (%(e)s) el %(f)s"
+msgstr "Acceptada per %(n)s (%(e)s) el %(f)s"
+
+msgid "rechazada"
+msgstr "rebutjada"
+
+msgid "aceptada"
+msgstr "acceptada"
+
+msgid "Tu gestoría te ha enviado una propuesta: %(t)s"
+msgstr "La teva gestoria t'ha enviat una proposta: %(t)s"
+
+msgid "%(cliente)s ha aceptado una propuesta"
+msgstr "%(cliente)s ha acceptat una proposta"
+
+msgid "Ya puedes empezar a trabajar en lo acordado."
+msgstr "Ja pots començar a treballar en el que s'ha acordat."
+
+msgid "%(cliente)s ha rechazado una propuesta"
+msgstr "%(cliente)s ha rebutjat una proposta"
+
+msgid "Mira el motivo y, si quieres, prepara otra."
+msgstr "Mira el motiu i, si vols, prepara'n una altra."
+
+msgid "Propuestas"
+msgstr "Propostes"
+
+msgid "Los presupuestos y propuestas que tu gestoría te ha enviado, para aceptarlos o rechazarlos desde aquí."
+msgstr "Els pressupostos i propostes que la teva gestoria t'ha enviat, per acceptar-los o rebutjar-los des d'aquí."
+
+msgid "Tus propuestas"
+msgstr "Les teves propostes"
+
+msgid "Tu gestoría no te ha enviado ninguna propuesta."
+msgstr "La teva gestoria no t'ha enviat cap proposta."
+
+msgid "Por responder"
+msgstr "Per respondre"
+
+msgid "Propuesta de tu gestoría"
+msgstr "Proposta de la teva gestoria"
+
+msgid "Propuesta aceptada. Tu gestoría ya lo sabe."
+msgstr "Proposta acceptada. La teva gestoria ja ho sap."
+
+msgid "Gracias. Estamos confirmando tu pago: en unos instantes aparecerá aquí."
+msgstr "Gràcies. Estem confirmant el teu pagament: d'aquí a uns instants apareixerà aquí."
+
+msgid "No se ha hecho ningún pago."
+msgstr "No s'ha fet cap pagament."
+
+msgid "Qué incluye"
+msgstr "Què inclou"
+
+msgid "Al aceptar se paga con tarjeta: %(i)s."
+msgstr "En acceptar es paga amb targeta: %(i)s."
+
+msgid "Aceptar la propuesta"
+msgstr "Acceptar la proposta"
+
+msgid "Tu aceptación queda registrada con tu nombre, tu correo, la fecha y la hora, y una huella de lo que aceptas. No es una factura."
+msgstr "La teva acceptació queda registrada amb el teu nom, el teu correu, la data i l'hora, i una empremta del que acceptes. No és una factura."
+
+msgid "Tu nombre completo"
+msgstr "El teu nom complet"
+
+msgid "He leído la propuesta y la acepto."
+msgstr "He llegit la proposta i l'accepto."
+
+msgid "No me encaja"
+msgstr "No m'encaixa"
+
+msgid "Cuéntanos por qué (opcional)"
+msgstr "Explica'ns per què (opcional)"
+
+msgid "Solo quien tiene el acceso completo puede responder a una propuesta."
+msgstr "Només qui té l'accés complet pot respondre a una proposta."
+
+msgid "Esta propuesta ha caducado. Si todavía te interesa, pide a tu gestoría que te envíe otra."
+msgstr "Aquesta proposta ha caducat. Si encara t'interessa, demana a la teva gestoria que te'n enviï una altra."
+
+msgid "Aceptada por %(n)s el %(f)s."
+msgstr "Acceptada per %(n)s el %(f)s."
+
+msgid "Pagado: %(i)s."
+msgstr "Pagat: %(i)s."
+
+msgid "Pagar %(i)s con tarjeta"
+msgstr "Pagar %(i)s amb targeta"
+
+msgid "Rechazaste esta propuesta el %(f)s."
+msgstr "Vas rebutjar aquesta proposta el %(f)s."
+
+msgid "Propuestas a clientes"
+msgstr "Propostes a clients"
+
+msgid "Prepara un presupuesto de servicios, envíalo al portal de tu cliente y mira si lo acepta. La aceptación queda registrada con el nombre, el correo, la fecha y una huella del contenido; no sustituye a la firma electrónica cualificada ni emite factura."
+msgstr "Prepara un pressupost de serveis, envia'l al portal del teu client i mira si l'accepta. L'acceptació queda registrada amb el nom, el correu, la data i una empremta del contingut; no substitueix la signatura electrònica qualificada ni emet factura."
+
+msgid "Nueva propuesta"
+msgstr "Nova proposta"
+
+msgid "Conceptos, uno por línea: concepto; cantidad; precio; IVA"
+msgstr "Conceptes, un per línia: concepte; quantitat; preu; IVA"
+
+msgid "Contabilidad mensual; 12; 80; 21"
+msgstr "Comptabilitat mensual; 12; 80; 21"
+
+msgid "La cantidad y el IVA son opcionales (1 y 21). Los precios van sin IVA, en euros."
+msgstr "La quantitat i l'IVA són opcionals (1 i 21). Els preus van sense IVA, en euros."
+
+msgid "Válida hasta (opcional)"
+msgstr "Vàlida fins (opcional)"
+
+msgid "Cobro al aceptar"
+msgstr "Cobrament en acceptar"
+
+msgid "No cobrar al aceptar"
+msgstr "No cobrar en acceptar"
+
+msgid "Cobrar el total con tarjeta"
+msgstr "Cobrar el total amb targeta"
+
+msgid "Cobrar un anticipo"
+msgstr "Cobrar un avançament"
+
+msgid "Anticipo (de 1 a 99 por ciento del total)"
+msgstr "Avançament (de l'1 al 99 per cent del total)"
+
+msgid "Guardar y enviar al cliente"
+msgstr "Desar i enviar al client"
+
+msgid "No hay propuestas."
+msgstr "No hi ha propostes."
+
+msgid "Pago pendiente"
+msgstr "Pagament pendent"
+
+msgid "Revisa las cantidades, los precios y el IVA: alguno no es un número válido."
+msgstr "Revisa les quantitats, els preus i l'IVA: algun no és un número vàlid."
+
+msgid "Cada línea necesita al menos un concepto y un precio, separados por «;»."
+msgstr "Cada línia necessita almenys un concepte i un preu, separats per «;»."
+
+msgid "La cantidad debe ser un número entero entre 1 y 9999."
+msgstr "La quantitat ha de ser un nombre enter entre 1 i 9999."
+
+msgid "Revisa los importes: el precio no puede ser negativo y el IVA va de 0 a 25."
+msgstr "Revisa els imports: el preu no pot ser negatiu i l'IVA va de 0 a 25."
+
+msgid "Añade al menos un concepto."
+msgstr "Afegeix almenys un concepte."
+
+msgid "Como máximo 30 conceptos por propuesta."
+msgstr "Com a màxim 30 conceptes per proposta."
+
+msgid "Ponle un título a la propuesta."
+msgstr "Posa un títol a la proposta."
+
+msgid "La fecha de validez ya ha pasado."
+msgstr "La data de validesa ja ha passat."
+
+msgid "La fecha de validez no es válida."
+msgstr "La data de validesa no és vàlida."
+
+msgid "El cobro al aceptar no es válido."
+msgstr "El cobrament en acceptar no és vàlid."
+
+msgid "El anticipo va del 1 al 99 por ciento del total."
+msgstr "L'avançament va de l'1 al 99 per cent del total."
+
+msgid "El importe a cobrar es demasiado pequeño para pagarlo con tarjeta."
+msgstr "L'import a cobrar és massa petit per pagar-lo amb targeta."
+
+msgid "Ese cliente no existe."
+msgstr "Aquest client no existeix."
+
+msgid "Solo se pueden enviar propuestas en borrador."
+msgstr "Només es poden enviar propostes en esborrany."
+
+msgid "Escribe tu nombre completo para aceptar."
+msgstr "Escriu el teu nom complet per acceptar."
+
+msgid "Esta propuesta ya no se puede aceptar."
+msgstr "Aquesta proposta ja no es pot acceptar."
+
+msgid "Esta propuesta ya no se puede rechazar."
+msgstr "Aquesta proposta ja no es pot rebutjar."
+
+msgid "No hay nada que pagar en esta propuesta."
+msgstr "No hi ha res a pagar en aquesta proposta."
+
+msgid "Marca la casilla para confirmar que aceptas la propuesta."
+msgstr "Marca la casella per confirmar que acceptes la proposta."

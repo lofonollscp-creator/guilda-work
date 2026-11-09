@@ -85,6 +85,11 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
         puntos.append({"clave": "honorarios", "urgente": False, "accion": _("Ver"), "url": url_for("portal_cliente.impuestos") + f"#vencimiento-{por_pagar[0][0]}",
                        "titulo": ngettext("Tienes %(n)s pago de honorarios pendiente", "Tienes %(n)s pagos de honorarios pendientes", len(por_pagar), n=len(por_pagar)), "detalle": f"{total / 100:.2f} €"})
 
+    from . import portal_propuestas
+    for pr in portal_propuestas.pendientes(cliente):
+        puntos.append({"clave": f"propuesta-{pr['id']}", "urgente": False, "accion": _("Ver"), "url": url_for("portal_cliente.propuesta", propuesta_id=pr["id"]),
+                       "titulo": _("Tu gestoría te ha enviado una propuesta: %(t)s", t=pr["titulo"]), "detalle": (_("Válida hasta el %(f)s", f=pr["valida_hasta"]) if pr["valida_hasta"] else _("Puedes aceptarla o rechazarla desde el portal."))})
+
     if verticales.esta_activo(cliente["tenant_id"], "fiscal"):
         from . import conformidad_declaracion
         from .fiscal_resumen_pdf import frase_resultado

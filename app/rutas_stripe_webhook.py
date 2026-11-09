@@ -66,7 +66,11 @@ def _procesar_pago_vencimiento(sesion: dict) -> None:
     """checkout.session.completed de un cobro de Connect -- solo si trae
     metadata.vencimiento_id (lo pone app/rutas_fiscal.py al crear la
     sesión de Checkout, ver stripe_pagos.crear_sesion_pago)."""
-    vencimiento_id = (sesion.get("metadata") or {}).get("vencimiento_id")
+    meta = sesion.get("metadata") or {}
+    if meta.get("propuesta_id"):
+        _procesar_pago_propuesta(sesion, meta)
+        return
+    vencimiento_id = meta.get("vencimiento_id")
     session_id = sesion.get("id")
     importe = sesion.get("amount_total")
     if not vencimiento_id or not session_id or importe is None:
@@ -77,6 +81,23 @@ def _procesar_pago_vencimiento(sesion: dict) -> None:
     tenant_id = db.tenant_id_de_vencimiento_fiscal(int(vencimiento_id))
     try:
         eventos.emitir("factura.cobrada", tenant_id, {"vencimiento_id": int(vencimiento_id), "importe_centimos": importe})
+    except Exception:
+        pass
+
+
+def _procesar_pago_propuesta(sesion: dict, meta: dict) -> None:
+    """Pago de lo que se fijó al aceptar una propuesta de servicios (metadata.propuesta_id y tenant_id, que pone app/portal_propuestas.py al abrir el pago)."""
+    from . import portal_propuestas
+    try:
+        propuesta_id, tenant_id = int(meta["propuesta_id"]), int(meta["tenant_id"])
+    except (KeyError, ValueError):
+        return
+    if not sesion.get("id") or sesion.get("amount_total") is None or sesion.get("payment_status") not in (None, "paid"):
+        return
+    if not portal_propuestas.registrar_pago(tenant_id, propuesta_id, sesion["id"], sesion["amount_total"]):
+        return                                   # ya procesado antes (Stripe puede reintentar la entrega)
+    try:
+        eventos.emitir("factura.cobrada", tenant_id, {"propuesta_id": propuesta_id, "importe_centimos": sesion["amount_total"]})
     except Exception:
         pass
 

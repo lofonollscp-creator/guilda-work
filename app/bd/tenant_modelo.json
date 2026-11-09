@@ -1560,6 +1560,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_propuestas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_telemetria_diaria": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

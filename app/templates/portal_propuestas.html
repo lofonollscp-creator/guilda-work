@@ -1,0 +1,18 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Propuestas') }}{% endblock %}
+{% block titulo %}{{ _('Propuestas') }}{% endblock %}
+{% block subtitulo %}{{ _('Los presupuestos y propuestas que tu gestoría te ha enviado, para aceptarlos o rechazarlos desde aquí.') }}{% endblock %}
+{% block contenido %}
+    <section class="dash-panel" aria-labelledby="prop-lista">
+      <h2 id="prop-lista">{{ _('Tus propuestas') }}</h2>
+      {% if not lista %}<p class="muted">{{ _('Tu gestoría no te ha enviado ninguna propuesta.') }}</p>{% endif %}
+      <ul class="portal-personas">
+        {% for p in lista %}
+        <li class="portal-persona"><div class="portal-persona-datos"><strong><a href="{{ url_for('portal_cliente.propuesta', propuesta_id=p.id) }}">{{ p.titulo }}</a></strong>
+          <span class="muted">{{ '%.2f'|format(p.total_centimos / 100) }} € · {{ (p.enviada_en or '')[:10]|fecha_dia }}{% if p.valida_hasta and p.efectivo == 'enviada' %} · {{ _('Válida hasta el %(f)s', f=p.valida_hasta) }}{% endif %}</span></div>
+          <span class="portal-estado {{ 'ok' if p.efectivo == 'aceptada' else 'warn' }}">{{ {'enviada': _('Por responder'), 'aceptada': _('Aceptada'), 'rechazada': _('Rechazada'), 'caducada': _('Caducada')}[p.efectivo] }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+{% endblock %}

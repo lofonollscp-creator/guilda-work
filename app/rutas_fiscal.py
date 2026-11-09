@@ -24,7 +24,7 @@ from .auth import limiter, login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_canales, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_propuestas, portal_canales, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -435,6 +435,64 @@ def portal_adopcion_canales_probar():
     except portal_canales.ErrorCanal as e:
         return redirect(url_for("fiscal.portal_adopcion_panel", canales_error=_(str(e))[:200]) + "#canales")
     return redirect(url_for("fiscal.portal_adopcion_panel", guardado=1) + "#canales")
+
+
+@fiscal_bp.route("/propuestas")
+@login_required
+def propuestas():
+    """Presupuestos y propuestas de servicios: se preparan, se envían al portal del cliente y se ve si los acepta, los rechaza o si ha pagado el anticipo."""
+    if g.tenant_id is None:
+        abort(404)
+    lista = portal_propuestas.listar_del_despacho(g.tenant_id, request.args.get("estado") or None)
+    for p in lista:
+        if p["estado"] in ("aceptada", "rechazada") and not p["visto_equipo"]:
+            portal_propuestas.marcar_vista(g.tenant_id, p["id"])
+    return render_template("fiscal_propuestas.html", lista=lista, clientes=db.listar_clientes_fiscales(g.tenant_id), cliente_id=request.args.get("cliente_id", type=int), estado=request.args.get("estado") or "",
+                           error=(request.args.get("error") or "")[:200] or None, hecho=request.args.get("hecho"), stripe_listo=portal_propuestas.cobro_disponible(g.tenant_id), form=session.pop("propuesta_borrador", None))
+
+
+@fiscal_bp.route("/propuestas/nueva", methods=["POST"])
+@login_required
+def propuesta_nueva():
+    if g.tenant_id is None:
+        abort(404)
+    f = request.form
+    try:
+        pid = portal_propuestas.crear(g.tenant_id, f.get("cliente_id", type=int) or 0, f.get("titulo", ""), f.get("descripcion", ""), f.get("lineas", ""), f.get("valida_hasta", ""),
+                                      f.get("anticipo", "").strip() if f.get("cobro") == "anticipo" else f.get("cobro", "no"), g.usuario_id)
+    except portal_propuestas.ErrorPropuesta as e:
+        session["propuesta_borrador"] = {k: f.get(k, "") for k in ("cliente_id", "titulo", "descripcion", "lineas", "valida_hasta", "cobro", "anticipo")}
+        return redirect(url_for("fiscal.propuestas", error=_(str(e))[:200]) + "#nueva")
+    if f.get("enviar") == "1":
+        try:
+            portal_propuestas.enviar(g.tenant_id, pid)
+        except portal_propuestas.ErrorPropuesta as e:
+            return redirect(url_for("fiscal.propuestas", error=_(str(e))[:200]))
+        auditoria.registrar(g.tenant_id, g.usuario_id, "portal.propuesta_enviada", "portal_propuesta", pid, {})
+    return redirect(url_for("fiscal.propuestas", hecho="enviada" if f.get("enviar") == "1" else "borrador"))
+
+
+@fiscal_bp.route("/propuestas/<int:propuesta_id>/enviar", methods=["POST"])
+@login_required
+def propuesta_enviar(propuesta_id: int):
+    if g.tenant_id is None:
+        abort(404)
+    try:
+        portal_propuestas.enviar(g.tenant_id, propuesta_id)
+    except portal_propuestas.ErrorPropuesta as e:
+        return redirect(url_for("fiscal.propuestas", error=_(str(e))[:200]))
+    auditoria.registrar(g.tenant_id, g.usuario_id, "portal.propuesta_enviada", "portal_propuesta", propuesta_id, {})
+    return redirect(url_for("fiscal.propuestas", hecho="enviada"))
+
+
+@fiscal_bp.route("/propuestas/<int:propuesta_id>/retirar", methods=["POST"])
+@login_required
+def propuesta_retirar(propuesta_id: int):
+    if g.tenant_id is None:
+        abort(404)
+    portal_propuestas.retirar(g.tenant_id, propuesta_id)
+    auditoria.registrar(g.tenant_id, g.usuario_id, "portal.propuesta_retirada", "portal_propuesta", propuesta_id, {})
+    return redirect(url_for("fiscal.propuestas", hecho="retirada"))
 
 
 @fiscal_bp.route("/portal-adopcion/salud", methods=["POST"])

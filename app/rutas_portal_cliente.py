@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_propuestas, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -36,7 +36,7 @@ DIAS_SESION_RECORDADA = 30
 _ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cerrar_sesion_remota", "portal_cliente.cerrar_otras_sesiones", "portal_cliente.segundo_factor_iniciar", "portal_cliente.segundo_factor_confirmar", "portal_cliente.segundo_factor_quitar", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista", "portal_cliente.passkey_registro_opciones", "portal_cliente.passkey_registro_verificar", "portal_cliente.passkey_quitar", "portal_cliente.guardar_silencio", "portal_cliente.telemetria", "portal_cliente.movil_pedir_codigo", "portal_cliente.movil_verificar", "portal_cliente.movil_quitar"}
 # Lo que solo hace el perfil «completo»: decidir en nombre del cliente y gestionar a quién más se deja entrar.
 _SOLO_PERFIL_COMPLETO = {"portal_cliente.conformidad", "portal_cliente.pagar_vencimiento", "portal_cliente.firma_vencimiento", "portal_cliente.anadir_contacto", "portal_cliente.cambiar_perfil_contacto", "portal_cliente.quitar_contacto",
-                         "portal_cliente.renovar_enlace_subida"}
+                         "portal_cliente.renovar_enlace_subida", "portal_cliente.propuesta_aceptar", "portal_cliente.propuesta_rechazar", "portal_cliente.propuesta_pagar"}
 
 
 def _cerrar_sesion_del_portal(tenant_id: int | None = None) -> None:
@@ -102,7 +102,7 @@ def _menu_del_portal():
     return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
             "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
             "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"),
-            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "portal_ventas": portal_ventas.activa_para(cliente), "portal_asistente": portal_asistente.disponible(cliente), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
+            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "portal_ventas": portal_ventas.activa_para(cliente), "portal_propuestas": portal_propuestas.hay(cliente), "portal_asistente": portal_asistente.disponible(cliente), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
 
 
 def _tiene_trabajadores(cliente) -> bool:
@@ -1402,6 +1402,89 @@ def mis_documentos_borrar(documento_id: int):
     if portal_documentos.borrar(cliente, documento_id):
         auditoria.registrar(cliente["tenant_id"], None, "portal.documento_borrado", "cliente_fiscal", cliente["id"], {"quien": g.get("portal_email") or "titular", "documento": documento_id})
     return redirect(url_for("portal_cliente.mis_documentos"))
+
+
+# --- Propuestas de servicios --------------------------------------------------------------------------------------------------------------------------------
+
+@portal_bp.route("/propuestas")
+@cliente_login_required
+def propuestas():
+    """Los presupuestos y propuestas que la gestoría ha enviado: lo pendiente de responder arriba y lo ya respondido debajo."""
+    cliente = _cliente_actual_o_salir()
+    return render_template("portal_propuestas.html", cliente=cliente, lista=portal_propuestas.listar(cliente), portal_seccion="documentos")
+
+
+@portal_bp.route("/propuestas/<int:propuesta_id>")
+@cliente_login_required
+def propuesta(propuesta_id: int):
+    cliente = _cliente_actual_o_salir()
+    p = portal_propuestas.obtener(cliente, propuesta_id)
+    if p is None:
+        abort(404)
+    puede = g.get("portal_rol", "completo") == "completo" and not g.get("vista_previa")
+    return render_template("portal_propuesta.html", cliente=cliente, p=p, d=portal_propuestas.desglose(p["lineas"]), puede=puede, puede_pagar=puede and portal_propuestas.puede_pagar(p, cliente["tenant_id"]),
+                           error=(request.args.get("error") or "")[:200] or None, estado_pago=request.args.get("pago"), portal_seccion="documentos")
+
+
+@portal_bp.route("/propuestas/<int:propuesta_id>/aceptar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("20/hour")
+def propuesta_aceptar(propuesta_id: int):
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa"):
+        abort(403)
+    try:
+        if request.form.get("conforme") != "1":
+            raise portal_propuestas.ErrorPropuesta("Marca la casilla para confirmar que aceptas la propuesta.")
+        portal_propuestas.aceptar(cliente, propuesta_id, g.get("portal_email") or cliente["email"], request.form.get("nombre", ""))
+    except portal_propuestas.ErrorPropuesta as e:
+        return redirect(url_for("portal_cliente.propuesta", propuesta_id=propuesta_id, error=_(str(e))[:200]))
+    auditoria.registrar(cliente["tenant_id"], None, "portal.propuesta_aceptada", "portal_propuesta", propuesta_id, {"quien": g.get("portal_email") or "titular"})
+    facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s ha aceptado una propuesta", cliente=cliente["nombre"]), _("Ya puedes empezar a trabajar en lo acordado."), url_for("fiscal.propuestas"), {"propuesta": propuesta_id})
+    return redirect(url_for("portal_cliente.propuesta", propuesta_id=propuesta_id, aceptada=1))
+
+
+@portal_bp.route("/propuestas/<int:propuesta_id>/rechazar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("20/hour")
+def propuesta_rechazar(propuesta_id: int):
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa"):
+        abort(403)
+    try:
+        portal_propuestas.rechazar(cliente, propuesta_id, g.get("portal_email") or cliente["email"], request.form.get("motivo", ""))
+    except portal_propuestas.ErrorPropuesta as e:
+        return redirect(url_for("portal_cliente.propuesta", propuesta_id=propuesta_id, error=_(str(e))[:200]))
+    auditoria.registrar(cliente["tenant_id"], None, "portal.propuesta_rechazada", "portal_propuesta", propuesta_id, {"quien": g.get("portal_email") or "titular"})
+    facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s ha rechazado una propuesta", cliente=cliente["nombre"]), _("Mira el motivo y, si quieres, prepara otra."), url_for("fiscal.propuestas"), {"propuesta": propuesta_id})
+    return redirect(url_for("portal_cliente.propuesta", propuesta_id=propuesta_id))
+
+
+@portal_bp.route("/propuestas/<int:propuesta_id>/pagar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour")
+def propuesta_pagar(propuesta_id: int):
+    """Abre el pago con tarjeta de lo que la gestoría fijó al aceptar esta propuesta (página segura de Stripe)."""
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa"):
+        abort(403)
+    try:
+        url = portal_propuestas.crear_pago(cliente, propuesta_id, url_for("portal_cliente.propuesta", propuesta_id=propuesta_id, pago="ok", _external=True), url_for("portal_cliente.propuesta", propuesta_id=propuesta_id, pago="cancelado", _external=True))
+    except portal_propuestas.ErrorPropuesta as e:
+        return redirect(url_for("portal_cliente.propuesta", propuesta_id=propuesta_id, error=_(str(e))[:200]))
+    return redirect(url, code=303)
+
+
+@portal_bp.route("/propuestas/<int:propuesta_id>.pdf")
+@cliente_login_required
+def propuesta_pdf(propuesta_id: int):
+    cliente = _cliente_actual_o_salir()
+    p = portal_propuestas.obtener(cliente, propuesta_id)
+    if p is None:
+        abort(404)
+    despacho = db.obtener_tenant(cliente["tenant_id"])
+    cuerpo = portal_propuestas.pdf(p, cliente["nombre"], cliente["nif"] or "", despacho["nombre"] if despacho else "")
+    return Response(cuerpo, mimetype="application/pdf", headers={"Content-Disposition": f'inline; filename="propuesta-{p["id"]}.pdf"', "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
 
 
 @portal_bp.route("/dossier", methods=["GET", "POST"])

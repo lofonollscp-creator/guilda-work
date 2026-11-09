@@ -1,0 +1,64 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ p.titulo }}{% endblock %}
+{% block titulo %}{{ p.titulo }}{% endblock %}
+{% block subtitulo %}{{ _('Propuesta de tu gestoría') }}{% endblock %}
+{% block contenido %}
+    {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+    {% if request.args.get('aceptada') %}<p class="portal-peticion" role="status"><strong>{{ _('Propuesta aceptada. Tu gestoría ya lo sabe.') }}</strong></p>{% endif %}
+    {% if estado_pago == 'ok' %}<p class="portal-peticion" role="status"><strong>{{ _('Gracias. Estamos confirmando tu pago: en unos instantes aparecerá aquí.') }}</strong></p>{% endif %}
+    {% if estado_pago == 'cancelado' %}<p class="portal-peticion" role="status"><strong>{{ _('No se ha hecho ningún pago.') }}</strong></p>{% endif %}
+    <section class="dash-panel" aria-labelledby="prop-detalle">
+      <h2 id="prop-detalle">{{ _('Qué incluye') }}</h2>
+      {% if p.descripcion %}<p>{{ p.descripcion }}</p>{% endif %}
+      <table class="tabla-datos">
+        <thead><tr><th scope="col">{{ _('Concepto') }}</th><th scope="col">{{ _('Cantidad') }}</th><th scope="col">{{ _('Precio') }}</th><th scope="col">{{ _('IVA') }}</th></tr></thead>
+        <tbody>{% for l in p.lineas %}<tr><td>{{ l.concepto }}</td><td>{{ l.cantidad }}</td><td class="mono">{{ '%.2f'|format(l.precio_centimos / 100) }} €</td><td>{{ l.iva }} {{ _('por ciento') }}</td></tr>{% endfor %}</tbody>
+        <tfoot>
+          <tr><th scope="row" colspan="3">{{ _('Base') }}</th><td class="mono">{{ '%.2f'|format(d.base / 100) }} €</td></tr>
+          <tr><th scope="row" colspan="3">{{ _('IVA') }}</th><td class="mono">{{ '%.2f'|format(d.iva / 100) }} €</td></tr>
+          <tr><th scope="row" colspan="3">{{ _('Total') }}</th><td class="mono"><strong>{{ '%.2f'|format(d.total / 100) }} €</strong></td></tr>
+        </tfoot>
+      </table>
+      {% if p.valida_hasta %}<p class="muted">{{ _('Válida hasta el %(f)s', f=p.valida_hasta) }}</p>{% endif %}
+      {% if p.cobro_centimos %}<p>{{ _('Al aceptar se paga con tarjeta: %(i)s.', i=('%.2f'|format(p.cobro_centimos / 100)) ~ ' €') }}</p>{% endif %}
+      <p><a class="btn btn-ghost" href="{{ url_for('portal_cliente.propuesta_pdf', propuesta_id=p.id) }}" target="_blank" rel="noopener">{{ _('Abrir PDF') }}</a></p>
+    </section>
+
+    {% if p.efectivo == 'enviada' %}
+      {% if puede %}
+      <section class="dash-panel" aria-labelledby="prop-aceptar">
+        <h2 id="prop-aceptar">{{ _('Aceptar la propuesta') }}</h2>
+        <p class="muted">{{ _('Tu aceptación queda registrada con tu nombre, tu correo, la fecha y la hora, y una huella de lo que aceptas. No es una factura.') }}</p>
+        <form method="post" action="{{ url_for('portal_cliente.propuesta_aceptar', propuesta_id=p.id) }}" class="edit-form">
+          <label for="prop-nombre">{{ _('Tu nombre completo') }}</label>
+          <input type="text" id="prop-nombre" name="nombre" autocomplete="name" required minlength="3" maxlength="120">
+          <label><input type="checkbox" name="conforme" value="1" required> {{ _('He leído la propuesta y la acepto.') }}</label>
+          <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Aceptar') }}</button></div>
+        </form>
+      </section>
+      <section class="dash-panel" aria-labelledby="prop-rechazar">
+        <h2 id="prop-rechazar">{{ _('No me encaja') }}</h2>
+        <form method="post" action="{{ url_for('portal_cliente.propuesta_rechazar', propuesta_id=p.id) }}" class="edit-form">
+          <label for="prop-motivo">{{ _('Cuéntanos por qué (opcional)') }}</label>
+          <textarea id="prop-motivo" name="motivo" rows="3" maxlength="1000"></textarea>
+          <div class="ds-fila"><button type="submit" class="btn btn-ghost">{{ _('Rechazar') }}</button></div>
+        </form>
+      </section>
+      {% else %}
+      <p class="muted">{{ _('Solo quien tiene el acceso completo puede responder a una propuesta.') }}</p>
+      {% endif %}
+    {% elif p.efectivo == 'caducada' %}
+      <p class="muted">{{ _('Esta propuesta ha caducado. Si todavía te interesa, pide a tu gestoría que te envíe otra.') }}</p>
+    {% elif p.estado == 'aceptada' %}
+      <section class="dash-panel" aria-labelledby="prop-estado">
+        <h2 id="prop-estado">{{ _('Aceptada') }}</h2>
+        <p>{{ _('Aceptada por %(n)s el %(f)s.', n=p.nombre_firmante, f=(p.respondida_en or '')[:10]|fecha_dia) }}</p>
+        {% if p.pagado_en %}<p role="status"><strong>{{ _('Pagado: %(i)s.', i=('%.2f'|format((p.pagado_centimos or 0) / 100)) ~ ' €') }}</strong></p>
+        {% elif puede_pagar %}
+        <form method="post" action="{{ url_for('portal_cliente.propuesta_pagar', propuesta_id=p.id) }}"><button type="submit" class="btn btn-primary">{{ _('Pagar %(i)s con tarjeta', i=('%.2f'|format(p.cobro_centimos / 100)) ~ ' €') }}</button></form>
+        {% endif %}
+      </section>
+    {% elif p.estado == 'rechazada' %}
+      <p class="muted">{{ _('Rechazaste esta propuesta el %(f)s.', f=(p.respondida_en or '')[:10]|fecha_dia) }}</p>
+    {% endif %}
+{% endblock %}

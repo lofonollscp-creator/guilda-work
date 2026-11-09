@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Propuestas a clientes') }} — Guilda Work{% endblock %}
+{% block content %}
+<h1>{{ _('Propuestas a clientes') }}</h1>
+<p class="muted">{{ _('Prepara un presupuesto de servicios, envíalo al portal de tu cliente y mira si lo acepta. La aceptación queda registrada con el nombre, el correo, la fecha y una huella del contenido; no sustituye a la firma electrónica cualificada ni emite factura.') }}</p>
+{% if hecho %}<p class="aviso-ok" role="status">{{ _('Hecho.') }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+<section class="proyecto-bloque" id="nueva" aria-labelledby="prop-nueva">
+  <h2 id="prop-nueva">{{ _('Nueva propuesta') }}</h2>
+  <form method="post" action="{{ url_for('fiscal.propuesta_nueva') }}" class="proyecto-form">
+    <label for="prop-cliente">{{ _('Cliente') }}</label>
+    <select id="prop-cliente" name="cliente_id" required>
+      {% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if (form and form.cliente_id|string == c.id|string) or (not form and cliente_id == c.id) }}>{{ c.nombre }}</option>{% endfor %}
+    </select>
+    <label for="prop-titulo">{{ _('Título') }}</label>
+    <input type="text" id="prop-titulo" name="titulo" maxlength="200" required value="{{ form.titulo if form else '' }}">
+    <label for="prop-desc">{{ _('Descripción (opcional)') }}</label>
+    <textarea id="prop-desc" name="descripcion" rows="3" maxlength="3000">{{ form.descripcion if form else '' }}</textarea>
+    <label for="prop-lineas">{{ _('Conceptos, uno por línea: concepto; cantidad; precio; IVA') }}</label>
+    <textarea id="prop-lineas" name="lineas" rows="5" required placeholder="{{ _('Contabilidad mensual; 12; 80; 21') }}">{{ form.lineas if form else '' }}</textarea>
+    <p class="muted">{{ _('La cantidad y el IVA son opcionales (1 y 21). Los precios van sin IVA, en euros.') }}</p>
+    <label for="prop-valida">{{ _('Válida hasta (opcional)') }}</label>
+    <input type="date" id="prop-valida" name="valida_hasta" value="{{ form.valida_hasta if form else '' }}">
+    {% if stripe_listo %}
+    <fieldset>
+      <legend>{{ _('Cobro al aceptar') }}</legend>
+      <label><input type="radio" name="cobro" value="no" {{ 'checked' if not form or form.cobro in ('', 'no') }}> {{ _('No cobrar al aceptar') }}</label>
+      <label><input type="radio" name="cobro" value="total" {{ 'checked' if form and form.cobro == 'total' }}> {{ _('Cobrar el total con tarjeta') }}</label>
+      <label><input type="radio" name="cobro" value="anticipo" {{ 'checked' if form and form.cobro == 'anticipo' }}> {{ _('Cobrar un anticipo') }}</label>
+      <label for="prop-anticipo">{{ _('Anticipo (de 1 a 99 por ciento del total)') }}</label>
+      <input type="number" id="prop-anticipo" name="anticipo" min="1" max="99" value="{{ form.anticipo if form else '' }}">
+    </fieldset>
+    {% endif %}
+    <div class="ds-fila">
+      <button type="submit" class="btn btn-ghost">{{ _('Guardar borrador') }}</button>
+      <button type="submit" name="enviar" value="1" class="btn btn-primary">{{ _('Guardar y enviar al cliente') }}</button>
+    </div>
+  </form>
+</section>
+
+<section class="proyecto-bloque ds-mt-24" aria-labelledby="prop-todas">
+  <h2 id="prop-todas">{{ _('Propuestas') }}</h2>
+  <form method="get" class="ds-fila"><label for="prop-filtro">{{ _('Estado') }}</label>
+    <select id="prop-filtro" name="estado"><option value="">{{ _('Todas') }}</option>
+      {% for k, v in (('borrador', _('Borrador')), ('enviada', _('Enviada')), ('aceptada', _('Aceptada')), ('rechazada', _('Rechazada')), ('retirada', _('Retirada'))) %}<option value="{{ k }}" {{ 'selected' if estado == k }}>{{ v }}</option>{% endfor %}
+    </select><button type="submit" class="btn btn-ghost">{{ _('Filtrar') }}</button></form>
+  {% if not lista %}<p class="muted">{{ _('No hay propuestas.') }}</p>{% endif %}
+  <table class="tabla-datos">
+    {% if lista %}<thead><tr><th scope="col">{{ _('Cliente') }}</th><th scope="col">{{ _('Título') }}</th><th scope="col">{{ _('Total') }}</th><th scope="col">{{ _('Estado') }}</th><th scope="col">{{ _('Acciones') }}</th></tr></thead>{% endif %}
+    <tbody>
+    {% for p in lista %}
+      <tr>
+        <td>{{ p.cliente }}</td><td>{{ p.titulo }}{% if p.motivo %}<br><span class="muted">{{ p.motivo }}</span>{% endif %}</td><td class="mono">{{ '%.2f'|format(p.total_centimos / 100) }} €</td>
+        <td>{{ {'borrador': _('Borrador'), 'enviada': _('Enviada'), 'aceptada': _('Aceptada'), 'rechazada': _('Rechazada'), 'retirada': _('Retirada'), 'caducada': _('Caducada')}[p.efectivo] }}{% if p.estado == 'aceptada' %} · {{ p.nombre_firmante }}{% endif %}{% if p.pagado_en %} · {{ _('Pagado') }} {{ '%.2f'|format((p.pagado_centimos or 0) / 100) }} €{% elif p.cobro_centimos and p.estado == 'aceptada' %} · {{ _('Pago pendiente') }}{% endif %}</td>
+        <td>
+          {% if p.estado == 'borrador' %}<form method="post" action="{{ url_for('fiscal.propuesta_enviar', propuesta_id=p.id) }}" class="inline-form"><button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button></form>{% endif %}
+          {% if p.estado in ('borrador', 'enviada') %}<form method="post" action="{{ url_for('fiscal.propuesta_retirar', propuesta_id=p.id) }}" class="inline-form"><button type="submit" class="btn btn-ghost">{{ _('Retirar') }}</button></form>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

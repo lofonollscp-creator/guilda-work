@@ -26088,3 +26088,219 @@ msgstr "Choisissez un canal activé et saisissez un mobile valide."
 
 msgid "Twilio no ha aceptado el mensaje. Revisa la cuenta, el remitente y la plantilla."
 msgstr "Twilio n'a pas accepté le message. Vérifiez le compte, l'expéditeur et le modèle."
+
+msgid "Presupuesto informativo: no es una factura. La aceptación electrónica queda registrada con el nombre, el correo, la fecha y la huella de este contenido."
+msgstr "Devis informatif : ce n'est pas une facture. L'acceptation électronique est enregistrée avec le nom, le courriel, la date et l'empreinte de ce contenu."
+
+msgid "Tu gestoría te ha enviado una propuesta"
+msgstr "Votre cabinet vous a envoyé une proposition"
+
+msgid "Ver la propuesta"
+msgstr "Voir la proposition"
+
+msgid "Válida hasta el %(f)s"
+msgstr "Valable jusqu'au %(f)s"
+
+msgid "Importe a pagar al aceptar: %(i)s"
+msgstr "Montant à payer à l'acceptation : %(i)s"
+
+msgid "Huella del contenido (SHA-256): %(h)s"
+msgstr "Empreinte du contenu (SHA-256) : %(h)s"
+
+msgid "Puedes aceptarla o rechazarla desde el portal."
+msgstr "Vous pouvez l'accepter ou la refuser depuis le portail."
+
+msgid "Aceptada por %(n)s (%(e)s) el %(f)s"
+msgstr "Acceptée par %(n)s (%(e)s) le %(f)s"
+
+msgid "rechazada"
+msgstr "refusée"
+
+msgid "aceptada"
+msgstr "acceptée"
+
+msgid "Tu gestoría te ha enviado una propuesta: %(t)s"
+msgstr "Votre cabinet vous a envoyé une proposition : %(t)s"
+
+msgid "%(cliente)s ha aceptado una propuesta"
+msgstr "%(cliente)s a accepté une proposition"
+
+msgid "Ya puedes empezar a trabajar en lo acordado."
+msgstr "Vous pouvez maintenant commencer à travailler sur ce qui a été convenu."
+
+msgid "%(cliente)s ha rechazado una propuesta"
+msgstr "%(cliente)s a refusé une proposition"
+
+msgid "Mira el motivo y, si quieres, prepara otra."
+msgstr "Consultez le motif et, si vous le souhaitez, préparez-en une autre."
+
+msgid "Propuestas"
+msgstr "Propositions"
+
+msgid "Los presupuestos y propuestas que tu gestoría te ha enviado, para aceptarlos o rechazarlos desde aquí."
+msgstr "Les devis et propositions que votre cabinet vous a envoyés, à accepter ou refuser d'ici."
+
+msgid "Tus propuestas"
+msgstr "Vos propositions"
+
+msgid "Tu gestoría no te ha enviado ninguna propuesta."
+msgstr "Votre cabinet ne vous a envoyé aucune proposition."
+
+msgid "Por responder"
+msgstr "À répondre"
+
+msgid "Propuesta de tu gestoría"
+msgstr "Proposition de votre cabinet"
+
+msgid "Propuesta aceptada. Tu gestoría ya lo sabe."
+msgstr "Proposition acceptée. Votre cabinet est déjà au courant."
+
+msgid "Gracias. Estamos confirmando tu pago: en unos instantes aparecerá aquí."
+msgstr "Merci. Nous confirmons votre paiement : il apparaîtra ici dans un instant."
+
+msgid "No se ha hecho ningún pago."
+msgstr "Aucun paiement n'a été effectué."
+
+msgid "Qué incluye"
+msgstr "Ce qu'elle comprend"
+
+msgid "Al aceptar se paga con tarjeta: %(i)s."
+msgstr "À l'acceptation, on paie par carte : %(i)s."
+
+msgid "Aceptar la propuesta"
+msgstr "Accepter la proposition"
+
+msgid "Tu aceptación queda registrada con tu nombre, tu correo, la fecha y la hora, y una huella de lo que aceptas. No es una factura."
+msgstr "Votre acceptation est enregistrée avec votre nom, votre courriel, la date et l'heure, et une empreinte de ce que vous acceptez. Ce n'est pas une facture."
+
+msgid "Tu nombre completo"
+msgstr "Votre nom complet"
+
+msgid "He leído la propuesta y la acepto."
+msgstr "J'ai lu la proposition et je l'accepte."
+
+msgid "No me encaja"
+msgstr "Elle ne me convient pas"
+
+msgid "Cuéntanos por qué (opcional)"
+msgstr "Dites-nous pourquoi (facultatif)"
+
+msgid "Solo quien tiene el acceso completo puede responder a una propuesta."
+msgstr "Seules les personnes ayant l'accès complet peuvent répondre à une proposition."
+
+msgid "Esta propuesta ha caducado. Si todavía te interesa, pide a tu gestoría que te envíe otra."
+msgstr "Cette proposition a expiré. Si elle vous intéresse encore, demandez à votre cabinet de vous en envoyer une autre."
+
+msgid "Aceptada por %(n)s el %(f)s."
+msgstr "Acceptée par %(n)s le %(f)s."
+
+msgid "Pagado: %(i)s."
+msgstr "Payé : %(i)s."
+
+msgid "Pagar %(i)s con tarjeta"
+msgstr "Payer %(i)s par carte"
+
+msgid "Rechazaste esta propuesta el %(f)s."
+msgstr "Vous avez refusé cette proposition le %(f)s."
+
+msgid "Propuestas a clientes"
+msgstr "Propositions aux clients"
+
+msgid "Prepara un presupuesto de servicios, envíalo al portal de tu cliente y mira si lo acepta. La aceptación queda registrada con el nombre, el correo, la fecha y una huella del contenido; no sustituye a la firma electrónica cualificada ni emite factura."
+msgstr "Préparez un devis de services, envoyez-le au portail de votre client et voyez s'il l'accepte. L'acceptation est enregistrée avec le nom, le courriel, la date et une empreinte du contenu ; elle ne remplace pas la signature électronique qualifiée et n'émet pas de facture."
+
+msgid "Nueva propuesta"
+msgstr "Nouvelle proposition"
+
+msgid "Conceptos, uno por línea: concepto; cantidad; precio; IVA"
+msgstr "Lignes, une par ligne : libellé; quantité; prix; TVA"
+
+msgid "Contabilidad mensual; 12; 80; 21"
+msgstr "Comptabilité mensuelle; 12; 80; 21"
+
+msgid "La cantidad y el IVA son opcionales (1 y 21). Los precios van sin IVA, en euros."
+msgstr "La quantité et la TVA sont facultatives (1 et 21). Les prix s'entendent hors TVA, en euros."
+
+msgid "Válida hasta (opcional)"
+msgstr "Valable jusqu'au (facultatif)"
+
+msgid "Cobro al aceptar"
+msgstr "Paiement à l'acceptation"
+
+msgid "No cobrar al aceptar"
+msgstr "Ne pas encaisser à l'acceptation"
+
+msgid "Cobrar el total con tarjeta"
+msgstr "Encaisser le total par carte"
+
+msgid "Cobrar un anticipo"
+msgstr "Encaisser un acompte"
+
+msgid "Anticipo (de 1 a 99 por ciento del total)"
+msgstr "Acompte (de 1 à 99 pour cent du total)"
+
+msgid "Guardar y enviar al cliente"
+msgstr "Enregistrer et envoyer au client"
+
+msgid "No hay propuestas."
+msgstr "Il n'y a aucune proposition."
+
+msgid "Pago pendiente"
+msgstr "Paiement en attente"
+
+msgid "Revisa las cantidades, los precios y el IVA: alguno no es un número válido."
+msgstr "Vérifiez les quantités, les prix et la TVA : l'un d'eux n'est pas un nombre valide."
+
+msgid "Cada línea necesita al menos un concepto y un precio, separados por «;»."
+msgstr "Chaque ligne a besoin au moins d'un libellé et d'un prix, séparés par « ; »."
+
+msgid "La cantidad debe ser un número entero entre 1 y 9999."
+msgstr "La quantité doit être un nombre entier entre 1 et 9999."
+
+msgid "Revisa los importes: el precio no puede ser negativo y el IVA va de 0 a 25."
+msgstr "Vérifiez les montants : le prix ne peut pas être négatif et la TVA va de 0 à 25."
+
+msgid "Añade al menos un concepto."
+msgstr "Ajoutez au moins une ligne."
+
+msgid "Como máximo 30 conceptos por propuesta."
+msgstr "30 lignes au maximum par proposition."
+
+msgid "Ponle un título a la propuesta."
+msgstr "Donnez un titre à la proposition."
+
+msgid "La fecha de validez ya ha pasado."
+msgstr "La date de validité est déjà passée."
+
+msgid "La fecha de validez no es válida."
+msgstr "La date de validité n'est pas valide."
+
+msgid "El cobro al aceptar no es válido."
+msgstr "Le paiement à l'acceptation n'est pas valide."
+
+msgid "El anticipo va del 1 al 99 por ciento del total."
+msgstr "L'acompte va de 1 à 99 pour cent du total."
+
+msgid "El importe a cobrar es demasiado pequeño para pagarlo con tarjeta."
+msgstr "Le montant à encaisser est trop petit pour être payé par carte."
+
+msgid "Ese cliente no existe."
+msgstr "Ce client n'existe pas."
+
+msgid "Solo se pueden enviar propuestas en borrador."
+msgstr "Seules les propositions en brouillon peuvent être envoyées."
+
+msgid "Escribe tu nombre completo para aceptar."
+msgstr "Saisissez votre nom complet pour accepter."
+
+msgid "Esta propuesta ya no se puede aceptar."
+msgstr "Cette proposition ne peut plus être acceptée."
+
+msgid "Esta propuesta ya no se puede rechazar."
+msgstr "Cette proposition ne peut plus être refusée."
+
+msgid "No hay nada que pagar en esta propuesta."
+msgstr "Il n'y a rien à payer dans cette proposition."
+
+msgid "Marca la casilla para confirmar que aceptas la propuesta."
+msgstr "Cochez la case pour confirmer que vous acceptez la proposition."

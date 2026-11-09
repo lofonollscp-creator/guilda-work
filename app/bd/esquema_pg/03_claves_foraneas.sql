@@ -339,6 +339,7 @@ ALTER TABLE portal_novedades_lectura ADD CONSTRAINT fk_portal_novedades_lectura_
 ALTER TABLE portal_passkeys ADD CONSTRAINT fk_portal_passkeys_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_peticiones ADD CONSTRAINT fk_portal_peticiones_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_peticiones_documentos ADD CONSTRAINT fk_portal_peticiones_documentos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE portal_propuestas ADD CONSTRAINT fk_portal_propuestas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_recordatorios_config ADD CONSTRAINT fk_portal_recordatorios_config_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_respuestas_rapidas ADD CONSTRAINT fk_portal_respuestas_rapidas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE portal_segundo_factor ADD CONSTRAINT fk_portal_segundo_factor_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;

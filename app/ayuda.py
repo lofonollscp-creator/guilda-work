@@ -117,6 +117,8 @@ MAPA = {
     "portal_cliente.asistente": "portal-de-cliente/preguntar-al-asistente",
     "portal_cliente.mis_documentos": "portal-de-cliente/mis-documentos",
     "portal_cliente.dossier": "portal-de-cliente/dossier-para-el-banco",
+    "portal_cliente.propuesta": "portal-de-cliente/propuestas-de-tu-gestoria",
+    "fiscal.propuesta": "trabajo-diario/propuestas-a-clientes",
     "portal_cliente.declaracion": "portal-de-cliente/lo-que-te-pide-tu-gestoria",
     "portal_cliente.personas": "portal-de-cliente/personas-con-acceso",
     "portal_cliente.facturas": "portal-de-cliente/mis-facturas",

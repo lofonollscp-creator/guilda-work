@@ -106,6 +106,7 @@
         <a href="{{ url_for('portal_cliente.impuestos') }}">{{ _('Impuestos') }}</a>
         <a href="{{ url_for('portal_cliente.mis_documentos') }}">{{ _('Documentos') }}</a>
         {% if portal_asistente %}<a href="{{ url_for('portal_cliente.asistente') }}">{{ _('Preguntar') }}</a>{% endif %}
+        {% if portal_propuestas %}<a href="{{ url_for('portal_cliente.propuestas') }}">{{ _('Propuestas') }}</a>{% endif %}
         {% if portal_ventas %}<a href="{{ url_for('portal_cliente.ventas') }}">{{ _('Mis ventas') }}</a>{% endif %}
         {% if portal_trabajadores %}<a href="{{ url_for('portal_cliente.trabajadores') }}">{{ _('Mis trabajadores') }}</a>{% endif %}
         <a href="{{ url_for('portal_cliente.carpeta') }}">{{ _('Carpeta') }}</a>

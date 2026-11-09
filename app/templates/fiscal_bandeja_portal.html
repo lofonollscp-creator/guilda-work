@@ -9,7 +9,7 @@
 </header>
 <a class="btn btn-ghost" href="{{ url_for('fiscal.portal_adopcion_panel') }}">{{ _('Adopción del portal') }}</a>
 <a class="btn btn-ghost" href="{{ url_for('fiscal.portal_actividad') }}">{{ _('Actividad del portal') }}</a>
-{% set nombres = {'mensaje': _('Mensajes'), 'solicitud': _('Solicitudes'), 'documentos': _('Documentos enviados'), 'cuestionario': _('Cuestionarios'), 'cita': _('Citas'), 'dossier': _('Dossiers')} %}
+{% set nombres = {'mensaje': _('Mensajes'), 'solicitud': _('Solicitudes'), 'documentos': _('Documentos enviados'), 'cuestionario': _('Cuestionarios'), 'cita': _('Citas'), 'dossier': _('Dossiers'), 'propuesta': _('Propuestas')} %}
 <nav class="ds-fila ds-envolver ds-mt-16" aria-label="{{ _('Filtrar por tipo') }}">
   <a class="btn {{ 'btn-primary' if not tipo else 'btn-ghost' }}" href="{{ url_for('fiscal.bandeja_portal', mios='1' if solo_mios else None) }}">{{ _('Todo (%(n)s)', n=total) }}</a>
   {% for k, n in cuentas.items() if n %}<a class="btn {{ 'btn-primary' if tipo == k else 'btn-ghost' }}" href="{{ url_for('fiscal.bandeja_portal', tipo=k, mios='1' if solo_mios else None) }}">{{ nombres[k] }} ({{ n }})</a>{% endfor %}

@@ -7,10 +7,11 @@ from __future__ import annotations
 from datetime import datetime
 
 from flask import url_for
+from flask_babel import gettext as _
 
 from . import acceso, db
 
-TIPOS = ("mensaje", "solicitud", "documentos", "cuestionario", "cita", "dossier")
+TIPOS = ("mensaje", "solicitud", "documentos", "cuestionario", "cita", "dossier", "propuesta")
 PREFIJO_SOLICITUD = "Solicitud: "
 
 
@@ -44,6 +45,9 @@ def listar(tenant_id: int, usuario_id: int, solo_mios: bool = False, tipo: str |
             items.append({"tipo": "dossier", "titulo": f"{f['desde']} – {f['hasta']}", "cliente_id": f["cliente_fiscal_id"], "desde": f["espera"], "url": url_for("fiscal.dossiers_pendientes")})
     finally:
         conn.close()
+    from . import portal_propuestas
+    for f in portal_propuestas.sin_ver(tenant_id):
+        items.append({"tipo": "propuesta", "titulo": f["titulo"] + (" · " + _("rechazada") if f["estado"] == "rechazada" else " · " + _("aceptada")), "cliente_id": f["cliente_fiscal_id"], "desde": f["desde"], "url": url_for("fiscal.propuestas")})
     visibles: dict[int, bool] = {}
     salida = []
     for it in items:
