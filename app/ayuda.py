@@ -119,6 +119,7 @@ MAPA = {
     "portal_cliente.mensajes": "portal-de-cliente/subir-documentos-y-mandar-mensajes",
     "fiscal.": "trabajo-diario/calendario-fiscal",
     "fiscal.recordatorios": "trabajo-diario/recordatorios-a-clientes",
+    "fiscal.portal_adopcion": "trabajo-diario/actividad-del-portal",
     "fiscal.papelera": "datos-y-administracion/papelera",
     "contabilidad.": "contabilizacion-de-facturas/empezar",
     "contabilidad.lista": "contabilizacion-de-facturas/anotar-y-revisar-facturas",
