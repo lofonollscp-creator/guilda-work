@@ -24822,3 +24822,69 @@ msgstr "Email change. My previous email was: "
 
 msgid "¿No puedes entrar?"
 msgstr "Can't sign in?"
+
+msgid "Buscar en la carpeta"
+msgstr "Search the folder"
+
+msgid "Buscar por nombre o modelo"
+msgstr "Search by name or return"
+
+msgid "Tipo de documento"
+msgstr "Document type"
+
+msgid "Todos los tipos"
+msgstr "All types"
+
+msgid "Justificantes oficiales"
+msgstr "Official receipts"
+
+msgid "Constancias de presentación"
+msgstr "Filing confirmations"
+
+msgid "Disponible durante"
+msgstr "Available for"
+
+msgid "Descargas"
+msgstr "Downloads"
+
+msgid "Vista previa del documento"
+msgstr "Document preview"
+
+msgid "Enlaces para compartir"
+msgstr "Sharing links"
+
+msgid "Enlace creado. Cópialo ahora: no se volverá a mostrar."
+msgstr "Link created. Copy it now: it will not be shown again."
+
+msgid "Enlace para compartir"
+msgstr "Link to share"
+
+msgid "Hasta el %(f)s · %(d)s de %(m)s descargas"
+msgstr "Until %(f)s · %(d)s of %(m)s downloads"
+
+msgid "No hay enlaces activos. Con «Compartir» en un documento creas uno temporal para el banco o un asesor, sin darles acceso al portal."
+msgstr "There are no active links. With “Share” on a document you create a temporary one for the bank or an adviser, without giving them access to the portal."
+
+msgid "Documento compartido"
+msgstr "Shared document"
+
+msgid "Este enlace ya no está disponible"
+msgstr "This link is no longer available"
+
+msgid "Ha caducado, se ha anulado o ya se ha descargado el máximo de veces. Pide a quien te lo envió que cree uno nuevo."
+msgstr "It has expired, been cancelled or already downloaded the maximum number of times. Ask whoever sent it to create a new one."
+
+msgid "%(cliente)s ha compartido contigo este documento:"
+msgstr "%(cliente)s has shared this document with you:"
+
+msgid "Disponible hasta el %(f)s · quedan %(n)s descargas."
+msgstr "Available until %(f)s · %(n)s downloads left."
+
+msgid "Elige cuánto tiempo y cuántas descargas."
+msgstr "Choose how long and how many downloads."
+
+msgid "Ese documento no se puede compartir."
+msgstr "That document cannot be shared."
+
+msgid "Ya tienes muchos enlaces activos: anula alguno antes de crear otro."
+msgstr "You already have many active links: cancel one before creating another."

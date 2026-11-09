@@ -24907,3 +24907,69 @@ msgstr "Changement d'e-mail. Mon ancienne adresse était : "
 
 msgid "¿No puedes entrar?"
 msgstr "Vous ne pouvez pas vous connecter ?"
+
+msgid "Buscar en la carpeta"
+msgstr "Rechercher dans le dossier"
+
+msgid "Buscar por nombre o modelo"
+msgstr "Rechercher par nom ou modèle"
+
+msgid "Tipo de documento"
+msgstr "Type de document"
+
+msgid "Todos los tipos"
+msgstr "Tous les types"
+
+msgid "Justificantes oficiales"
+msgstr "Justificatifs officiels"
+
+msgid "Constancias de presentación"
+msgstr "Attestations de dépôt"
+
+msgid "Disponible durante"
+msgstr "Disponible pendant"
+
+msgid "Descargas"
+msgstr "Téléchargements"
+
+msgid "Vista previa del documento"
+msgstr "Aperçu du document"
+
+msgid "Enlaces para compartir"
+msgstr "Liens de partage"
+
+msgid "Enlace creado. Cópialo ahora: no se volverá a mostrar."
+msgstr "Lien créé. Copiez-le maintenant : il ne sera plus affiché."
+
+msgid "Enlace para compartir"
+msgstr "Lien à partager"
+
+msgid "Hasta el %(f)s · %(d)s de %(m)s descargas"
+msgstr "Jusqu'au %(f)s · %(d)s téléchargements sur %(m)s"
+
+msgid "No hay enlaces activos. Con «Compartir» en un documento creas uno temporal para el banco o un asesor, sin darles acceso al portal."
+msgstr "Aucun lien actif. Avec « Partager » sur un document, vous en créez un temporaire pour la banque ou un conseiller, sans leur donner accès au portail."
+
+msgid "Documento compartido"
+msgstr "Document partagé"
+
+msgid "Este enlace ya no está disponible"
+msgstr "Ce lien n'est plus disponible"
+
+msgid "Ha caducado, se ha anulado o ya se ha descargado el máximo de veces. Pide a quien te lo envió que cree uno nuevo."
+msgstr "Il a expiré, a été annulé ou a déjà été téléchargé le nombre maximal de fois. Demandez à l'expéditeur d'en créer un nouveau."
+
+msgid "%(cliente)s ha compartido contigo este documento:"
+msgstr "%(cliente)s a partagé ce document avec vous :"
+
+msgid "Disponible hasta el %(f)s · quedan %(n)s descargas."
+msgstr "Disponible jusqu'au %(f)s · %(n)s téléchargements restants."
+
+msgid "Elige cuánto tiempo y cuántas descargas."
+msgstr "Choisissez la durée et le nombre de téléchargements."
+
+msgid "Ese documento no se puede compartir."
+msgstr "Ce document ne peut pas être partagé."
+
+msgid "Ya tienes muchos enlaces activos: anula alguno antes de crear otro."
+msgstr "Vous avez déjà beaucoup de liens actifs : annulez-en un avant d'en créer un autre."

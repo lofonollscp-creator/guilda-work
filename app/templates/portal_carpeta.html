@@ -18,14 +18,58 @@
     {% if c.documentos %}
     <section class="ds-mt-24" aria-labelledby="car-docs">
       <h2 id="car-docs">{{ _('Justificantes y constancias de presentación') }}</h2>
+      <div class="portal-carpeta-filtros" role="search">
+        <label class="sr-only" for="car-filtro-texto">{{ _('Buscar en la carpeta') }}</label>
+        <input type="search" id="car-filtro-texto" placeholder="{{ _('Buscar por nombre o modelo') }}" data-filtro-texto>
+        <label class="sr-only" for="car-filtro-tipo">{{ _('Tipo de documento') }}</label>
+        <select id="car-filtro-tipo" data-filtro-tipo>
+          <option value="">{{ _('Todos los tipos') }}</option>
+          <option value="justificante">{{ _('Justificantes oficiales') }}</option>
+          <option value="constancia">{{ _('Constancias de presentación') }}</option>
+        </select>
+        <p class="muted" role="status" aria-live="polite" data-filtro-estado></p>
+      </div>
       {% for d in c.documentos %}
-      <div class="portal-doc">
+      <div class="portal-doc" data-doc data-tipo="{{ d.origen }}" data-texto="{{ (d.nombre ~ ' ' ~ d.modelo ~ ' ' ~ d.periodo)|lower }}">
         <a href="{{ url_for('portal_cliente.descargar_documento', vencimiento_id=d.vencimiento_id, documento_id=d.id) }}">{{ d.nombre }}</a>
         <span class="pill">{{ _('Justificante oficial') if d.origen == 'justificante' else _('Constancia de presentación') }}</span>
         <span class="muted">{{ d.modelo }} {{ d.periodo }}</span>
         <span class="peso">{{ (d.tamano / 1024) | round | int }} KB</span>
+        <button type="button" class="btn btn-ghost" data-ver="{{ url_for('portal_cliente.descargar_documento', vencimiento_id=d.vencimiento_id, documento_id=d.id, ver=1) }}" data-nombre="{{ d.nombre }}">{{ _('Ver') }}</button>
+        {% if puede_compartir %}
+        <details class="portal-compartir">
+          <summary>{{ _('Compartir') }}</summary>
+          <form method="post" action="{{ url_for('portal_cliente.compartir_documento') }}" class="ds-fila">
+            <input type="hidden" name="vencimiento_id" value="{{ d.vencimiento_id }}"><input type="hidden" name="documento_id" value="{{ d.id }}"><input type="hidden" name="anio" value="{{ anio }}">
+            <label>{{ _('Disponible durante') }} <select name="dias">{% for n in duraciones %}<option value="{{ n }}" {{ 'selected' if n == '7' }}>{{ ngettext('%(n)s día', '%(n)s días', n|int, n=n) }}</option>{% endfor %}</select></label>
+            <label>{{ _('Descargas') }} <select name="max_descargas">{% for n in tope_descargas %}<option value="{{ n }}" {{ 'selected' if n == 5 }}>{{ n }}</option>{% endfor %}</select></label>
+            <button type="submit" class="btn btn-primary">{{ _('Crear enlace') }}</button>
+          </form>
+        </details>
+        {% endif %}
       </div>
       {% endfor %}
+      <dialog id="car-vista" class="portal-vista-documento" aria-labelledby="car-vista-titulo">
+        <div class="ds-fila"><strong id="car-vista-titulo"></strong><button type="button" class="btn btn-ghost" data-cerrar-vista>{{ _('Cerrar') }}</button></div>
+        <iframe title="{{ _('Vista previa del documento') }}" data-vista-marco></iframe>
+      </dialog>
+    </section>
+    {% endif %}
+
+    {% if puede_compartir %}
+    <section class="ds-mt-24" id="enlaces" aria-labelledby="car-enlaces">
+      <h2 id="car-enlaces">{{ _('Enlaces para compartir') }}</h2>
+      {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+      {% if enlace_nuevo %}
+      <div class="portal-peticion" role="status"><strong>{{ _('Enlace creado. Cópialo ahora: no se volverá a mostrar.') }}</strong>
+        <input type="text" readonly value="{{ enlace_nuevo }}" aria-label="{{ _('Enlace para compartir') }}" onclick="this.select()"></div>
+      {% endif %}
+      {% if enlaces %}
+      <ul class="portal-personas">{% for e in enlaces %}
+        <li class="portal-persona"><div class="portal-persona-datos"><strong>{{ e.nombre_archivo or _('Documento') }}</strong>
+          <span class="muted">{{ _('Hasta el %(f)s · %(d)s de %(m)s descargas', f=e.caduca_en[:10]|fecha_dia, d=e.descargas, m=e.max_descargas) }}</span></div>
+          <form method="post" action="{{ url_for('portal_cliente.anular_enlace', enlace_id=e.id) }}"><input type="hidden" name="anio" value="{{ anio }}"><button type="submit" class="btn btn-ghost">{{ _('Anular') }}</button></form></li>{% endfor %}</ul>
+      {% else %}<p class="muted">{{ _('No hay enlaces activos. Con «Compartir» en un documento creas uno temporal para el banco o un asesor, sin darles acceso al portal.') }}</p>{% endif %}
     </section>
     {% endif %}
 
@@ -65,3 +109,4 @@
     {% endif %}
     {% endif %}
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='portal_carpeta.js') }}" defer></script>{% endblock %}

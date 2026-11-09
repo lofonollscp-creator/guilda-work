@@ -24831,3 +24831,69 @@ msgstr "Canvi de correu. El meu correu anterior era: "
 
 msgid "¿No puedes entrar?"
 msgstr "No pots entrar?"
+
+msgid "Buscar en la carpeta"
+msgstr "Cercar a la carpeta"
+
+msgid "Buscar por nombre o modelo"
+msgstr "Cercar per nom o model"
+
+msgid "Tipo de documento"
+msgstr "Tipus de document"
+
+msgid "Todos los tipos"
+msgstr "Tots els tipus"
+
+msgid "Justificantes oficiales"
+msgstr "Justificants oficials"
+
+msgid "Constancias de presentación"
+msgstr "Constàncies de presentació"
+
+msgid "Disponible durante"
+msgstr "Disponible durant"
+
+msgid "Descargas"
+msgstr "Descàrregues"
+
+msgid "Vista previa del documento"
+msgstr "Vista prèvia del document"
+
+msgid "Enlaces para compartir"
+msgstr "Enllaços per compartir"
+
+msgid "Enlace creado. Cópialo ahora: no se volverá a mostrar."
+msgstr "Enllaç creat. Copia'l ara: no es tornarà a mostrar."
+
+msgid "Enlace para compartir"
+msgstr "Enllaç per compartir"
+
+msgid "Hasta el %(f)s · %(d)s de %(m)s descargas"
+msgstr "Fins al %(f)s · %(d)s de %(m)s descàrregues"
+
+msgid "No hay enlaces activos. Con «Compartir» en un documento creas uno temporal para el banco o un asesor, sin darles acceso al portal."
+msgstr "No hi ha enllaços actius. Amb «Compartir» en un document en crees un de temporal per al banc o un assessor, sense donar-los accés al portal."
+
+msgid "Documento compartido"
+msgstr "Document compartit"
+
+msgid "Este enlace ya no está disponible"
+msgstr "Aquest enllaç ja no està disponible"
+
+msgid "Ha caducado, se ha anulado o ya se ha descargado el máximo de veces. Pide a quien te lo envió que cree uno nuevo."
+msgstr "Ha caducat, s'ha anul·lat o ja s'ha descarregat el màxim de vegades. Demana a qui te'l va enviar que en creï un de nou."
+
+msgid "%(cliente)s ha compartido contigo este documento:"
+msgstr "%(cliente)s ha compartit amb tu aquest document:"
+
+msgid "Disponible hasta el %(f)s · quedan %(n)s descargas."
+msgstr "Disponible fins al %(f)s · queden %(n)s descàrregues."
+
+msgid "Elige cuánto tiempo y cuántas descargas."
+msgstr "Tria quant de temps i quantes descàrregues."
+
+msgid "Ese documento no se puede compartir."
+msgstr "Aquest document no es pot compartir."
+
+msgid "Ya tienes muchos enlaces activos: anula alguno antes de crear otro."
+msgstr "Ja tens molts enllaços actius: anul·la'n algun abans de crear-ne un altre."

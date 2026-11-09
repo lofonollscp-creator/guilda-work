@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, enderezar_documento, portal_actividad, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, enderezar_documento, portal_actividad, portal_compartir, portal_passkeys, portal_silencio, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -490,9 +490,70 @@ def descargar_documento(vencimiento_id: int, documento_id: int):
     except Exception:  # noqa: BLE001 -- almacenamiento externo caído
         abort(503)
     respuesta = Response(contenido, mimetype=documento["tipo_mime"])
-    respuesta.headers.set("Content-Disposition", "attachment", filename=documento["nombre_archivo"])
+    en_linea = request.args.get("ver") == "1" and documento["tipo_mime"] in ("application/pdf", "image/png", "image/jpeg", "image/webp")      # vista previa en la propia carpeta
+    respuesta.headers.set("Content-Disposition", "inline" if en_linea else "attachment", filename=documento["nombre_archivo"])
     respuesta.headers.set("X-Content-Type-Options", "nosniff")
     return respuesta
+
+
+@portal_bp.route("/carpeta/compartir", methods=["POST"])
+@cliente_login_required
+@limiter.limit("20/hour")
+def compartir_documento():
+    """Crea un enlace temporal para que un tercero (el banco, un asesor) descargue un documento de la carpeta sin entrar al portal. Solo el perfil completo."""
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa") or g.get("portal_rol", "completo") != "completo":
+        abort(403)
+    try:
+        token = portal_compartir.crear(cliente, request.form.get("vencimiento_id", type=int) or 0, request.form.get("documento_id", type=int) or 0, request.form.get("dias", ""),
+                                       request.form.get("max_descargas", type=int) or 0, g.get("portal_email") or "titular")
+    except portal_compartir.ErrorEnlace as e:
+        return redirect(url_for("portal_cliente.carpeta", anio=request.form.get("anio", type=int), error=_(str(e))[:200]) + "#enlaces")
+    session["portal_enlace_nuevo"] = f"{_base_publica()}{url_for('portal_cliente.enlace_compartido', token=token)}"
+    auditoria.registrar(cliente["tenant_id"], None, "portal.enlace_compartido_creado", "cliente_fiscal", cliente["id"], {"quien": g.get("portal_email") or "titular", "documento": request.form.get("documento_id", type=int)})
+    return redirect(url_for("portal_cliente.carpeta", anio=request.form.get("anio", type=int)) + "#enlaces")
+
+
+@portal_bp.route("/carpeta/enlaces/<int:enlace_id>/anular", methods=["POST"])
+@cliente_login_required
+@limiter.limit("60/hour")
+def anular_enlace(enlace_id: int):
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa") or g.get("portal_rol", "completo") != "completo":
+        abort(403)
+    if portal_compartir.anular(cliente, enlace_id):
+        auditoria.registrar(cliente["tenant_id"], None, "portal.enlace_compartido_anulado", "cliente_fiscal", cliente["id"], {"enlace": enlace_id})
+    return redirect(url_for("portal_cliente.carpeta", anio=request.form.get("anio", type=int)) + "#enlaces")
+
+
+def _sin_rastro(resp):
+    resp.headers["Cache-Control"] = "no-store"
+    resp.headers["Referrer-Policy"] = "no-referrer"
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return resp
+
+
+@portal_bp.route("/compartido/<token>")
+@limiter.limit("60/hour")
+def enlace_compartido(token: str):
+    """Página pública de un documento compartido: dice qué es y ofrece descargarlo. Abrirla no gasta ninguna descarga."""
+    datos = portal_compartir.ver(token)
+    if datos is None:
+        return _sin_rastro(Response(render_template("portal_compartido.html", datos=None), 404))
+    return _sin_rastro(Response(render_template("portal_compartido.html", datos=datos, token=token)))
+
+
+@portal_bp.route("/compartido/<token>/descargar", methods=["POST"])
+@limiter.limit("30/hour")
+def enlace_compartido_descargar(token: str):
+    r = portal_compartir.descargar(token)
+    if r is None:
+        return _sin_rastro(Response(render_template("portal_compartido.html", datos=None), 404))
+    contenido, mime, nombre = r
+    resp = Response(contenido, mimetype=mime)
+    resp.headers.set("Content-Disposition", "attachment", filename=nombre)
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    return _sin_rastro(resp)
 
 
 @portal_bp.route("/vencimientos/<int:vencimiento_id>/mensajes", methods=["GET", "POST"])
@@ -916,7 +977,10 @@ def carpeta():
     anio = request.args.get("anio", type=int)
     if anio not in anios:
         anio = anios[0] if anios else date.today().year
-    return render_template("portal_carpeta.html", cliente=cliente, anios=anios, c=portal_carpeta.contenido(cliente, anio), anio=anio, portal_seccion="carpeta")
+    puede_compartir = g.get("portal_rol", "completo") == "completo" and not g.get("vista_previa")
+    return render_template("portal_carpeta.html", cliente=cliente, anios=anios, c=portal_carpeta.contenido(cliente, anio), anio=anio, portal_seccion="carpeta", puede_compartir=puede_compartir,
+                           enlaces=portal_compartir.activos(cliente) if puede_compartir else [], enlace_nuevo=session.pop("portal_enlace_nuevo", None) if puede_compartir else None,
+                           duraciones=sorted(portal_compartir.DURACIONES, key=int), tope_descargas=portal_compartir.MAX_DESCARGAS, error=(request.args.get("error") or "")[:200] or None)
 
 
 @portal_bp.route("/carpeta/<int:anio>.zip")

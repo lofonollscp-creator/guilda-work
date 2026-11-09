@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>{{ _('Documento compartido') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      {% if not datos %}
+      <h1>{{ _('Este enlace ya no está disponible') }}</h1>
+      <p class="auth-alterna">{{ _('Ha caducado, se ha anulado o ya se ha descargado el máximo de veces. Pide a quien te lo envió que cree uno nuevo.') }}</p>
+      {% else %}
+      <h1>{{ _('Documento compartido') }}</h1>
+      <p class="auth-alterna">{{ _('%(cliente)s ha compartido contigo este documento:', cliente=datos.cliente) }}</p>
+      <p><strong>{{ datos.nombre }}</strong></p>
+      <p class="muted">{{ _('Disponible hasta el %(f)s · quedan %(n)s descargas.', f=datos.caduca_en[:10]|fecha_dia, n=datos.quedan) }}</p>
+      <form method="post" action="{{ url_for('portal_cliente.enlace_compartido_descargar', token=token) }}"><button type="submit" class="btn btn-primary auth-submit">{{ _('Descargar') }}</button></form>
+      {% endif %}
+    </div>
+  </main>
+</body>
+</html>
