@@ -1525,6 +1525,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_silencios": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_passkeys": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

@@ -26,6 +26,15 @@
       <p class="muted" id="push-estado" role="status" data-activos="{{ push_activo }}" data-txt-activado="{{ _('Los avisos están activados en este dispositivo.') }}" data-txt-desactivado="{{ _('Los avisos están desactivados en este dispositivo.') }}" data-txt-no-disponible="{{ _('Este navegador no permite avisos. En el iPhone, primero añade el portal a la pantalla de inicio.') }}" data-txt-denegado="{{ _('Has bloqueado las notificaciones de este sitio en el navegador.') }}"></p>
       <button type="button" class="btn btn-ghost" id="push-activar" hidden>{{ _('Activar avisos') }}</button>
       <button type="button" class="btn btn-ghost" id="push-desactivar" hidden>{{ _('Desactivar avisos') }}</button>
+      <form method="post" action="{{ url_for('portal_cliente.guardar_silencio') }}" class="portal-silencio" aria-labelledby="silencio-titulo">
+        <h3 id="silencio-titulo">{{ _('No molestar') }}</h3>
+        <p class="muted">{{ _('No te mandaremos notificaciones al móvil en esta franja. Los avisos te esperan en «Avisos» y el correo no suena. Déjalo vacío para recibirlas a cualquier hora.') }}</p>
+        <div class="ds-fila">
+          <label>{{ _('Desde') }} <input type="time" name="desde" value="{{ silencio.desde if silencio else '' }}"></label>
+          <label>{{ _('Hasta') }} <input type="time" name="hasta" value="{{ silencio.hasta if silencio else '' }}"></label>
+          <button type="submit" class="btn btn-ghost">{{ _('Guardar franja') }}</button>
+        </div>
+      </form>
     </section>
     {% endif %}
 

@@ -24768,3 +24768,15 @@ msgstr "No s'ha pogut entrar amb la passkey."
 
 msgid "Esta passkey ya no está registrada. Entra con el enlace del correo."
 msgstr "Aquesta passkey ja no està registrada. Entra amb l'enllaç del correu."
+
+msgid "No te mandaremos notificaciones al móvil en esta franja. Los avisos te esperan en «Avisos» y el correo no suena. Déjalo vacío para recibirlas a cualquier hora."
+msgstr "No t'enviarem notificacions al mòbil en aquesta franja. Els avisos t'esperen a «Avisos» i el correu no sona. Deixa-ho buit per rebre'ls a qualsevol hora."
+
+msgid "Guardar franja"
+msgstr "Desar la franja"
+
+msgid "Escribe las dos horas, por ejemplo de 22:00 a 08:00."
+msgstr "Escriu les dues hores, per exemple de 22:00 a 08:00."
+
+msgid "La hora de inicio y la de fin no pueden ser la misma."
+msgstr "L'hora d'inici i la de fi no poden ser la mateixa."

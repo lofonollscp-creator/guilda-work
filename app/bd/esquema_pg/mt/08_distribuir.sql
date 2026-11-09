@@ -207,6 +207,7 @@ SELECT create_distributed_table('portal_recordatorios_config', 'tenant_id', colo
 SELECT create_distributed_table('portal_respuestas_rapidas', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_segundo_factor', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_sesiones', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('portal_silencios', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_suscripciones_push', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_valoraciones', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('proyecto_miembros', 'tenant_id', colocate_with => 'abogados_ajustes');

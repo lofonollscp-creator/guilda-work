@@ -24759,3 +24759,15 @@ msgstr "Could not sign in with the passkey."
 
 msgid "Esta passkey ya no está registrada. Entra con el enlace del correo."
 msgstr "This passkey is no longer registered. Sign in with the email link."
+
+msgid "No te mandaremos notificaciones al móvil en esta franja. Los avisos te esperan en «Avisos» y el correo no suena. Déjalo vacío para recibirlas a cualquier hora."
+msgstr "We will not send you phone notifications in this time window. Your notices wait for you in “Notices” and email stays silent. Leave it empty to receive them at any time."
+
+msgid "Guardar franja"
+msgstr "Save window"
+
+msgid "Escribe las dos horas, por ejemplo de 22:00 a 08:00."
+msgstr "Enter both times, for example from 22:00 to 08:00."
+
+msgid "La hora de inicio y la de fin no pueden ser la misma."
+msgstr "The start and end times cannot be the same."

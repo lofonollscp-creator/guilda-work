@@ -49,7 +49,7 @@ def avisar(cliente, destino: str, texto: Callable[[], dict], *, urgente: bool = 
         if url and ne.configurado():
             enviados = correo_a(cliente, portal_personas.destinatarios(cliente, urgente, accion),
                                 lambda e: ne.enviar_aviso_portal(e, t["asunto"], t["lineas"], t["boton"], url, tenant_id=cliente["tenant_id"]))
-        portal_push.enviar(cliente, t["asunto"], t.get("push") or "", destino, accion)
+        portal_push.enviar(cliente, t["asunto"], t.get("push") or "", destino, accion, urgente)
     return enviados
 
 
@@ -58,7 +58,7 @@ def correo_directo(cliente, enviar: Callable[[str], None], *, urgente: bool = Fa
     `push`: (título, texto, ruta del portal) para avisar también en el móvil de quien lo tenga activado. Devuelve cuántos correos salieron."""
     n = correo_a(cliente, portal_personas.destinatarios(cliente, urgente, accion), enviar, errores)
     if push:
-        portal_push.enviar(cliente, push[0], push[1], push[2], accion)
+        portal_push.enviar(cliente, push[0], push[1], push[2], accion, urgente)
     return n
 
 
@@ -188,7 +188,7 @@ def recordar_esperas(cliente, hoy: date, ahora: datetime) -> int:
                     finally:
                         c.close()
                 enviados += correo_a(cliente, pendientes, mandar)
-            portal_push.enviar(cliente, t["asunto"], t.get("push") or "", espera["destino"], espera["accion"])
+            portal_push.enviar(cliente, t["asunto"], t.get("push") or "", espera["destino"], espera["accion"], paso >= PASOS_DIAS[-1])
         if paso == PASOS_DIAS[-1]:
             _avisar_al_equipo(cliente, espera, t["asunto"], ahora)
     return enviados

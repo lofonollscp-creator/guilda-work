@@ -62,7 +62,7 @@ def tiene(cliente, email: str | None) -> int:
         conn.close()
 
 
-def enviar(cliente, titulo: str, cuerpo: str, destino: str, accion: str | None = None) -> int:
+def enviar(cliente, titulo: str, cuerpo: str, destino: str, accion: str | None = None, urgente: bool = False) -> int:
     """Manda el aviso a los dispositivos de las personas de esta ficha que pueden actuar sobre él (`accion`, como en `portal_personas.destinatarios`). Devuelve a cuántos llegó.
     Nunca lanza: un aviso que no sale no debe romper lo que lo provoca."""
     try:
@@ -72,7 +72,10 @@ def enviar(cliente, titulo: str, cuerpo: str, destino: str, accion: str | None =
         pass
     if not disponible():
         return 0
-    permitidos = {p["email"] for p in portal_personas.listar(cliente) if p["rol"] in portal_personas.PERFILES_QUE_PUEDEN[accion]}
+    from . import portal_silencio
+    # Quien eligió solo el resumen semanal no recibe notificaciones; quien eligió solo lo urgente, solo las urgentes; y nadie las recibe dentro de su franja de «no molestar» (el aviso queda en Avisos).
+    permitidos = {p["email"] for p in portal_personas.listar(cliente) if p["rol"] in portal_personas.PERFILES_QUE_PUEDEN[accion] and (p["avisos"] == "todo" or (urgente and p["avisos"] == "urgente"))
+                  and not portal_silencio.en_silencio(cliente, p["email"])}
     ruta = destino if destino.startswith("/portal/") else "/portal/"
     carga = {"titulo": titulo[:120], "cuerpo": (cuerpo or "")[:push.MAX_CUERPO_WEB], "url": ruta, "tag": "portal"}
     enviados = 0

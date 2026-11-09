@@ -24844,3 +24844,15 @@ msgstr "Impossible de se connecter avec la passkey."
 
 msgid "Esta passkey ya no está registrada. Entra con el enlace del correo."
 msgstr "Cette passkey n'est plus enregistrée. Connectez-vous avec le lien reçu par e-mail."
+
+msgid "No te mandaremos notificaciones al móvil en esta franja. Los avisos te esperan en «Avisos» y el correo no suena. Déjalo vacío para recibirlas a cualquier hora."
+msgstr "Nous ne vous enverrons pas de notifications sur le téléphone pendant cette plage. Les avis vous attendent dans « Avis » et l'e-mail reste silencieux. Laissez vide pour les recevoir à toute heure."
+
+msgid "Guardar franja"
+msgstr "Enregistrer la plage"
+
+msgid "Escribe las dos horas, por ejemplo de 22:00 a 08:00."
+msgstr "Saisissez les deux heures, par exemple de 22:00 à 08:00."
+
+msgid "La hora de inicio y la de fin no pueden ser la misma."
+msgstr "L'heure de début et l'heure de fin ne peuvent pas être identiques."

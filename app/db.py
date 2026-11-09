@@ -2339,6 +2339,8 @@ def init_db() -> None:
         portal_seguridad.crear_esquema(conn)    # sesiones del portal y segundo factor opcional de cada persona (app/portal_seguridad.py)
         from . import portal_passkeys
         portal_passkeys.crear_esquema(conn)     # passkeys (WebAuthn) para entrar al portal sin esperar el correo (app/portal_passkeys.py)
+        from . import portal_silencio
+        portal_silencio.crear_esquema(conn)     # franja de «no molestar» de los avisos al móvil (app/portal_silencio.py)
         from . import portal_citas
         portal_citas.crear_esquema(conn)         # citas que los clientes piden a la gestoría desde el portal (app/portal_citas.py)
         from . import portal_valoraciones
