@@ -99,6 +99,7 @@ MAPA = {
     "portal_cliente.guardar_preferencias": "portal-de-cliente/mi-cuenta-y-avisos",
     "portal_cliente.segundo_factor": "portal-de-cliente/seguridad-de-tu-cuenta",
     "portal_cliente.cerrar_": "portal-de-cliente/seguridad-de-tu-cuenta",
+    "portal_cliente.no_puedo_entrar": "portal-de-cliente/acceder-al-portal",
     "portal_cliente.peticion": "portal-de-cliente/lo-que-te-pide-tu-gestoria",
     "portal_cliente.cuestionario": "portal-de-cliente/cuestionarios-de-tu-gestoria",
     "portal_cliente.avisos": "portal-de-cliente/avisos-del-portal",

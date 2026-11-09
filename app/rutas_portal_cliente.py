@@ -116,6 +116,12 @@ def cliente_login_required(vista):
     return decorada
 
 
+@portal_bp.route("/no-puedo-entrar")
+def no_puedo_entrar():
+    """Qué hacer en cada caso en que no se puede entrar (el correo no llega, se cambió de correo, se perdió el móvil o la aplicación de códigos). Es pública y no revela nada de nadie."""
+    return render_template("portal_no_puedo_entrar.html")
+
+
 @portal_bp.route("/solicitar-acceso", methods=["GET", "POST"])
 @limiter.limit("10/hour")
 def solicitar_acceso():
@@ -127,6 +133,7 @@ def solicitar_acceso():
     (mismo captcha.py que /login tras varios fallos)."""
     enviado = False
     error = None
+    cambio_de_correo = request.values.get("motivo") == "cambio_correo"
     if request.method == "POST":
         nombre = (request.form.get("nombre") or "").strip()
         email = (request.form.get("email") or "").strip()
@@ -139,7 +146,7 @@ def solicitar_acceso():
                 nombre, email, nif=request.form.get("nif"), mensaje=request.form.get("mensaje"),
             )
             enviado = True
-    return render_template("portal_solicitar_acceso.html", enviado=enviado, error=error)
+    return render_template("portal_solicitar_acceso.html", enviado=enviado, error=error, cambio_de_correo=cambio_de_correo)
 
 
 def destino_seguro(valor: str | None) -> str | None:

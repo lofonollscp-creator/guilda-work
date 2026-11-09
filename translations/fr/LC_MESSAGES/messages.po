@@ -24856,3 +24856,54 @@ msgstr "Saisissez les deux heures, par exemple de 22:00 à 08:00."
 
 msgid "La hora de inicio y la de fin no pueden ser la misma."
 msgstr "L'heure de début et l'heure de fin ne peuvent pas être identiques."
+
+msgid "No puedo entrar"
+msgstr "Je n'arrive pas à me connecter"
+
+msgid "Elige lo que te pasa:"
+msgstr "Choisissez ce qui vous arrive :"
+
+msgid "No me llega el correo con el enlace"
+msgstr "Je ne reçois pas l'e-mail avec le lien"
+
+msgid "Espera un par de minutos y mira también la carpeta de spam o correo no deseado. Comprueba que has escrito exactamente el correo que tu gestoría tiene de ti. Cada enlace sirve una sola vez y caduca: pide uno nuevo si hace falta."
+msgstr "Attendez quelques minutes et regardez aussi le dossier des courriers indésirables. Vérifiez que vous avez saisi exactement l'adresse que votre cabinet a de vous. Chaque lien ne sert qu'une fois et expire : demandez-en un nouveau si besoin."
+
+msgid "Pedir otro enlace"
+msgstr "Demander un autre lien"
+
+msgid "He cambiado de correo o ya no puedo abrir el anterior"
+msgstr "J'ai changé d'adresse e-mail ou je ne peux plus ouvrir l'ancienne"
+
+msgid "Dinos tu correo nuevo y tu NIF. Tu gestoría lo comprobará contigo antes de darte acceso, para que nadie más pueda entrar en tu nombre."
+msgstr "Indiquez-nous votre nouvelle adresse et votre NIF. Votre cabinet vérifiera avec vous avant de vous donner accès, pour que personne d'autre ne puisse se connecter à votre place."
+
+msgid "Pedir el cambio de correo"
+msgstr "Demander le changement d'e-mail"
+
+msgid "He perdido o cambiado de móvil u ordenador"
+msgstr "J'ai perdu ou changé de téléphone ou d'ordinateur"
+
+msgid "Entra con el enlace del correo: funciona en cualquier dispositivo. Después, en «Mi cuenta», cierra las sesiones del dispositivo que ya no tienes y quita su passkey."
+msgstr "Connectez-vous avec le lien reçu par e-mail : il fonctionne sur n'importe quel appareil. Ensuite, dans « Mon compte », fermez les sessions de l'appareil que vous n'avez plus et supprimez sa passkey."
+
+msgid "He perdido la aplicación de códigos (verificación en dos pasos)"
+msgstr "J'ai perdu l'application de codes (vérification en deux étapes)"
+
+msgid "Entra con uno de los códigos de recuperación que guardaste al activarla. Si ya no los tienes, entra con una passkey si tienes alguna o pídele a tu gestoría que te desactive la verificación en dos pasos."
+msgstr "Connectez-vous avec l'un des codes de récupération enregistrés lors de l'activation. Si vous ne les avez plus, connectez-vous avec une passkey si vous en avez une ou demandez à votre cabinet de désactiver la vérification en deux étapes."
+
+msgid "Pedir ayuda a mi gestoría"
+msgstr "Demander de l'aide à mon cabinet"
+
+msgid "Volver a la pantalla de acceso"
+msgstr "Retour à l'écran de connexion"
+
+msgid "Si has cambiado de correo, escribe aquí el nuevo y tu NIF, y dinos en el mensaje cuál era el anterior. Tu gestoría lo comprobará y te dará acceso con el nuevo."
+msgstr "Si vous avez changé d'adresse e-mail, saisissez ici la nouvelle et votre NIF, et indiquez dans le message l'ancienne. Votre cabinet vérifiera et vous donnera accès avec la nouvelle."
+
+msgid "Cambio de correo. Mi correo anterior era: "
+msgstr "Changement d'e-mail. Mon ancienne adresse était : "
+
+msgid "¿No puedes entrar?"
+msgstr "Vous ne pouvez pas vous connecter ?"

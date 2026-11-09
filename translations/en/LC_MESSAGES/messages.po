@@ -24771,3 +24771,54 @@ msgstr "Enter both times, for example from 22:00 to 08:00."
 
 msgid "La hora de inicio y la de fin no pueden ser la misma."
 msgstr "The start and end times cannot be the same."
+
+msgid "No puedo entrar"
+msgstr "I can't sign in"
+
+msgid "Elige lo que te pasa:"
+msgstr "Choose what is happening:"
+
+msgid "No me llega el correo con el enlace"
+msgstr "The email with the link doesn't arrive"
+
+msgid "Espera un par de minutos y mira también la carpeta de spam o correo no deseado. Comprueba que has escrito exactamente el correo que tu gestoría tiene de ti. Cada enlace sirve una sola vez y caduca: pide uno nuevo si hace falta."
+msgstr "Wait a couple of minutes and also check your spam or junk folder. Make sure you typed exactly the email your accountant has for you. Each link works only once and expires: ask for a new one if needed."
+
+msgid "Pedir otro enlace"
+msgstr "Ask for another link"
+
+msgid "He cambiado de correo o ya no puedo abrir el anterior"
+msgstr "I changed email or can no longer open the old one"
+
+msgid "Dinos tu correo nuevo y tu NIF. Tu gestoría lo comprobará contigo antes de darte acceso, para que nadie más pueda entrar en tu nombre."
+msgstr "Tell us your new email and your tax ID. Your accountant will check with you before giving you access, so nobody else can sign in as you."
+
+msgid "Pedir el cambio de correo"
+msgstr "Request the email change"
+
+msgid "He perdido o cambiado de móvil u ordenador"
+msgstr "I lost or changed my phone or computer"
+
+msgid "Entra con el enlace del correo: funciona en cualquier dispositivo. Después, en «Mi cuenta», cierra las sesiones del dispositivo que ya no tienes y quita su passkey."
+msgstr "Sign in with the email link: it works on any device. Then, in “My account”, close the sessions of the device you no longer have and remove its passkey."
+
+msgid "He perdido la aplicación de códigos (verificación en dos pasos)"
+msgstr "I lost my codes app (two-step verification)"
+
+msgid "Entra con uno de los códigos de recuperación que guardaste al activarla. Si ya no los tienes, entra con una passkey si tienes alguna o pídele a tu gestoría que te desactive la verificación en dos pasos."
+msgstr "Sign in with one of the recovery codes you saved when you turned it on. If you no longer have them, sign in with a passkey if you have one, or ask your accountant to turn off two-step verification."
+
+msgid "Pedir ayuda a mi gestoría"
+msgstr "Ask my accountant for help"
+
+msgid "Volver a la pantalla de acceso"
+msgstr "Back to the sign-in screen"
+
+msgid "Si has cambiado de correo, escribe aquí el nuevo y tu NIF, y dinos en el mensaje cuál era el anterior. Tu gestoría lo comprobará y te dará acceso con el nuevo."
+msgstr "If you changed email, enter the new one and your tax ID here, and tell us in the message what the old one was. Your accountant will check and give you access with the new one."
+
+msgid "Cambio de correo. Mi correo anterior era: "
+msgstr "Email change. My previous email was: "
+
+msgid "¿No puedes entrar?"
+msgstr "Can't sign in?"

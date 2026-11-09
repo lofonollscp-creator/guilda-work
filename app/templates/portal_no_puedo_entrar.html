@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="{{ idioma_actual|default('es') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('No puedo entrar') }} — Guilda Work</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <img class="auth-logo" src="{{ url_for('static', filename='logo.png') }}" alt="Guilda Work">
+      <h1>{{ _('No puedo entrar') }}</h1>
+      <p class="auth-alterna">{{ _('Elige lo que te pasa:') }}</p>
+      <details class="portal-que-es" open>
+        <summary>{{ _('No me llega el correo con el enlace') }}</summary>
+        <p>{{ _('Espera un par de minutos y mira también la carpeta de spam o correo no deseado. Comprueba que has escrito exactamente el correo que tu gestoría tiene de ti. Cada enlace sirve una sola vez y caduca: pide uno nuevo si hace falta.') }}</p>
+        <p><a class="btn btn-primary" href="{{ url_for('portal_cliente.entrar') }}">{{ _('Pedir otro enlace') }}</a></p>
+      </details>
+      <details class="portal-que-es">
+        <summary>{{ _('He cambiado de correo o ya no puedo abrir el anterior') }}</summary>
+        <p>{{ _('Dinos tu correo nuevo y tu NIF. Tu gestoría lo comprobará contigo antes de darte acceso, para que nadie más pueda entrar en tu nombre.') }}</p>
+        <p><a class="btn btn-ghost" href="{{ url_for('portal_cliente.solicitar_acceso', motivo='cambio_correo') }}">{{ _('Pedir el cambio de correo') }}</a></p>
+      </details>
+      <details class="portal-que-es">
+        <summary>{{ _('He perdido o cambiado de móvil u ordenador') }}</summary>
+        <p>{{ _('Entra con el enlace del correo: funciona en cualquier dispositivo. Después, en «Mi cuenta», cierra las sesiones del dispositivo que ya no tienes y quita su passkey.') }}</p>
+      </details>
+      <details class="portal-que-es">
+        <summary>{{ _('He perdido la aplicación de códigos (verificación en dos pasos)') }}</summary>
+        <p>{{ _('Entra con uno de los códigos de recuperación que guardaste al activarla. Si ya no los tienes, entra con una passkey si tienes alguna o pídele a tu gestoría que te desactive la verificación en dos pasos.') }}</p>
+        <p><a class="btn btn-ghost" href="{{ url_for('portal_cliente.solicitar_acceso', motivo='cambio_correo') }}">{{ _('Pedir ayuda a mi gestoría') }}</a></p>
+      </details>
+      <p class="auth-alterna"><a href="{{ url_for('portal_cliente.entrar') }}">{{ _('Volver a la pantalla de acceso') }}</a></p>
+    </div>
+  </main>
+</body>
+</html>

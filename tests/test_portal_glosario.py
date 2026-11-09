@@ -46,3 +46,13 @@ def test_cada_pantalla_del_portal_enlaza_su_guia_de_ayuda(cliente, correo):
     assert 'class="portal-nav-ayuda"' in inicio and "portal-de-cliente/recorrer-el-portal/" in inicio
     assert "portal-de-cliente/mi-carpeta/" in _html(cliente, "/portal/carpeta")
     assert "portal-de-cliente/avisos-del-portal/" in _html(cliente, "/portal/avisos")
+
+
+def test_no_puedo_entrar_es_publica_ofrece_los_cuatro_casos_y_se_enlaza_desde_la_entrada(cliente):
+    html = cliente.get("/portal/no-puedo-entrar").get_data(as_text=True)
+    for caso in ("No me llega el correo", "He cambiado de correo", "He perdido o cambiado de móvil", "aplicación de códigos"):
+        assert caso in html
+    assert "/portal/no-puedo-entrar" in cliente.get("/portal/entrar").get_data(as_text=True)
+    cambio = cliente.get("/portal/solicitar-acceso?motivo=cambio_correo").get_data(as_text=True)
+    assert "Si has cambiado de correo" in cambio and "Mi correo anterior era" in cambio
+    assert "Si todavía no tienes acceso" in cliente.get("/portal/solicitar-acceso").get_data(as_text=True)

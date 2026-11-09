@@ -45,6 +45,7 @@
         <p id="passkey-entrar-mensaje" class="ia-error" hidden></p>
       </div>
       <p class="auth-alterna">{{ _('¿Todavía no tienes acceso?') }} <a href="{{ url_for('portal_cliente.solicitar_acceso') }}">{{ _('Solicítalo aquí') }}</a></p>
+      <p class="auth-alterna"><a href="{{ url_for('portal_cliente.no_puedo_entrar') }}">{{ _('¿No puedes entrar?') }}</a></p>
       {% endif %}
     </div>
   </main>

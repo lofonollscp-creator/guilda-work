@@ -24780,3 +24780,54 @@ msgstr "Escriu les dues hores, per exemple de 22:00 a 08:00."
 
 msgid "La hora de inicio y la de fin no pueden ser la misma."
 msgstr "L'hora d'inici i la de fi no poden ser la mateixa."
+
+msgid "No puedo entrar"
+msgstr "No puc entrar"
+
+msgid "Elige lo que te pasa:"
+msgstr "Tria què et passa:"
+
+msgid "No me llega el correo con el enlace"
+msgstr "No em arriba el correu amb l'enllaç"
+
+msgid "Espera un par de minutos y mira también la carpeta de spam o correo no deseado. Comprueba que has escrito exactamente el correo que tu gestoría tiene de ti. Cada enlace sirve una sola vez y caduca: pide uno nuevo si hace falta."
+msgstr "Espera un parell de minuts i mira també la carpeta de correu brossa. Comprova que has escrit exactament el correu que la teva gestoria té de tu. Cada enllaç serveix una sola vegada i caduca: demana'n un de nou si cal."
+
+msgid "Pedir otro enlace"
+msgstr "Demanar un altre enllaç"
+
+msgid "He cambiado de correo o ya no puedo abrir el anterior"
+msgstr "He canviat de correu o ja no puc obrir l'anterior"
+
+msgid "Dinos tu correo nuevo y tu NIF. Tu gestoría lo comprobará contigo antes de darte acceso, para que nadie más pueda entrar en tu nombre."
+msgstr "Digue'ns el teu correu nou i el teu NIF. La teva gestoria ho comprovarà amb tu abans de donar-te accés, perquè ningú més pugui entrar en nom teu."
+
+msgid "Pedir el cambio de correo"
+msgstr "Demanar el canvi de correu"
+
+msgid "He perdido o cambiado de móvil u ordenador"
+msgstr "He perdut o canviat de mòbil o d'ordinador"
+
+msgid "Entra con el enlace del correo: funciona en cualquier dispositivo. Después, en «Mi cuenta», cierra las sesiones del dispositivo que ya no tienes y quita su passkey."
+msgstr "Entra amb l'enllaç del correu: funciona en qualsevol dispositiu. Després, a «El meu compte», tanca les sessions del dispositiu que ja no tens i treu-ne la passkey."
+
+msgid "He perdido la aplicación de códigos (verificación en dos pasos)"
+msgstr "He perdut l'aplicació de codis (verificació en dos passos)"
+
+msgid "Entra con uno de los códigos de recuperación que guardaste al activarla. Si ya no los tienes, entra con una passkey si tienes alguna o pídele a tu gestoría que te desactive la verificación en dos pasos."
+msgstr "Entra amb un dels codis de recuperació que vas desar en activar-la. Si ja no els tens, entra amb una passkey si en tens alguna o demana a la teva gestoria que et desactivi la verificació en dos passos."
+
+msgid "Pedir ayuda a mi gestoría"
+msgstr "Demanar ajuda a la meva gestoria"
+
+msgid "Volver a la pantalla de acceso"
+msgstr "Tornar a la pantalla d'accés"
+
+msgid "Si has cambiado de correo, escribe aquí el nuevo y tu NIF, y dinos en el mensaje cuál era el anterior. Tu gestoría lo comprobará y te dará acceso con el nuevo."
+msgstr "Si has canviat de correu, escriu aquí el nou i el teu NIF, i digue'ns al missatge quin era l'anterior. La teva gestoria ho comprovarà i et donarà accés amb el nou."
+
+msgid "Cambio de correo. Mi correo anterior era: "
+msgstr "Canvi de correu. El meu correu anterior era: "
+
+msgid "¿No puedes entrar?"
+msgstr "No pots entrar?"
