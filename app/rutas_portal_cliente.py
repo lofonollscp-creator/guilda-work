@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, redirect, render_template, requ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, portal_actividad, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, enderezar_documento, portal_actividad, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -565,6 +565,24 @@ def comprobar_archivos():
     cliente = _cliente_con_facturas()
     huellas = (request.get_json(silent=True) or {}).get("huellas")
     return {"repetidas": facturas_portal.archivos_ya_enviados(cliente["id"], huellas if isinstance(huellas, list) else [])}
+
+
+@portal_bp.route("/facturas/enderezar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("90/hour")
+def enderezar_foto():
+    """Propone la foto de un documento enderezada y sin sombras; 204 si no se ve un papel claro (la foto se queda como está). No guarda nada."""
+    _cliente_con_facturas()
+    archivo = request.files.get("archivo")
+    if g.get("vista_previa") or g.portal_rol == "consulta" or archivo is None or not (archivo.mimetype or "").lower().startswith("image/"):
+        return "", 204
+    r = enderezar_documento.enderezar(archivo.read(portal_lectura_previa.MAX_BYTES + 1))
+    if r is None:
+        return "", 204
+    resp = Response(r["imagen"], mimetype="image/jpeg")
+    resp.headers["Cache-Control"] = "no-store"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    return resp
 
 
 @portal_bp.route("/facturas/leer-previa", methods=["POST"])

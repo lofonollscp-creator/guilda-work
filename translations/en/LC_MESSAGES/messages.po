@@ -24672,3 +24672,15 @@ msgstr "Hello, I don't know what this is or how to do it. Could you explain it t
 
 msgid "Necesito ayuda con: %(tema)s"
 msgstr "I need help with: %(tema)s"
+
+msgid "«%(nombre)s» parece torcida o con sombras. Esta es la misma foto enderezada:"
+msgstr "“%(nombre)s” looks tilted or shadowed. This is the same photo straightened:"
+
+msgid "Usar la enderezada"
+msgstr "Use the straightened one"
+
+msgid "Dejar la mía"
+msgstr "Keep mine"
+
+msgid "Hecho: se enviará la enderezada."
+msgstr "Done: the straightened one will be sent."

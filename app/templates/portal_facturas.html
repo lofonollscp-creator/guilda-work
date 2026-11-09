@@ -81,7 +81,7 @@
     <section class="dash-panel">
       <h2>{{ _('Subir fotos o PDF de tus facturas') }}</h2>
       <p class="muted">{{ _('Sin escribir nada: tu gestoría leerá los datos de las facturas. Hasta %(n)s archivos de 8 MB cada vez.', n=max_archivos) }}</p>
-      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-cola-offline data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}"{% if lectura_previa %} data-url-leer="{{ url_for('portal_cliente.leer_previa') }}"{% endif %}
+      <form method="post" enctype="multipart/form-data" class="edit-form" id="form-subida" data-cola-offline data-url-comprobar="{{ url_for('portal_cliente.comprobar_archivos') }}" data-url-enderezar="{{ url_for('portal_cliente.enderezar_foto') }}"{% if lectura_previa %} data-url-leer="{{ url_for('portal_cliente.leer_previa') }}"{% endif %}
             data-txt-guardado="{{ _('Sin conexión: tus facturas se han guardado en este dispositivo y se enviarán solas cuando vuelva la conexión. No cierres la pestaña si puedes evitarlo.') }}"
             data-txt-enviando="{{ _('Enviando lo que estaba guardado…') }}"
             data-txt-enviado="{{ _('Ya se ha enviado lo que estaba guardado (%(n)s envío/s). Recarga la página para verlo.', n='%(n)s') }}"
@@ -97,6 +97,8 @@
             data-txt-repetida="{{ _('«%(nombre)s» ya la enviaste el %(fecha)s.', nombre='%(nombre)s', fecha='%(fecha)s') }}"
             data-txt-reflejos="{{ _('«%(nombre)s» tiene zonas quemadas por reflejos o flash: si puedes, hazla de nuevo sin que le dé la luz de frente.', nombre='%(nombre)s') }}"
             data-txt-oscura="{{ _('«%(nombre)s» está muy oscura: si puedes, hazla de nuevo con más luz.', nombre='%(nombre)s') }}"
+            data-txt-endereza="{{ _('«%(nombre)s» parece torcida o con sombras. Esta es la misma foto enderezada:', nombre='%(nombre)s') }}"
+            data-txt-usar-enderezada="{{ _('Usar la enderezada') }}" data-txt-dejar-original="{{ _('Dejar la mía') }}" data-txt-enderezada-puesta="{{ _('Hecho: se enviará la enderezada.') }}"
             data-txt-doble="{{ _('«%(nombre)s» está elegida dos veces.', nombre='%(nombre)s') }}"
             data-txt-grande="{{ _('«%(nombre)s» pesa más de 8 MB y no se podrá subir.', nombre='%(nombre)s') }}"
             data-txt-tipo="{{ _('«%(nombre)s» no es una imagen ni un PDF y no se podrá subir.', nombre='%(nombre)s') }}">

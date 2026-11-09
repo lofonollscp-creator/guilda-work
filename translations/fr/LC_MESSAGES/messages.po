@@ -24757,3 +24757,15 @@ msgstr "Bonjour, je ne sais pas ce que c'est ni comment faire. Pouvez-vous me l'
 
 msgid "Necesito ayuda con: %(tema)s"
 msgstr "J'ai besoin d'aide pour : %(tema)s"
+
+msgid "«%(nombre)s» parece torcida o con sombras. Esta es la misma foto enderezada:"
+msgstr "« %(nombre)s » semble de travers ou avec des ombres. Voici la même photo redressée :"
+
+msgid "Usar la enderezada"
+msgstr "Utiliser la version redressée"
+
+msgid "Dejar la mía"
+msgstr "Garder la mienne"
+
+msgid "Hecho: se enviará la enderezada."
+msgstr "Fait : la version redressée sera envoyée."

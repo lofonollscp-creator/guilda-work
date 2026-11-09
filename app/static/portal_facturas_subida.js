@@ -197,6 +197,36 @@
     }).catch(function () {});
   }
 
+  // Propone la foto enderezada (el servidor busca el papel en la imagen). Es solo una propuesta con vista previa: el cliente decide si la usa.
+  function ofrecerEnderezado(archivos) {
+    var url = form.getAttribute('data-url-enderezar');
+    if (!url) return;
+    archivos.forEach(function (archivo, i) {
+      if (archivo.type.indexOf('image/') !== 0 || archivo.type === 'image/gif' || archivo.size > MAX) return;
+      var datos = new FormData(); datos.append('archivo', archivo);
+      fetch(url, { method: 'POST', credentials: 'same-origin', body: datos }).then(function (r) { return r.status === 200 ? r.blob() : null; }).then(function (blob) {
+        if (!blob || blob.size < 2000) return;
+        var li = document.createElement('li'), img = document.createElement('img'), msg = document.createElement('span'), usar = document.createElement('button'), dejar = document.createElement('button');
+        var vista = URL.createObjectURL(blob);
+        li.className = 'portal-enderezar'; img.src = vista; img.alt = ''; img.className = 'portal-enderezar-vista';
+        msg.textContent = texto('endereza', { nombre: archivo.name });
+        usar.type = 'button'; usar.className = 'btn btn-primary'; usar.textContent = texto('usar-enderezada', {});
+        dejar.type = 'button'; dejar.className = 'btn btn-ghost'; dejar.textContent = texto('dejar-original', {});
+        usar.addEventListener('click', function () {
+          var nueva = new File([blob], archivo.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+          var actuales = Array.prototype.slice.call(entrada.files || []);
+          var j = actuales.findIndex(function (a) { return a.name === archivo.name && a.size === archivo.size; });
+          if (j >= 0) { actuales[j] = nueva; poner(actuales); }
+          li.textContent = texto('enderezada-puesta', {});
+          URL.revokeObjectURL(vista);
+        });
+        dejar.addEventListener('click', function () { URL.revokeObjectURL(vista); li.remove(); });
+        li.appendChild(img); li.appendChild(msg); li.appendChild(usar); li.appendChild(dejar);
+        lista.appendChild(li);
+      }).catch(function () {});
+    });
+  }
+
   function procesar() {
     var quiere = !(usarOriginales && usarOriginales.checked);
     return Promise.all(originales.map(function (a) { return quiere ? optimizar(a) : Promise.resolve(null); })).then(function (res) {
@@ -206,6 +236,7 @@
       res.forEach(function (r, i) { if (r) avisar(texto(r.recortada ? 'recortada' : 'reducida', { nombre: originales[i].name, antes: mb(r.antes), despues: mb(r.despues) })); });
       if (usarOriginales && usarOriginales.parentNode) usarOriginales.parentNode.hidden = !cambiado && !usarOriginales.checked;
       revisar(finales);
+      ofrecerEnderezado(finales);
       return finales.reduce(function (p, a) { return p.then(function () { return lecturaPrevia(a); }); }, Promise.resolve());
     }).catch(function () {});
   }

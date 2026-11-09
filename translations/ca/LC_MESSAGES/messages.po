@@ -24681,3 +24681,15 @@ msgstr "Hola, no sé què és això o com fer-ho. Podeu explicar-m'ho o trucar-m
 
 msgid "Necesito ayuda con: %(tema)s"
 msgstr "Necessito ajuda amb: %(tema)s"
+
+msgid "«%(nombre)s» parece torcida o con sombras. Esta es la misma foto enderezada:"
+msgstr "«%(nombre)s» sembla torçada o amb ombres. Aquesta és la mateixa foto adreçada:"
+
+msgid "Usar la enderezada"
+msgstr "Fer servir l'adreçada"
+
+msgid "Dejar la mía"
+msgstr "Deixar la meva"
+
+msgid "Hecho: se enviará la enderezada."
+msgstr "Fet: s'enviarà l'adreçada."
