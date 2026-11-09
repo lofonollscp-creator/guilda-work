@@ -14,6 +14,8 @@
   if (texto) texto.addEventListener('input', filtrar);
   if (tipo) tipo.addEventListener('change', filtrar);
 
+  document.querySelectorAll('[data-seleccionar]').forEach(function (i) { i.addEventListener('click', function () { i.select(); }); });
+
   var dialogo = document.getElementById('car-vista');
   if (!dialogo || !dialogo.showModal) return;
   var marco = dialogo.querySelector('[data-vista-marco]'), titulo = document.getElementById('car-vista-titulo'), abridor = null;

@@ -62,7 +62,7 @@
       {% if error %}<p class="portal-peticion" role="alert"><strong>{{ error }}</strong></p>{% endif %}
       {% if enlace_nuevo %}
       <div class="portal-peticion" role="status"><strong>{{ _('Enlace creado. Cópialo ahora: no se volverá a mostrar.') }}</strong>
-        <input type="text" readonly value="{{ enlace_nuevo }}" aria-label="{{ _('Enlace para compartir') }}" onclick="this.select()"></div>
+        <input type="text" readonly value="{{ enlace_nuevo }}" aria-label="{{ _('Enlace para compartir') }}" data-seleccionar></div>
       {% endif %}
       {% if enlaces %}
       <ul class="portal-personas">{% for e in enlaces %}
