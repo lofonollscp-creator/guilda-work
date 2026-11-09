@@ -1052,6 +1052,9 @@ class ClienteFiscal {
   final int? portalHonorarios;
   final String? idioma;
   final String? facturascriptsClienteCodigo;
+  final int? ventasPortal;
+  final int? facturascriptsIdempresa;
+  final String? facturascriptsSerie;
   final String? pais;
   final String? perfilFiscal;
   final int? clienteId;
@@ -1062,7 +1065,7 @@ class ClienteFiscal {
   final String? portalAvisos;
   final String? portalBienvenidaEn;
   final int? responsableId;
-  const ClienteFiscal({required this.id, this.tenantId, this.nombre, this.nif, this.notas, this.creadoEn, this.papeleraEn, this.referenciaExterna, this.modelosFiscales, this.generacionAutomatica, this.espocrmCuentaId, this.email, this.recordatoriosPortal, this.portalHonorarios, this.idioma, this.facturascriptsClienteCodigo, this.pais, this.perfilFiscal, this.clienteId, this.nifNormalizado, this.nifDuplicadoAutorizado, this.version, this.oficinaId, this.portalAvisos, this.portalBienvenidaEn, this.responsableId, });
+  const ClienteFiscal({required this.id, this.tenantId, this.nombre, this.nif, this.notas, this.creadoEn, this.papeleraEn, this.referenciaExterna, this.modelosFiscales, this.generacionAutomatica, this.espocrmCuentaId, this.email, this.recordatoriosPortal, this.portalHonorarios, this.idioma, this.facturascriptsClienteCodigo, this.ventasPortal, this.facturascriptsIdempresa, this.facturascriptsSerie, this.pais, this.perfilFiscal, this.clienteId, this.nifNormalizado, this.nifDuplicadoAutorizado, this.version, this.oficinaId, this.portalAvisos, this.portalBienvenidaEn, this.responsableId, });
   factory ClienteFiscal.fromJson(Map<String, dynamic> j) => ClienteFiscal(
     id: (j['id'] as num).toInt(),
     tenantId: j['tenant_id'] == null ? null : (j['tenant_id'] as num).toInt(),
@@ -1080,6 +1083,9 @@ class ClienteFiscal {
     portalHonorarios: j['portal_honorarios'] == null ? null : (j['portal_honorarios'] as num).toInt(),
     idioma: j['idioma'] == null ? null : j['idioma'] as String,
     facturascriptsClienteCodigo: j['facturascripts_cliente_codigo'] == null ? null : j['facturascripts_cliente_codigo'] as String,
+    ventasPortal: j['ventas_portal'] == null ? null : (j['ventas_portal'] as num).toInt(),
+    facturascriptsIdempresa: j['facturascripts_idempresa'] == null ? null : (j['facturascripts_idempresa'] as num).toInt(),
+    facturascriptsSerie: j['facturascripts_serie'] == null ? null : j['facturascripts_serie'] as String,
     pais: j['pais'] == null ? null : j['pais'] as String,
     perfilFiscal: j['perfil_fiscal'] == null ? null : j['perfil_fiscal'] as String,
     clienteId: j['cliente_id'] == null ? null : (j['cliente_id'] as num).toInt(),
@@ -1108,6 +1114,9 @@ class ClienteFiscal {
     'portal_honorarios': ?portalHonorarios,
     'idioma': ?idioma,
     'facturascripts_cliente_codigo': ?facturascriptsClienteCodigo,
+    'ventas_portal': ?ventasPortal,
+    'facturascripts_idempresa': ?facturascriptsIdempresa,
+    'facturascripts_serie': ?facturascriptsSerie,
     'pais': ?pais,
     'perfil_fiscal': ?perfilFiscal,
     'cliente_id': ?clienteId,
@@ -1119,9 +1128,9 @@ class ClienteFiscal {
     'portal_bienvenida_en': ?portalBienvenidaEn,
     'responsable_id': ?responsableId,
   };
-  ClienteFiscal copyWith({int? id, int? tenantId, String? nombre, String? nif, String? notas, String? creadoEn, String? papeleraEn, String? referenciaExterna, String? modelosFiscales, int? generacionAutomatica, String? espocrmCuentaId, String? email, int? recordatoriosPortal, int? portalHonorarios, String? idioma, String? facturascriptsClienteCodigo, String? pais, String? perfilFiscal, int? clienteId, String? nifNormalizado, String? nifDuplicadoAutorizado, int? version, int? oficinaId, String? portalAvisos, String? portalBienvenidaEn, int? responsableId, }) => ClienteFiscal(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, modelosFiscales: modelosFiscales ?? this.modelosFiscales, generacionAutomatica: generacionAutomatica ?? this.generacionAutomatica, espocrmCuentaId: espocrmCuentaId ?? this.espocrmCuentaId, email: email ?? this.email, recordatoriosPortal: recordatoriosPortal ?? this.recordatoriosPortal, portalHonorarios: portalHonorarios ?? this.portalHonorarios, idioma: idioma ?? this.idioma, facturascriptsClienteCodigo: facturascriptsClienteCodigo ?? this.facturascriptsClienteCodigo, pais: pais ?? this.pais, perfilFiscal: perfilFiscal ?? this.perfilFiscal, clienteId: clienteId ?? this.clienteId, nifNormalizado: nifNormalizado ?? this.nifNormalizado, nifDuplicadoAutorizado: nifDuplicadoAutorizado ?? this.nifDuplicadoAutorizado, version: version ?? this.version, oficinaId: oficinaId ?? this.oficinaId, portalAvisos: portalAvisos ?? this.portalAvisos, portalBienvenidaEn: portalBienvenidaEn ?? this.portalBienvenidaEn, responsableId: responsableId ?? this.responsableId, );
-  @override bool operator ==(Object other) => other is ClienteFiscal && other.id == id && other.tenantId == tenantId && other.nombre == nombre && other.nif == nif && other.notas == notas && other.creadoEn == creadoEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.modelosFiscales == modelosFiscales && other.generacionAutomatica == generacionAutomatica && other.espocrmCuentaId == espocrmCuentaId && other.email == email && other.recordatoriosPortal == recordatoriosPortal && other.portalHonorarios == portalHonorarios && other.idioma == idioma && other.facturascriptsClienteCodigo == facturascriptsClienteCodigo && other.pais == pais && other.perfilFiscal == perfilFiscal && other.clienteId == clienteId && other.nifNormalizado == nifNormalizado && other.nifDuplicadoAutorizado == nifDuplicadoAutorizado && other.version == version && other.oficinaId == oficinaId && other.portalAvisos == portalAvisos && other.portalBienvenidaEn == portalBienvenidaEn && other.responsableId == responsableId;
-  @override int get hashCode => Object.hashAll([id, tenantId, nombre, nif, notas, creadoEn, papeleraEn, referenciaExterna, modelosFiscales, generacionAutomatica, espocrmCuentaId, email, recordatoriosPortal, portalHonorarios, idioma, facturascriptsClienteCodigo, pais, perfilFiscal, clienteId, nifNormalizado, nifDuplicadoAutorizado, version, oficinaId, portalAvisos, portalBienvenidaEn, responsableId]);
+  ClienteFiscal copyWith({int? id, int? tenantId, String? nombre, String? nif, String? notas, String? creadoEn, String? papeleraEn, String? referenciaExterna, String? modelosFiscales, int? generacionAutomatica, String? espocrmCuentaId, String? email, int? recordatoriosPortal, int? portalHonorarios, String? idioma, String? facturascriptsClienteCodigo, int? ventasPortal, int? facturascriptsIdempresa, String? facturascriptsSerie, String? pais, String? perfilFiscal, int? clienteId, String? nifNormalizado, String? nifDuplicadoAutorizado, int? version, int? oficinaId, String? portalAvisos, String? portalBienvenidaEn, int? responsableId, }) => ClienteFiscal(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, modelosFiscales: modelosFiscales ?? this.modelosFiscales, generacionAutomatica: generacionAutomatica ?? this.generacionAutomatica, espocrmCuentaId: espocrmCuentaId ?? this.espocrmCuentaId, email: email ?? this.email, recordatoriosPortal: recordatoriosPortal ?? this.recordatoriosPortal, portalHonorarios: portalHonorarios ?? this.portalHonorarios, idioma: idioma ?? this.idioma, facturascriptsClienteCodigo: facturascriptsClienteCodigo ?? this.facturascriptsClienteCodigo, ventasPortal: ventasPortal ?? this.ventasPortal, facturascriptsIdempresa: facturascriptsIdempresa ?? this.facturascriptsIdempresa, facturascriptsSerie: facturascriptsSerie ?? this.facturascriptsSerie, pais: pais ?? this.pais, perfilFiscal: perfilFiscal ?? this.perfilFiscal, clienteId: clienteId ?? this.clienteId, nifNormalizado: nifNormalizado ?? this.nifNormalizado, nifDuplicadoAutorizado: nifDuplicadoAutorizado ?? this.nifDuplicadoAutorizado, version: version ?? this.version, oficinaId: oficinaId ?? this.oficinaId, portalAvisos: portalAvisos ?? this.portalAvisos, portalBienvenidaEn: portalBienvenidaEn ?? this.portalBienvenidaEn, responsableId: responsableId ?? this.responsableId, );
+  @override bool operator ==(Object other) => other is ClienteFiscal && other.id == id && other.tenantId == tenantId && other.nombre == nombre && other.nif == nif && other.notas == notas && other.creadoEn == creadoEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.modelosFiscales == modelosFiscales && other.generacionAutomatica == generacionAutomatica && other.espocrmCuentaId == espocrmCuentaId && other.email == email && other.recordatoriosPortal == recordatoriosPortal && other.portalHonorarios == portalHonorarios && other.idioma == idioma && other.facturascriptsClienteCodigo == facturascriptsClienteCodigo && other.ventasPortal == ventasPortal && other.facturascriptsIdempresa == facturascriptsIdempresa && other.facturascriptsSerie == facturascriptsSerie && other.pais == pais && other.perfilFiscal == perfilFiscal && other.clienteId == clienteId && other.nifNormalizado == nifNormalizado && other.nifDuplicadoAutorizado == nifDuplicadoAutorizado && other.version == version && other.oficinaId == oficinaId && other.portalAvisos == portalAvisos && other.portalBienvenidaEn == portalBienvenidaEn && other.responsableId == responsableId;
+  @override int get hashCode => Object.hashAll([id, tenantId, nombre, nif, notas, creadoEn, papeleraEn, referenciaExterna, modelosFiscales, generacionAutomatica, espocrmCuentaId, email, recordatoriosPortal, portalHonorarios, idioma, facturascriptsClienteCodigo, ventasPortal, facturascriptsIdempresa, facturascriptsSerie, pais, perfilFiscal, clienteId, nifNormalizado, nifDuplicadoAutorizado, version, oficinaId, portalAvisos, portalBienvenidaEn, responsableId]);
 }
 
 class ClienteFiscalDetalle {
@@ -1141,6 +1150,9 @@ class ClienteFiscalDetalle {
   final int? portalHonorarios;
   final String? idioma;
   final String? facturascriptsClienteCodigo;
+  final int? ventasPortal;
+  final int? facturascriptsIdempresa;
+  final String? facturascriptsSerie;
   final String? pais;
   final String? perfilFiscal;
   final int? clienteId;
@@ -1151,7 +1163,7 @@ class ClienteFiscalDetalle {
   final String? portalAvisos;
   final String? portalBienvenidaEn;
   final int? responsableId;
-  const ClienteFiscalDetalle({required this.id, this.tenantId, this.nombre, this.nif, this.notas, this.creadoEn, this.papeleraEn, this.referenciaExterna, this.modelosFiscales, this.generacionAutomatica, this.espocrmCuentaId, this.email, this.recordatoriosPortal, this.portalHonorarios, this.idioma, this.facturascriptsClienteCodigo, this.pais, this.perfilFiscal, this.clienteId, this.nifNormalizado, this.nifDuplicadoAutorizado, this.version, this.oficinaId, this.portalAvisos, this.portalBienvenidaEn, this.responsableId, });
+  const ClienteFiscalDetalle({required this.id, this.tenantId, this.nombre, this.nif, this.notas, this.creadoEn, this.papeleraEn, this.referenciaExterna, this.modelosFiscales, this.generacionAutomatica, this.espocrmCuentaId, this.email, this.recordatoriosPortal, this.portalHonorarios, this.idioma, this.facturascriptsClienteCodigo, this.ventasPortal, this.facturascriptsIdempresa, this.facturascriptsSerie, this.pais, this.perfilFiscal, this.clienteId, this.nifNormalizado, this.nifDuplicadoAutorizado, this.version, this.oficinaId, this.portalAvisos, this.portalBienvenidaEn, this.responsableId, });
   factory ClienteFiscalDetalle.fromJson(Map<String, dynamic> j) => ClienteFiscalDetalle(
     id: (j['id'] as num).toInt(),
     tenantId: j['tenant_id'] == null ? null : (j['tenant_id'] as num).toInt(),
@@ -1169,6 +1181,9 @@ class ClienteFiscalDetalle {
     portalHonorarios: j['portal_honorarios'] == null ? null : (j['portal_honorarios'] as num).toInt(),
     idioma: j['idioma'] == null ? null : j['idioma'] as String,
     facturascriptsClienteCodigo: j['facturascripts_cliente_codigo'] == null ? null : j['facturascripts_cliente_codigo'] as String,
+    ventasPortal: j['ventas_portal'] == null ? null : (j['ventas_portal'] as num).toInt(),
+    facturascriptsIdempresa: j['facturascripts_idempresa'] == null ? null : (j['facturascripts_idempresa'] as num).toInt(),
+    facturascriptsSerie: j['facturascripts_serie'] == null ? null : j['facturascripts_serie'] as String,
     pais: j['pais'] == null ? null : j['pais'] as String,
     perfilFiscal: j['perfil_fiscal'] == null ? null : j['perfil_fiscal'] as String,
     clienteId: j['cliente_id'] == null ? null : (j['cliente_id'] as num).toInt(),
@@ -1197,6 +1212,9 @@ class ClienteFiscalDetalle {
     'portal_honorarios': ?portalHonorarios,
     'idioma': ?idioma,
     'facturascripts_cliente_codigo': ?facturascriptsClienteCodigo,
+    'ventas_portal': ?ventasPortal,
+    'facturascripts_idempresa': ?facturascriptsIdempresa,
+    'facturascripts_serie': ?facturascriptsSerie,
     'pais': ?pais,
     'perfil_fiscal': ?perfilFiscal,
     'cliente_id': ?clienteId,
@@ -1208,9 +1226,9 @@ class ClienteFiscalDetalle {
     'portal_bienvenida_en': ?portalBienvenidaEn,
     'responsable_id': ?responsableId,
   };
-  ClienteFiscalDetalle copyWith({int? id, int? tenantId, String? nombre, String? nif, String? notas, String? creadoEn, String? papeleraEn, String? referenciaExterna, List<String>? modelosFiscales, int? generacionAutomatica, String? espocrmCuentaId, String? email, int? recordatoriosPortal, int? portalHonorarios, String? idioma, String? facturascriptsClienteCodigo, String? pais, String? perfilFiscal, int? clienteId, String? nifNormalizado, String? nifDuplicadoAutorizado, int? version, int? oficinaId, String? portalAvisos, String? portalBienvenidaEn, int? responsableId, }) => ClienteFiscalDetalle(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, modelosFiscales: modelosFiscales ?? this.modelosFiscales, generacionAutomatica: generacionAutomatica ?? this.generacionAutomatica, espocrmCuentaId: espocrmCuentaId ?? this.espocrmCuentaId, email: email ?? this.email, recordatoriosPortal: recordatoriosPortal ?? this.recordatoriosPortal, portalHonorarios: portalHonorarios ?? this.portalHonorarios, idioma: idioma ?? this.idioma, facturascriptsClienteCodigo: facturascriptsClienteCodigo ?? this.facturascriptsClienteCodigo, pais: pais ?? this.pais, perfilFiscal: perfilFiscal ?? this.perfilFiscal, clienteId: clienteId ?? this.clienteId, nifNormalizado: nifNormalizado ?? this.nifNormalizado, nifDuplicadoAutorizado: nifDuplicadoAutorizado ?? this.nifDuplicadoAutorizado, version: version ?? this.version, oficinaId: oficinaId ?? this.oficinaId, portalAvisos: portalAvisos ?? this.portalAvisos, portalBienvenidaEn: portalBienvenidaEn ?? this.portalBienvenidaEn, responsableId: responsableId ?? this.responsableId, );
-  @override bool operator ==(Object other) => other is ClienteFiscalDetalle && other.id == id && other.tenantId == tenantId && other.nombre == nombre && other.nif == nif && other.notas == notas && other.creadoEn == creadoEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.modelosFiscales == modelosFiscales && other.generacionAutomatica == generacionAutomatica && other.espocrmCuentaId == espocrmCuentaId && other.email == email && other.recordatoriosPortal == recordatoriosPortal && other.portalHonorarios == portalHonorarios && other.idioma == idioma && other.facturascriptsClienteCodigo == facturascriptsClienteCodigo && other.pais == pais && other.perfilFiscal == perfilFiscal && other.clienteId == clienteId && other.nifNormalizado == nifNormalizado && other.nifDuplicadoAutorizado == nifDuplicadoAutorizado && other.version == version && other.oficinaId == oficinaId && other.portalAvisos == portalAvisos && other.portalBienvenidaEn == portalBienvenidaEn && other.responsableId == responsableId;
-  @override int get hashCode => Object.hashAll([id, tenantId, nombre, nif, notas, creadoEn, papeleraEn, referenciaExterna, modelosFiscales, generacionAutomatica, espocrmCuentaId, email, recordatoriosPortal, portalHonorarios, idioma, facturascriptsClienteCodigo, pais, perfilFiscal, clienteId, nifNormalizado, nifDuplicadoAutorizado, version, oficinaId, portalAvisos, portalBienvenidaEn, responsableId]);
+  ClienteFiscalDetalle copyWith({int? id, int? tenantId, String? nombre, String? nif, String? notas, String? creadoEn, String? papeleraEn, String? referenciaExterna, List<String>? modelosFiscales, int? generacionAutomatica, String? espocrmCuentaId, String? email, int? recordatoriosPortal, int? portalHonorarios, String? idioma, String? facturascriptsClienteCodigo, int? ventasPortal, int? facturascriptsIdempresa, String? facturascriptsSerie, String? pais, String? perfilFiscal, int? clienteId, String? nifNormalizado, String? nifDuplicadoAutorizado, int? version, int? oficinaId, String? portalAvisos, String? portalBienvenidaEn, int? responsableId, }) => ClienteFiscalDetalle(id: id ?? this.id, tenantId: tenantId ?? this.tenantId, nombre: nombre ?? this.nombre, nif: nif ?? this.nif, notas: notas ?? this.notas, creadoEn: creadoEn ?? this.creadoEn, papeleraEn: papeleraEn ?? this.papeleraEn, referenciaExterna: referenciaExterna ?? this.referenciaExterna, modelosFiscales: modelosFiscales ?? this.modelosFiscales, generacionAutomatica: generacionAutomatica ?? this.generacionAutomatica, espocrmCuentaId: espocrmCuentaId ?? this.espocrmCuentaId, email: email ?? this.email, recordatoriosPortal: recordatoriosPortal ?? this.recordatoriosPortal, portalHonorarios: portalHonorarios ?? this.portalHonorarios, idioma: idioma ?? this.idioma, facturascriptsClienteCodigo: facturascriptsClienteCodigo ?? this.facturascriptsClienteCodigo, ventasPortal: ventasPortal ?? this.ventasPortal, facturascriptsIdempresa: facturascriptsIdempresa ?? this.facturascriptsIdempresa, facturascriptsSerie: facturascriptsSerie ?? this.facturascriptsSerie, pais: pais ?? this.pais, perfilFiscal: perfilFiscal ?? this.perfilFiscal, clienteId: clienteId ?? this.clienteId, nifNormalizado: nifNormalizado ?? this.nifNormalizado, nifDuplicadoAutorizado: nifDuplicadoAutorizado ?? this.nifDuplicadoAutorizado, version: version ?? this.version, oficinaId: oficinaId ?? this.oficinaId, portalAvisos: portalAvisos ?? this.portalAvisos, portalBienvenidaEn: portalBienvenidaEn ?? this.portalBienvenidaEn, responsableId: responsableId ?? this.responsableId, );
+  @override bool operator ==(Object other) => other is ClienteFiscalDetalle && other.id == id && other.tenantId == tenantId && other.nombre == nombre && other.nif == nif && other.notas == notas && other.creadoEn == creadoEn && other.papeleraEn == papeleraEn && other.referenciaExterna == referenciaExterna && other.modelosFiscales == modelosFiscales && other.generacionAutomatica == generacionAutomatica && other.espocrmCuentaId == espocrmCuentaId && other.email == email && other.recordatoriosPortal == recordatoriosPortal && other.portalHonorarios == portalHonorarios && other.idioma == idioma && other.facturascriptsClienteCodigo == facturascriptsClienteCodigo && other.ventasPortal == ventasPortal && other.facturascriptsIdempresa == facturascriptsIdempresa && other.facturascriptsSerie == facturascriptsSerie && other.pais == pais && other.perfilFiscal == perfilFiscal && other.clienteId == clienteId && other.nifNormalizado == nifNormalizado && other.nifDuplicadoAutorizado == nifDuplicadoAutorizado && other.version == version && other.oficinaId == oficinaId && other.portalAvisos == portalAvisos && other.portalBienvenidaEn == portalBienvenidaEn && other.responsableId == responsableId;
+  @override int get hashCode => Object.hashAll([id, tenantId, nombre, nif, notas, creadoEn, papeleraEn, referenciaExterna, modelosFiscales, generacionAutomatica, espocrmCuentaId, email, recordatoriosPortal, portalHonorarios, idioma, facturascriptsClienteCodigo, ventasPortal, facturascriptsIdempresa, facturascriptsSerie, pais, perfilFiscal, clienteId, nifNormalizado, nifDuplicadoAutorizado, version, oficinaId, portalAvisos, portalBienvenidaEn, responsableId]);
 }
 
 class ClientesDeTarea {
