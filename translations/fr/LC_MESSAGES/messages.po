@@ -24438,3 +24438,270 @@ msgstr "Source : texte reconnu sur le serveur (OCR)"
 
 msgid "Texto reconocido en el servidor (OCR)"
 msgstr "Texte reconnu sur le serveur (OCR)"
+
+msgid "IVA trimestral"
+msgstr "TVA trimestrielle"
+
+msgid "Resume el IVA que has cobrado a tus clientes menos el IVA que has pagado en tus compras y gastos. Si cobraste más de lo que pagaste, se ingresa la diferencia; si no, sale a compensar o a devolver."
+msgstr "Résume la TVA que vous avez facturée à vos clients moins la TVA payée sur vos achats et dépenses. Si vous avez facturé plus que payé, la différence est versée ; sinon elle est reportée ou remboursée."
+
+msgid "Todas tus facturas emitidas y recibidas del trimestre, con el IVA bien visible."
+msgstr "Toutes vos factures émises et reçues du trimestre, avec la TVA bien visible."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 30 de enero el último trimestre."
+msgstr "Chaque trimestre, durant les 20 premiers jours d'avril, juillet et octobre, et jusqu'au 30 janvier pour le dernier trimestre."
+
+msgid "Resumen anual del IVA"
+msgstr "Récapitulatif annuel de la TVA"
+
+msgid "Recoge en un solo documento lo que declaraste en los cuatro modelos 303 del año. Normalmente no se paga nada."
+msgstr "Rassemble en un seul document ce que vous avez déclaré dans les quatre modèles 303 de l'année. Normalement, rien n'est à payer."
+
+msgid "Normalmente nada nuevo: se hace con lo que ya hemos recibido durante el año."
+msgstr "Normalement rien de nouveau : il est préparé avec ce que nous avons déjà reçu pendant l'année."
+
+msgid "En enero, junto al cuarto trimestre."
+msgstr "En janvier, avec le quatrième trimestre."
+
+msgid "Pago a cuenta del IRPF (autónomos)"
+msgstr "Acompte d'impôt sur le revenu (indépendants)"
+
+msgid "Es un adelanto de tu declaración de la Renta si eres autónomo: se calcula con tus ingresos menos tus gastos del año hasta ahora, y se restan los pagos de trimestres anteriores."
+msgstr "Un acompte sur votre déclaration de revenus si vous êtes indépendant : il se calcule avec vos revenus moins vos dépenses de l'année jusqu'ici, moins les paiements des trimestres précédents."
+
+msgid "Facturas emitidas y recibidas del trimestre, y las retenciones que te hayan practicado."
+msgstr "Factures émises et reçues du trimestre, et les retenues qui vous ont été appliquées."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 30 de enero el último."
+msgstr "Chaque trimestre, durant les 20 premiers jours d'avril, juillet et octobre, et jusqu'au 30 janvier pour le dernier."
+
+msgid "Pago a cuenta del IRPF (módulos)"
+msgstr "Acompte d'impôt sur le revenu (régime forfaitaire)"
+
+msgid "Es el adelanto trimestral del IRPF para autónomos que tributan por módulos: no depende de tus gastos, sino de datos como tus trabajadores o tus metros."
+msgstr "L'acompte trimestriel d'impôt sur le revenu pour les indépendants au forfait : il ne dépend pas de vos dépenses mais de données comme vos salariés ou votre surface."
+
+msgid "Los datos de tu actividad que hayan cambiado (personal, superficie, consumos)."
+msgstr "Les données de votre activité qui ont changé (personnel, surface, consommations)."
+
+msgid "Declaración de la Renta"
+msgstr "Déclaration de revenus"
+
+msgid "Es tu declaración anual del IRPF: suma tus ingresos del año, resta lo que la ley permite y compara el resultado con lo que ya te retuvieron o pagaste a cuenta."
+msgstr "Votre déclaration annuelle de revenus : elle additionne vos revenus de l'année, soustrait ce que la loi permet et compare le résultat avec ce qui a déjà été retenu ou versé en acompte."
+
+msgid "Documentos de tus ingresos, gastos deducibles, hipoteca, hijos o cambios de domicilio, y tus datos bancarios."
+msgstr "Documents sur vos revenus, dépenses déductibles, prêt immobilier, enfants ou changement de domicile, et vos coordonnées bancaires."
+
+msgid "Cada año, de abril a finales de junio."
+msgstr "Chaque année, d'avril à fin juin."
+
+msgid "Retenciones de trabajadores y profesionales"
+msgstr "Retenues sur salariés et professionnels"
+
+msgid "Es lo que has retenido del sueldo de tus empleados o de las facturas de profesionales y has de ingresar a Hacienda a su nombre."
+msgstr "Ce que vous avez retenu sur le salaire de vos employés ou sur les factures de professionnels et devez verser au fisc en leur nom."
+
+msgid "Nóminas del trimestre y las facturas de profesionales que llevan retención."
+msgstr "Fiches de paie du trimestre et factures de professionnels comportant une retenue."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 20 de enero el último."
+msgstr "Chaque trimestre, durant les 20 premiers jours d'avril, juillet et octobre, et jusqu'au 20 janvier pour le dernier."
+
+msgid "Retenciones de alquileres"
+msgstr "Retenues sur loyers"
+
+msgid "Si alquilas un local para tu actividad, retienes una parte del alquiler y la ingresas a Hacienda por cuenta de quien te lo alquila."
+msgstr "Si vous louez un local pour votre activité, vous retenez une partie du loyer et la versez au fisc pour le compte du bailleur."
+
+msgid "Las facturas del alquiler del trimestre."
+msgstr "Les factures de loyer du trimestre."
+
+msgid "Resumen anual de retenciones de trabajo y profesionales"
+msgstr "Récapitulatif annuel des retenues sur salariés et professionnels"
+
+msgid "Resume todo lo declarado en los modelos 111 del año, persona por persona. Normalmente no se paga."
+msgstr "Résume tout ce qui a été déclaré dans les modèles 111 de l'année, personne par personne. Normalement, rien n'est à payer."
+
+msgid "Normalmente nada nuevo: se hace con lo ya declarado."
+msgstr "Normalement rien de nouveau : il est préparé avec ce qui a déjà été déclaré."
+
+msgid "En enero."
+msgstr "En janvier."
+
+msgid "Resumen anual de retenciones de alquileres"
+msgstr "Récapitulatif annuel des retenues sur loyers"
+
+msgid "Resume todo lo declarado en los modelos 115 del año. Normalmente no se paga."
+msgstr "Résume tout ce qui a été déclaré dans les modèles 115 de l'année. Normalement, rien n'est à payer."
+
+msgid "Operaciones con clientes y proveedores"
+msgstr "Opérations avec clients et fournisseurs"
+
+msgid "Informa a Hacienda de los clientes y proveedores con los que has movido más de 3.005,06 € en el año. No se paga nada: es una comparación de datos."
+msgstr "Informe le fisc des clients et fournisseurs avec lesquels vous avez dépassé 3 005,06 € dans l'année. Rien n'est à payer : c'est un recoupement de données."
+
+msgid "Que tus facturas del año estén completas, con el NIF de cada cliente y proveedor."
+msgstr "Que vos factures de l'année soient complètes, avec le NIF de chaque client et fournisseur."
+
+msgid "En febrero."
+msgstr "En février."
+
+msgid "Operaciones con la Unión Europea"
+msgstr "Opérations avec l'Union européenne"
+
+msgid "Informa de lo que has vendido o comprado a empresas de otros países de la UE. No se paga nada."
+msgstr "Informe de ce que vous avez vendu ou acheté à des entreprises d'autres pays de l'UE. Rien n'est à payer."
+
+msgid "Las facturas de operaciones con empresas europeas, con su NIF-IVA."
+msgstr "Les factures d'opérations avec des entreprises européennes, avec leur numéro de TVA."
+
+msgid "Cada trimestre o cada mes, según el volumen."
+msgstr "Chaque trimestre ou chaque mois, selon le volume."
+
+msgid "Impuesto de Sociedades"
+msgstr "Impôt sur les sociétés"
+
+msgid "Es el impuesto anual sobre el beneficio de una sociedad: ingresos menos gastos del ejercicio, con los ajustes que marca la ley."
+msgstr "L'impôt annuel sur le bénéfice d'une société : produits moins charges de l'exercice, avec les ajustements prévus par la loi."
+
+msgid "Las cuentas del año cerradas, el extracto de los bancos y los documentos de operaciones especiales."
+msgstr "Les comptes de l'année clôturés, les relevés bancaires et les documents des opérations spéciales."
+
+msgid "En julio, para las sociedades cuyo ejercicio coincide con el año natural."
+msgstr "En juillet, pour les sociétés dont l'exercice coïncide avec l'année civile."
+
+msgid "Pago a cuenta del Impuesto de Sociedades"
+msgstr "Acompte de l'impôt sur les sociétés"
+
+msgid "Es un adelanto del Impuesto de Sociedades que se paga en abril, octubre y diciembre."
+msgstr "Un acompte sur l'impôt sur les sociétés versé en avril, octobre et décembre."
+
+msgid "Normalmente nada: lo calculamos con lo ya declarado."
+msgstr "Normalement rien : nous le calculons avec ce qui a déjà été déclaré."
+
+msgid "En abril, octubre y diciembre."
+msgstr "En avril, octobre et décembre."
+
+msgid "Alta o cambio en el censo"
+msgstr "Inscription ou modification au registre fiscal"
+
+msgid "Sirve para dar de alta, modificar o dar de baja tu actividad en Hacienda: domicilio fiscal, actividad, régimen de IVA…"
+msgstr "Sert à déclarer, modifier ou cesser votre activité auprès du fisc : domicile fiscal, activité, régime de TVA…"
+
+msgid "Tus datos personales o de la empresa y la descripción de la actividad."
+msgstr "Vos données personnelles ou de l'entreprise et la description de l'activité."
+
+msgid "Antes de empezar la actividad o en el mes siguiente a un cambio."
+msgstr "Avant de commencer l'activité ou dans le mois suivant un changement."
+
+msgid "Bienes y cuentas en el extranjero"
+msgstr "Biens et comptes à l'étranger"
+
+msgid "Informa de cuentas, valores o inmuebles en otro país cuyo valor supere los 50.000 €. No se paga nada, pero no presentarlo tiene sanciones."
+msgstr "Informe sur les comptes, valeurs ou biens immobiliers dans un autre pays dépassant 50 000 €. Rien n'est à payer, mais ne pas le déposer entraîne des sanctions."
+
+msgid "Saldos y valoraciones a 31 de diciembre."
+msgstr "Soldes et valorisations au 31 décembre."
+
+msgid "De enero a marzo."
+msgstr "De janvier à mars."
+
+msgid "El IVA que cobras en las facturas que haces a tus clientes. No es tuyo: lo ingresas a Hacienda."
+msgstr "La TVA que vous facturez à vos clients. Elle n'est pas à vous : vous la reversez au fisc."
+
+msgid "El IVA que pagas en tus compras y gastos. Si son de tu actividad, lo puedes restar del IVA que has cobrado."
+msgstr "La TVA que vous payez sur vos achats et dépenses. S'ils concernent votre activité, vous pouvez la déduire de la TVA facturée."
+
+msgid "Una parte del importe de una factura o nómina que quien paga ingresa directamente a Hacienda a cuenta del IRPF de quien cobra."
+msgstr "Une partie du montant d'une facture ou d'une fiche de paie que le payeur verse directement au fisc au titre de l'impôt sur le revenu du bénéficiaire."
+
+msgid "Un adelanto trimestral de un impuesto anual, para no pagarlo todo de golpe al final."
+msgstr "Un acompte trimestriel d'un impôt annuel, pour ne pas tout payer d'un coup à la fin."
+
+msgid "Autoliquidación"
+msgstr "Autoliquidation"
+
+msgid "Una declaración en la que calculas tú mismo (o tu gestoría) lo que debes, en vez de que lo haga Hacienda."
+msgstr "Une déclaration dans laquelle vous calculez vous-même (ou votre cabinet) ce que vous devez, au lieu que le fisc le fasse."
+
+msgid "Justificante de presentación"
+msgstr "Justificatif de dépôt"
+
+msgid "El documento de Hacienda que prueba que un modelo se presentó dentro de plazo. Se guarda en tu carpeta."
+msgstr "Le document du fisc prouvant qu'un modèle a été déposé dans les délais. Il est conservé dans votre dossier."
+
+msgid "Certificado digital"
+msgstr "Certificat numérique"
+
+msgid "Tu identidad electrónica para presentar impuestos. Caduca a los pocos años y hay que renovarlo antes de que venza."
+msgstr "Votre identité électronique pour déposer les impôts. Il expire au bout de quelques années et doit être renouvelé avant son échéance."
+
+msgid "Domiciliación"
+msgstr "Prélèvement"
+
+msgid "Dejar que Hacienda cobre el importe de un modelo directamente de tu cuenta, el último día de plazo."
+msgstr "Laisser le fisc prélever le montant d'un modèle directement sur votre compte, le dernier jour du délai."
+
+msgid "Factura simplificada (tiquet)"
+msgstr "Facture simplifiée (ticket)"
+
+msgid "Un justificante de compra sin los datos del cliente, como los tiquets de tienda. Vale como gasto si cumple unos mínimos."
+msgstr "Un justificatif d'achat sans les données du client, comme les tickets de magasin. Il vaut comme dépense s'il remplit certaines conditions minimales."
+
+msgid "Factura rectificativa (abono)"
+msgstr "Facture rectificative (avoir)"
+
+msgid "Una factura que corrige o anula otra anterior. Resta en lugar de sumar."
+msgstr "Une facture qui corrige ou annule une précédente. Elle soustrait au lieu d'ajouter."
+
+msgid "Casos en que no se cobra IVA en la factura y lo ingresa quien la recibe, como en muchas compras a empresas de otros países."
+msgstr "Cas où la facture n'inclut pas de TVA et où c'est le destinataire qui la verse, comme dans beaucoup d'achats à des entreprises d'autres pays."
+
+msgid "Tributar por tus ingresos y gastos reales, frente a los módulos, donde se calcula con datos estándar."
+msgstr "Être imposé sur vos revenus et dépenses réels, par opposition au forfait, où le calcul se fait avec des données standard."
+
+msgid "Glosario"
+msgstr "Glossaire"
+
+msgid "Qué es cada modelo y cada palabra rara, en dos líneas."
+msgstr "Ce que signifie chaque modèle et chaque mot étrange, en deux lignes."
+
+msgid "Buscar en el glosario"
+msgstr "Rechercher dans le glossaire"
+
+msgid "Busca un modelo o una palabra (por ejemplo, 303 o retención)"
+msgstr "Cherchez un modèle ou un mot (par exemple, 303 ou retenue)"
+
+msgid "No hay nada con esa búsqueda. Si no encuentras lo que buscas, pregúntale a tu gestoría."
+msgstr "Rien ne correspond à cette recherche. Si vous ne trouvez pas ce que vous cherchez, demandez à votre cabinet."
+
+msgid "Preguntar a mi gestoría"
+msgstr "Poser la question à mon cabinet"
+
+msgid "Modelos fiscales"
+msgstr "Modèles fiscaux"
+
+msgid "Qué suele hacer falta de ti:"
+msgstr "Ce dont nous avons généralement besoin de vous :"
+
+msgid "Cuándo:"
+msgstr "Quand :"
+
+msgid "Palabras que oirás"
+msgstr "Mots que vous entendrez"
+
+msgid "Es una explicación general. Los plazos y lo que te toca a ti están en tu calendario y en «Para hacer»."
+msgstr "C'est une explication générale. Vos échéances et ce qui vous revient figurent dans votre calendrier et dans « À faire »."
+
+msgid "Ayuda sobre esta pantalla (se abre en una pestaña nueva)"
+msgstr "Aide sur cet écran (s'ouvre dans un nouvel onglet)"
+
+msgid "Ayuda"
+msgstr "Aide"
+
+msgid "¿Qué es el modelo %(m)s?"
+msgstr "Qu'est-ce que le modèle %(m)s ?"
+
+msgid "Ver en el glosario"
+msgstr "Voir dans le glossaire"

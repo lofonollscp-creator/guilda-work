@@ -50,6 +50,8 @@
       <a href="{{ url_for('portal_cliente.carpeta') }}" {% if portal_seccion == 'carpeta' %}aria-current="page"{% endif %}>{{ _('Carpeta') }}</a>
       <a href="{{ url_for('portal_cliente.buscar') }}" {% if portal_seccion == 'buscar' %}aria-current="page"{% endif %} aria-label="{{ _('Buscar en el portal') }}">{{ _('Buscar') }}</a>
       <a href="{{ url_for('portal_cliente.cuenta') }}" {% if portal_seccion == 'cuenta' %}aria-current="page"{% endif %}>{{ _('Mi cuenta') }}</a>
+      <a href="{{ url_for('portal_cliente.glosario') }}" {% if request.endpoint == 'portal_cliente.glosario' %}aria-current="page"{% endif %}>{{ _('Glosario') }}</a>
+      {% if portal_ayuda_url %}<a href="{{ portal_ayuda_url }}" target="_blank" rel="noopener" class="portal-nav-ayuda" aria-label="{{ _('Ayuda sobre esta pantalla (se abre en una pestaña nueva)') }}">{{ _('Ayuda') }}</a>{% endif %}
       {% if not vista_previa %}<form method="post" action="{{ url_for('portal_cliente.salir') }}" class="portal-nav-salir"><button type="submit" class="portal-nav-salir-boton">{{ _('Salir') }}</button></form>{% endif %}
     </nav>
 

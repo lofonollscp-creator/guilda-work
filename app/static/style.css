@@ -5467,3 +5467,12 @@ html[data-letra="muy-grande"] .portal-cliente-shell { zoom: 1.3; }
 .portal-aviso-item time { white-space: nowrap; font-size: 0.8rem; }
 .portal-adjunto { display: inline-block; margin: 6px 8px 0 0; font-size: 0.9rem; word-break: break-all; }
 .visor-xml-dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; } .visor-xml-dl dt { font-weight: 600; } .visor-xml-dl dd { margin: 0; }
+
+/* Glosario y «¿Qué es esto?» del portal */
+.portal-que-es { margin: 4px 0 8px; padding: 8px 12px; border: 1px solid var(--portal-border, var(--border)); border-radius: 10px; }
+.portal-que-es summary { cursor: pointer; font-weight: 600; overflow-wrap: anywhere; }
+.portal-que-es p { margin: 8px 0 0; overflow-wrap: anywhere; }
+.portal-glosario-buscar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 var(--space-4, 16px); }
+.portal-glosario-buscar input { flex: 1 1 220px; min-width: 0; }
+.portal-glosario-lista dt { font-weight: 700; margin-top: 12px; }
+.portal-glosario-lista dd { margin: 2px 0 0; color: var(--portal-muted); overflow-wrap: anywhere; }

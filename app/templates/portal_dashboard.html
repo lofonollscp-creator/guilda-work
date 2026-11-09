@@ -79,6 +79,7 @@
             <strong>{{ p.modelo }} {{ p.periodo }}</strong>
             <span class="muted">{{ p.fecha_limite|fecha_dia }} · {% if p.dias is none %}{% elif p.dias < 0 %}{{ _('venció hace %(n)s días', n=-p.dias) if p.dias < -1 else _('venció ayer') }}{% elif p.dias == 0 %}{{ _('vence hoy') }}{% elif p.dias == 1 %}{{ _('vence mañana') }}{% else %}{{ _('vence en %(n)s días', n=p.dias) }}{% endif %}</span>
           </div>
+          {% set gl = glosario_modelo(p.modelo) %}{% if gl %}<details class="portal-que-es"><summary>{{ _('¿Qué es el modelo %(m)s?', m=gl.modelo) }}</summary><p>{{ gl.que_es }}</p><p class="muted">{{ _('Qué suele hacer falta de ti:') }} {{ gl.que_hace_falta }}</p></details>{% endif %}
           {% if p.en_orden %}
           <span class="portal-estado ok">{{ _('Todo en orden: tu gestoría no necesita nada más de ti.') }}</span>
           {% else %}

@@ -17,10 +17,10 @@ from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
-from flask_babel import gettext as _
+from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -101,7 +101,8 @@ def _menu_del_portal():
     otras = [c for c in portal_personas.clientes_de(email) if c["id"] != cliente["id"]] if not g.get("vista_previa") else []
     return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
             "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
-            "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa")}
+            "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"),
+            "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
 
 
 def cliente_login_required(vista):
@@ -298,6 +299,14 @@ def dashboard():
         aviso=(request.args.get("aviso") or "")[:200] or None, max_caracteres=tareas_trabajo.MAX_CARACTERES_COMENTARIO,
         bienvenida=bienvenida and not resumen_primeros["completo"], primeros_pasos=primeros, primeros_resumen=resumen_primeros,
     )
+
+
+@portal_bp.route("/glosario")
+@cliente_login_required
+def glosario():
+    """Qué es cada modelo fiscal y cada palabra rara, en lenguaje llano; con buscador."""
+    q = (request.args.get("q") or "")[:60]
+    return render_template("portal_glosario.html", cliente=db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id), q=q, g_datos=portal_glosario.todo(q), portal_seccion="inicio")
 
 
 @portal_bp.route("/impuestos")

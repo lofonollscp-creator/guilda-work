@@ -1,0 +1,33 @@
+{% extends "portal_base.html" %}
+{% block titulo_pagina %}{{ _('Glosario') }}{% endblock %}
+{% block titulo %}{{ _('Glosario') }}{% endblock %}
+{% block subtitulo %}{{ _('Qué es cada modelo y cada palabra rara, en dos líneas.') }}{% endblock %}
+{% block contenido %}
+    <form method="get" class="portal-glosario-buscar" role="search">
+      <label class="sr-only" for="glosario-q">{{ _('Buscar en el glosario') }}</label>
+      <input type="search" id="glosario-q" name="q" value="{{ q }}" maxlength="60" placeholder="{{ _('Busca un modelo o una palabra (por ejemplo, 303 o retención)') }}">
+      <button type="submit" class="btn btn-ghost">{{ _('Buscar') }}</button>
+    </form>
+    {% if not g_datos.modelos and not g_datos.conceptos %}<p class="muted" role="status">{{ _('No hay nada con esa búsqueda. Si no encuentras lo que buscas, pregúntale a tu gestoría.') }}</p>
+    <p><a class="btn btn-primary" href="{{ url_for('portal_cliente.conversacion_nueva') }}">{{ _('Preguntar a mi gestoría') }}</a></p>{% endif %}
+    {% if g_datos.modelos %}
+    <section class="dash-panel" aria-labelledby="glosario-modelos"><h2 id="glosario-modelos">{{ _('Modelos fiscales') }}</h2>
+      {% for m in g_datos.modelos %}
+      <details class="portal-que-es" id="modelo-{{ m.modelo }}"{% if q %} open{% endif %}>
+        <summary><strong>{{ _('Modelo %(m)s', m=m.modelo) }}</strong> · {{ m.nombre }}</summary>
+        <p>{{ m.que_es }}</p>
+        <p><strong>{{ _('Qué suele hacer falta de ti:') }}</strong> {{ m.que_hace_falta }}</p>
+        <p class="muted"><strong>{{ _('Cuándo:') }}</strong> {{ m.cuando }}</p>
+      </details>
+      {% endfor %}
+    </section>
+    {% endif %}
+    {% if g_datos.conceptos %}
+    <section class="dash-panel" aria-labelledby="glosario-palabras"><h2 id="glosario-palabras">{{ _('Palabras que oirás') }}</h2>
+      <dl class="portal-glosario-lista">
+        {% for c in g_datos.conceptos %}<dt id="palabra-{{ c.clave }}">{{ c.nombre }}</dt><dd>{{ c.texto }}</dd>{% endfor %}
+      </dl>
+    </section>
+    {% endif %}
+    <p class="muted">{{ _('Es una explicación general. Los plazos y lo que te toca a ti están en tu calendario y en «Para hacer».') }}</p>
+{% endblock %}

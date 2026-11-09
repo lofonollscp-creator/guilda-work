@@ -24353,3 +24353,270 @@ msgstr "Source: text recognised on the server (OCR)"
 
 msgid "Texto reconocido en el servidor (OCR)"
 msgstr "Text recognised on the server (OCR)"
+
+msgid "IVA trimestral"
+msgstr "Quarterly VAT"
+
+msgid "Resume el IVA que has cobrado a tus clientes menos el IVA que has pagado en tus compras y gastos. Si cobraste más de lo que pagaste, se ingresa la diferencia; si no, sale a compensar o a devolver."
+msgstr "Summarises the VAT you charged your customers minus the VAT you paid on your purchases and expenses. If you charged more than you paid, the difference is paid in; otherwise it is carried forward or refunded."
+
+msgid "Todas tus facturas emitidas y recibidas del trimestre, con el IVA bien visible."
+msgstr "All your issued and received invoices for the quarter, with the VAT clearly visible."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 30 de enero el último trimestre."
+msgstr "Each quarter, during the first 20 days of April, July and October, and until 30 January for the last quarter."
+
+msgid "Resumen anual del IVA"
+msgstr "Annual VAT summary"
+
+msgid "Recoge en un solo documento lo que declaraste en los cuatro modelos 303 del año. Normalmente no se paga nada."
+msgstr "Gathers in one document what you declared in the year's four 303 returns. Normally nothing is paid."
+
+msgid "Normalmente nada nuevo: se hace con lo que ya hemos recibido durante el año."
+msgstr "Normally nothing new: it is prepared from what we already received during the year."
+
+msgid "En enero, junto al cuarto trimestre."
+msgstr "In January, together with the fourth quarter."
+
+msgid "Pago a cuenta del IRPF (autónomos)"
+msgstr "Advance income tax payment (self-employed)"
+
+msgid "Es un adelanto de tu declaración de la Renta si eres autónomo: se calcula con tus ingresos menos tus gastos del año hasta ahora, y se restan los pagos de trimestres anteriores."
+msgstr "An advance on your annual income tax return if you are self-employed: it is worked out from your income minus your expenses so far this year, minus payments from earlier quarters."
+
+msgid "Facturas emitidas y recibidas del trimestre, y las retenciones que te hayan practicado."
+msgstr "Issued and received invoices for the quarter, and any withholdings applied to you."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 30 de enero el último."
+msgstr "Each quarter, during the first 20 days of April, July and October, and until 30 January for the last one."
+
+msgid "Pago a cuenta del IRPF (módulos)"
+msgstr "Advance income tax payment (flat-rate scheme)"
+
+msgid "Es el adelanto trimestral del IRPF para autónomos que tributan por módulos: no depende de tus gastos, sino de datos como tus trabajadores o tus metros."
+msgstr "The quarterly advance of income tax for self-employed people on the flat-rate scheme: it does not depend on your expenses but on data such as your employees or your floor area."
+
+msgid "Los datos de tu actividad que hayan cambiado (personal, superficie, consumos)."
+msgstr "The details of your business that have changed (staff, floor area, consumption)."
+
+msgid "Declaración de la Renta"
+msgstr "Income tax return"
+
+msgid "Es tu declaración anual del IRPF: suma tus ingresos del año, resta lo que la ley permite y compara el resultado con lo que ya te retuvieron o pagaste a cuenta."
+msgstr "Your annual income tax return: it adds up your income for the year, subtracts what the law allows and compares the result with what was already withheld or paid on account."
+
+msgid "Documentos de tus ingresos, gastos deducibles, hipoteca, hijos o cambios de domicilio, y tus datos bancarios."
+msgstr "Documents about your income, deductible expenses, mortgage, children or change of address, and your bank details."
+
+msgid "Cada año, de abril a finales de junio."
+msgstr "Every year, from April to the end of June."
+
+msgid "Retenciones de trabajadores y profesionales"
+msgstr "Withholdings from employees and professionals"
+
+msgid "Es lo que has retenido del sueldo de tus empleados o de las facturas de profesionales y has de ingresar a Hacienda a su nombre."
+msgstr "What you have withheld from your employees' pay or from professionals' invoices and must pay to the tax office on their behalf."
+
+msgid "Nóminas del trimestre y las facturas de profesionales que llevan retención."
+msgstr "Payslips for the quarter and the professionals' invoices that carry a withholding."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 20 de enero el último."
+msgstr "Each quarter, during the first 20 days of April, July and October, and until 20 January for the last one."
+
+msgid "Retenciones de alquileres"
+msgstr "Rent withholdings"
+
+msgid "Si alquilas un local para tu actividad, retienes una parte del alquiler y la ingresas a Hacienda por cuenta de quien te lo alquila."
+msgstr "If you rent premises for your business, you withhold part of the rent and pay it to the tax office on behalf of the landlord."
+
+msgid "Las facturas del alquiler del trimestre."
+msgstr "The rent invoices for the quarter."
+
+msgid "Resumen anual de retenciones de trabajo y profesionales"
+msgstr "Annual summary of employee and professional withholdings"
+
+msgid "Resume todo lo declarado en los modelos 111 del año, persona por persona. Normalmente no se paga."
+msgstr "Summarises everything declared in the year's 111 returns, person by person. Normally nothing is paid."
+
+msgid "Normalmente nada nuevo: se hace con lo ya declarado."
+msgstr "Normally nothing new: it is prepared from what has already been declared."
+
+msgid "En enero."
+msgstr "In January."
+
+msgid "Resumen anual de retenciones de alquileres"
+msgstr "Annual summary of rent withholdings"
+
+msgid "Resume todo lo declarado en los modelos 115 del año. Normalmente no se paga."
+msgstr "Summarises everything declared in the year's 115 returns. Normally nothing is paid."
+
+msgid "Operaciones con clientes y proveedores"
+msgstr "Transactions with customers and suppliers"
+
+msgid "Informa a Hacienda de los clientes y proveedores con los que has movido más de 3.005,06 € en el año. No se paga nada: es una comparación de datos."
+msgstr "Tells the tax office about customers and suppliers with whom you moved more than €3,005.06 in the year. Nothing is paid: it is a data cross-check."
+
+msgid "Que tus facturas del año estén completas, con el NIF de cada cliente y proveedor."
+msgstr "That your invoices for the year are complete, with the tax ID of each customer and supplier."
+
+msgid "En febrero."
+msgstr "In February."
+
+msgid "Operaciones con la Unión Europea"
+msgstr "Transactions with the European Union"
+
+msgid "Informa de lo que has vendido o comprado a empresas de otros países de la UE. No se paga nada."
+msgstr "Reports what you have sold to or bought from companies in other EU countries. Nothing is paid."
+
+msgid "Las facturas de operaciones con empresas europeas, con su NIF-IVA."
+msgstr "Invoices for transactions with European companies, with their VAT number."
+
+msgid "Cada trimestre o cada mes, según el volumen."
+msgstr "Each quarter or each month, depending on volume."
+
+msgid "Impuesto de Sociedades"
+msgstr "Corporate tax"
+
+msgid "Es el impuesto anual sobre el beneficio de una sociedad: ingresos menos gastos del ejercicio, con los ajustes que marca la ley."
+msgstr "The annual tax on a company's profit: income minus expenses for the financial year, with the adjustments set by law."
+
+msgid "Las cuentas del año cerradas, el extracto de los bancos y los documentos de operaciones especiales."
+msgstr "The closed accounts for the year, bank statements and documents for special transactions."
+
+msgid "En julio, para las sociedades cuyo ejercicio coincide con el año natural."
+msgstr "In July, for companies whose financial year matches the calendar year."
+
+msgid "Pago a cuenta del Impuesto de Sociedades"
+msgstr "Advance payment of corporate tax"
+
+msgid "Es un adelanto del Impuesto de Sociedades que se paga en abril, octubre y diciembre."
+msgstr "An advance on corporate tax paid in April, October and December."
+
+msgid "Normalmente nada: lo calculamos con lo ya declarado."
+msgstr "Normally nothing: we work it out from what has already been declared."
+
+msgid "En abril, octubre y diciembre."
+msgstr "In April, October and December."
+
+msgid "Alta o cambio en el censo"
+msgstr "Registration or change in the tax census"
+
+msgid "Sirve para dar de alta, modificar o dar de baja tu actividad en Hacienda: domicilio fiscal, actividad, régimen de IVA…"
+msgstr "Used to register, change or cancel your business with the tax office: tax address, activity, VAT regime…"
+
+msgid "Tus datos personales o de la empresa y la descripción de la actividad."
+msgstr "Your personal or company details and a description of the activity."
+
+msgid "Antes de empezar la actividad o en el mes siguiente a un cambio."
+msgstr "Before starting the activity or in the month after a change."
+
+msgid "Bienes y cuentas en el extranjero"
+msgstr "Assets and accounts abroad"
+
+msgid "Informa de cuentas, valores o inmuebles en otro país cuyo valor supere los 50.000 €. No se paga nada, pero no presentarlo tiene sanciones."
+msgstr "Reports accounts, securities or property in another country worth more than €50,000. Nothing is paid, but not filing it carries penalties."
+
+msgid "Saldos y valoraciones a 31 de diciembre."
+msgstr "Balances and valuations at 31 December."
+
+msgid "De enero a marzo."
+msgstr "From January to March."
+
+msgid "El IVA que cobras en las facturas que haces a tus clientes. No es tuyo: lo ingresas a Hacienda."
+msgstr "The VAT you charge on invoices to your customers. It is not yours: you pay it to the tax office."
+
+msgid "El IVA que pagas en tus compras y gastos. Si son de tu actividad, lo puedes restar del IVA que has cobrado."
+msgstr "The VAT you pay on your purchases and expenses. If they are for your business, you can subtract it from the VAT you charged."
+
+msgid "Una parte del importe de una factura o nómina que quien paga ingresa directamente a Hacienda a cuenta del IRPF de quien cobra."
+msgstr "Part of the amount of an invoice or payslip that the payer sends directly to the tax office on account of the recipient's income tax."
+
+msgid "Un adelanto trimestral de un impuesto anual, para no pagarlo todo de golpe al final."
+msgstr "A quarterly advance on an annual tax, so you do not pay it all at once at the end."
+
+msgid "Autoliquidación"
+msgstr "Self-assessment"
+
+msgid "Una declaración en la que calculas tú mismo (o tu gestoría) lo que debes, en vez de que lo haga Hacienda."
+msgstr "A return in which you (or your accountant) work out what you owe, instead of the tax office doing it."
+
+msgid "Justificante de presentación"
+msgstr "Proof of filing"
+
+msgid "El documento de Hacienda que prueba que un modelo se presentó dentro de plazo. Se guarda en tu carpeta."
+msgstr "The tax office document proving that a return was filed on time. It is kept in your folder."
+
+msgid "Certificado digital"
+msgstr "Digital certificate"
+
+msgid "Tu identidad electrónica para presentar impuestos. Caduca a los pocos años y hay que renovarlo antes de que venza."
+msgstr "Your electronic identity for filing taxes. It expires after a few years and must be renewed before it lapses."
+
+msgid "Domiciliación"
+msgstr "Direct debit"
+
+msgid "Dejar que Hacienda cobre el importe de un modelo directamente de tu cuenta, el último día de plazo."
+msgstr "Letting the tax office collect the amount of a return directly from your account on the last day of the deadline."
+
+msgid "Factura simplificada (tiquet)"
+msgstr "Simplified invoice (receipt)"
+
+msgid "Un justificante de compra sin los datos del cliente, como los tiquets de tienda. Vale como gasto si cumple unos mínimos."
+msgstr "A proof of purchase without the customer's details, like shop receipts. It counts as an expense if it meets some minimum requirements."
+
+msgid "Factura rectificativa (abono)"
+msgstr "Corrective invoice (credit note)"
+
+msgid "Una factura que corrige o anula otra anterior. Resta en lugar de sumar."
+msgstr "An invoice that corrects or cancels an earlier one. It subtracts instead of adding."
+
+msgid "Casos en que no se cobra IVA en la factura y lo ingresa quien la recibe, como en muchas compras a empresas de otros países."
+msgstr "Cases where no VAT is charged on the invoice and the recipient pays it, as in many purchases from companies in other countries."
+
+msgid "Tributar por tus ingresos y gastos reales, frente a los módulos, donde se calcula con datos estándar."
+msgstr "Paying tax on your actual income and expenses, as opposed to the flat-rate scheme, where it is calculated with standard figures."
+
+msgid "Glosario"
+msgstr "Glossary"
+
+msgid "Qué es cada modelo y cada palabra rara, en dos líneas."
+msgstr "What each return and each odd word means, in two lines."
+
+msgid "Buscar en el glosario"
+msgstr "Search the glossary"
+
+msgid "Busca un modelo o una palabra (por ejemplo, 303 o retención)"
+msgstr "Look up a return or a word (for example, 303 or withholding)"
+
+msgid "No hay nada con esa búsqueda. Si no encuentras lo que buscas, pregúntale a tu gestoría."
+msgstr "Nothing matches that search. If you cannot find what you need, ask your accountant."
+
+msgid "Preguntar a mi gestoría"
+msgstr "Ask my accountant"
+
+msgid "Modelos fiscales"
+msgstr "Tax returns"
+
+msgid "Qué suele hacer falta de ti:"
+msgstr "What we usually need from you:"
+
+msgid "Cuándo:"
+msgstr "When:"
+
+msgid "Palabras que oirás"
+msgstr "Words you will hear"
+
+msgid "Es una explicación general. Los plazos y lo que te toca a ti están en tu calendario y en «Para hacer»."
+msgstr "This is a general explanation. Your deadlines and what is due from you are in your calendar and in “To do”."
+
+msgid "Ayuda sobre esta pantalla (se abre en una pestaña nueva)"
+msgstr "Help about this screen (opens in a new tab)"
+
+msgid "Ayuda"
+msgstr "Help"
+
+msgid "¿Qué es el modelo %(m)s?"
+msgstr "What is return %(m)s?"
+
+msgid "Ver en el glosario"
+msgstr "See in the glossary"

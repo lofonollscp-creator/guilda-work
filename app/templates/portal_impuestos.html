@@ -58,6 +58,7 @@
         <a href="{{ url_for('portal_cliente.mensajes_vencimiento', vencimiento_id=v.id) }}" class="{{ 'con-novedad' if sin_leer.get(v.id) }}" title="{{ _('Mensajes') }}" aria-label="{{ _('Mensajes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-message-circle"></use></svg></a>
       </span>
     </div>
+    {% set gl = glosario_modelo(v.modelo) %}{% if gl %}<details class="portal-que-es portal-carpeta-extra"><summary>{{ _('¿Qué es el modelo %(m)s?', m=gl.modelo) }}</summary><p>{{ gl.que_es }}</p><p class="muted">{{ _('Qué suele hacer falta de ti:') }} {{ gl.que_hace_falta }}</p><p><a href="{{ url_for('portal_cliente.glosario') }}#modelo-{{ gl.modelo }}">{{ _('Ver en el glosario') }}</a></p></details>{% endif %}
     {% if v.id in firmas %}<p class="portal-carpeta-extra"><a class="btn btn-primary" href="{{ url_for('portal_cliente.firma_vencimiento', vencimiento_id=v.id) }}">{{ _('Firmar el documento de este modelo') }}</a></p>{% endif %}
     {% if v.id in cobros %}{% set c = cobros[v.id] %}
     <p class="portal-carpeta-extra">

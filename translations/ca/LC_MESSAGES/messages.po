@@ -24362,3 +24362,270 @@ msgstr "Font: text reconegut al servidor (OCR)"
 
 msgid "Texto reconocido en el servidor (OCR)"
 msgstr "Text reconegut al servidor (OCR)"
+
+msgid "IVA trimestral"
+msgstr "IVA trimestral"
+
+msgid "Resume el IVA que has cobrado a tus clientes menos el IVA que has pagado en tus compras y gastos. Si cobraste más de lo que pagaste, se ingresa la diferencia; si no, sale a compensar o a devolver."
+msgstr "Resumeix l'IVA que has cobrat als teus clients menys l'IVA que has pagat en les teves compres i despeses. Si has cobrat més del que has pagat, s'ingressa la diferència; si no, surt a compensar o a retornar."
+
+msgid "Todas tus facturas emitidas y recibidas del trimestre, con el IVA bien visible."
+msgstr "Totes les teves factures emeses i rebudes del trimestre, amb l'IVA ben visible."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 30 de enero el último trimestre."
+msgstr "Cada trimestre, durant els 20 primers dies d'abril, juliol i octubre, i fins al 30 de gener l'últim trimestre."
+
+msgid "Resumen anual del IVA"
+msgstr "Resum anual de l'IVA"
+
+msgid "Recoge en un solo documento lo que declaraste en los cuatro modelos 303 del año. Normalmente no se paga nada."
+msgstr "Recull en un sol document el que vas declarar en els quatre models 303 de l'any. Normalment no es paga res."
+
+msgid "Normalmente nada nuevo: se hace con lo que ya hemos recibido durante el año."
+msgstr "Normalment res de nou: es fa amb el que ja hem rebut durant l'any."
+
+msgid "En enero, junto al cuarto trimestre."
+msgstr "Al gener, juntament amb el quart trimestre."
+
+msgid "Pago a cuenta del IRPF (autónomos)"
+msgstr "Pagament a compte de l'IRPF (autònoms)"
+
+msgid "Es un adelanto de tu declaración de la Renta si eres autónomo: se calcula con tus ingresos menos tus gastos del año hasta ahora, y se restan los pagos de trimestres anteriores."
+msgstr "És un avançament de la teva declaració de la Renda si ets autònom: es calcula amb els teus ingressos menys les teves despeses de l'any fins ara, i es resten els pagaments de trimestres anteriors."
+
+msgid "Facturas emitidas y recibidas del trimestre, y las retenciones que te hayan practicado."
+msgstr "Factures emeses i rebudes del trimestre, i les retencions que t'hagin practicat."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 30 de enero el último."
+msgstr "Cada trimestre, durant els 20 primers dies d'abril, juliol i octubre, i fins al 30 de gener l'últim."
+
+msgid "Pago a cuenta del IRPF (módulos)"
+msgstr "Pagament a compte de l'IRPF (mòduls)"
+
+msgid "Es el adelanto trimestral del IRPF para autónomos que tributan por módulos: no depende de tus gastos, sino de datos como tus trabajadores o tus metros."
+msgstr "És l'avançament trimestral de l'IRPF per a autònoms que tributen per mòduls: no depèn de les teves despeses, sinó de dades com els teus treballadors o els teus metres."
+
+msgid "Los datos de tu actividad que hayan cambiado (personal, superficie, consumos)."
+msgstr "Les dades de la teva activitat que hagin canviat (personal, superfície, consums)."
+
+msgid "Declaración de la Renta"
+msgstr "Declaració de la Renda"
+
+msgid "Es tu declaración anual del IRPF: suma tus ingresos del año, resta lo que la ley permite y compara el resultado con lo que ya te retuvieron o pagaste a cuenta."
+msgstr "És la teva declaració anual de l'IRPF: suma els teus ingressos de l'any, resta el que la llei permet i compara el resultat amb el que ja et van retenir o vas pagar a compte."
+
+msgid "Documentos de tus ingresos, gastos deducibles, hipoteca, hijos o cambios de domicilio, y tus datos bancarios."
+msgstr "Documents dels teus ingressos, despeses deduïbles, hipoteca, fills o canvis de domicili, i les teves dades bancàries."
+
+msgid "Cada año, de abril a finales de junio."
+msgstr "Cada any, d'abril a finals de juny."
+
+msgid "Retenciones de trabajadores y profesionales"
+msgstr "Retencions de treballadors i professionals"
+
+msgid "Es lo que has retenido del sueldo de tus empleados o de las facturas de profesionales y has de ingresar a Hacienda a su nombre."
+msgstr "És el que has retingut del sou dels teus empleats o de les factures de professionals i has d'ingressar a Hisenda en nom seu."
+
+msgid "Nóminas del trimestre y las facturas de profesionales que llevan retención."
+msgstr "Nòmines del trimestre i les factures de professionals que porten retenció."
+
+msgid "Cada trimestre, durante los 20 primeros días de abril, julio y octubre, y hasta el 20 de enero el último."
+msgstr "Cada trimestre, durant els 20 primers dies d'abril, juliol i octubre, i fins al 20 de gener l'últim."
+
+msgid "Retenciones de alquileres"
+msgstr "Retencions de lloguers"
+
+msgid "Si alquilas un local para tu actividad, retienes una parte del alquiler y la ingresas a Hacienda por cuenta de quien te lo alquila."
+msgstr "Si lloges un local per a la teva activitat, retens una part del lloguer i la ingresses a Hisenda per compte de qui te'l lloga."
+
+msgid "Las facturas del alquiler del trimestre."
+msgstr "Les factures del lloguer del trimestre."
+
+msgid "Resumen anual de retenciones de trabajo y profesionales"
+msgstr "Resum anual de retencions de treball i professionals"
+
+msgid "Resume todo lo declarado en los modelos 111 del año, persona por persona. Normalmente no se paga."
+msgstr "Resumeix tot el declarat en els models 111 de l'any, persona per persona. Normalment no es paga."
+
+msgid "Normalmente nada nuevo: se hace con lo ya declarado."
+msgstr "Normalment res de nou: es fa amb el ja declarat."
+
+msgid "En enero."
+msgstr "Al gener."
+
+msgid "Resumen anual de retenciones de alquileres"
+msgstr "Resum anual de retencions de lloguers"
+
+msgid "Resume todo lo declarado en los modelos 115 del año. Normalmente no se paga."
+msgstr "Resumeix tot el declarat en els models 115 de l'any. Normalment no es paga."
+
+msgid "Operaciones con clientes y proveedores"
+msgstr "Operacions amb clients i proveïdors"
+
+msgid "Informa a Hacienda de los clientes y proveedores con los que has movido más de 3.005,06 € en el año. No se paga nada: es una comparación de datos."
+msgstr "Informa Hisenda dels clients i proveïdors amb qui has mogut més de 3.005,06 € a l'any. No es paga res: és una comparació de dades."
+
+msgid "Que tus facturas del año estén completas, con el NIF de cada cliente y proveedor."
+msgstr "Que les teves factures de l'any estiguin completes, amb el NIF de cada client i proveïdor."
+
+msgid "En febrero."
+msgstr "Al febrer."
+
+msgid "Operaciones con la Unión Europea"
+msgstr "Operacions amb la Unió Europea"
+
+msgid "Informa de lo que has vendido o comprado a empresas de otros países de la UE. No se paga nada."
+msgstr "Informa del que has venut o comprat a empreses d'altres països de la UE. No es paga res."
+
+msgid "Las facturas de operaciones con empresas europeas, con su NIF-IVA."
+msgstr "Les factures d'operacions amb empreses europees, amb el seu NIF-IVA."
+
+msgid "Cada trimestre o cada mes, según el volumen."
+msgstr "Cada trimestre o cada mes, segons el volum."
+
+msgid "Impuesto de Sociedades"
+msgstr "Impost de Societats"
+
+msgid "Es el impuesto anual sobre el beneficio de una sociedad: ingresos menos gastos del ejercicio, con los ajustes que marca la ley."
+msgstr "És l'impost anual sobre el benefici d'una societat: ingressos menys despeses de l'exercici, amb els ajustos que marca la llei."
+
+msgid "Las cuentas del año cerradas, el extracto de los bancos y los documentos de operaciones especiales."
+msgstr "Els comptes de l'any tancats, l'extracte dels bancs i els documents d'operacions especials."
+
+msgid "En julio, para las sociedades cuyo ejercicio coincide con el año natural."
+msgstr "Al juliol, per a les societats l'exercici de les quals coincideix amb l'any natural."
+
+msgid "Pago a cuenta del Impuesto de Sociedades"
+msgstr "Pagament a compte de l'Impost de Societats"
+
+msgid "Es un adelanto del Impuesto de Sociedades que se paga en abril, octubre y diciembre."
+msgstr "És un avançament de l'Impost de Societats que es paga a l'abril, octubre i desembre."
+
+msgid "Normalmente nada: lo calculamos con lo ya declarado."
+msgstr "Normalment res: ho calculem amb el ja declarat."
+
+msgid "En abril, octubre y diciembre."
+msgstr "A l'abril, octubre i desembre."
+
+msgid "Alta o cambio en el censo"
+msgstr "Alta o canvi al cens"
+
+msgid "Sirve para dar de alta, modificar o dar de baja tu actividad en Hacienda: domicilio fiscal, actividad, régimen de IVA…"
+msgstr "Serveix per donar d'alta, modificar o donar de baixa la teva activitat a Hisenda: domicili fiscal, activitat, règim d'IVA…"
+
+msgid "Tus datos personales o de la empresa y la descripción de la actividad."
+msgstr "Les teves dades personals o de l'empresa i la descripció de l'activitat."
+
+msgid "Antes de empezar la actividad o en el mes siguiente a un cambio."
+msgstr "Abans de començar l'activitat o el mes següent a un canvi."
+
+msgid "Bienes y cuentas en el extranjero"
+msgstr "Béns i comptes a l'estranger"
+
+msgid "Informa de cuentas, valores o inmuebles en otro país cuyo valor supere los 50.000 €. No se paga nada, pero no presentarlo tiene sanciones."
+msgstr "Informa de comptes, valors o immobles en un altre país el valor dels quals superi els 50.000 €. No es paga res, però no presentar-lo té sancions."
+
+msgid "Saldos y valoraciones a 31 de diciembre."
+msgstr "Saldos i valoracions a 31 de desembre."
+
+msgid "De enero a marzo."
+msgstr "De gener a març."
+
+msgid "El IVA que cobras en las facturas que haces a tus clientes. No es tuyo: lo ingresas a Hacienda."
+msgstr "L'IVA que cobres a les factures que fas als teus clients. No és teu: l'ingresses a Hisenda."
+
+msgid "El IVA que pagas en tus compras y gastos. Si son de tu actividad, lo puedes restar del IVA que has cobrado."
+msgstr "L'IVA que pagues en les teves compres i despeses. Si són de la teva activitat, el pots restar de l'IVA que has cobrat."
+
+msgid "Una parte del importe de una factura o nómina que quien paga ingresa directamente a Hacienda a cuenta del IRPF de quien cobra."
+msgstr "Una part de l'import d'una factura o nòmina que qui paga ingressa directament a Hisenda a compte de l'IRPF de qui cobra."
+
+msgid "Un adelanto trimestral de un impuesto anual, para no pagarlo todo de golpe al final."
+msgstr "Un avançament trimestral d'un impost anual, per no pagar-lo tot d'un cop al final."
+
+msgid "Autoliquidación"
+msgstr "Autoliquidació"
+
+msgid "Una declaración en la que calculas tú mismo (o tu gestoría) lo que debes, en vez de que lo haga Hacienda."
+msgstr "Una declaració en què calcules tu mateix (o la teva gestoria) el que deus, en lloc que ho faci Hisenda."
+
+msgid "Justificante de presentación"
+msgstr "Justificant de presentació"
+
+msgid "El documento de Hacienda que prueba que un modelo se presentó dentro de plazo. Se guarda en tu carpeta."
+msgstr "El document d'Hisenda que prova que un model es va presentar dins de termini. Es guarda a la teva carpeta."
+
+msgid "Certificado digital"
+msgstr "Certificat digital"
+
+msgid "Tu identidad electrónica para presentar impuestos. Caduca a los pocos años y hay que renovarlo antes de que venza."
+msgstr "La teva identitat electrònica per presentar impostos. Caduca al cap de pocs anys i s'ha de renovar abans que venci."
+
+msgid "Domiciliación"
+msgstr "Domiciliació"
+
+msgid "Dejar que Hacienda cobre el importe de un modelo directamente de tu cuenta, el último día de plazo."
+msgstr "Deixar que Hisenda cobri l'import d'un model directament del teu compte, l'últim dia de termini."
+
+msgid "Factura simplificada (tiquet)"
+msgstr "Factura simplificada (tiquet)"
+
+msgid "Un justificante de compra sin los datos del cliente, como los tiquets de tienda. Vale como gasto si cumple unos mínimos."
+msgstr "Un justificant de compra sense les dades del client, com els tiquets de botiga. Val com a despesa si compleix uns mínims."
+
+msgid "Factura rectificativa (abono)"
+msgstr "Factura rectificativa (abonament)"
+
+msgid "Una factura que corrige o anula otra anterior. Resta en lugar de sumar."
+msgstr "Una factura que corregeix o anul·la una altra d'anterior. Resta en lloc de sumar."
+
+msgid "Casos en que no se cobra IVA en la factura y lo ingresa quien la recibe, como en muchas compras a empresas de otros países."
+msgstr "Casos en què no es cobra IVA a la factura i l'ingressa qui la rep, com en moltes compres a empreses d'altres països."
+
+msgid "Tributar por tus ingresos y gastos reales, frente a los módulos, donde se calcula con datos estándar."
+msgstr "Tributar pels teus ingressos i despeses reals, davant dels mòduls, on es calcula amb dades estàndard."
+
+msgid "Glosario"
+msgstr "Glossari"
+
+msgid "Qué es cada modelo y cada palabra rara, en dos líneas."
+msgstr "Què és cada model i cada paraula rara, en dues línies."
+
+msgid "Buscar en el glosario"
+msgstr "Cerca al glossari"
+
+msgid "Busca un modelo o una palabra (por ejemplo, 303 o retención)"
+msgstr "Cerca un model o una paraula (per exemple, 303 o retenció)"
+
+msgid "No hay nada con esa búsqueda. Si no encuentras lo que buscas, pregúntale a tu gestoría."
+msgstr "No hi ha res amb aquesta cerca. Si no trobes el que busques, pregunta-ho a la teva gestoria."
+
+msgid "Preguntar a mi gestoría"
+msgstr "Preguntar a la meva gestoria"
+
+msgid "Modelos fiscales"
+msgstr "Models fiscals"
+
+msgid "Qué suele hacer falta de ti:"
+msgstr "Què sol fer falta de tu:"
+
+msgid "Cuándo:"
+msgstr "Quan:"
+
+msgid "Palabras que oirás"
+msgstr "Paraules que sentiràs"
+
+msgid "Es una explicación general. Los plazos y lo que te toca a ti están en tu calendario y en «Para hacer»."
+msgstr "És una explicació general. Els terminis i el que et toca a tu són al teu calendari i a «Per fer»."
+
+msgid "Ayuda sobre esta pantalla (se abre en una pestaña nueva)"
+msgstr "Ajuda sobre aquesta pantalla (s'obre en una pestanya nova)"
+
+msgid "Ayuda"
+msgstr "Ajuda"
+
+msgid "¿Qué es el modelo %(m)s?"
+msgstr "Què és el model %(m)s?"
+
+msgid "Ver en el glosario"
+msgstr "Veure al glossari"
