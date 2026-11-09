@@ -200,6 +200,7 @@ SELECT create_distributed_table('portal_cuestionarios', 'tenant_id', colocate_wi
 SELECT create_distributed_table('portal_enlaces_subida', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_novedades', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_novedades_lectura', 'tenant_id', colocate_with => 'abogados_ajustes');
+SELECT create_distributed_table('portal_passkeys', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_peticiones', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_peticiones_documentos', 'tenant_id', colocate_with => 'abogados_ajustes');
 SELECT create_distributed_table('portal_recordatorios_config', 'tenant_id', colocate_with => 'abogados_ajustes');

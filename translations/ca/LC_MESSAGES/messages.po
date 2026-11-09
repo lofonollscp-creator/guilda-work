@@ -24705,3 +24705,66 @@ msgstr "S'ha tallat la connexió: les teves factures s'han desat en aquest dispo
 
 msgid "Se han guardado como compras y gastos; si son ventas, dilo a tu gestoría."
 msgstr "S'han desat com a compres i despeses; si són vendes, digues-ho a la teva gestoria."
+
+msgid "No se ha podido entrar con la passkey. Usa el enlace del correo."
+msgstr "No s'ha pogut entrar amb la passkey. Fes servir l'enllaç del correu."
+
+msgid "Has cancelado o no se ha podido verificar. Inténtalo de nuevo o usa el enlace del correo."
+msgstr "Has cancel·lat o no s'ha pogut verificar. Torna-ho a provar o fes servir l'enllaç del correu."
+
+msgid "Entrar con huella, cara o PIN"
+msgstr "Entrar amb empremta, cara o PIN"
+
+msgid "Passkeys: entrar con huella, cara o PIN"
+msgstr "Passkeys: entrar amb empremta, cara o PIN"
+
+msgid "Entras en un toque desde este dispositivo, sin esperar el correo. Es tan seguro como el desbloqueo de tu móvil u ordenador y cuenta como verificación en dos pasos. El enlace del correo sigue funcionando."
+msgstr "Entres d'un toc des d'aquest dispositiu, sense esperar el correu. És tan segur com el desbloqueig del teu mòbil o ordinador i compta com a verificació en dos passos. L'enllaç del correu continua funcionant."
+
+msgid "Creada el %(f)s"
+msgstr "Creada el %(f)s"
+
+msgid "Último uso: %(f)s"
+msgstr "Últim ús: %(f)s"
+
+msgid "Todavía no tienes ninguna passkey."
+msgstr "Encara no tens cap passkey."
+
+msgid "Nombre de la passkey"
+msgstr "Nom de la passkey"
+
+msgid "Nombre (por ejemplo, Mi móvil)"
+msgstr "Nom (per exemple, El meu mòbil)"
+
+msgid "No se ha podido crear la passkey. Inténtalo de nuevo."
+msgstr "No s'ha pogut crear la passkey. Torna-ho a provar."
+
+msgid "Has cancelado o este dispositivo no la admite."
+msgstr "Has cancel·lat o aquest dispositiu no l'admet."
+
+msgid "Añadir una passkey"
+msgstr "Afegir una passkey"
+
+msgid "Ya no tienes acceso con esta passkey. Entra con el enlace del correo."
+msgstr "Ja no tens accés amb aquesta passkey. Entra amb l'enllaç del correu."
+
+msgid "Se ha agotado el tiempo. Inténtalo de nuevo."
+msgstr "S'ha esgotat el temps. Torna-ho a provar."
+
+msgid "Ya tienes el máximo de passkeys. Quita alguna para añadir otra."
+msgstr "Ja tens el màxim de passkeys. Treu-ne alguna per afegir-ne una altra."
+
+msgid "Esa solicitud no era de tu cuenta. Inténtalo de nuevo."
+msgstr "Aquesta sol·licitud no era del teu compte. Torna-ho a provar."
+
+msgid "No hemos podido verificar la passkey. Inténtalo de nuevo."
+msgstr "No hem pogut verificar la passkey. Torna-ho a provar."
+
+msgid "Esa passkey ya está registrada."
+msgstr "Aquesta passkey ja està registrada."
+
+msgid "No se ha podido entrar con la passkey."
+msgstr "No s'ha pogut entrar amb la passkey."
+
+msgid "Esta passkey ya no está registrada. Entra con el enlace del correo."
+msgstr "Aquesta passkey ja no està registrada. Entra amb l'enllaç del correu."

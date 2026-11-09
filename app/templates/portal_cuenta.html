@@ -130,6 +130,24 @@
       {% endif %}
       <p class="muted">{{ _('Si ves un dispositivo que no reconoces, ciérralo y avisa a tu gestoría. Te escribiremos siempre que alguien entre desde un dispositivo nuevo.') }}</p>
 
+            <h3>{{ _('Passkeys: entrar con huella, cara o PIN') }}</h3>
+      <p class="muted">{{ _('Entras en un toque desde este dispositivo, sin esperar el correo. Es tan seguro como el desbloqueo de tu móvil u ordenador y cuenta como verificación en dos pasos. El enlace del correo sigue funcionando.') }}</p>
+      <ul class="portal-personas">
+        {% for k in seguridad.passkeys %}
+        <li class="portal-persona">
+          <div class="portal-persona-datos"><strong>{{ k.nombre }}</strong><span class="muted">{{ _('Creada el %(f)s', f=k.creada_en[:10]|fecha_dia) }}{% if k.ultimo_uso %} · {{ _('Último uso: %(f)s', f=k.ultimo_uso[:10]|fecha_dia) }}{% endif %}</span></div>
+          <form method="post" action="{{ url_for('portal_cliente.passkey_quitar', passkey_id=k.id) }}"><button type="submit" class="btn btn-ghost">{{ _('Quitar') }}</button></form>
+        </li>
+        {% else %}<li class="muted">{{ _('Todavía no tienes ninguna passkey.') }}</li>{% endfor %}
+      </ul>
+      <div class="ds-fila">
+        <label class="sr-only" for="passkey-nombre">{{ _('Nombre de la passkey') }}</label>
+        <input type="text" id="passkey-nombre" maxlength="60" placeholder="{{ _('Nombre (por ejemplo, Mi móvil)') }}">
+        <button type="button" class="btn btn-primary" data-passkey-alta hidden data-url-opciones="{{ url_for('portal_cliente.passkey_registro_opciones') }}" data-url-verificar="{{ url_for('portal_cliente.passkey_registro_verificar') }}"
+                data-url-despues="{{ url_for('portal_cliente.cuenta', guardado='passkey') }}#seguridad" data-txt-fallo="{{ _('No se ha podido crear la passkey. Inténtalo de nuevo.') }}" data-txt-cancelado="{{ _('Has cancelado o este dispositivo no la admite.') }}">{{ _('Añadir una passkey') }}</button>
+      </div>
+      <p id="passkey-mensaje" class="ia-error" hidden></p>
+
       <h3>{{ _('Verificación en dos pasos') }}</h3>
       {% if seguridad.segundo_factor %}
       <p>{{ _('Está activada: al entrar, además del enlace del correo, te pediremos un código de tu aplicación de autenticación.') }} <span class="muted">{{ _('Códigos de recuperación sin usar: %(n)s.', n=seguridad.codigos) }}</span></p>
@@ -175,4 +193,4 @@
       <p class="muted">{{ _('Al pedir tu enlace de acceso puedes marcar «Mantener la sesión abierta en este dispositivo» para no tener que pedirlo cada vez.') }}</p>
     </section>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='portal_cuenta.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='portal_cuenta.js') }}" defer></script><script src="{{ url_for('static', filename='portal_passkeys.js') }}" defer></script>{% endblock %}

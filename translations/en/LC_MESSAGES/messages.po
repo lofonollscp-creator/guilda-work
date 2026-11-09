@@ -24696,3 +24696,66 @@ msgstr "The connection dropped: your invoices have been saved on this device and
 
 msgid "Se han guardado como compras y gastos; si son ventas, dilo a tu gestoría."
 msgstr "They have been saved as purchases and expenses; if they are sales, tell your accountant."
+
+msgid "No se ha podido entrar con la passkey. Usa el enlace del correo."
+msgstr "Could not sign in with the passkey. Use the email link."
+
+msgid "Has cancelado o no se ha podido verificar. Inténtalo de nuevo o usa el enlace del correo."
+msgstr "You cancelled or it could not be verified. Try again or use the email link."
+
+msgid "Entrar con huella, cara o PIN"
+msgstr "Sign in with fingerprint, face or PIN"
+
+msgid "Passkeys: entrar con huella, cara o PIN"
+msgstr "Passkeys: sign in with fingerprint, face or PIN"
+
+msgid "Entras en un toque desde este dispositivo, sin esperar el correo. Es tan seguro como el desbloqueo de tu móvil u ordenador y cuenta como verificación en dos pasos. El enlace del correo sigue funcionando."
+msgstr "You sign in with one tap from this device, without waiting for the email. It is as secure as unlocking your phone or computer and counts as two-step verification. The email link keeps working."
+
+msgid "Creada el %(f)s"
+msgstr "Created on %(f)s"
+
+msgid "Último uso: %(f)s"
+msgstr "Last used: %(f)s"
+
+msgid "Todavía no tienes ninguna passkey."
+msgstr "You do not have any passkeys yet."
+
+msgid "Nombre de la passkey"
+msgstr "Passkey name"
+
+msgid "Nombre (por ejemplo, Mi móvil)"
+msgstr "Name (for example, My phone)"
+
+msgid "No se ha podido crear la passkey. Inténtalo de nuevo."
+msgstr "The passkey could not be created. Try again."
+
+msgid "Has cancelado o este dispositivo no la admite."
+msgstr "You cancelled or this device does not support it."
+
+msgid "Añadir una passkey"
+msgstr "Add a passkey"
+
+msgid "Ya no tienes acceso con esta passkey. Entra con el enlace del correo."
+msgstr "You no longer have access with this passkey. Sign in with the email link."
+
+msgid "Se ha agotado el tiempo. Inténtalo de nuevo."
+msgstr "Time ran out. Try again."
+
+msgid "Ya tienes el máximo de passkeys. Quita alguna para añadir otra."
+msgstr "You already have the maximum number of passkeys. Remove one to add another."
+
+msgid "Esa solicitud no era de tu cuenta. Inténtalo de nuevo."
+msgstr "That request was not from your account. Try again."
+
+msgid "No hemos podido verificar la passkey. Inténtalo de nuevo."
+msgstr "We could not verify the passkey. Try again."
+
+msgid "Esa passkey ya está registrada."
+msgstr "That passkey is already registered."
+
+msgid "No se ha podido entrar con la passkey."
+msgstr "Could not sign in with the passkey."
+
+msgid "Esta passkey ya no está registrada. Entra con el enlace del correo."
+msgstr "This passkey is no longer registered. Sign in with the email link."

@@ -16,11 +16,11 @@ import json
 from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 
-from flask import Blueprint, Response, abort, g, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, enderezar_documento, portal_actividad, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, enderezar_documento, portal_actividad, portal_passkeys, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -33,7 +33,7 @@ MAX_ARCHIVOS_POR_SUBIDA = 10
 
 DIAS_SESION_RECORDADA = 30
 # Con el perfil «consulta» solo se mira: estas son las únicas acciones que se permiten (sus propias preferencias y salir).
-_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cerrar_sesion_remota", "portal_cliente.cerrar_otras_sesiones", "portal_cliente.segundo_factor_iniciar", "portal_cliente.segundo_factor_confirmar", "portal_cliente.segundo_factor_quitar", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista"}
+_ACCIONES_DE_CONSULTA = {"portal_cliente.salir", "portal_cliente.cerrar_sesion_remota", "portal_cliente.cerrar_otras_sesiones", "portal_cliente.segundo_factor_iniciar", "portal_cliente.segundo_factor_confirmar", "portal_cliente.segundo_factor_quitar", "portal_cliente.cambiar_titular", "portal_cliente.guardar_preferencias", "portal_cliente.push_suscribir", "portal_cliente.push_baja", "portal_cliente.bienvenida_vista", "portal_cliente.passkey_registro_opciones", "portal_cliente.passkey_registro_verificar", "portal_cliente.passkey_quitar"}
 # Lo que solo hace el perfil «completo»: decidir en nombre del cliente y gestionar a quién más se deja entrar.
 _SOLO_PERFIL_COMPLETO = {"portal_cliente.conformidad", "portal_cliente.pagar_vencimiento", "portal_cliente.firma_vencimiento", "portal_cliente.anadir_contacto", "portal_cliente.cambiar_perfil_contacto", "portal_cliente.quitar_contacto",
                          "portal_cliente.renovar_enlace_subida"}
@@ -234,6 +234,73 @@ def _completar_entrada(cliente_id: int, email: str, recordar: bool, destino: str
         except ErrorNotificacionesEmail:
             pass
     return redirect(destino or url_for("portal_cliente.dashboard"))
+
+
+# --- Passkeys (huella, cara o PIN del dispositivo) --------------------------------------------------------------------------------------------------------
+
+def _persona_de_passkey():
+    cliente = _cliente_actual_o_salir()
+    if g.get("vista_previa"):
+        abort(403)
+    return cliente, g.get("portal_email") or portal_personas.limpio(cliente["email"])
+
+
+@portal_bp.route("/passkey/registro/opciones", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour")
+def passkey_registro_opciones():
+    cliente, yo = _persona_de_passkey()
+    try:
+        return jsonify(portal_passkeys.opciones_registro(cliente, yo, _base_publica(), session))
+    except portal_passkeys.ErrorPasskey as e:
+        return {"error": _(str(e))}, 400
+
+
+@portal_bp.route("/passkey/registro/verificar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour")
+def passkey_registro_verificar():
+    cliente, yo = _persona_de_passkey()
+    cuerpo = request.get_json(silent=True) or {}
+    try:
+        pid = portal_passkeys.verificar_registro(cliente, yo, cuerpo.get("credencial") or {}, str(cuerpo.get("nombre") or ""), _base_publica(), session)
+    except portal_passkeys.ErrorPasskey as e:
+        return {"error": _(str(e))}, 400
+    auditoria.registrar(cliente["tenant_id"], None, "portal.passkey_alta", "cliente_fiscal", cliente["id"], {"quien": yo, "passkey": pid})
+    return {"ok": True}
+
+
+@portal_bp.route("/passkey/<int:passkey_id>/quitar", methods=["POST"])
+@cliente_login_required
+@limiter.limit("30/hour")
+def passkey_quitar(passkey_id: int):
+    cliente, yo = _persona_de_passkey()
+    if portal_passkeys.quitar(cliente, yo, passkey_id):
+        auditoria.registrar(cliente["tenant_id"], None, "portal.passkey_baja", "cliente_fiscal", cliente["id"], {"quien": yo, "passkey": passkey_id})
+    return redirect(url_for("portal_cliente.cuenta", guardado="passkey") + "#seguridad")
+
+
+@portal_bp.route("/passkey/entrar/opciones", methods=["POST"])
+@limiter.limit("60/hour")
+def passkey_entrar_opciones():
+    return jsonify(portal_passkeys.opciones_entrada(_base_publica(), session))
+
+
+@portal_bp.route("/passkey/entrar/verificar", methods=["POST"])
+@limiter.limit("30/hour")
+def passkey_entrar_verificar():
+    """Entrada con passkey. Lleva verificación de usuario (huella/PIN), así que vale como segundo factor y no se pide el código de la aplicación."""
+    cuerpo = request.get_json(silent=True) or {}
+    try:
+        quien = portal_passkeys.verificar_entrada(cuerpo.get("credencial") or {}, _base_publica(), session)
+    except portal_passkeys.ErrorPasskey as e:
+        return {"ok": False, "error": _(str(e))}, 400
+    email = portal_personas.limpio(quien["email"])
+    if quien["cliente_fiscal_id"] not in {c["id"] for c in portal_personas.clientes_de(email)}:      # le quitaron el acceso después de registrar la passkey
+        return {"ok": False, "error": _("Ya no tienes acceso con esta passkey. Entra con el enlace del correo.")}, 403
+    destino = destino_seguro(cuerpo.get("siguiente"))
+    _completar_entrada(quien["cliente_fiscal_id"], email, bool(cuerpo.get("recordar")), destino)
+    return {"ok": True, "url": destino or url_for("portal_cliente.dashboard")}
 
 
 @portal_bp.route("/verificacion", methods=["GET", "POST"])
@@ -920,7 +987,8 @@ def cuenta():
     seguridad = None
     if not previa:
         sid = session.get("portal_sid")
-        seguridad = {"sesiones": portal_seguridad.listar(cliente, yo, sid), "segundo_factor": portal_seguridad.activo(cliente, yo), "codigos": portal_seguridad.codigos_restantes(cliente, yo)}
+        seguridad = {"sesiones": portal_seguridad.listar(cliente, yo, sid), "segundo_factor": portal_seguridad.activo(cliente, yo), "codigos": portal_seguridad.codigos_restantes(cliente, yo),
+                     "passkeys": portal_passkeys.listar(cliente, yo)}
         pendiente = portal_seguridad.secreto_pendiente(cliente, yo)
         if pendiente and not seguridad["segundo_factor"]:
             uri = portal_seguridad.uri_totp(yo, pendiente)

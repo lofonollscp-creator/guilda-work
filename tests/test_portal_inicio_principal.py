@@ -38,4 +38,5 @@ def test_un_mensaje_leido_de_la_gestoria_deja_de_ser_pendiente(cliente, correo):
     _entrar(cliente, c, "titular@ejemplo.com")
     assert "Aviso importante" in _html(cliente, "/portal/")
     cliente.get(f"/portal/conversaciones/{cid}")
-    assert "Aviso importante" not in _html(cliente, "/portal/") and "Estás al día" in _html(cliente, "/portal/")
+    html = _html(cliente, "/portal/")
+    assert "Estás al día" in html and "portal-hoy-principal" not in html and "portal-hoy-otras" not in html      # ya no es pendiente (sigue en «Lo que hemos hecho por ti»)

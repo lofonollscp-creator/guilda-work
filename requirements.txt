@@ -52,4 +52,7 @@ pypdf>=5.0
 pypdfium2>=4.30
 # Lectura de QR de facturas y tickets (VeriFactu, TicketBAI) y control de calidad de las fotos subidas (app/qr_facturas.py, app/calidad_imagen.py); cv2 sin interfaz gráfica.
 opencv-python-headless>=4.9
+
+# Passkeys del portal de cliente (app/portal_passkeys.py): WebAuthn (huella, cara o PIN del dispositivo) para entrar sin esperar el correo.
+webauthn>=2.5,<3
 numpy>=1.26

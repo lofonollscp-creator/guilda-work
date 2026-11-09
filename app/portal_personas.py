@@ -204,6 +204,8 @@ def quitar(cliente, contacto_id: int) -> str:
         conn.commit()
         from . import portal_seguridad
         portal_seguridad.quitar_a(cliente, f["email"])
+        from . import portal_passkeys
+        portal_passkeys.quitar_de_persona(cliente, f["email"])
         return f["email"]
     finally:
         conn.close()

@@ -39,9 +39,15 @@
         <label class="portal-recordar"><input type="checkbox" name="recordar" value="1"> {{ _('Mantener la sesión abierta en este dispositivo durante 30 días') }}</label>
         <button type="submit" class="btn btn-primary auth-submit">{{ _('Enviarme el enlace') }}</button>
       </form>
+      <div class="portal-passkey-entrar">
+        <button type="button" class="btn btn-ghost auth-submit" data-passkey-entrar hidden data-url-opciones="{{ url_for('portal_cliente.passkey_entrar_opciones') }}" data-url-verificar="{{ url_for('portal_cliente.passkey_entrar_verificar') }}" data-siguiente="{{ siguiente or '' }}"
+                data-txt-fallo="{{ _('No se ha podido entrar con la passkey. Usa el enlace del correo.') }}" data-txt-cancelado="{{ _('Has cancelado o no se ha podido verificar. Inténtalo de nuevo o usa el enlace del correo.') }}">{{ _('Entrar con huella, cara o PIN') }}</button>
+        <p id="passkey-entrar-mensaje" class="ia-error" hidden></p>
+      </div>
       <p class="auth-alterna">{{ _('¿Todavía no tienes acceso?') }} <a href="{{ url_for('portal_cliente.solicitar_acceso') }}">{{ _('Solicítalo aquí') }}</a></p>
       {% endif %}
     </div>
   </main>
+  <script src="{{ url_for('static', filename='portal_passkeys.js') }}" defer></script>
 </body>
 </html>
