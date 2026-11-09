@@ -19,6 +19,16 @@
       <p class="muted">{{ _('Siempre puedes ver todo lo pendiente entrando al portal; estos ajustes son solo para ti.') }}</p>
     </section>
 
+    <section class="portal-cuenta-bloque" aria-labelledby="cuenta-datos">
+      <h2 id="cuenta-datos">{{ _('Tus datos en tu gestoría') }}</h2>
+      <dl class="portal-datos">
+        <dt>{{ _('Nombre o razón social') }}</dt><dd>{{ cliente.nombre }}</dd>
+        <dt>{{ _('NIF') }}</dt><dd>{{ cliente.nif or '—' }}</dd>
+        <dt>{{ _('Correo de acceso') }}</dt><dd>{{ cliente.email or '—' }}</dd>
+      </dl>
+      {% if portal_puede_subir %}<p><a class="btn btn-ghost" href="{{ url_for('portal_cliente.gestion', clave='cambio-datos') }}">{{ _('Pedir un cambio de mis datos') }}</a></p>{% endif %}
+    </section>
+
     {% if push_disponible %}
     <section class="portal-cuenta-bloque" aria-labelledby="cuenta-push">
       <h2 id="cuenta-push">{{ _('Avisos en este dispositivo') }}</h2>

@@ -25195,3 +25195,12 @@ msgstr "Demanar quelcom"
 
 msgid "¿Necesitas algo de tu gestoría? Pídelo aquí"
 msgstr "Necessites alguna cosa de la teva gestoria? Demana-ho aquí"
+
+msgid "Tus datos en tu gestoría"
+msgstr "Les teves dades a la teva gestoria"
+
+msgid "Correo de acceso"
+msgstr "Correu d'accés"
+
+msgid "Pedir un cambio de mis datos"
+msgstr "Demanar un canvi de les meves dades"

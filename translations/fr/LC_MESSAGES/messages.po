@@ -25271,3 +25271,12 @@ msgstr "Demander quelque chose"
 
 msgid "¿Necesitas algo de tu gestoría? Pídelo aquí"
 msgstr "Besoin de quelque chose de votre cabinet ? Demandez-le ici"
+
+msgid "Tus datos en tu gestoría"
+msgstr "Vos données chez votre cabinet"
+
+msgid "Correo de acceso"
+msgstr "E-mail de connexion"
+
+msgid "Pedir un cambio de mis datos"
+msgstr "Demander la modification de mes données"

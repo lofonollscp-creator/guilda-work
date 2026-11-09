@@ -25186,3 +25186,12 @@ msgstr "Ask for something"
 
 msgid "¿Necesitas algo de tu gestoría? Pídelo aquí"
 msgstr "Need something from your accountant? Ask for it here"
+
+msgid "Tus datos en tu gestoría"
+msgstr "Your details at your accountant's"
+
+msgid "Correo de acceso"
+msgstr "Sign-in email"
+
+msgid "Pedir un cambio de mis datos"
+msgstr "Request a change of my details"

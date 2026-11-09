@@ -128,3 +128,10 @@ def test_quien_solo_consulta_ve_el_catalogo_pero_no_puede_pedir(cliente, correo)
     portal_personas.anadir(_ficha(c), "mira@ejemplo.com", "Mira", "consulta", por=u)
     _entrar(cliente, c, "mira@ejemplo.com")
     assert cliente.get("/portal/gestiones").status_code == 200 and cliente.get("/portal/gestiones/copia-modelo").status_code == 403
+
+
+def test_mi_cuenta_enseña_los_datos_que_tiene_la_gestoria_y_ofrece_pedir_el_cambio(cliente, correo):
+    t, u, c = _despacho("Mis datos cuenta")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    html = _html(cliente, "/portal/cuenta")
+    assert "Tus datos en tu gestoría" in html and "B12345678" in html and "titular@ejemplo.com" in html and "/portal/gestiones/cambio-datos" in html
