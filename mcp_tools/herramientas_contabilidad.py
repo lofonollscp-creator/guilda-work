@@ -142,3 +142,45 @@ def contabilidad_cuadre_303(cliente_fiscal_id: int, trimestre: str | None = None
     """Cuadra el IVA de las facturas (revisadas o exportadas, solo operaciones interiores) con las casillas 27 (cuota devengada) y 45 (total a deducir) del modelo 303 simulado en Guilda Fiscal, de un cliente y un
     trimestre («2026-T3»; por defecto el que se está cerrando). Una diferencia suele ser una factura que no llegó a Guilda Fiscal. Si no hay 303 calculable, `disponible` es false y `motivo` dice por qué."""
     return _mt._conta().cuadre_con_303(*_mt._ctx_conta(), cliente_fiscal_id, trimestre)
+
+
+def contabilidad_mover_factura(factura_id: int, cliente_destino_id: int) -> dict:
+    """Pasa una factura PENDIENTE a otro cliente del despacho, con su archivo (se subió o se leyó en el cliente equivocado). Quita las cuentas escritas a mano, que eran las del plan del otro cliente."""
+    return _mt._conta().mover_factura(*_mt._ctx_conta(), factura_id, cliente_destino_id)
+
+
+def contabilidad_historial_factura(factura_id: int) -> dict:
+    """Lo que ha pasado con una factura: anotada, leída, editada (con lo que cambió), revisada, exportada con su fichero, confirmada en a3, movida o descartada, quién y cuándo."""
+    return _mt._conta().historial_factura(*_mt._ctx_conta(), factura_id)
+
+
+def contabilidad_listar_ficheros(cliente_fiscal_id: int | None = None, limite: int = 50) -> list[dict]:
+    """Los ficheros SUENLACE.DAT generados, los más recientes primero: facturas, registros, cuántas confirmó a3 y el estado anotado (importado o rechazado, con su motivo)."""
+    return _mt._conta().listar_ficheros(*_mt._ctx_conta(), cliente_fiscal_id, limite)
+
+
+def contabilidad_fijar_estado_fichero(lote_id: int, estado: str = "", motivo: str = "") -> dict:
+    """Anota lo que pasó al importar un fichero en a3: `importado`, `rechazado` (con el `motivo` que dio a3) o vacío para quitarlo. Es una nota: no cambia las facturas."""
+    return _mt._conta().fijar_estado_fichero(*_mt._ctx_conta(), lote_id, estado, motivo)
+
+
+def contabilidad_listar_reglas(cliente_fiscal_id: int) -> list[dict]:
+    """Las reglas de proveedor y de cliente de un cliente de la gestoría: cuenta, IVA, retención, tipo de operación y concepto que se rellenan solos en sus facturas."""
+    return _mt._conta().listar_reglas(*_mt._ctx_conta(), cliente_fiscal_id)
+
+
+def contabilidad_guardar_regla(cliente_fiscal_id: int, tipo: str, nif: str, nombre: str | None = None, cuenta: str | None = None, pct_iva: float | None = None, pct_retencion: float | None = None,
+                               tipo_operacion: str | None = None, criterio_caja: bool = False, concepto: str | None = None) -> dict:
+    """Crea o cambia la regla de un proveedor (`tipo` proveedor) o de un cliente (`tipo` cliente) por su NIF: la cuenta de gasto o ingreso, el IVA y la retención en tanto por ciento, el tipo de operación y el concepto
+    que se rellenan solos en las facturas que se anoten o lean después. Una regla escrita a mano nunca se pisa al aprender."""
+    return _mt._conta().guardar_regla(*_mt._ctx_conta(), cliente_fiscal_id, tipo, nif, nombre, cuenta, pct_iva, pct_retencion, tipo_operacion, criterio_caja, concepto)
+
+
+def contabilidad_configuracion_a3(cliente_fiscal_id: int) -> dict:
+    """La configuración de a3 de un cliente: código de empresa, dígitos de las subcuentas, formato del fichero (512 con SII o 256 clásico), cuentas por defecto, régimen de IVA y subcuentas automáticas."""
+    return _mt._conta().configuracion_a3(*_mt._ctx_conta(), cliente_fiscal_id)
+
+
+def contabilidad_subir_factura(cliente_fiscal_id: int, tipo: str, nombre_archivo: str, contenido_base64: str, tipo_mime: str | None = None) -> dict:
+    """Sube la foto (JPG, PNG) o el PDF de una factura de un cliente de la gestoría (hasta 8 MB, en base64): queda pendiente de leer, y se lee con `contabilidad_leer_factura_con_ia`. `tipo`: emitida o recibida."""
+    return _mt._conta().subir_factura(*_mt._ctx_conta(), cliente_fiscal_id, tipo, nombre_archivo, contenido_base64, tipo_mime)

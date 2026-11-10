@@ -6,8 +6,8 @@ from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herr
 from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
-           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303")
-ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3")
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303", "contabilidad_historial_factura", "contabilidad_listar_ficheros", "contabilidad_listar_reglas", "contabilidad_configuracion_a3")
+ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
 
@@ -294,3 +294,63 @@ def test_cuadre_con_el_303_por_la_ia(monkeypatch):
     monkeypatch.setattr(consultas_fiscal, "simular_303", lambda *a, **k: {"bloqueos": [], "casillas": {"27": 10.5, "45": 4.0}})
     r = ih.ejecutar(u, "contabilidad_cuadre_303", {"cliente_fiscal_id": c, "trimestre": "2026-T3"})
     assert r["disponible"] and r["modelo_303"] == {"devengado": 10.5, "deducible": 4.0} and r["diferencia"] == {"repercutido": -10.5, "soportado": -4.0}
+
+
+# --- M4: catálogo completo ---------------------------------------------------------------------------------------------------------------------------------
+
+def test_historial_ficheros_y_su_estado_por_la_ia():
+    t, u, c = _despacho("Despacho herr m4 uno")
+    f = _anotar(u, c)
+    ih.ejecutar(u, "contabilidad_cambiar_estado_factura", {"factura_id": f["id"], "estado": "revisada"})
+    ih.ejecutar(u, "contabilidad_exportar", {"cliente_fiscal_id": c})
+    h = ih.ejecutar(u, "contabilidad_historial_factura", {"factura_id": f["id"]})
+    assert [e["que"] for e in h["eventos"]][:2] == ["Exportada a a3", "Dada por revisada"]
+    ficheros = ih.ejecutar(u, "contabilidad_listar_ficheros", {"cliente_fiscal_id": c})
+    assert len(ficheros) == 1 and ficheros[0]["facturas"] == 1 and ficheros[0]["estado_a3"] is None and "contenido" not in ficheros[0]
+    r = ih.ejecutar(u, "contabilidad_fijar_estado_fichero", {"lote_id": ficheros[0]["id"], "estado": "rechazado", "motivo": "falta la cuenta"})
+    assert (r["estado_a3"], r["motivo_a3"]) == ("rechazado", "falta la cuenta")
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(u, "contabilidad_fijar_estado_fichero", {"lote_id": ficheros[0]["id"], "estado": "raro"})
+    with pytest.raises(ih.ErrorHerramientaIA, match="No existe"):
+        ih.ejecutar(u, "contabilidad_historial_factura", {"factura_id": 999999})
+
+
+def test_reglas_y_configuracion_por_la_ia():
+    t, u, c = _despacho("Despacho herr m4 dos")
+    assert ih.ejecutar(u, "contabilidad_listar_reglas", {"cliente_fiscal_id": c}) == []
+    r = ih.ejecutar(u, "contabilidad_guardar_regla", {"cliente_fiscal_id": c, "tipo": "proveedor", "nif": "A58818501", "nombre": "Gasolinera", "cuenta": "62800000", "pct_iva": 21, "pct_retencion": 0})
+    assert r["cuenta"] == "62800000" and r["pct_iva"] == 21.0 and r["aprendida"] is False
+    f = _anotar(u, c, tercero_nif="A58818501", lineas=[{"base": "50,00"}])
+    assert ih.ejecutar(u, "contabilidad_ver_factura", {"factura_id": f["id"]})["lineas"][0]["cuenta"] == "62800000"       # la regla rellena la línea
+    cfg = ih.ejecutar(u, "contabilidad_configuracion_a3", {"cliente_fiscal_id": c})
+    assert cfg["a3_empresa"] == "7" and cfg["formato_enlace"] == "512" and cfg["digitos"] == 8 and cfg["cuenta_gasto"]
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(u, "contabilidad_guardar_regla", {"cliente_fiscal_id": c, "tipo": "otro", "nif": "A58818501"})
+
+
+def test_mover_y_subir_facturas_por_la_ia():
+    import base64
+    from app.db_fiscal import crear_cliente_fiscal
+    from tests.test_facturas_contables import PDF
+    t, u, c = _despacho("Despacho herr m4 tres")
+    otro = crear_cliente_fiscal(t, "Otro SL", nif="A58818501")
+    r = ih.ejecutar(u, "contabilidad_subir_factura", {"cliente_fiscal_id": c, "tipo": "recibida", "nombre_archivo": "f.pdf", "contenido_base64": base64.b64encode(PDF + b"9").decode()})
+    assert r["factura_id"] and not r["ya_estaba"]
+    m = ih.ejecutar(u, "contabilidad_mover_factura", {"factura_id": r["factura_id"], "cliente_destino_id": otro})
+    assert m["cliente_fiscal_id"] == otro and m["tiene_archivo"]
+    with pytest.raises(ih.ErrorHerramientaIA, match="base64"):
+        ih.ejecutar(u, "contabilidad_subir_factura", {"cliente_fiscal_id": c, "tipo": "recibida", "nombre_archivo": "f.pdf", "contenido_base64": "@@@"})
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(u, "contabilidad_subir_factura", {"cliente_fiscal_id": c, "tipo": "recibida", "nombre_archivo": "f.exe", "contenido_base64": base64.b64encode(b"MZ").decode()})
+
+
+def test_las_nuevas_que_escriben_no_las_usa_quien_solo_audita(monkeypatch):
+    from app import acceso
+    t, u, c = _despacho("Despacho herr m4 cuatro")
+    f = _anotar(u, c)
+    monkeypatch.setattr(acceso, "es_solo_auditor", lambda tenant, usuario: True)
+    for n, args in (("contabilidad_mover_factura", {"factura_id": f["id"], "cliente_destino_id": c}), ("contabilidad_fijar_estado_fichero", {"lote_id": 1, "estado": "importado"}),
+                    ("contabilidad_guardar_regla", {"cliente_fiscal_id": c, "tipo": "proveedor", "nif": "A58818501"}), ("contabilidad_subir_factura", {"cliente_fiscal_id": c, "tipo": "recibida", "nombre_archivo": "f.pdf", "contenido_base64": ""})):
+        with pytest.raises(ih.ErrorHerramientaIA, match="solo permite consultar"):
+            ih.ejecutar(u, n, args)
+    assert ih.ejecutar(u, "contabilidad_listar_reglas", {"cliente_fiscal_id": c}) == []

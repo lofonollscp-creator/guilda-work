@@ -258,3 +258,75 @@ def cuadre_con_303(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, trim
     r = cuadre_303.cuadrar(tenant_id, usuario_id, int(cliente_fiscal_id), trimestre or panel_cierre.trimestre_anterior())
     euros = lambda d: {k: (_euros(v) if isinstance(v, int) else v) for k, v in d.items()}      # noqa: E731
     return {**r, "facturas": euros(r["facturas"]), **({"modelo_303": euros(r["modelo_303"]), "diferencia": euros(r["diferencia"])} if r["disponible"] else {})}
+
+
+# --- Catálogo completo: mover, historial, ficheros, reglas, configuración y subida ------------------------------------------------------------------------
+
+def mover_factura(tenant_id: int, usuario_id: int, factura_id: int, cliente_destino_id: int) -> dict:
+    """Pasa una factura pendiente a otro cliente del despacho (con su archivo). Hay que volver a leerla después si era una factura leída con IA."""
+    _exigir_escritura(tenant_id, usuario_id)
+    fc.mover_a_cliente(tenant_id, usuario_id, int(factura_id), int(cliente_destino_id))
+    return ver_factura(tenant_id, usuario_id, factura_id)
+
+
+def historial_factura(tenant_id: int, usuario_id: int, factura_id: int) -> dict:
+    """Lo que ha pasado con una factura, de lo más reciente a lo más antiguo: {cuando, quien, que, detalle}."""
+    _exigir_modulo(tenant_id)
+    if fc.obtener(tenant_id, usuario_id, int(factura_id)) is None:
+        raise ValueError("No existe esa factura.")
+    return {"factura_id": int(factura_id), "eventos": fc.historial(tenant_id, usuario_id, int(factura_id))}
+
+
+def listar_ficheros(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, limite: int = 50) -> list[dict]:
+    """Los ficheros SUENLACE.DAT generados (los más recientes primero), con cuántas facturas llevan, cuántas confirmó a3 y el estado que se anotó (importado o rechazado)."""
+    _exigir_modulo(tenant_id)
+    return [{"id": l["id"], "cliente_fiscal_id": l["cliente_fiscal_id"], "cliente": l["cliente_nombre"], "creado_en": l["creado_en"], "facturas": l["n_facturas"], "registros": l["n_registros"],
+             "comprobado_en": l["comprobado_en"], "confirmadas_en_a3": l["n_confirmadas"], "estado_a3": l["estado_a3"], "motivo_a3": l["motivo_a3"]}
+            for l in fc.listar_lotes(tenant_id, usuario_id, cliente_fiscal_id or None, max(1, min(int(limite or 50), 200)))]
+
+
+def fijar_estado_fichero(tenant_id: int, usuario_id: int, lote_id: int, estado: str = "", motivo: str = "") -> dict:
+    """Anota si a3 importó el fichero (`importado`) o lo rechazó (`rechazado`, con el motivo), o lo quita (vacío). Es una nota: no cambia las facturas."""
+    _exigir_escritura(tenant_id, usuario_id)
+    fc.fijar_estado_a3_del_lote(tenant_id, usuario_id, int(lote_id), estado or "", motivo or "")
+    return next(l for l in listar_ficheros(tenant_id, usuario_id, None, 200) if l["id"] == int(lote_id))
+
+
+def listar_reglas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> list[dict]:
+    """Las reglas de proveedor y de cliente de un cliente de la gestoría: lo que se rellena solo en sus facturas (cuenta, IVA, retención, tipo de operación, concepto)."""
+    _exigir_modulo(tenant_id)
+    return [{"id": r["id"], "tipo": r["tipo"], "nif": r["nif"], "nombre": r["nombre"], "cuenta": r["cuenta_linea"], "pct_iva": None if r["pct_iva"] is None else r["pct_iva"] / 100,
+             "pct_retencion": None if r["pct_retencion"] is None else r["pct_retencion"] / 100, "tipo_operacion": r["subtipo"], "criterio_caja": bool(r["criterio_caja"]), "concepto": r["concepto"],
+             "aprendida": bool(r["aprendida"])} for r in fc.listar_reglas(tenant_id, usuario_id, int(cliente_fiscal_id))]
+
+
+def guardar_regla(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, nif: str, nombre: str | None = None, cuenta: str | None = None, pct_iva=None, pct_retencion=None,
+                  tipo_operacion: str | None = None, criterio_caja: bool = False, concepto: str | None = None) -> dict:
+    """Crea o cambia la regla de un proveedor (`tipo` = proveedor) o de un cliente (`cliente`), identificado por su NIF. Vale para las facturas que se anoten o lean después."""
+    _exigir_escritura(tenant_id, usuario_id)
+    fc.guardar_regla(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, {"nif": nif, "nombre": nombre, "cuenta_linea": cuenta, "pct_iva": None if pct_iva is None else str(pct_iva), "pct_retencion": None if pct_retencion is None else str(pct_retencion), "subtipo": tipo_operacion,
+                                                                          "criterio_caja": "1" if criterio_caja else "", "concepto": concepto})
+    return next(r for r in listar_reglas(tenant_id, usuario_id, cliente_fiscal_id) if r["tipo"] == tipo and r["nif"] == fc._nif(nif))
+
+
+def configuracion_a3(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> dict:
+    """La configuración de a3 de un cliente: código de empresa, dígitos, formato del fichero (512 o 256), cuentas por defecto, régimen de IVA y si usa subcuentas automáticas."""
+    _exigir_modulo(tenant_id)
+    if not acceso.puede_ver_cliente(tenant_id, usuario_id, int(cliente_fiscal_id)):
+        raise ValueError("No tienes acceso a ese cliente.")
+    c = fc.configuracion(tenant_id, int(cliente_fiscal_id))
+    return {**{k: c[k] for k in ("a3_empresa", "digitos", "formato_enlace", "regimen_iva", "subcuentas_auto", *fc.CAMPOS_CUENTAS)}, "retencion_emitidas": c["retencion_emitidas"] / 100}
+
+
+def subir_factura(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, nombre_archivo: str, contenido_base64: str, tipo_mime: str | None = None) -> dict:
+    """Sube la foto o el PDF de una factura de un cliente: queda pendiente de leer (usa `contabilidad_leer_factura_con_ia`). Devuelve su id y si el archivo ya estaba subido."""
+    _exigir_escritura(tenant_id, usuario_id)
+    try:
+        contenido = base64.b64decode(contenido_base64 or "", validate=True)
+    except (binascii.Error, ValueError):
+        raise ValueError("`contenido_base64` no es base64 válido.") from None
+    if not contenido:
+        raise ValueError("El archivo está vacío.")
+    mime = tipo_mime or ("application/pdf" if str(nombre_archivo).lower().endswith(".pdf") else "image/jpeg" if str(nombre_archivo).lower().endswith((".jpg", ".jpeg")) else "image/png" if str(nombre_archivo).lower().endswith(".png") else None)
+    ids = fc.subir_archivos(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, [(str(nombre_archivo)[:200], mime, contenido)])
+    return {"factura_id": ids[0] if ids else None, "ya_estaba": bool(getattr(ids, "repetidas", 0)) and not ids}
