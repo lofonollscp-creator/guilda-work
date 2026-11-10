@@ -26355,3 +26355,78 @@ msgstr "Pujades pel despatx"
 
 msgid "Si una lectura queda dudosa, releerla con el segundo modelo disponible y quedarse con la mejor (cuesta una consulta más)"
 msgstr "Si una lectura queda dubtosa, rellegir-la amb el segon model disponible i quedar-se amb la millor (costa una consulta més)"
+
+msgid "Lo que devuelve a3"
+msgstr "El que retorna a3"
+
+msgid "Sube el listado de facturas del cliente que sacas de a3 (CSV o Excel) y comprobamos cuáles de las que exportaste están de verdad contabilizadas."
+msgstr "Puja el llistat de factures del client que treus d'a3 (CSV o Excel) i comprovem quines de les que has exportat estan de debò comptabilitzades."
+
+msgid "Listado de a3"
+msgstr "Llistat d'a3"
+
+msgid "Marcar como confirmadas las que coinciden"
+msgstr "Marcar com a confirmades les que coincideixen"
+
+msgid "Reconocemos las columnas por su título: número de factura, fecha, NIF, base, cuota y total. Con el número basta; si el listado trae NIF o total, no pueden contradecirse."
+msgstr "Reconeixem les columnes pel seu títol: número de factura, data, NIF, base, quota i total. Amb el número n'hi ha prou; si el llistat porta NIF o total, no es poden contradir."
+
+msgid "Facturas en el listado"
+msgstr "Factures al llistat"
+
+msgid "Confirmadas ahora"
+msgstr "Confirmades ara"
+
+msgid "Ya confirmadas antes"
+msgstr "Ja confirmades abans"
+
+msgid "Exportadas y no encontradas"
+msgstr "Exportades i no trobades"
+
+msgid "En a3 y no exportadas aquí"
+msgstr "A a3 i no exportades des d'aquí"
+
+msgid "Confirmadas"
+msgstr "Confirmades"
+
+msgid "No encontradas"
+msgstr "No trobades"
+
+msgid "Exportadas que a3 no tiene"
+msgstr "Exportades que a3 no té"
+
+msgid "Mira si a3 las rechazó al importar o si falta importar el fichero. Puedes volver a descargarlo desde «Ficheros generados»."
+msgstr "Mira si a3 les va rebutjar en importar o si falta importar el fitxer. Pots tornar a baixar-lo des de «Fitxers generats»."
+
+msgid "En a3 y no exportadas desde aquí"
+msgstr "A a3 i no exportades des d'aquí"
+
+msgid "Se muestran las 200 primeras."
+msgstr "Es mostren les 200 primeres."
+
+msgid "Comprobar lo que devuelve a3"
+msgstr "Comprovar el que retorna a3"
+
+msgid "En a3"
+msgstr "A a3"
+
+msgid "Sin comprobar"
+msgstr "Sense comprovar"
+
+msgid "Tu gestoría ya la ha pasado a la contabilidad. Falta comprobar que ha entrado."
+msgstr "La teva gestoria ja l'ha passada a la comptabilitat. Falta comprovar que ha entrat."
+
+msgid "El archivo está vacío o pesa más de 8 MB."
+msgstr "L'arxiu és buit o pesa més de 8 MB."
+
+msgid "No se ha podido leer el archivo: sube el listado de a3 en CSV o Excel."
+msgstr "No s'ha pogut llegir l'arxiu: puja el llistat d'a3 en CSV o Excel."
+
+msgid "No encuentro las columnas del listado: hace falta al menos el número de factura y otra columna (fecha, NIF o total)."
+msgstr "No trobo les columnes del llistat: cal almenys el número de factura i una altra columna (data, NIF o total)."
+
+msgid "El listado no trae ninguna factura."
+msgstr "El llistat no porta cap factura."
+
+msgid "Elige el cliente y el archivo que devuelve a3."
+msgstr "Tria el client i l'arxiu que retorna a3."

@@ -102,7 +102,9 @@ def facturas_del_cliente(cliente_fiscal_id: int, limite: int = 500) -> list[dict
         eventos = _eventos(conn, cliente["tenant_id"], [f["id"] for f in filas if f["estado"] == "descartada"])
     finally:
         conn.close()
+    con_confirmacion = any(f.get("confirmada_en") for f in filas)            # el despacho cruza sus ficheros con lo que devuelve a3: entonces hay un último paso
     for f in filas:
+        f["con_confirmacion"] = con_confirmacion
         f["trimestre"] = fc.trimestre_de(f["fecha"])
         ev = eventos.get(f["id"]) if f["estado"] == "descartada" else None
         f["devuelta"] = ev["motivo"] if ev else None
@@ -148,6 +150,8 @@ def explicar(f: dict, mediana: int | None, hoy: date | None = None) -> tuple[str
     hoy = hoy or date.today()
     tarda = (" " + ngettext("Suele tardar %(n)s día.", "Suele tardar unos %(n)s días.", max(1, mediana), n=max(1, mediana))) if mediana is not None else ""
     if f["estado"] == "exportada":
+        if f.get("con_confirmacion") and not f.get("confirmada_en"):
+            return _("Tu gestoría ya la ha pasado a la contabilidad. Falta comprobar que ha entrado."), False
         return _("Contabilizada: ya cuenta en tus impuestos del trimestre."), False
     if f["estado"] == "revisada":
         return _("Revisada por tu gestoría. Entrará en la contabilidad de tu trimestre."), False
@@ -164,16 +168,19 @@ def explicar(f: dict, mediana: int | None, hoy: date | None = None) -> tuple[str
     return _("Tu gestoría ya la tiene. Ahora toca leerla y revisarla.") + tarda, False
 
 
-PASOS = ("recibida", "leida", "revisada", "contabilizada")
+PASOS = ("recibida", "leida", "revisada", "contabilizada", "confirmada")
 
 
 def pasos_de(f: dict) -> list[dict]:
-    """Las cuatro etapas de una factura para el cliente (recibida → leída → revisada → contabilizada): cuáles están hechas y cuál es la actual. Una factura devuelta o descartada no tiene camino."""
+    """Las etapas de una factura para el cliente (recibida → leída → revisada → contabilizada, y «confirmada» si el despacho comprueba lo que devuelve la contabilidad): cuáles están hechas y cuál
+    es la actual. Una factura devuelta o descartada no tiene camino."""
     if f["estado"] == "descartada":
         return []
-    hechas = {"recibida": True, "leida": f.get("lectura") not in ("pendiente", "fallida") or f["estado"] != "pendiente", "revisada": f["estado"] in ("revisada", "exportada"), "contabilizada": f["estado"] == "exportada"}
-    actual = next((p for p in PASOS if not hechas[p]), None)
-    return [{"clave": p, "hecho": hechas[p], "actual": p == actual} for p in PASOS]
+    hechas = {"recibida": True, "leida": f.get("lectura") not in ("pendiente", "fallida") or f["estado"] != "pendiente", "revisada": f["estado"] in ("revisada", "exportada"), "contabilizada": f["estado"] == "exportada",
+              "confirmada": bool(f.get("confirmada_en"))}
+    pasos = [p for p in PASOS if p != "confirmada" or f.get("con_confirmacion") or f.get("confirmada_en")]
+    actual = next((p for p in pasos if not hechas[p]), None)
+    return [{"clave": p, "hecho": hechas[p], "actual": p == actual} for p in pasos]
 
 
 def devueltas_por_cliente(tenant_id: int) -> dict[int, int]:

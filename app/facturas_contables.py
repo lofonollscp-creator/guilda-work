@@ -1091,7 +1091,7 @@ def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str,
                 raise ValueError("Parece repetida: ya hay una factura revisada o exportada con los mismos datos. Si no lo es, confirma que no es un duplicado y vuelve a revisarla.")
     conn = db.get_connection()
     try:
-        conn.execute("UPDATE facturas_contables SET estado = ?, actualizado_en = ?, revisado_por = ?, revisado_en = ?, lote_id = CASE WHEN ? = 'exportada' THEN lote_id ELSE NULL END WHERE id = ? AND tenant_id = ?",
+        conn.execute("UPDATE facturas_contables SET estado = ?, actualizado_en = ?, revisado_por = ?, revisado_en = ?, lote_id = CASE WHEN ? = 'exportada' THEN lote_id ELSE NULL END, confirmada_en = NULL WHERE id = ? AND tenant_id = ?",
                      (nuevo, db.now_iso(), usuario_id if nuevo == "revisada" else None, db.now_iso() if nuevo == "revisada" else None, nuevo, factura_id, tenant_id))
         auditoria.registrar(tenant_id, usuario_id, f"factura_contable.{nuevo}", "factura_contable", factura_id, {"antes": f["estado"]}, conn=conn)
         conn.commit()
@@ -1311,7 +1311,7 @@ def listar_lotes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None 
     conn = db.get_connection()
     try:
         filas = [dict(f) for f in conn.execute(
-            "SELECT l.id, l.cliente_fiscal_id, l.creado_en, l.desde, l.hasta, l.n_facturas, l.n_registros, c.nombre AS cliente_nombre FROM contabilidad_lotes l JOIN clientes_fiscales c ON c.id = l.cliente_fiscal_id "
+            "SELECT l.id, l.cliente_fiscal_id, l.creado_en, l.desde, l.hasta, l.n_facturas, l.n_registros, l.comprobado_en, l.n_confirmadas, c.nombre AS cliente_nombre FROM contabilidad_lotes l JOIN clientes_fiscales c ON c.id = l.cliente_fiscal_id "
             "WHERE l.tenant_id = ?" + (" AND l.cliente_fiscal_id = ?" if cliente_fiscal_id else "") + " ORDER BY l.id DESC LIMIT ?", [tenant_id, *([cliente_fiscal_id] if cliente_fiscal_id else []), limite])]
     finally:
         conn.close()
@@ -1537,7 +1537,7 @@ def listar_del_cliente(cliente_fiscal_id: int, limite: int = 100) -> list[dict]:
     conn = db.get_connection()
     try:
         filas = [dict(f) for f in conn.execute(
-            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, estado, origen, documento_id, lectura, creado_en FROM facturas_contables WHERE cliente_fiscal_id = ? ORDER BY fecha DESC, id DESC LIMIT ?",
+            "SELECT id, tipo, fecha, numero, tercero_nombre, total_centimos, estado, origen, documento_id, lectura, creado_en, confirmada_en FROM facturas_contables WHERE cliente_fiscal_id = ? ORDER BY fecha DESC, id DESC LIMIT ?",
             (cliente_fiscal_id, limite))]
     finally:
         conn.close()

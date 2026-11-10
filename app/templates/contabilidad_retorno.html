@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Lo que devuelve a3') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Lo que devuelve a3') }}</h1>
+    <p class="subtitle">{{ _('Sube el listado de facturas del cliente que sacas de a3 (CSV o Excel) y comprobamos cuáles de las que exportaste están de verdad contabilizadas.') }}</p>
+  </div>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.lotes') }}">‹ {{ _('Ficheros generados') }}</a></div>
+</header>
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  <form method="post" enctype="multipart/form-data" class="ds-fila">
+    <label>{{ _('Cliente') }}
+      <select name="cliente_id" required><option value="">{{ _('Elige…') }}</option>{% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if c.id == cliente_id }}>{{ c.nombre }}</option>{% endfor %}</select></label>
+    <label>{{ _('Listado de a3') }} <input type="file" name="archivo" required accept=".csv,.txt,.xlsx"></label>
+    <label class="ds-check"><input type="checkbox" name="confirmar" value="1" checked> {{ _('Marcar como confirmadas las que coinciden') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Comprobar') }}</button>
+  </form>
+  <p class="muted">{{ _('Reconocemos las columnas por su título: número de factura, fecha, NIF, base, cuota y total. Con el número basta; si el listado trae NIF o total, no pueden contradecirse.') }}</p>
+</section>
+
+{% if informe %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Resultado') }}</h2>
+  <dl class="portal-tablero-cifras">
+    <div><dt>{{ _('Facturas en el listado') }}</dt><dd>{{ informe.leidas }}</dd></div>
+    <div><dt>{{ _('Confirmadas ahora') }}</dt><dd>{{ informe.confirmadas|length }}</dd></div>
+    <div><dt>{{ _('Ya confirmadas antes') }}</dt><dd>{{ informe.ya_confirmadas|length }}</dd></div>
+    <div><dt>{{ _('Exportadas y no encontradas') }}</dt><dd>{{ informe.faltan|length }}</dd></div>
+    <div><dt>{{ _('En a3 y no exportadas aquí') }}</dt><dd>{{ informe.sobran|length }}</dd></div>
+  </dl>
+  {% if informe.por_lote %}
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Fichero') }}</th><th>{{ _('Confirmadas') }}</th><th>{{ _('No encontradas') }}</th></tr></thead>
+    <tbody>{% for l in informe.por_lote %}<tr><td>{% if l.lote_id %}<a href="{{ url_for('contabilidad.comprobar_lote', lote_id=l.lote_id) }}">#{{ l.lote_id }}</a>{% else %}—{% endif %}</td><td>{{ l.confirmadas }}</td><td>{{ l.faltan }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+</section>
+
+{% if informe.faltan %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Exportadas que a3 no tiene') }}</h2>
+  <p class="muted">{{ _('Mira si a3 las rechazó al importar o si falta importar el fichero. Puedes volver a descargarlo desde «Ficheros generados».') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Total') }}</th><th>{{ _('Fichero') }}</th></tr></thead>
+    <tbody>{% for f in informe.faltan %}<tr><td class="mono">{{ f.fecha }}</td><td><a href="{{ url_for('contabilidad.ver', factura_id=f.id) }}">{{ f.numero }}</a></td><td>{{ f.tercero_nombre }}</td><td class="mono">{{ '%.2f'|format(f.total_centimos / 100) }} €</td><td>{% if f.lote_id %}#{{ f.lote_id }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
+{% if informe.sobran %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('En a3 y no exportadas desde aquí') }}</h2>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>NIF</th><th>{{ _('Total') }}</th></tr></thead>
+    <tbody>{% for a in informe.sobran[:200] %}<tr><td class="mono">{{ a.fecha or '—' }}</td><td>{{ a.numero }}</td><td class="mono">{{ a.nif or '—' }}</td><td class="mono">{% if a.total is not none %}{{ '%.2f'|format(a.total / 100) }} €{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% if informe.sobran|length > 200 %}<p class="muted">{{ _('Se muestran las 200 primeras.') }}</p>{% endif %}
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

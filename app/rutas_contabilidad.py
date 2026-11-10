@@ -8,7 +8,7 @@ from flask_babel import gettext as _
 
 from . import acceso, cobro_contabilidad, db, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
-from . import cierre_trimestre, cola_contabilidad, facturas_control, facturas_portal, justificantes as justificantes_mod
+from . import cierre_trimestre, cola_contabilidad, facturas_control, retorno_a3, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
 
 contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad")
@@ -741,6 +741,24 @@ def _descarga(contenido: bytes) -> Response:
     resp.headers.set("X-Content-Type-Options", "nosniff")
     resp.headers.set("Cache-Control", "no-store")
     return resp
+
+
+@contabilidad_bp.route("/retorno", methods=["GET", "POST"])
+@login_required
+def retorno():
+    """Sube el listado de facturas que devuelve a3 y comprueba cuáles de las exportadas están de verdad contabilizadas."""
+    cliente_id = request.values.get("cliente_id", type=int)
+    informe = error = None
+    if request.method == "POST":
+        archivo = request.files.get("archivo")
+        try:
+            if not cliente_id or archivo is None or not archivo.filename:
+                raise ValueError("Elige el cliente y el archivo que devuelve a3.")
+            filas = retorno_a3.leer(archivo.read(retorno_a3.MAX_BYTES + 1), archivo.filename)
+            informe = retorno_a3.cruzar(g.tenant_id, g.usuario_id, cliente_id, filas, confirmar=request.form.get("confirmar") == "1")
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("contabilidad_retorno.html", clientes=_clientes(), cliente_id=cliente_id, informe=informe, error=error or _error(), subnav=None)
 
 
 @contabilidad_bp.route("/lotes")

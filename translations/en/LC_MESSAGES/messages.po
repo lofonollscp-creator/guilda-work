@@ -26346,3 +26346,78 @@ msgstr "Uploaded by the firm"
 
 msgid "Si una lectura queda dudosa, releerla con el segundo modelo disponible y quedarse con la mejor (cuesta una consulta más)"
 msgstr "If a reading is doubtful, read it again with the second available model and keep the better one (costs one more query)"
+
+msgid "Lo que devuelve a3"
+msgstr "What a3 returns"
+
+msgid "Sube el listado de facturas del cliente que sacas de a3 (CSV o Excel) y comprobamos cuáles de las que exportaste están de verdad contabilizadas."
+msgstr "Upload the client's invoice list from a3 (CSV or Excel) and we will check which of the ones you exported are really booked."
+
+msgid "Listado de a3"
+msgstr "a3 list"
+
+msgid "Marcar como confirmadas las que coinciden"
+msgstr "Mark the matching ones as confirmed"
+
+msgid "Reconocemos las columnas por su título: número de factura, fecha, NIF, base, cuota y total. Con el número basta; si el listado trae NIF o total, no pueden contradecirse."
+msgstr "We recognise the columns by their title: invoice number, date, tax ID, base, VAT amount and total. The number is enough; if the list has a tax ID or total, they must not contradict."
+
+msgid "Facturas en el listado"
+msgstr "Invoices in the list"
+
+msgid "Confirmadas ahora"
+msgstr "Confirmed now"
+
+msgid "Ya confirmadas antes"
+msgstr "Already confirmed before"
+
+msgid "Exportadas y no encontradas"
+msgstr "Exported but not found"
+
+msgid "En a3 y no exportadas aquí"
+msgstr "In a3 but not exported from here"
+
+msgid "Confirmadas"
+msgstr "Confirmed"
+
+msgid "No encontradas"
+msgstr "Not found"
+
+msgid "Exportadas que a3 no tiene"
+msgstr "Exported invoices a3 does not have"
+
+msgid "Mira si a3 las rechazó al importar o si falta importar el fichero. Puedes volver a descargarlo desde «Ficheros generados»."
+msgstr "Check whether a3 rejected them on import or the file still has to be imported. You can download it again from \"Generated files\"."
+
+msgid "En a3 y no exportadas desde aquí"
+msgstr "In a3 and not exported from here"
+
+msgid "Se muestran las 200 primeras."
+msgstr "The first 200 are shown."
+
+msgid "Comprobar lo que devuelve a3"
+msgstr "Check what a3 returns"
+
+msgid "En a3"
+msgstr "In a3"
+
+msgid "Sin comprobar"
+msgstr "Not checked"
+
+msgid "Tu gestoría ya la ha pasado a la contabilidad. Falta comprobar que ha entrado."
+msgstr "Your firm has already passed it to the accounts. We still need to check it went in."
+
+msgid "El archivo está vacío o pesa más de 8 MB."
+msgstr "The file is empty or larger than 8 MB."
+
+msgid "No se ha podido leer el archivo: sube el listado de a3 en CSV o Excel."
+msgstr "The file could not be read: upload the a3 list as CSV or Excel."
+
+msgid "No encuentro las columnas del listado: hace falta al menos el número de factura y otra columna (fecha, NIF o total)."
+msgstr "I cannot find the list columns: at least the invoice number and one more column (date, tax ID or total) are needed."
+
+msgid "El listado no trae ninguna factura."
+msgstr "The list contains no invoices."
+
+msgid "Elige el cliente y el archivo que devuelve a3."
+msgstr "Choose the client and the file a3 returns."

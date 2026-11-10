@@ -26431,3 +26431,78 @@ msgstr "Envoyées par le cabinet"
 
 msgid "Si una lectura queda dudosa, releerla con el segundo modelo disponible y quedarse con la mejor (cuesta una consulta más)"
 msgstr "Si une lecture reste douteuse, la refaire avec le deuxième modèle disponible et garder la meilleure (une requête de plus)"
+
+msgid "Lo que devuelve a3"
+msgstr "Ce que renvoie a3"
+
+msgid "Sube el listado de facturas del cliente que sacas de a3 (CSV o Excel) y comprobamos cuáles de las que exportaste están de verdad contabilizadas."
+msgstr "Envoyez la liste des factures du client extraite d'a3 (CSV ou Excel) et nous vérifions lesquelles de celles que vous avez exportées sont réellement comptabilisées."
+
+msgid "Listado de a3"
+msgstr "Liste d'a3"
+
+msgid "Marcar como confirmadas las que coinciden"
+msgstr "Marquer comme confirmées celles qui correspondent"
+
+msgid "Reconocemos las columnas por su título: número de factura, fecha, NIF, base, cuota y total. Con el número basta; si el listado trae NIF o total, no pueden contradecirse."
+msgstr "Nous reconnaissons les colonnes par leur titre : numéro de facture, date, NIF, base, TVA et total. Le numéro suffit ; si la liste contient un NIF ou un total, ils ne doivent pas se contredire."
+
+msgid "Facturas en el listado"
+msgstr "Factures dans la liste"
+
+msgid "Confirmadas ahora"
+msgstr "Confirmées maintenant"
+
+msgid "Ya confirmadas antes"
+msgstr "Déjà confirmées avant"
+
+msgid "Exportadas y no encontradas"
+msgstr "Exportées et introuvables"
+
+msgid "En a3 y no exportadas aquí"
+msgstr "Dans a3 mais non exportées d'ici"
+
+msgid "Confirmadas"
+msgstr "Confirmées"
+
+msgid "No encontradas"
+msgstr "Introuvables"
+
+msgid "Exportadas que a3 no tiene"
+msgstr "Exportées qu'a3 n'a pas"
+
+msgid "Mira si a3 las rechazó al importar o si falta importar el fichero. Puedes volver a descargarlo desde «Ficheros generados»."
+msgstr "Vérifiez si a3 les a rejetées à l'import ou s'il reste à importer le fichier. Vous pouvez le télécharger de nouveau depuis « Fichiers générés »."
+
+msgid "En a3 y no exportadas desde aquí"
+msgstr "Dans a3 et non exportées d'ici"
+
+msgid "Se muestran las 200 primeras."
+msgstr "Les 200 premières sont affichées."
+
+msgid "Comprobar lo que devuelve a3"
+msgstr "Vérifier ce que renvoie a3"
+
+msgid "En a3"
+msgstr "Dans a3"
+
+msgid "Sin comprobar"
+msgstr "Non vérifié"
+
+msgid "Tu gestoría ya la ha pasado a la contabilidad. Falta comprobar que ha entrado."
+msgstr "Votre cabinet l'a déjà transmise à la comptabilité. Il reste à vérifier qu'elle y est entrée."
+
+msgid "El archivo está vacío o pesa más de 8 MB."
+msgstr "Le fichier est vide ou dépasse 8 Mo."
+
+msgid "No se ha podido leer el archivo: sube el listado de a3 en CSV o Excel."
+msgstr "Le fichier n'a pas pu être lu : envoyez la liste d'a3 en CSV ou Excel."
+
+msgid "No encuentro las columnas del listado: hace falta al menos el número de factura y otra columna (fecha, NIF o total)."
+msgstr "Je ne trouve pas les colonnes de la liste : il faut au moins le numéro de facture et une autre colonne (date, NIF ou total)."
+
+msgid "El listado no trae ninguna factura."
+msgstr "La liste ne contient aucune facture."
+
+msgid "Elige el cliente y el archivo que devuelve a3."
+msgstr "Choisissez le client et le fichier renvoyé par a3."
