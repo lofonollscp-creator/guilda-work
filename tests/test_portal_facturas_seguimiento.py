@@ -80,3 +80,26 @@ def test_la_pagina_ofrece_juntar_y_avisa_de_reflejos_y_poca_luz(cliente):
     assert "data-misma-factura" in html and 'name="misma_factura"' in html and "data-txt-reflejos" in html and "data-txt-oscura" in html and "data-auto-enviar" not in html
     js = cliente.get("/static/portal_facturas_subida.js").get_data(as_text=True)
     assert "function luz(" in js and "ofrecerJuntar" in js and "data-auto-enviar" in js
+
+
+def test_respuestas_rapidas_del_cliente_solo_si_la_gestoria_escribio_la_ultima(cliente):
+    t, u, c = _portal(cliente)
+    f = fc.crear_desde_portal(c, {"tipo": "recibida", "fecha": "2026-08-10", "numero": "P-1", "tercero_nombre": "Ferretería", "tercero_nif": "B11111111", "total": "121,00", "pct_iva": "21"})
+    assert "Respuestas rápidas" not in cliente.get(f"/portal/facturas/{f}").get_data(as_text=True)
+    fp.escribir_como_despacho(t, u, f, "¿Es un gasto de la empresa?")
+    html = cliente.get(f"/portal/facturas/{f}").get_data(as_text=True)
+    assert "Respuestas rápidas" in html and "Es un gasto personal." in html
+    assert cliente.post(f"/portal/facturas/{f}/mensajes", data={"texto": "Es un gasto de la empresa."}).status_code == 302
+    assert [m["autor"] for m in fp.mensajes(t, f)] == ["empleado", "cliente"]
+    assert "Respuestas rápidas" not in cliente.get(f"/portal/facturas/{f}").get_data(as_text=True), "ya contestó: no se le vuelven a ofrecer"
+
+
+def test_las_preguntas_rapidas_del_despacho_salen_en_la_ficha_y_se_envian(cliente):
+    from tests.test_facturas_contables import _web
+    uid, t, c = _web(cliente, "preguntas@ejemplo.com")
+    f = fc.crear(t, uid, c, {"tipo": "recibida", "fecha": "2026-08-10", "numero": "Q-7", "tercero_nombre": "Ferretería", "tercero_nif": "B11111111", "concepto": "x"}, [{"base": "10,00", "pct_iva": "21"}])
+    html = cliente.get(f"/contabilidad/{f}").get_data(as_text=True)
+    assert "Pedir el concepto" in html and "Preguntas rápidas al cliente" in html
+    pregunta = "¿Para qué fue este gasto? Necesitamos el concepto para contabilizar la factura Q-7 de Ferretería."
+    assert cliente.post(f"/contabilidad/{f}/mensajes", data={"texto": pregunta}).status_code == 302
+    assert [m["texto"] for m in fp.mensajes(t, f)] == [pregunta]

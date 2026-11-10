@@ -509,7 +509,8 @@ def previsualizar(usuario_id: int, contenido: bytes, tipo_mime: str) -> dict:
     nif = fc._nif(datos.get("emisor_nif"))
     if not _texto(datos.get("emisor_nombre"), 100) and not nif:
         avisos.append("emisor")
-    return {"emisor": _texto(datos.get("emisor_nombre"), 100), "nif": nif, "numero": _texto(datos.get("numero"), fc.MAX_NUMERO), "fecha": fecha, "total": total, "avisos": sorted(set(avisos))}
+    return {"emisor": _texto(datos.get("emisor_nombre"), 100), "nif": nif, "numero": _texto(datos.get("numero"), fc.MAX_NUMERO), "fecha": fecha, "total": total, "avisos": sorted(set(avisos)),
+            "receptor_nif": fc._nif(datos.get("receptor_nif"))}
 
 
 def _duplicado(tenant_id: int, f: dict, numero: str, nif: str) -> list[str]:

@@ -26500,3 +26500,72 @@ msgstr "They are not confirmed: check which of the two amounts is right and corr
 
 msgid "Guilda"
 msgstr "Guilda"
+
+msgid "No se ve el número de factura."
+msgstr "The invoice number is not visible."
+
+msgid "El NIF leído parece tener un error: mira si se ve bien."
+msgstr "The tax ID that was read seems to have an error: check it is clearly visible."
+
+msgid "Parece una factura de otra empresa, no de la tuya."
+msgstr "This looks like another company's invoice, not yours."
+
+msgid "Tu gestoría ya tiene una factura con este número."
+msgstr "Your firm already has an invoice with this number."
+
+msgid "Preguntas rápidas al cliente"
+msgstr "Quick questions to the client"
+
+msgid "Pedir el concepto"
+msgstr "Ask for the description"
+
+msgid "¿Para qué fue este gasto? Necesitamos el concepto para contabilizar la factura %(numero)s de %(proveedor)s."
+msgstr "What was this expense for? We need the description to book invoice %(numero)s from %(proveedor)s."
+
+msgid "¿Empresa o personal?"
+msgstr "Business or personal?"
+
+msgid "¿Este gasto es de la empresa o es personal? Si es personal no podemos deducir el IVA."
+msgstr "Is this expense for the business or personal? If it is personal we cannot deduct the VAT."
+
+msgid "Pedir otra foto"
+msgstr "Ask for another photo"
+
+msgid "No se lee bien la factura %(numero)s. ¿Puedes enviarla de nuevo, entera y con buena luz?"
+msgstr "Invoice %(numero)s is hard to read. Can you send it again, complete and in good light?"
+
+msgid "Pedir NIF o nombre"
+msgstr "Ask for tax ID or name"
+
+msgid "Nos falta el NIF o el nombre completo del proveedor de la factura %(numero)s. ¿Puedes decírnoslo?"
+msgstr "We are missing the tax ID or full name of the supplier on invoice %(numero)s. Can you tell us?"
+
+msgid "¿Cómo la pagó?"
+msgstr "How did they pay it?"
+
+msgid "¿Cómo pagaste la factura %(numero)s: tarjeta, transferencia o efectivo?"
+msgstr "How did you pay invoice %(numero)s: card, transfer or cash?"
+
+msgid "Sí."
+msgstr "Yes."
+
+msgid "No."
+msgstr "No."
+
+msgid "Es un gasto de la empresa."
+msgstr "It is a business expense."
+
+msgid "Es un gasto personal."
+msgstr "It is a personal expense."
+
+msgid "La pagué con tarjeta."
+msgstr "I paid it by card."
+
+msgid "La pagué por transferencia."
+msgstr "I paid it by transfer."
+
+msgid "La pagué en efectivo."
+msgstr "I paid it in cash."
+
+msgid "Te la vuelvo a enviar ahora."
+msgstr "I will send it again now."

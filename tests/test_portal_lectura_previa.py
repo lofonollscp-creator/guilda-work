@@ -48,7 +48,7 @@ def test_el_endpoint_lee_y_devuelve_los_datos_sin_guardar_nada(cliente, ia, corr
     r = _subir(cliente)
     j = r.get_json()
     assert r.status_code == 200 and j["disponible"] and j["lectura"]["emisor"] == "Papelería Sol SL" and j["lectura"]["fecha"] == "2026-10-03" and j["lectura"]["total"] == "121.00"
-    assert j["lectura"]["numero"] == "2026/118" and j["lectura"]["avisos"] == []
+    assert j["lectura"]["numero"] == "2026/118" and j["lectura"]["avisos"] == ["otra_empresa"], "la factura no menciona el NIF del cliente: parece de otra empresa"
     assert db.get_connection().execute("SELECT COUNT(*) FROM facturas_contables").fetchone()[0] == antes
     assert ia == [u], "se lee con la IA de quien lleva al cliente"
 
@@ -135,3 +135,21 @@ def test_con_la_lectura_con_ia_encendida_lo_exacto_se_lee_primero_y_sin_gastar_i
     xml = (Path(__file__).parent / "datos_facturas" / "facturae_322.xml").read_bytes()
     r = _subir(cliente, "factura.xml", xml, "application/xml")
     assert r.status_code == 200 and r.get_json()["lectura"]["fuente"] == "xml" and ia == []
+
+
+def test_avisos_del_cliente_numero_nif_otra_empresa_y_repetida(cliente, monkeypatch, correo):
+    from app import facturas_contables as fc
+    t, u, c = _despacho("LP avisos")
+    plp.fijar(t, True)
+    ficha = _ficha(c)
+    propio = ficha["nif"] or ""
+    monkeypatch.setattr(lectura_facturas, "configurada", lambda uid: True)
+    respuesta = {"emisor_nombre": "Proveedor SL", "emisor_nif": "A58818501", "receptor_nif": propio, "numero": "9", "fecha": "2026-10-03", "total": "10,00", "lineas": []}
+    monkeypatch.setattr(ia_asistente, "completar_partes", lambda uid, prompt, partes: json.dumps(respuesta))
+    _entrar(cliente, c, "titular@ejemplo.com")
+    assert _subir(cliente).get_json()["lectura"]["avisos"] == [] or not propio
+    respuesta.update(numero="", emisor_nif="12345678A")
+    assert set(_subir(cliente).get_json()["lectura"]["avisos"]) >= {"numero", "nif_dudoso"}
+    respuesta.update(numero="9", emisor_nif="A58818501")
+    fc.crear(t, u, c, {"tipo": "recibida", "fecha": "2026-10-01", "numero": "9", "tercero_nombre": "Proveedor SL", "tercero_nif": "A58818501", "concepto": "x"}, [{"base": "10,00", "pct_iva": "21"}])
+    assert "repetida" in _subir(cliente).get_json()["lectura"]["avisos"]

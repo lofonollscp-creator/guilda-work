@@ -48,11 +48,30 @@ def disponible(cliente) -> bool:
     return bool(cliente is not None and verticales.esta_activo(cliente["tenant_id"], "contabilizacion") and activa(cliente["tenant_id"]) and lector_de(cliente) is not None)
 
 
+def con_avisos_del_cliente(cliente, r: dict) -> dict:
+    """Añade a lo leído lo que el cliente debe saber antes de enviar: no se ve el número, el NIF no supera su dígito de control, la factura parece de otra empresa o la gestoría ya la tiene (`avisos`:
+    numero · nif_dudoso · otra_empresa · repetida). Solo avisa: enviarla sigue siendo posible."""
+    from . import facturas_contables as fc
+    from .fiscal_modelos.validacion_apuntes import nif_espanol_valido
+    avisos = set(r.get("avisos") or [])
+    nif, receptor, propio = fc._nif(r.get("nif")), fc._nif(r.get("receptor_nif")), fc._nif(cliente["nif"])
+    if r.get("fuente") not in ("xml", "qr") and not r.get("numero"):
+        avisos.add("numero")
+    if nif and nif_espanol_valido(nif) is False:
+        avisos.add("nif_dudoso")
+    if propio and (nif or receptor) and propio not in (nif, receptor) and r.get("fuente") not in ("xml", "qr"):
+        avisos.add("otra_empresa")
+    if nif and r.get("numero") and fc.factura_igual(cliente["id"], nif, r["numero"]):
+        avisos.add("repetida")
+    return {**r, "avisos": sorted(avisos)}
+
+
 def leer_gratis(cliente, contenido: bytes, tipo_mime: str) -> dict | None:
     """Lo que trae el propio archivo (factura electrónica o QR), sin IA: lo ve cualquier cliente con facturas, tenga o no activada la lectura previa. None si no trae nada de eso."""
     if cliente is None or not verticales.esta_activo(cliente["tenant_id"], "contabilizacion") or tipo_mime not in TIPOS or not contenido or len(contenido) > MAX_BYTES:
         return None
-    return lectura_facturas.previsualizar_gratis(contenido, tipo_mime)
+    r = lectura_facturas.previsualizar_gratis(contenido, tipo_mime)
+    return con_avisos_del_cliente(cliente, r) if r else None
 
 
 def leer(cliente, contenido: bytes, tipo_mime: str) -> dict:
@@ -63,7 +82,7 @@ def leer(cliente, contenido: bytes, tipo_mime: str) -> dict:
         raise ValueError("Ese archivo no se puede leer aquí.")
     exacta = lectura_facturas.previsualizar_gratis(contenido, tipo_mime)
     if exacta:
-        return exacta
+        return con_avisos_del_cliente(cliente, exacta)
     if tipo_mime in TIPOS_XML:
         raise ValueError("Ese archivo no es una factura electrónica que podamos leer aquí. Puedes enviarlo igualmente: tu gestoría lo mirará.")
-    return lectura_facturas.previsualizar(lector_de(cliente), contenido, tipo_mime)
+    return con_avisos_del_cliente(cliente, lectura_facturas.previsualizar(lector_de(cliente), contenido, tipo_mime))

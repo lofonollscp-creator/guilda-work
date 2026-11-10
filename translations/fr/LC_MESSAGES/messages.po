@@ -26585,3 +26585,72 @@ msgstr "Elles ne sont pas confirmées : vérifiez lequel des deux montants est c
 
 msgid "Guilda"
 msgstr "Guilda"
+
+msgid "No se ve el número de factura."
+msgstr "Le numéro de facture n'est pas visible."
+
+msgid "El NIF leído parece tener un error: mira si se ve bien."
+msgstr "Le NIF lu semble comporter une erreur : vérifiez qu'il est bien visible."
+
+msgid "Parece una factura de otra empresa, no de la tuya."
+msgstr "Cela ressemble à une facture d'une autre entreprise, pas de la vôtre."
+
+msgid "Tu gestoría ya tiene una factura con este número."
+msgstr "Votre cabinet a déjà une facture avec ce numéro."
+
+msgid "Preguntas rápidas al cliente"
+msgstr "Questions rapides au client"
+
+msgid "Pedir el concepto"
+msgstr "Demander le motif"
+
+msgid "¿Para qué fue este gasto? Necesitamos el concepto para contabilizar la factura %(numero)s de %(proveedor)s."
+msgstr "À quoi correspondait cette dépense ? Nous avons besoin du motif pour comptabiliser la facture %(numero)s de %(proveedor)s."
+
+msgid "¿Empresa o personal?"
+msgstr "Entreprise ou personnel ?"
+
+msgid "¿Este gasto es de la empresa o es personal? Si es personal no podemos deducir el IVA."
+msgstr "Cette dépense est-elle professionnelle ou personnelle ? Si elle est personnelle, nous ne pouvons pas déduire la TVA."
+
+msgid "Pedir otra foto"
+msgstr "Demander une autre photo"
+
+msgid "No se lee bien la factura %(numero)s. ¿Puedes enviarla de nuevo, entera y con buena luz?"
+msgstr "La facture %(numero)s est difficile à lire. Pouvez-vous l'envoyer de nouveau, entière et bien éclairée ?"
+
+msgid "Pedir NIF o nombre"
+msgstr "Demander le NIF ou le nom"
+
+msgid "Nos falta el NIF o el nombre completo del proveedor de la factura %(numero)s. ¿Puedes decírnoslo?"
+msgstr "Il nous manque le NIF ou le nom complet du fournisseur de la facture %(numero)s. Pouvez-vous nous le communiquer ?"
+
+msgid "¿Cómo la pagó?"
+msgstr "Comment l'a-t-il payée ?"
+
+msgid "¿Cómo pagaste la factura %(numero)s: tarjeta, transferencia o efectivo?"
+msgstr "Comment avez-vous payé la facture %(numero)s : carte, virement ou espèces ?"
+
+msgid "Sí."
+msgstr "Oui."
+
+msgid "No."
+msgstr "Non."
+
+msgid "Es un gasto de la empresa."
+msgstr "C'est une dépense professionnelle."
+
+msgid "Es un gasto personal."
+msgstr "C'est une dépense personnelle."
+
+msgid "La pagué con tarjeta."
+msgstr "Je l'ai payée par carte."
+
+msgid "La pagué por transferencia."
+msgstr "Je l'ai payée par virement."
+
+msgid "La pagué en efectivo."
+msgstr "Je l'ai payée en espèces."
+
+msgid "Te la vuelvo a enviar ahora."
+msgstr "Je vous la renvoie tout de suite."

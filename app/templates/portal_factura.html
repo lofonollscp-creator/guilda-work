@@ -33,6 +33,13 @@
         {% endfor %}
       </div>
       {% endif %}
+      {% if mensajes and mensajes[-1].autor != 'cliente' %}
+      <div role="group" aria-label="{{ _('Respuestas rápidas') }}" class="portal-respuestas-rapidas">
+        {% for r in (_('Sí.'), _('No.'), _('Es un gasto de la empresa.'), _('Es un gasto personal.'), _('La pagué con tarjeta.'), _('La pagué por transferencia.'), _('La pagué en efectivo.'), _('Te la vuelvo a enviar ahora.')) %}
+        <form method="post" action="{{ url_for('portal_cliente.mensaje_de_factura', factura_id=f.id) }}"><button type="submit" class="btn btn-ghost btn-sm" name="texto" value="{{ r }}">{{ r }}</button></form>
+        {% endfor %}
+      </div>
+      {% endif %}
       <form method="post" action="{{ url_for('portal_cliente.mensaje_de_factura', factura_id=f.id) }}" class="portal-subir">
         <label for="mensaje-texto">{{ _('Escribe un mensaje') }}</label>
         <textarea id="mensaje-texto" class="ds-ancho-total ds-mb-3" name="texto" rows="3" maxlength="{{ max_mensaje }}" required></textarea>

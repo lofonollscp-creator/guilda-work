@@ -191,6 +191,17 @@
     {% for m in mensajes %}<div class="portal-msg {{ 'cliente' if m.autor == 'cliente' else 'gestoria' }}">{{ m.texto }}<span class="fecha">{{ m.creado_en|fecha_y_hora }}{% if m.usuario_email %} · {{ m.usuario_email }}{% endif %}</span></div>{% endfor %}
   </div>
   {% else %}<p class="muted">{{ _('Todavía no hay mensajes. El cliente los verá en su portal.') }}</p>{% endif %}
+  {% if f.estado != 'exportada' %}
+  <div role="group" aria-label="{{ _('Preguntas rápidas al cliente') }}" class="ds-fila">
+    {% for etiqueta, q in ((_('Pedir el concepto'), _('¿Para qué fue este gasto? Necesitamos el concepto para contabilizar la factura %(numero)s de %(proveedor)s.', numero=f.numero, proveedor=f.tercero_nombre)),
+                           (_('¿Empresa o personal?'), _('¿Este gasto es de la empresa o es personal? Si es personal no podemos deducir el IVA.')),
+                           (_('Pedir otra foto'), _('No se lee bien la factura %(numero)s. ¿Puedes enviarla de nuevo, entera y con buena luz?', numero=f.numero)),
+                           (_('Pedir NIF o nombre'), _('Nos falta el NIF o el nombre completo del proveedor de la factura %(numero)s. ¿Puedes decírnoslo?', numero=f.numero)),
+                           (_('¿Cómo la pagó?'), _('¿Cómo pagaste la factura %(numero)s: tarjeta, transferencia o efectivo?', numero=f.numero))) %}
+    <form method="post" action="{{ url_for('contabilidad.mensaje', factura_id=f.id) }}"><button type="submit" class="btn btn-ghost btn-sm" name="texto" value="{{ q }}">{{ etiqueta }}</button></form>
+    {% endfor %}
+  </div>
+  {% endif %}
   <form method="post" action="{{ url_for('contabilidad.mensaje', factura_id=f.id) }}" class="edit-form">
     <label for="mensaje-texto">{{ _('Escribir al cliente') }}</label>
     {% with cliente_fiscal_id=f.cliente_fiscal_id, destino='mensaje-texto' %}{% include '_respuestas_rapidas.html' %}{% endwith %}

@@ -26509,3 +26509,72 @@ msgstr "No es confirmen: revisa quin dels dos imports és el correcte i corregei
 
 msgid "Guilda"
 msgstr "Guilda"
+
+msgid "No se ve el número de factura."
+msgstr "No es veu el número de factura."
+
+msgid "El NIF leído parece tener un error: mira si se ve bien."
+msgstr "El NIF llegit sembla tenir un error: mira si es veu bé."
+
+msgid "Parece una factura de otra empresa, no de la tuya."
+msgstr "Sembla una factura d'una altra empresa, no de la teva."
+
+msgid "Tu gestoría ya tiene una factura con este número."
+msgstr "La teva gestoria ja té una factura amb aquest número."
+
+msgid "Preguntas rápidas al cliente"
+msgstr "Preguntes ràpides al client"
+
+msgid "Pedir el concepto"
+msgstr "Demanar el concepte"
+
+msgid "¿Para qué fue este gasto? Necesitamos el concepto para contabilizar la factura %(numero)s de %(proveedor)s."
+msgstr "Per a què va ser aquesta despesa? Necessitem el concepte per comptabilitzar la factura %(numero)s de %(proveedor)s."
+
+msgid "¿Empresa o personal?"
+msgstr "Empresa o personal?"
+
+msgid "¿Este gasto es de la empresa o es personal? Si es personal no podemos deducir el IVA."
+msgstr "Aquesta despesa és de l'empresa o és personal? Si és personal no podem deduir l'IVA."
+
+msgid "Pedir otra foto"
+msgstr "Demanar una altra foto"
+
+msgid "No se lee bien la factura %(numero)s. ¿Puedes enviarla de nuevo, entera y con buena luz?"
+msgstr "No es llegeix bé la factura %(numero)s. La pots tornar a enviar, sencera i amb bona llum?"
+
+msgid "Pedir NIF o nombre"
+msgstr "Demanar NIF o nom"
+
+msgid "Nos falta el NIF o el nombre completo del proveedor de la factura %(numero)s. ¿Puedes decírnoslo?"
+msgstr "Ens falta el NIF o el nom complet del proveïdor de la factura %(numero)s. Ens ho pots dir?"
+
+msgid "¿Cómo la pagó?"
+msgstr "Com la va pagar?"
+
+msgid "¿Cómo pagaste la factura %(numero)s: tarjeta, transferencia o efectivo?"
+msgstr "Com vas pagar la factura %(numero)s: targeta, transferència o efectiu?"
+
+msgid "Sí."
+msgstr "Sí."
+
+msgid "No."
+msgstr "No."
+
+msgid "Es un gasto de la empresa."
+msgstr "És una despesa de l'empresa."
+
+msgid "Es un gasto personal."
+msgstr "És una despesa personal."
+
+msgid "La pagué con tarjeta."
+msgstr "La vaig pagar amb targeta."
+
+msgid "La pagué por transferencia."
+msgstr "La vaig pagar per transferència."
+
+msgid "La pagué en efectivo."
+msgstr "La vaig pagar en efectiu."
+
+msgid "Te la vuelvo a enviar ahora."
+msgstr "Te la torno a enviar ara."
