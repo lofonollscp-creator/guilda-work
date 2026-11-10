@@ -81,6 +81,9 @@ def completar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str
             nuevos["tercero_nombre"] = anterior["tercero_nombre"]
         else:
             avisos.append(f"El NIF {nuevos.get('tercero_nif')} ya figura en este cliente como «{anterior['tercero_nombre']}» y la lectura dice «{nuevos.get('tercero_nombre')}»: comprueba el NIF.")
+    if not str(nuevos.get("concepto") or "").strip() and anterior.get("concepto"):
+        nuevos["concepto"] = anterior["concepto"]
+        avisos.append(f"Se ha puesto el concepto «{anterior['concepto']}», el de la última factura de este proveedor que revisó una persona.")
     if fc.regla_del_tercero(tenant_id, cliente_fiscal_id, tipo, nuevos.get("tercero_nif")):
         return avisos                                           # con regla propia manda ella, que es lo que se decidió a propósito
     previas = {l["pct_iva"]: l for l in anterior["lineas"]}

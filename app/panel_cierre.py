@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from . import acceso, db, facturas_contables as fc
+from . import acceso, db, facturas_contables as fc, facturas_periodicas
 
 MESES_DE_HISTORIAL = 6                  # cuántos meses atrás se mira para saber si un cliente suele entregar facturas
 MESES_PARA_SER_HABITUAL = 3             # con facturas en al menos tantos de esos meses se le considera un cliente que entrega cada mes
@@ -87,6 +87,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
     finally:
         conn.close()
     silenciosos = sin_entregas(tenant_id, hoy)
+    periodicas = facturas_periodicas.por_cliente(tenant_id, hoy)
     por_id = {f["cliente_fiscal_id"]: dict(f) for f in filas}
     for cid, nombre in configurados.items():
         por_id.setdefault(cid, {"cliente_fiscal_id": cid, "nombre": nombre, "total": 0, "sin_leer": 0, "por_revisar": 0, "listas": 0, "exportadas": 0, "sin_confirmar": 0, "sin_confirmar_antiguas": 0, "a_corregir": 0})
@@ -103,6 +104,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
         c["faltan"] = c["sin_leer"] + c["por_revisar"] + c["listas"] + c["sin_confirmar"]        # `a_corregir` ya cuenta dentro de por revisar o de listas: son las reabiertas tras exportarlas
         c["listo"] = c["total"] > 0 and c["faltan"] == 0
         c["sin_facturas"] = c["total"] == 0
+        c["periodicas_que_faltan"] = len(periodicas.get(cid, []))
         c["sin_entregas_este_mes"] = silenciosos.get(cid, 0)                              # >0 = suele entregar y este mes aún no ha mandado nada (los meses que lo hizo)
         clientes.append(c)
     clientes.sort(key=lambda c: (c["cerrado"], c["listo"], -c["faltan"], c["sin_facturas"] is False, c["nombre"].lower()))

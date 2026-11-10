@@ -27015,3 +27015,11 @@ msgstr "Fichier rejeté par a3"
 
 msgid "Estado de fichero no válido."
 msgstr "Statut de fichier non valide."
+
+msgid "Falta %(n)s factura periódica"
+msgid_plural "Faltan %(n)s facturas periódicas"
+msgstr[0] "Il manque %(n)s facture récurrente"
+msgstr[1] "Il manque %(n)s factures récurrentes"
+
+msgid "Apartada: no era una factura"
+msgstr "Écartée : ce n'était pas une facture"

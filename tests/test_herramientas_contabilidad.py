@@ -6,7 +6,7 @@ from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herr
 from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
-           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303", "contabilidad_historial_factura", "contabilidad_listar_ficheros", "contabilidad_listar_reglas", "contabilidad_configuracion_a3")
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303", "contabilidad_historial_factura", "contabilidad_listar_ficheros", "contabilidad_listar_reglas", "contabilidad_configuracion_a3", "contabilidad_facturas_periodicas_que_faltan")
 ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
@@ -383,3 +383,11 @@ def test_las_herramientas_de_ajuste_son_idempotentes_en_sus_anotaciones():
     assert a.idempotentHint and not a.readOnlyHint
     assert mcp_tools._anotaciones("contabilidad_guardar_regla").idempotentHint and not mcp_tools._anotaciones("contabilidad_exportar").idempotentHint
     assert mcp_tools._anotaciones("contabilidad_preguntar_al_cliente").openWorldHint
+
+
+def test_facturas_periodicas_que_faltan_por_la_ia():
+    t, u, c = _despacho("Despacho herr periodicas")
+    r = ih.ejecutar(u, "contabilidad_facturas_periodicas_que_faltan", {"cliente_fiscal_id": c})
+    assert r == {"cliente_fiscal_id": c, "proveedores": []}
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(u, "contabilidad_facturas_periodicas_que_faltan", {"cliente_fiscal_id": 999999})

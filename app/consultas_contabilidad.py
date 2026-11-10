@@ -336,3 +336,12 @@ def subir_factura(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo:
     mime = tipo_mime or ("application/pdf" if str(nombre_archivo).lower().endswith(".pdf") else "image/jpeg" if str(nombre_archivo).lower().endswith((".jpg", ".jpeg")) else "image/png" if str(nombre_archivo).lower().endswith(".png") else None)
     ids = fc.subir_archivos(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, [(str(nombre_archivo)[:200], mime, contenido)])
     return {"factura_id": ids[0] if ids else None, "ya_estaba": bool(getattr(ids, "repetidas", 0)) and not ids}
+
+
+def facturas_periodicas_que_faltan(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> dict:
+    """Proveedores periódicos (factura en al menos 3 de los 6 meses anteriores, la última reciente) de los que este mes aún no hay factura. Solo las recibidas; vacío antes del día 10 de cada mes."""
+    _exigir_modulo(tenant_id)
+    fc._cliente(tenant_id, usuario_id, int(cliente_fiscal_id))
+    from . import facturas_periodicas
+    return {"cliente_fiscal_id": int(cliente_fiscal_id), "proveedores": [{"nif": x["nif"], "nombre": x["nombre"], "meses_con_factura": x["meses"], "ultima_factura_del_mes": x["ultima"]}
+                                                                        for x in facturas_periodicas.que_faltan(tenant_id, int(cliente_fiscal_id))]}

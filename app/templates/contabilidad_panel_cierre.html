@@ -46,6 +46,7 @@
           {% else %}{{ chip(_('Faltan %(n)s', n=c.faltan), 'aviso') }}{% endif %}
           {% if c.fichero_rechazado and not c.cerrado %} {{ chip(_('Fichero rechazado por a3'), 'peligro') }}{% endif %}
           {% if c.sin_confirmar_antiguas and not c.cerrado %} {{ chip(_('Exportadas hace días sin confirmar'), 'aviso') }}{% endif %}
+          {% if c.periodicas_que_faltan and not c.cerrado %} {{ chip(ngettext('Falta %(n)s factura periódica', 'Faltan %(n)s facturas periódicas', c.periodicas_que_faltan, n=c.periodicas_que_faltan), 'aviso') }}{% endif %}
           {% if c.sin_entregas_este_mes and not c.cerrado %} {{ chip(_('Sin entregas este mes'), 'aviso') }}{% endif %}
         </td>
         <td>{% if not c.cerrado %}<a class="btn btn-ghost" href="{{ url_for('contabilidad.cierre', cliente_id=c.cliente_fiscal_id, trimestre=trimestre) }}">{{ _('Cierre guiado') }}</a>{% endif %}</td>

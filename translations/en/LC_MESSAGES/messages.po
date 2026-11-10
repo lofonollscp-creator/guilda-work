@@ -26930,3 +26930,11 @@ msgstr "File rejected by a3"
 
 msgid "Estado de fichero no válido."
 msgstr "Invalid file status."
+
+msgid "Falta %(n)s factura periódica"
+msgid_plural "Faltan %(n)s facturas periódicas"
+msgstr[0] "%(n)s recurring invoice missing"
+msgstr[1] "%(n)s recurring invoices missing"
+
+msgid "Apartada: no era una factura"
+msgstr "Set aside: it was not an invoice"

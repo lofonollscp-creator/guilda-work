@@ -1328,7 +1328,7 @@ def historial(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
         return []
     etiquetas = {"subida": _("Archivo subido"), "creada": _("Anotada"), "leida_ia": _("Leída con IA"), "leida_xml": _("Leída de la factura electrónica"), "revisada_auto": _("Revisada sola por la IA"),
                  "editada": _("Editada"), "revisada": _("Dada por revisada"), "pendiente": _("Reabierta"), "descartada": _("Descartada"), "exportada": _("Exportada a a3"),
-                 "confirmada_a3": _("Confirmada en a3"), "movida": _("Movida a otro cliente"), "incluir_en_fiscal": _("Incluida en Guilda Fiscal"), "pdf_separado": _("PDF separado en varias facturas")}
+                 "confirmada_a3": _("Confirmada en a3"), "movida": _("Movida a otro cliente"), "no_es_factura": _("Apartada: no era una factura"), "incluir_en_fiscal": _("Incluida en Guilda Fiscal"), "pdf_separado": _("PDF separado en varias facturas")}
     nombres = {"fecha": _("la fecha"), "numero": _("el número"), "tercero_nombre": _("el nombre"), "tercero_nif": _("el NIF"), "concepto": _("el concepto"), "total_centimos": _("el total")}
     res = []
     for e in auditoria.listar(tenant_id, entidad="factura_contable", entidad_id=factura_id, limite=200):

@@ -186,3 +186,8 @@ def contabilidad_configuracion_a3(cliente_fiscal_id: int) -> dict:
 def contabilidad_subir_factura(cliente_fiscal_id: int, tipo: str, nombre_archivo: str, contenido_base64: str, tipo_mime: str | None = None) -> dict:
     """Sube la foto (JPG, PNG) o el PDF de una factura de un cliente de la gestoría (hasta 8 MB, en base64): queda pendiente de leer, y se lee con `contabilidad_leer_factura_con_ia`. `tipo`: emitida o recibida."""
     return _mt._conta().subir_factura(*_mt._ctx_conta(), cliente_fiscal_id, tipo, nombre_archivo, contenido_base64, tipo_mime)
+
+
+def contabilidad_facturas_periodicas_que_faltan(cliente_fiscal_id: int) -> dict:
+    """Proveedores de los que un cliente recibe factura casi todos los meses (la luz, el alquiler, un seguro) y de los que este mes aún no hay: suele ser algo que el cliente no ha mandado. Vacío antes del día 10."""
+    return _mt._conta().facturas_periodicas_que_faltan(*_mt._ctx_conta(), cliente_fiscal_id)

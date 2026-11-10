@@ -10,7 +10,7 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 
-from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, lectura_historial, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, tipos_cambio, vies
+from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_clasificacion, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, lectura_historial, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, tipos_cambio, vies
 
 FORMA_DE_PAGO = {"domiciliacion": "DO", "transferencia": "TR", "cheque": "CH", "pagare": "PA", "letra": "LA", "efectivo": "ME"}      # lo que lee la IA → código de a3
 
@@ -399,6 +399,10 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
     contenido, mime = bytes(doc["contenido"]), (doc.get("tipo_mime") or "").lower().split(";")[0]
     config = ia_despacho.config(tenant_id)
     estructurada = facturas_estructuradas.extraer(contenido, mime, doc.get("nombre_archivo") or "")
+    if not estructurada:
+        otro = lectura_clasificacion.tipo_de_documento(_texto_del_pdf(contenido, mime))
+        if otro:                                                                    # un extracto, una nómina… colado entre las facturas: no se gasta IA y se aparta (el archivo sigue en los documentos del cliente)
+            return _apartar_no_factura(tenant_id, usuario_id, f, *otro)
     if separar and not estructurada and config["separar_pdf"] and mime == "application/pdf" and configurada(usuario_id):
         grupos = segmentacion_pdf.segmentar(usuario_id, contenido)
         if grupos:
@@ -594,6 +598,20 @@ def evidencia_de(f: dict) -> dict | None:
     except (TypeError, ValueError):
         return None
     return e if isinstance(e, dict) else None
+
+
+def _apartar_no_factura(tenant_id: int, usuario_id: int, f: dict, clave: str, nombre: str) -> list[str]:
+    """El documento no es una factura: la factura que se había anotado para él se descarta, con el motivo en sus notas y en su historial; el archivo se queda en los documentos del cliente."""
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE facturas_contables SET notas = ?, lectura = NULL, lectura_error = NULL WHERE id = ? AND tenant_id = ?",
+                     (f"No es una factura: parece {nombre}. Se ha apartado sin leerla; el archivo sigue en los documentos del cliente.", f["id"], tenant_id))
+        auditoria.registrar(tenant_id, usuario_id, "factura_contable.no_es_factura", "factura_contable", f["id"], {"parece": clave}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    fc.cambiar_estado(tenant_id, usuario_id, f["id"], "descartada")
+    return [f"El documento parece {nombre}, no una factura: no se ha leído y la factura anotada se ha descartado. El archivo sigue en los documentos del cliente."]
 
 
 def _marcar_fallida(tenant_id: int, f: dict, motivo: str) -> None:

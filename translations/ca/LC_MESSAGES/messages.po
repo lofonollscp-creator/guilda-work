@@ -26939,3 +26939,11 @@ msgstr "Fitxer rebutjat per a3"
 
 msgid "Estado de fichero no válido."
 msgstr "Estat de fitxer no vàlid."
+
+msgid "Falta %(n)s factura periódica"
+msgid_plural "Faltan %(n)s facturas periódicas"
+msgstr[0] "Falta %(n)s factura periòdica"
+msgstr[1] "Falten %(n)s factures periòdiques"
+
+msgid "Apartada: no era una factura"
+msgstr "Apartada: no era una factura"
