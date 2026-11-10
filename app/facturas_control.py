@@ -11,6 +11,7 @@ from . import db, vies
 from .fiscal_modelos.validacion_apuntes import FORMATOS_NIF_IVA, nif_espanol_valido  # noqa: F401 -- el mismo dígito de control que usan los apuntes fiscales
 
 OPERACIONES_INTRACOMUNITARIAS = {"emitida": ("03", "04"), "recibida": ("03", "08")}
+LIMITE_SIMPLIFICADA_CENTIMOS = 40000                # una factura simplificada no puede pasar de 400 euros (3.000 en comercio al por menor, hostelería y otros sectores)
 ANIOS_MAXIMOS = 4                                   # pasado ese tiempo el IVA de una factura ya no se puede deducir
 
 
@@ -113,6 +114,38 @@ def _hueco_de_numeracion(tenant_id: int, f: dict) -> str | None:
     return _("En la numeración falta la factura %(falta)s: la anterior que hay es la %(anterior)s.", falta=f"{prefijo}{str(n - 1).zfill(len(cifras))}", anterior=f"{prefijo}{str(max(anteriores)).zfill(len(cifras))}")
 
 
+def _clave_numero(numero) -> str:
+    return re.sub(r"[^A-Z0-9]", "", str(numero or "").upper()).lstrip("0")
+
+
+def _avisos_del_abono(tenant_id: int, f: dict) -> list[str]:
+    """Un abono o rectificativa frente a la factura que rectifica, si está en este cliente: que exista, que no la supere y que entre todos sus abonos no pasen de lo facturado. Solo avisa: la
+    factura original puede estar ya contabilizada en a3 y no estar aquí."""
+    numero = _clave_numero(f.get("rectifica_numero"))
+    if not f.get("abono") or not numero:
+        return []
+    nif = _nif(f.get("tercero_nif"))
+    conn = db.get_connection()
+    try:
+        filas = [dict(r) for r in conn.execute("SELECT id, numero, total_centimos, abono, tercero_nif, rectifica_numero, estado FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND tipo = ? "
+                                              "AND id != ? AND estado != 'descartada' ORDER BY id LIMIT 3000", (tenant_id, f["cliente_fiscal_id"], f["tipo"], f.get("id") or 0))]
+    finally:
+        conn.close()
+    mismas = [r for r in filas if not nif or not _nif(r["tercero_nif"]) or _nif(r["tercero_nif"]) == nif]
+    original = next((r for r in mismas if not r["abono"] and _clave_numero(r["numero"]) == numero), None)
+    if original is None:
+        return [_("No tengo en este cliente la factura %(numero)s que rectifica: si ya está contabilizada en a3 no pasa nada, si no, falta anotarla.", numero=f["rectifica_numero"])]
+    total = abs(f.get("total_centimos") or 0)
+    res = []
+    if total > original["total_centimos"]:
+        res.append(_("El abono (%(abono)s) es mayor que la factura que rectifica (%(original)s).", abono=f"{total / 100:.2f}", original=f"{original['total_centimos'] / 100:.2f}"))
+    otros = sum(abs(r["total_centimos"]) for r in mismas if r["abono"] and _clave_numero(r["rectifica_numero"]) == numero)
+    if total <= original["total_centimos"] and otros + total > original["total_centimos"]:
+        res.append(_("Entre este abono y los anteriores (%(suma)s) se supera lo facturado en la factura %(numero)s (%(original)s).", suma=f"{(otros + total) / 100:.2f}", numero=original["numero"],
+                     original=f"{original['total_centimos'] / 100:.2f}"))
+    return res
+
+
 def avisos(tenant_id: int, f: dict, hoy: date | None = None) -> list[str]:
     """Lo que conviene mirar de esta factura aunque no impida exportarla (lista vacía = nada que señalar)."""
     from . import facturas_contables as fc
@@ -148,6 +181,9 @@ def avisos(tenant_id: int, f: dict, hoy: date | None = None) -> list[str]:
     hueco = _hueco_de_numeracion(tenant_id, f)
     if hueco:
         res.append(hueco)
+    res.extend(_avisos_del_abono(tenant_id, f))
+    if f["tipo"] == "emitida" and (f.get("a3") or {}).get("clave_340") == "1" and abs(f.get("total_centimos") or 0) > LIMITE_SIMPLIFICADA_CENTIMOS:
+        res.append(_("Una factura simplificada (tique) no puede pasar de %(limite)s euros salvo en algunos sectores: ¿falta el NIF del cliente?", limite=f"{LIMITE_SIMPLIFICADA_CENTIMOS // 100:,}".replace(",", ".")))
     for d in duplicados(tenant_id, f):
         if d["contabilizada"]:
             res.append((_("Parece repetida: la factura %(numero)s (%(fecha)s) ya está exportada (%(motivo)s).") if d["estado"] == "exportada" else _("Parece repetida: la factura %(numero)s (%(fecha)s) ya está revisada (%(motivo)s)."))

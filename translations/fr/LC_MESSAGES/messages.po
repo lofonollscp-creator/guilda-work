@@ -26901,3 +26901,33 @@ msgstr "Une importation (type d'opération 06) ne peut être exportée qu'au for
 
 msgid "Una importación necesita el número de DUA (en «Datos para los modelos 340 y 347»)."
 msgstr "Une importation nécessite le numéro de DUA (dans « Données pour les modèles 340 et 347 »)."
+
+msgid "No tengo en este cliente la factura %(numero)s que rectifica: si ya está contabilizada en a3 no pasa nada, si no, falta anotarla."
+msgstr "Je n'ai pas pour ce client la facture %(numero)s qu'elle rectifie : si elle est déjà comptabilisée dans a3, ce n'est pas grave, sinon il faut la saisir."
+
+msgid "El abono (%(abono)s) es mayor que la factura que rectifica (%(original)s)."
+msgstr "L'avoir (%(abono)s) est supérieur à la facture qu'il rectifie (%(original)s)."
+
+msgid "Entre este abono y los anteriores (%(suma)s) se supera lo facturado en la factura %(numero)s (%(original)s)."
+msgstr "Entre cet avoir et les précédents (%(suma)s), le montant facturé sur la facture %(numero)s (%(original)s) est dépassé."
+
+msgid "Una factura simplificada (tique) no puede pasar de %(limite)s euros salvo en algunos sectores: ¿falta el NIF del cliente?"
+msgstr "Une facture simplifiée (ticket) ne peut pas dépasser %(limite)s euros sauf dans certains secteurs : le NIF du client manque-t-il ?"
+
+msgid "Parece una factura de %(nombre)s, otro cliente de tu despacho."
+msgstr "Cela ressemble à une facture de %(nombre)s, un autre client de votre cabinet."
+
+msgid "Moverla a %(nombre)s"
+msgstr "La déplacer vers %(nombre)s"
+
+msgid "La factura se ha movido a este cliente: léela de nuevo con la IA para comprobar si es emitida o recibida."
+msgstr "La facture a été déplacée vers ce client : relisez-la avec l'IA pour vérifier si elle est émise ou reçue."
+
+msgid "Movida a otro cliente"
+msgstr "Déplacée vers un autre client"
+
+msgid "Solo se puede mover una factura pendiente: reábrela antes."
+msgstr "Seule une facture en attente peut être déplacée : rouvrez-la d'abord."
+
+msgid "La factura ya es de ese cliente."
+msgstr "La facture appartient déjà à ce client."

@@ -201,6 +201,14 @@
   {% endif %}
 </section>
 {% endif %}
+{% if f and f.estado == 'pendiente' and evidencia and evidencia.posible_cliente %}
+<section class="dash-panel" role="status"><form method="post" action="{{ url_for('contabilidad.mover', factura_id=f.id) }}" class="ds-fila">
+  <span>{{ _('Parece una factura de %(nombre)s, otro cliente de tu despacho.', nombre=evidencia.posible_cliente.nombre) }}</span>
+  <input type="hidden" name="cliente_destino" value="{{ evidencia.posible_cliente.id }}">
+  <button type="submit" class="btn btn-primary">{{ _('Moverla a %(nombre)s', nombre=evidencia.posible_cliente.nombre) }}</button>
+</form></section>
+{% endif %}
+{% if request.args.get('movida') %}<div class="ia-aviso" role="status">{{ _('La factura se ha movido a este cliente: léela de nuevo con la IA para comprobar si es emitida o recibida.') }}</div>{% endif %}
 {% if f %}
 <section id="mensajes" class="ds-mt-24"><h2>{{ _('Mensajes con el cliente') }}</h2>
   {% if mensajes %}

@@ -26816,3 +26816,33 @@ msgstr "An import (operation type 06) can only be exported in the classic 256-po
 
 msgid "Una importación necesita el número de DUA (en «Datos para los modelos 340 y 347»)."
 msgstr "An import needs the DUA number (in “Data for models 340 and 347”)."
+
+msgid "No tengo en este cliente la factura %(numero)s que rectifica: si ya está contabilizada en a3 no pasa nada, si no, falta anotarla."
+msgstr "I do not have invoice %(numero)s, which it corrects, for this client: if it is already posted in a3 that is fine, otherwise it still needs to be entered."
+
+msgid "El abono (%(abono)s) es mayor que la factura que rectifica (%(original)s)."
+msgstr "The credit note (%(abono)s) is larger than the invoice it corrects (%(original)s)."
+
+msgid "Entre este abono y los anteriores (%(suma)s) se supera lo facturado en la factura %(numero)s (%(original)s)."
+msgstr "Between this credit note and the earlier ones (%(suma)s) the amount invoiced on invoice %(numero)s (%(original)s) is exceeded."
+
+msgid "Una factura simplificada (tique) no puede pasar de %(limite)s euros salvo en algunos sectores: ¿falta el NIF del cliente?"
+msgstr "A simplified invoice (receipt) cannot exceed %(limite)s euros except in some sectors: is the client's tax ID missing?"
+
+msgid "Parece una factura de %(nombre)s, otro cliente de tu despacho."
+msgstr "It looks like an invoice for %(nombre)s, another client of your firm."
+
+msgid "Moverla a %(nombre)s"
+msgstr "Move it to %(nombre)s"
+
+msgid "La factura se ha movido a este cliente: léela de nuevo con la IA para comprobar si es emitida o recibida."
+msgstr "The invoice has been moved to this client: read it again with the AI to check whether it is issued or received."
+
+msgid "Movida a otro cliente"
+msgstr "Moved to another client"
+
+msgid "Solo se puede mover una factura pendiente: reábrela antes."
+msgstr "Only a pending invoice can be moved: reopen it first."
+
+msgid "La factura ya es de ese cliente."
+msgstr "The invoice already belongs to that client."

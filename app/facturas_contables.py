@@ -1220,7 +1220,7 @@ def problemas(tenant_id: int, f: dict) -> list[str]:
         res.append("Falta el código de empresa de a3 de este cliente (en Configuración de a3).")
     if f["abono"] and not (f.get("rectifica_numero") and f.get("rectifica_fecha")):
         res.append("Un abono o rectificativa necesita el número y la fecha de la factura que rectifica: a3 lo exige.")
-    if not f.get("tercero_nif"):
+    if not f.get("tercero_nif") and not (f["tipo"] == "emitida" and (f.get("a3") or {}).get("clave_340") == "1"):         # un tique emitido no lleva el NIF del cliente
         res.append("Falta el NIF del proveedor o cliente.")
     ls = f.get("lineas") or []
     if not ls:
@@ -1299,7 +1299,7 @@ def historial(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
         return []
     etiquetas = {"subida": _("Archivo subido"), "creada": _("Anotada"), "leida_ia": _("Leída con IA"), "leida_xml": _("Leída de la factura electrónica"), "revisada_auto": _("Revisada sola por la IA"),
                  "editada": _("Editada"), "revisada": _("Dada por revisada"), "pendiente": _("Reabierta"), "descartada": _("Descartada"), "exportada": _("Exportada a a3"),
-                 "confirmada_a3": _("Confirmada en a3"), "incluir_en_fiscal": _("Incluida en Guilda Fiscal"), "pdf_separado": _("PDF separado en varias facturas")}
+                 "confirmada_a3": _("Confirmada en a3"), "movida": _("Movida a otro cliente"), "incluir_en_fiscal": _("Incluida en Guilda Fiscal"), "pdf_separado": _("PDF separado en varias facturas")}
     nombres = {"fecha": _("la fecha"), "numero": _("el número"), "tercero_nombre": _("el nombre"), "tercero_nif": _("el NIF"), "concepto": _("el concepto"), "total_centimos": _("el total")}
     res = []
     for e in auditoria.listar(tenant_id, entidad="factura_contable", entidad_id=factura_id, limite=200):
@@ -1317,6 +1317,39 @@ def historial(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
             detalle = f"#{d['lote']}"
         res.append({"cuando": e["creado_en"], "quien": e.get("actor") or "", "que": etiquetas.get(accion, accion), "detalle": detalle})
     return res
+
+
+def mover_a_cliente(tenant_id: int, usuario_id: int, factura_id: int, destino_id: int) -> None:
+    """Pasa una factura pendiente a otro cliente del despacho (se subió o se leyó en el cliente equivocado). Se lleva su archivo a los documentos del destino y lo quita del cliente de origen si ninguna otra
+    factura lo usa. Las cuentas escritas a mano (la del tercero y las de las líneas) se quitan: eran las del plan del otro cliente. La persona tiene que ver los dos clientes."""
+    f = obtener(tenant_id, usuario_id, factura_id)
+    if f is None:
+        raise ValueError("Factura no encontrada.")
+    if f["estado"] != "pendiente":
+        raise ValueError("Solo se puede mover una factura pendiente: reábrela antes.")
+    if int(destino_id) == f["cliente_fiscal_id"]:
+        raise ValueError("La factura ya es de ese cliente.")
+    destino = _cliente(tenant_id, usuario_id, int(destino_id))
+    documento = None
+    if f.get("documento_id"):
+        from . import almacen_documentos
+        doc = almacen_documentos.leer_de_cliente_fiscal(tenant_id, f["cliente_fiscal_id"], f["documento_id"], usuario_id)
+        if doc is None:
+            raise ValueError("No se encuentra el archivo de la factura.")
+        documento = adjuntar(tenant_id, destino["id"], usuario_id, doc.get("nombre_archivo") or "factura", doc.get("tipo_mime"), bytes(doc["contenido"]))
+    conn = db.get_connection()
+    try:
+        conn.execute("UPDATE facturas_contables SET cliente_fiscal_id = ?, documento_id = ?, tercero_cuenta = NULL, actualizado_en = ? WHERE id = ? AND tenant_id = ?",
+                     (destino["id"], documento if documento is not None else f.get("documento_id"), db.now_iso(), factura_id, tenant_id))
+        conn.execute("UPDATE facturas_contables_lineas SET cuenta = NULL WHERE factura_id = ?", (factura_id,))
+        otras = conn.execute("SELECT COUNT(*) AS n FROM facturas_contables WHERE tenant_id = ? AND documento_id = ? AND id != ?", (tenant_id, f.get("documento_id"), factura_id)).fetchone()["n"] if f.get("documento_id") else 0
+        auditoria.registrar(tenant_id, usuario_id, "factura_contable.movida", "factura_contable", factura_id, {"de": f["cliente_fiscal_id"], "a": destino["id"]}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    if f.get("documento_id") and not otras and documento != f["documento_id"]:
+        from . import almacen_documentos
+        almacen_documentos.eliminar_de_cliente_fiscal(usuario_id, f["cliente_fiscal_id"], f["documento_id"])
 
 
 def posibles_duplicados(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:

@@ -201,3 +201,34 @@ def test_la_ficha_muestra_el_historial(cliente):
     fid = fc.crear(t, uid, c, _datos(numero="H-9", tercero_nif="A58818501"), [LINEA])
     html = cliente.get(f"/contabilidad/{fid}").get_data(as_text=True)
     assert "Historial de la factura" in html and "Anotada" in html
+
+
+# --- L12: abonos frente a la factura que rectifican --------------------------------------------------------------------------------------------------------
+
+def _abono(t, u, c, numero, rectifica, base, **kw):
+    from app import facturas_contables as fc
+    from tests.test_facturas_contables import _datos
+    return fc.crear(t, u, c, _datos(numero=numero, abono="1", rectifica_numero=rectifica, rectifica_fecha="2026-08-01", tercero_nif="A58818501", **kw), [{"base": base, "pct_iva": "21"}])
+
+
+def test_un_abono_avisa_si_su_factura_no_esta_o_si_la_supera():
+    from app import facturas_contables as fc, facturas_control as ctrl
+    from tests.test_facturas_contables import LINEA, _datos, _despacho
+    t, u, c = _despacho()
+    a1 = _abono(t, u, c, "AB-1", "F-100", "10,00")
+    assert any("No tengo en este cliente la factura F-100" in m for m in ctrl.avisos(t, fc.obtener(t, u, a1)))
+    original = fc.crear(t, u, c, _datos(numero="F-100", tercero_nif="A58818501"), [{**LINEA, "base": "100,00"}])           # 121,00 con IVA
+    assert not any("No tengo" in m for m in ctrl.avisos(t, fc.obtener(t, u, a1)))
+    grande = _abono(t, u, c, "AB-2", "f-100", "500,00")
+    assert any("es mayor que la factura que rectifica" in m for m in ctrl.avisos(t, fc.obtener(t, u, grande)))
+
+
+def test_varios_abonos_que_juntos_superan_la_factura_se_avisan():
+    from app import facturas_contables as fc, facturas_control as ctrl
+    from tests.test_facturas_contables import LINEA, _datos, _despacho
+    t, u, c = _despacho()
+    fc.crear(t, u, c, _datos(numero="F-200", tercero_nif="A58818501"), [{**LINEA, "base": "100,00"}])                      # 121,00
+    _abono(t, u, c, "AB-1", "F-200", "60,00")                                                                              # 72,60
+    segundo = _abono(t, u, c, "AB-2", "F-200", "60,00")                                                                    # 72,60: juntos 145,20 > 121,00
+    m = ctrl.avisos(t, fc.obtener(t, u, segundo))
+    assert any("se supera lo facturado" in x and "145.20" in x for x in m) and not any("es mayor" in x for x in m)

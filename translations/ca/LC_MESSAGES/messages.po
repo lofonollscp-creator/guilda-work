@@ -26825,3 +26825,33 @@ msgstr "Una importació (tipus d'operació 06) només es pot exportar en el form
 
 msgid "Una importación necesita el número de DUA (en «Datos para los modelos 340 y 347»)."
 msgstr "Una importació necessita el número de DUA (a «Dades per als models 340 i 347»)."
+
+msgid "No tengo en este cliente la factura %(numero)s que rectifica: si ya está contabilizada en a3 no pasa nada, si no, falta anotarla."
+msgstr "No tinc en aquest client la factura %(numero)s que rectifica: si ja està comptabilitzada a a3 no passa res, si no, falta anotar-la."
+
+msgid "El abono (%(abono)s) es mayor que la factura que rectifica (%(original)s)."
+msgstr "L'abonament (%(abono)s) és més gran que la factura que rectifica (%(original)s)."
+
+msgid "Entre este abono y los anteriores (%(suma)s) se supera lo facturado en la factura %(numero)s (%(original)s)."
+msgstr "Entre aquest abonament i els anteriors (%(suma)s) se supera el que es va facturar a la factura %(numero)s (%(original)s)."
+
+msgid "Una factura simplificada (tique) no puede pasar de %(limite)s euros salvo en algunos sectores: ¿falta el NIF del cliente?"
+msgstr "Una factura simplificada (tiquet) no pot passar de %(limite)s euros tret d'alguns sectors: falta el NIF del client?"
+
+msgid "Parece una factura de %(nombre)s, otro cliente de tu despacho."
+msgstr "Sembla una factura de %(nombre)s, un altre client del teu despatx."
+
+msgid "Moverla a %(nombre)s"
+msgstr "Moure-la a %(nombre)s"
+
+msgid "La factura se ha movido a este cliente: léela de nuevo con la IA para comprobar si es emitida o recibida."
+msgstr "La factura s'ha mogut a aquest client: llegeix-la de nou amb la IA per comprovar si és emesa o rebuda."
+
+msgid "Movida a otro cliente"
+msgstr "Moguda a un altre client"
+
+msgid "Solo se puede mover una factura pendiente: reábrela antes."
+msgstr "Només es pot moure una factura pendent: reobre-la abans."
+
+msgid "La factura ya es de ese cliente."
+msgstr "La factura ja és d'aquest client."

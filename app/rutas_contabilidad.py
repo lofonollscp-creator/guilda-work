@@ -423,6 +423,17 @@ def mensaje(factura_id: int):
     return redirect(url_for("contabilidad.ver", factura_id=factura_id) + "#mensajes")
 
 
+@contabilidad_bp.route("/<int:factura_id>/mover", methods=["POST"])
+@login_required
+def mover(factura_id: int):
+    """Pasa la factura a otro cliente del despacho (se leyó o se subió en el equivocado)."""
+    try:
+        fc.mover_a_cliente(g.tenant_id, g.usuario_id, factura_id, request.form.get("cliente_destino", type=int) or 0)
+    except ValueError as e:
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=_(str(e))[:300]))
+    return redirect(url_for("contabilidad.ver", factura_id=factura_id, movida=1))
+
+
 @contabilidad_bp.route("/<int:factura_id>/devolver", methods=["POST"])
 @login_required
 def devolver(factura_id: int):

@@ -15,6 +15,7 @@ from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, factur
 PROMPT = """Eres un asistente de contabilidad en España. Recibes la foto o el PDF de UNA factura. Devuelve SOLO un objeto JSON, sin texto alrededor, con estos campos (null si no aparece o no se lee):
 {"emisor_nombre": str, "emisor_nif": str, "receptor_nombre": str, "receptor_nif": str, "numero": str, "fecha": "AAAA-MM-DD", "fecha_operacion": "AAAA-MM-DD",
  "es_abono": bool, "rectifica_numero": str, "rectifica_fecha": "AAAA-MM-DD", "concepto": str (máx. 60 caracteres, qué se factura),
+ "simplificada": bool (true si es un tique o «factura simplificada»: sin datos del destinatario y con el IVA incluido en el precio),
  "lineas": [{"base": número, "pct_iva": número, "cuota_iva": número, "pct_recargo": número, "pct_retencion": número}] (una por cada tipo de IVA distinto),
  "suplidos": número, "total": número, "moneda": "EUR" u otro código de 3 letras,
  "operacion": una de "interior", "inversion_sujeto_pasivo", "intracomunitaria_bienes", "intracomunitaria_servicios", "canarias_ceuta_melilla", "exportacion", "exenta", "no_sujeta" (null si es una operación interior normal o no lo sabes),
@@ -93,6 +94,8 @@ def _a_factura(datos: dict, f: dict, cliente_nif: str, texto: str = "") -> tuple
     if not nuevos.get("fecha"):
         nuevos["fecha"] = f["fecha"]
     nuevos["rectifica_numero"] = _texto(datos.get("rectifica_numero"), fc.MAX_NUMERO) or f.get("rectifica_numero")
+    if datos.get("simplificada") is True and not (datos.get("receptor_nif") if tipo == "emitida" else ""):
+        nuevos["datos_a3"] = {"clave_340": "1"}                                    # el tique se declara en el 340 con la clave 1 y no exige el NIF del cliente
     nuevos["notas"] = f.get("notas")
     lineas: list[dict] = []
     for l in (datos.get("lineas") if isinstance(datos.get("lineas"), list) else [])[:fc.MAX_LINEAS]:
@@ -254,6 +257,20 @@ def _segunda_opinion(usuario_id: int, doc: dict, f: dict, cliente_nif: str, qr: 
     return r, fuente, notas + ["La primera lectura era dudosa: se ha releído con un segundo modelo y se ha quedado la primera, que seguía siendo la mejor."]
 
 
+def _cliente_probable(tenant_id: int, usuario_id: int, cliente_actual_id: int, cliente_nif: str, valores: dict) -> dict | None:
+    """Si la factura leída no es de este cliente (su NIF no es ni el del emisor ni el del receptor) y sí de otro cliente del despacho que la persona ve, ese cliente: {id, nombre}."""
+    nifs = {valores.get("emisor_nif"), valores.get("receptor_nif")} - {"", None}
+    if not nifs or not cliente_nif or cliente_nif in nifs:
+        return None
+    visibles = acceso.clientes_visibles(tenant_id, usuario_id)
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT id, nombre, nif FROM clientes_fiscales WHERE tenant_id = ? AND papelera_en IS NULL AND id != ?", (tenant_id, cliente_actual_id)).fetchall()
+    finally:
+        conn.close()
+    return next(({"id": c["id"], "nombre": c["nombre"]} for c in filas if fc._nif(c["nif"]) in nifs and (visibles is None or c["id"] in visibles)), None)
+
+
 def _puerta_del_texto(r: dict, texto: str, cliente_nif: str) -> bool:
     """¿Se puede fiar de lo leído SOLO del texto del PDF? Únicamente si todo cuadra por sí solo: el cliente aparece como emisor o receptor, las líneas suman el total, y el número, la fecha y el total
     están escritos literalmente en el texto. Si algo falla, se vuelve a leer con la imagen: la calidad manda sobre el ahorro."""
@@ -409,6 +426,9 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
     else:
         evidencias = lectura_evidencias.limpiar(datos.get("evidencias"), valores)
         avisos += lectura_evidencias.avisos_de_evidencia(evidencias, ("numero", "fecha", "total", r["campo_contraparte"]))
+    otro_cliente = _cliente_probable(tenant_id, usuario_id, f["cliente_fiscal_id"], cliente_nif, valores)
+    if otro_cliente:
+        avisos.append(f"Parece una factura de otro cliente de tu despacho ({otro_cliente['nombre']}): puedes moverla desde su ficha.")
     comprobaciones = r["comprobaciones"] + _duplicado(tenant_id, f, nuevos["numero"], r["contraparte_nif"])
     from .fiscal_modelos.validacion_apuntes import nif_espanol_valido
     puntos = lectura_confianza.puntuar(datos=datos, valores=valores, evidencias=evidencias, fuente=fuente, texto_documento="" if fuente == "ocr" else texto, qr=qr, campo_contraparte=r["campo_contraparte"],
@@ -423,7 +443,7 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
     try:
         conn.execute("UPDATE facturas_contables SET lectura = ?, lectura_error = NULL, lectura_evidencia = ?, lectura_confianza = ?, lectura_fuente = ?, revision_auto = 0 WHERE id = ? AND tenant_id = ?",
                      ("xml" if fuente == "xml" else "ia", json.dumps({"origen": fuente, "campos": evidencias, "verificaciones": comprobaciones, "confianza": puntos["campos"], "motivos": puntos["motivos"],
-                                                                       "qr": qr, "segunda_lectura": segunda}, ensure_ascii=False), puntos["global"], fuente, factura_id, tenant_id))
+                                                                       "qr": qr, "segunda_lectura": segunda, "posible_cliente": otro_cliente}, ensure_ascii=False), puntos["global"], fuente, factura_id, tenant_id))
         auditoria.registrar(tenant_id, usuario_id, "factura_contable.leida_xml" if fuente == "xml" else "factura_contable.leida_ia", "factura_contable", factura_id,
                             {"avisos": len(avisos), "fuente": fuente, "confianza": puntos["global"]}, conn=conn)
         lectura_calidad.guardar_lo_leido(conn, tenant_id, factura_id, fc.obtener(tenant_id, usuario_id, factura_id))
