@@ -26947,3 +26947,12 @@ msgstr[1] "Falten %(n)s factures periòdiques"
 
 msgid "Apartada: no era una factura"
 msgstr "Apartada: no era una factura"
+
+msgid "Exportado y sin marcar como importado en a3"
+msgstr "Exportat i sense marcar com a importat a a3"
+
+msgid "Rechazado por a3: %(motivo)s"
+msgstr "Rebutjat per a3: %(motivo)s"
+
+msgid "%(cliente)s · fichero #%(n)s"
+msgstr "%(cliente)s · fitxer #%(n)s"

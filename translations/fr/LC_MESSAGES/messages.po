@@ -27023,3 +27023,12 @@ msgstr[1] "Il manque %(n)s factures récurrentes"
 
 msgid "Apartada: no era una factura"
 msgstr "Écartée : ce n'était pas une facture"
+
+msgid "Exportado y sin marcar como importado en a3"
+msgstr "Exporté et non marqué comme importé dans a3"
+
+msgid "Rechazado por a3: %(motivo)s"
+msgstr "Rejeté par a3 : %(motivo)s"
+
+msgid "%(cliente)s · fichero #%(n)s"
+msgstr "%(cliente)s · fichier #%(n)s"

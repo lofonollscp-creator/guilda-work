@@ -194,3 +194,48 @@ def test_los_certificados_que_caducan_salen_con_dias_servicios_y_riesgo_de_prese
     antiguo = next(i for t_, i in por_titulo.items() if "Antiguo" in t_)
     assert "Caducó hace 3 días" in antiguo["detalle"] and antiguo["urgencia"] == "vencido"
     assert any(i["titulo"].startswith("303") and "caduca" in i["detalle"].lower() for i in {s["clave"]: s for s in b["secciones"]}["certificados_riesgo"]["elementos"])
+
+
+# --- J25: ficheros para a3 que piden que alguien haga algo -------------------------------------------------------------------------------------------------
+
+def _con_fichero(nombre):
+    from app import facturas_contables as fc
+    from tests.test_facturas_contables import LINEA, _datos
+    t = db.crear_tenant(nombre)
+    u = db.crear_usuario_vinculado_a_kratos(f"{nombre.lower().replace(' ', '')}@ejemplo.com", f"kratos-{nombre}")
+    db.asignar_tenant(u, t); db.asignar_supervisor_tenant(u, True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = crear_cliente_fiscal(t, "Cliente Fichero SL", nif="B12345678")
+    fc.guardar_configuracion(t, u, c, {"a3_empresa": "7", "digitos": "8"})
+    fid = fc.crear(t, u, c, _datos(numero="H-1", tercero_nif="A58818501"), [LINEA])
+    fc.cambiar_estado(t, u, fid, "revisada")
+    lote = fc.exportar(t, u, c)["lote"]
+    return fc, t, u, c, lote
+
+
+def test_un_fichero_sin_marcar_pasados_unos_dias_y_uno_rechazado_aparecen_en_hoy(cliente):
+    fc, t, u, c, lote = _con_fichero("Despacho hoy ficheros")
+    assert fc.ficheros_por_atender(t, u) == []                                                      # recién exportado: aún es pronto
+    futuro = HOY + timedelta(days=4)
+    r = fc.ficheros_por_atender(t, u, futuro)
+    assert [(x["id"], x["motivo"]) for x in r] == [(lote, "sin_estado")]
+    fc.fijar_estado_a3_del_lote(t, u, lote, "rechazado", "falta la cuenta 4720")
+    r = fc.ficheros_por_atender(t, u)                                                               # un rechazado no espera días
+    assert [(x["motivo"], x["motivo_a3"]) for x in r] == [("rechazado", "falta la cuenta 4720")]
+    with cliente.application.test_request_context():
+        b = bandeja_hoy.reunir(u)
+    textos = [str(i) for s in b["secciones"] if s["clave"] == "contabilizacion" for i in s["elementos"]]
+    assert any("Rechazado por a3: falta la cuenta 4720" in x for x in textos)
+
+
+def test_un_fichero_importado_o_ya_cruzado_con_el_retorno_no_pide_nada():
+    fc, t, u, c, lote = _con_fichero("Despacho hoy ficheros dos")
+    fc.fijar_estado_a3_del_lote(t, u, lote, "importado")
+    assert fc.ficheros_por_atender(t, u, HOY + timedelta(days=30)) == []
+    fc.fijar_estado_a3_del_lote(t, u, lote, "")
+    conn = fc.db.get_connection()
+    try:
+        conn.execute("UPDATE contabilidad_lotes SET comprobado_en = ? WHERE id = ?", (fc.db.now_iso(), lote)); conn.commit()
+    finally:
+        conn.close()
+    assert fc.ficheros_por_atender(t, u, HOY + timedelta(days=30)) == []                           # cruzado con lo que devolvió a3: se importó

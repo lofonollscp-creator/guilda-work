@@ -141,6 +141,10 @@ def reunir(usuario_id: int, supervisor: bool = False, hoy: date | None = None, t
                 urgente = bool(c["del_portal"]) or bool(c["antigua"] and c["antigua"][:10] <= limite_antiguas)
                 facturas_cli.append(_item(c["nombre"], url_for("contabilidad.lista", cliente_id=c["cliente_fiscal_id"]), "hoy" if urgente else "info", " · ".join(partes), c["antigua"],
                                       destino=_destino("contabilizacion", c["cliente_fiscal_id"])))
+            for fch in facturas_contables.ficheros_por_atender(tid, usuario_id, hoy):
+                texto = (_("Rechazado por a3: %(motivo)s", motivo=fch["motivo_a3"]) if fch["motivo_a3"] else _("Rechazado por a3")) if fch["motivo"] == "rechazado" else _("Exportado y sin marcar como importado en a3")
+                facturas_cli.append(_item(_("%(cliente)s · fichero #%(n)s", cliente=fch["cliente"], n=fch["id"]), url_for("contabilidad.lotes"), "vencido" if fch["motivo"] == "rechazado" else "hoy", texto, fch["creado_en"],
+                                          destino=_destino("contabilizacion", fch["cliente_fiscal_id"])))
             secciones.append(_seccion("contabilizacion", _("Facturas de clientes"), facturas_cli))
 
         if certificados.puede_gestionar(usuario_id, tid):

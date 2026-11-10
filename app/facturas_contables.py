@@ -1677,6 +1677,23 @@ def fijar_estado_a3_del_lote(tenant_id: int, usuario_id: int, lote_id: int, esta
         conn.close()
 
 
+DIAS_FICHERO_SIN_ESTADO = 3        # un fichero exportado que lleva tanto sin marcar como importado ni cruzar con lo que devuelve a3 pide que alguien lo mire
+
+
+def ficheros_por_atender(tenant_id: int, usuario_id: int, hoy=None, dias: int = DIAS_FICHERO_SIN_ESTADO) -> list[dict]:
+    """Los ficheros para a3 de los clientes que ve la persona que necesitan que alguien haga algo: los **rechazados** por a3 (con su motivo) y los que llevan `dias` o más sin que nadie los marque como importados
+    ni se hayan cruzado con lo que devuelve a3. [{id, cliente_fiscal_id, cliente, creado_en, motivo: «rechazado» | «sin_estado», motivo_a3}], los más antiguos primero."""
+    from datetime import date as _date, timedelta
+    limite = ((hoy or _date.today()) - timedelta(days=dias)).isoformat()
+    res = []
+    for l in listar_lotes(tenant_id, usuario_id, None, 200):
+        if l.get("estado_a3") == "rechazado":
+            res.append({"id": l["id"], "cliente_fiscal_id": l["cliente_fiscal_id"], "cliente": l["cliente_nombre"], "creado_en": l["creado_en"], "motivo": "rechazado", "motivo_a3": l.get("motivo_a3")})
+        elif not l.get("estado_a3") and not l.get("comprobado_en") and str(l["creado_en"])[:10] <= limite:
+            res.append({"id": l["id"], "cliente_fiscal_id": l["cliente_fiscal_id"], "cliente": l["cliente_nombre"], "creado_en": l["creado_en"], "motivo": "sin_estado", "motivo_a3": None})
+    return sorted(res, key=lambda x: x["creado_en"])
+
+
 def contenido_del_lote(tenant_id: int, usuario_id: int, lote_id: int) -> bytes | None:
     conn = db.get_connection()
     try:
