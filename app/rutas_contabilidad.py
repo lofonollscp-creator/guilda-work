@@ -1,6 +1,7 @@
 """Facturas para contabilizar y fichero de enlace de a3 (ver app/facturas_contables.py y app/enlace_a3.py)."""
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
@@ -557,6 +558,31 @@ def copiar_configuracion(cliente_id: int):
     except ValueError as e:
         return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id, error=_(str(e))[:300]))
     return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id))
+
+
+@contabilidad_bp.route("/cliente/<int:cliente_id>/cuentas", methods=["GET", "POST"])
+@login_required
+def cuentas(cliente_id: int):
+    """El mapa de subcuentas de a3 de un cliente: qué cuenta va a cada proveedor y cliente, de dónde sale, y cambiarla a mano."""
+    cliente = db.obtener_cliente_fiscal(g.tenant_id, cliente_id)
+    if cliente is None or not acceso.puede_ver_cliente(g.tenant_id, g.usuario_id, cliente_id):
+        abort(404)
+    error = mensaje = None
+    if request.method == "POST":
+        actuales = {(t["tipo"], t["nif"]): t["cuenta"] for t in fc.mapa_de_cuentas(g.tenant_id, g.usuario_id, cliente_id)["terceros"]}
+        cambios = 0
+        try:
+            for clave, valor in request.form.items():
+                if not clave.startswith("cuenta__") or not valor.strip():
+                    continue
+                _p, tipo, nif = clave.split("__", 2)
+                if (tipo, nif) in actuales and actuales[(tipo, nif)] != re.sub(r"\D", "", valor):
+                    fc.fijar_cuenta_tercero(g.tenant_id, g.usuario_id, cliente_id, tipo, nif, valor)
+                    cambios += 1
+            mensaje = _("Subcuentas guardadas: %(n)s cambios.", n=cambios)
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("contabilidad_cuentas.html", cliente=cliente, mapa=fc.mapa_de_cuentas(g.tenant_id, g.usuario_id, cliente_id), cfg=fc.configuracion(g.tenant_id, cliente_id), error=error or _error(), mensaje=mensaje, subnav=None)
 
 
 @contabilidad_bp.route("/cliente/<int:cliente_id>/configuracion", methods=["GET", "POST"])

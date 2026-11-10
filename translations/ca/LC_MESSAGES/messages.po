@@ -26430,3 +26430,58 @@ msgstr "El llistat no porta cap factura."
 
 msgid "Elige el cliente y el archivo que devuelve a3."
 msgstr "Tria el client i l'arxiu que retorna a3."
+
+msgid "Mapa de cuentas"
+msgstr "Mapa de comptes"
+
+msgid "Subcuenta de a3 que se usará con cada proveedor y cliente."
+msgstr "Subcompte d'a3 que s'usarà amb cada proveïdor i client."
+
+msgid "Importar el plan de a3"
+msgstr "Importar el pla d'a3"
+
+msgid "Todavía no hay proveedores ni clientes con NIF"
+msgstr "Encara no hi ha proveïdors ni clients amb NIF"
+
+msgid "Aparecerán aquí cuando haya facturas con el NIF del proveedor o cliente."
+msgstr "Apareixeran aquí quan hi hagi factures amb el NIF del proveïdor o client."
+
+msgid "Subcuenta de %(n)s"
+msgstr "Subcompte de %(n)s"
+
+msgid "Genérica"
+msgstr "Genèrica"
+
+msgid "Nueva: se numerará sola"
+msgstr "Nova: es numerarà sola"
+
+msgid "Del plan de a3"
+msgstr "Del pla d'a3"
+
+msgid "Tiene que tener %(d)s dígitos, como el resto de las subcuentas de este cliente. Lo ya exportado no cambia."
+msgstr "Ha de tenir %(d)s dígits, com la resta de subcomptes d'aquest client. El que ja s'ha exportat no canvia."
+
+msgid "Guardar subcuentas"
+msgstr "Desar subcomptes"
+
+msgid "%(n)s proveedor o cliente va a la subcuenta genérica: en a3 se mezclará con los demás. Fíjale una subcuenta, impórtala del plan de a3 o activa la numeración automática."
+msgid_plural "%(n)s proveedores o clientes van a la subcuenta genérica: en a3 se mezclarán con los demás. Fíjales una subcuenta, impórtalas del plan de a3 o activa la numeración automática."
+msgstr[0] "%(n)s proveïdor o client va al subcompte genèric: a a3 es barrejarà amb els altres. Fixa-li un subcompte, importa'l del pla d'a3 o activa la numeració automàtica."
+msgstr[1] "%(n)s proveïdors o clients van al subcompte genèric: a a3 es barrejaran amb els altres. Fixa'ls un subcompte, importa'ls del pla d'a3 o activa la numeració automàtica."
+
+msgid "%(n)s factura no tiene NIF y usa siempre la subcuenta genérica."
+msgid_plural "%(n)s facturas no tienen NIF y usan siempre la subcuenta genérica."
+msgstr[0] "%(n)s factura no té NIF i fa servir sempre el subcompte genèric."
+msgstr[1] "%(n)s factures no tenen NIF i fan servir sempre el subcompte genèric."
+
+msgid "Mira qué subcuenta de a3 se usará con cada proveedor y cliente, de dónde sale, y cámbiala si hace falta."
+msgstr "Mira quin subcompte d'a3 s'usarà amb cada proveïdor i client, d'on surt, i canvia'l si cal."
+
+msgid "Subcuentas guardadas: %(n)s cambios."
+msgstr "Subcomptes desats: %(n)s canvis."
+
+msgid "Proveedor o cliente no válido."
+msgstr "Proveïdor o client no vàlid."
+
+msgid "La subcuenta no tiene los dígitos que usa este cliente (se ven abajo, en la tabla)."
+msgstr "El subcompte no té els dígits que fa servir aquest client (es veuen a sota, a la taula)."

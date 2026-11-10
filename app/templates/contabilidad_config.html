@@ -48,6 +48,7 @@
   </form>
   <p class="muted">{{ _('No cambia el código de empresa de a3 de este cliente. Los valores del despacho se fijan en Ajustes de a3.') }} <a href="{{ url_for('contabilidad.ajustes') }}">{{ _('Ajustes de a3') }}</a></p>
 </section>
+<p class="muted">{{ _('Mira qué subcuenta de a3 se usará con cada proveedor y cliente, de dónde sale, y cámbiala si hace falta.') }} <a class="btn btn-ghost" href="{{ url_for('contabilidad.cuentas', cliente_id=cliente.id) }}">{{ _('Mapa de cuentas') }}</a></p>
 {% if terceros %}
 <section class="ds-max-640">
   <h2>{{ _('Subcuentas recordadas') }}</h2>

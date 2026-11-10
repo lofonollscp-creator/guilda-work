@@ -142,3 +142,34 @@ def test_rutas_de_revision_rapida(cliente):
     d = _leida(t, c, "R-3", 80, fecha="2026-08-13", tercero_nif="B87654323")
     r = cliente.post(f"/contabilidad/{b}/estado", data={"estado": "revisada", "siguiente": "1", "no_es_duplicado": "1"})
     assert r.status_code == 302 and r.headers["Location"].endswith(f"/contabilidad/{d}")
+
+
+# --- Mapa de cuentas de a3 (J1) ------------------------------------------------------------------------------------------------------------------
+
+def test_mapa_de_cuentas_origen_y_cambio_a_mano():
+    t, u, c = _despacho()
+    fc.crear(t, u, c, _datos(numero="M-1", tercero_nif="B11111111", tercero_nombre="Genérico S.L."), [LINEA])
+    fc.crear(t, u, c, _datos(numero="M-2", tercero_nif="B22222222", tercero_nombre="Fijado S.L.", tercero_cuenta="40000007"), [LINEA])
+    fc.crear(t, u, c, _datos(numero="M-3", tercero_nif="", tercero_nombre="Sin NIF"), [LINEA])
+    m = fc.mapa_de_cuentas(t, u, c)
+    assert [(x["nif"], x["origen"]) for x in m["terceros"]] == [("B11111111", "generica"), ("B22222222", "recordada")] and m["sin_nif"] == 1 and m["faltan"] == 1
+    fc.fijar_cuenta_tercero(t, u, c, "proveedor", "B11111111", "40000042")
+    m = fc.mapa_de_cuentas(t, u, c)
+    assert {x["nif"]: (x["cuenta"], x["origen"]) for x in m["terceros"]}["B11111111"] == ("40000042", "recordada") and m["faltan"] == 0
+    with pytest.raises(ValueError, match="no tiene los dígitos"):
+        fc.fijar_cuenta_tercero(t, u, c, "proveedor", "B11111111", "4000042")
+    f = fc.obtener(t, u, fc.crear(t, u, c, _datos(numero="M-4", tercero_nif="B11111111"), [LINEA]))
+    assert fc.cuenta_efectiva(t, f) == "40000042"
+
+
+def test_mapa_con_numeracion_automatica_y_pagina(cliente):
+    from tests.test_facturas_contables import _web
+    uid, t, c = _web(cliente, "mapa@ejemplo.com")
+    fc.guardar_configuracion(t, uid, c, {"a3_empresa": "7", "digitos": "8", "subcuentas_auto": "1"})
+    fc.crear(t, uid, c, _datos(numero="N-1", tercero_nif="B33333333"), [LINEA])
+    assert [x["origen"] for x in fc.mapa_de_cuentas(t, uid, c)["terceros"]] == ["nueva"]
+    html = cliente.get(f"/contabilidad/cliente/{c}/cuentas").get_data(as_text=True)
+    assert "Mapa de cuentas" in html and "B33333333" in html and "Nueva: se numerará sola" in html
+    r = cliente.post(f"/contabilidad/cliente/{c}/cuentas", data={"cuenta__proveedor__B33333333": "40000099"})
+    assert "Subcuentas guardadas: 1 cambios" in r.get_data(as_text=True) and fc.mapa_de_cuentas(t, uid, c)["terceros"][0]["cuenta"] == "40000099"
+    assert "Mapa de cuentas" in cliente.get(f"/contabilidad/cliente/{c}/configuracion").get_data(as_text=True)

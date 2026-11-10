@@ -635,6 +635,75 @@ def terceros_del_cliente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
         conn.close()
 
 
+def mapa_de_cuentas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> dict:
+    """Qué subcuenta de a3 se usará con cada proveedor y cliente del cliente de la gestoría (los de sus facturas no descartadas, por NIF): {terceros: [{tipo, nif, nombre, facturas, cuenta, origen}], sin_nif, faltan}.
+    `origen`: «recordada» (guardada al exportar o fijada a mano), «plan» (la que ya tiene en el plan de a3 importado), «nueva» (se numerará sola al exportar) o «generica» (la genérica del cliente: en a3 todo
+    caerá en una sola subcuenta). `faltan` cuenta los que van a la genérica."""
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    cfg = configuracion(tenant_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        filas = [dict(f) for f in conn.execute(
+            "SELECT id, cliente_fiscal_id, tipo, fecha, tercero_nif, tercero_nombre, tercero_cuenta FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND estado != 'descartada' ORDER BY fecha, id",
+            (tenant_id, cliente_fiscal_id))]
+        recordadas = {(r["tipo"], r["nif"]): r["cuenta"] for r in conn.execute("SELECT tipo, nif, cuenta FROM contabilidad_terceros WHERE tenant_id = ? AND cliente_fiscal_id = ?", (tenant_id, cliente_fiscal_id))}
+        del_plan = {}
+        for r in conn.execute("SELECT tipo, nif, cuenta FROM contabilidad_plan WHERE tenant_id = ? AND cliente_fiscal_id = ? AND nif IS NOT NULL ORDER BY cuenta", (tenant_id, cliente_fiscal_id)):
+            del_plan.setdefault((r["tipo"], r["nif"]), r["cuenta"])
+    finally:
+        conn.close()
+    try:
+        nuevas = _subcuentas_nuevas(tenant_id, cfg, filas)
+    except ValueError:
+        nuevas = {}
+    grupos: dict[tuple[str, str], dict] = {}
+    sin_nif = 0
+    for f in filas:
+        nif, tipo = _nif(f["tercero_nif"]), _tipo_tercero(f["tipo"])
+        if not nif:
+            sin_nif += 1
+            continue
+        g_ = grupos.setdefault((tipo, nif), {"tipo": tipo, "nif": nif, "nombre": f["tercero_nombre"], "facturas": 0, "cuenta_en_factura": None})
+        g_["facturas"] += 1
+        g_["nombre"] = f["tercero_nombre"] or g_["nombre"]
+        g_["cuenta_en_factura"] = f["tercero_cuenta"] or g_["cuenta_en_factura"]
+    res = []
+    for (tipo, nif), t in grupos.items():
+        generica = cfg["cuenta_proveedores"] if tipo == "proveedor" else cfg["cuenta_clientes"]
+        if (tipo, nif) in recordadas:
+            cuenta, origen = recordadas[(tipo, nif)], "recordada"
+        elif t["cuenta_en_factura"]:
+            cuenta, origen = t["cuenta_en_factura"], "recordada"
+        elif (tipo, nif) in del_plan:
+            cuenta, origen = del_plan[(tipo, nif)], "plan"
+        elif (tipo, nif) in nuevas:
+            cuenta, origen = nuevas[(tipo, nif)][0], "nueva"
+        else:
+            cuenta, origen = generica, "generica"
+        res.append({"tipo": tipo, "nif": nif, "nombre": t["nombre"], "facturas": t["facturas"], "cuenta": cuenta, "origen": origen})
+    res.sort(key=lambda t: ({"generica": 0, "nueva": 1, "recordada": 2, "plan": 3}[t["origen"]], t["tipo"], t["nombre"].lower()))
+    return {"terceros": res, "sin_nif": sin_nif, "faltan": sum(1 for t in res if t["origen"] == "generica")}
+
+
+def fijar_cuenta_tercero(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo_tercero: str, nif: str, cuenta: str) -> None:
+    """Fija a mano la subcuenta de un proveedor o cliente (por su NIF) para las próximas exportaciones. Las ya exportadas no cambian."""
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    if tipo_tercero not in ("proveedor", "cliente") or not _nif(nif):
+        raise ValueError("Proveedor o cliente no válido.")
+    cfg = configuracion(tenant_id, cliente_fiscal_id)
+    cuenta = _cuenta_valida(cuenta, "Subcuenta", cfg["digitos"])
+    if len(cuenta) != cfg["digitos"]:
+        raise ValueError("La subcuenta no tiene los dígitos que usa este cliente (se ven abajo, en la tabla).")
+    conn = db.get_connection()
+    try:
+        nombre = conn.execute("SELECT tercero_nombre FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND tercero_nif = ? ORDER BY id DESC LIMIT 1", (tenant_id, cliente_fiscal_id, _nif(nif))).fetchone()
+        _recordar_tercero(conn, tenant_id, cliente_fiscal_id, "recibida" if tipo_tercero == "proveedor" else "emitida", _nif(nif), (nombre["tercero_nombre"] if nombre else "") or "", cuenta)
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.cuenta_tercero", "cliente_fiscal", cliente_fiscal_id, {"tipo": tipo_tercero, "nif": _nif(nif), "cuenta": cuenta}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
 # --- Cierre de periodos ----------------------------------------------------------------------------------------------------------------------------------
 # Un trimestre de un cliente está cerrado cuando se ha cerrado a mano aquí, o cuando su modelo 303 (o el 390 de ese año) figura como presentado en el calendario fiscal. Exportar facturas de un periodo
 # cerrado exige confirmarlo: lo normal es que ya estén contabilizadas o que haya que presentar una complementaria.

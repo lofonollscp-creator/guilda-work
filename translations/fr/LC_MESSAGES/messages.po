@@ -26506,3 +26506,58 @@ msgstr "La liste ne contient aucune facture."
 
 msgid "Elige el cliente y el archivo que devuelve a3."
 msgstr "Choisissez le client et le fichier renvoyé par a3."
+
+msgid "Mapa de cuentas"
+msgstr "Carte des comptes"
+
+msgid "Subcuenta de a3 que se usará con cada proveedor y cliente."
+msgstr "Sous-compte a3 utilisé pour chaque fournisseur et client."
+
+msgid "Importar el plan de a3"
+msgstr "Importer le plan d'a3"
+
+msgid "Todavía no hay proveedores ni clientes con NIF"
+msgstr "Il n'y a pas encore de fournisseurs ni de clients avec NIF"
+
+msgid "Aparecerán aquí cuando haya facturas con el NIF del proveedor o cliente."
+msgstr "Ils apparaîtront ici dès qu'il y aura des factures avec le NIF du fournisseur ou du client."
+
+msgid "Subcuenta de %(n)s"
+msgstr "Sous-compte de %(n)s"
+
+msgid "Genérica"
+msgstr "Générique"
+
+msgid "Nueva: se numerará sola"
+msgstr "Nouveau : il sera numéroté automatiquement"
+
+msgid "Del plan de a3"
+msgstr "Du plan d'a3"
+
+msgid "Tiene que tener %(d)s dígitos, como el resto de las subcuentas de este cliente. Lo ya exportado no cambia."
+msgstr "Elle doit comporter %(d)s chiffres, comme les autres sous-comptes de ce client. Ce qui a déjà été exporté ne change pas."
+
+msgid "Guardar subcuentas"
+msgstr "Enregistrer les sous-comptes"
+
+msgid "%(n)s proveedor o cliente va a la subcuenta genérica: en a3 se mezclará con los demás. Fíjale una subcuenta, impórtala del plan de a3 o activa la numeración automática."
+msgid_plural "%(n)s proveedores o clientes van a la subcuenta genérica: en a3 se mezclarán con los demás. Fíjales una subcuenta, impórtalas del plan de a3 o activa la numeración automática."
+msgstr[0] "%(n)s fournisseur ou client va au sous-compte générique : dans a3 il sera mélangé aux autres. Fixez-lui un sous-compte, importez-le du plan d'a3 ou activez la numérotation automatique."
+msgstr[1] "%(n)s fournisseurs ou clients vont au sous-compte générique : dans a3 ils seront mélangés aux autres. Fixez-leur un sous-compte, importez-les du plan d'a3 ou activez la numérotation automatique."
+
+msgid "%(n)s factura no tiene NIF y usa siempre la subcuenta genérica."
+msgid_plural "%(n)s facturas no tienen NIF y usan siempre la subcuenta genérica."
+msgstr[0] "%(n)s facture n'a pas de NIF et utilise toujours le sous-compte générique."
+msgstr[1] "%(n)s factures n'ont pas de NIF et utilisent toujours le sous-compte générique."
+
+msgid "Mira qué subcuenta de a3 se usará con cada proveedor y cliente, de dónde sale, y cámbiala si hace falta."
+msgstr "Voyez quel sous-compte a3 sera utilisé pour chaque fournisseur et client, d'où il vient, et modifiez-le si besoin."
+
+msgid "Subcuentas guardadas: %(n)s cambios."
+msgstr "Sous-comptes enregistrés : %(n)s modifications."
+
+msgid "Proveedor o cliente no válido."
+msgstr "Fournisseur ou client non valide."
+
+msgid "La subcuenta no tiene los dígitos que usa este cliente (se ven abajo, en la tabla)."
+msgstr "Le sous-compte n'a pas le nombre de chiffres utilisé par ce client (indiqué sous le tableau)."

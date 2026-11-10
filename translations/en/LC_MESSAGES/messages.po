@@ -26421,3 +26421,58 @@ msgstr "The list contains no invoices."
 
 msgid "Elige el cliente y el archivo que devuelve a3."
 msgstr "Choose the client and the file a3 returns."
+
+msgid "Mapa de cuentas"
+msgstr "Account map"
+
+msgid "Subcuenta de a3 que se usará con cada proveedor y cliente."
+msgstr "a3 sub-account that will be used for each supplier and customer."
+
+msgid "Importar el plan de a3"
+msgstr "Import the a3 chart"
+
+msgid "Todavía no hay proveedores ni clientes con NIF"
+msgstr "There are no suppliers or customers with a tax ID yet"
+
+msgid "Aparecerán aquí cuando haya facturas con el NIF del proveedor o cliente."
+msgstr "They will appear here once there are invoices with the supplier or customer tax ID."
+
+msgid "Subcuenta de %(n)s"
+msgstr "Sub-account of %(n)s"
+
+msgid "Genérica"
+msgstr "Generic"
+
+msgid "Nueva: se numerará sola"
+msgstr "New: it will be numbered automatically"
+
+msgid "Del plan de a3"
+msgstr "From the a3 chart"
+
+msgid "Tiene que tener %(d)s dígitos, como el resto de las subcuentas de este cliente. Lo ya exportado no cambia."
+msgstr "It must have %(d)s digits, like the rest of this client's sub-accounts. What was already exported does not change."
+
+msgid "Guardar subcuentas"
+msgstr "Save sub-accounts"
+
+msgid "%(n)s proveedor o cliente va a la subcuenta genérica: en a3 se mezclará con los demás. Fíjale una subcuenta, impórtala del plan de a3 o activa la numeración automática."
+msgid_plural "%(n)s proveedores o clientes van a la subcuenta genérica: en a3 se mezclarán con los demás. Fíjales una subcuenta, impórtalas del plan de a3 o activa la numeración automática."
+msgstr[0] "%(n)s supplier or customer goes to the generic sub-account: in a3 it will be mixed with the others. Set a sub-account, import it from the a3 chart or turn on automatic numbering."
+msgstr[1] "%(n)s suppliers or customers go to the generic sub-account: in a3 they will be mixed with the others. Set sub-accounts, import them from the a3 chart or turn on automatic numbering."
+
+msgid "%(n)s factura no tiene NIF y usa siempre la subcuenta genérica."
+msgid_plural "%(n)s facturas no tienen NIF y usan siempre la subcuenta genérica."
+msgstr[0] "%(n)s invoice has no tax ID and always uses the generic sub-account."
+msgstr[1] "%(n)s invoices have no tax ID and always use the generic sub-account."
+
+msgid "Mira qué subcuenta de a3 se usará con cada proveedor y cliente, de dónde sale, y cámbiala si hace falta."
+msgstr "See which a3 sub-account will be used for each supplier and customer, where it comes from, and change it if needed."
+
+msgid "Subcuentas guardadas: %(n)s cambios."
+msgstr "Sub-accounts saved: %(n)s changes."
+
+msgid "Proveedor o cliente no válido."
+msgstr "Invalid supplier or customer."
+
+msgid "La subcuenta no tiene los dígitos que usa este cliente (se ven abajo, en la tabla)."
+msgstr "The sub-account does not have the number of digits this client uses (shown below, under the table)."

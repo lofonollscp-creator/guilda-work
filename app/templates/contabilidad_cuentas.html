@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Mapa de cuentas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Mapa de cuentas') }}</h1>
+    <p class="subtitle">{{ cliente.nombre }} · {{ _('Subcuenta de a3 que se usará con cada proveedor y cliente.') }}</p>
+  </div>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.plan', cliente_id=cliente.id) }}">{{ _('Importar el plan de a3') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('contabilidad.configuracion', cliente_id=cliente.id) }}">‹ {{ _('Configuración de a3') }}</a></div>
+</header>
+{{ aviso_error(error) }}
+{% if mensaje %}<div class="ia-aviso" role="status">{{ mensaje }}</div>{% endif %}
+{% if not mapa.terceros %}
+  {{ estado_vacio(_('Todavía no hay proveedores ni clientes con NIF'), _('Aparecerán aquí cuando haya facturas con el NIF del proveedor o cliente.'), 'file-text') }}
+{% else %}
+{% if mapa.faltan %}<div class="ia-aviso" role="status">{{ ngettext('%(n)s proveedor o cliente va a la subcuenta genérica: en a3 se mezclará con los demás. Fíjale una subcuenta, impórtala del plan de a3 o activa la numeración automática.', '%(n)s proveedores o clientes van a la subcuenta genérica: en a3 se mezclarán con los demás. Fíjales una subcuenta, impórtalas del plan de a3 o activa la numeración automática.', mapa.faltan, n=mapa.faltan) }}</div>{% endif %}
+{% if mapa.sin_nif %}<p class="muted">{{ ngettext('%(n)s factura no tiene NIF y usa siempre la subcuenta genérica.', '%(n)s facturas no tienen NIF y usan siempre la subcuenta genérica.', mapa.sin_nif, n=mapa.sin_nif) }}</p>{% endif %}
+<form method="post">
+<div class="table-wrap"><table class="historial-table">
+  <thead><tr><th>{{ _('Proveedor o cliente') }}</th><th>NIF</th><th>{{ _('Tipo') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Subcuenta') }}</th><th>{{ _('Origen') }}</th></tr></thead>
+  <tbody>{% for t in mapa.terceros %}
+    <tr><td>{{ t.nombre }}</td><td class="mono">{{ t.nif }}</td><td>{{ _('Proveedor') if t.tipo == 'proveedor' else _('Cliente') }}</td><td>{{ t.facturas }}</td>
+      <td><input type="text" class="mono" inputmode="numeric" name="cuenta__{{ t.tipo }}__{{ t.nif }}" value="{{ t.cuenta }}" maxlength="12" size="14" aria-label="{{ _('Subcuenta de %(n)s', n=t.nombre) }}"></td>
+      <td><span class="pildora-v2 {{ {'generica': 'ambar', 'nueva': 'azul', 'recordada': 'verde', 'plan': 'verde'}[t.origen] }}">{{ {'generica': _('Genérica'), 'nueva': _('Nueva: se numerará sola'), 'recordada': _('Fijada'), 'plan': _('Del plan de a3')}[t.origen] }}</span></td></tr>
+  {% endfor %}</tbody>
+</table></div>
+<p class="muted">{{ _('Tiene que tener %(d)s dígitos, como el resto de las subcuentas de este cliente. Lo ya exportado no cambia.', d=cfg.digitos) }}</p>
+<button type="submit" class="btn btn-primary">{{ _('Guardar subcuentas') }}</button>
+</form>
+{% endif %}
+{% endblock %}
