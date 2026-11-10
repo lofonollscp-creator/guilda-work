@@ -6,7 +6,7 @@ from __future__ import annotations
 import base64
 import binascii
 
-from . import acceso, cobro_contabilidad, facturas_contables as fc, facturas_portal, lectura_calidad, lectura_facturas, panel_cierre, retorno_a3, verticales
+from . import acceso, cierre_trimestre, cobro_contabilidad, facturas_contables as fc, facturas_portal, lectura_calidad, lectura_facturas, panel_cierre, retorno_a3, verticales
 
 
 def _exigir_modulo(tenant_id: int) -> None:
@@ -235,3 +235,15 @@ def preguntar_al_cliente(tenant_id: int, usuario_id: int, factura_id: int, texto
     _exigir_escritura(tenant_id, usuario_id)
     facturas_portal.escribir_como_despacho(tenant_id, usuario_id, int(factura_id), texto)
     return mensajes_de_la_factura(tenant_id, usuario_id, factura_id)
+
+
+def cierre_del_cliente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, trimestre: str | None = None) -> dict:
+    """El estado de cierre de un trimestre de un cliente: la lista de puntos (por leer, por revisar, mensajes sin leer, duplicadas, sin exportar, justificantes…) con su estado, y lo que le falta frente a a3.
+    Para redactar un resumen del cierre."""
+    _exigir_modulo(tenant_id)
+    trimestre = trimestre or panel_cierre.trimestre_anterior()
+    c = cierre_trimestre.checklist(tenant_id, usuario_id, int(cliente_fiscal_id), trimestre)
+    fila = next((x for x in panel_cierre.panel(tenant_id, usuario_id, trimestre)["clientes"] if x["cliente_fiscal_id"] == int(cliente_fiscal_id)), None)
+    return {"trimestre": trimestre, "plazo": panel_cierre.plazo(trimestre).isoformat(), "facturas": c["total"], "listo_para_cerrar": c["listo"], "cerrado": bool(c["cierre"]),
+            "puntos": [{"punto": p["clave"], "estado": p["estado"], "cuantos": p["cuantos"]} for p in c["puntos"]],
+            "exportadas_sin_confirmar_en_a3": fila["sin_confirmar"] if fila and fila["usa_retorno"] else None}

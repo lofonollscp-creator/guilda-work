@@ -6,7 +6,7 @@ from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herr
 from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
-           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura")
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente")
 ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
@@ -265,3 +265,14 @@ def test_quien_solo_audita_no_puede_escribir_al_cliente(monkeypatch):
     monkeypatch.setattr(acceso, "es_solo_auditor", lambda tenant, usuario: True)
     with pytest.raises(ih.ErrorHerramientaIA, match="solo permite consultar"):
         ih.ejecutar(u, "contabilidad_preguntar_al_cliente", {"factura_id": f["id"], "texto": "Hola"})
+
+
+def test_cierre_de_un_cliente_para_redactar_el_resumen():
+    t, u, c = _despacho("Despacho herr cierre cliente")
+    _anotar(u, c)
+    r = ih.ejecutar(u, "contabilidad_cierre_cliente", {"cliente_fiscal_id": c, "trimestre": "2026-T3"})
+    puntos = {p["punto"]: p for p in r["puntos"]}
+    assert r["trimestre"] == "2026-T3" and r["plazo"] == "2026-10-20" and r["facturas"] == 1 and not r["listo_para_cerrar"] and not r["cerrado"]
+    assert puntos["por_revisar"]["estado"] == "pendiente" and puntos["por_revisar"]["cuantos"] == 1 and r["exportadas_sin_confirmar_en_a3"] is None
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(u, "contabilidad_cierre_cliente", {"cliente_fiscal_id": 999999, "trimestre": "2026-T3"})

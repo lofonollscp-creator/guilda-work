@@ -128,3 +128,9 @@ def contabilidad_preguntar_al_cliente(factura_id: int, texto: str) -> dict:
     """Escribe al cliente un mensaje sobre una factura suya (hasta 1000 caracteres): lo verá en su portal. Es un mensaje a una persona de fuera del despacho: redáctalo claro y amable y di qué factura es (número y
     proveedor). Antes mira `contabilidad_avisos_factura` y `contabilidad_mensajes_factura` para preguntar solo lo que falta."""
     return _mt._conta().preguntar_al_cliente(*_mt._ctx_conta(), factura_id, texto)
+
+
+def contabilidad_cierre_cliente(cliente_fiscal_id: int, trimestre: str | None = None) -> dict:
+    """El estado de cierre de un trimestre («2026-T3»; por defecto el que se está cerrando) de un cliente: cada punto de la lista de cierre (por leer, por revisar, mensajes sin leer del cliente, duplicadas, sin
+    exportar, justificantes del banco…) con su estado (ok, pendiente o aviso) y cuántas facturas afecta, el plazo de presentación y las exportadas aún sin confirmar en a3. Úsala para redactar un resumen del cierre."""
+    return _mt._conta().cierre_del_cliente(*_mt._ctx_conta(), cliente_fiscal_id, trimestre)
