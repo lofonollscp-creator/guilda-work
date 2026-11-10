@@ -86,7 +86,7 @@ PALABRAS: dict[str, tuple[str, ...]] = {
     "tiquets": ("tiquet", "ticket", "incidencia"),
     "facturacion": ("factura", "cobr"),
     "guilda_fiscal": ("modelo 303", "303", "iva trimestral", "declaración de iva", "declaracion de iva", "perfil fiscal", "apuntes fiscales", "libro registro", "libros de iva", "simula el 303", "autoliquidación"),
-    "contabilidad": ("contabiliz", "suenlace", "a3", "pre-chequeo", "prechequeo", "para contabilizar", "factura del cliente", "facturas del cliente", "facturas de mis clientes", "lectura con ia", "anota la factura", "duplicad", "mapa de cuentas", "falta para cerrar", "cerrar el trimestre", "devuelve a3", "calidad de la lectura", "revisar en lote", "esta factura"),
+    "contabilidad": ("contabiliz", "suenlace", "a3", "pre-chequeo", "prechequeo", "para contabilizar", "factura del cliente", "facturas del cliente", "facturas de mis clientes", "lectura con ia", "anota la factura", "duplicad", "mapa de cuentas", "falta para cerrar", "cerrar el trimestre", "devuelve a3", "calidad de la lectura", "revisar en lote", "revisa en lote", "facturas seguras", "esta factura", "cuadra el iva", "cuadre del iva", "en vies", "nif europeo", "resumen de cierre", "cierre del trimestre"),
     "juridico": ("jurídic", "jurisprudencia", "sentencia", "legislación", "norma", "ley ", "boe", "artículo", "deducible", "criterio", "consulta jurídica", "tribunal"),
     "comercial": ("oportunidad", "embudo", "prospecto", "comercial", "propuesta", "reuni", "acta", "venta", "seguimiento comercial", "transcrip", "etapa"),
     "crm": ("crm", "lead", "contacto", "oportunidad"),
