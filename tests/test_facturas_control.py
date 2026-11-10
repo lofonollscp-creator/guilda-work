@@ -173,3 +173,31 @@ def test_mapa_con_numeracion_automatica_y_pagina(cliente):
     r = cliente.post(f"/contabilidad/cliente/{c}/cuentas", data={"cuenta__proveedor__B33333333": "40000099"})
     assert "Subcuentas guardadas: 1 cambios" in r.get_data(as_text=True) and fc.mapa_de_cuentas(t, uid, c)["terceros"][0]["cuenta"] == "40000099"
     assert "Mapa de cuentas" in cliente.get(f"/contabilidad/cliente/{c}/configuracion").get_data(as_text=True)
+
+
+# --- F3: historial de la factura ---------------------------------------------------------------------------------------------------------------------------
+
+def test_el_historial_cuenta_lo_que_paso_con_la_factura_y_sus_cambios():
+    from app import facturas_contables as fc
+    from tests.test_facturas_contables import LINEA, _datos, _despacho
+    t, u, c = _despacho()
+    fid = fc.crear(t, u, c, _datos(numero="H-1", tercero_nif="A58818501"), [LINEA])
+    fc.actualizar(t, u, fid, _datos(numero="H-2", tercero_nif="A58818501", concepto="Otro"), [{**LINEA, "base": "2.000,00"}])
+    fc.cambiar_estado(t, u, fid, "revisada")
+    fc.exportar(t, u, c)
+    h = fc.historial(t, u, fid)
+    que = [x["que"] for x in h]
+    assert que == ["Exportada a a3", "Dada por revisada", "Editada", "Anotada"]                  # lo más reciente primero
+    editada = next(x for x in h if x["que"] == "Editada")
+    assert "el número: H-1 → H-2" in editada["detalle"] and "el total: 1210.00 → 2420.00" in editada["detalle"] and "los importes" in editada["detalle"]
+    assert h[0]["detalle"].startswith("#")
+    assert fc.historial(t, u, 999999) == []
+
+
+def test_la_ficha_muestra_el_historial(cliente):
+    from app import facturas_contables as fc
+    from tests.test_facturas_contables import LINEA, _datos, _web
+    uid, t, c = _web(cliente, "historialficha@ejemplo.com")
+    fid = fc.crear(t, uid, c, _datos(numero="H-9", tercero_nif="A58818501"), [LINEA])
+    html = cliente.get(f"/contabilidad/{fid}").get_data(as_text=True)
+    assert "Historial de la factura" in html and "Anotada" in html

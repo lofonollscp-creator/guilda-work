@@ -26645,3 +26645,63 @@ msgstr "Segones lectures (van canviar el resultat)"
 
 msgid "Coste de las segundas lecturas (USD)"
 msgstr "Cost de les segones lectures (USD)"
+
+msgid "Historial de la factura"
+msgstr "Historial de la factura"
+
+msgid "Qué pasó"
+msgstr "Què va passar"
+
+msgid "Archivo subido"
+msgstr "Arxiu pujat"
+
+msgid "Anotada"
+msgstr "Anotada"
+
+msgid "Leída de la factura electrónica"
+msgstr "Llegida de la factura electrònica"
+
+msgid "Revisada sola por la IA"
+msgstr "Revisada sola per la IA"
+
+msgid "Editada"
+msgstr "Editada"
+
+msgid "Dada por revisada"
+msgstr "Donada per revisada"
+
+msgid "Reabierta"
+msgstr "Reoberta"
+
+msgid "Exportada a a3"
+msgstr "Exportada a a3"
+
+msgid "Confirmada en a3"
+msgstr "Confirmada a a3"
+
+msgid "Incluida en Guilda Fiscal"
+msgstr "Inclosa a Guilda Fiscal"
+
+msgid "PDF separado en varias facturas"
+msgstr "PDF separat en diverses factures"
+
+msgid "la fecha"
+msgstr "la data"
+
+msgid "el número"
+msgstr "el número"
+
+msgid "el nombre"
+msgstr "el nom"
+
+msgid "el NIF"
+msgstr "el NIF"
+
+msgid "el concepto"
+msgstr "el concepte"
+
+msgid "el total"
+msgstr "el total"
+
+msgid "los importes"
+msgstr "els imports"

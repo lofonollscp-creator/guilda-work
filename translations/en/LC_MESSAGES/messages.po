@@ -26636,3 +26636,63 @@ msgstr "Second readings (changed the result)"
 
 msgid "Coste de las segundas lecturas (USD)"
 msgstr "Cost of second readings (USD)"
+
+msgid "Historial de la factura"
+msgstr "Invoice history"
+
+msgid "Qué pasó"
+msgstr "What happened"
+
+msgid "Archivo subido"
+msgstr "File uploaded"
+
+msgid "Anotada"
+msgstr "Entered"
+
+msgid "Leída de la factura electrónica"
+msgstr "Read from the e-invoice"
+
+msgid "Revisada sola por la IA"
+msgstr "Reviewed automatically by the AI"
+
+msgid "Editada"
+msgstr "Edited"
+
+msgid "Dada por revisada"
+msgstr "Marked as reviewed"
+
+msgid "Reabierta"
+msgstr "Reopened"
+
+msgid "Exportada a a3"
+msgstr "Exported to a3"
+
+msgid "Confirmada en a3"
+msgstr "Confirmed in a3"
+
+msgid "Incluida en Guilda Fiscal"
+msgstr "Included in Guilda Fiscal"
+
+msgid "PDF separado en varias facturas"
+msgstr "PDF split into several invoices"
+
+msgid "la fecha"
+msgstr "the date"
+
+msgid "el número"
+msgstr "the number"
+
+msgid "el nombre"
+msgstr "the name"
+
+msgid "el NIF"
+msgstr "the tax ID"
+
+msgid "el concepto"
+msgstr "the description"
+
+msgid "el total"
+msgstr "the total"
+
+msgid "los importes"
+msgstr "the amounts"

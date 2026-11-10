@@ -207,6 +207,8 @@ def cruzar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, filas: list[
                 if lote_id:
                     conn.execute("UPDATE contabilidad_lotes SET comprobado_en = ?, n_confirmadas = (SELECT COUNT(*) FROM facturas_contables WHERE lote_id = ? AND tenant_id = ? AND confirmada_en IS NOT NULL) "
                                  "WHERE id = ? AND tenant_id = ?", (ahora, lote_id, tenant_id, lote_id, tenant_id))
+            for f in confirmadas:
+                auditoria.registrar(tenant_id, usuario_id, "factura_contable.confirmada_a3", "factura_contable", f["id"], None, conn=conn)
             auditoria.registrar(tenant_id, usuario_id, "contabilidad.retorno_a3", "cliente_fiscal", cliente_fiscal_id,
                                 {"leidas": len(filas), "confirmadas": len(confirmadas), "faltan": len(faltan), "con_diferencias": len(con_diferencias)}, conn=conn)
             conn.commit()

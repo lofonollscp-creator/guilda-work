@@ -209,5 +209,13 @@
     <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button></div>
   </form>
 </section>
+{% if historial %}
+<section id="historial" class="ds-mt-24"><details><summary><h2 class="ds-en-linea">{{ _('Historial de la factura') }}</h2></summary>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cuándo') }}</th><th>{{ _('Quién') }}</th><th>{{ _('Qué pasó') }}</th></tr></thead>
+    <tbody>{% for h in historial %}<tr><td>{{ h.cuando|fecha_y_hora }}</td><td>{{ h.quien or '—' }}</td><td>{{ h.que }}{% if h.detalle %} <span class="muted">· {{ h.detalle }}</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</details></section>
+{% endif %}
 {% endif %}
 {% endblock %}

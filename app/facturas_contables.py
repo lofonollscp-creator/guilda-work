@@ -1078,6 +1078,20 @@ def fijar_incluir_en_fiscal(tenant_id: int, usuario_id: int, factura_id: int, in
         conn.close()
 
 
+def _cambios_de(antes: dict, despues: dict, total: int, lineas_nuevas: list[dict]) -> dict:
+    """Lo que cambió al editar una factura, para su historial: {campo: [antes, después]} con los datos principales y `lineas: true` si cambió algún importe o cuenta de las líneas."""
+    cambios = {}
+    for campo, nuevo in (("fecha", despues["fecha"]), ("numero", despues["numero"]), ("tercero_nombre", despues["tercero_nombre"]), ("tercero_nif", despues["tercero_nif"]), ("concepto", despues["concepto"]),
+                         ("total_centimos", total)):
+        viejo = antes.get(campo)
+        if (viejo or None) != (nuevo or None):
+            cambios[campo] = [str(viejo if viejo is not None else "")[:60], str(nuevo if nuevo is not None else "")[:60]]
+    columnas = ("cuenta", "subtipo", "base_centimos", "pct_iva", "cuota_iva", "pct_recargo", "cuota_recargo", "pct_retencion", "cuota_retencion")
+    if [tuple(l.get(c) for c in columnas) for l in antes["lineas"]] != [tuple(l.get(c) for c in columnas) for l in lineas_nuevas]:
+        cambios["lineas"] = True
+    return cambios
+
+
 def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, lineas: list[dict], documento_id: int | None = None) -> None:
     """Corrige una factura que aún no se ha exportado. Al cambiarla vuelve a `pendiente`: hay que revisarla otra vez."""
     f = obtener(tenant_id, usuario_id, factura_id)
@@ -1102,7 +1116,8 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
         _guardar_lineas(conn, factura_id, ls)
         if d["tercero_cuenta"]:
             _recordar_tercero(conn, tenant_id, f["cliente_fiscal_id"], f["tipo"], d["tercero_nif"] or "", d["tercero_nombre"], d["tercero_cuenta"])
-        auditoria.registrar(tenant_id, usuario_id, "factura_contable.editada", "factura_contable", factura_id, {"numero": d["numero"], "total": total}, conn=conn)
+        auditoria.registrar(tenant_id, usuario_id, "factura_contable.editada", "factura_contable", factura_id,
+                            {"numero": d["numero"], "total": total, "cambios": _cambios_de(f, d, total, ls)}, conn=conn)
         conn.commit()
     finally:
         conn.close()
@@ -1192,6 +1207,33 @@ def factura_igual(cliente_fiscal_id: int, nif, numero, excluir_id: int | None = 
     finally:
         conn.close()
     return dict(f) if f else None
+
+
+def historial(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
+    """Lo que ha pasado con una factura, de lo más reciente a lo más antiguo: [{cuando, quien, que, detalle}]. Sale de la auditoría (no hay tabla propia). `que` va ya traducido."""
+    from flask_babel import gettext as _
+    if obtener(tenant_id, usuario_id, factura_id) is None:
+        return []
+    etiquetas = {"subida": _("Archivo subido"), "creada": _("Anotada"), "leida_ia": _("Leída con IA"), "leida_xml": _("Leída de la factura electrónica"), "revisada_auto": _("Revisada sola por la IA"),
+                 "editada": _("Editada"), "revisada": _("Dada por revisada"), "pendiente": _("Reabierta"), "descartada": _("Descartada"), "exportada": _("Exportada a a3"),
+                 "confirmada_a3": _("Confirmada en a3"), "incluir_en_fiscal": _("Incluida en Guilda Fiscal"), "pdf_separado": _("PDF separado en varias facturas")}
+    nombres = {"fecha": _("la fecha"), "numero": _("el número"), "tercero_nombre": _("el nombre"), "tercero_nif": _("el NIF"), "concepto": _("el concepto"), "total_centimos": _("el total")}
+    res = []
+    for e in auditoria.listar(tenant_id, entidad="factura_contable", entidad_id=factura_id, limite=200):
+        accion = e["accion"].split(".", 1)[-1]
+        detalle = ""
+        d = e.get("detalle")
+        if accion == "editada" and isinstance(d, dict):
+            cambios = d.get("cambios") or {}
+            partes = [f"{nombres[c]}: {a or '—'} → {b or '—'}" if c != "total_centimos" else f"{nombres[c]}: {int(a or 0) / 100:.2f} → {int(b or 0) / 100:.2f}" for c, (a, b) in
+                      ((c, v) for c, v in cambios.items() if c in nombres and isinstance(v, list))]
+            if cambios.get("lineas"):
+                partes.append(_("los importes"))
+            detalle = "; ".join(partes)
+        elif accion == "exportada" and isinstance(d, dict) and d.get("lote"):
+            detalle = f"#{d['lote']}"
+        res.append({"cuando": e["creado_en"], "quien": e.get("actor") or "", "que": etiquetas.get(accion, accion), "detalle": detalle})
+    return res
 
 
 def posibles_duplicados(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
@@ -1389,6 +1431,8 @@ def exportar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: 
         for (tipo_tercero, nif), (cuenta, nombre) in nuevas.items():
             conn.execute("INSERT INTO contabilidad_terceros (tenant_id, cliente_fiscal_id, tipo, nif, nombre, cuenta) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(cliente_fiscal_id, tipo, nif) DO NOTHING",
                          (tenant_id, cliente_fiscal_id, tipo_tercero, nif, nombre[:100], cuenta))
+        for f in facturas:
+            auditoria.registrar(tenant_id, usuario_id, "factura_contable.exportada", "factura_contable", f["id"], {"lote": lote}, conn=conn)
         auditoria.registrar(tenant_id, usuario_id, "contabilidad.exportada", "cliente_fiscal", cliente_fiscal_id,
                             {"lote": lote, "facturas": len(facturas), "desde": desde, "hasta": hasta, "subcuentas_nuevas": len(nuevas),
                              "periodos_cerrados": sorted(cerrados) if cerrados else None}, conn=conn)
