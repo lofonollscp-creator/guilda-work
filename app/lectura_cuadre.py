@@ -51,9 +51,9 @@ def _describir(iva: int | None, rec: int, ret: int) -> str:
     return ", ".join(partes)
 
 
-def explicar_descuadre(lineas: list[dict], suplidos: str, total: str) -> str | None:
-    """Si las líneas no suman el total, busca una explicación que cuadre con él. Con una sola base prueba los tipos habituales de IVA, con o sin recargo y retención; con varias deja el IVA leído y prueba
-    solo recargo y retención. Si hay una única explicación con lo menos extraño, la dice; si hay varias o ninguna, calla."""
+def _buscar(lineas: list[dict], suplidos: str, total: str) -> dict | None:
+    """La única explicación (con lo menos extraño) que hace cuadrar el total con las líneas: {"sin_iva": True} si el total es la suma de las bases, o {"iva", "rec", "ret"} (iva None = se deja el leído de
+    cada línea). None si no hay explicación o hay varias igual de probables, o si las líneas ya cuadran."""
     bases = _bases(lineas)
     if not bases or total in ("", None, "0.00"):
         return None
@@ -61,12 +61,12 @@ def explicar_descuadre(lineas: list[dict], suplidos: str, total: str) -> str | N
         objetivo, extra = fc.importe_a_centimos(total), fc.importe_a_centimos(suplidos or "0")
     except ValueError:
         return None
-    suma = sum(bases) + extra
-    if abs(suma - objetivo) <= fc.TOLERANCIA_CENTIMOS and any(str(l.get("cuota_iva") or "").strip() not in ("", "0", "0.00") for l in lineas):
-        return "El total de la factura coincide con la suma de las bases: el total leído parece no incluir el IVA."
+    if abs(sum(bases) + extra - objetivo) <= fc.TOLERANCIA_CENTIMOS and any(str(l.get("cuota_iva") or "").strip() not in ("", "0", "0.00") for l in lineas):
+        return {"sin_iva": True}
     if len(lineas) == 1:
         iva_leido = _pct(lineas[0].get("pct_iva"))
         opciones = [(iva, rec, ret) for iva, ret in product(TIPOS_IVA, RETENCIONES) for rec in {0, fc.RECARGO_ESTANDAR.get(iva, 0)}]
+
         def total_de(o):
             iva, rec, ret = o
             return bases[0] + enlace_a3.cuota(bases[0], iva) + enlace_a3.cuota(bases[0], rec) - enlace_a3.cuota(bases[0], ret) + extra
@@ -76,18 +76,62 @@ def explicar_descuadre(lineas: list[dict], suplidos: str, total: str) -> str | N
             return None
         iva_leido = None
         opciones = [(None, rec, ret) for rec, ret in product((0, 1), RETENCIONES)]
+
         def total_de(o):
             _, rec, ret = o
             return sum(b + enlace_a3.cuota(b, i) + (enlace_a3.cuota(b, fc.RECARGO_ESTANDAR.get(i, 0)) if rec else 0) - enlace_a3.cuota(b, ret) for b, i in zip(bases, ivas)) + extra
     encajan = [o for o in opciones if abs(total_de(o) - objetivo) <= fc.TOLERANCIA_CENTIMOS]
     if not encajan:
         return None
-    rareza = lambda o: ((o[0] not in (iva_leido, None)) * 2 + bool(o[1]) + bool(o[2]))        # cuanto menos cambie lo leído y menos extras lleve, más probable
+
+    def rareza(o):                                                   # cuanto menos cambie lo leído y menos extras lleve, más probable
+        return (o[0] not in (iva_leido, None)) * 2 + bool(o[1]) + bool(o[2])
     mejor = min(rareza(o) for o in encajan)
-    elegidas = {(o[0], bool(o[1]), o[2]) for o in encajan if rareza(o) == mejor}
-    if len(elegidas) != 1:
+    elegidas = [o for o in encajan if rareza(o) == mejor]
+    if len({(o[0], bool(o[1]), o[2]) for o in elegidas}) != 1:
         return None
-    o = next(o for o in encajan if rareza(o) == mejor)
-    if len(lineas) > 1:
-        o = (None, fc.RECARGO_ESTANDAR.get(_pct(lineas[0].get("pct_iva")), 0) if o[1] else 0, o[2])
-    return f"El total de la factura cuadraría con {_describir(o[0], o[1], o[2])}: compruébalo en el documento."
+    iva, rec, ret = elegidas[0]
+    return {"iva": iva, "rec": bool(rec) if len(lineas) > 1 else rec, "ret": ret, "iva_leido": iva_leido}
+
+
+def explicar_descuadre(lineas: list[dict], suplidos: str, total: str) -> str | None:
+    """Si las líneas no suman el total, dice qué explicación cuadra con él (ver `_buscar`): con una sola base prueba los tipos habituales de IVA, con o sin recargo y retención; con varias deja el IVA leído y
+    prueba solo recargo y retención. Si hay varias explicaciones o ninguna, calla."""
+    e = _buscar(lineas, suplidos, total)
+    if e is None:
+        return None
+    if e.get("sin_iva"):
+        return "El total de la factura coincide con la suma de las bases: el total leído parece no incluir el IVA."
+    rec = e["rec"] if len(lineas) == 1 else (fc.RECARGO_ESTANDAR.get(_pct(lineas[0].get("pct_iva")), 0) if e["rec"] else 0)
+    return f"El total de la factura cuadraría con {_describir(e['iva'], rec, e['ret'])}: compruébalo en el documento."
+
+
+PALABRAS_RETENCION = ("irpf", "retencion", "retenciones")
+
+
+def aplicar_retencion(lineas: list[dict], suplidos: str, total: str, texto: str) -> str | None:
+    """Cuando el documento habla de IRPF o de retención y el total solo cuadra con una retención habitual sobre las líneas leídas (sin cambiar su IVA), la pone en las líneas que no la traen y lo cuenta. Sin
+    texto del documento no se toca nada (lo único que hay es el aviso de `explicar_descuadre`). Devuelve el aviso, o None si no se aplicó."""
+    from . import lectura_evidencias
+    if not texto or not any(p in lectura_evidencias._plano(texto) for p in PALABRAS_RETENCION) or any(_pct(l.get("pct_retencion")) for l in lineas):
+        return None
+    e = _buscar(lineas, suplidos, total)
+    if not e or e.get("sin_iva") or not e["ret"] or e["rec"] or (e["iva"] is not None and e["iva"] != e["iva_leido"]):
+        return None
+    for l in lineas:
+        l["pct_retencion"] = _texto_pct(e["ret"]).replace(",", ".")
+    return f"Se ha aplicado la retención del {_texto_pct(e['ret'])} % (IRPF) que menciona el documento, porque con ella el total cuadra; compruébalo."
+
+
+def suplidos_del_texto(lineas: list[dict], suplidos: str, total: str, texto: str) -> str | None:
+    """Cuando el total supera lo que suman las líneas y el documento habla de suplidos, la diferencia se anota como suplidos (importes pagados por cuenta del cliente, sin IVA). Devuelve el importe en texto
+    («45.00») o None si no procede: sin texto del documento, con suplidos ya anotados o si la diferencia no es positiva."""
+    from . import lectura_evidencias
+    if not texto or "suplido" not in lectura_evidencias._plano(texto) or fc.importe_a_centimos(suplidos or "0") or not lineas or total in ("", None, "0.00"):
+        return None
+    try:
+        calculado = fc._total_de(fc._lineas_limpias(lineas), 0)
+        dif = fc.importe_a_centimos(total) - calculado
+    except ValueError:
+        return None
+    return f"{dif / 100:.2f}" if dif > fc.TOLERANCIA_CENTIMOS else None

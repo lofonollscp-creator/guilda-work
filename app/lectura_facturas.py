@@ -106,6 +106,15 @@ def _a_factura(datos: dict, f: dict, cliente_nif: str, texto: str = "") -> tuple
         avisos.append("Solo se leyó el total: se ha desglosado con el 21 % de IVA, comprueba el tipo.")
     if lineas and total not in ("", "0.00"):
         try:
+            if texto:                                                  # con el texto delante se pueden confirmar las retenciones y los suplidos que el documento menciona
+                aplicada = lectura_cuadre.aplicar_retencion(lineas, nuevos["suplidos"], total, texto)
+                if aplicada:
+                    avisos.append(aplicada)
+                elif not fc._total_de(fc._lineas_limpias(lineas), fc.importe_a_centimos(nuevos["suplidos"])) == fc.importe_a_centimos(total):
+                    suplidos = lectura_cuadre.suplidos_del_texto(lineas, nuevos["suplidos"], total, texto)
+                    if suplidos:
+                        nuevos["suplidos"] = suplidos
+                        avisos.append(f"Se han anotado {suplidos} de suplidos (pagos por cuenta del cliente, sin IVA): el documento los menciona y así cuadra el total; compruébalo.")
             calculado = fc._total_de(fc._lineas_limpias(lineas), fc.importe_a_centimos(nuevos["suplidos"]))
             if abs(calculado - fc.importe_a_centimos(total)) > fc.TOLERANCIA_CENTIMOS:
                 avisos.append(f"Las líneas suman {calculado / 100:.2f} y el total de la factura es {total}: no cuadran.")

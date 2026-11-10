@@ -49,3 +49,42 @@ def test_si_no_hay_explicacion_clara_calla():
     assert lc.explicar_descuadre([_l("1000.00", "21", cuota_iva="210.00")], "", "1234.56") is None
     assert lc.explicar_descuadre([], "", "10.00") is None
     assert lc.explicar_descuadre([_l("1000.00", "21", cuota_iva="210.00")], "", "") is None
+
+
+# --- L7: retenciones y suplidos que el documento menciona -------------------------------------------------------------------------------------------------
+
+def test_aplica_la_retencion_si_el_documento_habla_de_irpf_y_cuadra():
+    lineas = [_l("1000.00", "21", cuota_iva="210.00")]
+    aviso = lc.aplicar_retencion(lineas, "", "1060.00", "Honorarios profesionales. Retención IRPF 15 %")
+    assert aviso and "15 %" in aviso and lineas[0]["pct_retencion"] == "15"
+
+
+def test_no_aplica_la_retencion_sin_texto_ni_mencion_ni_si_ya_la_trae():
+    assert lc.aplicar_retencion([_l("1000.00", "21", cuota_iva="210.00")], "", "1060.00", "") is None
+    assert lc.aplicar_retencion([_l("1000.00", "21", cuota_iva="210.00")], "", "1060.00", "Servicios varios") is None
+    ya = [_l("1000.00", "21", cuota_iva="210.00", pct_retencion="15")]
+    assert lc.aplicar_retencion(ya, "", "1060.00", "IRPF") is None
+
+
+def test_no_aplica_la_retencion_si_para_cuadrar_habria_que_cambiar_el_iva():
+    assert lc.aplicar_retencion([_l("1000.00", "21", cuota_iva="210.00")], "", "1100.00", "Retención IRPF") is None
+
+
+def test_suplidos_solo_si_el_documento_los_menciona():
+    lineas = [_l("1000.00", "21", cuota_iva="210.00")]
+    assert lc.suplidos_del_texto(lineas, "", "1255.00", "Gastos suplidos: tasas") == "45.00"
+    assert lc.suplidos_del_texto(lineas, "", "1255.00", "Servicios") is None
+    assert lc.suplidos_del_texto(lineas, "10.00", "1255.00", "suplidos") is None
+    assert lc.suplidos_del_texto(lineas, "", "1210.00", "suplidos") is None
+
+
+def test_la_lectura_aplica_retencion_y_suplidos_con_el_texto_del_documento():
+    from app import lectura_facturas as lf
+    f = {"tipo": "recibida", "tercero_nombre": "X", "tercero_nif": "", "numero": "1", "fecha": "2026-01-01"}
+    base = {"emisor_nif": "A58818501", "receptor_nif": "", "numero": "7", "fecha": "2026-03-01", "lineas": [{"base": 1000, "pct_iva": 21, "cuota_iva": 210}]}
+    _, nuevos, lineas, avisos = lf._a_factura({**base, "total": 1060}, f, "", "Factura de honorarios. IRPF retenido")
+    assert lineas[0]["pct_retencion"] == "15" and any("IRPF" in a for a in avisos) and not any("no cuadran" in a for a in avisos)
+    _, nuevos, lineas, avisos = lf._a_factura({**base, "total": 1255}, f, "", "Incluye suplidos de notaría")
+    assert nuevos["suplidos"] == "45.00" and not any("no cuadran" in a for a in avisos)
+    _, nuevos, lineas, avisos = lf._a_factura({**base, "total": 1060}, f, "", "")     # sin texto solo se avisa
+    assert not lineas[0].get("pct_retencion") and any("retención del 15 %" in a for a in avisos)
