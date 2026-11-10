@@ -40,3 +40,23 @@ def test_no_corrige_en_otro_cliente_ni_con_correcciones_que_no_coinciden(modelo)
     for i, n in enumerate(("B-1", "B-2")):
         _corregir_y_revisar(t, u, _leer(t, u, c, bytes([49 + i])), n)
     assert fc.obtener(t, u, _leer(t, u, otro, b"9"))["tercero_nif"] == "B87654399"
+
+
+def test_segunda_opinion_solo_si_esta_activada_y_la_primera_es_dudosa(modelo, monkeypatch):
+    from app import ia_asistente, ia_despacho
+    t, u, c = _despacho()
+    limpia = {**RESPUESTA, "emisor_nif": "A58818501"}                        # un NIF con el control bien: sin avisos
+    modelo.respuesta = json.dumps({**limpia, "total": 150})                  # la primera lectura no cuadra (150 con una línea de 121): es dudosa
+    buena = {"choices": [{"message": {"content": json.dumps(limpia)}}]}
+    llamadas = []
+    monkeypatch.setattr(ia_asistente, "candidatos", lambda uid, tarea="asistente": [{"proveedor": "a", "modelo": "uno"}, {"proveedor": "b", "modelo": "dos"}])
+    monkeypatch.setattr(ia_asistente, "_llamar", lambda uid, tarea, payload, timeout=90, cands=None: llamadas.append(cands[0]["modelo"]) or buena)
+    _leer(t, u, c, b"1")
+    assert llamadas == [], "desactivada: no hay segunda consulta"
+    ia_despacho.guardar_config(t, solo_ue=False, claves_personales=True, facturas_modo="compartida", umbral_confianza=90, segunda_lectura=True, por=u)
+    con = fc.obtener(t, u, _leer(t, u, c, b"2"))
+    assert llamadas == ["dos"] and con["total_centimos"] == 12100 and "segundo modelo" in con["notas"]
+    llamadas.clear()
+    modelo.respuesta = json.dumps(limpia)
+    _leer(t, u, c, b"3")
+    assert llamadas == [], "una lectura limpia no gasta una segunda consulta"

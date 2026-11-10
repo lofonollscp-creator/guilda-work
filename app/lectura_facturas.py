@@ -215,6 +215,30 @@ def _procesar(datos: dict, f: dict, cliente_nif: str, texto: str, qr: dict | Non
             "campo_contraparte": campo_contraparte, "datos": datos}
 
 
+def _incidencias(r: dict) -> int:
+    """Cuánto de dudoso tiene una lectura: comprobaciones que fallan, avisos y, si las líneas no suman el total, tres puntos más."""
+    return len(r["comprobaciones"]) + len(r["avisos"]) + (0 if _cuadra(r["lineas"], r["nuevos"].get("suplidos") or "", r["valores"]["total"]) else 3)
+
+
+def _segunda_opinion(usuario_id: int, doc: dict, f: dict, cliente_nif: str, qr: dict | None, texto: str, r: dict, fuente: str, notas: list[str]) -> tuple[dict, str, list[str]]:
+    """Si la lectura quedó dudosa y el despacho lo ha activado, se relee con el siguiente modelo disponible y se queda la lectura con menos dudas. Si no hay un segundo modelo o falla, no cambia nada.
+    Solo con imagen o texto del PDF (una factura electrónica es exacta y el OCR propio ya lo revisa siempre una persona)."""
+    if fuente not in ("imagen", "texto") or _incidencias(r) == 0:
+        return r, fuente, notas
+    candidatos = ia_asistente.candidatos(usuario_id, "facturas")
+    if len(candidatos) < 2:
+        return r, fuente, notas
+    carga = {"temperature": 0, "messages": [{"role": "system", "content": PROMPT}, {"role": "user", "content": _partes(doc)}]}
+    try:
+        respuesta = ia_asistente._llamar(usuario_id, "facturas", carga, 90, cands=[candidatos[1]])
+        otra = _procesar(_json_de((respuesta["choices"][0]["message"].get("content") or "").strip()), f, cliente_nif, texto, qr)
+    except (ia_asistente.ErrorIA, ValueError, KeyError, TypeError, IndexError):
+        return r, fuente, notas
+    if otra["lineas"] and _incidencias(otra) < _incidencias(r):
+        return otra, "imagen", notas + ["La primera lectura era dudosa: se ha releído con un segundo modelo y se ha quedado la segunda."]
+    return r, fuente, notas + ["La primera lectura era dudosa: se ha releído con un segundo modelo y se ha quedado la primera, que seguía siendo la mejor."]
+
+
 def _puerta_del_texto(r: dict, texto: str, cliente_nif: str) -> bool:
     """¿Se puede fiar de lo leído SOLO del texto del PDF? Únicamente si todo cuadra por sí solo: el cliente aparece como emisor o receptor, las líneas suman el total, y el número, la fecha y el total
     están escritos literalmente en el texto. Si algo falla, se vuelve a leer con la imagen: la calidad manda sobre el ahorro."""
@@ -349,6 +373,8 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
         except (ValueError, KeyError, TypeError) as e:
             _marcar_fallida(tenant_id, f, "la IA no devolvió datos legibles")
             raise ValueError(f"No se pudo leer la factura ({e}). Rellena los datos a mano.") from None
+    if config["segunda_lectura"] and not estructurada:
+        r, fuente, notas_lectura = _segunda_opinion(usuario_id, doc, f, cliente_nif, qr, texto, r, fuente, notas_lectura)
     tipo, nuevos, lineas, avisos, valores, datos = r["tipo"], r["nuevos"], r["lineas"], r["avisos"] + notas_lectura, r["valores"], r["datos"]
     avisos += lectura_correcciones.aplicar(tenant_id, f["cliente_fiscal_id"], nuevos) if fuente != "xml" else []       # lo ya corregido antes en este cliente (nunca sobre una factura electrónica)
     if tipo != f["tipo"]:

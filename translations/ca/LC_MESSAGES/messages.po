@@ -26331,3 +26331,27 @@ msgstr "Dreceres: R revisa la factura i S la revisa i passa a la següent (fora 
 
 msgid "Revisar y pasar a la siguiente"
 msgstr "Revisar i passar a la següent"
+
+msgid "Por tipo de documento"
+msgstr "Per tipus de document"
+
+msgid "Dónde se lee peor: una factura cuenta en varias filas (por ejemplo, un abono recibido). Conviene mirar con más cuidado los tipos con menos aciertos."
+msgstr "On es llegeix pitjor: una factura compta en diverses files (per exemple, un abonament rebut). Convé mirar amb més cura els tipus amb menys encerts."
+
+msgid "Abonos y rectificativas"
+msgstr "Abonaments i rectificatives"
+
+msgid "Tiquets y recibos (sin NIF)"
+msgstr "Tiquets i rebuts (sense NIF)"
+
+msgid "Facturas recibidas"
+msgstr "Factures rebudes"
+
+msgid "Subidas por el cliente"
+msgstr "Pujades pel client"
+
+msgid "Subidas por el despacho"
+msgstr "Pujades pel despatx"
+
+msgid "Si una lectura queda dudosa, releerla con el segundo modelo disponible y quedarse con la mejor (cuesta una consulta más)"
+msgstr "Si una lectura queda dubtosa, rellegir-la amb el segon model disponible i quedar-se amb la millor (costa una consulta més)"

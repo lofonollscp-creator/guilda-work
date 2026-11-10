@@ -265,6 +265,9 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "lectura", "TEXT")           # NULL = escrita a mano · pendiente = solo el archivo, por leer · ia = leída por la IA · fallida
     db._asegurar_columna(conn, "facturas_contables", "lectura_error", "TEXT")
     db._asegurar_columna(conn, "facturas_contables", "lectura_evidencia", "TEXT")      # de dónde sacó la IA cada dato (migración 008)
+    db._asegurar_columna(conn, "contabilidad_lotes", "comprobado_en", "TEXT")                  # cuándo se cruzó el lote con lo que devolvió a3 (J3)
+    db._asegurar_columna(conn, "contabilidad_lotes", "n_confirmadas", "INTEGER")
+    db._asegurar_columna(conn, "facturas_contables", "confirmada_en", "TEXT")                  # cuándo se comprobó que a3 la tiene contabilizada (retorno de a3, J3)
     db._asegurar_columna(conn, "facturas_contables", "lectura_confianza", "INTEGER")        # 0-100, lo que merece la lectura (app/lectura_confianza.py)
     db._asegurar_columna(conn, "facturas_contables", "lectura_fuente", "TEXT")             # xml · texto (capa de texto del PDF) · imagen
     db._asegurar_columna(conn, "facturas_contables", "revision_auto", "INTEGER NOT NULL DEFAULT 0")     # 1 = la dio por revisada la IA (modo «decide sola»), sin que la mirara una persona

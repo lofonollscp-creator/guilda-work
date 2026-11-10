@@ -39,6 +39,16 @@
 </section>
 
 <section class="dash-panel ds-mt-24">
+  <h2>{{ _('Por tipo de documento') }}</h2>
+  <p class="muted">{{ _('Dónde se lee peor: una factura cuenta en varias filas (por ejemplo, un abono recibido). Conviene mirar con más cuidado los tipos con menos aciertos.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Tipo') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Confianza media') }}</th><th>{{ _('Revisadas por personas') }}</th><th>{{ _('Sin corregir nada') }}</th></tr></thead>
+    <tbody>{% for clave, nombre in tipos_documento %}{% if clave in r.por_tipo %}{% set d = r.por_tipo[clave] %}<tr><td>{{ nombre }}</td><td>{{ d.facturas }}</td><td>{% if d.confianza_media is not none %}{{ d.confianza_media }} %{% else %}—{% endif %}</td>
+      <td>{{ d.revisadas }}</td><td>{% if d.pct_sin_correcciones is not none %}<span class="confianza confianza-{{ 'alta' if d.pct_sin_correcciones >= 90 else ('media' if d.pct_sin_correcciones >= 70 else 'baja') }}">{{ d.pct_sin_correcciones }} %</span>{% else %}—{% endif %}</td></tr>{% endif %}{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="dash-panel ds-mt-24">
   <h2>{{ _('Acierto por dato') }}</h2>
   <div class="table-wrap"><table class="historial-table">
     <thead><tr><th>{{ _('Dato') }}</th><th>{{ _('Revisadas') }}</th><th>{{ _('Corregidas') }}</th><th>{{ _('Acierto') }}</th></tr></thead>

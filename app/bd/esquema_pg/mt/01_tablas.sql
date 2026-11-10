@@ -786,6 +786,8 @@ CREATE TABLE IF NOT EXISTS contabilidad_lotes (
     n_facturas bigint NOT NULL,
     n_registros bigint NOT NULL,
     contenido bytea NOT NULL,
+    comprobado_en text,
+    n_confirmadas bigint,
     PRIMARY KEY (tenant_id, id)
 );
 
@@ -1554,6 +1556,7 @@ CREATE TABLE IF NOT EXISTS facturas_contables (
     lectura text,
     lectura_error text,
     lectura_evidencia text,
+    confirmada_en text,
     lectura_confianza bigint,
     lectura_fuente text,
     revision_auto bigint NOT NULL DEFAULT 0,
@@ -1949,6 +1952,7 @@ CREATE TABLE IF NOT EXISTS ia_config_despacho (
     lectura_texto bigint NOT NULL DEFAULT 1,
     separar_pdf bigint NOT NULL DEFAULT 1,
     ocr_local text NOT NULL DEFAULT 'respaldo',
+    segunda_lectura bigint NOT NULL DEFAULT 0,
     actualizado_por bigint,
     actualizado_en text NOT NULL,
     PRIMARY KEY (tenant_id),

@@ -26407,3 +26407,27 @@ msgstr "Raccourcis : R vérifie la facture et S la vérifie et passe à la suiva
 
 msgid "Revisar y pasar a la siguiente"
 msgstr "Vérifier et passer à la suivante"
+
+msgid "Por tipo de documento"
+msgstr "Par type de document"
+
+msgid "Dónde se lee peor: una factura cuenta en varias filas (por ejemplo, un abono recibido). Conviene mirar con más cuidado los tipos con menos aciertos."
+msgstr "Où la lecture est la moins fiable : une facture compte dans plusieurs lignes (par exemple, un avoir reçu). Il faut regarder de plus près les types les moins bien lus."
+
+msgid "Abonos y rectificativas"
+msgstr "Avoirs et rectificatives"
+
+msgid "Tiquets y recibos (sin NIF)"
+msgstr "Tickets et reçus (sans NIF)"
+
+msgid "Facturas recibidas"
+msgstr "Factures reçues"
+
+msgid "Subidas por el cliente"
+msgstr "Envoyées par le client"
+
+msgid "Subidas por el despacho"
+msgstr "Envoyées par le cabinet"
+
+msgid "Si una lectura queda dudosa, releerla con el segundo modelo disponible y quedarse con la mejor (cuesta una consulta más)"
+msgstr "Si une lecture reste douteuse, la refaire avec le deuxième modèle disponible et garder la meilleure (une requête de plus)"

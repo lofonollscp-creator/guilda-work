@@ -26322,3 +26322,27 @@ msgstr "Shortcuts: R reviews the invoice and S reviews it and moves to the next 
 
 msgid "Revisar y pasar a la siguiente"
 msgstr "Review and go to the next"
+
+msgid "Por tipo de documento"
+msgstr "By document type"
+
+msgid "Dónde se lee peor: una factura cuenta en varias filas (por ejemplo, un abono recibido). Conviene mirar con más cuidado los tipos con menos aciertos."
+msgstr "Where reading works worst: an invoice counts in several rows (for example, a received credit note). Take more care with the types that have fewer hits."
+
+msgid "Abonos y rectificativas"
+msgstr "Credit notes and corrections"
+
+msgid "Tiquets y recibos (sin NIF)"
+msgstr "Receipts and tickets (no tax ID)"
+
+msgid "Facturas recibidas"
+msgstr "Received invoices"
+
+msgid "Subidas por el cliente"
+msgstr "Uploaded by the client"
+
+msgid "Subidas por el despacho"
+msgstr "Uploaded by the firm"
+
+msgid "Si una lectura queda dudosa, releerla con el segundo modelo disponible y quedarse con la mejor (cuesta una consulta más)"
+msgstr "If a reading is doubtful, read it again with the second available model and keep the better one (costs one more query)"

@@ -87,3 +87,12 @@ def test_la_pagina_enseña_los_numeros_con_facturas_leidas(cliente, monkeypatch)
     lf.leer(t, uid, fid)
     html = cliente.get("/contabilidad/calidad?desde=2020-01-01").get_data(as_text=True)
     assert "Imagen del documento" in html and "Acierto por dato" in html and "Facturas leídas" in html
+
+
+def test_calidad_por_tipo_de_documento(modelo):
+    t, u, c = _despacho()
+    a = _leida(t, u, c, b"1")
+    fc.cambiar_estado(t, u, a, "revisada")
+    r = lq.resumen(t)
+    assert r["por_tipo"]["recibida"]["facturas"] == 1 and r["por_tipo"]["despacho"]["revisadas"] == 1 and "abono" not in r["por_tipo"] and "sin_nif" not in r["por_tipo"]
+    assert r["por_tipo"]["recibida"]["pct_sin_correcciones"] == 100

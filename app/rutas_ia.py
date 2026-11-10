@@ -314,7 +314,7 @@ def guardar_normas_despacho():
     try:
         ia_despacho.guardar_config(g.tenant_id, solo_ue=request.form.get("solo_ue") == "on", claves_personales=request.form.get("claves_personales") == "on",
                                    facturas_modo=request.form.get("facturas_modo", "compartida"), umbral_confianza=request.form.get("umbral_confianza", 90),
-                                   lectura_texto=request.form.get("lectura_texto") == "on", separar_pdf=request.form.get("separar_pdf") == "on", ocr_local=request.form.get("ocr_local", "respaldo"), por=g.usuario_id)
+                                   lectura_texto=request.form.get("lectura_texto") == "on", separar_pdf=request.form.get("separar_pdf") == "on", ocr_local=request.form.get("ocr_local", "respaldo"), segunda_lectura=request.form.get("segunda_lectura") == "on", por=g.usuario_id)
     except ValueError as e:
         return redirect(url_for("ia.ajustes", error=_(str(e))) + "#normas")
     from . import auditoria

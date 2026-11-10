@@ -14,6 +14,16 @@ CAMPOS = ("numero", "fecha", "total", "nif", "tercero", "base", "iva")
 ETIQUETAS = {"numero": "Número", "fecha": "Fecha", "total": "Total", "nif": "NIF", "tercero": "Proveedor/cliente", "base": "Base imponible", "iva": "Cuota de IVA"}
 
 
+def tipos_de(f) -> list[str]:
+    """A qué clases de documento pertenece una factura, para ver dónde falla más la lectura: abonos, tiquets (sin NIF), emitidas o recibidas, y quién la subió. Una factura cuenta en varias."""
+    res = ["abono"] if f["abono"] else []
+    if not (f["tercero_nif"] or "").strip():
+        res.append("sin_nif")
+    res.append("emitida" if f["tipo"] == "emitida" else "recibida")
+    res.append("portal" if f["origen"] == "portal" else "despacho")
+    return res
+
+
 def valores_de(f: dict) -> dict[str, str]:
     """Los siete datos que se comparan, tal como están en la factura (importes en céntimos, para que «100,00» y «100.0» sean lo mismo)."""
     lineas = f.get("lineas") or []
@@ -62,12 +72,13 @@ def resumen(tenant_id: int, desde: str | None = None, cliente_fiscal_id: int | N
     desde = desde or (datetime.now().date().replace(day=1)).isoformat()
     conn = db.get_connection()
     try:
-        filas = conn.execute("SELECT id, estado, lectura, lectura_fuente, lectura_confianza, revision_auto, lectura_evidencia, tercero_nombre, creado_en, revisado_en FROM facturas_contables "
+        filas = conn.execute("SELECT id, estado, lectura, lectura_fuente, lectura_confianza, revision_auto, lectura_evidencia, tercero_nombre, tercero_nif, tipo, abono, origen, creado_en, revisado_en FROM facturas_contables "
                              "WHERE tenant_id = ? AND lectura IN ('ia', 'xml') AND creado_en >= ? AND estado != 'descartada'" + (" AND cliente_fiscal_id = ?" if cliente_fiscal_id else ""),
                              (tenant_id, desde, *([cliente_fiscal_id] if cliente_fiscal_id else []))).fetchall()
     finally:
         conn.close()
     por_fuente: dict[str, dict] = {}
+    por_tipo: dict[str, dict] = {}
     campos = {c: {"revisadas": 0, "corregidas": 0} for c in CAMPOS}
     proveedores: dict[str, dict] = {}
     horas: list[float] = []
@@ -75,10 +86,12 @@ def resumen(tenant_id: int, desde: str | None = None, cliente_fiscal_id: int | N
     for f in filas:
         fuente = f["lectura_fuente"] or ("xml" if f["lectura"] == "xml" else "imagen")
         d = por_fuente.setdefault(fuente, {"facturas": 0, "confianza_suma": 0, "con_confianza": 0, "revisadas": 0, "sin_correcciones": 0})
-        d["facturas"] += 1
-        if f["lectura_confianza"] is not None:
-            d["confianza_suma"] += f["lectura_confianza"]
-            d["con_confianza"] += 1
+        grupos = [por_tipo.setdefault(k, {"facturas": 0, "confianza_suma": 0, "con_confianza": 0, "revisadas": 0, "sin_correcciones": 0}) for k in tipos_de(f)]
+        for x in (d, *grupos):
+            x["facturas"] += 1
+            if f["lectura_confianza"] is not None:
+                x["confianza_suma"] += f["lectura_confianza"]
+                x["con_confianza"] += 1
         if f["revision_auto"]:
             auto += 1
             continue
@@ -92,9 +105,9 @@ def resumen(tenant_id: int, desde: str | None = None, cliente_fiscal_id: int | N
         correcciones = e.get("correcciones")
         if not isinstance(correcciones, dict) or not isinstance(e.get("leido"), dict):
             continue
-        d["revisadas"] += 1
-        if not correcciones:
-            d["sin_correcciones"] += 1
+        for x in (d, *grupos):
+            x["revisadas"] += 1
+            x["sin_correcciones"] += 0 if correcciones else 1
         for c in CAMPOS:
             if c in e["leido"]:
                 campos[c]["revisadas"] += 1
@@ -111,7 +124,7 @@ def resumen(tenant_id: int, desde: str | None = None, cliente_fiscal_id: int | N
         n = (f["tercero_nombre"] or "?").strip()
         if n in proveedores:
             proveedores[n]["facturas"] += 1
-    for d in por_fuente.values():
+    for d in (*por_fuente.values(), *por_tipo.values()):
         d["confianza_media"] = round(d["confianza_suma"] / d["con_confianza"]) if d["con_confianza"] else None
         d["pct_sin_correcciones"] = round(100 * d["sin_correcciones"] / d["revisadas"]) if d["revisadas"] else None
     for c, d in campos.items():
@@ -119,6 +132,6 @@ def resumen(tenant_id: int, desde: str | None = None, cliente_fiscal_id: int | N
     uso = ia_uso.resumen(tenant_id)
     facturas_uso = [x for x in uso["filas"] if x["tarea"] == "facturas"]
     llamadas, coste = sum(x["llamadas"] for x in facturas_uso), round(sum(x["coste_usd"] for x in facturas_uso), 4)
-    return {"desde": desde, "total": len(filas), "por_fuente": por_fuente, "campos": campos, "auto": auto, "pendientes_de_revisar": pendientes,
+    return {"desde": desde, "total": len(filas), "por_fuente": por_fuente, "por_tipo": por_tipo, "campos": campos, "auto": auto, "pendientes_de_revisar": pendientes,
             "proveedores": sorted(proveedores.values(), key=lambda p: -p["correcciones"])[:10], "horas_hasta_revisar": round(sorted(horas)[len(horas) // 2], 1) if horas else None,
             "coste_usd": coste, "llamadas": llamadas, "coste_por_factura": round(coste / llamadas, 4) if llamadas else None, "sin_tarifa": uso["hay_sin_tarifa"]}

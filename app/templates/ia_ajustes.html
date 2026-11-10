@@ -149,6 +149,7 @@
         <input type="number" id="ia-umbral" name="umbral_confianza" min="50" max="100" value="{{ normas.umbral_confianza }}"></div>
       <label class="correo-form-checkbox"><input type="checkbox" name="separar_pdf" {% if normas.separar_pdf %}checked{% endif %}> {{ _('Si un PDF contiene varias facturas, separarlas y leer cada una') }}</label>
       <label class="correo-form-checkbox"><input type="checkbox" name="lectura_texto" {% if normas.lectura_texto %}checked{% endif %}> {{ _('Si el PDF tiene texto, leerlo primero como texto (más barato y rápido); si no cuadra, se vuelve a leer con la imagen') }}</label>
+      <label class="correo-form-checkbox"><input type="checkbox" name="segunda_lectura" {% if normas.segunda_lectura %}checked{% endif %}> {{ _('Si una lectura queda dudosa, releerla con el segundo modelo disponible y quedarse con la mejor (cuesta una consulta más)') }}</label>
       <div class="correo-form-campo"><label for="ia-ocr">{{ _('Reconocimiento de texto en el servidor (OCR local)') }}</label>
         <select id="ia-ocr" name="ocr_local">
           <option value="no" {% if normas.ocr_local == 'no' %}selected{% endif %}>{{ _('No usarlo') }}</option>
