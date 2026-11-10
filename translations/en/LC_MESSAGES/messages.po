@@ -26291,3 +26291,34 @@ msgstr "Check VAT number in VIES"
 
 msgid "No es un duplicado"
 msgstr "Not a duplicate"
+
+msgid "No quedan facturas pendientes de revisar."
+msgstr "No invoices are left to review."
+
+msgid "Leídas con al menos un %(u)s por ciento de confianza (o de factura electrónica) y sin nada que mirar: sin problemas, avisos ni copias."
+msgstr "Read with at least %(u)s percent confidence (or from an electronic invoice) and nothing to check: no problems, warnings or copies."
+
+msgid "Orden"
+msgstr "Order"
+
+msgid "Más recientes primero"
+msgstr "Newest first"
+
+msgid "Las dudosas primero (menos confianza)"
+msgstr "Doubtful first (lowest confidence)"
+
+msgid "Se ha dado por buena %(n)s factura."
+msgid_plural "Se han dado por buenas %(n)s facturas."
+msgstr[0] "%(n)s invoice has been approved."
+msgstr[1] "%(n)s invoices have been approved."
+
+msgid "Dar por buena %(n)s factura segura"
+msgid_plural "Dar por buenas las %(n)s facturas seguras"
+msgstr[0] "Approve %(n)s safe invoice"
+msgstr[1] "Approve the %(n)s safe invoices"
+
+msgid "Atajos: R revisa la factura y S la revisa y pasa a la siguiente (fuera de los campos de texto)."
+msgstr "Shortcuts: R reviews the invoice and S reviews it and moves to the next one (outside text fields)."
+
+msgid "Revisar y pasar a la siguiente"
+msgstr "Review and go to the next"

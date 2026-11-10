@@ -26300,3 +26300,34 @@ msgstr "Comprovar NIF al VIES"
 
 msgid "No es un duplicado"
 msgstr "No és un duplicat"
+
+msgid "No quedan facturas pendientes de revisar."
+msgstr "No queden factures pendents de revisar."
+
+msgid "Leídas con al menos un %(u)s por ciento de confianza (o de factura electrónica) y sin nada que mirar: sin problemas, avisos ni copias."
+msgstr "Llegides amb almenys un %(u)s per cent de confiança (o de factura electrònica) i sense res a mirar: sense problemes, avisos ni còpies."
+
+msgid "Orden"
+msgstr "Ordre"
+
+msgid "Más recientes primero"
+msgstr "Més recents primer"
+
+msgid "Las dudosas primero (menos confianza)"
+msgstr "Les dubtoses primer (menys confiança)"
+
+msgid "Se ha dado por buena %(n)s factura."
+msgid_plural "Se han dado por buenas %(n)s facturas."
+msgstr[0] "S'ha donat per bona %(n)s factura."
+msgstr[1] "S'han donat per bones %(n)s factures."
+
+msgid "Dar por buena %(n)s factura segura"
+msgid_plural "Dar por buenas las %(n)s facturas seguras"
+msgstr[0] "Donar per bona %(n)s factura segura"
+msgstr[1] "Donar per bones les %(n)s factures segures"
+
+msgid "Atajos: R revisa la factura y S la revisa y pasa a la siguiente (fuera de los campos de texto)."
+msgstr "Dreceres: R revisa la factura i S la revisa i passa a la següent (fora dels camps de text)."
+
+msgid "Revisar y pasar a la siguiente"
+msgstr "Revisar i passar a la següent"

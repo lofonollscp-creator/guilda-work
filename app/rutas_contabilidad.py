@@ -61,6 +61,22 @@ def _trimestres() -> list[str]:
     return res
 
 
+def resumen_pendientes_hay(cliente_id: int | None) -> bool:
+    return bool(fc.resumen_por_estado(g.tenant_id, g.usuario_id, cliente_id)["pendiente"])
+
+
+@contabilidad_bp.route("/revisar-seguras", methods=["POST"])
+@login_required
+def revisar_seguras():
+    """Da por revisadas de golpe las pendientes que se leyeron con seguridad y no tienen nada que mirar."""
+    cliente_id = request.form.get("cliente_id", type=int)
+    try:
+        r = fc.revisar_en_lote(g.tenant_id, g.usuario_id, cliente_id, request.form.get("umbral", type=int) or fc.UMBRAL_REVISION_EN_LOTE)
+    except ValueError as e:
+        return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, error=_(str(e))[:300]))
+    return redirect(url_for("contabilidad.lista", cliente_id=cliente_id, estado="pendiente", orden="confianza", en_lote=r["revisadas"]))
+
+
 @contabilidad_bp.route("/")
 @login_required
 def lista():
@@ -74,7 +90,8 @@ def lista():
             desde, hasta = fc.rango_del_trimestre(trimestre)
         except ValueError:
             trimestre = None
-    facturas = fc.listar(g.tenant_id, g.usuario_id, cliente_fiscal_id=cliente_id, estado=estado, tipo=tipo, desde=desde, hasta=hasta)
+    orden = "confianza" if request.args.get("orden") == "confianza" else None
+    facturas = fc.listar(g.tenant_id, g.usuario_id, cliente_fiscal_id=cliente_id, estado=estado, tipo=tipo, desde=desde, hasta=hasta, orden=orden)
     cfg = fc.configuracion(g.tenant_id, cliente_id) if cliente_id else None
     cierres = {}                                                       # {cliente_fiscal_id: {trimestre: cierre}} de los trimestres que salen en la lista
     for cid in {f["cliente_fiscal_id"] for f in facturas}:
@@ -84,7 +101,8 @@ def lista():
     cierre = fc.periodos_cerrados(g.tenant_id, cliente_id, [trimestre]).get(trimestre) if cliente_id and trimestre else None
     uso_plan = cobro_contabilidad.consumo(g.tenant_id)
     ids = [f["id"] for f in facturas]
-    return render_template("contabilidad_lista.html", duplicadas=fc.con_duplicado_entre(g.tenant_id, ids), con_mensaje=facturas_portal.con_mensajes_sin_leer_del_cliente(g.tenant_id, ids), uso_plan=uso_plan if uso_plan["tarifa"] else None, cierre=cierre, facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
+    en_lote = len(fc.revisables_en_lote(g.tenant_id, g.usuario_id, cliente_id)) if cliente_id and resumen_pendientes_hay(cliente_id) else 0
+    return render_template("contabilidad_lista.html", orden=orden, en_lote=en_lote, umbral_lote=fc.UMBRAL_REVISION_EN_LOTE, duplicadas=fc.con_duplicado_entre(g.tenant_id, ids), con_mensaje=facturas_portal.con_mensajes_sin_leer_del_cliente(g.tenant_id, ids), uso_plan=uso_plan if uso_plan["tarifa"] else None, cierre=cierre, facturas=facturas, clientes=_clientes(), cliente_id=cliente_id, estado=estado or "", tipo=tipo or "", trimestre=trimestre or "",
                            trimestres=_trimestres(), resumen=fc.resumen_por_estado(g.tenant_id, g.usuario_id, cliente_id), cfg=cfg, error=_error(), subnav=None,
                            por_leer=lectura_facturas.pendientes_de_leer(g.tenant_id, g.usuario_id, cliente_id), ia_lista=lectura_facturas.configurada(g.usuario_id), max_archivos=fc.MAX_ARCHIVOS_POR_SUBIDA)
 
@@ -381,6 +399,9 @@ def estado(factura_id: int):
         fc.cambiar_estado(g.tenant_id, g.usuario_id, factura_id, request.form.get("estado", ""), confirmar_duplicado=bool(request.form.get("no_es_duplicado")))
     except ValueError as e:
         return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=_(str(e))[:300]))
+    if request.form.get("siguiente"):
+        siguiente = fc.siguiente_pendiente(g.tenant_id, g.usuario_id, factura_id, "confianza" if request.form.get("orden") == "confianza" else None)
+        return redirect(url_for("contabilidad.ver", factura_id=siguiente) if siguiente else url_for("contabilidad.lista", estado="pendiente", todas_revisadas=1))
     return redirect(request.form.get("volver") or url_for("contabilidad.ver", factura_id=factura_id))
 
 

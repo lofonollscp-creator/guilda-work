@@ -20,6 +20,15 @@
   </div>
 </header>
 {{ aviso_error(error) }}
+{% if request.args.get('en_lote') %}<div class="ia-aviso" role="status">{{ ngettext('Se ha dado por buena %(n)s factura.', 'Se han dado por buenas %(n)s facturas.', request.args.get('en_lote', type=int) or 0, n=request.args.get('en_lote', type=int) or 0) }}</div>{% endif %}
+{% if request.args.get('todas_revisadas') %}<div class="ia-aviso" role="status">{{ _('No quedan facturas pendientes de revisar.') }}</div>{% endif %}
+{% if en_lote %}
+<section class="dash-panel"><div class="ds-fila">
+  <form method="post" action="{{ url_for('contabilidad.revisar_seguras') }}"><input type="hidden" name="cliente_id" value="{{ cliente_id }}"><input type="hidden" name="umbral" value="{{ umbral_lote }}">
+    <button type="submit" class="btn btn-primary">{{ ngettext('Dar por buena %(n)s factura segura', 'Dar por buenas las %(n)s facturas seguras', en_lote, n=en_lote) }}</button></form>
+  <span class="muted">{{ _('Leídas con al menos un %(u)s por ciento de confianza (o de factura electrónica) y sin nada que mirar: sin problemas, avisos ni copias.', u=umbral_lote) }}</span>
+</div></section>
+{% endif %}
 
 <form class="filters" method="get">
   <label>{{ _('Cliente') }}
@@ -31,6 +40,8 @@
       {% for e, n in (('pendiente', _('Pendientes de revisar')), ('revisada', _('Revisadas')), ('exportada', _('Exportadas')), ('descartada', _('Descartadas'))) %}<option value="{{ e }}" {{ 'selected' if e == estado }}>{{ n }}</option>{% endfor %}</select></label>
   <label>{{ _('Tipo') }}
     <select name="tipo"><option value="">{{ _('Todos') }}</option><option value="recibida" {{ 'selected' if tipo == 'recibida' }}>{{ _('Recibidas') }}</option><option value="emitida" {{ 'selected' if tipo == 'emitida' }}>{{ _('Emitidas') }}</option></select></label>
+  <label>{{ _('Orden') }}
+    <select name="orden"><option value="">{{ _('Más recientes primero') }}</option><option value="confianza" {{ 'selected' if orden == 'confianza' }}>{{ _('Las dudosas primero (menos confianza)') }}</option></select></label>
   <button type="submit" class="btn btn-primary">{{ _('Filtrar') }}</button>
 </form>
 
@@ -125,7 +136,7 @@
   {{ estado_vacio(_('No hay facturas'), _('Anota la primera, o cambia los filtros.'), 'file-text') }}
 {% else %}
 <div class="table-wrap"><table class="historial-table">
-  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Total') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
+  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Total') }}</th><th>{{ _('Confianza') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
   <tbody>
   {% for f in facturas %}
     <tr>
@@ -135,6 +146,7 @@
       <td><a href="{{ url_for('contabilidad.ver', factura_id=f.id) }}"><strong>{{ f.numero }}</strong></a>{% if f.id in duplicadas %} <span class="pill" title="{{ _('Hay otra factura del mismo cliente con el mismo NIF y número') }}">{{ _('Posible duplicada') }}</span>{% endif %}{% if f.id in con_mensaje %} <span class="pill" title="{{ _('El cliente ha escrito en esta factura') }}">{{ _('Mensaje nuevo') }}</span>{% endif %}</td>
       <td>{{ f.tercero_nombre }}{% if f.tercero_nif %} <span class="muted mono">{{ f.tercero_nif }}</span>{% endif %}</td>
       <td class="mono contabilidad-total">{{ '%.2f'|format(f.total_centimos / 100) }} €</td>
+      <td class="mono">{% if f.lectura_confianza is not none %}<span class="confianza confianza-{{ 'alta' if f.lectura_confianza >= 90 else ('media' if f.lectura_confianza >= 70 else 'baja') }}">{{ f.lectura_confianza }} %</span>{% elif f.lectura == 'xml' %}<span class="confianza confianza-alta">XML</span>{% else %}—{% endif %}</td>
       <td><span class="pildora-v2 {{ {'pendiente': 'ambar', 'revisada': 'azul', 'exportada': 'verde'}.get(f.estado, '') }}">{{ {'pendiente': _('Pendiente'), 'revisada': _('Revisada'), 'exportada': _('Exportada'), 'descartada': _('Descartada')}[f.estado] }}</span></td>
       <td>{% if f.estado == 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="revisada"><input type="hidden" name="volver" value="{{ request.full_path }}"><button type="submit" class="btn btn-ghost btn-sm">{{ _('Marcar como revisada') }}</button></form>{% endif %}</td>
     </tr>

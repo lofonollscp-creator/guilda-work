@@ -26376,3 +26376,34 @@ msgstr "Vérifier le numéro de TVA dans VIES"
 
 msgid "No es un duplicado"
 msgstr "Ce n'est pas un doublon"
+
+msgid "No quedan facturas pendientes de revisar."
+msgstr "Il ne reste aucune facture à vérifier."
+
+msgid "Leídas con al menos un %(u)s por ciento de confianza (o de factura electrónica) y sin nada que mirar: sin problemas, avisos ni copias."
+msgstr "Lues avec au moins %(u)s pour cent de confiance (ou issues d'une facture électronique) et sans rien à vérifier : ni problèmes, ni avertissements, ni doublons."
+
+msgid "Orden"
+msgstr "Ordre"
+
+msgid "Más recientes primero"
+msgstr "Les plus récentes d'abord"
+
+msgid "Las dudosas primero (menos confianza)"
+msgstr "Les douteuses d'abord (moins de confiance)"
+
+msgid "Se ha dado por buena %(n)s factura."
+msgid_plural "Se han dado por buenas %(n)s facturas."
+msgstr[0] "%(n)s facture a été validée."
+msgstr[1] "%(n)s factures ont été validées."
+
+msgid "Dar por buena %(n)s factura segura"
+msgid_plural "Dar por buenas las %(n)s facturas seguras"
+msgstr[0] "Valider %(n)s facture sûre"
+msgstr[1] "Valider les %(n)s factures sûres"
+
+msgid "Atajos: R revisa la factura y S la revisa y pasa a la siguiente (fuera de los campos de texto)."
+msgstr "Raccourcis : R vérifie la facture et S la vérifie et passe à la suivante (hors des champs de texte)."
+
+msgid "Revisar y pasar a la siguiente"
+msgstr "Vérifier et passer à la suivante"

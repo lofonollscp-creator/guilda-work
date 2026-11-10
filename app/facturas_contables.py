@@ -1147,7 +1147,8 @@ def con_duplicado_entre(tenant_id: int, ids: list[int]) -> set[int]:
 
 
 def listar(tenant_id: int, usuario_id: int, *, cliente_fiscal_id: int | None = None, estado: str | None = None, tipo: str | None = None, desde: str | None = None, hasta: str | None = None,
-           limite: int = 300) -> list[dict]:
+           limite: int = 300, orden: str | None = None) -> list[dict]:
+    """Las facturas visibles, de la más reciente a la más antigua; con `orden="confianza"` primero las que peor se leyeron (las dudosas arriba, para mirarlas antes)."""
     visibles = acceso.clientes_visibles(tenant_id, usuario_id)
     donde, p = ["x.tenant_id = ?"], [tenant_id]
     for campo, valor in (("x.cliente_fiscal_id", cliente_fiscal_id), ("x.estado", estado), ("x.tipo", tipo)):
@@ -1161,10 +1162,57 @@ def listar(tenant_id: int, usuario_id: int, *, cliente_fiscal_id: int | None = N
     try:
         filas = [dict(f) for f in conn.execute(
             "SELECT x.*, c.nombre AS cliente_nombre FROM facturas_contables x JOIN clientes_fiscales c ON c.id = x.cliente_fiscal_id WHERE " + " AND ".join(donde) +
-            " ORDER BY x.fecha DESC, x.id DESC LIMIT ?", [*p, limite])]
+            (" ORDER BY CASE WHEN x.lectura_confianza IS NULL THEN 101 ELSE x.lectura_confianza END ASC, x.fecha DESC, x.id DESC LIMIT ?" if orden == "confianza" else " ORDER BY x.fecha DESC, x.id DESC LIMIT ?"), [*p, limite])]
     finally:
         conn.close()
     return [f for f in filas if visibles is None or f["cliente_fiscal_id"] in visibles]
+
+
+UMBRAL_REVISION_EN_LOTE = 90
+
+
+def revisables_en_lote(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, umbral: int = UMBRAL_REVISION_EN_LOTE, ids: list[int] | None = None) -> list[dict]:
+    """Las facturas pendientes que se pueden dar por buenas de golpe: leídas de una factura electrónica (datos exactos) o con IA y confianza al menos `umbral`, sin problemas, sin avisos de
+    control (NIF dudoso, copia, fechas raras…) y no revisadas ya por la IA sola. Las demás necesitan que una persona las mire."""
+    from . import facturas_control
+    umbral = max(50, min(100, int(umbral)))
+    res = []
+    for f in listar(tenant_id, usuario_id, cliente_fiscal_id=cliente_fiscal_id, estado="pendiente", limite=2000):
+        if ids is not None and f["id"] not in ids:
+            continue
+        if not (f.get("lectura") == "xml" or (f.get("lectura") == "ia" and (f.get("lectura_confianza") or 0) >= umbral)):
+            continue
+        completa = obtener(tenant_id, usuario_id, f["id"])
+        if completa is None or completa["problemas"] or facturas_control.avisos(tenant_id, completa) or facturas_control.duplicados(tenant_id, completa):
+            continue
+        res.append(f)
+    return res
+
+
+def revisar_en_lote(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, umbral: int = UMBRAL_REVISION_EN_LOTE, ids: list[int] | None = None) -> dict:
+    """Da por revisadas las `revisables_en_lote`. Lo hace una persona (queda como revisor) pero no enseña reglas al sistema: aprende solo de lo que se mira una a una.
+    Devuelve {revisadas, omitidas} (omitidas = las que se intentaron y no pasaron, con el motivo en la auditoría)."""
+    hechas = omitidas = 0
+    for f in revisables_en_lote(tenant_id, usuario_id, cliente_fiscal_id, umbral, ids):
+        try:
+            cambiar_estado(tenant_id, usuario_id, f["id"], "revisada", aprender=False)
+            hechas += 1
+        except ValueError:
+            omitidas += 1
+    if hechas:
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.revision_en_lote", "tenant", tenant_id, {"revisadas": hechas, "umbral": umbral, "cliente_fiscal_id": cliente_fiscal_id})
+    return {"revisadas": hechas, "omitidas": omitidas}
+
+
+def siguiente_pendiente(tenant_id: int, usuario_id: int, factura_id: int, orden: str | None = None) -> int | None:
+    """La id de la siguiente factura pendiente del mismo cliente tras `factura_id` en el orden de la lista (o de otro cliente si ya no quedan), o None si no hay más."""
+    f = obtener(tenant_id, usuario_id, factura_id)
+    if f is None:
+        return None
+    pendientes = [x["id"] for x in listar(tenant_id, usuario_id, cliente_fiscal_id=f["cliente_fiscal_id"], estado="pendiente", limite=2000, orden=orden) if x["id"] != factura_id]
+    if not pendientes:
+        pendientes = [x["id"] for x in listar(tenant_id, usuario_id, estado="pendiente", limite=2000, orden=orden) if x["id"] != factura_id]
+    return pendientes[0] if pendientes else None
 
 
 def resumen_por_estado(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None) -> dict[str, int]:
