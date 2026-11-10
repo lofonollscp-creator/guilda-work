@@ -346,6 +346,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "contabilidad_clientes", "columnas_retorno", "TEXT")            # JSON: las columnas del listado de a3 que la persona indicó la última vez
     db._asegurar_columna(conn, "facturas_contables", "pago_exportado_en", "TEXT")              # cuándo salió su asiento de cobro o pago en un fichero para a3
     db._asegurar_columna(conn, "contabilidad_reglas", "pct_deducible", "INTEGER")              # % de IVA deducible en centésimas (5000 = 50 %); vacío = todo
+    db._asegurar_columna(conn, "contabilidad_lotes", "clase", "TEXT")                          # vacío = facturas; «pagos» = asientos de cobro y pago (migración 047)
     db._asegurar_columna(conn, "contabilidad_clientes", "plan_cuentas", "TEXT")                # JSON: todas las cuentas del plan de a3 importado (J12)
     db._asegurar_columna(conn, "contabilidad_lotes", "estado_a3", "TEXT")                      # importado · rechazado (lo que dice la persona tras importar el fichero en a3)
     db._asegurar_columna(conn, "contabilidad_lotes", "motivo_a3", "TEXT")
@@ -1365,7 +1366,7 @@ def historial(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
         return []
     etiquetas = {"subida": _("Archivo subido"), "creada": _("Anotada"), "leida_ia": _("Leída con IA"), "leida_xml": _("Leída de la factura electrónica"), "revisada_auto": _("Revisada sola por la IA"),
                  "editada": _("Editada"), "revisada": _("Dada por revisada"), "pendiente": _("Reabierta"), "descartada": _("Descartada"), "exportada": _("Exportada a a3"),
-                 "confirmada_a3": _("Confirmada en a3"), "movida": _("Movida a otro cliente"), "no_es_factura": _("Apartada: no era una factura"), "incluir_en_fiscal": _("Incluida en Guilda Fiscal"), "pdf_separado": _("PDF separado en varias facturas")}
+                 "confirmada_a3": _("Confirmada en a3"), "asiento_de_pago": _("Asiento de cobro o pago generado"), "movida": _("Movida a otro cliente"), "no_es_factura": _("Apartada: no era una factura"), "incluir_en_fiscal": _("Incluida en Guilda Fiscal"), "pdf_separado": _("PDF separado en varias facturas")}
     nombres = {"fecha": _("la fecha"), "numero": _("el número"), "tercero_nombre": _("el nombre"), "tercero_nif": _("el NIF"), "concepto": _("el concepto"), "total_centimos": _("el total")}
     res = []
     for e in auditoria.listar(tenant_id, entidad="factura_contable", entidad_id=factura_id, limite=200):
@@ -1687,7 +1688,7 @@ def listar_lotes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None 
     conn = db.get_connection()
     try:
         filas = [dict(f) for f in conn.execute(
-            "SELECT l.id, l.cliente_fiscal_id, l.creado_en, l.desde, l.hasta, l.n_facturas, l.n_registros, l.comprobado_en, l.n_confirmadas, l.estado_a3, l.motivo_a3, l.estado_a3_en, c.nombre AS cliente_nombre FROM contabilidad_lotes l JOIN clientes_fiscales c ON c.id = l.cliente_fiscal_id "
+            "SELECT l.id, l.cliente_fiscal_id, l.creado_en, l.desde, l.hasta, l.n_facturas, l.n_registros, l.comprobado_en, l.n_confirmadas, l.estado_a3, l.motivo_a3, l.estado_a3_en, l.clase, c.nombre AS cliente_nombre FROM contabilidad_lotes l JOIN clientes_fiscales c ON c.id = l.cliente_fiscal_id "
             "WHERE l.tenant_id = ?" + (" AND l.cliente_fiscal_id = ?" if cliente_fiscal_id else "") + " ORDER BY l.id DESC LIMIT ?", [tenant_id, *([cliente_fiscal_id] if cliente_fiscal_id else []), limite])]
     finally:
         conn.close()
@@ -1712,6 +1713,73 @@ def fijar_estado_a3_del_lote(tenant_id: int, usuario_id: int, lote_id: int, esta
         conn.commit()
     finally:
         conn.close()
+
+
+def facturas_para_asiento_de_pago(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, limite: int = 300) -> list[dict]:
+    """Las facturas exportadas del cliente (no abonos) cuyo asiento de cobro o pago aún no ha salido en un fichero: [{id, tipo, numero, fecha, tercero, total}], las más antiguas primero."""
+    _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT id, tipo, numero, fecha, tercero_nombre, total_centimos FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND estado = 'exportada' AND abono = 0 "
+                             "AND pago_exportado_en IS NULL ORDER BY fecha, id LIMIT ?", (tenant_id, cliente_fiscal_id, max(1, min(int(limite), 2000)))).fetchall()
+    finally:
+        conn.close()
+    return [{"id": f["id"], "tipo": f["tipo"], "numero": f["numero"], "fecha": f["fecha"], "tercero": f["tercero_nombre"], "total": f["total_centimos"]} for f in filas]
+
+
+def asientos_de_pago(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, pagos: list[dict], *, repetir: bool = False) -> dict:
+    """Genera el fichero para a3 con los asientos de **cobro** (facturas emitidas) y **pago** (recibidas) de las facturas indicadas, y lo guarda como fichero generado de clase «pagos». `pagos`: [{factura_id, fecha
+    (AAAA-MM-DD; hoy por defecto), importe (en céntimos; el total por defecto, para un pago parcial), cuenta_tesoreria (la del cliente por defecto)}]. Solo del formato clásico de 256 posiciones, y de facturas ya
+    exportadas (a3 tiene que tener la factura). Un pago: Debe el proveedor, Haber el banco; un cobro: Debe el banco, Haber el cliente. Marca las facturas para no repetirlas salvo con `repetir`."""
+    from datetime import date as _date
+    cliente = _cliente(tenant_id, usuario_id, cliente_fiscal_id)
+    cfg = configuracion(tenant_id, cliente_fiscal_id)
+    if cfg.get("formato_enlace") != enlace_a3.FORMATO_CLASICO:
+        raise ValueError("Los asientos de cobro y pago solo se pueden generar en el formato clásico de 256 posiciones: cámbialo en la configuración de a3 del cliente.")
+    if not cfg["a3_empresa"]:
+        raise ValueError("Indica antes el código de empresa de a3 de este cliente.")
+    if not isinstance(pagos, list) or not pagos or len(pagos) > 500:
+        raise ValueError("Indica entre 1 y 500 facturas.")
+    asientos, marcadas = [], []
+    for p in pagos:
+        f = obtener(tenant_id, usuario_id, int(p.get("factura_id") or 0))
+        if f is None or f["cliente_fiscal_id"] != cliente_fiscal_id:
+            raise ValueError("Una de las facturas no existe en este cliente.")
+        if f["estado"] != "exportada" or f["abono"]:
+            raise ValueError(f"La factura {f['numero']} tiene que estar exportada (ya en a3) y no ser un abono para generar su asiento de cobro o pago.")
+        if f.get("pago_exportado_en") and not repetir:
+            raise ValueError(f"La factura {f['numero']} ya tiene su asiento de cobro o pago en un fichero: si hace falta repetirlo, indícalo.")
+        fecha = _fecha(p.get("fecha") or _date.today().isoformat(), "Fecha del cobro o pago")
+        importe = int(p["importe"]) if p.get("importe") not in (None, "") else f["total_centimos"]
+        if not 0 < importe <= f["total_centimos"]:
+            raise ValueError(f"El importe de la factura {f['numero']} tiene que ser mayor que cero y no superar su total ({f['total_centimos'] / 100:.2f}).")
+        tesoreria = re.sub(r"\D", "", str(p.get("cuenta_tesoreria") or "")) or cfg["cuenta_tesoreria"]
+        tercero = cuenta_efectiva(tenant_id, f, cfg)
+        cobro = f["tipo"] == "emitida"
+        lineas = [{"cuenta": tesoreria, "nombre": "Banco o caja", "debe": True, "importe_centimos": importe}, {"cuenta": tercero, "nombre": f["tercero_nombre"], "debe": False, "importe_centimos": importe}] if cobro else \
+                 [{"cuenta": tercero, "nombre": f["tercero_nombre"], "debe": True, "importe_centimos": importe}, {"cuenta": tesoreria, "nombre": "Banco o caja", "debe": False, "importe_centimos": importe}]
+        asientos.append({"fecha": fecha, "referencia": f["numero"], "descripcion": ("Cobro fra. " if cobro else "Pago fra. ") + f["numero"], "lineas": lineas})
+        marcadas.append(f["id"])
+    from . import enlace_a3_chequeo
+    contenido = enlace_a3.generar_asientos(asientos, empresa=cfg["a3_empresa"], digitos=cfg["digitos"])
+    chequeo = enlace_a3_chequeo.chequear(contenido, cfg["digitos"])
+    if chequeo["errores"]:
+        e = chequeo["errores"][0]
+        raise ValueError(f"El fichero no pasa el pre-chequeo ({len(chequeo['errores'])} errores). El primero: {e['mensaje']}")
+    fechas = sorted(a["fecha"] for a in asientos)
+    conn = db.get_connection()
+    try:
+        cur = conn.execute("INSERT INTO contabilidad_lotes (tenant_id, cliente_fiscal_id, creado_por, creado_en, desde, hasta, n_facturas, n_registros, contenido, clase) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pagos')",
+                           (tenant_id, cliente_fiscal_id, usuario_id, db.now_iso(), fechas[0], fechas[-1], len(asientos), contenido.count(b"\r\n"), contenido))
+        lote = cur.lastrowid
+        conn.executemany("UPDATE facturas_contables SET pago_exportado_en = ? WHERE id = ? AND tenant_id = ?", [(db.now_iso(), i, tenant_id) for i in marcadas])
+        for i in marcadas:
+            auditoria.registrar(tenant_id, usuario_id, "factura_contable.asiento_de_pago", "factura_contable", i, {"lote": lote}, conn=conn)
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.asientos_de_pago", "cliente_fiscal", cliente_fiscal_id, {"lote": lote, "asientos": len(asientos)}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+    return {"lote": lote, "asientos": len(asientos), "registros": contenido.count(b"\r\n"), "contenido": contenido, "cliente": cliente["nombre"]}
 
 
 DIAS_FICHERO_SIN_ESTADO = 3        # un fichero exportado que lleva tanto sin marcar como importado ni cruzar con lo que devuelve a3 pide que alguien lo mire

@@ -785,6 +785,25 @@ def _descarga(contenido: bytes) -> Response:
     return resp
 
 
+@contabilidad_bp.route("/pagos", methods=["GET", "POST"])
+@login_required
+def pagos():
+    """Asientos de cobro y pago de las facturas ya exportadas: elige las facturas y la fecha y baja el fichero para a3 (formato clásico de 256)."""
+    cliente_id = request.values.get("cliente_id", type=int)
+    error = None
+    if request.method == "POST":
+        try:
+            ids = request.form.getlist("factura", type=int)
+            marcadas = [{"factura_id": i, "fecha": request.form.get(f"fecha_{i}") or request.form.get("fecha") or None} for i in ids]
+            r = fc.asientos_de_pago(g.tenant_id, g.usuario_id, cliente_id or 0, marcadas, repetir=bool(request.form.get("repetir")))
+            return _descarga(r["contenido"])
+        except ValueError as e:
+            error = _(str(e))
+    facturas = fc.facturas_para_asiento_de_pago(g.tenant_id, g.usuario_id, cliente_id) if cliente_id else []
+    cfg = fc.configuracion(g.tenant_id, cliente_id) if cliente_id else None
+    return render_template("contabilidad_pagos.html", clientes=_clientes(), cliente_id=cliente_id, facturas=facturas, cfg=cfg, hoy=date.today().isoformat(), error=error or _error(), subnav=None)
+
+
 @contabilidad_bp.route("/panel-cierre")
 @login_required
 def panel_del_cierre():

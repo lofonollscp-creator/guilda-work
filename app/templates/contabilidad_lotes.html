@@ -10,6 +10,7 @@
   </div>
   <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.comprobar_fichero') }}">{{ _('Comprobar un fichero') }}</a>
   <a class="btn btn-ghost" href="{{ url_for('contabilidad.retorno') }}">{{ _('Comprobar lo que devuelve a3') }}</a>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.pagos') }}">{{ _('Asientos de cobro y pago') }}</a>
   <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Volver a las facturas') }}</a></div>
 </header>
 {{ aviso_error(error) }}
@@ -18,7 +19,7 @@
 {% else %}
 <div class="table-wrap"><table class="historial-table">
   <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Registros') }}</th><th>{{ _('En a3') }}</th><th>{{ _('Estado en a3') }}</th><th></th></tr></thead>
-  <tbody>{% for l in lotes %}<tr><td class="mono">{{ l.creado_en[:16]|replace('T', ' ') }}</td><td>{{ l.cliente_nombre }}</td><td>{{ l.n_facturas }}</td><td>{{ l.n_registros }}</td><td>{% if l.comprobado_en %}{{ l.n_confirmadas }} / {{ l.n_facturas }}{% else %}<span class="muted">{{ _('Sin comprobar') }}</span>{% endif %}</td><td>
+  <tbody>{% for l in lotes %}<tr><td class="mono">{{ l.creado_en[:16]|replace('T', ' ') }}</td><td>{{ l.cliente_nombre }}</td><td>{{ l.n_facturas }}{% if l.clase == 'pagos' %} <span class="pill">{{ _('Cobros y pagos') }}</span>{% endif %}</td><td>{{ l.n_registros }}</td><td>{% if l.comprobado_en %}{{ l.n_confirmadas }} / {{ l.n_facturas }}{% else %}<span class="muted">{{ _('Sin comprobar') }}</span>{% endif %}</td><td>
       <form method="post" action="{{ url_for('contabilidad.estado_del_lote', lote_id=l.id) }}" class="ds-fila">
         <select name="estado" aria-label="{{ _('Estado en a3') }}"><option value="">—</option><option value="importado" {{ 'selected' if l.estado_a3 == 'importado' }}>{{ _('Importado') }}</option><option value="rechazado" {{ 'selected' if l.estado_a3 == 'rechazado' }}>{{ _('Rechazado por a3') }}</option></select>
         <input type="text" name="motivo" value="{{ l.motivo_a3 or '' }}" maxlength="300" placeholder="{{ _('Motivo (si lo rechazó)') }}" aria-label="{{ _('Motivo') }}">

@@ -785,6 +785,7 @@ CREATE TABLE IF NOT EXISTS contabilidad_lotes (
     contenido bytea NOT NULL,
     comprobado_en text,
     n_confirmadas bigint,
+    clase text,
     estado_a3 text,
     motivo_a3 text,
     estado_a3_en text,

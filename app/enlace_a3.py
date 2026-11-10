@@ -192,6 +192,31 @@ def registro_vencimiento_ampliacion(*, empresa, fecha_vencimiento, forma_pago: s
     return _rellenar(r, FORMATO_CLASICO)
 
 
+def registro_apunte(*, empresa, fecha, cuenta, digitos: int, nombre, debe: bool, referencia, linea: str, descripcion, importe_centimos: int) -> str:
+    """Registro tipo 0 (formato clásico de 256): una línea de un apunte sin IVA. `debe`: True = Debe, False = Haber. `linea`: «I» la primera, «M» las intermedias, «U» la última (todo asiento empieza por I y acaba en U)."""
+    if linea not in ("I", "M", "U"):
+        raise ValueError("La línea de un apunte es I, M o U.")
+    r = (TIPO_DE_FORMATO[FORMATO_CLASICO] + _empresa(empresa) + _fecha(fecha) + "0" + _cuenta(cuenta, digitos) + _texto(nombre, 30)                    # 1-57
+         + ("D" if debe else "H") + _texto(numero_corto(referencia), 10) + linea + _texto(descripcion, 30) + _importe(abs(int(importe_centimos))))     # 58, 59-68, 69, 70-99, 100-113
+    return _rellenar(r, FORMATO_CLASICO)
+
+
+def generar_asientos(asientos: list[dict], *, empresa, digitos: int = 8) -> bytes:
+    """Un SUENLACE.DAT del formato clásico con asientos sin IVA (cobros y pagos). Cada asiento: `{fecha, referencia, descripcion, lineas: [{cuenta, nombre, debe, importe_centimos}]}` con al menos dos líneas y
+    el Debe igual al Haber; la primera va como I, las intermedias como M y la última como U."""
+    lineas = []
+    for a in asientos:
+        ls = a["lineas"]
+        if len(ls) < 2:
+            raise ValueError("Un asiento necesita al menos dos líneas.")
+        if sum(l["importe_centimos"] for l in ls if l["debe"]) != sum(l["importe_centimos"] for l in ls if not l["debe"]):
+            raise ValueError("El asiento no cuadra: el Debe y el Haber son distintos.")
+        for i, l in enumerate(ls):
+            lineas.append(registro_apunte(empresa=empresa, fecha=a["fecha"], cuenta=l["cuenta"], digitos=digitos, nombre=l.get("nombre"), debe=l["debe"], referencia=a.get("referencia"),
+                                          linea="I" if i == 0 else "U" if i == len(ls) - 1 else "M", descripcion=a.get("descripcion"), importe_centimos=l["importe_centimos"]))
+    return "".join(l + FIN_DE_LINEA for l in lineas).encode("latin-1")
+
+
 def registro_cuenta(*, empresa, fecha, cuenta, digitos: int, nombre, nif=None, criterio_caja=None) -> str:
     """Registro tipo C (formato clásico de 256): alta o modificación de una cuenta de cliente o proveedor con su NIF (78-91) y, en los proveedores, si están en el criterio de caja (238: S o N). Si la cuenta
     ya existe a3 la actualiza con estos datos. No actualiza el saldo inicial."""

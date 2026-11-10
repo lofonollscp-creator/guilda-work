@@ -84,6 +84,7 @@ def chequear(contenido: bytes, digitos: int = 8) -> dict:
     registros = [texto[i:i + largo] for i in range(0, len(texto), largo)]
     facturas: list[dict] = []
     actual: dict | None = None
+    asiento: dict | None = None                                      # el apunte sin IVA (tipo 0) que se está leyendo: {registro, lineas: [(D/H, importe)], cerrado}
     empresas, vistos = set(), {}
     for n, r in enumerate(registros, start=1):
         if len(r) != largo or not r.endswith("\r\n"):
@@ -129,6 +130,8 @@ def chequear(contenido: bytes, digitos: int = 8) -> dict:
                 _ampliacion(inf, n, r, actual)
         elif tipo == "V" and inf.formato == enlace_a3.FORMATO_CLASICO:
             _vencimiento(inf, n, r, actual)
+        elif tipo == "0" and inf.formato == enlace_a3.FORMATO_CLASICO:
+            asiento = _apunte(inf, n, r, asiento, digitos)
         elif tipo == "C" and inf.formato == enlace_a3.FORMATO_CLASICO:
             _alta_de_cuenta(inf, n, r, digitos)
         elif tipo == "3" and inf.formato == enlace_a3.FORMATO_CLASICO:
@@ -136,6 +139,8 @@ def chequear(contenido: bytes, digitos: int = 8) -> dict:
                 inf.error(n, "Una observación (tipo 3) tiene que ir después del apunte al que se refiere.")
         else:
             inf.error(n, f"Tipo de registro desconocido en la posición 15: «{tipo}».")
+    if asiento is not None and not asiento["cerrado"]:
+        inf.error(asiento["registro"], "El asiento no acaba: la última línea tiene que llevar «U» en la posición 69.")
     for f in facturas:
         _cerrar(inf, f)
     _coherencia_de_cuentas(inf, facturas, digitos)
@@ -282,6 +287,38 @@ def _ampliacion(inf: _Informe, n: int, r: str, f: dict) -> None:
     esperado = "E" if f["tipo_factura"] == "1" else "R"
     if _c(r, 304, 304) != esperado:
         inf.error(n, f"El tipo de factura de la ampliación (304) debe ser «{esperado}» y es «{_c(r, 304, 304)}».")
+
+
+def _apunte(inf: _Informe, n: int, r: str, asiento: dict | None, digitos: int) -> dict:
+    """Una línea de un apunte sin IVA (tipo 0, formato de 256): cuenta, Debe o Haber, importe y la secuencia I, M…, U. Al cerrar el asiento (U) comprueba que el Debe y el Haber cuadren."""
+    cuenta = _c(r, 16, 27)
+    if not re.fullmatch(r"\d{12}", cuenta) or not cuenta[:digitos].strip("0") or cuenta[digitos:].strip("0"):
+        inf.error(n, f"La cuenta del apunte (16-27) no es válida: «{cuenta}».")
+    dh, linea = _c(r, 58, 58), _c(r, 69, 69)
+    if dh not in ("D", "H"):
+        inf.error(n, f"El tipo de importe (58) debe ser D (Debe) o H (Haber) y es «{dh}».")
+    importe = _importe(_c(r, 100, 113))
+    if importe is None:
+        inf.error(n, f"El importe (100-113) no tiene el formato +0000000000.00: «{_c(r, 100, 113)}».")
+    if linea not in ("I", "M", "U"):
+        inf.error(n, f"La línea de apunte (69) debe ser I, M o U y es «{linea}».")
+        return asiento or {"registro": n, "lineas": [], "cerrado": False}
+    if linea == "I":
+        if asiento is not None and not asiento["cerrado"]:
+            inf.error(asiento["registro"], "El asiento no acaba: la última línea tiene que llevar «U» en la posición 69.")
+        asiento = {"registro": n, "lineas": [], "cerrado": False}
+    elif asiento is None or asiento["cerrado"]:
+        inf.error(n, "Todo asiento tiene que empezar por una línea «I» (posición 69).")
+        asiento = {"registro": n, "lineas": [], "cerrado": False}
+    asiento["lineas"].append((dh, importe or 0))
+    if linea == "U":
+        asiento["cerrado"] = True
+        debe, haber = (sum(i for d, i in asiento["lineas"] if d == k) for k in ("D", "H"))
+        if len(asiento["lineas"]) < 2:
+            inf.error(asiento["registro"], "Un asiento necesita al menos dos líneas.")
+        elif debe != haber:
+            inf.error(asiento["registro"], f"El asiento no cuadra: Debe {debe / 100:.2f} y Haber {haber / 100:.2f}.")
+    return asiento
 
 
 def _alta_de_cuenta(inf: _Informe, n: int, r: str, digitos: int) -> None:

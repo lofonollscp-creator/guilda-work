@@ -213,3 +213,15 @@ def contabilidad_unificar_tercero(cliente_fiscal_id: int, tipo: str, nif: str, n
 def contabilidad_corregir_nif_tercero(cliente_fiscal_id: int, tipo: str, nif_mal: str, nif_bien: str) -> dict:
     """Cambia un NIF mal leído por el correcto en las facturas pendientes o revisadas de un cliente (las ya exportadas no se tocan). `tipo`: recibida (proveedores) o emitida (clientes)."""
     return _mt._conta().corregir_nif_tercero(*_mt._ctx_conta(), cliente_fiscal_id, tipo, nif_mal, nif_bien)
+
+
+def contabilidad_facturas_para_asiento_de_pago(cliente_fiscal_id: int) -> list[dict]:
+    """Las facturas ya exportadas de un cliente de la gestoría cuyo asiento de cobro (emitidas) o pago (recibidas) aún no ha salido en un fichero para a3, las más antiguas primero."""
+    return _mt._conta().facturas_para_asiento_de_pago(*_mt._ctx_conta(), cliente_fiscal_id)
+
+
+def contabilidad_generar_asientos_de_pago(cliente_fiscal_id: int, pagos: list[dict], repetir: bool = False) -> dict:
+    """Genera el fichero de asientos de cobro y pago para a3 (solo clientes con el formato de 256 posiciones). `pagos`: una por factura exportada, con `factura_id` y, opcionalmente, `fecha` (AAAA-MM-DD; hoy por
+    defecto), `importe` en euros (el total por defecto, para un pago parcial) y `cuenta_tesoreria`. Pago a un proveedor: Debe el proveedor, Haber el banco; cobro: Debe el banco, Haber el cliente. Marca las facturas
+    para no repetirlas salvo con `repetir`. Devuelve el número de fichero (se baja en Ficheros generados)."""
+    return _mt._conta().generar_asientos_de_pago(*_mt._ctx_conta(), cliente_fiscal_id, pagos, repetir)

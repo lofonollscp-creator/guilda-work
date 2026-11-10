@@ -6,8 +6,8 @@ from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herr
 from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
-           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303", "contabilidad_historial_factura", "contabilidad_listar_ficheros", "contabilidad_listar_reglas", "contabilidad_configuracion_a3", "contabilidad_facturas_periodicas_que_faltan", "contabilidad_terceros_duplicados")
-ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura", "contabilidad_factura_desde_adjunto", "contabilidad_unificar_tercero", "contabilidad_corregir_nif_tercero")
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303", "contabilidad_historial_factura", "contabilidad_listar_ficheros", "contabilidad_listar_reglas", "contabilidad_configuracion_a3", "contabilidad_facturas_periodicas_que_faltan", "contabilidad_terceros_duplicados", "contabilidad_facturas_para_asiento_de_pago")
+ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura", "contabilidad_factura_desde_adjunto", "contabilidad_unificar_tercero", "contabilidad_corregir_nif_tercero", "contabilidad_generar_asientos_de_pago")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
 
@@ -430,3 +430,19 @@ def test_terceros_duplicados_por_la_ia():
     assert [x["nif"] for x in d["mismo_nif"]] == ["A58818501"]
     assert ih.ejecutar(u, "contabilidad_unificar_tercero", {"cliente_fiscal_id": c, "tipo": "recibida", "nif": "A58818501", "nombre": "Papelería Sol S.L."}) == {"facturas_cambiadas": 1}
     assert ih.ejecutar(u, "contabilidad_corregir_nif_tercero", {"cliente_fiscal_id": c, "tipo": "recibida", "nif_mal": "A58818501", "nif_bien": "B12345674"}) == {"facturas_cambiadas": 2}
+
+
+def test_asientos_de_pago_por_la_ia():
+    t, u, c = _despacho("Despacho herr pagos")
+    ih.ejecutar(u, "contabilidad_guardar_regla", {"cliente_fiscal_id": c, "tipo": "proveedor", "nif": "B87654321"})
+    f = _anotar(u, c)
+    ih.ejecutar(u, "contabilidad_cambiar_estado_factura", {"factura_id": f["id"], "estado": "revisada"})
+    ih.ejecutar(u, "contabilidad_exportar", {"cliente_fiscal_id": c})
+    lista = ih.ejecutar(u, "contabilidad_facturas_para_asiento_de_pago", {"cliente_fiscal_id": c})
+    assert [x["id"] for x in lista] == [f["id"]] and lista[0]["total"] == 1210.0
+    with pytest.raises(ih.ErrorHerramientaIA, match="256 posiciones"):
+        ih.ejecutar(u, "contabilidad_generar_asientos_de_pago", {"cliente_fiscal_id": c, "pagos": [{"factura_id": f["id"]}]})
+    from app import facturas_contables as fc
+    fc.guardar_configuracion(t, u, c, {"a3_empresa": "7", "digitos": "8", "formato_enlace": "256"})
+    r = ih.ejecutar(u, "contabilidad_generar_asientos_de_pago", {"cliente_fiscal_id": c, "pagos": [{"factura_id": f["id"], "fecha": "2026-10-05", "importe": 500.5}]})
+    assert r["asientos"] == 1 and r["registros"] == 2 and r["lote"] and "contenido" not in r

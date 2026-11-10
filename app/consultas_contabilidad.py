@@ -381,3 +381,18 @@ def corregir_nif_tercero(tenant_id: int, usuario_id: int, cliente_fiscal_id: int
     from . import terceros_duplicados
     _exigir_escritura(tenant_id, usuario_id)
     return {"facturas_cambiadas": terceros_duplicados.corregir_nif(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, nif_mal, nif_bien)}
+
+
+def facturas_para_asiento_de_pago(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> list[dict]:
+    """Las facturas exportadas de un cliente cuyo asiento de cobro (emitidas) o pago (recibidas) aún no ha salido en un fichero."""
+    _exigir_modulo(tenant_id)
+    return [{**f, "total": _euros(f["total"])} for f in fc.facturas_para_asiento_de_pago(tenant_id, usuario_id, int(cliente_fiscal_id))]
+
+
+def generar_asientos_de_pago(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, pagos: list[dict], repetir: bool = False) -> dict:
+    """Genera el fichero de asientos de cobro y pago (formato de 256) y lo guarda como fichero generado: {lote, asientos, registros}. Se baja en Contabilización › Ficheros generados."""
+    _exigir_escritura(tenant_id, usuario_id)
+    limpios = [{"factura_id": p.get("factura_id"), "fecha": p.get("fecha"), "importe": None if p.get("importe") in (None, "") else round(float(p["importe"]) * 100), "cuenta_tesoreria": p.get("cuenta_tesoreria")}
+               for p in (pagos if isinstance(pagos, list) else []) if isinstance(p, dict)]
+    r = fc.asientos_de_pago(tenant_id, usuario_id, int(cliente_fiscal_id), limpios, repetir=bool(repetir))
+    return {"lote": r["lote"], "asientos": r["asientos"], "registros": r["registros"], "cliente": r["cliente"]}

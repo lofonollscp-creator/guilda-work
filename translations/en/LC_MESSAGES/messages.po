@@ -27010,3 +27010,48 @@ msgstr "Enter the correct name, the type (issued or received) and the tax ID."
 
 msgid "Indica el NIF que está mal, el correcto (distinto) y el tipo (emitida o recibida)."
 msgstr "Enter the wrong tax ID, the correct one (different) and the type (issued or received)."
+
+msgid "Asientos de cobro y pago"
+msgstr "Receipt and payment entries"
+
+msgid "Para las facturas que ya están en a3: el asiento del pago al proveedor (Debe el proveedor, Haber el banco) o del cobro al cliente (Debe el banco, Haber el cliente). Solo en el formato de 256 posiciones."
+msgstr "For invoices already in a3: the entry for paying the supplier (debit the supplier, credit the bank) or for collecting from the customer (debit the bank, credit the customer). Only in the 256-position format."
+
+msgid "Este cliente usa el formato de 512 posiciones: los asientos de cobro y pago solo se generan en el de 256. Cámbialo en la configuración de a3 del cliente."
+msgstr "This client uses the 512-position format: receipt and payment entries are only generated in the 256 one. Change it in the client's a3 settings."
+
+msgid "No hay facturas pendientes de asiento"
+msgstr "No invoices waiting for an entry"
+
+msgid "Todas las facturas exportadas de este cliente ya tienen su asiento de cobro o pago, o todavía no se ha exportado ninguna."
+msgstr "All of this client's exported invoices already have their receipt or payment entry, or none has been exported yet."
+
+msgid "Fecha del cobro o pago"
+msgstr "Date of receipt or payment"
+
+msgid "Cuenta de banco o caja: %(c)s (se cambia en la configuración de a3)."
+msgstr "Bank or cash account: %(c)s (change it in the a3 settings)."
+
+msgid "Cobro"
+msgstr "Receipt"
+
+msgid "Pago"
+msgstr "Payment"
+
+msgid "Generar el fichero"
+msgstr "Generate the file"
+
+msgid "Cobros y pagos"
+msgstr "Receipts and payments"
+
+msgid "Asiento de cobro o pago generado"
+msgstr "Receipt or payment entry generated"
+
+msgid "Los asientos de cobro y pago solo se pueden generar en el formato clásico de 256 posiciones: cámbialo en la configuración de a3 del cliente."
+msgstr "Receipt and payment entries can only be generated in the classic 256-position format: change it in the client's a3 settings."
+
+msgid "Indica entre 1 y 500 facturas."
+msgstr "Enter between 1 and 500 invoices."
+
+msgid "Una de las facturas no existe en este cliente."
+msgstr "One of the invoices does not exist for this client."

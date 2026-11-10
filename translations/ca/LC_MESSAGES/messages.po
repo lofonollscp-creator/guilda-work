@@ -27019,3 +27019,48 @@ msgstr "Indica el nom correcte, el tipus (emesa o rebuda) i el NIF."
 
 msgid "Indica el NIF que está mal, el correcto (distinto) y el tipo (emitida o recibida)."
 msgstr "Indica el NIF que està malament, el correcte (diferent) i el tipus (emesa o rebuda)."
+
+msgid "Asientos de cobro y pago"
+msgstr "Assentaments de cobrament i pagament"
+
+msgid "Para las facturas que ya están en a3: el asiento del pago al proveedor (Debe el proveedor, Haber el banco) o del cobro al cliente (Debe el banco, Haber el cliente). Solo en el formato de 256 posiciones."
+msgstr "Per a les factures que ja són a a3: l'assentament del pagament al proveïdor (Deure el proveïdor, Haver el banc) o del cobrament al client (Deure el banc, Haver el client). Només en el format de 256 posicions."
+
+msgid "Este cliente usa el formato de 512 posiciones: los asientos de cobro y pago solo se generan en el de 256. Cámbialo en la configuración de a3 del cliente."
+msgstr "Aquest client usa el format de 512 posicions: els assentaments de cobrament i pagament només es generen en el de 256. Canvia-ho a la configuració d'a3 del client."
+
+msgid "No hay facturas pendientes de asiento"
+msgstr "No hi ha factures pendents d'assentament"
+
+msgid "Todas las facturas exportadas de este cliente ya tienen su asiento de cobro o pago, o todavía no se ha exportado ninguna."
+msgstr "Totes les factures exportades d'aquest client ja tenen el seu assentament de cobrament o pagament, o encara no se n'ha exportat cap."
+
+msgid "Fecha del cobro o pago"
+msgstr "Data del cobrament o pagament"
+
+msgid "Cuenta de banco o caja: %(c)s (se cambia en la configuración de a3)."
+msgstr "Compte de banc o caixa: %(c)s (es canvia a la configuració d'a3)."
+
+msgid "Cobro"
+msgstr "Cobrament"
+
+msgid "Pago"
+msgstr "Pagament"
+
+msgid "Generar el fichero"
+msgstr "Generar el fitxer"
+
+msgid "Cobros y pagos"
+msgstr "Cobraments i pagaments"
+
+msgid "Asiento de cobro o pago generado"
+msgstr "Assentament de cobrament o pagament generat"
+
+msgid "Los asientos de cobro y pago solo se pueden generar en el formato clásico de 256 posiciones: cámbialo en la configuración de a3 del cliente."
+msgstr "Els assentaments de cobrament i pagament només es poden generar en el format clàssic de 256 posicions: canvia-ho a la configuració d'a3 del client."
+
+msgid "Indica entre 1 y 500 facturas."
+msgstr "Indica entre 1 i 500 factures."
+
+msgid "Una de las facturas no existe en este cliente."
+msgstr "Una de les factures no existeix en aquest client."

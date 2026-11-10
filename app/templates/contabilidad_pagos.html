@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Asientos de cobro y pago') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Asientos de cobro y pago') }}</h1>
+    <p class="subtitle">{{ _('Para las facturas que ya están en a3: el asiento del pago al proveedor (Debe el proveedor, Haber el banco) o del cobro al cliente (Debe el banco, Haber el cliente). Solo en el formato de 256 posiciones.') }}</p>
+  </div>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.lotes') }}">‹ {{ _('Ficheros generados') }}</a></div>
+</header>
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  <form method="get" class="ds-fila">
+    <label>{{ _('Cliente') }}
+      <select name="cliente_id" required><option value="">{{ _('Elige…') }}</option>{% for c in clientes %}<option value="{{ c.id }}" {{ 'selected' if c.id == cliente_id }}>{{ c.nombre }}</option>{% endfor %}</select></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Ver') }}</button>
+  </form>
+</section>
+{% if cliente_id and cfg and cfg.formato_enlace != '256' %}
+<section class="dash-panel ds-mt-24" role="status"><p>{{ _('Este cliente usa el formato de 512 posiciones: los asientos de cobro y pago solo se generan en el de 256. Cámbialo en la configuración de a3 del cliente.') }}</p>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.configuracion', cliente_id=cliente_id) }}">{{ _('Configuración de a3') }}</a></section>
+{% elif cliente_id and not facturas %}
+  {{ estado_vacio(_('No hay facturas pendientes de asiento'), _('Todas las facturas exportadas de este cliente ya tienen su asiento de cobro o pago, o todavía no se ha exportado ninguna.'), 'check') }}
+{% elif facturas %}
+<section class="dash-panel ds-mt-24">
+  <form method="post">
+    <input type="hidden" name="cliente_id" value="{{ cliente_id }}">
+    <div class="ds-fila"><label>{{ _('Fecha del cobro o pago') }}<input type="date" name="fecha" value="{{ hoy }}"></label>
+      <span class="muted">{{ _('Cuenta de banco o caja: %(c)s (se cambia en la configuración de a3).', c=cfg.cuenta_tesoreria) }}</span></div>
+    <div class="table-wrap"><table class="historial-table">
+      <thead><tr><th></th><th>{{ _('Fecha') }}</th><th>{{ _('Número') }}</th><th>{{ _('Proveedor / cliente') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Total') }}</th></tr></thead>
+      <tbody>{% for f in facturas %}<tr><td><input type="checkbox" name="factura" value="{{ f.id }}" aria-label="{{ f.numero }}"></td><td class="mono">{{ f.fecha }}</td><td><a href="{{ url_for('contabilidad.ver', factura_id=f.id) }}">{{ f.numero }}</a></td>
+        <td>{{ f.tercero }}</td><td>{{ _('Cobro') if f.tipo == 'emitida' else _('Pago') }}</td><td class="mono">{{ '%.2f'|format(f.total / 100) }} €</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Generar el fichero') }}</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
