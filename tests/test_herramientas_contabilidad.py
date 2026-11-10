@@ -6,7 +6,7 @@ from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herr
 from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
-           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente")
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303")
 ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
@@ -284,3 +284,13 @@ def test_anotar_con_impreso_y_datos_de_ampliacion_por_la_ia():
     assert f["datos_a3"] == {"bien_inversion": True, "clave_340": "3"} and f["lineas"][0]["impreso"] == "05"
     with pytest.raises(ih.ErrorHerramientaIA):
         _anotar(u, c, numero="F-2", datos_a3={"clave_340": "9"})
+
+
+def test_cuadre_con_el_303_por_la_ia(monkeypatch):
+    from app import consultas_fiscal
+    t, u, c = _despacho("Despacho herr cuadre")
+    r = ih.ejecutar(u, "contabilidad_cuadre_303", {"cliente_fiscal_id": c, "trimestre": "2026-T3"})
+    assert r["trimestre"] == "2026-T3" and not r["disponible"] and r["facturas"] == {"repercutido": 0.0, "soportado": 0.0, "facturas": 0}
+    monkeypatch.setattr(consultas_fiscal, "simular_303", lambda *a, **k: {"bloqueos": [], "casillas": {"27": 10.5, "45": 4.0}})
+    r = ih.ejecutar(u, "contabilidad_cuadre_303", {"cliente_fiscal_id": c, "trimestre": "2026-T3"})
+    assert r["disponible"] and r["modelo_303"] == {"devengado": 10.5, "deducible": 4.0} and r["diferencia"] == {"repercutido": -10.5, "soportado": -4.0}

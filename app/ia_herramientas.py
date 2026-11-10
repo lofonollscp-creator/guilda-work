@@ -625,6 +625,12 @@ HERRAMIENTAS: list[dict] = [
         ["cliente_fiscal_id"],
     ),
     _tool(
+        "contabilidad_cuadre_303",
+        "Cuadra el IVA de las facturas (revisadas o exportadas, solo operaciones interiores) con las casillas 27 y 45 del 303 simulado en Guilda Fiscal, de un cliente y un trimestre. Una diferencia suele ser una factura que no llegó a Guilda Fiscal.",
+        {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "trimestre": _param("string", "Por ejemplo 2026-T3; por defecto el que se está cerrando.")},
+        ["cliente_fiscal_id"],
+    ),
+    _tool(
         "contabilidad_anotar_factura",
         "Anota una factura de un cliente de la gestoría para contabilizarla (queda pendiente de revisar). Lo que dejes en blanco lo rellenan el régimen del cliente y la regla del proveedor.",
         {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "tipo": _param("string", "emitida o recibida."), "fecha": _param("string", "AAAA-MM-DD."), "numero": _param("string", "Número de la factura."), "tercero_nombre": _param("string", "Nombre del proveedor (recibida) o cliente (emitida)."), "tercero_nif": _param("string", "NIF del proveedor o cliente, recomendado."), "lineas": _param("array", "Una por tipo de IVA: {\"base\": \"1.234,56\", \"pct_iva\": 21}; opcionales cuota_iva, pct_recargo, pct_retencion, cuenta, subtipo, impreso."), "concepto": _param("string", "Concepto breve, opcional."), "abono": _param("boolean", "true si es un abono o rectificativa."), "rectifica_numero": _param("string", "Número de la factura que rectifica (abonos)."), "rectifica_fecha": _param("string", "Fecha AAAA-MM-DD de la factura que rectifica (abonos)."), "datos_a3": _param("object", "Solo en casos especiales: bien_inversion, dua, clave_340, nif_representante, autofactura, metalico, inmuebles.")},
@@ -1543,7 +1549,7 @@ LECTURA: set[str] = {
     "listar_documentos_despacho", "leer_documento_despacho", "listar_certificados", "riesgos_de_certificados", "panel_fiscal", "listar_traspasos", "listar_avisos_fiscales", "listar_expedientes_control", "ver_expediente_control",
     "listar_facturas_cliente",
     "fiscal_listar_titulares", "fiscal_ver_perfil", "fiscal_listar_apuntes", "fiscal_comprobar_apuntes", "fiscal_proponer_apuntes_de_factura", "fiscal_simular_303", "fiscal_listar_declaraciones", "fiscal_ver_declaracion",
-    "contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente", "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente",
+    "contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente", "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303",
     "listar_subtareas_tarea", "listar_clientes_de_tarea", "listar_tareas_de_cliente", "listar_adjuntos_tarea", "listar_revisiones_tarea", "listar_conversaciones_cliente_tarea", "listar_dependencias_tarea", "comercial_listar_oportunidades", "comercial_ver_oportunidad", "comercial_embudo", "comercial_ver_reunion", "informe_tareas", "listar_reglas_automatizacion", "simular_regla_automatizacion", "listar_ejecuciones_automatizacion",
     "abogados_provision_asunto", "abogados_partes_asunto", "abogados_agenda_vistas", "abogados_comprobar_conflicto", "inmobiliaria_listar_inmuebles", "inmobiliaria_cruces_de_demanda", "inmobiliaria_agenda_visitas", "inmobiliaria_resumen", "mensajes_de_enlace",
     "crm_listar_leads", "crm_listar_contactos", "crm_listar_cuentas",

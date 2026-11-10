@@ -9,7 +9,7 @@ from flask_babel import gettext as _
 
 from . import acceso, cobro_contabilidad, db, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
-from . import cierre_trimestre, cola_contabilidad, facturas_control, panel_cierre, retorno_a3, facturas_portal, justificantes as justificantes_mod
+from . import cierre_trimestre, cola_contabilidad, cuadre_303, facturas_control, panel_cierre, retorno_a3, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
 
 contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad")
@@ -821,6 +821,7 @@ def retorno():
             mapa = retorno_a3.mapa_de_columnas(**columnas)
             filas = retorno_a3.leer(contenido, archivo.filename, mapa, fila_titulos)
             informe = retorno_a3.cruzar(g.tenant_id, g.usuario_id, cliente_id, filas, confirmar=request.form.get("confirmar") == "1")
+            informe["cuadre_303"] = [x for x in (cuadre_303.cuadrar(g.tenant_id, g.usuario_id, cliente_id, c["trimestre"]) for c in informe["cuadre"]) if x["disponible"]]
         except ValueError as e:
             error = _(str(e))
             if contenido:

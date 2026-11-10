@@ -232,3 +232,43 @@ def test_varios_abonos_que_juntos_superan_la_factura_se_avisan():
     segundo = _abono(t, u, c, "AB-2", "F-200", "60,00")                                                                    # 72,60: juntos 145,20 > 121,00
     m = ctrl.avisos(t, fc.obtener(t, u, segundo))
     assert any("se supera lo facturado" in x and "145.20" in x for x in m) and not any("es mayor" in x for x in m)
+
+
+# --- J10: reabierta tras exportarla ----------------------------------------------------------------------------------------------------------------------
+
+def test_una_factura_reabierta_tras_exportarla_avisa_de_que_a3_ya_tiene_la_anterior():
+    from app import facturas_contables as fc, facturas_control as ctrl, panel_cierre
+    from tests.test_facturas_contables import LINEA, _datos, _despacho
+    t, u, c = _despacho()
+    fid = fc.crear(t, u, c, _datos(numero="X-1", tercero_nif="A58818501"), [LINEA])
+    fc.cambiar_estado(t, u, fid, "revisada")
+    lote = fc.exportar(t, u, c)["lote"]
+    assert not any("Ya salió" in m for m in ctrl.avisos(t, fc.obtener(t, u, fid)))
+    fc.cambiar_estado(t, u, fid, "pendiente")
+    m = [x for x in ctrl.avisos(t, fc.obtener(t, u, fid)) if "Ya salió" in x]
+    assert len(m) == 1 and f"#{lote}" in m[0] and "confirmada" not in m[0]
+    assert panel_cierre.panel(t, u, "2026-T3")["clientes"][0]["a_corregir"] == 1
+
+
+def test_si_a3_la_habia_confirmado_antes_de_reabrirla_el_aviso_lo_dice():
+    from app import facturas_contables as fc, facturas_control as ctrl, retorno_a3
+    from tests.test_facturas_contables import LINEA, _datos, _despacho
+    t, u, c = _despacho()
+    fid = fc.crear(t, u, c, _datos(numero="X-3", fecha="2026-08-15", tercero_nif="A58818501"), [LINEA])
+    fc.cambiar_estado(t, u, fid, "revisada")
+    fc.exportar(t, u, c)
+    retorno_a3.cruzar(t, u, c, retorno_a3.leer("Nº Factura;Fecha;Total\nX-3;15/08/2026;1.210,00\n".encode("cp1252"), "l.csv"))
+    fc.cambiar_estado(t, u, fid, "pendiente")
+    assert any("a3 la tiene contabilizada (confirmada el" in x for x in ctrl.avisos(t, fc.obtener(t, u, fid)))
+
+
+def test_el_prechequeo_de_la_exportacion_repite_ese_aviso():
+    from app import facturas_contables as fc
+    from tests.test_facturas_contables import LINEA, _datos, _despacho
+    t, u, c = _despacho()
+    fid = fc.crear(t, u, c, _datos(numero="X-2", tercero_nif="A58818501"), [LINEA])
+    fc.cambiar_estado(t, u, fid, "revisada")
+    fc.exportar(t, u, c)
+    fc.cambiar_estado(t, u, fid, "pendiente")
+    fc.cambiar_estado(t, u, fid, "revisada")
+    assert any("X-2" in a["mensaje"] and "Ya salió" in a["mensaje"] for a in fc.comprobar_exportacion(t, u, c)["avisos"])

@@ -111,3 +111,22 @@ def _despacho_aparte(nombre):
     t, u, c = otro(nombre)
     _entregas(t, u, c, "2026-09")                                              # solo un mes: no es un cliente que entregue cada mes
     return t, u, c
+
+
+def test_las_exportadas_que_llevan_dias_sin_confirmar_se_destacan():
+    t, u, c = _despacho()
+    a = _crear(t, u, c, "J-1")
+    b = _crear(t, u, c, "J-22", fecha="2026-08-20")
+    for f in (a, b):
+        fc.cambiar_estado(t, u, f, "revisada", confirmar_duplicado=True)
+    fc.exportar(t, u, c)
+    conn = fc.db.get_connection()
+    try:
+        conn.execute("UPDATE facturas_contables SET confirmada_en = ? WHERE id = ?", (fc.db.now_iso(), a))
+        conn.execute("UPDATE facturas_contables SET actualizado_en = ? WHERE id = ?", ("2026-10-01T10:00:00", b))
+        conn.commit()
+    finally:
+        conn.close()
+    cl = cc.panel(t, u, "2026-T3", hoy=date(2026, 10, 20))["clientes"][0]
+    assert cl["usa_retorno"] and cl["sin_confirmar"] == 1 and cl["sin_confirmar_antiguas"] == 1
+    assert cc.panel(t, u, "2026-T3", hoy=date(2026, 10, 5))["clientes"][0]["sin_confirmar_antiguas"] == 0       # solo 4 días

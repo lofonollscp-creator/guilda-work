@@ -68,6 +68,21 @@
 </section>
 {% endif %}
 
+{% if informe.cuadre_303 %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Cuadre con el modelo 303') }}</h2>
+  <p class="muted">{{ _('El IVA de las operaciones interiores de las facturas revisadas o exportadas frente a las casillas 27 (cuota devengada) y 45 (total a deducir) del 303 simulado en Guilda Fiscal. Una diferencia suele ser una factura que no llegó a Guilda Fiscal.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Trimestre') }}</th><th>{{ _('Repercutido (facturas)') }}</th><th>{{ _('Casilla 27') }}</th><th>{{ _('Diferencia') }}</th><th>{{ _('Soportado (facturas)') }}</th><th>{{ _('Casilla 45') }}</th><th>{{ _('Diferencia') }}</th></tr></thead>
+    <tbody>{% for c in informe.cuadre_303 %}<tr><td>{{ c.trimestre }}</td>
+      <td class="mono">{{ '%.2f'|format(c.facturas.repercutido / 100) }} €</td><td class="mono">{{ '%.2f'|format(c.modelo_303.devengado / 100) }} €</td>
+      <td class="mono"><span class="confianza confianza-{{ 'alta' if c.diferencia.repercutido == 0 else 'baja' }}">{{ '%.2f'|format(c.diferencia.repercutido / 100) }} €</span></td>
+      <td class="mono">{{ '%.2f'|format(c.facturas.soportado / 100) }} €</td><td class="mono">{{ '%.2f'|format(c.modelo_303.deducible / 100) }} €</td>
+      <td class="mono"><span class="confianza confianza-{{ 'alta' if c.diferencia.soportado == 0 else 'baja' }}">{{ '%.2f'|format(c.diferencia.soportado / 100) }} €</span></td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
 {% if informe.con_diferencias %}
 <section class="dash-panel ds-mt-24">
   <h2>{{ _('Están en a3 con otros importes') }}</h2>

@@ -136,3 +136,9 @@ def contabilidad_cierre_cliente(cliente_fiscal_id: int, trimestre: str | None = 
     """El estado de cierre de un trimestre («2026-T3»; por defecto el que se está cerrando) de un cliente: cada punto de la lista de cierre (por leer, por revisar, mensajes sin leer del cliente, duplicadas, sin
     exportar, justificantes del banco…) con su estado (ok, pendiente o aviso) y cuántas facturas afecta, el plazo de presentación y las exportadas aún sin confirmar en a3. Úsala para redactar un resumen del cierre."""
     return _mt._conta().cierre_del_cliente(*_mt._ctx_conta(), cliente_fiscal_id, trimestre)
+
+
+def contabilidad_cuadre_303(cliente_fiscal_id: int, trimestre: str | None = None) -> dict:
+    """Cuadra el IVA de las facturas (revisadas o exportadas, solo operaciones interiores) con las casillas 27 (cuota devengada) y 45 (total a deducir) del modelo 303 simulado en Guilda Fiscal, de un cliente y un
+    trimestre («2026-T3»; por defecto el que se está cerrando). Una diferencia suele ser una factura que no llegó a Guilda Fiscal. Si no hay 303 calculable, `disponible` es false y `motivo` dice por qué."""
+    return _mt._conta().cuadre_con_303(*_mt._ctx_conta(), cliente_fiscal_id, trimestre)

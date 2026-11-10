@@ -114,6 +114,21 @@ def _hueco_de_numeracion(tenant_id: int, f: dict) -> str | None:
     return _("En la numeración falta la factura %(falta)s: la anterior que hay es la %(anterior)s.", falta=f"{prefijo}{str(n - 1).zfill(len(cifras))}", anterior=f"{prefijo}{str(max(anteriores)).zfill(len(cifras))}")
 
 
+def _salida_previa(tenant_id: int, f: dict) -> tuple[int | str, str | None] | None:
+    """(fichero, fecha en que a3 la confirmó o None) si esta factura, ahora pendiente o revisada, ya salió en un fichero para a3 (se reabrió después). Sale de la auditoría de la propia factura: las exportadas
+    antes de que se registrara por factura no se detectan."""
+    if f.get("estado") not in ("pendiente", "revisada") or not f.get("id"):
+        return None
+    from . import auditoria
+    confirmada = None
+    for e in auditoria.listar(tenant_id, entidad="factura_contable", entidad_id=f["id"], limite=200):          # de lo más reciente a lo más antiguo
+        if e["accion"] == "factura_contable.confirmada_a3" and confirmada is None:
+            confirmada = str(e["creado_en"])[:10]
+        elif e["accion"] == "factura_contable.exportada":
+            return ((e.get("detalle") or {}).get("lote") if isinstance(e.get("detalle"), dict) else None) or "?", confirmada
+    return None
+
+
 def _clave_numero(numero) -> str:
     return re.sub(r"[^A-Z0-9]", "", str(numero or "").upper()).lstrip("0")
 
@@ -182,6 +197,14 @@ def avisos(tenant_id: int, f: dict, hoy: date | None = None) -> list[str]:
     if hueco:
         res.append(hueco)
     res.extend(_avisos_del_abono(tenant_id, f))
+    previa = _salida_previa(tenant_id, f)
+    if previa:                                                                                # se reabrió tras exportarla: a3 tiene la versión anterior
+        lote, confirmada = previa
+        if confirmada:
+            res.append(_("Ya salió en el fichero #%(lote)s y a3 la tiene contabilizada (confirmada el %(fecha)s): al volver a exportarla quedaría duplicada. Corrígela en a3 y no la vuelvas a exportar, o bórrala allí antes.",
+                         lote=lote, fecha=confirmada))
+        else:
+            res.append(_("Ya salió en el fichero #%(lote)s: si a3 ya lo importó, al volver a exportarla quedaría duplicada. Corrígela directamente en a3 o bórrala allí antes de importar el fichero nuevo.", lote=lote))
     if f["tipo"] == "emitida" and (f.get("a3") or {}).get("clave_340") == "1" and abs(f.get("total_centimos") or 0) > LIMITE_SIMPLIFICADA_CENTIMOS:
         res.append(_("Una factura simplificada (tique) no puede pasar de %(limite)s euros salvo en algunos sectores: ¿falta el NIF del cliente?", limite=f"{LIMITE_SIMPLIFICADA_CENTIMOS // 100:,}".replace(",", ".")))
     for d in duplicados(tenant_id, f):

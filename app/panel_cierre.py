@@ -9,6 +9,7 @@ from . import acceso, db, facturas_contables as fc
 MESES_DE_HISTORIAL = 6                  # cuántos meses atrás se mira para saber si un cliente suele entregar facturas
 MESES_PARA_SER_HABITUAL = 3             # con facturas en al menos tantos de esos meses se le considera un cliente que entrega cada mes
 DIA_DEL_MES_PARA_AVISAR = 10            # no se avisa antes: es normal que a principios de mes no haya llegado nada todavía
+DIAS_SIN_CONFIRMAR = 7                  # una exportada que lleva tanto sin confirmarse en a3 es sospechosa: ¿se llegó a importar el fichero?
 PLAZO_DEL_TRIMESTRE = {1: (4, 20), 2: (7, 20), 3: (10, 20), 4: (1, 30)}        # mes y día de presentación del modelo 303 (el del cuarto trimestre es de enero del año siguiente)
 
 
@@ -73,9 +74,12 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
                              "SUM(CASE WHEN x.estado = 'pendiente' AND x.lectura IN ('pendiente', 'fallida') THEN 1 ELSE 0 END) AS sin_leer, "
                              "SUM(CASE WHEN x.estado = 'pendiente' AND COALESCE(x.lectura, '') NOT IN ('pendiente', 'fallida') THEN 1 ELSE 0 END) AS por_revisar, "
                              "SUM(CASE WHEN x.estado = 'revisada' THEN 1 ELSE 0 END) AS listas, SUM(CASE WHEN x.estado = 'exportada' THEN 1 ELSE 0 END) AS exportadas, "
-                             "SUM(CASE WHEN x.estado = 'exportada' AND x.confirmada_en IS NULL THEN 1 ELSE 0 END) AS sin_confirmar "
+                             "SUM(CASE WHEN x.estado = 'exportada' AND x.confirmada_en IS NULL THEN 1 ELSE 0 END) AS sin_confirmar, "
+                             "SUM(CASE WHEN x.estado = 'exportada' AND x.confirmada_en IS NULL AND x.actualizado_en < ? THEN 1 ELSE 0 END) AS sin_confirmar_antiguas, "
+                             "SUM(CASE WHEN x.estado IN ('pendiente', 'revisada') AND EXISTS (SELECT 1 FROM auditoria_eventos a WHERE a.tenant_id = x.tenant_id AND a.entidad = 'factura_contable' "
+                             "AND a.accion = 'factura_contable.exportada' AND a.entidad_id = CAST(x.id AS TEXT)) THEN 1 ELSE 0 END) AS a_corregir "
                              "FROM facturas_contables x JOIN clientes_fiscales c ON c.id = x.cliente_fiscal_id WHERE x.tenant_id = ? AND x.fecha BETWEEN ? AND ? AND x.estado != 'descartada' "
-                             "AND c.papelera_en IS NULL GROUP BY x.cliente_fiscal_id, c.nombre", (tenant_id, desde, hasta)).fetchall()
+                             "AND c.papelera_en IS NULL GROUP BY x.cliente_fiscal_id, c.nombre", ((hoy - timedelta(days=DIAS_SIN_CONFIRMAR)).isoformat(), tenant_id, desde, hasta)).fetchall()
         configurados = {r["cliente_fiscal_id"]: r["nombre"] for r in conn.execute(
             "SELECT k.cliente_fiscal_id, c.nombre FROM contabilidad_clientes k JOIN clientes_fiscales c ON c.id = k.cliente_fiscal_id WHERE k.tenant_id = ? AND k.a3_empresa IS NOT NULL AND c.papelera_en IS NULL", (tenant_id,))}
         con_retorno = {r["cliente_fiscal_id"] for r in conn.execute("SELECT DISTINCT cliente_fiscal_id FROM facturas_contables WHERE tenant_id = ? AND confirmada_en IS NOT NULL", (tenant_id,))}
@@ -84,7 +88,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
     silenciosos = sin_entregas(tenant_id, hoy)
     por_id = {f["cliente_fiscal_id"]: dict(f) for f in filas}
     for cid, nombre in configurados.items():
-        por_id.setdefault(cid, {"cliente_fiscal_id": cid, "nombre": nombre, "total": 0, "sin_leer": 0, "por_revisar": 0, "listas": 0, "exportadas": 0, "sin_confirmar": 0})
+        por_id.setdefault(cid, {"cliente_fiscal_id": cid, "nombre": nombre, "total": 0, "sin_leer": 0, "por_revisar": 0, "listas": 0, "exportadas": 0, "sin_confirmar": 0, "sin_confirmar_antiguas": 0, "a_corregir": 0})
     clientes = []
     for cid, c in por_id.items():
         if visibles is not None and cid not in visibles:
@@ -92,9 +96,9 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
         c = {k: (v or 0) if k not in ("nombre", "cliente_fiscal_id") else v for k, v in c.items()}
         c["usa_retorno"] = cid in con_retorno
         if not c["usa_retorno"]:
-            c["sin_confirmar"] = 0
+            c["sin_confirmar"] = c["sin_confirmar_antiguas"] = 0
         c["cerrado"] = bool(fc.periodos_cerrados(tenant_id, cid, [trimestre]).get(trimestre))
-        c["faltan"] = c["sin_leer"] + c["por_revisar"] + c["listas"] + c["sin_confirmar"]
+        c["faltan"] = c["sin_leer"] + c["por_revisar"] + c["listas"] + c["sin_confirmar"]        # `a_corregir` ya cuenta dentro de por revisar o de listas: son las reabiertas tras exportarlas
         c["listo"] = c["total"] > 0 and c["faltan"] == 0
         c["sin_facturas"] = c["total"] == 0
         c["sin_entregas_este_mes"] = silenciosos.get(cid, 0)                              # >0 = suele entregar y este mes aún no ha mandado nada (los meses que lo hizo)

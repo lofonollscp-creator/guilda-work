@@ -26931,3 +26931,33 @@ msgstr "Seule une facture en attente peut être déplacée : rouvrez-la d'abord.
 
 msgid "La factura ya es de ese cliente."
 msgstr "La facture appartient déjà à ce client."
+
+msgid "Ya salió en el fichero #%(lote)s y a3 la tiene contabilizada (confirmada el %(fecha)s): al volver a exportarla quedaría duplicada. Corrígela en a3 y no la vuelvas a exportar, o bórrala allí antes."
+msgstr "Elle est déjà partie dans le fichier #%(lote)s et a3 l'a comptabilisée (confirmée le %(fecha)s) : l'exporter à nouveau la dupliquerait. Corrigez-la dans a3 et ne l'exportez pas à nouveau, ou supprimez-la d'abord là-bas."
+
+msgid "Ya salió en el fichero #%(lote)s: si a3 ya lo importó, al volver a exportarla quedaría duplicada. Corrígela directamente en a3 o bórrala allí antes de importar el fichero nuevo."
+msgstr "Elle est déjà partie dans le fichier #%(lote)s : si a3 l'a importé, l'exporter à nouveau la dupliquerait. Corrigez-la directement dans a3 ou supprimez-la là-bas avant d'importer le nouveau fichier."
+
+msgid "Cuadre con el modelo 303"
+msgstr "Rapprochement avec le modèle 303"
+
+msgid "El IVA de las operaciones interiores de las facturas revisadas o exportadas frente a las casillas 27 (cuota devengada) y 45 (total a deducir) del 303 simulado en Guilda Fiscal. Una diferencia suele ser una factura que no llegó a Guilda Fiscal."
+msgstr "La TVA des opérations intérieures des factures vérifiées ou exportées face aux cases 27 (TVA due) et 45 (total à déduire) du 303 simulé dans Guilda Fiscal. Un écart correspond souvent à une facture qui n'est pas arrivée dans Guilda Fiscal."
+
+msgid "Repercutido (facturas)"
+msgstr "TVA collectée (factures)"
+
+msgid "Casilla 27"
+msgstr "Case 27"
+
+msgid "Soportado (facturas)"
+msgstr "TVA déductible (factures)"
+
+msgid "Casilla 45"
+msgstr "Case 45"
+
+msgid "A corregir en a3"
+msgstr "À corriger dans a3"
+
+msgid "Exportadas hace días sin confirmar"
+msgstr "Exportées il y a des jours, non confirmées"

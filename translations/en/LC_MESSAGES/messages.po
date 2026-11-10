@@ -26846,3 +26846,33 @@ msgstr "Only a pending invoice can be moved: reopen it first."
 
 msgid "La factura ya es de ese cliente."
 msgstr "The invoice already belongs to that client."
+
+msgid "Ya salió en el fichero #%(lote)s y a3 la tiene contabilizada (confirmada el %(fecha)s): al volver a exportarla quedaría duplicada. Corrígela en a3 y no la vuelvas a exportar, o bórrala allí antes."
+msgstr "It already went out in file #%(lote)s and a3 has it posted (confirmed on %(fecha)s): exporting it again would duplicate it. Correct it in a3 and do not export it again, or delete it there first."
+
+msgid "Ya salió en el fichero #%(lote)s: si a3 ya lo importó, al volver a exportarla quedaría duplicada. Corrígela directamente en a3 o bórrala allí antes de importar el fichero nuevo."
+msgstr "It already went out in file #%(lote)s: if a3 has imported it, exporting it again would duplicate it. Correct it directly in a3 or delete it there before importing the new file."
+
+msgid "Cuadre con el modelo 303"
+msgstr "Reconciliation with model 303"
+
+msgid "El IVA de las operaciones interiores de las facturas revisadas o exportadas frente a las casillas 27 (cuota devengada) y 45 (total a deducir) del 303 simulado en Guilda Fiscal. Una diferencia suele ser una factura que no llegó a Guilda Fiscal."
+msgstr "The VAT on domestic transactions of reviewed or exported invoices against boxes 27 (output VAT) and 45 (total deductible) of the 303 simulated in Guilda Fiscal. A difference is usually an invoice that did not reach Guilda Fiscal."
+
+msgid "Repercutido (facturas)"
+msgstr "Output VAT (invoices)"
+
+msgid "Casilla 27"
+msgstr "Box 27"
+
+msgid "Soportado (facturas)"
+msgstr "Input VAT (invoices)"
+
+msgid "Casilla 45"
+msgstr "Box 45"
+
+msgid "A corregir en a3"
+msgstr "To correct in a3"
+
+msgid "Exportadas hace días sin confirmar"
+msgstr "Exported days ago, not confirmed"

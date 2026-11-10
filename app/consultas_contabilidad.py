@@ -6,7 +6,7 @@ from __future__ import annotations
 import base64
 import binascii
 
-from . import acceso, cierre_trimestre, cobro_contabilidad, facturas_contables as fc, facturas_portal, lectura_calidad, lectura_facturas, panel_cierre, retorno_a3, verticales
+from . import acceso, cierre_trimestre, cobro_contabilidad, cuadre_303, facturas_contables as fc, facturas_portal, lectura_calidad, lectura_facturas, panel_cierre, retorno_a3, verticales
 
 
 def _exigir_modulo(tenant_id: int) -> None:
@@ -247,3 +247,14 @@ def cierre_del_cliente(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, 
     return {"trimestre": trimestre, "plazo": panel_cierre.plazo(trimestre).isoformat(), "facturas": c["total"], "listo_para_cerrar": c["listo"], "cerrado": bool(c["cierre"]),
             "puntos": [{"punto": p["clave"], "estado": p["estado"], "cuantos": p["cuantos"]} for p in c["puntos"]],
             "exportadas_sin_confirmar_en_a3": fila["sin_confirmar"] if fila and fila["usa_retorno"] else None}
+
+
+def cuadre_con_303(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, trimestre: str | None = None) -> dict:
+    """El IVA de las operaciones interiores de las facturas revisadas o exportadas frente a las casillas 27 y 45 del 303 simulado en Guilda Fiscal (en euros). `disponible` es false, con su `motivo`, si no hay 303
+    con el que comparar."""
+    _exigir_modulo(tenant_id)
+    if not acceso.puede_ver_cliente(tenant_id, usuario_id, int(cliente_fiscal_id)):
+        raise ValueError("No tienes acceso a ese cliente.")
+    r = cuadre_303.cuadrar(tenant_id, usuario_id, int(cliente_fiscal_id), trimestre or panel_cierre.trimestre_anterior())
+    euros = lambda d: {k: (_euros(v) if isinstance(v, int) else v) for k, v in d.items()}      # noqa: E731
+    return {**r, "facturas": euros(r["facturas"]), **({"modelo_303": euros(r["modelo_303"]), "diferencia": euros(r["diferencia"])} if r["disponible"] else {})}

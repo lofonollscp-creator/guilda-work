@@ -26855,3 +26855,33 @@ msgstr "Només es pot moure una factura pendent: reobre-la abans."
 
 msgid "La factura ya es de ese cliente."
 msgstr "La factura ja és d'aquest client."
+
+msgid "Ya salió en el fichero #%(lote)s y a3 la tiene contabilizada (confirmada el %(fecha)s): al volver a exportarla quedaría duplicada. Corrígela en a3 y no la vuelvas a exportar, o bórrala allí antes."
+msgstr "Ja va sortir al fitxer #%(lote)s i a3 la té comptabilitzada (confirmada el %(fecha)s): en tornar-la a exportar quedaria duplicada. Corregeix-la a a3 i no la tornis a exportar, o esborra-la allà abans."
+
+msgid "Ya salió en el fichero #%(lote)s: si a3 ya lo importó, al volver a exportarla quedaría duplicada. Corrígela directamente en a3 o bórrala allí antes de importar el fichero nuevo."
+msgstr "Ja va sortir al fitxer #%(lote)s: si a3 ja el va importar, en tornar-la a exportar quedaria duplicada. Corregeix-la directament a a3 o esborra-la allà abans d'importar el fitxer nou."
+
+msgid "Cuadre con el modelo 303"
+msgstr "Quadrament amb el model 303"
+
+msgid "El IVA de las operaciones interiores de las facturas revisadas o exportadas frente a las casillas 27 (cuota devengada) y 45 (total a deducir) del 303 simulado en Guilda Fiscal. Una diferencia suele ser una factura que no llegó a Guilda Fiscal."
+msgstr "L'IVA de les operacions interiors de les factures revisades o exportades davant de les caselles 27 (quota meritada) i 45 (total a deduir) del 303 simulat a Guilda Fiscal. Una diferència sol ser una factura que no va arribar a Guilda Fiscal."
+
+msgid "Repercutido (facturas)"
+msgstr "Repercutit (factures)"
+
+msgid "Casilla 27"
+msgstr "Casella 27"
+
+msgid "Soportado (facturas)"
+msgstr "Suportat (factures)"
+
+msgid "Casilla 45"
+msgstr "Casella 45"
+
+msgid "A corregir en a3"
+msgstr "A corregir a a3"
+
+msgid "Exportadas hace días sin confirmar"
+msgstr "Exportades fa dies sense confirmar"

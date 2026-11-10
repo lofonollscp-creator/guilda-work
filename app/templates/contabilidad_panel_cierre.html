@@ -33,17 +33,18 @@
 {% if p and p.clientes %}
 <section class="dash-panel ds-mt-24">
   <div class="table-wrap"><table class="historial-table">
-    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Por leer') }}</th><th>{{ _('Por revisar') }}</th><th>{{ _('Listas para exportar') }}</th><th>{{ _('Sin confirmar en a3') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Por leer') }}</th><th>{{ _('Por revisar') }}</th><th>{{ _('Listas para exportar') }}</th><th>{{ _('Sin confirmar en a3') }}</th><th>{{ _('A corregir en a3') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
     <tbody>
     {% for c in p.clientes %}
       <tr>
         <td><a href="{{ url_for('contabilidad.lista', cliente_id=c.cliente_fiscal_id, trimestre=trimestre) }}">{{ c.nombre }}</a></td>
-        <td>{{ c.total }}</td><td>{{ c.sin_leer }}</td><td>{{ c.por_revisar }}</td><td>{{ c.listas }}</td><td>{% if c.usa_retorno %}{{ c.sin_confirmar }}{% else %}—{% endif %}</td>
+        <td>{{ c.total }}</td><td>{{ c.sin_leer }}</td><td>{{ c.por_revisar }}</td><td>{{ c.listas }}</td><td>{% if c.usa_retorno %}{{ c.sin_confirmar }}{% else %}—{% endif %}</td><td>{{ c.a_corregir }}</td>
         <td>
           {% if c.cerrado %}{{ chip(_('Cerrado'), 'exito') }}
           {% elif c.sin_facturas %}{{ chip(_('Sin facturas'), 'aviso') }}
           {% elif c.listo %}{{ chip(_('Listo para cerrar'), 'exito') }}
           {% else %}{{ chip(_('Faltan %(n)s', n=c.faltan), 'aviso') }}{% endif %}
+          {% if c.sin_confirmar_antiguas and not c.cerrado %} {{ chip(_('Exportadas hace días sin confirmar'), 'aviso') }}{% endif %}
           {% if c.sin_entregas_este_mes and not c.cerrado %} {{ chip(_('Sin entregas este mes'), 'aviso') }}{% endif %}
         </td>
         <td>{% if not c.cerrado %}<a class="btn btn-ghost" href="{{ url_for('contabilidad.cierre', cliente_id=c.cliente_fiscal_id, trimestre=trimestre) }}">{{ _('Cierre guiado') }}</a>{% endif %}</td>
