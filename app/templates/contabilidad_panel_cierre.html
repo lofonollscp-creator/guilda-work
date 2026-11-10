@@ -14,8 +14,8 @@
 <section class="dash-panel">
   <form method="get" class="ds-fila">
     <label>{{ _('Trimestre') }}
-      <select name="trimestre" onchange="this.form.submit()">{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ etiqueta(t) }}</option>{% endfor %}</select></label>
-    <noscript><button type="submit" class="btn btn-ghost">{{ _('Ver') }}</button></noscript>
+      <select name="trimestre">{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ etiqueta(t) }}</option>{% endfor %}</select></label>
+    <button type="submit" class="btn btn-ghost">{{ _('Ver') }}</button>
   </form>
   {% if p %}
   <p class="muted">
