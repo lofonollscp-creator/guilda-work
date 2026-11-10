@@ -168,6 +168,49 @@
     });
   }
 
+  // Cobros del extracto (importes positivos) sin una factura emitida del mismo importe en las semanas anteriores.
+  function cobrosSinFactura(movs, datos) {
+    var usadas = {};
+    return movs.filter(function (m) { return m.i > 0; }).filter(function (m) {
+      for (var k = 0; k < datos.facturas.length; k++) {
+        var fa = datos.facturas[k];
+        if (!fa.e || usadas[k] || Math.abs(fa.t - m.i) > 1) continue;
+        var d = dias(m.f, fa.f);
+        if (d >= -VENTANA_ANTES && d <= VENTANA_DESPUES) { usadas[k] = true; return false; }
+      }
+      return true;
+    });
+  }
+
+  // Facturas recibidas de las fechas que cubre el extracto cuyo importe no sale en ningún pago: ¿pagadas en efectivo, con otra cuenta o aún sin pagar?
+  function facturasSinPago(movs, datos) {
+    if (!movs.length) return [];
+    var fechas = movs.map(function (m) { return m.f; }).sort(), desde = fechas[0], hasta = fechas[fechas.length - 1], usados = {};
+    return (datos.facturas || []).filter(function (fa) {
+      if (fa.e || fa.f < desde || fa.f > hasta) return false;
+      for (var k = 0; k < movs.length; k++) {
+        var m = movs[k];
+        if (m.i >= 0 || usados[k] || Math.abs(-m.i - fa.t) > 1) continue;
+        var d = dias(m.f, fa.f);
+        if (d >= -VENTANA_ANTES && d <= VENTANA_DESPUES) { usados[k] = true; return false; }
+      }
+      return true;
+    });
+  }
+
+  function filaSencilla(importeTexto, detalleTexto, enlace, etiqueta) {
+    var li = document.createElement('li'); li.className = 'portal-persona';
+    var datos = document.createElement('div'); datos.className = 'portal-persona-datos';
+    var fuerte = document.createElement('strong'); fuerte.textContent = importeTexto;
+    var detalle = document.createElement('span'); detalle.className = 'muted'; detalle.textContent = detalleTexto;
+    datos.appendChild(fuerte); datos.appendChild(detalle); li.appendChild(datos);
+    if (enlace) { var a = document.createElement('a'); a.className = 'btn btn-ghost'; a.href = enlace; a.textContent = etiqueta; li.appendChild(a); }
+    return li;
+  }
+
+  function euros(centimos) { return (centimos / 100).toFixed(2).replace('.', ',') + ' €'; }
+  function mostrar(bloque, lista, filas) { bloque.hidden = !filas.length; filas.forEach(function (f) { lista.appendChild(f); }); }
+
   function formulario(m) {
     var li = document.createElement('li'); li.className = 'portal-persona';
     var datos = document.createElement('div'); datos.className = 'portal-persona-datos';
@@ -188,8 +231,13 @@
     try { return new TextDecoder('utf-8', { fatal: true }).decode(buffer); } catch (e) { return new TextDecoder('windows-1252').decode(buffer); }
   }
 
+  var bloqueCobros = document.getElementById('extracto-cobros'), listaCobros = document.getElementById('extracto-cobros-lista');
+  var bloqueSinPago = document.getElementById('extracto-sin-pago'), listaSinPago = document.getElementById('extracto-sin-pago-lista');
+
   entrada.addEventListener('change', function () {
     lista.textContent = ''; estado.textContent = '';
+    if (listaCobros) { listaCobros.textContent = ''; bloqueCobros.hidden = true; }
+    if (listaSinPago) { listaSinPago.textContent = ''; bloqueSinPago.hidden = true; }
     var archivo = entrada.files && entrada.files[0];
     if (!archivo) return;
     var lector = new FileReader();
@@ -201,9 +249,11 @@
         var faltan = pendientes(r.movimientos, datos);
         estado.textContent = faltan.length ? t('resumen', { n: r.movimientos.length, k: faltan.length }) : t('todo-bien');
         faltan.sort(function (a, b) { return a.f < b.f ? 1 : -1; }).slice(0, 200).forEach(function (m) { lista.appendChild(formulario(m)); });
+        if (listaCobros) mostrar(bloqueCobros, listaCobros, cobrosSinFactura(r.movimientos, datos).sort(function (a, b) { return a.f < b.f ? 1 : -1; }).slice(0, 100).map(function (m) { return filaSencilla(euros(m.i), m.f.split('-').reverse().join('/') + ' · ' + (m.c || '—'), raiz.getAttribute('data-url-facturas'), t('subir-emitida')); }));
+        if (listaSinPago) mostrar(bloqueSinPago, listaSinPago, facturasSinPago(r.movimientos, datos).sort(function (a, b) { return a.f < b.f ? 1 : -1; }).slice(0, 100).map(function (fa) { return filaSencilla(euros(fa.t), fa.f.split('-').reverse().join('/') + (fa.n ? ' · ' + fa.n : ''), null, ''); }));
       }).catch(function () { estado.textContent = t('vacio'); });
     };
     lector.readAsArrayBuffer(archivo);
   });
-  window.__extracto = { leer: leer, decodificar: decodificar, pendientes: pendientes, importe: importe, fecha: fecha };           // para las pruebas del navegador
+  window.__extracto = { leer: leer, decodificar: decodificar, pendientes: pendientes, cobrosSinFactura: cobrosSinFactura, facturasSinPago: facturasSinPago, importe: importe, fecha: fecha };           // para las pruebas del navegador
 })();

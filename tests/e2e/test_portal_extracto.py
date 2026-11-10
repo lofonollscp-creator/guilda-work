@@ -123,3 +123,32 @@ def test_lectura_de_cuaderno_43_y_camt_053_y_su_codificacion(servidor, abrir, en
     assert "2 movimientos" in nueva.locator("#extracto-estado").inner_text()
     assert not errores
     ctx.close()
+
+
+def test_cobros_sin_factura_emitida_y_facturas_sin_pago(servidor, abrir, entrar_como_equipo, chromium):
+    t = db.crear_tenant("Despacho extracto cobros")
+    pagina, _ = abrir()
+    entrar_como_equipo(pagina, "portal-extracto3@ejemplo.com", despacho=t, direccion=True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = db.crear_cliente_fiscal(t, "Cliente Cobros", email="cobros@ejemplo.com")
+    conn = db.get_connection()
+    for tipo, fecha, numero, total in (("emitida", "2026-10-30", "V-1", 100000), ("recibida", "2026-11-04", "R-9", 33300), ("recibida", "2026-11-03", "R-8", 12100)):
+        conn.execute("INSERT INTO facturas_contables (tenant_id, cliente_fiscal_id, tipo, estado, fecha, numero, tercero_nombre, total_centimos, origen, creado_en, actualizado_en) VALUES (?, ?, ?, 'revisada', ?, ?, 'X', ?, 'despacho', '2026-11-01', '2026-11-01')",
+                     (t, c, tipo, fecha, numero, total))
+    conn.commit(); conn.close()
+    ctx = chromium.new_context(viewport={"width": 390, "height": 900})
+    errores = []
+    nueva = ctx.new_page()
+    nueva.on("pageerror", lambda e: errores.append(str(e)))
+    nueva.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(c, '127.0.0.1')}")
+    nueva.goto(f"{servidor.url}/portal/extracto")
+    nueva.wait_for_load_state("networkidle")
+    nueva.set_input_files("#extracto-archivo", {"name": "extracto.csv", "mimeType": "text/csv", "buffer": CSV.encode()})
+    nueva.wait_for_function("document.getElementById('extracto-cobros').hidden === false")
+    cobros = nueva.locator("#extracto-cobros-lista").inner_text()
+    assert "2500,00" in cobros.replace(".", "") and "TRANSFERENCIA CLIENTE" in cobros
+    nueva.wait_for_function("document.getElementById('extracto-sin-pago').hidden === false")
+    sin_pago = nueva.locator("#extracto-sin-pago-lista").inner_text()
+    assert "333,00" in sin_pago and "R-9" in sin_pago and "R-8" not in sin_pago, "R-8 (121,00) sí salió pagada; R-9 no; la emitida no cuenta como pago pendiente"
+    assert not errores
+    ctx.close()

@@ -26569,3 +26569,18 @@ msgstr "I paid it in cash."
 
 msgid "Te la vuelvo a enviar ahora."
 msgstr "I will send it again now."
+
+msgid "Subir la factura emitida"
+msgstr "Upload the issued invoice"
+
+msgid "Cobros sin factura emitida"
+msgstr "Payments received without an issued invoice"
+
+msgid "Ingresos de tu extracto para los que no tenemos una factura emitida del mismo importe. Si es una venta, sube la factura."
+msgstr "Deposits in your statement for which we have no issued invoice of the same amount. If it is a sale, upload the invoice."
+
+msgid "Facturas que no salen pagadas en este extracto"
+msgstr "Invoices that do not appear paid in this statement"
+
+msgid "Facturas de estas fechas cuyo importe no aparece como pago: quizá las pagaste en efectivo o con otra cuenta, o siguen pendientes de pago."
+msgstr "Invoices from these dates whose amount does not show up as a payment: perhaps you paid them in cash or from another account, or they are still unpaid."

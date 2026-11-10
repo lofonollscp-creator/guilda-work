@@ -26654,3 +26654,18 @@ msgstr "Je l'ai payée en espèces."
 
 msgid "Te la vuelvo a enviar ahora."
 msgstr "Je vous la renvoie tout de suite."
+
+msgid "Subir la factura emitida"
+msgstr "Envoyer la facture émise"
+
+msgid "Cobros sin factura emitida"
+msgstr "Encaissements sans facture émise"
+
+msgid "Ingresos de tu extracto para los que no tenemos una factura emitida del mismo importe. Si es una venta, sube la factura."
+msgstr "Entrées de votre relevé pour lesquelles nous n'avons pas de facture émise du même montant. S'il s'agit d'une vente, envoyez la facture."
+
+msgid "Facturas que no salen pagadas en este extracto"
+msgstr "Factures qui n'apparaissent pas payées dans ce relevé"
+
+msgid "Facturas de estas fechas cuyo importe no aparece como pago: quizá las pagaste en efectivo o con otra cuenta, o siguen pendientes de pago."
+msgstr "Factures de ces dates dont le montant n'apparaît pas comme un paiement : vous les avez peut-être payées en espèces ou avec un autre compte, ou elles restent à payer."

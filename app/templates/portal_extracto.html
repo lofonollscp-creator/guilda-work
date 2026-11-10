@@ -9,11 +9,21 @@
              data-txt-vacio="{{ _('No hemos encontrado movimientos en el archivo.') }}"
              data-txt-todo-bien="{{ _('Todos los pagos de tu extracto tienen su factura o su tiquet. No falta nada.') }}"
              data-txt-resumen="{{ _('Hemos leído %(n)s movimientos y %(k)s son pagos sin factura ni tiquet.', n='%(n)s', k='%(k)s') }}"
-             data-txt-anotar="{{ _('Anotar como tiquet') }}" data-txt-subir="{{ _('Tengo la factura: subirla') }}" data-txt-fecha="{{ _('Fecha') }}" data-txt-importe="{{ _('Importe') }}" data-txt-concepto="{{ _('Concepto') }}">
+             data-txt-subir-emitida="{{ _('Subir la factura emitida') }}" data-txt-anotar="{{ _('Anotar como tiquet') }}" data-txt-subir="{{ _('Tengo la factura: subirla') }}" data-txt-fecha="{{ _('Fecha') }}" data-txt-importe="{{ _('Importe') }}" data-txt-concepto="{{ _('Concepto') }}">
       <p>{{ _('Elige el extracto de tu banco (un archivo CSV, Cuaderno 43 o CAMT.053 que descargas desde su web o su app) y te enseñamos qué pagos no tienen factura ni tiquet anotado. El archivo se lee en tu navegador: no se envía a nadie y no se guarda. Solo se envía lo que tú decidas anotar.') }}</p>
       <div class="correo-form-campo"><label for="extracto-archivo">{{ _('Extracto del banco (CSV, Cuaderno 43 o CAMT.053)') }}</label><input type="file" id="extracto-archivo" accept=".csv,.txt,.n43,.c43,.xml,text/csv,text/plain,text/xml,application/xml"></div>
       <p id="extracto-estado" class="muted" role="status" aria-live="polite"></p>
       <ul id="extracto-lista" class="portal-personas"></ul>
+      <div id="extracto-cobros" hidden>
+        <h2>{{ _('Cobros sin factura emitida') }}</h2>
+        <p class="muted">{{ _('Ingresos de tu extracto para los que no tenemos una factura emitida del mismo importe. Si es una venta, sube la factura.') }}</p>
+        <ul id="extracto-cobros-lista" class="portal-personas"></ul>
+      </div>
+      <div id="extracto-sin-pago" hidden>
+        <h2>{{ _('Facturas que no salen pagadas en este extracto') }}</h2>
+        <p class="muted">{{ _('Facturas de estas fechas cuyo importe no aparece como pago: quizá las pagaste en efectivo o con otra cuenta, o siguen pendientes de pago.') }}</p>
+        <ul id="extracto-sin-pago-lista" class="portal-personas"></ul>
+      </div>
     </section>
     <p><a href="{{ url_for('portal_cliente.facturas') }}">{{ _('Volver a mis facturas') }}</a></p>
 {% endblock %}

@@ -26578,3 +26578,18 @@ msgstr "La vaig pagar en efectiu."
 
 msgid "Te la vuelvo a enviar ahora."
 msgstr "Te la torno a enviar ara."
+
+msgid "Subir la factura emitida"
+msgstr "Pujar la factura emesa"
+
+msgid "Cobros sin factura emitida"
+msgstr "Cobraments sense factura emesa"
+
+msgid "Ingresos de tu extracto para los que no tenemos una factura emitida del mismo importe. Si es una venta, sube la factura."
+msgstr "Ingressos del teu extracte per als quals no tenim una factura emesa del mateix import. Si és una venda, puja la factura."
+
+msgid "Facturas que no salen pagadas en este extracto"
+msgstr "Factures que no surten pagades en aquest extracte"
+
+msgid "Facturas de estas fechas cuyo importe no aparece como pago: quizá las pagaste en efectivo o con otra cuenta, o siguen pendientes de pago."
+msgstr "Factures d'aquestes dates l'import de les quals no apareix com a pagament: potser les vas pagar en efectiu o amb un altre compte, o continuen pendents de pagament."
