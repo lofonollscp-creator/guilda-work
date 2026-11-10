@@ -6,7 +6,7 @@ from tests import pg_ayudas
 
 psycopg = pytest.importorskip("psycopg")
 pytestmark = [pytest.mark.solo_sqlite, pytest.mark.skipif(not pg_ayudas.URL, reason="sin GUILDA_TEST_PG_URL")]
-COLUMNAS = (("contabilidad_clientes", "formato_enlace"), ("contabilidad_despacho", "formato_enlace"), ("facturas_contables", "datos_a3"), ("facturas_contables_lineas", "impreso"))
+COLUMNAS = (("contabilidad_clientes", "formato_enlace"), ("contabilidad_despacho", "formato_enlace"), ("facturas_contables", "datos_a3"), ("facturas_contables_lineas", "impreso"), ("contabilidad_lotes", "estado_a3"), ("contabilidad_lotes", "motivo_a3"), ("contabilidad_lotes", "estado_a3_en"), ("contabilidad_clientes", "plan_cuentas"))
 
 
 @pytest.fixture(params=["multitenant", "citus"])

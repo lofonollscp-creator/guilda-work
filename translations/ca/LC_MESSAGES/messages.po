@@ -26921,3 +26921,21 @@ msgstr "L'IBAN no és vàlid: revisa els dígits."
 
 msgid "Elige una forma de cobro o pago de la lista."
 msgstr "Tria una forma de cobrament o pagament de la llista."
+
+msgid "Estado en a3"
+msgstr "Estat a a3"
+
+msgid "Importado"
+msgstr "Importat"
+
+msgid "Rechazado por a3"
+msgstr "Rebutjat per a3"
+
+msgid "Motivo (si lo rechazó)"
+msgstr "Motiu (si el va rebutjar)"
+
+msgid "Fichero rechazado por a3"
+msgstr "Fitxer rebutjat per a3"
+
+msgid "Estado de fichero no válido."
+msgstr "Estat de fitxer no vàlid."

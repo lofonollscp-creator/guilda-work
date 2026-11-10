@@ -341,6 +341,10 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "revision_auto", "INTEGER NOT NULL DEFAULT 0")     # 1 = la dio por revisada la IA (modo «decide sola»), sin que la mirara una persona
     db._asegurar_columna(conn, "contabilidad_clientes", "formato_enlace", "TEXT NOT NULL DEFAULT '512'")      # 512 = SII, 256 = clásico (migración 046)
     db._asegurar_columna(conn, "contabilidad_despacho", "formato_enlace", "TEXT NOT NULL DEFAULT '512'")
+    db._asegurar_columna(conn, "contabilidad_clientes", "plan_cuentas", "TEXT")                # JSON: todas las cuentas del plan de a3 importado (J12)
+    db._asegurar_columna(conn, "contabilidad_lotes", "estado_a3", "TEXT")                      # importado · rechazado (lo que dice la persona tras importar el fichero en a3)
+    db._asegurar_columna(conn, "contabilidad_lotes", "motivo_a3", "TEXT")
+    db._asegurar_columna(conn, "contabilidad_lotes", "estado_a3_en", "TEXT")
     db._asegurar_columna(conn, "facturas_contables", "datos_a3", "TEXT")                       # JSON: bien de inversión, DUA, clave del 340, 347… (ver `datos_a3_validados`)
     db._asegurar_columna(conn, "facturas_contables_lineas", "impreso", "TEXT")                 # impreso de a3 elegido a mano para la línea (110, 115, 347, 349…); vacío = el que toca
     db._asegurar_columna(conn, "facturas_contables", "incluir_en_fiscal", "INTEGER NOT NULL DEFAULT 1")      # 1 = cuenta para Guilda Fiscal (modelos de impuestos); 0 = solo contabilidad
@@ -424,7 +428,7 @@ def configuracion(tenant_id: int, cliente_fiscal_id: int) -> dict:
         f = conn.execute("SELECT * FROM contabilidad_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id)).fetchone()
     finally:
         conn.close()
-    return {**configuracion_despacho(tenant_id), "a3_empresa": None, **({k: f[k] for k in f.keys() if k not in ("cliente_fiscal_id", "tenant_id")} if f else {})}
+    return {**configuracion_despacho(tenant_id), "a3_empresa": None, **({k: f[k] for k in f.keys() if k not in ("cliente_fiscal_id", "tenant_id", "plan_cuentas")} if f else {})}
 
 
 def _cuenta_valida(valor, campo: str, digitos: int) -> str:
@@ -1537,26 +1541,56 @@ def _preparar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     return cliente, cfg, facturas, nuevas, contenido
 
 
+def plan_completo(tenant_id: int, cliente_fiscal_id: int) -> set[str] | None:
+    """Todas las cuentas del plan de a3 importado del cliente (del ancho de sus subcuentas), o None si no se importó o se importó antes de guardarlas todas."""
+    import json
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT plan_cuentas FROM contabilidad_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id)).fetchone()
+    finally:
+        conn.close()
+    try:
+        cuentas = json.loads(f["plan_cuentas"]) if f and f["plan_cuentas"] else None
+    except ValueError:
+        return None
+    return set(cuentas) if cuentas else None
+
+
 def _fuera_del_plan(tenant_id: int, cliente_fiscal_id: int, cfg: dict, facturas: list[dict], nuevas: dict) -> list[dict]:
-    """Si el cliente tiene importado su plan de cuentas de a3, avisa de las subcuentas de terceros (escritas a mano o recordadas) que no figuran en él: a3 las daría de alta nuevas o rechazaría el asiento.
-    Las genéricas del cliente y las que el programa numera solo (`nuevas`) no se avisan: son a propósito."""
+    """Si el cliente tiene importado su plan de cuentas de a3, avisa de las cuentas que se usan y no figuran en él: subcuentas de terceros escritas a mano o recordadas, y las de gasto o ingreso, IVA y retención.
+    a3 las daría de alta nuevas: casi siempre es un error de tecleo o de configuración. Las genéricas y las que el programa numera solo (`nuevas`) no se avisan: son a propósito."""
     conn = db.get_connection()
     try:
         plan = {r["cuenta"] for r in conn.execute("SELECT cuenta FROM contabilidad_plan WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))}
     finally:
         conn.close()
-    if not plan:
+    completo = plan_completo(tenant_id, cliente_fiscal_id)
+    if not plan and not completo:
         return []
+    existentes = plan | (completo or set())
     genericas = {cfg["cuenta_proveedores"], cfg["cuenta_clientes"]}
+    ancho = cfg["digitos"]
     avisos, vistas = [], set()
+
+    def avisar(cuenta: str, tipo: str, texto: str) -> None:
+        if (tipo, cuenta) not in vistas:
+            vistas.add((tipo, cuenta))
+            avisos.append({"registro": None, "mensaje": texto})
     for f in facturas:
         tipo = "proveedor" if f["tipo"] == "recibida" else "cliente"
-        if (tipo, _nif(f["tercero_nif"])) in nuevas:
+        if (tipo, _nif(f["tercero_nif"])) not in nuevas:
+            cuenta = cuenta_efectiva(tenant_id, f, cfg)
+            if cuenta and cuenta not in existentes and cuenta not in genericas:
+                avisar(cuenta, tipo, f"La subcuenta {cuenta} de {f['tercero_nombre']} no figura en el plan de cuentas importado de a3: a3 la dará de alta nueva o rechazará el asiento.")
+        if not completo:
             continue
-        cuenta = cuenta_efectiva(tenant_id, f, cfg)
-        if cuenta and cuenta not in plan and cuenta not in genericas and (tipo, cuenta) not in vistas:
-            vistas.add((tipo, cuenta))
-            avisos.append({"registro": None, "mensaje": f"La subcuenta {cuenta} de {f['tercero_nombre']} no figura en el plan de cuentas importado de a3: a3 la dará de alta nueva o rechazará el asiento."})
+        gasto = cfg["cuenta_gasto"] if f["tipo"] == "recibida" else cfg["cuenta_ingreso"]
+        iva = cfg["cuenta_iva_soportado"] if f["tipo"] == "recibida" else cfg["cuenta_iva_repercutido"]
+        for l in f["lineas"]:
+            for cuenta, que in ((l["cuenta"] or gasto, "de gasto o ingreso"), (iva, "de IVA"), (cfg["cuenta_retencion"] if l["cuota_retencion"] else None, "de retención")):
+                c = re.sub(r"\D", "", str(cuenta or ""))[:ancho].ljust(ancho, "0") if cuenta else ""
+                if c and c not in completo:
+                    avisar(c, que, f"La cuenta {que} {c} (factura {f['numero']}) no figura en el plan de cuentas importado de a3: a3 la creará nueva. ¿Es un error?")
     return avisos
 
 
@@ -1616,11 +1650,31 @@ def listar_lotes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None 
     conn = db.get_connection()
     try:
         filas = [dict(f) for f in conn.execute(
-            "SELECT l.id, l.cliente_fiscal_id, l.creado_en, l.desde, l.hasta, l.n_facturas, l.n_registros, l.comprobado_en, l.n_confirmadas, c.nombre AS cliente_nombre FROM contabilidad_lotes l JOIN clientes_fiscales c ON c.id = l.cliente_fiscal_id "
+            "SELECT l.id, l.cliente_fiscal_id, l.creado_en, l.desde, l.hasta, l.n_facturas, l.n_registros, l.comprobado_en, l.n_confirmadas, l.estado_a3, l.motivo_a3, l.estado_a3_en, c.nombre AS cliente_nombre FROM contabilidad_lotes l JOIN clientes_fiscales c ON c.id = l.cliente_fiscal_id "
             "WHERE l.tenant_id = ?" + (" AND l.cliente_fiscal_id = ?" if cliente_fiscal_id else "") + " ORDER BY l.id DESC LIMIT ?", [tenant_id, *([cliente_fiscal_id] if cliente_fiscal_id else []), limite])]
     finally:
         conn.close()
     return [f for f in filas if visibles is None or f["cliente_fiscal_id"] in visibles]
+
+
+ESTADOS_A3_DEL_LOTE = ("importado", "rechazado")
+
+
+def fijar_estado_a3_del_lote(tenant_id: int, usuario_id: int, lote_id: int, estado: str, motivo: str = "") -> None:
+    """Anota lo que pasó al importar el fichero en a3: `importado`, `rechazado` (con el motivo que dio a3) o vacío para quitarlo. Es una nota de la persona: no cambia las facturas."""
+    if estado and estado not in ESTADOS_A3_DEL_LOTE:
+        raise ValueError("Estado de fichero no válido.")
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT cliente_fiscal_id FROM contabilidad_lotes WHERE id = ? AND tenant_id = ?", (lote_id, tenant_id)).fetchone()
+        if f is None or not acceso.puede_ver_cliente(tenant_id, usuario_id, f["cliente_fiscal_id"]):
+            raise ValueError("No existe ese fichero.")
+        conn.execute("UPDATE contabilidad_lotes SET estado_a3 = ?, motivo_a3 = ?, estado_a3_en = ? WHERE id = ? AND tenant_id = ?",
+                     (estado or None, (motivo or "").strip()[:300] or None if estado == "rechazado" else None, db.now_iso() if estado else None, lote_id, tenant_id))
+        auditoria.registrar(tenant_id, usuario_id, "contabilidad.estado_fichero_a3", "cliente_fiscal", f["cliente_fiscal_id"], {"lote": lote_id, "estado": estado or None, "motivo": (motivo or "")[:300] or None}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def contenido_del_lote(tenant_id: int, usuario_id: int, lote_id: int) -> bytes | None:

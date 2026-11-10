@@ -173,3 +173,42 @@ def test_el_chequeo_del_alta_de_cuenta_detecta_marcas_y_cuentas_mal():
     mensajes = " ".join(e["mensaje"] for e in r["errores"])
     assert not r["ok"] and "actualizar saldo inicial" in mensajes and "criterio de caja (238)" in mensajes
     assert chequeo.chequear((alta + "\r\n" + base).encode("latin-1"), 8)["ok"]
+
+
+# --- J14: estado del fichero en a3 ----------------------------------------------------------------------------------------------------------------------
+
+def test_se_anota_si_a3_importo_o_rechazo_el_fichero_y_se_ve_en_el_panel():
+    from app import panel_cierre
+    t, u, c = _despacho()
+    fid = _crear(t, u, c)
+    fc.cambiar_estado(t, u, fid, "revisada", confirmar_duplicado=True)
+    lote = fc.exportar(t, u, c)["lote"]
+    assert fc.listar_lotes(t, u)[0]["estado_a3"] is None
+    fc.fijar_estado_a3_del_lote(t, u, lote, "rechazado", "  Falta la cuenta 4720  ")
+    l = fc.listar_lotes(t, u)[0]
+    assert (l["estado_a3"], l["motivo_a3"]) == ("rechazado", "Falta la cuenta 4720") and l["estado_a3_en"]
+    assert panel_cierre.panel(t, u, "2026-T3")["clientes"][0]["fichero_rechazado"] is True
+    fc.fijar_estado_a3_del_lote(t, u, lote, "importado", "ya no cuenta")
+    l = fc.listar_lotes(t, u)[0]
+    assert (l["estado_a3"], l["motivo_a3"]) == ("importado", None)
+    assert panel_cierre.panel(t, u, "2026-T3")["clientes"][0]["fichero_rechazado"] is False
+    fc.fijar_estado_a3_del_lote(t, u, lote, "")
+    assert fc.listar_lotes(t, u)[0]["estado_a3"] is None
+    for malo in (("raro", ""),):
+        with pytest.raises(ValueError):
+            fc.fijar_estado_a3_del_lote(t, u, lote, *malo)
+    with pytest.raises(ValueError, match="No existe"):
+        fc.fijar_estado_a3_del_lote(t, u, 999999, "importado")
+
+
+def test_la_pantalla_de_ficheros_guarda_el_estado(cliente):
+    from tests.test_facturas_contables import _web
+    uid, t, c = _web(cliente, "estadolote@ejemplo.com")
+    fc.guardar_configuracion(t, uid, c, {"a3_empresa": "7", "digitos": "8"})
+    fid = fc.crear(t, uid, c, _datos(numero="L-1", tercero_nif=NIF), [LINEA])
+    fc.cambiar_estado(t, uid, fid, "revisada")
+    lote = fc.exportar(t, uid, c)["lote"]
+    assert "Estado en a3" in cliente.get("/contabilidad/lotes").get_data(as_text=True)
+    r = cliente.post(f"/contabilidad/lotes/{lote}/estado", data={"estado": "rechazado", "motivo": "cuenta inexistente"})
+    assert r.status_code == 302 and fc.listar_lotes(t, uid)[0]["motivo_a3"] == "cuenta inexistente"
+    assert "cuenta inexistente" in cliente.get("/contabilidad/lotes").get_data(as_text=True)

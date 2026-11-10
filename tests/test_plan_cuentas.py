@@ -237,3 +237,58 @@ def test_flujo_web_subir_revisar_e_importar(cliente):
     assert "caducado" in r.get_data(as_text=True)
     assert "Plan borrado" in cliente.post(url, data={"accion": "borrar"}).get_data(as_text=True)
     assert cliente.get(f"/contabilidad/cliente/999999/plan").status_code == 404
+
+
+# --- J12: el plan completo avisa de las cuentas que no existen ---------------------------------------------------------------------------------------------
+
+PLAN_COMPLETO = ("Cuenta;Descripción;NIF\n40000001;PAPELERÍA SOL S.L.;B87654321\n62900000;Gastos varios;\n62900001;Material de oficina;\n47200000;IVA soportado;\n47700000;IVA repercutido;\n"
+                 "47510000;Retenciones;\n70000000;Ventas;\n").encode()
+
+
+def _revisada(t, u, c, numero, lineas):
+    fid = fc.crear(t, u, c, _datos(numero=numero, tercero_nif="B87654321"), lineas)
+    fc.cambiar_estado(t, u, fid, "revisada", confirmar_duplicado=True)
+    return fid
+
+
+def _avisos(t, u, c):
+    return [a["mensaje"] for a in fc.comprobar_exportacion(t, u, c)["avisos"] if "plan de cuentas" in a["mensaje"]]
+
+
+def test_el_plan_completo_se_guarda_y_se_borra_con_el_plan():
+    t, u, c = _despacho()
+    assert fc.plan_completo(t, c) is None
+    _importar(t, u, c, PLAN_COMPLETO)
+    assert fc.plan_completo(t, c) == {"40000001", "62900000", "62900001", "47200000", "47700000", "47510000", "70000000"}
+    pc.borrar(t, u, c)
+    assert fc.plan_completo(t, c) is None
+
+
+def test_una_cuenta_de_gasto_que_no_esta_en_el_plan_se_avisa_y_las_que_estan_no():
+    t, u, c = _despacho()
+    _importar(t, u, c, PLAN_COMPLETO)
+    _revisada(t, u, c, "P-1", [LINEA])                                               # gasto 62900000 por defecto: existe
+    assert _avisos(t, u, c) == []
+    _revisada(t, u, c, "P-2", [{**LINEA, "cuenta": "62900099"}])
+    m = _avisos(t, u, c)
+    assert len(m) == 1 and "62900099" in m[0] and "P-2" in m[0] and "de gasto o ingreso" in m[0]
+
+
+def test_tambien_se_avisa_del_iva_y_de_la_retencion_si_no_existen():
+    t, u, c = _despacho()
+    plan = PLAN_COMPLETO.replace(b"47200000;IVA soportado;\n", b"").replace(b"47510000;Retenciones;\n", b"")
+    _importar(t, u, c, plan)
+    _revisada(t, u, c, "P-3", [{**LINEA, "pct_retencion": "15"}])
+    m = " ".join(_avisos(t, u, c))
+    assert "47200000" in m and "de IVA" in m and "47510000" in m and "de retención" in m
+
+
+def test_importar_el_plan_no_cambia_la_configuracion_heredada_del_despacho():
+    t = db.crear_tenant("Despacho plan dos")
+    u = db.crear_usuario_vinculado_a_kratos("plan2@ejemplo.com", "k-plan2"); db.asignar_tenant(u, t); db.asignar_supervisor_tenant(u, True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = crear_cliente_fiscal(t, "Sin configurar SL", nif="B12345679")
+    fc.guardar_configuracion_despacho(t, u, {"digitos": "8", "cuenta_gasto": "62100000"})
+    antes = fc.configuracion(t, c)["cuenta_gasto"]
+    _importar(t, u, c, PLAN_COMPLETO)                                                # el cliente no tenía su fila de configuración: se crea con lo que ya le valía
+    assert antes == "62100000" and fc.configuracion(t, c)["cuenta_gasto"] == "62100000" and fc.configuracion(t, c)["a3_empresa"] is None

@@ -26997,3 +26997,21 @@ msgstr "L'IBAN n'est pas valide : vérifiez les chiffres."
 
 msgid "Elige una forma de cobro o pago de la lista."
 msgstr "Choisissez un mode d'encaissement ou de paiement dans la liste."
+
+msgid "Estado en a3"
+msgstr "Statut dans a3"
+
+msgid "Importado"
+msgstr "Importé"
+
+msgid "Rechazado por a3"
+msgstr "Rejeté par a3"
+
+msgid "Motivo (si lo rechazó)"
+msgstr "Motif (en cas de rejet)"
+
+msgid "Fichero rechazado por a3"
+msgstr "Fichier rejeté par a3"
+
+msgid "Estado de fichero no válido."
+msgstr "Statut de fichier non valide."

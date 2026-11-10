@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_ds/componentes.html" import estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
 {% block title %}{{ _('Ficheros generados') }} — Guilda Work{% endblock %}
 {% block content %}
 <header class="page-header">
@@ -11,12 +12,18 @@
   <a class="btn btn-ghost" href="{{ url_for('contabilidad.retorno') }}">{{ _('Comprobar lo que devuelve a3') }}</a>
   <a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Volver a las facturas') }}</a></div>
 </header>
+{{ aviso_error(error) }}
 {% if not lotes %}
   {{ estado_vacio(_('Todavía no has generado ningún fichero'), _('Revisa algunas facturas y genera el fichero desde la lista.'), 'file-text') }}
 {% else %}
 <div class="table-wrap"><table class="historial-table">
-  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Registros') }}</th><th>{{ _('En a3') }}</th><th></th></tr></thead>
-  <tbody>{% for l in lotes %}<tr><td class="mono">{{ l.creado_en[:16]|replace('T', ' ') }}</td><td>{{ l.cliente_nombre }}</td><td>{{ l.n_facturas }}</td><td>{{ l.n_registros }}</td><td>{% if l.comprobado_en %}{{ l.n_confirmadas }} / {{ l.n_facturas }}{% else %}<span class="muted">{{ _('Sin comprobar') }}</span>{% endif %}</td>
+  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Registros') }}</th><th>{{ _('En a3') }}</th><th>{{ _('Estado en a3') }}</th><th></th></tr></thead>
+  <tbody>{% for l in lotes %}<tr><td class="mono">{{ l.creado_en[:16]|replace('T', ' ') }}</td><td>{{ l.cliente_nombre }}</td><td>{{ l.n_facturas }}</td><td>{{ l.n_registros }}</td><td>{% if l.comprobado_en %}{{ l.n_confirmadas }} / {{ l.n_facturas }}{% else %}<span class="muted">{{ _('Sin comprobar') }}</span>{% endif %}</td><td>
+      <form method="post" action="{{ url_for('contabilidad.estado_del_lote', lote_id=l.id) }}" class="ds-fila">
+        <select name="estado" aria-label="{{ _('Estado en a3') }}"><option value="">—</option><option value="importado" {{ 'selected' if l.estado_a3 == 'importado' }}>{{ _('Importado') }}</option><option value="rechazado" {{ 'selected' if l.estado_a3 == 'rechazado' }}>{{ _('Rechazado por a3') }}</option></select>
+        <input type="text" name="motivo" value="{{ l.motivo_a3 or '' }}" maxlength="300" placeholder="{{ _('Motivo (si lo rechazó)') }}" aria-label="{{ _('Motivo') }}">
+        <button type="submit" class="btn btn-ghost btn-sm">{{ _('Guardar') }}</button>
+      </form></td>
     <td><a class="btn btn-ghost btn-sm" href="{{ url_for('contabilidad.descargar_lote', lote_id=l.id) }}">{{ _('Descargar') }}</a> <a class="btn btn-ghost btn-sm" href="{{ url_for('contabilidad.comprobar_lote', lote_id=l.id) }}">{{ _('Comprobar') }}</a></td></tr>{% endfor %}</tbody>
 </table></div>
 {% endif %}

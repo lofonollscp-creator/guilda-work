@@ -26912,3 +26912,21 @@ msgstr "The IBAN is not valid: check the digits."
 
 msgid "Elige una forma de cobro o pago de la lista."
 msgstr "Choose a payment method from the list."
+
+msgid "Estado en a3"
+msgstr "Status in a3"
+
+msgid "Importado"
+msgstr "Imported"
+
+msgid "Rechazado por a3"
+msgstr "Rejected by a3"
+
+msgid "Motivo (si lo rechazó)"
+msgstr "Reason (if rejected)"
+
+msgid "Fichero rechazado por a3"
+msgstr "File rejected by a3"
+
+msgid "Estado de fichero no válido."
+msgstr "Invalid file status."

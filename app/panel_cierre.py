@@ -82,6 +82,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
                              "AND c.papelera_en IS NULL GROUP BY x.cliente_fiscal_id, c.nombre", ((hoy - timedelta(days=DIAS_SIN_CONFIRMAR)).isoformat(), tenant_id, desde, hasta)).fetchall()
         configurados = {r["cliente_fiscal_id"]: r["nombre"] for r in conn.execute(
             "SELECT k.cliente_fiscal_id, c.nombre FROM contabilidad_clientes k JOIN clientes_fiscales c ON c.id = k.cliente_fiscal_id WHERE k.tenant_id = ? AND k.a3_empresa IS NOT NULL AND c.papelera_en IS NULL", (tenant_id,))}
+        rechazados = {r["cliente_fiscal_id"] for r in conn.execute("SELECT DISTINCT cliente_fiscal_id FROM contabilidad_lotes WHERE tenant_id = ? AND estado_a3 = 'rechazado'", (tenant_id,))}
         con_retorno = {r["cliente_fiscal_id"] for r in conn.execute("SELECT DISTINCT cliente_fiscal_id FROM facturas_contables WHERE tenant_id = ? AND confirmada_en IS NOT NULL", (tenant_id,))}
     finally:
         conn.close()
@@ -95,6 +96,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
             continue
         c = {k: (v or 0) if k not in ("nombre", "cliente_fiscal_id") else v for k, v in c.items()}
         c["usa_retorno"] = cid in con_retorno
+        c["fichero_rechazado"] = cid in rechazados
         if not c["usa_retorno"]:
             c["sin_confirmar"] = c["sin_confirmar_antiguas"] = 0
         c["cerrado"] = bool(fc.periodos_cerrados(tenant_id, cid, [trimestre]).get(trimestre))

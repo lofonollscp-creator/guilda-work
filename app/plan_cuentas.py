@@ -23,6 +23,7 @@ _SINONIMOS = {
     "nombre": ("descripcion", "nombre", "titulo", "razonsocial", "denominacion", "nombrecuenta", "descripcioncuenta", "titular"),
     "nif": ("nif", "cif", "nifcif", "cifnif", "dni", "nifproveedor", "nifcliente", "documento", "vat"),
 }
+MAX_CUENTAS_DEL_PLAN = 30000
 _NIF = re.compile(r"^[A-Za-z]?[\s.\-]?\d{6,8}[\s.\-]?[A-Za-z]?$")
 
 
@@ -74,6 +75,7 @@ def leer_registros(nombre: str, datos: bytes) -> dict:
             inicio = i + 1
             break
     registros: dict[str, dict] = {}
+    todas: set[str] = set()                                            # todas las cuentas del archivo, de cualquier grupo: sirven para avisar de las que no existen
     ignoradas = 0
     for f in filas[inicio:]:
         if columnas:
@@ -84,6 +86,8 @@ def leer_registros(nombre: str, datos: bytes) -> dict:
             cuenta, nom, nif = _sin_cabecera(f)
         if not cuenta:
             continue
+        if 4 <= len(cuenta) <= 12 and len(todas) < MAX_CUENTAS_DEL_PLAN:
+            todas.add(cuenta)
         tipo = _tipo_de(cuenta)
         if tipo is None or not 4 <= len(cuenta) <= 12:
             ignoradas += 1
@@ -98,7 +102,7 @@ def leer_registros(nombre: str, datos: bytes) -> dict:
         avisos.append("El archivo no tiene cabecera: se ha leído «cuenta, nombre y NIF» fila a fila. Comprueba la vista previa.")
     if columnas and "nif" not in columnas:
         avisos.append("El archivo no trae el NIF: las coincidencias serán por nombre y habrá que confirmarlas una a una.")
-    return {"registros": list(registros.values()), "ignoradas": ignoradas, "avisos": avisos}
+    return {"registros": list(registros.values()), "ignoradas": ignoradas, "avisos": avisos, "todas": sorted(todas)}
 
 
 def _sin_cabecera(f: list[str]) -> tuple[str, str, str]:
@@ -186,6 +190,18 @@ def previsualizar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, impor
             "por_nif": por_nif_resultado, "por_nombre": por_nombre_resultado, "difieren": difieren, "muestra": validas[:8], "avisos": importacion.get("avisos", [])}
 
 
+def _guardar_plan_completo(conn, tenant_id: int, cliente_fiscal_id: int, cuentas: list[str]) -> None:
+    """Guarda todas las cuentas del plan (del ancho de subcuenta del cliente) para avisar luego de las que se usan y no existen. Si el cliente aún no tiene su fila de configuración, se crea con los valores
+    que ya le valían (los del despacho), para no cambiarle nada."""
+    import json
+    valor = json.dumps(cuentas) if cuentas else None
+    hay = conn.execute("SELECT 1 FROM contabilidad_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id)).fetchone()
+    if not hay:
+        cfg = fc.configuracion(tenant_id, cliente_fiscal_id)
+        fc._guardar_fila_cliente(conn, tenant_id, cliente_fiscal_id, None, {k: cfg[k] for k in fc.COLUMNAS_AJUSTES})
+    conn.execute("UPDATE contabilidad_clientes SET plan_cuentas = ? WHERE cliente_fiscal_id = ? AND tenant_id = ?", (valor, cliente_fiscal_id, tenant_id))
+
+
 def importar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, importacion: dict, nombres_confirmados: list[int]) -> dict:
     """Sustituye el plan guardado del cliente por el del archivo y recuerda las coincidencias por nombre confirmadas (índices de `previsualizar()['por_nombre']`)."""
     fc._cliente(tenant_id, usuario_id, cliente_fiscal_id)
@@ -202,6 +218,7 @@ def importar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, importacio
         for t in elegidas:
             if t["nif"]:
                 fc._recordar_tercero(conn, tenant_id, cliente_fiscal_id, "recibida" if t["tipo"] == "proveedor" else "emitida", t["nif"], t["nombre"], t["cuenta"])
+        _guardar_plan_completo(conn, tenant_id, cliente_fiscal_id, [c for c in importacion.get("todas") or [] if len(c) == vista["digitos"]])
         auditoria.registrar(tenant_id, usuario_id, "contabilidad.plan_importado", "cliente_fiscal", cliente_fiscal_id, {"cuentas": len(validas), "por_nif": len(vista["por_nif"]), "por_nombre": len(elegidas)}, conn=conn)
         conn.commit()
     finally:
@@ -226,6 +243,7 @@ def borrar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> None:
     conn = db.get_connection()
     try:
         conn.execute("DELETE FROM contabilidad_plan WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
+        conn.execute("UPDATE contabilidad_clientes SET plan_cuentas = NULL WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))
         auditoria.registrar(tenant_id, usuario_id, "contabilidad.plan_borrado", "cliente_fiscal", cliente_fiscal_id, None, conn=conn)
         conn.commit()
     finally:

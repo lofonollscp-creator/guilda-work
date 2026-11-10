@@ -840,6 +840,17 @@ def lotes():
     return render_template("contabilidad_lotes.html", lotes=fc.listar_lotes(g.tenant_id, g.usuario_id), error=_error())
 
 
+@contabilidad_bp.route("/lotes/<int:lote_id>/estado", methods=["POST"])
+@login_required
+def estado_del_lote(lote_id: int):
+    """Anota si a3 importó el fichero o lo rechazó (y por qué)."""
+    try:
+        fc.fijar_estado_a3_del_lote(g.tenant_id, g.usuario_id, lote_id, request.form.get("estado", ""), request.form.get("motivo", ""))
+    except ValueError as e:
+        return redirect(url_for("contabilidad.lotes", error=_(str(e))[:300]))
+    return redirect(url_for("contabilidad.lotes"))
+
+
 @contabilidad_bp.route("/lotes/<int:lote_id>/descargar")
 @login_required
 def descargar_lote(lote_id: int):

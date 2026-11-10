@@ -730,6 +730,7 @@ CREATE TABLE IF NOT EXISTS contabilidad_clientes (
     regimen_iva text NOT NULL DEFAULT 'general',
     retencion_emitidas bigint NOT NULL DEFAULT 0,
     formato_enlace text NOT NULL DEFAULT '512',
+    plan_cuentas text,
     PRIMARY KEY (cliente_fiscal_id)
 );
 
@@ -781,6 +782,9 @@ CREATE TABLE IF NOT EXISTS contabilidad_lotes (
     contenido bytea NOT NULL,
     comprobado_en text,
     n_confirmadas bigint,
+    estado_a3 text,
+    motivo_a3 text,
+    estado_a3_en text,
     PRIMARY KEY (id)
 );
 
