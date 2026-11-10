@@ -6,8 +6,8 @@ from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herr
 from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
-           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303", "contabilidad_historial_factura", "contabilidad_listar_ficheros", "contabilidad_listar_reglas", "contabilidad_configuracion_a3", "contabilidad_facturas_periodicas_que_faltan")
-ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura", "contabilidad_factura_desde_adjunto")
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303", "contabilidad_historial_factura", "contabilidad_listar_ficheros", "contabilidad_listar_reglas", "contabilidad_configuracion_a3", "contabilidad_facturas_periodicas_que_faltan", "contabilidad_terceros_duplicados")
+ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura", "contabilidad_factura_desde_adjunto", "contabilidad_unificar_tercero", "contabilidad_corregir_nif_tercero")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
 
@@ -420,3 +420,13 @@ def test_leer_un_adjunto_binario_del_chat_no_falla_y_explica_que_hacer():
     pdf = db.crear_adjunto_ia(u, "f.pdf", "application/pdf", PDF + b"\xff\xfe")
     r = ih.ejecutar(u, "leer_adjunto_chat", {"adjunto_id": pdf})
     assert r["texto"] is None and "contabilidad_factura_desde_adjunto" in r["nota"]
+
+
+def test_terceros_duplicados_por_la_ia():
+    t, u, c = _despacho("Despacho herr terceros")
+    _anotar(u, c, numero="D-1", tercero_nif="A58818501", tercero_nombre="Papelería Sol S.L.")
+    _anotar(u, c, numero="D-2", tercero_nif="A58818501", tercero_nombre="PAPELERIA SOL")
+    d = ih.ejecutar(u, "contabilidad_terceros_duplicados", {"cliente_fiscal_id": c})
+    assert [x["nif"] for x in d["mismo_nif"]] == ["A58818501"]
+    assert ih.ejecutar(u, "contabilidad_unificar_tercero", {"cliente_fiscal_id": c, "tipo": "recibida", "nif": "A58818501", "nombre": "Papelería Sol S.L."}) == {"facturas_cambiadas": 1}
+    assert ih.ejecutar(u, "contabilidad_corregir_nif_tercero", {"cliente_fiscal_id": c, "tipo": "recibida", "nif_mal": "A58818501", "nif_bien": "B12345674"}) == {"facturas_cambiadas": 2}

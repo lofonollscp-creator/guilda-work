@@ -8,7 +8,8 @@
     <h1>{{ _('Mapa de cuentas') }}</h1>
     <p class="subtitle">{{ cliente.nombre }} · {{ _('Subcuenta de a3 que se usará con cada proveedor y cliente.') }}</p>
   </div>
-  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.plan', cliente_id=cliente.id) }}">{{ _('Importar el plan de a3') }}</a>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.terceros', cliente_id=cliente.id) }}">{{ _('Proveedores y clientes duplicados') }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('contabilidad.plan', cliente_id=cliente.id) }}">{{ _('Importar el plan de a3') }}</a>
     <a class="btn btn-ghost" href="{{ url_for('contabilidad.configuracion', cliente_id=cliente.id) }}">‹ {{ _('Configuración de a3') }}</a></div>
 </header>
 {{ aviso_error(error) }}

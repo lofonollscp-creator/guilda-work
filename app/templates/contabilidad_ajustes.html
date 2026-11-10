@@ -30,6 +30,7 @@
     <label>{{ _('IVA soportado') }}<input type="text" name="cuenta_iva_soportado" value="{{ cfg.cuenta_iva_soportado }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
     <label>{{ _('IVA repercutido') }}<input type="text" name="cuenta_iva_repercutido" value="{{ cfg.cuenta_iva_repercutido }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
     <label>{{ _('Retenciones') }}<input type="text" name="cuenta_retencion" value="{{ cfg.cuenta_retencion }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
+  <label>{{ _('Banco o caja (cobros y pagos)') }}<input type="text" name="cuenta_tesoreria" value="{{ cfg.cuenta_tesoreria }}" inputmode="numeric" {{ 'disabled' if not puede_despacho }}></label>
   <label>{{ _('Régimen de IVA del cliente') }}
     <select name="regimen_iva" {{ 'disabled' if not puede_despacho }}>{% for r, nombre in regimenes %}<option value="{{ r }}" {{ 'selected' if cfg.regimen_iva == r }}>{{ nombre }}</option>{% endfor %}</select></label>
   <p class="muted">{{ _('Con recargo de equivalencia, las facturas recibidas llevan solas el recargo de cada tipo de IVA. En una actividad exenta, las emitidas salen como exentas y las recibidas con IVA no deducible. Lo que escribas en una línea manda siempre.') }}</p>

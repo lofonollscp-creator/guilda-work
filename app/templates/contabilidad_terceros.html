@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Proveedores y clientes duplicados') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Proveedores y clientes duplicados') }}</h1>
+    <p class="subtitle">{{ cliente.nombre }} · {{ _('El mismo NIF con nombres distintos o el mismo nombre con NIF distintos acaban en subcuentas repetidas en a3. Solo se cambian las facturas pendientes o revisadas: las ya exportadas no.') }}</p>
+  </div>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.cuentas', cliente_id=cliente.id) }}">‹ {{ _('Volver') }}</a></div>
+</header>
+{{ aviso_error(error) }}
+{% if mensaje %}<div class="ia-aviso" role="status">{{ mensaje }}</div>{% endif %}
+
+{% if not d.mismo_nif and not d.mismo_nombre %}
+  {{ estado_vacio(_('No hay duplicados'), _('Ningún proveedor ni cliente de este cliente aparece con dos nombres o con dos NIF.'), 'check') }}
+{% endif %}
+
+{% if d.mismo_nif %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Mismo NIF con nombres distintos') }}</h2>
+  {% for x in d.mismo_nif %}
+  <form method="post" class="edit-form">
+    <input type="hidden" name="accion" value="nombre"><input type="hidden" name="tipo" value="{{ x.tipo }}"><input type="hidden" name="nif" value="{{ x.nif }}">
+    <p><strong class="mono">{{ x.nif }}</strong> · {{ _('Proveedor') if x.tipo == 'recibida' else _('Cliente') }}</p>
+    <ul>{% for n in x.nombres %}<li>{{ n.nombre }} <span class="muted">({{ ngettext('%(n)s factura', '%(n)s facturas', n.facturas, n=n.facturas) }}{% if n.editables != n.facturas %} · {{ _('%(e)s se pueden cambiar', e=n.editables) }}{% endif %})</span></li>{% endfor %}</ul>
+    <div class="ds-fila"><label>{{ _('Nombre correcto') }}<input type="text" name="nombre" value="{{ x.nombres[0].nombre }}" maxlength="100" required></label>
+      <button type="submit" class="btn btn-primary">{{ _('Unificar') }}</button></div>
+  </form>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if d.mismo_nombre %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Mismo nombre con NIF distintos') }}</h2>
+  <p class="muted">{{ _('Casi siempre es un NIF mal leído: elige el que está mal y el correcto.') }}</p>
+  {% for x in d.mismo_nombre %}
+  <form method="post" class="edit-form">
+    <input type="hidden" name="accion" value="nif"><input type="hidden" name="tipo" value="{{ x.tipo }}">
+    <p><strong>{{ x.nombre }}</strong> · {{ _('Proveedor') if x.tipo == 'recibida' else _('Cliente') }}</p>
+    <ul>{% for n in x.nifs %}<li class="mono">{{ n.nif }} <span class="muted">({{ ngettext('%(n)s factura', '%(n)s facturas', n.facturas, n=n.facturas) }})</span></li>{% endfor %}</ul>
+    <div class="ds-fila">
+      <label>{{ _('NIF que está mal') }}<select name="nif_mal">{% for n in x.nifs %}<option value="{{ n.nif }}">{{ n.nif }}</option>{% endfor %}</select></label>
+      <label>{{ _('NIF correcto') }}<select name="nif_bien">{% for n in x.nifs %}<option value="{{ n.nif }}" {{ 'selected' if loop.first }}>{{ n.nif }}</option>{% endfor %}</select></label>
+      <button type="submit" class="btn btn-primary">{{ _('Corregir') }}</button></div>
+  </form>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

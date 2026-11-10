@@ -225,3 +225,65 @@ def test_flujo_web_anadir_editar_borrar_y_sugeridas(cliente):
     r = cliente.post(url, data={"accion": "guardar", f"r{regla['id']}_borrar": "1"})
     assert fc.regla_del_tercero(t, c, "recibida", NIF) is None
     assert cliente.get("/contabilidad/cliente/999999/reglas").status_code == 404
+
+
+# --- L18: IVA parcialmente deducible ------------------------------------------------------------------------------------------------------------------------
+
+_N_DEDUCIBLE = [0]
+
+
+def _con_regla_deducible(pct, **kw):
+    from tests.test_herramientas_contabilidad import _despacho as _otro
+    _N_DEDUCIBLE[0] += 1
+    t, u, c = _otro(f"Despacho deducible {_N_DEDUCIBLE[0]}")
+    fc.guardar_regla(t, u, c, "proveedor", {"nif": "A58818501", "pct_deducible": pct, **kw})
+    return t, u, c
+
+
+def _factura(t, u, c, base="100,00", **kw):
+    from tests.test_facturas_contables import _datos
+    return fc.obtener(t, u, fc.crear(t, u, c, _datos(numero=kw.pop("numero", "V-1"), tercero_nif="A58818501", **kw), [{"base": base, "pct_iva": "21"}]))
+
+
+def test_la_regla_parte_la_linea_en_parte_deducible_y_parte_no_deducible():
+    t, u, c = _con_regla_deducible("50")
+    f = _factura(t, u, c)
+    assert [(l["subtipo"], l["base_centimos"], l["cuota_iva"]) for l in f["lineas"]] == [("01", 5000, 1050), ("07", 5000, 1050)] and f["total_centimos"] == 12100
+
+
+def test_el_reparto_no_pierde_ni_un_centimo_con_importes_raros():
+    t, u, c = _con_regla_deducible("50")
+    f = _factura(t, u, c, base="100,01", numero="V-2")
+    assert sum(l["base_centimos"] for l in f["lineas"]) == 10001 and sum(l["cuota_iva"] for l in f["lineas"]) == 2100 and f["total_centimos"] == 12101 and f["problemas"] == []
+
+
+def test_con_cero_por_ciento_toda_la_linea_es_no_deducible_y_con_cien_o_sin_regla_no_cambia_nada():
+    t, u, c = _con_regla_deducible("0")
+    assert [l["subtipo"] for l in _factura(t, u, c)["lineas"]] == ["07"]
+    t, u, c = _con_regla_deducible("100")
+    assert [l["subtipo"] for l in _factura(t, u, c)["lineas"]] == ["01"]
+    t, u, c = _con_regla_deducible("")
+    assert [l["subtipo"] for l in _factura(t, u, c)["lineas"]] == ["01"]
+
+
+def test_editar_la_factura_no_vuelve_a_partir_las_lineas_ya_partidas_ni_toca_las_emitidas():
+    t, u, c = _con_regla_deducible("50")
+    f = _factura(t, u, c)
+    lineas = [{"base": f"{l['base_centimos'] / 100:.2f}".replace(".", ","), "pct_iva": "21", "subtipo": l["subtipo"]} for l in f["lineas"]]
+    fc.actualizar(t, u, f["id"], {"tipo": "recibida", "fecha": f["fecha"], "numero": "V-1", "tercero_nombre": f["tercero_nombre"], "tercero_nif": "A58818501"}, lineas)
+    assert [l["subtipo"] for l in fc.obtener(t, u, f["id"])["lineas"]] == ["01", "07"]
+    from tests.test_facturas_contables import _datos
+    fc.guardar_regla(t, u, c, "cliente", {"nif": "B22222222", "pct_deducible": "50"})                              # en una regla de cliente no se guarda
+    assert fc.listar_reglas(t, u, c)[-1]["pct_deducible"] is None or all(r["tipo"] != "cliente" or r["pct_deducible"] is None for r in fc.listar_reglas(t, u, c))
+
+
+def test_el_porcentaje_se_valida_y_se_ve_en_la_pantalla_de_reglas(cliente):
+    import pytest as _p
+    from tests.test_facturas_contables import _web
+    t, u, c = _con_regla_deducible("")
+    with _p.raises(ValueError, match="porcentaje"):
+        fc.guardar_regla(t, u, c, "proveedor", {"nif": "A58818501", "pct_deducible": "150"})
+    uid, t, c = _web(cliente, "reglasdeducible@ejemplo.com")
+    fc.guardar_regla(t, uid, c, "proveedor", {"nif": "A58818501", "nombre": "Concesionario", "pct_deducible": "50"})
+    html = cliente.get(f"/contabilidad/cliente/{c}/reglas").get_data(as_text=True)
+    assert "IVA deducible" in html and 'value="50"' in html

@@ -30,6 +30,7 @@
   <label>{{ _('IVA soportado') }}<input type="text" name="cuenta_iva_soportado" value="{{ cfg.cuenta_iva_soportado }}" inputmode="numeric"></label>
   <label>{{ _('IVA repercutido') }}<input type="text" name="cuenta_iva_repercutido" value="{{ cfg.cuenta_iva_repercutido }}" inputmode="numeric"></label>
   <label>{{ _('Retenciones') }}<input type="text" name="cuenta_retencion" value="{{ cfg.cuenta_retencion }}" inputmode="numeric"></label>
+  <label>{{ _('Banco o caja (cobros y pagos)') }}<input type="text" name="cuenta_tesoreria" value="{{ cfg.cuenta_tesoreria }}" inputmode="numeric" ></label>
   <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button><a class="btn btn-ghost" href="{{ url_for('contabilidad.lista', cliente_id=cliente.id) }}">{{ _('Cancelar') }}</a></div>
 </form>
 <section class="ds-max-640 ds-mt-24">

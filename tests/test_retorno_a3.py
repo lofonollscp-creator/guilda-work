@@ -164,3 +164,32 @@ def test_la_pantalla_acepta_las_columnas_indicadas_y_ensena_la_vista_previa(clie
     r = cliente.post("/contabilidad/retorno", data={"cliente_id": c, "archivo": (io.BytesIO(SIN_TITULOS), "a3.csv"), "col_numero": "C", "col_fecha": "B", "col_total": "D", "fila_titulos": "0"},
                      content_type="multipart/form-data")
     assert r.status_code == 200 and "No encuentro las columnas" not in r.get_data(as_text=True) and "Resultado" in r.get_data(as_text=True)
+
+
+# --- J24: el mapeo de columnas se recuerda por cliente ---------------------------------------------------------------------------------------------------------
+
+def test_las_columnas_indicadas_se_recuerdan_para_el_siguiente_listado_del_mismo_cliente():
+    t, u, c = _despacho()
+    assert retorno_a3.mapeo_guardado(t, c) is None
+    with pytest.raises(ValueError, match="No encuentro las columnas"):
+        retorno_a3.leer_de_cliente(t, c, SIN_TITULOS, "a3.csv")                                            # sin mapeo guardado, falla como siempre
+    mapa = retorno_a3.mapa_de_columnas(numero="C", fecha="B", total="D")
+    assert [f["numero"] for f in retorno_a3.leer_de_cliente(t, c, SIN_TITULOS, "a3.csv", mapa, 0)] == ["F-1", "F-2"]
+    assert retorno_a3.mapeo_guardado(t, c) == ({"numero": 2, "fecha": 1, "total": 3}, 0)
+    siguiente = "Registro de facturas\nB;20/09/2026;F-9;50,00;B87654321\n".encode()
+    assert [f["numero"] for f in retorno_a3.leer_de_cliente(t, c, siguiente, "a3.csv")] == ["F-9"]       # ya no hace falta indicarlas
+    assert [f["numero"] for f in retorno_a3.leer_de_cliente(t, c, CSV, "a3.csv")][:1] == ["F-1"]          # un listado con títulos reconocibles se lee por sus títulos
+    retorno_a3.guardar_mapeo(t, c, None)
+    assert retorno_a3.mapeo_guardado(t, c) is None
+
+
+def test_guardar_el_mapeo_no_cambia_la_configuracion_heredada_del_despacho():
+    from app import db, verticales
+    from app.db_fiscal import crear_cliente_fiscal
+    t = db.crear_tenant("Despacho mapeo")
+    u = db.crear_usuario_vinculado_a_kratos("mapeo@ejemplo.com", "k-mapeo"); db.asignar_tenant(u, t); db.asignar_supervisor_tenant(u, True)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    c = crear_cliente_fiscal(t, "Sin fila SL", nif="B12345679")
+    fc.guardar_configuracion_despacho(t, u, {"digitos": "8", "cuenta_gasto": "62100000"})
+    retorno_a3.guardar_mapeo(t, c, {"numero": 0, "total": 1}, 1)
+    assert fc.configuracion(t, c)["cuenta_gasto"] == "62100000" and "columnas_retorno" not in fc.configuracion(t, c)

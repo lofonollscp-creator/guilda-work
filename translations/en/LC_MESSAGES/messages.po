@@ -26947,3 +26947,66 @@ msgstr "Rejected by a3: %(motivo)s"
 
 msgid "%(cliente)s · fichero #%(n)s"
 msgstr "%(cliente)s · file #%(n)s"
+
+msgid "Proveedores y clientes duplicados"
+msgstr "Duplicate suppliers and customers"
+
+msgid "El mismo NIF con nombres distintos o el mismo nombre con NIF distintos acaban en subcuentas repetidas en a3. Solo se cambian las facturas pendientes o revisadas: las ya exportadas no."
+msgstr "The same tax ID with different names, or the same name with different tax IDs, end up as repeated sub-accounts in a3. Only pending or reviewed invoices are changed: exported ones are not."
+
+msgid "No hay duplicados"
+msgstr "No duplicates"
+
+msgid "Ningún proveedor ni cliente de este cliente aparece con dos nombres o con dos NIF."
+msgstr "No supplier or customer of this client appears with two names or two tax IDs."
+
+msgid "Mismo NIF con nombres distintos"
+msgstr "Same tax ID, different names"
+
+msgid "%(e)s se pueden cambiar"
+msgstr "%(e)s can be changed"
+
+msgid "Nombre correcto"
+msgstr "Correct name"
+
+msgid "Unificar"
+msgstr "Merge"
+
+msgid "Mismo nombre con NIF distintos"
+msgstr "Same name, different tax IDs"
+
+msgid "Casi siempre es un NIF mal leído: elige el que está mal y el correcto."
+msgstr "It is almost always a misread tax ID: choose the wrong one and the right one."
+
+msgid "NIF que está mal"
+msgstr "Wrong tax ID"
+
+msgid "NIF correcto"
+msgstr "Correct tax ID"
+
+msgid "%(n)s factura"
+msgid_plural "%(n)s facturas"
+msgstr[0] "%(n)s invoice"
+msgstr[1] "%(n)s invoices"
+
+msgid "IVA deducible"
+msgstr "Deductible VAT"
+
+msgid "Banco o caja (cobros y pagos)"
+msgstr "Bank or cash (receipts and payments)"
+
+msgid "Se ha unificado el nombre en %(n)s factura."
+msgid_plural "Se ha unificado el nombre en %(n)s facturas."
+msgstr[0] "The name has been merged in %(n)s invoice."
+msgstr[1] "The name has been merged in %(n)s invoices."
+
+msgid "Se ha corregido el NIF en %(n)s factura."
+msgid_plural "Se ha corregido el NIF en %(n)s facturas."
+msgstr[0] "The tax ID has been corrected in %(n)s invoice."
+msgstr[1] "The tax ID has been corrected in %(n)s invoices."
+
+msgid "Indica el nombre correcto, el tipo (emitida o recibida) y el NIF."
+msgstr "Enter the correct name, the type (issued or received) and the tax ID."
+
+msgid "Indica el NIF que está mal, el correcto (distinto) y el tipo (emitida o recibida)."
+msgstr "Enter the wrong tax ID, the correct one (different) and the type (issued or received)."

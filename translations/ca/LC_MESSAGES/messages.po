@@ -26956,3 +26956,66 @@ msgstr "Rebutjat per a3: %(motivo)s"
 
 msgid "%(cliente)s · fichero #%(n)s"
 msgstr "%(cliente)s · fitxer #%(n)s"
+
+msgid "Proveedores y clientes duplicados"
+msgstr "Proveïdors i clients duplicats"
+
+msgid "El mismo NIF con nombres distintos o el mismo nombre con NIF distintos acaban en subcuentas repetidas en a3. Solo se cambian las facturas pendientes o revisadas: las ya exportadas no."
+msgstr "El mateix NIF amb noms diferents o el mateix nom amb NIF diferents acaben en subcomptes repetides a a3. Només es canvien les factures pendents o revisades: les ja exportades no."
+
+msgid "No hay duplicados"
+msgstr "No hi ha duplicats"
+
+msgid "Ningún proveedor ni cliente de este cliente aparece con dos nombres o con dos NIF."
+msgstr "Cap proveïdor ni client d'aquest client apareix amb dos noms o amb dos NIF."
+
+msgid "Mismo NIF con nombres distintos"
+msgstr "Mateix NIF amb noms diferents"
+
+msgid "%(e)s se pueden cambiar"
+msgstr "%(e)s es poden canviar"
+
+msgid "Nombre correcto"
+msgstr "Nom correcte"
+
+msgid "Unificar"
+msgstr "Unificar"
+
+msgid "Mismo nombre con NIF distintos"
+msgstr "Mateix nom amb NIF diferents"
+
+msgid "Casi siempre es un NIF mal leído: elige el que está mal y el correcto."
+msgstr "Gairebé sempre és un NIF mal llegit: tria el que està malament i el correcte."
+
+msgid "NIF que está mal"
+msgstr "NIF que està malament"
+
+msgid "NIF correcto"
+msgstr "NIF correcte"
+
+msgid "%(n)s factura"
+msgid_plural "%(n)s facturas"
+msgstr[0] "%(n)s factura"
+msgstr[1] "%(n)s factures"
+
+msgid "IVA deducible"
+msgstr "IVA deduïble"
+
+msgid "Banco o caja (cobros y pagos)"
+msgstr "Banc o caixa (cobraments i pagaments)"
+
+msgid "Se ha unificado el nombre en %(n)s factura."
+msgid_plural "Se ha unificado el nombre en %(n)s facturas."
+msgstr[0] "S'ha unificat el nom en %(n)s factura."
+msgstr[1] "S'ha unificat el nom en %(n)s factures."
+
+msgid "Se ha corregido el NIF en %(n)s factura."
+msgid_plural "Se ha corregido el NIF en %(n)s facturas."
+msgstr[0] "S'ha corregit el NIF en %(n)s factura."
+msgstr[1] "S'ha corregit el NIF en %(n)s factures."
+
+msgid "Indica el nombre correcto, el tipo (emitida o recibida) y el NIF."
+msgstr "Indica el nom correcte, el tipus (emesa o rebuda) i el NIF."
+
+msgid "Indica el NIF que está mal, el correcto (distinto) y el tipo (emitida o recibida)."
+msgstr "Indica el NIF que està malament, el correcte (diferent) i el tipus (emesa o rebuda)."

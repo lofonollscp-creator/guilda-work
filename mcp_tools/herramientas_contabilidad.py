@@ -172,10 +172,11 @@ def contabilidad_listar_reglas(cliente_fiscal_id: int) -> list[dict]:
 
 
 def contabilidad_guardar_regla(cliente_fiscal_id: int, tipo: str, nif: str, nombre: str | None = None, cuenta: str | None = None, pct_iva: float | None = None, pct_retencion: float | None = None,
-                               tipo_operacion: str | None = None, criterio_caja: bool = False, concepto: str | None = None) -> dict:
+                               tipo_operacion: str | None = None, criterio_caja: bool = False, concepto: str | None = None, iva_deducible: float | None = None) -> dict:
     """Crea o cambia la regla de un proveedor (`tipo` proveedor) o de un cliente (`tipo` cliente) por su NIF: la cuenta de gasto o ingreso, el IVA y la retención en tanto por ciento, el tipo de operación y el concepto
-    que se rellenan solos en las facturas que se anoten o lean después. Una regla escrita a mano nunca se pisa al aprender."""
-    return _mt._conta().guardar_regla(*_mt._ctx_conta(), cliente_fiscal_id, tipo, nif, nombre, cuenta, pct_iva, pct_retencion, tipo_operacion, criterio_caja, concepto)
+    que se rellenan solos en las facturas que se anoten o lean después. `iva_deducible` (solo proveedores, en %; por ejemplo 50 en un vehículo) parte cada línea en la parte deducible y la que no. Una regla escrita
+    a mano nunca se pisa al aprender."""
+    return _mt._conta().guardar_regla(*_mt._ctx_conta(), cliente_fiscal_id, tipo, nif, nombre, cuenta, pct_iva, pct_retencion, tipo_operacion, criterio_caja, concepto, iva_deducible)
 
 
 def contabilidad_configuracion_a3(cliente_fiscal_id: int) -> dict:
@@ -197,3 +198,18 @@ def contabilidad_factura_desde_adjunto(adjunto_id: int, cliente_fiscal_id: int, 
     """Convierte en factura de un cliente de la gestoría la foto (JPG, PNG) o el PDF que la persona subió al chat (clip del asistente): queda pendiente de leer, y se lee con `contabilidad_leer_factura_con_ia`.
     `tipo`: emitida o recibida. Pregunta de qué cliente es si no te lo han dicho."""
     return _mt._conta().factura_desde_adjunto(*_mt._ctx_conta(), adjunto_id, cliente_fiscal_id, tipo)
+
+
+def contabilidad_terceros_duplicados(cliente_fiscal_id: int) -> dict:
+    """Los proveedores y clientes de un cliente de la gestoría que aparecen duplicados: el mismo NIF con nombres distintos y el mismo nombre con NIF distintos (casi siempre un NIF mal leído). Acaban en subcuentas repetidas en a3."""
+    return _mt._conta().terceros_duplicados_de(*_mt._ctx_conta(), cliente_fiscal_id)
+
+
+def contabilidad_unificar_tercero(cliente_fiscal_id: int, tipo: str, nif: str, nombre: str) -> dict:
+    """Pone un nombre único a un NIF en las facturas pendientes o revisadas de un cliente (las ya exportadas no se tocan). `tipo`: recibida (proveedores) o emitida (clientes)."""
+    return _mt._conta().unificar_tercero(*_mt._ctx_conta(), cliente_fiscal_id, tipo, nif, nombre)
+
+
+def contabilidad_corregir_nif_tercero(cliente_fiscal_id: int, tipo: str, nif_mal: str, nif_bien: str) -> dict:
+    """Cambia un NIF mal leído por el correcto en las facturas pendientes o revisadas de un cliente (las ya exportadas no se tocan). `tipo`: recibida (proveedores) o emitida (clientes)."""
+    return _mt._conta().corregir_nif_tercero(*_mt._ctx_conta(), cliente_fiscal_id, tipo, nif_mal, nif_bien)

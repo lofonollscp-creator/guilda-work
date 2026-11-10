@@ -164,6 +164,49 @@ def mapa_de_columnas(**columnas) -> dict[str, int] | None:
     return mapa
 
 
+def mapeo_guardado(tenant_id: int, cliente_fiscal_id: int) -> tuple[dict[str, int], int] | None:
+    """El mapeo de columnas que se indicó la última vez para este cliente: ({campo: posición}, fila de títulos), o None."""
+    import json
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT columnas_retorno FROM contabilidad_clientes WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id)).fetchone()
+    finally:
+        conn.close()
+    try:
+        d = json.loads(f["columnas_retorno"]) if f and f["columnas_retorno"] else None
+        return ({k: int(v) for k, v in d["mapa"].items() if k in SINONIMOS}, int(d["fila_titulos"])) if d and d.get("mapa") else None
+    except (ValueError, KeyError, TypeError):
+        return None
+
+
+def guardar_mapeo(tenant_id: int, cliente_fiscal_id: int, mapa: dict[str, int] | None, fila_de_titulos: int = 1) -> None:
+    """Recuerda el mapeo de columnas de este cliente para la próxima vez (o lo olvida con `None`)."""
+    import json
+    conn = db.get_connection()
+    try:
+        fc._asegurar_fila_cliente(conn, tenant_id, cliente_fiscal_id)
+        conn.execute("UPDATE contabilidad_clientes SET columnas_retorno = ? WHERE cliente_fiscal_id = ? AND tenant_id = ?",
+                     (json.dumps({"mapa": mapa, "fila_titulos": int(fila_de_titulos)}) if mapa else None, cliente_fiscal_id, tenant_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def leer_de_cliente(tenant_id: int, cliente_fiscal_id: int, contenido: bytes, nombre: str = "", mapa: dict[str, int] | None = None, fila_de_titulos: int = 1) -> list[dict]:
+    """Lee el listado de a3 de un cliente: con las columnas que se indican ahora (y se recuerdan para la próxima vez), si no por sus títulos y, si los títulos no se reconocen, con el mapeo recordado."""
+    if mapa:
+        filas = leer(contenido, nombre, mapa, fila_de_titulos)
+        guardar_mapeo(tenant_id, cliente_fiscal_id, mapa, fila_de_titulos)
+        return filas
+    try:
+        return leer(contenido, nombre)
+    except ValueError:
+        guardado = mapeo_guardado(tenant_id, cliente_fiscal_id)
+        if guardado is None:
+            raise
+        return leer(contenido, nombre, *guardado)
+
+
 def leer(contenido: bytes, nombre: str = "", mapa: dict[str, int] | None = None, fila_de_titulos: int = 1) -> list[dict]:
     """Las facturas del listado de a3: [{numero, fecha, nif, total, base, cuota}] (los campos que el listado no traiga quedan en None). Las columnas se reconocen por su título; si no se reconocen, `mapa`
     ({campo: posición}) dice cuál es cuál y `fila_de_titulos` (desde 1; 0 = el listado no trae títulos) dónde empiezan los datos. `ValueError` si no se puede leer o no se reconoce ninguna columna útil."""

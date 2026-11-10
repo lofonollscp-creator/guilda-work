@@ -43,7 +43,7 @@
   <form method="post" class="edit-form">
     <input type="hidden" name="accion" value="guardar">
     <div class="table-wrap"><table class="historial-table">
-      <thead><tr><th>{{ _('Nombre') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Cuenta de gasto/ingreso') }}</th><th>{{ _('IVA') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Tipo de operación') }}</th><th>{{ _('Criterio de caja') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Borrar') }}</th></tr></thead>
+      <thead><tr><th>{{ _('Nombre') }}</th><th>{{ _('NIF') }}</th><th>{{ _('Cuenta de gasto/ingreso') }}</th><th>{{ _('IVA') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('IVA deducible') }} %</th><th>{{ _('Tipo de operación') }}</th><th>{{ _('Criterio de caja') }}</th><th>{{ _('Concepto') }}</th><th>{{ _('Borrar') }}</th></tr></thead>
       <tbody>{% for r in reglas %}
         <tr>
           <td>{{ r.nombre or '—' }}{% if r.aprendida %} <span class="pill">{{ _('Sugerida') }}</span>{% endif %}<br><span class="muted">{{ _('Proveedor') if r.tipo == 'proveedor' else _('Cliente') }}</span></td>
@@ -51,6 +51,7 @@
           <td><input type="text" name="r{{ r.id }}_cuenta_linea" value="{{ r.cuenta_linea or '' }}" inputmode="numeric" maxlength="12" size="12" aria-label="{{ _('Cuenta de gasto/ingreso') }}"></td>
           <td><input type="text" name="r{{ r.id }}_pct_iva" value="{{ valor_pct(r.pct_iva) }}" size="5" aria-label="{{ _('IVA') }}"></td>
           <td><input type="text" name="r{{ r.id }}_pct_retencion" value="{{ valor_pct(r.pct_retencion) }}" size="5" aria-label="{{ _('Retención') }}"></td>
+          <td>{% if r.tipo == 'proveedor' %}<input type="text" name="r{{ r.id }}_pct_deducible" value="{{ valor_pct(r.pct_deducible) }}" size="5" placeholder="100" aria-label="{{ _('IVA deducible') }}">{% else %}—{% endif %}</td>
           <td>{{ operaciones(r.tipo, r.subtipo, 'r' ~ r.id ~ '_subtipo') }}</td>
           <td>{% if r.tipo == 'proveedor' %}<input type="checkbox" name="r{{ r.id }}_criterio_caja" value="1" {{ 'checked' if r.criterio_caja }} aria-label="{{ _('Criterio de caja') }}">{% else %}—{% endif %}</td>
           <td><input type="text" name="r{{ r.id }}_concepto" value="{{ r.concepto or '' }}" maxlength="60" aria-label="{{ _('Concepto') }}"></td>
@@ -76,6 +77,7 @@
       <label>{{ _('Cuenta de gasto/ingreso') }}<input type="text" name="n_cuenta_linea" value="{{ nueva.cuenta_linea or '' }}" inputmode="numeric" maxlength="12"></label>
       <label>{{ _('Tipo de IVA') }} %<input type="text" name="n_pct_iva" value="{{ nueva.pct_iva or '' }}" size="5"></label>
       <label>{{ _('Retención') }} %<input type="text" name="n_pct_retencion" value="{{ nueva.pct_retencion or '' }}" size="5"></label>
+      <label>{{ _('IVA deducible') }} %<input type="text" name="n_pct_deducible" value="{{ nueva.pct_deducible or '' }}" size="5" placeholder="100"></label>
     </div>
     <label>{{ _('Tipo de operación (código de dos dígitos, opcional)') }}<input type="text" name="n_subtipo" value="{{ nueva.subtipo or '' }}" maxlength="2" size="3" inputmode="numeric"></label>
     <label class="checkbox-label"><input type="checkbox" name="n_criterio_caja" value="1" {{ 'checked' if nueva.criterio_caja }}> {{ _('El proveedor aplica el criterio de caja') }}</label>

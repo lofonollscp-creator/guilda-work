@@ -217,7 +217,7 @@ def cruzar_retorno_a3(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, c
     else:
         _exigir_modulo(tenant_id)
     mapa = retorno_a3.mapa_de_columnas(**{k: v for k, v in (columnas or {}).items() if k in retorno_a3.SINONIMOS})
-    filas = retorno_a3.leer(_bytes_del_listado(contenido, contenido_base64), nombre or "", mapa, int(fila_de_titulos))
+    filas = retorno_a3.leer_de_cliente(tenant_id, int(cliente_fiscal_id), _bytes_del_listado(contenido, contenido_base64), nombre or "", mapa, int(fila_de_titulos))
     return retorno_a3.cruzar(tenant_id, usuario_id, int(cliente_fiscal_id), filas, confirmar=bool(confirmar))
 
 
@@ -302,16 +302,17 @@ def listar_reglas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> li
     """Las reglas de proveedor y de cliente de un cliente de la gestoría: lo que se rellena solo en sus facturas (cuenta, IVA, retención, tipo de operación, concepto)."""
     _exigir_modulo(tenant_id)
     return [{"id": r["id"], "tipo": r["tipo"], "nif": r["nif"], "nombre": r["nombre"], "cuenta": r["cuenta_linea"], "pct_iva": None if r["pct_iva"] is None else r["pct_iva"] / 100,
-             "pct_retencion": None if r["pct_retencion"] is None else r["pct_retencion"] / 100, "tipo_operacion": r["subtipo"], "criterio_caja": bool(r["criterio_caja"]), "concepto": r["concepto"],
+             "pct_retencion": None if r["pct_retencion"] is None else r["pct_retencion"] / 100, "iva_deducible": None if r.get("pct_deducible") is None else r["pct_deducible"] / 100, "tipo_operacion": r["subtipo"], "criterio_caja": bool(r["criterio_caja"]), "concepto": r["concepto"],
              "aprendida": bool(r["aprendida"])} for r in fc.listar_reglas(tenant_id, usuario_id, int(cliente_fiscal_id))]
 
 
 def guardar_regla(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, nif: str, nombre: str | None = None, cuenta: str | None = None, pct_iva=None, pct_retencion=None,
-                  tipo_operacion: str | None = None, criterio_caja: bool = False, concepto: str | None = None) -> dict:
+                  tipo_operacion: str | None = None, criterio_caja: bool = False, concepto: str | None = None, iva_deducible=None) -> dict:
     """Crea o cambia la regla de un proveedor (`tipo` = proveedor) o de un cliente (`cliente`), identificado por su NIF. Vale para las facturas que se anoten o lean después."""
     _exigir_escritura(tenant_id, usuario_id)
     fc.guardar_regla(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, {"nif": nif, "nombre": nombre, "cuenta_linea": cuenta, "pct_iva": None if pct_iva is None else str(pct_iva), "pct_retencion": None if pct_retencion is None else str(pct_retencion), "subtipo": tipo_operacion,
-                                                                          "criterio_caja": "1" if criterio_caja else "", "concepto": concepto})
+                                                                          "criterio_caja": "1" if criterio_caja else "", "concepto": concepto,
+                                                                          "pct_deducible": None if iva_deducible is None else str(iva_deducible)})
     return next(r for r in listar_reglas(tenant_id, usuario_id, cliente_fiscal_id) if r["tipo"] == tipo and r["nif"] == fc._nif(nif))
 
 
@@ -359,3 +360,24 @@ def factura_desde_adjunto(tenant_id: int, usuario_id: int, adjunto_id: int, clie
         raise ValueError("Ese adjunto no es una foto ni un PDF: solo esos se pueden convertir en factura.")
     ids = fc.subir_archivos(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, [(a["nombre_archivo"], a["tipo_mime"], contenido)])
     return {"factura_id": ids[0] if ids else None, "ya_estaba": not ids}
+
+
+def terceros_duplicados_de(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> dict:
+    """Los proveedores y clientes de un cliente que aparecen duplicados: el mismo NIF con nombres distintos y el mismo nombre con NIF distintos (casi siempre un NIF mal leído)."""
+    from . import terceros_duplicados
+    _exigir_modulo(tenant_id)
+    return terceros_duplicados.encontrar(tenant_id, usuario_id, int(cliente_fiscal_id))
+
+
+def unificar_tercero(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, nif: str, nombre: str) -> dict:
+    """Pone un nombre único a un NIF en las facturas pendientes o revisadas del cliente (las exportadas no se tocan). `tipo`: emitida (clientes) o recibida (proveedores)."""
+    from . import terceros_duplicados
+    _exigir_escritura(tenant_id, usuario_id)
+    return {"facturas_cambiadas": terceros_duplicados.unificar_nombre(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, nif, nombre)}
+
+
+def corregir_nif_tercero(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, nif_mal: str, nif_bien: str) -> dict:
+    """Cambia un NIF mal leído por el correcto en las facturas pendientes o revisadas del cliente (las exportadas no se tocan)."""
+    from . import terceros_duplicados
+    _exigir_escritura(tenant_id, usuario_id)
+    return {"facturas_cambiadas": terceros_duplicados.corregir_nif(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, nif_mal, nif_bien)}

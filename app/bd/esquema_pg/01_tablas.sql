@@ -730,6 +730,8 @@ CREATE TABLE IF NOT EXISTS contabilidad_clientes (
     regimen_iva text NOT NULL DEFAULT 'general',
     retencion_emitidas bigint NOT NULL DEFAULT 0,
     formato_enlace text NOT NULL DEFAULT '512',
+    cuenta_tesoreria text NOT NULL DEFAULT '57200000',
+    columnas_retorno text,
     plan_cuentas text,
     PRIMARY KEY (cliente_fiscal_id)
 );
@@ -748,6 +750,7 @@ CREATE TABLE IF NOT EXISTS contabilidad_despacho (
     regimen_iva text NOT NULL DEFAULT 'general',
     retencion_emitidas bigint NOT NULL DEFAULT 0,
     formato_enlace text NOT NULL DEFAULT '512',
+    cuenta_tesoreria text NOT NULL DEFAULT '57200000',
     PRIMARY KEY (tenant_id)
 );
 
@@ -827,6 +830,7 @@ CREATE TABLE IF NOT EXISTS contabilidad_reglas (
     concepto text,
     aprendida bigint NOT NULL DEFAULT 0,
     actualizado_en text NOT NULL,
+    pct_deducible bigint,
     PRIMARY KEY (id),
     UNIQUE (cliente_fiscal_id, tipo, nif),
     CHECK (tipo IN ('proveedor', 'cliente'))
@@ -1527,6 +1531,7 @@ CREATE TABLE IF NOT EXISTS facturas_contables (
     lectura_confianza bigint,
     lectura_fuente text,
     revision_auto bigint NOT NULL DEFAULT 0,
+    pago_exportado_en text,
     datos_a3 text,
     incluir_en_fiscal bigint NOT NULL DEFAULT 1,
     PRIMARY KEY (id),

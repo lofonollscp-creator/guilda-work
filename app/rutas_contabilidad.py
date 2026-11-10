@@ -5,11 +5,11 @@ import re
 from datetime import date
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
-from flask_babel import gettext as _
+from flask_babel import gettext as _, ngettext
 
 from . import acceso, cobro_contabilidad, db, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
-from . import cierre_trimestre, cola_contabilidad, cuadre_303, facturas_control, panel_cierre, retorno_a3, facturas_portal, justificantes as justificantes_mod
+from . import cierre_trimestre, cola_contabilidad, cuadre_303, terceros_duplicados, facturas_control, panel_cierre, retorno_a3, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
 
 contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad")
@@ -560,7 +560,7 @@ def reglas(cliente_id: int):
                            nueva=nueva, error=error, mensaje=mensaje)
 
 
-_CAMPOS_REGLA = ("cuenta_linea", "pct_iva", "pct_retencion", "subtipo", "criterio_caja", "concepto")
+_CAMPOS_REGLA = ("cuenta_linea", "pct_iva", "pct_retencion", "pct_deducible", "subtipo", "criterio_caja", "concepto")
 
 
 @contabilidad_bp.route("/cliente/<int:cliente_id>/copiar-configuracion", methods=["POST"])
@@ -804,6 +804,27 @@ def panel_del_cierre():
     return render_template("contabilidad_panel_cierre.html", p=p, trimestres=trimestres, trimestre=trimestre, etiqueta=cierre_trimestre.etiqueta, error=error or _error(), subnav=None)
 
 
+@contabilidad_bp.route("/cliente/<int:cliente_id>/terceros", methods=["GET", "POST"])
+@login_required
+def terceros(cliente_id: int):
+    """Proveedores y clientes duplicados de un cliente: el mismo NIF con nombres distintos y el mismo nombre con NIF distintos."""
+    mensaje = error = None
+    cliente = next((x for x in _clientes() if x["id"] == cliente_id), None)
+    if cliente is None:
+        abort(404)
+    if request.method == "POST":
+        try:
+            if request.form.get("accion") == "nombre":
+                n = terceros_duplicados.unificar_nombre(g.tenant_id, g.usuario_id, cliente_id, request.form.get("tipo", ""), request.form.get("nif", ""), request.form.get("nombre", ""))
+                mensaje = ngettext("Se ha unificado el nombre en %(n)s factura.", "Se ha unificado el nombre en %(n)s facturas.", n, n=n)
+            else:
+                n = terceros_duplicados.corregir_nif(g.tenant_id, g.usuario_id, cliente_id, request.form.get("tipo", ""), request.form.get("nif_mal", ""), request.form.get("nif_bien", ""))
+                mensaje = ngettext("Se ha corregido el NIF en %(n)s factura.", "Se ha corregido el NIF en %(n)s facturas.", n, n=n)
+        except ValueError as e:
+            error = _(str(e))
+    return render_template("contabilidad_terceros.html", cliente=cliente, d=terceros_duplicados.encontrar(g.tenant_id, g.usuario_id, cliente_id), mensaje=mensaje, error=error or _error(), subnav=None)
+
+
 @contabilidad_bp.route("/retorno", methods=["GET", "POST"])
 @login_required
 def retorno():
@@ -820,7 +841,7 @@ def retorno():
                 raise ValueError("Elige el cliente y el archivo que devuelve a3.")
             contenido = archivo.read(retorno_a3.MAX_BYTES + 1)
             mapa = retorno_a3.mapa_de_columnas(**columnas)
-            filas = retorno_a3.leer(contenido, archivo.filename, mapa, fila_titulos)
+            filas = retorno_a3.leer_de_cliente(g.tenant_id, cliente_id, contenido, archivo.filename, mapa, fila_titulos)
             informe = retorno_a3.cruzar(g.tenant_id, g.usuario_id, cliente_id, filas, confirmar=request.form.get("confirmar") == "1")
             informe["cuadre_303"] = [x for x in (cuadre_303.cuadrar(g.tenant_id, g.usuario_id, cliente_id, c["trimestre"]) for c in informe["cuadre"]) if x["disponible"]]
         except ValueError as e:
