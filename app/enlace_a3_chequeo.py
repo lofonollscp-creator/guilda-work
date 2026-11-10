@@ -15,9 +15,9 @@ LONG_REGISTRO = enlace_a3.LONGITUD + 2
 TOLERANCIA_CENTIMOS = 2
 _IMPORTE = re.compile(r"^[+-]\d{10}\.\d{2}$")
 _PORCENTAJE = re.compile(r"^\d{2}\.\d{2}$")
-_SUBTIPOS_EMITIDA = {"01", "02", "03", "04", "05", "06", "08", "09"}
+_SUBTIPOS_EMITIDA = {"01", "02", "03", "04", "05", "06", "07", "08", "09"}
 _SUBTIPOS_RECIBIDA = {"01", "02", "03", "04", "06", "07", "08"}
-_EMITIDA_SIN_IVA = {"02", "03", "04", "05", "06", "09"}
+_EMITIDA_SIN_IVA = {"02", "03", "04", "05", "06", "07", "09"}
 IMPRESO_349 = {("1", "03"): "02", ("1", "04"): "02", ("2", "03"): "02", ("2", "08"): "11"}      # tipo de factura 1 emitida · 2 recibida
 _CAMPOS_ACEPTADOS = "".join(chr(c) for c in range(32, 127)) + "ÁÉÍÓÚÜÑáéíóúüñÇçº¿¡·ª"
 
@@ -43,9 +43,10 @@ def _porcentaje(texto: str) -> int | None:
 
 
 class _Informe:
-    def __init__(self) -> None:
+    def __init__(self, formato: str = enlace_a3.FORMATO_SII) -> None:
         self.errores: list[dict] = []
         self.avisos: list[dict] = []
+        self.formato = formato                                    # «512» (SII) o «256» (clásico): cambian la longitud del registro y las posiciones de moneda y generado
 
     def error(self, registro: int | None, mensaje: str) -> None:
         self.errores.append({"registro": registro, "mensaje": mensaje})
@@ -54,31 +55,46 @@ class _Informe:
         self.avisos.append({"registro": registro, "mensaje": mensaje})
 
 
+def formato_de(contenido: bytes) -> str:
+    """El formato del fichero por dónde cae el primer CR LF: en la posición 255-256 es el clásico de 256 y en la 511-512 el de 512 (SII). Si no hay ninguno claro, el tipo de formato de la posición 1
+    (4 = clásico) y, a falta de él, el de 512."""
+    if contenido[254:256] == b"\r\n":
+        return enlace_a3.FORMATO_CLASICO
+    if contenido[510:512] == b"\r\n":
+        return enlace_a3.FORMATO_SII
+    return enlace_a3.FORMATO_CLASICO if contenido[:1] == b"4" and len(contenido) % 256 == 0 else enlace_a3.FORMATO_SII
+
+
 def chequear(contenido: bytes, digitos: int = 8) -> dict:
-    """Revisa el contenido de un SUENLACE.DAT. Devuelve `{ok, registros, facturas, errores, avisos, totales}`; `errores` y `avisos` son listas de `{registro, mensaje}` (registro 1 = el primero)."""
-    inf = _Informe()
+    """Revisa el contenido de un SUENLACE.DAT (formato de 512 o clásico de 256, según lo que empiece). Devuelve `{ok, registros, facturas, errores, avisos, totales}`; `errores` y `avisos` son listas de
+    `{registro, mensaje}` (registro 1 = el primero)."""
+    formato = formato_de(contenido) if contenido else enlace_a3.FORMATO_SII
+    inf = _Informe(formato)
+    largo = 256 if formato == enlace_a3.FORMATO_CLASICO else 512
     if not contenido:
         inf.error(None, "El fichero está vacío.")
         return _resultado(inf, 0, [], {})
-    if len(contenido) % LONG_REGISTRO:
-        inf.error(None, f"El tamaño ({len(contenido)} bytes) no es múltiplo de {LONG_REGISTRO}: los registros de a3 son de 512 bytes (510 caracteres más CR LF).")
+    if len(contenido) % largo:
+        inf.error(None, f"El tamaño ({len(contenido)} bytes) no es múltiplo de {largo}: los registros de este formato son de {largo} bytes ({largo - 2} caracteres más CR LF).")
     try:
         texto = contenido.decode("latin-1")
     except UnicodeDecodeError:       # no puede pasar con latin-1, por si acaso
         inf.error(None, "El fichero no está en ASCII/Latin-1.")
         return _resultado(inf, 0, [], {})
-    registros = [texto[i:i + LONG_REGISTRO] for i in range(0, len(texto), LONG_REGISTRO)]
+    registros = [texto[i:i + largo] for i in range(0, len(texto), largo)]
     facturas: list[dict] = []
     actual: dict | None = None
     empresas, vistos = set(), {}
     for n, r in enumerate(registros, start=1):
-        if len(r) != LONG_REGISTRO or not r.endswith("\r\n"):
-            inf.error(n, "El registro no mide 512 bytes o no acaba en CR LF.")
+        if len(r) != largo or not r.endswith("\r\n"):
+            inf.error(n, f"El registro no mide {largo} bytes o no acaba en CR LF.")
             continue
-        r = r[:enlace_a3.LONGITUD]
-        if _c(r, 1, 1) != "5":
-            inf.error(n, f"La posición 1 debe ser «5» y es «{_c(r, 1, 1)}».")
+        r = r[:enlace_a3.LONGITUD_DE[formato]]
+        esperado = enlace_a3.TIPO_DE_FORMATO[formato]
+        if _c(r, 1, 1) != esperado:
+            inf.error(n, f"La posición 1 debe ser «{esperado}» y es «{_c(r, 1, 1)}».")
             continue
+        pos_moneda, pos_generado = (509, 510) if formato == enlace_a3.FORMATO_SII else (253, 254)
         raros = sorted({ch for ch in r if ch not in _CAMPOS_ACEPTADOS})
         if raros:
             inf.aviso(n, "Caracteres poco habituales que a3 podría no aceptar: " + "".join(raros)[:20])
@@ -89,10 +105,10 @@ def chequear(contenido: bytes, digitos: int = 8) -> dict:
         fecha = _fecha(_c(r, 7, 14))
         if fecha is None:
             inf.error(n, f"La fecha del registro (7-14) no es válida: «{_c(r, 7, 14)}».")
-        if _c(r, 15, 15) != "4" and _c(r, 509, 509) != "E":         # la ampliación de rectificativa (tipo 4) no lleva moneda
-            inf.error(n, "La posición 509 (moneda) debe ser «E» (euros).")
-        if _c(r, 510, 510) not in ("N", "S"):
-            inf.error(n, "La posición 510 (generado/ya contabilizado) debe ser «N» o «S».")
+        if _c(r, 15, 15) != "4" and _c(r, pos_moneda, pos_moneda) != "E":         # la ampliación (tipo 4) no lleva moneda
+            inf.error(n, f"La posición {pos_moneda} (moneda) debe ser «E» (euros).")
+        if _c(r, pos_generado, pos_generado) not in ("N", "S"):
+            inf.error(n, f"La posición {pos_generado} (generado/ya contabilizado) debe ser «N» o «S».")
         tipo = _c(r, 15, 15)
         if tipo in ("1", "2"):
             actual = _cabecera(inf, n, r, tipo, fecha, digitos)
@@ -137,10 +153,11 @@ def _cabecera(inf: _Informe, n: int, r: str, tipo: str, fecha: datetime | None, 
     elif not cuenta[:digitos].strip("0"):
         inf.error(n, "La subcuenta del tercero está a cero.")
     tipo_factura = _c(r, 58, 58)
-    if tipo_factura not in ("1", "2"):
-        inf.error(n, f"El tipo de factura (58) debe ser 1 (emitida) o 2 (recibida) y es «{tipo_factura}».")
+    if tipo_factura not in ("1", "2", "3"):
+        inf.error(n, f"El tipo de factura (58) debe ser 1 (emitida), 2 (recibida) o 3 (bien de inversión) y es «{tipo_factura}».")
+
     numero = _c(r, 59, 68).strip()
-    ampliado = _c(r, 253, 312).strip()
+    ampliado = _c(r, 253, 312).strip() if inf.formato == enlace_a3.FORMATO_SII else ""
     if not numero:
         inf.error(n, "Falta el número de factura (59-68).")
     elif ampliado and not ampliado.endswith(numero):
@@ -153,7 +170,7 @@ def _cabecera(inf: _Informe, n: int, r: str, tipo: str, fecha: datetime | None, 
         inf.aviso(n, "La factura no lleva NIF: a3 la admitirá, pero no entrará en los modelos 347/349 ni en el SII.")
     else:
         from . import fiscal_identidad
-        if not fiscal_identidad.clave_unica(nif, "ES") and re.fullmatch(r"[A-Z0-9]+", nif) and _c(r, 374, 375) == "ES":
+        if not fiscal_identidad.clave_unica(nif, "ES") and re.fullmatch(r"[A-Z0-9]+", nif) and (inf.formato == enlace_a3.FORMATO_CLASICO or _c(r, 374, 375) == "ES"):
             inf.aviso(n, f"El NIF «{nif}» no pasa la validación de dígito de control.")
     if not _c(r, 28, 57).strip():
         inf.aviso(n, "La factura no lleva nombre del tercero.")
@@ -242,8 +259,12 @@ def _detalle(inf: _Informe, n: int, r: str, f: dict, digitos: int) -> None:
 def _ampliacion(inf: _Informe, n: int, r: str, f: dict) -> None:
     f["cerrada"] = True
     f["ampliacion"] = True
-    if not f["abono"]:
+    clasico = inf.formato == enlace_a3.FORMATO_CLASICO
+    if not f["abono"] and not clasico:
         inf.error(n, "Una ampliación de rectificativa (tipo 4) sigue a una factura normal: solo los abonos y rectificativas (tipo 2) la llevan.")
+        return
+    if clasico:
+        _ampliacion_clasica(inf, n, r, f)
         return
     if _fecha(_c(r, 59, 66)) is None:
         inf.error(n, "Falta la fecha de la factura rectificada (59-66) o no es válida.")
@@ -254,6 +275,30 @@ def _ampliacion(inf: _Informe, n: int, r: str, f: dict) -> None:
     esperado = "E" if f["tipo_factura"] == "1" else "R"
     if _c(r, 304, 304) != esperado:
         inf.error(n, f"El tipo de factura de la ampliación (304) debe ser «{esperado}» y es «{_c(r, 304, 304)}».")
+
+
+def _ampliacion_clasica(inf: _Informe, n: int, r: str, f: dict) -> None:
+    """El tipo 4 del formato de 256: factura rectificada (59-76), DUA (77-94), clave del 340 (107), NIF del representante (108-121), autofactura (122-131) y los importes del 347 (132-161)."""
+    if f["abono"]:
+        if _fecha(_c(r, 59, 66)) is None:
+            inf.error(n, "Falta la fecha de la factura rectificada (59-66) o no es válida.")
+        if not _c(r, 67, 76).strip():
+            inf.error(n, "Falta el número de la factura rectificada (67-76).")
+    elif _c(r, 59, 76).strip():
+        inf.aviso(n, "Una factura que no es rectificativa lleva datos de factura rectificada (59-76).")
+    clave = _c(r, 107, 107)
+    if clave.strip():
+        permitido = ("1",) if f["tipo_factura"] == "1" else ("1", "3")
+        if clave not in permitido:
+            inf.error(n, f"La clave de factura para el modelo 340 (107) «{clave}» no vale en una factura {'emitida' if f['tipo_factura'] == '1' else 'recibida'}: los valores son {', '.join(permitido)}.")
+    for desde, hasta, marca in ((133, 146, 132), (148, 161, 147)):
+        importe, m = _c(r, desde, hasta), _c(r, marca, marca)
+        if m not in (" ", "S"):
+            inf.error(n, f"La marca de la posición {marca} debe ser «S» o ir en blanco y es «{m}».")
+        if importe.strip() and _importe(importe) is None:
+            inf.error(n, f"El importe de las posiciones {desde}-{hasta} no tiene el formato +0000000000.00.")
+        if m == "S" and importe.strip():
+            inf.aviso(n, f"Con la marca «S» en la posición {marca} el importe de {desde}-{hasta} no se tiene en cuenta (se toma el total de la factura).")
 
 
 def _cerrar(inf: _Informe, f: dict) -> None:

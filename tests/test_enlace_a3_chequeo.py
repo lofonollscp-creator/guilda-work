@@ -301,3 +301,57 @@ def test_avisa_de_nif_distintos_en_la_misma_subcuenta_y_de_un_nif_con_varias():
     assert any("2 NIF distintos" in a["mensaje"] for a in r["avisos"])
     r = ch.chequear(_fichero(_fra(), _fra(numero="F-2", cuenta_tercero="40000002")), 8)
     assert any("2 subcuentas distintas" in a["mensaje"] for a in r["avisos"])
+
+
+# --- Formato clásico de 256 y bienes de inversión ----------------------------------------------------------------------------------------------------------
+
+def _fichero256(*facturas):
+    from app import enlace_a3
+    return enlace_a3.generar(list(facturas), empresa="7", digitos=8, formato="256")
+
+
+def test_un_fichero_de_256_se_detecta_y_pasa_el_chequeo():
+    from app import enlace_a3_chequeo as ch
+    c = _fichero256(_fra())
+    assert ch.formato_de(c) == "256" and ch.formato_de(_fichero(_fra())) == "512"
+    r = ch.chequear(c, 8)
+    assert r["ok"] and r["errores"] == [] and r["facturas"] == 1 and r["registros"] == 2
+
+
+def test_un_fichero_de_256_con_ampliacion_del_340_y_347_pasa_el_chequeo():
+    from app import enlace_a3_chequeo as ch
+    f = _fra(ampliacion={"clave_340": "1", "metalico": 5000, "dua": "DUA-1"})
+    r = ch.chequear(_fichero256(f), 8)
+    assert r["ok"], r["errores"]
+
+
+def test_un_fichero_de_256_estropeado_da_errores_con_su_registro():
+    from app import enlace_a3_chequeo as ch
+    c = bytearray(_fichero256(_fra(ampliacion={"clave_340": "1"})))
+    c[0] = ord("5")                                                  # el tipo de formato no es el de 256
+    c[256 + 252] = ord("X")                                          # moneda del 2.º registro
+    r = ch.chequear(bytes(c), 8)
+    mensajes = " ".join(e["mensaje"] for e in r["errores"])
+    assert not r["ok"] and "posición 1" in mensajes
+
+
+def test_la_clave_340_y_las_marcas_del_347_se_validan():
+    from app import enlace_a3, enlace_a3_chequeo as ch
+    ok = enlace_a3.registro_ampliacion_clasico(empresa="7", fecha="2026-08-15", clave_340="3", metalico=True)
+    mala = enlace_a3.registro_ampliacion_clasico(empresa="7", fecha="2026-08-15", clave_340="2")
+    base = _fichero256(_fra()).decode("latin-1")
+    r1 = ch.chequear((base + ok + "\r\n").encode("latin-1"), 8)
+    r2 = ch.chequear((base + mala + "\r\n").encode("latin-1"), 8)
+    assert r1["ok"] and not r2["ok"] and any("clave de factura" in e["mensaje"] for e in r2["errores"])
+
+
+def test_un_bien_de_inversion_vale():
+    from app import enlace_a3_chequeo as ch
+    assert ch.chequear(_fichero(_fra(bien_inversion=True)), 8)["ok"]
+
+
+def test_el_subtipo_07_de_las_emitidas_vale():
+    from app import enlace_a3, enlace_a3_chequeo as ch
+    linea = {**_fra()["lineas"][0], "subtipo": "07", "pct_iva": 0, "cuota_iva": 0, "cuenta_iva": None, "cuenta": "70000000"}
+    f = _fra(tipo="emitida", nif="12345678Z", cuenta_tercero="43000001", total_centimos=100000, lineas=[linea])
+    assert ch.chequear(enlace_a3.generar([f], empresa="7", digitos=8), 8)["ok"]

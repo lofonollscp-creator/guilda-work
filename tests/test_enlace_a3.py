@@ -126,3 +126,59 @@ def test_cuota_redondea_al_centimo(base, pct, esperado):
 
 def test_fechas():
     assert a3._fecha("2026-02-03") == "20260203" and a3._fecha(None) == "00000000" and a3._fecha("basura") == "00000000"
+
+
+# --- Formato clásico de 256 posiciones (documento «Enlace contable de entrada. Descripción de registros») ---------------------------------------------------------
+
+def _lineas256(facturas, **kw):
+    return a3.generar(facturas, empresa=12, digitos=8, formato="256").decode("latin-1").split("\r\n")[:-1]
+
+
+def test_en_256_cada_registro_mide_256_bytes_empieza_por_4_y_cierra_con_moneda_y_n():
+    contenido = a3.generar([FACTURA], empresa=12, formato="256")
+    assert len(contenido) == 2 * 256 and contenido.endswith(b"\r\n")
+    ls = _lineas256([FACTURA])
+    assert all(len(l) == 254 and l[0] == "4" and l[252:] == "EN" for l in ls), "tipo de formato 4 (1), moneda E (253), generado N (254)"
+
+
+def test_en_256_la_cabecera_y_el_detalle_llevan_los_mismos_campos_hasta_la_252():
+    c512, d512 = _lineas([FACTURA])
+    c256, d256 = _lineas256([FACTURA])
+    assert c256[1:252] == c512[1:252] and d256[1:252] == d512[1:252]            # solo cambian el tipo de formato (1) y el cierre; el resto es el mismo
+    assert c256[14] == "1" and d256[14] == "9" and c256[57] == "2"
+
+
+def test_en_256_el_numero_largo_se_recorta_a_las_10_posiciones_de_siempre():
+    c = _lineas256([dict(FACTURA, numero="FRA/2026/0000123")])[0]
+    assert _campo(c, 59, 68) == "2026/0000123"[-10:]
+
+
+def test_un_bien_de_inversion_lleva_tipo_de_factura_3_y_en_las_ventas_no_vale():
+    assert _campo(_lineas([dict(FACTURA, bien_inversion=True)])[0], 58, 58) == "3"
+    assert _campo(_lineas([dict(FACTURA, tipo="emitida", bien_inversion=True, nif="12345678Z")])[0], 58, 58) == "1"
+
+
+def test_ampliacion_del_formato_clasico_campo_a_campo():
+    f = dict(FACTURA, ampliacion={"dua": "DUA-2026-777", "clave_340": "1", "nif_representante": "12345678z", "autofactura": "AUTO-9", "metalico": 150000, "inmuebles": True})
+    registros = _lineas256([f])
+    assert [r[14] for r in registros] == ["1", "9", "4"]
+    a = registros[2]
+    _comprobar(a, [(1, 1, "4"), (2, 6, "00012"), (7, 14, "20260930"), (15, 15, "4"), (16, 58, " " * 43), (59, 66, " " * 8), (67, 76, " " * 10), (77, 94, "DUA-2026-777".ljust(18)),
+                   (95, 106, "400000010000"), (107, 107, "1"), (108, 121, "12345678Z".ljust(14)), (122, 131, "AUTO-9".ljust(10)), (132, 132, " "), (133, 146, "+0000001500.00"),
+                   (147, 147, "S"), (148, 161, " " * 14), (162, 253, " " * 92), (254, 254, "N")])
+
+
+def test_una_rectificativa_en_256_lleva_su_factura_en_59_a_76():
+    f = dict(FACTURA, abono=True, rectifica_fecha="2026-08-01", rectifica_numero="A-100")
+    a = _lineas256([f])[2]
+    _comprobar(a, [(15, 15, "4"), (59, 66, "20260801"), (67, 76, "A-100".ljust(10)), (77, 94, " " * 18), (254, 254, "N")])
+
+
+def test_sin_datos_de_ampliacion_ni_abono_no_hay_registro_4():
+    assert [r[14] for r in _lineas256([FACTURA])] == ["1", "9"]
+    assert [r[14] for r in _lineas([dict(FACTURA, ampliacion={"dua": "X"})])] == ["1", "9"], "en 512 las ampliaciones del 340 y 347 aún no salen (se desconocen sus posiciones)"
+
+
+def test_formato_desconocido():
+    with pytest.raises(ValueError):
+        a3.generar([FACTURA], empresa=12, formato="128")
