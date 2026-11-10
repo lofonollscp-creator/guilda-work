@@ -6,7 +6,7 @@ from __future__ import annotations
 import base64
 import binascii
 
-from . import acceso, cobro_contabilidad, facturas_contables as fc, lectura_calidad, lectura_facturas, panel_cierre, retorno_a3, verticales
+from . import acceso, cobro_contabilidad, facturas_contables as fc, facturas_portal, lectura_calidad, lectura_facturas, panel_cierre, retorno_a3, verticales
 
 
 def _exigir_modulo(tenant_id: int) -> None:
@@ -219,3 +219,19 @@ def panel_del_cierre(tenant_id: int, usuario_id: int, trimestre: str | None = No
     """Qué falta para cerrar un trimestre, cliente por cliente (por leer, por revisar, listas para exportar, sin confirmar en a3), con el plazo de presentación y los días que quedan."""
     _exigir_modulo(tenant_id)
     return panel_cierre.panel(tenant_id, usuario_id, trimestre or None)
+
+
+def mensajes_de_la_factura(tenant_id: int, usuario_id: int, factura_id: int) -> dict:
+    """La conversación con el cliente sobre una factura (lo que le escribió el despacho y lo que contestó él desde su portal): [{autor, texto, cuando, leido}], de la más antigua a la más reciente."""
+    _exigir_modulo(tenant_id)
+    if fc.obtener(tenant_id, usuario_id, int(factura_id)) is None:
+        raise ValueError("No existe esa factura.")
+    return {"factura_id": int(factura_id), "mensajes": [{"autor": "cliente" if m["autor"] == "cliente" else "despacho", "texto": m["texto"], "cuando": m["creado_en"], "leido": bool(m["leido_en"])}
+                                                       for m in facturas_portal.mensajes(tenant_id, int(factura_id))]}
+
+
+def preguntar_al_cliente(tenant_id: int, usuario_id: int, factura_id: int, texto: str) -> dict:
+    """Escribe al cliente en una factura suya: lo verá en su portal."""
+    _exigir_escritura(tenant_id, usuario_id)
+    facturas_portal.escribir_como_despacho(tenant_id, usuario_id, int(factura_id), texto)
+    return mensajes_de_la_factura(tenant_id, usuario_id, factura_id)

@@ -32,5 +32,6 @@ def test_las_de_contabilidad_estan_clasificadas_y_agrupadas():
     assert en_modulo, "no se encontró ninguna herramienta de contabilidad en el MCP"
     for n in sorted(en_modulo):
         assert hg.grupo_de(n) == "contabilidad", n
-        assert (n in ih.LECTURA) != (n in ih.ESCRITURA), f"{n} debe ser de lectura o de escritura, no de las dos ni de ninguna"
+        clases = [n in ih.LECTURA, n in ih.ESCRITURA, n in ih.SIEMPRE_CONFIRMAR]
+        assert sum(clases) == 1, f"{n} debe estar en una sola clase: lectura, escritura o siempre confirmar"
         assert any(t["function"]["name"] == n for t in ih.HERRAMIENTAS), f"{n} no está en el asistente"

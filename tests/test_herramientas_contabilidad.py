@@ -6,7 +6,7 @@ from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herr
 from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
-           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre")
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura")
 ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
@@ -241,3 +241,27 @@ def test_el_asistente_sabe_que_factura_tiene_abierta_la_persona():
 def test_esta_factura_ofrece_las_herramientas_de_contabilidad():
     ofrecidas = {t["function"]["name"] for t in ih.herramientas_para([{"role": "user", "content": "¿por qué tiene avisos esta factura?"}])}
     assert "contabilidad_avisos_factura" in ofrecidas
+
+
+def test_preguntar_al_cliente_pide_siempre_confirmacion_y_deja_el_mensaje_en_la_factura():
+    t, u, c = _despacho("Despacho herr preguntas")
+    f = _anotar(u, c)
+    assert "contabilidad_preguntar_al_cliente" in ih.SIEMPRE_CONFIRMAR
+    assert ih.necesita_confirmacion("contabilidad_preguntar_al_cliente", modo_autonomo=True)         # es un mensaje a una persona de fuera: nunca solo
+    assert not ih.necesita_confirmacion("contabilidad_mensajes_factura", modo_autonomo=False)
+    assert ih.ejecutar(u, "contabilidad_mensajes_factura", {"factura_id": f["id"]})["mensajes"] == []
+    r = ih.ejecutar(u, "contabilidad_preguntar_al_cliente", {"factura_id": f["id"], "texto": "¿Para qué fue este gasto?"})
+    assert [(m["autor"], m["texto"], m["leido"]) for m in r["mensajes"]] == [("despacho", "¿Para qué fue este gasto?", False)] and "@" not in str(r)       # sin correos de empleados
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(u, "contabilidad_preguntar_al_cliente", {"factura_id": f["id"], "texto": "  "})
+    with pytest.raises(ih.ErrorHerramientaIA, match="No existe"):
+        ih.ejecutar(u, "contabilidad_mensajes_factura", {"factura_id": 999999})
+
+
+def test_quien_solo_audita_no_puede_escribir_al_cliente(monkeypatch):
+    from app import acceso
+    t, u, c = _despacho("Despacho herr auditor 3")
+    f = _anotar(u, c)
+    monkeypatch.setattr(acceso, "es_solo_auditor", lambda tenant, usuario: True)
+    with pytest.raises(ih.ErrorHerramientaIA, match="solo permite consultar"):
+        ih.ejecutar(u, "contabilidad_preguntar_al_cliente", {"factura_id": f["id"], "texto": "Hola"})

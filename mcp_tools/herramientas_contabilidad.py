@@ -117,3 +117,14 @@ def contabilidad_panel_cierre(trimestre: str | None = None) -> dict:
     """Qué falta para cerrar un trimestre («2026-T3»; por defecto el que se está cerrando), cliente por cliente: facturas por leer, por revisar, listas para exportar y sin confirmar en a3, si está cerrado,
     y el plazo de presentación con los días que quedan. Los clientes que más les falta van primero."""
     return _mt._conta().panel_del_cierre(*_mt._ctx_conta(), trimestre)
+
+
+def contabilidad_mensajes_factura(factura_id: int) -> dict:
+    """La conversación con el cliente sobre una factura: lo que le escribió el despacho y lo que ha contestado él desde su portal, de la más antigua a la más reciente."""
+    return _mt._conta().mensajes_de_la_factura(*_mt._ctx_conta(), factura_id)
+
+
+def contabilidad_preguntar_al_cliente(factura_id: int, texto: str) -> dict:
+    """Escribe al cliente un mensaje sobre una factura suya (hasta 1000 caracteres): lo verá en su portal. Es un mensaje a una persona de fuera del despacho: redáctalo claro y amable y di qué factura es (número y
+    proveedor). Antes mira `contabilidad_avisos_factura` y `contabilidad_mensajes_factura` para preguntar solo lo que falta."""
+    return _mt._conta().preguntar_al_cliente(*_mt._ctx_conta(), factura_id, texto)
