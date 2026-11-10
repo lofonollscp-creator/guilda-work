@@ -486,3 +486,15 @@ def cachés_de_despacho_limpias():
     portal_telemetria._CACHE.clear()
     yield
     portal_telemetria._CACHE.clear()
+
+
+@pytest.fixture(autouse=True)
+def tipos_de_cambio_sin_red(monkeypatch):
+    """El BCE no se consulta de verdad en los tests: sin respuesta, una factura en otra moneda no se convierte. Los tests de `tipos_cambio` ponen su propia respuesta."""
+    from app import tipos_cambio
+
+    def sin_red(url):
+        raise OSError("sin red en los tests")
+
+    monkeypatch.setattr(tipos_cambio, "_descargar", sin_red)
+    tipos_cambio._cache.clear()

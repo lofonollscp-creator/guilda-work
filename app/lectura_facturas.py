@@ -10,7 +10,7 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 
-from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, lectura_historial, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, vies
+from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, lectura_historial, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, tipos_cambio, vies
 
 PROMPT = """Eres un asistente de contabilidad en España. Recibes la foto o el PDF de UNA factura. Devuelve SOLO un objeto JSON, sin texto alrededor, con estos campos (null si no aparece o no se lee):
 {"emisor_nombre": str, "emisor_nif": str, "receptor_nombre": str, "receptor_nif": str, "numero": str, "fecha": "AAAA-MM-DD", "fecha_operacion": "AAAA-MM-DD",
@@ -211,9 +211,12 @@ def _aplicar_qr(datos: dict, qr: dict | None) -> list[str]:
 def _procesar(datos: dict, f: dict, cliente_nif: str, texto: str, qr: dict | None) -> dict:
     """Todo lo que se hace con los datos leídos, vengan de un XML, de una imagen o del texto: QR, conversión a factura, comprobaciones propias y VIES."""
     datos = dict(datos)
+    if isinstance(datos.get("lineas"), list):
+        datos["lineas"] = [dict(l) if isinstance(l, dict) else l for l in datos["lineas"]]        # la conversión de divisa no debe tocar lo que devolvió el modelo
     correcciones = _aplicar_qr(datos, qr)
+    cambio = tipos_cambio.convertir(datos)
     tipo, nuevos, lineas, avisos = _a_factura(datos, f, cliente_nif, texto)
-    avisos = correcciones + avisos
+    avisos = correcciones + ([cambio] if cambio else []) + avisos
     contraparte_nif = fc._nif(datos.get("receptor_nif" if tipo == "emitida" else "emisor_nif"))
     campo_contraparte = "receptor_nif" if tipo == "emitida" else "emisor_nif"
     valores = {"numero": nuevos["numero"], "fecha": nuevos["fecha"] or "", "emisor_nif": fc._nif(datos.get("emisor_nif")), "receptor_nif": fc._nif(datos.get("receptor_nif")), "total": _num(datos.get("total")),
