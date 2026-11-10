@@ -10,7 +10,7 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 
-from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_correcciones, lectura_evidencias, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, vies
+from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, vies
 
 PROMPT = """Eres un asistente de contabilidad en España. Recibes la foto o el PDF de UNA factura. Devuelve SOLO un objeto JSON, sin texto alrededor, con estos campos (null si no aparece o no se lee):
 {"emisor_nombre": str, "emisor_nif": str, "receptor_nombre": str, "receptor_nif": str, "numero": str, "fecha": "AAAA-MM-DD", "fecha_operacion": "AAAA-MM-DD",
@@ -109,6 +109,9 @@ def _a_factura(datos: dict, f: dict, cliente_nif: str, texto: str = "") -> tuple
             calculado = fc._total_de(fc._lineas_limpias(lineas), fc.importe_a_centimos(nuevos["suplidos"]))
             if abs(calculado - fc.importe_a_centimos(total)) > fc.TOLERANCIA_CENTIMOS:
                 avisos.append(f"Las líneas suman {calculado / 100:.2f} y el total de la factura es {total}: no cuadran.")
+                explicacion = lectura_cuadre.explicar_descuadre(lineas, nuevos["suplidos"], total)
+                if explicacion:
+                    avisos.append(explicacion)
         except ValueError:
             avisos.append("Alguna línea leída no es válida.")
     _casos_especiales(datos, tipo, nuevos, lineas, avisos, texto)

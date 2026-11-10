@@ -131,6 +131,8 @@ def verificaciones(*, nif_contraparte: str, lineas: list[dict], fecha: str, hoy:
             esperada = int((Decimal(base) * pct / 100).to_integral_value())
             if abs(cuota - esperada) > 2:
                 salida.append(f"Línea {i}: la cuota de IVA leída ({cuota / 100:.2f}) no cuadra con el {pct:g} % de la base ({esperada / 100:.2f}).")
+    from . import lectura_cuadre
+    salida.extend(lectura_cuadre.tipos_raros(lineas))
     try:
         if fecha and date.fromisoformat(fecha[:10]) > hoy:
             salida.append("La fecha de la factura es posterior a hoy: puede estar mal leída.")
