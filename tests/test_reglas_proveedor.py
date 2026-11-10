@@ -43,7 +43,7 @@ def test_guardar_otra_vez_sustituye_y_no_duplica():
 @pytest.mark.parametrize("tipo,datos,fragmento", [
     ("otro", {"nif": NIF}, "proveedor o de un cliente"), ("proveedor", {"nif": ""}, "NIF"), ("proveedor", {"nif": NIF, "cuenta_linea": "12"}, "entre 3 y 12"),
     ("proveedor", {"nif": NIF, "pct_iva": "150"}, "porcentaje"), ("proveedor", {"nif": NIF, "pct_retencion": "70"}, "Retención"),
-    ("proveedor", {"nif": NIF, "subtipo": "05"}, "no vale para facturas recibidas"), ("cliente", {"nif": NIF, "subtipo": "07"}, "no vale para facturas emitidas")])
+    ("proveedor", {"nif": NIF, "subtipo": "05"}, "no vale para facturas recibidas"), ("cliente", {"nif": NIF, "subtipo": "99"}, "no vale para facturas emitidas")])
 def test_validaciones(tipo, datos, fragmento):
     t, u, c = _despacho()
     with pytest.raises(ValueError, match=fragmento):
