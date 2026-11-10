@@ -36,11 +36,43 @@ def factura_anterior(tenant_id: int, cliente_fiscal_id: int, tipo: str, nif: str
     return dict(fila) if fila else None
 
 
+MIN_FACTURAS_PARA_SUGERIR = 2
+PALABRAS_SIN_VALOR_DEL_CONCEPTO = PALABRAS_SIN_VALOR | {"factura", "fra", "servicio", "servicios", "compra", "venta", "gasto", "pago", "cliente", "varios", "para", "con", "por", "mes"}
+
+
+def sugerir_cuenta(tenant_id: int, cliente_fiscal_id: int, tipo: str, concepto: str | None, nombre: str | None) -> tuple[str, int] | None:
+    """La cuenta de gasto o ingreso que este cliente ya usó en facturas revisadas por una persona con un concepto o un proveedor parecidos (comparten alguna palabra con significado): (cuenta, cuántas facturas).
+    Solo si al menos dos facturas coinciden y esa cuenta es la de más del 60 % de ellas. Es una sugerencia: nunca se aplica sola."""
+    palabras = {p for p in _palabras(concepto) | _palabras(nombre) if p not in PALABRAS_SIN_VALOR_DEL_CONCEPTO and len(p) >= 4}
+    if not palabras:
+        return None
+    conn = db.get_connection()
+    try:
+        filas = [dict(r) for r in conn.execute(
+            "SELECT x.id, x.concepto, x.tercero_nombre, l.cuenta FROM facturas_contables x JOIN facturas_contables_lineas l ON l.factura_id = x.id WHERE x.tenant_id = ? AND x.cliente_fiscal_id = ? AND x.tipo = ? "
+            "AND x.estado IN ('revisada', 'exportada') AND COALESCE(x.revision_auto, 0) = 0 AND l.cuenta IS NOT NULL ORDER BY x.id DESC LIMIT 3000", (tenant_id, cliente_fiscal_id, tipo))]
+    finally:
+        conn.close()
+    por_cuenta: dict[str, set[int]] = {}
+    for f in filas:
+        if palabras & (_palabras(f["concepto"]) | _palabras(f["tercero_nombre"])):
+            por_cuenta.setdefault(f["cuenta"], set()).add(f["id"])
+    total = len(set().union(*por_cuenta.values())) if por_cuenta else 0
+    if total < MIN_FACTURAS_PARA_SUGERIR:
+        return None
+    cuenta, ids = max(por_cuenta.items(), key=lambda kv: (len(kv[1]), kv[0]))
+    return (cuenta, len(ids)) if len(ids) >= MIN_FACTURAS_PARA_SUGERIR and len(ids) / total > 0.6 else None
+
+
 def completar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo: str, nuevos: dict, lineas: list[dict], fuente: str) -> list[str]:
     """Rellena `nuevos` y `lineas` (en su sitio) con lo decidido en la factura anterior de ese proveedor o cliente y devuelve los avisos de lo que cambió. Nada si no hay factura anterior revisada."""
     ref = factura_anterior(tenant_id, cliente_fiscal_id, tipo, nuevos.get("tercero_nif"))
     anterior = fc.obtener(tenant_id, usuario_id, ref["id"]) if ref else None
     if anterior is None:
+        if any(not str(l.get("cuenta") or "").strip() for l in lineas) and not fc.regla_del_tercero(tenant_id, cliente_fiscal_id, tipo, nuevos.get("tercero_nif")):
+            sugerida = sugerir_cuenta(tenant_id, cliente_fiscal_id, tipo, nuevos.get("concepto"), nuevos.get("tercero_nombre"))
+            if sugerida:
+                return [f"Sugerencia: la cuenta {sugerida[0]}, que usaste en {sugerida[1]} facturas con un concepto o un proveedor parecidos. No se ha aplicado: ponla en las líneas si es la que toca."]
         return []
     avisos = []
     if fuente != "xml" and anterior["tercero_nombre"] and nuevos.get("tercero_nombre") != anterior["tercero_nombre"]:

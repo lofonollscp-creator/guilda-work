@@ -98,12 +98,45 @@ def explicar_descuadre(lineas: list[dict], suplidos: str, total: str) -> str | N
     """Si las líneas no suman el total, dice qué explicación cuadra con él (ver `_buscar`): con una sola base prueba los tipos habituales de IVA, con o sin recargo y retención; con varias deja el IVA leído y
     prueba solo recargo y retención. Si hay varias explicaciones o ninguna, calla."""
     e = _buscar(lineas, suplidos, total)
-    if e is None:
-        return None
+    otra = _otra_explicacion(lineas, suplidos, total)
+    if e is None or otra:
+        return None if (e and otra) else otra                      # si IVA, recargo o retención y una exenta o un descuento lo explican a la vez, no se elige: se calla
     if e.get("sin_iva"):
         return "El total de la factura coincide con la suma de las bases: el total leído parece no incluir el IVA."
     rec = e["rec"] if len(lineas) == 1 else (fc.RECARGO_ESTANDAR.get(_pct(lineas[0].get("pct_iva")), 0) if e["rec"] else 0)
     return f"El total de la factura cuadraría con {_describir(e['iva'], rec, e['ret'])}: compruébalo en el documento."
+
+
+DESCUENTOS_HABITUALES = (100, 200, 300, 500, 1000, 1500, 2000)      # en centésimas de punto: 1 %, 2 %, 3 %, 5 %, 10 %, 15 % y 20 % (pronto pago y descuentos de pie de factura)
+
+
+def _otra_explicacion(lineas: list[dict], suplidos: str, total: str) -> str | None:
+    """Lo que explica un descuadre cuando no es IVA, recargo ni retención: que alguna línea sea exenta (sin IVA) o que haya un descuento general sobre las bases (pronto pago, pie de factura). Si hay una
+    sola explicación, la dice; si hay varias o ninguna, calla. Con una sola línea no hay «alguna línea»."""
+    bases = _bases(lineas)
+    if not bases or total in ("", None, "0.00"):
+        return None
+    try:
+        objetivo, extra = fc.importe_a_centimos(total), fc.importe_a_centimos(suplidos or "0")
+    except ValueError:
+        return None
+    ivas = [_pct(l.get("pct_iva")) for l in lineas]
+    if any(i is None for i in ivas):
+        return None
+    tol = fc.TOLERANCIA_CENTIMOS
+    exentas = []
+    if len(lineas) > 1:
+        for mascara in range(1, 2 ** len(lineas) - 1):                          # no todas las líneas: una factura entera sin IVA no es «alguna línea exenta»
+            if abs(sum(b + (0 if mascara >> i & 1 else enlace_a3.cuota(b, iv)) for i, (b, iv) in enumerate(zip(bases, ivas))) + extra - objetivo) <= tol:
+                exentas.append([i + 1 for i in range(len(lineas)) if mascara >> i & 1])
+    if len(exentas) == 1:
+        n = exentas[0]
+        return f"El total de la factura cuadraría si {'la línea ' + str(n[0]) if len(n) == 1 else 'las líneas ' + ', '.join(map(str, n))} {'fuera exenta o no sujeta' if len(n) == 1 else 'fueran exentas o no sujetas'} (sin IVA): compruébalo en el documento."
+    descuentos = [d for d in DESCUENTOS_HABITUALES
+                  if abs(sum(b - enlace_a3.cuota(b, d) + enlace_a3.cuota(b - enlace_a3.cuota(b, d), iv) for b, iv in zip(bases, ivas)) + extra - objetivo) <= tol]
+    if len(descuentos) == 1 and not exentas:
+        return f"El total de la factura cuadraría con un descuento del {_texto_pct(descuentos[0])} % sobre las bases (pronto pago o descuento general): comprueba si las bases leídas ya lo llevan."
+    return None
 
 
 PALABRAS_RETENCION = ("irpf", "retencion", "retenciones")

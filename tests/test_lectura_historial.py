@@ -81,3 +81,43 @@ def test_no_mezcla_clientes_ni_clases():
     _anterior(t, u, c)
     nuevos, lineas = _nueva()
     assert lh.completar(t, u, c, "emitida", nuevos, lineas, "imagen") == []
+
+
+# --- L15: cuenta sugerida para proveedores nuevos -----------------------------------------------------------------------------------------------------------
+
+def _con_concepto(t, u, c, numero, concepto, cuenta, nif="B11111111", nombre="Otro proveedor", revisar=True):
+    fid = fc.crear(t, u, c, _datos(numero=numero, tercero_nombre=nombre, tercero_nif=nif, concepto=concepto), [{"base": "100,00", "pct_iva": "21", "cuenta": cuenta}])
+    if revisar:
+        fc.cambiar_estado(t, u, fid, "revisada")
+    return fid
+
+
+def test_sugiere_la_cuenta_usada_en_facturas_con_concepto_parecido():
+    t, u, c = _despacho()
+    _con_concepto(t, u, c, "S-1", "Gasolina vehículo", "62800000")
+    _con_concepto(t, u, c, "S-2", "Gasolina camioneta", "62800000", nif="B22222222")
+    assert lh.sugerir_cuenta(t, c, "recibida", "Gasolina mes de octubre", "Estación Norte") == ("62800000", 2)
+    nuevos = {"tercero_nombre": "Estación Norte", "tercero_nif": "A58818501", "concepto": "Gasolina octubre"}
+    lineas = [{"base": "50.00", "pct_iva": "21"}]
+    avisos = lh.completar(t, u, c, "recibida", nuevos, lineas, "imagen")
+    assert any("Sugerencia: la cuenta 62800000" in a and "2 facturas" in a for a in avisos) and "cuenta" not in lineas[0]    # solo se sugiere
+
+
+def test_no_sugiere_con_una_sola_factura_ni_si_las_cuentas_divergen_ni_con_lo_sin_revisar():
+    t, u, c = _despacho()
+    _con_concepto(t, u, c, "S-1", "Reparación taller", "62200000")
+    assert lh.sugerir_cuenta(t, c, "recibida", "Reparación taller", None) is None                   # una sola
+    _con_concepto(t, u, c, "S-2", "Reparación taller", "62200001", nif="B22222222")
+    assert lh.sugerir_cuenta(t, c, "recibida", "Reparación taller", None) is None                   # 1 y 1: ninguna pasa del 60 %
+    _con_concepto(t, u, c, "S-3", "Reparación taller", "62200000", nif="B33333333", revisar=False)
+    assert lh.sugerir_cuenta(t, c, "recibida", "Reparación taller", None) is None                   # la pendiente no cuenta
+    assert lh.sugerir_cuenta(t, c, "recibida", "Papelería", None) is None and lh.sugerir_cuenta(t, c, "emitida", "Reparación taller", None) is None
+
+
+def test_si_el_proveedor_ya_tiene_historial_o_regla_no_se_sugiere():
+    t, u, c = _despacho()
+    _con_concepto(t, u, c, "S-1", "Gasolina vehículo", "62800000"); _con_concepto(t, u, c, "S-2", "Gasolina camioneta", "62800000", nif="B22222222")
+    _anterior(t, u, c)                                                                              # este proveedor (NIF) ya tiene una revisada: manda la copia de L8
+    nuevos, lineas = _nueva()
+    nuevos["concepto"] = "Gasolina"
+    assert not any("Sugerencia" in a for a in lh.completar(t, u, c, "recibida", nuevos, lineas, "imagen"))

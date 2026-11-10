@@ -88,3 +88,33 @@ def test_la_lectura_aplica_retencion_y_suplidos_con_el_texto_del_documento():
     assert nuevos["suplidos"] == "45.00" and not any("no cuadran" in a for a in avisos)
     _, nuevos, lineas, avisos = lf._a_factura({**base, "total": 1060}, f, "", "")     # sin texto solo se avisa
     assert not lineas[0].get("pct_retencion") and any("retención del 15 %" in a for a in avisos)
+
+
+# --- L14: IVA mixto y descuentos --------------------------------------------------------------------------------------------------------------------------
+
+def test_si_una_linea_es_exenta_el_total_cuadra_sin_su_iva():
+    lineas = [_l("1000.00", "21", cuota_iva="210.00"), _l("300.00", "21", cuota_iva="63.00")]
+    msg = lc.explicar_descuadre(lineas, "", "1510.00")                       # 1000 + 210 + 300 sin IVA
+    assert msg and "la línea 2 fuera exenta" in msg
+
+
+def test_varias_lineas_exentas_a_la_vez():
+    lineas = [_l("1000.00", "21", cuota_iva="210.00"), _l("300.00", "21", cuota_iva="63.00"), _l("200.00", "10", cuota_iva="20.00")]
+    msg = lc.explicar_descuadre(lineas, "", "1710.00")                       # 1000 + 210 + 300 + 200 con las dos últimas sin IVA
+    assert msg and "las líneas 2, 3 fueran exentas" in msg
+
+
+def test_el_descuento_del_2_por_ciento_se_reconoce():
+    lineas = [_l("1000.00", "21", cuota_iva="210.00")]
+    msg = lc.explicar_descuadre(lineas, "", "1185.80")                       # 980 + 205,80
+    assert msg and "descuento del 2 %" in msg
+
+
+def test_si_dos_familias_de_explicaciones_encajan_a_la_vez_calla():
+    lineas = [_l("1000.00", "21", cuota_iva="210.00"), _l("500.00", "21", cuota_iva="105.00")]
+    assert lc.explicar_descuadre(lineas, "", "1710.00") is None             # «línea 2 exenta» y «retención del 7 %» dan lo mismo: no se elige
+
+
+def test_si_no_hay_explicacion_calla():
+    assert lc.explicar_descuadre([_l("1000.00", "21", cuota_iva="210.00"), _l("500.00", "21", cuota_iva="105.00")], "", "1234.56") is None
+    assert lc.explicar_descuadre([_l("1000.00", "21", cuota_iva="210.00")], "", "1234.56") is None
