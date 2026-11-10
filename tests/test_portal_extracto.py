@@ -25,7 +25,7 @@ def test_datos_trae_facturas_y_tiquets_del_cliente_sin_las_descartadas_ni_las_an
     conn.execute("INSERT INTO justificantes_pendientes (tenant_id, cliente_fiscal_id, origen, fecha, importe_centimos, concepto, estado, huella, creado_en) VALUES (?, ?, 'cliente', ?, -450, 'Parking', 'tiquet', 'h1', ?)", (t, c, (hoy - timedelta(days=5)).isoformat(), db.now_iso()))
     conn.commit(); conn.close()
     d = portal_extracto.datos(_ficha(c))
-    assert d["facturas"] == [{"f": (hoy - timedelta(days=10)).isoformat(), "t": 12100}]
+    assert d["facturas"] == [{"f": (hoy - timedelta(days=10)).isoformat(), "t": 12100, "e": 0, "n": "N"}]
     assert d["justificantes"] == [{"f": (hoy - timedelta(days=5)).isoformat(), "i": -450}]
 
 

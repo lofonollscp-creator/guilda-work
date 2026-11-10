@@ -151,5 +151,5 @@ def avisos(tenant_id: int, f: dict, hoy: date | None = None) -> list[str]:
     for d in duplicados(tenant_id, f):
         if d["contabilizada"]:
             res.append((_("Parece repetida: la factura %(numero)s (%(fecha)s) ya está exportada (%(motivo)s).") if d["estado"] == "exportada" else _("Parece repetida: la factura %(numero)s (%(fecha)s) ya está revisada (%(motivo)s)."))
-                       % {"numero": d["numero"], "fecha": d["fecha"], "motivo": _(d["motivo"])})
+                       % {"numero": d["numero"], "fecha": d["fecha"], "motivo": {"mismo número": _("mismo número"), "mismo importe y fecha": _("mismo importe y fecha"), "mismo número e importe": _("mismo número e importe")}[d["motivo"]]})
     return res

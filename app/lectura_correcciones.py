@@ -11,7 +11,7 @@ from collections import Counter
 from . import db
 
 MINIMO_REPETICIONES = 2
-FACTURAS_A_MIRAR = 800
+FACTURAS_A_MIRAR = 1500
 CAMPOS = {"nif": "tercero_nif", "tercero": "tercero_nombre"}          # campo de `lectura_calidad` → columna de la factura
 
 
@@ -26,7 +26,7 @@ def aprendidas(tenant_id: int, cliente_fiscal_id: int) -> dict[str, dict[str, st
     conn = db.get_connection()
     try:
         filas = conn.execute("SELECT tercero_nif, tercero_nombre, lectura_evidencia FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND estado IN ('revisada', 'exportada') "
-                             "AND revision_auto = 0 AND lectura = 'ia' AND lectura_evidencia LIKE '%\"correcciones\"%' ORDER BY id DESC LIMIT ?", (tenant_id, cliente_fiscal_id, FACTURAS_A_MIRAR)).fetchall()
+                             "AND revision_auto = 0 AND lectura = 'ia' AND lectura_evidencia IS NOT NULL ORDER BY id DESC LIMIT ?", (tenant_id, cliente_fiscal_id, FACTURAS_A_MIRAR)).fetchall()
     finally:
         conn.close()
     cuentas: dict[tuple[str, str], Counter] = {}

@@ -21,7 +21,7 @@ def _con_dos_modelos(t, u):
 def _revisada(t, u, c, n, modelo):
     fid = fc.subir_archivos(t, u, c, "recibida", [("f.pdf", "application/pdf", PDF + bytes([n]))])[0]
     lf.leer(t, u, fid)
-    fc.cambiar_estado(t, u, fid, "revisada")
+    fc.cambiar_estado(t, u, fid, "revisada", confirmar_duplicado=True)
     return fid
 
 
