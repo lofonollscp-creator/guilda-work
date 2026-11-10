@@ -694,6 +694,15 @@ HERRAMIENTAS: list[dict] = [
         ["adjunto_id", "cliente_fiscal_id", "tipo"],
     ),
     _tool(
+        "ejecutar_plan",
+        "Ejecuta de una vez, con UNA sola confirmación de la persona, varias acciones de Facturas para contabilizar que tú has propuesto (por ejemplo: dar por buenas las seguras, escribir a clientes y generar el fichero). Máximo 10 pasos; "
+        "solo herramientas de contabilidad que escriben; se ejecutan en orden y se para en el primer error (lo ya hecho no se deshace). Los mensajes a clientes van con su texto completo en los argumentos: la persona los ve antes de confirmar. "
+        "Antes de usarla, enseña el plan numerado y pregunta si lo quiere.",
+        {"titulo": _param("string", "Qué se consigue con el plan, en una frase."),
+         "pasos": _param("array", "Lista ordenada de pasos: {\"herramienta\": \"contabilidad_revisar_seguras\", \"argumentos\": {...}}.")},
+        ["titulo", "pasos"],
+    ),
+    _tool(
         "contabilidad_anotar_factura",
         "Anota una factura de un cliente de la gestoría para contabilizarla (queda pendiente de revisar). Lo que dejes en blanco lo rellenan el régimen del cliente y la regla del proveedor.",
         {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "tipo": _param("string", "emitida o recibida."), "fecha": _param("string", "AAAA-MM-DD."), "numero": _param("string", "Número de la factura."), "tercero_nombre": _param("string", "Nombre del proveedor (recibida) o cliente (emitida)."), "tercero_nif": _param("string", "NIF del proveedor o cliente, recomendado."), "lineas": _param("array", "Una por tipo de IVA: {\"base\": \"1.234,56\", \"pct_iva\": 21}; opcionales cuota_iva, pct_recargo, pct_retencion, cuenta, subtipo, impreso."), "concepto": _param("string", "Concepto breve, opcional."), "abono": _param("boolean", "true si es un abono o rectificativa."), "rectifica_numero": _param("string", "Número de la factura que rectifica (abonos)."), "rectifica_fecha": _param("string", "Fecha AAAA-MM-DD de la factura que rectifica (abonos)."), "datos_a3": _param("object", "Solo en casos especiales: bien_inversion, dua, clave_340, nif_representante, autofactura, metalico, inmuebles.")},
@@ -1659,7 +1668,7 @@ ESCRITURA: set[str] = {
 # ya avisaban de esto en su description para el LLM, pero solo estaban en
 # ESCRITURA -- con modo autónomo activado, el propio modelo decidía si
 # confirmar o no, sin ninguna garantía en código).
-SIEMPRE_CONFIRMAR: set[str] = {"contabilidad_preguntar_al_cliente", "comercial_aplicar_cambio_masivo", "comercial_deshacer_cambio_masivo", "enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma", "responder_mensaje_de_enlace", "responder_cliente_tarea", "comercial_guardar_transcripcion"}
+SIEMPRE_CONFIRMAR: set[str] = {"ejecutar_plan", "contabilidad_preguntar_al_cliente", "comercial_aplicar_cambio_masivo", "comercial_deshacer_cambio_masivo", "enviar_borrador_correo", "crear_factura_cliente", "enviar_documento_a_firma", "responder_mensaje_de_enlace", "responder_cliente_tarea", "comercial_guardar_transcripcion"}
 
 _NOMBRES_VALIDOS = LECTURA | ESCRITURA | SIEMPRE_CONFIRMAR
 
@@ -1667,6 +1676,8 @@ _NOMBRES_VALIDOS = LECTURA | ESCRITURA | SIEMPRE_CONFIRMAR
 def resumen_de_confirmacion(usuario_id: int, nombre: str, argumentos: dict) -> str:
     """Lo que hace exactamente la acción pendiente, en una frase, cuando la herramienta lo sabe (hoy, los cambios en lote del Comercial); vacío en las demás. Nunca falla: la tarjeta de confirmación
     sigue enseñando la herramienta y sus argumentos."""
+    if nombre == "ejecutar_plan":
+        return _resumen_del_plan(argumentos)
     if nombre not in ("comercial_aplicar_cambio_masivo", "comercial_deshacer_cambio_masivo"):
         return ""
     try:
@@ -1699,6 +1710,57 @@ def _errores_de_servicios() -> tuple[type, ...]:
             outline.ErrorOutline, paperless.ErrorPaperless, stalwart.ErrorStalwart, synapse.ErrorSynapse, umami.ErrorUmami, uptime_kuma.ErrorUptimeKuma)
 
 
+PLAN_MAX_PASOS = 10
+PLAN_GRUPOS = {"contabilidad"}                       # de momento solo se agrupan acciones de Facturas para contabilizar
+
+
+def _validar_plan(argumentos: dict) -> list[dict]:
+    """Los pasos de un plan ya comprobados: entre 1 y 10, cada uno una herramienta del grupo contabilidad que escribe (nunca otro plan) y sus argumentos. `ErrorHerramientaIA` con el motivo si algo no vale."""
+    pasos = argumentos.get("pasos")
+    if not isinstance(pasos, list) or not pasos:
+        raise ErrorHerramientaIA("El plan necesita al menos un paso (`pasos`).")
+    if len(pasos) > PLAN_MAX_PASOS:
+        raise ErrorHerramientaIA(f"Un plan puede tener como mucho {PLAN_MAX_PASOS} pasos: divídelo en dos.")
+    limpios = []
+    for i, p in enumerate(pasos, start=1):
+        nombre = p.get("herramienta") if isinstance(p, dict) else None
+        args = p.get("argumentos") if isinstance(p, dict) else None
+        if not isinstance(nombre, str) or not isinstance(args, dict):
+            raise ErrorHerramientaIA(f"Paso {i}: indica la `herramienta` y sus `argumentos`.")
+        if nombre == "ejecutar_plan" or nombre not in (ESCRITURA | SIEMPRE_CONFIRMAR) or herramientas_grupos.grupo_de(nombre) not in PLAN_GRUPOS:
+            raise ErrorHerramientaIA(f"Paso {i}: «{nombre}» no se puede incluir en un plan: solo acciones de contabilidad que escriben (las consultas se hacen antes, por separado).")
+        limpios.append({"herramienta": nombre, "argumentos": args})
+    return limpios
+
+
+def _ejecutar_plan(usuario_id: int, argumentos: dict) -> dict:
+    """Ejecuta los pasos en orden como cualquier otra herramienta (con su propio control de permisos y sus validaciones) y para en el primer error. No deshace lo ya hecho: lo cuenta."""
+    import json as _json
+    pasos = _validar_plan(argumentos)
+    hechos = []
+    for i, p in enumerate(pasos, start=1):
+        try:
+            r = ejecutar(usuario_id, p["herramienta"], p["argumentos"])
+        except ErrorHerramientaIA as e:
+            return {"plan": argumentos.get("titulo"), "completado": False, "pasos": hechos, "fallo": {"paso": i, "herramienta": p["herramienta"], "mensaje": str(e)}, "sin_ejecutar": [x["herramienta"] for x in pasos[i:]],
+                    "aviso": "Se paró en el primer error. Lo hecho antes NO se ha deshecho."}
+        texto = _json.dumps(r, ensure_ascii=False, default=str)
+        hechos.append({"paso": i, "herramienta": p["herramienta"], "resultado": _json.loads(texto) if len(texto) <= 2000 else texto[:2000] + "…"})
+    return {"plan": argumentos.get("titulo"), "completado": True, "pasos": hechos}
+
+
+def _resumen_del_plan(argumentos: dict) -> str:
+    try:
+        pasos = _validar_plan(argumentos)
+    except ErrorHerramientaIA as e:
+        return f"Este plan no se puede ejecutar: {e}"
+    lineas = []
+    for i, p in enumerate(pasos, start=1):
+        detalle = ", ".join(f"{k}={str(v)[:300]!r}" if isinstance(v, str) else f"{k}={v}" for k, v in p["argumentos"].items())
+        lineas.append(f"{i}. {p['herramienta']}({detalle})" + (" — mensaje a una persona de fuera del despacho" if p["herramienta"] in SIEMPRE_CONFIRMAR and p["herramienta"] != "ejecutar_plan" else ""))
+    return f"«{argumentos.get('titulo') or 'Plan'}» — {len(pasos)} pasos, en este orden; si uno falla se para:\n" + "\n".join(lineas)
+
+
 def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
     """Ejecuta una tool "como" `usuario_id` — ninguna tool de mcp_tools.py
     expone un parámetro de usuario (un cliente MCP externo como Claude Code
@@ -1710,6 +1772,8 @@ def ejecutar(usuario_id: int, nombre: str, argumentos: dict):
         return ia_soporte.ejecutar(usuario_id, nombre, argumentos)
     if nombre == "activar_herramientas":
         return herramientas_grupos.texto_activacion(list(argumentos.get("grupos") or []))
+    if nombre == "ejecutar_plan":
+        return _ejecutar_plan(usuario_id, argumentos)
     funcion = getattr(mcp_tools, nombre, None)
     if funcion is None:
         raise ErrorHerramientaIA(f"Herramienta '{nombre}' no está implementada en mcp_tools.")

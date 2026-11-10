@@ -144,6 +144,8 @@ def _prompt_sistema(usuario_id: int, idioma: str, ahora: datetime | None = None,
         "explícitamente la persona usuaria, consúltalo primero con una herramienta de lectura. "
         "Cuando una respuesta se apoye en datos de herramientas (correos, notas, tareas, clientes), di brevemente "
         "de dónde sale cada dato. "
+        "Cuando una petición de Facturas para contabilizar implique varias acciones seguidas (revisar, escribir a clientes, exportar), enseña primero el plan numerado y, si la persona lo aprueba, usa ejecutar_plan: "
+        "una sola confirmación cubre todos los pasos. "
         "No inventes datos: si una herramienta falla o no devuelve nada, dilo. Las acciones que modifican "
         "datos pueden pedir confirmación a la persona usuaria; si la rechaza, no insistas. "
         + _PROMPT_SOPORTE + _contexto_soporte(usuario_id, soporte)

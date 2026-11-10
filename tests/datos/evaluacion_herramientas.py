@@ -169,6 +169,7 @@ CASOS: list[tuple[str, str]] = [
     ("comprueba en vies el nif europeo de este proveedor", "contabilidad_comprobar_vies"),
     ("cuál es la configuración de a3 de este cliente", "contabilidad_configuracion_a3"),
     ("dame el resumen de cierre del trimestre de este cliente para el responsable", "contabilidad_cierre_cliente"),
+    ("cierra el trimestre de este cliente: revisa las seguras y escribe a los clientes lo que falte", "ejecutar_plan"),
     ("dame el informe de tareas vencidas por cliente", "informe_tareas"),
     ("pide la revisión de esta tarea a Marta antes de cerrarla", "pedir_revision_tarea"),
     ("la tarea está bloqueada, apunta el motivo", "cambiar_estado_tarea_con_motivo"),
