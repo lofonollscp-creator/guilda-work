@@ -2,10 +2,13 @@
 quedan para el plazo de presentación. Es una vista sobre `facturas_contables`: no guarda nada. La confirmación en a3 solo se exige a los clientes que ya la usan (alguna factura suya confirmada)."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from . import acceso, db, facturas_contables as fc
 
+MESES_DE_HISTORIAL = 6                  # cuántos meses atrás se mira para saber si un cliente suele entregar facturas
+MESES_PARA_SER_HABITUAL = 3             # con facturas en al menos tantos de esos meses se le considera un cliente que entrega cada mes
+DIA_DEL_MES_PARA_AVISAR = 10            # no se avisa antes: es normal que a principios de mes no haya llegado nada todavía
 PLAZO_DEL_TRIMESTRE = {1: (4, 20), 2: (7, 20), 3: (10, 20), 4: (1, 30)}        # mes y día de presentación del modelo 303 (el del cuarto trimestre es de enero del año siguiente)
 
 
@@ -26,6 +29,35 @@ def trimestre_anterior(hoy: date | None = None) -> str:
     hoy = hoy or date.today()
     t = (hoy.month - 1) // 3
     return f"{hoy.year - (t == 0)}-T{t or 4}"
+
+
+def _mes_anterior(mes: str, n: int) -> str:
+    a, m = int(mes[:4]), int(mes[5:7])
+    m -= n
+    while m < 1:
+        m += 12
+        a -= 1
+    return f"{a:04d}-{m:02d}"
+
+
+def sin_entregas(tenant_id: int, hoy: date | None = None) -> dict[int, int]:
+    """Los clientes que suelen mandar facturas (en al menos 3 de los 6 meses anteriores) y este mes aún no han mandado ninguna, pasado el día 10: {cliente_fiscal_id: meses con facturas}. Cuenta las anotadas
+    por cualquier vía (portal, correo, a mano): lo que importa es que lleguen. No escribe nada."""
+    hoy = hoy or date.today()
+    if hoy.day < DIA_DEL_MES_PARA_AVISAR:
+        return {}
+    actual = f"{hoy.year:04d}-{hoy.month:02d}"
+    desde = _mes_anterior(actual, MESES_DE_HISTORIAL) + "-01"
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT cliente_fiscal_id, substr(creado_en, 1, 7) AS mes FROM facturas_contables WHERE tenant_id = ? AND creado_en >= ? AND estado != 'descartada' "
+                             "GROUP BY cliente_fiscal_id, substr(creado_en, 1, 7)", (tenant_id, desde)).fetchall()
+    finally:
+        conn.close()
+    meses: dict[int, set[str]] = {}
+    for f in filas:
+        meses.setdefault(f["cliente_fiscal_id"], set()).add(f["mes"])
+    return {cid: len(m - {actual}) for cid, m in meses.items() if actual not in m and len(m) >= MESES_PARA_SER_HABITUAL}
 
 
 def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: date | None = None) -> dict:
@@ -49,6 +81,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
         con_retorno = {r["cliente_fiscal_id"] for r in conn.execute("SELECT DISTINCT cliente_fiscal_id FROM facturas_contables WHERE tenant_id = ? AND confirmada_en IS NOT NULL", (tenant_id,))}
     finally:
         conn.close()
+    silenciosos = sin_entregas(tenant_id, hoy)
     por_id = {f["cliente_fiscal_id"]: dict(f) for f in filas}
     for cid, nombre in configurados.items():
         por_id.setdefault(cid, {"cliente_fiscal_id": cid, "nombre": nombre, "total": 0, "sin_leer": 0, "por_revisar": 0, "listas": 0, "exportadas": 0, "sin_confirmar": 0})
@@ -64,9 +97,10 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
         c["faltan"] = c["sin_leer"] + c["por_revisar"] + c["listas"] + c["sin_confirmar"]
         c["listo"] = c["total"] > 0 and c["faltan"] == 0
         c["sin_facturas"] = c["total"] == 0
+        c["sin_entregas_este_mes"] = silenciosos.get(cid, 0)                              # >0 = suele entregar y este mes aún no ha mandado nada (los meses que lo hizo)
         clientes.append(c)
     clientes.sort(key=lambda c: (c["cerrado"], c["listo"], -c["faltan"], c["sin_facturas"] is False, c["nombre"].lower()))
     limite = plazo(trimestre)
     return {"trimestre": trimestre, "plazo": limite.isoformat(), "dias": (limite - hoy).days, "clientes": clientes,
-            "resumen": {"clientes": len(clientes), "listos": sum(1 for c in clientes if c["listo"] or c["cerrado"]), "sin_facturas": sum(1 for c in clientes if c["sin_facturas"] and not c["cerrado"]),
+            "resumen": {"clientes": len(clientes), "listos": sum(1 for c in clientes if c["listo"] or c["cerrado"]), "sin_facturas": sum(1 for c in clientes if c["sin_facturas"] and not c["cerrado"]), "sin_entregas": sum(1 for c in clientes if c["sin_entregas_este_mes"]),
                         "faltan": sum(c["faltan"] for c in clientes if not c["cerrado"])}}

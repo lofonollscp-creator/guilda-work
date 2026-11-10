@@ -24,7 +24,7 @@ def test_cuenta_lo_que_falta_en_cada_punto():
     assert p["dias"] == 10 and p["plazo"] == "2026-10-20"
     cl = p["clientes"][0]
     assert (cl["total"], cl["por_revisar"], cl["listas"], cl["sin_leer"], cl["listo"]) == (2, 1, 1, 0, False) and cl["faltan"] == 2
-    assert p["resumen"] == {"clientes": 1, "listos": 0, "sin_facturas": 0, "faltan": 2}
+    assert p["resumen"] == {"clientes": 1, "listos": 0, "sin_facturas": 0, "sin_entregas": 0, "faltan": 2}
 
 
 def test_un_cliente_listo_y_la_confirmacion_solo_si_ya_la_usa():
@@ -75,3 +75,39 @@ def test_la_pantalla_se_ve_y_enlaza_al_cierre_de_cada_cliente(cliente):
     assert r.status_code == 200 and "Qué falta para cerrar" in html and "Cliente Web" in html and "/contabilidad/cierre?cliente_id=%d&amp;trimestre=2026-T3" % c in html
     assert cliente.get("/contabilidad/panel-cierre?trimestre=mal").status_code == 200       # un trimestre que no vale no rompe la pantalla
     assert "Qué falta para cerrar" in cliente.get("/contabilidad/").get_data(as_text=True)
+
+
+def _entregas(t, u, c, *meses):
+    """Anota una factura creada en cada uno de esos meses (AAAA-MM)."""
+    ids = [(_crear(t, u, c, f"E-{i}{mes}", fecha=f"{mes}-05"), mes) for i, mes in enumerate(meses)]
+    conn = fc.db.get_connection()
+    try:
+        for fid, mes in ids:
+            conn.execute("UPDATE facturas_contables SET creado_en = ? WHERE id = ?", (f"{mes}-05T10:00:00", fid))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def test_un_cliente_que_suele_entregar_y_este_mes_no_ha_mandado_nada_se_avisa():
+    t, u, c = _despacho()
+    _entregas(t, u, c, "2026-05", "2026-07", "2026-08", "2026-09")
+    assert cc.sin_entregas(t, date(2026, 10, 15)) == {c: 4}
+    assert cc.sin_entregas(t, date(2026, 10, 9)) == {}                       # a principios de mes todavía es pronto
+    p = cc.panel(t, u, "2026-T3", hoy=date(2026, 10, 15))
+    assert p["clientes"][0]["sin_entregas_este_mes"] == 4 and p["resumen"]["sin_entregas"] == 1
+
+
+def test_no_avisa_si_ya_ha_entregado_este_mes_ni_si_nunca_fue_habitual():
+    t, u, c = _despacho()
+    _entregas(t, u, c, "2026-07", "2026-08", "2026-09", "2026-10")
+    assert cc.sin_entregas(t, date(2026, 10, 20)) == {}
+    t2 = _despacho_aparte("Despacho entregas dos")
+    assert cc.sin_entregas(t2[0], date(2026, 10, 20)) == {}
+
+
+def _despacho_aparte(nombre):
+    from tests.test_herramientas_contabilidad import _despacho as otro
+    t, u, c = otro(nombre)
+    _entregas(t, u, c, "2026-09")                                              # solo un mes: no es un cliente que entregue cada mes
+    return t, u, c

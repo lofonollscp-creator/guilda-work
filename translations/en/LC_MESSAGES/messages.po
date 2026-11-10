@@ -26723,3 +26723,6 @@ msgstr "A column you entered is not valid: use the column letter (A, B, C…)."
 
 msgid "Indica al menos la columna del número de factura y otra más (fecha, NIF o total)."
 msgstr "Enter at least the invoice number column and one more (date, tax ID or total)."
+
+msgid "Sin entregas este mes"
+msgstr "Nothing sent this month"

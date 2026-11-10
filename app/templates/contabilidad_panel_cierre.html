@@ -26,6 +26,7 @@
     <div><dt>{{ _('Clientes listos o cerrados') }}</dt><dd>{{ p.resumen.listos }} / {{ p.resumen.clientes }}</dd></div>
     <div><dt>{{ _('Facturas que faltan') }}</dt><dd>{{ p.resumen.faltan }}</dd></div>
     <div><dt>{{ _('Clientes sin facturas') }}</dt><dd>{{ p.resumen.sin_facturas }}</dd></div>
+    <div><dt>{{ _('Sin entregas este mes') }}</dt><dd>{{ p.resumen.sin_entregas }}</dd></div>
   </dl>
   {% endif %}
 </section>
@@ -43,6 +44,7 @@
           {% elif c.sin_facturas %}{{ chip(_('Sin facturas'), 'aviso') }}
           {% elif c.listo %}{{ chip(_('Listo para cerrar'), 'exito') }}
           {% else %}{{ chip(_('Faltan %(n)s', n=c.faltan), 'aviso') }}{% endif %}
+          {% if c.sin_entregas_este_mes and not c.cerrado %} {{ chip(_('Sin entregas este mes'), 'aviso') }}{% endif %}
         </td>
         <td>{% if not c.cerrado %}<a class="btn btn-ghost" href="{{ url_for('contabilidad.cierre', cliente_id=c.cliente_fiscal_id, trimestre=trimestre) }}">{{ _('Cierre guiado') }}</a>{% endif %}</td>
       </tr>

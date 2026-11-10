@@ -26808,3 +26808,6 @@ msgstr "Une colonne indiquée n'est pas valide : utilisez la lettre de la colonn
 
 msgid "Indica al menos la columna del número de factura y otra más (fecha, NIF o total)."
 msgstr "Indiquez au moins la colonne du numéro de facture et une autre (date, NIF ou total)."
+
+msgid "Sin entregas este mes"
+msgstr "Rien reçu ce mois-ci"

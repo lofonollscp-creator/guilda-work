@@ -26732,3 +26732,6 @@ msgstr "Una columna indicada no és vàlida: usa la lletra de la columna (A, B, 
 
 msgid "Indica al menos la columna del número de factura y otra más (fecha, NIF o total)."
 msgstr "Indica almenys la columna del número de factura i una altra (data, NIF o total)."
+
+msgid "Sin entregas este mes"
+msgstr "Sense lliuraments aquest mes"
