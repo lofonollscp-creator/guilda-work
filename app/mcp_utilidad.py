@@ -113,9 +113,38 @@ def prompt_cierre_de_trimestre(modelo: str, periodo: str) -> str:
             "ya tienen documentación pedida y no se ha recibido. Propón un reparto del trabajo por días.")
 
 
+def prompt_cierre_contable_de_cliente(cliente: str, trimestre: str = "") -> str:
+    """Cierre de un trimestre de un cliente en Facturas para contabilizar: qué falta, qué se puede revisar de golpe y qué preguntar al cliente."""
+    return (f"Quiero cerrar la contabilización del trimestre {trimestre or 'que se está cerrando'} de «{cliente}». Localiza al cliente con `listar_clientes_fiscales` y usa `contabilidad_cierre_cliente` y "
+            "`contabilidad_panel_cierre` para ver qué falta (por leer, por revisar, mensajes sin leer, duplicadas, sin exportar, sin confirmar en a3). Con `contabilidad_revisables_en_lote` dime cuántas se pueden dar por buenas de golpe. "
+            "Para las dudosas mira `contabilidad_avisos_factura` y propón qué preguntar al cliente (sin enviar nada). Presenta un plan numerado y espera mi confirmación antes de usar `contabilidad_revisar_seguras`, "
+            "`contabilidad_preguntar_al_cliente` o `contabilidad_exportar`.")
+
+
+def prompt_revisar_facturas_pendientes(cliente: str) -> str:
+    """Revisa las facturas pendientes de un cliente por orden de dudas."""
+    return (f"Revisa las facturas pendientes de «{cliente}». Localiza al cliente, lista sus pendientes con `contabilidad_listar_facturas` (estado pendiente) y para cada una mira `contabilidad_avisos_factura`. "
+            "Agrúpalas en: seguras (nada que mirar), con avisos (dime cuáles) y sin leer. Para las sin leer ofrece `contabilidad_leer_factura_con_ia` (gasta una consulta de IA: pregúntame antes). No des nada por revisado sin que yo lo confirme.")
+
+
+def prompt_preparar_fichero_a3(cliente: str, trimestre: str = "") -> str:
+    """Comprueba lo que saldría en el fichero para a3 de un cliente y, con confirmación, lo genera."""
+    return (f"Prepara el fichero para a3 de «{cliente}»{' (' + trimestre + ')' if trimestre else ''}. Mira su configuración con `contabilidad_configuracion_a3`, lo que saldría con `contabilidad_comprobar_exportacion` "
+            "y el `contabilidad_mapa_de_cuentas` (qué subcuenta irá a cada tercero). Dime los errores y avisos con su factura y las subcuentas genéricas que mezclarían terceros. Si no hay errores, pídeme confirmación y entonces "
+            "usa `contabilidad_exportar`. Después, recuérdame descargar el fichero y anotar su estado con `contabilidad_fijar_estado_fichero`.")
+
+
+def prompt_comprobar_retorno_a3(cliente: str) -> str:
+    """Cruza un listado de a3 con lo exportado y cuadra el IVA con el 303."""
+    return (f"Voy a pasarte el listado de facturas que devuelve a3 de «{cliente}». Úsalo con `contabilidad_comprobar_retorno_a3` (solo informa). Dime cuáles coinciden, cuáles tienen importes distintos, "
+            "cuáles faltan en a3 y cuáles parecen la misma con otro número, y revisa el `contabilidad_cuadre_303`. Si todo está bien, pídeme confirmación y usa `contabilidad_confirmar_retorno_a3`.")
+
+
 PROMPTS = (
     ("resumen_del_dia_prompt", prompt_resumen_del_dia), ("ficha_cliente", prompt_ficha_cliente), ("preparar_vencimiento", prompt_preparar_vencimiento),
     ("revisar_correo", prompt_revisar_correo), ("cierre_de_trimestre", prompt_cierre_de_trimestre),
+    ("cierre_contable_de_cliente", prompt_cierre_contable_de_cliente), ("revisar_facturas_pendientes", prompt_revisar_facturas_pendientes), ("preparar_fichero_a3", prompt_preparar_fichero_a3),
+    ("comprobar_retorno_a3", prompt_comprobar_retorno_a3),
 )
 
 # --- Recursos: datos que el cliente puede adjuntar a la conversación sin llamar a una herramienta ------------------------------------------
@@ -126,4 +155,6 @@ RECURSOS = (
     ("guilda://tareas/hoy", "Mi día", "Tareas vencidas, de hoy, en curso y asignadas.", "listar_tareas_hoy"),
     ("guilda://fiscal/clientes", "Clientes fiscales", "Los clientes fiscales del despacho.", "listar_clientes_fiscales"),
     ("guilda://consumo-ia", "Consumo de IA", "Consultas de IA del mes del despacho y su tope.", "consumo_ia"),
+    ("guilda://contabilidad/resumen", "Facturas para contabilizar", "Lo que espera en Facturas para contabilizar, cliente por cliente.", "contabilidad_resumen"),
+    ("guilda://contabilidad/panel-cierre", "Qué falta para cerrar", "Estado de cada cliente en el trimestre que se está cerrando.", "contabilidad_panel_cierre"),
 )

@@ -122,6 +122,9 @@ def es_lectura(nombre: str, lectura_conocida: set[str] | frozenset[str] = frozen
     """Herramienta que solo consulta. Una herramienta con verbo de escritura nunca cuenta como lectura."""
     if nombre in lectura_conocida:
         return True
+    from .ia_herramientas import ESCRITURA, SIEMPRE_CONFIRMAR               # lo que se sabe que escribe nunca es lectura, aunque su nombre lleve un verbo de lectura (contabilidad_exportar)
+    if nombre in ESCRITURA or nombre in SIEMPRE_CONFIRMAR:
+        return False
     if _VERBOS_ESCRITURA.search(nombre):
         return False
     return bool(_VERBOS_LECTURA.search(nombre))

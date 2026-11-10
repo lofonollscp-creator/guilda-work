@@ -519,7 +519,7 @@ HERRAMIENTAS: list[dict] = [
     _tool(
         "contabilidad_listar_facturas",
         "Facturas anotadas en Facturas para contabilizar (las más recientes primero), con estado y procedencia.",
-        {"cliente_fiscal_id": _param("integer", "Solo las de este cliente fiscal, opcional."), "estado": _param("string", "pendiente, revisada, exportada o descartada, opcional."), "tipo": _param("string", "emitida o recibida, opcional."), "trimestre": _param("string", "Por ejemplo 2026-T3, opcional."), "limite": _param("integer", "Máximo de facturas (50 por defecto).")},
+        {"cliente_fiscal_id": _param("integer", "Solo las de este cliente fiscal, opcional."), "estado": _param("string", "pendiente, revisada, exportada o descartada, opcional."), "tipo": _param("string", "emitida o recibida, opcional."), "trimestre": _param("string", "Por ejemplo 2026-T3, opcional."), "limite": _param("integer", "Máximo de facturas (50 por defecto, 200 como mucho)."), "desde_indice": _param("integer", "Cuántas saltarse, para pedir las siguientes.")},
         [],
     ),
     _tool(
@@ -566,8 +566,8 @@ HERRAMIENTAS: list[dict] = [
     ),
     _tool(
         "contabilidad_revisar_seguras",
-        "Da por revisadas de golpe las facturas que devuelve contabilidad_revisables_en_lote. Devuelve cuántas se revisaron y cuántas se omitieron.",
-        {"cliente_fiscal_id": _param("integer", "Solo las de este cliente fiscal, opcional."), "umbral": _param("integer", "Confianza mínima de 50 a 100 (90 por defecto).")},
+        "Da por revisadas de golpe las facturas que devuelve contabilidad_revisables_en_lote. Devuelve cuántas se revisaron y cuántas se omitieron. Con simular no cambia nada.",
+        {"cliente_fiscal_id": _param("integer", "Solo las de este cliente fiscal, opcional."), "umbral": _param("integer", "Confianza mínima de 50 a 100 (90 por defecto)."), "simular": _param("boolean", "true = solo dice cuáles se revisarían.")},
         [],
     ),
     _tool(
@@ -645,7 +645,7 @@ HERRAMIENTAS: list[dict] = [
     _tool(
         "contabilidad_listar_ficheros",
         "Los ficheros SUENLACE.DAT generados, los más recientes primero: facturas, registros, cuántas confirmó a3 y el estado anotado (importado o rechazado).",
-        {"cliente_fiscal_id": _param("integer", "Solo los de este cliente fiscal, opcional."), "limite": _param("integer", "Máximo de ficheros (50 por defecto, 200 como mucho).")},
+        {"cliente_fiscal_id": _param("integer", "Solo los de este cliente fiscal, opcional."), "limite": _param("integer", "Máximo de ficheros (50 por defecto, 200 como mucho)."), "desde_indice": _param("integer", "Cuántos saltarse, para pedir los siguientes.")},
         [],
     ),
     _tool(

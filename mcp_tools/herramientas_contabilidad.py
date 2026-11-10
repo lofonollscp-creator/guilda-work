@@ -15,9 +15,10 @@ def _conta():
     return consultas_contabilidad
 
 
-def contabilidad_listar_facturas(cliente_fiscal_id: int | None = None, estado: str | None = None, tipo: str | None = None, trimestre: str | None = None, limite: int = 50) -> list[dict]:
-    """Las facturas anotadas para contabilizar, las más recientes primero. `estado`: pendiente, revisada, exportada o descartada. `tipo`: emitida o recibida. `trimestre`: «2026-T3»."""
-    return _mt._conta().listar_facturas(*_mt._ctx_conta(), cliente_fiscal_id, estado, tipo, trimestre, limite)
+def contabilidad_listar_facturas(cliente_fiscal_id: int | None = None, estado: str | None = None, tipo: str | None = None, trimestre: str | None = None, limite: int = 50, desde_indice: int = 0) -> list[dict]:
+    """Las facturas anotadas para contabilizar, las más recientes primero. `estado`: pendiente, revisada, exportada o descartada. `tipo`: emitida o recibida. `trimestre`: «2026-T3». Hasta 200 por llamada:
+    para las siguientes, `desde_indice` (cuántas saltarse)."""
+    return _mt._conta().listar_facturas(*_mt._ctx_conta(), cliente_fiscal_id, estado, tipo, trimestre, limite, desde_indice)
 
 
 def contabilidad_ver_factura(factura_id: int) -> dict:
@@ -84,9 +85,10 @@ def contabilidad_revisables_en_lote(cliente_fiscal_id: int | None = None, umbral
     return _mt._conta().revisables_en_lote(*_mt._ctx_conta(), cliente_fiscal_id, umbral)
 
 
-def contabilidad_revisar_seguras(cliente_fiscal_id: int | None = None, umbral: int | None = None) -> dict:
-    """Da por revisadas de golpe las facturas que devuelve `contabilidad_revisables_en_lote` (opcionalmente de un solo cliente). Devuelve cuántas se revisaron y cuántas se omitieron. No enseña reglas al sistema."""
-    return _mt._conta().revisar_seguras(*_mt._ctx_conta(), cliente_fiscal_id, umbral)
+def contabilidad_revisar_seguras(cliente_fiscal_id: int | None = None, umbral: int | None = None, simular: bool = False) -> dict:
+    """Da por revisadas de golpe las facturas que devuelve `contabilidad_revisables_en_lote` (opcionalmente de un solo cliente). Devuelve cuántas se revisaron y cuántas se omitieron. No enseña reglas al sistema.
+    Con `simular` no cambia nada: dice cuáles se revisarían."""
+    return _mt._conta().revisar_seguras(*_mt._ctx_conta(), cliente_fiscal_id, umbral, simular)
 
 
 def contabilidad_mapa_de_cuentas(cliente_fiscal_id: int) -> dict:
@@ -154,9 +156,9 @@ def contabilidad_historial_factura(factura_id: int) -> dict:
     return _mt._conta().historial_factura(*_mt._ctx_conta(), factura_id)
 
 
-def contabilidad_listar_ficheros(cliente_fiscal_id: int | None = None, limite: int = 50) -> list[dict]:
+def contabilidad_listar_ficheros(cliente_fiscal_id: int | None = None, limite: int = 50, desde_indice: int = 0) -> list[dict]:
     """Los ficheros SUENLACE.DAT generados, los más recientes primero: facturas, registros, cuántas confirmó a3 y el estado anotado (importado o rechazado, con su motivo)."""
-    return _mt._conta().listar_ficheros(*_mt._ctx_conta(), cliente_fiscal_id, limite)
+    return _mt._conta().listar_ficheros(*_mt._ctx_conta(), cliente_fiscal_id, limite, desde_indice)
 
 
 def contabilidad_fijar_estado_fichero(lote_id: int, estado: str = "", motivo: str = "") -> dict:

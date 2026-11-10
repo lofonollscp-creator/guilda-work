@@ -354,3 +354,32 @@ def test_las_nuevas_que_escriben_no_las_usa_quien_solo_audita(monkeypatch):
         with pytest.raises(ih.ErrorHerramientaIA, match="solo permite consultar"):
             ih.ejecutar(u, n, args)
     assert ih.ejecutar(u, "contabilidad_listar_reglas", {"cliente_fiscal_id": c}) == []
+
+
+def test_paginacion_y_simulacro_de_la_revision_en_lote():
+    t, u, c = _despacho("Despacho herr m5")
+    ids = [_anotar(u, c, numero=f"P-{i}", fecha=f"2026-08-{10 + i}")["id"] for i in range(5)]
+    primera = ih.ejecutar(u, "contabilidad_listar_facturas", {"cliente_fiscal_id": c, "limite": 2})
+    segunda = ih.ejecutar(u, "contabilidad_listar_facturas", {"cliente_fiscal_id": c, "limite": 2, "desde_indice": 2})
+    ultima = ih.ejecutar(u, "contabilidad_listar_facturas", {"cliente_fiscal_id": c, "limite": 2, "desde_indice": 4})
+    assert [len(primera), len(segunda), len(ultima)] == [2, 2, 1] and {x["id"] for x in primera + segunda + ultima} == set(ids)
+    s = ih.ejecutar(u, "contabilidad_revisar_seguras", {"cliente_fiscal_id": c, "simular": True})
+    assert s["simulacion"] is True and s["se_revisarian"] == 0 and s["facturas"] == []
+
+
+def test_los_prompts_y_recursos_de_contabilidad_estan_en_el_mcp():
+    from app import mcp_utilidad as mu
+    nombres = {n for n, _f in mu.PROMPTS}
+    assert {"cierre_contable_de_cliente", "revisar_facturas_pendientes", "preparar_fichero_a3", "comprobar_retorno_a3"} <= nombres
+    herramientas = {t.__name__ for t in mcp_tools.TOOLS}
+    for _n, f in mu.PROMPTS:
+        for h in __import__("re").findall(r"`(contabilidad_[a-z_0-9]+)`", f.__doc__ + " " + f(*["x"] * (f.__code__.co_argcount))):
+            assert h in herramientas, f"el prompt {f.__name__} cita una herramienta que no existe: {h}"
+    assert {"guilda://contabilidad/resumen", "guilda://contabilidad/panel-cierre"} <= {r[0] for r in mu.RECURSOS}
+
+
+def test_las_herramientas_de_ajuste_son_idempotentes_en_sus_anotaciones():
+    a = mcp_tools._anotaciones("contabilidad_fijar_estado_fichero")
+    assert a.idempotentHint and not a.readOnlyHint
+    assert mcp_tools._anotaciones("contabilidad_guardar_regla").idempotentHint and not mcp_tools._anotaciones("contabilidad_exportar").idempotentHint
+    assert mcp_tools._anotaciones("contabilidad_preguntar_al_cliente").openWorldHint

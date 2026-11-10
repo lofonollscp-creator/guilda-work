@@ -152,11 +152,11 @@ def test_consumo_ia_comunicados_y_entregas_de_webhook():
 def test_los_prompts_estan_registrados_y_solo_nombran_herramientas_que_existen():
     servidor = _servidor()
     nombres = {p.name for p in asyncio.run(servidor.list_prompts())}
-    assert nombres == {n for n, _ in mu.PROMPTS} and len(nombres) == 5
+    assert nombres == {n for n, _ in mu.PROMPTS} and len(nombres) == 9
     existentes = {t.__name__ for t in mt.TOOLS}
     for nombre, fn in mu.PROMPTS:
         texto = fn(*["Acme"] * (fn.__code__.co_argcount))
-        citadas = set(re.findall(r"`([a-z_]+)`", texto))
+        citadas = set(re.findall(r"`([a-z_0-9]+)`", texto))
         assert citadas and citadas <= existentes, (nombre, citadas - existentes)
     r = asyncio.run(servidor.get_prompt("ficha_cliente", {"cliente": "Acme SL"}))
     assert "Acme SL" in r.messages[0].content.text and "resumen_cliente_fiscal" in r.messages[0].content.text

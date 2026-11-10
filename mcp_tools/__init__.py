@@ -787,7 +787,7 @@ def _anotaciones(nombre: str):
     return ToolAnnotations(
         readOnlyHint=lectura,
         destructiveHint=False if lectura else (borra or nombre in SIEMPRE_CONFIRMAR),
-        idempotentHint=lectura or nombre.startswith(("editar_", "fijar_", "marcar_", "completar_", "alternar_")),
+        idempotentHint=lectura or nombre.startswith(("editar_", "fijar_", "marcar_", "completar_", "alternar_")) or bool(re.search(r"(^|_)(fijar|guardar)_", nombre)),
         openWorldHint=bool(externo),
     )
 

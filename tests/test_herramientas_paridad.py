@@ -35,3 +35,13 @@ def test_las_de_contabilidad_estan_clasificadas_y_agrupadas():
         clases = [n in ih.LECTURA, n in ih.ESCRITURA, n in ih.SIEMPRE_CONFIRMAR]
         assert sum(clases) == 1, f"{n} debe estar en una sola clase: lectura, escritura o siempre confirmar"
         assert any(t["function"]["name"] == n for t in ih.HERRAMIENTAS), f"{n} no está en el asistente"
+
+
+def test_ninguna_herramienta_que_escribe_cuenta_como_lectura():
+    """Un token de solo lectura no puede ejecutar nada que cambie datos: por muy «de lectura» que suene su nombre (contabilidad_exportar, contabilidad_leer_factura_con_ia)."""
+    escriben = ih.ESCRITURA | ih.SIEMPRE_CONFIRMAR
+    mal = sorted(n for n in escriben if hg.es_lectura(n, ih.LECTURA))
+    assert not mal, f"escriben pero se tratan como lectura: {mal}"
+    expuestas = {t.__name__ for t in mcp_tools.tools_filtradas(None, True)}
+    assert not (expuestas & escriben), sorted(expuestas & escriben)
+    assert mcp_tools._anotaciones("contabilidad_exportar").readOnlyHint is False and mcp_tools._anotaciones("contabilidad_exportar").destructiveHint is False

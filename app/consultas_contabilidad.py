@@ -30,7 +30,8 @@ def _resumen(f: dict) -> dict:
             "tiene_archivo": bool(f.get("documento_id")), "lectura_fuente": f.get("lectura_fuente"), "lectura_confianza": f.get("lectura_confianza"), "revision_auto": bool(f.get("revision_auto"))}
 
 
-def listar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, estado: str | None = None, tipo: str | None = None, trimestre: str | None = None, limite: int = 50) -> list[dict]:
+def listar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, estado: str | None = None, tipo: str | None = None, trimestre: str | None = None, limite: int = 50,
+                    desde_indice: int = 0) -> list[dict]:
     """Las facturas anotadas (las más recientes primero), con su estado y su procedencia."""
     _exigir_modulo(tenant_id)
     if estado and estado not in fc.ESTADOS:
@@ -38,8 +39,9 @@ def listar_facturas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | No
     if tipo and tipo not in fc.TIPOS:
         raise ValueError("`tipo` debe ser emitida o recibida.")
     desde, hasta = fc.rango_del_trimestre(trimestre) if trimestre else (None, None)
-    filas = fc.listar(tenant_id, usuario_id, cliente_fiscal_id=cliente_fiscal_id, estado=estado or None, tipo=tipo or None, desde=desde, hasta=hasta, limite=max(1, min(int(limite or 50), 200)))
-    return [_resumen(f) for f in filas]
+    limite, salto = max(1, min(int(limite or 50), 200)), max(0, int(desde_indice or 0))
+    filas = fc.listar(tenant_id, usuario_id, cliente_fiscal_id=cliente_fiscal_id, estado=estado or None, tipo=tipo or None, desde=desde, hasta=hasta, limite=min(limite + salto, 2000))
+    return [_resumen(f) for f in filas[salto:salto + limite]]
 
 
 def ver_factura(tenant_id: int, usuario_id: int, factura_id: int) -> dict:
@@ -164,8 +166,12 @@ def revisables_en_lote(tenant_id: int, usuario_id: int, cliente_fiscal_id: int |
     return {"umbral": umbral, "total": len(filas), "facturas": [_resumen(f) for f in filas[:200]]}
 
 
-def revisar_seguras(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, umbral: int | None = None) -> dict:
-    """Da por revisadas de golpe las `revisables_en_lote`: {revisadas, omitidas}. No enseña reglas al sistema."""
+def revisar_seguras(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, umbral: int | None = None, simular: bool = False) -> dict:
+    """Da por revisadas de golpe las `revisables_en_lote`: {revisadas, omitidas}. No enseña reglas al sistema. Con `simular` no cambia nada: {simulacion: true, se_revisarian, facturas}."""
+    if simular:
+        _exigir_modulo(tenant_id)
+        r = revisables_en_lote(tenant_id, usuario_id, cliente_fiscal_id, umbral)
+        return {"simulacion": True, "se_revisarian": r["total"], "umbral": r["umbral"], "facturas": r["facturas"]}
     _exigir_escritura(tenant_id, usuario_id)
     return fc.revisar_en_lote(tenant_id, usuario_id, cliente_fiscal_id or None, int(umbral or fc.UMBRAL_REVISION_EN_LOTE))
 
@@ -277,12 +283,12 @@ def historial_factura(tenant_id: int, usuario_id: int, factura_id: int) -> dict:
     return {"factura_id": int(factura_id), "eventos": fc.historial(tenant_id, usuario_id, int(factura_id))}
 
 
-def listar_ficheros(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, limite: int = 50) -> list[dict]:
+def listar_ficheros(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, limite: int = 50, desde_indice: int = 0) -> list[dict]:
     """Los ficheros SUENLACE.DAT generados (los más recientes primero), con cuántas facturas llevan, cuántas confirmó a3 y el estado que se anotó (importado o rechazado)."""
     _exigir_modulo(tenant_id)
     return [{"id": l["id"], "cliente_fiscal_id": l["cliente_fiscal_id"], "cliente": l["cliente_nombre"], "creado_en": l["creado_en"], "facturas": l["n_facturas"], "registros": l["n_registros"],
              "comprobado_en": l["comprobado_en"], "confirmadas_en_a3": l["n_confirmadas"], "estado_a3": l["estado_a3"], "motivo_a3": l["motivo_a3"]}
-            for l in fc.listar_lotes(tenant_id, usuario_id, cliente_fiscal_id or None, max(1, min(int(limite or 50), 200)))]
+            for l in fc.listar_lotes(tenant_id, usuario_id, cliente_fiscal_id or None, min(max(1, min(int(limite or 50), 200)) + max(0, int(desde_indice or 0)), 400))][max(0, int(desde_indice or 0)):][:max(1, min(int(limite or 50), 200))]
 
 
 def fijar_estado_fichero(tenant_id: int, usuario_id: int, lote_id: int, estado: str = "", motivo: str = "") -> dict:
