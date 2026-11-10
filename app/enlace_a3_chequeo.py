@@ -105,7 +105,7 @@ def chequear(contenido: bytes, digitos: int = 8) -> dict:
         fecha = _fecha(_c(r, 7, 14))
         if fecha is None:
             inf.error(n, f"La fecha del registro (7-14) no es válida: «{_c(r, 7, 14)}».")
-        if _c(r, 15, 15) != "4" and _c(r, pos_moneda, pos_moneda) != "E":         # la ampliación (tipo 4) no lleva moneda
+        if _c(r, 15, 15) not in ("3", "4") and _c(r, pos_moneda, pos_moneda) != "E":         # la observación (tipo 3) y la ampliación (tipo 4) no llevan moneda
             inf.error(n, f"La posición {pos_moneda} (moneda) debe ser «E» (euros).")
         if _c(r, pos_generado, pos_generado) not in ("N", "S"):
             inf.error(n, f"La posición {pos_generado} (generado/ya contabilizado) debe ser «N» o «S».")
@@ -129,6 +129,11 @@ def chequear(contenido: bytes, digitos: int = 8) -> dict:
                 _ampliacion(inf, n, r, actual)
         elif tipo == "V" and inf.formato == enlace_a3.FORMATO_CLASICO:
             _vencimiento(inf, n, r, actual)
+        elif tipo == "C" and inf.formato == enlace_a3.FORMATO_CLASICO:
+            _alta_de_cuenta(inf, n, r, digitos)
+        elif tipo == "3" and inf.formato == enlace_a3.FORMATO_CLASICO:
+            if actual is None:
+                inf.error(n, "Una observación (tipo 3) tiene que ir después del apunte al que se refiere.")
         else:
             inf.error(n, f"Tipo de registro desconocido en la posición 15: «{tipo}».")
     for f in facturas:
@@ -277,6 +282,26 @@ def _ampliacion(inf: _Informe, n: int, r: str, f: dict) -> None:
     esperado = "E" if f["tipo_factura"] == "1" else "R"
     if _c(r, 304, 304) != esperado:
         inf.error(n, f"El tipo de factura de la ampliación (304) debe ser «{esperado}» y es «{_c(r, 304, 304)}».")
+
+
+def _alta_de_cuenta(inf: _Informe, n: int, r: str, digitos: int) -> None:
+    """Registro tipo C del formato de 256: alta o modificación de una cuenta de cliente o proveedor."""
+    cuenta = _c(r, 16, 27)
+    if not re.fullmatch(r"\d{12}", cuenta):
+        inf.error(n, f"La cuenta (16-27) debe tener 12 dígitos y es «{cuenta}».")
+    elif cuenta[digitos:].strip("0"):
+        inf.error(n, f"La cuenta {cuenta[:digitos]}… tiene más de {digitos} dígitos significativos.")
+    if not _c(r, 28, 57).strip():
+        inf.aviso(n, "La cuenta no lleva nombre.")
+    if _c(r, 58, 58) not in ("S", "N"):
+        inf.error(n, f"La marca «actualizar saldo inicial» (58) debe ser S o N y es «{_c(r, 58, 58)}».")
+    if _c(r, 73, 73) not in (" ", "B"):
+        inf.error(n, f"La marca de ampliación (73) debe ir en blanco (cuenta) o ser «B» (banco) y es «{_c(r, 73, 73)}».")
+    if _c(r, 238, 238) not in (" ", "S", "N"):
+        inf.error(n, f"La marca de criterio de caja (238) debe ser S, N o ir en blanco y es «{_c(r, 238, 238)}».")
+    nif = _c(r, 78, 91).strip()
+    if nif and _c(r, 73, 73) == " " and not re.fullmatch(r"[A-Z0-9]{5,14}", nif):
+        inf.error(n, f"El NIF de la cuenta (78-91) «{nif}» tiene caracteres que no vale.")
 
 
 def _vencimiento(inf: _Informe, n: int, r: str, factura: dict | None) -> None:

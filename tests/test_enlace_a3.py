@@ -207,3 +207,27 @@ def test_una_emitida_genera_un_cobro_y_sin_forma_ni_cuenta_no_hay_ampliacion():
 def test_ni_un_abono_ni_el_formato_de_512_llevan_vencimientos():
     assert [r[14] for r in _lineas256([dict(FACTURA, abono=True, rectifica_fecha="2026-08-01", rectifica_numero="A-1", vencimiento={"fecha": "2026-10-30"})])] == ["2", "9", "4"]
     assert [r[14] for r in _lineas([dict(FACTURA, vencimiento={"fecha": "2026-10-30"})])] == ["1", "9"]
+
+
+# --- Altas de cuentas (C) y observaciones (3) del formato clásico ----------------------------------------------------------------------------------------------
+
+def test_el_alta_de_cuenta_campo_a_campo():
+    a = a3.registro_cuenta(empresa=12, fecha="2026-08-01", cuenta="40000007", digitos=8, nombre="Proveedor Ñandú S.L.", nif="b-12345678", criterio_caja=True)
+    assert len(a) == 254
+    _comprobar(a, [(1, 1, "4"), (2, 6, "00012"), (7, 14, "20260801"), (15, 15, "C"), (16, 27, "400000070000"), (28, 57, "Proveedor Ñandú S.L.".ljust(30)), (58, 58, "N"), (59, 72, " " * 14), (73, 73, " "),
+                   (74, 77, "    "), (78, 91, "B12345678".ljust(14)), (92, 237, " " * 146), (238, 238, "S"), (239, 252, " " * 14), (253, 253, "E"), (254, 254, "N")])
+    assert a3.registro_cuenta(empresa=1, fecha="2026-08-01", cuenta="43000001", digitos=8, nombre="X")[237] == " "
+
+
+def test_las_altas_van_antes_de_las_facturas_solo_en_256():
+    alta = {"cuenta": "40000007", "nombre": "Proveedor", "nif": "B12345678", "fecha": "2026-09-30", "criterio_caja": None}
+    registros = a3.generar([FACTURA], empresa=12, formato="256", altas=[alta]).decode("latin-1").split("\r\n")[:-1]
+    assert [r[14] for r in registros] == ["C", "1", "9"]
+    assert [r[14] for r in a3.generar([FACTURA], empresa=12, altas=[alta]).decode("latin-1").split("\r\n")[:-1]] == ["1", "9"]
+
+
+def test_la_observacion_va_al_final_del_apunte_en_256():
+    registros = _lineas256([dict(FACTURA, observacion="Guilda Work #7 · Compra", vencimiento={"fecha": "2026-10-30"})])
+    assert [r[14] for r in registros] == ["1", "9", "V", "3"]
+    _comprobar(registros[3], [(1, 1, "4"), (7, 14, "20260930"), (15, 15, "3"), (16, 58, " " * 43), (59, 253, "Guilda Work #7 · Compra".ljust(195)), (254, 254, "N")])
+    assert len(registros[3]) == 254

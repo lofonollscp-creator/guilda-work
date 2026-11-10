@@ -192,7 +192,24 @@ def registro_vencimiento_ampliacion(*, empresa, fecha_vencimiento, forma_pago: s
     return _rellenar(r, FORMATO_CLASICO)
 
 
-def generar(facturas: list[dict], *, empresa, digitos: int = 8, formato: str = FORMATO_SII) -> bytes:
+def registro_cuenta(*, empresa, fecha, cuenta, digitos: int, nombre, nif=None, criterio_caja=None) -> str:
+    """Registro tipo C (formato clásico de 256): alta o modificación de una cuenta de cliente o proveedor con su NIF (78-91) y, en los proveedores, si están en el criterio de caja (238: S o N). Si la cuenta
+    ya existe a3 la actualiza con estos datos. No actualiza el saldo inicial."""
+    r = (TIPO_DE_FORMATO[FORMATO_CLASICO] + _empresa(empresa) + _fecha(fecha) + "C" + _cuenta(cuenta, digitos) + _texto(nombre, 30)               # 1-57
+         + "N" + " " * 14 + " " + " " * 4                                                                                                          # 58 (no actualizar saldo), 59-72, 73, 74-77
+         + _texto(re.sub(r"[\s.\-]", "", str(nif or "")).upper(), 14))                                                                         # 78-91
+    r = r.ljust(237) + ("S" if criterio_caja is True else "N" if criterio_caja is False else " ")                                                  # 92-237 (domicilio y contacto), 238
+    return _rellenar(r, FORMATO_CLASICO)
+
+
+def registro_observacion(*, empresa, fecha, texto) -> str:
+    """Registro tipo 3 (formato clásico de 256): comentario asociado al apunte que lo precede (59-253, 195 caracteres)."""
+    r = TIPO_DE_FORMATO[FORMATO_CLASICO] + _empresa(empresa) + _fecha(fecha) + "3" + " " * 43 + _texto(texto, 195)                                   # 1-58, 59-253
+    assert len(r) == 253, f"observación de {len(r)} caracteres"
+    return r + "N"
+
+
+def generar(facturas: list[dict], *, empresa, digitos: int = 8, formato: str = FORMATO_SII, altas: list[dict] | None = None) -> bytes:
     """El contenido de SUENLACE.DAT. Cada factura es un dict ya validado:
     `{tipo: 'emitida'|'recibida', abono, bien_inversion, rectifica_fecha, rectifica_numero, fecha, fecha_operacion, numero, concepto, nif, nombre, cuenta_tercero, total_centimos, ampliacion: {dua, clave_340,
     nif_representante, autofactura, metalico, inmuebles}, lineas: [{cuenta, descripcion_cuenta, subtipo, base_centimos, pct_iva, cuota_iva, pct_recargo, cuota_recargo, pct_retencion, cuota_retencion,
@@ -202,6 +219,9 @@ def generar(facturas: list[dict], *, empresa, digitos: int = 8, formato: str = F
     if formato not in FORMATOS:
         raise ValueError(f"Formato de enlace desconocido: {formato}")
     lineas = []
+    if formato == FORMATO_CLASICO:                                  # las altas de cuentas van antes de las facturas que las usan; en el de 512 no se sabe su diseño: las crea la propia factura
+        for a in altas or []:
+            lineas.append(registro_cuenta(empresa=empresa, fecha=a["fecha"], cuenta=a["cuenta"], digitos=digitos, nombre=a.get("nombre"), nif=a.get("nif"), criterio_caja=a.get("criterio_caja")))
     for f in facturas:
         abono = bool(f.get("abono"))
         tipo = RECIBIDA if f.get("tipo") == "recibida" else EMITIDA
@@ -233,6 +253,8 @@ def generar(facturas: list[dict], *, empresa, digitos: int = 8, formato: str = F
                                                concepto=f.get("concepto"), importe_centimos=int(f["total_centimos"]), fecha_factura=f["fecha"], cuenta_tesoreria=venc.get("cuenta_tesoreria")))
             if venc.get("forma_pago") or venc.get("ccc"):
                 lineas.append(registro_vencimiento_ampliacion(empresa=empresa, fecha_vencimiento=venc["fecha"], forma_pago=venc.get("forma_pago"), ccc=venc.get("ccc")))
+        if formato == FORMATO_CLASICO and f.get("observacion"):
+            lineas.append(registro_observacion(empresa=empresa, fecha=f["fecha"], texto=f["observacion"]))
     return "".join(l + FIN_DE_LINEA for l in lineas).encode("latin-1")
 
 

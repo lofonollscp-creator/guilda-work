@@ -55,7 +55,7 @@ def test_en_256_la_ampliacion_sale_en_el_registro_4_y_el_chequeo_lo_da_por_bueno
     fc.guardar_configuracion(t, u, c, {"a3_empresa": "7", "digitos": "8", "formato_enlace": "256"})
     contenido = _exportar(t, u, c, _crear(t, u, c, datos_a3={"clave_340": "1", "metalico": "total"}))
     registros = [contenido[i:i + 256].decode("latin-1") for i in range(0, len(contenido), 256)]
-    assert [r[14] for r in registros] == ["1", "9", "4"] and registros[2][106] == "1" and registros[2][131] == "S" and all(r[0] == "4" for r in registros)
+    assert [r[14] for r in registros] == ["1", "9", "4", "3"] and registros[2][106] == "1" and registros[2][131] == "S" and all(r[0] == "4" for r in registros)
     assert chequeo.chequear(contenido, 8)["ok"]
 
 
@@ -127,7 +127,7 @@ def test_vencimiento_forma_de_pago_e_iban_se_validan_y_salen_en_256():
             fc.datos_a3_validados(malo, "recibida")
     contenido = _exportar(t, u, c, fid)
     registros = [contenido[i:i + 256].decode("latin-1") for i in range(0, len(contenido), 256)]
-    assert [r[14] for r in registros] == ["1", "9", "V", "V"] and registros[2][6:14] == "20261030" and registros[3][93:113] == "21000418450200051332" and registros[3][58:60] == "TR"
+    assert [r[14] for r in registros] == ["1", "9", "V", "V", "3"] and registros[2][6:14] == "20261030" and registros[3][93:113] == "21000418450200051332" and registros[3][58:60] == "TR"
     assert chequeo.chequear(contenido, 8)["ok"]
 
 
@@ -150,3 +150,26 @@ def test_la_lectura_guarda_iban_vencimiento_y_forma_de_pago_validos():
     assert nuevos["datos_a3"] == {"iban": "ES9121000418450200051332", "vencimiento": "2026-09-14", "forma_pago": "TR"}
     _, nuevos, _, avisos = lf._a_factura({**base, "iban": "ES00 0000", "vencimiento": "2026-08-01", "forma_pago": "bizum"}, f, "", "")
     assert "datos_a3" not in nuevos and any("IBAN leído" in a for a in avisos)               # IBAN inválido, vencimiento anterior a la factura y forma desconocida: nada se guarda
+
+
+def test_en_256_las_cuentas_nuevas_se_dan_de_alta_con_su_nif_y_cada_apunte_lleva_su_observacion():
+    t, u, c = _despacho()
+    fc.guardar_configuracion(t, u, c, {"a3_empresa": "7", "digitos": "8", "formato_enlace": "256", "subcuentas_auto": "1"})
+    fid = _crear(t, u, c, concepto="Material de oficina")
+    contenido = _exportar(t, u, c, fid)
+    registros = [contenido[i:i + 256].decode("latin-1") for i in range(0, len(contenido), 256)]
+    assert [r[14] for r in registros] == ["C", "1", "9", "3"]
+    assert registros[0][77:91].strip() == NIF and registros[0][15:27] == "400000010000" and registros[3][58:120].startswith(f"Guilda Work #{fid} · Material")
+    assert chequeo.chequear(contenido, 8)["ok"]
+
+
+def test_el_chequeo_del_alta_de_cuenta_detecta_marcas_y_cuentas_mal():
+    from app import enlace_a3
+    base = enlace_a3.generar([{"tipo": "recibida", "fecha": "2026-08-15", "numero": "1", "nif": NIF, "nombre": "X", "cuenta_tercero": "40000001", "total_centimos": 12100,
+                               "lineas": [{"cuenta": "62900000", "base_centimos": 10000, "pct_iva": 2100, "cuota_iva": 2100, "cuenta_iva": "47200000"}]}], empresa=7, formato="256").decode("latin-1")
+    alta = enlace_a3.registro_cuenta(empresa=7, fecha="2026-08-15", cuenta="40000001", digitos=8, nombre="X", nif=NIF)
+    mala = alta[:57] + "Z" + alta[58:237] + "Q" + alta[238:]                          # marca de saldo y de criterio de caja inválidas
+    r = chequeo.chequear((mala + "\r\n" + base).encode("latin-1"), 8)
+    mensajes = " ".join(e["mensaje"] for e in r["errores"])
+    assert not r["ok"] and "actualizar saldo inicial" in mensajes and "criterio de caja (238)" in mensajes
+    assert chequeo.chequear((alta + "\r\n" + base).encode("latin-1"), 8)["ok"]

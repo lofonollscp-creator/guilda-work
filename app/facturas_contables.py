@@ -1479,6 +1479,17 @@ def resumen_por_estado(tenant_id: int, usuario_id: int, cliente_fiscal_id: int |
 
 # --- Exportar a a3 ---------------------------------------------------------------------------------------------------------------------------------------
 
+def _altas_para_enlace(facturas: list[dict], nuevas: dict) -> list[dict]:
+    """Las cuentas de terceros que el programa numera al exportar (`nuevas`), con su NIF y la fecha de su primera factura, para darlas de alta con sus datos (registro C del formato de 256). Los proveedores
+    que aplican el criterio de caja se marcan."""
+    altas = []
+    for (tipo_tercero, nif), (cuenta, nombre) in nuevas.items():
+        suyas = [f for f in facturas if _nif(f["tercero_nif"]) == nif and (f["tipo"] == "recibida") == (tipo_tercero == "proveedor")]
+        altas.append({"cuenta": cuenta, "nombre": nombre, "nif": nif, "fecha": min((f["fecha"] for f in suyas), default=facturas[0]["fecha"]),
+                      "criterio_caja": (True if any(f.get("criterio_caja") for f in suyas) else None) if tipo_tercero == "proveedor" else None})
+    return altas
+
+
 def _vencimiento_para_enlace(f: dict) -> dict:
     """El vencimiento de la factura para el registro V (formato clásico): fecha, forma de cobro o pago y la cuenta bancaria de 20 dígitos (los 20 últimos de un IBAN español)."""
     a = f.get("a3") or {}
@@ -1499,7 +1510,7 @@ def _para_enlace(tenant_id: int, f: dict, cfg: dict, nuevas: dict | None = None)
     return {"tipo": f["tipo"], "abono": bool(f["abono"]), "fecha": f["fecha"], "fecha_operacion": f["fecha_operacion"], "numero": f["numero"], "rectifica_fecha": f.get("rectifica_fecha"), "rectifica_numero": f.get("rectifica_numero"), "concepto": f["concepto"] or (
         ("Su Fra. " if f["tipo"] == "recibida" else "Nuestra Fra. ") + f["numero"]), "nif": f["tercero_nif"], "nombre": f["tercero_nombre"], "caja": bool(f.get("criterio_caja")) and f["tipo"] == "recibida",
         "cuenta_tercero": (nuevas or {}).get(("proveedor" if f["tipo"] == "recibida" else "cliente", _nif(f["tercero_nif"])), (None,))[0] or cuenta_efectiva(tenant_id, f, cfg), "total_centimos": f["total_centimos"],
-        "bien_inversion": bool((f.get("a3") or {}).get("bien_inversion")) and f["tipo"] == "recibida", "ampliacion": _ampliacion_para_enlace(f), "vencimiento": _vencimiento_para_enlace(f),
+        "bien_inversion": bool((f.get("a3") or {}).get("bien_inversion")) and f["tipo"] == "recibida", "ampliacion": _ampliacion_para_enlace(f), "vencimiento": _vencimiento_para_enlace(f), "observacion": f"Guilda Work #{f['id']}" + (f" · {f['concepto']}" if f.get("concepto") else ""),
         "lineas": [{"cuenta": l["cuenta"] or gasto_o_ingreso, "descripcion_cuenta": "Compras" if f["tipo"] == "recibida" else "Ventas", "subtipo": l["subtipo"], "base_centimos": l["base_centimos"], "pct_iva": l["pct_iva"], "cuota_iva": l["cuota_iva"],
                     "pct_recargo": l["pct_recargo"], "cuota_recargo": l["cuota_recargo"], "pct_retencion": l["pct_retencion"], "cuota_retencion": l["cuota_retencion"],
                     "sujeta_iva": bool(l["sujeta_iva"]), "impreso": impreso_de_linea(f["tipo"], l), "cuenta_iva": cuenta_iva, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}
@@ -1520,7 +1531,9 @@ def _preparar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
         if f["problemas"]:
             raise ValueError(f"La factura {f['numero']} tiene problemas: " + " ".join(f["problemas"]))
     nuevas = _subcuentas_nuevas(tenant_id, cfg, facturas)
-    contenido = enlace_a3.generar([_para_enlace(tenant_id, f, cfg, nuevas) for f in facturas], empresa=cfg["a3_empresa"], digitos=cfg["digitos"], formato=cfg.get("formato_enlace") or enlace_a3.FORMATO_SII)
+    formato = cfg.get("formato_enlace") or enlace_a3.FORMATO_SII
+    contenido = enlace_a3.generar([_para_enlace(tenant_id, f, cfg, nuevas) for f in facturas], empresa=cfg["a3_empresa"], digitos=cfg["digitos"], formato=formato,
+                                  altas=_altas_para_enlace(facturas, nuevas))
     return cliente, cfg, facturas, nuevas, contenido
 
 
