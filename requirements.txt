@@ -8,7 +8,7 @@ pyinstaller>=6.0
 pywebview>=5.0
 pystray>=0.19
 keyboard>=0.13
-Pillow>=10.0
+Pillow>=12.3.0
 # Export PDF del registro de fichaje (app/fichaje_export.py) -- puro Python
 # instalable por pip, sin binario de sistema externo (a diferencia de
 # weasyprint/wkhtmltopdf, que necesitan Pango/Cairo o un binario aparte).
@@ -56,3 +56,8 @@ opencv-python-headless>=4.9
 # Passkeys del portal de cliente (app/portal_passkeys.py): WebAuthn (huella, cara o PIN del dispositivo) para entrar sin esperar el correo.
 webauthn>=2.5,<3
 numpy>=1.26
+# Mínimos por vulnerabilidades conocidas (dependencias indirectas fijadas aquí para que una instalación nueva no traiga versiones afectadas)
+certifi>=2026.7.22
+opentelemetry-api>=1.44.0
+pyasn1>=0.6.4
+setuptools>=83.0.0
