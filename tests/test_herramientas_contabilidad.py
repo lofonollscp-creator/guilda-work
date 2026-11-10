@@ -212,3 +212,15 @@ def test_panel_de_cierre_por_trimestre():
     assert r["trimestre"] == "2026-T3" and r["plazo"] == "2026-10-20" and r["clientes"][0]["por_revisar"] == 1
     with pytest.raises(ih.ErrorHerramientaIA):
         ih.ejecutar(u, "contabilidad_panel_cierre", {"trimestre": "mal"})
+
+
+def test_retorno_de_a3_con_las_columnas_indicadas_por_la_ia():
+    t, u, c = _despacho("Despacho herr columnas")
+    f = _anotar(u, c)
+    ih.ejecutar(u, "contabilidad_cambiar_estado_factura", {"factura_id": f["id"], "estado": "revisada"})
+    ih.ejecutar(u, "contabilidad_exportar", {"cliente_fiscal_id": c})
+    sin_titulos = "Registro\nB;15/08/2026;F-1;1.210,00\n"
+    with pytest.raises(ih.ErrorHerramientaIA, match="No encuentro las columnas"):
+        ih.ejecutar(u, "contabilidad_comprobar_retorno_a3", {"cliente_fiscal_id": c, "contenido": sin_titulos})
+    r = ih.ejecutar(u, "contabilidad_confirmar_retorno_a3", {"cliente_fiscal_id": c, "contenido": sin_titulos, "columnas": {"numero": "C", "fecha": "B", "total": "D"}, "fila_de_titulos": 0})
+    assert r["leidas"] == 1 and len(r["confirmadas"]) == 1

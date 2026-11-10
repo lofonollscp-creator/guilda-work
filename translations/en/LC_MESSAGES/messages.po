@@ -26696,3 +26696,30 @@ msgstr "the total"
 
 msgid "los importes"
 msgstr "the amounts"
+
+msgid "Mi listado no se reconoce: indicar las columnas"
+msgstr "My listing is not recognised: set the columns"
+
+msgid "Estas son las primeras filas del archivo. Indica la letra de cada columna, vuelve a elegir el archivo y pulsa «Comprobar»."
+msgstr "These are the first rows of the file. Enter the letter of each column, choose the file again and press “Check”."
+
+msgid "Fila de los títulos (0 si no hay)"
+msgstr "Header row (0 if none)"
+
+msgid "Quizá son la misma con otro número"
+msgstr "Maybe the same invoice with another number"
+
+msgid "Estas exportadas no están en a3 con su número, pero hay una fila de a3 con el mismo importe y una fecha muy cercana. Comprueba si es la misma y corrige el número donde haga falta."
+msgstr "These exported invoices are not in a3 under their number, but there is an a3 row with the same amount and a very close date. Check whether it is the same one and fix the number where needed."
+
+msgid "Factura en Guilda"
+msgstr "Invoice in Guilda"
+
+msgid "Fila de a3"
+msgstr "a3 row"
+
+msgid "Una columna indicada no es válida: usa la letra de la columna (A, B, C…)."
+msgstr "A column you entered is not valid: use the column letter (A, B, C…)."
+
+msgid "Indica al menos la columna del número de factura y otra más (fecha, NIF o total)."
+msgstr "Enter at least the invoice number column and one more (date, tax ID or total)."

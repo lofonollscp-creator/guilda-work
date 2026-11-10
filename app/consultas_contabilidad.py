@@ -202,13 +202,16 @@ def _bytes_del_listado(contenido: str | None, contenido_base64: str | None) -> b
     raise ValueError("Pasa el listado de a3 en `contenido` (texto CSV) o en `contenido_base64` (CSV o Excel).")
 
 
-def cruzar_retorno_a3(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "", confirmar: bool = False) -> dict:
-    """Cruza un listado de a3 con las facturas exportadas del cliente. Sin `confirmar` solo informa (no guarda nada); con `confirmar` anota como confirmadas las que coinciden exactamente."""
+def cruzar_retorno_a3(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "", confirmar: bool = False,
+                      columnas: dict | None = None, fila_de_titulos: int = 1) -> dict:
+    """Cruza un listado de a3 con las facturas exportadas del cliente. Sin `confirmar` solo informa (no guarda nada); con `confirmar` anota como confirmadas las que coinciden exactamente. Si las columnas no
+    se reconocen por su título, `columnas` ({"numero": "C", "fecha": "B", "total": "D"}, por letra) y `fila_de_titulos` (0 si no hay) dicen cuál es cuál."""
     if confirmar:
         _exigir_escritura(tenant_id, usuario_id)
     else:
         _exigir_modulo(tenant_id)
-    filas = retorno_a3.leer(_bytes_del_listado(contenido, contenido_base64), nombre or "")
+    mapa = retorno_a3.mapa_de_columnas(**{k: v for k, v in (columnas or {}).items() if k in retorno_a3.SINONIMOS})
+    filas = retorno_a3.leer(_bytes_del_listado(contenido, contenido_base64), nombre or "", mapa, int(fila_de_titulos))
     return retorno_a3.cruzar(tenant_id, usuario_id, int(cliente_fiscal_id), filas, confirmar=bool(confirmar))
 
 

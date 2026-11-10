@@ -26705,3 +26705,30 @@ msgstr "el total"
 
 msgid "los importes"
 msgstr "els imports"
+
+msgid "Mi listado no se reconoce: indicar las columnas"
+msgstr "El meu llistat no es reconeix: indicar les columnes"
+
+msgid "Estas son las primeras filas del archivo. Indica la letra de cada columna, vuelve a elegir el archivo y pulsa «Comprobar»."
+msgstr "Aquestes són les primeres files de l'arxiu. Indica la lletra de cada columna, torna a triar l'arxiu i prem «Comprovar»."
+
+msgid "Fila de los títulos (0 si no hay)"
+msgstr "Fila dels títols (0 si no n'hi ha)"
+
+msgid "Quizá son la misma con otro número"
+msgstr "Potser són la mateixa amb un altre número"
+
+msgid "Estas exportadas no están en a3 con su número, pero hay una fila de a3 con el mismo importe y una fecha muy cercana. Comprueba si es la misma y corrige el número donde haga falta."
+msgstr "Aquestes exportades no són a a3 amb el seu número, però hi ha una fila d'a3 amb el mateix import i una data molt propera. Comprova si és la mateixa i corregeix el número on calgui."
+
+msgid "Factura en Guilda"
+msgstr "Factura a Guilda"
+
+msgid "Fila de a3"
+msgstr "Fila d'a3"
+
+msgid "Una columna indicada no es válida: usa la letra de la columna (A, B, C…)."
+msgstr "Una columna indicada no és vàlida: usa la lletra de la columna (A, B, C…)."
+
+msgid "Indica al menos la columna del número de factura y otra más (fecha, NIF o total)."
+msgstr "Indica almenys la columna del número de factura i una altra (data, NIF o total)."

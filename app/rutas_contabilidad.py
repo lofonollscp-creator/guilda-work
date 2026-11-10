@@ -791,19 +791,30 @@ def panel_del_cierre():
 @contabilidad_bp.route("/retorno", methods=["GET", "POST"])
 @login_required
 def retorno():
-    """Sube el listado de facturas que devuelve a3 y comprueba cuáles de las exportadas están de verdad contabilizadas."""
+    """Sube el listado de facturas que devuelve a3 y comprueba cuáles de las exportadas están de verdad contabilizadas. Si no se reconocen las columnas por su título, se pueden indicar a mano."""
     cliente_id = request.values.get("cliente_id", type=int)
-    informe = error = None
+    informe = error = vista = None
+    columnas = {c: request.form.get(f"col_{c}", "").strip() for c in retorno_a3.SINONIMOS}
+    fila_titulos = request.form.get("fila_titulos", default=1, type=int)
     if request.method == "POST":
         archivo = request.files.get("archivo")
+        contenido = b""
         try:
             if not cliente_id or archivo is None or not archivo.filename:
                 raise ValueError("Elige el cliente y el archivo que devuelve a3.")
-            filas = retorno_a3.leer(archivo.read(retorno_a3.MAX_BYTES + 1), archivo.filename)
+            contenido = archivo.read(retorno_a3.MAX_BYTES + 1)
+            mapa = retorno_a3.mapa_de_columnas(**columnas)
+            filas = retorno_a3.leer(contenido, archivo.filename, mapa, fila_titulos)
             informe = retorno_a3.cruzar(g.tenant_id, g.usuario_id, cliente_id, filas, confirmar=request.form.get("confirmar") == "1")
         except ValueError as e:
             error = _(str(e))
-    return render_template("contabilidad_retorno.html", clientes=_clientes(), cliente_id=cliente_id, informe=informe, error=error or _error(), subnav=None)
+            if contenido:
+                try:
+                    vista = retorno_a3.vista_previa(contenido, archivo.filename)
+                except ValueError:
+                    vista = None
+    return render_template("contabilidad_retorno.html", clientes=_clientes(), cliente_id=cliente_id, informe=informe, error=error or _error(), vista=vista, columnas=columnas, fila_titulos=fila_titulos,
+                           campos_columnas=retorno_a3.SINONIMOS, subnav=None)
 
 
 @contabilidad_bp.route("/lotes")

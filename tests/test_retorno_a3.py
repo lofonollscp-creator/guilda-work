@@ -112,3 +112,55 @@ def test_el_libro_de_iva_con_una_fila_por_tipo_se_agrupa_y_cuadra_el_iva():
     filas[1]["cuota"] = 8000
     r = retorno_a3.cruzar(t, u, c, filas, confirmar=False)
     assert r["cuadre"][0]["diferencia"] == 400 and [d["campo"] for d in r["con_diferencias"][0]["diferencias"]] == ["cuota"]
+
+
+# --- J8: columnas indicadas a mano y posibles parejas --------------------------------------------------------------------------------------------------------
+
+SIN_TITULOS = "Registro de facturas\nB;15/08/2026;F-1;1.210,00;B87654321\nB;16/08/2026;F-2;1.210,00;B87654321\n".encode("utf-8")
+
+
+def test_letras_y_cifras_de_columna():
+    assert [retorno_a3.letra_de_columna(i) for i in (0, 1, 25, 26, 27)] == ["A", "B", "Z", "AA", "AB"]
+    assert [retorno_a3.indice_de_columna(x) for x in ("A", "b", "AA", "3", "1", "0", "", "ñ", "ABC")] == [0, 1, 26, 2, 0, None, None, None, None]
+
+
+def test_un_listado_sin_titulos_reconocibles_se_lee_con_las_columnas_indicadas():
+    with pytest.raises(ValueError, match="No encuentro las columnas"):
+        retorno_a3.leer(SIN_TITULOS, "a3.csv")
+    mapa = retorno_a3.mapa_de_columnas(numero="C", fecha="b", total="D", nif="E")
+    filas = retorno_a3.leer(SIN_TITULOS, "a3.csv", mapa, fila_de_titulos=0)
+    assert [f["numero"] for f in filas] == ["F-1", "F-2"] and filas[0]["total"] == 121000 and filas[0]["fecha"] == "2026-08-15" and filas[0]["nif"] == "B87654321"
+    una_fila_de_titulos = retorno_a3.leer("x\nA;B;C;D\n1;15/08/2026;F-7;5,00\n".encode(), "a3.csv", {"numero": 2, "fecha": 1, "total": 3}, fila_de_titulos=2)
+    assert [f["numero"] for f in una_fila_de_titulos] == ["F-7"]
+
+
+def test_las_columnas_indicadas_se_validan():
+    assert retorno_a3.mapa_de_columnas() is None and retorno_a3.mapa_de_columnas(numero="  ") is None
+    for malo in ({"numero": "A"}, {"fecha": "B", "total": "C"}, {"numero": "A", "fecha": "??"}):
+        with pytest.raises(ValueError):
+            retorno_a3.mapa_de_columnas(**malo)
+
+
+def test_la_vista_previa_da_la_letra_de_cada_columna():
+    v = retorno_a3.vista_previa(SIN_TITULOS, "a3.csv")
+    assert v["letras"] == ["A", "B", "C", "D", "E"] and v["filas"][1][2] == "F-1"
+
+
+def test_una_exportada_que_a3_tiene_con_otro_numero_se_ofrece_como_posible_pareja():
+    t, u, c = _despacho()
+    a, = _exportadas(t, u, c, "F-1")
+    listado = "Fecha;Nº Factura;NIF;Total\n15/08/2026;F-1/2026;B87654321;1.210,00\n20/08/2026;Z-9;B87654321;1.210,00\n".encode("cp1252")
+    r = retorno_a3.cruzar(t, u, c, retorno_a3.leer(listado, "l.csv"))
+    assert [f["id"] for f in r["faltan"]] == [a] and [(p["factura"]["id"], p["a3"]["numero"]) for p in r["posibles_parejas"]] == [(a, "F-1/2026")]   # el Z-9 está a 5 días: no
+    assert not fc.obtener(t, u, a)["confirmada_en"]
+
+
+def test_la_pantalla_acepta_las_columnas_indicadas_y_ensena_la_vista_previa(cliente):
+    uid, t, c = _web(cliente, "retornocolumnas@ejemplo.com")
+    fc.guardar_configuracion(t, uid, c, {"a3_empresa": "7", "digitos": "8"})
+    r = cliente.post("/contabilidad/retorno", data={"cliente_id": c, "archivo": (io.BytesIO(SIN_TITULOS), "a3.csv")}, content_type="multipart/form-data")
+    html = r.get_data(as_text=True)
+    assert r.status_code == 200 and "No encuentro las columnas" in html and "<th>E</th>" in html and "F-1" in html        # se enseña el archivo con sus letras
+    r = cliente.post("/contabilidad/retorno", data={"cliente_id": c, "archivo": (io.BytesIO(SIN_TITULOS), "a3.csv"), "col_numero": "C", "col_fecha": "B", "col_total": "D", "fila_titulos": "0"},
+                     content_type="multipart/form-data")
+    assert r.status_code == 200 and "No encuentro las columnas" not in r.get_data(as_text=True) and "Resultado" in r.get_data(as_text=True)

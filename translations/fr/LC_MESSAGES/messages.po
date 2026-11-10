@@ -26781,3 +26781,30 @@ msgstr "le total"
 
 msgid "los importes"
 msgstr "les montants"
+
+msgid "Mi listado no se reconoce: indicar las columnas"
+msgstr "Mon listing n'est pas reconnu : indiquer les colonnes"
+
+msgid "Estas son las primeras filas del archivo. Indica la letra de cada columna, vuelve a elegir el archivo y pulsa «Comprobar»."
+msgstr "Voici les premières lignes du fichier. Indiquez la lettre de chaque colonne, choisissez à nouveau le fichier et appuyez sur « Vérifier »."
+
+msgid "Fila de los títulos (0 si no hay)"
+msgstr "Ligne des titres (0 s'il n'y en a pas)"
+
+msgid "Quizá son la misma con otro número"
+msgstr "Peut-être la même avec un autre numéro"
+
+msgid "Estas exportadas no están en a3 con su número, pero hay una fila de a3 con el mismo importe y una fecha muy cercana. Comprueba si es la misma y corrige el número donde haga falta."
+msgstr "Ces factures exportées ne figurent pas dans a3 sous leur numéro, mais une ligne d'a3 a le même montant et une date très proche. Vérifiez s'il s'agit de la même et corrigez le numéro si besoin."
+
+msgid "Factura en Guilda"
+msgstr "Facture dans Guilda"
+
+msgid "Fila de a3"
+msgstr "Ligne d'a3"
+
+msgid "Una columna indicada no es válida: usa la letra de la columna (A, B, C…)."
+msgstr "Une colonne indiquée n'est pas valide : utilisez la lettre de la colonne (A, B, C…)."
+
+msgid "Indica al menos la columna del número de factura y otra más (fecha, NIF o total)."
+msgstr "Indiquez au moins la colonne du numéro de facture et une autre (date, NIF ou total)."

@@ -106,19 +106,75 @@ def _clave_numero(numero) -> str:
     return re.sub(r"[^A-Z0-9]", "", str(numero or "").upper()).lstrip("0")
 
 
-def leer(contenido: bytes, nombre: str = "") -> list[dict]:
-    """Las facturas del listado de a3: [{numero, fecha, nif, total, base, cuota}] (los campos que el listado no traiga quedan en None). `ValueError` si no se puede leer o no se reconoce ninguna columna útil."""
+def _filas_del_archivo(contenido: bytes, nombre: str) -> list[list]:
     if not contenido or len(contenido) > MAX_BYTES:
         raise ValueError("El archivo está vacío o pesa más de 8 MB.")
     es_excel = nombre.lower().endswith((".xlsx", ".xlsm")) or contenido[:2] == b"PK"
     try:
-        filas = _filas_de_excel(contenido) if es_excel else _filas_de_csv(contenido)
+        return _filas_de_excel(contenido) if es_excel else _filas_de_csv(contenido)
     except Exception:  # noqa: BLE001 -- un archivo estropeado o de otro tipo
         raise ValueError("No se ha podido leer el archivo: sube el listado de a3 en CSV o Excel.") from None
-    inicio = next((i for i, f in enumerate(filas[:30]) if len(_columnas(f)) >= 2 and "numero" in _columnas(f)), None)
-    if inicio is None:
-        raise ValueError("No encuentro las columnas del listado: hace falta al menos el número de factura y otra columna (fecha, NIF o total).")
-    col = _columnas(filas[inicio])
+
+
+def letra_de_columna(i: int) -> str:
+    """0 → A, 25 → Z, 26 → AA (como en una hoja de cálculo)."""
+    res = ""
+    i += 1
+    while i:
+        i, resto = divmod(i - 1, 26)
+        res = chr(65 + resto) + res
+    return res
+
+
+def indice_de_columna(texto) -> int | None:
+    """«B» → 1, «aa» → 26 y «3» → 2 (las cifras cuentan desde 1, como las letras). None si está vacío o no vale."""
+    t = str(texto or "").strip().upper()
+    if re.fullmatch(r"\d{1,3}", t):
+        return int(t) - 1 if int(t) >= 1 else None
+    if re.fullmatch(r"[A-Z]{1,2}", t):
+        n = 0
+        for ch in t:
+            n = n * 26 + ord(ch) - 64
+        return n - 1
+    return None
+
+
+def vista_previa(contenido: bytes, nombre: str = "", filas: int = 6) -> dict:
+    """Las primeras filas del listado con la letra de cada columna, para que la persona diga cuál es cuál cuando no se reconocen por su título: {letras: [A, B…], filas: [[texto…]]}."""
+    todas = [f for f in _filas_del_archivo(contenido, nombre) if any(str(c or "").strip() for c in f)][:filas]
+    ancho = max((len(f) for f in todas), default=0)
+    return {"letras": [letra_de_columna(i) for i in range(ancho)], "filas": [[("" if c is None else str(c))[:40] for c in f] + [""] * (ancho - len(f)) for f in todas]}
+
+
+def mapa_de_columnas(**columnas) -> dict[str, int] | None:
+    """{campo: posición} con lo que la persona indicó (letra o cifra de cada columna). None si no indicó ninguna; `ValueError` si una no vale o falta el número de factura."""
+    mapa = {}
+    for campo in SINONIMOS:
+        crudo = columnas.get(campo)
+        if str(crudo or "").strip() == "":
+            continue
+        i = indice_de_columna(crudo)
+        if i is None:
+            raise ValueError("Una columna indicada no es válida: usa la letra de la columna (A, B, C…).")
+        mapa[campo] = i
+    if not mapa:
+        return None
+    if "numero" not in mapa or len(mapa) < 2:
+        raise ValueError("Indica al menos la columna del número de factura y otra más (fecha, NIF o total).")
+    return mapa
+
+
+def leer(contenido: bytes, nombre: str = "", mapa: dict[str, int] | None = None, fila_de_titulos: int = 1) -> list[dict]:
+    """Las facturas del listado de a3: [{numero, fecha, nif, total, base, cuota}] (los campos que el listado no traiga quedan en None). Las columnas se reconocen por su título; si no se reconocen, `mapa`
+    ({campo: posición}) dice cuál es cuál y `fila_de_titulos` (desde 1; 0 = el listado no trae títulos) dónde empiezan los datos. `ValueError` si no se puede leer o no se reconoce ninguna columna útil."""
+    filas = _filas_del_archivo(contenido, nombre)
+    if mapa:
+        col, inicio = dict(mapa), max(0, int(fila_de_titulos)) - 1
+    else:
+        inicio = next((i for i, f in enumerate(filas[:30]) if len(_columnas(f)) >= 2 and "numero" in _columnas(f)), None)
+        if inicio is None:
+            raise ValueError("No encuentro las columnas del listado: hace falta al menos el número de factura y otra columna (fecha, NIF o total).")
+        col = _columnas(filas[inicio])
     res = []
     for f in filas[inicio + 1:inicio + 1 + MAX_FILAS]:
         numero = str(f[col["numero"]]).strip() if col["numero"] < len(f) and f[col["numero"]] is not None else ""
@@ -160,6 +216,33 @@ def _comparar(f: dict, a: dict) -> list[dict] | None:
     return [{"campo": campo, "guilda": nuestros[campo], "a3": abs(a[campo])} for campo in ("total", "base", "cuota") if a[campo] is not None and abs(a[campo]) != nuestros[campo]]
 
 
+DIAS_DE_MARGEN = 3
+
+
+def _posibles_parejas(faltan: list[dict], libres: list[dict]) -> list[dict]:
+    """Para cada exportada que a3 no tiene, la fila de a3 sin pareja que tiene su mismo importe total y una fecha de hasta 3 días de diferencia (y un NIF que no la contradiga): suele ser la misma factura con
+    otro número (a3 renumera o se tecleó distinto). Solo una pista: no se confirma nada. Cada fila de a3 se ofrece una sola vez."""
+    from datetime import date
+    usadas: set[int] = set()
+    res = []
+    for f in faltan:
+        for i, a in enumerate(libres):
+            if i in usadas or a["total"] is None or abs(a["total"]) != f["total_centimos"]:
+                continue
+            if a["nif"] and f.get("tercero_nif") and fc._nif(f["tercero_nif"]) != a["nif"]:
+                continue
+            if a["fecha"]:
+                try:
+                    if abs((date.fromisoformat(a["fecha"]) - date.fromisoformat(f["fecha"][:10])).days) > DIAS_DE_MARGEN:
+                        continue
+                except ValueError:
+                    continue
+            usadas.add(i)
+            res.append({"factura": f, "a3": a})
+            break
+    return res
+
+
 def cruzar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, filas: list[dict], *, confirmar: bool = True) -> dict:
     """Cruza el listado de a3 con las facturas exportadas del cliente. Devuelve {leidas, confirmadas, ya_confirmadas, con_diferencias, faltan, sobran, por_lote, cuadre} y, con `confirmar`, anota la fecha de
     confirmación de las idénticas. `con_diferencias`: están en a3 pero con un importe distinto (no se confirman: [{factura, diferencias}]). `faltan`: exportadas que a3 no tiene (solo las del rango de
@@ -184,6 +267,7 @@ def cruzar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, filas: list[
                 (ya if f.get("confirmada_en") else confirmadas).append(f)
         elif (desde is None or desde <= f["fecha"] <= hasta) and not f.get("confirmada_en"):
             faltan.append(f)
+    posibles_parejas = _posibles_parejas(faltan, libres)
     por_lote: dict[int, dict] = {}
     for f in (*confirmadas, *ya, *faltan):
         l = por_lote.setdefault(f.get("lote_id") or 0, {"lote_id": f.get("lote_id"), "confirmadas": 0, "faltan": 0})
@@ -215,4 +299,4 @@ def cruzar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, filas: list[
         finally:
             conn.close()
     return {"leidas": len(filas), "confirmadas": confirmadas, "ya_confirmadas": ya, "con_diferencias": con_diferencias, "faltan": faltan, "sobran": libres,
-            "por_lote": sorted(por_lote.values(), key=lambda l: l["lote_id"] or 0), "cuadre": sorted(cuadre.values(), key=lambda c: (c["trimestre"], c["tipo"])), "desde": desde, "hasta": hasta}
+            "posibles_parejas": posibles_parejas, "por_lote": sorted(por_lote.values(), key=lambda l: l["lote_id"] or 0), "cuadre": sorted(cuadre.values(), key=lambda c: (c["trimestre"], c["tipo"])), "desde": desde, "hasta": hasta}

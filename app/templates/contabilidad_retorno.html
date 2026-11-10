@@ -17,6 +17,22 @@
     <label>{{ _('Listado de a3') }} <input type="file" name="archivo" required accept=".csv,.txt,.xlsx"></label>
     <label class="ds-check"><input type="checkbox" name="confirmar" value="1" checked> {{ _('Marcar como confirmadas las que coinciden') }}</label>
     <button type="submit" class="btn btn-primary">{{ _('Comprobar') }}</button>
+    <details class="ds-ancho-total" {{ 'open' if vista }}>
+      <summary>{{ _('Mi listado no se reconoce: indicar las columnas') }}</summary>
+      {% if vista %}
+      <p class="muted">{{ _('Estas son las primeras filas del archivo. Indica la letra de cada columna, vuelve a elegir el archivo y pulsa «Comprobar».') }}</p>
+      <div class="table-wrap"><table class="historial-table">
+        <thead><tr>{% for l in vista.letras %}<th>{{ l }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for f in vista.filas %}<tr>{% for c in f %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      </table></div>
+      {% endif %}
+      <div class="ds-fila">
+        {% for campo, etiqueta in (('numero', _('Número de factura')), ('fecha', _('Fecha')), ('nif', _('NIF')), ('total', _('Total')), ('base', _('Base imponible')), ('cuota', _('Cuota de IVA'))) %}
+        <label>{{ etiqueta }}<input type="text" name="col_{{ campo }}" value="{{ columnas[campo] if columnas else '' }}" maxlength="3" size="4" placeholder="A"></label>
+        {% endfor %}
+        <label>{{ _('Fila de los títulos (0 si no hay)') }}<input type="number" name="fila_titulos" min="0" max="30" value="{{ fila_titulos if fila_titulos is not none else 1 }}" size="3"></label>
+      </div>
+    </details>
   </form>
   <p class="muted">{{ _('Reconocemos las columnas por su título: número de factura, fecha, NIF, base, cuota y total. Con el número basta; si el listado trae NIF o total, no pueden contradecirse.') }}</p>
 </section>
@@ -60,6 +76,17 @@
     <thead><tr><th>{{ _('Número') }}</th><th>{{ _('Dato') }}</th><th>{{ _('Guilda') }}</th><th>a3</th></tr></thead>
     <tbody>{% for x in informe.con_diferencias %}{% for d in x.diferencias %}<tr><td><a href="{{ url_for('contabilidad.ver', factura_id=x.factura.id) }}">{{ x.factura.numero }}</a></td>
       <td>{{ {'total': _('Total'), 'base': _('Base imponible'), 'cuota': _('Cuota de IVA')}[d.campo] }}</td><td class="mono">{{ '%.2f'|format(d.guilda / 100) }} €</td><td class="mono">{{ '%.2f'|format(d.a3 / 100) }} €</td></tr>{% endfor %}{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
+{% if informe.posibles_parejas %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Quizá son la misma con otro número') }}</h2>
+  <p class="muted">{{ _('Estas exportadas no están en a3 con su número, pero hay una fila de a3 con el mismo importe y una fecha muy cercana. Comprueba si es la misma y corrige el número donde haga falta.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Factura en Guilda') }}</th><th>{{ _('Fila de a3') }}</th><th>{{ _('Total') }}</th></tr></thead>
+    <tbody>{% for p in informe.posibles_parejas %}<tr><td><a href="{{ url_for('contabilidad.ver', factura_id=p.factura.id) }}">{{ p.factura.numero }}</a> · {{ p.factura.fecha }}</td><td>{{ p.a3.numero }}{% if p.a3.fecha %} · {{ p.a3.fecha }}{% endif %}</td><td class="mono">{{ '%.2f'|format(p.factura.total_centimos / 100) }} €</td></tr>{% endfor %}</tbody>
   </table></div>
 </section>
 {% endif %}

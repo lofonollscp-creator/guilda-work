@@ -102,15 +102,15 @@ def contabilidad_calidad_lectura(desde: str | None = None, cliente_fiscal_id: in
     return _mt._conta().calidad_lectura(*_mt._ctx_conta(), desde, cliente_fiscal_id)
 
 
-def contabilidad_comprobar_retorno_a3(cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "") -> dict:
+def contabilidad_comprobar_retorno_a3(cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "", columnas: dict | None = None, fila_de_titulos: int = 1) -> dict:
     """Cruza un listado que devuelve a3 (CSV en `contenido`, o CSV/Excel en `contenido_base64` con su `nombre`) con las facturas exportadas del cliente: cuáles coinciden, cuáles tienen importes distintos, cuáles faltan en a3
-    y cuáles sobran, más el cuadre del IVA por trimestre. SOLO INFORMA: no guarda nada. Para confirmar las que coinciden usa `contabilidad_confirmar_retorno_a3`."""
-    return _mt._conta().cruzar_retorno_a3(*_mt._ctx_conta(), cliente_fiscal_id, contenido, contenido_base64, nombre, confirmar=False)
+    y cuáles sobran, las que parecen la misma con otro número y el cuadre del IVA por trimestre. Si no se reconocen las columnas por su título, indícalas con `columnas` (letras, por ejemplo {"numero": "C", "fecha": "B", "total": "D"}) y `fila_de_titulos` (0 si no hay). SOLO INFORMA: no guarda nada. Para confirmar las que coinciden usa `contabilidad_confirmar_retorno_a3`."""
+    return _mt._conta().cruzar_retorno_a3(*_mt._ctx_conta(), cliente_fiscal_id, contenido, contenido_base64, nombre, confirmar=False, columnas=columnas, fila_de_titulos=fila_de_titulos)
 
 
-def contabilidad_confirmar_retorno_a3(cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "") -> dict:
+def contabilidad_confirmar_retorno_a3(cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "", columnas: dict | None = None, fila_de_titulos: int = 1) -> dict:
     """Igual que `contabilidad_comprobar_retorno_a3`, pero además anota como «confirmadas en a3» las facturas exportadas que coinciden exactamente con el listado."""
-    return _mt._conta().cruzar_retorno_a3(*_mt._ctx_conta(), cliente_fiscal_id, contenido, contenido_base64, nombre, confirmar=True)
+    return _mt._conta().cruzar_retorno_a3(*_mt._ctx_conta(), cliente_fiscal_id, contenido, contenido_base64, nombre, confirmar=True, columnas=columnas, fila_de_titulos=fila_de_titulos)
 
 
 def contabilidad_panel_cierre(trimestre: str | None = None) -> dict:

@@ -591,13 +591,13 @@ HERRAMIENTAS: list[dict] = [
     _tool(
         "contabilidad_comprobar_retorno_a3",
         "Cruza un listado que devuelve a3 (CSV en `contenido`, o CSV/Excel en base64) con las facturas exportadas del cliente: coinciden, importes distintos, faltan en a3, sobran y cuadre de IVA. Solo informa, no guarda nada.",
-        {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "contenido": _param("string", "El listado en texto CSV."), "contenido_base64": _param("string", "El listado en base64 (CSV o Excel)."), "nombre": _param("string", "Nombre del archivo, opcional.")},
+        {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "contenido": _param("string", "El listado en texto CSV."), "contenido_base64": _param("string", "El listado en base64 (CSV o Excel)."), "nombre": _param("string", "Nombre del archivo, opcional."), "columnas": _param("object", "Si no se reconocen las columnas: letra de cada una, por ejemplo {\"numero\": \"C\", \"fecha\": \"B\", \"total\": \"D\"}."), "fila_de_titulos": _param("integer", "Fila de los títulos (1 por defecto; 0 si el listado no los trae).")},
         ["cliente_fiscal_id"],
     ),
     _tool(
         "contabilidad_confirmar_retorno_a3",
         "Igual que contabilidad_comprobar_retorno_a3 pero además marca como confirmadas en a3 las facturas exportadas que coinciden exactamente.",
-        {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "contenido": _param("string", "El listado en texto CSV."), "contenido_base64": _param("string", "El listado en base64 (CSV o Excel)."), "nombre": _param("string", "Nombre del archivo, opcional.")},
+        {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "contenido": _param("string", "El listado en texto CSV."), "contenido_base64": _param("string", "El listado en base64 (CSV o Excel)."), "nombre": _param("string", "Nombre del archivo, opcional."), "columnas": _param("object", "Si no se reconocen las columnas: letra de cada una, por ejemplo {\"numero\": \"C\", \"fecha\": \"B\", \"total\": \"D\"}."), "fila_de_titulos": _param("integer", "Fila de los títulos (1 por defecto; 0 si el listado no los trae).")},
         ["cliente_fiscal_id"],
     ),
     _tool(
