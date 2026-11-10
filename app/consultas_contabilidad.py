@@ -345,3 +345,17 @@ def facturas_periodicas_que_faltan(tenant_id: int, usuario_id: int, cliente_fisc
     from . import facturas_periodicas
     return {"cliente_fiscal_id": int(cliente_fiscal_id), "proveedores": [{"nif": x["nif"], "nombre": x["nombre"], "meses_con_factura": x["meses"], "ultima_factura_del_mes": x["ultima"]}
                                                                         for x in facturas_periodicas.que_faltan(tenant_id, int(cliente_fiscal_id))]}
+
+
+def factura_desde_adjunto(tenant_id: int, usuario_id: int, adjunto_id: int, cliente_fiscal_id: int, tipo: str) -> dict:
+    """Convierte en factura pendiente de leer la foto o el PDF que la persona subió al chat. El adjunto es suyo (nadie más lo ve)."""
+    from . import db
+    _exigir_escritura(tenant_id, usuario_id)
+    a = db.obtener_adjunto_ia(usuario_id, int(adjunto_id))
+    if a is None:
+        raise ValueError(f"No existe el adjunto #{int(adjunto_id)} (o no es tuyo).")
+    contenido = bytes(a["contenido"])
+    if a["tipo_mime"] not in ("application/pdf", "image/jpeg", "image/png"):
+        raise ValueError("Ese adjunto no es una foto ni un PDF: solo esos se pueden convertir en factura.")
+    ids = fc.subir_archivos(tenant_id, usuario_id, int(cliente_fiscal_id), tipo, [(a["nombre_archivo"], a["tipo_mime"], contenido)])
+    return {"factura_id": ids[0] if ids else None, "ya_estaba": not ids}

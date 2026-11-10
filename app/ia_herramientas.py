@@ -688,6 +688,12 @@ HERRAMIENTAS: list[dict] = [
         ["cliente_fiscal_id"],
     ),
     _tool(
+        "contabilidad_factura_desde_adjunto",
+        "Convierte en factura de un cliente la foto o el PDF que la persona subió al chat: queda pendiente de leer con contabilidad_leer_factura_con_ia. Pregunta de qué cliente es si no te lo han dicho.",
+        {"adjunto_id": _param("integer", "Id del adjunto del chat."), "cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "tipo": _param("string", "emitida o recibida.")},
+        ["adjunto_id", "cliente_fiscal_id", "tipo"],
+    ),
+    _tool(
         "contabilidad_anotar_factura",
         "Anota una factura de un cliente de la gestoría para contabilizarla (queda pendiente de revisar). Lo que dejes en blanco lo rellenan el régimen del cliente y la regla del proveedor.",
         {"cliente_fiscal_id": _param("integer", "Id del cliente fiscal."), "tipo": _param("string", "emitida o recibida."), "fecha": _param("string", "AAAA-MM-DD."), "numero": _param("string", "Número de la factura."), "tercero_nombre": _param("string", "Nombre del proveedor (recibida) o cliente (emitida)."), "tercero_nif": _param("string", "NIF del proveedor o cliente, recomendado."), "lineas": _param("array", "Una por tipo de IVA: {\"base\": \"1.234,56\", \"pct_iva\": 21}; opcionales cuota_iva, pct_recargo, pct_retencion, cuenta, subtipo, impreso."), "concepto": _param("string", "Concepto breve, opcional."), "abono": _param("boolean", "true si es un abono o rectificativa."), "rectifica_numero": _param("string", "Número de la factura que rectifica (abonos)."), "rectifica_fecha": _param("string", "Fecha AAAA-MM-DD de la factura que rectifica (abonos)."), "datos_a3": _param("object", "Solo en casos especiales: bien_inversion, dua, clave_340, nif_representante, autofactura, metalico, inmuebles.")},
@@ -1641,7 +1647,7 @@ ESCRITURA: set[str] = {
     "cambiar_mis_ajustes",
     "pedir_ausencia", "cancelar_ausencia", "resolver_ausencia", "asignar_turno", "ajustar_bolsa_de_horas",
     "cambiar_estado_tarea_con_motivo", "crear_subtarea", "fijar_clientes_de_tarea", "pedir_revision_tarea", "resolver_revision_tarea", "ocultar_comentario_cliente_tarea", "anadir_dependencia_tarea", "quitar_dependencia_tarea", "comercial_crear_oportunidad", "comercial_mover_oportunidad", "comercial_anotar_actividad", "comercial_crear_reunion", "comercial_generar_acta",
-    "contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3",
+    "contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_factura_desde_adjunto", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3",
     "registrar_certificado", "renovar_certificado", "comprobar_certificado", "proponer_traspaso", "resolver_traspaso", "acusar_aviso_fiscal", "abrir_expediente_control", "marcar_punto_expediente", "cambiar_estado_expediente_control", "comentar_expediente_control",
     "comercial_editar_oportunidad", "comercial_convertir_en_cliente", "comercial_eliminar_oportunidad", "comercial_editar_reunion", "comercial_borrar_transcripcion", "comercial_guardar_acta", "comercial_crear_tareas_de_acta", "comercial_eliminar_reunion",
     "juridico_consultar", "juridico_guardar_informe",

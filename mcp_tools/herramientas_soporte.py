@@ -53,7 +53,11 @@ def leer_adjunto_chat(adjunto_id: int) -> dict:
     adjunto = _mt.db.obtener_adjunto_ia(_mt._uid(), adjunto_id)
     if adjunto is None:
         raise ValueError(f"No existe el adjunto #{adjunto_id} (o no es tuyo).")
-    texto = adjunto["contenido"].decode("utf-8")
+    try:
+        texto = adjunto["contenido"].decode("utf-8")
+    except UnicodeDecodeError:                                       # una foto o un PDF: no es texto
+        return {"nombre_archivo": adjunto["nombre_archivo"], "tipo": adjunto["tipo_mime"], "texto": None, "truncado": False,
+                "nota": "Es una foto o un PDF, no un texto. Si es una factura de un cliente, créala con `contabilidad_factura_desde_adjunto` y léela con `contabilidad_leer_factura_con_ia`."}
     truncado = len(texto) > _mt._ADJUNTO_MAX_CARACTERES
     return {
         "nombre_archivo": adjunto["nombre_archivo"],

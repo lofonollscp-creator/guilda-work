@@ -44,3 +44,18 @@ def test_descargar_adjunto_de_otro_usuario_da_404(cliente):
         iniciar_sesion_de_prueba(otro_cliente, "ia-adjunto-intruso@ejemplo.com", "contrasena123")
         resp = otro_cliente.get(f"/ia/adjuntos/{adjunto_id}")
         assert resp.status_code == 404
+
+
+def test_se_pueden_subir_al_chat_fotos_y_pdf_y_se_rechaza_lo_que_no_es_texto_ni_eso(cliente):
+    import io
+    from tests.conftest import iniciar_sesion_de_prueba
+    iniciar_sesion_de_prueba(cliente, "adjuntopdf@ejemplo.com", "contrasena123")
+    def subir(contenido, nombre):
+        return cliente.post("/ia/adjuntos", data={"adjunto": (io.BytesIO(contenido), nombre)}, content_type="multipart/form-data").get_json()
+    pdf = subir(b"%PDF-1.4\n1 0 obj<<>>endobj\n%%EOF\xff", "factura.pdf")
+    assert pdf["ok"] and pdf["id"]
+    assert subir(b"\xff\xd8\xff\xe0" + b"0" * 100, "foto.jpg")["ok"] and subir(b"\x89PNG\r\n\x1a\n" + b"0" * 100, "foto.png")["ok"]
+    r = subir(b"MZ\x90\x00\xff\xff", "virus.pdf")                                                # la extensión no cuenta: no es un PDF ni texto
+    assert not r["ok"] and "fotos" in r["error"]
+    assert subir("a;b\n1;2\n".encode(), "datos.csv")["ok"]
+    assert not subir(b"%PDF-" + b"0" * (8 * 1024 * 1024 + 1), "grande.pdf")["ok"]

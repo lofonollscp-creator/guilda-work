@@ -66,6 +66,18 @@ def enviar_mensaje():
 
 
 _ADJUNTO_TAMANO_MAXIMO_BYTES = 1 * 1024 * 1024  # 1 MB -- son ficheros de texto/CSV pequeños, no documentos grandes
+_ADJUNTO_BINARIO_MAXIMO_BYTES = 8 * 1024 * 1024  # 8 MB -- una foto o un PDF de una factura (como en Facturas para contabilizar)
+
+
+def _mime_de_factura(datos: bytes) -> str | None:
+    """«application/pdf», «image/jpeg» o «image/png» según lo que el archivo es de verdad (sus primeros bytes), o None si no es ninguno de los tres."""
+    if datos[:5] == b"%PDF-":
+        return "application/pdf"
+    if datos[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if datos[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    return None
 
 
 @ia_bp.route("/adjuntos", methods=["POST"])
@@ -79,14 +91,21 @@ def subir_adjunto():
     fichero = request.files.get("adjunto")
     if not fichero or not fichero.filename:
         return jsonify({"ok": False, "error": "Falta el archivo."})
-    datos = fichero.read(_ADJUNTO_TAMANO_MAXIMO_BYTES + 1)
-    if len(datos) > _ADJUNTO_TAMANO_MAXIMO_BYTES:
-        return jsonify({"ok": False, "error": "El archivo pesa demasiado (máximo 1 MB)."})
-    try:
-        datos.decode("utf-8")
-    except UnicodeDecodeError:
-        return jsonify({"ok": False, "error": "Solo se admiten archivos de texto o CSV (UTF-8)."})
-    adjunto_id = db.crear_adjunto_ia(g.usuario_id, fichero.filename, fichero.mimetype, datos)
+    datos = fichero.read(_ADJUNTO_BINARIO_MAXIMO_BYTES + 1)
+    mime = _mime_de_factura(datos)
+    if mime:                                                                  # una foto o un PDF (por lo que son de verdad, no por su extensión): sirve para crear una factura con `contabilidad_factura_desde_adjunto`
+        if len(datos) > _ADJUNTO_BINARIO_MAXIMO_BYTES:
+            return jsonify({"ok": False, "error": "El archivo pesa demasiado (máximo 8 MB)."})
+        fichero_mime = mime
+    else:
+        if len(datos) > _ADJUNTO_TAMANO_MAXIMO_BYTES:
+            return jsonify({"ok": False, "error": "El archivo pesa demasiado (máximo 1 MB)."})
+        try:
+            datos.decode("utf-8")
+        except UnicodeDecodeError:
+            return jsonify({"ok": False, "error": "Solo se admiten archivos de texto o CSV (UTF-8), fotos (JPG, PNG) o PDF."})
+        fichero_mime = fichero.mimetype
+    adjunto_id = db.crear_adjunto_ia(g.usuario_id, fichero.filename, fichero_mime, datos)
     return jsonify({"ok": True, "id": adjunto_id, "nombre_archivo": fichero.filename})
 
 

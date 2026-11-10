@@ -191,3 +191,9 @@ def contabilidad_subir_factura(cliente_fiscal_id: int, tipo: str, nombre_archivo
 def contabilidad_facturas_periodicas_que_faltan(cliente_fiscal_id: int) -> dict:
     """Proveedores de los que un cliente recibe factura casi todos los meses (la luz, el alquiler, un seguro) y de los que este mes aún no hay: suele ser algo que el cliente no ha mandado. Vacío antes del día 10."""
     return _mt._conta().facturas_periodicas_que_faltan(*_mt._ctx_conta(), cliente_fiscal_id)
+
+
+def contabilidad_factura_desde_adjunto(adjunto_id: int, cliente_fiscal_id: int, tipo: str) -> dict:
+    """Convierte en factura de un cliente de la gestoría la foto (JPG, PNG) o el PDF que la persona subió al chat (clip del asistente): queda pendiente de leer, y se lee con `contabilidad_leer_factura_con_ia`.
+    `tipo`: emitida o recibida. Pregunta de qué cliente es si no te lo han dicho."""
+    return _mt._conta().factura_desde_adjunto(*_mt._ctx_conta(), adjunto_id, cliente_fiscal_id, tipo)

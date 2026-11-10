@@ -7,7 +7,7 @@ from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
            "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre", "contabilidad_mensajes_factura", "contabilidad_cierre_cliente", "contabilidad_cuadre_303", "contabilidad_historial_factura", "contabilidad_listar_ficheros", "contabilidad_listar_reglas", "contabilidad_configuracion_a3", "contabilidad_facturas_periodicas_que_faltan")
-ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura")
+ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3", "contabilidad_mover_factura", "contabilidad_fijar_estado_fichero", "contabilidad_guardar_regla", "contabilidad_subir_factura", "contabilidad_factura_desde_adjunto")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
 
@@ -391,3 +391,32 @@ def test_facturas_periodicas_que_faltan_por_la_ia():
     assert r == {"cliente_fiscal_id": c, "proveedores": []}
     with pytest.raises(ih.ErrorHerramientaIA):
         ih.ejecutar(u, "contabilidad_facturas_periodicas_que_faltan", {"cliente_fiscal_id": 999999})
+
+
+def test_una_foto_o_un_pdf_del_chat_se_convierte_en_factura():
+    from app import db
+    from tests.test_facturas_contables import PDF
+    t, u, c = _despacho("Despacho herr adjunto")
+    pdf = db.crear_adjunto_ia(u, "f.pdf", "application/pdf", PDF + b"7")
+    texto = db.crear_adjunto_ia(u, "datos.csv", "text/csv", b"a;b\n")
+    r = ih.ejecutar(u, "contabilidad_factura_desde_adjunto", {"adjunto_id": pdf, "cliente_fiscal_id": c, "tipo": "recibida"})
+    assert r["factura_id"] and not r["ya_estaba"]
+    assert ih.ejecutar(u, "contabilidad_ver_factura", {"factura_id": r["factura_id"]})["tiene_archivo"] is True
+    with pytest.raises(ih.ErrorHerramientaIA, match="ni un PDF"):
+        ih.ejecutar(u, "contabilidad_factura_desde_adjunto", {"adjunto_id": texto, "cliente_fiscal_id": c, "tipo": "recibida"})
+    with pytest.raises(ih.ErrorHerramientaIA, match="no existe|No existe"):
+        ih.ejecutar(u, "contabilidad_factura_desde_adjunto", {"adjunto_id": 999999, "cliente_fiscal_id": c, "tipo": "recibida"})
+    otro = db.crear_usuario_vinculado_a_kratos("otro-adjunto@ejemplo.com", "k-otro-adj"); db.asignar_tenant(otro, t)
+    ajeno = db.crear_adjunto_ia(otro, "g.pdf", "application/pdf", PDF + b"8")
+    with pytest.raises(ih.ErrorHerramientaIA, match="no es tuyo"):
+        ih.ejecutar(u, "contabilidad_factura_desde_adjunto", {"adjunto_id": ajeno, "cliente_fiscal_id": c, "tipo": "recibida"})
+
+
+def test_leer_un_adjunto_binario_del_chat_no_falla_y_explica_que_hacer():
+    import mcp_tools as mt
+    from app import db
+    from tests.test_facturas_contables import PDF
+    t, u, c = _despacho("Despacho herr adjunto dos")
+    pdf = db.crear_adjunto_ia(u, "f.pdf", "application/pdf", PDF + b"\xff\xfe")
+    r = ih.ejecutar(u, "leer_adjunto_chat", {"adjunto_id": pdf})
+    assert r["texto"] is None and "contabilidad_factura_desde_adjunto" in r["nota"]

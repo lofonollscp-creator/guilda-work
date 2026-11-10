@@ -40,7 +40,7 @@ def test_tools_tiene_217_herramientas():
     # + 2 más (registrar_certificado, renovar_certificado).
     # + 3 de avisos por correo (crear_recordatorio, recordar_tarea, listar_recordatorios).
     # + 3 de cambios en lote del Comercial (proponer, aplicar, deshacer).
-    assert len(mt.TOOLS) == 295
+    assert len(mt.TOOLS) == 296
 
 
 def test_registrar_tools_las_registra_todas():

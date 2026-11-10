@@ -33,7 +33,7 @@
   <form class="ia-chat-form" id="{{ contenedor_id }}-form">
     <button type="button" class="ia-chat-mic" id="{{ contenedor_id }}-mic" title="{{ _('Dictar mensaje') }}" aria-label="{{ _('Dictar mensaje') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-mic"></use></svg></button>
     <label class="ia-chat-adjuntar" title="{{ _('Adjuntar archivo de texto/CSV') }}" aria-label="{{ _('Adjuntar archivo de texto/CSV') }}">
-      <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg><input type="file" id="{{ contenedor_id }}-adjunto" accept=".txt,.csv,.md,text/plain,text/csv" hidden>
+      <svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg><input type="file" id="{{ contenedor_id }}-adjunto" accept=".txt,.csv,.md,.pdf,.jpg,.jpeg,.png,text/plain,text/csv,application/pdf,image/jpeg,image/png" hidden>
     </label>
     <textarea placeholder="{{ _('Escribe un mensaje...') }}" rows="2" required></textarea>
     <button class="ia-chat-enviar" type="submit">{{ _('Enviar') }}</button>
