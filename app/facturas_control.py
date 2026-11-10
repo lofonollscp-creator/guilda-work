@@ -2,48 +2,20 @@
 proveedor igual al propio cliente, NIF intracomunitario sin formato). Los `problemas` de `facturas_contables` bloquean; esto avisa. Sin tablas: se calcula al vuelo con las facturas del cliente."""
 from __future__ import annotations
 
-import json
 import re
-import urllib.error
-import urllib.request
 from datetime import date, timedelta
 
 from flask_babel import gettext as _
 
-from . import db
+from . import db, vies
+from .fiscal_modelos.validacion_apuntes import FORMATOS_NIF_IVA, nif_espanol_valido  # noqa: F401 -- el mismo dígito de control que usan los apuntes fiscales
 
-_LETRAS_DNI = "TRWAGMYFPDXBNJZSQVHLCKE"
-_CIF_CONTROL_LETRA = "PQRSNW"                       # organizaciones cuyo control es siempre una letra
-_CIF_CONTROL_DIGITO = "ABEH"                        # y las que lo llevan siempre en cifra
-_PAISES_UE = {"AT": r"U\d{8}", "BE": r"[01]\d{9}", "BG": r"\d{9,10}", "CY": r"\d{8}[A-Z]", "CZ": r"\d{8,10}", "DE": r"\d{9}", "DK": r"\d{8}", "EE": r"\d{9}", "EL": r"\d{9}", "ES": r"[A-Z0-9]\d{7}[A-Z0-9]",
-              "FI": r"\d{8}", "FR": r"[A-Z0-9]{2}\d{9}", "HR": r"\d{11}", "HU": r"\d{8}", "IE": r"\d[A-Z0-9+*]\d{5}[A-Z]{1,2}", "IT": r"\d{11}", "LT": r"(\d{9}|\d{12})", "LU": r"\d{8}", "LV": r"\d{11}",
-              "MT": r"\d{8}", "NL": r"\d{9}B\d{2}", "PL": r"\d{10}", "PT": r"\d{9}", "RO": r"\d{2,10}", "SE": r"\d{12}", "SI": r"\d{8}", "SK": r"\d{10}"}
 OPERACIONES_INTRACOMUNITARIAS = {"emitida": ("03", "04"), "recibida": ("03", "08")}
 ANIOS_MAXIMOS = 4                                   # pasado ese tiempo el IVA de una factura ya no se puede deducir
-URL_VIES = "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"
 
 
 def _nif(valor) -> str:
     return re.sub(r"[\s.\-]", "", str(valor or "")).upper()
-
-
-def nif_espanol_valido(nif: str) -> bool | None:
-    """True/False si el NIF, NIE o CIF español tiene bien su dígito de control; None si no tiene forma de NIF español (extranjero, otro país: no se opina)."""
-    n = _nif(nif)
-    if re.fullmatch(r"\d{8}[A-Z]", n):
-        return _LETRAS_DNI[int(n[:8]) % 23] == n[8]
-    if re.fullmatch(r"[XYZ]\d{7}[A-Z]", n):
-        return _LETRAS_DNI[int(str("XYZ".index(n[0])) + n[1:8]) % 23] == n[8]
-    if re.fullmatch(r"[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]", n):
-        cifras = [int(c) for c in n[1:8]]
-        suma = sum(cifras[1::2]) + sum(sum(divmod(c * 2, 10)) for c in cifras[0::2])
-        control = (10 - suma % 10) % 10
-        if n[0] in _CIF_CONTROL_LETRA:
-            return n[8] == "JABCDEFGHI"[control]
-        if n[0] in _CIF_CONTROL_DIGITO:
-            return n[8] == str(control)
-        return n[8] in (str(control), "JABCDEFGHI"[control])
-    return None
 
 
 def nif_ue_con_formato(nif: str) -> bool | None:
@@ -51,25 +23,16 @@ def nif_ue_con_formato(nif: str) -> bool | None:
     n = _nif(nif)
     if not n:
         return None
-    patron = _PAISES_UE.get(n[:2])
-    return bool(patron and re.fullmatch(patron, n[2:]))
+    patron = FORMATOS_NIF_IVA.get(n[:2])
+    return bool(patron and re.fullmatch(patron, n))
 
 
-def comprobar_vies(nif: str, *, abrir=urllib.request.urlopen) -> dict:
-    """Pregunta al VIES de la Comisión Europea si el NIF-IVA está dado de alta: {valido: bool|None, nombre, direccion, error}. `valido` es None si el servicio no contestó (no es un «no»)."""
-    n = _nif(nif)
-    if len(n) < 4 or n[:2] not in _PAISES_UE:
+def comprobar_vies(nif: str) -> dict:
+    """Pregunta al VIES si el NIF-IVA de otro país de la UE está dado de alta (con la caché de `app/vies.py`): {valido: bool|None, error}. `valido` es None si el servicio no contestó (no es un «no»)."""
+    if vies.separar(nif) is None:
         return {"valido": None, "error": _("El NIF debe empezar por el código del país de la UE (por ejemplo FR o DE).")}
-    cuerpo = json.dumps({"countryCode": n[:2], "vatNumber": n[2:]}).encode()
-    peticion = urllib.request.Request(URL_VIES, data=cuerpo, headers={"Content-Type": "application/json", "Accept": "application/json"}, method="POST")
-    try:
-        with abrir(peticion, timeout=8) as r:
-            datos = json.loads(r.read().decode("utf-8", "replace"))
-    except (urllib.error.URLError, TimeoutError, ValueError, OSError):
-        return {"valido": None, "error": _("El servicio VIES no contestó: inténtalo más tarde.")}
-    if datos.get("userError") not in (None, "VALID", "INVALID"):
-        return {"valido": None, "error": _("El servicio VIES no pudo comprobarlo ahora mismo.")}
-    return {"valido": bool(datos.get("valid")), "nombre": (datos.get("name") or "").strip() if datos.get("name") != "---" else "", "direccion": (datos.get("address") or "").strip() if datos.get("address") != "---" else "", "error": ""}
+    valido = vies.valido(nif)
+    return {"valido": valido, "error": "" if valido is not None else _("El servicio VIES no contestó: inténtalo más tarde.")}
 
 
 # --- Duplicados ---------------------------------------------------------------------------------------------------------------------------------------

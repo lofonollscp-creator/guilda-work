@@ -17,18 +17,12 @@ def test_nif_ue_con_formato():
     assert ctl.nif_ue_con_formato("XX123") is False and ctl.nif_ue_con_formato("") is None
 
 
-def test_vies_contesta_y_no_contesta():
-    class R:
-        def __init__(self, t): self.t = t
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
-        def read(self): return self.t.encode()
-    assert ctl.comprobar_vies("FR12345678901", abrir=lambda *a, **k: R('{"valid": true, "name": "ACME SA", "address": "---"}')) == {"valido": True, "nombre": "ACME SA", "direccion": "", "error": ""}
-    assert ctl.comprobar_vies("DE123456789", abrir=lambda *a, **k: R('{"valid": false}'))["valido"] is False
-
-    def caido(*a, **k): raise OSError("sin red")
-    assert ctl.comprobar_vies("DE123456789", abrir=caido)["valido"] is None
-    assert ctl.comprobar_vies("12345678Z")["valido"] is None
+def test_vies_contesta_y_no_contesta(monkeypatch):
+    from app import vies
+    monkeypatch.setattr(vies, "valido", lambda nif: True if nif == "FR12345678901" else None)
+    assert ctl.comprobar_vies("FR12345678901") == {"valido": True, "error": ""}
+    assert ctl.comprobar_vies("DE123456789")["valido"] is None and "no contestó" in ctl.comprobar_vies("DE123456789")["error"]
+    assert ctl.comprobar_vies("12345678Z")["valido"] is None and "código del país" in ctl.comprobar_vies("12345678Z")["error"]
 
 
 def test_duplicados_por_numero_importe_y_sin_nif():

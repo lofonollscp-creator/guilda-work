@@ -12,7 +12,7 @@
       .then(function (r) { return r.json(); })
       .then(function (p) {
         if (p.valido === null) resultado.textContent = p.error;
-        else resultado.textContent = (p.valido ? boton.dataset.leyendaOk : boton.dataset.leyendaNo) + (p.nombre ? " · " + p.nombre : "");
+        else resultado.textContent = (p.valido ? boton.dataset.leyendaOk : boton.dataset.leyendaNo);
       })
       .catch(function () { resultado.textContent = boton.dataset.leyendaNo; })
       .then(function () { boton.disabled = false; });

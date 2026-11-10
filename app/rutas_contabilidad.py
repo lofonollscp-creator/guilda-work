@@ -389,7 +389,7 @@ def vies(factura_id: int):
     if f is None:
         abort(404)
     r = facturas_control.comprobar_vies(f.get("tercero_nif"))
-    return jsonify(valido=r["valido"], nombre=r.get("nombre", ""), direccion=r.get("direccion", ""), error=r.get("error") or "")
+    return jsonify(valido=r["valido"], error=r.get("error") or "")
 
 
 @contabilidad_bp.route("/<int:factura_id>/estado", methods=["POST"])
