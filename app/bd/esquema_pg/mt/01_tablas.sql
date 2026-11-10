@@ -738,6 +738,7 @@ CREATE TABLE IF NOT EXISTS contabilidad_clientes (
     subcuentas_auto bigint NOT NULL DEFAULT 0,
     regimen_iva text NOT NULL DEFAULT 'general',
     retencion_emitidas bigint NOT NULL DEFAULT 0,
+    formato_enlace text NOT NULL DEFAULT '512',
     PRIMARY KEY (tenant_id, cliente_fiscal_id)
 );
 
@@ -754,6 +755,7 @@ CREATE TABLE IF NOT EXISTS contabilidad_despacho (
     subcuentas_auto bigint NOT NULL DEFAULT 0,
     regimen_iva text NOT NULL DEFAULT 'general',
     retencion_emitidas bigint NOT NULL DEFAULT 0,
+    formato_enlace text NOT NULL DEFAULT '512',
     PRIMARY KEY (tenant_id)
 );
 
@@ -1560,6 +1562,7 @@ CREATE TABLE IF NOT EXISTS facturas_contables (
     lectura_confianza bigint,
     lectura_fuente text,
     revision_auto bigint NOT NULL DEFAULT 0,
+    datos_a3 text,
     incluir_en_fiscal bigint NOT NULL DEFAULT 1,
     PRIMARY KEY (tenant_id, id),
     CHECK (tipo IN ('emitida', 'recibida')),
@@ -1579,6 +1582,7 @@ CREATE TABLE IF NOT EXISTS facturas_contables_lineas (
     pct_retencion bigint NOT NULL DEFAULT 0,
     cuota_retencion bigint NOT NULL DEFAULT 0,
     sujeta_iva bigint NOT NULL DEFAULT 1,
+    impreso text,
     tenant_id bigint NOT NULL DEFAULT nullif(current_setting('app.tenant_id', true), '')::bigint,
     PRIMARY KEY (tenant_id, id)
 );

@@ -26811,3 +26811,93 @@ msgstr "Indiquez au moins la colonne du numéro de facture et une autre (date, N
 
 msgid "Sin entregas este mes"
 msgstr "Rien reçu ce mois-ci"
+
+msgid "Impreso"
+msgstr "Imprimé"
+
+msgid "El que toque"
+msgstr "Celui qui convient"
+
+msgid "Datos para los modelos 340 y 347 y para importaciones"
+msgstr "Données pour les modèles 340 et 347 et pour les importations"
+
+msgid "Solo hacen falta en casos especiales. Salen en el registro de ampliación del fichero de 256 posiciones; el bien de inversión sale en los dos formatos."
+msgstr "Nécessaires seulement dans des cas particuliers. Ils figurent dans l'enregistrement d'extension du fichier de 256 positions ; le bien d'investissement figure dans les deux formats."
+
+msgid "Es un bien de inversión"
+msgstr "C'est un bien d'investissement"
+
+msgid "Clave de factura del 340"
+msgstr "Clé de facture du modèle 340"
+
+msgid "1 · Ticket"
+msgstr "1 · Ticket"
+
+msgid "3 · Agencias de viajes"
+msgstr "3 · Agences de voyages"
+
+msgid "Número de DUA (importaciones)"
+msgstr "Numéro de DUA (importations)"
+
+msgid "NIF del representante legal"
+msgstr "NIF du représentant légal"
+
+msgid "Número de la autofactura (inversión del sujeto pasivo)"
+msgstr "Numéro de l'autofacture (autoliquidation)"
+
+msgid "Cobrado en metálico (347): «total» o importe"
+msgstr "Encaissé en espèces (347) : « total » ou montant"
+
+msgid "Transmisión de inmuebles (347): «total» o importe"
+msgstr "Cession d'immeubles (347) : « total » ou montant"
+
+msgid "Formato del fichero para a3"
+msgstr "Format du fichier pour a3"
+
+msgid "512 posiciones (con SII): el de las versiones actuales"
+msgstr "512 positions (avec SII) : celui des versions actuelles"
+
+msgid "256 posiciones (clásico): versiones antiguas, importaciones y datos del 340 y 347"
+msgstr "256 positions (classique) : anciennes versions, importations et données des modèles 340 et 347"
+
+msgid "Si no sabes cuál usar, deja el de 512. El de 256 es el formato clásico de a3: lleva además los datos del registro de ampliación (modelos 340 y 347, DUA de las importaciones)."
+msgstr "Si vous hésitez, laissez 512. Le format 256 est le format classique d'a3 : il contient aussi les données de l'enregistrement d'extension (modèles 340 et 347, DUA des importations)."
+
+msgid "347"
+msgstr "347"
+
+msgid "349 bienes"
+msgstr "349 biens"
+
+msgid "349 servicios"
+msgstr "349 services"
+
+msgid "115 alquileres"
+msgstr "115 loyers"
+
+msgid "110 profesionales"
+msgstr "110 professionnels"
+
+msgid "110 agrarios"
+msgstr "110 agricoles"
+
+msgid "Otra operación no sujeta a IVA"
+msgstr "Autre opération non soumise à la TVA"
+
+msgid "Importación"
+msgstr "Importation"
+
+msgid "Elige un formato de fichero de la lista: 512 (SII) o 256 (clásico)."
+msgstr "Choisissez un format de fichier dans la liste : 512 (SII) ou 256 (classique)."
+
+msgid "Solo una factura recibida puede ser un bien de inversión."
+msgstr "Seule une facture reçue peut être un bien d'investissement."
+
+msgid "La clave de factura del modelo 340 debe ser 1 (ticket) o, en las compras, 3 (agencias de viajes)."
+msgstr "La clé de facture du modèle 340 doit être 1 (ticket) ou, pour les achats, 3 (agences de voyages)."
+
+msgid "Una importación (tipo de operación 06) solo se puede exportar en el formato clásico de 256 posiciones: cámbialo en la configuración de a3 del cliente."
+msgstr "Une importation (type d'opération 06) ne peut être exportée qu'au format classique de 256 positions : modifiez-le dans la configuration a3 du client."
+
+msgid "Una importación necesita el número de DUA (en «Datos para los modelos 340 y 347»)."
+msgstr "Une importation nécessite le numéro de DUA (dans « Données pour les modèles 340 et 347 »)."

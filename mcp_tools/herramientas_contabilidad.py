@@ -36,12 +36,14 @@ def contabilidad_comprobar_exportacion(cliente_fiscal_id: int, trimestre: str | 
 
 
 def contabilidad_anotar_factura(cliente_fiscal_id: int, tipo: str, fecha: str, numero: str, tercero_nombre: str, lineas: list[dict], tercero_nif: str | None = None, concepto: str | None = None,
-                                abono: bool = False, rectifica_numero: str | None = None, rectifica_fecha: str | None = None, tercero_cuenta: str | None = None, notas: str | None = None) -> dict:
+                                abono: bool = False, rectifica_numero: str | None = None, rectifica_fecha: str | None = None, tercero_cuenta: str | None = None, notas: str | None = None,
+                                datos_a3: dict | None = None) -> dict:
     """Anota una factura de un cliente de la gestoría (queda pendiente de revisar). `tipo`: emitida o recibida; `fecha` AAAA-MM-DD. `lineas`: una por tipo de IVA, cada una con `base` (importe sin IVA,
     «1.234,56») y `pct_iva` (21); opcionales `cuota_iva`, `pct_recargo`, `pct_retencion`, `cuenta` y `subtipo` (tipo de operación). Lo que dejes en blanco lo rellenan el régimen del cliente y la regla del
-    proveedor. Un abono necesita `rectifica_numero` y `rectifica_fecha`."""
+    proveedor. Un abono necesita `rectifica_numero` y `rectifica_fecha`. En una línea, `impreso` fija el impreso de a3 (si no, el que toca). `datos_a3`, solo en casos especiales: `bien_inversion`, `dua` (importaciones),
+    `clave_340` (1 ticket, 3 agencias de viajes), `nif_representante`, `autofactura`, `metalico` y `inmuebles` («total» o un importe del 347)."""
     datos = {"cliente_fiscal_id": cliente_fiscal_id, "tipo": tipo, "fecha": fecha, "numero": numero, "tercero_nombre": tercero_nombre, "tercero_nif": tercero_nif, "concepto": concepto,
-             "abono": "1" if abono else "", "rectifica_numero": rectifica_numero, "rectifica_fecha": rectifica_fecha, "tercero_cuenta": tercero_cuenta, "notas": notas, "lineas": lineas}
+             "abono": "1" if abono else "", "rectifica_numero": rectifica_numero, "rectifica_fecha": rectifica_fecha, "tercero_cuenta": tercero_cuenta, "notas": notas, "lineas": lineas, "datos_a3": datos_a3}
     return _mt._conta().anotar_factura(*_mt._ctx_conta(), datos)
 
 

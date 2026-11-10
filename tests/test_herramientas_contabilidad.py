@@ -276,3 +276,11 @@ def test_cierre_de_un_cliente_para_redactar_el_resumen():
     assert puntos["por_revisar"]["estado"] == "pendiente" and puntos["por_revisar"]["cuantos"] == 1 and r["exportadas_sin_confirmar_en_a3"] is None
     with pytest.raises(ih.ErrorHerramientaIA):
         ih.ejecutar(u, "contabilidad_cierre_cliente", {"cliente_fiscal_id": 999999, "trimestre": "2026-T3"})
+
+
+def test_anotar_con_impreso_y_datos_de_ampliacion_por_la_ia():
+    t, u, c = _despacho("Despacho herr ampliacion")
+    f = _anotar(u, c, datos_a3={"bien_inversion": True, "clave_340": "3"}, lineas=[{"base": "100,00", "pct_iva": 21, "pct_retencion": 15, "impreso": "05"}])
+    assert f["datos_a3"] == {"bien_inversion": True, "clave_340": "3"} and f["lineas"][0]["impreso"] == "05"
+    with pytest.raises(ih.ErrorHerramientaIA):
+        _anotar(u, c, numero="F-2", datos_a3={"clave_340": "9"})

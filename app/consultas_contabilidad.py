@@ -50,10 +50,10 @@ def ver_factura(tenant_id: int, usuario_id: int, factura_id: int) -> dict:
         raise ValueError("No existe esa factura.")
     cerrado = fc.periodos_cerrados(tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"])
     return {**_resumen(f), "fecha_operacion": f["fecha_operacion"], "concepto": f["concepto"], "referencia": f["referencia"], "subcuenta_tercero": fc.cuenta_efectiva(tenant_id, f),
-            "rectifica_numero": f["rectifica_numero"], "rectifica_fecha": f["rectifica_fecha"], "criterio_caja": bool(f.get("criterio_caja")), "suplidos": _euros(f["suplidos_centimos"]), "notas": f["notas"],
+            "rectifica_numero": f["rectifica_numero"], "rectifica_fecha": f["rectifica_fecha"], "criterio_caja": bool(f.get("criterio_caja")), "suplidos": _euros(f["suplidos_centimos"]), "notas": f["notas"], "datos_a3": f.get("a3") or {},
             "lectura_error": f.get("lectura_error"), "problemas": f["problemas"], "periodo_cerrado": cerrado["detalle"] if cerrado else None,
             "lineas": [{"base": _euros(l["base_centimos"]), "pct_iva": l["pct_iva"] / 100, "cuota_iva": _euros(l["cuota_iva"]), "pct_recargo": l["pct_recargo"] / 100, "cuota_recargo": _euros(l["cuota_recargo"]),
-                        "pct_retencion": l["pct_retencion"] / 100, "cuota_retencion": _euros(l["cuota_retencion"]), "cuenta": l["cuenta"], "tipo_operacion": l["subtipo"]} for l in f["lineas"]]}
+                        "pct_retencion": l["pct_retencion"] / 100, "cuota_retencion": _euros(l["cuota_retencion"]), "cuenta": l["cuenta"], "tipo_operacion": l["subtipo"], "impreso": fc.impreso_de_linea(f["tipo"], l)} for l in f["lineas"]]}
 
 
 def resumen(tenant_id: int, usuario_id: int) -> dict:

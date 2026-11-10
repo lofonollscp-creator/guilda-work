@@ -26,7 +26,7 @@ def _solo_con_gestoria():
 
 @contabilidad_bp.app_context_processor
 def _catalogos_de_plantilla():
-    return {"operaciones_contables": fc.OPERACIONES, "regimenes": [(r, fc.TEXTO_REGIMEN[r]) for r in fc.REGIMENES]}
+    return {"operaciones_contables": fc.OPERACIONES, "regimenes": [(r, fc.TEXTO_REGIMEN[r]) for r in fc.REGIMENES], "impresos_comunes": fc.IMPRESOS_COMUNES}
 
 
 def _error() -> str | None:
@@ -39,11 +39,11 @@ def _clientes() -> list:
 
 
 def _lineas_del_formulario() -> list[dict]:
-    return [{c: request.form.get(f"{c}_{i}", "") for c in ("base", "pct_iva", "cuota_iva", "pct_recargo", "pct_retencion", "cuenta", "subtipo")} for i in range(fc.MAX_LINEAS)]
+    return [{c: request.form.get(f"{c}_{i}", "") for c in ("base", "pct_iva", "cuota_iva", "pct_recargo", "pct_retencion", "cuenta", "subtipo", "impreso")} for i in range(fc.MAX_LINEAS)]
 
 
 def _datos_del_formulario() -> dict:
-    return {c: request.form.get(c, "") for c in ("tipo", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "tercero_cuenta", "concepto", "referencia", "suplidos", "notas", "abono", "rectifica_fecha", "rectifica_numero", "criterio_caja")}
+    return {c: request.form.get(c, "") for c in ("tipo", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "tercero_cuenta", "concepto", "referencia", "suplidos", "notas", "abono", "rectifica_fecha", "rectifica_numero", "criterio_caja", *fc.DATOS_A3)}
 
 
 def _adjunto_del_formulario(cliente_id: int | None) -> int | None:
@@ -203,8 +203,12 @@ def ver(factura_id: int):
         return redirect(url_for("contabilidad.ver", factura_id=factura_id))
     lineas = [{"base": f"{l['base_centimos'] / 100:.2f}".replace(".", ","), "pct_iva": f"{l['pct_iva'] / 100:g}", "cuota_iva": f"{l['cuota_iva'] / 100:.2f}".replace(".", ","),
                "pct_recargo": f"{l['pct_recargo'] / 100:g}" if l["pct_recargo"] else "", "pct_retencion": f"{l['pct_retencion'] / 100:g}" if l["pct_retencion"] else "",
-               "cuenta": l["cuenta"] or "", "subtipo": l["subtipo"]} for l in f["lineas"]]
+               "cuenta": l["cuenta"] or "", "subtipo": l["subtipo"], "impreso": l.get("impreso") or ""} for l in f["lineas"]]
     datos = {k: f[k] for k in ("tipo", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "concepto", "referencia", "notas")}
+    a3 = f.get("a3") or {}
+    datos.update(bien_inversion="1" if a3.get("bien_inversion") else "", dua=a3.get("dua", ""), clave_340=a3.get("clave_340", ""), nif_representante=a3.get("nif_representante", ""), autofactura=a3.get("autofactura", ""),
+                 metalico="total" if a3.get("metalico") == "total" else (f"{a3['metalico'] / 100:.2f}".replace(".", ",") if a3.get("metalico") else ""),
+                 inmuebles="total" if a3.get("inmuebles") == "total" else (f"{a3['inmuebles'] / 100:.2f}".replace(".", ",") if a3.get("inmuebles") else ""))
     datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "", criterio_caja="1" if f.get("criterio_caja") else "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
     mensajes = facturas_portal.mensajes(g.tenant_id, factura_id)

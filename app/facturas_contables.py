@@ -220,15 +220,60 @@ CREATE TABLE IF NOT EXISTS justificantes_pendientes (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_justificantes_huella ON justificantes_pendientes(tenant_id, cliente_fiscal_id, huella);
 CREATE INDEX IF NOT EXISTS idx_justificantes_cliente ON justificantes_pendientes(tenant_id, cliente_fiscal_id, estado);
 """
-# Tipo de operación de cada línea (campo «subtipo» del enlace de a3, posiciones 100-101). La importación (06) necesita el número de DUA y no se ofrece.
+# Tipo de operación de cada línea (campo «subtipo» del enlace de a3, posiciones 100-101). La importación (06) necesita el número de DUA (datos de ampliación) y solo sale en el formato clásico de 256.
 OPERACIONES = {
     "emitida": (("01", _l("Operación interior sujeta a IVA")), ("02", _l("Exenta sin derecho a deducción")), ("03", _l("Entrega intracomunitaria")),
                 ("04", _l("Entrega intracomunitaria triangular")), ("05", _l("Operación con Canarias, Ceuta o Melilla")), ("06", _l("Exportación")),
-                ("08", _l("No sujeta o inversión del sujeto pasivo")), ("09", _l("Otra exenta con derecho a deducción"))),
+                ("07", _l("Otra operación no sujeta a IVA")), ("08", _l("No sujeta o inversión del sujeto pasivo")), ("09", _l("Otra exenta con derecho a deducción"))),
     "recibida": (("01", _l("Operación interior con IVA deducible")), ("02", _l("Compensación agraria")), ("03", _l("Adquisición intracomunitaria de bienes")),
-                 ("04", _l("Inversión del sujeto pasivo")), ("07", _l("IVA no deducible")), ("08", _l("Adquisición intracomunitaria de servicios"))),
+                 ("04", _l("Inversión del sujeto pasivo")), ("06", _l("Importación")), ("07", _l("IVA no deducible")), ("08", _l("Adquisición intracomunitaria de servicios"))),
 }
 IMPRESO_349 = {"emitida": {"03": "02", "04": "02"}, "recibida": {"03": "02", "08": "11"}}     # impreso 02 = 349 bienes · 11 = 349 servicios
+IMPRESOS_VALIDOS = {f"{i:02d}" for i in range(1, 40)}          # los códigos de «impreso» (posiciones 173-174) que admite a3: 347, 349, 115 y las variantes del 110/123
+IMPRESOS_COMUNES = (("01", _l("347")), ("02", _l("349 bienes")), ("11", _l("349 servicios")), ("03", _l("115 alquileres")), ("05", _l("110 profesionales")), ("07", _l("110 agrarios")))
+IMPRESO_DE_LA_RETENCION = {1900: "03", 1500: "05", 700: "05", 200: "07", 100: "07"}     # retención practicada en una compra → impreso que la acumula (por su porcentaje)
+
+
+def impreso_de_linea(tipo: str, linea: dict) -> str | None:
+    """El impreso de a3 de una línea: el que se eligió a mano; si no, el del 349 que toca por su operación intracomunitaria y, en las compras con retención, el del modelo de esa retención (19 % → 115,
+    15 y 7 % → 110 profesionales, 2 y 1 % → 110 agrarios). Las retenciones de otro tipo no se adivinan: se eligen a mano."""
+    manual = str(linea.get("impreso") or "").strip()
+    if manual in IMPRESOS_VALIDOS:
+        return manual
+    del_349 = IMPRESO_349.get(tipo, {}).get(linea.get("subtipo"))
+    if del_349:
+        return del_349
+    if tipo == "recibida" and linea.get("cuota_retencion"):
+        return IMPRESO_DE_LA_RETENCION.get(linea.get("pct_retencion"))
+    return None
+
+
+def datos_a3_validados(datos: dict | None, tipo: str) -> dict:
+    """Los datos de ampliación de a3 de una factura, ya limpios: `bien_inversion` (solo compras), `dua` (importaciones; 18), `clave_340` (1 = ticket; 3 = agencias de viajes, solo compras), `nif_representante`
+    (14), `autofactura` (inversión del sujeto pasivo; 10) y `metalico` / `inmuebles` del 347 (`total` = el total de la factura, o un importe en euros). Lo vacío no se guarda. `ValueError` si algo no vale."""
+    datos = datos or {}
+    res: dict = {}
+    if str(datos.get("bien_inversion") or "").lower() in ("1", "true", "on", "s"):
+        if tipo != "recibida":
+            raise ValueError("Solo una factura recibida puede ser un bien de inversión.")
+        res["bien_inversion"] = True
+    for campo, largo in (("dua", 18), ("nif_representante", 14), ("autofactura", 10)):
+        v = str(datos.get(campo) or "").strip()
+        if v:
+            res[campo] = _nif(v)[:largo] if campo == "nif_representante" else v[:largo]
+    clave = str(datos.get("clave_340") or "").strip()
+    if clave:
+        if clave not in (("1",) if tipo == "emitida" else ("1", "3")):
+            raise ValueError("La clave de factura del modelo 340 debe ser 1 (ticket) o, en las compras, 3 (agencias de viajes).")
+        res["clave_340"] = clave
+    for campo in ("metalico", "inmuebles"):
+        v = str(datos.get(campo) if datos.get(campo) is not None else "").strip().lower()
+        if v in ("total", "true", "s"):
+            res[campo] = "total"
+        elif v:
+            c = importe_a_centimos(v, permitir_cero=False)
+            res[campo] = c
+    return res
 
 
 def operaciones_validas(tipo: str) -> set[str]:
@@ -248,7 +293,7 @@ MAX_LINEAS = 8
 MAX_NUMERO = 60          # el enlace de a3 admite hasta 60 caracteres (campo ampliado del SII); en las 10 posiciones clásicas va un resumen
 TOLERANCIA_CENTIMOS = 2
 CONFIG_DEFECTO = {"digitos": 8, "cuenta_proveedores": "40000000", "cuenta_clientes": "43000000", "cuenta_gasto": "62900000", "cuenta_ingreso": "70000000",
-                  "cuenta_iva_soportado": "47200000", "cuenta_iva_repercutido": "47700000", "cuenta_retencion": "47510000", "subcuentas_auto": 0, "regimen_iva": "general", "retencion_emitidas": 0}
+                  "cuenta_iva_soportado": "47200000", "cuenta_iva_repercutido": "47700000", "cuenta_retencion": "47510000", "subcuentas_auto": 0, "regimen_iva": "general", "retencion_emitidas": 0, "formato_enlace": "512"}
 
 
 def crear_esquema(conn) -> None:
@@ -271,6 +316,10 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "facturas_contables", "lectura_confianza", "INTEGER")        # 0-100, lo que merece la lectura (app/lectura_confianza.py)
     db._asegurar_columna(conn, "facturas_contables", "lectura_fuente", "TEXT")             # xml · texto (capa de texto del PDF) · imagen
     db._asegurar_columna(conn, "facturas_contables", "revision_auto", "INTEGER NOT NULL DEFAULT 0")     # 1 = la dio por revisada la IA (modo «decide sola»), sin que la mirara una persona
+    db._asegurar_columna(conn, "contabilidad_clientes", "formato_enlace", "TEXT NOT NULL DEFAULT '512'")      # 512 = SII, 256 = clásico (migración 046)
+    db._asegurar_columna(conn, "contabilidad_despacho", "formato_enlace", "TEXT NOT NULL DEFAULT '512'")
+    db._asegurar_columna(conn, "facturas_contables", "datos_a3", "TEXT")                       # JSON: bien de inversión, DUA, clave del 340, 347… (ver `datos_a3_validados`)
+    db._asegurar_columna(conn, "facturas_contables_lineas", "impreso", "TEXT")                 # impreso de a3 elegido a mano para la línea (110, 115, 347, 349…); vacío = el que toca
     db._asegurar_columna(conn, "facturas_contables", "incluir_en_fiscal", "INTEGER NOT NULL DEFAULT 1")      # 1 = cuenta para Guilda Fiscal (modelos de impuestos); 0 = solo contabilidad
 
 
@@ -378,7 +427,7 @@ def _empresa_valida(valor) -> str | None:
 REGIMENES = ("general", "recargo", "exento")
 TEXTO_REGIMEN = {"general": _l("Régimen general"), "recargo": _l("Recargo de equivalencia (comercio minorista)"), "exento": _l("Actividad exenta de IVA (sin derecho a deducción)")}
 RECARGO_ESTANDAR = {2100: 520, 1000: 140, 400: 50}        # recargo de equivalencia que acompaña a cada tipo de IVA
-COLUMNAS_AJUSTES = ("digitos", *CAMPOS_CUENTAS, "subcuentas_auto", "regimen_iva", "retencion_emitidas")
+COLUMNAS_AJUSTES = ("digitos", *CAMPOS_CUENTAS, "subcuentas_auto", "regimen_iva", "retencion_emitidas", "formato_enlace")
 
 
 def _ajustes_validados(datos: dict) -> dict:
@@ -397,7 +446,10 @@ def _ajustes_validados(datos: dict) -> dict:
     retencion = ret if isinstance(ret, int) and not isinstance(ret, bool) else porcentaje_a_centesimas(ret)
     if not 0 <= retencion <= 6000:
         raise ValueError("La retención por defecto debe estar entre 0 y 60 %.")
-    res = {"digitos": digitos, "subcuentas_auto": 1 if datos.get("subcuentas_auto") in (1, "1", "on", True) else 0, "regimen_iva": regimen, "retencion_emitidas": retencion}
+    formato = str(datos.get("formato_enlace") or CONFIG_DEFECTO["formato_enlace"]).strip()
+    if formato not in enlace_a3.FORMATOS:
+        raise ValueError("Elige un formato de fichero de la lista: 512 (SII) o 256 (clásico).")
+    res = {"digitos": digitos, "subcuentas_auto": 1 if datos.get("subcuentas_auto") in (1, "1", "on", True) else 0, "regimen_iva": regimen, "retencion_emitidas": retencion, "formato_enlace": formato}
     for k in CAMPOS_CUENTAS:
         res[k] = _cuenta_valida(datos.get(k) or CONFIG_DEFECTO[k], _ETIQUETAS_CUENTAS[k], digitos)
     return res
@@ -953,7 +1005,8 @@ def _lineas_limpias(lineas: list[dict], tipo: str | None = None, cfg: dict | Non
         cuota_ret = importe_a_centimos(l.get("cuota_retencion")) if str(l.get("cuota_retencion") or "").strip() else enlace_a3.cuota(base, pct_ret)
         cuenta = re.sub(r"\D", "", str(l.get("cuenta") or "")) or None
         res.append({"cuenta": cuenta, "subtipo": (re.sub(r"\D", "", str(l.get("subtipo") or "")).zfill(2)[-2:] if str(l.get("subtipo") or "").strip() else subtipo_por_defecto(tipo or "recibida", cfg)), "base_centimos": base, "pct_iva": pct_iva, "cuota_iva": cuota_iva,
-                    "pct_recargo": pct_re, "cuota_recargo": cuota_re, "pct_retencion": pct_ret, "cuota_retencion": cuota_ret, "sujeta_iva": 0 if str(l.get("sujeta_iva")) == "0" else 1})
+                    "pct_recargo": pct_re, "cuota_recargo": cuota_re, "pct_retencion": pct_ret, "cuota_retencion": cuota_ret, "sujeta_iva": 0 if str(l.get("sujeta_iva")) == "0" else 1,
+                    "impreso": (lambda v: v if v in IMPRESOS_VALIDOS else None)(re.sub(r"\D", "", str(l.get("impreso") or "")).zfill(2)[-2:] if str(l.get("impreso") or "").strip() else "")})
     if not res:
         raise ValueError("Añade al menos una línea con la base imponible y el IVA.")
     if len(res) > MAX_LINEAS:
@@ -1019,6 +1072,7 @@ def _insertar(tenant_id: int, usuario_id: int | None, f, datos: dict, lineas: li
                             d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"], d["suplidos_centimos"], total, d["notas"], usuario_id, ahora, ahora, documento_id))
         fid = cur.lastrowid
         conn.execute("UPDATE facturas_contables SET criterio_caja = ? WHERE id = ?", (d["criterio_caja"], fid))
+        conn.execute("UPDATE facturas_contables SET datos_a3 = ? WHERE id = ?", (_json_datos_a3(datos, d["tipo"]), fid))
         _guardar_lineas(conn, fid, ls)
         if d["tercero_cuenta"]:
             _recordar_tercero(conn, tenant_id, cliente_fiscal_id, d["tipo"], d["tercero_nif"] or "", d["tercero_nombre"], d["tercero_cuenta"])
@@ -1029,12 +1083,33 @@ def _insertar(tenant_id: int, usuario_id: int | None, f, datos: dict, lineas: li
         conn.close()
 
 
+DATOS_A3 = ("bien_inversion", "dua", "clave_340", "nif_representante", "autofactura", "metalico", "inmuebles")
+
+
+def _json_datos_a3(datos: dict, tipo: str) -> str | None:
+    """Los datos de ampliación de a3 que llegan con la factura (sueltos o en `datos_a3`), validados y en JSON; None si no hay ninguno."""
+    import json
+    origen = dict(datos.get("datos_a3") or {}) if isinstance(datos.get("datos_a3"), dict) else {}
+    origen.update({k: datos[k] for k in DATOS_A3 if k in datos})
+    limpio = datos_a3_validados(origen, tipo)
+    return json.dumps(limpio, ensure_ascii=False) if limpio else None
+
+
 def _guardar_lineas(conn, factura_id: int, lineas: list[dict]) -> None:
     conn.execute("DELETE FROM facturas_contables_lineas WHERE factura_id = ?", (factura_id,))
-    conn.executemany("INSERT INTO facturas_contables_lineas (factura_id, cuenta, subtipo, base_centimos, pct_iva, cuota_iva, pct_recargo, cuota_recargo, pct_retencion, cuota_retencion, sujeta_iva) "
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    conn.executemany("INSERT INTO facturas_contables_lineas (factura_id, cuenta, subtipo, base_centimos, pct_iva, cuota_iva, pct_recargo, cuota_recargo, pct_retencion, cuota_retencion, sujeta_iva, impreso) "
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                      [(factura_id, l["cuenta"], l["subtipo"], l["base_centimos"], l["pct_iva"], l["cuota_iva"], l["pct_recargo"], l["cuota_recargo"], l["pct_retencion"], l["cuota_retencion"],
-                       l["sujeta_iva"]) for l in lineas])
+                       l["sujeta_iva"], l.get("impreso")) for l in lineas])
+
+
+def _leer_datos_a3(texto) -> dict:
+    import json
+    try:
+        v = json.loads(texto) if texto else {}
+    except ValueError:
+        return {}
+    return v if isinstance(v, dict) else {}
 
 
 def obtener(tenant_id: int, usuario_id: int, factura_id: int) -> dict | None:
@@ -1049,6 +1124,7 @@ def obtener(tenant_id: int, usuario_id: int, factura_id: int) -> dict | None:
     finally:
         conn.close()
     d["trimestre"] = trimestre_de(d["fecha"])
+    d["a3"] = _leer_datos_a3(d.get("datos_a3"))
     d["problemas"] = problemas(tenant_id, d)
     return d
 
@@ -1113,6 +1189,8 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
                      (d["fecha"], d["fecha_operacion"], d["numero"], d["tercero_nombre"], d["tercero_nif"], d["tercero_cuenta"], d["concepto"], d["referencia"], d["abono"], d["rectifica_fecha"], d["rectifica_numero"],
                       d["suplidos_centimos"], total, d["notas"], db.now_iso(), documento_id, factura_id, tenant_id))
         conn.execute("UPDATE facturas_contables SET criterio_caja = ? WHERE id = ? AND tenant_id = ?", (d["criterio_caja"], factura_id, tenant_id))
+        if "datos_a3" in datos or any(k in datos for k in DATOS_A3):                       # solo se tocan si llegan: una lectura con IA no borra lo que puso una persona
+            conn.execute("UPDATE facturas_contables SET datos_a3 = ? WHERE id = ? AND tenant_id = ?", (_json_datos_a3(datos, f["tipo"]), factura_id, tenant_id))
         _guardar_lineas(conn, factura_id, ls)
         if d["tercero_cuenta"]:
             _recordar_tercero(conn, tenant_id, f["cliente_fiscal_id"], f["tipo"], d["tercero_nif"] or "", d["tercero_nombre"], d["tercero_cuenta"])
@@ -1147,6 +1225,11 @@ def problemas(tenant_id: int, f: dict) -> list[str]:
     ls = f.get("lineas") or []
     if not ls:
         res.append("No tiene líneas de IVA.")
+    if f["tipo"] == "recibida" and any(l["subtipo"] == "06" for l in ls):
+        if cfg.get("formato_enlace") != enlace_a3.FORMATO_CLASICO:
+            res.append("Una importación (tipo de operación 06) solo se puede exportar en el formato clásico de 256 posiciones: cámbialo en la configuración de a3 del cliente.")
+        elif not (f.get("a3") or {}).get("dua"):
+            res.append("Una importación necesita el número de DUA (en «Datos para los modelos 340 y 347»).")
     for i, l in enumerate(ls, start=1):
         esperada = enlace_a3.cuota(l["base_centimos"], l["pct_iva"])
         if abs(esperada - l["cuota_iva"]) > TOLERANCIA_CENTIMOS and l["sujeta_iva"]:
@@ -1338,15 +1421,23 @@ def resumen_por_estado(tenant_id: int, usuario_id: int, cliente_fiscal_id: int |
 
 # --- Exportar a a3 ---------------------------------------------------------------------------------------------------------------------------------------
 
+def _ampliacion_para_enlace(f: dict) -> dict:
+    """Los datos de ampliación del registro 4 (formato clásico): el 347 en céntimos o `True` (= el total de la factura)."""
+    a = f.get("a3") or {}
+    return {"dua": a.get("dua"), "clave_340": a.get("clave_340"), "nif_representante": a.get("nif_representante"), "autofactura": a.get("autofactura"),
+            "metalico": True if a.get("metalico") == "total" else a.get("metalico"), "inmuebles": True if a.get("inmuebles") == "total" else a.get("inmuebles")}
+
+
 def _para_enlace(tenant_id: int, f: dict, cfg: dict, nuevas: dict | None = None) -> dict:
     gasto_o_ingreso = cfg["cuenta_gasto"] if f["tipo"] == "recibida" else cfg["cuenta_ingreso"]
     cuenta_iva = cfg["cuenta_iva_soportado"] if f["tipo"] == "recibida" else cfg["cuenta_iva_repercutido"]
     return {"tipo": f["tipo"], "abono": bool(f["abono"]), "fecha": f["fecha"], "fecha_operacion": f["fecha_operacion"], "numero": f["numero"], "rectifica_fecha": f.get("rectifica_fecha"), "rectifica_numero": f.get("rectifica_numero"), "concepto": f["concepto"] or (
         ("Su Fra. " if f["tipo"] == "recibida" else "Nuestra Fra. ") + f["numero"]), "nif": f["tercero_nif"], "nombre": f["tercero_nombre"], "caja": bool(f.get("criterio_caja")) and f["tipo"] == "recibida",
         "cuenta_tercero": (nuevas or {}).get(("proveedor" if f["tipo"] == "recibida" else "cliente", _nif(f["tercero_nif"])), (None,))[0] or cuenta_efectiva(tenant_id, f, cfg), "total_centimos": f["total_centimos"],
+        "bien_inversion": bool((f.get("a3") or {}).get("bien_inversion")) and f["tipo"] == "recibida", "ampliacion": _ampliacion_para_enlace(f),
         "lineas": [{"cuenta": l["cuenta"] or gasto_o_ingreso, "descripcion_cuenta": "Compras" if f["tipo"] == "recibida" else "Ventas", "subtipo": l["subtipo"], "base_centimos": l["base_centimos"], "pct_iva": l["pct_iva"], "cuota_iva": l["cuota_iva"],
                     "pct_recargo": l["pct_recargo"], "cuota_recargo": l["cuota_recargo"], "pct_retencion": l["pct_retencion"], "cuota_retencion": l["cuota_retencion"],
-                    "sujeta_iva": bool(l["sujeta_iva"]), "impreso": IMPRESO_349.get(f["tipo"], {}).get(l["subtipo"]), "cuenta_iva": cuenta_iva, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}
+                    "sujeta_iva": bool(l["sujeta_iva"]), "impreso": impreso_de_linea(f["tipo"], l), "cuenta_iva": cuenta_iva, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}
                    for l in f["lineas"]]}
 
 
@@ -1364,7 +1455,7 @@ def _preparar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
         if f["problemas"]:
             raise ValueError(f"La factura {f['numero']} tiene problemas: " + " ".join(f["problemas"]))
     nuevas = _subcuentas_nuevas(tenant_id, cfg, facturas)
-    contenido = enlace_a3.generar([_para_enlace(tenant_id, f, cfg, nuevas) for f in facturas], empresa=cfg["a3_empresa"], digitos=cfg["digitos"])
+    contenido = enlace_a3.generar([_para_enlace(tenant_id, f, cfg, nuevas) for f in facturas], empresa=cfg["a3_empresa"], digitos=cfg["digitos"], formato=cfg.get("formato_enlace") or enlace_a3.FORMATO_SII)
     return cliente, cfg, facturas, nuevas, contenido
 
 

@@ -111,7 +111,7 @@
 
   <h2 class="ds-mt-16">{{ _('Importes') }} {{ punto_confianza('base') }}</h2>
   <div class="table-wrap"><table class="historial-table">
-    <thead><tr><th>{{ _('Base imponible') }}</th><th>{{ _('Tipo de IVA') }} %</th><th>{{ _('Cuota IVA') }}</th><th>{{ _('Recargo') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Cuenta de gasto/ingreso') }}</th><th>{{ _('Tipo de operación') }}</th></tr></thead>
+    <thead><tr><th>{{ _('Base imponible') }}</th><th>{{ _('Tipo de IVA') }} %</th><th>{{ _('Cuota IVA') }}</th><th>{{ _('Recargo') }} %</th><th>{{ _('Retención') }} %</th><th>{{ _('Cuenta de gasto/ingreso') }}</th><th>{{ _('Tipo de operación') }}</th><th>{{ _('Impreso') }}</th></tr></thead>
     <tbody>
     {% for i in range([lineas|length + 1, 3]|max if lineas|length < 8 else 8) %}{% set l = lineas[i] if i < lineas|length else {} %}
       <tr>
@@ -123,10 +123,27 @@
         <td><input type="text" name="cuenta_{{ i }}" value="{{ l.cuenta or '' }}" inputmode="numeric" maxlength="12" placeholder="{{ _('por defecto') }}" aria-label="{{ _('Cuenta') }}"></td>
         <td><select name="subtipo_{{ i }}" aria-label="{{ _('Tipo de operación') }}"><option value="">{{ _('Según el régimen del cliente') }}</option>
           {% for codigo, nombre in operaciones_contables[datos.tipo or 'recibida'] %}<option value="{{ codigo }}" {{ 'selected' if l.subtipo == codigo }}>{{ codigo }} · {{ nombre }}</option>{% endfor %}</select></td>
+        <td><select name="impreso_{{ i }}" aria-label="{{ _('Impreso') }}"><option value="">{{ _('El que toque') }}</option>
+          {% for codigo, nombre in impresos_comunes %}<option value="{{ codigo }}" {{ 'selected' if l.impreso == codigo }}>{{ codigo }} · {{ nombre }}</option>{% endfor %}</select></td>
       </tr>
     {% endfor %}
     </tbody>
   </table></div>
+  <details class="ds-mt-16" {{ 'open' if datos.bien_inversion or datos.dua or datos.clave_340 or datos.nif_representante or datos.autofactura or datos.metalico or datos.inmuebles }}>
+    <summary>{{ _('Datos para los modelos 340 y 347 y para importaciones') }}</summary>
+    <p class="muted">{{ _('Solo hacen falta en casos especiales. Salen en el registro de ampliación del fichero de 256 posiciones; el bien de inversión sale en los dos formatos.') }}</p>
+    {% if (datos.tipo or 'recibida') == 'recibida' %}<label class="checkbox-label"><input type="checkbox" name="bien_inversion" value="1" {{ 'checked' if datos.bien_inversion }}> {{ _('Es un bien de inversión') }}</label>{% endif %}
+    <div class="fila-campos">
+      <label>{{ _('Clave de factura del 340') }}<select name="clave_340"><option value="">—</option><option value="1" {{ 'selected' if datos.clave_340 == '1' }}>{{ _('1 · Ticket') }}</option>{% if (datos.tipo or 'recibida') == 'recibida' %}<option value="3" {{ 'selected' if datos.clave_340 == '3' }}>{{ _('3 · Agencias de viajes') }}</option>{% endif %}</select></label>
+      <label>{{ _('Número de DUA (importaciones)') }}<input type="text" name="dua" value="{{ datos.dua }}" maxlength="18"></label>
+      <label>{{ _('NIF del representante legal') }}<input type="text" name="nif_representante" value="{{ datos.nif_representante }}" maxlength="14"></label>
+      <label>{{ _('Número de la autofactura (inversión del sujeto pasivo)') }}<input type="text" name="autofactura" value="{{ datos.autofactura }}" maxlength="10"></label>
+    </div>
+    <div class="fila-campos">
+      <label>{{ _('Cobrado en metálico (347): «total» o importe') }}<input type="text" name="metalico" value="{{ datos.metalico }}" placeholder="total"></label>
+      <label>{{ _('Transmisión de inmuebles (347): «total» o importe') }}<input type="text" name="inmuebles" value="{{ datos.inmuebles }}" placeholder="total"></label>
+    </div>
+  </details>
   <datalist id="tipos-iva"><option value="21"><option value="10"><option value="4"><option value="0"></datalist>
   <label>{{ _('Suplidos (importe sin IVA que no forma parte de la base)') }}<input type="text" name="suplidos" value="{{ datos.suplidos }}" inputmode="decimal"></label>
   {% if fiscal_activo() %}<label class="checkbox-label"><input type="hidden" name="incluir_en_fiscal_presente" value="1"><input type="checkbox" name="incluir_en_fiscal" value="1" {{ 'checked' if fiscal_marcada(f) }}> {{ _('Incluir en Guilda Fiscal (para presentar los modelos de impuestos)') }}</label>
