@@ -56,6 +56,20 @@
   </form>
 </section>
 
+<section class="proyecto-bloque ds-max-720 ds-mt-24" id="compromiso" aria-labelledby="compromiso-titulo">
+  <h2 id="compromiso-titulo">{{ _('Compromiso con el cliente') }}</h2>
+  <p class="muted">{{ _('Dile al cliente cuándo puede esperar respuesta, para que una espera no parezca un olvido. En la bandeja del portal se marca lo que ya ha superado ese plazo.') }}</p>
+  {% if error_compromiso %}<div class="ia-error" role="alert">{{ error_compromiso }}</div>{% endif %}
+  {% if guardado_compromiso %}<p class="muted" role="status">{{ _('Guardado.') }}</p>{% endif %}
+  <form method="post" action="{{ url_for('fiscal.guardar_compromiso') }}" class="proyecto-form">
+    <label>{{ _('Plazo de respuesta, en días laborables (0 para no enseñarlo)') }} <input type="number" name="plazo_respuesta_dias" min="0" max="10" value="{{ compromiso.plazo_respuesta_dias }}"></label>
+    <label><input type="checkbox" name="mostrar_ausencias" value="1" {{ 'checked' if compromiso.mostrar_ausencias }}> {{ _('Avisar al cliente cuando quien lleva su expediente está de vacaciones o ausente (solo el nombre y la fecha de vuelta)') }}</label>
+    <label><input type="checkbox" name="voz_cliente" value="1" {{ 'checked' if compromiso.voz_cliente }}> {{ _('Dejar que el cliente mande notas de voz, que se pasan a texto') }}</label>
+    <label><input type="checkbox" name="escalada_avisos" value="1" {{ 'checked' if compromiso.escalada_avisos }}> {{ _('Si un aviso importante no se abre, repetirlo por el móvil o SMS (solo a quien lo tiene activado) y, al final, crear una tarea de llamada') }}</label>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+</section>
+
 <section class="proyecto-bloque ds-max-720 ds-mt-24" id="respuestas-rapidas" aria-labelledby="respuestas-titulo">
   <h2 id="respuestas-titulo">{{ _('Respuestas rápidas') }}</h2>
   <p class="muted">{{ _('Frases hechas para contestar a tus clientes en un clic desde las conversaciones del portal. Puedes usar {cliente} y {despacho}; se editan antes de enviar.') }}</p>

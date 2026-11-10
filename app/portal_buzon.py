@@ -31,6 +31,7 @@ def _agrupar(filas, tipo: str, titulo, url, hacia_cliente: str) -> list[dict]:
         h = hilos.setdefault(f["ref"], {"tipo": tipo, "ref": f["ref"], "titulo": titulo(f), "url": url(f), "mensajes": 0, "sin_leer": 0})
         h["mensajes"] += 1
         h["ultimo_texto"], h["ultimo_autor"], h["ultimo_en"] = f["texto"], "cliente" if f["autor"] == "cliente" else "gestoria", f["creado_en"]
+        h["visto"] = f["autor"] == "cliente" and f["leido_en"] is not None                # lo último es del cliente y la gestoría ya lo ha abierto (K4)
         if f["autor"] == hacia_cliente and f["leido_en"] is None:
             h["sin_leer"] += 1
     return list(hilos.values())
@@ -54,7 +55,8 @@ def conversaciones(cliente: dict) -> list[dict]:
         if t["comentarios"]:
             ult = t["comentarios"][-1]
             hilos.append({"tipo": "tarea", "ref": t["id"], "titulo": t["asunto"], "url": url_for("portal_cliente.dashboard") + f"#tarea-{t['id']}", "mensajes": len(t["comentarios"]), "sin_leer": 0,
-                          "ultimo_texto": ult["texto"], "ultimo_autor": "cliente" if ult["autor"] == "cliente" else "gestoria", "ultimo_en": ult["creado_en"]})
+                          "ultimo_texto": ult["texto"], "ultimo_autor": "cliente" if ult["autor"] == "cliente" else "gestoria", "ultimo_en": ult["creado_en"],
+                          "visto": ult["autor"] == "cliente" and bool(ult.get("leido_en"))})
     hilos += portal_conversaciones.para_el_buzon(cliente)
     for h in hilos:
         h["espera_respuesta"] = h["ultimo_autor"] == "gestoria" and not h.get("cerrada")

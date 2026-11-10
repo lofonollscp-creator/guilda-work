@@ -22,7 +22,7 @@
   <thead><tr><th scope="col">{{ _('Qué') }}</th><th scope="col">{{ _('Cliente') }}</th><th scope="col">{{ _('Esperando') }}</th><th scope="col">{{ _('Lo lleva') }}</th></tr></thead>
   <tbody>{% for i in items %}
     <tr><td><span class="pill">{{ nombres[i.tipo] }}</span> <a href="{{ i.url }}">{{ i.titulo }}</a></td><td>{{ i.cliente }}</td>
-      <td class="{{ 'texto-aviso' if i.dias >= 3 }}">{{ ngettext('%(n)s día', '%(n)s días', i.dias, n=i.dias) if i.dias else _('hoy') }}</td><td>{{ i.responsable or '—' }}</td></tr>{% endfor %}
+      <td class="{{ 'texto-aviso' if i.dias >= 3 or i.fuera_de_plazo }}">{{ ngettext('%(n)s día', '%(n)s días', i.dias, n=i.dias) if i.dias else _('hoy') }}{% if i.fuera_de_plazo %} · <strong>{{ _('Fuera de plazo') }}</strong>{% endif %}</td><td>{{ i.responsable or '—' }}</td></tr>{% endfor %}
   </tbody>
 </table></div>
 {% endif %}

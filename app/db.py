@@ -2362,6 +2362,8 @@ def init_db() -> None:
         portal_valoraciones.crear_esquema(conn)  # valoración de los clientes al cerrar un trámite (app/portal_valoraciones.py)
         from . import portal_peticiones
         portal_peticiones.crear_esquema(conn)   # peticiones de documentos de la gestoría a sus clientes (app/portal_peticiones.py)
+        from . import portal_peticiones_recurrentes
+        portal_peticiones_recurrentes.crear_esquema(conn)   # documentos que se piden cada mes o trimestre (app/portal_peticiones_recurrentes.py)
         from . import portal_conversaciones
         portal_conversaciones.crear_esquema(conn)    # conversaciones libres cliente-gestoría del portal (app/portal_conversaciones.py)
         from . import portal_cuestionarios

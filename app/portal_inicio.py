@@ -156,3 +156,11 @@ def para_hacer(cliente: dict, vencimientos, solicitudes, certificados, trabajo, 
 
     puntos.sort(key=lambda p: not p["urgente"])
     return puntos
+
+
+def pendientes_de(cliente, rol: str = "completo", hoy: date | None = None) -> int:
+    """Cuántas cosas tiene este cliente por hacer, para enseñarlo junto a su nombre en el selector de empresas (K10). Nunca falla: si algo no se puede calcular, 0."""
+    try:
+        return len(datos(cliente, rol, hoy)["para_hacer"])
+    except Exception:  # noqa: BLE001 -- es un número decorativo del selector, no debe romper la pantalla
+        return 0

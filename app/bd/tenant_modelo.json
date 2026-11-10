@@ -1615,6 +1615,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "portal_peticiones_recurrentes": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_peticiones_documentos": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

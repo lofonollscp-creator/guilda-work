@@ -136,6 +136,19 @@
     <label><input type="checkbox" name="avisar" value="1" checked> {{ _('Avisarle ahora por correo') }}</label>
     <button type="submit" class="btn btn-primary">{{ _('Pedir') }}</button>
   </form>
+  <h3 id="periodicos">{{ _('Documentos periódicos') }}</h3>
+  <p class="muted">{{ _('Lo que se pide siempre (extracto, nóminas, tiques de caja): el portal abre la petición solo, el primer día de cada mes o trimestre.') }}</p>
+  {% for r in periodicos %}
+  <div class="log-item"><span class="log-text"><strong>{{ r.titulo }}</strong> <span class="muted">{{ _('Cada mes') if r.periodicidad == 'mensual' else _('Cada trimestre') }} · {{ _('hasta el día %(d)s', d=r.dia_limite) }}{% if not r.activa %} · {{ _('en pausa') }}{% endif %}</span></span>
+    <form method="post" action="{{ url_for('fiscal.activar_peticion_periodica', cliente_id=cliente.id, regla_id=r.id) }}" class="portal-persona-form"><input type="hidden" name="activa" value="{{ 0 if r.activa else 1 }}"><button type="submit" class="btn btn-ghost">{{ _('Pausar') if r.activa else _('Reanudar') }}</button></form>
+    <form method="post" action="{{ url_for('fiscal.borrar_peticion_periodica', cliente_id=cliente.id, regla_id=r.id) }}" class="portal-persona-form"><button type="submit" class="btn btn-ghost">{{ _('Quitar') }}</button></form></div>
+  {% endfor %}
+  <form method="post" action="{{ url_for('fiscal.crear_peticion_periodica', cliente_id=cliente.id) }}" class="edit-form">
+    <div class="correo-form-campo"><label for="per-titulo">{{ _('Qué documento') }}</label><input type="text" id="per-titulo" name="titulo" maxlength="80" required placeholder="{{ _('Extracto bancario') }}"></div>
+    <div class="correo-form-campo"><label for="per-periodicidad">{{ _('Cada') }}</label><select id="per-periodicidad" name="periodicidad"><option value="mensual">{{ _('Mes') }}</option><option value="trimestral">{{ _('Trimestre') }}</option></select></div>
+    <div class="correo-form-campo"><label for="per-dia">{{ _('Día límite del mes (1 a 28)') }}</label><input type="number" id="per-dia" name="dia_limite" min="1" max="28" value="10"></div>
+    <button type="submit" class="btn btn-primary">{{ _('Añadir documento periódico') }}</button>
+  </form>
 </section>
 
 <section class="proyecto-bloque ds-max-640 ds-mt-24" id="conversaciones" aria-labelledby="conversaciones-titulo">

@@ -9,7 +9,7 @@ from datetime import datetime
 from flask import url_for
 from flask_babel import gettext as _
 
-from . import acceso, db
+from . import acceso, db, portal_compromiso
 
 TIPOS = ("mensaje", "solicitud", "documentos", "cuestionario", "cita", "dossier", "propuesta")
 PREFIJO_SOLICITUD = "Solicitud: "
@@ -50,6 +50,7 @@ def listar(tenant_id: int, usuario_id: int, solo_mios: bool = False, tipo: str |
         items.append({"tipo": "propuesta", "titulo": f["titulo"] + (" · " + _("rechazada") if f["estado"] == "rechazada" else " · " + _("aceptada")), "cliente_id": f["cliente_fiscal_id"], "desde": f["desde"], "url": url_for("fiscal.propuestas")})
     visibles: dict[int, bool] = {}
     salida = []
+    plazo = portal_compromiso.ajustes(tenant_id)["plazo_respuesta_dias"]
     for it in items:
         c = clientes.get(it["cliente_id"])
         if c is None or (tipo and it["tipo"] != tipo) or (solo_mios and c["responsable_id"] != usuario_id):
@@ -58,7 +59,7 @@ def listar(tenant_id: int, usuario_id: int, solo_mios: bool = False, tipo: str |
             visibles[it["cliente_id"]] = acceso.puede_ver_cliente(tenant_id, usuario_id, it["cliente_id"])
         if not visibles[it["cliente_id"]]:
             continue
-        salida.append({**it, "cliente": c["nombre"], "responsable": c["responsable"] or "", "dias": _dias(it["desde"], ahora)})
+        salida.append({**it, "cliente": c["nombre"], "responsable": c["responsable"] or "", "dias": _dias(it["desde"], ahora), "fuera_de_plazo": portal_compromiso.fuera_de_plazo(it["desde"], plazo, ahora)})
     return sorted(salida, key=lambda x: x["desde"] or "")
 
 

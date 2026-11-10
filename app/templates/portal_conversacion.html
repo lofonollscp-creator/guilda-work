@@ -18,7 +18,7 @@
       {% if puede_escribir %}
       <form method="post" enctype="multipart/form-data" action="{{ url_for('portal_cliente.conversacion', conversacion_id=c.id) }}" class="portal-subir">
         <label for="conv-respuesta">{{ _('Escribe un mensaje') if c.estado == 'abierta' else _('Escribe para reabrir la conversación') }}</label>
-        <textarea id="conv-respuesta" class="ds-ancho-total ds-mb-3" name="texto" rows="3" maxlength="{{ max_texto }}" required></textarea>
+        <textarea id="conv-respuesta" class="ds-ancho-total ds-mb-3" name="texto" rows="3" maxlength="{{ max_texto }}" required></textarea>{% if voz %}<button type="button" class="btn btn-ghost" data-voz="conv-respuesta" data-url="{{ url_for('portal_cliente.transcribir_voz') }}" data-idioma="{{ idioma_actual|default('') }}" data-txt-parar="{{ _('Parar') }}" data-txt-grabando="{{ _('Grabando… pulsa Parar cuando termines') }}" data-txt-pasando="{{ _('Pasando tu voz a texto…') }}" data-txt-permiso="{{ _('No se ha podido usar el micrófono. Revisa el permiso del navegador.') }}" data-txt-error="{{ _('No se ha podido pasar la nota de voz a texto.') }}" hidden>{{ _('Dictar por voz') }}</button> <span class="muted" data-voz-estado role="status"></span>{% endif %}
         <label for="conv-respuesta-archivos" class="muted">{{ _('Adjuntar archivos (hasta 3, de 8 MB cada uno)') }}</label>
         <input type="file" id="conv-respuesta-archivos" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx,.doc,.docx" class="ds-mb-3">
         <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
@@ -27,3 +27,4 @@
     </section>
     <p><a href="{{ url_for('portal_cliente.mensajes') }}">{{ _('Volver a los mensajes') }}</a></p>
 {% endblock %}
+{% block scripts %}{% if voz %}<script src="{{ url_for('static', filename='portal_voz.js') }}"></script>{% endif %}{% endblock %}

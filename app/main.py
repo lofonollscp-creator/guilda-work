@@ -36,7 +36,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .bd import contexto as contexto_bd
 from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
-from . import acceso, acento, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_avisos, portal_recordatorios, proyecto_plantillas, salud
+from . import acceso, acento, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_avisos, portal_peticiones_recurrentes, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_juridico, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -2574,6 +2574,7 @@ def _recordatorios_portal_servidor():
         try:
             enviados = portal_recordatorios.procesar_recordatorios()
             otros = portal_avisos.procesar()                       # recordatorios escalonados de lo que espera al cliente y resumen de los lunes
+            portal_peticiones_recurrentes.generar()               # documentos periódicos de cada mes o trimestre (K6)
             salud.registrar_ok("recordatorios_portal", RECORDATORIOS_PORTAL_INTERVALO_HORAS * 3600, f"{enviados} enviado(s), {otros['recordatorios']} de seguimiento, {otros['resumenes']} resumen(es)")
         except Exception as e:  # noqa: BLE001 -- el hilo no debe morir nunca
             logging.getLogger("guilda").exception("Fallo en los recordatorios del portal")

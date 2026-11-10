@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Callable
 
 from . import db, notificaciones_email as ne, portal_personas, portal_push, portal_recordatorios as pr, verticales
@@ -203,6 +203,28 @@ def _avisar_al_equipo(cliente, espera: dict, asunto: str, ahora: datetime) -> No
         conn.close()
     from . import facturas_contables
     facturas_contables.avisar_al_equipo(cliente, f"{cliente['nombre']} lleva {PASOS_DIAS[-1]} días sin contestar", asunto, f"/fiscal/clientes/{cliente['id']}/editar", {"cliente_fiscal_id": cliente["id"]})
+    _tarea_de_llamada(cliente, asunto, ahora)
+
+
+def _tarea_de_llamada(cliente, asunto: str, ahora: datetime) -> None:
+    """Con la escalada activada por el despacho (K9), el último paso deja además una tarea «llamar» para quien lleva al cliente (o, si no hay, la primera persona de la dirección). Nunca rompe el aviso."""
+    try:
+        from . import portal_compromiso
+        if not portal_compromiso.ajustes(cliente["tenant_id"])["escalada_avisos"]:
+            return
+        quien = cliente["responsable_id"]
+        if not quien:
+            conn = db.get_connection()
+            try:
+                f = conn.execute("SELECT u.id FROM usuarios u WHERE " + db.sql_supervisor() + " ORDER BY u.id", (cliente["tenant_id"], cliente["tenant_id"])).fetchone()
+            finally:
+                conn.close()
+            quien = f["id"] if f else None
+        if quien:
+            db.crear_tarea_outlook(quien, f"Llamar a {cliente['nombre']}: lleva {PASOS_DIAS[-1]} días sin contestar", cuerpo=asunto, prioridad="alta",
+                                   fecha_vencimiento=(ahora.date() + timedelta(days=1)).isoformat(), cliente_fiscal_id=cliente["id"])
+    except Exception:  # noqa: BLE001 -- la tarea es un extra del aviso al equipo
+        logger.exception("No se pudo crear la tarea de llamada del cliente %s", cliente["id"])
 
 
 # --- El resumen de los lunes ----------------------------------------------------------------------------------------------------------------------------------

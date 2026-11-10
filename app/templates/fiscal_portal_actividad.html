@@ -10,6 +10,18 @@
 <a class="btn btn-ghost" href="{{ url_for('fiscal.recordatorios') }}">&larr; {{ _('Recordatorios a clientes') }}</a> <a class="btn btn-ghost" href="{{ url_for('fiscal.citas_portal') }}">{{ _('Citas pedidas') }}</a>
 <section class="proyecto-bloque ds-max-720 ds-mt-16" id="satisfaccion" aria-labelledby="satisfaccion-titulo">
   <h2 id="satisfaccion-titulo">{{ _('Satisfacción de los clientes (90 días)') }}</h2>
+  <section class="proyecto-bloque ds-mt-16" id="tiempos" aria-labelledby="tiempos-titulo">
+    <h2 id="tiempos-titulo">{{ _('Cuánto se tarda (últimos 90 días)') }}</h2>
+    {% set pe, cv = tiempos.peticiones, tiempos.conversaciones %}
+    {% if pe.n or cv.n %}
+    <ul class="log-list">
+      {% if pe.n %}<li class="log-item"><span class="log-text">{{ ngettext('%(n)s petición de documentos', '%(n)s peticiones de documentos', pe.n, n=pe.n) }}:
+        {% if pe.hasta_subir is not none %}{{ _('el cliente tarda %(d)s días en subirlo', d=pe.hasta_subir) }}{% else %}{{ _('aún pocos casos para dar una cifra') }}{% endif %}{% if pe.hasta_revisar is not none %} · {{ _('se cierra a los %(d)s días', d=pe.hasta_revisar) }}{% endif %}</span></li>{% endif %}
+      {% if cv.n %}<li class="log-item"><span class="log-text">{{ ngettext('%(n)s conversación abierta por un cliente', '%(n)s conversaciones abiertas por clientes', cv.n, n=cv.n) }}:
+        {% if cv.primera_respuesta is not none %}{{ _('primera respuesta a los %(d)s días laborables', d=cv.primera_respuesta) }}{% else %}{{ _('aún pocos casos para dar una cifra') }}{% endif %}{% if cv.dentro_de_plazo is not none %} · {{ _('%(p)s por ciento dentro del plazo de %(n)s días', p=cv.dentro_de_plazo, n=tiempos.plazo) }}{% endif %}{% if cv.sin_contestar %} · {{ ngettext('%(n)s sin contestar', '%(n)s sin contestar', cv.sin_contestar, n=cv.sin_contestar) }}{% endif %}</span></li>{% endif %}
+    </ul>
+    {% else %}<p class="muted">{{ _('Todavía no hay peticiones ni conversaciones suficientes para medir.') }}</p>{% endif %}
+  </section>
   {% if valoraciones.n %}
   <p><strong>{{ valoraciones.media }}</strong> / 5 · {{ ngettext('%(n)s valoración', '%(n)s valoraciones', valoraciones.n, n=valoraciones.n) }} · {% for k in [5, 4, 3, 2, 1] %}{{ k }}★ {{ valoraciones.reparto[k] }}{{ ' · ' if not loop.last }}{% endfor %}</p>
   <ul class="log-list">

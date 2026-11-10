@@ -27055,3 +27055,155 @@ msgstr "Enter between 1 and 500 invoices."
 
 msgid "Una de las facturas no existe en este cliente."
 msgstr "One of the invoices does not exist for this client."
+
+msgid "Falta el audio."
+msgstr "The audio is missing."
+
+msgid "Documentos periódicos"
+msgstr "Recurring documents"
+
+msgid "Lo que se pide siempre (extracto, nóminas, tiques de caja): el portal abre la petición solo, el primer día de cada mes o trimestre."
+msgstr "What you always ask for (bank statement, payslips, till receipts): the portal opens the request by itself on the first day of each month or quarter."
+
+msgid "hasta el día %(d)s"
+msgstr "by day %(d)s"
+
+msgid "Qué documento"
+msgstr "Which document"
+
+msgid "Extracto bancario"
+msgstr "Bank statement"
+
+msgid "Cada"
+msgstr "Every"
+
+msgid "Día límite del mes (1 a 28)"
+msgstr "Deadline day of the month (1 to 28)"
+
+msgid "Añadir documento periódico"
+msgstr "Add recurring document"
+
+msgid "Cuánto se tarda (últimos 90 días)"
+msgstr "How long things take (last 90 days)"
+
+msgid "el cliente tarda %(d)s días en subirlo"
+msgstr "the client takes %(d)s days to upload it"
+
+msgid "aún pocos casos para dar una cifra"
+msgstr "too few cases yet to give a figure"
+
+msgid "se cierra a los %(d)s días"
+msgstr "closed after %(d)s days"
+
+msgid "primera respuesta a los %(d)s días laborables"
+msgstr "first reply after %(d)s working days"
+
+msgid "%(p)s por ciento dentro del plazo de %(n)s días"
+msgstr "%(p)s percent within the %(n)s-day deadline"
+
+msgid "Todavía no hay peticiones ni conversaciones suficientes para medir."
+msgstr "There are not enough requests or conversations to measure yet."
+
+msgid "%(n)s petición de documentos"
+msgid_plural "%(n)s peticiones de documentos"
+msgstr[0] "%(n)s document request"
+msgstr[1] "%(n)s document requests"
+
+msgid "%(n)s conversación abierta por un cliente"
+msgid_plural "%(n)s conversaciones abiertas por clientes"
+msgstr[0] "%(n)s conversation opened by a client"
+msgstr[1] "%(n)s conversations opened by clients"
+
+msgid "%(n)s sin contestar"
+msgid_plural "%(n)s sin contestar"
+msgstr[0] "%(n)s unanswered"
+msgstr[1] "%(n)s unanswered"
+
+msgid "Compromiso con el cliente"
+msgstr "Commitment to the client"
+
+msgid "Dile al cliente cuándo puede esperar respuesta, para que una espera no parezca un olvido. En la bandeja del portal se marca lo que ya ha superado ese plazo."
+msgstr "Tell the client when to expect a reply, so a wait does not look like an oversight. The portal inbox flags what has passed that deadline."
+
+msgid "Plazo de respuesta, en días laborables (0 para no enseñarlo)"
+msgstr "Reply deadline, in working days (0 to hide it)"
+
+msgid "Avisar al cliente cuando quien lleva su expediente está de vacaciones o ausente (solo el nombre y la fecha de vuelta)"
+msgstr "Tell the client when the person handling their file is on holiday or away (only the first name and return date)"
+
+msgid "Dejar que el cliente mande notas de voz, que se pasan a texto"
+msgstr "Let the client send voice notes, which are turned into text"
+
+msgid "Si un aviso importante no se abre, repetirlo por el móvil o SMS (solo a quien lo tiene activado) y, al final, crear una tarea de llamada"
+msgstr "If an important notice is not opened, repeat it by mobile or SMS (only to those who enabled it) and, finally, create a call task"
+
+msgid "Parar"
+msgstr "Stop"
+
+msgid "Grabando… pulsa Parar cuando termines"
+msgstr "Recording… press Stop when you finish"
+
+msgid "Pasando tu voz a texto…"
+msgstr "Turning your voice into text…"
+
+msgid "No se ha podido usar el micrófono. Revisa el permiso del navegador."
+msgstr "The microphone could not be used. Check the browser permission."
+
+msgid "No se ha podido pasar la nota de voz a texto."
+msgstr "The voice note could not be turned into text."
+
+msgid "Dictar por voz"
+msgstr "Dictate by voice"
+
+msgid "Pantallas sencillas: letra más grande y solo lo principal (Inicio, Facturas, Mensajes y Mi cuenta) en la barra"
+msgstr "Simple screens: larger text and only the essentials (Home, Invoices, Messages and My account) in the bar"
+
+msgid "Hemos recibido %(n)s archivos. Tu gestoría los revisará."
+msgstr "We have received %(n)s files. Your firm will review them."
+
+msgid "Solemos contestar en %(n)s día laborable."
+msgid_plural "Solemos contestar en %(n)s días laborables."
+msgstr[0] "We usually reply within %(n)s working day."
+msgstr[1] "We usually reply within %(n)s working days."
+
+msgid "%(nombre)s, quien lleva tu expediente, está fuera hasta el %(hasta)s; el resto del equipo atiende tus mensajes igualmente."
+msgstr "%(nombre)s, who handles your file, is away until %(hasta)s; the rest of the team still answers your messages."
+
+msgid "Tu gestor"
+msgstr "Your adviser"
+
+msgid "Visto por tu gestoría"
+msgstr "Seen by your firm"
+
+msgid "El plazo debe ser un número de días."
+msgstr "The deadline must be a number of days."
+
+msgid "El plazo debe estar entre 0 y 10 días laborables."
+msgstr "The deadline must be between 0 and 10 working days."
+
+msgid "Las notas de voz no están disponibles."
+msgstr "Voice notes are not available."
+
+msgid "Ese audio no se puede leer aquí."
+msgstr "That audio cannot be read here."
+
+msgid "La nota de voz es demasiado larga: grábala más corta."
+msgstr "The voice note is too long: record a shorter one."
+
+msgid "No se ha entendido nada en la nota de voz. Inténtalo de nuevo, más cerca del micrófono."
+msgstr "Nothing could be understood in the voice note. Try again, closer to the microphone."
+
+msgid "No se ha podido pasar la nota de voz a texto. Escribe el mensaje o inténtalo más tarde."
+msgstr "The voice note could not be turned into text. Type the message or try again later."
+
+msgid "Escribe qué documento hay que pedir (mínimo 3 caracteres)."
+msgstr "Write which document to ask for (at least 3 characters)."
+
+msgid "Elige si se pide cada mes o cada trimestre."
+msgstr "Choose whether it is requested monthly or quarterly."
+
+msgid "El día límite debe ser un número del 1 al 28."
+msgstr "The deadline day must be a number from 1 to 28."
+
+msgid "Este cliente ya tiene demasiados documentos periódicos."
+msgstr "This client already has too many recurring documents."

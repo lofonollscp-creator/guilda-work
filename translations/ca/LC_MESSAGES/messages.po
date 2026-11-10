@@ -27064,3 +27064,155 @@ msgstr "Indica entre 1 i 500 factures."
 
 msgid "Una de las facturas no existe en este cliente."
 msgstr "Una de les factures no existeix en aquest client."
+
+msgid "Falta el audio."
+msgstr "Falta l'àudio."
+
+msgid "Documentos periódicos"
+msgstr "Documents periòdics"
+
+msgid "Lo que se pide siempre (extracto, nóminas, tiques de caja): el portal abre la petición solo, el primer día de cada mes o trimestre."
+msgstr "El que es demana sempre (extracte, nòmines, tiquets de caixa): el portal obre la petició sol, el primer dia de cada mes o trimestre."
+
+msgid "hasta el día %(d)s"
+msgstr "fins al dia %(d)s"
+
+msgid "Qué documento"
+msgstr "Quin document"
+
+msgid "Extracto bancario"
+msgstr "Extracte bancari"
+
+msgid "Cada"
+msgstr "Cada"
+
+msgid "Día límite del mes (1 a 28)"
+msgstr "Dia límit del mes (1 a 28)"
+
+msgid "Añadir documento periódico"
+msgstr "Afegir document periòdic"
+
+msgid "Cuánto se tarda (últimos 90 días)"
+msgstr "Quant es triga (últims 90 dies)"
+
+msgid "el cliente tarda %(d)s días en subirlo"
+msgstr "el client triga %(d)s dies a pujar-lo"
+
+msgid "aún pocos casos para dar una cifra"
+msgstr "encara pocs casos per donar una xifra"
+
+msgid "se cierra a los %(d)s días"
+msgstr "es tanca als %(d)s dies"
+
+msgid "primera respuesta a los %(d)s días laborables"
+msgstr "primera resposta als %(d)s dies laborables"
+
+msgid "%(p)s por ciento dentro del plazo de %(n)s días"
+msgstr "%(p)s per cent dins del termini de %(n)s dies"
+
+msgid "Todavía no hay peticiones ni conversaciones suficientes para medir."
+msgstr "Encara no hi ha prou peticions ni converses per mesurar."
+
+msgid "%(n)s petición de documentos"
+msgid_plural "%(n)s peticiones de documentos"
+msgstr[0] "%(n)s petició de documents"
+msgstr[1] "%(n)s peticions de documents"
+
+msgid "%(n)s conversación abierta por un cliente"
+msgid_plural "%(n)s conversaciones abiertas por clientes"
+msgstr[0] "%(n)s conversa oberta per un client"
+msgstr[1] "%(n)s converses obertes per clients"
+
+msgid "%(n)s sin contestar"
+msgid_plural "%(n)s sin contestar"
+msgstr[0] "%(n)s sense contestar"
+msgstr[1] "%(n)s sense contestar"
+
+msgid "Compromiso con el cliente"
+msgstr "Compromís amb el client"
+
+msgid "Dile al cliente cuándo puede esperar respuesta, para que una espera no parezca un olvido. En la bandeja del portal se marca lo que ya ha superado ese plazo."
+msgstr "Digues al client quan pot esperar resposta, perquè una espera no sembli un oblit. A la safata del portal es marca el que ja ha superat aquest termini."
+
+msgid "Plazo de respuesta, en días laborables (0 para no enseñarlo)"
+msgstr "Termini de resposta, en dies laborables (0 per no mostrar-lo)"
+
+msgid "Avisar al cliente cuando quien lleva su expediente está de vacaciones o ausente (solo el nombre y la fecha de vuelta)"
+msgstr "Avisar el client quan qui porta el seu expedient és de vacances o absent (només el nom i la data de tornada)"
+
+msgid "Dejar que el cliente mande notas de voz, que se pasan a texto"
+msgstr "Deixar que el client enviï notes de veu, que es passen a text"
+
+msgid "Si un aviso importante no se abre, repetirlo por el móvil o SMS (solo a quien lo tiene activado) y, al final, crear una tarea de llamada"
+msgstr "Si un avís important no s'obre, repetir-lo pel mòbil o SMS (només a qui ho té activat) i, al final, crear una tasca de trucada"
+
+msgid "Parar"
+msgstr "Parar"
+
+msgid "Grabando… pulsa Parar cuando termines"
+msgstr "Gravant… prem Parar quan acabis"
+
+msgid "Pasando tu voz a texto…"
+msgstr "Passant la teva veu a text…"
+
+msgid "No se ha podido usar el micrófono. Revisa el permiso del navegador."
+msgstr "No s'ha pogut fer servir el micròfon. Revisa el permís del navegador."
+
+msgid "No se ha podido pasar la nota de voz a texto."
+msgstr "No s'ha pogut passar la nota de veu a text."
+
+msgid "Dictar por voz"
+msgstr "Dictar per veu"
+
+msgid "Pantallas sencillas: letra más grande y solo lo principal (Inicio, Facturas, Mensajes y Mi cuenta) en la barra"
+msgstr "Pantalles senzilles: lletra més gran i només el principal (Inici, Factures, Missatges i El meu compte) a la barra"
+
+msgid "Hemos recibido %(n)s archivos. Tu gestoría los revisará."
+msgstr "Hem rebut %(n)s arxius. La teva gestoria els revisarà."
+
+msgid "Solemos contestar en %(n)s día laborable."
+msgid_plural "Solemos contestar en %(n)s días laborables."
+msgstr[0] "Solem contestar en %(n)s dia laborable."
+msgstr[1] "Solem contestar en %(n)s dies laborables."
+
+msgid "%(nombre)s, quien lleva tu expediente, está fuera hasta el %(hasta)s; el resto del equipo atiende tus mensajes igualmente."
+msgstr "%(nombre)s, qui porta el teu expedient, és fora fins al %(hasta)s; la resta de l'equip atén els teus missatges igualment."
+
+msgid "Tu gestor"
+msgstr "El teu gestor"
+
+msgid "Visto por tu gestoría"
+msgstr "Vist per la teva gestoria"
+
+msgid "El plazo debe ser un número de días."
+msgstr "El termini ha de ser un nombre de dies."
+
+msgid "El plazo debe estar entre 0 y 10 días laborables."
+msgstr "El termini ha d'estar entre 0 i 10 dies laborables."
+
+msgid "Las notas de voz no están disponibles."
+msgstr "Les notes de veu no estan disponibles."
+
+msgid "Ese audio no se puede leer aquí."
+msgstr "Aquest àudio no es pot llegir aquí."
+
+msgid "La nota de voz es demasiado larga: grábala más corta."
+msgstr "La nota de veu és massa llarga: grava-la més curta."
+
+msgid "No se ha entendido nada en la nota de voz. Inténtalo de nuevo, más cerca del micrófono."
+msgstr "No s'ha entès res a la nota de veu. Torna-ho a provar, més a prop del micròfon."
+
+msgid "No se ha podido pasar la nota de voz a texto. Escribe el mensaje o inténtalo más tarde."
+msgstr "No s'ha pogut passar la nota de veu a text. Escriu el missatge o torna-ho a provar més tard."
+
+msgid "Escribe qué documento hay que pedir (mínimo 3 caracteres)."
+msgstr "Escriu quin document cal demanar (mínim 3 caràcters)."
+
+msgid "Elige si se pide cada mes o cada trimestre."
+msgstr "Tria si es demana cada mes o cada trimestre."
+
+msgid "El día límite debe ser un número del 1 al 28."
+msgstr "El dia límit ha de ser un número de l'1 al 28."
+
+msgid "Este cliente ya tiene demasiados documentos periódicos."
+msgstr "Aquest client ja té massa documents periòdics."

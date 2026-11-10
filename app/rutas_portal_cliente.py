@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_propuestas, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_propuestas, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, portal_compromiso, portal_voz, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -99,10 +99,14 @@ def _menu_del_portal():
     con_facturas = verticales.esta_activo(cliente["tenant_id"], "contabilizacion")
     email = g.get("portal_email") or cliente["email"]
     otras = [c for c in portal_personas.clientes_de(email) if c["id"] != cliente["id"]] if not g.get("vista_previa") else []
-    return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
+    pendientes_otras = {c["id"]: portal_inicio.pendientes_de(c, portal_personas.rol_de(c, email) or "consulta") for c in otras[:MAX_SELECTOR_CON_CUENTA]}       # K10: lo pendiente de cada empresa, en el selector
+    return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_pendientes_otras": pendientes_otras, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
             "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
             "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"),
             "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "portal_ventas": portal_ventas.activa_para(cliente), "portal_propuestas": portal_propuestas.hay(cliente), "portal_asistente": portal_asistente.disponible(cliente), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
+
+
+MAX_SELECTOR_CON_CUENTA = 8                       # a partir de ahí el selector no calcula lo pendiente de cada empresa: sería una portada entera por empresa en cada pantalla
 
 
 def _tiene_trabajadores(cliente) -> bool:
@@ -656,7 +660,7 @@ def facturas():
             if request.form.get("misma_factura") == "1":
                 archivos = facturas_contables.unir_paginas(archivos)
             subidas = facturas_contables.subir_desde_portal(cliente["id"], request.form.get("tipo", ""), archivos)
-            return redirect(url_for("portal_cliente.facturas", anotada=1, trimestre=destino, repetidas=subidas.repetidas or None))
+            return redirect(url_for("portal_cliente.facturas", anotada=1, trimestre=destino, repetidas=subidas.repetidas or None, n=len(subidas)))
         except ValueError as e:
             error = _(str(e))
     elif request.method == "POST":
@@ -672,7 +676,7 @@ def facturas():
     hoy_iso = date.today().isoformat()
     puede_valorar_subida = bool(anotada and g.portal_rol != "consulta" and not g.get("vista_previa") and not portal_valoraciones.ya_valorada(cliente, g.portal_email or cliente["email"] or "", "subida", hoy_iso))
     return render_template("portal_facturas.html", puede_valorar_subida=puede_valorar_subida, hoy_iso=hoy_iso, cliente=cliente, lectura_previa=g.portal_rol != "consulta" and not g.get("vista_previa") and portal_lectura_previa.disponible(cliente), tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
-                           datos=datos, error=error, anotada=anotada, atendida=request.args.get("atendida"), con_informe=verticales.esta_activo(cliente["tenant_id"], "fiscal"), justificantes_pendientes=len(justificantes.pendientes_del_cliente(cliente["id"])), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
+                           datos=datos, error=error, anotada=anotada, recibidas=request.args.get("n", type=int) or 0, compromiso=portal_compromiso.para_el_cliente(cliente), atendida=request.args.get("atendida"), con_informe=verticales.esta_activo(cliente["tenant_id"], "fiscal"), justificantes_pendientes=len(justificantes.pendientes_del_cliente(cliente["id"])), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
                            max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
 
 
@@ -728,7 +732,7 @@ def compartir():
     except ValueError as e:
         return redirect(url_for("portal_cliente.facturas", error=_(str(e))[:200]), 303)
     auditoria.registrar(cliente["tenant_id"], None, "portal.compartir", "cliente_fiscal", cliente["id"], {"archivos": len(subidas)})
-    return redirect(url_for("portal_cliente.facturas", anotada=1, compartido=1, trimestre=facturas_portal.trimestre_actual(), repetidas=subidas.repetidas or None), 303)
+    return redirect(url_for("portal_cliente.facturas", anotada=1, compartido=1, trimestre=facturas_portal.trimestre_actual(), repetidas=subidas.repetidas or None, n=len(subidas)), 303)
 
 
 @portal_bp.route("/facturas/enderezar", methods=["POST"])
@@ -747,6 +751,23 @@ def enderezar_foto():
     resp.headers["Cache-Control"] = "no-store"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     return resp
+
+
+@portal_bp.route("/voz/transcribir", methods=["POST"])
+@cliente_login_required
+@limiter.limit("40/hour")
+def transcribir_voz():
+    """Pasa a texto la nota de voz que el cliente acaba de grabar (solo si el despacho lo ha activado). No guarda el audio: devuelve el texto para que lo revise y lo envíe él."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    if cliente is None or g.get("vista_previa") or g.portal_rol == "consulta" or not portal_voz.disponible(cliente):
+        return {"disponible": False}, 404
+    archivo = request.files.get("audio")
+    if archivo is None:
+        return {"error": _("Falta el audio.")}, 400
+    try:
+        return {"disponible": True, "texto": portal_voz.transcribir(cliente, archivo.read(portal_voz.MAX_BYTES + 1), archivo.mimetype, request.args.get("idioma"))}
+    except ValueError as e:
+        return {"disponible": True, "error": _(str(e))}, 422
 
 
 @portal_bp.route("/facturas/leer-previa", methods=["POST"])
@@ -1034,7 +1055,7 @@ def mensajes():
     if cliente is None:
         _cerrar_sesion_del_portal()
         return redirect(url_for("portal_cliente.entrar"))
-    return render_template("portal_mensajes.html", cliente=cliente, conversaciones=portal_buzon.conversaciones(cliente), portal_seccion="mensajes", con_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"))
+    return render_template("portal_mensajes.html", cliente=cliente, conversaciones=portal_buzon.conversaciones(cliente), compromiso=portal_compromiso.para_el_cliente(cliente), portal_seccion="mensajes", con_facturas=verticales.esta_activo(cliente["tenant_id"], "contabilizacion"))
 
 
 # --- Mi cuenta: avisos, personas con acceso, móvil ----------------------------------------------------------------------------------------------------------
@@ -1697,7 +1718,7 @@ def conversacion_nueva():
             return redirect(url_for("portal_cliente.conversacion", conversacion_id=cid, enviado=1))
         except ValueError as e:
             error = _(str(e))
-    return render_template("portal_conversacion_nueva.html", cliente=cliente, asunto=asunto, texto=texto, error=error, peticion=p, max_asunto=portal_conversaciones.MAX_ASUNTO, max_texto=portal_conversaciones.MAX_TEXTO,
+    return render_template("portal_conversacion_nueva.html", cliente=cliente, voz=portal_voz.disponible(cliente) and _puede_escribir(), asunto=asunto, texto=texto, error=error, peticion=p, max_asunto=portal_conversaciones.MAX_ASUNTO, max_texto=portal_conversaciones.MAX_TEXTO,
                            portal_seccion="mensajes")
 
 
@@ -1725,7 +1746,7 @@ def conversacion(conversacion_id: int):
         portal_conversaciones.marcar_leida(cliente, conversacion_id, "cliente")
         c = portal_conversaciones.obtener(cliente, conversacion_id)
     peticion = portal_peticiones.obtener(cliente, c["peticion_id"]) if c["peticion_id"] else None
-    return render_template("portal_conversacion.html", cliente=cliente, c=c, peticion=peticion, error=error, enviado=request.args.get("enviado"), puede_escribir=_puede_escribir(),
+    return render_template("portal_conversacion.html", cliente=cliente, voz=portal_voz.disponible(cliente) and _puede_escribir(), c=c, peticion=peticion, error=error, enviado=request.args.get("enviado"), puede_escribir=_puede_escribir(),
                            max_texto=portal_conversaciones.MAX_TEXTO, portal_seccion="mensajes")
 
 

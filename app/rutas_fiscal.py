@@ -24,7 +24,7 @@ from .auth import limiter, login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_propuestas, portal_canales, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_propuestas, portal_canales, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_compromiso, portal_tiempos, portal_peticiones_recurrentes, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -316,6 +316,7 @@ def recordatorios():
         max_antes=db.MAX_AVISOS_ANTES, max_despues=db.MAX_AVISOS_DESPUES, correo_facturas=portal_subida_rapida.direccion_base(g.tenant_id), respuestas=portal_respuestas.listar(g.tenant_id),
         error_correo=(request.args.get("error_correo") or "")[:200] or None, error_respuesta=(request.args.get("error_respuesta") or "")[:200] or None,
         lectura_previa=portal_lectura_previa.activa(g.tenant_id), guardado_lectura=request.args.get("guardado_lectura"),
+        compromiso=portal_compromiso.ajustes(g.tenant_id), guardado_compromiso=request.args.get("guardado_compromiso"), error_compromiso=(request.args.get("error_compromiso") or "")[:200] or None,
         guardado_correo=request.args.get("guardado_correo"), guardado_respuesta=request.args.get("guardado_respuesta"), max_respuestas=portal_respuestas.MAX_RESPUESTAS,
     )
 
@@ -548,6 +549,20 @@ def guardar_lectura_previa():
     return redirect(url_for("fiscal.recordatorios", guardado_lectura=1) + "#lectura-previa")
 
 
+@fiscal_bp.route("/recordatorios/compromiso", methods=["POST"])
+@login_required
+def guardar_compromiso():
+    """Plazo de respuesta que el portal enseña a los clientes, si se muestran las ausencias de quien los lleva y las notas de voz y la escalada de avisos (K2, K3, K7, K9)."""
+    if g.tenant_id is None:
+        abort(404)
+    try:
+        portal_compromiso.fijar(g.tenant_id, plazo_respuesta_dias=request.form.get("plazo_respuesta_dias") or 0, mostrar_ausencias=request.form.get("mostrar_ausencias") == "1",
+                                voz_cliente=request.form.get("voz_cliente") == "1", escalada_avisos=request.form.get("escalada_avisos") == "1")
+    except ValueError as e:
+        return redirect(url_for("fiscal.recordatorios", error_compromiso=_(str(e))[:200]) + "#compromiso")
+    return redirect(url_for("fiscal.recordatorios", guardado_compromiso=1) + "#compromiso")
+
+
 @fiscal_bp.route("/respuestas-rapidas", methods=["POST"])
 @login_required
 def crear_respuesta_rapida():
@@ -576,7 +591,7 @@ def portal_actividad():
     if g.tenant_id is None:
         abort(404)
     from . import portal_valoraciones
-    return render_template("fiscal_portal_actividad.html", filas=portal_metricas.filas(g.tenant_id, g.usuario_id), dias_sin_entrar=portal_metricas.DIAS_SIN_ENTRAR, valoraciones=portal_valoraciones.resumen(g.tenant_id))
+    return render_template("fiscal_portal_actividad.html", filas=portal_metricas.filas(g.tenant_id, g.usuario_id), dias_sin_entrar=portal_metricas.DIAS_SIN_ENTRAR, valoraciones=portal_valoraciones.resumen(g.tenant_id), tiempos=portal_tiempos.resumen(g.tenant_id, g.usuario_id))
 
 
 @fiscal_bp.route("/citas-portal")
@@ -645,6 +660,37 @@ def crear_peticion_documento(cliente_id: int):
             except ErrorNotificacionesEmail:
                 pass
     return _volver_a_peticiones(cliente_id)
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/peticiones-periodicas", methods=["POST"])
+@login_required
+def crear_peticion_periodica(cliente_id: int):
+    """Una regla de «pídele esto cada mes o trimestre» (K6)."""
+    cliente = _cliente_para_contactos(cliente_id)
+    try:
+        portal_peticiones_recurrentes.crear(cliente, request.form.get("titulo", ""), request.form.get("periodicidad", ""), request.form.get("dia_limite") or 10, por=g.usuario_id)
+    except ValueError as e:
+        return _volver_a_peticiones(cliente_id, _(str(e)))
+    auditoria.registrar(g.tenant_id, g.usuario_id, "portal.peticion_periodica_creada", "cliente_fiscal", cliente_id, {"titulo": request.form.get("titulo", "")[:80]})
+    return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id) + "#periodicos")
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/peticiones-periodicas/<int:regla_id>/activar", methods=["POST"])
+@login_required
+def activar_peticion_periodica(cliente_id: int, regla_id: int):
+    cliente = _cliente_para_contactos(cliente_id)
+    if not portal_peticiones_recurrentes.activar(cliente, regla_id, request.form.get("activa") == "1"):
+        abort(404)
+    return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id) + "#periodicos")
+
+
+@fiscal_bp.route("/clientes/<int:cliente_id>/peticiones-periodicas/<int:regla_id>/borrar", methods=["POST"])
+@login_required
+def borrar_peticion_periodica(cliente_id: int, regla_id: int):
+    cliente = _cliente_para_contactos(cliente_id)
+    if not portal_peticiones_recurrentes.borrar(cliente, regla_id):
+        abort(404)
+    return redirect(url_for("fiscal.editar_cliente", cliente_id=cliente_id) + "#periodicos")
 
 
 @fiscal_bp.route("/clientes/<int:cliente_id>/peticiones/<int:peticion_id>/<accion>", methods=["POST"])
@@ -1009,7 +1055,7 @@ def editar_cliente(cliente_id: int):
         paises_con_calendario=PAISES_CON_CALENDARIO,
         perfil=db.perfil_fiscal_de_cliente(cliente), perfil_tipos=perfil_fiscal.TIPOS, perfil_atributos=perfil_fiscal.ATRIBUTOS,
         modelos_sugeridos=perfil_fiscal.modelos_para_perfil(db.perfil_fiscal_de_cliente(cliente)),
-        peticiones=portal_peticiones.listar(cliente), peticiones_archivos={p["id"]: portal_peticiones.archivos(cliente, p["id"]) for p in portal_peticiones.listar(cliente) if p["archivos"]},
+        peticiones=portal_peticiones.listar(cliente), periodicos=portal_peticiones_recurrentes.listar(cliente), peticiones_archivos={p["id"]: portal_peticiones.archivos(cliente, p["id"]) for p in portal_peticiones.listar(cliente) if p["archivos"]},
         error_peticion=(request.args.get("error_peticion") or "")[:200] or None,
         conversaciones=[{**h, "detalle": portal_conversaciones.obtener(cliente, h["id"])} for h in portal_conversaciones.listar(cliente)],
         cuestionarios=portal_cuestionarios.listar(cliente), plantillas_cuestionario={k: v["titulo"] for k, v in portal_cuestionarios.PLANTILLAS.items()}, error_conversacion=(request.args.get("error_conversacion") or "")[:200] or None,

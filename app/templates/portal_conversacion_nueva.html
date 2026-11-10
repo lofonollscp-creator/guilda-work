@@ -10,7 +10,7 @@
       <div class="correo-form-campo"><label for="conv-asunto">{{ _('Asunto') }}</label>
         <input type="text" id="conv-asunto" class="ds-ancho-total" name="asunto" value="{{ asunto }}" minlength="3" maxlength="{{ max_asunto }}" required></div>
       <div class="correo-form-campo"><label for="conv-texto">{{ _('Mensaje') }}</label>
-        <textarea id="conv-texto" class="ds-ancho-total ds-mb-3" name="texto" rows="6" maxlength="{{ max_texto }}" required>{{ texto }}</textarea></div>
+        <textarea id="conv-texto" class="ds-ancho-total ds-mb-3" name="texto" rows="6" maxlength="{{ max_texto }}" required>{{ texto }}</textarea>{% if voz %}<button type="button" class="btn btn-ghost" data-voz="conv-texto" data-url="{{ url_for('portal_cliente.transcribir_voz') }}" data-idioma="{{ idioma_actual|default('') }}" data-txt-parar="{{ _('Parar') }}" data-txt-grabando="{{ _('Grabando… pulsa Parar cuando termines') }}" data-txt-pasando="{{ _('Pasando tu voz a texto…') }}" data-txt-permiso="{{ _('No se ha podido usar el micrófono. Revisa el permiso del navegador.') }}" data-txt-error="{{ _('No se ha podido pasar la nota de voz a texto.') }}" hidden>{{ _('Dictar por voz') }}</button> <span class="muted" data-voz-estado role="status"></span>{% endif %}</div>
       <div class="correo-form-campo"><label for="conv-archivos">{{ _('Adjuntar archivos (hasta 3, de 8 MB cada uno)') }}</label>
         <input type="file" id="conv-archivos" name="archivos" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.csv,.xls,.xlsx,.doc,.docx"></div>
       <button type="submit" class="btn btn-primary">{{ _('Enviar') }}</button>
@@ -18,3 +18,4 @@
     </form>
     <p class="muted">{{ _('Tu gestoría recibirá un aviso y te contestará aquí mismo.') }}</p>
 {% endblock %}
+{% block scripts %}{% if voz %}<script src="{{ url_for('static', filename='portal_voz.js') }}"></script>{% endif %}{% endblock %}

@@ -34,7 +34,7 @@
       <label for="portal-cambiar-titular">{{ _('Estás viendo:') }}</label>
       <select id="portal-cambiar-titular" name="cliente_id">
         <option value="{{ portal_cliente.id }}" selected>{{ portal_cliente.nombre }}</option>
-        {% for c in portal_otros_clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}
+        {% for c in portal_otros_clientes %}<option value="{{ c.id }}">{{ c.nombre }}{% if portal_pendientes_otras.get(c.id) %} · {{ ngettext('%(n)s pendiente', '%(n)s pendientes', portal_pendientes_otras[c.id], n=portal_pendientes_otras[c.id]) }}{% endif %}</option>{% endfor %}
       </select>
       <button type="submit" class="btn btn-ghost">{{ _('Cambiar') }}</button>
     </form>

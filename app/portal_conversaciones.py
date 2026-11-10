@@ -274,7 +274,8 @@ def para_el_buzon(cliente) -> list[dict]:
     """Los hilos en el formato del buzón del portal (app/portal_buzon.py): tipo «conversacion», título, mensajes, sin leer y si espera la respuesta del cliente."""
     from flask import url_for
     return [{"tipo": "conversacion", "ref": h["id"], "titulo": h["asunto"], "url": url_for("portal_cliente.conversacion", conversacion_id=h["id"]), "mensajes": h["mensajes"], "sin_leer": h["sin_leer_cliente"],
-             "ultimo_texto": h["ultimo_texto"], "ultimo_autor": "cliente" if h["ultimo_de"] == "cliente" else "gestoria", "ultimo_en": h["ultimo_en"], "cerrada": h["estado"] == "cerrada"} for h in listar(cliente)]
+             "ultimo_texto": h["ultimo_texto"], "ultimo_autor": "cliente" if h["ultimo_de"] == "cliente" else "gestoria", "ultimo_en": h["ultimo_en"], "cerrada": h["estado"] == "cerrada",
+             "visto": h["ultimo_de"] == "cliente" and h["sin_leer_equipo"] == 0} for h in listar(cliente)]
 
 
 def adjunto_de(cliente, cid: int, documento_id: int) -> dict | None:

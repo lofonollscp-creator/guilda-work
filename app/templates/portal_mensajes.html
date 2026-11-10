@@ -4,6 +4,9 @@
 {% block subtitulo %}{{ cliente.nombre }} · {{ _('Todas tus conversaciones con tu gestoría en un solo sitio.') }}{% endblock %}
 {% block contenido %}
     {% set tipos = {'modelo': _('Modelo'), 'factura': _('Factura'), 'tarea': _('Trabajo'), 'conversacion': _('Conversación')} %}
+    {% if compromiso.plazo or compromiso.ausencia %}<p class="portal-peticion" role="note">
+      {% if compromiso.plazo %}{{ ngettext('Solemos contestar en %(n)s día laborable.', 'Solemos contestar en %(n)s días laborables.', compromiso.plazo, n=compromiso.plazo) }}{% endif %}
+      {% if compromiso.ausencia %}{{ _('%(nombre)s, quien lleva tu expediente, está fuera hasta el %(hasta)s; el resto del equipo atiende tus mensajes igualmente.', nombre=compromiso.ausencia.nombre or _('Tu gestor'), hasta=compromiso.ausencia.hasta|fecha_dia) }}{% endif %}</p>{% endif %}
     {% if portal_puede_subir %}<p><a class="btn btn-primary" href="{{ url_for('portal_cliente.conversacion_nueva') }}">{{ _('Nueva conversación') }}</a></p>{% endif %}
     {% if not conversaciones %}
     <p class="empty-lane">{{ _('Todavía no hay conversaciones. Cuando escribas a tu gestoría, o ella a ti, aparecerán aquí.') }}</p>
@@ -15,6 +18,7 @@
           <span class="portal-buzon-cab"><span class="pill">{{ tipos[c.tipo] }}</span> <strong>{{ c.titulo }}</strong>
             {% if c.sin_leer %}<span class="portal-nav-insignia" title="{{ _('Mensajes sin leer') }}">{{ c.sin_leer }}</span>{% endif %}
             {% if c.espera_respuesta and not c.sin_leer %}<span class="portal-estado warn">{{ _('Espera tu respuesta') }}</span>{% endif %}
+            {% if c.visto and not c.cerrada %}<span class="portal-estado">{{ _('Visto por tu gestoría') }}</span>{% endif %}
             {% if c.cerrada %}<span class="portal-estado">{{ _('Cerrada') }}</span>{% endif %}</span>
           <span class="portal-buzon-texto">{{ _('Tú') if c.ultimo_autor == 'cliente' else _('Tu gestoría') }}: {{ c.ultimo_texto[:140] }}{% if c.ultimo_texto|length > 140 %}…{% endif %}</span>
           <span class="muted">{{ c.ultimo_en|fecha_y_hora }} · {{ ngettext('%(n)s mensaje', '%(n)s mensajes', c.mensajes, n=c.mensajes) }}</span>
