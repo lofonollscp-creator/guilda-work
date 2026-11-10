@@ -1,0 +1,14 @@
+{# Barra inferior del móvil (portal nuevo): las mismas 5 secciones que arriba, en el mismo orden, y un botón flotante «Subir» para la cámara. #}
+{% set ins_msg = (portal_insignia_mensajes|default(0)) + (portal_insignia_avisos|default(0)) %}
+{% set ins_fact = portal_insignia_facturas|default(0) %}
+{% macro icono(nombre) %}<svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-{{ nombre }}"></use></svg>{% endmacro %}
+{% if portal_facturas and portal_puede_subir and portal_grupo in ('inicio', 'facturas') %}
+<a class="pv-subir" href="{{ url_for('portal_cliente.facturas') }}#form-subida">{{ icono('camera') }}<span>{{ _('Subir factura') }}</span></a>
+{% endif %}
+<nav class="pv-tabs" aria-label="{{ _('Navegación principal') }}">
+  <a href="{{ url_for('portal_cliente.dashboard') }}" {% if portal_grupo == 'inicio' %}aria-current="page"{% endif %}>{{ icono('house') }}<span>{{ _('Inicio') }}</span></a>
+  {% if portal_facturas %}<a href="{{ url_for('portal_cliente.facturas') }}" {% if portal_grupo == 'facturas' %}aria-current="page"{% endif %}>{{ icono('paperclip') }}<span>{{ _('Facturas') }}</span>{% if ins_fact %}<b class="portal-nav-insignia" aria-hidden="true">{{ ins_fact }}</b>{% endif %}</a>{% endif %}
+  <a href="{{ url_for('portal_cliente.mis_documentos') }}" {% if portal_grupo == 'documentos' %}aria-current="page"{% endif %}>{{ icono('folder') }}<span>{{ _('Documentos') }}</span></a>
+  <a href="{{ url_for('portal_cliente.mensajes') }}" {% if portal_grupo == 'mensajes' %}aria-current="page"{% endif %}>{{ icono('mail') }}<span>{{ _('Mensajes') }}</span>{% if ins_msg %}<b class="portal-nav-insignia" aria-hidden="true">{{ ins_msg }}</b>{% endif %}</a>
+  <a href="{{ url_for('portal_cliente.impuestos') }}" {% if portal_grupo == 'impuestos' %}aria-current="page"{% endif %}>{{ icono('list-checks') }}<span>{{ _('Impuestos') }}</span></a>
+</nav>

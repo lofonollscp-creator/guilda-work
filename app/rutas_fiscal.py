@@ -24,7 +24,7 @@ from .auth import limiter, login_required
 from .notificaciones_email import (
     ErrorNotificacionesEmail, enviar_enlace_pago, enviar_respuesta_portal, enviar_solicitud_documento,
 )
-from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_propuestas, portal_canales, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_compromiso, portal_tiempos, portal_peticiones_recurrentes, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
+from . import acceso, auditoria, portal_conversaciones, portal_cuestionarios, fiscal_identidad, honorarios, obligaciones, portal_avisos, portal_citas, portal_adopcion, portal_asistente, portal_bandeja, portal_propuestas, portal_canales, portal_invitaciones, portal_telemetria, portal_lectura_previa, portal_compromiso, portal_diseno, portal_tiempos, portal_peticiones_recurrentes, portal_metricas, portal_personas, portal_peticiones, portal_recordatorios, portal_respuestas, portal_subida_rapida, portal_vista_previa
 from . import facturacion_despacho as fd
 from .vencimientos_fiscales import MODELOS_POR_PAIS
 from .vencimientos_fiscales import modelos_disponibles as modelos_disponibles_para_pais
@@ -316,7 +316,7 @@ def recordatorios():
         max_antes=db.MAX_AVISOS_ANTES, max_despues=db.MAX_AVISOS_DESPUES, correo_facturas=portal_subida_rapida.direccion_base(g.tenant_id), respuestas=portal_respuestas.listar(g.tenant_id),
         error_correo=(request.args.get("error_correo") or "")[:200] or None, error_respuesta=(request.args.get("error_respuesta") or "")[:200] or None,
         lectura_previa=portal_lectura_previa.activa(g.tenant_id), guardado_lectura=request.args.get("guardado_lectura"),
-        compromiso=portal_compromiso.ajustes(g.tenant_id), guardado_compromiso=request.args.get("guardado_compromiso"), error_compromiso=(request.args.get("error_compromiso") or "")[:200] or None,
+        portal_nuevo=portal_diseno.activo(g.tenant_id), guardado_portal_nuevo=request.args.get("guardado_portal_nuevo"), compromiso=portal_compromiso.ajustes(g.tenant_id), guardado_compromiso=request.args.get("guardado_compromiso"), error_compromiso=(request.args.get("error_compromiso") or "")[:200] or None,
         guardado_correo=request.args.get("guardado_correo"), guardado_respuesta=request.args.get("guardado_respuesta"), max_respuestas=portal_respuestas.MAX_RESPUESTAS,
     )
 
@@ -547,6 +547,17 @@ def guardar_lectura_previa():
         abort(404)
     portal_lectura_previa.fijar(g.tenant_id, request.form.get("activa") == "1")
     return redirect(url_for("fiscal.recordatorios", guardado_lectura=1) + "#lectura-previa")
+
+
+@fiscal_bp.route("/recordatorios/portal-nuevo", methods=["POST"])
+@login_required
+def guardar_portal_nuevo():
+    """Encender o apagar la navegación nueva del portal de los clientes de este despacho (app/portal_diseno.py)."""
+    if g.tenant_id is None:
+        abort(404)
+    portal_diseno.fijar(g.tenant_id, request.form.get("activa") == "1")
+    auditoria.registrar(g.tenant_id, g.usuario_id, "portal.nuevo_" + ("activado" if request.form.get("activa") == "1" else "desactivado"), "tenant", g.tenant_id, {})
+    return redirect(url_for("fiscal.recordatorios", guardado_portal_nuevo=1) + "#portal-nuevo")
 
 
 @fiscal_bp.route("/recordatorios/compromiso", methods=["POST"])

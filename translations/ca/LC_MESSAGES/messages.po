@@ -27216,3 +27216,50 @@ msgstr "El dia límit ha de ser un número de l'1 al 28."
 
 msgid "Este cliente ya tiene demasiados documentos periódicos."
 msgstr "Aquest client ja té massa documents periòdics."
+
+msgid "Mi gestoría"
+msgstr "La meva gestoria"
+
+msgid "Menú de %(nombre)s"
+msgstr "Menú de %(nombre)s"
+
+msgid "%(n)s por atender"
+msgid_plural "%(n)s por atender"
+msgstr[0] "%(n)s per atendre"
+msgstr[1] "%(n)s per atendre"
+
+msgid "Dentro de esta sección"
+msgstr "Dins d'aquesta secció"
+
+msgid "Banco y tiques"
+msgstr "Banc i tiquets"
+
+msgid "Revisar extracto"
+msgstr "Revisar extracte"
+
+msgid "Lo que te pedimos"
+msgstr "El que et demanem"
+
+msgid "Firmas"
+msgstr "Signatures"
+
+msgid "Subir factura"
+msgstr "Pujar factura"
+
+msgid "¿Tienes una factura nueva?"
+msgstr "Tens una factura nova?"
+
+msgid "Hazle una foto y la leemos por ti."
+msgstr "Fes-li una foto i la llegim per tu."
+
+msgid "Portal con la navegación nueva"
+msgstr "Portal amb la navegació nova"
+
+msgid "Cinco secciones fijas (Inicio, Facturas, Documentos, Mensajes e Impuestos) con pestañas dentro, tu logo y tu color en la cabecera y el idioma a un toque. Las direcciones no cambian. Puedes apagarlo cuando quieras para volver al portal de siempre; antes de encenderlo, mira cómo lo ve un cliente con la vista previa."
+msgstr "Cinc seccions fixes (Inici, Factures, Documents, Missatges i Impostos) amb pestanyes a dins, el teu logo i el teu color a la capçalera i l'idioma a un toc. Les adreces no canvien. Pots apagar-ho quan vulguis per tornar al portal de sempre; abans d'encendre'l, mira com el veu un client amb la vista prèvia."
+
+msgid "Usar la navegación nueva en el portal de mis clientes"
+msgstr "Fer servir la navegació nova al portal dels meus clients"
+
+msgid "Perfil de %(nombre)s"
+msgstr "Perfil de %(nombre)s"

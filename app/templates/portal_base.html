@@ -10,9 +10,11 @@
   <meta name="theme-color" content="#f5f6f8">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='paginas_cristal.css') }}">
+  {% if portal_nuevo %}<link rel="stylesheet" href="{{ url_for('static', filename='portal_v2.css') }}">
+  {% if portal_marca.color %}<link rel="stylesheet" href="{{ url_for('portal_cliente.marca_estilo') }}?v={{ portal_marca.version|urlencode }}">{% endif %}{% endif %}
   <script src="{{ url_for('static', filename='portal_aspecto.js') }}"></script>
 </head>
-<body>
+<body{% if portal_nuevo %} class="portal-v2"{% endif %}>
   <div class="portal-barra-carga" data-barra-carga hidden aria-hidden="true"></div>
   <a class="portal-saltar" href="#portal-contenido">{{ _('Saltar al contenido') }}</a>
   <div class="portal-cliente-shell">
@@ -22,6 +24,7 @@
       <form method="post" action="{{ url_for('portal_cliente.salir') }}"><button type="submit" class="btn btn-primary">{{ _('Salir de la vista previa') }}</button></form>
     </div>
     {% endif %}
+    {% if portal_nuevo %}{% include '_portal_cabecera_v2.html' %}{% else %}
     <header class="page-header">
       <div>
         <h1>{% block titulo %}{% endblock %}</h1>
@@ -38,7 +41,7 @@
       </select>
       <button type="submit" class="btn btn-ghost">{{ _('Cambiar') }}</button>
     </form>
-    {% endif %}
+    {% endif %}{% endif %}
 
     {% if not vista_previa %}
     <div class="portal-instalar" data-instalar hidden role="region" aria-label="{{ _('Instalar la aplicación') }}"
@@ -50,6 +53,12 @@
     </div>
     {% endif %}
 
+    {% if portal_nuevo %}{% include '_portal_pestanas_v2.html' %}
+    <header class="pv-titulo">
+      <h1>{{ self.titulo() }}</h1>
+      <p class="subtitle">{{ self.subtitulo() }}</p>
+    </header>
+    {% else %}
     <nav class="portal-nav" aria-label="{{ _('Secciones del portal') }}">
       <a href="{{ url_for('portal_cliente.dashboard') }}" data-atajo="i" {% if portal_seccion == 'inicio' %}aria-current="page"{% endif %}>{{ _('Inicio') }}</a>
       {% if portal_facturas %}
@@ -67,6 +76,7 @@
       {% if portal_ayuda_url %}<a href="{{ portal_ayuda_url }}" target="_blank" rel="noopener" class="portal-nav-ayuda" aria-label="{{ _('Ayuda sobre esta pantalla (se abre en una pestaña nueva)') }}">{{ _('Ayuda') }}</a>{% endif %}
       {% if not vista_previa %}<form method="post" action="{{ url_for('portal_cliente.salir') }}" class="portal-nav-salir"><button type="submit" class="portal-nav-salir-boton">{{ _('Salir') }}</button></form>{% endif %}
     </nav>
+    {% endif %}
 
     <main id="portal-contenido" tabindex="-1" class="portal-contenido{{ ' portal-solo-lectura' if vista_previa }}">
     {% block contenido %}{% endblock %}
@@ -93,6 +103,7 @@
   {% set ins_fact = portal_insignia_facturas|default(0) %}{% set ins_msg = portal_insignia_mensajes|default(0) %}{% set ins_avi = portal_insignia_avisos|default(0) %}
   <meta name="portal-insignia" content="{{ ins_fact + ins_msg + ins_avi }}">
   {% if portal_telemetria %}<meta name="portal-telemetria" content="{{ url_for('portal_cliente.telemetria') }}">{% endif %}
+  {% if portal_nuevo %}{% include '_portal_tabs_v2.html' %}{% else %}
   <nav class="portal-tabs" aria-label="{{ _('Navegación principal') }}">
     <a href="{{ url_for('portal_cliente.dashboard') }}" {% if portal_seccion == 'inicio' and request.endpoint == 'portal_cliente.dashboard' %}aria-current="page"{% endif %}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-house"></use></svg><span>{{ _('Inicio') }}</span></a>
     {% if portal_facturas %}<a href="{{ url_for('portal_cliente.facturas') }}" {% if portal_seccion == 'facturas' %}aria-current="page"{% endif %}><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-paperclip"></use></svg><span>{{ _('Facturas') }}</span>{% if ins_fact %}<b class="portal-nav-insignia" aria-hidden="true">{{ ins_fact }}</b>{% endif %}</a>{% endif %}
@@ -118,6 +129,7 @@
       </div>
     </details>
   </nav>
+  {% endif %}
   <script src="{{ url_for('static', filename='portal_app.js') }}" defer></script>
   {% if portal_cliente and not vista_previa %}<script src="{{ url_for('static', filename='sw_registro.js') }}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}

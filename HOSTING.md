@@ -251,6 +251,7 @@ Variables opcionales:
 | `GUILDA_CERT_HOSTS` | (el de `GUILDA_URL_PUBLICA`) | Dominios cuyo certificado HTTPS vigila el panel de salud, separados por comas. Ámbar a 21 días de caducar y rojo a 7. |
 | `GUILDA_CADUCIDADES` | (vacío) | Cosas que caducan y nadie más vigila: `Secreto de Microsoft=2028-10-01;Dominio guildawork.com=2027-03-15`. Ámbar a 45 días y rojo a 14; el vigilante avisa por correo de lo que esté en rojo. |
 | `GUILDA_URL_PUBLICA` | _(vacío)_ | URL pública de la app (p. ej. `https://work.tudominio.com`), sin barra final. La usan los correos que se mandan sin petición web de por medio —recordatorios de vencimientos a clientes— para enlazar al portal. Sin ella el correo sale sin enlace. |
+| `GUILDA_URL_PORTAL` | _(vacío: se usa `GUILDA_URL_PUBLICA`)_ | Dirección con la que entran los clientes al portal (p. ej. `https://clientes.tudominio.com`), sin barra final. La usan los enlaces del portal: correos, invitaciones, avisos, preferencias, subida rápida y las passkeys (que quedan atadas a este dominio). Los webhooks de Twilio y Stripe siguen firmándose sobre `GUILDA_URL_PUBLICA`. En el proxy, este dominio solo debería dejar pasar `/portal`, `/static`, `/sw.js` e `/idioma`. |
 | `GUILDA_FICHAJE_AVISO_HORAS` | `10` | Horas con la jornada de fichaje abierta tras las cuales se avisa (una vez por jornada) de que quizá se olvidó la salida. `0` lo desactiva. Se comprueba cada 15 minutos. |
 
 **Sincronización del correo**: `serve.py` lanza un hilo que, cada

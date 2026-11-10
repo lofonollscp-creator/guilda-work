@@ -27292,3 +27292,50 @@ msgstr "Le jour limite doit être un nombre de 1 à 28."
 
 msgid "Este cliente ya tiene demasiados documentos periódicos."
 msgstr "Ce client a déjà trop de documents périodiques."
+
+msgid "Mi gestoría"
+msgstr "Mon cabinet"
+
+msgid "Menú de %(nombre)s"
+msgstr "Menu de %(nombre)s"
+
+msgid "%(n)s por atender"
+msgid_plural "%(n)s por atender"
+msgstr[0] "%(n)s à traiter"
+msgstr[1] "%(n)s à traiter"
+
+msgid "Dentro de esta sección"
+msgstr "Dans cette rubrique"
+
+msgid "Banco y tiques"
+msgstr "Banque et tickets"
+
+msgid "Revisar extracto"
+msgstr "Vérifier le relevé"
+
+msgid "Lo que te pedimos"
+msgstr "Ce que nous vous demandons"
+
+msgid "Firmas"
+msgstr "Signatures"
+
+msgid "Subir factura"
+msgstr "Téléverser une facture"
+
+msgid "¿Tienes una factura nueva?"
+msgstr "Une nouvelle facture ?"
+
+msgid "Hazle una foto y la leemos por ti."
+msgstr "Prenez-la en photo et nous la lisons pour vous."
+
+msgid "Portal con la navegación nueva"
+msgstr "Portail avec la nouvelle navigation"
+
+msgid "Cinco secciones fijas (Inicio, Facturas, Documentos, Mensajes e Impuestos) con pestañas dentro, tu logo y tu color en la cabecera y el idioma a un toque. Las direcciones no cambian. Puedes apagarlo cuando quieras para volver al portal de siempre; antes de encenderlo, mira cómo lo ve un cliente con la vista previa."
+msgstr "Cinq rubriques fixes (Accueil, Factures, Documents, Messages et Impôts) avec des onglets à l'intérieur, votre logo et votre couleur dans l'en-tête et la langue à portée de main. Les adresses ne changent pas. Vous pouvez l'éteindre à tout moment pour revenir au portail habituel ; avant de l'allumer, voyez comment un client le voit avec l'aperçu."
+
+msgid "Usar la navegación nueva en el portal de mis clientes"
+msgstr "Utiliser la nouvelle navigation dans le portail de mes clients"
+
+msgid "Perfil de %(nombre)s"
+msgstr "Profil de %(nombre)s"

@@ -70,6 +70,9 @@
         <p>{{ _('Ahora mismo tu gestoría no necesita nada de ti.') }}</p>
         {% if plazos %}{% set siguiente = plazos[0] %}<p class="muted">{{ _('Lo próximo: %(modelo)s el %(fecha)s.', modelo=siguiente.modelo ~ ' ' ~ siguiente.periodo, fecha=siguiente.fecha_limite|fecha_dia) }}</p>{% endif %}
       </div>
+      {% if portal_nuevo and portal_facturas and portal_puede_subir %}
+      <div class="pv-accion-principal"><span><strong>{{ _('¿Tienes una factura nueva?') }}</strong>{{ _('Hazle una foto y la leemos por ti.') }}</span><a class="btn btn-primary" href="{{ url_for('portal_cliente.facturas') }}#form-subida">{{ _('Subir una factura') }}</a></div>
+      {% endif %}
       {% endif %}
       {% if portal_puede_subir %}<p class="portal-necesitas"><a class="btn btn-ghost" href="{{ url_for('portal_cliente.gestiones') }}">{{ _('¿Necesitas algo de tu gestoría? Pídelo aquí') }}</a></p>{% endif %}
     </section>
@@ -117,13 +120,14 @@
     </div>
     <div class="portal-col portal-col-lateral">
     {% if actividad %}
-    <section class="portal-plazos" aria-labelledby="portal-actividad-titulo">
-      <h2 id="portal-actividad-titulo">{{ _('Lo que hemos hecho por ti') }}</h2>
+    {% if portal_nuevo %}<details class="pv-tarjeta-plegable"><summary id="portal-actividad-titulo">{{ _('Lo que hemos hecho por ti') }}</summary><div>
+    {% else %}<section class="portal-plazos" aria-labelledby="portal-actividad-titulo">
+      <h2 id="portal-actividad-titulo">{{ _('Lo que hemos hecho por ti') }}</h2>{% endif %}
       <ol class="portal-actividad">
         {% for e in actividad %}<li class="portal-actividad-{{ e.tipo }}"><time datetime="{{ e.fecha }}">{{ e.fecha|fecha_dia }}</time> <span><a href="{{ e.url }}">{{ e.titulo }}</a></span></li>{% endfor %}
       </ol>
       <p><a href="{{ url_for('portal_cliente.actividad') }}">{{ _('Ver todo') }}</a></p>
-    </section>
+    {% if portal_nuevo %}</div></details>{% else %}</section>{% endif %}
     {% endif %}
 
     {% if plazos %}

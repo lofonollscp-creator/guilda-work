@@ -1,0 +1,33 @@
+{# Pestañas de dentro de la sección actual (portal nuevo). Cada pestaña agrupa los endpoints que son «la misma pantalla» (el listado y su detalle) para marcar la activa. #}
+{% macro pestana(endpoints, destino, texto, atajo='', insignia=0) %}
+  {% set actual = request.endpoint.split('.')[-1] %}
+  <a href="{{ destino }}" {% if atajo %}data-atajo="{{ atajo }}"{% endif %} {% if actual in endpoints %}aria-current="page"{% endif %}>{{ texto }}{% if insignia %} <span class="portal-nav-insignia" aria-label="{{ ngettext('%(n)s por atender', '%(n)s por atender', insignia, n=insignia) }}">{{ insignia }}</span>{% endif %}</a>
+{% endmacro %}
+{% if portal_grupo in ('facturas', 'documentos', 'mensajes', 'impuestos') %}
+<nav class="pv-pestanas" aria-label="{{ _('Dentro de esta sección') }}">
+  {% if portal_grupo == 'facturas' %}
+    {{ pestana(['facturas', 'factura', 'informe_trimestre', 'subida_rapida'], url_for('portal_cliente.facturas'), _('Mis facturas'), '', portal_insignia_facturas|default(0)) }}
+    {{ pestana(['justificantes_cliente'], url_for('portal_cliente.justificantes_cliente'), _('Banco y tiques')) }}
+    {{ pestana(['extracto'], url_for('portal_cliente.extracto'), _('Revisar extracto')) }}
+    {% if portal_ventas %}{{ pestana(['ventas'], url_for('portal_cliente.ventas'), _('Mis ventas')) }}{% endif %}
+  {% elif portal_grupo == 'documentos' %}
+    {{ pestana(['mis_documentos', 'documentos_vencimiento'], url_for('portal_cliente.mis_documentos'), _('Mis documentos'), 'd') }}
+    {{ pestana(['carpeta'], url_for('portal_cliente.carpeta'), _('Carpeta'), 'c') }}
+    {{ pestana(['peticiones', 'peticion'], url_for('portal_cliente.peticiones'), _('Lo que te pedimos')) }}
+    {{ pestana(['cuestionarios', 'cuestionario'], url_for('portal_cliente.cuestionarios'), _('Cuestionarios')) }}
+    {{ pestana(['dossier'], url_for('portal_cliente.dossier'), _('Dossier para el banco')) }}
+  {% elif portal_grupo == 'mensajes' %}
+    {{ pestana(['mensajes', 'conversacion', 'conversacion_nueva', 'mensajes_vencimiento'], url_for('portal_cliente.mensajes'), _('Conversaciones'), 'm', portal_insignia_mensajes|default(0)) }}
+    {{ pestana(['avisos'], url_for('portal_cliente.avisos'), _('Avisos'), 'a', portal_insignia_avisos|default(0)) }}
+    {{ pestana(['gestiones', 'gestion'], url_for('portal_cliente.gestiones'), _('Pedir algo'), 'p') }}
+    {% if portal_propuestas %}{{ pestana(['propuestas', 'propuesta'], url_for('portal_cliente.propuestas'), _('Propuestas')) }}{% endif %}
+    {% if portal_asistente %}{{ pestana(['asistente'], url_for('portal_cliente.asistente'), _('Preguntar')) }}{% endif %}
+    {{ pestana(['citas'], url_for('portal_cliente.citas'), _('Citas')) }}
+  {% elif portal_grupo == 'impuestos' %}
+    {{ pestana(['impuestos', 'declaracion'], url_for('portal_cliente.impuestos'), _('Modelos'), 't') }}
+    {{ pestana(['firmas', 'firma_vencimiento'], url_for('portal_cliente.firmas'), _('Firmas')) }}
+    {% if portal_honorarios %}{{ pestana(['honorarios_cliente'], url_for('portal_cliente.honorarios_cliente'), _('Honorarios')) }}{% endif %}
+    {% if portal_trabajadores %}{{ pestana(['trabajadores'], url_for('portal_cliente.trabajadores'), _('Mis trabajadores')) }}{% endif %}
+  {% endif %}
+</nav>
+{% endif %}

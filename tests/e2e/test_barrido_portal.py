@@ -102,6 +102,10 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
         conn.execute("UPDATE clientes_fiscales SET nombre = ?", ("Construcciones y Reformas Hermanos Fernández-Villanueva de la Vera e Hijos Sociedad Limitada Profesional ECLI:ES:TS:2099:12345ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",))
         conn.commit()
         conn.close()
+    if os.environ.get("GUILDA_PORTAL_NUEVO"):                                  # el mismo barrido con la navegación nueva y la marca del despacho
+        from app import marca, portal_diseno
+        portal_diseno.fijar(t, True)
+        marca.guardar(t, nombre="Asesores Fernández-Villanueva y Asociados", color="#0a7d5a")
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
     rutas += [f"/portal/cuestionarios/{cuest}", f"/portal/cuestionarios/{cuest_largo}", f"/portal/conversaciones/nueva?peticion={pet_abierta}", f"/portal/conversaciones/{conv}", f"/portal/conversaciones/{conv_cerrada}", f"/portal/peticiones/{pet_abierta}", f"/portal/peticiones/{pet_cerrada}", f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
@@ -128,6 +132,9 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
                 d["http"] = resp.status if resp else 0
                 d["final"] = pg.url.replace(servidor.url, "")[:60]
                 d.update({k: v for k, v in m.items() if v})
+                if os.environ.get("GUILDA_CAPTURAS") and etiqueta == "portal:" and ruta in ("/portal/", "/portal/facturas", "/portal/mensajes", "/portal/documentos", "/portal/impuestos"):
+                    Path(os.environ["GUILDA_CAPTURAS"]).mkdir(parents=True, exist_ok=True)
+                    pg.screenshot(path=str(Path(os.environ["GUILDA_CAPTURAS"]) / f"{ruta.strip('/').replace('/', '_') or 'portal'}-{ancho}.png"), full_page=False)
 
     # sin sesión
     ctx = chromium.new_context(viewport={"width": 1280, "height": 800})

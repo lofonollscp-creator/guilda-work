@@ -19,8 +19,8 @@ from urllib.parse import urlencode
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import gettext as _, get_locale
 
-from . import antivirus, auditoria, captcha, db, notificaciones, tareas_trabajo, verticales
-from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_propuestas, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, portal_compromiso, portal_voz, portal_recordatorios, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import antivirus, auditoria, captcha, db, marca, notificaciones, tareas_trabajo, verticales
+from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_propuestas, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, portal_compromiso, portal_voz, portal_diseno, portal_recordatorios, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -100,13 +100,24 @@ def _menu_del_portal():
     email = g.get("portal_email") or cliente["email"]
     otras = [c for c in portal_personas.clientes_de(email) if c["id"] != cliente["id"]] if not g.get("vista_previa") else []
     pendientes_otras = {c["id"]: portal_inicio.pendientes_de(c, portal_personas.rol_de(c, email) or "consulta") for c in otras[:MAX_SELECTOR_CON_CUENTA]}       # K10: lo pendiente de cada empresa, en el selector
-    return {"vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_pendientes_otras": pendientes_otras, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
+    return {**_diseno_del_portal(cliente), "vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_honorarios": bool(cliente["portal_honorarios"]), "portal_pendientes_otras": pendientes_otras, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
             "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
             "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"),
             "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "portal_ventas": portal_ventas.activa_para(cliente), "portal_propuestas": portal_propuestas.hay(cliente), "portal_asistente": portal_asistente.disponible(cliente), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
 
 
 MAX_SELECTOR_CON_CUENTA = 8                       # a partir de ahí el selector no calcula lo pendiente de cada empresa: sería una portada entera por empresa en cada pantalla
+
+
+def _diseno_del_portal(cliente) -> dict:
+    """Lo que necesita la plantilla base para el portal nuevo: si está activo para este despacho, en qué sección estamos y la marca del despacho. Con el portal nuevo apagado, solo `portal_nuevo=False`."""
+    if not portal_diseno.activo(cliente["tenant_id"]):
+        return {"portal_nuevo": False}
+    return {"portal_nuevo": True, "portal_grupo": portal_diseno.grupo_de(request.endpoint, None), "portal_marca": portal_diseno.marca_del_portal(cliente["tenant_id"]),
+            "portal_idiomas": IDIOMAS_DEL_PORTAL}
+
+
+IDIOMAS_DEL_PORTAL = (("es", "Español"), ("ca", "Català"), ("en", "English"), ("fr", "Français"))
 
 
 def _tiene_trabajadores(cliente) -> bool:
@@ -751,6 +762,45 @@ def enderezar_foto():
     resp.headers["Cache-Control"] = "no-store"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     return resp
+
+
+@portal_bp.route("/marca/logo")
+@cliente_login_required
+def marca_logo():
+    """El logo que el despacho ha subido en «Marca del despacho», para la cabecera del portal. 404 si no hay (la cabecera enseña entonces solo el nombre)."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    contenido = marca.logo(cliente["tenant_id"]) if cliente else None
+    if not contenido:
+        abort(404)
+    r = Response(contenido, mimetype="image/png")
+    r.headers["Cache-Control"] = "private, max-age=86400"
+    r.headers["X-Content-Type-Options"] = "nosniff"
+    return r
+
+
+@portal_bp.route("/marca/estilo.css")
+@cliente_login_required
+def marca_estilo():
+    """Los colores del portal nuevo con el acento del despacho (vacío si no ha elegido color)."""
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id)
+    m = portal_diseno.marca_del_portal(cliente["tenant_id"]) if cliente else {"color": ""}
+    r = Response(portal_diseno.css_de_marca(m["color"]), mimetype="text/css")
+    r.headers["Cache-Control"] = "private, max-age=3600"
+    return r
+
+
+@portal_bp.route("/idioma/<codigo>", methods=["POST"])
+def cambiar_idioma_portal(codigo: str):
+    """Elegir el idioma del portal sin entrar en Mi cuenta: se recuerda en una cookie de este navegador (un año) y se vuelve a la misma pantalla."""
+    from urllib.parse import urlparse
+    destino = url_for("portal_cliente.dashboard")
+    ref = urlparse(request.referrer or "")
+    if ref.netloc == request.host and ref.path.startswith("/portal"):
+        destino = ref.path + (f"?{ref.query}" if ref.query else "")
+    r = redirect(destino, 303)
+    if codigo in dict(IDIOMAS_DEL_PORTAL):
+        r.set_cookie("idioma_portal", codigo, max_age=365 * 24 * 3600, secure=request.is_secure, httponly=True, samesite="Lax", path="/")
+    return r
 
 
 @portal_bp.route("/voz/transcribir", methods=["POST"])

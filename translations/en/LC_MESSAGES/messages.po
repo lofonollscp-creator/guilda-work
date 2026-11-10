@@ -27207,3 +27207,50 @@ msgstr "The deadline day must be a number from 1 to 28."
 
 msgid "Este cliente ya tiene demasiados documentos periódicos."
 msgstr "This client already has too many recurring documents."
+
+msgid "Mi gestoría"
+msgstr "My firm"
+
+msgid "Menú de %(nombre)s"
+msgstr "%(nombre)s menu"
+
+msgid "%(n)s por atender"
+msgid_plural "%(n)s por atender"
+msgstr[0] "%(n)s to attend to"
+msgstr[1] "%(n)s to attend to"
+
+msgid "Dentro de esta sección"
+msgstr "Within this section"
+
+msgid "Banco y tiques"
+msgstr "Bank and receipts"
+
+msgid "Revisar extracto"
+msgstr "Check statement"
+
+msgid "Lo que te pedimos"
+msgstr "What we ask of you"
+
+msgid "Firmas"
+msgstr "Signatures"
+
+msgid "Subir factura"
+msgstr "Upload invoice"
+
+msgid "¿Tienes una factura nueva?"
+msgstr "Have a new invoice?"
+
+msgid "Hazle una foto y la leemos por ti."
+msgstr "Take a photo and we will read it for you."
+
+msgid "Portal con la navegación nueva"
+msgstr "Portal with the new navigation"
+
+msgid "Cinco secciones fijas (Inicio, Facturas, Documentos, Mensajes e Impuestos) con pestañas dentro, tu logo y tu color en la cabecera y el idioma a un toque. Las direcciones no cambian. Puedes apagarlo cuando quieras para volver al portal de siempre; antes de encenderlo, mira cómo lo ve un cliente con la vista previa."
+msgstr "Five fixed sections (Home, Invoices, Documents, Messages and Taxes) with tabs inside, your logo and colour in the header and the language one tap away. Addresses do not change. You can turn it off at any time to go back to the usual portal; before turning it on, see how a client sees it with the preview."
+
+msgid "Usar la navegación nueva en el portal de mis clientes"
+msgstr "Use the new navigation in my clients' portal"
+
+msgid "Perfil de %(nombre)s"
+msgstr "%(nombre)s's profile"

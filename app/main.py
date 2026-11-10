@@ -169,6 +169,9 @@ def _seleccionar_idioma():
     idioma_guardado = db.idioma_usuario(getattr(g, "usuario_id", None)) if getattr(g, "usuario_id", None) else None
     if idioma_guardado in IDIOMAS_DISPONIBLES:
         return idioma_guardado
+    elegido = request.cookies.get("idioma_portal")                     # el que eligió un cliente del portal en la cabecera (sin cuenta de usuario)
+    if elegido in IDIOMAS_DISPONIBLES:
+        return elegido
     return request.accept_languages.best_match(IDIOMAS_DISPONIBLES) or "es"
 
 

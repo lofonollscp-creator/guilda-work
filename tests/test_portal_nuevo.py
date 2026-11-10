@@ -1,0 +1,125 @@
+"""El portal con la navegación nueva (U1-U12): 5 secciones, pestañas, marca del despacho, idioma y menú de perfil; apagado, el portal es el de siempre."""
+import re
+
+import pytest
+
+from app import db, marca, portal_diseno, portal_peticiones
+from tests.test_portal_personas_avisos import _despacho, _entrar, _html
+
+SECCIONES = ("inicio", "facturas", "documentos", "mensajes", "impuestos")
+PAGINAS = {"/portal/": "inicio", "/portal/facturas": "facturas", "/portal/justificantes": "facturas", "/portal/documentos": "documentos", "/portal/carpeta": "documentos", "/portal/peticiones": "documentos",
+           "/portal/mensajes": "mensajes", "/portal/avisos": "mensajes", "/portal/gestiones": "mensajes", "/portal/impuestos": "impuestos", "/portal/firmas": "impuestos"}
+
+
+def _con_portal(cliente, nuevo=True, nombre="Gestoria N"):
+    t, u, c = _despacho(nombre, cliente_email="dueno@ejemplo.com", cliente_nombre="Sociedad Uno SL")
+    if nuevo:
+        portal_diseno.fijar(t, True)
+    _entrar(cliente, c, "dueno@ejemplo.com")
+    return t, u, c
+
+
+def test_apagado_el_portal_es_el_de_siempre(cliente):
+    _con_portal(cliente, nuevo=False)
+    html = _html(cliente, "/portal/")
+    assert 'class="portal-nav"' in html and "pv-cabecera" not in html and "portal_v2.css" not in html and "portal-v2" not in html
+
+
+def test_encendido_cada_pantalla_cae_en_su_seccion_y_hay_una_sola_marca_activa(cliente):
+    _con_portal(cliente)
+    for ruta, seccion in PAGINAS.items():
+        html = _html(cliente, ruta)
+        nav = re.search(r'<nav class="pv-nav".*?</nav>', html, re.S).group(0)
+        activas = re.findall(r'<a href="[^"]*"[^>]*aria-current="page"', nav)
+        assert len(activas) == 1, (ruta, activas)
+        assert f'data-atajo="{ {"inicio": "i", "facturas": "f", "documentos": "d", "mensajes": "m", "impuestos": "t"}[seccion] }" aria-current="page"' in nav, ruta
+        assert len(re.findall(r'<nav class="pv-tabs"', html)) == 1 and 'class="portal-nav"' not in html and html.count("<h1>") == 1, ruta
+
+
+def test_las_pestanas_son_de_la_seccion_y_marcan_la_pantalla_actual(cliente):
+    _con_portal(cliente)
+    html = _html(cliente, "/portal/avisos")
+    pest = re.search(r'<nav class="pv-pestanas".*?</nav>', html, re.S).group(0)
+    assert "Conversaciones" in pest and "Pedir algo" in pest and "Mis facturas" not in pest
+    assert re.search(r'<a href="/portal/avisos"[^>]*aria-current="page"', pest)
+    assert 'class="pv-pestanas"' not in _html(cliente, "/portal/")                              # Inicio no tiene pestañas
+    assert "Banco y tiques" in _html(cliente, "/portal/facturas")
+
+
+def test_el_menu_de_perfil_trae_cuenta_idioma_y_salir(cliente):
+    _con_portal(cliente)
+    html = _html(cliente, "/portal/")
+    perfil = re.search(r'<details class="pv-perfil">.*?</details>', html, re.S).group(0)
+    for esperado in ('href="/portal/cuenta"', 'href="/portal/glosario"', "Català", "English", "Français", "/portal/salir"):
+        assert esperado in perfil, esperado
+
+
+def test_el_idioma_se_elige_con_una_cookie_y_vuelve_a_la_misma_pantalla(cliente):
+    _con_portal(cliente)
+    r = cliente.post("/portal/idioma/ca", headers={"Referer": "http://127.0.0.1:8000/portal/mensajes"})
+    assert r.status_code == 303 and r.headers["Location"].endswith("/portal/mensajes") and "idioma_portal=ca" in r.headers.get("Set-Cookie", "")
+    assert 'lang="ca"' in _html(cliente, "/portal/")
+    r = cliente.post("/portal/idioma/zz", headers={"Referer": "https://externo.example/portal/x"})
+    assert r.status_code == 303 and "/portal/" in r.headers["Location"] and "externo" not in r.headers["Location"] and "idioma_portal" not in r.headers.get("Set-Cookie", "")
+
+
+def test_la_marca_del_despacho_pone_nombre_color_y_logo(cliente):
+    t, u, c = _con_portal(cliente)
+    assert "Mi gestoría" in _html(cliente, "/portal/") and cliente.get("/portal/marca/logo").status_code == 404
+    marca.guardar(t, nombre="Asesores Lopez", color="#0a7d5a")
+    html = _html(cliente, "/portal/")
+    assert "Asesores Lopez" in html and "marca/estilo.css" in html
+    css = cliente.get("/portal/marca/estilo.css")
+    assert css.status_code == 200 and "--pv-accent: #0a7d5a" in css.get_data(as_text=True) and "--pv-on-accent" in css.get_data(as_text=True)
+    texto = css.get_data(as_text=True)
+    assert "--primary: #0a7d5a" in texto and "--portal-accent:" in texto                       # los botones y enlaces de siempre toman el color del despacho
+    assert portal_diseno.css_de_marca("") == "/* sin marca */\n"
+
+
+def test_el_selector_de_empresas_va_dentro_del_menu_de_perfil(cliente):
+    from app.db_fiscal import crear_cliente_fiscal
+    t, u, c = _con_portal(cliente)
+    crear_cliente_fiscal(t, "Sociedad Dos SL", nif="B87654321", email="dueno@ejemplo.com")
+    html = _html(cliente, "/portal/")
+    assert "Sociedad Dos SL" in re.search(r'<details class="pv-perfil">.*?</details>', html, re.S).group(0)
+
+
+def test_la_portada_pliega_lo_hecho_y_ofrece_subir_una_factura_si_esta_al_dia(cliente):
+    _con_portal(cliente)
+    html = _html(cliente, "/portal/")
+    assert "pv-accion-principal" in html and "Subir una factura" in html
+
+
+def test_el_interruptor_se_guarda_y_los_grupos_estan_completos():
+    t = db.crear_tenant("Interruptor")
+    assert portal_diseno.activo(t) is False
+    portal_diseno.fijar(t, True); assert portal_diseno.activo(t) is True
+    portal_diseno.fijar(t, False); assert portal_diseno.activo(t) is False
+    assert set(portal_diseno._GRUPO_DE.values()) == set(SECCIONES)
+    assert portal_diseno.grupo_de("portal_cliente.cuenta", "cuenta") is None and portal_diseno.grupo_de("portal_cliente.carpeta") == "documentos"
+
+
+@pytest.mark.parametrize("texto,fondo,minimo", [
+    ("#4f6b00", "#ffffff", 4.5),          # acento como texto sobre la tarjeta (claro)
+    ("#4f6b00", "#eef5d6", 4.5),          # acento sobre su fondo suave (pestaña/enlace activo)
+    ("#ffffff", "#4f6b00", 4.5),          # texto sobre el relleno (avatar, botón Subir)
+    ("#c7e85c", "#1e1b14", 4.5),          # tema oscuro: acento sobre la tarjeta
+    ("#c7e85c", "#2a2f12", 4.5),          # tema oscuro: acento sobre su fondo suave
+    ("#1a1f00", "#c7e85c", 4.5),          # tema oscuro: texto sobre el relleno
+])
+def test_los_colores_por_defecto_del_portal_nuevo_cumplen_el_contraste(texto, fondo, minimo):
+    assert marca._contraste(marca._luminancia(texto), marca._luminancia(fondo)) >= minimo
+
+
+def test_los_colores_por_defecto_estan_en_la_hoja_de_estilos():
+    css = open("app/static/portal_v2.css", encoding="utf-8").read()
+    for token in ("--pv-accent: #4f6b00", "--pv-on-accent: #ffffff", "--pv-accent-soft: #eef5d6", "--pv-accent: #c7e85c", "--pv-accent-soft: #2a2f12"):
+        assert token in css
+
+
+def test_ninguna_pantalla_del_portal_nuevo_repite_ids(cliente):
+    _con_portal(cliente)
+    for ruta in PAGINAS:
+        ids = re.findall(r'\sid="([^"]+)"', _html(cliente, ruta))
+        repetidos = {i for i in ids if ids.count(i) > 1}
+        assert not repetidos, (ruta, repetidos)

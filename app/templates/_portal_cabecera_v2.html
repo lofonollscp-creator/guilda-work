@@ -1,0 +1,44 @@
+{# Cabecera del portal nuevo: marca del despacho, las 5 secciones, la búsqueda y el menú de perfil (cliente, idioma, ayuda y salir). Las insignias suman lo que hay por atender en cada sección. #}
+{% set ins_msg = (portal_insignia_mensajes|default(0)) + (portal_insignia_avisos|default(0)) %}
+{% set secciones = [('inicio', _('Inicio'), url_for('portal_cliente.dashboard'), 'i', 0)] %}
+{% if portal_facturas %}{% set secciones = secciones + [('facturas', _('Facturas'), url_for('portal_cliente.facturas'), 'f', portal_insignia_facturas|default(0))] %}{% endif %}
+{% set secciones = secciones + [('documentos', _('Documentos'), url_for('portal_cliente.mis_documentos'), 'd', 0), ('mensajes', _('Mensajes'), url_for('portal_cliente.mensajes'), 'm', ins_msg), ('impuestos', _('Impuestos'), url_for('portal_cliente.impuestos'), 't', 0)] %}
+<header class="pv-cabecera">
+  <a class="pv-marca" href="{{ url_for('portal_cliente.dashboard') }}">
+    {% if portal_marca.tiene_logo %}<img class="pv-logo" src="{{ url_for('portal_cliente.marca_logo') }}?v={{ portal_marca.version|urlencode }}" alt="" width="32" height="32">{% else %}<span class="pv-logo pv-logo-letra" aria-hidden="true">{{ (portal_marca.nombre or portal_cliente.nombre)[:1]|upper }}</span>{% endif %}
+    <span class="pv-marca-nombre">{{ portal_marca.nombre or _('Mi gestoría') }}</span>
+  </a>
+  <nav class="pv-nav" aria-label="{{ _('Secciones del portal') }}">
+    {% for clave, texto, destino, atajo, insignia in secciones %}
+    <a href="{{ destino }}" data-atajo="{{ atajo }}" {% if portal_grupo == clave %}aria-current="page"{% endif %}>{{ texto }}{% if insignia %} <span class="portal-nav-insignia" aria-label="{{ ngettext('%(n)s por atender', '%(n)s por atender', insignia, n=insignia) }}">{{ insignia }}</span>{% endif %}</a>
+    {% endfor %}
+  </nav>
+  <div class="pv-acciones">
+    <a class="pv-icono" href="{{ url_for('portal_cliente.buscar') }}" data-atajo="b" aria-label="{{ _('Buscar en el portal') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg></a>
+    <details class="pv-perfil">
+      <summary aria-label="{{ _('Perfil de %(nombre)s', nombre=portal_cliente.nombre) }}"><span class="pv-avatar" aria-hidden="true">{{ portal_cliente.nombre[:1]|upper }}</span><span class="pv-perfil-nombre">{{ portal_cliente.nombre }}</span></summary>
+      <div class="pv-perfil-panel">
+        {% if portal_otros_clientes %}
+        <form method="post" action="{{ url_for('portal_cliente.cambiar_titular') }}" class="pv-cambiar">
+          <label for="portal-cambiar-titular">{{ _('Estás viendo:') }}</label>
+          <select id="portal-cambiar-titular" name="cliente_id">
+            <option value="{{ portal_cliente.id }}" selected>{{ portal_cliente.nombre }}</option>
+            {% for c in portal_otros_clientes %}<option value="{{ c.id }}">{{ c.nombre }}{% if portal_pendientes_otras.get(c.id) %} · {{ ngettext('%(n)s pendiente', '%(n)s pendientes', portal_pendientes_otras[c.id], n=portal_pendientes_otras[c.id]) }}{% endif %}</option>{% endfor %}
+          </select>
+          <button type="submit" class="btn btn-ghost">{{ _('Cambiar') }}</button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('portal_cliente.cuenta') }}" data-atajo="u" {% if portal_seccion == 'cuenta' %}aria-current="page"{% endif %}>{{ _('Mi cuenta') }}</a>
+        <a href="{{ url_for('portal_cliente.glosario') }}" data-atajo="l">{{ _('Glosario') }}</a>
+        {% if portal_ayuda_url %}<a href="{{ portal_ayuda_url }}" target="_blank" rel="noopener">{{ _('Ayuda') }}</a>{% endif %}
+        <button type="button" class="btn btn-ghost" data-atajos-abrir>{{ _('Atajos de teclado') }}</button>
+        <div class="pv-idiomas" role="group" aria-label="{{ _('Idioma') }}">
+          {% for codigo, nombre in portal_idiomas %}
+          <form method="post" action="{{ url_for('portal_cliente.cambiar_idioma_portal', codigo=codigo) }}"><button type="submit" class="btn btn-ghost" lang="{{ codigo }}" {% if codigo == idioma_actual %}aria-current="true"{% endif %}>{{ nombre }}</button></form>
+          {% endfor %}
+        </div>
+        {% if not vista_previa %}<form method="post" action="{{ url_for('portal_cliente.salir') }}"><button type="submit" class="pv-salir">{{ _('Salir') }}</button></form>{% endif %}
+      </div>
+    </details>
+  </div>
+</header>
