@@ -13,8 +13,8 @@ PAGINAS = {"/portal/": "inicio", "/portal/facturas": "facturas", "/portal/justif
 
 def _con_portal(cliente, nuevo=True, nombre="Gestoria N"):
     t, u, c = _despacho(nombre, cliente_email="dueno@ejemplo.com", cliente_nombre="Sociedad Uno SL")
-    if nuevo:
-        portal_diseno.fijar(t, True)
+    if not nuevo:
+        portal_diseno.fijar(t, False)                                      # está encendido por defecto: apagarlo es una decisión del despacho
     _entrar(cliente, c, "dueno@ejemplo.com")
     return t, u, c
 
@@ -92,9 +92,9 @@ def test_la_portada_pliega_lo_hecho_y_ofrece_subir_una_factura_si_esta_al_dia(cl
 
 def test_el_interruptor_se_guarda_y_los_grupos_estan_completos():
     t = db.crear_tenant("Interruptor")
-    assert portal_diseno.activo(t) is False
-    portal_diseno.fijar(t, True); assert portal_diseno.activo(t) is True
+    assert portal_diseno.activo(t) is True                                   # por defecto, encendido (también sin configuración guardada)
     portal_diseno.fijar(t, False); assert portal_diseno.activo(t) is False
+    portal_diseno.fijar(t, True); assert portal_diseno.activo(t) is True
     assert set(portal_diseno._GRUPO_DE.values()) == set(SECCIONES)
     assert portal_diseno.grupo_de("portal_cliente.cuenta", "cuenta") is None and portal_diseno.grupo_de("portal_cliente.carpeta") == "documentos"
 
@@ -123,3 +123,20 @@ def test_ninguna_pantalla_del_portal_nuevo_repite_ids(cliente):
         ids = re.findall(r'\sid="([^"]+)"', _html(cliente, ruta))
         repetidos = {i for i in ids if ids.count(i) > 1}
         assert not repetidos, (ruta, repetidos)
+
+
+def test_las_pestanas_condicionales_solo_salen_cuando_el_cliente_las_tiene(cliente):
+    from app import verticales
+    t, u, c = _con_portal(cliente)
+    assert "Mis ventas" not in _html(cliente, "/portal/facturas") and "Mis trabajadores" not in _html(cliente, "/portal/impuestos")
+    assert "Honorarios" not in _html(cliente, "/portal/impuestos") and "Propuestas" not in _html(cliente, "/portal/mensajes") and "Preguntar" not in _html(cliente, "/portal/mensajes")
+    conn = db.get_connection(); conn.execute("UPDATE clientes_fiscales SET portal_honorarios = 1 WHERE id = ?", (c,)); conn.commit(); conn.close()
+    assert "/portal/honorarios" in _html(cliente, "/portal/impuestos")
+
+
+def test_la_ayuda_de_cada_pantalla_sigue_en_el_menu_de_perfil(cliente):
+    _con_portal(cliente)
+    html = _html(cliente, "/portal/")
+    perfil = re.search(r'<details class="pv-perfil">.*?</details>', html, re.S).group(0)
+    assert "portal-de-cliente/recorrer-el-portal/" in perfil and "/portal/carpeta" not in perfil
+    assert "portal-de-cliente/mi-carpeta/" in re.search(r'<details class="pv-perfil">.*?</details>', _html(cliente, "/portal/carpeta"), re.S).group(0)

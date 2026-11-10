@@ -27339,3 +27339,9 @@ msgstr "Utiliser la nouvelle navigation dans le portail de mes clients"
 
 msgid "Perfil de %(nombre)s"
 msgstr "Profil de %(nombre)s"
+
+msgid "Cinco secciones fijas (Inicio, Facturas, Documentos, Mensajes e Impuestos) con pestañas dentro, tu logo y tu color en la cabecera y el idioma a un toque. Está encendido para todos los despachos; las direcciones no cambian, y puedes apagarlo cuando quieras para volver al portal de siempre."
+msgstr "Cinq rubriques fixes (Accueil, Factures, Documents, Messages et Impôts) avec des onglets à l'intérieur, votre logo et votre couleur dans l'en-tête et la langue à portée de main. Activé pour tous les cabinets ; les adresses ne changent pas, et vous pouvez le désactiver à tout moment pour revenir au portail habituel."
+
+msgid "Usar la navegación nueva en el portal de mis clientes (encendido por defecto)"
+msgstr "Utiliser la nouvelle navigation dans le portail de mes clients (activée par défaut)"

@@ -27263,3 +27263,9 @@ msgstr "Fer servir la navegació nova al portal dels meus clients"
 
 msgid "Perfil de %(nombre)s"
 msgstr "Perfil de %(nombre)s"
+
+msgid "Cinco secciones fijas (Inicio, Facturas, Documentos, Mensajes e Impuestos) con pestañas dentro, tu logo y tu color en la cabecera y el idioma a un toque. Está encendido para todos los despachos; las direcciones no cambian, y puedes apagarlo cuando quieras para volver al portal de siempre."
+msgstr "Cinc seccions fixes (Inici, Factures, Documents, Missatges i Impostos) amb pestanyes a dins, el teu logo i el teu color a la capçalera i l'idioma a un toc. Està encès per a tots els despatxos; les adreces no canvien, i ho pots apagar quan vulguis per tornar al portal de sempre."
+
+msgid "Usar la navegación nueva en el portal de mis clientes (encendido por defecto)"
+msgstr "Fer servir la navegació nova al portal dels meus clients (encesa per defecte)"

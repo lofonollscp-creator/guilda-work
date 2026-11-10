@@ -108,7 +108,7 @@ def test_los_botones_de_ver_su_portal_estan_en_la_lista_y_la_ficha(cliente):
 
 # --- E3: buzón -----------------------------------------------------------------------------------------------------------------------------------------
 
-def test_el_buzon_reune_modelos_facturas_y_trabajos(cliente):
+def test_el_buzon_reune_modelos_facturas_y_trabajos(cliente, portal_antiguo):
     uid, t, c = _despacho(cliente, "bz1@ejemplo.com")
     v = db.crear_vencimiento_fiscal(t, c, "303", "2026-T3", "2026-10-20", usuario_id=uid)
     interno = db.crear_vencimiento_fiscal(t, c, "NOMINAS", "2026-10", "2026-10-30", usuario_id=uid)

@@ -25,14 +25,14 @@ def _factura_del_portal(t, u, c, numero="P-1", fecha="2026-08-10"):
 # --- Navegación -----------------------------------------------------------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("ruta", ["/portal/", "/portal/facturas", "/portal/impuestos"])
-def test_todas_las_secciones_llevan_la_misma_barra(cliente, ruta):
+def test_todas_las_secciones_llevan_la_misma_barra(cliente, ruta, portal_antiguo):
     _portal(cliente, "Despacho nav")
     html = _html(cliente, ruta)
     assert 'class="portal-nav"' in html and "/portal/facturas" in html and "/portal/impuestos" in html
     assert html.count('aria-current="page"') >= 1
 
 
-def test_documentos_y_mensajes_de_un_modelo_cuelgan_de_impuestos(cliente):
+def test_documentos_y_mensajes_de_un_modelo_cuelgan_de_impuestos(cliente, portal_antiguo):
     t, u, c = _portal(cliente, "Despacho nav2")
     v = db.crear_vencimiento_fiscal(t, c, "303", "2026-T3", "2026-10-20", usuario_id=u)
     for ruta in (f"/portal/vencimientos/{v}/documentos", f"/portal/vencimientos/{v}/mensajes"):
@@ -40,7 +40,7 @@ def test_documentos_y_mensajes_de_un_modelo_cuelgan_de_impuestos(cliente):
         assert 'class="portal-nav"' in html and "Volver a mis impuestos" in html and "/portal/impuestos" in html
 
 
-def test_sin_el_modulo_de_facturas_no_hay_pestana_de_facturas(cliente):
+def test_sin_el_modulo_de_facturas_no_hay_pestana_de_facturas(cliente, portal_antiguo):
     t, u, c = _portal(cliente, "Despacho sin facturas")
     verticales.fijar_activo(t, "contabilizacion", False)
     html = _html(cliente, "/portal/")

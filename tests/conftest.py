@@ -498,3 +498,10 @@ def tipos_de_cambio_sin_red(monkeypatch):
 
     monkeypatch.setattr(tipos_cambio, "_descargar", sin_red)
     tipos_cambio._cache.clear()
+
+
+@pytest.fixture
+def portal_antiguo(monkeypatch):
+    """Fija el portal de los clientes en su aspecto de siempre (la navegación nueva está encendida por defecto): para los tests que comprueban la estructura de la barra antigua."""
+    from app import portal_diseno
+    monkeypatch.setattr(portal_diseno, "activo", lambda tenant_id: False)

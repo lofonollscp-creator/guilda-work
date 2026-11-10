@@ -28,7 +28,7 @@ def _datos(t, u, c):
     portal_peticiones.crear(db.obtener_cliente_fiscal_por_id(c), "Extracto bancario del trimestre", por=u)
 
 
-def test_apagado_por_defecto_y_se_enciende_solo_con_un_modelo_configurado(cliente, correo, monkeypatch):
+def test_apagado_por_defecto_y_se_enciende_solo_con_un_modelo_configurado(cliente, correo, monkeypatch, portal_antiguo):
     t, u, c = _despacho("Asistente apagado")
     ficha = _ficha(c)
     Modelo(monkeypatch, u)

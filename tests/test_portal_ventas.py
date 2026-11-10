@@ -45,7 +45,7 @@ def test_apagado_por_defecto_y_sin_empresa_o_sin_facturascripts_no_hay_ventas(cl
     assert pv.activa_para(_ficha(c)) is False
 
 
-def test_alta_de_un_cliente_y_emision_a_nombre_de_su_empresa_con_su_serie(cliente, correo, monkeypatch):
+def test_alta_de_un_cliente_y_emision_a_nombre_de_su_empresa_con_su_serie(cliente, correo, monkeypatch, portal_antiguo):
     fs = FS(monkeypatch)
     t, u, c = _despacho("Ventas flujo")
     _preparar(t, c)

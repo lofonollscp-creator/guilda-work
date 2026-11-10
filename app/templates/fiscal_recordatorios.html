@@ -58,10 +58,10 @@
 
 <section class="proyecto-bloque ds-max-720 ds-mt-24" id="portal-nuevo" aria-labelledby="portal-nuevo-titulo">
   <h2 id="portal-nuevo-titulo">{{ _('Portal con la navegación nueva') }}</h2>
-  <p class="muted">{{ _('Cinco secciones fijas (Inicio, Facturas, Documentos, Mensajes e Impuestos) con pestañas dentro, tu logo y tu color en la cabecera y el idioma a un toque. Las direcciones no cambian. Puedes apagarlo cuando quieras para volver al portal de siempre; antes de encenderlo, mira cómo lo ve un cliente con la vista previa.') }}</p>
+  <p class="muted">{{ _('Cinco secciones fijas (Inicio, Facturas, Documentos, Mensajes e Impuestos) con pestañas dentro, tu logo y tu color en la cabecera y el idioma a un toque. Está encendido para todos los despachos; las direcciones no cambian, y puedes apagarlo cuando quieras para volver al portal de siempre.') }}</p>
   {% if guardado_portal_nuevo %}<p class="muted" role="status">{{ _('Guardado.') }}</p>{% endif %}
   <form method="post" action="{{ url_for('fiscal.guardar_portal_nuevo') }}" class="proyecto-form">
-    <label><input type="checkbox" name="activa" value="1" {{ 'checked' if portal_nuevo }}> {{ _('Usar la navegación nueva en el portal de mis clientes') }}</label>
+    <label><input type="checkbox" name="activa" value="1" {{ 'checked' if portal_nuevo }}> {{ _('Usar la navegación nueva en el portal de mis clientes (encendido por defecto)') }}</label>
     <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
   </form>
 </section>

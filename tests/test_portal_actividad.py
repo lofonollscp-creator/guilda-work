@@ -182,7 +182,7 @@ def test_un_certificado_por_caducar_ofrece_la_guia_para_renovarlo_sin_pedir_el_a
     assert "Cómo renovarlo, paso a paso" in html and "no se admite" in html
 
 
-def test_mis_trabajadores_solo_sale_con_plantilla_y_ofrece_alta_y_baja_con_el_nombre_ya_escrito(cliente, correo):
+def test_mis_trabajadores_solo_sale_con_plantilla_y_ofrece_alta_y_baja_con_el_nombre_ya_escrito(cliente, correo, portal_antiguo):
     from app import laboral
     t, u, c = _despacho("Trabajadores")
     _entrar(cliente, c, "titular@ejemplo.com")

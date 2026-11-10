@@ -87,7 +87,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "portal_recordatorios_config", "embudo_uso", "INTEGER NOT NULL DEFAULT 0")     # embudo de uso del portal para el despacho (app/portal_adopcion.py)
     db._asegurar_columna(conn, "portal_recordatorios_config", "telemetria", "INTEGER NOT NULL DEFAULT 0")     # salud del portal desde el navegador de los clientes (app/portal_telemetria.py)
     db._asegurar_columna(conn, "portal_recordatorios_config", "asistente_cliente", "INTEGER NOT NULL DEFAULT 0")     # asistente del portal para el cliente (app/portal_asistente.py)
-    db._asegurar_columna(conn, "portal_recordatorios_config", "portal_nuevo", "INTEGER NOT NULL DEFAULT 0")          # el portal con la navegación nueva (app/portal_diseno.py)
+    db._asegurar_columna(conn, "portal_recordatorios_config", "portal_nuevo", "INTEGER NOT NULL DEFAULT 1")          # el portal con la navegación nueva (app/portal_diseno.py)
     for columna in ("plazo_respuesta_dias", "mostrar_ausencias", "voz_cliente", "escalada_avisos"):                  # compromiso con el cliente, notas de voz y escalada (app/portal_compromiso.py)
         db._asegurar_columna(conn, "portal_recordatorios_config", columna, "INTEGER NOT NULL DEFAULT 0")
 

@@ -48,7 +48,7 @@ def test_lo_que_se_avisa_por_el_portal_queda_en_el_centro(cliente, correo):
     assert "Tu gestoría te pide un documento" in titulos and "Tu gestoría te ha escrito" in titulos
 
 
-def test_la_pagina_enseña_lo_nuevo_marcado_y_despues_ya_no_lo_esta(cliente, correo):
+def test_la_pagina_enseña_lo_nuevo_marcado_y_despues_ya_no_lo_esta(cliente, correo, portal_antiguo):
     t, u, c = _despacho("Avisos pagina")
     pn.anotar(_ficha(c), "Aviso de prueba", "Con su resumen", "/portal/peticiones")
     _entrar(cliente, c, "titular@ejemplo.com")

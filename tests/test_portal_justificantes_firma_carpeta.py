@@ -347,7 +347,7 @@ def _con_carpeta(cliente, email):
     return uid, t, c, v, d
 
 
-def test_la_carpeta_reune_justificantes_informes_y_resumenes(cliente):
+def test_la_carpeta_reune_justificantes_informes_y_resumenes(cliente, portal_antiguo):
     uid, t, c, v, d = _con_carpeta(cliente, "carpeta1@ejemplo.com")
     _como_cliente(cliente, c)
     pagina = _html(cliente, "/portal/carpeta?anio=2026")

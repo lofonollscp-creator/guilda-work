@@ -1,7 +1,7 @@
 """El portal «nuevo» (U1-U12): una navegación de 5 secciones fijas (Inicio, Facturas, Documentos, Mensajes, Impuestos), pestañas dentro de cada una, la marca del despacho en la cabecera y un
 menú de perfil con Mi cuenta, el idioma, la ayuda y salir.
 
-Lo activa cada despacho (`portal_nuevo`, apagado por defecto) para poder probarlo con unos pocos antes de abrirlo a todos; con él apagado el portal se ve exactamente como siempre. Las URL no
+Está **encendido por defecto** para todos los despachos (`portal_nuevo`, 1); cada despacho puede apagarlo y entonces el portal se ve exactamente como siempre. Las URL no
 cambian: lo único que cambia es cómo se agrupan las pantallas, y por eso cada endpoint declara aquí a qué sección y pestaña pertenece."""
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def activo(tenant_id: int | None) -> bool:
         f = conn.execute("SELECT portal_nuevo FROM portal_recordatorios_config WHERE tenant_id = ?", (tenant_id,)).fetchone()
     finally:
         conn.close()
-    return bool(f and f["portal_nuevo"])
+    return True if f is None else bool(f["portal_nuevo"])                      # sin configuración guardada, el despacho usa el valor por defecto: encendido
 
 
 def fijar(tenant_id: int, activar: bool) -> None:

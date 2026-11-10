@@ -39,7 +39,7 @@ def test_cada_vencimiento_lleva_su_que_es_en_impuestos(cliente, correo):
     assert "¿Qué es el modelo 303?" in html and "IVA que has cobrado" in html
 
 
-def test_cada_pantalla_del_portal_enlaza_su_guia_de_ayuda(cliente, correo):
+def test_cada_pantalla_del_portal_enlaza_su_guia_de_ayuda(cliente, correo, portal_antiguo):
     t, u, c = _despacho("Glosario ayuda")
     _entrar(cliente, c, "titular@ejemplo.com")
     inicio = _html(cliente, "/portal/")

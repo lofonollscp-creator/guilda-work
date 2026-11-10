@@ -3315,7 +3315,7 @@ CREATE TABLE IF NOT EXISTS portal_recordatorios_config (
     embudo_uso bigint NOT NULL DEFAULT 0,
     telemetria bigint NOT NULL DEFAULT 0,
     asistente_cliente bigint NOT NULL DEFAULT 0,
-    portal_nuevo bigint NOT NULL DEFAULT 0,
+    portal_nuevo bigint NOT NULL DEFAULT 1,
     plazo_respuesta_dias bigint NOT NULL DEFAULT 0,
     mostrar_ausencias bigint NOT NULL DEFAULT 0,
     voz_cliente bigint NOT NULL DEFAULT 0,
