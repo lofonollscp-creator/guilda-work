@@ -100,7 +100,8 @@ def consumir_gratis(usuario_id: int, hoy: date | None = None) -> bool:
 _PANTALLA: dict[int, str] = {}
 # Ficha concreta que la persona tiene abierta: (clase, id). Solo una pista para el asistente; las herramientas comprueban el acceso igualmente.
 _FICHA: dict[int, tuple[str, int]] = {}
-_FICHAS = {"clientes.ficha": ("cliente", "cliente_id"), "expedientes.ficha": ("expediente", "expediente_id"), "fiscal.ficha_cliente": ("cliente_fiscal", "cliente_id")}
+_FICHAS = {"clientes.ficha": ("cliente", "cliente_id"), "expedientes.ficha": ("expediente", "expediente_id"), "fiscal.ficha_cliente": ("cliente_fiscal", "cliente_id"),
+            "contabilidad.ver": ("factura_contable", "factura_id")}
 
 
 def recordar_pantalla(usuario_id: int, endpoint: str | None, argumentos: dict | None = None) -> None:

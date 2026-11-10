@@ -224,3 +224,20 @@ def test_retorno_de_a3_con_las_columnas_indicadas_por_la_ia():
         ih.ejecutar(u, "contabilidad_comprobar_retorno_a3", {"cliente_fiscal_id": c, "contenido": sin_titulos})
     r = ih.ejecutar(u, "contabilidad_confirmar_retorno_a3", {"cliente_fiscal_id": c, "contenido": sin_titulos, "columnas": {"numero": "C", "fecha": "B", "total": "D"}, "fila_de_titulos": 0})
     assert r["leidas"] == 1 and len(r["confirmadas"]) == 1
+
+
+def test_el_asistente_sabe_que_factura_tiene_abierta_la_persona():
+    from app import ia_asistente, ia_soporte
+    t, u, c = _despacho("Despacho herr ficha")
+    f = _anotar(u, c)
+    ia_soporte.recordar_pantalla(u, "contabilidad.ver", {"factura_id": f["id"]})
+    assert ia_soporte.ficha_de(u) == ("factura_contable", f["id"])
+    texto = ia_asistente._contexto_soporte(u, False)
+    assert f"id {f['id']}" in texto and "contabilidad_ver_factura" in texto and "contabilidad_avisos_factura" in texto and "esta factura" in texto
+    ia_soporte.recordar_pantalla(u, "contabilidad.lista", {})
+    assert ia_soporte.ficha_de(u) is None
+
+
+def test_esta_factura_ofrece_las_herramientas_de_contabilidad():
+    ofrecidas = {t["function"]["name"] for t in ih.herramientas_para([{"role": "user", "content": "¿por qué tiene avisos esta factura?"}])}
+    assert "contabilidad_avisos_factura" in ofrecidas

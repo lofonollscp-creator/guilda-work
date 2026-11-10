@@ -101,8 +101,9 @@ def _contexto_soporte(usuario_id: int, soporte: bool) -> str:
     ficha = None if soporte else ia_soporte.ficha_de(usuario_id)
     if ficha:
         clase, id_ = ficha
-        herramienta = {"cliente": "resumen_cliente_despacho", "expediente": "resumen_expediente_despacho", "cliente_fiscal": "resumen_cliente_fiscal"}[clase]
-        texto += (f" La persona tiene abierta la ficha del {clase.replace('_', ' ')} con id {id_}: si dice «este cliente», «este asunto», «esta operación» o similar, "
+        herramienta = {"cliente": "resumen_cliente_despacho", "expediente": "resumen_expediente_despacho", "cliente_fiscal": "resumen_cliente_fiscal",
+                       "factura_contable": "contabilidad_ver_factura y contabilidad_avisos_factura"}[clase]
+        texto += (f" La persona tiene abierta la ficha del {clase.replace('_', ' ')} con id {id_}: si dice «este cliente», «este asunto», «esta operación», «esta factura» o similar, "
                   f"se refiere a ella; usa {herramienta} con ese id sin pedirle que lo busque.")
     endpoint = ia_soporte.pantalla_de(usuario_id)
     if endpoint:
