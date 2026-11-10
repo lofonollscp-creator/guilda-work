@@ -8,7 +8,7 @@ from flask_babel import gettext as _
 
 from . import acceso, cobro_contabilidad, db, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
-from . import cierre_trimestre, cola_contabilidad, facturas_portal, justificantes as justificantes_mod
+from . import cierre_trimestre, cola_contabilidad, facturas_control, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
 
 contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad")
@@ -189,7 +189,7 @@ def ver(factura_id: int):
     mensajes = facturas_portal.mensajes(g.tenant_id, factura_id)
     facturas_portal.marcar_leidos(g.tenant_id, factura_id, "empleado")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
-                           mensajes=mensajes, duplicados=fc.posibles_duplicados(g.tenant_id, g.usuario_id, factura_id),
+                           mensajes=mensajes, duplicados=fc.posibles_duplicados(g.tenant_id, g.usuario_id, factura_id), avisos_control=facturas_control.avisos(g.tenant_id, f),
                            cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), evidencia=lectura_facturas.evidencia_de(f) if f.get("lectura") in ("ia", "xml") else None, visor=_visor_de(f), visor_evidencias=_evidencias_para_el_visor(f),
                            imagen_en_linea=False, regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]), periodo_cerrado=fc.periodos_cerrados(g.tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"]),
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
@@ -363,11 +363,22 @@ def leer(factura_id: int):
     return redirect(url_for("contabilidad.ver", factura_id=factura_id))
 
 
+@contabilidad_bp.route("/<int:factura_id>/vies", methods=["POST"])
+@login_required
+def vies(factura_id: int):
+    """Comprueba en el VIES europeo el NIF-IVA de la factura (solo consulta: no guarda nada)."""
+    f = fc.obtener(g.tenant_id, g.usuario_id, factura_id)
+    if f is None:
+        abort(404)
+    r = facturas_control.comprobar_vies(f.get("tercero_nif"))
+    return jsonify(valido=r["valido"], nombre=r.get("nombre", ""), direccion=r.get("direccion", ""), error=r.get("error") or "")
+
+
 @contabilidad_bp.route("/<int:factura_id>/estado", methods=["POST"])
 @login_required
 def estado(factura_id: int):
     try:
-        fc.cambiar_estado(g.tenant_id, g.usuario_id, factura_id, request.form.get("estado", ""))
+        fc.cambiar_estado(g.tenant_id, g.usuario_id, factura_id, request.form.get("estado", ""), confirmar_duplicado=bool(request.form.get("no_es_duplicado")))
     except ValueError as e:
         return redirect(url_for("contabilidad.ver", factura_id=factura_id, error=_(str(e))[:300]))
     return redirect(request.form.get("volver") or url_for("contabilidad.ver", factura_id=factura_id))

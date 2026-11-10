@@ -15,9 +15,13 @@
 <div class="ia-error" role="alert"><strong>{{ _('Antes de poder exportarla:') }}</strong><ul>{% for p in f.problemas %}<li>{{ p }}</li>{% endfor %}</ul></div>
 {% endif %}
 
+{% if avisos_control %}
+<div class="ia-aviso" role="status"><strong>{{ _('Conviene mirar:') }}</strong><ul>{% for a in avisos_control %}<li>{{ a }}</li>{% endfor %}</ul></div>
+{% endif %}
+
 {% if duplicados %}
 <div class="ia-error" role="alert"><strong>{{ _('Posible factura duplicada:') }}</strong>
-  <ul>{% for d in duplicados %}<li><a href="{{ url_for('contabilidad.ver', factura_id=d.id) }}">{{ d.numero }}</a> · {{ d.fecha }} · {{ {'pendiente': _('Pendiente'), 'revisada': _('Revisada'), 'exportada': _('Exportada')}[d.estado] }} — {{ _('mismo número') if d.motivo == 'mismo número' else _('mismo importe y fecha') }}</li>{% endfor %}</ul>
+  <ul>{% for d in duplicados %}<li><a href="{{ url_for('contabilidad.ver', factura_id=d.id) }}">{{ d.numero }}</a> · {{ d.fecha }} · {{ {'pendiente': _('Pendiente'), 'revisada': _('Revisada'), 'exportada': _('Exportada')}[d.estado] }} — {{ {'mismo número': _('mismo número'), 'mismo importe y fecha': _('mismo importe y fecha'), 'mismo número e importe': _('mismo número e importe')}.get(d.motivo, d.motivo) }}</li>{% endfor %}</ul>
   <small>{{ _('Si es la misma, descarta una de las dos antes de exportar.') }}</small></div>
 {% endif %}
 
@@ -159,11 +163,13 @@
 <script type="application/json" id="visor-evidencias">{{ (visor_evidencias or {})|tojson }}</script>
 <script src="{{ url_for('static', filename='contabilidad_visor.js') }}" defer></script>
 {% endif %}
+<script src="{{ url_for('static', filename='contabilidad_vies.js') }}" defer></script>
 {% if f %}
 <section class="ds-mt-24"><h2>{{ _('Revisión') }}</h2>
   <div class="ds-fila">
     {% if f.documento_id and f.estado != 'exportada' %}<form method="post" action="{{ url_for('contabilidad.leer', factura_id=f.id) }}"><button type="submit" class="btn btn-ghost" {{ 'disabled' if not (ia_lista or (visor and visor.tipo == 'xml')) }} title="{{ _('Lee el archivo adjunto y rellena los datos; sustituye lo escrito') if (ia_lista or (visor and visor.tipo == 'xml')) else _('Hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA') }}">{{ _('Leer con IA') }}</button></form>{% endif %}
-    {% if f.estado == 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="revisada"><button type="submit" class="btn btn-primary">{{ _('Marcar como revisada') }}</button></form>{% endif %}
+    {% if f.tercero_nif %}<button type="button" class="btn btn-ghost" id="vies-boton" data-url="{{ url_for('contabilidad.vies', factura_id=f.id) }}" data-leyenda-ok="{{ _('NIF-IVA válido en VIES') }}" data-leyenda-no="{{ _('VIES no reconoce este NIF-IVA') }}">{{ _('Comprobar NIF en VIES') }}</button><span id="vies-resultado" role="status" class="muted"></span>{% endif %}
+    {% if f.estado == 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="revisada">{% if duplicados and duplicados|selectattr('contabilizada')|rejectattr('motivo', 'equalto', 'mismo importe y fecha')|list %}<label class="ds-check"><input type="checkbox" name="no_es_duplicado" value="1"> {{ _('No es un duplicado') }}</label>{% endif %}<button type="submit" class="btn btn-primary">{{ _('Marcar como revisada') }}</button></form>{% endif %}
     {% if f.estado != 'pendiente' %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="pendiente"><button type="submit" class="btn btn-ghost">{{ _('Reabrir') }}</button></form>{% endif %}
     {% if f.estado in ('pendiente', 'revisada') %}<form method="post" action="{{ url_for('contabilidad.estado', factura_id=f.id) }}"><input type="hidden" name="estado" value="descartada"><button type="submit" class="btn btn-ghost">{{ _('Descartar') }}</button></form>{% endif %}
   </div>

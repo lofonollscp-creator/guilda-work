@@ -26228,3 +26228,66 @@ msgstr "Choose your bank statement (a CSV, Norma 43 or CAMT.053 file you downloa
 
 msgid "Extracto del banco (CSV, Cuaderno 43 o CAMT.053)"
 msgstr "Bank statement (CSV, Norma 43 or CAMT.053)"
+
+msgid "En la numeración falta la factura %(falta)s: la anterior que hay es la %(anterior)s."
+msgstr "The numbering is missing invoice %(falta)s: the previous one on file is %(anterior)s."
+
+msgid "El NIF debe empezar por el código del país de la UE (por ejemplo FR o DE)."
+msgstr "The VAT number must start with the EU country code (for example FR or DE)."
+
+msgid "El servicio VIES no pudo comprobarlo ahora mismo."
+msgstr "The VIES service could not check it right now."
+
+msgid "El total es cero."
+msgstr "The total is zero."
+
+msgid "El servicio VIES no contestó: inténtalo más tarde."
+msgstr "The VIES service did not answer: try again later."
+
+msgid "El NIF %(nif)s no supera su dígito de control: puede estar mal escrito o mal leído."
+msgstr "Tax ID %(nif)s fails its check digit: it may be mistyped or misread."
+
+msgid "El NIF del proveedor o cliente es el del propio titular: ¿se han cruzado el emisor y el receptor?"
+msgstr "The supplier or customer tax ID is the account holder's own: were issuer and recipient swapped?"
+
+msgid "Es una operación intracomunitaria y no tiene NIF-IVA: hace falta para el modelo 349."
+msgstr "This is an intra-EU transaction without a VAT number: it is needed for form 349."
+
+msgid "La fecha de la factura es futura."
+msgstr "The invoice date is in the future."
+
+msgid "Es de un periodo ya cerrado (%(trimestre)s): para exportarla habrá que confirmarlo."
+msgstr "It belongs to an already closed period (%(trimestre)s): you will have to confirm to export it."
+
+msgid "Es una operación intracomunitaria y el NIF no tiene el prefijo y el formato de un país de la UE (por ejemplo FR12345678901)."
+msgstr "This is an intra-EU transaction and the VAT number lacks the prefix and format of an EU country (for example FR12345678901)."
+
+msgid "Tiene más de %(anios)s años: el IVA de una factura tan antigua ya no se puede deducir."
+msgstr "It is more than %(anios)s years old: the VAT on such an old invoice can no longer be deducted."
+
+msgid "Parece repetida: la factura %(numero)s (%(fecha)s) ya está exportada (%(motivo)s)."
+msgstr "It looks repeated: invoice %(numero)s (%(fecha)s) is already exported (%(motivo)s)."
+
+msgid "Parece repetida: la factura %(numero)s (%(fecha)s) ya está revisada (%(motivo)s)."
+msgstr "It looks repeated: invoice %(numero)s (%(fecha)s) is already reviewed (%(motivo)s)."
+
+msgid "Parece repetida: ya hay una factura revisada o exportada con los mismos datos. Si no lo es, confirma que no es un duplicado y vuelve a revisarla."
+msgstr "It looks repeated: a reviewed or exported invoice with the same data already exists. If it is not, confirm it is not a duplicate and review it again."
+
+msgid "Conviene mirar:"
+msgstr "Worth a look:"
+
+msgid "mismo número e importe"
+msgstr "same number and amount"
+
+msgid "NIF-IVA válido en VIES"
+msgstr "VAT number valid in VIES"
+
+msgid "VIES no reconoce este NIF-IVA"
+msgstr "VIES does not recognise this VAT number"
+
+msgid "Comprobar NIF en VIES"
+msgstr "Check VAT number in VIES"
+
+msgid "No es un duplicado"
+msgstr "Not a duplicate"

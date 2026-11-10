@@ -1069,8 +1069,8 @@ def problemas(tenant_id: int, f: dict) -> list[str]:
     return res
 
 
-def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str, aprender: bool = True) -> None:
-    """`revisada` (solo si no hay problemas), `pendiente` (reabrir; una exportada solo si se reabre aposta), `descartada`."""
+def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str, aprender: bool = True, confirmar_duplicado: bool = False) -> None:
+    """`revisada` (solo si no hay problemas), `pendiente` (reabrir; una exportada solo si se reabre aposta), `descartada`. Si parece copia de una factura ya revisada o exportada, hay que confirmar que no lo es."""
     f = obtener(tenant_id, usuario_id, factura_id)
     if f is None:
         raise ValueError("Factura no encontrada.")
@@ -1081,6 +1081,11 @@ def cambiar_estado(tenant_id: int, usuario_id: int, factura_id: int, nuevo: str,
             raise ValueError("Solo se puede revisar una factura pendiente.")
         if f["problemas"]:
             raise ValueError("No se puede dar por revisada: " + " ".join(f["problemas"]))
+        if not confirmar_duplicado:
+            from . import facturas_control
+            repetida = facturas_control.ya_contabilizada(tenant_id, f)
+            if repetida:
+                raise ValueError("Parece repetida: ya hay una factura revisada o exportada con los mismos datos. Si no lo es, confirma que no es un duplicado y vuelve a revisarla.")
     conn = db.get_connection()
     try:
         conn.execute("UPDATE facturas_contables SET estado = ?, actualizado_en = ?, revisado_por = ?, revisado_en = ?, lote_id = CASE WHEN ? = 'exportada' THEN lote_id ELSE NULL END WHERE id = ? AND tenant_id = ?",
@@ -1118,26 +1123,12 @@ def factura_igual(cliente_fiscal_id: int, nif, numero, excluir_id: int | None = 
 
 
 def posibles_duplicados(tenant_id: int, usuario_id: int, factura_id: int) -> list[dict]:
-    """Facturas del mismo cliente que pueden ser esta misma: mismo NIF y número, o mismo NIF, importe y fecha con tres días de margen. [{id, numero, fecha, estado, motivo}]."""
+    """Facturas del mismo cliente que pueden ser esta misma (ver `facturas_control.duplicados`): [{id, numero, fecha, estado, motivo, contabilizada}]."""
+    from . import facturas_control
     f = obtener(tenant_id, usuario_id, factura_id)
-    if f is None or f["estado"] == "descartada" or not f.get("tercero_nif"):
+    if f is None or f["estado"] == "descartada":
         return []
-    conn = db.get_connection()
-    try:
-        otras = [dict(o) for o in conn.execute("SELECT id, numero, fecha, estado, total_centimos FROM facturas_contables WHERE tenant_id = ? AND cliente_fiscal_id = ? AND tercero_nif = ? AND estado != 'descartada' AND id != ? ORDER BY id",
-                                               (tenant_id, f["cliente_fiscal_id"], f["tercero_nif"], factura_id))]
-    finally:
-        conn.close()
-    res = []
-    for o in otras:
-        if f["numero"] != "(por leer)" and o["numero"].strip().upper() == f["numero"].strip().upper():
-            motivo = "mismo número"
-        elif f["total_centimos"] and o["total_centimos"] == f["total_centimos"] and abs((date.fromisoformat(o["fecha"]) - date.fromisoformat(f["fecha"])).days) <= 3:
-            motivo = "mismo importe y fecha"
-        else:
-            continue
-        res.append({"id": o["id"], "numero": o["numero"], "fecha": o["fecha"], "estado": o["estado"], "motivo": motivo})
-    return res
+    return facturas_control.duplicados(tenant_id, f)
 
 
 def con_duplicado_entre(tenant_id: int, ids: list[int]) -> set[int]:
@@ -1223,6 +1214,9 @@ def comprobar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     informe["cliente"] = cliente["nombre"]
     informe["subcuentas_nuevas"] = [{"tipo": t, "nif": nif, "cuenta": c, "nombre": nom} for (t, nif), (c, nom) in nuevas.items()]
     informe["numeros"] = [f["numero"] for f in facturas]
+    from . import facturas_control
+    de_control = [{"registro": None, "mensaje": f"{f['numero']}: {a}"} for f in facturas for a in facturas_control.avisos(tenant_id, f) if "periodo ya cerrado" not in a]
+    informe["avisos"] = [*informe["avisos"], *de_control]
     cerrados = _cerrados_en(tenant_id, cliente_fiscal_id, facturas)
     informe["periodos_cerrados"] = [{"trimestre": t, **c} for t, c in sorted(cerrados.items())]
     if cerrados:
