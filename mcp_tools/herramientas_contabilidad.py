@@ -111,3 +111,9 @@ def contabilidad_comprobar_retorno_a3(cliente_fiscal_id: int, contenido: str | N
 def contabilidad_confirmar_retorno_a3(cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "") -> dict:
     """Igual que `contabilidad_comprobar_retorno_a3`, pero además anota como «confirmadas en a3» las facturas exportadas que coinciden exactamente con el listado."""
     return _mt._conta().cruzar_retorno_a3(*_mt._ctx_conta(), cliente_fiscal_id, contenido, contenido_base64, nombre, confirmar=True)
+
+
+def contabilidad_panel_cierre(trimestre: str | None = None) -> dict:
+    """Qué falta para cerrar un trimestre («2026-T3»; por defecto el que se está cerrando), cliente por cliente: facturas por leer, por revisar, listas para exportar y sin confirmar en a3, si está cerrado,
+    y el plazo de presentación con los días que quedan. Los clientes que más les falta van primero."""
+    return _mt._conta().panel_del_cierre(*_mt._ctx_conta(), trimestre)
