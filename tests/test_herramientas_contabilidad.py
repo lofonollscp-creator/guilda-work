@@ -5,8 +5,9 @@ import mcp_tools
 from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herramientas as ih, verticales
 from app.db_fiscal import crear_cliente_fiscal
 
-LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion")
-ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar")
+LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3")
+ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
 
@@ -125,3 +126,80 @@ def test_las_funciones_del_mcp_existen_con_documentacion():
     for n in LECTURA + ESCRITURA:
         f = getattr(mcp_tools, n)
         assert f.__doc__ and len(f.__doc__) > 40, n
+
+
+# --- Controles, lote, mapa de cuentas y retorno de a3 ----------------------------------------------------------------------------------------------------
+
+LISTADO = "Fecha;Nº Factura;NIF;Base imponible;Cuota IVA;Total\n15/08/2026;F-1;B87654321;1.000,00;210,00;1.210,00\n"
+
+
+def test_avisos_de_una_factura_y_sus_duplicados():
+    t, u, c = _despacho("Despacho herr avisos")
+    f = _anotar(u, c)
+    r = ih.ejecutar(u, "contabilidad_avisos_factura", {"factura_id": f["id"]})
+    assert r["factura_id"] == f["id"] and any("dígito de control" in a for a in r["avisos"]) and r["duplicados"] == []
+    g = _anotar(u, c, numero="F-1")                                  # mismo número, mismo NIF
+    assert [d["id"] for d in ih.ejecutar(u, "contabilidad_avisos_factura", {"factura_id": g["id"]})["duplicados"]] == [f["id"]]
+
+
+def test_vies_y_siguiente_pendiente(monkeypatch):
+    from app import vies
+    t, u, c = _despacho("Despacho herr vies")
+    monkeypatch.setattr(vies, "valido", lambda nif, ahora=None: True)
+    assert ih.ejecutar(u, "contabilidad_comprobar_vies", {"nif": "FR12345678901"})["valido"] is True
+    assert ih.ejecutar(u, "contabilidad_comprobar_vies", {"nif": "12345678"})["valido"] is None
+    a, b = _anotar(u, c, numero="A-1"), _anotar(u, c, numero="A-2", fecha="2026-08-16", tercero_nif="A58818501")
+    sig = ih.ejecutar(u, "contabilidad_siguiente_pendiente", {"factura_id": a["id"]})["factura_id"]
+    assert sig == b["id"]
+
+
+def test_lote_solo_con_lo_seguro_y_pide_confirmacion():
+    t, u, c = _despacho("Despacho herr lote")
+    _anotar(u, c)                                                    # anotada a mano: nunca es «segura»
+    r = ih.ejecutar(u, "contabilidad_revisables_en_lote", {"cliente_fiscal_id": c})
+    assert r["total"] == 0 and r["umbral"] == fc.UMBRAL_REVISION_EN_LOTE
+    assert ih.ejecutar(u, "contabilidad_revisar_seguras", {"cliente_fiscal_id": c}) == {"revisadas": 0, "omitidas": 0}
+
+
+def test_mapa_de_cuentas_y_fijar_una_a_mano():
+    t, u, c = _despacho("Despacho herr mapa")
+    _anotar(u, c, tercero_nif="A58818501")
+    m = ih.ejecutar(u, "contabilidad_mapa_de_cuentas", {"cliente_fiscal_id": c})
+    assert [x["nif"] for x in m["terceros"]] == ["A58818501"]
+    r = ih.ejecutar(u, "contabilidad_fijar_cuenta_tercero", {"cliente_fiscal_id": c, "tipo_tercero": "proveedor", "nif": "A58818501", "cuenta": "40000123"})
+    assert r["ok"]
+    assert ih.ejecutar(u, "contabilidad_mapa_de_cuentas", {"cliente_fiscal_id": c})["terceros"][0]["cuenta"] == "40000123"
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(u, "contabilidad_fijar_cuenta_tercero", {"cliente_fiscal_id": c, "tipo_tercero": "otro", "nif": "A58818501", "cuenta": "40000123"})
+
+
+def test_calidad_de_la_lectura():
+    t, u, c = _despacho("Despacho herr calidad")
+    r = ih.ejecutar(u, "contabilidad_calidad_lectura", {})
+    assert {"por_fuente", "por_tipo", "campos"} <= set(r)
+
+
+def test_retorno_de_a3_informa_y_confirma_por_separado():
+    import json
+    t, u, c = _despacho("Despacho herr retorno")
+    f = _anotar(u, c)
+    ih.ejecutar(u, "contabilidad_cambiar_estado_factura", {"factura_id": f["id"], "estado": "revisada"})
+    ih.ejecutar(u, "contabilidad_exportar", {"cliente_fiscal_id": c})
+    r = ih.ejecutar(u, "contabilidad_comprobar_retorno_a3", {"cliente_fiscal_id": c, "contenido": LISTADO})
+    json.dumps(r)                                                    # lo que sale tiene que poder viajar como JSON
+    assert fc.obtener(t, u, f["id"])["confirmada_en"] is None        # solo informa
+    ih.ejecutar(u, "contabilidad_confirmar_retorno_a3", {"cliente_fiscal_id": c, "contenido": LISTADO})
+    assert fc.obtener(t, u, f["id"])["confirmada_en"]
+    with pytest.raises(ih.ErrorHerramientaIA, match="listado de a3"):
+        ih.ejecutar(u, "contabilidad_comprobar_retorno_a3", {"cliente_fiscal_id": c})
+
+
+def test_las_nuevas_de_escritura_no_las_usa_quien_solo_audita(monkeypatch):
+    from app import acceso
+    t, u, c = _despacho("Despacho herr auditor 2")
+    monkeypatch.setattr(acceso, "es_solo_auditor", lambda tenant, usuario: True)
+    for n, args in (("contabilidad_revisar_seguras", {}), ("contabilidad_fijar_cuenta_tercero", {"cliente_fiscal_id": c, "tipo_tercero": "proveedor", "nif": "A58818501", "cuenta": "40000123"}),
+                    ("contabilidad_confirmar_retorno_a3", {"cliente_fiscal_id": c, "contenido": LISTADO})):
+        with pytest.raises(ih.ErrorHerramientaIA, match="solo permite consultar"):
+            ih.ejecutar(u, n, args)
+    assert ih.ejecutar(u, "contabilidad_comprobar_retorno_a3", {"cliente_fiscal_id": c, "contenido": LISTADO})["leidas"] == 1

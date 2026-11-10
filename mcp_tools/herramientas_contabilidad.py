@@ -59,3 +59,55 @@ def contabilidad_exportar(cliente_fiscal_id: int, trimestre: str | None = None) 
     """Genera el SUENLACE.DAT para a3 con las facturas revisadas del cliente (y trimestre) y las marca como exportadas. Lo pasa antes por el pre-chequeo y no exporta periodos cerrados (eso se confirma en la
     web). Devuelve el número de lote; el fichero se descarga en Contabilización › Ficheros generados o por la API."""
     return _mt._conta().exportar(*_mt._ctx_conta(), cliente_fiscal_id, trimestre)
+
+
+def contabilidad_avisos_factura(factura_id: int) -> dict:
+    """Lo que conviene mirar de una factura aunque no impida revisarla (NIF con el dígito de control mal, NIF igual al del titular, NIF-IVA sin formato, fecha futura o muy antigua, periodo cerrado, hueco en la numeración,
+    total cero) y las facturas del mismo cliente que pueden ser la misma, con el motivo y si esa otra ya está revisada o exportada."""
+    return _mt._conta().avisos_factura(*_mt._ctx_conta(), factura_id)
+
+
+def contabilidad_comprobar_vies(nif: str) -> dict:
+    """Comprueba en el VIES si un NIF-IVA de otro país de la UE (con su prefijo, por ejemplo FR12345678901) está dado de alta. `valido` es null si el servicio no contestó (no es un «no»)."""
+    return _mt._conta().comprobar_vies(*_mt._ctx_conta(), nif)
+
+
+def contabilidad_siguiente_pendiente(factura_id: int) -> dict:
+    """La id de la siguiente factura pendiente de revisar del mismo cliente (o de otro si ya no quedan) tras la indicada; null si no hay más."""
+    return _mt._conta().siguiente_pendiente(*_mt._ctx_conta(), factura_id)
+
+
+def contabilidad_revisables_en_lote(cliente_fiscal_id: int | None = None, umbral: int | None = None) -> dict:
+    """Las facturas pendientes que se pueden dar por buenas de golpe: de factura electrónica o leídas con IA con confianza igual o superior al `umbral` (90 por defecto), sin problemas ni avisos de control. No cambia nada."""
+    return _mt._conta().revisables_en_lote(*_mt._ctx_conta(), cliente_fiscal_id, umbral)
+
+
+def contabilidad_revisar_seguras(cliente_fiscal_id: int | None = None, umbral: int | None = None) -> dict:
+    """Da por revisadas de golpe las facturas que devuelve `contabilidad_revisables_en_lote` (opcionalmente de un solo cliente). Devuelve cuántas se revisaron y cuántas se omitieron. No enseña reglas al sistema."""
+    return _mt._conta().revisar_seguras(*_mt._ctx_conta(), cliente_fiscal_id, umbral)
+
+
+def contabilidad_mapa_de_cuentas(cliente_fiscal_id: int) -> dict:
+    """Qué subcuenta de a3 se usará con cada proveedor y cliente de un cliente de la gestoría y de dónde sale: recordada, del plan de a3 importado, nueva (se numera al exportar) o genérica (todo cae en una sola)."""
+    return _mt._conta().mapa_de_cuentas(*_mt._ctx_conta(), cliente_fiscal_id)
+
+
+def contabilidad_fijar_cuenta_tercero(cliente_fiscal_id: int, tipo_tercero: str, nif: str, cuenta: str) -> dict:
+    """Fija a mano la subcuenta de a3 de un proveedor o cliente (por su NIF) para las próximas exportaciones. `tipo_tercero`: proveedor o cliente. Las facturas ya exportadas no cambian."""
+    return _mt._conta().fijar_cuenta_tercero(*_mt._ctx_conta(), cliente_fiscal_id, tipo_tercero, nif, cuenta)
+
+
+def contabilidad_calidad_lectura(desde: str | None = None, cliente_fiscal_id: int | None = None) -> dict:
+    """Cómo acierta la lectura de facturas: por fuente (XML, texto, imagen), por tipo de documento y por campo, con las facturas dadas por buenas sin correcciones y el coste. `desde`: AAAA-MM-DD (por defecto, el día 1 del mes)."""
+    return _mt._conta().calidad_lectura(*_mt._ctx_conta(), desde, cliente_fiscal_id)
+
+
+def contabilidad_comprobar_retorno_a3(cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "") -> dict:
+    """Cruza un listado que devuelve a3 (CSV en `contenido`, o CSV/Excel en `contenido_base64` con su `nombre`) con las facturas exportadas del cliente: cuáles coinciden, cuáles tienen importes distintos, cuáles faltan en a3
+    y cuáles sobran, más el cuadre del IVA por trimestre. SOLO INFORMA: no guarda nada. Para confirmar las que coinciden usa `contabilidad_confirmar_retorno_a3`."""
+    return _mt._conta().cruzar_retorno_a3(*_mt._ctx_conta(), cliente_fiscal_id, contenido, contenido_base64, nombre, confirmar=False)
+
+
+def contabilidad_confirmar_retorno_a3(cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "") -> dict:
+    """Igual que `contabilidad_comprobar_retorno_a3`, pero además anota como «confirmadas en a3» las facturas exportadas que coinciden exactamente con el listado."""
+    return _mt._conta().cruzar_retorno_a3(*_mt._ctx_conta(), cliente_fiscal_id, contenido, contenido_base64, nombre, confirmar=True)

@@ -3,7 +3,10 @@ Mismas reglas que la web: el despacho propio, el módulo `contabilizacion` activ
 con dos decimales además de en céntimos. Los `ValueError` llevan un mensaje legible y los de «no existe» o «no está activo» se tratan como 404."""
 from __future__ import annotations
 
-from . import acceso, cobro_contabilidad, facturas_contables as fc, lectura_facturas, verticales
+import base64
+import binascii
+
+from . import acceso, cobro_contabilidad, facturas_contables as fc, lectura_calidad, lectura_facturas, retorno_a3, verticales
 
 
 def _exigir_modulo(tenant_id: int) -> None:
@@ -126,3 +129,84 @@ def fichero_del_lote(tenant_id: int, usuario_id: int, lote_id: int) -> bytes:
     if contenido is None:
         raise ValueError("No existe ese fichero.")
     return contenido
+
+
+# --- Controles, revisión en lote, mapa de cuentas y retorno de a3 ---------------------------------------------------------------------------------------
+
+def avisos_factura(tenant_id: int, usuario_id: int, factura_id: int) -> dict:
+    """Lo que conviene mirar de una factura aunque no impida revisarla (NIF dudoso, fechas raras, hueco de numeración…) y las facturas que pueden ser la misma: {avisos, duplicados}."""
+    from . import facturas_control
+    _exigir_modulo(tenant_id)
+    f = fc.obtener(tenant_id, usuario_id, int(factura_id))
+    if f is None:
+        raise ValueError("No existe esa factura.")
+    return {"factura_id": f["id"], "avisos": facturas_control.avisos(tenant_id, f), "duplicados": facturas_control.duplicados(tenant_id, f)}
+
+
+def comprobar_vies(tenant_id: int, usuario_id: int, nif: str) -> dict:
+    """Pregunta al VIES si un NIF-IVA de otro país de la UE está dado de alta: {valido: true|false|null, error}. `null` = el servicio no contestó."""
+    from . import facturas_control
+    _exigir_modulo(tenant_id)
+    return facturas_control.comprobar_vies(nif)
+
+
+def siguiente_pendiente(tenant_id: int, usuario_id: int, factura_id: int) -> dict:
+    """La siguiente factura pendiente del mismo cliente tras la indicada (o de otro si ya no quedan): {factura_id: id|null}."""
+    _exigir_modulo(tenant_id)
+    return {"factura_id": fc.siguiente_pendiente(tenant_id, usuario_id, int(factura_id))}
+
+
+def revisables_en_lote(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, umbral: int | None = None) -> dict:
+    """Las pendientes que se pueden dar por buenas de golpe (factura electrónica o lectura con confianza alta, sin problemas ni avisos). No cambia nada."""
+    _exigir_modulo(tenant_id)
+    umbral = int(umbral or fc.UMBRAL_REVISION_EN_LOTE)
+    filas = fc.revisables_en_lote(tenant_id, usuario_id, cliente_fiscal_id or None, umbral)
+    return {"umbral": umbral, "total": len(filas), "facturas": [_resumen(f) for f in filas[:200]]}
+
+
+def revisar_seguras(tenant_id: int, usuario_id: int, cliente_fiscal_id: int | None = None, umbral: int | None = None) -> dict:
+    """Da por revisadas de golpe las `revisables_en_lote`: {revisadas, omitidas}. No enseña reglas al sistema."""
+    _exigir_escritura(tenant_id, usuario_id)
+    return fc.revisar_en_lote(tenant_id, usuario_id, cliente_fiscal_id or None, int(umbral or fc.UMBRAL_REVISION_EN_LOTE))
+
+
+def mapa_de_cuentas(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> dict:
+    """Qué subcuenta de a3 se usará con cada proveedor y cliente del cliente de la gestoría y de dónde sale (recordada, plan, nueva o genérica)."""
+    _exigir_modulo(tenant_id)
+    return fc.mapa_de_cuentas(tenant_id, usuario_id, int(cliente_fiscal_id))
+
+
+def fijar_cuenta_tercero(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, tipo_tercero: str, nif: str, cuenta: str) -> dict:
+    """Fija a mano la subcuenta de un proveedor o cliente para las próximas exportaciones (las ya exportadas no cambian)."""
+    _exigir_escritura(tenant_id, usuario_id)
+    fc.fijar_cuenta_tercero(tenant_id, usuario_id, int(cliente_fiscal_id), tipo_tercero, nif, cuenta)
+    return {"ok": True, "tipo_tercero": tipo_tercero, "nif": nif, "cuenta": cuenta}
+
+
+def calidad_lectura(tenant_id: int, usuario_id: int, desde: str | None = None, cliente_fiscal_id: int | None = None) -> dict:
+    """Cómo acierta la lectura de facturas (por fuente, por tipo de documento y por campo) y cuánto cuesta. Por defecto, desde el día 1 del mes."""
+    _exigir_modulo(tenant_id)
+    if cliente_fiscal_id and not acceso.puede_ver_cliente(tenant_id, usuario_id, int(cliente_fiscal_id)):
+        raise ValueError("No tienes acceso a ese cliente.")
+    return lectura_calidad.resumen(tenant_id, desde or None, int(cliente_fiscal_id) if cliente_fiscal_id else None)
+
+
+def _bytes_del_listado(contenido: str | None, contenido_base64: str | None) -> bytes:
+    if contenido_base64:
+        try:
+            return base64.b64decode(contenido_base64, validate=False)
+        except (binascii.Error, ValueError):
+            raise ValueError("`contenido_base64` no es base64 válido.") from None
+    if contenido:
+        return contenido.encode("utf-8")
+    raise ValueError("Pasa el listado de a3 en `contenido` (texto CSV) o en `contenido_base64` (CSV o Excel).")
+
+
+def cruzar_retorno_a3(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, contenido: str | None = None, contenido_base64: str | None = None, nombre: str = "", confirmar: bool = False) -> dict:
+    """Cruza un listado de a3 con las facturas exportadas del cliente. Sin `confirmar` solo informa (no guarda nada); con `confirmar` anota como confirmadas las que coinciden exactamente."""
+    if confirmar:
+        _exigir_escritura(tenant_id, usuario_id)
+    else:
+        _exigir_modulo(tenant_id)
+    filas = retorno_a3.leer(_bytes_del_listado(contenido, contenido_base64), nombre or "")
+    return retorno_a3.cruzar(tenant_id, usuario_id, int(cliente_fiscal_id), filas, confirmar=bool(confirmar))
