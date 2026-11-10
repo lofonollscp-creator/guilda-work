@@ -127,6 +127,8 @@ def chequear(contenido: bytes, digitos: int = 8) -> dict:
                 inf.error(n, "La ampliación (tipo 4) tiene que ir después de los detalles de una factura.")
             else:
                 _ampliacion(inf, n, r, actual)
+        elif tipo == "V" and inf.formato == enlace_a3.FORMATO_CLASICO:
+            _vencimiento(inf, n, r, actual)
         else:
             inf.error(n, f"Tipo de registro desconocido en la posición 15: «{tipo}».")
     for f in facturas:
@@ -275,6 +277,39 @@ def _ampliacion(inf: _Informe, n: int, r: str, f: dict) -> None:
     esperado = "E" if f["tipo_factura"] == "1" else "R"
     if _c(r, 304, 304) != esperado:
         inf.error(n, f"El tipo de factura de la ampliación (304) debe ser «{esperado}» y es «{_c(r, 304, 304)}».")
+
+
+def _vencimiento(inf: _Informe, n: int, r: str, factura: dict | None) -> None:
+    """Registros tipo V del formato de 256: el alta del vencimiento (posición 69 en blanco) y su ampliación (69 = «A»). Tienen que ir después de la factura a la que pertenecen."""
+    if factura is None:
+        inf.error(n, "Un registro de vencimiento (tipo V) tiene que ir después de la factura a la que pertenece.")
+        return
+    if _fecha(_c(r, 7, 14)) is None:
+        inf.error(n, f"La fecha del vencimiento (7-14) no es válida: «{_c(r, 7, 14)}».")
+    marca = _c(r, 69, 69)
+    if marca == "A":
+        forma = _c(r, 59, 60).strip()
+        if forma and forma not in enlace_a3.FORMAS_DE_PAGO:
+            inf.error(n, f"El tipo de cobro o pago (59-60) «{forma}» no vale: los válidos son {', '.join(enlace_a3.FORMAS_DE_PAGO)}.")
+        if _c(r, 70, 70) not in ("P", "D", "C", "G"):
+            inf.error(n, f"El estado del vencimiento (70) debe ser P, D, C o G y es «{_c(r, 70, 70)}».")
+        return
+    if marca != " ":
+        inf.error(n, f"La marca de ampliación del vencimiento (69) debe ir en blanco o ser «A» y es «{marca}».")
+    if _c(r, 58, 58) not in ("C", "P"):
+        inf.error(n, f"El tipo de vencimiento (58) debe ser C (cobro) o P (pago) y es «{_c(r, 58, 58)}».")
+    elif _c(r, 58, 58) != ("C" if factura["tipo_factura"] == "1" else "P"):
+        inf.aviso(n, f"El vencimiento es de {'cobro' if _c(r, 58, 58) == 'C' else 'pago'} y la factura {factura['numero_completo']} es {'emitida' if factura['tipo_factura'] == '1' else 'recibida'}.")
+    if _importe(_c(r, 100, 113)) is None:
+        inf.error(n, f"El importe del vencimiento (100-113) no tiene el formato +0000000000.00: «{_c(r, 100, 113)}».")
+    if _fecha(_c(r, 114, 121)) is None:
+        inf.error(n, "La fecha de factura del vencimiento (114-121) no es válida.")
+    cuenta = _c(r, 16, 27)
+    if not re.fullmatch(r"\d{12}", cuenta):
+        inf.error(n, f"La cuenta del vencimiento (16-27) debe tener 12 dígitos y es «{cuenta}».")
+    forma = _c(r, 134, 135)
+    if forma.strip() and not re.fullmatch(r"\d{2}", forma):
+        inf.error(n, f"La forma de pago (134-135) debe ser dos dígitos o ir en blanco y es «{forma}».")
 
 
 def _ampliacion_clasica(inf: _Informe, n: int, r: str, f: dict) -> None:

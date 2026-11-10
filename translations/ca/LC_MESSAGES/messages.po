@@ -26885,3 +26885,39 @@ msgstr "A corregir a a3"
 
 msgid "Exportadas hace días sin confirmar"
 msgstr "Exportades fa dies sense confirmar"
+
+msgid "Solo hacen falta en casos especiales. Salen en los registros de ampliación y de vencimiento del fichero de 256 posiciones; el bien de inversión sale en los dos formatos."
+msgstr "Només calen en casos especials. Surten als registres d'ampliació i de venciment del fitxer de 256 posicions; el bé d'inversió surt en els dos formats."
+
+msgid "Forma de cobro o pago"
+msgstr "Forma de cobrament o pagament"
+
+msgid "Transferencia"
+msgstr "Transferència"
+
+msgid "Cheque"
+msgstr "Xec"
+
+msgid "Pagaré"
+msgstr "Pagaré"
+
+msgid "Letra aceptada"
+msgstr "Lletra acceptada"
+
+msgid "Letra no aceptada"
+msgstr "Lletra no acceptada"
+
+msgid "Giro postal"
+msgstr "Gir postal"
+
+msgid "Metálico"
+msgstr "Metàl·lic"
+
+msgid "IBAN"
+msgstr "IBAN"
+
+msgid "El IBAN no es válido: revisa los dígitos."
+msgstr "L'IBAN no és vàlid: revisa els dígits."
+
+msgid "Elige una forma de cobro o pago de la lista."
+msgstr "Tria una forma de cobrament o pagament de la llista."

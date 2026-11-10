@@ -248,6 +248,16 @@ def impreso_de_linea(tipo: str, linea: dict) -> str | None:
     return None
 
 
+def iban_valido(iban: str) -> bool:
+    """El dígito de control del IBAN (módulo 97 de la cadena reordenada) y su longitud mínima. No comprueba que el banco exista."""
+    t = re.sub(r"\s", "", str(iban or "")).upper()
+    if not re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{11,30}", t):
+        return False
+    if t[:2] == "ES" and len(t) != 24:
+        return False
+    return int("".join(str(int(ch, 36)) for ch in t[4:] + t[:4])) % 97 == 1
+
+
 def datos_a3_validados(datos: dict | None, tipo: str) -> dict:
     """Los datos de ampliación de a3 de una factura, ya limpios: `bien_inversion` (solo compras), `dua` (importaciones; 18), `clave_340` (1 = ticket; 3 = agencias de viajes, solo compras), `nif_representante`
     (14), `autofactura` (inversión del sujeto pasivo; 10) y `metalico` / `inmuebles` del 347 (`total` = el total de la factura, o un importe en euros). Lo vacío no se guarda. `ValueError` si algo no vale."""
@@ -266,6 +276,19 @@ def datos_a3_validados(datos: dict | None, tipo: str) -> dict:
         if clave not in (("1",) if tipo == "emitida" else ("1", "3")):
             raise ValueError("La clave de factura del modelo 340 debe ser 1 (ticket) o, en las compras, 3 (agencias de viajes).")
         res["clave_340"] = clave
+    iban = re.sub(r"\s", "", str(datos.get("iban") or "")).upper()
+    if iban:
+        if not iban_valido(iban):
+            raise ValueError("El IBAN no es válido: revisa los dígitos.")
+        res["iban"] = iban
+    venc = str(datos.get("vencimiento") or "").strip()
+    if venc:
+        res["vencimiento"] = _fecha(venc, "Vencimiento")
+    forma = str(datos.get("forma_pago") or "").strip().upper()
+    if forma:
+        if forma not in enlace_a3.FORMAS_DE_PAGO:
+            raise ValueError("Elige una forma de cobro o pago de la lista.")
+        res["forma_pago"] = forma
     for campo in ("metalico", "inmuebles"):
         v = str(datos.get(campo) if datos.get(campo) is not None else "").strip().lower()
         if v in ("total", "true", "s"):
@@ -1083,13 +1106,15 @@ def _insertar(tenant_id: int, usuario_id: int | None, f, datos: dict, lineas: li
         conn.close()
 
 
-DATOS_A3 = ("bien_inversion", "dua", "clave_340", "nif_representante", "autofactura", "metalico", "inmuebles")
+DATOS_A3 = ("bien_inversion", "dua", "clave_340", "nif_representante", "autofactura", "metalico", "inmuebles", "iban", "vencimiento", "forma_pago")
 
 
-def _json_datos_a3(datos: dict, tipo: str) -> str | None:
-    """Los datos de ampliación de a3 que llegan con la factura (sueltos o en `datos_a3`), validados y en JSON; None si no hay ninguno."""
+def _json_datos_a3(datos: dict, tipo: str, previos: dict | None = None) -> str | None:
+    """Los datos de ampliación de a3 que llegan con la factura (sueltos, como en el formulario, o en `datos_a3`, como en una lectura con IA), validados y en JSON; None si no hay ninguno. Los de `datos_a3` se
+    suman a los `previos` (una lectura no borra lo que puso una persona); los sueltos mandan, y uno vacío lo quita."""
     import json
-    origen = dict(datos.get("datos_a3") or {}) if isinstance(datos.get("datos_a3"), dict) else {}
+    origen = dict(previos or {}) if isinstance(datos.get("datos_a3"), dict) else {}
+    origen.update(datos["datos_a3"] if isinstance(datos.get("datos_a3"), dict) else {})
     origen.update({k: datos[k] for k in DATOS_A3 if k in datos})
     limpio = datos_a3_validados(origen, tipo)
     return json.dumps(limpio, ensure_ascii=False) if limpio else None
@@ -1190,7 +1215,7 @@ def actualizar(tenant_id: int, usuario_id: int, factura_id: int, datos: dict, li
                       d["suplidos_centimos"], total, d["notas"], db.now_iso(), documento_id, factura_id, tenant_id))
         conn.execute("UPDATE facturas_contables SET criterio_caja = ? WHERE id = ? AND tenant_id = ?", (d["criterio_caja"], factura_id, tenant_id))
         if "datos_a3" in datos or any(k in datos for k in DATOS_A3):                       # solo se tocan si llegan: una lectura con IA no borra lo que puso una persona
-            conn.execute("UPDATE facturas_contables SET datos_a3 = ? WHERE id = ? AND tenant_id = ?", (_json_datos_a3(datos, f["tipo"]), factura_id, tenant_id))
+            conn.execute("UPDATE facturas_contables SET datos_a3 = ? WHERE id = ? AND tenant_id = ?", (_json_datos_a3(datos, f["tipo"], f.get("a3")), factura_id, tenant_id))
         _guardar_lineas(conn, factura_id, ls)
         if d["tercero_cuenta"]:
             _recordar_tercero(conn, tenant_id, f["cliente_fiscal_id"], f["tipo"], d["tercero_nif"] or "", d["tercero_nombre"], d["tercero_cuenta"])
@@ -1454,6 +1479,13 @@ def resumen_por_estado(tenant_id: int, usuario_id: int, cliente_fiscal_id: int |
 
 # --- Exportar a a3 ---------------------------------------------------------------------------------------------------------------------------------------
 
+def _vencimiento_para_enlace(f: dict) -> dict:
+    """El vencimiento de la factura para el registro V (formato clásico): fecha, forma de cobro o pago y la cuenta bancaria de 20 dígitos (los 20 últimos de un IBAN español)."""
+    a = f.get("a3") or {}
+    iban = a.get("iban") or ""
+    return {"fecha": a.get("vencimiento"), "forma_pago": a.get("forma_pago"), "ccc": iban[4:] if iban.startswith("ES") else None}
+
+
 def _ampliacion_para_enlace(f: dict) -> dict:
     """Los datos de ampliación del registro 4 (formato clásico): el 347 en céntimos o `True` (= el total de la factura)."""
     a = f.get("a3") or {}
@@ -1467,7 +1499,7 @@ def _para_enlace(tenant_id: int, f: dict, cfg: dict, nuevas: dict | None = None)
     return {"tipo": f["tipo"], "abono": bool(f["abono"]), "fecha": f["fecha"], "fecha_operacion": f["fecha_operacion"], "numero": f["numero"], "rectifica_fecha": f.get("rectifica_fecha"), "rectifica_numero": f.get("rectifica_numero"), "concepto": f["concepto"] or (
         ("Su Fra. " if f["tipo"] == "recibida" else "Nuestra Fra. ") + f["numero"]), "nif": f["tercero_nif"], "nombre": f["tercero_nombre"], "caja": bool(f.get("criterio_caja")) and f["tipo"] == "recibida",
         "cuenta_tercero": (nuevas or {}).get(("proveedor" if f["tipo"] == "recibida" else "cliente", _nif(f["tercero_nif"])), (None,))[0] or cuenta_efectiva(tenant_id, f, cfg), "total_centimos": f["total_centimos"],
-        "bien_inversion": bool((f.get("a3") or {}).get("bien_inversion")) and f["tipo"] == "recibida", "ampliacion": _ampliacion_para_enlace(f),
+        "bien_inversion": bool((f.get("a3") or {}).get("bien_inversion")) and f["tipo"] == "recibida", "ampliacion": _ampliacion_para_enlace(f), "vencimiento": _vencimiento_para_enlace(f),
         "lineas": [{"cuenta": l["cuenta"] or gasto_o_ingreso, "descripcion_cuenta": "Compras" if f["tipo"] == "recibida" else "Ventas", "subtipo": l["subtipo"], "base_centimos": l["base_centimos"], "pct_iva": l["pct_iva"], "cuota_iva": l["cuota_iva"],
                     "pct_recargo": l["pct_recargo"], "cuota_recargo": l["cuota_recargo"], "pct_retencion": l["pct_retencion"], "cuota_retencion": l["cuota_retencion"],
                     "sujeta_iva": bool(l["sujeta_iva"]), "impreso": impreso_de_linea(f["tipo"], l), "cuenta_iva": cuenta_iva, "cuenta_retencion": cfg["cuenta_retencion"] if l["cuota_retencion"] else None}

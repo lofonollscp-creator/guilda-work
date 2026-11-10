@@ -208,7 +208,8 @@ def ver(factura_id: int):
     a3 = f.get("a3") or {}
     datos.update(bien_inversion="1" if a3.get("bien_inversion") else "", dua=a3.get("dua", ""), clave_340=a3.get("clave_340", ""), nif_representante=a3.get("nif_representante", ""), autofactura=a3.get("autofactura", ""),
                  metalico="total" if a3.get("metalico") == "total" else (f"{a3['metalico'] / 100:.2f}".replace(".", ",") if a3.get("metalico") else ""),
-                 inmuebles="total" if a3.get("inmuebles") == "total" else (f"{a3['inmuebles'] / 100:.2f}".replace(".", ",") if a3.get("inmuebles") else ""))
+                 inmuebles="total" if a3.get("inmuebles") == "total" else (f"{a3['inmuebles'] / 100:.2f}".replace(".", ",") if a3.get("inmuebles") else ""),
+                 iban=a3.get("iban", ""), vencimiento=a3.get("vencimiento", ""), forma_pago=a3.get("forma_pago", ""))
     datos.update(rectifica_fecha=f["rectifica_fecha"] or "", rectifica_numero=f["rectifica_numero"] or "", criterio_caja="1" if f.get("criterio_caja") else "")
     datos.update(tercero_cuenta=f["tercero_cuenta"] or "", abono="1" if f["abono"] else "", suplidos=f"{f['suplidos_centimos'] / 100:.2f}".replace(".", ",") if f["suplidos_centimos"] else "")
     mensajes = facturas_portal.mensajes(g.tenant_id, factura_id)

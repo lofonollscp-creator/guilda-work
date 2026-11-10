@@ -26961,3 +26961,39 @@ msgstr "À corriger dans a3"
 
 msgid "Exportadas hace días sin confirmar"
 msgstr "Exportées il y a des jours, non confirmées"
+
+msgid "Solo hacen falta en casos especiales. Salen en los registros de ampliación y de vencimiento del fichero de 256 posiciones; el bien de inversión sale en los dos formatos."
+msgstr "Nécessaires seulement dans des cas particuliers. Ils figurent dans les enregistrements d'extension et d'échéance du fichier de 256 positions ; le bien d'investissement figure dans les deux formats."
+
+msgid "Forma de cobro o pago"
+msgstr "Mode d'encaissement ou de paiement"
+
+msgid "Transferencia"
+msgstr "Virement"
+
+msgid "Cheque"
+msgstr "Chèque"
+
+msgid "Pagaré"
+msgstr "Billet à ordre"
+
+msgid "Letra aceptada"
+msgstr "Lettre de change acceptée"
+
+msgid "Letra no aceptada"
+msgstr "Lettre de change non acceptée"
+
+msgid "Giro postal"
+msgstr "Mandat postal"
+
+msgid "Metálico"
+msgstr "Espèces"
+
+msgid "IBAN"
+msgstr "IBAN"
+
+msgid "El IBAN no es válido: revisa los dígitos."
+msgstr "L'IBAN n'est pas valide : vérifiez les chiffres."
+
+msgid "Elige una forma de cobro o pago de la lista."
+msgstr "Choisissez un mode d'encaissement ou de paiement dans la liste."

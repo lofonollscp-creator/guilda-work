@@ -172,6 +172,26 @@ def registro_ampliacion_clasico(*, empresa, fecha, fecha_rectificada=None, numer
     return r
 
 
+FORMAS_DE_PAGO = ("DO", "TR", "CH", "PA", "LA", "LE", "GI", "ME")      # domiciliación, transferencia, cheque, pagaré, letra aceptada, letra no aceptada, giro postal, metálico
+
+
+def registro_vencimiento(*, empresa, fecha_vencimiento, cuenta, digitos: int, nombre, cobro: bool, numero, concepto, importe_centimos: int, fecha_factura, cuenta_tesoreria=None, forma_pago=None) -> str:
+    """Registro tipo V (formato clásico de 256): alta del vencimiento de la factura que lo precede. `cobro`: True = cobro (facturas emitidas), False = pago. La cuenta de tesorería y la forma de pago (01 a 99)
+    van en blanco si no se conocen."""
+    r = (TIPO_DE_FORMATO[FORMATO_CLASICO] + _empresa(empresa) + _fecha(fecha_vencimiento) + "V" + _cuenta(cuenta, digitos) + _texto(nombre, 30)       # 1-57
+         + ("C" if cobro else "P") + _texto(numero_corto(numero), 10) + " " + _texto(concepto, 30) + _importe(abs(int(importe_centimos)))               # 58, 59-68, 69, 70-99, 100-113
+         + _fecha(fecha_factura) + _cuenta_o_blancos(cuenta_tesoreria, digitos) + _dos(forma_pago) + "  ")                                              # 114-121, 122-133, 134-135, 136-137
+    return _rellenar(r, FORMATO_CLASICO)
+
+
+def registro_vencimiento_ampliacion(*, empresa, fecha_vencimiento, forma_pago: str | None = None, estado: str = "P", ccc=None) -> str:
+    """Registro tipo V con la marca de ampliación «A» (formato de 256): forma de cobro o pago (DO, TR, CH, PA, LA, LE, GI o ME), estado del vencimiento (P = pendiente) y cuenta bancaria de 20 dígitos (CCC)."""
+    r = (TIPO_DE_FORMATO[FORMATO_CLASICO] + _empresa(empresa) + _fecha(fecha_vencimiento) + "V" + " " * 43                                           # 1-58
+         + _texto(forma_pago if forma_pago in FORMAS_DE_PAGO else "", 2) + " " * 8 + "A" + _texto(estado, 1) + " " * 15 + " " * 8                          # 59-60, 61-68, 69, 70, 71-85, 86-93
+         + _texto(re.sub(r"\D", "", str(ccc or ""))[:20], 20))                                                                                          # 94-113
+    return _rellenar(r, FORMATO_CLASICO)
+
+
 def generar(facturas: list[dict], *, empresa, digitos: int = 8, formato: str = FORMATO_SII) -> bytes:
     """El contenido de SUENLACE.DAT. Cada factura es un dict ya validado:
     `{tipo: 'emitida'|'recibida', abono, bien_inversion, rectifica_fecha, rectifica_numero, fecha, fecha_operacion, numero, concepto, nif, nombre, cuenta_tercero, total_centimos, ampliacion: {dua, clave_340,
@@ -207,6 +227,12 @@ def generar(facturas: list[dict], *, empresa, digitos: int = 8, formato: str = F
                                                       metalico=ampliacion.get("metalico"), inmuebles=ampliacion.get("inmuebles")))
         elif abono:
             lineas.append(registro_ampliacion_rectificativa(empresa=empresa, fecha=f["fecha"], fecha_rectificada=f.get("rectifica_fecha"), numero_rectificado=f.get("rectifica_numero"), tipo_factura=tipo))
+        venc = f.get("vencimiento") or {}
+        if formato == FORMATO_CLASICO and venc.get("fecha") and not abono:
+            lineas.append(registro_vencimiento(empresa=empresa, fecha_vencimiento=venc["fecha"], cuenta=f["cuenta_tercero"], digitos=digitos, nombre=f.get("nombre"), cobro=tipo == EMITIDA, numero=f["numero"],
+                                               concepto=f.get("concepto"), importe_centimos=int(f["total_centimos"]), fecha_factura=f["fecha"], cuenta_tesoreria=venc.get("cuenta_tesoreria")))
+            if venc.get("forma_pago") or venc.get("ccc"):
+                lineas.append(registro_vencimiento_ampliacion(empresa=empresa, fecha_vencimiento=venc["fecha"], forma_pago=venc.get("forma_pago"), ccc=venc.get("ccc")))
     return "".join(l + FIN_DE_LINEA for l in lineas).encode("latin-1")
 
 

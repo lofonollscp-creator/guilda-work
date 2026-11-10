@@ -110,3 +110,43 @@ def test_el_formato_se_elige_en_la_configuracion_del_cliente(cliente):
     assert "Formato del fichero para a3" in cliente.get(f"/contabilidad/cliente/{c}/configuracion").get_data(as_text=True)
     r = cliente.post(f"/contabilidad/cliente/{c}/configuracion", data={"a3_empresa": "12", "digitos": "8", "formato_enlace": "256", "regimen_iva": "general"})
     assert r.status_code == 302 and fc.configuracion(t, c)["formato_enlace"] == "256"
+
+
+def test_el_iban_se_valida_con_su_digito_de_control():
+    assert fc.iban_valido("ES91 2100 0418 4502 0005 1332") and fc.iban_valido("GB82WEST12345698765432")
+    assert not fc.iban_valido("ES91 2100 0418 4502 0005 1333") and not fc.iban_valido("ES9121000418450200051") and not fc.iban_valido("") and not fc.iban_valido("1234")
+
+
+def test_vencimiento_forma_de_pago_e_iban_se_validan_y_salen_en_256():
+    t, u, c = _despacho()
+    fc.guardar_configuracion(t, u, c, {"a3_empresa": "7", "digitos": "8", "formato_enlace": "256"})
+    fid = _crear(t, u, c, datos_a3={"iban": "es91 2100 0418 4502 0005 1332", "vencimiento": "2026-10-30", "forma_pago": "tr"})
+    assert fc.obtener(t, u, fid)["a3"] == {"iban": "ES9121000418450200051332", "vencimiento": "2026-10-30", "forma_pago": "TR"}
+    for malo in ({"iban": "ES00"}, {"forma_pago": "XX"}, {"vencimiento": "mañana"}):
+        with pytest.raises(ValueError):
+            fc.datos_a3_validados(malo, "recibida")
+    contenido = _exportar(t, u, c, fid)
+    registros = [contenido[i:i + 256].decode("latin-1") for i in range(0, len(contenido), 256)]
+    assert [r[14] for r in registros] == ["1", "9", "V", "V"] and registros[2][6:14] == "20261030" and registros[3][93:113] == "21000418450200051332" and registros[3][58:60] == "TR"
+    assert chequeo.chequear(contenido, 8)["ok"]
+
+
+def test_una_lectura_suma_sus_datos_a_los_que_puso_una_persona():
+    t, u, c = _despacho()
+    fid = _crear(t, u, c, datos_a3={"bien_inversion": True})
+    f = fc.obtener(t, u, fid)
+    base = {"tipo": "recibida", "fecha": f["fecha"], "numero": "Z-1", "tercero_nombre": f["tercero_nombre"], "tercero_nif": NIF}
+    fc.actualizar(t, u, fid, {**base, "datos_a3": {"vencimiento": "2026-10-30"}}, [LINEA])
+    assert fc.obtener(t, u, fid)["a3"] == {"bien_inversion": True, "vencimiento": "2026-10-30"}
+    fc.actualizar(t, u, fid, {**base, "bien_inversion": "", "vencimiento": "", "iban": "", "forma_pago": ""}, [LINEA])             # el formulario manda y vacía
+    assert fc.obtener(t, u, fid)["a3"] == {}
+
+
+def test_la_lectura_guarda_iban_vencimiento_y_forma_de_pago_validos():
+    from app import lectura_facturas as lf
+    f = {"tipo": "recibida", "tercero_nombre": "X", "tercero_nif": "", "numero": "1", "fecha": "2026-08-15"}
+    base = {"emisor_nif": "A58818501", "receptor_nif": "", "numero": "7", "fecha": "2026-08-15", "total": 12.10, "lineas": [{"base": 10, "pct_iva": 21, "cuota_iva": 2.1}]}
+    _, nuevos, _, avisos = lf._a_factura({**base, "iban": "ES91 2100 0418 4502 0005 1332", "vencimiento": "2026-09-14", "forma_pago": "Transferencia"}, f, "", "")
+    assert nuevos["datos_a3"] == {"iban": "ES9121000418450200051332", "vencimiento": "2026-09-14", "forma_pago": "TR"}
+    _, nuevos, _, avisos = lf._a_factura({**base, "iban": "ES00 0000", "vencimiento": "2026-08-01", "forma_pago": "bizum"}, f, "", "")
+    assert "datos_a3" not in nuevos and any("IBAN leído" in a for a in avisos)               # IBAN inválido, vencimiento anterior a la factura y forma desconocida: nada se guarda

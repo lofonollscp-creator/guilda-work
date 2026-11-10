@@ -355,3 +355,17 @@ def test_el_subtipo_07_de_las_emitidas_vale():
     linea = {**_fra()["lineas"][0], "subtipo": "07", "pct_iva": 0, "cuota_iva": 0, "cuenta_iva": None, "cuenta": "70000000"}
     f = _fra(tipo="emitida", nif="12345678Z", cuenta_tercero="43000001", total_centimos=100000, lineas=[linea])
     assert ch.chequear(enlace_a3.generar([f], empresa="7", digitos=8), 8)["ok"]
+
+
+def test_los_vencimientos_del_formato_de_256_pasan_el_chequeo_y_sus_errores_se_detectan():
+    from app import enlace_a3, enlace_a3_chequeo as ch
+    f = _fra(vencimiento={"fecha": "2026-10-30", "forma_pago": "TR", "ccc": "21000418450200051332"})
+    c = enlace_a3.generar([f], empresa="7", digitos=8, formato="256")
+    assert ch.chequear(c, 8)["ok"]
+    mal = bytearray(c)
+    mal[2 * 256 + 57] = ord("X")                                       # tipo de vencimiento
+    mal[3 * 256 + 58] = ord("Z")                                       # forma de cobro o pago
+    mensajes = " ".join(e["mensaje"] for e in ch.chequear(bytes(mal), 8)["errores"])
+    assert "tipo de vencimiento (58)" in mensajes and "59-60" in mensajes
+    huerfano = enlace_a3.registro_vencimiento(empresa="7", fecha_vencimiento="2026-10-30", cuenta="40000001", digitos=8, nombre="X", cobro=False, numero="1", concepto="", importe_centimos=1, fecha_factura="2026-08-15")
+    assert any("después de la factura" in e["mensaje"] for e in ch.chequear((huerfano + "\r\n").encode("latin-1"), 8)["errores"])

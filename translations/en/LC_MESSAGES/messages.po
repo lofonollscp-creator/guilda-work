@@ -26876,3 +26876,39 @@ msgstr "To correct in a3"
 
 msgid "Exportadas hace días sin confirmar"
 msgstr "Exported days ago, not confirmed"
+
+msgid "Solo hacen falta en casos especiales. Salen en los registros de ampliación y de vencimiento del fichero de 256 posiciones; el bien de inversión sale en los dos formatos."
+msgstr "Only needed in special cases. They go in the extension and due-date records of the 256-position file; the investment good goes in both formats."
+
+msgid "Forma de cobro o pago"
+msgstr "Payment method"
+
+msgid "Transferencia"
+msgstr "Bank transfer"
+
+msgid "Cheque"
+msgstr "Cheque"
+
+msgid "Pagaré"
+msgstr "Promissory note"
+
+msgid "Letra aceptada"
+msgstr "Accepted bill of exchange"
+
+msgid "Letra no aceptada"
+msgstr "Unaccepted bill of exchange"
+
+msgid "Giro postal"
+msgstr "Postal order"
+
+msgid "Metálico"
+msgstr "Cash"
+
+msgid "IBAN"
+msgstr "IBAN"
+
+msgid "El IBAN no es válido: revisa los dígitos."
+msgstr "The IBAN is not valid: check the digits."
+
+msgid "Elige una forma de cobro o pago de la lista."
+msgstr "Choose a payment method from the list."

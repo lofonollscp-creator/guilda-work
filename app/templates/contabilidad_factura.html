@@ -129,15 +129,21 @@
     {% endfor %}
     </tbody>
   </table></div>
-  <details class="ds-mt-16" {{ 'open' if datos.bien_inversion or datos.dua or datos.clave_340 or datos.nif_representante or datos.autofactura or datos.metalico or datos.inmuebles }}>
+  <details class="ds-mt-16" {{ 'open' if datos.bien_inversion or datos.vencimiento or datos.iban or datos.forma_pago or datos.dua or datos.clave_340 or datos.nif_representante or datos.autofactura or datos.metalico or datos.inmuebles }}>
     <summary>{{ _('Datos para los modelos 340 y 347 y para importaciones') }}</summary>
-    <p class="muted">{{ _('Solo hacen falta en casos especiales. Salen en el registro de ampliación del fichero de 256 posiciones; el bien de inversión sale en los dos formatos.') }}</p>
+    <p class="muted">{{ _('Solo hacen falta en casos especiales. Salen en los registros de ampliación y de vencimiento del fichero de 256 posiciones; el bien de inversión sale en los dos formatos.') }}</p>
     {% if (datos.tipo or 'recibida') == 'recibida' %}<label class="checkbox-label"><input type="checkbox" name="bien_inversion" value="1" {{ 'checked' if datos.bien_inversion }}> {{ _('Es un bien de inversión') }}</label>{% endif %}
     <div class="fila-campos">
       <label>{{ _('Clave de factura del 340') }}<select name="clave_340"><option value="">—</option><option value="1" {{ 'selected' if datos.clave_340 == '1' }}>{{ _('1 · Ticket') }}</option>{% if (datos.tipo or 'recibida') == 'recibida' %}<option value="3" {{ 'selected' if datos.clave_340 == '3' }}>{{ _('3 · Agencias de viajes') }}</option>{% endif %}</select></label>
       <label>{{ _('Número de DUA (importaciones)') }}<input type="text" name="dua" value="{{ datos.dua }}" maxlength="18"></label>
       <label>{{ _('NIF del representante legal') }}<input type="text" name="nif_representante" value="{{ datos.nif_representante }}" maxlength="14"></label>
       <label>{{ _('Número de la autofactura (inversión del sujeto pasivo)') }}<input type="text" name="autofactura" value="{{ datos.autofactura }}" maxlength="10"></label>
+    </div>
+    <div class="fila-campos">
+      <label>{{ _('Vencimiento') }}<input type="date" name="vencimiento" value="{{ datos.vencimiento }}"></label>
+      <label>{{ _('Forma de cobro o pago') }}<select name="forma_pago"><option value="">—</option>
+        {% for codigo, nombre in (('DO', _('Domiciliación')), ('TR', _('Transferencia')), ('CH', _('Cheque')), ('PA', _('Pagaré')), ('LA', _('Letra aceptada')), ('LE', _('Letra no aceptada')), ('GI', _('Giro postal')), ('ME', _('Metálico'))) %}<option value="{{ codigo }}" {{ 'selected' if datos.forma_pago == codigo }}>{{ nombre }}</option>{% endfor %}</select></label>
+      <label>{{ _('IBAN') }}<input type="text" name="iban" value="{{ datos.iban }}" maxlength="34" autocomplete="off"></label>
     </div>
     <div class="fila-campos">
       <label>{{ _('Cobrado en metálico (347): «total» o importe') }}<input type="text" name="metalico" value="{{ datos.metalico }}" placeholder="total"></label>

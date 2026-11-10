@@ -182,3 +182,28 @@ def test_sin_datos_de_ampliacion_ni_abono_no_hay_registro_4():
 def test_formato_desconocido():
     with pytest.raises(ValueError):
         a3.generar([FACTURA], empresa=12, formato="128")
+
+
+# --- Vencimientos (registros V) del formato clásico ---------------------------------------------------------------------------------------------------------
+
+def test_el_vencimiento_se_genera_tras_la_factura_en_256_campo_a_campo():
+    f = dict(FACTURA, vencimiento={"fecha": "2026-10-30", "forma_pago": "TR", "ccc": "21000418450200051332", "cuenta_tesoreria": "57200000"})
+    registros = _lineas256([f])
+    assert [r[14] for r in registros] == ["1", "9", "V", "V"]
+    v, a = registros[2], registros[3]
+    _comprobar(v, [(1, 1, "4"), (2, 6, "00012"), (7, 14, "20261030"), (15, 15, "V"), (16, 27, "400000010000"), (28, 57, "Proveedor Ñandú S.L.".ljust(30)), (58, 58, "P"), (59, 68, "A-123".ljust(10)),
+                   (69, 69, " "), (70, 99, "Compra de material".ljust(30)), (100, 113, "+0000001210.00"), (114, 121, "20260930"), (122, 133, "572000000000"), (134, 135, "  "), (136, 137, "  "),
+                   (138, 252, " " * 115), (253, 253, "E"), (254, 254, "N")])
+    _comprobar(a, [(1, 1, "4"), (7, 14, "20261030"), (15, 15, "V"), (16, 58, " " * 43), (59, 60, "TR"), (61, 68, " " * 8), (69, 69, "A"), (70, 70, "P"), (71, 85, " " * 15), (86, 93, " " * 8),
+                   (94, 113, "21000418450200051332"), (114, 252, " " * 139), (253, 253, "E"), (254, 254, "N")])
+
+
+def test_una_emitida_genera_un_cobro_y_sin_forma_ni_cuenta_no_hay_ampliacion():
+    f = dict(FACTURA, tipo="emitida", nif="12345678Z", vencimiento={"fecha": "2026-10-30"})
+    registros = _lineas256([f])
+    assert [r[14] for r in registros] == ["1", "9", "V"] and registros[2][57] == "C"
+
+
+def test_ni_un_abono_ni_el_formato_de_512_llevan_vencimientos():
+    assert [r[14] for r in _lineas256([dict(FACTURA, abono=True, rectifica_fecha="2026-08-01", rectifica_numero="A-1", vencimiento={"fecha": "2026-10-30"})])] == ["2", "9", "4"]
+    assert [r[14] for r in _lineas([dict(FACTURA, vencimiento={"fecha": "2026-10-30"})])] == ["1", "9"]

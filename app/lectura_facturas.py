@@ -12,10 +12,14 @@ from decimal import Decimal, InvalidOperation
 
 from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, lectura_historial, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, tipos_cambio, vies
 
+FORMA_DE_PAGO = {"domiciliacion": "DO", "transferencia": "TR", "cheque": "CH", "pagare": "PA", "letra": "LA", "efectivo": "ME"}      # lo que lee la IA → código de a3
+
 PROMPT = """Eres un asistente de contabilidad en España. Recibes la foto o el PDF de UNA factura. Devuelve SOLO un objeto JSON, sin texto alrededor, con estos campos (null si no aparece o no se lee):
 {"emisor_nombre": str, "emisor_nif": str, "receptor_nombre": str, "receptor_nif": str, "numero": str, "fecha": "AAAA-MM-DD", "fecha_operacion": "AAAA-MM-DD",
  "es_abono": bool, "rectifica_numero": str, "rectifica_fecha": "AAAA-MM-DD", "concepto": str (máx. 60 caracteres, qué se factura),
  "simplificada": bool (true si es un tique o «factura simplificada»: sin datos del destinatario y con el IVA incluido en el precio),
+ "iban": str (IBAN donde pagar la factura, solo si figura), "vencimiento": "AAAA-MM-DD" (fecha de vencimiento o de pago, solo si figura),
+ "forma_pago": una de "domiciliacion", "transferencia", "cheque", "pagare", "letra", "efectivo" (solo si figura),
  "lineas": [{"base": número, "pct_iva": número, "cuota_iva": número, "pct_recargo": número, "pct_retencion": número}] (una por cada tipo de IVA distinto),
  "suplidos": número, "total": número, "moneda": "EUR" u otro código de 3 letras,
  "operacion": una de "interior", "inversion_sujeto_pasivo", "intracomunitaria_bienes", "intracomunitaria_servicios", "canarias_ceuta_melilla", "exportacion", "exenta", "no_sujeta" (null si es una operación interior normal o no lo sabes),
@@ -94,8 +98,25 @@ def _a_factura(datos: dict, f: dict, cliente_nif: str, texto: str = "") -> tuple
     if not nuevos.get("fecha"):
         nuevos["fecha"] = f["fecha"]
     nuevos["rectifica_numero"] = _texto(datos.get("rectifica_numero"), fc.MAX_NUMERO) or f.get("rectifica_numero")
+    extra: dict = {}
     if datos.get("simplificada") is True and not (datos.get("receptor_nif") if tipo == "emitida" else ""):
-        nuevos["datos_a3"] = {"clave_340": "1"}                                    # el tique se declara en el 340 con la clave 1 y no exige el NIF del cliente
+        extra["clave_340"] = "1"                                                   # el tique se declara en el 340 con la clave 1 y no exige el NIF del cliente
+    iban = re.sub(r"\s", "", str(datos.get("iban") or "")).upper()
+    if iban:
+        if fc.iban_valido(iban):
+            extra["iban"] = iban
+        else:
+            avisos.append(f"El IBAN leído ({iban}) no es válido: no se ha guardado, compruébalo en el documento.")
+    try:
+        if datos.get("vencimiento") and fc._fecha(datos["vencimiento"], "Vencimiento") >= (nuevos.get("fecha") or "0000-00-00"):
+            extra["vencimiento"] = fc._fecha(datos["vencimiento"], "Vencimiento")
+    except ValueError:
+        pass
+    forma = FORMA_DE_PAGO.get(str(datos.get("forma_pago") or "").strip().lower())
+    if forma:
+        extra["forma_pago"] = forma
+    if extra:
+        nuevos["datos_a3"] = extra
     nuevos["notas"] = f.get("notas")
     lineas: list[dict] = []
     for l in (datos.get("lineas") if isinstance(datos.get("lineas"), list) else [])[:fc.MAX_LINEAS]:
