@@ -28,15 +28,20 @@ def con_destino(url: str | None, destino: str | None, cliente_id: int | None = N
     return f"{url}{'&' if '?' in url else '?'}siguiente={quote(destino, safe='')}{c}"
 
 
+def base_portal() -> str:
+    """La dirección con la que los clientes entran al portal: `GUILDA_URL_PORTAL` (por ejemplo https://clientes.guildawork.com) o, si no está, la pública de siempre. Los webhooks (Twilio, Stripe) siguen firmándose sobre `GUILDA_URL_PUBLICA`."""
+    return (os.environ.get("GUILDA_URL_PORTAL", "").strip() or os.environ.get("GUILDA_URL_PUBLICA", "").strip()).rstrip("/")
+
+
 def url_portal(destino: str | None = None, cliente_id: int | None = None) -> str | None:
-    base = os.environ.get("GUILDA_URL_PUBLICA", "").strip().rstrip("/")
+    base = base_portal()
     return con_destino(f"{base}/portal/entrar" if base else None, destino, cliente_id)
 
 
 def url_preferencias(cliente_id: int, email: str) -> str | None:
     """El enlace del pie de cada correo para cambiar los avisos sin tener que entrar (firmado, vale un año)."""
     from . import portal_personas
-    base = os.environ.get("GUILDA_URL_PUBLICA", "").strip().rstrip("/")
+    base = base_portal()
     return f"{base}/portal/preferencias/{portal_personas.token_preferencias(cliente_id, email)}" if base else None
 
 

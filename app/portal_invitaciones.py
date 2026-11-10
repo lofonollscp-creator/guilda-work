@@ -65,7 +65,8 @@ def pendientes(tenant_id: int) -> int:
 
 
 def _base_publica() -> str:
-    return (os.environ.get("GUILDA_URL_PUBLICA", "").strip() or "").rstrip("/")
+    from . import portal_recordatorios
+    return portal_recordatorios.base_portal()
 
 
 def procesar(ahora: datetime | None = None, base_url: str | None = None, enviar=None) -> dict:

@@ -104,3 +104,13 @@ def test_la_escalada_deja_una_tarea_de_llamada_solo_si_el_despacho_la_activa(cli
     filas = conn.execute("SELECT asunto, prioridad, cliente_fiscal_id FROM tareas_outlook WHERE usuario_id = ?", (u,)).fetchall()
     conn.close()
     assert len(filas) == 1 and filas[0]["asunto"].startswith("Llamar a Uno SL") and filas[0]["prioridad"] == "alta" and filas[0]["cliente_fiscal_id"] == c
+
+
+def test_los_enlaces_del_portal_usan_la_direccion_de_los_clientes_si_existe(monkeypatch):
+    from app import portal_recordatorios as pr
+    monkeypatch.setenv("GUILDA_URL_PUBLICA", "https://app.ejemplo.com")
+    monkeypatch.delenv("GUILDA_URL_PORTAL", raising=False)
+    assert pr.url_portal() == "https://app.ejemplo.com/portal/entrar"
+    monkeypatch.setenv("GUILDA_URL_PORTAL", "https://clientes.ejemplo.com/")
+    assert pr.url_portal() == "https://clientes.ejemplo.com/portal/entrar" and pr.url_preferencias(1, "a@b.com").startswith("https://clientes.ejemplo.com/portal/preferencias/")
+    assert "app.ejemplo.com" not in pr.url_portal("/portal/peticiones/3", 7)

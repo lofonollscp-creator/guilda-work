@@ -1459,7 +1459,8 @@ def contexto_plantilla(usuario_id: int, cliente_fiscal_id: int | None = None, mo
                     valores["dias"] = str(restantes) if restantes >= 0 else str(-restantes)
                 except ValueError:
                     pass
-                base = os.environ.get("GUILDA_URL_PUBLICA", "").strip().rstrip("/")
+                from . import portal_recordatorios
+                base = portal_recordatorios.base_portal()
                 if base:
                     valores["enlace_portal"] = f"{base}/portal/entrar"
                 try:
