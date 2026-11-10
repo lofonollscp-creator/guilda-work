@@ -56,6 +56,9 @@ def test_segunda_opinion_solo_si_esta_activada_y_la_primera_es_dudosa(modelo, mo
     ia_despacho.guardar_config(t, solo_ue=False, claves_personales=True, facturas_modo="compartida", umbral_confianza=90, segunda_lectura=True, por=u)
     con = fc.obtener(t, u, _leer(t, u, c, b"2"))
     assert llamadas == ["dos"] and con["total_centimos"] == 12100 and "segundo modelo" in con["notas"]
+    from app import lectura_calidad
+    seg = lectura_calidad.resumen(t)["segunda_lectura"]
+    assert seg["usadas"] == 1 and seg["cambiaron"] == 1                       # la segunda lectura ganó y el panel de calidad lo cuenta
     llamadas.clear()
     modelo.respuesta = json.dumps(limpia)
     _leer(t, u, c, b"3")

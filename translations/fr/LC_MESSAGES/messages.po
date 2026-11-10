@@ -26715,3 +26715,9 @@ msgid "Plazo de presentación: %(fecha)s — vencido hace %(num)s día."
 msgid_plural "Plazo de presentación: %(fecha)s — vencido hace %(num)s días."
 msgstr[0] "Échéance de dépôt : %(fecha)s — dépassée depuis %(num)s jour."
 msgstr[1] "Échéance de dépôt : %(fecha)s — dépassée depuis %(num)s jours."
+
+msgid "Segundas lecturas (cambiaron el resultado)"
+msgstr "Secondes lectures (ont changé le résultat)"
+
+msgid "Coste de las segundas lecturas (USD)"
+msgstr "Coût des secondes lectures (USD)"

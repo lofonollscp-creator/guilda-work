@@ -385,8 +385,12 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
         except (ValueError, KeyError, TypeError) as e:
             _marcar_fallida(tenant_id, f, "la IA no devolvió datos legibles")
             raise ValueError(f"No se pudo leer la factura ({e}). Rellena los datos a mano.") from None
+    segunda = None                                                          # si hubo segunda lectura: «cambiada» (ganó la segunda) o «conservada» (se quedó la primera); para medir si compensa
     if config["segunda_lectura"] and not estructurada:
+        primera, n_notas = r, len(notas_lectura)
         r, fuente, notas_lectura = _segunda_opinion(usuario_id, doc, f, cliente_nif, qr, texto, r, fuente, notas_lectura)
+        if len(notas_lectura) > n_notas:
+            segunda = "cambiada" if r is not primera else "conservada"
     tipo, nuevos, lineas, avisos, valores, datos = r["tipo"], r["nuevos"], r["lineas"], r["avisos"] + notas_lectura, r["valores"], r["datos"]
     avisos += lectura_correcciones.aplicar(tenant_id, f["cliente_fiscal_id"], nuevos) if fuente != "xml" else []       # lo ya corregido antes en este cliente (nunca sobre una factura electrónica)
     avisos += lectura_historial.completar(tenant_id, usuario_id, f["cliente_fiscal_id"], tipo, nuevos, lineas, fuente)           # lo ya decidido con ese proveedor en este cliente
@@ -416,7 +420,7 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
     try:
         conn.execute("UPDATE facturas_contables SET lectura = ?, lectura_error = NULL, lectura_evidencia = ?, lectura_confianza = ?, lectura_fuente = ?, revision_auto = 0 WHERE id = ? AND tenant_id = ?",
                      ("xml" if fuente == "xml" else "ia", json.dumps({"origen": fuente, "campos": evidencias, "verificaciones": comprobaciones, "confianza": puntos["campos"], "motivos": puntos["motivos"],
-                                                                       "qr": qr}, ensure_ascii=False), puntos["global"], fuente, factura_id, tenant_id))
+                                                                       "qr": qr, "segunda_lectura": segunda}, ensure_ascii=False), puntos["global"], fuente, factura_id, tenant_id))
         auditoria.registrar(tenant_id, usuario_id, "factura_contable.leida_xml" if fuente == "xml" else "factura_contable.leida_ia", "factura_contable", factura_id,
                             {"avisos": len(avisos), "fuente": fuente, "confianza": puntos["global"]}, conn=conn)
         lectura_calidad.guardar_lo_leido(conn, tenant_id, factura_id, fc.obtener(tenant_id, usuario_id, factura_id))

@@ -26639,3 +26639,9 @@ msgid "Plazo de presentación: %(fecha)s — vencido hace %(num)s día."
 msgid_plural "Plazo de presentación: %(fecha)s — vencido hace %(num)s días."
 msgstr[0] "Termini de presentació: %(fecha)s — vençut fa %(num)s dia."
 msgstr[1] "Termini de presentació: %(fecha)s — vençut fa %(num)s dies."
+
+msgid "Segundas lecturas (cambiaron el resultado)"
+msgstr "Segones lectures (van canviar el resultat)"
+
+msgid "Coste de las segundas lecturas (USD)"
+msgstr "Cost de les segones lectures (USD)"

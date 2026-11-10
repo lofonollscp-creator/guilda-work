@@ -25,6 +25,8 @@
     <div><dt>{{ _('Mediana hasta revisar') }}</dt><dd>{% if r.horas_hasta_revisar is not none %}{{ r.horas_hasta_revisar }} h{% else %}—{% endif %}</dd></div>
     <div><dt>{{ _('Coste de la IA (USD)') }}</dt><dd>{{ '%.2f'|format(r.coste_usd) }}</dd></div>
     <div><dt>{{ _('Coste por factura (USD)') }}</dt><dd>{% if r.coste_por_factura is not none %}{{ '%.4f'|format(r.coste_por_factura) }}{% else %}—{% endif %}</dd></div>
+    {% if r.segunda_lectura.usadas %}<div><dt>{{ _('Segundas lecturas (cambiaron el resultado)') }}</dt><dd>{{ r.segunda_lectura.usadas }} ({{ r.segunda_lectura.cambiaron }})</dd></div>
+    {% if r.segunda_lectura.coste_extra_usd is not none %}<div><dt>{{ _('Coste de las segundas lecturas (USD)') }}</dt><dd>{{ '%.4f'|format(r.segunda_lectura.coste_extra_usd) }}</dd></div>{% endif %}{% endif %}
   </dl>
   {% if r.sin_tarifa %}<p class="muted">{{ _('Algunos modelos no tienen tarifa conocida: su coste no está incluido.') }}</p>{% endif %}
 </section>

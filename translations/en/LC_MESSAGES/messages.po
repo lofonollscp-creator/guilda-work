@@ -26630,3 +26630,9 @@ msgid "Plazo de presentación: %(fecha)s — vencido hace %(num)s día."
 msgid_plural "Plazo de presentación: %(fecha)s — vencido hace %(num)s días."
 msgstr[0] "Filing deadline: %(fecha)s — overdue by %(num)s day."
 msgstr[1] "Filing deadline: %(fecha)s — overdue by %(num)s days."
+
+msgid "Segundas lecturas (cambiaron el resultado)"
+msgstr "Second readings (changed the result)"
+
+msgid "Coste de las segundas lecturas (USD)"
+msgstr "Cost of second readings (USD)"

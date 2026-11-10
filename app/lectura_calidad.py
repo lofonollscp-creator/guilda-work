@@ -83,6 +83,7 @@ def resumen(tenant_id: int, desde: str | None = None, cliente_fiscal_id: int | N
     proveedores: dict[str, dict] = {}
     horas: list[float] = []
     auto = pendientes = 0
+    segunda = {"usadas": 0, "cambiaron": 0}
     for f in filas:
         fuente = f["lectura_fuente"] or ("xml" if f["lectura"] == "xml" else "imagen")
         d = por_fuente.setdefault(fuente, {"facturas": 0, "confianza_suma": 0, "con_confianza": 0, "revisadas": 0, "sin_correcciones": 0})
@@ -92,6 +93,12 @@ def resumen(tenant_id: int, desde: str | None = None, cliente_fiscal_id: int | N
             if f["lectura_confianza"] is not None:
                 x["confianza_suma"] += f["lectura_confianza"]
                 x["con_confianza"] += 1
+        try:
+            if json.loads(f["lectura_evidencia"] or "{}").get("segunda_lectura"):
+                segunda["usadas"] += 1
+                segunda["cambiaron"] += 1 if json.loads(f["lectura_evidencia"]).get("segunda_lectura") == "cambiada" else 0
+        except (ValueError, AttributeError):
+            pass
         if f["revision_auto"]:
             auto += 1
             continue
@@ -134,4 +141,5 @@ def resumen(tenant_id: int, desde: str | None = None, cliente_fiscal_id: int | N
     llamadas, coste = sum(x["llamadas"] for x in facturas_uso), round(sum(x["coste_usd"] for x in facturas_uso), 4)
     return {"desde": desde, "total": len(filas), "por_fuente": por_fuente, "por_tipo": por_tipo, "campos": campos, "auto": auto, "pendientes_de_revisar": pendientes,
             "proveedores": sorted(proveedores.values(), key=lambda p: -p["correcciones"])[:10], "horas_hasta_revisar": round(sorted(horas)[len(horas) // 2], 1) if horas else None,
+            "segunda_lectura": {**segunda, "coste_extra_usd": round(segunda["usadas"] * coste / llamadas, 4) if llamadas and segunda["usadas"] else None},
             "coste_usd": coste, "llamadas": llamadas, "coste_por_factura": round(coste / llamadas, 4) if llamadas else None, "sin_tarifa": uso["hay_sin_tarifa"]}
