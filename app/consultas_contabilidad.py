@@ -6,7 +6,7 @@ from __future__ import annotations
 import base64
 import binascii
 
-from . import acceso, cobro_contabilidad, facturas_contables as fc, lectura_calidad, lectura_facturas, retorno_a3, verticales
+from . import acceso, cobro_contabilidad, facturas_contables as fc, lectura_calidad, lectura_facturas, panel_cierre, retorno_a3, verticales
 
 
 def _exigir_modulo(tenant_id: int) -> None:
@@ -210,3 +210,9 @@ def cruzar_retorno_a3(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, c
         _exigir_modulo(tenant_id)
     filas = retorno_a3.leer(_bytes_del_listado(contenido, contenido_base64), nombre or "")
     return retorno_a3.cruzar(tenant_id, usuario_id, int(cliente_fiscal_id), filas, confirmar=bool(confirmar))
+
+
+def panel_del_cierre(tenant_id: int, usuario_id: int, trimestre: str | None = None) -> dict:
+    """Qué falta para cerrar un trimestre, cliente por cliente (por leer, por revisar, listas para exportar, sin confirmar en a3), con el plazo de presentación y los días que quedan."""
+    _exigir_modulo(tenant_id)
+    return panel_cierre.panel(tenant_id, usuario_id, trimestre or None)

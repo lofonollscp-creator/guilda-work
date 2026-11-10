@@ -9,7 +9,7 @@ from flask_babel import gettext as _
 
 from . import acceso, cobro_contabilidad, db, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
-from . import cierre_trimestre, cola_contabilidad, facturas_control, retorno_a3, facturas_portal, justificantes as justificantes_mod
+from . import cierre_trimestre, cola_contabilidad, facturas_control, panel_cierre, retorno_a3, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
 
 contabilidad_bp = Blueprint("contabilidad", __name__, url_prefix="/contabilidad")
@@ -767,6 +767,25 @@ def _descarga(contenido: bytes) -> Response:
     resp.headers.set("X-Content-Type-Options", "nosniff")
     resp.headers.set("Cache-Control", "no-store")
     return resp
+
+
+@contabilidad_bp.route("/panel-cierre")
+@login_required
+def panel_del_cierre():
+    """Qué falta para cerrar un trimestre, cliente por cliente: por leer, por revisar, listas para exportar y sin confirmar en a3, con los días que quedan para el plazo."""
+    hoy = date.today()
+    actual = panel_cierre.trimestre_actual(hoy)
+    trimestres = [actual]
+    for _i in range(5):
+        a, t = int(trimestres[-1][:4]), int(trimestres[-1][-1])
+        trimestres.append(f"{a - (t == 1)}-T{t - 1 or 4}")
+    trimestre = request.args.get("trimestre") or panel_cierre.trimestre_anterior(hoy)
+    error = None
+    try:
+        p = panel_cierre.panel(g.tenant_id, g.usuario_id, trimestre, hoy)
+    except ValueError as e:
+        p, error = None, _(str(e))
+    return render_template("contabilidad_panel_cierre.html", p=p, trimestres=trimestres, trimestre=trimestre, etiqueta=cierre_trimestre.etiqueta, error=error or _error(), subnav=None)
 
 
 @contabilidad_bp.route("/retorno", methods=["GET", "POST"])

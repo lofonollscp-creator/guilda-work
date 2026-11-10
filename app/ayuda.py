@@ -148,6 +148,7 @@ MAPA = {
     "contabilidad.retorno": "contabilizacion-de-facturas/comprobar-lo-que-devuelve-a3",
     "contabilidad.cuentas": "contabilizacion-de-facturas/comprobar-lo-que-devuelve-a3",
     "contabilidad.revisar_seguras": "contabilizacion-de-facturas/controles-y-revision-rapida",
+    "contabilidad.panel_del_cierre": "contabilizacion-de-facturas/recordar-y-automatizar",
     "herramientas": "herramientas/catalogo-de-apps-conectadas",
     "ia.": "asistente-ia/usar-el-asistente",
     "ia.ajustes": "asistente-ia/ajustes-y-limites",

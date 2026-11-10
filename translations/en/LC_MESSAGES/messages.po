@@ -26584,3 +26584,49 @@ msgstr "Invoices that do not appear paid in this statement"
 
 msgid "Facturas de estas fechas cuyo importe no aparece como pago: quizá las pagaste en efectivo o con otra cuenta, o siguen pendientes de pago."
 msgstr "Invoices from these dates whose amount does not show up as a payment: perhaps you paid them in cash or from another account, or they are still unpaid."
+
+msgid "Qué falta para cerrar"
+msgstr "What is left to close"
+
+msgid "Cada cliente de un vistazo: lo que queda por leer, revisar, exportar y confirmar en a3 antes del plazo del trimestre."
+msgstr "Every client at a glance: what is left to read, review, export and confirm in a3 before the quarter's deadline."
+
+msgid "Clientes listos o cerrados"
+msgstr "Clients ready or closed"
+
+msgid "Facturas que faltan"
+msgstr "Invoices still missing"
+
+msgid "Clientes sin facturas"
+msgstr "Clients with no invoices"
+
+msgid "Listas para exportar"
+msgstr "Ready to export"
+
+msgid "Sin confirmar en a3"
+msgstr "Not confirmed in a3"
+
+msgid "Sin facturas"
+msgstr "No invoices"
+
+msgid "Listo para cerrar"
+msgstr "Ready to close"
+
+msgid "Faltan %(n)s"
+msgstr "%(n)s to go"
+
+msgid "Cierre guiado"
+msgstr "Guided close"
+
+msgid "Todavía no hay clientes con facturas para contabilizar."
+msgstr "There are no clients with invoices to post yet."
+
+msgid "Plazo de presentación: %(fecha)s — queda %(num)s día."
+msgid_plural "Plazo de presentación: %(fecha)s — quedan %(num)s días."
+msgstr[0] "Filing deadline: %(fecha)s — %(num)s day left."
+msgstr[1] "Filing deadline: %(fecha)s — %(num)s days left."
+
+msgid "Plazo de presentación: %(fecha)s — vencido hace %(num)s día."
+msgid_plural "Plazo de presentación: %(fecha)s — vencido hace %(num)s días."
+msgstr[0] "Filing deadline: %(fecha)s — overdue by %(num)s day."
+msgstr[1] "Filing deadline: %(fecha)s — overdue by %(num)s days."

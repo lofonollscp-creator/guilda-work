@@ -26669,3 +26669,49 @@ msgstr "Factures qui n'apparaissent pas payées dans ce relevé"
 
 msgid "Facturas de estas fechas cuyo importe no aparece como pago: quizá las pagaste en efectivo o con otra cuenta, o siguen pendientes de pago."
 msgstr "Factures de ces dates dont le montant n'apparaît pas comme un paiement : vous les avez peut-être payées en espèces ou avec un autre compte, ou elles restent à payer."
+
+msgid "Qué falta para cerrar"
+msgstr "Ce qu'il reste à clôturer"
+
+msgid "Cada cliente de un vistazo: lo que queda por leer, revisar, exportar y confirmar en a3 antes del plazo del trimestre."
+msgstr "Chaque client en un coup d'œil : ce qui reste à lire, vérifier, exporter et confirmer dans a3 avant l'échéance du trimestre."
+
+msgid "Clientes listos o cerrados"
+msgstr "Clients prêts ou clôturés"
+
+msgid "Facturas que faltan"
+msgstr "Factures restantes"
+
+msgid "Clientes sin facturas"
+msgstr "Clients sans factures"
+
+msgid "Listas para exportar"
+msgstr "Prêtes à exporter"
+
+msgid "Sin confirmar en a3"
+msgstr "Non confirmées dans a3"
+
+msgid "Sin facturas"
+msgstr "Sans factures"
+
+msgid "Listo para cerrar"
+msgstr "Prêt à clôturer"
+
+msgid "Faltan %(n)s"
+msgstr "Il en reste %(n)s"
+
+msgid "Cierre guiado"
+msgstr "Clôture guidée"
+
+msgid "Todavía no hay clientes con facturas para contabilizar."
+msgstr "Il n'y a pas encore de clients avec des factures à comptabiliser."
+
+msgid "Plazo de presentación: %(fecha)s — queda %(num)s día."
+msgid_plural "Plazo de presentación: %(fecha)s — quedan %(num)s días."
+msgstr[0] "Échéance de dépôt : %(fecha)s — il reste %(num)s jour."
+msgstr[1] "Échéance de dépôt : %(fecha)s — il reste %(num)s jours."
+
+msgid "Plazo de presentación: %(fecha)s — vencido hace %(num)s día."
+msgid_plural "Plazo de presentación: %(fecha)s — vencido hace %(num)s días."
+msgstr[0] "Échéance de dépôt : %(fecha)s — dépassée depuis %(num)s jour."
+msgstr[1] "Échéance de dépôt : %(fecha)s — dépassée depuis %(num)s jours."

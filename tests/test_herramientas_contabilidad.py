@@ -6,7 +6,7 @@ from app import db, facturas_contables as fc, herramientas_grupos as hg, ia_herr
 from app.db_fiscal import crear_cliente_fiscal
 
 LECTURA = ("contabilidad_listar_facturas", "contabilidad_ver_factura", "contabilidad_resumen", "contabilidad_comprobar_exportacion", "contabilidad_avisos_factura", "contabilidad_comprobar_vies", "contabilidad_siguiente_pendiente",
-           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3")
+           "contabilidad_revisables_en_lote", "contabilidad_mapa_de_cuentas", "contabilidad_calidad_lectura", "contabilidad_comprobar_retorno_a3", "contabilidad_panel_cierre")
 ESCRITURA = ("contabilidad_anotar_factura", "contabilidad_cambiar_estado_factura", "contabilidad_leer_factura_con_ia", "contabilidad_exportar", "contabilidad_revisar_seguras", "contabilidad_fijar_cuenta_tercero", "contabilidad_confirmar_retorno_a3")
 LINEAS = [{"base": "1.000,00", "pct_iva": "21"}]
 
@@ -203,3 +203,12 @@ def test_las_nuevas_de_escritura_no_las_usa_quien_solo_audita(monkeypatch):
         with pytest.raises(ih.ErrorHerramientaIA, match="solo permite consultar"):
             ih.ejecutar(u, n, args)
     assert ih.ejecutar(u, "contabilidad_comprobar_retorno_a3", {"cliente_fiscal_id": c, "contenido": LISTADO})["leidas"] == 1
+
+
+def test_panel_de_cierre_por_trimestre():
+    t, u, c = _despacho("Despacho herr panel")
+    _anotar(u, c)
+    r = ih.ejecutar(u, "contabilidad_panel_cierre", {"trimestre": "2026-T3"})
+    assert r["trimestre"] == "2026-T3" and r["plazo"] == "2026-10-20" and r["clientes"][0]["por_revisar"] == 1
+    with pytest.raises(ih.ErrorHerramientaIA):
+        ih.ejecutar(u, "contabilidad_panel_cierre", {"trimestre": "mal"})

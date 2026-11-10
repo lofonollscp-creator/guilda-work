@@ -26593,3 +26593,49 @@ msgstr "Factures que no surten pagades en aquest extracte"
 
 msgid "Facturas de estas fechas cuyo importe no aparece como pago: quizá las pagaste en efectivo o con otra cuenta, o siguen pendientes de pago."
 msgstr "Factures d'aquestes dates l'import de les quals no apareix com a pagament: potser les vas pagar en efectiu o amb un altre compte, o continuen pendents de pagament."
+
+msgid "Qué falta para cerrar"
+msgstr "Què falta per tancar"
+
+msgid "Cada cliente de un vistazo: lo que queda por leer, revisar, exportar y confirmar en a3 antes del plazo del trimestre."
+msgstr "Cada client d'una ullada: el que queda per llegir, revisar, exportar i confirmar a a3 abans del termini del trimestre."
+
+msgid "Clientes listos o cerrados"
+msgstr "Clients llestos o tancats"
+
+msgid "Facturas que faltan"
+msgstr "Factures que falten"
+
+msgid "Clientes sin facturas"
+msgstr "Clients sense factures"
+
+msgid "Listas para exportar"
+msgstr "Llestes per exportar"
+
+msgid "Sin confirmar en a3"
+msgstr "Sense confirmar a a3"
+
+msgid "Sin facturas"
+msgstr "Sense factures"
+
+msgid "Listo para cerrar"
+msgstr "Llest per tancar"
+
+msgid "Faltan %(n)s"
+msgstr "En falten %(n)s"
+
+msgid "Cierre guiado"
+msgstr "Tancament guiat"
+
+msgid "Todavía no hay clientes con facturas para contabilizar."
+msgstr "Encara no hi ha clients amb factures per comptabilitzar."
+
+msgid "Plazo de presentación: %(fecha)s — queda %(num)s día."
+msgid_plural "Plazo de presentación: %(fecha)s — quedan %(num)s días."
+msgstr[0] "Termini de presentació: %(fecha)s — queda %(num)s dia."
+msgstr[1] "Termini de presentació: %(fecha)s — queden %(num)s dies."
+
+msgid "Plazo de presentación: %(fecha)s — vencido hace %(num)s día."
+msgid_plural "Plazo de presentación: %(fecha)s — vencido hace %(num)s días."
+msgstr[0] "Termini de presentació: %(fecha)s — vençut fa %(num)s dia."
+msgstr[1] "Termini de presentació: %(fecha)s — vençut fa %(num)s dies."

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_ds/componentes.html" import estado_vacio, chip %}
+{% from "_nucleo_macros.html" import aviso_error %}
+{% block title %}{{ _('Qué falta para cerrar') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Qué falta para cerrar') }}</h1>
+    <p class="subtitle">{{ _('Cada cliente de un vistazo: lo que queda por leer, revisar, exportar y confirmar en a3 antes del plazo del trimestre.') }}</p>
+  </div>
+  <div class="ds-fila"><a class="btn btn-ghost" href="{{ url_for('contabilidad.lista') }}">‹ {{ _('Facturas para contabilizar') }}</a></div>
+</header>
+{{ aviso_error(error) }}
+<section class="dash-panel">
+  <form method="get" class="ds-fila">
+    <label>{{ _('Trimestre') }}
+      <select name="trimestre" onchange="this.form.submit()">{% for t in trimestres %}<option value="{{ t }}" {{ 'selected' if t == trimestre }}>{{ etiqueta(t) }}</option>{% endfor %}</select></label>
+    <noscript><button type="submit" class="btn btn-ghost">{{ _('Ver') }}</button></noscript>
+  </form>
+  {% if p %}
+  <p class="muted">
+    {% if p.dias >= 0 %}{{ ngettext('Plazo de presentación: %(fecha)s — queda %(num)s día.', 'Plazo de presentación: %(fecha)s — quedan %(num)s días.', p.dias, fecha=p.plazo) }}
+    {% else %}{{ ngettext('Plazo de presentación: %(fecha)s — vencido hace %(num)s día.', 'Plazo de presentación: %(fecha)s — vencido hace %(num)s días.', -p.dias, fecha=p.plazo) }}{% endif %}
+  </p>
+  <dl class="portal-tablero-cifras">
+    <div><dt>{{ _('Clientes listos o cerrados') }}</dt><dd>{{ p.resumen.listos }} / {{ p.resumen.clientes }}</dd></div>
+    <div><dt>{{ _('Facturas que faltan') }}</dt><dd>{{ p.resumen.faltan }}</dd></div>
+    <div><dt>{{ _('Clientes sin facturas') }}</dt><dd>{{ p.resumen.sin_facturas }}</dd></div>
+  </dl>
+  {% endif %}
+</section>
+{% if p and p.clientes %}
+<section class="dash-panel ds-mt-24">
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Cliente') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('Por leer') }}</th><th>{{ _('Por revisar') }}</th><th>{{ _('Listas para exportar') }}</th><th>{{ _('Sin confirmar en a3') }}</th><th>{{ _('Estado') }}</th><th></th></tr></thead>
+    <tbody>
+    {% for c in p.clientes %}
+      <tr>
+        <td><a href="{{ url_for('contabilidad.lista', cliente_id=c.cliente_fiscal_id, trimestre=trimestre) }}">{{ c.nombre }}</a></td>
+        <td>{{ c.total }}</td><td>{{ c.sin_leer }}</td><td>{{ c.por_revisar }}</td><td>{{ c.listas }}</td><td>{% if c.usa_retorno %}{{ c.sin_confirmar }}{% else %}—{% endif %}</td>
+        <td>
+          {% if c.cerrado %}{{ chip(_('Cerrado'), 'exito') }}
+          {% elif c.sin_facturas %}{{ chip(_('Sin facturas'), 'aviso') }}
+          {% elif c.listo %}{{ chip(_('Listo para cerrar'), 'exito') }}
+          {% else %}{{ chip(_('Faltan %(n)s', n=c.faltan), 'aviso') }}{% endif %}
+        </td>
+        <td>{% if not c.cerrado %}<a class="btn btn-ghost" href="{{ url_for('contabilidad.cierre', cliente_id=c.cliente_fiscal_id, trimestre=trimestre) }}">{{ _('Cierre guiado') }}</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% elif p %}
+{{ estado_vacio(_('Todavía no hay clientes con facturas para contabilizar.')) }}
+{% endif %}
+{% endblock %}
