@@ -263,3 +263,41 @@ def test_flujo_web(cliente):
     assert "Errores: 1" in html and "cuota de IVA" in html
     ok = cliente.post("/contabilidad/comprobar-fichero", data={"archivo": (io.BytesIO(_bytes(FACTURA)), "SUENLACE.DAT")}, content_type="multipart/form-data")
     assert "Sin errores" in ok.get_data(as_text=True)
+
+
+# --- J6: coherencia de las cuentas del fichero ---------------------------------------------------------------------------------------------------------------
+
+def _fichero(*facturas):
+    from app import enlace_a3
+    return enlace_a3.generar(list(facturas), empresa="7", digitos=8)
+
+
+def _fra(**kw):
+    base = {"tipo": "recibida", "abono": False, "fecha": "2026-08-15", "fecha_operacion": "2026-08-15", "numero": "F-1", "concepto": "Material", "nif": "A58818501", "nombre": "Papelería", "caja": False,
+            "cuenta_tercero": "40000001", "total_centimos": 121000, "rectifica_fecha": None, "rectifica_numero": None,
+            "lineas": [{"cuenta": "62900000", "descripcion_cuenta": "Compras", "subtipo": "01", "base_centimos": 100000, "pct_iva": 2100, "cuota_iva": 21000, "pct_recargo": 0, "cuota_recargo": 0,
+                        "pct_retencion": 0, "cuota_retencion": 0, "sujeta_iva": True, "impreso": None, "cuenta_iva": "47200000", "cuenta_retencion": None}]}
+    return {**base, **kw}
+
+
+def test_cuentas_coherentes_no_avisan_de_clases():
+    from app import enlace_a3_chequeo as ch
+    r = ch.chequear(_fichero(_fra()), 8)
+    assert not [a for a in r["avisos"] if "subcuenta" in a["mensaje"] or "cuenta de " in a["mensaje"]]
+
+
+def test_avisa_de_clase_de_cuenta_cruzada():
+    from app import enlace_a3_chequeo as ch
+    r = ch.chequear(_fichero(_fra(cuenta_tercero="43000001")), 8)
+    assert any("subcuenta de clientes" in a["mensaje"] for a in r["avisos"])
+    linea = {**_fra()["lineas"][0], "cuenta": "70000000"}
+    r = ch.chequear(_fichero(_fra(lineas=[linea])), 8)
+    assert any("cuenta de ingresos" in a["mensaje"] for a in r["avisos"])
+
+
+def test_avisa_de_nif_distintos_en_la_misma_subcuenta_y_de_un_nif_con_varias():
+    from app import enlace_a3_chequeo as ch
+    r = ch.chequear(_fichero(_fra(), _fra(numero="F-2", nif="B12345674", nombre="Otro")), 8)
+    assert any("2 NIF distintos" in a["mensaje"] for a in r["avisos"])
+    r = ch.chequear(_fichero(_fra(), _fra(numero="F-2", cuenta_tercero="40000002")), 8)
+    assert any("2 subcuentas distintas" in a["mensaje"] for a in r["avisos"])

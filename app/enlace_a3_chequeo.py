@@ -115,6 +115,7 @@ def chequear(contenido: bytes, digitos: int = 8) -> dict:
             inf.error(n, f"Tipo de registro desconocido en la posición 15: «{tipo}».")
     for f in facturas:
         _cerrar(inf, f)
+    _coherencia_de_cuentas(inf, facturas, digitos)
     if len(empresas) > 1:
         inf.aviso(None, "El fichero mezcla varios códigos de empresa: " + ", ".join(sorted(empresas)) + ". a3 importa a la empresa abierta.")
     años = {f["fecha"].year for f in facturas if f["fecha"]}
@@ -162,13 +163,14 @@ def _cabecera(inf: _Informe, n: int, r: str, tipo: str, fecha: datetime | None, 
     elif fecha and f_fra != fecha:
         inf.aviso(n, "La fecha de la factura (245-252) no coincide con la del registro (7-14).")
     return {"registro": n, "abono": tipo == "2", "tipo_factura": tipo_factura, "numero": numero, "numero_completo": ampliado or numero, "total": total, "nif": nif, "fecha": fecha,
-            "detalles": [], "ampliacion": False, "cerrada": False, "suma": 0}
+            "detalles": [], "ampliacion": False, "cerrada": False, "suma": 0, "cuenta": cuenta, "cuentas_detalle": []}
 
 
 def _detalle(inf: _Informe, n: int, r: str, f: dict, digitos: int) -> None:
     cuenta = _c(r, 16, 27)
     if not re.fullmatch(r"\d{12}", cuenta) or not cuenta[:digitos].strip("0"):
         inf.error(n, f"La cuenta de gasto o ingreso (16-27) no es válida: «{cuenta}».")
+    f["cuentas_detalle"].append((n, cuenta))
     sentido = _c(r, 58, 58)
     if sentido != ("A" if f["abono"] else "C"):
         inf.error(n, f"El sentido (58) debe ser «{'A' if f['abono'] else 'C'}» en {'un abono' if f['abono'] else 'una factura'} y es «{sentido}».")
@@ -265,6 +267,35 @@ def _cerrar(inf: _Informe, f: dict) -> None:
         inf.error(n, f"El abono {f['numero_completo']} necesita su registro de ampliación (tipo 4) con la factura que rectifica.")
     if f["total"] is not None and abs(f["suma"] - f["total"]) > TOLERANCIA_CENTIMOS * len(f["detalles"]):
         inf.aviso(n, f"El total de la cabecera ({f['total'] / 100:.2f}) no es la suma de sus detalles ({f['suma'] / 100:.2f}): normal si la factura lleva suplidos, si no hay que revisarla.")
+
+
+def _coherencia_de_cuentas(inf: _Informe, facturas: list[dict], digitos: int) -> None:
+    """Avisos sobre cómo se reparten las cuentas en el fichero (J6): un proveedor o un cliente con la subcuenta de la clase que no es, un gasto en una cuenta de ingresos (o al revés), varios NIF
+    distintos en una misma subcuenta y un mismo NIF con subcuentas distintas. Solo avisan: a3 los admite, pero casi siempre son un error de configuración."""
+    for f in facturas:
+        grupo = f["cuenta"][:2] if re.fullmatch(r"\d{12}", f["cuenta"] or "") else ""
+        if f["tipo_factura"] == "2" and grupo == "43":
+            inf.aviso(f["registro"], f"La factura recibida {f['numero_completo']} lleva una subcuenta de clientes ({f['cuenta'][:digitos]}…): ¿es un proveedor?")
+        elif f["tipo_factura"] == "1" and grupo in ("40", "41"):
+            inf.aviso(f["registro"], f"La factura emitida {f['numero_completo']} lleva una subcuenta de proveedores ({f['cuenta'][:digitos]}…): ¿es un cliente?")
+        for registro, cuenta in f["cuentas_detalle"]:
+            clase = cuenta[:1] if re.fullmatch(r"\d{12}", cuenta) else ""
+            if f["tipo_factura"] == "2" and clase == "7":
+                inf.aviso(registro, f"La factura recibida {f['numero_completo']} lleva una cuenta de ingresos ({cuenta[:digitos]}…): ¿es un gasto?")
+            elif f["tipo_factura"] == "1" and clase == "6":
+                inf.aviso(registro, f"La factura emitida {f['numero_completo']} lleva una cuenta de gastos ({cuenta[:digitos]}…): ¿es un ingreso?")
+    por_cuenta: dict[tuple[str, str], dict[str, int]] = {}
+    por_nif: dict[tuple[str, str], dict[str, int]] = {}
+    for f in facturas:
+        if f["nif"] and re.fullmatch(r"\d{12}", f["cuenta"] or ""):
+            por_cuenta.setdefault((f["tipo_factura"], f["cuenta"]), {}).setdefault(f["nif"], f["registro"])
+            por_nif.setdefault((f["tipo_factura"], f["nif"]), {}).setdefault(f["cuenta"], f["registro"])
+    for (_tipo, cuenta), nifs in por_cuenta.items():
+        if len(nifs) > 1:
+            inf.aviso(min(nifs.values()), f"La subcuenta {cuenta[:digitos]} se usa con {len(nifs)} NIF distintos: en a3 quedarán todos en la misma ficha (¿falta la subcuenta propia de cada uno?).")
+    for (_tipo, nif), cuentas in por_nif.items():
+        if len(cuentas) > 1:
+            inf.aviso(min(cuentas.values()), f"El NIF {nif} aparece con {len(cuentas)} subcuentas distintas en este fichero: sus facturas se repartirán en varias fichas de a3.")
 
 
 def _resultado(inf: _Informe, n_registros: int, facturas: list[dict], extra: dict) -> dict:

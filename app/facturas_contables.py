@@ -1326,6 +1326,29 @@ def _preparar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     return cliente, cfg, facturas, nuevas, contenido
 
 
+def _fuera_del_plan(tenant_id: int, cliente_fiscal_id: int, cfg: dict, facturas: list[dict], nuevas: dict) -> list[dict]:
+    """Si el cliente tiene importado su plan de cuentas de a3, avisa de las subcuentas de terceros (escritas a mano o recordadas) que no figuran en él: a3 las daría de alta nuevas o rechazaría el asiento.
+    Las genéricas del cliente y las que el programa numera solo (`nuevas`) no se avisan: son a propósito."""
+    conn = db.get_connection()
+    try:
+        plan = {r["cuenta"] for r in conn.execute("SELECT cuenta FROM contabilidad_plan WHERE cliente_fiscal_id = ? AND tenant_id = ?", (cliente_fiscal_id, tenant_id))}
+    finally:
+        conn.close()
+    if not plan:
+        return []
+    genericas = {cfg["cuenta_proveedores"], cfg["cuenta_clientes"]}
+    avisos, vistas = [], set()
+    for f in facturas:
+        tipo = "proveedor" if f["tipo"] == "recibida" else "cliente"
+        if (tipo, _nif(f["tercero_nif"])) in nuevas:
+            continue
+        cuenta = cuenta_efectiva(tenant_id, f, cfg)
+        if cuenta and cuenta not in plan and cuenta not in genericas and (tipo, cuenta) not in vistas:
+            vistas.add((tipo, cuenta))
+            avisos.append({"registro": None, "mensaje": f"La subcuenta {cuenta} de {f['tercero_nombre']} no figura en el plan de cuentas importado de a3: a3 la dará de alta nueva o rechazará el asiento."})
+    return avisos
+
+
 def comprobar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, *, desde: str | None = None, hasta: str | None = None) -> dict:
     """Pre-chequeo de lo que se exportaría ahora: genera el fichero en memoria, lo relee por sus posiciones y devuelve el informe (ver app/enlace_a3_chequeo.py). No marca ni guarda nada."""
     from . import enlace_a3_chequeo
@@ -1336,7 +1359,7 @@ def comprobar_exportacion(tenant_id: int, usuario_id: int, cliente_fiscal_id: in
     informe["numeros"] = [f["numero"] for f in facturas]
     from . import facturas_control
     de_control = [{"registro": None, "mensaje": f"{f['numero']}: {a}"} for f in facturas for a in facturas_control.avisos(tenant_id, f) if "periodo ya cerrado" not in a]
-    informe["avisos"] = [*informe["avisos"], *de_control]
+    informe["avisos"] = [*informe["avisos"], *de_control, *_fuera_del_plan(tenant_id, cliente_fiscal_id, cfg, facturas, nuevas)]
     cerrados = _cerrados_en(tenant_id, cliente_fiscal_id, facturas)
     informe["periodos_cerrados"] = [{"trimestre": t, **c} for t, c in sorted(cerrados.items())]
     if cerrados:
