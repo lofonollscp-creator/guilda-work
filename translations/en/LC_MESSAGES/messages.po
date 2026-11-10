@@ -26476,3 +26476,27 @@ msgstr "Invalid supplier or customer."
 
 msgid "La subcuenta no tiene los dígitos que usa este cliente (se ven abajo, en la tabla)."
 msgstr "The sub-account does not have the number of digits this client uses (shown below, under the table)."
+
+msgid "Con importes distintos"
+msgstr "With different amounts"
+
+msgid "Cuadre del IVA por trimestre"
+msgstr "VAT reconciliation by quarter"
+
+msgid "Solo con las facturas que están en a3 y en Guilda a la vez. Una diferencia distinta de cero se mira antes de presentar el modelo 303."
+msgstr "Only with invoices present in both a3 and Guilda. A non-zero difference should be checked before filing form 303."
+
+msgid "IVA según Guilda"
+msgstr "VAT per Guilda"
+
+msgid "IVA según a3"
+msgstr "VAT per a3"
+
+msgid "Están en a3 con otros importes"
+msgstr "In a3 with other amounts"
+
+msgid "No se confirman: revisa cuál de los dos importes es el correcto y corrígelo donde haga falta."
+msgstr "They are not confirmed: check which of the two amounts is right and correct it where needed."
+
+msgid "Guilda"
+msgstr "Guilda"

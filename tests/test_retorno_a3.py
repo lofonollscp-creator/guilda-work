@@ -59,7 +59,9 @@ def test_si_el_total_o_el_nif_no_coinciden_no_se_confirma():
     (a,) = _exportadas(t, u, c, "F-1")
     otro_total = [{"numero": "F-1", "fecha": "2026-08-15", "nif": "B87654321", "total": 999, "base": None, "cuota": None}]
     otro_nif = [{"numero": "F-1", "fecha": "2026-08-15", "nif": "B00000000", "total": 121000, "base": None, "cuota": None}]
-    assert retorno_a3.cruzar(t, u, c, otro_total)["confirmadas"] == [] and retorno_a3.cruzar(t, u, c, otro_nif)["confirmadas"] == []
+    r = retorno_a3.cruzar(t, u, c, otro_total)
+    assert r["confirmadas"] == [] and r["faltan"] == [] and [(d["campo"], d["guilda"], d["a3"]) for d in r["con_diferencias"][0]["diferencias"]] == [("total", 121000, 999)]
+    assert retorno_a3.cruzar(t, u, c, otro_nif)["confirmadas"] == []
     assert not fc.obtener(t, u, a)["confirmada_en"]
     solo_numero = [{"numero": "f 1", "fecha": None, "nif": None, "total": None, "base": None, "cuota": None}]
     assert [f["id"] for f in retorno_a3.cruzar(t, u, c, solo_numero, confirmar=False)["confirmadas"]] == [a]
@@ -97,3 +99,16 @@ def test_la_pagina_sube_el_listado_y_lo_cruza(cliente):
     assert "1 / 1" in cliente.get("/contabilidad/lotes").get_data(as_text=True)
     r = cliente.post("/contabilidad/retorno", data={"cliente_id": c, "archivo": (io.BytesIO(b"nada"), "a3.csv")}, content_type="multipart/form-data")
     assert "No encuentro las columnas" in r.get_data(as_text=True)
+
+
+def test_el_libro_de_iva_con_una_fila_por_tipo_se_agrupa_y_cuadra_el_iva():
+    t, u, c = _despacho()
+    (a,) = _exportadas(t, u, c, "F-1")                                   # base 1.000 al 21 %: IVA 210, total 1.210
+    filas = [{"numero": "F-1", "fecha": "2026-08-15", "nif": "B87654321", "total": 121000, "base": 60000, "cuota": 12600},
+             {"numero": "F-1", "fecha": "2026-08-15", "nif": "B87654321", "total": 121000, "base": 40000, "cuota": 8400}]
+    r = retorno_a3.cruzar(t, u, c, filas)
+    assert [f["id"] for f in r["confirmadas"]] == [a] and r["con_diferencias"] == []
+    assert r["cuadre"] == [{"trimestre": "2026-T3", "tipo": "recibida", "facturas": 1, "iva_guilda": 21000, "iva_a3": 21000, "diferencia": 0}]
+    filas[1]["cuota"] = 8000
+    r = retorno_a3.cruzar(t, u, c, filas, confirmar=False)
+    assert r["cuadre"][0]["diferencia"] == 400 and [d["campo"] for d in r["con_diferencias"][0]["diferencias"]] == ["cuota"]

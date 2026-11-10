@@ -26561,3 +26561,27 @@ msgstr "Fournisseur ou client non valide."
 
 msgid "La subcuenta no tiene los dígitos que usa este cliente (se ven abajo, en la tabla)."
 msgstr "Le sous-compte n'a pas le nombre de chiffres utilisé par ce client (indiqué sous le tableau)."
+
+msgid "Con importes distintos"
+msgstr "Avec des montants différents"
+
+msgid "Cuadre del IVA por trimestre"
+msgstr "Rapprochement de la TVA par trimestre"
+
+msgid "Solo con las facturas que están en a3 y en Guilda a la vez. Una diferencia distinta de cero se mira antes de presentar el modelo 303."
+msgstr "Uniquement avec les factures présentes à la fois dans a3 et dans Guilda. Une différence non nulle se vérifie avant de déposer le modèle 303."
+
+msgid "IVA según Guilda"
+msgstr "TVA selon Guilda"
+
+msgid "IVA según a3"
+msgstr "TVA selon a3"
+
+msgid "Están en a3 con otros importes"
+msgstr "Dans a3 avec d'autres montants"
+
+msgid "No se confirman: revisa cuál de los dos importes es el correcto y corrígelo donde haga falta."
+msgstr "Elles ne sont pas confirmées : vérifiez lequel des deux montants est correct et corrigez-le là où il le faut."
+
+msgid "Guilda"
+msgstr "Guilda"

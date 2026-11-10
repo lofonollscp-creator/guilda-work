@@ -132,39 +132,72 @@ def leer(contenido: bytes, nombre: str = "") -> list[dict]:
     return res
 
 
-def _coincide(f: dict, a: dict) -> bool:
-    """¿Es la misma factura la exportada `f` y la fila `a` de a3? El número manda; con él, el NIF (si ambos lo traen) y el importe (si ambos lo traen, sin signo) no pueden contradecirse."""
+def _agrupar(filas: list[dict]) -> list[dict]:
+    """Una fila por factura: el libro de IVA de a3 trae una fila por tipo impositivo de cada factura. Base y cuota se suman; el total, si se repite igual en todas las filas, es el de la factura."""
+    grupos: dict[tuple[str, str], list[dict]] = {}
+    for a in filas:
+        grupos.setdefault((_clave_numero(a["numero"]), a["nif"] or ""), []).append(a)
+    res = []
+    for partes in grupos.values():
+        if len(partes) == 1:
+            res.append(partes[0])
+            continue
+        def suma(campo):
+            valores = [p[campo] for p in partes if p[campo] is not None]
+            return sum(valores) if valores else None
+        totales = [p["total"] for p in partes if p["total"] is not None]
+        res.append({**partes[0], "base": suma("base"), "cuota": suma("cuota"), "total": totales[0] if len(set(totales)) == 1 else suma("total")})
+    return res
+
+
+def _comparar(f: dict, a: dict) -> list[dict] | None:
+    """None si `a` no es la factura `f` (otro número, o un NIF que la contradice); si lo es, la lista de diferencias de importe ({campo, guilda, a3}; vacía = idéntica). El número manda."""
     if _clave_numero(f["numero"]) != _clave_numero(a["numero"]):
-        return False
+        return None
     if a["nif"] and f.get("tercero_nif") and fc._nif(f["tercero_nif"]) != a["nif"]:
-        return False
-    if a["total"] is not None and abs(a["total"]) != f["total_centimos"] and (a["base"] is None or abs(a["base"]) != sum(l["base_centimos"] for l in f["lineas"])):
-        return False
-    return True
+        return None
+    nuestros = {"total": f["total_centimos"], "base": sum(l["base_centimos"] for l in f["lineas"]), "cuota": sum(l["cuota_iva"] for l in f["lineas"])}
+    return [{"campo": campo, "guilda": nuestros[campo], "a3": abs(a[campo])} for campo in ("total", "base", "cuota") if a[campo] is not None and abs(a[campo]) != nuestros[campo]]
 
 
 def cruzar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, filas: list[dict], *, confirmar: bool = True) -> dict:
-    """Cruza el listado de a3 con las facturas exportadas del cliente. Devuelve {leidas, confirmadas, ya_confirmadas, faltan, sobran, por_lote} y, con `confirmar`, anota la fecha de confirmación de las que
-    coinciden. `faltan`: exportadas que a3 no tiene (solo las del rango de fechas del listado). `sobran`: filas de a3 que no corresponden a ninguna exportada."""
+    """Cruza el listado de a3 con las facturas exportadas del cliente. Devuelve {leidas, confirmadas, ya_confirmadas, con_diferencias, faltan, sobran, por_lote, cuadre} y, con `confirmar`, anota la fecha de
+    confirmación de las idénticas. `con_diferencias`: están en a3 pero con un importe distinto (no se confirman: [{factura, diferencias}]). `faltan`: exportadas que a3 no tiene (solo las del rango de
+    fechas del listado). `sobran`: filas de a3 que no corresponden a ninguna exportada. `cuadre`: IVA por trimestre y tipo según Guilda y según a3 (solo con las facturas que están en las dos partes)."""
     if not acceso.puede_ver_cliente(tenant_id, usuario_id, cliente_fiscal_id):
         raise ValueError("Cliente no encontrado.")
     exportadas = [fc.obtener(tenant_id, usuario_id, f["id"]) for f in fc.listar(tenant_id, usuario_id, cliente_fiscal_id=cliente_fiscal_id, estado="exportada", limite=5000)]
     exportadas = [f for f in exportadas if f]
+    filas = _agrupar(filas)
     fechas = [a["fecha"] for a in filas if a["fecha"]]
     desde, hasta = (min(fechas), max(fechas)) if fechas else (None, None)
     libres = list(filas)
-    confirmadas, ya, faltan = [], [], []
+    confirmadas, ya, faltan, con_diferencias, parejas = [], [], [], [], []
     for f in sorted(exportadas, key=lambda f: (f["fecha"], f["id"])):
-        encontrada = next((a for a in libres if _coincide(f, a)), None)
-        if encontrada is not None:
-            libres.remove(encontrada)
-            (ya if f.get("confirmada_en") else confirmadas).append(f)
+        pareja = next(((a, d) for a in libres if (d := _comparar(f, a)) is not None), None)
+        if pareja is not None:
+            libres.remove(pareja[0])
+            parejas.append((f, pareja[0]))
+            if pareja[1]:
+                con_diferencias.append({"factura": f, "diferencias": pareja[1]})
+            else:
+                (ya if f.get("confirmada_en") else confirmadas).append(f)
         elif (desde is None or desde <= f["fecha"] <= hasta) and not f.get("confirmada_en"):
             faltan.append(f)
     por_lote: dict[int, dict] = {}
     for f in (*confirmadas, *ya, *faltan):
         l = por_lote.setdefault(f.get("lote_id") or 0, {"lote_id": f.get("lote_id"), "confirmadas": 0, "faltan": 0})
         l["faltan" if f in faltan else "confirmadas"] += 1
+    cuadre: dict[tuple[str, str], dict] = {}
+    for f, a in parejas:
+        if a["cuota"] is None:
+            continue
+        c = cuadre.setdefault((fc.trimestre_de(f["fecha"]), f["tipo"]), {"trimestre": fc.trimestre_de(f["fecha"]), "tipo": f["tipo"], "facturas": 0, "iva_guilda": 0, "iva_a3": 0})
+        c["facturas"] += 1
+        c["iva_guilda"] += (-1 if f["abono"] else 1) * sum(l["cuota_iva"] for l in f["lineas"])
+        c["iva_a3"] += (-1 if f["abono"] else 1) * abs(a["cuota"])
+    for c in cuadre.values():
+        c["diferencia"] = c["iva_guilda"] - c["iva_a3"]
     if confirmar and confirmadas:
         conn = db.get_connection()
         try:
@@ -174,9 +207,10 @@ def cruzar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, filas: list[
                 if lote_id:
                     conn.execute("UPDATE contabilidad_lotes SET comprobado_en = ?, n_confirmadas = (SELECT COUNT(*) FROM facturas_contables WHERE lote_id = ? AND tenant_id = ? AND confirmada_en IS NOT NULL) "
                                  "WHERE id = ? AND tenant_id = ?", (ahora, lote_id, tenant_id, lote_id, tenant_id))
-            auditoria.registrar(tenant_id, usuario_id, "contabilidad.retorno_a3", "cliente_fiscal", cliente_fiscal_id, {"leidas": len(filas), "confirmadas": len(confirmadas), "faltan": len(faltan)}, conn=conn)
+            auditoria.registrar(tenant_id, usuario_id, "contabilidad.retorno_a3", "cliente_fiscal", cliente_fiscal_id,
+                                {"leidas": len(filas), "confirmadas": len(confirmadas), "faltan": len(faltan), "con_diferencias": len(con_diferencias)}, conn=conn)
             conn.commit()
         finally:
             conn.close()
-    return {"leidas": len(filas), "confirmadas": confirmadas, "ya_confirmadas": ya, "faltan": faltan, "sobran": libres, "por_lote": sorted(por_lote.values(), key=lambda l: l["lote_id"] or 0),
-            "desde": desde, "hasta": hasta}
+    return {"leidas": len(filas), "confirmadas": confirmadas, "ya_confirmadas": ya, "con_diferencias": con_diferencias, "faltan": faltan, "sobran": libres,
+            "por_lote": sorted(por_lote.values(), key=lambda l: l["lote_id"] or 0), "cuadre": sorted(cuadre.values(), key=lambda c: (c["trimestre"], c["tipo"])), "desde": desde, "hasta": hasta}

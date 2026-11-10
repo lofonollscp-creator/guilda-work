@@ -28,6 +28,7 @@
     <div><dt>{{ _('Facturas en el listado') }}</dt><dd>{{ informe.leidas }}</dd></div>
     <div><dt>{{ _('Confirmadas ahora') }}</dt><dd>{{ informe.confirmadas|length }}</dd></div>
     <div><dt>{{ _('Ya confirmadas antes') }}</dt><dd>{{ informe.ya_confirmadas|length }}</dd></div>
+    <div><dt>{{ _('Con importes distintos') }}</dt><dd>{{ informe.con_diferencias|length }}</dd></div>
     <div><dt>{{ _('Exportadas y no encontradas') }}</dt><dd>{{ informe.faltan|length }}</dd></div>
     <div><dt>{{ _('En a3 y no exportadas aquí') }}</dt><dd>{{ informe.sobran|length }}</dd></div>
   </dl>
@@ -38,6 +39,30 @@
   </table></div>
   {% endif %}
 </section>
+
+{% if informe.cuadre %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Cuadre del IVA por trimestre') }}</h2>
+  <p class="muted">{{ _('Solo con las facturas que están en a3 y en Guilda a la vez. Una diferencia distinta de cero se mira antes de presentar el modelo 303.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Trimestre') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Facturas') }}</th><th>{{ _('IVA según Guilda') }}</th><th>{{ _('IVA según a3') }}</th><th>{{ _('Diferencia') }}</th></tr></thead>
+    <tbody>{% for c in informe.cuadre %}<tr><td>{{ c.trimestre }}</td><td>{{ _('Recibidas') if c.tipo == 'recibida' else _('Emitidas') }}</td><td>{{ c.facturas }}</td><td class="mono">{{ '%.2f'|format(c.iva_guilda / 100) }} €</td><td class="mono">{{ '%.2f'|format(c.iva_a3 / 100) }} €</td>
+      <td class="mono"><span class="confianza confianza-{{ 'alta' if c.diferencia == 0 else 'baja' }}">{{ '%.2f'|format(c.diferencia / 100) }} €</span></td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
+{% if informe.con_diferencias %}
+<section class="dash-panel ds-mt-24">
+  <h2>{{ _('Están en a3 con otros importes') }}</h2>
+  <p class="muted">{{ _('No se confirman: revisa cuál de los dos importes es el correcto y corrígelo donde haga falta.') }}</p>
+  <div class="table-wrap"><table class="historial-table">
+    <thead><tr><th>{{ _('Número') }}</th><th>{{ _('Dato') }}</th><th>{{ _('Guilda') }}</th><th>a3</th></tr></thead>
+    <tbody>{% for x in informe.con_diferencias %}{% for d in x.diferencias %}<tr><td><a href="{{ url_for('contabilidad.ver', factura_id=x.factura.id) }}">{{ x.factura.numero }}</a></td>
+      <td>{{ {'total': _('Total'), 'base': _('Base imponible'), 'cuota': _('Cuota de IVA')}[d.campo] }}</td><td class="mono">{{ '%.2f'|format(d.guilda / 100) }} €</td><td class="mono">{{ '%.2f'|format(d.a3 / 100) }} €</td></tr>{% endfor %}{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
 
 {% if informe.faltan %}
 <section class="dash-panel ds-mt-24">
