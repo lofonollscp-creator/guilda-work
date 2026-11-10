@@ -10,7 +10,7 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 
-from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, vies
+from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, lectura_historial, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, vies
 
 PROMPT = """Eres un asistente de contabilidad en España. Recibes la foto o el PDF de UNA factura. Devuelve SOLO un objeto JSON, sin texto alrededor, con estos campos (null si no aparece o no se lee):
 {"emisor_nombre": str, "emisor_nif": str, "receptor_nombre": str, "receptor_nif": str, "numero": str, "fecha": "AAAA-MM-DD", "fecha_operacion": "AAAA-MM-DD",
@@ -389,6 +389,7 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
         r, fuente, notas_lectura = _segunda_opinion(usuario_id, doc, f, cliente_nif, qr, texto, r, fuente, notas_lectura)
     tipo, nuevos, lineas, avisos, valores, datos = r["tipo"], r["nuevos"], r["lineas"], r["avisos"] + notas_lectura, r["valores"], r["datos"]
     avisos += lectura_correcciones.aplicar(tenant_id, f["cliente_fiscal_id"], nuevos) if fuente != "xml" else []       # lo ya corregido antes en este cliente (nunca sobre una factura electrónica)
+    avisos += lectura_historial.completar(tenant_id, usuario_id, f["cliente_fiscal_id"], tipo, nuevos, lineas, fuente)           # lo ya decidido con ese proveedor en este cliente
     if tipo != f["tipo"]:
         conn = db.get_connection()
         try:
