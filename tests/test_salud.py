@@ -188,3 +188,38 @@ def test_script_de_tareas_recurrentes_deja_su_latido(monkeypatch):
     spec.loader.exec_module(modulo)
     modulo.main()
     assert db.listar_latidos()["tareas_recurrentes"]["ultimo_ok"]
+
+
+def _encolar(t, n, estado="pendiente", hace_min=0, terminado=False):
+    from app import ia_trabajos
+    ahora = datetime.now()
+    conn = db.get_connection()
+    for i in range(n):
+        conn.execute("INSERT INTO ia_trabajos (tenant_id, tipo, referencia, lote, estado, creado_en, terminado_en) VALUES (?, 'factura', ?, 'L', ?, ?, ?)",
+                     (t, i, estado, (ahora - timedelta(minutes=hace_min)).isoformat(timespec="seconds"), ahora.isoformat(timespec="seconds") if terminado else None))
+    conn.commit(); conn.close()
+
+
+def test_la_cola_de_ia_se_pone_ambar_y_roja_si_nadie_coge_los_trabajos():
+    t = db.crear_tenant("Salud cola IA")
+    ahora = datetime.now()
+    assert salud._estado_cola_ia(ahora)["estado"] == salud.VERDE and "Sin trabajos" in salud._estado_cola_ia(ahora)["detalle"]
+    _encolar(t, 2, hace_min=5)
+    assert salud._estado_cola_ia(ahora)["estado"] == salud.VERDE                      # esperando poco: normal
+    _encolar(t, 1, hace_min=20)
+    assert salud._estado_cola_ia(ahora)["estado"] == salud.AMBAR
+    _encolar(t, 1, hace_min=90)
+    i = salud._estado_cola_ia(ahora)
+    assert i["estado"] == salud.ROJO and "4 pendiente(s)" in i["detalle"] and i["valor"] >= 90
+
+
+def test_la_cola_de_ia_avisa_si_falla_mas_de_la_mitad():
+    t = db.crear_tenant("Salud cola IA errores")
+    _encolar(t, 3, estado="error", terminado=True)
+    _encolar(t, 1, estado="hecha", terminado=True)
+    i = salud._estado_cola_ia(datetime.now())
+    assert i["estado"] == salud.AMBAR and "1 hechas y 3 con error" in i["detalle"]
+
+
+def test_el_panel_incluye_la_cola_de_ia():
+    assert any(i["clave"] == "cola_ia" for i in salud.panel(datetime.now()))

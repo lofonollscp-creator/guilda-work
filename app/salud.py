@@ -223,6 +223,31 @@ def _estado_bd() -> dict:
     return _item("Servidor", "bd", _("Tamaño de la base de datos"), VERDE, _("%(mb)s MB.", mb=f"{tamano / 1024 / 1024:.1f}"), round(tamano / 1024 / 1024, 1))
 
 
+COLA_IA_AMBAR_MIN, COLA_IA_ROJO_MIN = 15, 60            # un trabajo de IA que lleva tanto esperando sin que nadie lo coja
+
+
+def _estado_cola_ia(ahora: datetime) -> dict:
+    """La cola de trabajos de IA en segundo plano (app/ia_trabajos.py): el más antiguo pendiente, los atascados leyendo y los errores de las últimas 24 h. Un hilo parado se ve aquí antes que por las quejas."""
+    from .bd import contexto
+    with contexto.como_plataforma():
+        conn = db.get_connection()
+        try:
+            antiguo = conn.execute("SELECT MIN(creado_en) FROM ia_trabajos WHERE estado = 'pendiente' AND (no_antes_de IS NULL OR no_antes_de <= ?)", (ahora.isoformat(timespec="seconds"),)).fetchone()[0]
+            pendientes = conn.execute("SELECT COUNT(*) FROM ia_trabajos WHERE estado = 'pendiente'").fetchone()[0]
+            errores = conn.execute("SELECT COUNT(*) FROM ia_trabajos WHERE estado = 'error' AND terminado_en >= ?", ((ahora - timedelta(hours=24)).isoformat(timespec="seconds"),)).fetchone()[0]
+            hechas = conn.execute("SELECT COUNT(*) FROM ia_trabajos WHERE estado = 'hecha' AND terminado_en >= ?", ((ahora - timedelta(hours=24)).isoformat(timespec="seconds"),)).fetchone()[0]
+        finally:
+            conn.close()
+    espera = max(0, int((ahora - datetime.fromisoformat(antiguo)).total_seconds() // 60)) if antiguo else 0
+    estado = VERDE if espera < COLA_IA_AMBAR_MIN else (AMBAR if espera < COLA_IA_ROJO_MIN else ROJO)
+    if estado == VERDE and errores and errores * 2 > errores + hechas:        # más de la mitad de lo terminado hoy ha fallado
+        estado = AMBAR
+    if not pendientes and not errores and not hechas:
+        return _item("Servidor", "cola_ia", _("Cola de IA"), VERDE, _("Sin trabajos en las últimas 24 h."), 0)
+    detalle = _("%(p)s pendiente(s), la más antigua espera %(m)s min; en 24 h: %(h)s hechas y %(e)s con error.", p=pendientes, m=espera, h=hechas, e=errores)
+    return _item("Servidor", "cola_ia", _("Cola de IA"), estado, detalle, espera)
+
+
 def _estado_errores(ahora: datetime) -> dict:
     """Ráfaga de respuestas 5xx del servidor en los últimos minutos (ámbar desde 3, rojo desde 10)."""
     r = db.resumen_errores_servidor((ahora - timedelta(minutes=ERRORES_VENTANA_MIN)).isoformat(timespec="seconds"))
@@ -396,6 +421,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
     _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))
+    _seguro("Servidor", "cola_ia", _("Cola de IA"), lambda: _estado_cola_ia(ahora))
     _seguro("Servidor", "certificados", _("Certificados HTTPS"), lambda: _estado_certificados(ahora))
     _seguro("Servidor", "caducidades", _("Caducidades configuradas"), lambda: _estado_caducidades(ahora))
     _seguro("Correo", "correo", _("Cuentas de correo"), lambda: _estado_correo(ahora))

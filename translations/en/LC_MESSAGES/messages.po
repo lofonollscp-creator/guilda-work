@@ -27329,3 +27329,12 @@ msgstr "What is out of the ordinary with your clients. Each alert says which rul
 
 msgid "Todo en orden: no hay nada fuera de lo normal."
 msgstr "All in order: nothing out of the ordinary."
+
+msgid "%(p)s pendiente(s), la más antigua espera %(m)s min; en 24 h: %(h)s hechas y %(e)s con error."
+msgstr "%(p)s pending, the oldest has waited %(m)s min; in 24 h: %(h)s done and %(e)s failed."
+
+msgid "Cola de IA"
+msgstr "AI queue"
+
+msgid "Sin trabajos en las últimas 24 h."
+msgstr "No jobs in the last 24 h."

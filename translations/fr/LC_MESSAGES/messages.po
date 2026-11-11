@@ -27414,3 +27414,12 @@ msgstr "Ce qui sort de l'ordinaire chez vos clients. Chaque alerte indique la r�
 
 msgid "Todo en orden: no hay nada fuera de lo normal."
 msgstr "Tout est en ordre : rien d'inhabituel."
+
+msgid "%(p)s pendiente(s), la más antigua espera %(m)s min; en 24 h: %(h)s hechas y %(e)s con error."
+msgstr "%(p)s en attente, la plus ancienne attend depuis %(m)s min ; en 24 h : %(h)s faits et %(e)s en erreur."
+
+msgid "Cola de IA"
+msgstr "File d'attente IA"
+
+msgid "Sin trabajos en las últimas 24 h."
+msgstr "Aucune tâche au cours des dernières 24 h."

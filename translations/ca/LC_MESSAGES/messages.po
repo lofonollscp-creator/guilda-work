@@ -27338,3 +27338,12 @@ msgstr "El que surt del normal en els teus clients. Cada alerta diu quina regla 
 
 msgid "Todo en orden: no hay nada fuera de lo normal."
 msgstr "Tot en ordre: no hi ha res fora del normal."
+
+msgid "%(p)s pendiente(s), la más antigua espera %(m)s min; en 24 h: %(h)s hechas y %(e)s con error."
+msgstr "%(p)s pendent(s), la més antiga espera %(m)s min; en 24 h: %(h)s fetes i %(e)s amb error."
+
+msgid "Cola de IA"
+msgstr "Cua d'IA"
+
+msgid "Sin trabajos en las últimas 24 h."
+msgstr "Cap feina en les últimes 24 h."
