@@ -135,6 +135,14 @@ def obtener_identidad(identity_id: str) -> dict | None:
     return cuerpo
 
 
+def credenciales_de(identity_id: str) -> set[str] | None:
+    """Los métodos de acceso que tiene una identidad (`password`, `totp`, `lookup_secret`…) vía Admin API, o None si no se pudo consultar. Sirve para saber quién tiene la verificación en dos pasos (`totp`)."""
+    estado, cuerpo, _ = _peticion(f"{KRATOS_ADMIN_URL}/admin/identities/{identity_id}?include_credential=totp&include_credential=lookup_secret")
+    if estado != 200 or not isinstance(cuerpo, dict):
+        return None
+    return set((cuerpo.get("credentials") or {}).keys())
+
+
 def iniciar_flujo(tipo: str, cookies: dict, aal: str | None = None) -> tuple[str, list[str]]:
     """Inicia un flujo self-service de navegador (login o registro) y
     devuelve (url_de_redireccion_para_el_navegador, cabeceras_set_cookie).

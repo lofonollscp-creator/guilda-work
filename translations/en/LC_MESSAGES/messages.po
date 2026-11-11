@@ -27599,3 +27599,31 @@ msgstr "I found nothing in your data about that."
 
 msgid "La búsqueda no está disponible ahora mismo."
 msgstr "Search is not available right now."
+
+msgid "Acceso del equipo"
+msgstr "Team access"
+
+msgid "Quién tiene la verificación en dos pasos. Es opcional para cada persona; conviene que la tenga al menos quien dirige y quien ve todos los clientes."
+msgstr "Who has two-step verification. It is optional for each person; at least those who manage and those who see all clients should have it."
+
+msgid "Todo el equipo comprobado tiene la verificación en dos pasos."
+msgstr "Everyone checked has two-step verification."
+
+msgid "Cómo se activa"
+msgstr "How to turn it on"
+
+msgid "Cada persona la activa en Ajustes → Contraseña y email: escanea un código con una app de autenticación y guarda los códigos de recuperación. Después, al iniciar sesión le pedirá el segundo factor."
+msgstr "Each person turns it on in Settings → Password and email: scan a code with an authenticator app and keep the recovery codes. After that, signing in will ask for the second factor."
+
+msgid "Si alguien pierde el móvil y los códigos, la dirección puede quitarle el segundo factor desde el backoffice."
+msgstr "If someone loses their phone and codes, management can remove their second factor from the backoffice."
+
+msgid "%(n)s persona de la dirección no tiene la verificación en dos pasos."
+msgid_plural "%(n)s personas de la dirección no tienen la verificación en dos pasos."
+msgstr[0] "%(n)s person in management does not have two-step verification."
+msgstr[1] "%(n)s people in management do not have two-step verification."
+
+msgid "%(n)s persona del equipo no la tiene."
+msgid_plural "%(n)s personas del equipo no la tienen."
+msgstr[0] "%(n)s team member does not have it."
+msgstr[1] "%(n)s team members do not have it."

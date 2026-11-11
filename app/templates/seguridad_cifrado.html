@@ -7,6 +7,7 @@
 <p class="subtitle">{{ _('Los documentos se guardan cifrados con la clave de tu despacho: protege los datos guardados y las copias de seguridad.') }}</p></div></header>
 <nav class="tareas-subnav">
   <a class="active" href="{{ url_for('seguridad.cifrado') }}">{{ _('Cifrado de documentos') }}</a>
+  <a class="" href="{{ url_for('seguridad.acceso') }}">{{ _('Acceso del equipo') }}</a>
   <a class="" href="{{ url_for('seguridad.privacidad') }}">{{ _('Privacidad y retención') }}</a>
 </nav>
 {{ aviso_error(error) }}

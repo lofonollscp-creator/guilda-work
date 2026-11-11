@@ -27608,3 +27608,31 @@ msgstr "No he trobat res a les teves dades sobre això."
 
 msgid "La búsqueda no está disponible ahora mismo."
 msgstr "La cerca no està disponible ara mateix."
+
+msgid "Acceso del equipo"
+msgstr "Accés de l'equip"
+
+msgid "Quién tiene la verificación en dos pasos. Es opcional para cada persona; conviene que la tenga al menos quien dirige y quien ve todos los clientes."
+msgstr "Qui té la verificació en dos passos. És opcional per a cada persona; convé que la tingui almenys qui dirigeix i qui veu tots els clients."
+
+msgid "Todo el equipo comprobado tiene la verificación en dos pasos."
+msgstr "Tot l'equip comprovat té la verificació en dos passos."
+
+msgid "Cómo se activa"
+msgstr "Com s'activa"
+
+msgid "Cada persona la activa en Ajustes → Contraseña y email: escanea un código con una app de autenticación y guarda los códigos de recuperación. Después, al iniciar sesión le pedirá el segundo factor."
+msgstr "Cada persona l'activa a Ajustos → Contrasenya i correu: escaneja un codi amb una app d'autenticació i desa els codis de recuperació. Després, en iniciar sessió li demanarà el segon factor."
+
+msgid "Si alguien pierde el móvil y los códigos, la dirección puede quitarle el segundo factor desde el backoffice."
+msgstr "Si algú perd el mòbil i els codis, la direcció li pot treure el segon factor des del backoffice."
+
+msgid "%(n)s persona de la dirección no tiene la verificación en dos pasos."
+msgid_plural "%(n)s personas de la dirección no tienen la verificación en dos pasos."
+msgstr[0] "%(n)s persona de la direcció no té la verificació en dos passos."
+msgstr[1] "%(n)s persones de la direcció no tenen la verificació en dos passos."
+
+msgid "%(n)s persona del equipo no la tiene."
+msgid_plural "%(n)s personas del equipo no la tienen."
+msgstr[0] "%(n)s persona de l'equip no la té."
+msgstr[1] "%(n)s persones de l'equip no la tenen."

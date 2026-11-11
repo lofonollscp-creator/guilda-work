@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Acceso del equipo') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header"><div><h1>{{ _('Acceso del equipo') }}</h1>
+<p class="subtitle">{{ _('Quién tiene la verificación en dos pasos. Es opcional para cada persona; conviene que la tenga al menos quien dirige y quien ve todos los clientes.') }}</p></div></header>
+<nav class="tareas-subnav">
+  <a class="" href="{{ url_for('seguridad.cifrado') }}">{{ _('Cifrado de documentos') }}</a>
+  <a class="active" href="{{ url_for('seguridad.acceso') }}">{{ _('Acceso del equipo') }}</a>
+  <a class="" href="{{ url_for('seguridad.privacidad') }}">{{ _('Privacidad y retención') }}</a>
+</nav>
+{% if informe.direccion_sin_segundo_factor %}<p class="ia-error" role="status">{{ ngettext('%(n)s persona de la dirección no tiene la verificación en dos pasos.', '%(n)s personas de la dirección no tienen la verificación en dos pasos.', informe.direccion_sin_segundo_factor, n=informe.direccion_sin_segundo_factor) }}</p>
+{% elif informe.sin_segundo_factor %}<p class="muted" role="status">{{ ngettext('%(n)s persona del equipo no la tiene.', '%(n)s personas del equipo no la tienen.', informe.sin_segundo_factor, n=informe.sin_segundo_factor) }}</p>
+{% else %}<p class="portal-peticion" role="status"><strong>{{ _('Todo el equipo comprobado tiene la verificación en dos pasos.') }}</strong></p>{% endif %}
+<ul class="log-list ds-max-720">
+  {% for p in informe.personas %}
+  <li class="log-item"><span class="pill {{ 'pill-danger' if p.segundo_factor is false and p.direccion else '' }}">{{ _('Sí') if p.segundo_factor else (_('No') if p.segundo_factor is false else _('Sin comprobar')) }}</span>
+    <span class="log-text"><strong>{{ p.nombre }}</strong>{% if p.direccion %} · {{ _('Dirección') }}{% endif %}<br><span class="muted">{{ p.email }}</span></span></li>
+  {% endfor %}
+</ul>
+<section class="proyecto-bloque ds-max-720 ds-mt-16">
+  <h2>{{ _('Cómo se activa') }}</h2>
+  <p>{{ _('Cada persona la activa en Ajustes → Contraseña y email: escanea un código con una app de autenticación y guarda los códigos de recuperación. Después, al iniciar sesión le pedirá el segundo factor.') }}</p>
+  <p class="muted">{{ _('Si alguien pierde el móvil y los códigos, la dirección puede quitarle el segundo factor desde el backoffice.') }}</p>
+</section>
+{% endblock %}

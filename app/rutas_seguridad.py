@@ -179,6 +179,15 @@ def recuperar():
     return _accion(lambda: cd.recuperar(t, g.usuario_id, request.form.get("clave") or "", request.form.get("frase_nueva") or ""), _("Frase restablecida y documentos desbloqueados."))
 
 
+@seguridad_bp.route("/acceso")
+@login_required
+def acceso():
+    """Quién del equipo tiene la verificación en dos pasos (solo la dirección lo ve)."""
+    t = _exigir_responsable()
+    from . import seguridad_equipo
+    return render_template("seguridad_acceso.html", informe=seguridad_equipo.informe(t))
+
+
 @seguridad_bp.route("/privacidad")
 @login_required
 def privacidad():
