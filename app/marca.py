@@ -49,7 +49,7 @@ def _mezclar(color: str, con: str, peso: float) -> str:
 # Los fondos reales de la interfaz (--bg claro y --surface oscuro): el acento como texto tiene que leerse sobre ellos, no sobre blanco o negro puros
 # (sobre el gris claro de la página un turquesa «de 4,5:1 sobre blanco» se quedaba en 4,25:1).
 _LUM_FONDO_CLARO = 0.9355      # #f7f8fa
-_LUM_FONDO_OSCURO = 0.0056     # #101113
+_LUM_FONDO_OSCURO = 0.0125     # el más claro de los fondos oscuros sobre los que va texto de acento: las tarjetas del portal (#1e1b14 y su acento suave), no solo #101113
 
 
 def colores_derivados(color: str) -> dict:
@@ -68,7 +68,23 @@ def colores_derivados(color: str) -> dict:
         if _contraste(_luminancia(texto_oscuro), _LUM_FONDO_OSCURO) >= 4.5:
             break
         texto_oscuro = _mezclar(texto_oscuro, "#ffffff", 0.15)
-    return {"primary": color, "primary_dark": _mezclar(color, "#000000", 0.15), "on_accent": sobre, "texto_claro": texto_claro, "texto_oscuro": texto_oscuro}
+    return {"primary": color, "primary_dark": _mezclar(color, "#000000", 0.15), "on_accent": sobre, "texto_claro": texto_claro, "texto_oscuro": texto_oscuro,
+            "primary_oscuro": texto_oscuro, "primary_dark_oscuro": _mezclar(texto_oscuro, "#000000", 0.15), "on_accent_oscuro": sobre_de(texto_oscuro)}
+
+
+def sobre_de(fondo: str) -> str:
+    """Texto negro o blanco, el que más contraste dé sobre este fondo."""
+    lum = _luminancia(fondo)
+    return "#0a0a0a" if _contraste(lum, _luminancia("#0a0a0a")) >= _contraste(lum, 1.0) else "#ffffff"
+
+
+def con_contraste_sobre(texto: str, fondo: str, hacia: str) -> str:
+    """El color de texto, movido hacia `hacia` (negro o blanco) hasta tener al menos 4,5:1 sobre `fondo`."""
+    for _ in range(14):
+        if _contraste(_luminancia(texto), _luminancia(fondo)) >= 4.5:
+            break
+        texto = _mezclar(texto, hacia, 0.15)
+    return texto
 
 
 def css(marca: dict | None) -> str:
@@ -76,8 +92,11 @@ def css(marca: dict | None) -> str:
     if not marca or not marca.get("color"):
         return "/* sin marca */\n"
     d = colores_derivados(marca["color"])
+    oscuro = (f"--primary: {d['primary_oscuro']}; --primary-dark: {d['primary_dark_oscuro']}; --on-accent: {d['on_accent_oscuro']}; "
+              f"--primary-text: {d['texto_oscuro']}; --focus-ring: {d['texto_oscuro']};")                       # en oscuro el acento se aclara: con el del tema claro el botón perdía contraste (y el texto sobre él seguía siendo el del claro)
     return (f":root {{ --primary: {d['primary']}; --primary-dark: {d['primary_dark']}; --on-accent: {d['on_accent']}; --primary-text: {d['texto_claro']}; --focus-ring: {d['texto_claro']}; }}\n"
-            f':root[data-theme="dark"] {{ --primary-text: {d["texto_oscuro"]}; --focus-ring: {d["texto_oscuro"]}; }}\n')
+            f':root[data-theme="dark"] {{ {oscuro} }}\n'
+            f'@media (prefers-color-scheme: dark) {{ :root:not([data-theme="light"]) {{ {oscuro} }} }}\n')
 
 
 def obtener(tenant_id: int | None) -> dict | None:

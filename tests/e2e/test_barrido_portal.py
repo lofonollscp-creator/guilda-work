@@ -10,6 +10,28 @@ from tests.e2e.test_barrido_pantallas import MEDIR
 from tests.e2e.test_capturas_web import _sembrar
 
 CARPETA = os.environ.get("GUILDA_BARRIDO")
+# Contraste AA (4,5:1; 3:1 en texto grande) de cada texto visible contra el fondo real que tiene detrás: sube por los ascendientes componiendo los fondos translúcidos. Devuelve los peores (máx. 6) con su selector.
+CONTRASTE = """() => {
+  const rgba = (c) => { const m = c.match(/rgba?\\(([^)]+)\\)/); if (!m) return null; const p = m[1].split(/[ ,\\/]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
+  const comp = (f, b) => [f[0] * f[3] + b[0] * (1 - f[3]), f[1] * f[3] + b[1] * (1 - f[3]), f[2] * f[3] + b[2] * (1 - f[3]), 1];
+  const lum = (c) => { const v = c.slice(0, 3).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+  const fondo = (el) => { let capas = []; for (let e = el; e; e = e.parentElement) { const s = getComputedStyle(e); if (s.backgroundImage !== 'none') return null; const c = rgba(s.backgroundColor); if (c && c[3] > 0) { capas.push(c); if (c[3] >= 1) break; } } let base = [255, 255, 255, 1]; if (capas.length && capas[capas.length - 1][3] < 1) capas.push(getComputedStyle(document.documentElement).colorScheme === 'dark' ? [10, 10, 12, 1] : [255, 255, 255, 1]); let r = capas.pop() || base; while (capas.length) r = comp(capas.pop(), r); return r; };
+  const malos = [], visto = new Set();
+  const it = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = it.nextNode());) {
+    if (!n.nodeValue.trim()) continue; const el = n.parentElement; if (!el || visto.has(el)) continue; visto.add(el);
+    const s = getComputedStyle(el); if (s.visibility === 'hidden' || s.display === 'none' || +s.opacity === 0) continue;
+    const r = el.getBoundingClientRect(); if (r.width < 1 || r.height < 1 || r.right <= 0 || r.bottom <= 0) continue;                // lo que está fuera de pantalla (enlace «Saltar al contenido») no cuenta hasta que recibe el foco
+    if (el.closest('[hidden], [inert], dialog:not([open]), details:not([open]) > :not(summary)')) continue;
+    const f = fondo(el); if (!f) continue; const t = rgba(s.color); if (!t) continue; const tc = comp(t, f);
+    const l1 = lum(tc), l2 = lum(f), ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    const grande = parseFloat(s.fontSize) >= 24 || (parseFloat(s.fontSize) >= 18.66 && +s.fontWeight >= 700);
+    if (ratio < (grande ? 3 : 4.5)) malos.push({ r: Math.round(ratio * 100) / 100, s: el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/)[0] : ''), t: n.nodeValue.trim().slice(0, 24), c: s.color, f: f.slice(0, 3).map(Math.round).join(',') });
+  }
+  malos.sort((a, b) => a.r - b.r); return malos.slice(0, 6);
+}"""
+# Huella de estilos: por cada elemento de la página, su ruta y los estilos calculados que más se notan. Dos huellas iguales = la página se ve igual (sirve para mover CSS de sitio sin romper nada: GUILDA_HUELLA=<fichero.json>).
+HUELLA = """() => Array.from(document.body.querySelectorAll('*')).map((e) => { const s = getComputedStyle(e); const r = e.getBoundingClientRect(); const ruta = e.tagName.toLowerCase() + (typeof e.className === 'string' && e.className ? '.' + e.className.trim().split(/\\s+/).join('.') : ''); return [ruta, s.color, s.backgroundColor, s.fontSize, s.fontWeight, s.display, s.position, s.margin, s.padding, s.border, s.borderRadius, s.boxShadow, s.gap, s.textAlign, s.opacity, Math.round(r.width), Math.round(r.height)].join('|'); })"""
 pytestmark = pytest.mark.skipif(not CARPETA, reason="GUILDA_BARRIDO sin definir")
 EXCLUIR = ("salir", "logout", "descargar", "export", "pdf", "csv", "static", "adjunto", "archivo", "borrar", "eliminar", "enviar", "manifest", "push", "comprobar")
 
@@ -108,14 +130,18 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
         marca.guardar(t, nombre="Asesores Fernández-Villanueva y Asociados", color="#0a7d5a")
     rutas = sorted({r.rule for r in servidor.app.url_map.iter_rules() if r.rule.startswith("/portal") and "GET" in r.methods and not r.arguments and not any(x in r.rule.lower() for x in EXCLUIR)})
     rutas += [f"/portal/cuestionarios/{cuest}", f"/portal/cuestionarios/{cuest_largo}", f"/portal/conversaciones/nueva?peticion={pet_abierta}", f"/portal/conversaciones/{conv}", f"/portal/conversaciones/{conv_cerrada}", f"/portal/peticiones/{pet_abierta}", f"/portal/peticiones/{pet_cerrada}", f"/portal/facturas?trimestre={trimestre}", f"/portal/vencimientos/{v303}/documentos", f"/portal/vencimientos/{v303}/mensajes", f"/portal/facturas/{fids[0]}", f"/portal/facturas/{fids[1]}", f"/portal/declaraciones/{decl}", f"/portal/vencimientos/{v303}/firma", "/portal/justificantes", "/portal/buscar?q=ferreteria", "/portal/buscar?q=zzzz", f"/portal/preferencias/{token_preferencias}", f"/portal/subida/{token_subida}"]
+    tema = os.environ.get("GUILDA_TEMA", "")                                   # claro | oscuro | sistema-oscuro | sistema-claro (vacío: como estaba)
     anonimas = ["/login", "/registro", "/recuperar-contrasena"]
     anchos = [int(a) for a in os.environ.get("GUILDA_ANCHOS", "375,768,1280").split(",")]
     lang = os.environ.get("GUILDA_IDIOMA", "es")
     informe = {}
+    huellas = {}
     actual = {"k": ""}
 
     def recorrer(pg, lista, etiqueta):
         pg.context.set_extra_http_headers({"Accept-Language": lang})
+        if tema in ("claro", "oscuro"):                                        # lo que guarda el selector de tema del portal (portal_aspecto.js)
+            pg.context.add_init_script("try { localStorage.setItem('guilda-work-tema', '%s') } catch (e) {}" % ("dark" if tema == "oscuro" else "light"))
         pg.on("pageerror", lambda e: informe.setdefault(actual["k"], {}).setdefault("js", []).append(str(e)[:140]))
         for ancho in anchos:
             pg.set_viewport_size({"width": ancho, "height": 800})
@@ -132,16 +158,23 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
                 d["http"] = resp.status if resp else 0
                 d["final"] = pg.url.replace(servidor.url, "")[:60]
                 d.update({k: v for k, v in m.items() if v})
+                if os.environ.get("GUILDA_HUELLA"):
+                    huellas[actual["k"]] = pg.evaluate(HUELLA)
+                if tema:
+                    c = pg.evaluate(CONTRASTE)
+                    if c:
+                        d["contraste"] = c
                 if os.environ.get("GUILDA_CAPTURAS") and etiqueta == "portal:" and ruta in ("/portal/", "/portal/facturas", "/portal/mensajes", "/portal/documentos", "/portal/impuestos"):
                     Path(os.environ["GUILDA_CAPTURAS"]).mkdir(parents=True, exist_ok=True)
-                    pg.screenshot(path=str(Path(os.environ["GUILDA_CAPTURAS"]) / f"{ruta.strip('/').replace('/', '_') or 'portal'}-{ancho}.png"), full_page=False)
+                    pg.screenshot(path=str(Path(os.environ["GUILDA_CAPTURAS"]) / f"{ruta.strip('/').replace('/', '_') or 'portal'}-{ancho}.png"), full_page=bool(os.environ.get("GUILDA_CAPTURA_COMPLETA")))
 
     # sin sesión
-    ctx = chromium.new_context(viewport={"width": 1280, "height": 800})
+    esquema = "dark" if tema in ("oscuro", "sistema-oscuro") else "light"
+    ctx = chromium.new_context(viewport={"width": 1280, "height": 800}, color_scheme=esquema)
     recorrer(ctx.new_page(), anonimas, "anon:")
     ctx.close()
     # cliente del portal con su enlace
-    ctx = chromium.new_context(viewport={"width": 1280, "height": 800})
+    ctx = chromium.new_context(viewport={"width": 1280, "height": 800}, color_scheme=esquema)
     pg = ctx.new_page()
     pg.goto(f"{servidor.url}/portal/entrar/{db.crear_acceso_cliente_fiscal(ids['cliente'], '127.0.0.1', email='titular-barrido@ejemplo.com')}")
     pg.wait_for_load_state("load")
@@ -150,4 +183,6 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
     ctx.close()
     Path(CARPETA).mkdir(parents=True, exist_ok=True)
     (Path(CARPETA) / "informe-portal.json").write_text(json.dumps(informe, ensure_ascii=False, indent=1), encoding="utf-8")
+    if os.environ.get("GUILDA_HUELLA"):
+        Path(os.environ["GUILDA_HUELLA"]).write_text(json.dumps(huellas), encoding="utf-8")
     print("BARRIDO PORTAL:", len(rutas) + len(anonimas), "pantallas x", len(anchos), "anchos")

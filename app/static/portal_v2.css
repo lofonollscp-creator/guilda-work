@@ -59,6 +59,7 @@
 
 /* Barra inferior y botón Subir (móvil) */
 .pv-tabs, .pv-subir { display: none; }
+@media (max-width: 400px) { .pv-tabs a { font-size: .68rem; padding-inline: 0; } }
 @media (max-width: 720px) {
   .pv-nav, .pv-perfil-nombre { display: none; }
   .pv-marca-nombre { display: inline; max-width: 16ch; }
@@ -89,6 +90,18 @@
 .portal-v2 .proyecto-bloque, .portal-v2 .portal-cuenta-bloque { border-radius: var(--pv-radio); }
 .portal-v2 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--pv-radio); }
 .portal-v2 .table-wrap th:first-child, .portal-v2 .table-wrap td:first-child { position: sticky; left: 0; background: var(--portal-card, #fff); }
+@media (max-width: 720px) {                                                 /* V1: en el móvil, cada fila es una tarjeta con el título de cada dato delante (portal_tablas.js pone data-label) */
+  .portal-v2 .table-wrap { overflow-x: visible; }
+  .portal-v2 .pv-tabla-tarjetas { display: block; width: 100%; }
+  .portal-v2 .pv-tabla-tarjetas thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .portal-v2 .pv-tabla-tarjetas tbody, .portal-v2 .pv-tabla-tarjetas tr { display: block; }
+  .portal-v2 .pv-tabla-tarjetas tr { margin: 0 0 12px; padding: 4px 14px; border: 1px solid var(--portal-line); border-radius: var(--pv-radio); background: var(--portal-card, #fff); }
+  .portal-v2 .pv-tabla-tarjetas td { display: grid; grid-template-columns: minmax(84px, 34%) minmax(0, 1fr); gap: 4px 12px; align-items: start; position: static; padding: 10px 0; border: 0; border-bottom: 1px solid var(--portal-line); overflow-wrap: anywhere; text-align: left; }
+  .portal-v2 .pv-tabla-tarjetas td:last-child { border-bottom: 0; }
+  .portal-v2 .pv-tabla-tarjetas td::before { content: attr(data-label); color: var(--portal-muted); font-size: .85em; font-weight: 600; }
+  .portal-v2 .pv-tabla-tarjetas td:not([data-label]) { display: block; }
+  .portal-v2 .pv-tabla-tarjetas td:not([data-label])::before { content: none; }
+}
 
 /* Portada */
 .pv-tarjeta-plegable { border: 1px solid var(--portal-line); border-radius: var(--pv-radio); background: var(--portal-card, #fff); margin: 12px 0; }
@@ -103,3 +116,15 @@
 
 /* Pantallas sencillas */
 html[data-sencillo] .pv-nav a, html[data-sencillo] .pv-tabs a, html[data-sencillo] .pv-pestanas a { min-height: 56px; font-size: 1.05em; }
+
+/* Contraste AA del texto atenuado en claro y oscuro (el barrido con GUILDA_TEMA lo vigila) */
+.portal-cliente-shell .muted, .portal-cliente-shell .mono { color: var(--portal-muted); }
+
+/* Tema (claro, oscuro o el del sistema): los controles nativos (selects, casillas, barras de desplazamiento) siguen al tema elegido */
+:root { color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+.pv-temas { display: flex; gap: 4px; padding: 8px 4px; border-top: 1px solid var(--portal-line); margin-top: 4px; }
+.pv-temas[hidden] { display: none; }
+.pv-temas button { flex: 1 1 0; justify-content: center; border: 1px solid var(--portal-line); min-width: 0; }
+.pv-temas button[aria-pressed="true"] { border-color: var(--pv-accent); background: var(--pv-accent-soft); color: var(--pv-accent-text); font-weight: 700; }

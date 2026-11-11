@@ -37,6 +37,11 @@
           <form method="post" action="{{ url_for('portal_cliente.cambiar_idioma_portal', codigo=codigo) }}"><button type="submit" class="btn btn-ghost" lang="{{ codigo }}" {% if codigo == idioma_actual %}aria-current="true"{% endif %}>{{ nombre }}</button></form>
           {% endfor %}
         </div>
+        <div class="pv-temas" role="group" aria-label="{{ _('Aspecto') }}" data-temas hidden>
+          <button type="button" class="btn btn-ghost" data-tema="system" aria-pressed="false">{{ _('Sistema') }}</button>
+          <button type="button" class="btn btn-ghost" data-tema="light" aria-pressed="false">{{ _('Claro') }}</button>
+          <button type="button" class="btn btn-ghost" data-tema="dark" aria-pressed="false">{{ _('Oscuro') }}</button>
+        </div>
         {% if not vista_previa %}<form method="post" action="{{ url_for('portal_cliente.salir') }}"><button type="submit" class="pv-salir">{{ _('Salir') }}</button></form>{% endif %}
       </div>
     </details>

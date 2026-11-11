@@ -63,10 +63,12 @@ def css_de_marca(color: str) -> str:
     if not color:
         return "/* sin marca */\n"
     d = marca.colores_derivados(color)
-    suave_claro, suave_oscuro = marca._mezclar(d["primary"], "#ffffff", 0.88), marca._mezclar(d["primary"], "#000000", 0.78)
+    suave_claro, suave_oscuro = marca._mezclar(d["primary"], "#ffffff", 0.88), marca._mezclar(d["primary_oscuro"], "#000000", 0.78)
+    texto_claro = marca.con_contraste_sobre(d["texto_claro"], suave_claro, "#000000")                  # el acento como texto también sobre su propio fondo suave (pestaña activa, avisos)
+    texto_oscuro = marca.con_contraste_sobre(d["texto_oscuro"], suave_oscuro, "#ffffff")
     fuera = marca.css({"color": color})                                          # --primary y compañía: los botones y enlaces de siempre toman también el color del despacho
-    return (fuera + f":root {{ --portal-accent: {d['texto_claro']}; --portal-accent-bg: {suave_claro}; }}\n"
-            f':root[data-theme="dark"] {{ --portal-accent: {d["texto_oscuro"]}; --portal-accent-bg: {suave_oscuro}; }}\n'
-            f":root {{ --pv-accent: {d['primary']}; --pv-on-accent: {d['on_accent']}; --pv-accent-text: {d['texto_claro']}; --pv-accent-soft: {suave_claro}; }}\n"
-            f':root[data-theme="dark"] {{ --pv-accent-text: {d["texto_oscuro"]}; --pv-accent-soft: {suave_oscuro}; }}\n'
-            f"@media (prefers-color-scheme: dark) {{ :root:not([data-theme=\"light\"]) {{ --pv-accent-text: {d['texto_oscuro']}; --pv-accent-soft: {suave_oscuro}; }} }}\n")
+    claro = f"--portal-accent: {texto_claro}; --portal-accent-bg: {suave_claro}; --pv-accent: {d['primary']}; --pv-on-accent: {d['on_accent']}; --pv-accent-text: {texto_claro}; --pv-accent-soft: {suave_claro};"
+    oscuro = f"--portal-accent: {texto_oscuro}; --portal-accent-bg: {suave_oscuro}; --pv-accent: {d['primary_oscuro']}; --pv-on-accent: {d['on_accent_oscuro']}; --pv-accent-text: {texto_oscuro}; --pv-accent-soft: {suave_oscuro};"
+    return (fuera + f":root {{ {claro} }}\n"
+            f':root[data-theme="dark"] {{ {oscuro} }}\n'
+            f'@media (prefers-color-scheme: dark) {{ :root:not([data-theme="light"]) {{ {oscuro} }} }}\n')

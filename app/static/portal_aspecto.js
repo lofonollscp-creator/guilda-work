@@ -5,7 +5,19 @@
   function guardar(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* sin almacenamiento: vale para esta página */ } }
   var raiz = document.documentElement;
 
-  function aplicarTema(t) { if (t === 'light' || t === 'dark') raiz.setAttribute('data-theme', t); else raiz.removeAttribute('data-theme'); }
+  // El color de la barra del navegador en el móvil sigue al tema elegido (sin elegir, lo deciden las dos etiquetas con media= de la cabecera).
+  var COLOR_BARRA = { light: '#f5f6f8', dark: '#16140f' };
+  function aplicarTema(t) {
+    if (t === 'light' || t === 'dark') raiz.setAttribute('data-theme', t); else raiz.removeAttribute('data-theme');
+    var m = document.querySelector('meta[data-tema-color]');
+    if (m && COLOR_BARRA[t]) { m.setAttribute('content', COLOR_BARRA[t]); m.removeAttribute('media'); } else if (m) m.setAttribute('media', 'not all');
+  }
+  function temaActual() { var v = leer(TEMA); return v === 'light' || v === 'dark' ? v : 'system'; }
+  function marcarSelectores() {
+    var actual = temaActual();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-tema]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-tema') === actual ? 'true' : 'false'); });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="aspecto-tema"]'), function (r) { r.checked = r.value === actual; });
+  }
   function sencillo() { return leer(SENCILLO) === '1'; }
   // En las pantallas sencillas la letra nunca baja de «grande»: es lo que más ayuda a quien las activa.
   function aplicarLetra(l) { if (LETRAS.indexOf(l) > 0) raiz.setAttribute('data-letra', l); else if (sencillo()) raiz.setAttribute('data-letra', 'grande'); else raiz.removeAttribute('data-letra'); }
@@ -15,6 +27,15 @@
   aplicarLetra(leer(LETRA));
 
   document.addEventListener('DOMContentLoaded', function () {
+    aplicarTema(leer(TEMA));
+    var temas = document.querySelector('[data-temas]');                      // selector rápido del menú de perfil: solo tiene sentido con JS
+    if (temas) {
+      temas.hidden = false;
+      Array.prototype.forEach.call(temas.querySelectorAll('[data-tema]'), function (b) {
+        b.addEventListener('click', function () { var v = b.getAttribute('data-tema'); guardar(TEMA, v); aplicarTema(v); marcarSelectores(); });
+      });
+      marcarSelectores();
+    }
     var bloque = document.getElementById('aspecto');
     if (!bloque) return;
     var caja = document.getElementById('aspecto-sencillo');
@@ -26,7 +47,7 @@
       var radios = bloque.querySelectorAll('input[name="' + g[0] + '"]'), actual = g[3](leer(g[1]));
       Array.prototype.forEach.call(radios, function (r) {
         r.checked = r.value === actual;
-        r.addEventListener('change', function () { if (r.checked) { guardar(g[1], r.value); g[2](r.value); } });
+        r.addEventListener('change', function () { if (r.checked) { guardar(g[1], r.value); g[2](r.value); marcarSelectores(); } });
       });
     });
   });
