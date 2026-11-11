@@ -119,6 +119,7 @@ def test_barrido(servidor, abrir, entrar_como_equipo):
                 resp = pagina.goto(f"{servidor.url}{ruta}", wait_until="load")
                 pagina.wait_for_timeout(120)
                 pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)
+                pagina.wait_for_timeout(400)                                       # las transiciones de color (~0,2 s) terminan antes de medir: a mitad de camino el contraste sale falso
                 m = pagina.evaluate(MEDIR)
                 if os.environ.get("GUILDA_CONTRASTE"):                              # contraste AA de cada texto contra su fondo real (el mismo cálculo que el barrido del portal)
                     from tests.e2e.test_barrido_portal import CONTRASTE
