@@ -171,14 +171,24 @@
     {% if uso and uso.filas %}
     <h3>{{ _('Uso este mes por proveedor (estimado)') }}</h3>
     <div class="tabla-caja"><table class="tabla">
-      <thead><tr><th>{{ _('Proveedor') }}</th><th>{{ _('Para') }}</th><th>{{ _('Clave') }}</th><th>{{ _('Consultas') }}</th><th>{{ _('Tokens') }}</th><th>{{ _('Coste (USD)') }}</th></tr></thead>
+      <thead><tr><th>{{ _('Proveedor') }}</th><th>{{ _('Para') }}</th><th>{{ _('Clave') }}</th><th>{{ _('Consultas') }}</th><th>{{ _('Tokens') }}</th><th>{{ _('Latencia media') }}</th><th>{{ _('Fallos') }}</th><th>{{ _('Coste (USD)') }}</th></tr></thead>
       <tbody>
         {% for f in uso.filas %}<tr><td>{{ f.proveedor }}</td><td>{{ {'asistente': _('Asistente'), 'facturas': _('Facturas'), 'otras': _('Otras')}[f.tarea] }}</td><td>{{ _('Despacho') if f.origen == 'despacho' else _('Personal') }}</td>
-          <td>{{ f.llamadas }}</td><td>{{ f.tokens_entrada + f.tokens_salida }}</td><td>{{ '%.4f'|format(f.coste_usd) }}{% if f.llamadas_sin_tarifa %} <span class="muted">({{ _('%(n)s sin tarifa conocida', n=f.llamadas_sin_tarifa) }})</span>{% endif %}</td></tr>{% endfor %}
+          <td>{{ f.llamadas }}</td><td>{{ f.tokens_entrada + f.tokens_salida }}</td><td>{{ (f.latencia_ms / 1000)|round(1) ~ ' s' if f.latencia_ms is not none else '—' }}</td><td>{{ f.errores or '—' }}</td><td>{{ '%.4f'|format(f.coste_usd) }}{% if f.llamadas_sin_tarifa %} <span class="muted">({{ _('%(n)s sin tarifa conocida', n=f.llamadas_sin_tarifa) }})</span>{% endif %}</td></tr>{% endfor %}
       </tbody>
-      <tfoot><tr><th colspan="3">{{ _('Total') }}</th><th>{{ uso.total_llamadas }}</th><th></th><th>{{ '%.4f'|format(uso.total_usd) }}</th></tr></tfoot>
+      <tfoot><tr><th colspan="3">{{ _('Total') }}</th><th>{{ uso.total_llamadas }}</th><th></th><th></th><th>{{ uso.total_errores or '—' }}</th><th>{{ '%.4f'|format(uso.total_usd) }}</th></tr></tfoot>
     </table></div>
     <p class="muted">{{ _('Es una estimación con las tarifas públicas de cada modelo. La cifra real es la que te cobra cada proveedor.') }}</p>
+    {% endif %}
+    {% if salidas %}
+    <h3 id="salidas-datos">{{ _('Datos que han salido a proveedores externos (30 días)') }}</h3>
+    {% if salidas.consultas %}
+    <p>{{ ngettext('%(n)s consulta salió a un proveedor externo.', '%(n)s consultas salieron a proveedores externos.', salidas.consultas, n=salidas.consultas) }}
+      {% if salidas.enmascarados %}{{ _('Antes de salir se enmascararon:') }} {% for etiqueta, n in salidas.enmascarados.items() %}{{ n }} {{ etiqueta|lower }}{{ ', ' if not loop.last }}{% endfor %}.{% else %}{{ _('No se detectaron datos personales que enmascarar.') }}{% endif %}</p>
+    <ul class="log-list ds-max-720">{% for p in salidas.por_proveedor %}<li class="log-item"><span class="log-text"><strong>{{ p.proveedor }}</strong> · {{ ngettext('%(n)s consulta', '%(n)s consultas', p.consultas, n=p.consultas) }}{% if p.adjuntos %} · {{ ngettext('%(n)s con adjuntos', '%(n)s con adjuntos', p.adjuntos, n=p.adjuntos) }}{% endif %}</span></li>{% endfor %}</ul>
+    {% if salidas.con_adjuntos %}<p class="ia-error">{{ _('Las imágenes y los PDF que se mandan a leer (facturas) no se pueden enmascarar: el proveedor los ve tal cual. Para que ningún documento salga del servidor, elige «Solo local» en el OCR de las normas del despacho.') }}</p>{% endif %}
+    {% else %}<p class="muted">{{ _('No ha salido ninguna consulta a proveedores externos.') }}</p>{% endif %}
+    <p class="muted">{{ _('Solo se cuentan datos, nunca su contenido. Los proveedores de tu propia red (Ollama) no sacan nada del servidor y no cuentan aquí.') }}</p>
     {% endif %}
     {% endif %}
   </section>

@@ -1515,6 +1515,16 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "cliente_memoria": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "ia_salidas_datos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "ia_propuestas": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",

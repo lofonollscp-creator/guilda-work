@@ -22,6 +22,27 @@
     {% endif %}
   </div>
 </header>
+{% if memoria is defined and memoria is not none %}
+<section class="proyecto-bloque ds-max-720" id="memoria" aria-labelledby="memoria-titulo">
+  <h2 id="memoria-titulo">{{ _('Memoria del cliente') }}</h2>
+  <p class="muted">{{ _('Lo que conviene recordar para tratarlo bien. La escribes o la confirmas tú; la IA solo propone actualizaciones y nunca cambia nada sola.') }}</p>
+  <form method="post" action="{{ url_for('clientes.memoria', cliente_id=c.id, accion='guardar') }}">
+    <label class="sr-only" for="memoria-texto">{{ _('Memoria del cliente') }}</label>
+    <textarea id="memoria-texto" name="texto" rows="5" maxlength="1200" placeholder="{{ _('Por ejemplo: prefiere WhatsApp; cambió de domicilio en marzo; entrega los tiques a final de mes.') }}">{{ memoria.texto }}</textarea>
+    <div class="ds-fila ds-envolver"><button type="submit" class="btn btn-primary">{{ _('Guardar memoria') }}</button></div>
+  </form>
+  {% if memoria.borrador %}
+  <div class="lectura-dudosos" role="group" aria-label="{{ _('Propuesta de la IA') }}">
+    <strong>{{ _('Propuesta de la IA (sin aplicar):') }}</strong>
+    <pre class="muted">{{ memoria.borrador }}</pre>
+    <form method="post" action="{{ url_for('clientes.memoria', cliente_id=c.id, accion='aceptar') }}"><button type="submit" class="btn btn-primary">{{ _('Aceptar propuesta') }}</button></form>
+    <form method="post" action="{{ url_for('clientes.memoria', cliente_id=c.id, accion='descartar') }}"><button type="submit" class="btn btn-ghost">{{ _('Descartar') }}</button></form>
+  </div>
+  {% elif ia_lista %}
+  <form method="post" action="{{ url_for('clientes.memoria', cliente_id=c.id, accion='proponer') }}"><button type="submit" class="btn btn-ghost">{{ _('Proponer actualización con IA') }}</button></form>
+  {% endif %}
+</section>
+{% endif %}
 {% if copiloto and (copiloto.propuestas or copiloto.avisos) %}
 <section class="proyecto-bloque ds-max-720 copiloto" aria-labelledby="copiloto-titulo">
   <h2 id="copiloto-titulo">{{ _('Qué toca ahora con este cliente') }}</h2>

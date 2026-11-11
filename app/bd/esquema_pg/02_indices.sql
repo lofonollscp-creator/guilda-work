@@ -115,6 +115,7 @@ CREATE INDEX IF NOT EXISTS idx_ia_mensajes_conversacion ON ia_mensajes(conversac
 CREATE INDEX IF NOT EXISTS idx_ia_mensajes_usuario ON ia_mensajes(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_ia_propuestas_clave ON ia_propuestas(tenant_id, clave);
 CREATE INDEX IF NOT EXISTS idx_ia_propuestas_tenant ON ia_propuestas(tenant_id, estado, creada_en);
+CREATE INDEX IF NOT EXISTS idx_ia_salidas_tenant ON ia_salidas_datos(tenant_id, creado_en);
 CREATE INDEX IF NOT EXISTS idx_ia_trabajos_estado ON ia_trabajos(estado, no_antes_de);
 CREATE INDEX IF NOT EXISTS idx_ia_trabajos_lote ON ia_trabajos(tenant_id, lote);
 CREATE INDEX IF NOT EXISTS idx_inmobiliaria_demandas ON inmobiliaria_demandas(tenant_id, estado, operacion);

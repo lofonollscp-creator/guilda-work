@@ -137,3 +137,17 @@ def test_la_subcuenta_del_plan_de_a3_se_propone_y_se_fija_al_aprobar():
     assert p["tipo"] == "cuenta_tercero" and p["datos"]["cuenta"] == cuenta and "Ferretería Paco" in p["titulo"]
     ip.aprobar(t, u, p["id"])
     assert fc.cuenta_del_tercero(t, c, "recibida", "B11111111") == cuenta
+
+
+def test_las_estadisticas_avisan_de_lo_que_casi_siempre_se_rechaza():
+    t, u, c = _eq(12)
+    for i in range(6):
+        pid = ip.proponer(t, clave=f"ruido:{i}", tipo="tarea", titulo=f"Ruido {i}", origen="alerta", cliente_fiscal_id=c)
+        (ip.rechazar if i < 5 else ip.aprobar)(t, u, pid)
+    for i in range(2):
+        pid = ip.proponer(t, clave=f"util:{i}", tipo="peticion_portal", titulo=f"Útil {i}", origen="facturas", cliente_fiscal_id=c, datos={"titulo": f"Doc {i}"})
+        ip.aprobar(t, u, pid)
+    e = {(x["origen"], x["tipo"]): x for x in ip.estadisticas(t)}
+    assert e[("alerta", "tarea")]["tasa_rechazo"] == 83 and e[("alerta", "tarea")]["revisar"] is True
+    assert e[("facturas", "peticion_portal")]["tasa_rechazo"] == 0 and e[("facturas", "peticion_portal")]["revisar"] is False
+    assert ip.estadisticas(t)[0]["origen"] == "alerta"                                         # las más rechazadas, primero

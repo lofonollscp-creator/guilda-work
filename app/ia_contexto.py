@@ -36,4 +36,8 @@ def sugerencias(tenant_id: int, cliente_fiscal_id: int, hoy: date | None = None)
     if pendientes:
         avisos.append({"titulo": _("%(n)s facturas esperan revisión", n=pendientes) if pendientes != 1 else _("1 factura espera revisión"), "detalle": "", "destino": url_for("contabilidad.lista", cliente_id=cliente_fiscal_id, estado="pendiente", orden="confianza")})
     pregunta = _("Hazme un resumen de la situación de %(c)s: qué tiene pendiente, qué vence pronto y qué debería hacer yo primero.", c=nombre)
+    from . import cliente_memoria
+    memoria = cliente_memoria.obtener(tenant_id, cliente_fiscal_id)["texto"]
+    if memoria:                                                                                # lo que el equipo ya sabe del cliente viaja con la pregunta
+        pregunta += " " + _("Esto es lo que ya sabemos de él: %(m)s", m=" ".join(memoria.split()))
     return {"propuestas": propuestas, "avisos": avisos, "pregunta": pregunta, "pregunta_url": url_for("ia.asistente_vista") + "?q=" + quote(pregunta)}

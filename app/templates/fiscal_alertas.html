@@ -8,7 +8,9 @@
   </div>
 </header>
 {% if aviso == 'tarea' %}<p class="portal-peticion" role="status"><strong>{{ _('Tarea creada: la tienes en tus tareas.') }}</strong></p>
+{% elif aviso == 'umbrales' %}<p class="portal-peticion" role="status"><strong>{{ _('Umbrales guardados.') }}</strong></p>
 {% elif aviso == 'resuelta' %}<p class="muted" role="status">{{ _('Esa alerta ya no está: alguien la ha resuelto.') }}</p>{% endif %}
+{% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
 {% if alertas %}
 <ul class="log-list ds-max-720">
   {% for a in alertas %}
@@ -21,5 +23,14 @@
 </ul>
 {% else %}
 <p class="empty-lane">{{ _('Todo en orden: no hay nada fuera de lo normal.') }}</p>
+{% endif %}
+{% if direccion %}
+{% set etiquetas = {'dias_sin_facturas': _('Días sin facturas (mínimo)'), 'importe_gasto': _('Gasto atípico: importe mínimo (€)'), 'dias_vencimiento': _('Modelo sin documentación: días de antelación'), 'iva_desvio_pct': _('IVA: desviación que avisa (%%)'), 'dias_sin_entrar': _('Portal: días sin entrar'), 'importe_proveedor_nuevo': _('Proveedor nuevo: importe mínimo (€)')} %}
+<form method="post" action="{{ url_for('fiscal.alertas_umbrales') }}" class="proyecto-bloque ds-max-720 ds-mt-16" id="umbrales">
+  <h2>{{ _('Cuándo salta cada alerta') }}</h2>
+  <p class="muted">{{ _('Solo la dirección lo cambia. Si una regla avisa demasiado, súbele el umbral; si se queda corta, bájalo.') }}</p>
+  {% for k, texto in etiquetas.items() %}<div class="correo-form-campo"><label for="umbral-{{ k }}">{{ texto }}</label><input type="number" id="umbral-{{ k }}" name="{{ k }}" min="{{ limites[k][0] }}" max="{{ limites[k][1] }}" value="{{ umbrales[k] }}"></div>{% endfor %}
+  <div class="ds-fila ds-envolver"><button type="submit" class="btn btn-primary">{{ _('Guardar umbrales') }}</button> <button type="submit" name="restablecer" value="1" class="btn btn-ghost">{{ _('Volver a los de serie') }}</button></div>
+</form>
 {% endif %}
 {% endblock %}

@@ -103,6 +103,9 @@ CREATE POLICY aislamiento ON cliente_documentos USING (tenant_id = nullif(curren
 ALTER TABLE cliente_etiquetas ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON cliente_etiquetas;
 CREATE POLICY aislamiento ON cliente_etiquetas USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE cliente_memoria ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON cliente_memoria;
+CREATE POLICY aislamiento ON cliente_memoria USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON clientes;
 CREATE POLICY aislamiento ON clientes USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
@@ -364,6 +367,9 @@ CREATE POLICY aislamiento ON ia_propuestas USING (tenant_id = nullif(current_set
 ALTER TABLE ia_proveedores_despacho ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON ia_proveedores_despacho;
 CREATE POLICY aislamiento ON ia_proveedores_despacho USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
+ALTER TABLE ia_salidas_datos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS aislamiento ON ia_salidas_datos;
+CREATE POLICY aislamiento ON ia_salidas_datos USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);
 ALTER TABLE ia_soporte_uso ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS aislamiento ON ia_soporte_uso;
 CREATE POLICY aislamiento ON ia_soporte_uso USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint) WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::bigint);

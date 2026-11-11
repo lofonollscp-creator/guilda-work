@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 from datetime import date, timedelta
+from urllib.parse import urlencode
 
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import gettext as _
@@ -172,6 +173,32 @@ def eliminar_plantilla(plantilla_id: str):
     return redirect(url_for("clientes.plantillas"))
 
 
+@clientes_bp.route("/<int:cliente_id>/memoria/<accion>", methods=["POST"])
+@login_required
+def memoria(cliente_id: int, accion: str):
+    """La memoria del cliente: guardar lo que escribe una persona, pedir a la IA una propuesta de actualización y aceptarla o descartarla. La IA nunca cambia la memoria sola."""
+    from . import cliente_memoria
+    from .ia_errores import ErrorIA
+    t = _tenant()
+    c = nucleo.obtener_cliente(t, cliente_id)
+    if c is None or not c["cliente_fiscal_id"] or accion not in ("guardar", "proponer", "aceptar", "descartar"):
+        abort(404)
+    fid = c["cliente_fiscal_id"]
+    destino = url_for("clientes.ficha", cliente_id=cliente_id)
+    try:
+        if accion == "guardar":
+            cliente_memoria.guardar(t, g.usuario_id, fid, request.form.get("texto", ""))
+        elif accion == "proponer":
+            cliente_memoria.proponer_con_ia(t, g.usuario_id, fid)
+        elif accion == "aceptar":
+            cliente_memoria.aceptar_borrador(t, g.usuario_id, fid)
+        else:
+            cliente_memoria.descartar_borrador(t, g.usuario_id, fid)
+    except (cliente_memoria.ErrorMemoria, ErrorIA) as e:
+        return redirect(destino + "?" + urlencode({"error": _(str(e))[:200]}) + "#memoria")
+    return redirect(destino + "#memoria")
+
+
 @clientes_bp.route("/<int:cliente_id>")
 @login_required
 def ficha(cliente_id: int):
@@ -212,6 +239,9 @@ def ficha(cliente_id: int):
     if fid and fiscal and pestana == ficha_cliente.pestana_valida(None, fid):                  # el copiloto solo en la pestaña de entrada: es lo primero que ve quien abre al cliente
         from . import ia_contexto
         ctx["copiloto"] = ia_contexto.sugerencias(t, fid)
+        from . import cliente_memoria, ia_asistente
+        ctx["memoria"] = cliente_memoria.obtener(t, fid)
+        ctx["ia_lista"] = ia_asistente.disponible(g.usuario_id)
     return render_template("cliente_ficha.html", **ctx)
 
 

@@ -27437,3 +27437,135 @@ msgstr "On approval: %(que)s"
 
 msgid "de las facturas"
 msgstr "from the invoices"
+
+msgid "El IVA de %(c)s se sale de lo habitual este trimestre"
+msgstr "%(c)s's VAT is out of the ordinary this quarter"
+
+msgid "Lleva %(r)s y por la media de los trimestres anteriores (%(m)s) cabría esperar %(e)s."
+msgstr "It stands at %(r)s and, by the average of previous quarters (%(m)s), %(e)s would be expected."
+
+msgid "%(c)s tiene documentos pedidos y no entra al portal"
+msgstr "%(c)s has requested documents and does not enter the portal"
+
+msgid "Proveedor nuevo con un importe alto en %(c)s"
+msgstr "New supplier with a high amount at %(c)s"
+
+msgid "%(p)s: %(i)s el %(f)s; es la primera vez que aparece."
+msgstr "%(p)s: %(i)s on %(f)s; it is the first time it appears."
+
+msgid "Última entrada: %(f)s."
+msgstr "Last visit: %(f)s."
+
+msgid "No ha entrado nunca."
+msgstr "Has never visited."
+
+msgid "Umbrales guardados."
+msgstr "Thresholds saved."
+
+msgid "Días sin facturas (mínimo)"
+msgstr "Days without invoices (minimum)"
+
+msgid "Gasto atípico: importe mínimo (€)"
+msgstr "Unusual expense: minimum amount (€)"
+
+msgid "Modelo sin documentación: días de antelación"
+msgstr "Form without documents: days in advance"
+
+msgid "IVA: desviación que avisa (%%)"
+msgstr "VAT: deviation that triggers (%%)"
+
+msgid "Portal: días sin entrar"
+msgstr "Portal: days without visiting"
+
+msgid "Proveedor nuevo: importe mínimo (€)"
+msgstr "New supplier: minimum amount (€)"
+
+msgid "Cuándo salta cada alerta"
+msgstr "When each alert fires"
+
+msgid "Solo la dirección lo cambia. Si una regla avisa demasiado, súbele el umbral; si se queda corta, bájalo."
+msgstr "Only management changes this. If a rule warns too much, raise its threshold; if it falls short, lower it."
+
+msgid "Guardar umbrales"
+msgstr "Save thresholds"
+
+msgid "Volver a los de serie"
+msgstr "Back to defaults"
+
+msgid "Cuánto se aprueba de lo que se propone (90 días)"
+msgstr "How much of what is proposed gets approved (90 days)"
+
+msgid "%(a)s aprobadas y %(r)s rechazadas (%(p)s %% rechazo)"
+msgstr "%(a)s approved and %(r)s rejected (%(p)s %% rejection)"
+
+msgid "Casi todo se rechaza: conviene ajustar el umbral de esta regla o desactivarla."
+msgstr "Almost everything is rejected: adjust this rule's threshold or turn it off."
+
+msgid "Latencia media"
+msgstr "Average latency"
+
+msgid "Datos que han salido a proveedores externos (30 días)"
+msgstr "Data sent to external providers (30 days)"
+
+msgid "Antes de salir se enmascararon:"
+msgstr "Before leaving, these were masked:"
+
+msgid "No se detectaron datos personales que enmascarar."
+msgstr "No personal data to mask was detected."
+
+msgid "Las imágenes y los PDF que se mandan a leer (facturas) no se pueden enmascarar: el proveedor los ve tal cual. Para que ningún documento salga del servidor, elige «Solo local» en el OCR de las normas del despacho."
+msgstr "Images and PDFs sent for reading (invoices) cannot be masked: the provider sees them as they are. For no document to leave the server, choose «Local only» in the OCR firm rules."
+
+msgid "No ha salido ninguna consulta a proveedores externos."
+msgstr "No queries have gone to external providers."
+
+msgid "Solo se cuentan datos, nunca su contenido. Los proveedores de tu propia red (Ollama) no sacan nada del servidor y no cuentan aquí."
+msgstr "Only counts are kept, never the content. Providers on your own network (Ollama) take nothing off the server and are not counted here."
+
+msgid "%(n)s consulta salió a un proveedor externo."
+msgid_plural "%(n)s consultas salieron a proveedores externos."
+msgstr[0] "%(n)s query went to an external provider."
+msgstr[1] "%(n)s queries went to external providers."
+
+msgid "%(n)s consulta"
+msgid_plural "%(n)s consultas"
+msgstr[0] "%(n)s query"
+msgstr[1] "%(n)s queries"
+
+msgid "%(n)s con adjuntos"
+msgid_plural "%(n)s con adjuntos"
+msgstr[0] "%(n)s with attachments"
+msgstr[1] "%(n)s with attachments"
+
+msgid "Memoria del cliente"
+msgstr "Client memory"
+
+msgid "Lo que conviene recordar para tratarlo bien. La escribes o la confirmas tú; la IA solo propone actualizaciones y nunca cambia nada sola."
+msgstr "What is worth remembering to treat them well. You write or confirm it; the AI only proposes updates and never changes anything on its own."
+
+msgid "Por ejemplo: prefiere WhatsApp; cambió de domicilio en marzo; entrega los tiques a final de mes."
+msgstr "For example: prefers WhatsApp; changed address in March; hands in receipts at the end of the month."
+
+msgid "Guardar memoria"
+msgstr "Save memory"
+
+msgid "Propuesta de la IA"
+msgstr "AI proposal"
+
+msgid "Propuesta de la IA (sin aplicar):"
+msgstr "AI proposal (not applied):"
+
+msgid "Aceptar propuesta"
+msgstr "Accept proposal"
+
+msgid "Proponer actualización con IA"
+msgstr "Suggest an update with AI"
+
+msgid "Esto es lo que ya sabemos de él: %(m)s"
+msgstr "This is what we already know about them: %(m)s"
+
+msgid "La IA no ha propuesto nada."
+msgstr "The AI proposed nothing."
+
+msgid "No hay ninguna propuesta que aceptar."
+msgstr "There is no proposal to accept."

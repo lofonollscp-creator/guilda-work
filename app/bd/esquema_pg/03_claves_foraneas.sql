@@ -61,6 +61,7 @@ ALTER TABLE cliente_contactos ADD CONSTRAINT fk_cliente_contactos_cliente_id FOR
 ALTER TABLE cliente_documentos ADD CONSTRAINT fk_cliente_documentos_cliente_fiscal_id FOREIGN KEY (cliente_fiscal_id) REFERENCES clientes_fiscales (id) ON DELETE CASCADE;
 ALTER TABLE cliente_documentos ADD CONSTRAINT fk_cliente_documentos_subido_por FOREIGN KEY (subido_por) REFERENCES usuarios (id);
 ALTER TABLE cliente_etiquetas ADD CONSTRAINT fk_cliente_etiquetas_cliente_id FOREIGN KEY (cliente_id) REFERENCES clientes (id) ON DELETE CASCADE;
+ALTER TABLE cliente_memoria ADD CONSTRAINT fk_cliente_memoria_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE clientes ADD CONSTRAINT fk_clientes_responsable_id FOREIGN KEY (responsable_id) REFERENCES usuarios (id);
 ALTER TABLE clientes ADD CONSTRAINT fk_clientes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE clientes_fiscales ADD CONSTRAINT fk_clientes_fiscales_cliente_id FOREIGN KEY (cliente_id) REFERENCES clientes (id);
@@ -211,6 +212,7 @@ ALTER TABLE ia_config_despacho ADD CONSTRAINT fk_ia_config_despacho_tenant_id FO
 ALTER TABLE ia_consumo ADD CONSTRAINT fk_ia_consumo_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_propuestas ADD CONSTRAINT fk_ia_propuestas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_proveedores_despacho ADD CONSTRAINT fk_ia_proveedores_despacho_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE ia_salidas_datos ADD CONSTRAINT fk_ia_salidas_datos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;
 ALTER TABLE ia_trabajos ADD CONSTRAINT fk_ia_trabajos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_uso_proveedor ADD CONSTRAINT fk_ia_uso_proveedor_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;

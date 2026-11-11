@@ -611,13 +611,29 @@ def alertas():
     """Lo que se sale de lo normal en los clientes del despacho (facturas que dejan de llegar, gastos atípicos, duplicadas, modelos sin documentación). Cada alerta dice qué regla saltó y a dónde ir."""
     if g.tenant_id is None:
         abort(404)
-    from . import anomalias
+    from . import anomalias, ia_despacho
     lista = []
     for a in anomalias.detectar(g.tenant_id):
         titulo, detalle = anomalias.texto(a)
         destino = (url_for("contabilidad.ver", factura_id=a["factura_id"]) if a.get("factura_id") else url_for("fiscal.editar_vencimiento", vencimiento_id=a["vencimiento_id"]) if a.get("vencimiento_id") else url_for("fiscal.ficha_cliente", cliente_id=a["cliente_id"]))
         lista.append({**a, "titulo": titulo, "detalle": detalle, "destino": destino, "clave": anomalias.clave(a)})
-    return render_template("fiscal_alertas.html", alertas=lista, aviso=request.args.get("aviso"))
+    return render_template("fiscal_alertas.html", alertas=lista, aviso=request.args.get("aviso"), error=(request.args.get("error") or "")[:200] or None, direccion=ia_despacho.es_direccion(g.usuario_id), umbrales=ia_despacho.umbrales(g.tenant_id), por_defecto=anomalias.UMBRALES_POR_DEFECTO, limites=anomalias.LIMITES)
+
+
+@fiscal_bp.route("/alertas/umbrales", methods=["POST"])
+@login_required
+def alertas_umbrales():
+    """La dirección ajusta cuándo salta cada regla de las alertas de clientes (o vuelve a los valores de serie)."""
+    from . import anomalias, ia_despacho
+    if g.tenant_id is None or not ia_despacho.es_direccion(g.usuario_id):
+        abort(403)
+    valores = {} if request.form.get("restablecer") else {k: request.form.get(k, anomalias.UMBRALES_POR_DEFECTO[k]) for k in anomalias.UMBRALES_POR_DEFECTO}
+    try:
+        ia_despacho.guardar_umbrales(g.tenant_id, valores, por=g.usuario_id)
+    except ValueError as e:
+        return redirect(url_for("fiscal.alertas", error=_(str(e))) + "#umbrales")
+    auditoria.registrar(g.tenant_id, g.usuario_id, "alertas.umbrales", "ia_config", None, {})
+    return redirect(url_for("fiscal.alertas", aviso="umbrales") + "#umbrales")
 
 
 @fiscal_bp.route("/alertas/tarea", methods=["POST"])

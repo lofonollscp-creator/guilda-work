@@ -24,6 +24,12 @@
 {% else %}
 <p class="empty-lane">{{ _('No hay propuestas pendientes.') }}</p>
 {% endif %}
+{% if estadisticas %}
+<h2 class="ds-mt-16">{{ _('Cuánto se aprueba de lo que se propone (90 días)') }}</h2>
+<ul class="log-list ds-max-720">
+  {% for e in estadisticas %}<li class="log-item"><span class="log-text"><strong>{{ etiqueta(e.tipo) }}</strong> · {{ e.origen or '—' }}<br><span class="muted">{{ _('%(a)s aprobadas y %(r)s rechazadas (%(p)s %% rechazo)', a=e.aprobadas, r=e.rechazadas, p=e.tasa_rechazo) }}</span>{% if e.revisar %}<br><span class="ia-error">{{ _('Casi todo se rechaza: conviene ajustar el umbral de esta regla o desactivarla.') }}</span>{% endif %}</span></li>{% endfor %}
+</ul>
+{% endif %}
 {% if resueltas %}
 <h2 class="ds-mt-16">{{ _('Resueltas en los últimos 30 días') }}</h2>
 <ul class="log-list ds-max-720">

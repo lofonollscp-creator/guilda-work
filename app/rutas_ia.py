@@ -8,7 +8,7 @@ from flask import (
 
 from flask_babel import gettext as _
 
-from . import db, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_proveedores, ia_soporte, ia_uso, ocr_local
+from . import db, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_proveedores, ia_salidas, ia_soporte, ia_uso, ocr_local
 from .ia_errores import ErrorIA
 from .auth import login_required
 
@@ -34,7 +34,7 @@ def propuestas():
         abort(404)
     from . import ia_propuestas
     ia_propuestas.generar_todo(g.tenant_id)
-    return render_template("ia_propuestas.html", etiqueta=ia_propuestas.etiqueta, pendientes=ia_propuestas.pendientes(g.tenant_id), resueltas=ia_propuestas.resueltas(g.tenant_id), aviso=request.args.get("aviso"), error=(request.args.get("error") or "")[:200] or None)
+    return render_template("ia_propuestas.html", etiqueta=ia_propuestas.etiqueta, estadisticas=ia_propuestas.estadisticas(g.tenant_id) if ia_despacho.es_direccion(g.usuario_id) else [], pendientes=ia_propuestas.pendientes(g.tenant_id), resueltas=ia_propuestas.resueltas(g.tenant_id), aviso=request.args.get("aviso"), error=(request.args.get("error") or "")[:200] or None)
 
 
 @ia_bp.route("/propuestas/<int:propuesta_id>/<accion>", methods=["POST"])
@@ -318,6 +318,7 @@ def ajustes():
         despacho=ia_despacho.listar(g.tenant_id) if g.tenant_id else [],
         normas=ia_despacho.config(g.tenant_id) if g.tenant_id else None, ocr_disponible=ocr_local.disponible(),
         uso=ia_uso.resumen(g.tenant_id) if g.tenant_id else None,
+        salidas=ia_salidas.resumen(g.tenant_id) if g.tenant_id and direccion else None,
         es_direccion=direccion,
         error=request.args.get("error"),
         aviso=request.args.get("aviso"),

@@ -37,6 +37,8 @@ TAREAS = ("asistente", "facturas", "otras")
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
+    db._asegurar_columna(conn, "ia_uso_proveedor", "errores", "INTEGER NOT NULL DEFAULT 0")                    # consultas que fallaron (y se pasó al siguiente proveedor)
+    db._asegurar_columna(conn, "ia_uso_proveedor", "ms_total", "INTEGER NOT NULL DEFAULT 0")                   # suma de milisegundos de las consultas correctas: ms_total / llamadas = latencia media
 
 
 def _mes(ahora: datetime | None = None) -> str:
@@ -60,7 +62,7 @@ def coste_estimado(proveedor: str, modelo: str, tokens_entrada: int, tokens_sali
     return None
 
 
-def registrar(tenant_id: int | None, proveedor: str, modelo: str, tarea: str, origen: str, usage: dict | None, ahora: datetime | None = None) -> None:
+def registrar(tenant_id: int | None, proveedor: str, modelo: str, tarea: str, origen: str, usage: dict | None, ahora: datetime | None = None, ms: int = 0) -> None:
     """Suma una consulta correcta al uso del mes. Nunca debe romper la consulta que mide."""
     if tenant_id is None:
         return
@@ -70,11 +72,11 @@ def registrar(tenant_id: int | None, proveedor: str, modelo: str, tarea: str, or
     try:
         conn = db.get_connection()
         try:
-            conn.execute("INSERT INTO ia_uso_proveedor (tenant_id, mes, proveedor, tarea, origen, llamadas, tokens_entrada, tokens_salida, coste_usd, llamadas_sin_tarifa) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?) "
+            conn.execute("INSERT INTO ia_uso_proveedor (tenant_id, mes, proveedor, tarea, origen, llamadas, tokens_entrada, tokens_salida, coste_usd, llamadas_sin_tarifa, ms_total) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?) "
                          "ON CONFLICT (tenant_id, mes, proveedor, tarea, origen) DO UPDATE SET llamadas = ia_uso_proveedor.llamadas + 1, tokens_entrada = ia_uso_proveedor.tokens_entrada + excluded.tokens_entrada, "
                          "tokens_salida = ia_uso_proveedor.tokens_salida + excluded.tokens_salida, coste_usd = ia_uso_proveedor.coste_usd + excluded.coste_usd, "
-                         "llamadas_sin_tarifa = ia_uso_proveedor.llamadas_sin_tarifa + excluded.llamadas_sin_tarifa",
-                         (tenant_id, _mes(ahora), proveedor, tarea if tarea in TAREAS else "otras", origen, entrada, salida, coste or 0.0, 1 if coste is None else 0))
+                         "llamadas_sin_tarifa = ia_uso_proveedor.llamadas_sin_tarifa + excluded.llamadas_sin_tarifa, ms_total = ia_uso_proveedor.ms_total + excluded.ms_total",
+                         (tenant_id, _mes(ahora), proveedor, tarea if tarea in TAREAS else "otras", origen, entrada, salida, coste or 0.0, 1 if coste is None else 0, max(0, int(ms))))
             conn.commit()
         finally:
             conn.close()
@@ -83,14 +85,34 @@ def registrar(tenant_id: int | None, proveedor: str, modelo: str, tarea: str, or
         logging.getLogger("guilda").warning("No se pudo anotar el uso de IA", exc_info=True)
 
 
+def registrar_error(tenant_id: int | None, proveedor: str, tarea: str, origen: str, ahora: datetime | None = None) -> None:
+    """Anota una consulta fallida a ese proveedor (no suma llamadas ni coste: solo el fallo). Nunca rompe la consulta."""
+    if tenant_id is None:
+        return
+    try:
+        conn = db.get_connection()
+        try:
+            conn.execute("INSERT INTO ia_uso_proveedor (tenant_id, mes, proveedor, tarea, origen, llamadas, errores) VALUES (?, ?, ?, ?, ?, 0, 1) "
+                         "ON CONFLICT (tenant_id, mes, proveedor, tarea, origen) DO UPDATE SET errores = ia_uso_proveedor.errores + 1",
+                         (tenant_id, _mes(ahora), proveedor, tarea if tarea in TAREAS else "otras", origen))
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001
+        import logging
+        logging.getLogger("guilda").warning("No se pudo anotar el fallo de IA", exc_info=True)
+
+
 def resumen(tenant_id: int, mes: str | None = None) -> dict:
     """{mes, filas: [{proveedor, tarea, origen, llamadas, tokens_entrada, tokens_salida, coste_usd, llamadas_sin_tarifa}], total_usd, total_llamadas, hay_sin_tarifa}."""
     mes = mes or _mes()
     conn = db.get_connection()
     try:
-        filas = [dict(f) for f in conn.execute("SELECT proveedor, tarea, origen, llamadas, tokens_entrada, tokens_salida, coste_usd, llamadas_sin_tarifa FROM ia_uso_proveedor "
+        filas = [dict(f) for f in conn.execute("SELECT proveedor, tarea, origen, llamadas, tokens_entrada, tokens_salida, coste_usd, llamadas_sin_tarifa, errores, ms_total FROM ia_uso_proveedor "
                                                "WHERE tenant_id = ? AND mes = ? ORDER BY coste_usd DESC, llamadas DESC", (tenant_id, mes)).fetchall()]
     finally:
         conn.close()
-    return {"mes": mes, "filas": filas, "total_usd": round(sum(f["coste_usd"] for f in filas), 4), "total_llamadas": sum(f["llamadas"] for f in filas),
+    for f in filas:
+        f["latencia_ms"] = round(f["ms_total"] / f["llamadas"]) if f["llamadas"] else None                    # media de las consultas correctas
+    return {"mes": mes, "filas": filas, "total_errores": sum(f["errores"] for f in filas), "total_usd": round(sum(f["coste_usd"] for f in filas), 4), "total_llamadas": sum(f["llamadas"] for f in filas),
             "hay_sin_tarifa": any(f["llamadas_sin_tarifa"] for f in filas)}

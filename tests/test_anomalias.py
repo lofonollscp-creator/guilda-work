@@ -128,3 +128,106 @@ def test_una_alerta_se_convierte_en_tarea_una_sola_vez(cliente):
     conn.close()
     assert n == 1
     assert "aviso=resuelta" in cliente.post("/fiscal/alertas/tarea", data={"clave": "duplicada:1:1"}).headers["Location"]
+
+
+def _con_iva(c, hoy, cuotas_previas, actual, tipo="emitida"):
+    """Una factura por trimestre con la cuota de IVA indicada (la base no importa para esta regla)."""
+    from app import anomalias as an
+    y, q = an._trimestre(hoy)
+    creadas = []
+    for i, cuota in enumerate(list(cuotas_previas) + [actual]):
+        qq, yy = q - len(cuotas_previas) + i, y
+        while qq <= 0:
+            qq, yy = qq + 4, yy - 1
+        d = date(yy, 3 * qq - 1, 15).isoformat() if i < len(cuotas_previas) else (hoy - timedelta(days=1)).isoformat()
+        creadas.append((fc.crear_desde_portal(c, {"tipo": tipo, "fecha": d, "numero": f"I-{i}", "tercero_nombre": "Cliente final", "tercero_nif": "B22222222", "total": "100,00", "pct_iva": "21"}), cuota))
+    conn = db.get_connection()
+    for f, cuota in creadas:
+        conn.execute("UPDATE facturas_contables_lineas SET cuota_iva = ? WHERE factura_id = ?", (cuota, f))
+    conn.commit(); conn.close()
+
+
+def test_el_iva_que_se_sale_de_lo_habitual_salta_y_uno_normal_no():
+    hoy = date(2026, 11, 20)                                                         # al 80 % del 4T
+    t, c = _t()
+    _con_iva(c, hoy, [100000, 110000, 95000, 105000], 1000)                          # media 1.025 €, esperado ~557 €, lleva 10 €
+    a = [x for x in anomalias.detectar(t, hoy) if x["tipo"] == "iva_desviado"]
+    assert len(a) == 1 and a[0]["datos"]["real"] == 1000 and a[0]["datos"]["media"] == 102500
+    t2, c2 = _t()
+    _con_iva(c2, hoy, [100000, 110000, 95000, 105000], 80000)
+    assert "iva_desviado" not in [x["tipo"] for x in anomalias.detectar(t2, hoy)]
+    t3, c3 = _t()
+    _con_iva(c3, hoy, [10000, 12000, 9000, 11000], 0)                                # IVA medio de 100 €: demasiado pequeño para opinar
+    assert "iva_desviado" not in [x["tipo"] for x in anomalias.detectar(t3, hoy)]
+
+
+def test_un_cliente_con_documentos_pedidos_que_no_entra_al_portal_salta():
+    from app import portal_peticiones
+    t, c = _t()
+    ficha = db.obtener_cliente_fiscal_por_id(c)
+    portal_peticiones.crear(ficha, "Extracto del banco", "En PDF")
+    assert "sin_entrar_portal" in [a["tipo"] for a in anomalias.detectar(t, HOY)]                            # nunca ha entrado
+    conn = db.get_connection()
+    conn.execute("INSERT INTO portal_contactos (tenant_id, cliente_fiscal_id, email, nombre, rol, avisos, ultimo_acceso_en, creado_en) VALUES (?, ?, 'x@ejemplo.com', 'X', 'completo', 'todo', ?, '2026-01-01T10:00:00')", (t, c, (HOY - timedelta(days=3)).isoformat() + "T10:00:00"))
+    conn.commit(); conn.close()
+    assert "sin_entrar_portal" not in [a["tipo"] for a in anomalias.detectar(t, HOY)]                        # entró hace 3 días
+
+
+def test_un_proveedor_nuevo_con_importe_alto_avisa_una_vez_y_con_importe_bajo_no():
+    t, c = _t()
+    _f(c, 120, total="80,00", nombre="Habitual", nif="B11111111")
+    _f(c, 10, total="2500,00", nombre="Proveedor Nuevo", nif="B99999999")
+    _f(c, 8, total="90,00", nombre="Otro Nuevo", nif="B88888888")
+    n = [a for a in anomalias.detectar(t, HOY) if a["tipo"] == "proveedor_nuevo"]
+    assert len(n) == 1 and n[0]["datos"]["proveedor"] == "Proveedor Nuevo" and n[0]["severidad"] == "baja"
+    _f(c, 3, total="2600,00", nombre="Proveedor Nuevo", nif="B99999999", num="N-2")                          # ya no es la primera vez
+    assert not [a for a in anomalias.detectar(t, HOY) if a["tipo"] == "proveedor_nuevo"]
+
+
+def test_los_umbrales_del_despacho_cambian_lo_que_salta_y_se_validan():
+    from app import ia_despacho
+    t, c = _t()
+    for d in (220, 190, 160, 130, 85):                                               # sin facturas desde hace 85 días con intervalo de 30: umbral por intervalo = 90
+        _f(c, d)
+    assert "sin_facturas" not in _tipos(t)
+    assert ia_despacho.umbrales(t)["dias_sin_facturas"] == 45
+    ia_despacho.guardar_umbrales(t, {"importe_gasto": 50, "dias_vencimiento": 10})
+    u = ia_despacho.umbrales(t)
+    assert u["importe_gasto"] == 50 and u["dias_vencimiento"] == 10 and u["iva_desvio_pct"] == 50           # lo no tocado sigue con el de serie
+    with pytest.raises(ValueError):
+        ia_despacho.guardar_umbrales(t, {"importe_gasto": 1})
+    with pytest.raises(ValueError):
+        ia_despacho.guardar_umbrales(t, {"dias_vencimiento": "mucho"})
+    ia_despacho.guardar_umbrales(t, {})
+    assert ia_despacho.umbrales(t) == anomalias.UMBRALES_POR_DEFECTO                                        # guardar sin cambios vuelve a los de serie
+
+
+def test_el_cache_reutiliza_el_resultado_y_la_deteccion_en_vivo_no():
+    t, c = _t()
+    db.crear_vencimiento_fiscal(t, c, "303", "3T", (date.today() - timedelta(days=2)).isoformat())
+    anomalias._CACHE.clear()
+    assert len(anomalias.detectar_cacheado(t)) == 1
+    db.crear_vencimiento_fiscal(t, c, "111", "3T", (date.today() - timedelta(days=2)).isoformat())
+    assert len(anomalias.detectar_cacheado(t)) == 1 and len(anomalias.detectar(t)) == 2
+    anomalias._CACHE.clear()
+    assert len(anomalias.detectar_cacheado(t)) == 2
+
+
+def test_la_direccion_ajusta_los_umbrales_desde_la_pantalla_y_otros_no(cliente):
+    from app import ia_despacho
+    from tests.conftest import iniciar_sesion_de_prueba
+    t = db.crear_tenant("Anomalías umbrales")
+    u = iniciar_sesion_de_prueba(cliente, "umbrales@ejemplo.com", "contrasena123")
+    db.asignar_tenant(u, t)
+    db.asignar_supervisor_tenant(u, True)
+    html = cliente.get("/fiscal/alertas").get_data(as_text=True)
+    assert "Cuándo salta cada alerta" in html and 'name="dias_vencimiento"' in html
+    datos = dict(dias_sin_facturas=60, importe_gasto=500, dias_vencimiento=10, iva_desvio_pct=50, dias_sin_entrar=30, importe_proveedor_nuevo=1000)
+    assert "aviso=umbrales" in cliente.post("/fiscal/alertas/umbrales", data=datos).headers["Location"]
+    assert ia_despacho.umbrales(t)["importe_gasto"] == 500 and ia_despacho.umbrales(t)["dias_vencimiento"] == 10
+    assert "error=" in cliente.post("/fiscal/alertas/umbrales", data={**datos, "importe_gasto": 1}).headers["Location"]
+    cliente.post("/fiscal/alertas/umbrales", data={"restablecer": "1"})
+    assert ia_despacho.umbrales(t) == anomalias.UMBRALES_POR_DEFECTO
+    db.asignar_supervisor_tenant(u, False)
+    assert cliente.post("/fiscal/alertas/umbrales", data=datos).status_code == 403
+    assert "Cuándo salta cada alerta" not in cliente.get("/fiscal/alertas").get_data(as_text=True)

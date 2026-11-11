@@ -49,6 +49,11 @@ def purgar(ahora: datetime | None = None) -> dict:
             resultado["accesos_portal"] = db.purgar_accesos_antiguos()
         except Exception:  # noqa: BLE001 -- la tabla puede no existir en instalaciones sin ese módulo
             log.exception("No se pudo purgar el registro de accesos del portal")
+        try:
+            from . import ia_salidas
+            resultado["ia_salidas"] = ia_salidas.purgar(ahora)                      # el contador de datos enviados a la IA no se guarda para siempre
+        except Exception:  # noqa: BLE001
+            log.exception("No se pudo purgar el contador de salidas de datos a la IA")
     return resultado
 
 

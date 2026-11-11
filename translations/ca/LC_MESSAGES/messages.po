@@ -27446,3 +27446,135 @@ msgstr "En aprovar: %(que)s"
 
 msgid "de las facturas"
 msgstr "de les factures"
+
+msgid "El IVA de %(c)s se sale de lo habitual este trimestre"
+msgstr "L'IVA de %(c)s surt del normal aquest trimestre"
+
+msgid "Lleva %(r)s y por la media de los trimestres anteriores (%(m)s) cabría esperar %(e)s."
+msgstr "Porta %(r)s i per la mitjana dels trimestres anteriors (%(m)s) caldria esperar %(e)s."
+
+msgid "%(c)s tiene documentos pedidos y no entra al portal"
+msgstr "%(c)s té documents demanats i no entra al portal"
+
+msgid "Proveedor nuevo con un importe alto en %(c)s"
+msgstr "Proveïdor nou amb un import alt a %(c)s"
+
+msgid "%(p)s: %(i)s el %(f)s; es la primera vez que aparece."
+msgstr "%(p)s: %(i)s el %(f)s; és la primera vegada que apareix."
+
+msgid "Última entrada: %(f)s."
+msgstr "Última entrada: %(f)s."
+
+msgid "No ha entrado nunca."
+msgstr "No ha entrat mai."
+
+msgid "Umbrales guardados."
+msgstr "Llindars desats."
+
+msgid "Días sin facturas (mínimo)"
+msgstr "Dies sense factures (mínim)"
+
+msgid "Gasto atípico: importe mínimo (€)"
+msgstr "Despesa atípica: import mínim (€)"
+
+msgid "Modelo sin documentación: días de antelación"
+msgstr "Model sense documentació: dies d'antelació"
+
+msgid "IVA: desviación que avisa (%%)"
+msgstr "IVA: desviació que avisa (%%)"
+
+msgid "Portal: días sin entrar"
+msgstr "Portal: dies sense entrar"
+
+msgid "Proveedor nuevo: importe mínimo (€)"
+msgstr "Proveïdor nou: import mínim (€)"
+
+msgid "Cuándo salta cada alerta"
+msgstr "Quan salta cada alerta"
+
+msgid "Solo la dirección lo cambia. Si una regla avisa demasiado, súbele el umbral; si se queda corta, bájalo."
+msgstr "Només la direcció ho canvia. Si una regla avisa massa, puja-li el llindar; si es queda curta, baixa'l."
+
+msgid "Guardar umbrales"
+msgstr "Desar llindars"
+
+msgid "Volver a los de serie"
+msgstr "Tornar als de sèrie"
+
+msgid "Cuánto se aprueba de lo que se propone (90 días)"
+msgstr "Quant s'aprova del que es proposa (90 dies)"
+
+msgid "%(a)s aprobadas y %(r)s rechazadas (%(p)s %% rechazo)"
+msgstr "%(a)s aprovades i %(r)s rebutjades (%(p)s %% de rebuig)"
+
+msgid "Casi todo se rechaza: conviene ajustar el umbral de esta regla o desactivarla."
+msgstr "Gairebé tot es rebutja: convé ajustar el llindar d'aquesta regla o desactivar-la."
+
+msgid "Latencia media"
+msgstr "Latència mitjana"
+
+msgid "Datos que han salido a proveedores externos (30 días)"
+msgstr "Dades que han sortit a proveïdors externs (30 dies)"
+
+msgid "Antes de salir se enmascararon:"
+msgstr "Abans de sortir es van emmascarar:"
+
+msgid "No se detectaron datos personales que enmascarar."
+msgstr "No es van detectar dades personals per emmascarar."
+
+msgid "Las imágenes y los PDF que se mandan a leer (facturas) no se pueden enmascarar: el proveedor los ve tal cual. Para que ningún documento salga del servidor, elige «Solo local» en el OCR de las normas del despacho."
+msgstr "Les imatges i els PDF que s'envien a llegir (factures) no es poden emmascarar: el proveïdor els veu tal qual. Perquè cap document surti del servidor, tria «Només local» a l'OCR de les normes del despatx."
+
+msgid "No ha salido ninguna consulta a proveedores externos."
+msgstr "No ha sortit cap consulta a proveïdors externs."
+
+msgid "Solo se cuentan datos, nunca su contenido. Los proveedores de tu propia red (Ollama) no sacan nada del servidor y no cuentan aquí."
+msgstr "Només es compten dades, mai el seu contingut. Els proveïdors de la teva pròpia xarxa (Ollama) no treuen res del servidor i no compten aquí."
+
+msgid "%(n)s consulta salió a un proveedor externo."
+msgid_plural "%(n)s consultas salieron a proveedores externos."
+msgstr[0] "%(n)s consulta va sortir a un proveïdor extern."
+msgstr[1] "%(n)s consultes van sortir a proveïdors externs."
+
+msgid "%(n)s consulta"
+msgid_plural "%(n)s consultas"
+msgstr[0] "%(n)s consulta"
+msgstr[1] "%(n)s consultes"
+
+msgid "%(n)s con adjuntos"
+msgid_plural "%(n)s con adjuntos"
+msgstr[0] "%(n)s amb adjunts"
+msgstr[1] "%(n)s amb adjunts"
+
+msgid "Memoria del cliente"
+msgstr "Memòria del client"
+
+msgid "Lo que conviene recordar para tratarlo bien. La escribes o la confirmas tú; la IA solo propone actualizaciones y nunca cambia nada sola."
+msgstr "El que convé recordar per tractar-lo bé. L'escrius o la confirmes tu; la IA només proposa actualitzacions i mai canvia res sola."
+
+msgid "Por ejemplo: prefiere WhatsApp; cambió de domicilio en marzo; entrega los tiques a final de mes."
+msgstr "Per exemple: prefereix WhatsApp; va canviar de domicili al març; lliura els tiquets a final de mes."
+
+msgid "Guardar memoria"
+msgstr "Desar la memòria"
+
+msgid "Propuesta de la IA"
+msgstr "Proposta de la IA"
+
+msgid "Propuesta de la IA (sin aplicar):"
+msgstr "Proposta de la IA (sense aplicar):"
+
+msgid "Aceptar propuesta"
+msgstr "Acceptar la proposta"
+
+msgid "Proponer actualización con IA"
+msgstr "Proposar actualització amb IA"
+
+msgid "Esto es lo que ya sabemos de él: %(m)s"
+msgstr "Això és el que ja sabem d'ell: %(m)s"
+
+msgid "La IA no ha propuesto nada."
+msgstr "La IA no ha proposat res."
+
+msgid "No hay ninguna propuesta que aceptar."
+msgstr "No hi ha cap proposta per acceptar."

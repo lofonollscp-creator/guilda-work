@@ -51,6 +51,7 @@ def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
     db._asegurar_columna(conn, "ia_config_despacho", "ocr_local", "TEXT NOT NULL DEFAULT 'respaldo'")
     db._asegurar_columna(conn, "ia_config_despacho", "segunda_lectura", "INTEGER NOT NULL DEFAULT 0")       # releer con un segundo modelo las facturas dudosas
+    db._asegurar_columna(conn, "ia_config_despacho", "umbrales", "TEXT NOT NULL DEFAULT '{}'")                  # umbrales de las alertas de clientes que el despacho ha cambiado (JSON; app/anomalias.py)
     db._asegurar_columna(conn, "ia_config_despacho", "voz", "TEXT NOT NULL DEFAULT ''")                      # cómo habla el despacho: el tono que la IA imita en los borradores (W4)
 
 
@@ -93,6 +94,47 @@ def guardar_config(tenant_id: int, *, solo_ue: bool, claves_personales: bool, fa
                      "ON CONFLICT (tenant_id) DO UPDATE SET solo_ue = excluded.solo_ue, claves_personales = excluded.claves_personales, facturas_modo = excluded.facturas_modo, "
                      "umbral_confianza = excluded.umbral_confianza, lectura_texto = excluded.lectura_texto, separar_pdf = excluded.separar_pdf, ocr_local = excluded.ocr_local, segunda_lectura = excluded.segunda_lectura, actualizado_por = excluded.actualizado_por, actualizado_en = excluded.actualizado_en",
                      (tenant_id, int(solo_ue), int(claves_personales), facturas_modo, umbral, int(lectura_texto), int(separar_pdf), ocr_local, int(segunda_lectura), por, _ahora()))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def umbrales(tenant_id: int) -> dict:
+    """Los umbrales de las alertas de clientes: los de serie con lo que el despacho haya cambiado."""
+    import json
+    from . import anomalias
+    base = dict(anomalias.UMBRALES_POR_DEFECTO)
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT umbrales FROM ia_config_despacho WHERE tenant_id = ?", (tenant_id,)).fetchone()
+    finally:
+        conn.close()
+    try:
+        guardados = json.loads(f["umbrales"]) if f and f["umbrales"] else {}
+    except ValueError:
+        guardados = {}
+    base.update({k: v for k, v in guardados.items() if k in base and isinstance(v, int)})
+    return base
+
+
+def guardar_umbrales(tenant_id: int, valores: dict, por: int | None = None) -> None:
+    """Guarda solo los que se salen de los de serie. `ValueError` con un mensaje legible si alguno está fuera de rango."""
+    import json
+    from . import anomalias
+    limpios = {}
+    for k, (lo, hi) in anomalias.LIMITES.items():
+        try:
+            v = int(valores.get(k, anomalias.UMBRALES_POR_DEFECTO[k]))
+        except (TypeError, ValueError):
+            raise ValueError("Los umbrales de las alertas deben ser números.") from None
+        if not lo <= v <= hi:
+            raise ValueError(f"Un umbral de las alertas está fuera de rango (entre {lo} y {hi}).")
+        if v != anomalias.UMBRALES_POR_DEFECTO[k]:
+            limpios[k] = v
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT INTO ia_config_despacho (tenant_id, umbrales, actualizado_por, actualizado_en) VALUES (?, ?, ?, ?) ON CONFLICT (tenant_id) DO UPDATE SET umbrales = excluded.umbrales, actualizado_por = excluded.actualizado_por, actualizado_en = excluded.actualizado_en",
+                     (tenant_id, json.dumps(limpios), por, _ahora()))
         conn.commit()
     finally:
         conn.close()

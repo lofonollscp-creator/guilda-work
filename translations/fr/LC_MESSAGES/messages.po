@@ -27522,3 +27522,135 @@ msgstr "À l'approbation : %(que)s"
 
 msgid "de las facturas"
 msgstr "des factures"
+
+msgid "El IVA de %(c)s se sale de lo habitual este trimestre"
+msgstr "La TVA de %(c)s sort de l'ordinaire ce trimestre"
+
+msgid "Lleva %(r)s y por la media de los trimestres anteriores (%(m)s) cabría esperar %(e)s."
+msgstr "Elle s'élève à %(r)s et, d'après la moyenne des trimestres précédents (%(m)s), on attendrait %(e)s."
+
+msgid "%(c)s tiene documentos pedidos y no entra al portal"
+msgstr "%(c)s a des documents demandés et n'entre pas dans le portail"
+
+msgid "Proveedor nuevo con un importe alto en %(c)s"
+msgstr "Nouveau fournisseur avec un montant élevé chez %(c)s"
+
+msgid "%(p)s: %(i)s el %(f)s; es la primera vez que aparece."
+msgstr "%(p)s : %(i)s le %(f)s ; c'est la première fois qu'il apparaît."
+
+msgid "Última entrada: %(f)s."
+msgstr "Dernière visite : %(f)s."
+
+msgid "No ha entrado nunca."
+msgstr "N'est jamais venu."
+
+msgid "Umbrales guardados."
+msgstr "Seuils enregistrés."
+
+msgid "Días sin facturas (mínimo)"
+msgstr "Jours sans factures (minimum)"
+
+msgid "Gasto atípico: importe mínimo (€)"
+msgstr "Dépense atypique : montant minimum (€)"
+
+msgid "Modelo sin documentación: días de antelación"
+msgstr "Modèle sans documents : jours d'avance"
+
+msgid "IVA: desviación que avisa (%%)"
+msgstr "TVA : écart qui déclenche (%%)"
+
+msgid "Portal: días sin entrar"
+msgstr "Portail : jours sans visite"
+
+msgid "Proveedor nuevo: importe mínimo (€)"
+msgstr "Nouveau fournisseur : montant minimum (€)"
+
+msgid "Cuándo salta cada alerta"
+msgstr "Quand chaque alerte se déclenche"
+
+msgid "Solo la dirección lo cambia. Si una regla avisa demasiado, súbele el umbral; si se queda corta, bájalo."
+msgstr "Seule la direction le modifie. Si une règle alerte trop, relevez son seuil ; si elle est trop courte, abaissez-le."
+
+msgid "Guardar umbrales"
+msgstr "Enregistrer les seuils"
+
+msgid "Volver a los de serie"
+msgstr "Revenir aux valeurs par défaut"
+
+msgid "Cuánto se aprueba de lo que se propone (90 días)"
+msgstr "Quelle part des propositions est approuvée (90 jours)"
+
+msgid "%(a)s aprobadas y %(r)s rechazadas (%(p)s %% rechazo)"
+msgstr "%(a)s approuvées et %(r)s rejetées (%(p)s %% de rejet)"
+
+msgid "Casi todo se rechaza: conviene ajustar el umbral de esta regla o desactivarla."
+msgstr "Presque tout est rejeté : ajustez le seuil de cette règle ou désactivez-la."
+
+msgid "Latencia media"
+msgstr "Latence moyenne"
+
+msgid "Datos que han salido a proveedores externos (30 días)"
+msgstr "Données envoyées à des fournisseurs externes (30 jours)"
+
+msgid "Antes de salir se enmascararon:"
+msgstr "Avant l'envoi, ont été masqués :"
+
+msgid "No se detectaron datos personales que enmascarar."
+msgstr "Aucune donnée personnelle à masquer n'a été détectée."
+
+msgid "Las imágenes y los PDF que se mandan a leer (facturas) no se pueden enmascarar: el proveedor los ve tal cual. Para que ningún documento salga del servidor, elige «Solo local» en el OCR de las normas del despacho."
+msgstr "Les images et PDF envoyés à la lecture (factures) ne peuvent pas être masqués : le fournisseur les voit tels quels. Pour qu'aucun document ne quitte le serveur, choisissez « Local uniquement » dans l'OCR des règles du cabinet."
+
+msgid "No ha salido ninguna consulta a proveedores externos."
+msgstr "Aucune requête n'est partie vers des fournisseurs externes."
+
+msgid "Solo se cuentan datos, nunca su contenido. Los proveedores de tu propia red (Ollama) no sacan nada del servidor y no cuentan aquí."
+msgstr "Seuls des comptes sont conservés, jamais le contenu. Les fournisseurs de votre propre réseau (Ollama) ne sortent rien du serveur et ne comptent pas ici."
+
+msgid "%(n)s consulta salió a un proveedor externo."
+msgid_plural "%(n)s consultas salieron a proveedores externos."
+msgstr[0] "%(n)s requête est partie vers un fournisseur externe."
+msgstr[1] "%(n)s requêtes sont parties vers des fournisseurs externes."
+
+msgid "%(n)s consulta"
+msgid_plural "%(n)s consultas"
+msgstr[0] "%(n)s requête"
+msgstr[1] "%(n)s requêtes"
+
+msgid "%(n)s con adjuntos"
+msgid_plural "%(n)s con adjuntos"
+msgstr[0] "%(n)s avec pièces jointes"
+msgstr[1] "%(n)s avec pièces jointes"
+
+msgid "Memoria del cliente"
+msgstr "Mémoire du client"
+
+msgid "Lo que conviene recordar para tratarlo bien. La escribes o la confirmas tú; la IA solo propone actualizaciones y nunca cambia nada sola."
+msgstr "Ce qu'il convient de retenir pour bien le traiter. Vous l'écrivez ou la confirmez ; l'IA ne fait que proposer des mises à jour et ne change jamais rien seule."
+
+msgid "Por ejemplo: prefiere WhatsApp; cambió de domicilio en marzo; entrega los tiques a final de mes."
+msgstr "Par exemple : préfère WhatsApp ; a changé d'adresse en mars ; remet ses tickets en fin de mois."
+
+msgid "Guardar memoria"
+msgstr "Enregistrer la mémoire"
+
+msgid "Propuesta de la IA"
+msgstr "Proposition de l'IA"
+
+msgid "Propuesta de la IA (sin aplicar):"
+msgstr "Proposition de l'IA (non appliquée) :"
+
+msgid "Aceptar propuesta"
+msgstr "Accepter la proposition"
+
+msgid "Proponer actualización con IA"
+msgstr "Proposer une mise à jour avec l'IA"
+
+msgid "Esto es lo que ya sabemos de él: %(m)s"
+msgstr "Voici ce que nous savons déjà de lui : %(m)s"
+
+msgid "La IA no ha propuesto nada."
+msgstr "L'IA n'a rien proposé."
+
+msgid "No hay ninguna propuesta que aceptar."
+msgstr "Il n'y a aucune proposition à accepter."

@@ -29,7 +29,7 @@ import itertools
 
 import keyring
 
-from . import anonimizar, ayuda, db, ia_claves, ia_consumo, ia_despacho, ia_fuentes, ia_proveedores, ia_soporte, ia_uso, ia_herramientas as herramientas
+from . import anonimizar, ayuda, db, ia_claves, ia_consumo, ia_despacho, ia_fuentes, ia_proveedores, ia_salidas, ia_soporte, ia_uso, ia_herramientas as herramientas
 from .ia_errores import ErrorIA
 
 SERVICIO_KEYRING_IA = "guilda-work-ia"
@@ -390,6 +390,7 @@ def _llamar(usuario_id: int, tarea: str, payload: dict, timeout: int = TIMEOUT_S
         raise _sin_candidatos(usuario_id)
     primero: ErrorIA | None = None
     for c in cands:
+        inicio = time.monotonic()
         try:
             if c["proveedor"] == "openrouter":
                 extra = (timeout,) if timeout != TIMEOUT_SEGUNDOS else ()
@@ -398,8 +399,10 @@ def _llamar(usuario_id: int, tarea: str, payload: dict, timeout: int = TIMEOUT_S
                 respuesta = _con_claves(c, payload, timeout)
         except ErrorIA as e:
             primero = primero or e
+            ia_uso.registrar_error(_tenant_de(usuario_id), c["proveedor"], tarea, c["origen"])      # el fallo se cuenta y se pasa al siguiente proveedor de la lista
             continue
-        ia_uso.registrar(_tenant_de(usuario_id), c["proveedor"], c["modelo"], tarea, c["origen"], respuesta.get("usage") if isinstance(respuesta, dict) else None)
+        ia_uso.registrar(_tenant_de(usuario_id), c["proveedor"], c["modelo"], tarea, c["origen"], respuesta.get("usage") if isinstance(respuesta, dict) else None, ms=int((time.monotonic() - inicio) * 1000))
+        ia_salidas.anotar(_tenant_de(usuario_id), c["proveedor"], c["modelo"], tarea, ia_proveedores.obtener(c["proveedor"]).region)
         return respuesta
     raise primero
 
@@ -446,6 +449,7 @@ def _llamar_stream(usuario_id: int, tarea: str, payload: dict) -> Iterator[dict]
                 uso = trozo["usage"]
             yield trozo
         ia_uso.registrar(_tenant_de(usuario_id), c["proveedor"], c["modelo"], tarea, c["origen"], uso)
+        ia_salidas.anotar(_tenant_de(usuario_id), c["proveedor"], c["modelo"], tarea, ia_proveedores.obtener(c["proveedor"]).region)
         return
     raise primero
 
@@ -514,6 +518,7 @@ def _envio_protegido(usuario_id: int, mensajes: list[dict]) -> tuple[anonimizar.
         raise ErrorIA(str(e)) from e
     if sp.protegidos:
         logging.getLogger(__name__).info("IA: datos personales protegidos antes del envío (%s)", sp.resumen())
+    ia_salidas.preparar(sp.protegidos, enviados)                                          # para el contador de datos que salen (app/ia_salidas.py)
     return sp, enviados
 
 

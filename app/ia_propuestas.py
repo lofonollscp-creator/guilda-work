@@ -179,6 +179,27 @@ def resueltas(tenant_id: int, dias: int = 30, limite: int = 30) -> list[dict]:
         conn.close()
 
 
+def estadisticas(tenant_id: int, dias: int = 90) -> list[dict]:
+    """Por origen y tipo: cuántas se han aprobado y rechazado y la tasa de rechazo, de las más rechazadas a las menos. Con 5 o más resueltas y un 70 % o más rechazadas, `revisar` es True: esa regla probablemente sobra o está muy sensible."""
+    desde = (datetime.now() - timedelta(days=dias)).isoformat(timespec="seconds")
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT origen, tipo, estado, COUNT(*) AS n FROM ia_propuestas WHERE tenant_id = ? AND estado <> 'pendiente' AND resuelta_en >= ? GROUP BY origen, tipo, estado", (tenant_id, desde)).fetchall()
+    finally:
+        conn.close()
+    por: dict[tuple[str, str], dict] = {}
+    for f in filas:
+        d = por.setdefault((f["origen"], f["tipo"]), {"origen": f["origen"], "tipo": f["tipo"], "aprobadas": 0, "rechazadas": 0})
+        d["aprobadas" if f["estado"] == "aprobada" else "rechazadas"] += f["n"]
+    salida = []
+    for d in por.values():
+        total = d["aprobadas"] + d["rechazadas"]
+        d["total"], d["tasa_rechazo"] = total, round(100 * d["rechazadas"] / total)
+        d["revisar"] = total >= 5 and d["tasa_rechazo"] >= 70
+        salida.append(d)
+    return sorted(salida, key=lambda d: (-d["tasa_rechazo"], -d["total"]))
+
+
 def _resolver(tenant_id: int, usuario_id: int, propuesta_id: int, estado: str, resultado: str = "") -> bool:
     conn = db.get_connection()
     try:

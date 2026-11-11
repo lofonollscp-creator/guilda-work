@@ -2377,6 +2377,10 @@ def init_db() -> None:
         from . import ia_despacho, ia_uso
         ia_despacho.crear_esquema(conn)         # proveedores de IA con clave del despacho y sus normas (app/ia_despacho.py)
         ia_uso.crear_esquema(conn)              # uso y coste de la IA por proveedor (app/ia_uso.py)
+        from . import ia_salidas
+        ia_salidas.crear_esquema(conn)          # cuántos datos personales salen a proveedores de IA externos, solo contadores (app/ia_salidas.py)
+        from . import cliente_memoria
+        cliente_memoria.crear_esquema(conn)     # memoria viva de cada cliente: texto confirmado por una persona y borrador de la IA (app/cliente_memoria.py)
         from . import ia_propuestas
         ia_propuestas.crear_esquema(conn)       # bandeja de propuestas de la IA y de las reglas: aprobar o rechazar (app/ia_propuestas.py)
         from . import salud_historial
