@@ -231,3 +231,65 @@ def test_la_direccion_ajusta_los_umbrales_desde_la_pantalla_y_otros_no(cliente):
     db.asignar_supervisor_tenant(u, False)
     assert cliente.post("/fiscal/alertas/umbrales", data=datos).status_code == 403
     assert "Cuándo salta cada alerta" not in cliente.get("/fiscal/alertas").get_data(as_text=True)
+
+
+def _certificado(t, c, caduca, servicio="presentacion", estado="autorizado", n=[0]):
+    n[0] += 1
+    conn = db.get_connection()
+    cur = conn.execute("INSERT INTO certificados (tenant_id, huella_sha256, nombre_comun, not_after, estado_operativo, creado_en, actualizado_en) VALUES (?, ?, 'Cert de prueba', ?, ?, '2026-01-01T00:00:00', '2026-01-01T00:00:00')",
+                       (t, f"h{t}-{n[0]}", caduca.isoformat() + "T00:00:00", estado))
+    conn.execute("INSERT INTO certificados_vinculos (tenant_id, certificado_id, cliente_fiscal_id, servicio, autorizacion, vigente_desde, estado, creado_en) VALUES (?, ?, ?, ?, 'poder', '2026-01-01', 'activo', '2026-01-01T00:00:00')",
+                 (t, cur.lastrowid, c, servicio))
+    conn.commit(); conn.close()
+
+
+def test_un_certificado_que_caduca_pronto_avisa_y_uno_con_alternativa_o_lejano_no():
+    t, c = _t()
+    _certificado(t, c, HOY + timedelta(days=10))
+    a = [x for x in anomalias.detectar(t, HOY) if x["tipo"] == "certificado_caduca"]
+    assert len(a) == 1 and a[0]["severidad"] == "alta" and a[0]["datos"]["dias"] == 10 and "caduca en 10 días" in anomalias.texto(a[0])[0]
+    _certificado(t, c, HOY + timedelta(days=400))                                                       # otro vigente sobrado: ya no hay riesgo
+    assert "certificado_caduca" not in _tipos(t)
+    t2, c2 = _t()
+    _certificado(t2, c2, HOY + timedelta(days=200))
+    assert "certificado_caduca" not in _tipos(t2)                                                       # lejos del horizonte
+    t3, c3 = _t()
+    _certificado(t3, c3, HOY - timedelta(days=3))
+    a = [x for x in anomalias.detectar(t3, HOY) if x["tipo"] == "certificado_caduca"]
+    assert a and "caducó el" in anomalias.texto(a[0])[0]                                                # ya caducado
+    t4, c4 = _t()
+    _certificado(t4, c4, HOY + timedelta(days=5), estado="sustituido")
+    _certificado(t4, c4, HOY + timedelta(days=5), servicio="firma")
+    assert "certificado_caduca" not in _tipos(t4)                                                       # sustituido o solo para firmar: no cuenta
+    t5, c5 = _t()
+    _certificado(t5, c5, HOY + timedelta(days=20))
+    assert "certificado_caduca" in _tipos(t5)
+    from app import ia_despacho
+    ia_despacho.guardar_umbrales(t5, {"dias_certificado": 7})
+    assert "certificado_caduca" not in [x["tipo"] for x in anomalias.detectar(t5, HOY)]                 # el despacho avisa más tarde
+
+
+def _con_retencion(c, fecha, cuota="15,00"):
+    f = fc.crear_desde_portal(c, {"tipo": "recibida", "fecha": fecha, "numero": f"R-{fecha}", "tercero_nombre": "Abogado", "tercero_nif": "12345678Z", "total": "106,00", "pct_iva": "21"})
+    conn = db.get_connection()
+    conn.execute("UPDATE facturas_contables_lineas SET pct_retencion = 15, cuota_retencion = 1500 WHERE factura_id = ?", (f,))
+    conn.commit(); conn.close()
+
+
+def test_retenciones_del_trimestre_cerrado_sin_modelo_111_avisan_hasta_que_hay_modelo():
+    hoy = date(2026, 10, 10)                                                                            # el tercer trimestre acaba de cerrarse
+    t, c = _t()
+    _con_retencion(c, "2026-08-20")
+    a = [x for x in anomalias.detectar(t, hoy) if x["tipo"] == "retencion_sin_modelo"]
+    assert len(a) == 1 and a[0]["periodo"] == "2026-T3" and a[0]["datos"]["retenido"] == 1500 and "111" in anomalias.texto(a[0])[0]
+    conn = db.get_connection()
+    conn.execute("INSERT INTO vencimientos_fiscales (tenant_id, cliente_fiscal_id, modelo, periodo, fecha_limite, estado, creado_en) VALUES (?, ?, '111', '2026-T3', '2026-10-20', 'pendiente', '2026-10-01T00:00:00')", (t, c))
+    conn.commit(); conn.close()
+    assert "retencion_sin_modelo" not in [x["tipo"] for x in anomalias.detectar(t, hoy)]                # ya existe la obligación
+    t2, c2 = _t()
+    _con_retencion(c2, "2026-08-20")
+    assert "retencion_sin_modelo" not in [x["tipo"] for x in anomalias.detectar(t2, date(2026, 12, 20))]  # pasada la ventana de 60 días
+    assert "retencion_sin_modelo" not in [x["tipo"] for x in anomalias.detectar(t2, date(2026, 9, 20))]   # el trimestre aún no ha cerrado
+    t3, c3 = _t()
+    _f(c3, 5)                                                                                           # una factura sin retención no avisa
+    assert "retencion_sin_modelo" not in [x["tipo"] for x in anomalias.detectar(t3, hoy)]

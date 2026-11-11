@@ -27727,3 +27727,24 @@ msgstr "Vous vous connectez d'un geste depuis cet appareil, sans saisir le mot d
 
 msgid "con passkey"
 msgstr "avec passkey"
+
+msgid "Es el único vigente para presentar en su nombre: «%(n)s». Abre su renovación antes de que falle una presentación."
+msgstr "C'est le seul valide pour déposer en son nom : « %(n)s ». Ouvrez son renouvellement avant qu'un dépôt n'échoue."
+
+msgid "%(c)s tiene retenciones en %(p)s y no figura el modelo 111"
+msgstr "%(c)s a des retenues en %(p)s et aucun modèle 111 n'est enregistré"
+
+msgid "%(n)s facturas recibidas con retención de IRPF en el trimestre y ningún modelo 111 de ese periodo."
+msgstr "%(n)s factures reçues avec retenue d'IRPF au trimestre et aucun modèle 111 pour cette période."
+
+msgid "El certificado de %(c)s caducó el %(f)s"
+msgstr "Le certificat de %(c)s a expiré le %(f)s"
+
+msgid "El certificado de %(c)s caduca en %(n)s días"
+msgstr "Le certificat de %(c)s expire dans %(n)s jours"
+
+msgid "sin nombre"
+msgstr "sans nom"
+
+msgid "Certificado: días de antelación al aviso de caducidad"
+msgstr "Certificat : jours de préavis avant l'expiration"

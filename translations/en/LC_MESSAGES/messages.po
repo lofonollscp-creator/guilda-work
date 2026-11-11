@@ -27642,3 +27642,24 @@ msgstr "You sign in with one tap from this device, without typing the password. 
 
 msgid "con passkey"
 msgstr "with passkey"
+
+msgid "Es el único vigente para presentar en su nombre: «%(n)s». Abre su renovación antes de que falle una presentación."
+msgstr "It is the only valid one for filing on their behalf: “%(n)s”. Open its renewal before a filing fails."
+
+msgid "%(c)s tiene retenciones en %(p)s y no figura el modelo 111"
+msgstr "%(c)s has withholdings in %(p)s and no form 111 is on record"
+
+msgid "%(n)s facturas recibidas con retención de IRPF en el trimestre y ningún modelo 111 de ese periodo."
+msgstr "%(n)s received invoices with IRPF withholding in the quarter and no form 111 for that period."
+
+msgid "El certificado de %(c)s caducó el %(f)s"
+msgstr "%(c)s's certificate expired on %(f)s"
+
+msgid "El certificado de %(c)s caduca en %(n)s días"
+msgstr "%(c)s's certificate expires in %(n)s days"
+
+msgid "sin nombre"
+msgstr "unnamed"
+
+msgid "Certificado: días de antelación al aviso de caducidad"
+msgstr "Certificate: days of notice before expiry"

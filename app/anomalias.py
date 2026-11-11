@@ -22,8 +22,8 @@ from datetime import date, timedelta
 from . import db
 
 SEVERIDADES = {"alta": 0, "media": 1, "baja": 2}
-UMBRALES_POR_DEFECTO = {"dias_sin_facturas": 45, "importe_gasto": 300, "dias_vencimiento": 7, "iva_desvio_pct": 50, "dias_sin_entrar": 30, "importe_proveedor_nuevo": 1000}
-LIMITES = {"dias_sin_facturas": (15, 365), "importe_gasto": (50, 100000), "dias_vencimiento": (1, 30), "iva_desvio_pct": (10, 500), "dias_sin_entrar": (7, 365), "importe_proveedor_nuevo": (100, 1000000)}
+UMBRALES_POR_DEFECTO = {"dias_sin_facturas": 45, "importe_gasto": 300, "dias_vencimiento": 7, "iva_desvio_pct": 50, "dias_sin_entrar": 30, "importe_proveedor_nuevo": 1000, "dias_certificado": 30}
+LIMITES = {"dias_sin_facturas": (15, 365), "importe_gasto": (50, 100000), "dias_vencimiento": (1, 30), "iva_desvio_pct": (10, 500), "dias_sin_entrar": (7, 365), "importe_proveedor_nuevo": (100, 1000000), "dias_certificado": (7, 180)}
 MIN_FACTURAS_HABITUALES = 3
 FACTOR_INTERVALO = 3
 MIN_ANTERIORES_GASTO = 8
@@ -173,6 +173,51 @@ def iva_desviado(conn, tenant_id: int, nombres: dict[int, str], hoy: date, u: di
     return salida
 
 
+def certificado_caduca(conn, tenant_id: int, nombres: dict[int, str], hoy: date, u: dict) -> list[dict]:
+    """Clientes cuyo único certificado vigente para presentar o acceder (según los vínculos de `certificados`) caduca en `dias_certificado` días o ya ha caducado. Si el cliente tiene otro
+    certificado que sigue vigente más allá del horizonte, no se avisa. Una alerta por cliente, con el certificado que antes caduca."""
+    limite = (hoy + timedelta(days=u["dias_certificado"])).isoformat()
+    por: dict[int, list] = {}
+    for f in conn.execute("SELECT b.cliente_fiscal_id AS cliente, c.id, c.nombre_comun, c.not_after FROM certificados_vinculos b JOIN certificados c ON c.id = b.certificado_id "
+                          "WHERE b.tenant_id = ? AND b.estado = 'activo' AND b.cliente_fiscal_id IS NOT NULL AND b.servicio IN ('presentacion', 'acceso_buzon') "
+                          "AND c.estado_operativo NOT IN ('archivado', 'sustituido', 'suspendido') AND c.not_after IS NOT NULL", (tenant_id,)).fetchall():
+        por.setdefault(f["cliente"], []).append(f)
+    salida = []
+    for cid, certs in por.items():
+        if cid not in nombres or any(c["not_after"][:10] > limite for c in certs):
+            continue
+        c = min(certs, key=lambda x: x["not_after"])
+        caduca = _d(c["not_after"])
+        if caduca is None:
+            continue
+        dias = (caduca - hoy).days
+        salida.append({"tipo": "certificado_caduca", "severidad": "alta" if dias <= 15 else "media", "cliente_id": cid, "cliente": nombres[cid], "certificado_id": c["id"],
+                       "datos": {"dias": dias, "caduca": caduca.isoformat(), "certificado": (c["nombre_comun"] or "")[:80]}})
+    return salida
+
+
+def retencion_sin_modelo(conn, tenant_id: int, nombres: dict[int, str], hoy: date, u: dict | None = None) -> list[dict]:
+    """Facturas recibidas con retención de IRPF en el trimestre que acaba de cerrarse y ningún modelo 111 (ni pendiente ni presentado) de ese periodo para el cliente. Solo se avisa de que falta la obligación:
+    no se calcula ningún importe. Se mira durante los 60 días siguientes al cierre del trimestre."""
+    anio, q = _trimestre(hoy)
+    q -= 1
+    if q == 0:
+        anio, q = anio - 1, 4
+    inicio = date(anio, 3 * q - 2, 1)
+    fin = date(anio + (q == 4), (3 * q) % 12 + 1, 1)                  # primer día del trimestre siguiente
+    if not 0 <= (hoy - fin).days <= 60:
+        return []
+    periodo = f"{anio}-T{q}"
+    con_modelo = {r["cliente_fiscal_id"] for r in conn.execute("SELECT cliente_fiscal_id FROM vencimientos_fiscales WHERE tenant_id = ? AND modelo = '111' AND periodo = ? AND papelera_en IS NULL", (tenant_id, periodo)).fetchall()}
+    salida = []
+    for f in conn.execute("SELECT f.cliente_fiscal_id AS cliente, COUNT(DISTINCT f.id) AS n, SUM(l.cuota_retencion) AS retenido FROM facturas_contables f JOIN facturas_contables_lineas l ON l.factura_id = f.id "
+                          "WHERE f.tenant_id = ? AND f.tipo = 'recibida' AND f.estado <> 'descartada' AND f.fecha >= ? AND f.fecha < ? AND l.cuota_retencion > 0 GROUP BY f.cliente_fiscal_id",
+                          (tenant_id, inicio.isoformat(), fin.isoformat())).fetchall():
+        if f["cliente"] in nombres and f["cliente"] not in con_modelo:
+            salida.append({"tipo": "retencion_sin_modelo", "severidad": "media", "cliente_id": f["cliente"], "cliente": nombres[f["cliente"]], "periodo": periodo, "datos": {"facturas": f["n"], "retenido": f["retenido"]}})
+    return salida
+
+
 def sin_entrar_portal(conn, tenant_id: int, nombres: dict[int, str], hoy: date, u: dict) -> list[dict]:
     limite = (hoy - timedelta(days=u["dias_sin_entrar"])).isoformat()
     salida = []
@@ -215,7 +260,7 @@ def detectar(tenant_id: int, hoy: date | None = None, umbrales: dict | None = No
     try:
         nombres = _clientes(conn, tenant_id)
         facturas = _facturas(conn, tenant_id, hoy - timedelta(days=365))
-        alertas = vencimientos(conn, tenant_id, nombres, hoy, umbrales) + iva_desviado(conn, tenant_id, nombres, hoy, umbrales) + sin_entrar_portal(conn, tenant_id, nombres, hoy, umbrales)
+        alertas = vencimientos(conn, tenant_id, nombres, hoy, umbrales) + iva_desviado(conn, tenant_id, nombres, hoy, umbrales) + sin_entrar_portal(conn, tenant_id, nombres, hoy, umbrales) + certificado_caduca(conn, tenant_id, nombres, hoy, umbrales) + retencion_sin_modelo(conn, tenant_id, nombres, hoy, umbrales)
     finally:
         conn.close()
     alertas += sin_facturas(facturas, nombres, hoy, umbrales) + gasto_atipico(facturas, nombres, hoy, umbrales) + duplicadas(facturas, nombres, hoy) + proveedor_nuevo(facturas, nombres, hoy, umbrales)
@@ -262,6 +307,12 @@ def texto(a: dict) -> tuple[str, str]:
     if a["tipo"] == "proveedor_nuevo":
         return (_("Proveedor nuevo con un importe alto en %(c)s", c=a["cliente"]),
                 _("%(p)s: %(i)s el %(f)s; es la primera vez que aparece.", p=d["proveedor"], i=_eur(d["importe"]), f=d["fecha"]))
+    if a["tipo"] == "certificado_caduca":
+        return ((_("El certificado de %(c)s caducó el %(f)s", c=a["cliente"], f=d["caduca"]) if d["dias"] < 0 else _("El certificado de %(c)s caduca en %(n)s días", c=a["cliente"], n=d["dias"])),
+                _("Es el único vigente para presentar en su nombre: «%(n)s». Abre su renovación antes de que falle una presentación.", n=d["certificado"] or _("sin nombre")))
+    if a["tipo"] == "retencion_sin_modelo":
+        return (_("%(c)s tiene retenciones en %(p)s y no figura el modelo 111", c=a["cliente"], p=a["periodo"]),
+                _("%(n)s facturas recibidas con retención de IRPF en el trimestre y ningún modelo 111 de ese periodo.", n=d["facturas"]))
     return (_("Modelo %(m)s de %(c)s sin presentar", m=a["modelo"], c=a["cliente"]),
             _("La fecha límite pasó hace %(n)s días.", n=d["dias"]))
 

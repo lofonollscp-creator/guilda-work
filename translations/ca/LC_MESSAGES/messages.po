@@ -27651,3 +27651,24 @@ msgstr "Entres d'un toc des d'aquest dispositiu, sense escriure la contrasenya. 
 
 msgid "con passkey"
 msgstr "amb passkey"
+
+msgid "Es el único vigente para presentar en su nombre: «%(n)s». Abre su renovación antes de que falle una presentación."
+msgstr "És l'únic vigent per presentar en nom seu: «%(n)s». Obre'n la renovació abans que falli una presentació."
+
+msgid "%(c)s tiene retenciones en %(p)s y no figura el modelo 111"
+msgstr "%(c)s té retencions a %(p)s i no hi consta el model 111"
+
+msgid "%(n)s facturas recibidas con retención de IRPF en el trimestre y ningún modelo 111 de ese periodo."
+msgstr "%(n)s factures rebudes amb retenció d'IRPF al trimestre i cap model 111 d'aquest període."
+
+msgid "El certificado de %(c)s caducó el %(f)s"
+msgstr "El certificat de %(c)s va caducar el %(f)s"
+
+msgid "El certificado de %(c)s caduca en %(n)s días"
+msgstr "El certificat de %(c)s caduca d'aquí a %(n)s dies"
+
+msgid "sin nombre"
+msgstr "sense nom"
+
+msgid "Certificado: días de antelación al aviso de caducidad"
+msgstr "Certificat: dies d'antelació a l'avís de caducitat"
