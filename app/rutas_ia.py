@@ -19,6 +19,13 @@ def _sse(evento: dict) -> str:
     return f"data: {json.dumps(evento, ensure_ascii=False)}\n\n"
 
 
+@ia_bp.app_context_processor
+def _propuestas_en_las_plantillas():
+    """`n_propuestas()` en cualquier plantilla: cuántas propuestas esperan en la bandeja del despacho (se calcula solo si la plantilla lo pide)."""
+    from . import ia_propuestas
+    return {"n_propuestas": lambda: ia_propuestas.contar(g.tenant_id) if g.get("tenant_id") else 0}
+
+
 @ia_bp.route("/propuestas")
 @login_required
 def propuestas():
@@ -26,8 +33,8 @@ def propuestas():
     if g.tenant_id is None:
         abort(404)
     from . import ia_propuestas
-    ia_propuestas.generar_desde_alertas(g.tenant_id)
-    return render_template("ia_propuestas.html", pendientes=ia_propuestas.pendientes(g.tenant_id), resueltas=ia_propuestas.resueltas(g.tenant_id), aviso=request.args.get("aviso"), error=(request.args.get("error") or "")[:200] or None)
+    ia_propuestas.generar_todo(g.tenant_id)
+    return render_template("ia_propuestas.html", etiqueta=ia_propuestas.etiqueta, pendientes=ia_propuestas.pendientes(g.tenant_id), resueltas=ia_propuestas.resueltas(g.tenant_id), aviso=request.args.get("aviso"), error=(request.args.get("error") or "")[:200] or None)
 
 
 @ia_bp.route("/propuestas/<int:propuesta_id>/<accion>", methods=["POST"])

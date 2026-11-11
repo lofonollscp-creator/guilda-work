@@ -27504,3 +27504,21 @@ msgstr "Que faire maintenant avec ce client"
 
 msgid "Preguntar al asistente sobre este cliente"
 msgstr "Interroger l'assistant sur ce client"
+
+msgid "crear una tarea"
+msgstr "créer une tâche"
+
+msgid "pedir documentación al cliente por el portal"
+msgstr "demander des documents au client via le portail"
+
+msgid "escribir al cliente por el portal"
+msgstr "écrire au client via le portail"
+
+msgid "fijar la subcuenta de un proveedor o cliente"
+msgstr "fixer le sous-compte d'un fournisseur ou client"
+
+msgid "Al aprobar: %(que)s"
+msgstr "À l'approbation : %(que)s"
+
+msgid "de las facturas"
+msgstr "des factures"

@@ -27419,3 +27419,21 @@ msgstr "What to do now with this client"
 
 msgid "Preguntar al asistente sobre este cliente"
 msgstr "Ask the assistant about this client"
+
+msgid "crear una tarea"
+msgstr "create a task"
+
+msgid "pedir documentación al cliente por el portal"
+msgstr "request documents from the client through the portal"
+
+msgid "escribir al cliente por el portal"
+msgstr "write to the client through the portal"
+
+msgid "fijar la subcuenta de un proveedor o cliente"
+msgstr "set the sub-account of a supplier or client"
+
+msgid "Al aprobar: %(que)s"
+msgstr "On approval: %(que)s"
+
+msgid "de las facturas"
+msgstr "from the invoices"

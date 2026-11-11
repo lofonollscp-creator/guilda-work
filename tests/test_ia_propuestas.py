@@ -98,3 +98,42 @@ def test_la_pantalla_recoge_las_alertas_y_permite_aprobar_y_rechazar(cliente):
     assert "No hay propuestas pendientes." in html and "Aprobada" in html and "Rechazada" in html            # y al reabrirla no reaparecen
     assert "error=" in cliente.post(f"/ia/propuestas/{pendientes[0]['id']}/aprobar").headers["Location"]       # ya resuelta
     assert cliente.post("/ia/propuestas/1/otra").status_code == 404
+
+
+def test_pedir_documentacion_y_escribir_al_cliente_por_el_portal_solo_al_aprobar():
+    from app import portal_conversaciones, portal_peticiones
+    t, u, c = _eq(8)
+    ficha = db.obtener_cliente_fiscal_por_id(c)
+    p1 = ip.proponer(t, clave="doc:1", tipo="peticion_portal", titulo="Extracto del banco", detalle="Del tercer trimestre, en PDF", cliente_fiscal_id=c, datos={"titulo": "Extracto del banco del 3T", "descripcion": "En PDF"})
+    p2 = ip.proponer(t, clave="msg:1", tipo="mensaje_portal", titulo="Falta una factura", cliente_fiscal_id=c, datos={"asunto": "Falta una factura de septiembre", "texto": "Hola, no nos consta la factura de septiembre. ¿Nos la mandas?"})
+    assert portal_peticiones.listar(ficha) == [] and portal_conversaciones.listar(ficha) == []                          # proponer no manda nada al cliente
+    assert ip.aprobar(t, u, p1).startswith("peticion:") and ip.aprobar(t, u, p2).startswith("hilo:")
+    assert [x["titulo"] for x in portal_peticiones.listar(ficha)] == ["Extracto del banco del 3T"]
+    hilos = portal_conversaciones.listar(ficha)
+    assert len(hilos) == 1 and hilos[0]["asunto"] == "Falta una factura de septiembre"
+
+
+def test_un_cliente_borrado_o_de_otro_despacho_no_recibe_nada():
+    t, u, c = _eq(9)
+    t2, u2, c2 = _eq(10)
+    pid = ip.proponer(t, clave="msg:x", tipo="mensaje_portal", titulo="Hola", cliente_fiscal_id=c2, datos={"asunto": "Hola", "texto": "texto"})       # cliente de otro despacho
+    with pytest.raises(ip.ErrorPropuesta):
+        ip.aprobar(t, u, pid)
+    assert ip.obtener(t, pid)["estado"] == "pendiente"
+
+
+def test_la_subcuenta_del_plan_de_a3_se_propone_y_se_fija_al_aprobar():
+    from app import facturas_contables as fc, verticales
+    t, u, c = _eq(11)
+    verticales.fijar_activo(t, "contabilizacion", True)
+    fc.crear_desde_portal(c, {"tipo": "recibida", "fecha": date.today().isoformat(), "numero": "P-1", "tercero_nombre": "Ferretería Paco", "tercero_nif": "B11111111", "total": "121,00", "pct_iva": "21"})
+    cuenta = "4000".ljust(fc.configuracion(t, c)["digitos"] - 1, "0") + "1"                       # con los dígitos que usa este cliente
+    assert ip.generar_cuentas_de_terceros(t) == 0                                                    # sin la cuenta en el plan no hay nada que proponer
+    conn = db.get_connection()
+    conn.execute("INSERT INTO contabilidad_plan (tenant_id, cliente_fiscal_id, cuenta, nombre, tipo, nif, importado_en) VALUES (?, ?, ?, 'FERRETERIA PACO', 'proveedor', 'B11111111', '2026-11-01T10:00:00')", (t, c, cuenta))
+    conn.commit(); conn.close()
+    assert ip.generar_cuentas_de_terceros(t) == 1 and ip.generar_cuentas_de_terceros(t) == 0
+    p = ip.pendientes(t)[0]
+    assert p["tipo"] == "cuenta_tercero" and p["datos"]["cuenta"] == cuenta and "Ferretería Paco" in p["titulo"]
+    ip.aprobar(t, u, p["id"])
+    assert fc.cuenta_del_tercero(t, c, "recibida", "B11111111") == cuenta

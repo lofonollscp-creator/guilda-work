@@ -58,9 +58,63 @@ def manejador(tipo: str):
 
 @manejador("tarea")
 def _crear_tarea(p: dict, usuario_id: int) -> str:
+    """Crea la tarea (y, si la propuesta trae `avisar_en`, su recordatorio) a nombre de quien aprueba."""
     d = p["datos"]
     tid = db.crear_tarea_outlook(usuario_id, asunto=p["titulo"], cuerpo=p["detalle"] or None, prioridad=p["prioridad"], cliente_fiscal_id=p["cliente_fiscal_id"])
+    if d.get("avisar_en"):
+        db.anadir_recordatorio_tarea(usuario_id, tid, d["avisar_en"])
     return f"tarea:{tid}"
+
+
+def _cliente_de(p: dict) -> dict:
+    c = db.obtener_cliente_fiscal_por_id(p["cliente_fiscal_id"]) if p["cliente_fiscal_id"] else None
+    if c is None or c["tenant_id"] != p["tenant_id"]:
+        raise ErrorPropuesta("El cliente de esta propuesta ya no existe.")
+    return c
+
+
+@manejador("peticion_portal")
+def _pedir_documentacion(p: dict, usuario_id: int) -> str:
+    """Abre en el portal del cliente una petición de documentos (datos: titulo, descripcion, fecha_limite opcional)."""
+    from . import portal_peticiones
+    d = p["datos"]
+    try:
+        pid = portal_peticiones.crear(_cliente_de(p), d.get("titulo") or p["titulo"], d.get("descripcion") or p["detalle"], d.get("fecha_limite"), por=usuario_id)
+    except ValueError as e:
+        raise ErrorPropuesta(str(e)) from e
+    return f"peticion:{pid}"
+
+
+@manejador("mensaje_portal")
+def _escribir_al_cliente(p: dict, usuario_id: int) -> str:
+    """Abre un hilo en el portal del cliente con el texto propuesto (datos: asunto, texto). Es lo único que llega a un cliente, y solo cuando una persona lo aprueba."""
+    from . import portal_conversaciones
+    d = p["datos"]
+    nombre = db.nombre_mostrado_usuario(usuario_id) or "Despacho"
+    try:
+        hid = portal_conversaciones.iniciar(_cliente_de(p), d.get("asunto") or p["titulo"], d.get("texto") or p["detalle"], "despacho", nombre, usuario_id=usuario_id)
+    except ValueError as e:
+        raise ErrorPropuesta(str(e)) from e
+    return f"hilo:{hid}"
+
+
+@manejador("cuenta_tercero")
+def _fijar_cuenta(p: dict, usuario_id: int) -> str:
+    """Fija la subcuenta de un proveedor o cliente (datos: tipo_tercero, nif, cuenta) para las próximas exportaciones. Las ya exportadas no cambian."""
+    from . import facturas_contables as fc
+    d = p["datos"]
+    try:
+        fc.fijar_cuenta_tercero(p["tenant_id"], usuario_id, p["cliente_fiscal_id"], d.get("tipo_tercero", "proveedor"), d.get("nif", ""), d.get("cuenta", ""))
+    except ValueError as e:
+        raise ErrorPropuesta(str(e)) from e
+    return f"cuenta:{d.get('nif')}"
+
+
+def etiqueta(tipo: str) -> str:
+    """Qué hará aprobar esta propuesta, en palabras de quien la lee."""
+    from flask_babel import gettext as _
+    return {"tarea": _("crear una tarea"), "peticion_portal": _("pedir documentación al cliente por el portal"), "mensaje_portal": _("escribir al cliente por el portal"),
+            "cuenta_tercero": _("fijar la subcuenta de un proveedor o cliente")}.get(tipo, tipo)
 
 
 def proponer(tenant_id: int, *, clave: str, tipo: str, titulo: str, detalle: str = "", origen: str = "", datos: dict | None = None, cliente_fiscal_id: int | None = None, prioridad: str = "normal") -> int | None:
@@ -182,6 +236,37 @@ def generar_desde_alertas(tenant_id: int, hoy=None) -> int:
     return nuevas
 
 
+def generar_cuentas_de_terceros(tenant_id: int, hoy=None) -> int:
+    """Proveedores y clientes de facturas recientes que no tienen subcuenta recordada pero SÍ la tienen en el plan de a3 importado: se propone fijarla (así las próximas facturas salen con esa cuenta). Idempotente."""
+    from datetime import date
+    from . import facturas_contables as fc
+    desde = ((hoy or date.today()) - timedelta(days=90)).isoformat()
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT DISTINCT cliente_fiscal_id, tipo, tercero_nif, tercero_nombre FROM facturas_contables WHERE tenant_id = ? AND estado <> 'descartada' AND fecha >= ? AND COALESCE(tercero_nif, '') <> ''", (tenant_id, desde)).fetchall()
+        clientes = {r["id"]: r["nombre"] for r in conn.execute("SELECT id, nombre FROM clientes_fiscales WHERE tenant_id = ?", (tenant_id,)).fetchall()}
+    finally:
+        conn.close()
+    nuevas = 0
+    for f in filas:
+        cid, nif = f["cliente_fiscal_id"], fc._nif(f["tercero_nif"])
+        if cid not in clientes or fc.cuenta_del_tercero(tenant_id, cid, f["tipo"], nif):
+            continue
+        cuenta = fc.cuenta_del_plan(tenant_id, cid, f["tipo"], nif)
+        if not cuenta:
+            continue
+        tipo_tercero = "proveedor" if f["tipo"] == "recibida" else "cliente"
+        if proponer(tenant_id, clave=f"cuenta:{cid}:{tipo_tercero}:{nif}", tipo="cuenta_tercero", origen="facturas", cliente_fiscal_id=cid, datos={"tipo_tercero": tipo_tercero, "nif": nif, "cuenta": cuenta},
+                    titulo=f"Fijar la subcuenta {cuenta} de {f['tercero_nombre']}", detalle=f"El plan de a3 de {clientes[cid]} ya la tiene; así las próximas facturas de {f['tercero_nombre']} salen con esa cuenta."):
+            nuevas += 1
+    return nuevas
+
+
+def generar_todo(tenant_id: int) -> int:
+    """Todo lo que las reglas del sistema proponen hoy (alertas de clientes y cuentas de terceros)."""
+    return generar_desde_alertas(tenant_id) + generar_cuentas_de_terceros(tenant_id)
+
+
 _ULTIMA_GENERACION: dict[int, datetime] = {}
 
 
@@ -192,4 +277,4 @@ def generar_si_toca(tenant_id: int, minutos: int = 60) -> int:
     if ultima and ahora - ultima < timedelta(minutes=minutos):
         return 0
     _ULTIMA_GENERACION[tenant_id] = ahora
-    return generar_desde_alertas(tenant_id)
+    return generar_todo(tenant_id)

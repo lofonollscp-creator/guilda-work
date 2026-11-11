@@ -15,7 +15,7 @@
   {% for p in pendientes %}
   <li class="log-item" id="propuesta-{{ p.id }}">
     <span class="pill {{ 'pill-danger' if p.prioridad == 'alta' else '' }}">{{ _('Alta') if p.prioridad == 'alta' else _('Normal') }}</span>
-    <span class="log-text"><strong>{{ p.titulo }}</strong>{% if p.detalle %}<br><span class="muted">{{ p.detalle }}</span>{% endif %}<br><small class="muted">{{ _('Propone: crear una tarea') }}{% if p.origen == 'alerta' %} · {{ _('de las alertas de clientes') }}{% endif %}</small></span>
+    <span class="log-text"><strong>{{ p.titulo }}</strong>{% if p.detalle %}<br><span class="muted">{{ p.detalle }}</span>{% endif %}<br>{% if p.tipo == 'mensaje_portal' and p.datos.texto %}<blockquote class="muted">{{ p.datos.texto }}</blockquote>{% endif %}<small class="muted">{{ _('Al aprobar: %(que)s', que=etiqueta(p.tipo)) }}{% if p.origen == 'alerta' %} · {{ _('de las alertas de clientes') }}{% elif p.origen == 'facturas' %} · {{ _('de las facturas') }}{% endif %}</small></span>
     <form method="post" action="{{ url_for('ia.resolver_propuesta', propuesta_id=p.id, accion='aprobar') }}"><button type="submit" class="btn btn-primary">{{ _('Aprobar') }}</button></form>
     <form method="post" action="{{ url_for('ia.resolver_propuesta', propuesta_id=p.id, accion='rechazar') }}"><button type="submit" class="btn btn-ghost">{{ _('Rechazar') }}</button></form>
   </li>

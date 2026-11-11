@@ -208,3 +208,16 @@ def test_las_alertas_graves_de_los_clientes_entran_en_el_resumen_de_quien_dirige
     otro = db.crear_usuario_vinculado_a_kratos("sin-mando@ejemplo.com", "k-sin-mando")
     db.asignar_tenant(otro, eq.t)
     assert rp.reunir(otro, HOY)["alertas"] == []                                                       # quien no dirige no recibe el ruido
+
+
+def test_las_propuestas_pendientes_salen_en_el_resumen_sin_repetir_las_alertas():
+    from app import ia_propuestas as ip
+    eq = Equipo()
+    verticales.fijar_activo(eq.t, "gestoria", True)
+    c = db.crear_cliente_fiscal(eq.t, "Cliente Prop SL", email="p@ejemplo.com")
+    db.crear_vencimiento_fiscal(eq.t, c, "303", "3T", (HOY - timedelta(days=2)).isoformat())
+    ip.generar_desde_alertas(eq.t)                                                                        # propuesta de origen «alerta»: ya sale en «Alertas»
+    ip.proponer(eq.t, clave="x", tipo="tarea", titulo="Llamar a Cliente Prop", origen="asistente", cliente_fiscal_id=c)
+    r = rp.reunir(eq.u, HOY)
+    assert [p["titulo"] for p in r["propuestas"]] == ["Llamar a Cliente Prop"] and len(r["alertas"]) == 1
+    assert "Propuestas por revisar (1)" in "\n".join(rp.redactar(r)[2])

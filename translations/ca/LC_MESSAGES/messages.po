@@ -27428,3 +27428,21 @@ msgstr "Què toca ara amb aquest client"
 
 msgid "Preguntar al asistente sobre este cliente"
 msgstr "Preguntar a l'assistent sobre aquest client"
+
+msgid "crear una tarea"
+msgstr "crear una tasca"
+
+msgid "pedir documentación al cliente por el portal"
+msgstr "demanar documentació al client pel portal"
+
+msgid "escribir al cliente por el portal"
+msgstr "escriure al client pel portal"
+
+msgid "fijar la subcuenta de un proveedor o cliente"
+msgstr "fixar el subcompte d'un proveïdor o client"
+
+msgid "Al aprobar: %(que)s"
+msgstr "En aprovar: %(que)s"
+
+msgid "de las facturas"
+msgstr "de les factures"

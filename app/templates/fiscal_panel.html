@@ -17,7 +17,7 @@
     <p class="subtitle">{{ _('Qué mirar hoy, cómo está repartido el trabajo y cómo se cumple. Cada aviso dice por qué y a dónde ir.') }}
       {% if p.ambito == 'parcial' %}<strong>{{ _('Solo ves los clientes de tus oficinas y los que te han compartido.') }}</strong>{% endif %}</p>
   </div>
-  <div class="ds-fila"><a class="btn btn-secondary" href="{{ url_for('fiscal.alertas') }}">{{ _('Alertas') }}</a> <a class="btn btn-secondary" href="{{ url_for('ia.propuestas') }}">{{ _('Propuestas') }}</a> <a class="btn btn-secondary" href="{{ url_for('control_fiscal.traspasos_pantalla') }}">{{ _('Traspasos') }}</a></div>
+  <div class="ds-fila"><a class="btn btn-secondary" href="{{ url_for('fiscal.alertas') }}">{{ _('Alertas') }}</a> <a class="btn btn-secondary" href="{{ url_for('ia.propuestas') }}">{{ _('Propuestas') }}{% if n_propuestas() %} ({{ n_propuestas() }}){% endif %}</a> <a class="btn btn-secondary" href="{{ url_for('control_fiscal.traspasos_pantalla') }}">{{ _('Traspasos') }}</a></div>
 </header>
 
 <section class="cert-resumen" aria-label="{{ _('Resumen') }}">
