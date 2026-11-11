@@ -36,10 +36,10 @@ import urllib.parse
 import urllib.request
 from collections import defaultdict
 
-from flask import Blueprint, Response, redirect, request
+from flask import Blueprint, Response, g, redirect, request
 from flask_babel import get_locale
 
-from . import captcha
+from . import captcha, seguridad_avisos
 from . import kratos as kratos_modulo
 
 kratos_proxy_bp = Blueprint("kratos_proxy", __name__, url_prefix="/.ory")
@@ -151,6 +151,9 @@ def proxy(subruta: str):
     else:
         cuerpo = cuerpo_original
 
+    # Un envío de ajustes (passkey, segundo factor…) de una persona con sesión: foto de sus métodos antes y después para avisarle de lo que cambie (app/seguridad_avisos.py).
+    vigilar_cambios = request.method == "POST" and subruta.rstrip("/") == "self-service/settings" and g.get("usuario_id") is not None
+    antes = seguridad_avisos.instantanea(g.usuario_id) if vigilar_cambios else None
     peticion = urllib.request.Request(destino, data=cuerpo, headers=cabeceras, method=request.method)
     # Sin seguir redirecciones: un 303 de Kratos (p.ej. tras completar login)
     # tiene que llegar TAL CUAL al navegador real para que lo siga él mismo
@@ -181,6 +184,8 @@ def proxy(subruta: str):
             valor = kratos_modulo.reescribir_action_para_navegador(valor)
         respuesta.headers.add(clave, valor)
 
+    if vigilar_cambios and antes is not None and estado < 400:
+        seguridad_avisos.avisar(g.usuario_id, antes, seguridad_avisos.instantanea(g.usuario_id))
     if vigilar_captcha:
         location = respuesta.headers.get("Location", "")
         if _RUTA_LOGIN_PAGINA in location:

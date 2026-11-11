@@ -27799,3 +27799,24 @@ msgid "Te queda %(n)s día (hasta el %(f)s)."
 msgid_plural "Te quedan %(n)s días (hasta el %(f)s)."
 msgstr[0] "Il vous reste %(n)s jour (jusqu'au %(f)s)."
 msgstr[1] "Il vous reste %(n)s jours (jusqu'au %(f)s)."
+
+msgid "Si no has sido tú, cambia la contraseña y avisa a la dirección de tu despacho."
+msgstr "Si ce n'était pas vous, changez votre mot de passe et prévenez la direction de votre cabinet."
+
+msgid "Se ha añadido una passkey a tu cuenta"
+msgstr "Une passkey a été ajoutée à votre compte"
+
+msgid "Se ha quitado una passkey de tu cuenta"
+msgstr "Une passkey a été retirée de votre compte"
+
+msgid "Se ha activado la verificación en dos pasos en tu cuenta"
+msgstr "La vérification en deux étapes a été activée sur votre compte"
+
+msgid "Se ha quitado la verificación en dos pasos de tu cuenta"
+msgstr "La vérification en deux étapes a été retirée de votre compte"
+
+msgid "Se han generado códigos de recuperación en tu cuenta"
+msgstr "Des codes de récupération ont été générés pour votre compte"
+
+msgid "Se han quitado los códigos de recuperación de tu cuenta"
+msgstr "Les codes de récupération ont été retirés de votre compte"

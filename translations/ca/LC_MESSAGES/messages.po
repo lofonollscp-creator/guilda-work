@@ -27723,3 +27723,24 @@ msgid "Te queda %(n)s día (hasta el %(f)s)."
 msgid_plural "Te quedan %(n)s días (hasta el %(f)s)."
 msgstr[0] "Et queda %(n)s dia (fins al %(f)s)."
 msgstr[1] "Et queden %(n)s dies (fins al %(f)s)."
+
+msgid "Si no has sido tú, cambia la contraseña y avisa a la dirección de tu despacho."
+msgstr "Si no has estat tu, canvia la contrasenya i avisa la direcció del teu despatx."
+
+msgid "Se ha añadido una passkey a tu cuenta"
+msgstr "S'ha afegit una passkey al teu compte"
+
+msgid "Se ha quitado una passkey de tu cuenta"
+msgstr "S'ha tret una passkey del teu compte"
+
+msgid "Se ha activado la verificación en dos pasos en tu cuenta"
+msgstr "S'ha activat la verificació en dos passos al teu compte"
+
+msgid "Se ha quitado la verificación en dos pasos de tu cuenta"
+msgstr "S'ha tret la verificació en dos passos del teu compte"
+
+msgid "Se han generado códigos de recuperación en tu cuenta"
+msgstr "S'han generat codis de recuperació al teu compte"
+
+msgid "Se han quitado los códigos de recuperación de tu cuenta"
+msgstr "S'han tret els codis de recuperació del teu compte"

@@ -27714,3 +27714,24 @@ msgid "Te queda %(n)s día (hasta el %(f)s)."
 msgid_plural "Te quedan %(n)s días (hasta el %(f)s)."
 msgstr[0] "You have %(n)s day left (until %(f)s)."
 msgstr[1] "You have %(n)s days left (until %(f)s)."
+
+msgid "Si no has sido tú, cambia la contraseña y avisa a la dirección de tu despacho."
+msgstr "If this wasn't you, change your password and tell your firm's management."
+
+msgid "Se ha añadido una passkey a tu cuenta"
+msgstr "A passkey was added to your account"
+
+msgid "Se ha quitado una passkey de tu cuenta"
+msgstr "A passkey was removed from your account"
+
+msgid "Se ha activado la verificación en dos pasos en tu cuenta"
+msgstr "Two-step verification was turned on for your account"
+
+msgid "Se ha quitado la verificación en dos pasos de tu cuenta"
+msgstr "Two-step verification was removed from your account"
+
+msgid "Se han generado códigos de recuperación en tu cuenta"
+msgstr "Recovery codes were generated for your account"
+
+msgid "Se han quitado los códigos de recuperación de tu cuenta"
+msgstr "Recovery codes were removed from your account"
