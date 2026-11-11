@@ -216,7 +216,7 @@ def ver(factura_id: int):
     facturas_portal.marcar_leidos(g.tenant_id, factura_id, "empleado")
     return render_template("contabilidad_factura.html", f=f, datos=datos, lineas=lineas, cliente_id=f["cliente_fiscal_id"], clientes=_clientes(), error=_error(), cfg=cfg,
                            mensajes=mensajes, duplicados=fc.posibles_duplicados(g.tenant_id, g.usuario_id, factura_id), avisos_control=facturas_control.avisos(g.tenant_id, f), historial=fc.historial(g.tenant_id, g.usuario_id, factura_id),
-                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), evidencia=lectura_facturas.evidencia_de(f) if f.get("lectura") in ("ia", "xml") else None, visor=_visor_de(f), visor_evidencias=_evidencias_para_el_visor(f),
+                           cuenta_efectiva=fc.cuenta_efectiva(g.tenant_id, f, cfg), ia_lista=lectura_facturas.configurada(g.usuario_id), evidencia=lectura_facturas.evidencia_de(f) if f.get("lectura") in ("ia", "xml") else None, visor=_visor_de(f), visor_evidencias=_evidencias_para_el_visor(f), dudosos=lectura_facturas.campos_dudosos(lectura_facturas.evidencia_de(f), f["tipo"]) if f.get("lectura") == "ia" and f["estado"] == "pendiente" else [],
                            imagen_en_linea=False, regla=fc.regla_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"]), periodo_cerrado=fc.periodos_cerrados(g.tenant_id, f["cliente_fiscal_id"], [f["trimestre"]]).get(f["trimestre"]),
                            cuenta_nueva=bool(cfg["subcuentas_auto"] and f["tercero_nif"] and not f["tercero_cuenta"] and not fc.cuenta_del_tercero(g.tenant_id, f["cliente_fiscal_id"], f["tipo"], f["tercero_nif"])))
 

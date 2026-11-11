@@ -27441,3 +27441,12 @@ msgstr "Par exemple : tutoyer le client, phrases courtes, sans jargon, conclure 
 
 msgid "Guardar voz"
 msgstr "Enregistrer la voix"
+
+msgid "Datos que conviene mirar primero"
+msgstr "Données à vérifier en premier"
+
+msgid "Mira primero:"
+msgstr "Vérifiez d'abord :"
+
+msgid "La IA no está segura de estos datos; el resto los ha leído con confianza."
+msgstr "L'IA n'est pas sûre de ces données ; elle a lu le reste avec confiance."

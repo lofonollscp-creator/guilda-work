@@ -5285,3 +5285,5 @@ html[data-sencillo] .portal-nav a, html[data-sencillo] .portal-tabs a { min-heig
 .edit-form.arrastrando { outline: 2px dashed var(--portal-accent); outline-offset: 6px; background: var(--portal-accent-bg); }
 
 .portal-compartir input[type="number"], .portal-compartir input[maxlength="4"] { width: 6em; }
+.lectura-dudosos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--warning-text, #b45309); border-radius: 10px; background: color-mix(in srgb, var(--warning, #eab308) 12%, transparent); }
+.lectura-dudosos small { flex-basis: 100%; }

@@ -27356,3 +27356,12 @@ msgstr "For example: use the informal «you», short sentences, no jargon, close
 
 msgid "Guardar voz"
 msgstr "Save voice"
+
+msgid "Datos que conviene mirar primero"
+msgstr "Data worth checking first"
+
+msgid "Mira primero:"
+msgstr "Check first:"
+
+msgid "La IA no está segura de estos datos; el resto los ha leído con confianza."
+msgstr "The AI is not sure about this data; it read the rest with confidence."

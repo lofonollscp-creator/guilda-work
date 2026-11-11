@@ -591,6 +591,18 @@ def _duplicado(tenant_id: int, f: dict, numero: str, nif: str) -> list[str]:
     return [f"Ya hay otra factura de este titular con el número {numero} y el NIF {nif} (id {o['id']}): ¿es un duplicado?" for o in otras]
 
 
+UMBRAL_DUDOSO = 90
+
+
+def campos_dudosos(evidencia: dict | None, tipo: str = "recibida", umbral: int = UMBRAL_DUDOSO) -> list[dict]:
+    """Los datos de una lectura de los que la IA no está segura, de menos a más fiable: `[{campo, confianza}]`. La pantalla de revisión los enseña primero para que la persona mire lo dudoso y
+    no todo. De los dos NIF solo cuenta el de la otra parte (el emisor en una recibida, el receptor en una emitida): el propio no se rellena a mano."""
+    conf = (evidencia or {}).get("confianza") or {}
+    propio = "emisor_nif" if tipo == "emitida" else "receptor_nif"
+    sal = [{"campo": c, "confianza": int(p)} for c, p in conf.items() if c != propio and isinstance(p, (int, float)) and p < umbral]
+    return sorted(sal, key=lambda d: (d["confianza"], d["campo"]))
+
+
 def evidencia_de(f: dict) -> dict | None:
     """Las evidencias guardadas de una factura leída con IA (`{"campos", "verificaciones"}`), o None."""
     try:

@@ -37,6 +37,15 @@
 </div>
 {% endif %}
 
+{% if dudosos %}
+{% set nombres_campo = {'numero': _('Número de factura'), 'fecha': _('Fecha de la factura'), 'emisor_nif': _('NIF / CIF'), 'receptor_nif': _('NIF / CIF'), 'total': _('Total'), 'base': _('Base imponible'), 'iva': _('IVA')} %}
+<div class="lectura-dudosos" role="group" aria-label="{{ _('Datos que conviene mirar primero') }}" data-dudosos>
+  <strong>{{ _('Mira primero:') }}</strong>
+  {% for d in dudosos %}<button type="button" class="btn btn-ghost" data-ir-campo="{{ d.campo }}">{{ nombres_campo[d.campo] }} · {{ d.confianza }} %</button>{% endfor %}
+  <small class="muted">{{ _('La IA no está segura de estos datos; el resto los ha leído con confianza.') }}</small>
+</div>
+<script src="{{ url_for('static', filename='contabilidad_dudosos.js') }}" defer></script>
+{% endif %}
 <div class="revision-visor {{ 'con-documento' if visor }}" data-visor-revision>
 {% if visor %}
 <aside class="visor-documento" aria-label="{{ _('Documento de la factura') }}">

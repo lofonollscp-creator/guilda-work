@@ -27365,3 +27365,12 @@ msgstr "Per exemple: tutejar el client, frases curtes, sense tecnicismes, tancar
 
 msgid "Guardar voz"
 msgstr "Desar la veu"
+
+msgid "Datos que conviene mirar primero"
+msgstr "Dades que convé mirar primer"
+
+msgid "Mira primero:"
+msgstr "Mira primer:"
+
+msgid "La IA no está segura de estos datos; el resto los ha leído con confianza."
+msgstr "La IA no n'està segura, d'aquestes dades; la resta les ha llegit amb confiança."
