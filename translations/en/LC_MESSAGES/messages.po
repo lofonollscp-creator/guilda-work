@@ -27395,3 +27395,27 @@ msgstr "That proposal does not exist."
 
 msgid "No sé ejecutar ese tipo de propuesta."
 msgstr "I don't know how to carry out that kind of proposal."
+
+msgid "Hazme un resumen de la situación de %(c)s: qué tiene pendiente, qué vence pronto y qué debería hacer yo primero."
+msgstr "Give me a summary of %(c)s's situation: what is pending, what is due soon and what I should do first."
+
+msgid "El modelo %(m)s (%(p)s) vence en %(n)s días"
+msgstr "Form %(m)s (%(p)s) is due in %(n)s days"
+
+msgid "Falta por llegar: %(p)s."
+msgstr "Still missing: %(p)s."
+
+msgid "No se ha pedido documentación."
+msgstr "No documents have been requested."
+
+msgid "%(n)s facturas esperan revisión"
+msgstr "%(n)s invoices are waiting for review"
+
+msgid "1 factura espera revisión"
+msgstr "1 invoice is waiting for review"
+
+msgid "Qué toca ahora con este cliente"
+msgstr "What to do now with this client"
+
+msgid "Preguntar al asistente sobre este cliente"
+msgstr "Ask the assistant about this client"

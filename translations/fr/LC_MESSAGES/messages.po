@@ -27480,3 +27480,27 @@ msgstr "Cette proposition n'existe pas."
 
 msgid "No sé ejecutar ese tipo de propuesta."
 msgstr "Je ne sais pas exécuter ce type de proposition."
+
+msgid "Hazme un resumen de la situación de %(c)s: qué tiene pendiente, qué vence pronto y qué debería hacer yo primero."
+msgstr "Fais-moi un résumé de la situation de %(c)s : ce qui est en attente, ce qui échoit bientôt et ce que je devrais faire en premier."
+
+msgid "El modelo %(m)s (%(p)s) vence en %(n)s días"
+msgstr "Le modèle %(m)s (%(p)s) échoit dans %(n)s jours"
+
+msgid "Falta por llegar: %(p)s."
+msgstr "Il manque encore : %(p)s."
+
+msgid "No se ha pedido documentación."
+msgstr "Aucun document n'a été demandé."
+
+msgid "%(n)s facturas esperan revisión"
+msgstr "%(n)s factures attendent une révision"
+
+msgid "1 factura espera revisión"
+msgstr "1 facture attend une révision"
+
+msgid "Qué toca ahora con este cliente"
+msgstr "Que faire maintenant avec ce client"
+
+msgid "Preguntar al asistente sobre este cliente"
+msgstr "Interroger l'assistant sur ce client"

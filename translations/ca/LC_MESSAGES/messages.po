@@ -27404,3 +27404,27 @@ msgstr "Aquesta proposta no existeix."
 
 msgid "No sé ejecutar ese tipo de propuesta."
 msgstr "No sé executar aquest tipus de proposta."
+
+msgid "Hazme un resumen de la situación de %(c)s: qué tiene pendiente, qué vence pronto y qué debería hacer yo primero."
+msgstr "Fes-me un resum de la situació de %(c)s: què té pendent, què venç aviat i què hauria de fer jo primer."
+
+msgid "El modelo %(m)s (%(p)s) vence en %(n)s días"
+msgstr "El model %(m)s (%(p)s) venç d'aquí a %(n)s dies"
+
+msgid "Falta por llegar: %(p)s."
+msgstr "Falta que arribi: %(p)s."
+
+msgid "No se ha pedido documentación."
+msgstr "No s'ha demanat documentació."
+
+msgid "%(n)s facturas esperan revisión"
+msgstr "%(n)s factures esperen revisió"
+
+msgid "1 factura espera revisión"
+msgstr "1 factura espera revisió"
+
+msgid "Qué toca ahora con este cliente"
+msgstr "Què toca ara amb aquest client"
+
+msgid "Preguntar al asistente sobre este cliente"
+msgstr "Preguntar a l'assistent sobre aquest client"

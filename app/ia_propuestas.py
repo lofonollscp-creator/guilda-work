@@ -180,3 +180,16 @@ def generar_desde_alertas(tenant_id: int, hoy=None) -> int:
         if proponer(tenant_id, clave=f"alerta:{anomalias.clave(a)}", tipo="tarea", titulo=titulo, detalle=detalle, origen="alerta", cliente_fiscal_id=a["cliente_id"], prioridad="alta" if a["severidad"] == "alta" else "normal", datos={"alerta": a["tipo"]}):
             nuevas += 1
     return nuevas
+
+
+_ULTIMA_GENERACION: dict[int, datetime] = {}
+
+
+def generar_si_toca(tenant_id: int, minutos: int = 60) -> int:
+    """Como `generar_desde_alertas`, pero como mucho una vez cada `minutos` por despacho en este proceso: la ficha de cada cliente la llama y calcular las alertas de todo el despacho no es gratis."""
+    ahora = datetime.now()
+    ultima = _ULTIMA_GENERACION.get(tenant_id)
+    if ultima and ahora - ultima < timedelta(minutes=minutos):
+        return 0
+    _ULTIMA_GENERACION[tenant_id] = ahora
+    return generar_desde_alertas(tenant_id)

@@ -22,6 +22,24 @@
     {% endif %}
   </div>
 </header>
+{% if copiloto and (copiloto.propuestas or copiloto.avisos) %}
+<section class="proyecto-bloque ds-max-720 copiloto" aria-labelledby="copiloto-titulo">
+  <h2 id="copiloto-titulo">{{ _('Qué toca ahora con este cliente') }}</h2>
+  <ul class="log-list">
+    {% for p in copiloto.propuestas %}
+    <li class="log-item"><span class="pill {{ 'pill-danger' if p.prioridad == 'alta' else '' }}">{{ _('Alta') if p.prioridad == 'alta' else _('Normal') }}</span>
+      <span class="log-text"><strong>{{ p.titulo }}</strong>{% if p.detalle %}<br><span class="muted">{{ p.detalle }}</span>{% endif %}</span>
+      <form method="post" action="{{ url_for('ia.resolver_propuesta', propuesta_id=p.id, accion='aprobar') }}"><input type="hidden" name="volver" value="{{ request.path }}"><button type="submit" class="btn btn-primary">{{ _('Crear tarea') }}</button></form>
+      <form method="post" action="{{ url_for('ia.resolver_propuesta', propuesta_id=p.id, accion='rechazar') }}"><input type="hidden" name="volver" value="{{ request.path }}"><button type="submit" class="btn btn-ghost">{{ _('Descartar') }}</button></form></li>
+    {% endfor %}
+    {% for a in copiloto.avisos %}
+    <li class="log-item"><span class="log-text"><a href="{{ a.destino }}"><strong>{{ a.titulo }}</strong></a>{% if a.detalle %}<br><span class="muted">{{ a.detalle }}</span>{% endif %}</span></li>
+    {% endfor %}
+  </ul>
+  <p><a class="btn btn-ghost" href="{{ copiloto.pregunta_url }}">{{ _('Preguntar al asistente sobre este cliente') }}</a></p>
+</section>
+{% endif %}
+
 <p class="ficha-volver"><a href="{{ url_for('clientes.lista') }}">‹ {{ _('Clientes') }}</a></p>
 <nav class="tareas-subnav" aria-label="{{ _('Secciones de la ficha') }}">
   {% for p, nombre in (('resumen', _('Resumen')), ('fiscal', _('Fiscal')), ('laboral', _('Laboral')), ('tareas', _('Tareas')), ('documentos', _('Documentos')), ('mensajes', _('Mensajes'))) if p in pestanas %}

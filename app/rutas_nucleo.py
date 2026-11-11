@@ -209,6 +209,9 @@ def ficha(cliente_id: int):
         ctx.update(ficha_cliente.contexto_mensajes(fiscal, vencimientos))
     elif pestana == "tareas":
         ctx.update(ficha_cliente.contexto_tareas(g.usuario_id, fiscal))
+    if fid and fiscal and pestana == ficha_cliente.pestana_valida(None, fid):                  # el copiloto solo en la pestaña de entrada: es lo primero que ve quien abre al cliente
+        from . import ia_contexto
+        ctx["copiloto"] = ia_contexto.sugerencias(t, fid)
     return render_template("cliente_ficha.html", **ctx)
 
 
