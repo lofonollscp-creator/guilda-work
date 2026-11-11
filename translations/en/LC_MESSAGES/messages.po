@@ -27365,3 +27365,33 @@ msgstr "Check first:"
 
 msgid "La IA no está segura de estos datos; el resto los ha leído con confianza."
 msgstr "The AI is not sure about this data; it read the rest with confidence."
+
+msgid "Lo que la IA y las reglas del sistema sugieren hacer. No se ejecuta nada hasta que lo apruebas; si rechazas una, no vuelve a salir en un mes."
+msgstr "What the AI and the system's rules suggest doing. Nothing runs until you approve it; if you reject one, it won't come back for a month."
+
+msgid "Hecho: la propuesta se ha ejecutado."
+msgstr "Done: the proposal has been carried out."
+
+msgid "Propuesta rechazada: no volverá a salir en un mes."
+msgstr "Proposal rejected: it won't come back for a month."
+
+msgid "Propone: crear una tarea"
+msgstr "Proposes: create a task"
+
+msgid "de las alertas de clientes"
+msgstr "from the client alerts"
+
+msgid "No hay propuestas pendientes."
+msgstr "No pending proposals."
+
+msgid "Resueltas en los últimos 30 días"
+msgstr "Resolved in the last 30 days"
+
+msgid "Esa propuesta ya estaba resuelta."
+msgstr "That proposal was already resolved."
+
+msgid "Esa propuesta no existe."
+msgstr "That proposal does not exist."
+
+msgid "No sé ejecutar ese tipo de propuesta."
+msgstr "I don't know how to carry out that kind of proposal."

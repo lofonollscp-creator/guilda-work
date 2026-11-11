@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Propuestas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Propuestas') }}</h1>
+    <p class="subtitle">{{ _('Lo que la IA y las reglas del sistema sugieren hacer. No se ejecuta nada hasta que lo apruebas; si rechazas una, no vuelve a salir en un mes.') }}</p>
+  </div>
+</header>
+{% if aviso == 'aprobada' %}<p class="portal-peticion" role="status"><strong>{{ _('Hecho: la propuesta se ha ejecutado.') }}</strong></p>
+{% elif aviso == 'rechazada' %}<p class="muted" role="status">{{ _('Propuesta rechazada: no volverá a salir en un mes.') }}</p>{% endif %}
+{% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+{% if pendientes %}
+<ul class="log-list ds-max-720">
+  {% for p in pendientes %}
+  <li class="log-item" id="propuesta-{{ p.id }}">
+    <span class="pill {{ 'pill-danger' if p.prioridad == 'alta' else '' }}">{{ _('Alta') if p.prioridad == 'alta' else _('Normal') }}</span>
+    <span class="log-text"><strong>{{ p.titulo }}</strong>{% if p.detalle %}<br><span class="muted">{{ p.detalle }}</span>{% endif %}<br><small class="muted">{{ _('Propone: crear una tarea') }}{% if p.origen == 'alerta' %} · {{ _('de las alertas de clientes') }}{% endif %}</small></span>
+    <form method="post" action="{{ url_for('ia.resolver_propuesta', propuesta_id=p.id, accion='aprobar') }}"><button type="submit" class="btn btn-primary">{{ _('Aprobar') }}</button></form>
+    <form method="post" action="{{ url_for('ia.resolver_propuesta', propuesta_id=p.id, accion='rechazar') }}"><button type="submit" class="btn btn-ghost">{{ _('Rechazar') }}</button></form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty-lane">{{ _('No hay propuestas pendientes.') }}</p>
+{% endif %}
+{% if resueltas %}
+<h2 class="ds-mt-16">{{ _('Resueltas en los últimos 30 días') }}</h2>
+<ul class="log-list ds-max-720">
+  {% for p in resueltas %}<li class="log-item"><span class="pill">{{ _('Aprobada') if p.estado == 'aprobada' else _('Rechazada') }}</span><span class="log-text">{{ p.titulo }} <span class="muted">· {{ p.resuelta_en|fecha_y_hora }}</span></span></li>{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

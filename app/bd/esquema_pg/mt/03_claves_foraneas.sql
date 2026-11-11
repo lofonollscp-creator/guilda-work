@@ -277,6 +277,7 @@ ALTER TABLE ia_consumo ADD CONSTRAINT fk_ia_consumo_tenant_id FOREIGN KEY (tenan
 ALTER TABLE ia_conversaciones ADD CONSTRAINT fk_ia_conversaciones_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE ia_mensajes ADD CONSTRAINT fk_ia_mensajes_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE ia_preferencias ADD CONSTRAINT fk_ia_preferencias_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
+ALTER TABLE ia_propuestas ADD CONSTRAINT fk_ia_propuestas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_proveedores_despacho ADD CONSTRAINT fk_ia_proveedores_despacho_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;

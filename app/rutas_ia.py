@@ -19,6 +19,36 @@ def _sse(evento: dict) -> str:
     return f"data: {json.dumps(evento, ensure_ascii=False)}\n\n"
 
 
+@ia_bp.route("/propuestas")
+@login_required
+def propuestas():
+    """La bandeja de propuestas: lo que la IA y las reglas sugieren hacer, para aprobar (se ejecuta como tú) o rechazar (no vuelve a salir en un mes). Al abrirla se recogen las alertas de clientes nuevas."""
+    if g.tenant_id is None:
+        abort(404)
+    from . import ia_propuestas
+    ia_propuestas.generar_desde_alertas(g.tenant_id)
+    return render_template("ia_propuestas.html", pendientes=ia_propuestas.pendientes(g.tenant_id), resueltas=ia_propuestas.resueltas(g.tenant_id), aviso=request.args.get("aviso"), error=(request.args.get("error") or "")[:200] or None)
+
+
+@ia_bp.route("/propuestas/<int:propuesta_id>/<accion>", methods=["POST"])
+@login_required
+def resolver_propuesta(propuesta_id: int, accion: str):
+    if g.tenant_id is None or accion not in ("aprobar", "rechazar"):
+        abort(404)
+    from . import ia_propuestas
+    volver = request.form.get("volver", "")
+    destino = volver if volver.startswith("/") and not volver.startswith("//") else url_for("ia.propuestas")
+    sep = "&" if "?" in destino else "?"
+    try:
+        if accion == "aprobar":
+            ia_propuestas.aprobar(g.tenant_id, g.usuario_id, propuesta_id)
+        else:
+            ia_propuestas.rechazar(g.tenant_id, g.usuario_id, propuesta_id)
+    except ia_propuestas.ErrorPropuesta as e:
+        return redirect(destino + sep + "error=" + _(str(e)))
+    return redirect(destino + sep + "aviso=" + ("aprobada" if accion == "aprobar" else "rechazada"))
+
+
 @ia_bp.route("/")
 @login_required
 def asistente_vista():

@@ -27450,3 +27450,33 @@ msgstr "Vérifiez d'abord :"
 
 msgid "La IA no está segura de estos datos; el resto los ha leído con confianza."
 msgstr "L'IA n'est pas sûre de ces données ; elle a lu le reste avec confiance."
+
+msgid "Lo que la IA y las reglas del sistema sugieren hacer. No se ejecuta nada hasta que lo apruebas; si rechazas una, no vuelve a salir en un mes."
+msgstr "Ce que l'IA et les règles du système suggèrent de faire. Rien ne s'exécute avant votre accord ; si vous en rejetez une, elle ne reviendra pas avant un mois."
+
+msgid "Hecho: la propuesta se ha ejecutado."
+msgstr "Fait : la proposition a été exécutée."
+
+msgid "Propuesta rechazada: no volverá a salir en un mes."
+msgstr "Proposition rejetée : elle ne reviendra pas avant un mois."
+
+msgid "Propone: crear una tarea"
+msgstr "Propose : créer une tâche"
+
+msgid "de las alertas de clientes"
+msgstr "des alertes clients"
+
+msgid "No hay propuestas pendientes."
+msgstr "Aucune proposition en attente."
+
+msgid "Resueltas en los últimos 30 días"
+msgstr "Résolues au cours des 30 derniers jours"
+
+msgid "Esa propuesta ya estaba resuelta."
+msgstr "Cette proposition était déjà résolue."
+
+msgid "Esa propuesta no existe."
+msgstr "Cette proposition n'existe pas."
+
+msgid "No sé ejecutar ese tipo de propuesta."
+msgstr "Je ne sais pas exécuter ce type de proposition."

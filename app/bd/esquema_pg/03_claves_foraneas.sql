@@ -209,6 +209,7 @@ ALTER TABLE honorarios_reglas ADD CONSTRAINT fk_honorarios_reglas_tenant_id FORE
 ALTER TABLE ia_adjuntos ADD CONSTRAINT fk_ia_adjuntos_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id);
 ALTER TABLE ia_config_despacho ADD CONSTRAINT fk_ia_config_despacho_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_consumo ADD CONSTRAINT fk_ia_consumo_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE ia_propuestas ADD CONSTRAINT fk_ia_propuestas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_proveedores_despacho ADD CONSTRAINT fk_ia_proveedores_despacho_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;
 ALTER TABLE ia_trabajos ADD CONSTRAINT fk_ia_trabajos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;

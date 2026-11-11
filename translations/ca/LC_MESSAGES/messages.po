@@ -27374,3 +27374,33 @@ msgstr "Mira primer:"
 
 msgid "La IA no está segura de estos datos; el resto los ha leído con confianza."
 msgstr "La IA no n'està segura, d'aquestes dades; la resta les ha llegit amb confiança."
+
+msgid "Lo que la IA y las reglas del sistema sugieren hacer. No se ejecuta nada hasta que lo apruebas; si rechazas una, no vuelve a salir en un mes."
+msgstr "El que la IA i les regles del sistema suggereixen fer. No s'executa res fins que ho aproves; si en rebutges una, no torna a sortir en un mes."
+
+msgid "Hecho: la propuesta se ha ejecutado."
+msgstr "Fet: la proposta s'ha executat."
+
+msgid "Propuesta rechazada: no volverá a salir en un mes."
+msgstr "Proposta rebutjada: no tornarà a sortir en un mes."
+
+msgid "Propone: crear una tarea"
+msgstr "Proposa: crear una tasca"
+
+msgid "de las alertas de clientes"
+msgstr "de les alertes de clients"
+
+msgid "No hay propuestas pendientes."
+msgstr "No hi ha propostes pendents."
+
+msgid "Resueltas en los últimos 30 días"
+msgstr "Resoltes en els últims 30 dies"
+
+msgid "Esa propuesta ya estaba resuelta."
+msgstr "Aquesta proposta ja estava resolta."
+
+msgid "Esa propuesta no existe."
+msgstr "Aquesta proposta no existeix."
+
+msgid "No sé ejecutar ese tipo de propuesta."
+msgstr "No sé executar aquest tipus de proposta."

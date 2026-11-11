@@ -1515,6 +1515,11 @@
   "motivo": "ya lleva tenant_id",
   "via": []
  },
+ "ia_propuestas": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
  "portal_novedades": {
   "clase": "propio",
   "motivo": "ya lleva tenant_id",
