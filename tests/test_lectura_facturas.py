@@ -212,3 +212,29 @@ def test_el_uso_cuenta_las_facturas_leidas_con_ia(modelo):
     lf.leer(t, u, _borrador(t, u, c))
     assert fc.uso_del_mes(t)["leidas_ia"] == 1
     assert dict(next(e for e in verticales.estado_para_backoffice(t) if e["id"] == "contabilizacion")["uso"])["Facturas leídas con IA"] == "1"
+
+
+def test_el_json_del_modelo_se_tolera_con_saltos_sin_escapar_comas_finales_y_cercos():
+    roto = '```json\n{"numero": "T-1",\n "concepto": "línea uno\nlínea dos\ttab",\n "lineas": [{"base": 30, "pct_iva": 10,},],\n}\n```'
+    d = lf._json_de(roto)
+    assert d["numero"] == "T-1" and "línea dos" in d["concepto"] and d["lineas"][0]["base"] == 30
+    for inservible in ("", "sin llaves", "{no es json}", "[1]"):
+        with pytest.raises(ValueError):                           # JSONDecodeError es un ValueError: el flujo de siempre lo trata como lectura fallida
+            lf._json_de(inservible)
+
+
+def test_un_total_en_negativo_sin_marca_de_abono_se_marca_como_abono_y_se_avisa(modelo):
+    t, u, c = _despacho()
+    modelo.respuesta = json.dumps({**RESPUESTA, "es_abono": False, "lineas": [{"base": -100, "pct_iva": 21, "cuota_iva": -21}], "total": -121})
+    fid = _borrador(t, u, c)
+    lf.leer(t, u, fid)
+    f = fc.obtener(t, u, fid)
+    assert f["abono"] == 1 and f["total_centimos"] == 12100
+    assert any("negativo" in a for a in (f.get("lectura_avisos") or "").split("\n")) or "negativo" in json.dumps(f, default=str)
+
+
+def test_una_factura_normal_no_se_marca_como_abono(modelo):
+    t, u, c = _despacho()
+    fid = _borrador(t, u, c)
+    lf.leer(t, u, fid)
+    assert fc.obtener(t, u, fid)["abono"] == 0

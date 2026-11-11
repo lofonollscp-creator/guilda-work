@@ -6,14 +6,15 @@ from app import evals_facturas as ev
 
 def test_los_casos_sinteticos_son_coherentes_y_no_llevan_datos_reales():
     casos = ev.cargar_casos()
-    assert len(casos) >= 8 and len({c["id"] for c in casos}) == len(casos)
+    assert len(casos) >= 12 and len({c["id"] for c in casos}) == len(casos)
     for c in casos:
         e = c["esperado"]
         base = sum(l["base"] for l in e["lineas"])
         cuota = sum(l["cuota_iva"] for l in e["lineas"])
         retencion = sum(l["base"] * l.get("pct_retencion", 0) / 100 for l in e["lineas"])
-        assert abs(base + cuota - retencion - e["total"]) <= 0.011, c["id"]              # lo que se espera cuadra consigo mismo
-        assert e["numero"] in c["texto"] or c["id"] == "formato_europeo_miles", c["id"]
+        recargo = sum(l["base"] * l.get("pct_recargo", 0) / 100 for l in e["lineas"])
+        assert abs(base + cuota + recargo - retencion - e["total"]) <= 0.011, c["id"]              # lo que se espera cuadra consigo mismo
+        assert e["numero"] in c["texto"].replace(" ", "") or c["id"] == "formato_europeo_miles", c["id"]
 
 
 def test_un_lector_perfecto_acierta_todo_y_uno_malo_se_nota_por_campo():

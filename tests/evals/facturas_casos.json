@@ -72,12 +72,12 @@
     "fecha": "2026-10-20",
     "emisor_nif": "B12345674",
     "receptor_nif": "B87654321",
-    "total": -60.5,
+    "total": 60.5,
     "lineas": [
      {
-      "base": -50.0,
+      "base": 50.0,
       "pct_iva": 21,
-      "cuota_iva": -10.5
+      "cuota_iva": 10.5
      }
     ],
     "es_abono": true
@@ -154,6 +154,91 @@
       "base": 80.0,
       "pct_iva": 21,
       "cuota_iva": 16.8
+     }
+    ],
+    "es_abono": false
+   }
+  },
+  {
+   "id": "recargo_equivalencia",
+   "texto": "PAPELERÍA LA PLUMA, S.L.\nCIF: B31415926\nFACTURA Nº 2026/311\nFecha: 08/11/2026\nCliente: COMERCIAL ORTEGA, S.L. NIF B27182818\n\nMaterial de oficina\nBase imponible ........ 200,00 €\nIVA 21% ............... 42,00 €\nRecargo de equivalencia 5,2% ... 10,40 €\nTOTAL ................. 252,40 €",
+   "esperado": {
+    "numero": "2026/311",
+    "fecha": "2026-11-08",
+    "emisor_nif": "B31415926",
+    "receptor_nif": "B27182818",
+    "total": 252.4,
+    "lineas": [
+     {
+      "base": 200.0,
+      "pct_iva": 21,
+      "cuota_iva": 42.0,
+      "pct_recargo": 5.2
+     }
+    ],
+    "es_abono": false
+   }
+  },
+  {
+   "id": "tres_tipos_iva",
+   "texto": "SUPERMERCADOS DEL VALLE, S.A.\nNIF A58585858\nFactura 9-2026-0044\nFecha de emisión: 15/10/2026\nDestinatario: HOTEL MIRAMAR, S.L. (B60606060)\n\nProductos 21% base 100,00 cuota 21,00\nAlimentación 10% base 100,00 cuota 10,00\nPan y leche 4% base 100,00 cuota 4,00\nTotal factura: 335,00 EUR",
+   "esperado": {
+    "numero": "9-2026-0044",
+    "fecha": "2026-10-15",
+    "emisor_nif": "A58585858",
+    "receptor_nif": "B60606060",
+    "total": 335.0,
+    "lineas": [
+     {
+      "base": 100.0,
+      "pct_iva": 21,
+      "cuota_iva": 21.0
+     },
+     {
+      "base": 100.0,
+      "pct_iva": 10,
+      "cuota_iva": 10.0
+     },
+     {
+      "base": 100.0,
+      "pct_iva": 4,
+      "cuota_iva": 4.0
+     }
+    ],
+    "es_abono": false
+   }
+  },
+  {
+   "id": "abono_en_negativo_sin_palabra_abono",
+   "texto": "TALLERES RÍOS, S.L. CIF B70707070\nNº V-2026-88\nFecha 02/11/2026\nCliente: LOGÍSTICA NORTE, S.L. NIF B80808080\nAjuste por error de facturación\nBase -120,00\nIVA 21% -25,20\nTotal -145,20",
+   "esperado": {
+    "numero": "V-2026-88",
+    "fecha": "2026-11-02",
+    "emisor_nif": "B70707070",
+    "receptor_nif": "B80808080",
+    "total": 145.2,
+    "lineas": [
+     {
+      "base": 120.0,
+      "pct_iva": 21,
+      "cuota_iva": 25.2
+     }
+    ],
+    "es_abono": true
+   }
+  },
+  {
+   "id": "ruido_de_escaneo",
+   "texto": "CONSULTORÍA  M0LINA  S.L.\nC1F  B9O9O9O91   <- ojo, ruido\n\nFactura   n°:  2026 - 0102\nFecha :  1 2 / 1 1 / 2 0 2 6\nCliente : INMOBILIARIA SOL, S.L.   NIF  B1 1 1 1 1 1 1 1\nHonorarios profesionales ... 500,00\nIVA (21%) ................. 105,00\nTOTAL ..................... 605,00 EUR",
+   "esperado": {
+    "numero": "2026-0102",
+    "fecha": "2026-11-12",
+    "total": 605.0,
+    "lineas": [
+     {
+      "base": 500.0,
+      "pct_iva": 21,
+      "cuota_iva": 105.0
      }
     ],
     "es_abono": false

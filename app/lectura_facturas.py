@@ -55,13 +55,32 @@ def _texto(valor, largo: int) -> str:
 
 
 def _json_de(respuesta: str) -> dict:
+    """El objeto JSON de la respuesta del modelo. Tolera lo que los modelos pequeños suelen estropear: saltos de línea o tabulaciones sin escapar dentro de un texto, comas finales y comentarios de línea."""
     i, j = respuesta.find("{"), respuesta.rfind("}")
     if i < 0 or j <= i:
         raise ValueError("el modelo no devolvió datos")
-    datos = json.loads(respuesta[i:j + 1])
+    bruto = respuesta[i:j + 1]
+    try:
+        datos = json.loads(bruto, strict=False)                        # strict=False admite caracteres de control dentro de las cadenas
+    except json.JSONDecodeError:
+        limpio = re.sub(r",(\s*[}\]])", r"\1", re.sub(r"(?m)^\s*//.*$", "", bruto))
+        datos = json.loads(limpio, strict=False)
     if not isinstance(datos, dict):
         raise ValueError("el modelo no devolvió datos")
     return datos
+
+
+def _es_negativo(valor) -> bool:
+    try:
+        return valor is not None and not isinstance(valor, bool) and Decimal(str(valor).replace(",", ".").strip()) < 0
+    except (InvalidOperation, ValueError):
+        return False
+
+
+def _abono_por_signo(datos: dict) -> bool:
+    """Un total o una base en negativo es un abono aunque el modelo no lo haya marcado: la aplicación guarda los importes en positivo y el abono aparte, así que sin esto se perdería el signo en silencio."""
+    lineas = datos.get("lineas") if isinstance(datos.get("lineas"), list) else []
+    return _es_negativo(datos.get("total")) or any(isinstance(l, dict) and _es_negativo(l.get("base")) for l in lineas)
 
 
 def _partes(doc: dict) -> list[dict]:
@@ -88,7 +107,9 @@ def _a_factura(datos: dict, f: dict, cliente_nif: str, texto: str = "") -> tuple
     nombre = _texto(datos.get(f"{contraparte[0]}_nombre"), 100)
     nuevos: dict = {"tipo": tipo, "tercero_nombre": nombre or f["tercero_nombre"], "tercero_nif": contraparte[1] or f.get("tercero_nif"), "tercero_cuenta": f.get("tercero_cuenta"),
                     "numero": _texto(datos.get("numero"), fc.MAX_NUMERO) or f["numero"], "concepto": _texto(datos.get("concepto"), 60) or f.get("concepto"),
-                    "referencia": f.get("referencia"), "suplidos": _num(datos.get("suplidos")), "abono": "1" if datos.get("es_abono") is True else ""}
+                    "referencia": f.get("referencia"), "suplidos": _num(datos.get("suplidos")), "abono": "1" if datos.get("es_abono") is True or _abono_por_signo(datos) else ""}
+    if nuevos["abono"] and datos.get("es_abono") is not True:
+        avisos.append("Los importes venían en negativo: se ha marcado como abono (rectificativa). Compruébalo.")
     for campo, etiqueta in (("fecha", "la fecha"), ("fecha_operacion", "la fecha de operación"), ("rectifica_fecha", "la fecha de la factura rectificada")):
         try:
             nuevos[campo] = fc._fecha(datos.get(campo), campo) if datos.get(campo) else f.get(campo)
