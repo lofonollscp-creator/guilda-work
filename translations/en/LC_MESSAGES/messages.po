@@ -27765,3 +27765,6 @@ msgstr "Kratos did not answer: it could not be checked."
 
 msgid "Kratos no ofrece el método passkey: revisa deploy/kratos/kratos.yml y reinicia su contenedor."
 msgstr "Kratos does not offer the passkey method: check deploy/kratos/kratos.yml and restart its container."
+
+msgid "Tu despacho exige verificación en dos pasos o una passkey. Actívala desde la web (Ajustes → Contraseña y email) y vuelve a entrar."
+msgstr "Your firm requires two-step verification or a passkey. Turn it on from the web (Settings → Password and email) and sign in again."

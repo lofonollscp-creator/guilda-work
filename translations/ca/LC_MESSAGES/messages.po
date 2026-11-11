@@ -27774,3 +27774,6 @@ msgstr "Kratos no ha respost: no s'ha pogut comprovar."
 
 msgid "Kratos no ofrece el método passkey: revisa deploy/kratos/kratos.yml y reinicia su contenedor."
 msgstr "Kratos no ofereix el mètode passkey: revisa deploy/kratos/kratos.yml i reinicia'n el contenidor."
+
+msgid "Tu despacho exige verificación en dos pasos o una passkey. Actívala desde la web (Ajustes → Contraseña y email) y vuelve a entrar."
+msgstr "El teu despatx exigeix verificació en dos passos o una passkey. Activa-la des del web (Ajustos → Contrasenya i correu) i torna a entrar."

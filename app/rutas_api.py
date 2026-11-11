@@ -313,6 +313,10 @@ def login():
         # local vinculada — se crea aquí, la primera vez que entra.
         usuario_id = db.crear_usuario_vinculado_a_kratos(email, identity_id)
         usuario = db.obtener_usuario(usuario_id)
+    from . import politica_acceso
+    pendiente = politica_acceso.pendiente(usuario["id"], usuario["tenant_id"])
+    if pendiente and pendiente["vencida"]:                                    # la fecha límite de la política del despacho ya pasó: se activa en la web y luego se entra
+        return _err(gettext("Tu despacho exige verificación en dos pasos o una passkey. Actívala desde la web (Ajustes → Contraseña y email) y vuelve a entrar."), 403, "politica_acceso")
     token = db.crear_token_api(usuario["id"], datos.get("nombre_dispositivo"))
     return _ok({"token": token, "usuario": {"id": usuario["id"], "email": usuario["email"]}})
 

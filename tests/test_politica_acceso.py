@@ -98,3 +98,23 @@ def test_la_pantalla_de_acceso_la_gestiona_la_direccion_y_valida_la_fecha(client
     assert "aviso=politica" in r.headers["Location"] and politica_acceso.obtener(t)["exigir"]
     db.asignar_supervisor_tenant(u, False)
     assert cliente.post("/seguridad/acceso/politica", data={"exigir": "1"}).status_code == 403
+
+
+def test_el_acceso_de_la_app_movil_se_cierra_pasada_la_fecha_y_se_abre_al_cumplir(cliente, creds):
+    t = db.crear_tenant("Política móvil")
+    identidad = kratos.crear_identidad("movil-politica@ejemplo.com", "contrasena123")
+    u = db.crear_usuario_vinculado_a_kratos("movil-politica@ejemplo.com", identidad)
+    db.asignar_tenant(u, t)
+    creds.por = {identidad: {"password"}}
+    login = lambda: cliente.post("/api/v1/auth/login", json={"email": "movil-politica@ejemplo.com", "contrasena": "contrasena123"})
+    politica_acceso.fijar(t, u, True, (date.today() + timedelta(days=10)).isoformat())
+    assert login().status_code == 200                                                                      # antes de la fecha: entra
+    conn = db.get_connection()
+    conn.execute("UPDATE tenants SET segundo_factor_limite = ? WHERE id = ?", ((date.today() - timedelta(days=1)).isoformat(), t))
+    conn.commit(); conn.close()
+    politica_acceso._CACHE.clear()
+    r = login()
+    assert r.status_code == 403 and "dos pasos" in r.get_data(as_text=True)
+    creds.por = {identidad: {"password", "passkey"}}
+    politica_acceso._CACHE.clear()
+    assert login().status_code == 200                                                                      # con passkey, entra
