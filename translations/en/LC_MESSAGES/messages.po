@@ -27663,3 +27663,12 @@ msgstr "unnamed"
 
 msgid "Certificado: días de antelación al aviso de caducidad"
 msgstr "Certificate: days of notice before expiry"
+
+msgid "Esa sugerencia ya no aplica."
+msgstr "That suggestion no longer applies."
+
+msgid "Reglas que casi siempre se rechazan"
+msgstr "Rules that are almost always rejected"
+
+msgid "%(r)s de %(t)s propuestas de «%(n)s» se rechazaron: pasar «%(u)s» de %(a)s a %(s)s."
+msgstr "%(r)s of %(t)s proposals from “%(n)s” were rejected: change “%(u)s” from %(a)s to %(s)s."

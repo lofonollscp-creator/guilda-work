@@ -28,6 +28,12 @@
 {% set etiquetas = {'dias_sin_facturas': _('Días sin facturas (mínimo)'), 'importe_gasto': _('Gasto atípico: importe mínimo (€)'), 'dias_vencimiento': _('Modelo sin documentación: días de antelación'), 'iva_desvio_pct': _('IVA: desviación que avisa (en tanto por ciento)'), 'dias_sin_entrar': _('Portal: días sin entrar'), 'importe_proveedor_nuevo': _('Proveedor nuevo: importe mínimo (€)'), 'dias_certificado': _('Certificado: días de antelación al aviso de caducidad')} %}
 <form method="post" action="{{ url_for('fiscal.alertas_umbrales') }}" class="proyecto-bloque ds-max-720 ds-mt-16" id="umbrales">
   <h2>{{ _('Cuándo salta cada alerta') }}</h2>
+  {% if sugerencias %}<div class="aviso-bloque" id="sugerencias-umbral">
+    <p><strong>{{ _('Reglas que casi siempre se rechazan') }}</strong></p>
+    {% for s in sugerencias %}<form method="post" action="{{ url_for('fiscal.alertas_umbral_sugerido') }}" class="ds-fila ds-envolver"><input type="hidden" name="regla" value="{{ s.regla }}">
+      <span>{{ _('%(r)s de %(t)s propuestas de «%(n)s» se rechazaron: pasar «%(u)s» de %(a)s a %(s)s.', r=s.rechazadas, t=s.total, n=s.regla, u=etiquetas[s.umbral], a=s.actual, s=s.sugerido) }}</span>
+      <button type="submit" class="btn btn-ghost">{{ _('Aplicar') }}</button></form>{% endfor %}
+  </div>{% endif %}
   <p class="muted">{{ _('Solo la dirección lo cambia. Si una regla avisa demasiado, súbele el umbral; si se queda corta, bájalo.') }}</p>
   {% for k, texto in etiquetas.items() %}<div class="correo-form-campo"><label for="umbral-{{ k }}">{{ texto }}</label><input type="number" id="umbral-{{ k }}" name="{{ k }}" min="{{ limites[k][0] }}" max="{{ limites[k][1] }}" value="{{ umbrales[k] }}"></div>{% endfor %}
   <div class="ds-fila ds-envolver"><button type="submit" class="btn btn-primary">{{ _('Guardar umbrales') }}</button> <button type="submit" name="restablecer" value="1" class="btn btn-ghost">{{ _('Volver a los de serie') }}</button></div>

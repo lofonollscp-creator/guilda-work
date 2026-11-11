@@ -27672,3 +27672,12 @@ msgstr "sense nom"
 
 msgid "Certificado: días de antelación al aviso de caducidad"
 msgstr "Certificat: dies d'antelació a l'avís de caducitat"
+
+msgid "Esa sugerencia ya no aplica."
+msgstr "Aquest suggeriment ja no s'aplica."
+
+msgid "Reglas que casi siempre se rechazan"
+msgstr "Regles que gairebé sempre es rebutgen"
+
+msgid "%(r)s de %(t)s propuestas de «%(n)s» se rechazaron: pasar «%(u)s» de %(a)s a %(s)s."
+msgstr "%(r)s de %(t)s propostes de «%(n)s» es van rebutjar: passar «%(u)s» de %(a)s a %(s)s."

@@ -611,13 +611,14 @@ def alertas():
     """Lo que se sale de lo normal en los clientes del despacho (facturas que dejan de llegar, gastos atípicos, duplicadas, modelos sin documentación). Cada alerta dice qué regla saltó y a dónde ir."""
     if g.tenant_id is None:
         abort(404)
-    from . import anomalias, ia_despacho
+    from . import anomalias, ia_despacho, ia_propuestas
     lista = []
     for a in anomalias.detectar(g.tenant_id):
         titulo, detalle = anomalias.texto(a)
         destino = (url_for("contabilidad.ver", factura_id=a["factura_id"]) if a.get("factura_id") else url_for("fiscal.editar_vencimiento", vencimiento_id=a["vencimiento_id"]) if a.get("vencimiento_id") else url_for("fiscal.ficha_cliente", cliente_id=a["cliente_id"]))
         lista.append({**a, "titulo": titulo, "detalle": detalle, "destino": destino, "clave": anomalias.clave(a)})
-    return render_template("fiscal_alertas.html", alertas=lista, aviso=request.args.get("aviso"), error=(request.args.get("error") or "")[:200] or None, direccion=ia_despacho.es_direccion(g.usuario_id), umbrales=ia_despacho.umbrales(g.tenant_id), por_defecto=anomalias.UMBRALES_POR_DEFECTO, limites=anomalias.LIMITES)
+    return render_template("fiscal_alertas.html", alertas=lista, aviso=request.args.get("aviso"), error=(request.args.get("error") or "")[:200] or None, direccion=ia_despacho.es_direccion(g.usuario_id), umbrales=ia_despacho.umbrales(g.tenant_id), por_defecto=anomalias.UMBRALES_POR_DEFECTO, limites=anomalias.LIMITES,
+                           sugerencias=ia_propuestas.sugerencias_de_umbral(g.tenant_id) if ia_despacho.es_direccion(g.usuario_id) else [])
 
 
 @fiscal_bp.route("/alertas/umbrales", methods=["POST"])
@@ -633,6 +634,21 @@ def alertas_umbrales():
     except ValueError as e:
         return redirect(url_for("fiscal.alertas", error=_(str(e))) + "#umbrales")
     auditoria.registrar(g.tenant_id, g.usuario_id, "alertas.umbrales", "ia_config", None, {})
+    return redirect(url_for("fiscal.alertas", aviso="umbrales") + "#umbrales")
+
+
+@fiscal_bp.route("/alertas/umbrales/sugerido", methods=["POST"])
+@login_required
+def alertas_umbral_sugerido():
+    """La dirección acepta la sugerencia de subir el umbral de una regla que casi siempre se rechaza. El valor se recalcula aquí: lo que llegue del formulario solo dice qué regla."""
+    from . import ia_despacho, ia_propuestas
+    if g.tenant_id is None or not ia_despacho.es_direccion(g.usuario_id):
+        abort(403)
+    sug = next((s for s in ia_propuestas.sugerencias_de_umbral(g.tenant_id) if s["regla"] == request.form.get("regla")), None)
+    if sug is None:
+        return redirect(url_for("fiscal.alertas", error=_("Esa sugerencia ya no aplica.")) + "#umbrales")
+    ia_despacho.guardar_umbrales(g.tenant_id, {**ia_despacho.umbrales(g.tenant_id), sug["umbral"]: sug["sugerido"]}, por=g.usuario_id)
+    auditoria.registrar(g.tenant_id, g.usuario_id, "alertas.umbral_sugerido", "ia_config", None, {"umbral": sug["umbral"], "de": sug["actual"], "a": sug["sugerido"]})
     return redirect(url_for("fiscal.alertas", aviso="umbrales") + "#umbrales")
 
 

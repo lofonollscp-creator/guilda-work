@@ -212,6 +212,39 @@ def estadisticas(tenant_id: int, dias: int = 90) -> list[dict]:
     return sorted(salida, key=lambda d: (-d["tasa_rechazo"], -d["total"]))
 
 
+def sugerencias_de_umbral(tenant_id: int, dias: int = 90) -> list[dict]:
+    """Reglas de alertas de clientes cuyas propuestas se rechazan casi siempre (5 o más resueltas y un 70 % o más rechazadas) y el umbral que las haría menos sensibles: un 50 % más alto (o un 40 % más bajo en
+    los «días de antelación»), dentro de los límites. Es solo una sugerencia: la dirección la aplica o no. Una regla ya en su límite no se sugiere."""
+    from . import anomalias, ia_despacho
+    desde = (datetime.now() - timedelta(days=dias)).isoformat(timespec="seconds")
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT estado, datos FROM ia_propuestas WHERE tenant_id = ? AND origen = 'alerta' AND estado <> 'pendiente' AND resuelta_en >= ?", (tenant_id, desde)).fetchall()
+    finally:
+        conn.close()
+    por: dict[str, list[int]] = {}
+    for f in filas:
+        try:
+            regla = json.loads(f["datos"] or "{}").get("alerta")
+        except ValueError:
+            continue
+        if regla in anomalias.UMBRAL_DE_REGLA:
+            acum = por.setdefault(regla, [0, 0])
+            acum[0 if f["estado"] == "rechazada" else 1] += 1
+    actuales, salida = ia_despacho.umbrales(tenant_id), []
+    for regla, (rechazadas, aprobadas) in por.items():
+        total = rechazadas + aprobadas
+        if total < 5 or round(100 * rechazadas / total) < 70:
+            continue
+        clave, sentido = anomalias.UMBRAL_DE_REGLA[regla]
+        lo, hi = anomalias.LIMITES[clave]
+        actual = actuales[clave]
+        sugerido = max(lo, min(hi, round(actual * (1.5 if sentido > 0 else 0.6))))
+        if sugerido != actual:
+            salida.append({"regla": regla, "umbral": clave, "actual": actual, "sugerido": sugerido, "rechazadas": rechazadas, "total": total})
+    return sorted(salida, key=lambda d: (-d["rechazadas"], d["regla"]))
+
+
 def _resolver(tenant_id: int, usuario_id: int, propuesta_id: int, estado: str, resultado: str = "") -> bool:
     conn = db.get_connection()
     try:

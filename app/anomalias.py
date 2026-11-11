@@ -24,6 +24,9 @@ from . import db
 SEVERIDADES = {"alta": 0, "media": 1, "baja": 2}
 UMBRALES_POR_DEFECTO = {"dias_sin_facturas": 45, "importe_gasto": 300, "dias_vencimiento": 7, "iva_desvio_pct": 50, "dias_sin_entrar": 30, "importe_proveedor_nuevo": 1000, "dias_certificado": 30}
 LIMITES = {"dias_sin_facturas": (15, 365), "importe_gasto": (50, 100000), "dias_vencimiento": (1, 30), "iva_desvio_pct": (10, 500), "dias_sin_entrar": (7, 365), "importe_proveedor_nuevo": (100, 1000000), "dias_certificado": (7, 180)}
+# Qué umbral hace menos sensible a cada regla y hacia dónde moverlo: +1 = subirlo (menos avisos con valores más altos), -1 = bajarlo (los «días de antelación» avisan menos cuanto menos antelación).
+UMBRAL_DE_REGLA = {"sin_facturas": ("dias_sin_facturas", 1), "gasto_atipico": ("importe_gasto", 1), "vencimiento_sin_documentos": ("dias_vencimiento", -1), "iva_desviado": ("iva_desvio_pct", 1),
+                   "sin_entrar_portal": ("dias_sin_entrar", 1), "proveedor_nuevo": ("importe_proveedor_nuevo", 1), "certificado_caduca": ("dias_certificado", -1)}
 MIN_FACTURAS_HABITUALES = 3
 FACTOR_INTERVALO = 3
 MIN_ANTERIORES_GASTO = 8

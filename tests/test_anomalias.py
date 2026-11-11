@@ -293,3 +293,36 @@ def test_retenciones_del_trimestre_cerrado_sin_modelo_111_avisan_hasta_que_hay_m
     t3, c3 = _t()
     _f(c3, 5)                                                                                           # una factura sin retención no avisa
     assert "retencion_sin_modelo" not in [x["tipo"] for x in anomalias.detectar(t3, hoy)]
+
+
+def _resolver_propuestas(t, u, regla, aprobar, rechazar):
+    from app import ia_propuestas
+    for i in range(aprobar + rechazar):
+        pid = ia_propuestas.proponer(t, clave=f"alerta:{regla}:{i}", tipo="tarea", titulo="x", origen="alerta", datos={"alerta": regla})
+        conn = db.get_connection()
+        conn.execute("UPDATE ia_propuestas SET estado = ?, resuelta_en = ? WHERE id = ?", ("aprobada" if i < aprobar else "rechazada", "2999-01-01T00:00:00", pid))
+        conn.commit(); conn.close()
+
+
+def test_una_regla_que_casi_siempre_se_rechaza_sugiere_un_umbral_menos_sensible_y_la_direccion_lo_aplica(cliente):
+    from app import ia_despacho, ia_propuestas
+    from tests.conftest import iniciar_sesion_de_prueba
+    t = db.crear_tenant("Anomalías sugerencias")
+    u = iniciar_sesion_de_prueba(cliente, "sugerencias@ejemplo.com", "contrasena123")
+    db.asignar_tenant(u, t)
+    db.asignar_supervisor_tenant(u, True)
+    _resolver_propuestas(t, u, "gasto_atipico", aprobar=1, rechazar=5)                                # 5 de 6: salta la sugerencia
+    _resolver_propuestas(t, u, "sin_facturas", aprobar=3, rechazar=3)                                 # la mitad: no
+    _resolver_propuestas(t, u, "duplicada", aprobar=0, rechazar=9)                                    # sin umbral que mover: no
+    _resolver_propuestas(t, u, "certificado_caduca", aprobar=0, rechazar=5)                           # «días de antelación»: se baja
+    s = {x["regla"]: x for x in ia_propuestas.sugerencias_de_umbral(t)}
+    assert set(s) == {"gasto_atipico", "certificado_caduca"}
+    assert s["gasto_atipico"]["actual"] == 300 and s["gasto_atipico"]["sugerido"] == 450
+    assert s["certificado_caduca"]["actual"] == 30 and s["certificado_caduca"]["sugerido"] == 18
+    html = cliente.get("/fiscal/alertas").get_data(as_text=True)
+    assert "Reglas que casi siempre se rechazan" in html and 'value="gasto_atipico"' in html
+    assert "aviso=umbrales" in cliente.post("/fiscal/alertas/umbrales/sugerido", data={"regla": "gasto_atipico"}).headers["Location"]
+    assert ia_despacho.umbrales(t)["importe_gasto"] == 450 and ia_despacho.umbrales(t)["dias_certificado"] == 30
+    assert "error=" in cliente.post("/fiscal/alertas/umbrales/sugerido", data={"regla": "regla_inventada"}).headers["Location"]
+    db.asignar_supervisor_tenant(u, False)
+    assert cliente.post("/fiscal/alertas/umbrales/sugerido", data={"regla": "certificado_caduca"}).status_code == 403
