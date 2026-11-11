@@ -73,12 +73,46 @@ class ApiFalsa extends ApiClient {
   List<IaMensaje> chat = [];
   final List<String> enviadosIa = [];
 
+  Object? falloCargaIa;
+  Object? falloSubidaIa;
+  final List<String> subidosIa = [];
+
   @override
-  Future<List<IaMensaje>> listarMensajesIa() async => chat;
+  Future<List<IaMensaje>> listarMensajesIa() async {
+    if (falloCargaIa != null) throw falloCargaIa!;
+    return chat;
+  }
+
+  @override
+  Future<IaAdjunto> subirAdjuntoIa(Uint8List bytes, String nombreArchivo) async {
+    if (falloSubidaIa != null) throw falloSubidaIa!;
+    subidosIa.add(nombreArchivo);
+    return IaAdjunto(id: 7, nombre: nombreArchivo);
+  }
+  /// El guion de cada turno del asistente (los eventos del stream); sin él, el turno acaba en blanco.
+  Stream<IaEventoStream> Function(String texto)? flujoIa;
+  Stream<IaEventoStream> Function(bool aceptar)? flujoConfirmarIa;
+  final List<bool> confirmadosIa = [];
+  int vaciadosIa = 0;
+  Object? falloVaciarIa;
+
   @override
   Stream<IaEventoStream> enviarMensajeIaStream(String texto) {
     enviadosIa.add(texto);
-    return const Stream.empty();
+    return flujoIa?.call(texto) ?? const Stream.empty();
+  }
+
+  @override
+  Stream<IaEventoStream> confirmarIaStream(bool aceptar) {
+    confirmadosIa.add(aceptar);
+    return flujoConfirmarIa?.call(aceptar) ?? const Stream.empty();
+  }
+
+  @override
+  Future<void> vaciarIa() async {
+    if (falloVaciarIa != null) throw falloVaciarIa!;
+    vaciadosIa++;
+    chat = [];
   }
 
   @override

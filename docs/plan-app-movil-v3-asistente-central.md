@@ -161,3 +161,31 @@ Decisiones aprobadas: botón ✦ central en la barra + barra de entrada flotante
 **Capturas** (`docs/ux-app-movil-v3/fase1/`): `galeria_v3_claro/oscuro.png` (todo lo nuevo en una pantalla) y 7 pantallas reales con el tema nuevo. Cambian poco: Hoy, Tareas, etc. usan sus propios contenedores y no heredan las tarjetas del tema; se rediseñan en las fases 4 y 6.
 
 **Pendiente de esta fase, a propósito**: el conmutador de vidrio en Ajustes y el modo de reserva para gama baja se enchufan en la fase 7 (la pieza ya lo respeta). `suaveSobre` se aplicará dentro de `TarjetaBento` en la fase 4 cuando haya texto secundario real dentro.
+
+## 12. Fase 3 (primera mitad) — refactor del chat, sin cambiar su cara (2026-11-12)
+
+**Hecho: `ia_chat_screen.dart` pasa de 1 081 líneas con todo mezclado a una pantalla de 288 y cinco piezas con una sola responsabilidad.** Es el cambio de más riesgo del plan, hecho antes de pintar nada nuevo.
+
+| Pieza | Líneas | Responsabilidad |
+|---|---|---|
+| `screens/ia_chat_screen.dart` | 288 | Solo la piel: barra, menú, selector de archivos, portapapeles y diálogos. Mismo constructor que antes (`api`, `locale`, `consultaInicial`, `contexto`, `contextoIa`, `alCerrar`): ninguno de sus 9 usos cambia |
+| `funciones/asistente/asistente_controlador.dart` | 421 | La conversación: historial, envío, streaming, confirmación, parar, vaciar, archivos y contexto. Sin `BuildContext` |
+| `funciones/asistente/servicio_voz.dart` | 205 | La voz: cola de frases, troceo por frases completas y bucle del modo «Live». Sin chat |
+| `funciones/asistente/motor_voz.dart` | 127 | La frontera con los plugins nativos (`speech_to_text`, `flutter_tts`) como interfaz; incluye el arreglo del audio de iOS tal cual |
+| `funciones/asistente/chat_cuerpo.dart` | 303 | Lo que se ve de la conversación: inicio, mensajes y burbujas |
+| `funciones/asistente/chat_entrada.dart` | 138 | Campo de escritura, adjunto pendiente y atajos |
+
+**Desviación del plan, a propósito.** El plan decía «controlador Riverpod». El controlador es un `ChangeNotifier` que recibe `api` y los textos por constructor. Motivo: los 9 sitios que abren el chat (y ~25 pruebas) le pasan `api` directamente, sin `serviciosProvider`; un `Notifier` global habría obligado a reescribirlos todos en esta misma fase. En la fase 2, cuando la barra flotante y el chat tengan que compartir conversación, se expone con un `Provider` y `IaChatScreen` aceptará un controlador ya creado; el controlador no cambia.
+
+**Cómo se comprobó que no cambia nada visible**
+1. Antes de tocar nada, 14 pruebas de caracterización (`test/asistente_flujo_test.dart`) del turno completo: texto en directo, mensaje definitivo, pasos de herramientas, confirmar/rechazar, acción pendiente recuperada del historial, parar, error del servidor, caída de red, vaciar. **Pasaron contra el código antiguo y contra el nuevo, sin cambiar una línea.**
+2. Capturas del chat (conversación e inicio, claro y oscuro) del commit anterior frente al refactor: **idénticas byte a byte**.
+3. 35 pruebas de unidad nuevas (`test/asistente_controlador_test.dart`) que antes eran imposibles: contexto del primer mensaje, adjuntos, ciclo de vida de los eventos, historial roto, y la voz entera con un motor falso (cola, troceo, silencio, «Live» y su bucle de re-escucha).
+4. `flutter test`: **441 en verde** (392 + 14 + 35). `analyze`: los mismos 5 avisos de siempre.
+
+**Fallo que ya existía y que el refactor deja arreglado.** Si se paraba una respuesta y se enviaba otra enseguida, el bucle del turno anterior seguía vivo (la marca «detenido» se reiniciaba con el turno nuevo y solo se comprobaba al llegar otro evento): la cola de la respuesta vieja se mezclaba con la nueva y, al salir, cerraba el turno nuevo. Ahora cada turno lleva su número y uno parado no puede tocar al siguiente. Hay una prueba que **falla si se quita el arreglo** (comprobado por mutación).
+
+**Qué falta de la fase 3** (la mitad visible):
+- Rediseño del chat con la v3 (mensajes del asistente sin burbuja, burbuja solo para ti, texto con cursor suave, pasos plegables, orbe al pensar/escuchar).
+- Tarjetas de resultado dentro del chat (tarea, correo, nota, fichaje, vencimiento) con sus botones y toque para abrir la ficha.
+- Píldora de contexto quitable con el estilo nuevo y comandos de un toque por pantalla.
