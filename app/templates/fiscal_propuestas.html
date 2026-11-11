@@ -32,7 +32,7 @@
       <input type="number" id="prop-anticipo" name="anticipo" min="1" max="99" value="{{ form.anticipo if form else '' }}">
     </fieldset>
     {% endif %}
-    <div class="ds-fila">
+    <div class="ds-fila ds-envolver">
       <button type="submit" class="btn btn-ghost">{{ _('Guardar borrador') }}</button>
       <button type="submit" name="enviar" value="1" class="btn btn-primary">{{ _('Guardar y enviar al cliente') }}</button>
     </div>

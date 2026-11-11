@@ -72,7 +72,7 @@ def reunir(usuario_id: int, hoy: date | None = None) -> dict:
         "fecha": iso,
         "tareas_vencidas": [{"id": t["id"], "titulo": t["asunto"], "fecha": _dia(t["fecha_vencimiento"])} for t in mi_dia["vencidas"]],
         "tareas_hoy": [{"id": t["id"], "titulo": t["asunto"]} for t in mi_dia["hoy"]],
-        "visitas_hoy": [], "plazos": [], "vencimientos": [], "ausencias_por_aprobar": [], "correos_sin_contestar": correos_sin_contestar(usuario_id, hoy),
+        "visitas_hoy": [], "plazos": [], "vencimientos": [], "ausencias_por_aprobar": [], "correos_sin_contestar": correos_sin_contestar(usuario_id, hoy), "alertas": [],
     }
     if tenant is None:
         return r
@@ -92,6 +92,9 @@ def reunir(usuario_id: int, hoy: date | None = None) -> dict:
     from . import ausencias
     if ausencias.puede_gestionar(usuario_id, tid):
         r["ausencias_por_aprobar"] = [{"id": x["id"], "persona": x["persona"], "desde": x["desde"], "hasta": x["hasta"]} for x in ausencias.listar(tid, estado="pendiente")]
+    if ausencias.puede_gestionar(usuario_id, tid) and {"gestoria", "contabilizacion", "fiscal"} & set(activos):      # las alertas graves de los clientes (app/anomalias.py), solo a quien dirige: al resto le sobraría ruido
+        from . import anomalias
+        r["alertas"] = [{"titulo": t, "detalle": d, "severidad": a["severidad"]} for a in anomalias.detectar(tid, hoy) if a["severidad"] == "alta" for t, d in [anomalias.texto(a)]]
     hasta = (hoy + timedelta(days=DIAS_PLAZO_CERCANO)).isoformat()
     for v in db.listar_vencimientos_fiscales(tid, estado="pendiente", hasta=hasta):
         if v["usuario_id"] == usuario_id:
@@ -100,7 +103,7 @@ def reunir(usuario_id: int, hoy: date | None = None) -> dict:
 
 
 def total(r: dict) -> int:
-    return sum(len(r[k]) for k in ("tareas_vencidas", "tareas_hoy", "visitas_hoy", "plazos", "vencimientos", "ausencias_por_aprobar", "correos_sin_contestar"))
+    return sum(len(r[k]) for k in ("tareas_vencidas", "tareas_hoy", "visitas_hoy", "plazos", "vencimientos", "ausencias_por_aprobar", "correos_sin_contestar", "alertas"))
 
 
 def _cuando(fecha: str, hoy: str) -> str:
@@ -142,6 +145,7 @@ def redactar(r: dict) -> tuple[str, str, list[str]]:
             lineas.append(f"  · … y {len(items) - LIMITE_LINEAS} más")
         lineas.append("")
 
+    seccion("Alertas de clientes", [a["titulo"] for a in r.get("alertas", [])])
     seccion("Visitas de hoy", [f"{v['hora'] or '--:--'} · {v['direccion']}" + (f" · {v['visitante']}" if v["visitante"] else "") for v in r["visitas_hoy"]])
     seccion("Plazos", [f"{z['titulo']}" + (f" ({z['cliente']})" if z["cliente"] else "") + f" · {_cuando(z['fecha'], hoy)}" for z in r["plazos"]])
     seccion("Vencimientos fiscales", [f"{v['modelo']} · {v['cliente']} · {_cuando(v['fecha'], hoy)}" for v in r["vencimientos"]])
@@ -154,8 +158,8 @@ def redactar(r: dict) -> tuple[str, str, list[str]]:
     n = total(r)
     partes = []
     for clave, etiqueta in (("visitas_hoy", "visitas"), ("plazos", "plazos"), ("vencimientos", "vencimientos"), ("tareas_vencidas", "atrasadas"),
-                            ("tareas_hoy", "tareas hoy"), ("ausencias_por_aprobar", "ausencias por aprobar"), ("correos_sin_contestar", "correos sin contestar")):
-        if r[clave]:
+                            ("tareas_hoy", "tareas hoy"), ("ausencias_por_aprobar", "ausencias por aprobar"), ("correos_sin_contestar", "correos sin contestar"), ("alertas", "alertas de clientes")):
+        if r.get(clave):
             partes.append(f"{len(r[clave])} {etiqueta}")
     return f"Tu día: {n} pendiente" + ("s" if n != 1 else ""), ", ".join(partes), [ln for ln in lineas]
 
@@ -212,8 +216,9 @@ def html_resumen(r: dict) -> str:
         (len(r["visitas_hoy"]), "visitas hoy", _C.ACENTO), (plazos_y_venc, "plazos y vencimientos", _C.ACENTO),
         (len(r["tareas_vencidas"]), "tareas atrasadas", AVISO), (len(r["tareas_hoy"]), "tareas para hoy", _C.ACENTO),
         (len(r["ausencias_por_aprobar"]), "ausencias por aprobar", _C.ACENTO),
-        (len(r["correos_sin_contestar"]), "correos sin contestar", _C.ACENTO)) if n]
+        (len(r["correos_sin_contestar"]), "correos sin contestar", _C.ACENTO), (len(r.get("alertas", [])), "alertas de clientes", AVISO)) if n]
     partes = [_baldosas(baldosas)]
+    partes.append(_seccion_html("Alertas de clientes", [("", a["titulo"], a["detalle"]) for a in r.get("alertas", [])], AVISO))
     partes.append(_seccion_html("Visitas de hoy", [(v["hora"] or "--:--", v["direccion"] or "", v["visitante"] or "") for v in r["visitas_hoy"]]))
     urgentes = ([(_cuando(z["fecha"], hoy), z["titulo"], z["cliente"] or "Plazo") for z in r["plazos"]]
                 + [(_cuando(v["fecha"], hoy), f"Modelo {v['modelo']}", v["cliente"] or "Vencimiento fiscal") for v in r["vencimientos"]])

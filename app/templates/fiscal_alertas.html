@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Alertas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Alertas') }}</h1>
+    <p class="subtitle">{{ _('Lo que se sale de lo normal en tus clientes. Cada alerta dice qué regla ha saltado y lleva a donde se arregla.') }}</p>
+  </div>
+</header>
+{% if alertas %}
+<ul class="log-list ds-max-720">
+  {% for a in alertas %}
+  <li class="log-item">
+    <span class="pill {{ 'pill-danger' if a.severidad == 'alta' else '' }}">{{ _('Alta') if a.severidad == 'alta' else _('Media') }}</span>
+    <span class="log-text"><a href="{{ a.destino }}"><strong>{{ a.titulo }}</strong></a><br><span class="muted">{{ a.detalle }}</span></span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty-lane">{{ _('Todo en orden: no hay nada fuera de lo normal.') }}</p>
+{% endif %}
+{% endblock %}

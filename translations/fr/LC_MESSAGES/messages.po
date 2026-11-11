@@ -27375,3 +27375,42 @@ msgstr "Est-il facile de trouver ce que vous cherchez dans le portail ?"
 
 msgid "Me cuesta"
 msgstr "J'ai du mal"
+
+msgid "Modelo %(m)s de %(c)s sin presentar"
+msgstr "Modèle %(m)s de %(c)s non déposé"
+
+msgid "La fecha límite pasó hace %(n)s días."
+msgstr "La date limite est passée il y a %(n)s jours."
+
+msgid "%(c)s lleva %(n)s días sin subir facturas"
+msgstr "%(c)s n'a pas envoyé de factures depuis %(n)s jours"
+
+msgid "Lo habitual es una cada %(n)s días; la última es del %(f)s."
+msgstr "D'habitude une tous les %(n)s jours ; la dernière date du %(f)s."
+
+msgid "Gasto fuera de lo normal en %(c)s"
+msgstr "Dépense inhabituelle chez %(c)s"
+
+msgid "%(p)s: %(i)s, cuando la media de sus facturas es %(m)s."
+msgstr "%(p)s : %(i)s, alors que la moyenne de ses factures est de %(m)s."
+
+msgid "Posible factura duplicada de %(c)s"
+msgstr "Facture en double possible pour %(c)s"
+
+msgid "%(p)s por %(i)s, con fechas a menos de %(n)s días."
+msgstr "%(p)s pour %(i)s, à moins de %(n)s jours d'écart."
+
+msgid "Modelo %(m)s de %(c)s vence en %(n)s días sin documentación"
+msgstr "Le modèle %(m)s de %(c)s échoit dans %(n)s jours sans documents"
+
+msgid "Se pidió «%(p)s» y no ha llegado nada."
+msgstr "« %(p)s » a été demandé et rien n'est arrivé."
+
+msgid "Alertas"
+msgstr "Alertes"
+
+msgid "Lo que se sale de lo normal en tus clientes. Cada alerta dice qué regla ha saltado y lleva a donde se arregla."
+msgstr "Ce qui sort de l'ordinaire chez vos clients. Chaque alerte indique la règle déclenchée et mène à l'endroit où la corriger."
+
+msgid "Todo en orden: no hay nada fuera de lo normal."
+msgstr "Tout est en ordre : rien d'inhabituel."

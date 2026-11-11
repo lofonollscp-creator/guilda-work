@@ -605,6 +605,21 @@ def portal_actividad():
     return render_template("fiscal_portal_actividad.html", filas=portal_metricas.filas(g.tenant_id, g.usuario_id), dias_sin_entrar=portal_metricas.DIAS_SIN_ENTRAR, valoraciones=portal_valoraciones.resumen(g.tenant_id), tiempos=portal_tiempos.resumen(g.tenant_id, g.usuario_id))
 
 
+@fiscal_bp.route("/alertas")
+@login_required
+def alertas():
+    """Lo que se sale de lo normal en los clientes del despacho (facturas que dejan de llegar, gastos atípicos, duplicadas, modelos sin documentación). Cada alerta dice qué regla saltó y a dónde ir."""
+    if g.tenant_id is None:
+        abort(404)
+    from . import anomalias
+    lista = []
+    for a in anomalias.detectar(g.tenant_id):
+        titulo, detalle = anomalias.texto(a)
+        destino = (url_for("contabilidad.ver", factura_id=a["factura_id"]) if a.get("factura_id") else url_for("fiscal.editar_vencimiento", vencimiento_id=a["vencimiento_id"]) if a.get("vencimiento_id") else url_for("fiscal.ficha_cliente", cliente_id=a["cliente_id"]))
+        lista.append({**a, "titulo": titulo, "detalle": detalle, "destino": destino})
+    return render_template("fiscal_alertas.html", alertas=lista)
+
+
 @fiscal_bp.route("/citas-portal")
 @login_required
 def citas_portal():

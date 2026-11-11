@@ -120,6 +120,9 @@ def test_barrido(servidor, abrir, entrar_como_equipo):
                 pagina.wait_for_timeout(120)
                 pagina.evaluate("t => document.documentElement.setAttribute('data-theme', t)", tema)
                 m = pagina.evaluate(MEDIR)
+                if os.environ.get("GUILDA_CONTRASTE"):                              # contraste AA de cada texto contra su fondo real (el mismo cálculo que el barrido del portal)
+                    from tests.e2e.test_barrido_portal import CONTRASTE
+                    m["contraste"] = pagina.evaluate(CONTRASTE)
                 for fila in (".tarea-fila", ".fiscal-fila", ".cliente-fila", ".correo-fila"):         # estados al pasar el ratón (los controles de fila aparecen al hover)
                     if pagina.locator(fila).count():
                         pagina.locator(fila).first.hover()

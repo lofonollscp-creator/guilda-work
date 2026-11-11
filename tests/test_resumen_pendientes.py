@@ -193,3 +193,18 @@ def test_quien_gestiona_ve_las_ausencias_por_aprobar_y_los_demas_no(eq):
     assert [x["persona"] for x in r["ausencias_por_aprobar"]] == ["pide-resumen@ejemplo.com"]
     assert "Ausencias por aprobar (1)" in "\n".join(rp.redactar(r)[2]) and "ausencias por aprobar" in rp.construir_correo(eq.u, r)[2]
     assert rp.reunir(otra, HOY)["ausencias_por_aprobar"] == []
+
+
+def test_las_alertas_graves_de_los_clientes_entran_en_el_resumen_de_quien_dirige():
+    eq = Equipo()
+    verticales.fijar_activo(eq.t, "gestoria", True)
+    c = db.crear_cliente_fiscal(eq.t, "Cliente Alerta SL", email="alerta@ejemplo.com")
+    db.crear_vencimiento_fiscal(eq.t, c, "303", "3T", (HOY - timedelta(days=2)).isoformat())          # vencido sin presentar: alerta alta
+    r = rp.reunir(eq.u, HOY)
+    assert [a["titulo"] for a in r["alertas"]] == ["Modelo 303 de Cliente Alerta SL sin presentar"]
+    titulo, corto, lineas = rp.redactar(r)
+    assert "alertas de clientes" in corto and "Alertas de clientes (1)" in "\n".join(lineas) and "Modelo 303 de Cliente Alerta SL sin presentar" in "\n".join(lineas)
+    assert "Alertas de clientes" in rp.construir_correo(eq.u, r)[2]
+    otro = db.crear_usuario_vinculado_a_kratos("sin-mando@ejemplo.com", "k-sin-mando")
+    db.asignar_tenant(otro, eq.t)
+    assert rp.reunir(otro, HOY)["alertas"] == []                                                       # quien no dirige no recibe el ruido
