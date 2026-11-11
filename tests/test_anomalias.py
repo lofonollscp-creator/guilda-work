@@ -107,3 +107,24 @@ def test_la_pantalla_de_alertas_las_enseña_con_su_explicacion(cliente):
     html = cliente.get("/fiscal/alertas").get_data(as_text=True)
     assert "Modelo 303 de Cliente Web SL sin presentar" in html and "La fecha límite pasó hace 3 días." in html and f"/fiscal/vencimientos/{v}/editar" in html
     db.eliminar_vencimiento_fiscal(t, v) if hasattr(db, "eliminar_vencimiento_fiscal") else None
+
+
+def test_una_alerta_se_convierte_en_tarea_una_sola_vez(cliente):
+    from tests.conftest import iniciar_sesion_de_prueba
+    t = db.crear_tenant("Anomalías tarea")
+    u = iniciar_sesion_de_prueba(cliente, "alertas-tarea@ejemplo.com", "contrasena123")
+    db.asignar_tenant(u, t)
+    c = db.crear_cliente_fiscal(t, "Cliente Tarea SL", email="t@ejemplo.com")
+    v = db.crear_vencimiento_fiscal(t, c, "303", "3T", (date.today() - timedelta(days=3)).isoformat())
+    html = cliente.get("/fiscal/alertas").get_data(as_text=True)
+    import re
+    clave = re.search(r'name="clave" value="([^"]+)"', html).group(1)
+    assert clave == f"vencido_sin_presentar:{c}:{v}"
+    for _ in range(2):                                                                    # pulsar dos veces no duplica
+        r = cliente.post("/fiscal/alertas/tarea", data={"clave": clave})
+        assert r.status_code == 302 and "aviso=tarea" in r.headers["Location"]
+    conn = db.get_connection()
+    n = conn.execute("SELECT COUNT(*) FROM tareas_outlook WHERE usuario_id = ? AND asunto = 'Modelo 303 de Cliente Tarea SL sin presentar'", (u,)).fetchone()[0]
+    conn.close()
+    assert n == 1
+    assert "aviso=resuelta" in cliente.post("/fiscal/alertas/tarea", data={"clave": "duplicada:1:1"}).headers["Location"]

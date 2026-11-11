@@ -616,8 +616,30 @@ def alertas():
     for a in anomalias.detectar(g.tenant_id):
         titulo, detalle = anomalias.texto(a)
         destino = (url_for("contabilidad.ver", factura_id=a["factura_id"]) if a.get("factura_id") else url_for("fiscal.editar_vencimiento", vencimiento_id=a["vencimiento_id"]) if a.get("vencimiento_id") else url_for("fiscal.ficha_cliente", cliente_id=a["cliente_id"]))
-        lista.append({**a, "titulo": titulo, "detalle": detalle, "destino": destino})
-    return render_template("fiscal_alertas.html", alertas=lista)
+        lista.append({**a, "titulo": titulo, "detalle": detalle, "destino": destino, "clave": anomalias.clave(a)})
+    return render_template("fiscal_alertas.html", alertas=lista, aviso=request.args.get("aviso"))
+
+
+@fiscal_bp.route("/alertas/tarea", methods=["POST"])
+@login_required
+def alerta_a_tarea():
+    """Convierte una alerta en una tarea para quien la pulsa, enlazada al cliente. Si ya hay una tarea abierta con el mismo título para ese cliente, no se duplica."""
+    if g.tenant_id is None:
+        abort(404)
+    from . import anomalias
+    clave = request.form.get("clave", "")
+    alerta = next((a for a in anomalias.detectar(g.tenant_id) if anomalias.clave(a) == clave), None)
+    if alerta is None:
+        return redirect(url_for("fiscal.alertas", aviso="resuelta"))
+    titulo, detalle = anomalias.texto(alerta)
+    conn = db.get_connection()
+    try:
+        ya = conn.execute("SELECT 1 FROM tareas_outlook WHERE usuario_id = ? AND asunto = ? AND cliente_fiscal_id = ? AND estado <> 'completada'", (g.usuario_id, titulo, alerta["cliente_id"])).fetchone()
+    finally:
+        conn.close()
+    if not ya:
+        db.crear_tarea_outlook(g.usuario_id, asunto=titulo, cuerpo=detalle, prioridad="alta" if alerta["severidad"] == "alta" else "normal", cliente_fiscal_id=alerta["cliente_id"])
+    return redirect(url_for("fiscal.alertas", aviso="tarea"))
 
 
 @fiscal_bp.route("/citas-portal")

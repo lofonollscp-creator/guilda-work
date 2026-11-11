@@ -27338,3 +27338,9 @@ msgstr "AI queue"
 
 msgid "Sin trabajos en las últimas 24 h."
 msgstr "No jobs in the last 24 h."
+
+msgid "Tarea creada: la tienes en tus tareas."
+msgstr "Task created: you'll find it in your tasks."
+
+msgid "Esa alerta ya no está: alguien la ha resuelto."
+msgstr "That alert is gone: someone has resolved it."

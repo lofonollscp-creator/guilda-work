@@ -27423,3 +27423,9 @@ msgstr "File d'attente IA"
 
 msgid "Sin trabajos en las últimas 24 h."
 msgstr "Aucune tâche au cours des dernières 24 h."
+
+msgid "Tarea creada: la tienes en tus tareas."
+msgstr "Tâche créée : vous la trouverez dans vos tâches."
+
+msgid "Esa alerta ya no está: alguien la ha resuelto."
+msgstr "Cette alerte n'existe plus : quelqu'un l'a résolue."

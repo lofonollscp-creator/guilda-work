@@ -158,3 +158,8 @@ def texto(a: dict) -> tuple[str, str]:
                 _("Se pidió «%(p)s» y no ha llegado nada.", p=d["pedido"]))
     return (_("Modelo %(m)s de %(c)s sin presentar", m=a["modelo"], c=a["cliente"]),
             _("La fecha límite pasó hace %(n)s días.", n=d["dias"]))
+
+
+def clave(a: dict) -> str:
+    """Un identificador estable de la alerta (regla + cliente + lo que la provoca) para poder referirse a ella desde un formulario sin guardarla en ninguna tabla."""
+    return ":".join(str(x) for x in (a["tipo"], a["cliente_id"], a.get("factura_id") or a.get("vencimiento_id") or ""))

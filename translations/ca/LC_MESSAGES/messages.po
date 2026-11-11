@@ -27347,3 +27347,9 @@ msgstr "Cua d'IA"
 
 msgid "Sin trabajos en las últimas 24 h."
 msgstr "Cap feina en les últimes 24 h."
+
+msgid "Tarea creada: la tienes en tus tareas."
+msgstr "Tasca creada: la tens a les teves tasques."
+
+msgid "Esa alerta ya no está: alguien la ha resuelto."
+msgstr "Aquesta alerta ja no hi és: algú l'ha resolta."

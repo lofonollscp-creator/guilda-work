@@ -7,12 +7,15 @@
     <p class="subtitle">{{ _('Lo que se sale de lo normal en tus clientes. Cada alerta dice qué regla ha saltado y lleva a donde se arregla.') }}</p>
   </div>
 </header>
+{% if aviso == 'tarea' %}<p class="portal-peticion" role="status"><strong>{{ _('Tarea creada: la tienes en tus tareas.') }}</strong></p>
+{% elif aviso == 'resuelta' %}<p class="muted" role="status">{{ _('Esa alerta ya no está: alguien la ha resuelto.') }}</p>{% endif %}
 {% if alertas %}
 <ul class="log-list ds-max-720">
   {% for a in alertas %}
   <li class="log-item">
     <span class="pill {{ 'pill-danger' if a.severidad == 'alta' else '' }}">{{ _('Alta') if a.severidad == 'alta' else _('Media') }}</span>
     <span class="log-text"><a href="{{ a.destino }}"><strong>{{ a.titulo }}</strong></a><br><span class="muted">{{ a.detalle }}</span></span>
+    <form method="post" action="{{ url_for('fiscal.alerta_a_tarea') }}"><input type="hidden" name="clave" value="{{ a.clave }}"><button type="submit" class="btn btn-ghost">{{ _('Crear tarea') }}</button></form>
   </li>
   {% endfor %}
 </ul>
