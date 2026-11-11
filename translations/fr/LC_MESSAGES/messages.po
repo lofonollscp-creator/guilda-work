@@ -27838,3 +27838,15 @@ msgstr "Votre cabinet a épuisé sa limite mensuelle d'IA"
 
 msgid "Has usado las %(n)s consultas del mes. Se renueva el día 1; si lo necesitas antes, contacta con soporte."
 msgstr "Vous avez utilisé les %(n)s requêtes du mois. Il se renouvelle le 1er ; contactez le support si vous en avez besoin avant."
+
+msgid "Passkeys del equipo (Kratos)"
+msgstr "Passkeys de l'équipe (Kratos)"
+
+msgid "Kratos ofrece el acceso con passkey."
+msgstr "Kratos propose la connexion par passkey."
+
+msgid "Kratos no ha contestado: no se ha podido comprobar."
+msgstr "Kratos n'a pas répondu : vérification impossible."
+
+msgid "Kratos no ofrece el método passkey: revisa deploy/kratos/kratos.yml y reinicia su contenedor."
+msgstr "Kratos ne propose pas la méthode passkey : vérifiez deploy/kratos/kratos.yml et redémarrez son conteneur."

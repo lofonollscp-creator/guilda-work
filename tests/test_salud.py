@@ -223,3 +223,15 @@ def test_la_cola_de_ia_avisa_si_falla_mas_de_la_mitad():
 
 def test_el_panel_incluye_la_cola_de_ia():
     assert any(i["clave"] == "cola_ia" for i in salud.panel(datetime.now()))
+
+
+def test_el_panel_avisa_si_kratos_deja_de_ofrecer_passkeys(monkeypatch):
+    from app import kratos
+    def flujo(con_passkey):
+        nodos = [{"attributes": {"name": "identifier"}}] + ([{"attributes": {"name": "passkey_login"}}] if con_passkey else [])
+        return lambda url, **kw: (200, {"ui": {"nodes": nodos}}, {})
+    for respuesta, esperado in ((flujo(True), "verde"), (flujo(False), "ambar"), (lambda url, **kw: (502, {}, {}), "ambar")):
+        salud._PASSKEYS_CACHE.update(hasta=0.0, ofrece=None)
+        monkeypatch.setattr(kratos, "_peticion", respuesta)
+        assert salud._estado_passkeys()["estado"] == esperado
+    salud._PASSKEYS_CACHE.update(hasta=0.0, ofrece=None)

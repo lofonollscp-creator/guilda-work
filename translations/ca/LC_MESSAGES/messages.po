@@ -27762,3 +27762,15 @@ msgstr "El teu despatx ha esgotat el límit mensual d'IA"
 
 msgid "Has usado las %(n)s consultas del mes. Se renueva el día 1; si lo necesitas antes, contacta con soporte."
 msgstr "Has fet servir les %(n)s consultes del mes. Es renova l'1; si ho necessites abans, contacta amb suport."
+
+msgid "Passkeys del equipo (Kratos)"
+msgstr "Passkeys de l'equip (Kratos)"
+
+msgid "Kratos ofrece el acceso con passkey."
+msgstr "Kratos ofereix l'accés amb passkey."
+
+msgid "Kratos no ha contestado: no se ha podido comprobar."
+msgstr "Kratos no ha respost: no s'ha pogut comprovar."
+
+msgid "Kratos no ofrece el método passkey: revisa deploy/kratos/kratos.yml y reinicia su contenedor."
+msgstr "Kratos no ofereix el mètode passkey: revisa deploy/kratos/kratos.yml i reinicia'n el contenidor."

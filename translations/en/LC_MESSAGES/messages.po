@@ -27753,3 +27753,15 @@ msgstr "Your firm has used up its monthly AI limit"
 
 msgid "Has usado las %(n)s consultas del mes. Se renueva el día 1; si lo necesitas antes, contacta con soporte."
 msgstr "You've used all %(n)s queries for the month. It renews on the 1st; contact support if you need more sooner."
+
+msgid "Passkeys del equipo (Kratos)"
+msgstr "Team passkeys (Kratos)"
+
+msgid "Kratos ofrece el acceso con passkey."
+msgstr "Kratos offers passkey sign-in."
+
+msgid "Kratos no ha contestado: no se ha podido comprobar."
+msgstr "Kratos did not answer: it could not be checked."
+
+msgid "Kratos no ofrece el método passkey: revisa deploy/kratos/kratos.yml y reinicia su contenedor."
+msgstr "Kratos does not offer the passkey method: check deploy/kratos/kratos.yml and restart its container."

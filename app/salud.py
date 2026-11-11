@@ -223,6 +223,34 @@ def _estado_bd() -> dict:
     return _item("Servidor", "bd", _("Tamaño de la base de datos"), VERDE, _("%(mb)s MB.", mb=f"{tamano / 1024 / 1024:.1f}"), round(tamano / 1024 / 1024, 1))
 
 
+_PASSKEYS_CACHE: dict = {"hasta": 0.0, "ofrece": None}
+
+
+def _kratos_ofrece_passkeys() -> bool | None:
+    """True/False según el flujo de acceso de Kratos traiga o no el método passkey; None si no contesta. Se recuerda 5 minutos: el panel de salud se pinta a menudo."""
+    import time
+    if time.monotonic() < _PASSKEYS_CACHE["hasta"]:
+        return _PASSKEYS_CACHE["ofrece"]
+    from . import kratos
+    estado, cuerpo, _cab = kratos._peticion(f"{kratos.KRATOS_PUBLIC_URL}/self-service/login/api")
+    ofrece = None
+    if estado == 200 and isinstance(cuerpo, dict):
+        ofrece = any((n.get("attributes") or {}).get("name") == "passkey_login" for n in (cuerpo.get("ui") or {}).get("nodes", []))
+    _PASSKEYS_CACHE.update(hasta=time.monotonic() + 300, ofrece=ofrece)
+    return ofrece
+
+
+def _estado_passkeys() -> dict:
+    """Las passkeys del equipo dependen de la configuración de Kratos (deploy/kratos/kratos.yml): si tras un cambio o un reinicio dejan de ofrecerse, nadie se entera hasta que alguien las busca."""
+    titulo = _("Passkeys del equipo (Kratos)")
+    ofrece = _kratos_ofrece_passkeys()
+    if ofrece is None:
+        return _item("Servidor", "passkeys", titulo, AMBAR, _("Kratos no ha contestado: no se ha podido comprobar."))
+    if not ofrece:
+        return _item("Servidor", "passkeys", titulo, AMBAR, _("Kratos no ofrece el método passkey: revisa deploy/kratos/kratos.yml y reinicia su contenedor."))
+    return _item("Servidor", "passkeys", titulo, VERDE, _("Kratos ofrece el acceso con passkey."))
+
+
 COLA_IA_AMBAR_MIN, COLA_IA_ROJO_MIN = 15, 60            # un trabajo de IA que lleva tanto esperando sin que nadie lo coja
 
 
@@ -422,6 +450,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
     _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))
     _seguro("Servidor", "cola_ia", _("Cola de IA"), lambda: _estado_cola_ia(ahora))
+    _seguro("Servidor", "passkeys", _("Passkeys del equipo (Kratos)"), _estado_passkeys)
     _seguro("Servidor", "certificados", _("Certificados HTTPS"), lambda: _estado_certificados(ahora))
     _seguro("Servidor", "caducidades", _("Caducidades configuradas"), lambda: _estado_caducidades(ahora))
     _seguro("Correo", "correo", _("Cuentas de correo"), lambda: _estado_correo(ahora))
