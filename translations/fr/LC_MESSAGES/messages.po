@@ -27345,3 +27345,33 @@ msgstr "Cinq rubriques fixes (Accueil, Factures, Documents, Messages et Impôts)
 
 msgid "Usar la navegación nueva en el portal de mis clientes (encendido por defecto)"
 msgstr "Utiliser la nouvelle navigation dans le portail de mes clients (activée par défaut)"
+
+msgid "Tus passkeys se crearon en otra dirección del portal y aquí no se pueden usar. Añade una nueva en este dispositivo; las anteriores puedes quitarlas."
+msgstr "Vos passkeys ont été créées sur une autre adresse du portail et ne peuvent pas être utilisées ici. Ajoutez-en une nouvelle sur cet appareil ; vous pouvez supprimer les anciennes."
+
+msgid "Novedades"
+msgstr "Nouveautés"
+
+msgid "nuevo"
+msgstr "nouveau"
+
+msgid "No hay novedades por ahora."
+msgstr "Aucune nouveauté pour l'instant."
+
+msgid "Ver todos los avisos"
+msgstr "Voir tous les avis"
+
+msgid "Cómo quiero que me avisen"
+msgstr "Comment je veux être prévenu"
+
+msgid "Cómo va este modelo"
+msgstr "Où en est ce modèle"
+
+msgid "Para seguir necesitamos de ti: %(que)s"
+msgstr "Pour avancer, nous avons besoin de vous : %(que)s"
+
+msgid "¿Te resulta fácil encontrar lo que buscas en el portal?"
+msgstr "Est-il facile de trouver ce que vous cherchez dans le portail ?"
+
+msgid "Me cuesta"
+msgstr "J'ai du mal"

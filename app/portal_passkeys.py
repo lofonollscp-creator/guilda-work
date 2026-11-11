@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import logging
 from datetime import datetime, timedelta
 from urllib.parse import urlsplit
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS portal_passkeys (
     contador INTEGER NOT NULL DEFAULT 0,
     transportes TEXT NOT NULL DEFAULT '',
     nombre TEXT NOT NULL DEFAULT '',
+    rp_id TEXT NOT NULL DEFAULT '',
     creada_en TEXT NOT NULL,
     ultimo_uso TEXT,
     UNIQUE (tenant_id, credencial_id)
@@ -46,6 +48,7 @@ class ErrorPasskey(ValueError):
 
 def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
+    db._asegurar_columna(conn, "portal_passkeys", "rp_id", "TEXT NOT NULL DEFAULT ''")          # el dominio en el que se creó: una passkey solo funciona en él
 
 
 def _ahora() -> str:
@@ -82,10 +85,22 @@ def _tomar_desafio(sesion, clave: str) -> tuple[bytes, dict]:
 def listar(cliente, email: str) -> list[dict]:
     conn = db.get_connection()
     try:
-        return [dict(f) for f in conn.execute("SELECT id, nombre, creada_en, ultimo_uso FROM portal_passkeys WHERE tenant_id = ? AND cliente_fiscal_id = ? AND email = ? ORDER BY id",
+        return [dict(f) for f in conn.execute("SELECT id, nombre, creada_en, ultimo_uso, rp_id FROM portal_passkeys WHERE tenant_id = ? AND cliente_fiscal_id = ? AND email = ? ORDER BY id",
                                               (cliente["tenant_id"], cliente["id"], _email(email))).fetchall()]
     finally:
         conn.close()
+
+
+def rp_de_origen_antiguo() -> str:
+    """El dominio en el que se crearon las passkeys anteriores a registrar el dominio de cada una (rp_id vacío): la dirección pública de siempre."""
+    return (urlsplit(os.environ.get("GUILDA_URL_PUBLICA", "").strip()).hostname or "").lower()
+
+
+def funcionan_aqui(passkeys: list[dict], base_url: str) -> list[dict]:
+    """Las passkeys que el navegador ofrecerá en esta dirección: las creadas en este mismo dominio (las anteriores se suponen de la dirección pública de siempre)."""
+    aqui = contexto(base_url)[0].lower()
+    antiguo = rp_de_origen_antiguo() or aqui
+    return [k for k in passkeys if (k.get("rp_id") or antiguo).lower() == aqui]
 
 
 def quitar(cliente, email: str, passkey_id: int) -> bool:
@@ -148,8 +163,8 @@ def verificar_registro(cliente, email: str, credencial: dict, nombre: str, base_
     try:
         if conn.execute("SELECT 1 FROM portal_passkeys WHERE credencial_id = ?", (bytes_to_base64url(r.credential_id),)).fetchone():
             raise ErrorPasskey("Esa passkey ya está registrada.")
-        cur = conn.execute("INSERT INTO portal_passkeys (tenant_id, cliente_fiscal_id, email, credencial_id, clave_publica, contador, transportes, nombre, creada_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                           (cliente["tenant_id"], cliente["id"], _email(email), bytes_to_base64url(r.credential_id), bytes_to_base64url(r.credential_public_key), r.sign_count, transportes, nombre, _ahora()))
+        cur = conn.execute("INSERT INTO portal_passkeys (tenant_id, cliente_fiscal_id, email, credencial_id, clave_publica, contador, transportes, nombre, rp_id, creada_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                           (cliente["tenant_id"], cliente["id"], _email(email), bytes_to_base64url(r.credential_id), bytes_to_base64url(r.credential_public_key), r.sign_count, transportes, nombre, rp_id, _ahora()))
         conn.commit()
         return cur.lastrowid
     finally:

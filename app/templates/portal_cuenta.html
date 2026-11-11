@@ -181,6 +181,7 @@
 
             <h3>{{ _('Passkeys: entrar con huella, cara o PIN') }}</h3>
       <p class="muted">{{ _('Entras en un toque desde este dispositivo, sin esperar el correo. Es tan seguro como el desbloqueo de tu móvil u ordenador y cuenta como verificación en dos pasos. El enlace del correo sigue funcionando.') }}</p>
+      {% if seguridad.passkeys_en_otra_direccion %}<p class="ia-error" role="status">{{ _('Tus passkeys se crearon en otra dirección del portal y aquí no se pueden usar. Añade una nueva en este dispositivo; las anteriores puedes quitarlas.') }}</p>{% endif %}
       <ul class="portal-personas">
         {% for k in seguridad.passkeys %}
         <li class="portal-persona">

@@ -45,7 +45,7 @@ def test_el_cliente_comenta_con_un_archivo_y_el_equipo_le_contesta(servidor, abr
     equipo.get_by_role("button", name="Contestar al cliente").click()
     equipo.wait_for_load_state()
     cliente.reload()
-    assert cliente.get_by_text("Recibida, gracias").first.is_visible()
+    assert cliente.locator(".portal-hilo").get_by_text("Recibida, gracias").first.is_visible()                  # el aviso de la campana también lo dice, pero está plegado
     _sin_errores(errores_cliente + errores_equipo)
 
 

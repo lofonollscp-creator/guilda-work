@@ -3225,6 +3225,7 @@ CREATE TABLE IF NOT EXISTS portal_passkeys (
     contador bigint NOT NULL DEFAULT 0,
     transportes text NOT NULL DEFAULT '',
     nombre text NOT NULL DEFAULT '',
+    rp_id text NOT NULL DEFAULT '',
     creada_en text NOT NULL,
     ultimo_uso text,
     PRIMARY KEY (tenant_id, id),

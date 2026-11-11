@@ -60,3 +60,48 @@ def test_sistema_oscuro_pinta_oscuro_sin_elegir_nada_y_claro_lo_fuerza(servidor,
     _elegir(pg, "light")
     assert _luz(_fondo(pg)) > 200                                              # elegir «Claro» gana al dispositivo
     ctx.close()
+
+
+def test_el_menu_de_perfil_se_cierra_con_escape_y_con_un_clic_fuera_y_devuelve_el_foco(servidor, abrir, entrar_como_equipo, chromium):
+    ctx, pg = _entrar(servidor, abrir, entrar_como_equipo, chromium, "light")
+    pg.click(".pv-perfil > summary")
+    assert pg.evaluate("document.querySelector('.pv-perfil').open") is True
+    pg.wait_for_function("document.querySelector('.pv-perfil > summary').getAttribute('aria-expanded') === 'true'")
+    pg.keyboard.press("Escape")
+    assert pg.evaluate("document.querySelector('.pv-perfil').open") is False
+    assert pg.evaluate("document.activeElement.tagName") == "SUMMARY"
+    pg.click(".pv-perfil > summary")
+    pg.click("h1")
+    assert pg.evaluate("document.querySelector('.pv-perfil').open") is False
+    ctx.close()
+
+
+def test_la_pestana_activa_se_ve_aunque_la_fila_haga_scroll_en_el_movil(servidor, abrir, entrar_como_equipo, chromium):
+    ctx, pg = _entrar(servidor, abrir, entrar_como_equipo, chromium, "light")
+    pg.set_viewport_size({"width": 320, "height": 700})
+    pg.goto(f"{servidor.url}/portal/extracto")
+    pg.wait_for_load_state("load")
+    caja = pg.evaluate("(() => { const a = document.querySelector('.pv-pestanas a[aria-current]').getBoundingClientRect(), f = document.querySelector('.pv-pestanas').getBoundingClientRect(); return [a.left >= f.left - 1, a.right <= f.right + 1]; })()")
+    assert caja == [True, True]
+    ctx.close()
+
+
+def test_navegacion_nueva_barra_inferior_en_el_movil_y_cabecera_en_el_pc(servidor, abrir, entrar_como_equipo, chromium):
+    ctx, pg = _entrar(servidor, abrir, entrar_como_equipo, chromium, "light")
+    pg.set_viewport_size({"width": 390, "height": 800})
+    pg.goto(f"{servidor.url}/portal/")
+    assert pg.locator(".pv-tabs").is_visible() and pg.locator(".pv-nav").is_hidden()
+    assert pg.locator(".pv-tabs").evaluate("e => getComputedStyle(e).position") == "fixed"
+    pg.set_viewport_size({"width": 1280, "height": 800})
+    assert pg.locator(".pv-tabs").is_hidden() and pg.locator(".pv-nav").is_visible()
+    ctx.close()
+
+
+def test_la_campana_y_el_perfil_no_se_abren_a_la_vez(servidor, abrir, entrar_como_equipo, chromium):
+    ctx, pg = _entrar(servidor, abrir, entrar_como_equipo, chromium, "light")
+    pg.click(".pv-campana > summary")
+    assert pg.evaluate("document.querySelector('.pv-campana').open") is True
+    pg.click(".pv-perfil > summary")
+    pg.wait_for_function("document.querySelector('.pv-campana').open === false")
+    assert pg.evaluate("document.querySelector('.pv-perfil').open") is True
+    ctx.close()

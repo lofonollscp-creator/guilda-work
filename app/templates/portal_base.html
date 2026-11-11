@@ -134,7 +134,7 @@
   </nav>
   {% endif %}
   <script src="{{ url_for('static', filename='portal_app.js') }}" defer></script>
-  {% if portal_nuevo %}<script src="{{ url_for('static', filename='portal_tablas.js') }}" defer></script>{% endif %}
+  {% if portal_nuevo %}<script src="{{ url_for('static', filename='portal_v2.js') }}" defer></script>{% endif %}
   {% if portal_cliente and not vista_previa %}<script src="{{ url_for('static', filename='sw_registro.js') }}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>

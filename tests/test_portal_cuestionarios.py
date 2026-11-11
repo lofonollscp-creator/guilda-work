@@ -1,4 +1,5 @@
 """Cuestionarios del cliente (Q8): plantillas y propios, respuestas validadas por tipo, avisos y revisión por el equipo."""
+import re
 import pytest
 
 from app import db, portal_cuestionarios as pq
@@ -86,7 +87,7 @@ def test_el_equipo_manda_una_plantilla_el_cliente_contesta_y_el_equipo_lo_recibe
     assert "Contestado: por revisar" in _html(cliente, f"/fiscal/clientes/{c}/editar") and "Nada más" in _html(cliente, f"/fiscal/clientes/{c}/editar")
     assert cliente.post(f"/fiscal/clientes/{c}/cuestionarios/{q['id']}/recibido").status_code == 302 and pq.obtener(_ficha(c), q["id"])["estado"] == "recibido"
     assert "Recibido por tu gestoría" in _html(web, "/portal/cuestionarios")
-    assert "Tu gestoría te pide que contestes" not in _html(web, "/portal/")                                                                  # ya no está pendiente
+    assert "Tu gestoría te pide que contestes" not in re.sub(r'<details class="pv-campana.*?</details>', "", _html(web, "/portal/"), flags=re.S)                                                                  # ya no está pendiente
 
 
 def test_reabrir_borra_las_respuestas_y_cancelar_lo_saca_de_pendientes(cliente, correo):

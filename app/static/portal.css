@@ -231,7 +231,7 @@
 .portal-lectura-dudosa { font-weight: 600; }
 .portal-valoracion { display: flex; flex-wrap: wrap; gap: 8px 16px; border: 0; padding: 0; margin: 0 0 8px; }
 .portal-valoracion legend { padding: 0; margin-bottom: 4px; }
-.portal-saltar { position: absolute; left: 8px; top: -48px; z-index: 100; padding: 10px 14px; background: var(--primary); color: #fff; border-radius: var(--radius-sm); text-decoration: none; }
+.portal-saltar { position: absolute; left: 8px; top: -48px; z-index: 100; padding: 10px 14px; background: var(--primary); color: var(--on-accent, #fff); border-radius: var(--radius-sm); text-decoration: none; }
 .portal-saltar:focus { top: 8px; }
 .portal-cuenta-form .correo-form-campo { min-width: 0; }
 .portal-cuenta-form input[type="file"], .portal-cuenta-form input[type="text"], .portal-cuenta-form select { max-width: 100%; box-sizing: border-box; }

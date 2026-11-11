@@ -7,7 +7,7 @@ CONTRASTE = """() => {
   const fondo = e => { while (e) { const c = getComputedStyle(e).backgroundColor; if (c && !/rgba\\(0, 0, 0, 0\\)|transparent/.test(c)) return rgb(c); e = e.parentElement; } return [255, 255, 255]; };
   const razon = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
   const medir = sel => { const e = document.querySelector(sel); if (!e) return null; const cs = getComputedStyle(e); return Math.round(razon(rgb(cs.color), fondo(e)) * 100) / 100; };
-  return {texto: medir('.portal-contenido p'), apagado: medir('.portal-contenido .muted'), enlace: medir('.portal-contenido a:not(.btn)'), boton: medir('.portal-contenido .btn-primary'), nav: medir('.portal-nav a')};
+  return {texto: medir('.portal-contenido p'), apagado: medir('.portal-contenido .muted'), enlace: medir('.portal-contenido a:not(.btn)'), boton: medir('.portal-contenido .btn-primary'), nav: medir('.pv-nav a')};
 }"""
 
 
@@ -66,7 +66,7 @@ def test_el_contraste_del_texto_cumple_wcag_aa_en_claro_y_en_oscuro(servidor, ab
 def test_el_foco_del_teclado_se_ve_en_enlaces_y_botones(servidor, abrir, entrar_como_equipo, chromium):
     ctx, nueva = _entrar(servidor, abrir, entrar_como_equipo, chromium, "Portal foco")
     nueva.goto(f"{servidor.url}/portal/cuenta")
-    nueva.focus(".portal-nav a >> nth=1")
+    nueva.focus(".pv-nav a >> nth=1")
     nueva.keyboard.press("Shift+Tab"); nueva.keyboard.press("Tab")
     ancho = nueva.evaluate("parseFloat(getComputedStyle(document.activeElement).outlineWidth)")
     assert ancho >= 2

@@ -3,6 +3,16 @@
 {% block titulo %}{{ cliente.nombre }}{% if cliente.pais and cliente.pais != 'ES' %} <span class="pill" title="{{ _('País de tributación') }}">{{ cliente.pais }}</span>{% endif %}{% endblock %}
 {% block subtitulo %}{{ _('Tu expediente fiscal.') }}{% endblock %}
 {% block contenido %}
+    {% if error_valoracion %}<p class="ia-error" role="alert">{{ error_valoracion }}</p>{% endif %}
+    {% if valorado %}<p class="muted" role="status">{{ _('¡Gracias por contárnoslo!') }}</p>
+    {% elif puede_valorar_navegacion %}
+    <form method="post" action="{{ url_for('portal_cliente.valorar') }}" class="portal-valoracion-rapida" aria-labelledby="val-navegacion">
+      <input type="hidden" name="tipo" value="navegacion"><input type="hidden" name="referencia" value="v2">
+      <span id="val-navegacion">{{ _('¿Te resulta fácil encontrar lo que buscas en el portal?') }}</span>
+      <button type="submit" name="puntos" value="5" class="btn btn-ghost">{{ _('Sí, muy fácil') }}</button>
+      <button type="submit" name="puntos" value="2" class="btn btn-ghost">{{ _('Me cuesta') }}</button>
+    </form>
+    {% endif %}
     {% if ayuda_enviada %}<p class="portal-peticion" role="status"><strong>{{ _('Hemos avisado a tu gestoría de que necesitas ayuda con tu certificado. Se pondrá en contacto contigo.') }}</strong></p>{% endif %}
     {% if bienvenida %}
     <section class="portal-bienvenida" aria-labelledby="portal-bienvenida-titulo">

@@ -9,6 +9,8 @@ def _entrar(servidor, abrir, entrar_como_equipo, chromium, nombre, ancho=390):
     pagina, _ = abrir()
     entrar_como_equipo(pagina, f"{nombre.replace(' ', '')}@ejemplo.com", despacho=t, direccion=True)
     verticales.fijar_activo(t, "contabilizacion", True)
+    from app import portal_diseno
+    portal_diseno.fijar(t, False)                                              # estas pruebas son de la navegación de siempre; la nueva se prueba en test_portal_tema.py
     c = db.crear_cliente_fiscal(t, "Cliente Webapp", email="webapp@ejemplo.com")
     ctx = chromium.new_context(viewport={"width": ancho, "height": 800})
     nueva = ctx.new_page()

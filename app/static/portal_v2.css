@@ -29,10 +29,10 @@
 @media (max-width: 960px) { .pv-marca-nombre, .pv-perfil-nombre { display: none; } .pv-nav a { padding: 0 10px; } .pv-nav { min-width: 0; } }
 
 /* Menú de perfil */
-.pv-perfil { position: relative; }
-.pv-perfil > summary { list-style: none; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px 0 4px; border-radius: 999px; cursor: pointer; }
-.pv-perfil > summary::-webkit-details-marker { display: none; }
-.pv-perfil > summary:hover { background: var(--pv-accent-soft); }
+.pv-perfil, .pv-campana { position: relative; }
+.pv-perfil > summary, .pv-campana > summary { list-style: none; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px 0 4px; border-radius: 999px; cursor: pointer; }
+.pv-perfil > summary::-webkit-details-marker, .pv-campana > summary::-webkit-details-marker { display: none; }
+.pv-perfil > summary:hover, .pv-campana > summary:hover { background: var(--pv-accent-soft); }
 .pv-avatar { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--pv-accent); color: var(--pv-on-accent); font-weight: 800; }
 .pv-perfil-nombre { max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .pv-perfil-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; width: min(320px, 92vw); display: grid; gap: 2px; padding: 8px; background: var(--portal-card, #fff); border: 1px solid var(--portal-line); border-radius: var(--pv-radio); box-shadow: var(--pv-sombra); }
@@ -128,3 +128,23 @@ html[data-sencillo] .pv-nav a, html[data-sencillo] .pv-tabs a, html[data-sencill
 .pv-temas[hidden] { display: none; }
 .pv-temas button { flex: 1 1 0; justify-content: center; border: 1px solid var(--portal-line); min-width: 0; }
 .pv-temas button[aria-pressed="true"] { border-color: var(--pv-accent); background: var(--pv-accent-soft); color: var(--pv-accent-text); font-weight: 700; }
+
+/* V12: foco visible y legible en cualquier tema y con cualquier color de marca */
+.portal-v2 a:focus-visible, .portal-v2 button:focus-visible, .portal-v2 summary:focus-visible, .portal-v2 select:focus-visible, .portal-v2 input:focus-visible, .portal-v2 textarea:focus-visible { outline: 3px solid var(--pv-accent-text); outline-offset: 2px; border-radius: 8px; }
+.portal-v2 .pv-pestanas a:focus-visible { outline-offset: -3px; }
+.portal-v2 .portal-saltar:focus { outline: 3px solid var(--portal-ink); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .portal-v2 * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* V10: campana de novedades */
+.pv-campana > summary { position: relative; padding: 0; justify-content: center; }
+.pv-campana .pv-campana-n { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; font-size: .7rem; }
+.pv-campana-panel { width: min(360px, 92vw); max-height: min(70vh, 480px); overflow-y: auto; }
+.pv-campana-titulo { padding: 8px 12px 4px; }
+.pv-campana-panel a.pv-novedad { display: grid; gap: 2px; align-items: start; min-height: 44px; padding: 8px 12px; height: auto; }
+.pv-campana-panel a.pv-novedad.nuevo { border-left: 4px solid var(--pv-accent); background: var(--pv-accent-soft); }
+.pv-novedad-titulo { font-weight: 600; overflow-wrap: anywhere; }
+.pv-novedad-detalle, .pv-novedad-fecha { font-size: .85em; overflow-wrap: anywhere; }
+.pv-campana-vacia { padding: 8px 12px; margin: 0; }
+
+@media (max-width: 400px) { .pv-marca-nombre { display: none; } .pv-cabecera { gap: 4px; padding-inline: 6px; } .pv-acciones { gap: 0; } .pv-perfil > summary { padding: 0 2px; } }       /* 320 px: logo + lupa + campana + perfil caben sin desbordar (el nombre del despacho ya sale en el título del menú) */
+@media (max-width: 720px) { .portal-v2 .portal-pasos li { white-space: normal; overflow-wrap: anywhere; } }       /* los pasos de la factura caben en la tarjeta en 320 px y en catalán */

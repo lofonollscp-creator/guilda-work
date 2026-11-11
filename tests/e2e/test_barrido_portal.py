@@ -32,6 +32,26 @@ CONTRASTE = """() => {
 }"""
 # Huella de estilos: por cada elemento de la página, su ruta y los estilos calculados que más se notan. Dos huellas iguales = la página se ve igual (sirve para mover CSS de sitio sin romper nada: GUILDA_HUELLA=<fichero.json>).
 HUELLA = """() => Array.from(document.body.querySelectorAll('*')).map((e) => { const s = getComputedStyle(e); const r = e.getBoundingClientRect(); const ruta = e.tagName.toLowerCase() + (typeof e.className === 'string' && e.className ? '.' + e.className.trim().split(/\\s+/).join('.') : ''); return [ruta, s.color, s.backgroundColor, s.fontSize, s.fontWeight, s.display, s.position, s.margin, s.padding, s.border, s.borderRadius, s.boxShadow, s.gap, s.textAlign, s.opacity, Math.round(r.width), Math.round(r.height)].join('|'); })"""
+# Accesibilidad que MEDIR no mira: campos sin etiqueta, regiones (nav, main) repetidas con el mismo nombre, saltos de nivel de encabezado, ids repetidos y botones o enlaces vacíos.
+ACCESIBILIDAD = """() => {
+  const vis = (e) => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && !e.closest('[hidden]'); };
+  const o = [];
+  for (const c of document.querySelectorAll('input:not([type=hidden]):not([type=submit]):not([type=button]), select, textarea')) {
+    if (c.type === 'file' && !vis(c) && !c.labels?.length && !c.getAttribute('aria-label')) { o.push('campo oculto sin etiqueta: ' + (c.id || c.name)); continue; }
+    if (!vis(c) && c.type !== 'file') continue;
+    if (!(c.labels && c.labels.length) && !c.getAttribute('aria-label') && !c.getAttribute('aria-labelledby') && !c.title) o.push('sin etiqueta: ' + c.tagName.toLowerCase() + '#' + (c.id || c.name));
+  }
+  const navs = [...document.querySelectorAll('nav')].filter(vis).map((n) => n.getAttribute('aria-label') || '');
+  navs.forEach((n, i) => { if (!n || navs.indexOf(n) !== i) o.push('nav sin nombre o repetido: «' + n + '»'); });
+  if (document.querySelectorAll('main').length !== 1) o.push('main: ' + document.querySelectorAll('main').length);
+  let ultimo = 0;
+  for (const h of document.querySelectorAll('h1,h2,h3,h4,h5,h6')) { if (!vis(h)) continue; const n = +h.tagName[1]; if (ultimo && n > ultimo + 1) o.push('salto h' + ultimo + '→h' + n + ': ' + h.textContent.trim().slice(0, 30)); ultimo = n; }
+  const ids = {}; for (const e of document.querySelectorAll('[id]')) ids[e.id] = (ids[e.id] || 0) + 1;
+  for (const k in ids) if (ids[k] > 1) o.push('id repetido: ' + k);
+  for (const b of document.querySelectorAll('button, a[href]')) { if (vis(b) && !(b.getAttribute('aria-label') || b.getAttribute('aria-labelledby') || b.title || (b.textContent || '').trim() || b.querySelector('img[alt]:not([alt=""])'))) o.push('vacío: ' + b.tagName.toLowerCase() + '.' + (b.className || '').toString().slice(0, 30)); }
+  if (!document.documentElement.lang) o.push('html sin lang');
+  return [...new Set(o)].slice(0, 8);
+}"""
 pytestmark = pytest.mark.skipif(not CARPETA, reason="GUILDA_BARRIDO sin definir")
 EXCLUIR = ("salir", "logout", "descargar", "export", "pdf", "csv", "static", "adjunto", "archivo", "borrar", "eliminar", "enviar", "manifest", "push", "comprobar")
 
@@ -160,6 +180,9 @@ def test_barrido_portal(servidor, abrir, entrar_como_equipo, chromium):
                 d.update({k: v for k, v in m.items() if v})
                 if os.environ.get("GUILDA_HUELLA"):
                     huellas[actual["k"]] = pg.evaluate(HUELLA)
+                a = pg.evaluate(ACCESIBILIDAD) if os.environ.get("GUILDA_A11Y") else []
+                if a:
+                    d["a11y"] = a
                 if tema:
                     c = pg.evaluate(CONTRASTE)
                     if c:

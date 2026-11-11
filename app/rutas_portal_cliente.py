@@ -20,7 +20,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _, get_locale
 
 from . import antivirus, auditoria, captcha, db, marca, notificaciones, tareas_trabajo, verticales
-from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_propuestas, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, portal_compromiso, portal_voz, portal_diseno, portal_recordatorios, facturas_contables, justificantes, facturas_portal, portal_inicio
+from . import ayuda, laboral, enderezar_documento, portal_actividad, portal_compartir, portal_documentos, portal_dossier, portal_propuestas, portal_asistente, portal_negocio, portal_telemetria, portal_ventas, portal_solicitudes, portal_passkeys, portal_silencio, portal_canales, portal_buzon, portal_busqueda, portal_conversaciones, portal_cuestionarios, portal_datos, portal_novedades, portal_calendario, portal_citas, portal_extracto, portal_firmas_honorarios, portal_lectura_previa, portal_personas, portal_peticiones, portal_seguridad, portal_valoraciones, portal_plazos, portal_push, portal_situacion, portal_estado, portal_informe_anual, portal_glosario, portal_primeros_pasos, portal_subida_rapida, portal_vista_previa, qr, cierre_trimestre, conformidad_declaracion, portal_carpeta, portal_firma, portal_pagos, portal_compromiso, portal_voz, portal_diseno, portal_linea_tiempo, portal_recordatorios, facturas_contables, justificantes, facturas_portal, portal_inicio
 from .auth import limiter
 from . import notificaciones_email
 from .notificaciones_email import ErrorNotificacionesEmail, enviar_enlace_portal
@@ -101,9 +101,9 @@ def _menu_del_portal():
     otras = [c for c in portal_personas.clientes_de(email) if c["id"] != cliente["id"]] if not g.get("vista_previa") else []
     pendientes_otras = {c["id"]: portal_inicio.pendientes_de(c, portal_personas.rol_de(c, email) or "consulta") for c in otras[:MAX_SELECTOR_CON_CUENTA]}       # K10: lo pendiente de cada empresa, en el selector
     return {**_diseno_del_portal(cliente), "vista_previa": g.get("vista_previa"), "portal_cliente": cliente, "portal_honorarios": bool(cliente["portal_honorarios"]), "portal_pendientes_otras": pendientes_otras, "portal_facturas": con_facturas, "portal_insignia_facturas": facturas_portal.para_el_inicio(cliente["id"])["para_corregir"] if con_facturas else 0,
-            "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
+            "portal_insignia_mensajes": portal_buzon.sin_leer_total(cliente), "portal_insignia_avisos": 0 if g.get("vista_previa") else portal_novedades.sin_leer(cliente, g.get("portal_email") or cliente["email"] or ""), "portal_novedades_recientes": [] if g.get("vista_previa") else portal_novedades.listar(cliente, g.get("portal_email") or cliente["email"] or "", 5), "portal_rol": g.get("portal_rol", "completo"), "portal_otros_clientes": otras, "portal_puede_decidir": g.get("portal_rol", "completo") == "completo",
             "portal_puede_subir": g.get("portal_rol", "completo") != "consulta" and not g.get("vista_previa"),
-            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "portal_ventas": portal_ventas.activa_para(cliente), "portal_propuestas": portal_propuestas.hay(cliente), "portal_asistente": portal_asistente.disponible(cliente), "glosario_modelo": portal_glosario.por_modelo, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
+            "portal_telemetria": portal_telemetria.activa(cliente["tenant_id"]) and not g.get("vista_previa"), "portal_trabajadores": _tiene_trabajadores(cliente), "portal_ventas": portal_ventas.activa_para(cliente), "portal_propuestas": portal_propuestas.hay(cliente), "portal_asistente": portal_asistente.disponible(cliente), "glosario_modelo": portal_glosario.por_modelo, "linea_tiempo": portal_linea_tiempo.de_vencimiento, "falta_de_ti": portal_linea_tiempo.falta_de_ti, "portal_ayuda_url": ayuda.url_de(request.endpoint, str(get_locale() or "es")[:2])[0]}
 
 
 MAX_SELECTOR_CON_CUENTA = 8                       # a partir de ahí el selector no calcula lo pendiente de cada empresa: sería una portada entera por empresa en cada pantalla
@@ -391,7 +391,8 @@ def dashboard():
     primeros = portal_primeros_pasos.pasos(cliente, d["con_facturas"], g.portal_rol != "consulta", g.portal_rol != "consulta") if bienvenida else []
     resumen_primeros = portal_primeros_pasos.resumen(primeros)
     return render_template(
-        "portal_dashboard.html", cliente=cliente, vencimientos=d["vencimientos"], certificados=d["certificados"], tipos_certificado=certificados.TIPOS_CERTIFICADO,
+        "portal_dashboard.html", puede_valorar_navegacion=bool(portal_diseno.activo(cliente["tenant_id"]) and g.portal_rol != "consulta" and not g.get("vista_previa") and not portal_valoraciones.ya_valorada(cliente, g.portal_email or cliente["email"], "navegacion", portal_valoraciones.REF_NAVEGACION)),
+        valorado=request.args.get("valorado"), error_valoracion=(request.args.get("error") or "")[:200] or None, cliente=cliente, vencimientos=d["vencimientos"], certificados=d["certificados"], tipos_certificado=certificados.TIPOS_CERTIFICADO,
         instrucciones_certificado=cfg_cert["instrucciones"], ayuda_enviada=request.args.get("ayuda"), portal_seccion="inicio",
         para_hacer=d["para_hacer"], presentados=d["presentados"], proximo_pendiente=d["proximo_pendiente"], trabajo_en_curso=portal_estado.enriquecer(d["trabajo"], cliente["tenant_id"]),
         plazos=portal_plazos.proximos(cliente, d["vencimientos"], g.portal_rol),
@@ -1142,6 +1143,7 @@ def cuenta():
         sid = session.get("portal_sid")
         seguridad = {"sesiones": portal_seguridad.listar(cliente, yo, sid), "segundo_factor": portal_seguridad.activo(cliente, yo), "codigos": portal_seguridad.codigos_restantes(cliente, yo),
                      "passkeys": portal_passkeys.listar(cliente, yo)}
+        seguridad["passkeys_en_otra_direccion"] = bool(seguridad["passkeys"]) and not portal_passkeys.funcionan_aqui(seguridad["passkeys"], _base_publica())      # las de la dirección anterior no se ofrecen aquí: hay que crear una nueva
         pendiente = portal_seguridad.secreto_pendiente(cliente, yo)
         if pendiente and not seguridad["segundo_factor"]:
             uri = portal_seguridad.uri_totp(yo, pendiente)
@@ -1234,7 +1236,7 @@ def valorar():
         baja = portal_valoraciones.valorar(cliente, g.portal_email or cliente["email"], tipo, referencia, request.form.get("puntos"), request.form.get("comentario", ""))
     except ValueError as e:
         return redirect(destino + "?" + urlencode({"error": _(str(e))[:200]}))
-    if baja:
+    if baja and tipo != "navegacion":                                                    # la nota de la navegación no es un trámite: se ve en la actividad del portal, sin avisar a nadie
         facturas_contables.avisar_al_equipo(cliente, _("%(cliente)s ha valorado con nota baja un trámite", cliente=cliente["nombre"]), _("Conviene hablar con el cliente: ha puntuado %(n)s o menos sobre 5.", n=portal_valoraciones.NOTA_BAJA),
                                            url_for("fiscal.portal_actividad"), {"valoracion": tipo})
     return redirect(destino + "?valorado=1")
@@ -2035,8 +2037,11 @@ def buscar():
 def manifiesto():
     """El portal instalable en el móvil: arranca en su portada y no se sale de /portal/."""
     import json
-    cuerpo = {"name": "Guilda Work", "short_name": "Mi gestoría", "description": _("Tu portal de cliente: lo que tienes que hacer, tus facturas e impuestos y tus mensajes."), "start_url": "/portal/", "scope": "/portal/", "display": "standalone", "share_target": {"action": "/portal/compartir", "method": "POST", "enctype": "multipart/form-data", "params": {"files": [{"name": "archivos", "accept": ["application/pdf", "image/*"]}]}},
-              "background_color": "#f5f6f8", "theme_color": "#f5f6f8", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"}, {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    cliente = db.obtener_cliente_fiscal_por_id(g.cliente_fiscal_id) if g.get("cliente_fiscal_id") else None
+    m = portal_diseno.marca_del_portal(cliente["tenant_id"]) if cliente and portal_diseno.activo(cliente["tenant_id"]) else {"nombre": "", "color": ""}           # con la sesión puesta, la app instalada lleva el nombre y el color del despacho
+    nombre = (m["nombre"] or "").strip()
+    cuerpo = {"name": nombre or "Guilda Work", "short_name": nombre[:12].strip() or "Mi gestoría", "description": _("Tu portal de cliente: lo que tienes que hacer, tus facturas e impuestos y tus mensajes."), "start_url": "/portal/", "scope": "/portal/", "display": "standalone", "share_target": {"action": "/portal/compartir", "method": "POST", "enctype": "multipart/form-data", "params": {"files": [{"name": "archivos", "accept": ["application/pdf", "image/*"]}]}},
+              "background_color": "#f5f6f8", "theme_color": m["color"] or "#f5f6f8", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"}, {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
                                                                                 {"src": "/static/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}]}
     cuerpo.update({"id": "/portal/", "lang": str(get_locale() or "es")[:2], "categories": ["business", "finance", "productivity"], "display_override": ["standalone", "minimal-ui"], "orientation": "any",
                    "shortcuts": [{"name": _("Subir una factura"), "short_name": _("Subir"), "url": "/portal/facturas#form-subida", "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]},

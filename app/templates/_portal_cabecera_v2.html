@@ -15,7 +15,18 @@
   </nav>
   <div class="pv-acciones">
     <a class="pv-icono" href="{{ url_for('portal_cliente.buscar') }}" data-atajo="b" aria-label="{{ _('Buscar en el portal') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg></a>
-    <details class="pv-perfil">
+    <details class="pv-campana pv-desplegable">
+      <summary class="pv-icono" aria-label="{{ _('Novedades') }}{% if portal_insignia_avisos %} ({{ portal_insignia_avisos }}){% endif %}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-bell"></use></svg>{% if portal_insignia_avisos %}<span class="portal-nav-insignia pv-campana-n" aria-hidden="true">{{ portal_insignia_avisos }}</span>{% endif %}</summary>
+      <div class="pv-perfil-panel pv-campana-panel">
+        <strong class="pv-campana-titulo">{{ _('Novedades') }}</strong>
+        {% for n in portal_novedades_recientes %}
+        <a class="pv-novedad{{ ' nuevo' if n.nuevo }}" href="{{ n.url or url_for('portal_cliente.avisos') }}"><span class="pv-novedad-titulo">{{ n.titulo }}{% if n.nuevo %} <span class="sr-only">({{ _('nuevo') }})</span>{% endif %}</span>{% if n.detalle %}<span class="muted pv-novedad-detalle">{{ n.detalle }}</span>{% endif %}<span class="muted pv-novedad-fecha">{{ n.creado_en[:10]|fecha_dia }}</span></a>
+        {% else %}<p class="muted pv-campana-vacia">{{ _('No hay novedades por ahora.') }}</p>{% endfor %}
+        <a href="{{ url_for('portal_cliente.avisos') }}">{{ _('Ver todos los avisos') }}</a>
+        <a href="{{ url_for('portal_cliente.cuenta') }}#avisos">{{ _('Cómo quiero que me avisen') }}</a>
+      </div>
+    </details>
+    <details class="pv-perfil pv-desplegable">
       <summary aria-label="{{ _('Perfil de %(nombre)s', nombre=portal_cliente.nombre) }}"><span class="pv-avatar" aria-hidden="true">{{ portal_cliente.nombre[:1]|upper }}</span><span class="pv-perfil-nombre">{{ portal_cliente.nombre }}</span></summary>
       <div class="pv-perfil-panel">
         {% if portal_otros_clientes %}

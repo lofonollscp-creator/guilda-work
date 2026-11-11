@@ -49,7 +49,7 @@ def test_las_pestanas_son_de_la_seccion_y_marcan_la_pantalla_actual(cliente):
 def test_el_menu_de_perfil_trae_cuenta_idioma_y_salir(cliente):
     _con_portal(cliente)
     html = _html(cliente, "/portal/")
-    perfil = re.search(r'<details class="pv-perfil">.*?</details>', html, re.S).group(0)
+    perfil = re.search(r'<details class="pv-perfil pv-desplegable">.*?</details>', html, re.S).group(0)
     for esperado in ('href="/portal/cuenta"', 'href="/portal/glosario"', "Català", "English", "Français", "/portal/salir"):
         assert esperado in perfil, esperado
 
@@ -81,7 +81,7 @@ def test_el_selector_de_empresas_va_dentro_del_menu_de_perfil(cliente):
     t, u, c = _con_portal(cliente)
     crear_cliente_fiscal(t, "Sociedad Dos SL", nif="B87654321", email="dueno@ejemplo.com")
     html = _html(cliente, "/portal/")
-    assert "Sociedad Dos SL" in re.search(r'<details class="pv-perfil">.*?</details>', html, re.S).group(0)
+    assert "Sociedad Dos SL" in re.search(r'<details class="pv-perfil pv-desplegable">.*?</details>', html, re.S).group(0)
 
 
 def test_la_portada_pliega_lo_hecho_y_ofrece_subir_una_factura_si_esta_al_dia(cliente):
@@ -137,6 +137,67 @@ def test_las_pestanas_condicionales_solo_salen_cuando_el_cliente_las_tiene(clien
 def test_la_ayuda_de_cada_pantalla_sigue_en_el_menu_de_perfil(cliente):
     _con_portal(cliente)
     html = _html(cliente, "/portal/")
-    perfil = re.search(r'<details class="pv-perfil">.*?</details>', html, re.S).group(0)
+    perfil = re.search(r'<details class="pv-perfil pv-desplegable">.*?</details>', html, re.S).group(0)
     assert "portal-de-cliente/recorrer-el-portal/" in perfil and "/portal/carpeta" not in perfil
-    assert "portal-de-cliente/mi-carpeta/" in re.search(r'<details class="pv-perfil">.*?</details>', _html(cliente, "/portal/carpeta"), re.S).group(0)
+    assert "portal-de-cliente/mi-carpeta/" in re.search(r'<details class="pv-perfil pv-desplegable">.*?</details>', _html(cliente, "/portal/carpeta"), re.S).group(0)
+
+
+def test_cada_modelo_enseña_su_linea_de_tiempo_y_lo_que_falta_de_la_persona(cliente):
+    t, u, c = _con_portal(cliente)
+    v1 = db.crear_vencimiento_fiscal(t, c, "303", "2026-3T", "2026-10-20", usuario_id=u)
+    v2 = db.crear_vencimiento_fiscal(t, c, "111", "2026-3T", "2026-10-20", usuario_id=u)
+    conn = db.get_connection()
+    conn.execute("UPDATE vencimientos_fiscales SET estado = 'presentado' WHERE id = ?", (v1,))
+    conn.execute("UPDATE vencimientos_fiscales SET documento_solicitado = 'El extracto del banco' WHERE id = ?", (v2,))
+    conn.commit(); conn.close()
+    html = _html(cliente, "/portal/impuestos")
+    assert html.count('aria-label="Cómo va este modelo"') == 2
+    assert "Para seguir necesitamos de ti: El extracto del banco" in html and html.count("Para seguir necesitamos de ti") == 1      # el presentado no pide nada
+    from app import portal_linea_tiempo as lt
+    assert [p["estado"] for p in lt.de_vencimiento({"estado": "presentado"})] == ["hecha", "hecha", "hecha"]
+    assert [p["estado"] for p in lt.de_vencimiento({"estado": "pendiente"})] == ["hecha", "actual", "pendiente"]
+    assert [p["estado"] for p in lt.de_vencimiento({"estado": "fuera_plazo"})] == ["hecha", "hecha", "actual"]
+
+
+def test_la_campana_de_novedades_enseña_lo_ultimo_con_lo_nuevo_marcado(cliente):
+    from app import portal_novedades
+    t, u, c = _con_portal(cliente)
+    ficha = db.obtener_cliente_fiscal_por_id(c)
+    html = _html(cliente, "/portal/")
+    assert "pv-campana" in html and "No hay novedades por ahora." in html and "pv-campana-n" not in html
+    for i in range(7):
+        portal_novedades.anotar(ficha, f"Novedad número {i}", "Detalle de la novedad", "/portal/facturas")
+    html = _html(cliente, "/portal/impuestos")
+    campana = html.split('class="pv-campana', 1)[1].split("</details>", 1)[0]
+    assert campana.count('class="pv-novedad nuevo"') == 5 and "Novedad número 6" in campana and "Novedad número 1<" not in campana        # las 5 últimas, la más reciente primero
+    assert 'aria-label="Novedades (7)"' in html and 'href="/portal/facturas"' in campana
+    assert "Ver todos los avisos" in campana and "Cómo quiero que me avisen" in campana
+    _html(cliente, "/portal/avisos")                                                                                                        # abrir el centro de avisos los marca como leídos
+    assert 'class="pv-novedad nuevo"' not in _html(cliente, "/portal/").split('class="pv-campana', 1)[1].split("</details>", 1)[0]
+
+
+def test_la_app_instalada_lleva_el_nombre_y_el_color_del_despacho(cliente):
+    t, u, c = _con_portal(cliente)
+    antes = cliente.get("/portal/manifest.webmanifest").get_json()
+    assert antes["name"] == "Guilda Work" and antes["short_name"] == "Mi gestoría"                   # sin marca, como siempre
+    marca.guardar(t, nombre="Asesores Fernández-Villanueva", color="#0a7d5a")
+    despues = cliente.get("/portal/manifest.webmanifest").get_json()
+    assert despues["name"] == "Asesores Fernández-Villanueva" and despues["short_name"] == "Asesores Fer" and despues["theme_color"] == "#0a7d5a"
+    assert [i["sizes"] for i in despues["icons"]][:2] == ["192x192", "512x512"]                        # los iconos que exige la instalación siguen
+
+
+def test_la_pregunta_sobre_la_navegacion_sale_una_vez_y_no_avisa_al_equipo(cliente):
+    from app import portal_valoraciones
+    t, u, c = _con_portal(cliente)
+    assert "¿Te resulta fácil encontrar lo que buscas en el portal?" in _html(cliente, "/portal/")
+    r = cliente.post("/portal/valorar", data={"tipo": "navegacion", "referencia": "v2", "puntos": "2"}, follow_redirects=True)
+    assert "¡Gracias por contárnoslo!" in r.get_data(as_text=True)
+    assert "¿Te resulta fácil encontrar lo que buscas" not in _html(cliente, "/portal/")                 # una sola vez por persona
+    assert portal_valoraciones.resumen(t)["ultimas"][0]["tipo"] == "navegacion"                          # la ve la dirección en la actividad del portal
+    assert "Ya has valorado" in cliente.post("/portal/valorar", data={"tipo": "navegacion", "referencia": "v2", "puntos": "5"}, follow_redirects=True).get_data(as_text=True)
+    assert "No se puede valorar eso" in cliente.post("/portal/valorar", data={"tipo": "navegacion", "referencia": "otra", "puntos": "5"}, follow_redirects=True).get_data(as_text=True)
+
+
+def test_con_el_portal_apagado_no_se_pregunta_por_la_navegacion_nueva(cliente):
+    _con_portal(cliente, nuevo=False)
+    assert "¿Te resulta fácil encontrar lo que buscas" not in _html(cliente, "/portal/")

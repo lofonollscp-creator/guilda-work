@@ -27260,3 +27260,33 @@ msgstr "Five fixed sections (Home, Invoices, Documents, Messages and Taxes) with
 
 msgid "Usar la navegación nueva en el portal de mis clientes (encendido por defecto)"
 msgstr "Use the new navigation in my clients' portal (on by default)"
+
+msgid "Tus passkeys se crearon en otra dirección del portal y aquí no se pueden usar. Añade una nueva en este dispositivo; las anteriores puedes quitarlas."
+msgstr "Your passkeys were created on a different portal address and can't be used here. Add a new one on this device; you can remove the old ones."
+
+msgid "Novedades"
+msgstr "Updates"
+
+msgid "nuevo"
+msgstr "new"
+
+msgid "No hay novedades por ahora."
+msgstr "No updates for now."
+
+msgid "Ver todos los avisos"
+msgstr "See all notices"
+
+msgid "Cómo quiero que me avisen"
+msgstr "How I want to be notified"
+
+msgid "Cómo va este modelo"
+msgstr "How this form is going"
+
+msgid "Para seguir necesitamos de ti: %(que)s"
+msgstr "To move forward we need from you: %(que)s"
+
+msgid "¿Te resulta fácil encontrar lo que buscas en el portal?"
+msgstr "Is it easy to find what you're looking for in the portal?"
+
+msgid "Me cuesta"
+msgstr "I find it hard"

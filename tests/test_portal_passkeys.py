@@ -108,3 +108,29 @@ def test_el_contador_avanza_y_no_se_admite_una_credencial_clonada(cliente, corre
 
 def test_la_pantalla_de_entrada_ofrece_el_boton(cliente, correo):
     assert "data-passkey-entrar" in _html(cliente, "/portal/entrar")
+
+
+def test_la_passkey_guarda_su_dominio_y_las_antiguas_se_suponen_de_la_direccion_publica(cliente, correo, monkeypatch):
+    monkeypatch.setenv("GUILDA_URL_PUBLICA", "https://app.guildawork.com")
+    t, u, c = _despacho("Passkey dominio")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    _registrar(cliente, Autenticador(), "Nueva")
+    ficha = db.obtener_cliente_fiscal_por_id(c)
+    lista = pk.listar(ficha, "titular@ejemplo.com")
+    assert lista[0]["rp_id"] == "localhost" or lista[0]["rp_id"]                          # el dominio con el que se registró (el de la petición en las pruebas)
+    antigua = {"rp_id": "", "nombre": "Vieja"}
+    assert pk.funcionan_aqui([antigua], "https://app.guildawork.com") == [antigua]        # sin dominio guardado = la dirección de siempre
+    assert pk.funcionan_aqui([antigua], "https://clientes.guildawork.com") == []          # en el dominio nuevo no se ofrece
+    nueva = {"rp_id": "clientes.guildawork.com", "nombre": "Nueva"}
+    assert pk.funcionan_aqui([antigua, nueva], "https://clientes.guildawork.com") == [nueva]
+
+
+def test_mi_cuenta_avisa_si_las_passkeys_son_de_otra_direccion(cliente, correo, monkeypatch):
+    t, u, c = _despacho("Passkey aviso")
+    _entrar(cliente, c, "titular@ejemplo.com")
+    _registrar(cliente, Autenticador(), "Mi móvil")
+    assert "se crearon en otra dirección" not in _html(cliente, "/portal/cuenta")         # la creada aquí funciona aquí
+    monkeypatch.setenv("GUILDA_URL_PORTAL", "https://clientes.guildawork.com")
+    monkeypatch.setenv("GUILDA_URL_PUBLICA", "https://app.guildawork.com")
+    conn = db.get_connection(); conn.execute("UPDATE portal_passkeys SET rp_id = ''"); conn.commit(); conn.close()   # como las de antes de registrar el dominio
+    assert "se crearon en otra dirección" in _html(cliente, "/portal/cuenta")

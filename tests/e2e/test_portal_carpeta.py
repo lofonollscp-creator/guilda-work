@@ -37,6 +37,8 @@ def test_la_carpeta_filtra_y_abre_la_vista_previa(servidor, abrir, entrar_como_e
 
 def test_al_navegar_aparece_la_barra_de_carga_y_la_pagina_se_marca_ocupada(servidor, abrir, entrar_como_equipo, chromium):
     t = db.crear_tenant("Despacho portal barra")
+    from app import portal_diseno
+    portal_diseno.fijar(t, False)                                              # esta prueba usa la barra «Más» de la navegación de siempre
     pagina, _ = abrir()
     entrar_como_equipo(pagina, "portal-barra@ejemplo.com", despacho=t, direccion=True)
     c = db.crear_cliente_fiscal(t, "Cliente Barra", email="barra@ejemplo.com")

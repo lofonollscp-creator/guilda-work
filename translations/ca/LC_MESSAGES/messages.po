@@ -27269,3 +27269,33 @@ msgstr "Cinc seccions fixes (Inici, Factures, Documents, Missatges i Impostos) a
 
 msgid "Usar la navegación nueva en el portal de mis clientes (encendido por defecto)"
 msgstr "Fer servir la navegació nova al portal dels meus clients (encesa per defecte)"
+
+msgid "Tus passkeys se crearon en otra dirección del portal y aquí no se pueden usar. Añade una nueva en este dispositivo; las anteriores puedes quitarlas."
+msgstr "Les teves passkeys es van crear en una altra adreça del portal i aquí no es poden fer servir. Afegeix-ne una de nova en aquest dispositiu; les anteriors les pots treure."
+
+msgid "Novedades"
+msgstr "Novetats"
+
+msgid "nuevo"
+msgstr "nou"
+
+msgid "No hay novedades por ahora."
+msgstr "De moment no hi ha novetats."
+
+msgid "Ver todos los avisos"
+msgstr "Veure tots els avisos"
+
+msgid "Cómo quiero que me avisen"
+msgstr "Com vull que m'avisin"
+
+msgid "Cómo va este modelo"
+msgstr "Com va aquest model"
+
+msgid "Para seguir necesitamos de ti: %(que)s"
+msgstr "Per continuar necessitem de tu: %(que)s"
+
+msgid "¿Te resulta fácil encontrar lo que buscas en el portal?"
+msgstr "Et resulta fàcil trobar el que busques al portal?"
+
+msgid "Me cuesta"
+msgstr "Em costa"

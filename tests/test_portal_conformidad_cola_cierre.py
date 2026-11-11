@@ -11,6 +11,11 @@ from tests.escenarios_303 import ESCENARIOS
 from tests.test_facturas_contables import LINEA, PDF, _datos
 
 
+def _sin_campana(html):
+    import re
+    return re.sub(r'<details class="pv-campana.*?</details>', '', html, flags=re.S)                  # lo nuevo también sale en la campana, plegada
+
+
 def _despacho(cliente, email, fiscal=True):
     uid = iniciar_sesion_de_prueba(cliente, email, "contrasena123")
     t = db.crear_tenant("Despacho " + email); db.asignar_tenant(uid, t); db.asignar_supervisor_tenant(uid, True)
@@ -51,7 +56,7 @@ def test_sin_pedirla_el_cliente_no_ve_la_declaracion(cliente):
     d = _declaracion_revisada(t, uid, c)
     _como_cliente(cliente, c)
     assert cliente.get(f"/portal/declaraciones/{d}").status_code == 404
-    assert "Revisa tu modelo 303" not in cliente.get("/portal/").get_data(as_text=True)
+    assert "Revisa tu modelo 303" not in _sin_campana(cliente.get("/portal/").get_data(as_text=True))
 
 
 def test_flujo_completo_pedir_ver_y_dar_la_conformidad(cliente, correo):
@@ -65,7 +70,7 @@ def test_flujo_completo_pedir_ver_y_dar_la_conformidad(cliente, correo):
     assert "Pendiente de respuesta" in cliente.get(f"/guilda-fiscal/declaracion/{d}").get_data(as_text=True)
 
     _como_cliente(cliente, c)
-    inicio = cliente.get("/portal/").get_data(as_text=True)
+    inicio = _sin_campana(cliente.get("/portal/").get_data(as_text=True))
     assert "Revisa tu modelo 303 de 2T 2026" in inicio and f"/portal/declaraciones/{d}" in inicio
     pagina = cliente.get(f"/portal/declaraciones/{d}").get_data(as_text=True)
     assert "Resultado" in pagina and "De acuerdo" in pagina and "Hay un error" in pagina and "IVA que has cobrado" in pagina
@@ -73,7 +78,7 @@ def test_flujo_completo_pedir_ver_y_dar_la_conformidad(cliente, correo):
     assert pagina.count("<tr>") >= 3, "y los apuntes que la componen, uno por fila"
     r = cliente.post(f"/portal/declaraciones/{d}/conformidad", data={"resultado": "conforme"})
     assert r.status_code == 302 and "respondida=conforme" in r.headers["Location"]
-    assert "Revisa tu modelo 303" not in cliente.get("/portal/").get_data(as_text=True)
+    assert "Revisa tu modelo 303" not in _sin_campana(cliente.get("/portal/").get_data(as_text=True))
     assert "Das tu conformidad" in cliente.get(f"/portal/declaraciones/{d}").get_data(as_text=True)
     assert "El cliente está de acuerdo" in cliente.get(f"/guilda-fiscal/declaracion/{d}").get_data(as_text=True)
     assert cliente.post(f"/portal/declaraciones/{d}/conformidad", data={"resultado": "conforme"}).headers["Location"].count("error=")
