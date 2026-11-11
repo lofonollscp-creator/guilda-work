@@ -16,9 +16,9 @@ def creds(monkeypatch):
         por: dict = {}
     c = C()
     monkeypatch.setattr(kratos, "credenciales_de", lambda ident: c.por[ident])
-    politica_acceso._CACHE.clear()
+    politica_acceso.olvidar_todo()
     yield c
-    politica_acceso._CACHE.clear()
+    politica_acceso.olvidar_todo()
 
 
 def _ident(u):
@@ -71,18 +71,18 @@ def test_pasada_la_fecha_solo_se_puede_ir_a_activarlo_y_el_aviso_sale_antes(clie
     u = _con_sesion(cliente, t, "bloqueo@ejemplo.com")
     creds.por = {_ident(u): {"password"}}
     politica_acceso.fijar(t, u, True, (date.today() + timedelta(days=10)).isoformat())
-    politica_acceso._CACHE.clear()
+    politica_acceso.olvidar_todo()
     html = cliente.get("/").get_data(as_text=True)
     assert "Tu despacho exige verificación en dos pasos o una passkey" in html and "Te quedan 10 días" in html   # el aviso, sin bloqueo
     conn = db.get_connection()
     conn.execute("UPDATE tenants SET segundo_factor_limite = ? WHERE id = ?", ((date.today() - timedelta(days=1)).isoformat(), t))
     conn.commit(); conn.close()
-    politica_acceso._CACHE.clear()
+    politica_acceso.olvidar_todo()
     r = cliente.get("/tareas")
     assert r.status_code == 302 and "/ajustes/cuenta" in r.headers["Location"]                              # vencida: a activarlo
     assert cliente.get("/logout", follow_redirects=False).status_code in (200, 302, 405)                      # y salir siempre se puede
     creds.por = {_ident(u): {"password", "totp"}}
-    politica_acceso._CACHE.clear()
+    politica_acceso.olvidar_todo()
     assert cliente.get("/tareas").status_code != 302 or "/ajustes/cuenta" not in cliente.get("/tareas").headers["Location"]
 
 
@@ -112,9 +112,9 @@ def test_el_acceso_de_la_app_movil_se_cierra_pasada_la_fecha_y_se_abre_al_cumpli
     conn = db.get_connection()
     conn.execute("UPDATE tenants SET segundo_factor_limite = ? WHERE id = ?", ((date.today() - timedelta(days=1)).isoformat(), t))
     conn.commit(); conn.close()
-    politica_acceso._CACHE.clear()
+    politica_acceso.olvidar_todo()
     r = login()
     assert r.status_code == 403 and "dos pasos" in r.get_data(as_text=True)
     creds.por = {identidad: {"password", "passkey"}}
-    politica_acceso._CACHE.clear()
+    politica_acceso.olvidar_todo()
     assert login().status_code == 200                                                                      # con passkey, entra

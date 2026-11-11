@@ -14,16 +14,29 @@ MIN_DIAS = 7
 METODOS_VALIDOS = {"totp", "passkey"}
 _CACHE: dict[int, tuple[float, bool | None]] = {}
 SEGUNDOS_CACHE = 60
+_POLITICA: dict[int, tuple[float, dict]] = {}                    # la política de cada despacho, 30 s: se pide en cada pantalla y casi nunca cambia
+SEGUNDOS_POLITICA = 30
+
+
+def olvidar_todo() -> None:
+    _CACHE.clear()
+    _POLITICA.clear()
 
 
 def obtener(tenant_id: int) -> dict:
     """{exigir: bool, limite: 'AAAA-MM-DD' | None}"""
+    ahora = time.monotonic()
+    hit = _POLITICA.get(tenant_id)
+    if hit and ahora - hit[0] < SEGUNDOS_POLITICA:
+        return hit[1]
     conn = db.get_connection()
     try:
         f = conn.execute("SELECT exigir_segundo_factor, segundo_factor_limite FROM tenants WHERE id = ?", (tenant_id,)).fetchone()
     finally:
         conn.close()
-    return {"exigir": bool(f and f["exigir_segundo_factor"]), "limite": (f["segundo_factor_limite"] if f else None) or None}
+    res = {"exigir": bool(f and f["exigir_segundo_factor"]), "limite": (f["segundo_factor_limite"] if f else None) or None}
+    _POLITICA[tenant_id] = (ahora, res)
+    return res
 
 
 def fijar(tenant_id: int, usuario_id: int, exigir: bool, limite: str | None, hoy: date | None = None) -> None:
@@ -46,7 +59,7 @@ def fijar(tenant_id: int, usuario_id: int, exigir: bool, limite: str | None, hoy
         conn.commit()
     finally:
         conn.close()
-    _CACHE.clear()
+    olvidar_todo()
     auditoria.registrar(tenant_id, usuario_id, "seguridad.politica_acceso", "tenant", tenant_id, {"exigir": bool(exigir), "limite": limite})
 
 

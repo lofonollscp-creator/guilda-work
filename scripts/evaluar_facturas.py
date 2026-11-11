@@ -4,6 +4,7 @@ con --base, falla (código 1) si algo ha empeorado respecto a una evaluación an
 
   scripts/evaluar_facturas.py --usuario 1 --salida eval-gpt4omini.json
   scripts/evaluar_facturas.py --usuario 1 --base eval-gpt4omini.json --margen 2
+  scripts/evaluar_facturas.py --usuario 1 --modelo meta-llama/llama-3.3-70b-instruct:free   # compara otro modelo con la misma clave
 """
 import argparse
 import json
@@ -20,10 +21,14 @@ def main() -> int:
     ap.add_argument("--casos", help="otro fichero de casos (por defecto tests/evals/facturas_casos.json)")
     ap.add_argument("--salida", help="guarda el resultado en este fichero JSON")
     ap.add_argument("--base", help="evaluación anterior con la que comparar")
+    ap.add_argument("--modelo", help="evalúa este modelo del proveedor de la persona (sin tocar su configuración) en vez del suyo; sirve para comparar modelos")
     ap.add_argument("--margen", type=float, default=2.0, help="puntos de bajada tolerados (por defecto 2)")
     a = ap.parse_args()
     from app import evals_facturas as ev, ia_asistente, lectura_facturas
     casos = ev.cargar_casos(a.casos)
+    if a.modelo:
+        original = ia_asistente.candidatos
+        ia_asistente.candidatos = lambda uid, tarea: [{**c, "modelo": a.modelo} for c in original(uid, tarea)][:1]
 
     def leer(texto: str) -> dict:
         return lectura_facturas._json_de(ia_asistente.completar_partes(a.usuario, lectura_facturas.PROMPT_TEXTO, [{"type": "text", "text": "Extrae los datos de esta factura.\n\nTEXTO DEL DOCUMENTO:\n" + texto}]))
