@@ -926,6 +926,7 @@ def _flujo_o_redirigir(tipo: str):
         "nodos": flujo["ui"]["nodes"],
         "accion": kratos.reescribir_action_para_navegador(flujo["ui"]["action"]),
         "mensajes": flujo["ui"].get("messages", []),
+        "scripts": kratos.scripts_del_flujo(flujo["ui"]["nodes"]),
     }
 
 

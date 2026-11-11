@@ -110,10 +110,26 @@
       {% endif %}
 
       <button type="submit" class="btn btn-primary auth-submit">{{ _('Entrar') }}</button>
+      {% if nodos|selectattr('attributes.name', 'equalto', 'passkey_challenge')|list %}
+      <button type="button" class="btn btn-secondary auth-submit" data-passkey-login hidden>{{ _('Entrar con passkey') }}</button>
+      <p class="ia-error" role="alert" data-passkey-error hidden>{{ _('No se ha podido usar la passkey. Entra con tu contraseña o inténtalo de nuevo.') }}</p>
+      {% endif %}
       <p class="auth-alterna"><a href="{{ url_for('recuperar_contrasena') }}">{{ _('¿Olvidaste tu contraseña?') }}</a></p>
       <p class="auth-alterna">{{ _('¿No tienes cuenta?') }} <a href="{{ url_for('registro') }}">{{ _('Regístrate') }}</a></p>
       <p class="auth-alterna">{{ _('¿Quieres integrar tu software?') }} <a href="{{ url_for('docs.pagina') }}">{{ _('Documentación para desarrolladores') }}</a></p>
     </form>
+    {% set reto = nodos|selectattr('attributes.name', 'equalto', 'passkey_challenge')|list %}
+    {% if reto %}
+    {# Formulario aparte para la passkey: webauthn.js lee estos campos por nombre y envía su propio formulario; dentro del de la contraseña mandaría también el correo y la contraseña vacíos. #}
+    <form id="form-passkey" method="post" action="{{ accion }}" hidden>
+      {% for nodo in nodos|selectattr('attributes.name', 'equalto', 'csrf_token') %}<input type="hidden" name="csrf_token" value="{{ nodo.attributes.value }}">{% endfor %}
+      <input type="hidden" name="method" value="passkey">
+      <input type="hidden" name="passkey_challenge" value="{{ reto[0].attributes.value }}">
+      <input type="hidden" name="passkey_login" value="">
+    </form>
+    {% for s in scripts or [] %}<script src="{{ s }}" defer></script>{% endfor %}
+    <script src="{{ url_for('static', filename='kratos_passkeys.js') }}" defer></script>
+    {% endif %}
     {% endif %}
     </div>
   </div>

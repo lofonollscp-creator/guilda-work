@@ -94,6 +94,22 @@ def reescribir_action_para_navegador(url: str) -> str:
     return url
 
 
+_PREFIJO_SCRIPTS_PERMITIDOS = "/.ory/.well-known/ory/"
+
+
+def scripts_del_flujo(nodos: list[dict]) -> list[str]:
+    """Las direcciones (ya del propio origen, a través del proxy `/.ory/…`) de los scripts que Kratos pide cargar en un flujo: hoy solo `webauthn.js`, que gobierna las passkeys. Solo se admiten
+    los de `/.well-known/ory/`: lo que no sea eso se ignora, así que un flujo no puede hacer que la página cargue un script cualquiera."""
+    salida = []
+    for n in nodos:
+        a = n.get("attributes") or {}
+        if a.get("node_type") == "script" and isinstance(a.get("src"), str):
+            ruta = reescribir_action_para_navegador(a["src"])
+            if ruta.startswith(_PREFIJO_SCRIPTS_PERMITIDOS) and ".." not in ruta and ruta not in salida:
+                salida.append(ruta)
+    return salida
+
+
 def _id_de_error(cuerpo) -> str | None:
     error = cuerpo.get("error") if isinstance(cuerpo, dict) else None
     return error.get("id") if isinstance(error, dict) else None
@@ -136,8 +152,8 @@ def obtener_identidad(identity_id: str) -> dict | None:
 
 
 def credenciales_de(identity_id: str) -> set[str] | None:
-    """Los métodos de acceso que tiene una identidad (`password`, `totp`, `lookup_secret`…) vía Admin API, o None si no se pudo consultar. Sirve para saber quién tiene la verificación en dos pasos (`totp`)."""
-    estado, cuerpo, _ = _peticion(f"{KRATOS_ADMIN_URL}/admin/identities/{identity_id}?include_credential=totp&include_credential=lookup_secret")
+    """Los métodos de acceso que tiene una identidad (`password`, `totp`, `lookup_secret`…) vía Admin API, o None si no se pudo consultar. Sirve para saber quién tiene la verificación en dos pasos (`totp`) y quién ha registrado una passkey (`passkey`)."""
+    estado, cuerpo, _ = _peticion(f"{KRATOS_ADMIN_URL}/admin/identities/{identity_id}?include_credential=totp&include_credential=lookup_secret&include_credential=passkey")
     if estado != 200 or not isinstance(cuerpo, dict):
         return None
     return set((cuerpo.get("credentials") or {}).keys())

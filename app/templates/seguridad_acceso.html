@@ -14,7 +14,7 @@
 <ul class="log-list ds-max-720">
   {% for p in informe.personas %}
   <li class="log-item"><span class="pill {{ 'pill-danger' if p.segundo_factor is false and p.direccion else '' }}">{{ _('Sí') if p.segundo_factor else (_('No') if p.segundo_factor is false else _('Sin comprobar')) }}</span>
-    <span class="log-text"><strong>{{ p.nombre }}</strong>{% if p.direccion %} · {{ _('Dirección') }}{% endif %}<br><span class="muted">{{ p.email }}</span></span></li>
+    <span class="log-text"><strong>{{ p.nombre }}</strong>{% if p.direccion %} · {{ _('Dirección') }}{% endif %}{% if p.passkey %} · {{ _('con passkey') }}{% endif %}<br><span class="muted">{{ p.email }}</span></span></li>
   {% endfor %}
 </ul>
 <section class="proyecto-bloque ds-max-720 ds-mt-16">

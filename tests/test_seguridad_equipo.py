@@ -53,3 +53,12 @@ def test_la_pantalla_la_ve_la_direccion_y_nadie_mas(cliente, monkeypatch):
     db.asignar_supervisor_tenant(u, True)
     html = cliente.get("/seguridad/acceso").get_data(as_text=True)
     assert "Acceso del equipo" in html and "1 persona de la dirección no tiene la verificación en dos pasos." in html and "acceso-web@ejemplo.com" in html and "Cómo se activa" in html
+
+
+def test_el_informe_enseña_quien_tiene_passkey(monkeypatch):
+    t, *_ = _equipo(3)
+    monkeypatch.setattr(kratos, "credenciales_de", lambda i: {"password", "passkey"} if i == "k-con23" else {"password"})
+    r = {p["email"]: p for p in seguridad_equipo.informe(t)["personas"]}
+    assert r["con23@ejemplo.com"]["passkey"] is True and r["sin23@ejemplo.com"]["passkey"] is False
+    monkeypatch.setattr(kratos, "credenciales_de", lambda i: None)
+    assert all(p["passkey"] is None for p in seguridad_equipo.informe(t)["personas"])

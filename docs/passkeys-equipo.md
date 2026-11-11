@@ -1,20 +1,32 @@
-# Passkeys para el equipo (W14): por qué no están activadas y cómo se activarán
+# Passkeys para el equipo (W14)
 
-**Estado:** el portal de clientes ya tiene passkeys (`app/portal_passkeys.py`). El equipo entra por Kratos con contraseña y, opcionalmente, TOTP + códigos de recuperación. Para el equipo se ha hecho lo seguro: la pantalla **Seguridad → Acceso del equipo** (`app/seguridad_equipo.py`) dice quién tiene el segundo factor. Las passkeys del equipo **no se han activado** porque tocan el inicio de sesión de todas las personas y no se pueden comprobar sin un autenticador real y un Kratos de pruebas.
+**Estado:** implementadas y probadas de punta a punta; **activadas en producción solo cuando se reinicie Kratos con la configuración nueva** (ver «Puesta en marcha»).
 
-## Qué hay que hacer
+## Qué hace
+- En el acceso aparece **Entrar con passkey** (si Kratos las ofrece): un toque con huella, cara o PIN, sin escribir nada.
+- En **Ajustes → Contraseña y email** hay una sección **Passkeys** para añadir (con el autenticador del dispositivo) y quitar passkeys.
+- Una passkey cuenta como primer factor, igual que la contraseña: quien tiene además la verificación en dos pasos (TOTP) sigue dándola.
+- **Seguridad → Acceso del equipo** enseña quién tiene el segundo factor y quién ha registrado alguna passkey.
+- La contraseña sigue funcionando: la passkey es una opción más, no obligatoria.
 
-1. **Kratos** (`deploy/kratos/kratos.yml`): activar `selfservice.methods.webauthn` con `passwordless: true`, `rp.id` = el dominio de la aplicación (sin puerto) y `rp.origins` con la URL pública. Es un cambio de configuración que **exige reiniciar Kratos**: si queda mal, Kratos no arranca y nadie puede entrar.
-2. **Esquema de identidad** (`deploy/kratos/identity.schema.json`): marcar el correo con `ory.sh/kratos.credentials.webauthn.identifier: true` para poder iniciar sesión solo con passkey.
-3. **Pantallas de acceso** (`app/rutas_kratos_proxy.py` y plantillas de login/ajustes): Kratos devuelve para WebAuthn nodos con `onclick` y un script `/.well-known/ory/webauthn.js`. Nuestra CSP prohíbe manejadores en línea, así que hay que enlazar esos botones desde un fichero JS propio (leyendo el `onclick` como datos, nunca ejecutándolo) y servir el script de Kratos desde el propio dominio.
-4. **Ajustes → Seguridad**: alta, nombre y baja de passkeys de cada persona; y con passkey, `aal2` ya se cumple (sin pedir TOTP).
+## Cómo está hecho
+1. `deploy/kratos/kratos.yml`: método `passkey` con `rp.id = app.guildawork.com` y `origins = https://app.guildawork.com`. Una passkey solo funciona en ese dominio (el backoffice y el portal de clientes tienen sus propios accesos).
+2. `deploy/kratos/identity.schema.json`: el correo lleva `credentials.passkey.display_name`.
+3. El script oficial de Kratos (`webauthn.js`) se sirve desde el propio origen a través del proxy `/.ory/` (`kratos.scripts_del_flujo` solo admite scripts de `/.well-known/ory/`); la CSP no cambia. `app/static/kratos_passkeys.js` solo conecta los botones, sin manejadores en línea.
+4. En el acceso, la passkey va en un formulario aparte del de la contraseña: `webauthn.js` lee sus campos por nombre y envía el formulario que los contiene. En Ajustes, los campos de la passkey viven solo en su formulario.
 
-## Cómo probarlo antes de tocar producción
+## Pruebas
+- `tests/test_kratos_passkeys.py`: sin Kratos ni navegador (scripts admitidos, pantallas, configuración real).
+- `tests/e2e/test_passkeys_equipo.py` (con `scripts/probar_navegador.sh`): arranca un **Kratos real en Docker** con la configuración de `deploy/kratos` (solo cambian puertos, dominio y base en memoria), usa un autenticador virtual del navegador y comprueba: entrar con contraseña → añadir passkey → salir → entrar solo con la passkey. Se salta si no hay Docker o imagen.
 
-- Un Kratos de pruebas (otro contenedor, otro dominio local) con la misma configuración.
-- Playwright con un **autenticador virtual** (`CDP: WebAuthn.addVirtualAuthenticator`) para registrar y usar una passkey de punta a punta.
-- Plan de vuelta atrás: guardar `kratos.yml` y el esquema antes de cambiarlos, y comprobar `kratos --config … validate` antes de reiniciar.
+## Puesta en marcha (producción)
+1. Copia de seguridad: `cp deploy/kratos/kratos.yml deploy/kratos/kratos.yml.bak && cp deploy/kratos/identity.schema.json deploy/kratos/identity.schema.json.bak` (o `git` ya tiene la versión anterior).
+2. Desplegar el código (la app) y reiniciar los servicios.
+3. Reiniciar Kratos para que lea la configuración y el esquema: `docker restart guilda-work-kratos` (unos segundos sin acceso nuevo; las sesiones abiertas siguen).
+4. Comprobar: `curl -s localhost:4433/health/ready` y que el acceso muestra **Entrar con passkey**.
+5. Vuelta atrás si algo falla: restaurar los dos ficheros y `docker restart guilda-work-kratos`.
 
-## Decisión pendiente
-
-Que alguien con acceso al servidor decida la ventana de cambio (reinicio de Kratos) y tenga a mano la copia de `kratos.yml`. Hasta entonces, lo que protege al equipo es el segundo factor TOTP, y la nueva pantalla ayuda a exigirlo a la dirección.
+## Límites
+- Las passkeys son por dispositivo/gestor de contraseñas (iCloud, Google, 1Password…); quien cambie de dominio de la app tendría que registrarlas de nuevo.
+- Las cuentas de la API móvil siguen entrando con contraseña (el flujo `api` de Kratos no se ha tocado).
+- No se puede obligar todavía a usar passkey ni a quitar la contraseña: sería una decisión aparte.

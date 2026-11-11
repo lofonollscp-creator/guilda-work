@@ -106,6 +106,17 @@ selfservice:
     # Verificación en dos pasos OPCIONAL (cada persona la activa en Ajustes → Contraseña y email): app de autenticación (TOTP, RFC 6238)
     # y 12 códigos de recuperación de un solo uso por si se pierde el móvil. Con `session.whoami.required_aal: highest_available`, quien la
     # activa tiene que dar el segundo factor al iniciar sesión; quien no, entra como siempre.
+    # Passkeys del equipo (huella, cara o PIN en lugar de contraseña; W14). Una passkey solo funciona en el dominio donde se creó: `rp.id` es el dominio de la aplicación (sin puerto ni esquema)
+    # y `origins` la URL completa con la que el navegador abre la app. Pasa por el proxy de la propia app (`/.ory/…`), así que el navegador siempre está en este origen.
+    # Una passkey cuenta como primer factor: quien tenga además la verificación en dos pasos sigue dándola.
+    passkey:
+      enabled: true
+      config:
+        rp:
+          display_name: Guilda Work
+          id: app.guildawork.com
+          origins:
+            - https://app.guildawork.com
     totp:
       enabled: true
       config:

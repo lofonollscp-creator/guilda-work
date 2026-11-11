@@ -1,0 +1,40 @@
+{
+ "casos": 8,
+ "acierto_global": 83.9,
+ "por_campo": {
+  "emisor_nif": 87.5,
+  "es_abono": 87.5,
+  "fecha": 87.5,
+  "lineas": 75.0,
+  "numero": 87.5,
+  "receptor_nif": 87.5,
+  "total": 75.0
+ },
+ "fallos": [
+  {
+   "caso": "abono",
+   "campos": [
+    "total",
+    "lineas"
+   ]
+  },
+  {
+   "caso": "tique_simplificado",
+   "campos": [
+    "numero",
+    "fecha",
+    "emisor_nif",
+    "receptor_nif",
+    "total",
+    "es_abono",
+    "lineas"
+   ]
+  }
+ ],
+ "errores": [
+  {
+   "caso": "tique_simplificado",
+   "error": "Invalid control character at: line 2 column 45 (char 46)"
+  }
+ ]
+}

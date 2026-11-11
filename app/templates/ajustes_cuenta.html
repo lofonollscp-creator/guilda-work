@@ -19,8 +19,9 @@
    (no en "password"/"profile"), así que hay que repetirlo dentro de
    CADA form -- si no, el submit de cualquier grupo que no sea "default"
    fallaría por CSRF. #}
-{% set nodos_ocultos = nodos|selectattr('attributes.node_type', 'equalto', 'input')|selectattr('attributes.type', 'equalto', 'hidden')|list %}
-{% set grupos = nodos|rejectattr('group', 'in', ['default', 'link'])|groupby('group') %}
+{# Solo se repiten en cada formulario los ocultos del grupo «default» (el csrf_token): los de las passkeys (`passkey_create_data`…) los lee webauthn.js POR NOMBRE y envía el formulario que los contiene, así que deben vivir solo en el suyo. #}
+{% set nodos_ocultos = nodos|selectattr('group', 'equalto', 'default')|selectattr('attributes.node_type', 'equalto', 'input')|selectattr('attributes.type', 'equalto', 'hidden')|list %}
+{% set grupos = nodos|rejectattr('group', 'in', ['default', 'link'])|rejectattr('attributes.node_type', 'equalto', 'script')|groupby('group') %}
 {% for grupo, nodos_grupo in grupos %}
   <form class="edit-form ds-max-480" method="post" action="{{ accion }}">
     <h2 class="ds-texto-1rem">
@@ -28,12 +29,14 @@
       {% elif grupo == 'profile' %}{{ _('Email') }}
       {% elif grupo == 'totp' %}{{ _('Verificación en dos pasos') }}
       {% elif grupo == 'lookup_secret' %}{{ _('Códigos de recuperación') }}
+      {% elif grupo == 'passkey' %}{{ _('Passkeys: entrar con huella, cara o PIN') }}
       {% else %}{{ grupo }}{% endif %}
     </h2>
     {% for nodo in nodos_ocultos %}
       <input type="hidden" name="{{ nodo.attributes.name }}" value="{{ nodo.attributes.value }}">
     {% endfor %}
     {% if grupo == 'totp' %}<p class="muted">{{ _('Pide un código de tu app de autenticación (Google Authenticator, Aegis, 1Password...) al iniciar sesión, además de la contraseña.') }}</p><p class="muted">{{ _('La app móvil todavía no pide este código: los móviles que ya tienen sesión siguen funcionando, pero para volver a iniciar sesión en la app móvil hará falta una versión que lo admita.') }}</p>{% endif %}
+    {% if grupo == 'passkey' %}<p class="muted">{{ _('Entras en un toque desde este dispositivo, sin escribir la contraseña. Es tan seguro como el desbloqueo de tu móvil u ordenador. Si además tienes la verificación en dos pasos, se sigue pidiendo.') }}</p>{% endif %}
     {% if grupo == 'lookup_secret' %}<p class="muted">{{ _('Códigos de un solo uso para entrar si pierdes el móvil. Guárdalos en un lugar seguro: solo se muestran una vez.') }}</p>{% endif %}
     {% for nodo in nodos_grupo %}
       {% set attrs = nodo.attributes %}
@@ -47,6 +50,9 @@
         {% else %}
           <p class="muted">{{ attrs.text.text }}</p>
         {% endif %}
+      {% elif attrs.node_type == 'input' and attrs.type == 'button' %}
+        <button type="button" class="btn btn-primary" data-passkey-registrar hidden>{{ nodo.meta.label|msg_kratos if nodo.meta and nodo.meta.label else _('Añadir una passkey') }}</button>
+        {% for m in nodo.messages %}<div class="{{ 'ia-error' if m.type == 'error' else 'auth-info' }}"{% if m.type == 'error' %} role="alert"{% endif %}>{{ m|msg_kratos }}</div>{% endfor %}
       {% elif attrs.node_type == 'input' and attrs.type == 'submit' %}
         <button type="submit" name="{{ attrs.name }}" value="{{ attrs.value }}" class="btn btn-primary">
           {{ nodo.meta.label|msg_kratos if nodo.meta and nodo.meta.label else _('Guardar') }}
@@ -72,4 +78,8 @@
 {% endfor %}
 
 <p class="subtitle"><a href="{{ url_for('ajustes_perfil') }}">{{ _('← Volver a mi perfil') }}</a></p>
+{% if nodos|selectattr('attributes.name', 'equalto', 'passkey_create_data')|list %}
+{% for s in scripts or [] %}<script src="{{ s }}" defer></script>{% endfor %}
+<script src="{{ url_for('static', filename='kratos_passkeys.js') }}" defer></script>
+{% endif %}
 {% endblock %}

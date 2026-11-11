@@ -27630,3 +27630,15 @@ msgstr[1] "%(n)s team members do not have it."
 
 msgid "IVA: desviación que avisa (en tanto por ciento)"
 msgstr "VAT: deviation that triggers (in percent)"
+
+msgid "Entrar con passkey"
+msgstr "Sign in with a passkey"
+
+msgid "No se ha podido usar la passkey. Entra con tu contraseña o inténtalo de nuevo."
+msgstr "The passkey could not be used. Sign in with your password or try again."
+
+msgid "Entras en un toque desde este dispositivo, sin escribir la contraseña. Es tan seguro como el desbloqueo de tu móvil u ordenador. Si además tienes la verificación en dos pasos, se sigue pidiendo."
+msgstr "You sign in with one tap from this device, without typing the password. It is as secure as unlocking your phone or computer. If you also have two-step verification, it is still asked for."
+
+msgid "con passkey"
+msgstr "with passkey"

@@ -27639,3 +27639,15 @@ msgstr[1] "%(n)s persones de l'equip no la tenen."
 
 msgid "IVA: desviación que avisa (en tanto por ciento)"
 msgstr "IVA: desviació que avisa (en tant per cent)"
+
+msgid "Entrar con passkey"
+msgstr "Entrar amb passkey"
+
+msgid "No se ha podido usar la passkey. Entra con tu contraseña o inténtalo de nuevo."
+msgstr "No s'ha pogut fer servir la passkey. Entra amb la teva contrasenya o torna-ho a provar."
+
+msgid "Entras en un toque desde este dispositivo, sin escribir la contraseña. Es tan seguro como el desbloqueo de tu móvil u ordenador. Si además tienes la verificación en dos pasos, se sigue pidiendo."
+msgstr "Entres d'un toc des d'aquest dispositiu, sense escriure la contrasenya. És tan segur com el desbloqueig del teu mòbil o ordinador. Si a més tens la verificació en dos passos, se segueix demanant."
+
+msgid "con passkey"
+msgstr "amb passkey"

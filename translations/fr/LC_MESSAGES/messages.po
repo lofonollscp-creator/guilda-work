@@ -27715,3 +27715,15 @@ msgstr[1] "%(n)s membres de l'équipe ne l'ont pas."
 
 msgid "IVA: desviación que avisa (en tanto por ciento)"
 msgstr "TVA : écart qui déclenche (en pourcentage)"
+
+msgid "Entrar con passkey"
+msgstr "Se connecter avec une passkey"
+
+msgid "No se ha podido usar la passkey. Entra con tu contraseña o inténtalo de nuevo."
+msgstr "La passkey n'a pas pu être utilisée. Connectez-vous avec votre mot de passe ou réessayez."
+
+msgid "Entras en un toque desde este dispositivo, sin escribir la contraseña. Es tan seguro como el desbloqueo de tu móvil u ordenador. Si además tienes la verificación en dos pasos, se sigue pidiendo."
+msgstr "Vous vous connectez d'un geste depuis cet appareil, sans saisir le mot de passe. C'est aussi sûr que le déverrouillage de votre téléphone ou ordinateur. Si vous avez aussi la vérification en deux étapes, elle reste demandée."
+
+msgid "con passkey"
+msgstr "avec passkey"
