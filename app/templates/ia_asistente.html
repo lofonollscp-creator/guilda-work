@@ -8,6 +8,7 @@
 {% endblock %}
 {% block barra_accion %}
 <button type="button" class="top-bar-accion top-bar-accion-sec" id="ia-nueva-conversacion"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-pencil"></use></svg> {{ _('Nueva conversación') }}</button>
+<a class="top-bar-icono" href="{{ url_for('ia.preguntar') }}" title="{{ _('Preguntar a tus datos') }}" aria-label="{{ _('Preguntar a tus datos') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-search"></use></svg></a>
 <a class="top-bar-icono" href="{{ url_for('ia.ajustes') }}" title="{{ _('Ajustes') }}" aria-label="{{ _('Ajustes') }}"><svg class="icono-inline" aria-hidden="true"><use href="{{ url_for('static', filename='iconos.svg') }}#icono-settings"></use></svg></a>
 {% endblock %}
 {% block content %}

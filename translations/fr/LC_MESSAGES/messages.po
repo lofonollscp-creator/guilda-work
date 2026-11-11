@@ -27654,3 +27654,33 @@ msgstr "L'IA n'a rien proposé."
 
 msgid "No hay ninguna propuesta que aceptar."
 msgstr "Il n'y a aucune proposition à accepter."
+
+msgid "Preguntar a tus datos"
+msgstr "Interroger vos données"
+
+msgid "Contesta solo con lo que hay en tus notas, tareas, correo, calendario fiscal y clientes, y dice de dónde sale cada cosa."
+msgstr "Ne répond qu'avec ce qui figure dans vos notes, tâches, e-mails, calendrier fiscal et clients, et indique la source de chaque élément."
+
+msgid "Por ejemplo: ¿qué me pidió Ferretería Paco sobre el IVA del tercer trimestre?"
+msgstr "Par exemple : qu'est-ce que Ferretería Paco m'a demandé sur la TVA du troisième trimestre ?"
+
+msgid "Hace falta un modelo de IA configurado (Ajustes del Asistente IA)."
+msgstr "Un modèle d'IA doit être configuré (Réglages de l'assistant IA)."
+
+msgid "Esta respuesta no cita ninguna fuente: tómala con cautela y compruébala."
+msgstr "Cette réponse ne cite aucune source : prenez-la avec prudence et vérifiez-la."
+
+msgid "citada"
+msgstr "citée"
+
+msgid "La IA solo ha visto estos fragmentos. Los datos personales se enmascaran antes de enviarse a un proveedor externo."
+msgstr "L'IA n'a vu que ces extraits. Les données personnelles sont masquées avant l'envoi à un fournisseur externe."
+
+msgid "Escribe una pregunta."
+msgstr "Écrivez une question."
+
+msgid "No he encontrado nada en tus datos sobre eso."
+msgstr "Je n'ai rien trouvé dans vos données à ce sujet."
+
+msgid "La búsqueda no está disponible ahora mismo."
+msgstr "La recherche n'est pas disponible pour le moment."

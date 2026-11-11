@@ -27569,3 +27569,33 @@ msgstr "The AI proposed nothing."
 
 msgid "No hay ninguna propuesta que aceptar."
 msgstr "There is no proposal to accept."
+
+msgid "Preguntar a tus datos"
+msgstr "Ask your data"
+
+msgid "Contesta solo con lo que hay en tus notas, tareas, correo, calendario fiscal y clientes, y dice de dónde sale cada cosa."
+msgstr "Answers only with what is in your notes, tasks, email, tax calendar and clients, and says where each thing comes from."
+
+msgid "Por ejemplo: ¿qué me pidió Ferretería Paco sobre el IVA del tercer trimestre?"
+msgstr "For example: what did Ferretería Paco ask me about third-quarter VAT?"
+
+msgid "Hace falta un modelo de IA configurado (Ajustes del Asistente IA)."
+msgstr "An AI model must be configured (AI Assistant settings)."
+
+msgid "Esta respuesta no cita ninguna fuente: tómala con cautela y compruébala."
+msgstr "This answer cites no source: treat it with caution and check it."
+
+msgid "citada"
+msgstr "cited"
+
+msgid "La IA solo ha visto estos fragmentos. Los datos personales se enmascaran antes de enviarse a un proveedor externo."
+msgstr "The AI only saw these excerpts. Personal data is masked before being sent to an external provider."
+
+msgid "Escribe una pregunta."
+msgstr "Write a question."
+
+msgid "No he encontrado nada en tus datos sobre eso."
+msgstr "I found nothing in your data about that."
+
+msgid "La búsqueda no está disponible ahora mismo."
+msgstr "Search is not available right now."

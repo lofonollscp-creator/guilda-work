@@ -26,6 +26,22 @@ def _propuestas_en_las_plantillas():
     return {"n_propuestas": lambda: ia_propuestas.contar(g.tenant_id) if g.get("tenant_id") else 0}
 
 
+@ia_bp.route("/preguntar", methods=["GET", "POST"])
+@login_required
+def preguntar():
+    """Pregunta a tus propios datos (notas, tareas, correo, calendario fiscal, clientes) y recibe una respuesta con las fuentes citadas."""
+    from . import busqueda_respuestas
+    pregunta, resultado, error = (request.form.get("pregunta") or "").strip(), None, None
+    if request.method == "POST":
+        try:
+            resultado = busqueda_respuestas.responder(g.usuario_id, g.get("tenant_id"), pregunta)
+        except busqueda_respuestas.ErrorPregunta as e:
+            error = _(str(e))
+        except ErrorIA as e:
+            error = str(e)
+    return render_template("ia_preguntar.html", pregunta=pregunta, resultado=resultado, error=error, ia_lista=asistente.disponible(g.usuario_id))
+
+
 @ia_bp.route("/propuestas")
 @login_required
 def propuestas():

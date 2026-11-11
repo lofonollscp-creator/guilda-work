@@ -27578,3 +27578,33 @@ msgstr "La IA no ha proposat res."
 
 msgid "No hay ninguna propuesta que aceptar."
 msgstr "No hi ha cap proposta per acceptar."
+
+msgid "Preguntar a tus datos"
+msgstr "Preguntar a les teves dades"
+
+msgid "Contesta solo con lo que hay en tus notas, tareas, correo, calendario fiscal y clientes, y dice de dónde sale cada cosa."
+msgstr "Respon només amb el que hi ha a les teves notes, tasques, correu, calendari fiscal i clients, i diu d'on surt cada cosa."
+
+msgid "Por ejemplo: ¿qué me pidió Ferretería Paco sobre el IVA del tercer trimestre?"
+msgstr "Per exemple: què em va demanar Ferretería Paco sobre l'IVA del tercer trimestre?"
+
+msgid "Hace falta un modelo de IA configurado (Ajustes del Asistente IA)."
+msgstr "Cal un model d'IA configurat (Ajustos de l'Assistent IA)."
+
+msgid "Esta respuesta no cita ninguna fuente: tómala con cautela y compruébala."
+msgstr "Aquesta resposta no cita cap font: pren-la amb cautela i comprova-la."
+
+msgid "citada"
+msgstr "citada"
+
+msgid "La IA solo ha visto estos fragmentos. Los datos personales se enmascaran antes de enviarse a un proveedor externo."
+msgstr "La IA només ha vist aquests fragments. Les dades personals s'emmascaren abans d'enviar-se a un proveïdor extern."
+
+msgid "Escribe una pregunta."
+msgstr "Escriu una pregunta."
+
+msgid "No he encontrado nada en tus datos sobre eso."
+msgstr "No he trobat res a les teves dades sobre això."
+
+msgid "La búsqueda no está disponible ahora mismo."
+msgstr "La cerca no està disponible ara mateix."

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Preguntar a tus datos') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Preguntar a tus datos') }}</h1>
+    <p class="subtitle">{{ _('Contesta solo con lo que hay en tus notas, tareas, correo, calendario fiscal y clientes, y dice de dónde sale cada cosa.') }}</p>
+  </div>
+</header>
+<form method="post" class="ds-max-720">
+  <label for="pregunta-datos">{{ _('Tu pregunta') }}</label>
+  <textarea id="pregunta-datos" name="pregunta" rows="3" maxlength="500" required placeholder="{{ _('Por ejemplo: ¿qué me pidió Ferretería Paco sobre el IVA del tercer trimestre?') }}">{{ pregunta }}</textarea>
+  <div class="ds-fila ds-envolver"><button type="submit" class="btn btn-primary" {% if not ia_lista %}disabled{% endif %}>{{ _('Preguntar') }}</button>{% if not ia_lista %}<small class="muted">{{ _('Hace falta un modelo de IA configurado (Ajustes del Asistente IA).') }}</small>{% endif %}</div>
+</form>
+{% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}
+{% if resultado %}
+<section class="proyecto-bloque ds-max-720 ds-mt-16" aria-labelledby="respuesta-titulo">
+  <h2 id="respuesta-titulo">{{ _('Respuesta') }}</h2>
+  {% if resultado.sin_fuentes %}<p class="ia-error" role="status">{{ _('Esta respuesta no cita ninguna fuente: tómala con cautela y compruébala.') }}</p>{% endif %}
+  <p style="white-space: pre-line">{{ resultado.respuesta }}</p>
+  <h3>{{ _('Fuentes') }}</h3>
+  <ol class="log-list">
+    {% for f in resultado.fuentes %}
+    <li class="log-item" id="fuente-{{ f.n }}" value="{{ f.n }}">
+      <span class="pill">[{{ f.n }}]</span>
+      <span class="log-text">{% if f.destino %}<a href="{{ f.destino }}"><strong>{{ f.titulo }}</strong></a>{% else %}<strong>{{ f.titulo }}</strong>{% endif %}{% if f.n in resultado.citadas %} <small class="muted">({{ _('citada') }})</small>{% endif %}<br><span class="muted">{{ f.texto[:200] }}{% if f.texto|length > 200 %}…{% endif %}</span></span>
+    </li>
+    {% endfor %}
+  </ol>
+  <p class="muted">{{ _('La IA solo ha visto estos fragmentos. Los datos personales se enmascaran antes de enviarse a un proveedor externo.') }}</p>
+</section>
+{% endif %}
+{% endblock %}
