@@ -53,7 +53,8 @@
 .pv-pestanas a:hover { color: var(--portal-ink); }
 .pv-pestanas a[aria-current="page"] { color: var(--pv-accent-text); border-bottom-color: var(--pv-accent); }
 .pv-titulo { margin: 0 0 16px; min-width: 0; overflow-wrap: anywhere; }
-.pv-perfil-panel, .pv-cambiar select { max-width: 100%; }
+.pv-cambiar select { max-width: 100%; }                                         /* (el panel NO: su caja contenedora es el botón del menú, y con max-width:100% se encogía a su ancho) */
+.pv-perfil-panel { max-width: calc(100vw - 16px); }
 .pv-titulo h1 { margin: 0; font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.9rem); line-height: 1.2; }
 .pv-titulo .subtitle { margin: 4px 0 0; color: var(--portal-muted); }
 
