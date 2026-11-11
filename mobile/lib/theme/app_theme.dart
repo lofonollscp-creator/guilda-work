@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
+import '../diseno/v3/tokens_v3.dart';
 import 'acento.dart';
 import 'brand_colors.dart';
 
@@ -109,6 +111,11 @@ class AppTheme {
       onError: Colors.white,
       surface: surface,
       onSurface: text,
+      // Las capas suben de claridad (oscuro) o se oscurecen un pelo (claro): la profundidad se lee sin sombras pesadas.
+      surfaceContainerLowest: bg,
+      surfaceContainerLow: Color.alphaBlend((brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.02), surface),
+      surfaceContainer: Color.alphaBlend((brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.04), surface),
+      surfaceContainerHigh: Color.alphaBlend((brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.07), surface),
       surfaceContainerHighest: Color.alphaBlend(border.withValues(alpha: 0.35), surface),
       onSurfaceVariant: textMuted,
       outline: border,
@@ -130,23 +137,24 @@ class AppTheme {
         backgroundColor: bg,
         foregroundColor: text,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
-        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 22, letterSpacing: -0.3),
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 22, letterSpacing: -0.4),
       ),
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: border)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(V3.radioM), side: BorderSide(color: border.withValues(alpha: 0.7))),
         margin: const EdgeInsets.symmetric(vertical: 4),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: onAccent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          minimumSize: const Size(48, 48),
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          minimumSize: const Size(48, 52),
           textStyle: textTheme.labelLarge,
         ),
       ),
@@ -154,8 +162,9 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: text,
           side: BorderSide(color: border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          minimumSize: const Size(48, 52),
           textStyle: textTheme.labelLarge,
         ),
       ),
@@ -191,7 +200,7 @@ class AppTheme {
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
-          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall))),
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
           side: WidgetStatePropertyAll(BorderSide(color: border)),
           backgroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? Color.alphaBlend(primary.withValues(alpha: brightness == Brightness.dark ? 0.22 : 0.30), surface) : surface),
           foregroundColor: WidgetStatePropertyAll(text),
@@ -209,7 +218,7 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: surface,
         showDragHandle: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(BrandColors.radiusLarge))),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       ),
       // OJO: NO se fija aquí un IconButtonThemeData con foregroundColor fijo
       // -- forzaba el mismo color de icono en TODOS los IconButton,
@@ -221,9 +230,9 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall), borderSide: BorderSide(color: border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall), borderSide: BorderSide(color: border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall), borderSide: BorderSide(color: primary, width: 2)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(V3.radioS), borderSide: BorderSide(color: border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(V3.radioS), borderSide: BorderSide(color: border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(V3.radioS), borderSide: BorderSide(color: primary, width: 2)),
         labelStyle: TextStyle(color: textMuted),
       ),
       switchTheme: SwitchThemeData(
@@ -242,16 +251,23 @@ class AppTheme {
         foregroundColor: onAccent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusLarge)),
       ),
+      // Transiciones de página: en Android, el «desvanecer y avanzar» moderno de Material; en iOS, el deslizamiento de siempre.
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      }),
       dividerTheme: DividerThemeData(color: border, space: 1),
       snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
         backgroundColor: text,
         contentTextStyle: TextStyle(color: bg),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusSmall)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(V3.radioS)),
       ),
       listTileTheme: ListTileThemeData(iconColor: textMuted, textColor: text),
       dialogTheme: DialogThemeData(
         backgroundColor: surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BrandColors.radiusLarge)),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       ),
       // La pista de las barras de progreso es un gris suave: con la de Material (el contenedor del acento) una barra al 54 % parecía llena.
       progressIndicatorTheme: ProgressIndicatorThemeData(color: primary, linearTrackColor: Color.alphaBlend(border.withValues(alpha: 0.6), surface), linearMinHeight: 6),

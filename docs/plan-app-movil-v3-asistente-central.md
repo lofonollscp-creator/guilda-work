@@ -137,3 +137,27 @@ Decisiones aprobadas: botón ✦ central en la barra + barra de entrada flotante
 - Flutter se ejecuta como `guilda` con `su - guilda` (con `su guilda` a secas hereda `HOME=/root` y falla al leer `.pub-cache`).
 - `flutter pub get` reescribe 5 ficheros generados de escritorio (`mobile/linux|macos|windows/...`); no son del móvil, se revierten con `git restore` sobre esas rutas.
 - Esta máquina no tiene emulador: las capturas salen de los tests de widgets, no de un dispositivo.
+
+## 11. Fase 1 — resultado (2026-11-12)
+
+**Hecho: el sistema de diseño v3, sin tocar ninguna pantalla.** Todo importable con `import 'diseno/v3/v3.dart'`.
+
+| Pieza | Fichero | Qué es |
+|---|---|---|
+| Tokens y paleta | `diseno/v3/tokens_v3.dart` | `V3` (radios 16/24/32, tiempos ≤ 420 ms, curvas, muelle), `Haptica` (seleccion / toque / hecho / aviso), `PaletaV3` derivada del tema vigente (sigue al claro/oscuro y al acento) y `suaveSobre(fondo)` para el texto secundario sobre fondos teñidos |
+| Vidrio | `diseno/v3/vidrio.dart` | Superficie esmerilada. Cae a opaca con alto contraste, con `V3.vidrioActivo = false` (Ajustes lo usará para móviles lentos) o con `opaco: true` |
+| Aura y orbe | `diseno/v3/aura.dart` | `Aura` (manchas violeta/acento a la deriva) y `OrbeIa` (reposo / escuchando / pensando) |
+| Mosaico y táctil | `diseno/v3/bento.dart` | `TarjetaBento` (neutro, acento, IA) y `Pulsable` (se hunde un 3 % y vibra suave; conserva onda, foco y semántica de botón) |
+| Cabecera y carga | `diseno/v3/cabecera_brillo.dart` | `CabeceraGrande` (título que se pliega, con vidrio), `Brillo` y `BloqueEsqueleto` |
+
+**Tema (`theme/app_theme.dart`)**: botones en píldora de 52 dp, tarjetas a 24, campos a 16, hojas y diálogos a 28, barra superior sin tinte al hacer scroll, snackbars flotantes, transiciones de página modernas en Android (`FadeForwards`) y capas de superficie (`surfaceContainer*`). Las constantes de `BrandColors` no cambian.
+
+**Calidad**
+- `flutter test`: **392 pruebas en verde** (382 + 10 nuevas en `test/diseno_v3_test.dart`), incluidas las de accesibilidad de todas las pantallas en claro y oscuro con el tema nuevo.
+- `flutter analyze`: los mismos 5 avisos de siempre, ninguno en código nuevo.
+- Las 10 pruebas nuevas cubren: paleta por tema y acento; **contraste AA ≥ 4,5:1 de texto y texto suave sobre cada tono de tarjeta, en claro y oscuro y con los 8 acentos**; botones en píldora ≥ 48 dp; vidrio con sus tres reservas opacas; «reducir movimiento» (aura, orbe y brillo no programan fotogramas); toque, semántica de botón y hundimiento de `Pulsable`; plegado de la cabecera.
+- Hallazgo del contraste: el gris secundario (4,83:1 sobre blanco) pierde margen con cualquier velo de color. Se redujo el velo del acento en claro y se añadió `suaveSobre` para el texto secundario dentro de tarjetas teñidas.
+
+**Capturas** (`docs/ux-app-movil-v3/fase1/`): `galeria_v3_claro/oscuro.png` (todo lo nuevo en una pantalla) y 7 pantallas reales con el tema nuevo. Cambian poco: Hoy, Tareas, etc. usan sus propios contenedores y no heredan las tarjetas del tema; se rediseñan en las fases 4 y 6.
+
+**Pendiente de esta fase, a propósito**: el conmutador de vidrio en Ajustes y el modo de reserva para gama baja se enchufan en la fase 7 (la pieza ya lo respeta). `suaveSobre` se aplicará dentro de `TarjetaBento` en la fase 4 cuando haya texto secundario real dentro.
