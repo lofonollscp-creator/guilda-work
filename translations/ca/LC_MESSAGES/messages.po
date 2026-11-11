@@ -27744,3 +27744,21 @@ msgstr "S'han generat codis de recuperació al teu compte"
 
 msgid "Se han quitado los códigos de recuperación de tu cuenta"
 msgstr "S'han tret els codis de recuperació del teu compte"
+
+msgid "Tu despacho ha usado el %(p)s %% del límite mensual de IA"
+msgstr "El teu despatx ha fet servir el %(p)s %% del límit mensual d'IA"
+
+msgid "Van %(d)s de %(l)s consultas este mes."
+msgstr "Porteu %(d)s de %(l)s consultes aquest mes."
+
+msgid "El proveedor de IA «%(p)s» está fallando"
+msgstr "El proveïdor d'IA «%(p)s» està fallant"
+
+msgid "Lleva %(e)s consultas fallidas este mes frente a %(l)s correctas. Revisa la clave y el modelo en los ajustes de IA o cambia de proveedor."
+msgstr "Porta %(e)s consultes fallides aquest mes davant de %(l)s de correctes. Revisa la clau i el model als ajustos d'IA o canvia de proveïdor."
+
+msgid "Tu despacho ha agotado el límite mensual de IA"
+msgstr "El teu despatx ha esgotat el límit mensual d'IA"
+
+msgid "Has usado las %(n)s consultas del mes. Se renueva el día 1; si lo necesitas antes, contacta con soporte."
+msgstr "Has fet servir les %(n)s consultes del mes. Es renova l'1; si ho necessites abans, contacta amb suport."

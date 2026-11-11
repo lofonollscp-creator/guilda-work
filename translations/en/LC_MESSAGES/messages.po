@@ -27735,3 +27735,21 @@ msgstr "Recovery codes were generated for your account"
 
 msgid "Se han quitado los códigos de recuperación de tu cuenta"
 msgstr "Recovery codes were removed from your account"
+
+msgid "Tu despacho ha usado el %(p)s %% del límite mensual de IA"
+msgstr "Your firm has used %(p)s%% of its monthly AI limit"
+
+msgid "Van %(d)s de %(l)s consultas este mes."
+msgstr "%(d)s of %(l)s queries so far this month."
+
+msgid "El proveedor de IA «%(p)s» está fallando"
+msgstr "The AI provider “%(p)s” is failing"
+
+msgid "Lleva %(e)s consultas fallidas este mes frente a %(l)s correctas. Revisa la clave y el modelo en los ajustes de IA o cambia de proveedor."
+msgstr "%(e)s queries have failed this month against %(l)s that worked. Check the key and model in the AI settings or switch provider."
+
+msgid "Tu despacho ha agotado el límite mensual de IA"
+msgstr "Your firm has used up its monthly AI limit"
+
+msgid "Has usado las %(n)s consultas del mes. Se renueva el día 1; si lo necesitas antes, contacta con soporte."
+msgstr "You've used all %(n)s queries for the month. It renews on the 1st; contact support if you need more sooner."

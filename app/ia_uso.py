@@ -96,8 +96,11 @@ def registrar_error(tenant_id: int | None, proveedor: str, tarea: str, origen: s
                          "ON CONFLICT (tenant_id, mes, proveedor, tarea, origen) DO UPDATE SET errores = ia_uso_proveedor.errores + 1",
                          (tenant_id, _mes(ahora), proveedor, tarea if tarea in TAREAS else "otras", origen))
             conn.commit()
+            tot = conn.execute("SELECT COALESCE(SUM(errores), 0) AS e, COALESCE(SUM(llamadas), 0) AS l FROM ia_uso_proveedor WHERE tenant_id = ? AND mes = ? AND proveedor = ?", (tenant_id, _mes(ahora), proveedor)).fetchone()
         finally:
             conn.close()
+        from . import ia_vigilancia
+        ia_vigilancia.avisar_fallos(tenant_id, proveedor, tot["e"], tot["l"])
     except Exception:  # noqa: BLE001
         import logging
         logging.getLogger("guilda").warning("No se pudo anotar el fallo de IA", exc_info=True)

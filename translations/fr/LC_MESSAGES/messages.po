@@ -27820,3 +27820,21 @@ msgstr "Des codes de récupération ont été générés pour votre compte"
 
 msgid "Se han quitado los códigos de recuperación de tu cuenta"
 msgstr "Les codes de récupération ont été retirés de votre compte"
+
+msgid "Tu despacho ha usado el %(p)s %% del límite mensual de IA"
+msgstr "Votre cabinet a utilisé %(p)s %% de sa limite mensuelle d'IA"
+
+msgid "Van %(d)s de %(l)s consultas este mes."
+msgstr "%(d)s requêtes sur %(l)s ce mois-ci."
+
+msgid "El proveedor de IA «%(p)s» está fallando"
+msgstr "Le fournisseur d'IA « %(p)s » est en échec"
+
+msgid "Lleva %(e)s consultas fallidas este mes frente a %(l)s correctas. Revisa la clave y el modelo en los ajustes de IA o cambia de proveedor."
+msgstr "%(e)s requêtes ont échoué ce mois-ci contre %(l)s réussies. Vérifiez la clé et le modèle dans les paramètres d'IA ou changez de fournisseur."
+
+msgid "Tu despacho ha agotado el límite mensual de IA"
+msgstr "Votre cabinet a épuisé sa limite mensuelle d'IA"
+
+msgid "Has usado las %(n)s consultas del mes. Se renueva el día 1; si lo necesitas antes, contacta con soporte."
+msgstr "Vous avez utilisé les %(n)s requêtes du mois. Il se renouvelle le 1er ; contactez le support si vous en avez besoin avant."

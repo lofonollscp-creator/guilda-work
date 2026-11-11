@@ -41,6 +41,11 @@ def reservar(usuario_id: int, ahora: datetime | None = None) -> None:
         conn.commit()
     finally:
         conn.close()
+    try:
+        from . import ia_vigilancia
+        ia_vigilancia.avisar_consumo(tenant_id, usadas, usadas + 1, limite)
+    except Exception:  # noqa: BLE001 -- el aviso nunca debe impedir la consulta
+        pass
 
 
 def ia_activa(usuario_id: int) -> bool:
