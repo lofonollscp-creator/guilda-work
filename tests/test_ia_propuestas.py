@@ -151,3 +151,21 @@ def test_las_estadisticas_avisan_de_lo_que_casi_siempre_se_rechaza():
     assert e[("alerta", "tarea")]["tasa_rechazo"] == 83 and e[("alerta", "tarea")]["revisar"] is True
     assert e[("facturas", "peticion_portal")]["tasa_rechazo"] == 0 and e[("facturas", "peticion_portal")]["revisar"] is False
     assert ip.estadisticas(t)[0]["origen"] == "alerta"                                         # las más rechazadas, primero
+
+
+def test_las_propuestas_avisan_a_los_webhooks_al_crearse_y_al_resolverse(monkeypatch):
+    from app import eventos
+    visto = []
+    monkeypatch.setattr(eventos, "emitir", lambda evento, tenant_id, payload: visto.append((evento, tenant_id, payload)))
+    t, u, c = _eq(13)
+    visto.clear()                                                                                    # crear el cliente también emite su evento
+    pid = _p(t, c)
+    ip.aprobar(t, u, pid)
+    p2 = _p(t, c, clave="x:2")
+    ip.rechazar(t, u, p2)
+    visto = [v for v in visto if v[0].startswith("propuesta.")]                                       # la tarea que crea aprobar emite además su propio «tarea.creada»
+    assert [v[0] for v in visto] == ["propuesta.creada", "propuesta.resuelta", "propuesta.creada", "propuesta.resuelta"]
+    assert visto[0][2]["propuesta_id"] == pid and visto[1][2]["estado"] == "aprobada" and visto[1][2]["resultado"].startswith("tarea:") and visto[3][2]["estado"] == "rechazada"
+    assert "propuesta.creada" in eventos.EVENTOS and "propuesta.resuelta" in eventos.EVENTOS
+    monkeypatch.setattr(eventos, "emitir", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("receptor caído")))
+    assert _p(t, c, clave="x:3") is not None                                                       # un fallo al avisar no impide proponer

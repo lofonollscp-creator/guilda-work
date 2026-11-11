@@ -770,3 +770,13 @@ RESPUESTAS.update({"titulares_guilda_fiscal_api": ("FiscalTitular", True), "perf
                    "comprobacion_guilda_fiscal_api": ("FiscalComprobacion", False), "simulacion_guilda_fiscal_api": ("FiscalSimulacion", False), "declaraciones_guilda_fiscal_api": ("FiscalDeclaracionResumen", True),
                    "declaracion_guilda_fiscal_api": ("FiscalDeclaracion", False), "propuesta_guilda_fiscal_api": ("FiscalPropuestaApunte", True)})
 
+
+# Bandeja de propuestas (app/rutas_api_propuestas.py)
+ESQUEMAS["ListaPropuestas"] = {"type": "object", "properties": {"propuestas": {"type": "array", "items": {"type": "object", "properties": {
+    "id": {"type": "integer"}, "tipo": {"type": "string", "enum": ["tarea", "peticion_portal", "mensaje_portal", "cuenta_tercero"]}, "origen": {"type": "string", "description": "De dónde sale: `alerta`, `facturas`, `asistente`…"},
+    "titulo": {"type": "string"}, "detalle": {"type": "string"}, "cliente_id": {"type": "integer", "nullable": True}, "prioridad": {"type": "string", "enum": ["alta", "normal"]},
+    "estado": {"type": "string", "enum": ["pendiente", "aprobada", "rechazada"]}, "creada_en": {"type": "string"}}}}}}
+ESQUEMAS["ResultadoPropuesta"] = {"type": "object", "properties": {"id": {"type": "integer"}, "estado": {"type": "string", "enum": ["aprobada", "rechazada"]}, "resultado": {"type": "string", "description": "Lo que se hizo al aprobar, p. ej. `tarea:12` (vacío al rechazar)."}}}
+RESPUESTAS["listar_propuestas"] = ("ListaPropuestas", False)
+RESPUESTAS["aprobar_propuesta"] = ("ResultadoPropuesta", False)
+RESPUESTAS["rechazar_propuesta"] = ("ResultadoPropuesta", False)

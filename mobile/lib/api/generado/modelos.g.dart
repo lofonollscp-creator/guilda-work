@@ -163,6 +163,11 @@ enum RespuestaJuridicaStatus { answered('answered'), needsContext('needs_context
   static RespuestaJuridicaStatus desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => RespuestaJuridicaStatus.sinReconocer);
 }
 
+enum ResultadoPropuestaEstado { aprobada('aprobada'), rechazada('rechazada'), sinReconocer('');
+  final String valor; const ResultadoPropuestaEstado(this.valor);
+  static ResultadoPropuestaEstado desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => ResultadoPropuestaEstado.sinReconocer);
+}
+
 enum ReunionComercialPlantilla { cliente('cliente'), comercial('comercial'), interna('interna'), sinReconocer('');
   final String valor; const ReunionComercialPlantilla(this.valor);
   static ReunionComercialPlantilla desde(String s) => values.firstWhere((e) => e.valor == s, orElse: () => ReunionComercialPlantilla.sinReconocer);
@@ -3400,6 +3405,20 @@ class Integridad {
   @override int get hashCode => Object.hashAll([integra, total, filaRota]);
 }
 
+class ListaPropuestas {
+  final List<Map<String, dynamic>>? propuestas;
+  const ListaPropuestas({this.propuestas, });
+  factory ListaPropuestas.fromJson(Map<String, dynamic> j) => ListaPropuestas(
+    propuestas: j['propuestas'] == null ? null : (j['propuestas'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+  );
+  Map<String, dynamic> toJson() => {
+    if (propuestas != null) 'propuestas': propuestas!.map((e) => e).toList(),
+  };
+  ListaPropuestas copyWith({List<Map<String, dynamic>>? propuestas, }) => ListaPropuestas(propuestas: propuestas ?? this.propuestas, );
+  @override bool operator ==(Object other) => other is ListaPropuestas && other.propuestas == propuestas;
+  @override int get hashCode => Object.hashAll([propuestas]);
+}
+
 class Membresia {
   final int id;
   final int? usuarioId;
@@ -4864,6 +4883,26 @@ class ResultadoLote {
   ResultadoLote copyWith({int? ok, int? fallos, }) => ResultadoLote(ok: ok ?? this.ok, fallos: fallos ?? this.fallos, );
   @override bool operator ==(Object other) => other is ResultadoLote && other.ok == ok && other.fallos == fallos;
   @override int get hashCode => Object.hashAll([ok, fallos]);
+}
+
+class ResultadoPropuesta {
+  final int? id;
+  final ResultadoPropuestaEstado? estado;
+  final String? resultado;
+  const ResultadoPropuesta({this.id, this.estado, this.resultado, });
+  factory ResultadoPropuesta.fromJson(Map<String, dynamic> j) => ResultadoPropuesta(
+    id: j['id'] == null ? null : (j['id'] as num).toInt(),
+    estado: j['estado'] == null ? null : ResultadoPropuestaEstado.desde(j['estado'] as String),
+    resultado: j['resultado'] == null ? null : j['resultado'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': ?id,
+    if (estado != null) 'estado': estado!.valor,
+    'resultado': ?resultado,
+  };
+  ResultadoPropuesta copyWith({int? id, ResultadoPropuestaEstado? estado, String? resultado, }) => ResultadoPropuesta(id: id ?? this.id, estado: estado ?? this.estado, resultado: resultado ?? this.resultado, );
+  @override bool operator ==(Object other) => other is ResultadoPropuesta && other.id == id && other.estado == estado && other.resultado == resultado;
+  @override int get hashCode => Object.hashAll([id, estado, resultado]);
 }
 
 class ResultadoTransicion {

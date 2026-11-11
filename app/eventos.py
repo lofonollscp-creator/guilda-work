@@ -57,6 +57,7 @@ EVENTOS = [
     "factura.cobrada",
     "tarea.creada", "tarea.completada", "tarea.asignada", "correo.enviado", "nota.editada",
     "cliente.creado", "correo.sin_respuesta",
+    "propuesta.creada", "propuesta.resuelta",             # la bandeja de propuestas (app/ia_propuestas.py): un flujo externo puede avisar por chat o crear la tarea en otra herramienta
 ]
 
 

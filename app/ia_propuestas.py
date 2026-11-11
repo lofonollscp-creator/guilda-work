@@ -129,9 +129,21 @@ def proponer(tenant_id: int, *, clave: str, tipo: str, titulo: str, detalle: str
         cur = conn.execute("INSERT INTO ia_propuestas (tenant_id, clave, tipo, origen, titulo, detalle, datos, cliente_fiscal_id, prioridad, creada_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                            (tenant_id, clave[:200], tipo, origen[:40], titulo[:200], detalle[:600], json.dumps(datos or {}, ensure_ascii=False), cliente_fiscal_id, prioridad, _ahora()))
         conn.commit()
-        return cur.lastrowid
+        nueva = cur.lastrowid
     finally:
         conn.close()
+    _emitir("propuesta.creada", tenant_id, {"propuesta_id": nueva, "tipo": tipo, "origen": origen, "titulo": titulo[:200], "cliente_id": cliente_fiscal_id, "prioridad": prioridad})
+    return nueva
+
+
+def _emitir(evento: str, tenant_id: int, payload: dict) -> None:
+    """Avisa a los webhooks del despacho (app/eventos.py). Un fallo al avisar nunca impide guardar ni resolver la propuesta."""
+    try:
+        from . import eventos
+        eventos.emitir(evento, tenant_id, payload)
+    except Exception:  # noqa: BLE001
+        import logging
+        logging.getLogger("guilda").warning("No se pudo emitir %s", evento, exc_info=True)
 
 
 def _fila(f) -> dict:
@@ -237,6 +249,7 @@ def aprobar(tenant_id: int, usuario_id: int, propuesta_id: int) -> str:
     finally:
         conn.close()
     auditoria.registrar(tenant_id, usuario_id, "ia.propuesta_aprobada", "ia_propuesta", propuesta_id, {"tipo": p["tipo"], "origen": p["origen"], "resultado": resultado})
+    _emitir("propuesta.resuelta", tenant_id, {"propuesta_id": propuesta_id, "estado": "aprobada", "tipo": p["tipo"], "origen": p["origen"], "resultado": resultado, "usuario_id": usuario_id})
     return resultado
 
 
@@ -244,6 +257,7 @@ def rechazar(tenant_id: int, usuario_id: int, propuesta_id: int) -> None:
     if not _resolver(tenant_id, usuario_id, propuesta_id, "rechazada"):
         raise ErrorPropuesta("Esa propuesta ya estaba resuelta.")
     auditoria.registrar(tenant_id, usuario_id, "ia.propuesta_rechazada", "ia_propuesta", propuesta_id, {})
+    _emitir("propuesta.resuelta", tenant_id, {"propuesta_id": propuesta_id, "estado": "rechazada", "usuario_id": usuario_id})
 
 
 def generar_desde_alertas(tenant_id: int, hoy=None) -> int:
