@@ -36,7 +36,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .bd import contexto as contexto_bd
 from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
-from . import acceso, acento, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_avisos, portal_peticiones_recurrentes, portal_recordatorios, proyecto_plantillas, salud
+from . import acceso, acento, politica_acceso, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_avisos, portal_peticiones_recurrentes, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_juridico, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -586,6 +586,33 @@ def _modo_mantenimiento():
         resp = make_response(render_template("mantenimiento.html", mensaje=texto, hasta=cierre["hasta"]), 503)
     resp.headers["Retry-After"] = "300"
     return resp
+
+
+_RUTAS_ABIERTAS_CON_POLITICA = ("/sw.js", "/static/", "/.ory/", "/login", "/logout", "/idioma/", "/ajustes/cuenta", "/ajustes-cuenta", "/api/", "/webhooks/", "/soporte/ver-como")
+
+
+@app.before_request
+def _politica_de_acceso():
+    """Pasada la fecha límite de la política de acceso del despacho, quien aún no tiene segundo factor ni passkey solo puede ir a activarlo (app/politica_acceso.py). Nunca tumba una página por un fallo propio."""
+    if MODO_ESCRITORIO or g.get("es_admin") or g.get("ver_como") or g.get("usuario_id") is None or request.path.startswith(_RUTAS_ABIERTAS_CON_POLITICA):
+        return
+    try:
+        pendiente = politica_acceso.pendiente(g.usuario_id, g.get("tenant_id"))
+    except Exception:  # noqa: BLE001
+        return
+    if pendiente and pendiente["vencida"]:
+        return redirect(url_for("ajustes_cuenta", politica=1))
+
+
+@app.context_processor
+def inyectar_politica_de_acceso():
+    """Datos del aviso «activa tu segundo factor» (solo si la política está activa y la persona no cumple)."""
+    try:
+        if g.get("usuario_id") is not None and not g.get("ver_como") and not request.path.startswith(("/static/", "/.ory/")):
+            return {"politica_acceso_pendiente": peticion.memo("politica_acceso", lambda: politica_acceso.pendiente(g.usuario_id, g.get("tenant_id")))}
+    except Exception:  # noqa: BLE001
+        pass
+    return {"politica_acceso_pendiente": None}
 
 
 @app.route("/soporte/ver-como/<token>")
@@ -2165,6 +2192,7 @@ def ajustes_cuenta():
     locales de escritorio (es_local=1), que nunca pasan por Kratos."""
     if db.obtener_usuario(g.usuario_id)["es_local"]:
         abort(404)
+    politica_acceso.olvidar(g.usuario_id)
     datos = _flujo_o_redirigir("settings")
     if datos is None:
         return g._redireccion_flujo

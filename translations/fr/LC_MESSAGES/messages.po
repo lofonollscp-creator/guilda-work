@@ -27757,3 +27757,45 @@ msgstr "Règles presque toujours rejetées"
 
 msgid "%(r)s de %(t)s propuestas de «%(n)s» se rechazaron: pasar «%(u)s» de %(a)s a %(s)s."
 msgstr "%(r)s propositions sur %(t)s de « %(n)s » ont été rejetées : passer « %(u)s » de %(a)s à %(s)s."
+
+msgid "Política de acceso guardada."
+msgstr "Politique d'accès enregistrée."
+
+msgid "Exigir verificación al equipo"
+msgstr "Exiger la vérification de l'équipe"
+
+msgid "Pide a todas las personas del despacho que activen la verificación en dos pasos o una passkey. Hasta la fecha límite solo ven un aviso; pasada la fecha, solo pueden entrar a activarla en sus ajustes."
+msgstr "Demande à toutes les personnes du cabinet d'activer la vérification en deux étapes ou une passkey. Jusqu'à la date limite elles ne voient qu'un avis ; après, elles ne peuvent accéder qu'à leurs paramètres pour l'activer."
+
+msgid "Exigir segundo factor o passkey"
+msgstr "Exiger un second facteur ou une passkey"
+
+msgid "Todas las personas comprobadas cumplen."
+msgstr "Toutes les personnes vérifiées sont en règle."
+
+msgid "No cumple"
+msgstr "Non conforme"
+
+msgid "Fecha límite (al menos %(n)s día desde hoy)"
+msgid_plural "Fecha límite (al menos %(n)s días desde hoy)"
+msgstr[0] "Date limite (au moins %(n)s jour à partir d'aujourd'hui)"
+msgstr[1] "Date limite (au moins %(n)s jours à partir d'aujourd'hui)"
+
+msgid "%(n)s persona aún no cumple."
+msgid_plural "%(n)s personas aún no cumplen."
+msgstr[0] "%(n)s personne n'est pas encore en règle."
+msgstr[1] "%(n)s personnes ne sont pas encore en règle."
+
+msgid "Tu despacho exige verificación en dos pasos o una passkey"
+msgstr "Votre cabinet exige la vérification en deux étapes ou une passkey"
+
+msgid "La fecha límite ya pasó (%(f)s): actívala para seguir trabajando."
+msgstr "La date limite est passée (%(f)s) : activez-la pour continuer à travailler."
+
+msgid "Activarla"
+msgstr "L'activer"
+
+msgid "Te queda %(n)s día (hasta el %(f)s)."
+msgid_plural "Te quedan %(n)s días (hasta el %(f)s)."
+msgstr[0] "Il vous reste %(n)s jour (jusqu'au %(f)s)."
+msgstr[1] "Il vous reste %(n)s jours (jusqu'au %(f)s)."

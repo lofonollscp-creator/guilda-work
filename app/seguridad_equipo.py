@@ -4,7 +4,7 @@ La verificación en dos pasos (app de autenticación y códigos de recuperación
 Las passkeys del equipo (huella o PIN en lugar de contraseña) las da el método `passkey` de Kratos (deploy/kratos/kratos.yml; guía y prueba en docs/passkeys-equipo.md); aquí también se ve quién ha registrado alguna."""
 from __future__ import annotations
 
-from . import db, kratos
+from . import db, kratos, politica_acceso
 
 
 def informe(tenant_id: int) -> dict:
@@ -20,7 +20,9 @@ def informe(tenant_id: int) -> dict:
         except Exception:  # noqa: BLE001 -- una consulta que falla no rompe la pantalla: esa persona sale «sin comprobar»
             creds = None
         personas.append({"id": uid, "nombre": db.nombre_mostrado_usuario(uid) or u["email"], "email": u["email"], "direccion": bool(u["supervisor_tenant"]),
-                         "segundo_factor": None if creds is None else "totp" in creds, "passkey": None if creds is None else "passkey" in creds})
+                         "segundo_factor": None if creds is None else "totp" in creds, "passkey": None if creds is None else "passkey" in creds,
+                         "cumple": None if creds is None else bool(creds & politica_acceso.METODOS_VALIDOS)})
     personas.sort(key=lambda p: (not p["direccion"], p["segundo_factor"] is not False, p["nombre"].lower()))
     sin = [p for p in personas if p["segundo_factor"] is False]
-    return {"personas": personas, "sin_segundo_factor": len(sin), "direccion_sin_segundo_factor": sum(1 for p in sin if p["direccion"]), "sin_comprobar": sum(1 for p in personas if p["segundo_factor"] is None)}
+    return {"personas": personas, "sin_segundo_factor": len(sin), "direccion_sin_segundo_factor": sum(1 for p in sin if p["direccion"]), "sin_comprobar": sum(1 for p in personas if p["segundo_factor"] is None),
+            "politica": politica_acceso.obtener(tenant_id), "incumplen": sum(1 for p in personas if p["cumple"] is False)}

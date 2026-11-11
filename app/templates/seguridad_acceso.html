@@ -11,10 +11,21 @@
 {% if informe.direccion_sin_segundo_factor %}<p class="ia-error" role="status">{{ ngettext('%(n)s persona de la dirección no tiene la verificación en dos pasos.', '%(n)s personas de la dirección no tienen la verificación en dos pasos.', informe.direccion_sin_segundo_factor, n=informe.direccion_sin_segundo_factor) }}</p>
 {% elif informe.sin_segundo_factor %}<p class="muted" role="status">{{ ngettext('%(n)s persona del equipo no la tiene.', '%(n)s personas del equipo no la tienen.', informe.sin_segundo_factor, n=informe.sin_segundo_factor) }}</p>
 {% else %}<p class="portal-peticion" role="status"><strong>{{ _('Todo el equipo comprobado tiene la verificación en dos pasos.') }}</strong></p>{% endif %}
+{% if error %}<p class="ia-error" role="alert">{{ error }}</p>{% endif %}{% if aviso == 'politica' %}<p class="portal-peticion" role="status">{{ _('Política de acceso guardada.') }}</p>{% endif %}
+<section class="proyecto-bloque ds-max-720 ds-mb-16" id="politica">
+  <h2>{{ _('Exigir verificación al equipo') }}</h2>
+  <p class="muted">{{ _('Pide a todas las personas del despacho que activen la verificación en dos pasos o una passkey. Hasta la fecha límite solo ven un aviso; pasada la fecha, solo pueden entrar a activarla en sus ajustes.') }}</p>
+  <form method="post" action="{{ url_for('seguridad.acceso_politica') }}">
+    <div class="correo-form-campo"><label><input type="checkbox" name="exigir" value="1" {{ 'checked' if informe.politica.exigir else '' }}> {{ _('Exigir segundo factor o passkey') }}</label></div>
+    <div class="correo-form-campo"><label for="politica-limite">{{ ngettext('Fecha límite (al menos %(n)s día desde hoy)', 'Fecha límite (al menos %(n)s días desde hoy)', min_dias, n=min_dias) }}</label><input type="date" id="politica-limite" name="limite" value="{{ informe.politica.limite or '' }}"></div>
+    <button type="submit" class="btn btn-primary">{{ _('Guardar') }}</button>
+  </form>
+  {% if informe.politica.exigir and informe.incumplen %}<p class="ia-error" role="status">{{ ngettext('%(n)s persona aún no cumple.', '%(n)s personas aún no cumplen.', informe.incumplen, n=informe.incumplen) }}</p>{% elif informe.politica.exigir %}<p class="muted" role="status">{{ _('Todas las personas comprobadas cumplen.') }}</p>{% endif %}
+</section>
 <ul class="log-list ds-max-720">
   {% for p in informe.personas %}
   <li class="log-item"><span class="pill {{ 'pill-danger' if p.segundo_factor is false and p.direccion else '' }}">{{ _('Sí') if p.segundo_factor else (_('No') if p.segundo_factor is false else _('Sin comprobar')) }}</span>
-    <span class="log-text"><strong>{{ p.nombre }}</strong>{% if p.direccion %} · {{ _('Dirección') }}{% endif %}{% if p.passkey %} · {{ _('con passkey') }}{% endif %}<br><span class="muted">{{ p.email }}</span></span></li>
+    <span class="log-text"><strong>{{ p.nombre }}</strong>{% if p.direccion %} · {{ _('Dirección') }}{% endif %}{% if p.passkey %} · {{ _('con passkey') }}{% endif %}{% if informe.politica.exigir and p.cumple is false %} · <span class="pill pill-danger">{{ _('No cumple') }}</span>{% endif %}<br><span class="muted">{{ p.email }}</span></span></li>
   {% endfor %}
 </ul>
 <section class="proyecto-bloque ds-max-720 ds-mt-16">

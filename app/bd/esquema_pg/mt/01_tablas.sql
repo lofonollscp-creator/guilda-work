@@ -3895,6 +3895,8 @@ CREATE TABLE IF NOT EXISTS tenants (
     ia_limite_mensual bigint,
     direccion_fiscal text,
     zona_horaria text,
+    exigir_segundo_factor bigint NOT NULL DEFAULT 0,
+    segundo_factor_limite text,
     facturascripts_url text,
     facturascripts_admin_user text,
     facturascripts_admin_pass text,

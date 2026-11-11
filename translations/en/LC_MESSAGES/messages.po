@@ -27672,3 +27672,45 @@ msgstr "Rules that are almost always rejected"
 
 msgid "%(r)s de %(t)s propuestas de «%(n)s» se rechazaron: pasar «%(u)s» de %(a)s a %(s)s."
 msgstr "%(r)s of %(t)s proposals from “%(n)s” were rejected: change “%(u)s” from %(a)s to %(s)s."
+
+msgid "Política de acceso guardada."
+msgstr "Access policy saved."
+
+msgid "Exigir verificación al equipo"
+msgstr "Require verification from the team"
+
+msgid "Pide a todas las personas del despacho que activen la verificación en dos pasos o una passkey. Hasta la fecha límite solo ven un aviso; pasada la fecha, solo pueden entrar a activarla en sus ajustes."
+msgstr "Asks everyone in the firm to turn on two-step verification or a passkey. Until the deadline they only see a notice; after it, they can only get into their settings to turn it on."
+
+msgid "Exigir segundo factor o passkey"
+msgstr "Require a second factor or passkey"
+
+msgid "Todas las personas comprobadas cumplen."
+msgstr "Everyone checked complies."
+
+msgid "No cumple"
+msgstr "Not compliant"
+
+msgid "Fecha límite (al menos %(n)s día desde hoy)"
+msgid_plural "Fecha límite (al menos %(n)s días desde hoy)"
+msgstr[0] "Deadline (at least %(n)s day from today)"
+msgstr[1] "Deadline (at least %(n)s days from today)"
+
+msgid "%(n)s persona aún no cumple."
+msgid_plural "%(n)s personas aún no cumplen."
+msgstr[0] "%(n)s person still doesn't comply."
+msgstr[1] "%(n)s people still don't comply."
+
+msgid "Tu despacho exige verificación en dos pasos o una passkey"
+msgstr "Your firm requires two-step verification or a passkey"
+
+msgid "La fecha límite ya pasó (%(f)s): actívala para seguir trabajando."
+msgstr "The deadline has passed (%(f)s): turn it on to keep working."
+
+msgid "Activarla"
+msgstr "Turn it on"
+
+msgid "Te queda %(n)s día (hasta el %(f)s)."
+msgid_plural "Te quedan %(n)s días (hasta el %(f)s)."
+msgstr[0] "You have %(n)s day left (until %(f)s)."
+msgstr[1] "You have %(n)s days left (until %(f)s)."

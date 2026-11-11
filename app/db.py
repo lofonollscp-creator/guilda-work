@@ -1932,6 +1932,8 @@ def init_db() -> None:
         _asegurar_columna(conn, "tenants", "ia_limite_mensual", "INTEGER")
         _asegurar_columna(conn, "tenants", "direccion_fiscal", "TEXT")
         _asegurar_columna(conn, "tenants", "zona_horaria", "TEXT")
+        _asegurar_columna(conn, "tenants", "exigir_segundo_factor", "INTEGER NOT NULL DEFAULT 0")       # política de acceso (app/politica_acceso.py)
+        _asegurar_columna(conn, "tenants", "segundo_factor_limite", "TEXT")
 
         # FacturaScripts (Fase facturación): a diferencia de EspoCRM/
         # Nextcloud (una instancia compartida), cada tenant tiene su

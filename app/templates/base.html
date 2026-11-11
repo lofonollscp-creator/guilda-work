@@ -478,6 +478,12 @@
         <form method="post" action="{{ url_for('salir_ver_como') }}"><button type="submit" class="btn btn-secondary">{{ _('Salir') }}</button></form>
       </div>
       {% endif %}
+      {% if politica_acceso_pendiente %}
+      <div class="comunicado comunicado-{{ 'critico' if politica_acceso_pendiente.dias <= 7 else 'aviso' }} ds-mb-16" role="status">
+        <div class="comunicado-texto"><strong>{{ _('Tu despacho exige verificación en dos pasos o una passkey') }}</strong> <span>{% if politica_acceso_pendiente.vencida %}{{ _('La fecha límite ya pasó (%(f)s): actívala para seguir trabajando.', f=politica_acceso_pendiente.limite) }}{% else %}{{ ngettext('Te queda %(n)s día (hasta el %(f)s).', 'Te quedan %(n)s días (hasta el %(f)s).', politica_acceso_pendiente.dias, n=politica_acceso_pendiente.dias, f=politica_acceso_pendiente.limite) }}{% endif %}</span></div>
+        <a class="btn btn-secondary" href="{{ url_for('ajustes_cuenta') }}">{{ _('Activarla') }}</a>
+      </div>
+      {% endif %}
       {% if comunicados_activos %}
       <div class="comunicados" role="region" aria-label="{{ _('Comunicados') }}">
         {% for c in comunicados_activos %}

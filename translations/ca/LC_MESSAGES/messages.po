@@ -27681,3 +27681,45 @@ msgstr "Regles que gairebé sempre es rebutgen"
 
 msgid "%(r)s de %(t)s propuestas de «%(n)s» se rechazaron: pasar «%(u)s» de %(a)s a %(s)s."
 msgstr "%(r)s de %(t)s propostes de «%(n)s» es van rebutjar: passar «%(u)s» de %(a)s a %(s)s."
+
+msgid "Política de acceso guardada."
+msgstr "Política d'accés desada."
+
+msgid "Exigir verificación al equipo"
+msgstr "Exigir verificació a l'equip"
+
+msgid "Pide a todas las personas del despacho que activen la verificación en dos pasos o una passkey. Hasta la fecha límite solo ven un aviso; pasada la fecha, solo pueden entrar a activarla en sus ajustes."
+msgstr "Demana a totes les persones del despatx que activin la verificació en dos passos o una passkey. Fins a la data límit només veuen un avís; passada la data, només poden entrar a activar-la als seus ajustos."
+
+msgid "Exigir segundo factor o passkey"
+msgstr "Exigir segon factor o passkey"
+
+msgid "Todas las personas comprobadas cumplen."
+msgstr "Totes les persones comprovades compleixen."
+
+msgid "No cumple"
+msgstr "No compleix"
+
+msgid "Fecha límite (al menos %(n)s día desde hoy)"
+msgid_plural "Fecha límite (al menos %(n)s días desde hoy)"
+msgstr[0] "Data límit (almenys %(n)s dia des d'avui)"
+msgstr[1] "Data límit (almenys %(n)s dies des d'avui)"
+
+msgid "%(n)s persona aún no cumple."
+msgid_plural "%(n)s personas aún no cumplen."
+msgstr[0] "%(n)s persona encara no compleix."
+msgstr[1] "%(n)s persones encara no compleixen."
+
+msgid "Tu despacho exige verificación en dos pasos o una passkey"
+msgstr "El teu despatx exigeix verificació en dos passos o una passkey"
+
+msgid "La fecha límite ya pasó (%(f)s): actívala para seguir trabajando."
+msgstr "La data límit ja ha passat (%(f)s): activa-la per continuar treballant."
+
+msgid "Activarla"
+msgstr "Activa-la"
+
+msgid "Te queda %(n)s día (hasta el %(f)s)."
+msgid_plural "Te quedan %(n)s días (hasta el %(f)s)."
+msgstr[0] "Et queda %(n)s dia (fins al %(f)s)."
+msgstr[1] "Et queden %(n)s dies (fins al %(f)s)."

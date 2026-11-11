@@ -6,7 +6,7 @@ from flask import Blueprint, Response, abort, g, jsonify, redirect, render_templ
 from flask_babel import gettext as _
 
 from . import cifrado_despacho as cd
-from . import correo_cifrado
+from . import correo_cifrado, politica_acceso
 from . import rgpd
 from .auth import limiter, login_required
 
@@ -185,7 +185,19 @@ def acceso():
     """Quién del equipo tiene la verificación en dos pasos (solo la dirección lo ve)."""
     t = _exigir_responsable()
     from . import seguridad_equipo
-    return render_template("seguridad_acceso.html", informe=seguridad_equipo.informe(t))
+    return render_template("seguridad_acceso.html", informe=seguridad_equipo.informe(t), min_dias=politica_acceso.MIN_DIAS, error=(request.args.get("error") or "")[:200] or None, aviso=request.args.get("aviso"))
+
+
+@seguridad_bp.route("/acceso/politica", methods=["POST"])
+@login_required
+def acceso_politica():
+    """La dirección exige (o deja de exigir) a todo el equipo un segundo factor o una passkey, con una fecha límite."""
+    t = _exigir_responsable()
+    try:
+        politica_acceso.fijar(t, g.usuario_id, bool(request.form.get("exigir")), request.form.get("limite"))
+    except ValueError as e:
+        return redirect(url_for("seguridad.acceso", error=_(str(e))))
+    return redirect(url_for("seguridad.acceso", aviso="politica"))
 
 
 @seguridad_bp.route("/privacidad")
