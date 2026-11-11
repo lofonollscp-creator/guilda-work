@@ -326,6 +326,16 @@ def mover_proveedor_despacho(proveedor: str, sentido: str):
     return redirect(url_for("ia.ajustes") + f"#proveedor-{proveedor}")
 
 
+@ia_bp.route("/ajustes/despacho/voz", methods=["POST"])
+@login_required
+def guardar_voz_despacho():
+    _exigir_direccion()
+    ia_despacho.guardar_voz(g.tenant_id, request.form.get("voz", ""), por=g.usuario_id)
+    from . import auditoria
+    auditoria.registrar(g.tenant_id, g.usuario_id, "ia.voz_despacho", "ia_config", None, {})
+    return redirect(url_for("ia.ajustes", guardado="voz") + "#voz")
+
+
 @ia_bp.route("/ajustes/despacho/normas", methods=["POST"])
 @login_required
 def guardar_normas_despacho():

@@ -27344,3 +27344,15 @@ msgstr "Task created: you'll find it in your tasks."
 
 msgid "Esa alerta ya no está: alguien la ha resuelto."
 msgstr "That alert is gone: someone has resolved it."
+
+msgid "Voz del despacho"
+msgstr "Firm's voice"
+
+msgid "Cómo habla tu despacho (la IA lo imita al redactar respuestas de correo)"
+msgstr "How your firm speaks (the AI imitates it when drafting email replies)"
+
+msgid "Por ejemplo: tutea al cliente, frases cortas, sin tecnicismos, cierra ofreciendo una llamada."
+msgstr "For example: use the informal «you», short sentences, no jargon, close by offering a call."
+
+msgid "Guardar voz"
+msgstr "Save voice"

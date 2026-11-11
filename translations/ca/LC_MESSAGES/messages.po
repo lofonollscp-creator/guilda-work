@@ -27353,3 +27353,15 @@ msgstr "Tasca creada: la tens a les teves tasques."
 
 msgid "Esa alerta ya no está: alguien la ha resuelto."
 msgstr "Aquesta alerta ja no hi és: algú l'ha resolta."
+
+msgid "Voz del despacho"
+msgstr "Veu del despatx"
+
+msgid "Cómo habla tu despacho (la IA lo imita al redactar respuestas de correo)"
+msgstr "Com parla el teu despatx (la IA ho imita en redactar respostes de correu)"
+
+msgid "Por ejemplo: tutea al cliente, frases cortas, sin tecnicismos, cierra ofreciendo una llamada."
+msgstr "Per exemple: tutejar el client, frases curtes, sense tecnicismes, tancar oferint una trucada."
+
+msgid "Guardar voz"
+msgstr "Desar la veu"

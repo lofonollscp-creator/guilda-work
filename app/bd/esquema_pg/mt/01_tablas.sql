@@ -1969,6 +1969,7 @@ CREATE TABLE IF NOT EXISTS ia_config_despacho (
     segunda_lectura bigint NOT NULL DEFAULT 0,
     actualizado_por bigint,
     actualizado_en text NOT NULL,
+    voz text NOT NULL DEFAULT '',
     PRIMARY KEY (tenant_id),
     CHECK (facturas_modo IN ('compartida', 'auto')),
     CHECK (ocr_local IN ('no', 'respaldo', 'solo_local'))

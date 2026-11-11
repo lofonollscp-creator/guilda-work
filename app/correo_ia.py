@@ -7,7 +7,7 @@ import json
 import re
 from datetime import date, datetime
 
-from . import ia_asistente, quickadd
+from . import db, ia_asistente, ia_despacho, quickadd
 
 MAX_CARACTERES_CUERPO = 12000
 MAX_TAREAS = 8
@@ -132,6 +132,11 @@ def ejecutar(usuario_id: int, accion: str, mensaje, idioma: str = "es", clientes
     clientes = dict(list((clientes or {}).items())[:MAX_CLIENTES_EN_PROMPT])
     lista = "\n".join(f"{i}: {' '.join(str(n).split())[:80]}" for i, n in clientes.items()) or "(ninguno)"
     sistema = _SISTEMAS[accion].replace("{idioma}", _NOMBRES_IDIOMA.get(idioma, idioma)).replace("{hoy}", hoy.isoformat()).replace("{clientes}", lista)
+    if accion == "responder":                                                                       # el borrador suena como el despacho (ajustes de IA → «Voz del despacho»)
+        tenant = db.tenant_de_usuario(usuario_id)
+        voz = ia_despacho.voz(tenant["id"]) if tenant else ""
+        if voz:
+            sistema += f"\n\nVoz del despacho (imita este tono y estas normas de estilo, sin citarlas): {voz}"
     respuesta = ia_asistente.completar_texto(usuario_id, sistema, _contenido(mensaje))
     if accion == "tareas":
         return {"tareas": parsear_tareas(respuesta)}

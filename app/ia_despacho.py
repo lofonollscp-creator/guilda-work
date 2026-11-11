@@ -51,6 +51,7 @@ def crear_esquema(conn) -> None:
     conn.executescript(ESQUEMA)
     db._asegurar_columna(conn, "ia_config_despacho", "ocr_local", "TEXT NOT NULL DEFAULT 'respaldo'")
     db._asegurar_columna(conn, "ia_config_despacho", "segunda_lectura", "INTEGER NOT NULL DEFAULT 0")       # releer con un segundo modelo las facturas dudosas
+    db._asegurar_columna(conn, "ia_config_despacho", "voz", "TEXT NOT NULL DEFAULT ''")                      # cómo habla el despacho: el tono que la IA imita en los borradores (W4)
 
 
 def _ahora() -> str:
@@ -67,12 +68,12 @@ def config(tenant_id: int) -> dict:
     """Las normas del despacho (con sus valores por defecto si la dirección aún no ha tocado nada)."""
     conn = db.get_connection()
     try:
-        f = conn.execute("SELECT solo_ue, claves_personales, facturas_modo, umbral_confianza, lectura_texto, separar_pdf, ocr_local, segunda_lectura FROM ia_config_despacho WHERE tenant_id = ?", (tenant_id,)).fetchone()
+        f = conn.execute("SELECT solo_ue, claves_personales, facturas_modo, umbral_confianza, lectura_texto, separar_pdf, ocr_local, segunda_lectura, voz FROM ia_config_despacho WHERE tenant_id = ?", (tenant_id,)).fetchone()
     finally:
         conn.close()
     return {"solo_ue": bool(f["solo_ue"]), "claves_personales": bool(f["claves_personales"]), "facturas_modo": f["facturas_modo"], "umbral_confianza": f["umbral_confianza"],
-            "lectura_texto": bool(f["lectura_texto"]), "separar_pdf": bool(f["separar_pdf"]), "ocr_local": f["ocr_local"], "segunda_lectura": bool(f["segunda_lectura"])} if f else {"solo_ue": False, "claves_personales": True, "facturas_modo": "compartida", "umbral_confianza": 90,
-                                                                                                                  "lectura_texto": True, "separar_pdf": True, "ocr_local": "respaldo", "segunda_lectura": False}
+            "lectura_texto": bool(f["lectura_texto"]), "separar_pdf": bool(f["separar_pdf"]), "ocr_local": f["ocr_local"], "segunda_lectura": bool(f["segunda_lectura"]), "voz": f["voz"] or ""} if f else {"solo_ue": False, "claves_personales": True, "facturas_modo": "compartida", "umbral_confianza": 90,
+                                                                                                                  "lectura_texto": True, "separar_pdf": True, "ocr_local": "respaldo", "segunda_lectura": False, "voz": ""}
 
 
 def guardar_config(tenant_id: int, *, solo_ue: bool, claves_personales: bool, facturas_modo: str, umbral_confianza: int, lectura_texto: bool = True, separar_pdf: bool = True, ocr_local: str = "respaldo", segunda_lectura: bool = False, por: int | None = None) -> None:
@@ -92,6 +93,25 @@ def guardar_config(tenant_id: int, *, solo_ue: bool, claves_personales: bool, fa
                      "ON CONFLICT (tenant_id) DO UPDATE SET solo_ue = excluded.solo_ue, claves_personales = excluded.claves_personales, facturas_modo = excluded.facturas_modo, "
                      "umbral_confianza = excluded.umbral_confianza, lectura_texto = excluded.lectura_texto, separar_pdf = excluded.separar_pdf, ocr_local = excluded.ocr_local, segunda_lectura = excluded.segunda_lectura, actualizado_por = excluded.actualizado_por, actualizado_en = excluded.actualizado_en",
                      (tenant_id, int(solo_ue), int(claves_personales), facturas_modo, umbral, int(lectura_texto), int(separar_pdf), ocr_local, int(segunda_lectura), por, _ahora()))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+MAX_VOZ = 800
+
+
+def voz(tenant_id: int | None) -> str:
+    """El tono del despacho para los borradores de la IA («tutea, frases cortas, firma como el equipo»); vacío si no se ha escrito."""
+    return config(tenant_id)["voz"] if tenant_id is not None else ""
+
+
+def guardar_voz(tenant_id: int, texto: str, por: int | None = None) -> None:
+    texto = " ".join((texto or "").split())[:MAX_VOZ] if "\n" not in (texto or "") else "\n".join(" ".join(l.split()) for l in (texto or "").splitlines() if l.strip())[:MAX_VOZ]
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT INTO ia_config_despacho (tenant_id, voz, actualizado_por, actualizado_en) VALUES (?, ?, ?, ?) ON CONFLICT (tenant_id) DO UPDATE SET voz = excluded.voz, actualizado_por = excluded.actualizado_por, actualizado_en = excluded.actualizado_en",
+                     (tenant_id, texto, por, _ahora()))
         conn.commit()
     finally:
         conn.close()

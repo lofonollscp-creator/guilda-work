@@ -27429,3 +27429,15 @@ msgstr "Tâche créée : vous la trouverez dans vos tâches."
 
 msgid "Esa alerta ya no está: alguien la ha resuelto."
 msgstr "Cette alerte n'existe plus : quelqu'un l'a résolue."
+
+msgid "Voz del despacho"
+msgstr "Voix du cabinet"
+
+msgid "Cómo habla tu despacho (la IA lo imita al redactar respuestas de correo)"
+msgstr "Comment s'exprime votre cabinet (l'IA l'imite en rédigeant les réponses par e-mail)"
+
+msgid "Por ejemplo: tutea al cliente, frases cortas, sin tecnicismos, cierra ofreciendo una llamada."
+msgstr "Par exemple : tutoyer le client, phrases courtes, sans jargon, conclure en proposant un appel."
+
+msgid "Guardar voz"
+msgstr "Enregistrer la voix"

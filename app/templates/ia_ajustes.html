@@ -161,6 +161,13 @@
       <button type="submit" class="btn btn-primary">{{ _('Guardar normas') }}</button>
     </form>
 
+    <form method="post" action="{{ url_for('ia.guardar_voz_despacho') }}" class="ia-form" id="voz">
+      <h3>{{ _('Voz del despacho') }}</h3>
+      <div class="correo-form-campo"><label for="ia-voz">{{ _('Cómo habla tu despacho (la IA lo imita al redactar respuestas de correo)') }}</label>
+        <textarea id="ia-voz" name="voz" rows="4" maxlength="800" placeholder="{{ _('Por ejemplo: tutea al cliente, frases cortas, sin tecnicismos, cierra ofreciendo una llamada.') }}">{{ normas.voz }}</textarea></div>
+      <button type="submit" class="btn btn-primary">{{ _('Guardar voz') }}</button>
+    </form>
+
     {% if uso and uso.filas %}
     <h3>{{ _('Uso este mes por proveedor (estimado)') }}</h3>
     <div class="tabla-caja"><table class="tabla">
