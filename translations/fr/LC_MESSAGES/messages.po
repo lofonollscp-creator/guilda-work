@@ -27712,3 +27712,6 @@ msgid "%(n)s persona del equipo no la tiene."
 msgid_plural "%(n)s personas del equipo no la tienen."
 msgstr[0] "%(n)s membre de l'équipe ne l'a pas."
 msgstr[1] "%(n)s membres de l'équipe ne l'ont pas."
+
+msgid "IVA: desviación que avisa (en tanto por ciento)"
+msgstr "TVA : écart qui déclenche (en pourcentage)"

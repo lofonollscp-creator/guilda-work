@@ -25,7 +25,7 @@
 <p class="empty-lane">{{ _('Todo en orden: no hay nada fuera de lo normal.') }}</p>
 {% endif %}
 {% if direccion %}
-{% set etiquetas = {'dias_sin_facturas': _('Días sin facturas (mínimo)'), 'importe_gasto': _('Gasto atípico: importe mínimo (€)'), 'dias_vencimiento': _('Modelo sin documentación: días de antelación'), 'iva_desvio_pct': _('IVA: desviación que avisa (%%)'), 'dias_sin_entrar': _('Portal: días sin entrar'), 'importe_proveedor_nuevo': _('Proveedor nuevo: importe mínimo (€)')} %}
+{% set etiquetas = {'dias_sin_facturas': _('Días sin facturas (mínimo)'), 'importe_gasto': _('Gasto atípico: importe mínimo (€)'), 'dias_vencimiento': _('Modelo sin documentación: días de antelación'), 'iva_desvio_pct': _('IVA: desviación que avisa (en tanto por ciento)'), 'dias_sin_entrar': _('Portal: días sin entrar'), 'importe_proveedor_nuevo': _('Proveedor nuevo: importe mínimo (€)')} %}
 <form method="post" action="{{ url_for('fiscal.alertas_umbrales') }}" class="proyecto-bloque ds-max-720 ds-mt-16" id="umbrales">
   <h2>{{ _('Cuándo salta cada alerta') }}</h2>
   <p class="muted">{{ _('Solo la dirección lo cambia. Si una regla avisa demasiado, súbele el umbral; si se queda corta, bájalo.') }}</p>

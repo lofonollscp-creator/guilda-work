@@ -87,4 +87,4 @@ def test_retencion_borra_lo_caduco_y_conserva_lo_reciente(usuario_id):
     assert r["ia_conversaciones"] == 1 and r["ia_mensajes"] == 1 and r["avisos"] == 2
     assert [c["titulo"] for c in db.listar_conversaciones_ia(usuario_id)] == ["reciente"]
     assert [n["titulo"] for n in db.listar_notificaciones(usuario_id)] == ["no leida reciente"]
-    assert retencion.purgar(ahora) == {"ia_conversaciones": 0, "ia_mensajes": 0, "avisos": 0, "accesos_portal": 0}      # idempotente
+    assert retencion.purgar(ahora) == {"ia_conversaciones": 0, "ia_mensajes": 0, "avisos": 0, "accesos_portal": 0, "ia_salidas": 0}      # idempotente

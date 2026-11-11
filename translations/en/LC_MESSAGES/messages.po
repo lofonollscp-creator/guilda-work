@@ -27627,3 +27627,6 @@ msgid "%(n)s persona del equipo no la tiene."
 msgid_plural "%(n)s personas del equipo no la tienen."
 msgstr[0] "%(n)s team member does not have it."
 msgstr[1] "%(n)s team members do not have it."
+
+msgid "IVA: desviación que avisa (en tanto por ciento)"
+msgstr "VAT: deviation that triggers (in percent)"

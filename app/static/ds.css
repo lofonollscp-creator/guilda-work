@@ -172,7 +172,7 @@ input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-loca
 .ds-mt-16 { margin-top: 16px !important; } .ds-mt-24 { margin-top: 24px !important; } .ds-mt-32 { margin-top: 2rem !important; }
 .ds-mb-3 { margin-bottom: var(--space-3) !important; } .ds-mb-6 { margin-bottom: 6px !important; } .ds-mb-12 { margin-bottom: 12px !important; } .ds-mb-16 { margin-bottom: 16px !important; }
 .ds-mr-12 { margin-right: 12px !important; } .ds-gap-8 { gap: 8px !important; }
-.ds-ancho-total { width: 100% !important; } .ds-ancho-5em { width: 5em !important; }
+.ds-pre-linea { white-space: pre-line !important; } .ds-ancho-total { width: 100% !important; } .ds-ancho-5em { width: 5em !important; }
 .ds-flex-1 { flex: 1 !important; } .ds-flex-2 { flex: 2 !important; } .ds-flex-3 { flex: 3 !important; }
 .ds-en-linea { display: inline !important; } .ds-bloque { display: block !important; } .ds-contenido { display: contents !important; }
 .ds-fila { display: flex !important; align-items: center !important; gap: 8px !important; }

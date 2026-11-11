@@ -17,7 +17,7 @@
 <section class="proyecto-bloque ds-max-720 ds-mt-16" aria-labelledby="respuesta-titulo">
   <h2 id="respuesta-titulo">{{ _('Respuesta') }}</h2>
   {% if resultado.sin_fuentes %}<p class="ia-error" role="status">{{ _('Esta respuesta no cita ninguna fuente: tómala con cautela y compruébala.') }}</p>{% endif %}
-  <p style="white-space: pre-line">{{ resultado.respuesta }}</p>
+  <p class="ds-pre-linea">{{ resultado.respuesta }}</p>
   <h3>{{ _('Fuentes') }}</h3>
   <ol class="log-list">
     {% for f in resultado.fuentes %}

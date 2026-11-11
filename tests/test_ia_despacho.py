@@ -138,8 +138,8 @@ def test_si_falla_el_primero_responde_el_siguiente_y_se_anota_el_uso(despacho, m
     r = a._llamar(u, "asistente", {"messages": [{"role": "user", "content": "hola"}]})
     assert r["choices"][0]["message"]["content"] == "hecho" and [x[0] for x in llamadas] == ["openai", "anthropic"]
     uso = ia_uso.resumen(t)
-    assert [(f["proveedor"], f["tarea"], f["origen"], f["llamadas"]) for f in uso["filas"]] == [("anthropic", "asistente", "despacho", 1)]
-    assert uso["filas"][0]["tokens_entrada"] == 1000 and uso["hay_sin_tarifa"] is True                 # claude-haiku-5-5 aún no tiene tarifa conocida: no se inventa
+    assert [(f["proveedor"], f["tarea"], f["origen"], f["llamadas"], f["errores"]) for f in sorted(uso["filas"], key=lambda f: f["proveedor"])] == [("anthropic", "asistente", "despacho", 1, 0), ("openai", "asistente", "despacho", 0, 1)]     # el fallo del primero se cuenta aparte, sin llamadas ni coste
+    assert next(f for f in uso["filas"] if f["proveedor"] == "anthropic")["tokens_entrada"] == 1000 and uso["hay_sin_tarifa"] is True                 # claude-haiku-5-5 aún no tiene tarifa conocida: no se inventa
 
 
 def test_si_todos_fallan_el_error_es_el_del_primero_y_no_se_anota_uso(despacho, monkeypatch):
@@ -152,7 +152,7 @@ def test_si_todos_fallan_el_error_es_el_del_primero_y_no_se_anota_uso(despacho, 
     monkeypatch.setattr(pv, "llamar", falso)
     with pytest.raises(ErrorIA, match="openai caído"):
         a._llamar(u, "asistente", {"messages": []})
-    assert ia_uso.resumen(t)["filas"] == []
+    assert all(f["llamadas"] == 0 and f["coste_usd"] == 0 for f in ia_uso.resumen(t)["filas"]) and ia_uso.resumen(t)["total_errores"] == 2       # nada de uso ni coste: solo los fallos de cada proveedor
 
 
 def test_varias_claves_del_mismo_proveedor_pasan_a_la_siguiente_si_la_primera_no_vale(despacho, monkeypatch):
