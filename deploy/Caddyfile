@@ -59,10 +59,14 @@ app.HOSTNAME {
 		# upstream con Add(), así que un `header` normal declarado ANTES de
 		# reverse_proxy acaba duplicado en vez de sustituido -- verificado
 		# en vivo).
-		handle /static/* {
-			reverse_proxy localhost:8000 {
-				header_down Cache-Control "public, max-age=604800"
-			}
+		# Los estáticos los sirve Caddy directamente (sin pasar por Python: no
+		# gastan hilos de waitress). Requiere que el usuario caddy pueda recorrer
+		# el directorio de la app: setfacl -m u:caddy:x /home/guilda (ver HOSTING.md).
+		handle_path /static/* {
+			root * {$GUILDA_ESTATICOS:/home/guilda/guilda-work/app/static}
+			@existe file
+			header @existe Cache-Control "public, max-age=604800"
+			file_server
 		}
 		handle {
 			reverse_proxy localhost:8000

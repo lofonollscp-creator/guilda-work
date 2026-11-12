@@ -12,7 +12,7 @@ Variables de entorno:
                         cada vez que se reinicie el proceso.
     GUILDA_HOST         Dirección de escucha (por defecto 0.0.0.0).
     GUILDA_PORT         Puerto de escucha (por defecto 8000).
-    GUILDA_THREADS      Hilos de waitress (por defecto 16; waitress trae 4).
+    GUILDA_THREADS      Hilos de waitress (por defecto 32; waitress trae 4).
     GUILDA_CORREO_SYNC_MINUTOS  Cada cuántos minutos se sincroniza el correo de
                         todas las cuentas (por defecto 5; 0 lo desactiva).
 
@@ -121,5 +121,5 @@ if __name__ == "__main__":
         clear_untrusted_proxy_headers=True,
         # waitress usa 4 hilos por defecto: con llamadas lentas a Kratos o al
         # correo, 4 usuarios simultáneos bloquean al resto.
-        threads=int(os.environ.get("GUILDA_THREADS", "16")),
+        threads=int(os.environ.get("GUILDA_THREADS", "32")),
     )

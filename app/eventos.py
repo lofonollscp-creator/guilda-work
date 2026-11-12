@@ -189,7 +189,7 @@ def _worker() -> None:
         except Exception:
             trabajado = 0
         if not trabajado:
-            _despertar.wait(timeout=5)
+            _despertar.wait(timeout=15)
         _despertar.clear()
 
 

@@ -200,6 +200,7 @@
 {% if f %}
 <section class="ds-mt-24"><h2>{{ _('Revisión') }}</h2>
   <p class="muted">{{ _('Atajos: R revisa la factura y S la revisa y pasa a la siguiente (fuera de los campos de texto).') }}</p>
+  {% if request.args.get('leyendo') %}<p id="leyendo-estado" class="muted" role="status" data-url="{{ url_for('contabilidad.progreso_lectura', lote='LOTE') }}" data-lote="{{ request.args.get('leyendo') }}" data-txt-error="{{ _('No se pudo leer la factura: %(error)s', error='%(error)s') }}">{{ _('Leyendo la factura con IA en segundo plano; esta página se actualizará sola cuando termine.') }}</p>{% endif %}
   <div class="ds-fila">
     {% if f.documento_id and f.estado != 'exportada' %}<form method="post" action="{{ url_for('contabilidad.leer', factura_id=f.id) }}"><button type="submit" class="btn btn-ghost" {{ 'disabled' if not (ia_lista or (visor and visor.tipo == 'xml')) }} title="{{ _('Lee el archivo adjunto y rellena los datos; sustituye lo escrito') if (ia_lista or (visor and visor.tipo == 'xml')) else _('Hace falta un modelo con visión y tu clave de OpenRouter, en Ajustes del Asistente IA') }}">{{ _('Leer con IA') }}</button></form>{% endif %}
     {% if f.tercero_nif %}<button type="button" class="btn btn-ghost" id="vies-boton" data-url="{{ url_for('contabilidad.vies', factura_id=f.id) }}" data-leyenda-ok="{{ _('NIF-IVA válido en VIES') }}" data-leyenda-no="{{ _('VIES no reconoce este NIF-IVA') }}">{{ _('Comprobar NIF en VIES') }}</button><span id="vies-resultado" role="status" class="muted"></span>{% endif %}
@@ -259,3 +260,4 @@
 {% endif %}
 {% endif %}
 {% endblock %}
+{% block scripts_pagina %}{% if request.args.get('leyendo') %}<script src="{{ url_for('static', filename='contabilidad_leyendo.js') }}" defer></script>{% endif %}{% endblock %}

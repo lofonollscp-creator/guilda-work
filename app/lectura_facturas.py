@@ -701,3 +701,18 @@ def encolar_pendientes(tenant_id: int, usuario_id: int, cliente_fiscal_id: int |
         pass
     lote = ia_trabajos.encolar(tenant_id, usuario_id, "lectura", ids, datos={"proveedor": proveedor})
     return lote, ia_trabajos.progreso(tenant_id, lote)["total"]                       # solo las que de verdad entran: las que ya estaban en la cola no se repiten
+
+
+def encolar_una(tenant_id: int, usuario_id: int, factura_id: int) -> str:
+    """Pone en la cola de fondo la lectura de una sola factura (el botón «Leer con IA» de su ficha). Devuelve el lote para seguir el avance."""
+    proveedor = None
+    try:
+        c = ia_asistente.candidatos(usuario_id, "facturas")
+        proveedor = c[0]["proveedor"] if c else None
+    except Exception:  # noqa: BLE001
+        pass
+    lote = ia_trabajos.encolar(tenant_id, usuario_id, "lectura", [factura_id], datos={"proveedor": proveedor})
+    if ia_trabajos.progreso(tenant_id, lote)["total"] == 0:                         # ya estaba en la cola con otro lote: se sigue ese
+        existente = ia_trabajos.lote_en_curso(tenant_id, "lectura", factura_id)
+        lote = existente or lote
+    return lote

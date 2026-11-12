@@ -27884,3 +27884,36 @@ msgstr "%(hash)s “%(asunto)s” (commit from %(c)s ago; this process started %
 
 msgid "Hay código commiteado sin desplegar (falta reiniciar los servicios). "
 msgstr "There is committed code that has not been deployed (the services need a restart). "
+
+msgid "Rendimiento de la web"
+msgstr "Web performance"
+
+msgid "%(n)s peticiones en la última hora: p50 %(p50)s ms, p95 %(p95)s ms, máximo %(max)s ms."
+msgstr "%(n)s requests in the last hour: p50 %(p50)s ms, p95 %(p95)s ms, max %(max)s ms."
+
+msgid "Todavía no hay peticiones medidas."
+msgstr "No requests have been measured yet."
+
+msgid "Sin peticiones en las últimas horas."
+msgstr "No requests in the last few hours."
+
+msgid "La más lenta: %(ruta)s (p95 %(ms)s ms)."
+msgstr "Slowest: %(ruta)s (p95 %(ms)s ms)."
+
+msgid "Todos los hilos del servidor estuvieron ocupados %(n)s veces en la última hora: la web se queda esperando. "
+msgstr "All server threads were busy %(n)s times in the last hour: the site is left waiting. "
+
+msgid "Todos los hilos del servidor estuvieron ocupados %(n)s veces en las últimas 24 horas. "
+msgstr "All server threads were busy %(n)s times in the last 24 hours. "
+
+msgid "%(n)s peticiones tardaron más de un segundo. "
+msgstr "%(n)s requests took more than a second. "
+
+msgid "La app tiene %(mb)s MB en swap (memoria lenta). "
+msgstr "The app has %(mb)s MB in swap (slow memory). "
+
+msgid "No se pudo leer la factura: %(error)s"
+msgstr "The invoice could not be read: %(error)s"
+
+msgid "Leyendo la factura con IA en segundo plano; esta página se actualizará sola cuando termine."
+msgstr "Reading the invoice with AI in the background; this page will refresh by itself when it finishes."

@@ -416,7 +416,7 @@ def _obtener_pool(rol: str = "app"):
     with _candado_pool:
         if rol not in _pools:
             from psycopg_pool import ConnectionPool
-            maximo = int(os.environ.get("GUILDA_PG_POOL_MAX", "20"))
+            maximo = int(os.environ.get("GUILDA_PG_POOL_MAX", "24"))
             _pools[rol] = ConnectionPool(
                 _url(rol), min_size=1, max_size=maximo, open=True, timeout=float(os.environ.get("GUILDA_PG_POOL_ESPERA", "10")),
                 # Sin sentencias preparadas por defecto (compatible con PgBouncer en modo transacción). GUILDA_PG_PREPARAR=N las usa tras N ejecuciones de la misma sentencia

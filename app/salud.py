@@ -244,6 +244,38 @@ def _estado_calidad_ia(ahora: datetime) -> dict:
     return _item("Servidor", "calidad_ia", titulo, VERDE, resumen, e["asistente"]["acierto_global"] or 0)
 
 
+RENDIMIENTO_P95_AMBAR_MS = 1500
+RENDIMIENTO_LENTAS_AMBAR = 5
+RENDIMIENTO_COLA_ROJO = 5
+RENDIMIENTO_SWAP_AMBAR_MB = 300
+
+
+def _estado_rendimiento(ahora: datetime) -> dict:
+    """Cómo responde la web (app/rendimiento.py): p95 de la última hora, peticiones lentas y avisos de «todos los hilos ocupados» de waitress."""
+    titulo = _("Rendimiento de la web")
+    ruta = db.BACKUPS_DIR / "rendimiento_estado.json"
+    if not ruta.exists():
+        return _item("Servidor", "rendimiento", titulo, GRIS, _("Todavía no hay peticiones medidas."))
+    e = json.loads(ruta.read_text(encoding="utf-8"))
+    edad = (ahora - datetime.fromisoformat(e["fecha"]).replace(tzinfo=None)).total_seconds()
+    if edad > 2 * 3600:
+        return _item("Servidor", "rendimiento", titulo, GRIS, _("Sin peticiones en las últimas horas."))
+    peor = e["peores"][0] if e.get("peores") else None
+    resumen = _("%(n)s peticiones en la última hora: p50 %(p50)s ms, p95 %(p95)s ms, máximo %(max)s ms.", n=e["peticiones"], p50=e["p50_ms"], p95=e["p95_ms"], max=e["max_ms"])
+    if peor and peor["p95_ms"] >= 1000:
+        resumen += " " + _("La más lenta: %(ruta)s (p95 %(ms)s ms).", ruta=peor["ruta"], ms=peor["p95_ms"])
+    if e.get("cola_saturada_hora", 0) >= RENDIMIENTO_COLA_ROJO:
+        return _item("Servidor", "rendimiento", titulo, ROJO, _("Todos los hilos del servidor estuvieron ocupados %(n)s veces en la última hora: la web se queda esperando. ", n=e["cola_saturada_hora"]) + resumen, e["p95_ms"])
+    if e.get("cola_saturada_dia", 0):
+        return _item("Servidor", "rendimiento", titulo, AMBAR, _("Todos los hilos del servidor estuvieron ocupados %(n)s veces en las últimas 24 horas. ", n=e["cola_saturada_dia"]) + resumen, e["p95_ms"])
+    if e["p95_ms"] >= RENDIMIENTO_P95_AMBAR_MS or e["lentas"] >= RENDIMIENTO_LENTAS_AMBAR:
+        return _item("Servidor", "rendimiento", titulo, AMBAR, _("%(n)s peticiones tardaron más de un segundo. ", n=e["lentas"]) + resumen, e["p95_ms"])
+    swap = e.get("swap_proceso_mb")
+    if swap is not None and swap >= RENDIMIENTO_SWAP_AMBAR_MB:
+        return _item("Servidor", "rendimiento", titulo, AMBAR, _("La app tiene %(mb)s MB en swap (memoria lenta). ", mb=swap) + resumen, e["p95_ms"])
+    return _item("Servidor", "rendimiento", titulo, VERDE, resumen, e["p95_ms"])
+
+
 EXPOSICION_AMBAR_HORAS = 6
 
 
@@ -549,6 +581,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Servidor", "dependencias", _("Dependencias con vulnerabilidades conocidas"), lambda: _estado_dependencias(ahora))
     _seguro("Servidor", "version", _("Versión desplegada"), lambda: _estado_version(ahora))
     _seguro("Servidor", "calidad_ia", _("Calidad de la IA (evaluación semanal)"), lambda: _estado_calidad_ia(ahora))
+    _seguro("Servidor", "rendimiento", _("Rendimiento de la web"), lambda: _estado_rendimiento(ahora))
     _seguro("Servidor", "exposicion", _("Exposición pública (cabeceras y puertos)"), lambda: _estado_exposicion(ahora))
     _seguro("Servidor", "crowdsec", _("CrowdSec (bloqueos)"), lambda: _estado_crowdsec(ahora))
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)

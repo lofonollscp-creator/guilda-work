@@ -27893,3 +27893,36 @@ msgstr "%(hash)s «%(asunto)s» (commit de fa %(c)s; aquest procés va arrencar 
 
 msgid "Hay código commiteado sin desplegar (falta reiniciar los servicios). "
 msgstr "Hi ha codi comès sense desplegar (falta reiniciar els serveis). "
+
+msgid "Rendimiento de la web"
+msgstr "Rendiment de la web"
+
+msgid "%(n)s peticiones en la última hora: p50 %(p50)s ms, p95 %(p95)s ms, máximo %(max)s ms."
+msgstr "%(n)s peticions en l'última hora: p50 %(p50)s ms, p95 %(p95)s ms, màxim %(max)s ms."
+
+msgid "Todavía no hay peticiones medidas."
+msgstr "Encara no hi ha peticions mesurades."
+
+msgid "Sin peticiones en las últimas horas."
+msgstr "Sense peticions en les últimes hores."
+
+msgid "La más lenta: %(ruta)s (p95 %(ms)s ms)."
+msgstr "La més lenta: %(ruta)s (p95 %(ms)s ms)."
+
+msgid "Todos los hilos del servidor estuvieron ocupados %(n)s veces en la última hora: la web se queda esperando. "
+msgstr "Tots els fils del servidor han estat ocupats %(n)s vegades en l'última hora: la web es queda esperant. "
+
+msgid "Todos los hilos del servidor estuvieron ocupados %(n)s veces en las últimas 24 horas. "
+msgstr "Tots els fils del servidor han estat ocupats %(n)s vegades en les últimes 24 hores. "
+
+msgid "%(n)s peticiones tardaron más de un segundo. "
+msgstr "%(n)s peticions han trigat més d'un segon. "
+
+msgid "La app tiene %(mb)s MB en swap (memoria lenta). "
+msgstr "L'aplicació té %(mb)s MB en swap (memòria lenta). "
+
+msgid "No se pudo leer la factura: %(error)s"
+msgstr "No s'ha pogut llegir la factura: %(error)s"
+
+msgid "Leyendo la factura con IA en segundo plano; esta página se actualizará sola cuando termine."
+msgstr "Llegint la factura amb IA en segon pla; aquesta pàgina s'actualitzarà sola quan acabi."

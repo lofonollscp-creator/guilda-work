@@ -203,8 +203,12 @@ def test_flujo_web_subir_leer_todas_y_ver_el_resultado(cliente, modelo):
     fid2 = fc.subir_archivos(t, uid, c, "recibida", [("q.pdf", "application/pdf", PDF + b"q")])[0]
     r = cliente.post(f"/contabilidad/{fid2}/leer", headers={"Accept": "application/json"})
     assert r.get_json()["ok"] is False
-    r = cliente.post(f"/contabilidad/{fid2}/leer")
-    assert r.status_code == 302 and "error=" in r.headers["Location"]
+    r = cliente.post(f"/contabilidad/{fid2}/leer")                    # desde la ficha va a la cola de fondo (no retiene la petición)
+    assert r.status_code == 302 and "leyendo=" in r.headers["Location"]
+    from app import ia_trabajos
+    while ia_trabajos.procesar_uno():
+        pass
+    assert fc.obtener(t, uid, fid2)["lectura"] == "fallida"
 
 
 def test_el_uso_cuenta_las_facturas_leidas_con_ia(modelo):

@@ -1011,7 +1011,7 @@ def _worker() -> None:
         except Exception:  # noqa: BLE001 -- un fallo inesperado nunca debe tumbar el hilo
             trabajado = 0
         if not trabajado:
-            _despertar.wait(timeout=5)
+            _despertar.wait(timeout=15)
         _despertar.clear()
 
 

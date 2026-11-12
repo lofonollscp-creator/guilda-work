@@ -27969,3 +27969,36 @@ msgstr "%(hash)s « %(asunto)s » (commit d'il y a %(c)s ; ce processus a démar
 
 msgid "Hay código commiteado sin desplegar (falta reiniciar los servicios). "
 msgstr "Du code commité n'a pas été déployé (les services doivent être redémarrés). "
+
+msgid "Rendimiento de la web"
+msgstr "Performance du site"
+
+msgid "%(n)s peticiones en la última hora: p50 %(p50)s ms, p95 %(p95)s ms, máximo %(max)s ms."
+msgstr "%(n)s requêtes dans la dernière heure : p50 %(p50)s ms, p95 %(p95)s ms, max %(max)s ms."
+
+msgid "Todavía no hay peticiones medidas."
+msgstr "Aucune requête n'a encore été mesurée."
+
+msgid "Sin peticiones en las últimas horas."
+msgstr "Aucune requête ces dernières heures."
+
+msgid "La más lenta: %(ruta)s (p95 %(ms)s ms)."
+msgstr "La plus lente : %(ruta)s (p95 %(ms)s ms)."
+
+msgid "Todos los hilos del servidor estuvieron ocupados %(n)s veces en la última hora: la web se queda esperando. "
+msgstr "Tous les fils du serveur ont été occupés %(n)s fois dans la dernière heure : le site reste en attente. "
+
+msgid "Todos los hilos del servidor estuvieron ocupados %(n)s veces en las últimas 24 horas. "
+msgstr "Tous les fils du serveur ont été occupés %(n)s fois ces dernières 24 heures. "
+
+msgid "%(n)s peticiones tardaron más de un segundo. "
+msgstr "%(n)s requêtes ont pris plus d'une seconde. "
+
+msgid "La app tiene %(mb)s MB en swap (memoria lenta). "
+msgstr "L'application a %(mb)s Mo en swap (mémoire lente). "
+
+msgid "No se pudo leer la factura: %(error)s"
+msgstr "La facture n'a pas pu être lue : %(error)s"
+
+msgid "Leyendo la factura con IA en segundo plano; esta página se actualizará sola cuando termine."
+msgstr "Lecture de la facture par l'IA en arrière-plan ; cette page se rafraîchira toute seule à la fin."

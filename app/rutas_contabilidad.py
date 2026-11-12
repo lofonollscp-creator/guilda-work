@@ -378,6 +378,14 @@ def progreso_lectura(lote: str):
 def leer(factura_id: int):
     """Lee con IA el archivo de la factura. Con `Accept: application/json` (lo usa «Leer todas») responde JSON; si no, vuelve a la factura."""
     quiere_json = request.accept_mimetypes.best == "application/json"
+    if not quiere_json and lectura_facturas.configurada(g.usuario_id):
+        # Leer con IA puede tardar un minuto: no se hace dentro de la petición (retendría un hilo del servidor y la página se quedaría
+        # parada). Va a la cola de fondo y la factura enseña el avance. Sin IA (XML) la lectura es instantánea y sigue siendo directa.
+        f = fc.obtener(g.tenant_id, g.usuario_id, factura_id)
+        if f is None:
+            abort(404)
+        lote = lectura_facturas.encolar_una(g.tenant_id, g.usuario_id, factura_id)
+        return redirect(url_for("contabilidad.ver", factura_id=factura_id, leyendo=lote))
     try:
         avisos = lectura_facturas.leer(g.tenant_id, g.usuario_id, factura_id)
     except ValueError as e:

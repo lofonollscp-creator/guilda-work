@@ -115,6 +115,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Herramientas conectadas que responden de verdad (octubre de 2026)](#herramientas-conectadas-que-responden-de-verdad-octubre-de-2026)
 - [Comercial: CRM nativo y notas de reunión con acta de IA (octubre de 2026)](#comercial-crm-nativo-y-notas-de-reunión-con-acta-de-ia-octubre-de-2026)
 - [Asistente jurídico: biblioteca autorizada, consultas con citas e informes (octubre de 2026)](#asistente-jurídico-biblioteca-autorizada-consultas-con-citas-e-informes-octubre-de-2026)
+- [Rendimiento de la web (AB)](#rendimiento-de-la-web-ab)
 
 <!-- /INDICE -->
 
@@ -210,13 +211,14 @@ Variables opcionales:
 
 | Variable | Por defecto | Para qué |
 |---|---|---|
-| `GUILDA_THREADS` | `16` | Hilos de waitress (su valor propio es 4). |
+| `GUILDA_THREADS` | `32` | Hilos de waitress (su valor propio es 4). Con el pool de base de datos (`GUILDA_PG_POOL_MAX`) en 24. |
+| `GUILDA_PETICION_LENTA_MS` | `1000` | Una petición que tarda más se anota en el registro como «Petición lenta» (solo la ruta). |
 | `GUILDA_DB_ENGINE` | `sqlite` | `postgres` usa la base de datos PostgreSQL + Citus (§9.4) en lugar de `data/registro.db`. Solo tras el corte (fase 11 del plan de migración). |
 | `GUILDA_DATABASE_URL` | _(vacío)_ | Con `postgres`: URL del rol `guilda_app` (sin privilegios, sujeto a RLS): `postgresql://guilda_app:CLAVE@127.0.0.1:5433/guilda`. |
 | `GUILDA_DATABASE_URL_PLATAFORMA` | _(la anterior)_ | URL del rol `guilda_plataforma` (backoffice, trabajos en segundo plano, borrado de despachos; se salta la RLS y tiene `pg_monitor`). |
 | `GUILDA_DATABASE_URL_BACKOFFICE` | _(la de la plataforma)_ | URL del rol `guilda_backoffice`: solo ve el esquema `backoffice` (la antigua `backoffice.db`: administradores, auditoría, cobros…). |
 | `GUILDA_PG_ESQUEMA` | `simple` | Con `postgres`: `citus` en producción (reescritura de consultas por despacho), `multitenant` o `simple` solo para pruebas. |
-| `GUILDA_PG_POOL_MAX` | `20` | Conexiones máximas del pool por proceso y rol. Recomendado `12` con 16 hilos de waitress (ver ADR, fase 9). `max_connections` de PostgreSQL ≥ suma de todos los pools + 20. |
+| `GUILDA_PG_POOL_MAX` | `24` | Conexiones máximas del pool por proceso y rol. Recomendado `24` con 32 hilos de waitress (antes `12` con 16; ver ADR, fase 9). `max_connections` de PostgreSQL ≥ suma de todos los pools + 20. |
 | `GUILDA_USO_DIFERIDO` | _(1 con PostgreSQL, 0 con SQLite)_ | Uso de la API y del MCP (`tokens_api_uso`, `mcp_uso`, `ultimo_uso_en`) **acumulado en memoria y volcado en lote** en vez de escribirse en cada petición. Imprescindible con Citus: esas tablas son de referencia y escribirlas por petición provoca interbloqueos distribuidos (`app/uso_diferido.py`). `0` = escritura inmediata. |
 | `GUILDA_USO_VOLCADO_SEG` | `30` | Cada cuántos segundos vuelca el hilo de fondo el uso acumulado. Si el proceso muere de golpe se pierde como mucho ese margen de contadores. |
 | `GUILDA_USO_HILO` | `1` | `0` = sin hilo de volcado (solo se vuelca al leer el uso y al parar el servicio). Lo usan las pruebas. |
@@ -3727,3 +3729,13 @@ Módulo vertical `juridico` (`app/juridico/`, `app/rutas_juridico.py`, `app/ruta
 - **No hecho** (decisiones o dependencias): jurisprudencia ordinaria (CENDOJ), EUR-Lex/Cellar, convenios y subvenciones; consultas asíncronas con cancelación (hoy síncronas, con límite diario y de concurrencia); OCR; evaluación semántica de las citas con un modelo; exportación a Word/PDF; panel de informes dentro de la ficha de expediente; cifrado por despacho del texto de los adjuntos (hoy el texto extraído va en claro en la base de datos del servidor; el aislamiento es por despacho). **Las respuestas son borradores: la calidad jurídica la tiene que validar un profesional con el conjunto de evaluación del piloto.**
 - **Migración**: aditiva e idempotente (tablas `jur_*`, FTS5 incluido); no toca tablas existentes. Reversión: desactivar el vertical y `LEGAL_AI_ENABLED`; «borrar datos» de un despacho elimina sus datos privados y deja el corpus común.
 - **Pruebas**: `tests/test_juridico_motor.py`, `test_juridico_busqueda.py`, `test_juridico_asistente.py`, `test_juridico_pantallas.py`, `test_juridico_herramientas.py`, `test_juridico_aislamiento.py`, `test_api_juridico.py` (todas con fixtures sintéticos y el modelo de IA simulado: prueban el software, no la calidad jurídica).
+
+## Rendimiento de la web (AB)
+
+- **Medición** (`app/rendimiento.py`): cada respuesta lleva `Server-Timing: app;dur=<ms>`; las peticiones de más de `GUILDA_PETICION_LENTA_MS` salen en el registro como «Petición lenta: MÉTODO /ruta -> estado en N ms» (sin parámetros de la URL) y cada minuto se vuelca un resumen a `data/backups/rendimiento_estado.json`. La fila «Rendimiento de la web» de Salud lo muestra: ámbar con p95 ≥ 1,5 s, 5 o más peticiones lentas, algún aviso de «todos los hilos ocupados» en 24 h o más de 300 MB de la app en swap; rojo con 5 avisos de cola en una hora. Sin tráfico en 2 h, gris. Los avisos de cola son los «Task queue depth is N» de waitress. Análisis a posteriori desde Caddy: `journalctl -u caddy --since -48h -o cat | grep '"duration"'`.
+- **Nada lento dentro de la petición**: «Leer con IA» de la ficha de una factura va a la cola de fondo (`ia_trabajos`) y la ficha enseña el avance (`?leyendo=<lote>`, `contabilidad_leyendo.js`); sin IA (XML) sigue siendo directo, y con `Accept: application/json` (la API) también. Los trabajadores de la cola esperan cada vez más en reposo (2 → 20 s) y `encolar()` los despierta al instante; los de webhooks y automatizaciones esperan 15 s.
+- **Estáticos desde Caddy**: `/static/*` lo sirve `file_server` (variable `GUILDA_ESTATICOS` del entorno de Caddy, por defecto `/home/guilda/guilda-work/app/static`) con `Cache-Control: public, max-age=604800` solo si el fichero existe (un 404 no se cachea siete días). Caddy necesita recorrer la carpeta personal: `setfacl -m u:caddy:x /home/guilda` (solo atravesar, no listar ni leer). Si se quita, los estáticos dan 404: vuelve al `reverse_proxy localhost:8000` del bloque anterior.
+- **Memoria**: `/etc/systemd/system/guilda-work.service.d/rendimiento.conf` con `MemorySwapMax=0` para que la app no se vaya a swap (el servidor tiene 7,7 GB y la app ronda los 650 MB de pico; si la memoria se agotara de verdad, el kernel mataría procesos en vez de paginar a disco). `/tmp` es RAM: `scripts/probar.sh` borra sus copias, pero conviene vigilar `du -sh /tmp/*`.
+- **Prueba de carga con Postgres/Citus** (20 usuarios, 20 despachos, con trabajo de fondo, 30 s): peor p95 702 ms, 0 errores 5xx, 0 bloqueos. Comando en `scripts/prueba_carga.py` (`--motor postgres --url …@127.0.0.1:55432/postgres`, contra el contenedor `guilda-pg-ensayo`).
+- **Logo y favicon** reducidos (`logo.png` 256 px, `favicon.ico` 16/32/48): de 260 KB a 57 KB en total.
+- Pruebas: `tests/test_rendimiento_web.py`.

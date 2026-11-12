@@ -47,6 +47,8 @@ RITMO_POR_DEFECTO_SEGUNDOS = 0.4
 MAX_POR_LOTE = 500
 
 _manejadores: dict = {}
+_despertar = threading.Event()                      # encolar() lo activa: los trabajadores, dormidos en reposo, se ponen a trabajar al instante
+ESPERA_MAXIMA_EN_REPOSO_SEGUNDOS = 20.0
 _ultima_consulta: dict[str, float] = {}
 _candado_ritmo = threading.Lock()
 
@@ -88,6 +90,7 @@ def encolar(tenant_id: int, usuario_id: int | None, tipo: str, referencias: list
         conn.commit()
     finally:
         conn.close()
+    _despertar.set()
     return lote
 
 
@@ -181,15 +184,32 @@ def procesar_uno() -> bool:
 def bucle(trabajadores: int = 2) -> None:
     """Hilos del servidor: cada uno reclama y ejecuta trabajos, y duerme un par de segundos cuando no hay ninguno."""
     def _trabajar() -> None:
+        espera = SEGUNDOS_ENTRE_COMPROBACIONES
         while True:
             try:
-                if not procesar_uno():
-                    time.sleep(SEGUNDOS_ENTRE_COMPROBACIONES)
+                if procesar_uno():
+                    espera = SEGUNDOS_ENTRE_COMPROBACIONES
+                    continue
+                # En reposo la espera crece (2 → 4 → 8 → 16 → 20 s) para no consultar la base de datos cada 2 s sin motivo;
+                # un trabajo nuevo despierta a los hilos al momento (encolar), y los reintentos programados esperan como mucho 20 s.
+                _despertar.wait(espera)
+                _despertar.clear()
+                espera = min(espera * 2, ESPERA_MAXIMA_EN_REPOSO_SEGUNDOS)
             except Exception:  # noqa: BLE001
                 logger.warning("Fallo en el trabajador de IA", exc_info=True)
                 time.sleep(SEGUNDOS_ENTRE_COMPROBACIONES * 3)
     for i in range(trabajadores):
         threading.Thread(target=_trabajar, daemon=True, name=f"ia-trabajos-{i}").start()
+
+
+def lote_en_curso(tenant_id: int, tipo: str, referencia: int) -> str | None:
+    """El lote del trabajo que está esperando o en marcha para esa referencia, si lo hay."""
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT lote FROM ia_trabajos WHERE tenant_id = ? AND tipo = ? AND referencia = ? AND estado IN ('pendiente', 'leyendo') ORDER BY id DESC LIMIT 1", (tenant_id, tipo, referencia)).fetchone()
+    finally:
+        conn.close()
+    return f["lote"] if f else None
 
 
 def progreso(tenant_id: int, lote: str) -> dict:

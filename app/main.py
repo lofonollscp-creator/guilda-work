@@ -36,7 +36,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .bd import contexto as contexto_bd
 from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
-from . import acceso, acento, adjuntos_seguros, redireccion, politica_acceso, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_avisos, portal_peticiones_recurrentes, portal_recordatorios, proyecto_plantillas, salud
+from . import acceso, acento, adjuntos_seguros, redireccion, politica_acceso, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, rendimiento, portal_avisos, portal_peticiones_recurrentes, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_juridico, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -419,6 +419,9 @@ def _cabecera_id_de_peticion(respuesta):
         except Exception:  # noqa: BLE001
             logger.warning("No se pudo anotar el error 5xx en errores_servidor", exc_info=True)
     return respuesta
+
+
+rendimiento.instalar(app, db.BACKUPS_DIR / "rendimiento_estado.json")
 
 
 # Rutas públicas que reciben POST de otra web a propósito (landing, métricas del centro de ayuda, API con token y CORS propio) y comprueban su origen ellas mismas.
