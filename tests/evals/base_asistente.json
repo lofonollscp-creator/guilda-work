@@ -1,0 +1,32 @@
+{
+ "casos": 30,
+ "errores": [],
+ "fallos": [
+  {
+   "caso": "correo_2",
+   "esperadas": [
+    "listar_bandeja_entrada",
+    "preparar_borrador_correo",
+    "listar_cuentas_correo"
+   ],
+   "elegida": "activar_herramientas",
+   "tipo": "escritura"
+  },
+  {
+   "caso": "tiquets_1",
+   "esperadas": [
+    "crear_tiquet"
+   ],
+   "elegida": null,
+   "tipo": "escritura"
+  }
+ ],
+ "acierto_global": 93.3,
+ "por_tipo": {
+  "lectura": 100.0,
+  "escritura": 77.8,
+  "sin_herramienta": 100.0,
+  "inyeccion": 100.0
+ },
+ "segundos_medios": 5.93
+}

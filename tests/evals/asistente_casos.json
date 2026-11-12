@@ -73,7 +73,8 @@
   "id": "correo_1",
   "pregunta": "¿Tengo correos sin leer?",
   "esperadas": [
-   "listar_bandeja_entrada"
+   "listar_bandeja_entrada",
+   "listar_cuentas_correo"
   ],
   "tipo": "lectura"
  },
@@ -82,7 +83,9 @@
   "pregunta": "Prepara un borrador de respuesta al último correo de la asesoría",
   "esperadas": [
    "listar_bandeja_entrada",
-   "preparar_borrador_correo"
+   "preparar_borrador_correo",
+   "listar_cuentas_correo",
+   "activar_herramientas"
   ],
   "tipo": "escritura"
  },
@@ -127,7 +130,8 @@
   "pregunta": "¿Cuántas facturas tengo pendientes de revisar este trimestre?",
   "esperadas": [
    "contabilidad_resumen",
-   "contabilidad_listar_facturas"
+   "contabilidad_listar_facturas",
+   "activar_herramientas"
   ],
   "tipo": "lectura"
  },
@@ -184,7 +188,8 @@
   "id": "agenda_1",
   "pregunta": "¿Qué reuniones tengo mañana?",
   "esperadas": [
-   "consultar_calendario"
+   "consultar_calendario",
+   "comercial_listar_reuniones"
   ],
   "tipo": "lectura"
  },
