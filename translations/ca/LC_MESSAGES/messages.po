@@ -27849,3 +27849,35 @@ msgstr "Avaluació inconclusa (el proveïdor no ha respost a molts casos): %(lis
 
 msgid "La última evaluación es antigua: el temporizador semanal no está funcionando. "
 msgstr "L'última avaluació és antiga: el temporitzador setmanal no està funcionant. "
+
+msgid "Herramientas del asistente (últimos %(d)s días)"
+msgstr "Eines de l'assistent (últims %(d)s dies)"
+
+msgid "%(n)s llamada a una herramienta"
+msgid_plural "%(n)s llamadas a herramientas"
+msgstr[0] "%(n)s crida a una eina"
+msgstr[1] "%(n)s crides a eines"
+
+msgid "%(e)s con error"
+msgstr "%(e)s amb error"
+
+msgid "%(r)s acciones rechazadas al pedir confirmación"
+msgstr "%(r)s accions rebutjades en demanar confirmació"
+
+msgid "Herramienta"
+msgstr "Eina"
+
+msgid "Usos"
+msgstr "Usos"
+
+msgid "Rechazadas"
+msgstr "Rebutjades"
+
+msgid "Escribe"
+msgstr "Escriu"
+
+msgid "Lee"
+msgstr "Llegeix"
+
+msgid "Fallan o se rechazan en más de un tercio de los usos (revisa su descripción o sus parámetros):"
+msgstr "Fallen o es rebutgen en més d'un terç dels usos (revisa'n la descripció o els paràmetres):"

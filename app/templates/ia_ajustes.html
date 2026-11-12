@@ -180,6 +180,15 @@
     </table></div>
     <p class="muted">{{ _('Es una estimación con las tarifas públicas de cada modelo. La cifra real es la que te cobra cada proveedor.') }}</p>
     {% endif %}
+    {% if herramientas_uso and herramientas_uso.total %}
+    <h3 id="uso-herramientas">{{ _('Herramientas del asistente (últimos %(d)s días)', d=herramientas_uso.dias) }}</h3>
+    <p>{{ ngettext('%(n)s llamada a una herramienta', '%(n)s llamadas a herramientas', herramientas_uso.total, n=herramientas_uso.total) }} · {{ _('%(e)s con error', e=herramientas_uso.errores) }} · {{ _('%(r)s acciones rechazadas al pedir confirmación', r=herramientas_uso.rechazadas) }}.</p>
+    <div class="tabla-caja"><table class="tabla">
+      <thead><tr><th>{{ _('Herramienta') }}</th><th>{{ _('Tipo') }}</th><th>{{ _('Usos') }}</th><th>{{ _('Errores') }}</th><th>{{ _('Rechazadas') }}</th></tr></thead>
+      <tbody>{% for t in herramientas_uso.mas_usadas %}<tr><td><code>{{ t.herramienta }}</code></td><td>{{ _('Escribe') if t.escribe else _('Lee') }}</td><td>{{ t.llamadas }}</td><td>{{ t.errores or '—' }}</td><td>{{ t.rechazadas or '—' }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% if herramientas_uso.conflictivas %}<p class="muted">{{ _('Fallan o se rechazan en más de un tercio de los usos (revisa su descripción o sus parámetros):') }} {% for t in herramientas_uso.conflictivas %}<code>{{ t.herramienta }}</code>{{ ', ' if not loop.last }}{% endfor %}.</p>{% endif %}
+    {% endif %}
     {% if salidas %}
     <h3 id="salidas-datos">{{ _('Datos que han salido a proveedores externos (30 días)') }}</h3>
     {% if salidas.consultas %}

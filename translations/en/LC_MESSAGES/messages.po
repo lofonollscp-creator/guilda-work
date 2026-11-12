@@ -27840,3 +27840,35 @@ msgstr "Inconclusive evaluation (the provider did not answer many cases): %(list
 
 msgid "La última evaluación es antigua: el temporizador semanal no está funcionando. "
 msgstr "The last evaluation is old: the weekly timer is not working. "
+
+msgid "Herramientas del asistente (últimos %(d)s días)"
+msgstr "Assistant tools (last %(d)s days)"
+
+msgid "%(n)s llamada a una herramienta"
+msgid_plural "%(n)s llamadas a herramientas"
+msgstr[0] "%(n)s tool call"
+msgstr[1] "%(n)s tool calls"
+
+msgid "%(e)s con error"
+msgstr "%(e)s with errors"
+
+msgid "%(r)s acciones rechazadas al pedir confirmación"
+msgstr "%(r)s actions rejected when asking for confirmation"
+
+msgid "Herramienta"
+msgstr "Tool"
+
+msgid "Usos"
+msgstr "Uses"
+
+msgid "Rechazadas"
+msgstr "Rejected"
+
+msgid "Escribe"
+msgstr "Writes"
+
+msgid "Lee"
+msgstr "Reads"
+
+msgid "Fallan o se rechazan en más de un tercio de los usos (revisa su descripción o sus parámetros):"
+msgstr "They fail or are rejected in more than a third of uses (review their description or parameters):"

@@ -8,7 +8,7 @@ from flask import (
 
 from flask_babel import gettext as _
 
-from . import adjuntos_seguros, db, redireccion, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_proveedores, ia_salidas, ia_soporte, ia_uso, ocr_local
+from . import adjuntos_seguros, db, redireccion, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_herramientas_uso, ia_proveedores, ia_salidas, ia_soporte, ia_uso, ocr_local
 from .ia_errores import ErrorIA
 from .auth import login_required
 
@@ -333,6 +333,7 @@ def ajustes():
         normas=ia_despacho.config(g.tenant_id) if g.tenant_id else None, ocr_disponible=ocr_local.disponible(),
         uso=ia_uso.resumen(g.tenant_id) if g.tenant_id else None,
         salidas=ia_salidas.resumen(g.tenant_id) if g.tenant_id and direccion else None,
+        herramientas_uso=ia_herramientas_uso.resumen(g.tenant_id) if g.tenant_id and direccion else None,
         es_direccion=direccion,
         error=request.args.get("error"),
         aviso=request.args.get("aviso"),

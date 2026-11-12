@@ -27925,3 +27925,35 @@ msgstr "Évaluation non concluante (le fournisseur n'a pas répondu à de nombre
 
 msgid "La última evaluación es antigua: el temporizador semanal no está funcionando. "
 msgstr "La dernière évaluation est ancienne : le minuteur hebdomadaire ne fonctionne pas. "
+
+msgid "Herramientas del asistente (últimos %(d)s días)"
+msgstr "Outils de l'assistant (%(d)s derniers jours)"
+
+msgid "%(n)s llamada a una herramienta"
+msgid_plural "%(n)s llamadas a herramientas"
+msgstr[0] "%(n)s appel à un outil"
+msgstr[1] "%(n)s appels à des outils"
+
+msgid "%(e)s con error"
+msgstr "%(e)s avec erreur"
+
+msgid "%(r)s acciones rechazadas al pedir confirmación"
+msgstr "%(r)s actions refusées lors de la demande de confirmation"
+
+msgid "Herramienta"
+msgstr "Outil"
+
+msgid "Usos"
+msgstr "Utilisations"
+
+msgid "Rechazadas"
+msgstr "Refusées"
+
+msgid "Escribe"
+msgstr "Écrit"
+
+msgid "Lee"
+msgstr "Lit"
+
+msgid "Fallan o se rechazan en más de un tercio de los usos (revisa su descripción o sus parámetros):"
+msgstr "Elles échouent ou sont refusées dans plus d'un tiers des utilisations (revoyez leur description ou leurs paramètres) :"
