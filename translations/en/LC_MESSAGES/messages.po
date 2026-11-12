@@ -27786,3 +27786,6 @@ msgstr "The last scan was %(hace)s ago: the weekly timer is not working."
 
 msgid "Sin vulnerabilidades conocidas (escaneo hace %(hace)s)."
 msgstr "No known vulnerabilities (scanned %(hace)s ago)."
+
+msgid "Te lo pregunto porque en esta conversación he leído contenido escrito por terceros (correo, adjunto, mensaje de un cliente) y podría traer instrucciones ocultas."
+msgstr "I'm asking because in this conversation I have read content written by third parties (an email, an attachment, a client's message) and it could carry hidden instructions."

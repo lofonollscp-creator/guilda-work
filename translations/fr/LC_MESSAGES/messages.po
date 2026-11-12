@@ -27871,3 +27871,6 @@ msgstr "La dernière analyse date d'il y a %(hace)s : le minuteur hebdomadaire n
 
 msgid "Sin vulnerabilidades conocidas (escaneo hace %(hace)s)."
 msgstr "Aucune vulnérabilité connue (analyse il y a %(hace)s)."
+
+msgid "Te lo pregunto porque en esta conversación he leído contenido escrito por terceros (correo, adjunto, mensaje de un cliente) y podría traer instrucciones ocultas."
+msgstr "Je vous le demande parce que, dans cette conversation, j'ai lu du contenu écrit par des tiers (courriel, pièce jointe, message d'un client) et il pourrait contenir des instructions cachées."

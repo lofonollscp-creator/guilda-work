@@ -27795,3 +27795,6 @@ msgstr "L'últim escaneig és de fa %(hace)s: el temporitzador setmanal no està
 
 msgid "Sin vulnerabilidades conocidas (escaneo hace %(hace)s)."
 msgstr "Sense vulnerabilitats conegudes (escaneig fa %(hace)s)."
+
+msgid "Te lo pregunto porque en esta conversación he leído contenido escrito por terceros (correo, adjunto, mensaje de un cliente) y podría traer instrucciones ocultas."
+msgstr "Te'l pregunto perquè en aquesta conversa he llegit contingut escrit per tercers (correu, adjunt, missatge d'un client) i podria portar instruccions ocultes."

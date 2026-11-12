@@ -1703,6 +1703,15 @@ SIEMPRE_CONFIRMAR: set[str] = {"ejecutar_plan", "contabilidad_preguntar_al_clien
 
 _NOMBRES_VALIDOS = LECTURA | ESCRITURA | SIEMPRE_CONFIRMAR
 
+# Herramientas de lectura que devuelven TEXTO ESCRITO POR TERCEROS (correos, adjuntos, mensajes de clientes, facturas de proveedores, transcripciones).
+# Ese texto puede traer instrucciones ocultas dirigidas al asistente (inyección de instrucciones). Si en el turno en curso el asistente ha leído algo de
+# esta lista, las escrituras piden confirmación aunque el modo autónomo esté activado: la persona ve qué se va a hacer antes de que ocurra.
+ORIGEN_EXTERNO: set[str] = {
+    "leer_correo", "listar_bandeja_entrada", "listar_conversacion_correo", "leer_adjunto_chat", "leer_documento_despacho",
+    "listar_comentarios_tarea", "listar_conversaciones_cliente_tarea", "mensajes_de_enlace", "buscar_semantico",
+    "contabilidad_ver_factura", "comercial_ver_reunion", "juridico_ver_documento", "juridico_buscar",
+}
+
 
 def resumen_de_confirmacion(usuario_id: int, nombre: str, argumentos: dict) -> str:
     """Lo que hace exactamente la acción pendiente, en una frase, cuando la herramienta lo sabe (hoy, los cambios en lote del Comercial); vacío en las demás. Nunca falla: la tarjeta de confirmación
@@ -1724,12 +1733,12 @@ def resumen_de_confirmacion(usuario_id: int, nombre: str, argumentos: dict) -> s
         return ""
 
 
-def necesita_confirmacion(nombre: str, modo_autonomo: bool) -> bool:
+def necesita_confirmacion(nombre: str, modo_autonomo: bool, turno_con_contenido_externo: bool = False) -> bool:
     if nombre in SIEMPRE_CONFIRMAR:
         return True
     if nombre in LECTURA:
         return False
-    return not modo_autonomo
+    return not modo_autonomo or turno_con_contenido_externo
 
 
 def _errores_de_servicios() -> tuple[type, ...]:
