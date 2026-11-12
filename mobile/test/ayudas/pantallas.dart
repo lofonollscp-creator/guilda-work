@@ -174,6 +174,8 @@ Widget appDePantalla(Widget home, List<Override> overrides, {bool oscuro = false
     theme: AppTheme.light,
     darkTheme: AppTheme.dark,
     themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+    // Con «reducir movimiento» las animaciones infinitas (el orbe del asistente) se quedan quietas; si no, `pumpAndSettle` no terminaría nunca.
+    builder: (c, h) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: h!),
     home: home,
   );
   return ProviderScope(overrides: overrides, child: clave == null ? app : RepaintBoundary(key: clave, child: app));

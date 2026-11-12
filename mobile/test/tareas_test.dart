@@ -1165,6 +1165,9 @@ void main() {
 
     testWidgets('en una tableta ancha el asistente va en un tercer panel, sabe qué tarea hay abierta y se cierra y reabre', (t) async {
       final repo = _RepoFalso()..paginas = ((a, e, q, o) => [_tarea(7), _tarea(8)]);
+      // El orbe del inicio anima sin parar: con «reducir movimiento» se queda quieto y `pumpAndSettle` termina.
+      t.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(t.platformDispatcher.clearAccessibilityFeaturesTestValue);
       t.view.physicalSize = const Size(1400, 800);
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.reset);

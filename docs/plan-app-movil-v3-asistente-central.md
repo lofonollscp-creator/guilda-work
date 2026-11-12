@@ -189,3 +189,25 @@ Decisiones aprobadas: botón ✦ central en la barra + barra de entrada flotante
 - Rediseño del chat con la v3 (mensajes del asistente sin burbuja, burbuja solo para ti, texto con cursor suave, pasos plegables, orbe al pensar/escuchar).
 - Tarjetas de resultado dentro del chat (tarea, correo, nota, fichaje, vencimiento) con sus botones y toque para abrir la ficha.
 - Píldora de contexto quitable con el estilo nuevo y comandos de un toque por pantalla.
+
+## 13. Fase 3 (segunda mitad) — la cara nueva del chat (2026-11-12)
+
+**Hecho.** Capturas en `docs/ux-app-movil-v3/fase3/` (conversación e inicio, claro y oscuro).
+
+| Cambio | Dónde |
+|---|---|
+| **Tarjetas de resultado**: cada tarea, nota, correo o vencimiento que cita el asistente sale como tarjeta con su icono y tipo; un toque abre la ficha real (mismo camino que antes, `destinoDeFuenteIa`). Se anuncia como un botón «Tareas: título». Sustituyen al desplegable «N fuentes» | `funciones/asistente/chat_v3.dart` (`TarjetasResultado`) |
+| **Texto en directo con cursor suave**: un punto que respira al final de la respuesta que llega; quieto con «reducir movimiento» | `TextoVivo` |
+| **Pasos plegables**: mientras responde, el orbe pensando y «N pasos» que se despliegan con un toque (antes iban siempre abiertos) | `PasosPlegables` |
+| **Inicio**: orbe grande centrado y sugerencias como tarjetas sueltas (antes, una lista en una sola caja) | `chat_cuerpo.dart` |
+| **Burbuja tuya** con esquinas más suaves; **píldora de contexto** con chispa y filo violeta | `chat_cuerpo.dart`, `ia_chat_screen.dart` |
+
+**Sin backend.** Las tarjetas salen de las fuentes que ya manda el servidor (`tipo`, `titulo`, `url`). Con eso cada tarjeta tiene una sola acción: abrir. Los botones propios por tarjeta (completar una tarea, archivar un correo) necesitan que el servidor mande datos estructurados del resultado; queda anotado para la fase 5.
+
+**Textos nuevos** (es, ca, en, fr): `iaPasosN`, `iaTipoVencimiento`. El resto reutiliza claves existentes.
+
+**Pruebas:** 448 en verde (7 nuevas en `test/chat_v3_test.dart`: tarjetas, etiqueta vacía, semántica, pasos plegados, cursor con y sin movimiento). Se actualizaron 3 pruebas que fijaban el diseño anterior (pasos siempre visibles, fuentes plegadas, texto en directo como `Text` plano). Efecto colateral: el orbe del inicio anima sin parar y `pumpAndSettle` no termina; `appDePantalla` ahora corre con «reducir movimiento» y dos pruebas de tableta lo activan a mano. `analyze`: los mismos 5 avisos.
+
+**Se quitó** código muerto: `FuentesPlegables` y `PasosRespuesta`.
+
+**Pendiente de la fase 3:** los comandos de un toque ya existen por tipo de contexto (correo, tarea, nota); extenderlos por pantalla (Fichaje, Más) llega con la barra nueva de la fase 2.

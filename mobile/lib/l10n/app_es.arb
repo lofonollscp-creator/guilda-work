@@ -1368,5 +1368,14 @@
   "hoyLoSiguiente": "Lo siguiente",
   "hoyAbrir": "Abrir",
   "hoyContadorPendientes": "Pendientes",
-  "hoyContadorUrgentes": "Urgentes"
+  "hoyContadorUrgentes": "Urgentes",
+  "iaPasosN": "{n, plural, =1{1 paso} other{{n} pasos}}",
+  "@iaPasosN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "iaTipoVencimiento": "Vencimiento"
 }

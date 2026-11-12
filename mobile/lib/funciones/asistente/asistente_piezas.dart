@@ -95,68 +95,6 @@ class CautelaFiscal extends StatelessWidget {
   }
 }
 
-/// «3 fuentes»: plegado por defecto; al tocarlo, cada fuente como fila que se abre.
-class FuentesPlegables extends StatefulWidget {
-  final List<IaFuente> fuentes;
-  final void Function(IaFuente) alAbrir;
-  const FuentesPlegables({super.key, required this.fuentes, required this.alAbrir});
-
-  @override
-  State<FuentesPlegables> createState() => _FuentesPlegablesState();
-}
-
-class _FuentesPlegablesState extends State<FuentesPlegables> {
-  bool _abierto = false;
-
-  IconData _icono(String tipo) => switch (tipo) {
-        'tarea' => Icons.task_alt,
-        'nota' => Icons.sticky_note_2_outlined,
-        'correo' => Icons.mail_outline,
-        'vencimiento' => Icons.event_note_outlined,
-        _ => Icons.folder_open_outlined,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final tema = Theme.of(context);
-    final c = ColoresIa.de(context);
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Semantics(
-        button: true,
-        expanded: _abierto,
-        child: InkWell(
-          onTap: () => setState(() => _abierto = !_abierto),
-          borderRadius: BorderRadius.circular(10),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 44),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              ExcludeSemantics(child: Icon(_abierto ? Icons.expand_less : Icons.chevron_right, size: 18, color: tema.colorScheme.onSurfaceVariant)),
-              const SizedBox(width: 2),
-              Text(t.iaFuentesN(widget.fuentes.length), style: tema.textTheme.labelLarge?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
-            ]),
-          ),
-        ),
-      ),
-      if (_abierto)
-        for (final f in widget.fuentes)
-          InkWell(
-            onTap: () => widget.alAbrir(f),
-            borderRadius: BorderRadius.circular(10),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 44),
-              child: Row(children: [
-                ExcludeSemantics(child: Icon(_icono(f.tipo), size: 18, color: c.acento)),
-                const SizedBox(width: 10),
-                Expanded(child: Text(f.titulo, style: tema.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis)),
-                ExcludeSemantics(child: Icon(Icons.north_east, size: 16, color: tema.colorScheme.onSurfaceVariant)),
-              ]),
-            ),
-          ),
-    ]);
-  }
-}
-
 /// Copiar y leer en voz alta, discretos bajo la última respuesta.
 class AccionesRespuesta extends StatelessWidget {
   final VoidCallback alCopiar;
@@ -171,69 +109,6 @@ class AccionesRespuesta extends StatelessWidget {
       IconButton(icon: Icon(Icons.copy_outlined, size: 19, color: gris), tooltip: t.iaCopiar, onPressed: alCopiar, constraints: const BoxConstraints(minWidth: 44, minHeight: 44)),
       if (alLeer != null) IconButton(icon: Icon(Icons.volume_up_outlined, size: 19, color: gris), tooltip: t.iaLeerEnVozAlta, onPressed: alLeer, constraints: const BoxConstraints(minWidth: 44, minHeight: 44)),
     ]);
-  }
-}
-
-/// Mientras responde: los pasos que ha dado (con su marca) y puntos que laten, en vez de un spinner mudo.
-class PasosRespuesta extends StatefulWidget {
-  final List<String> hechos;
-  final String? enCurso;
-  const PasosRespuesta({super.key, required this.hechos, this.enCurso});
-
-  @override
-  State<PasosRespuesta> createState() => _PasosRespuestaState();
-}
-
-class _PasosRespuestaState extends State<PasosRespuesta> with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
-
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
-  }
-
-  Widget _punto(int i) => AnimatedBuilder(
-        animation: _anim,
-        builder: (_, _) {
-          final fase = ((_anim.value * 3) - i).clamp(0.0, 3.0);
-          final opacidad = 0.25 + 0.75 * (fase < 1 ? fase : (fase < 2 ? 1 - (fase - 1) : 0.0));
-          return Container(
-            width: 6,
-            height: 6,
-            margin: const EdgeInsets.only(right: 3),
-            decoration: BoxDecoration(color: ColoresIa.de(context).acento.withValues(alpha: opacidad.clamp(0.25, 1.0)), shape: BoxShape.circle),
-          );
-        },
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final texto = tema.textTheme.labelLarge?.copyWith(color: tema.colorScheme.onSurfaceVariant);
-    final ok = tema.brightness == Brightness.dark ? const Color(0xFF7BD88F) : const Color(0xFF1B6B34);
-    return Semantics(
-      liveRegion: true,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        for (final h in widget.hechos)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              ExcludeSemantics(child: Icon(Icons.check, size: 16, color: ok)),
-              const SizedBox(width: 8),
-              Flexible(child: Text(h, style: texto)),
-            ]),
-          ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            ExcludeSemantics(child: Row(children: [_punto(0), _punto(1), _punto(2)])),
-            const SizedBox(width: 6),
-            Flexible(child: Text(widget.enCurso ?? AppLocalizations.of(context).iaPensando, style: texto)),
-          ]),
-        ),
-      ]),
-    );
   }
 }
 

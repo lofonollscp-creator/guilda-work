@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../diseno/asistente.dart';
 import '../../diseno/componentes.dart';
+import '../../diseno/v3/v3.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/models.dart';
 import '../../services/api_client.dart';
 import '../../theme/brand_colors.dart';
 import 'asistente_controlador.dart';
 import 'asistente_piezas.dart';
+import 'chat_v3.dart';
 
 /// El texto de un error del asistente: el que mandó el servidor tal cual, el de una [ApiException] según su categoría y, para cualquier otra cosa, el de red.
 String textoDeErrorAsistente(AppLocalizations t, Object error) {
@@ -87,39 +89,34 @@ class _Inicio extends StatelessWidget {
     final iconos = [Icons.today_outlined, Icons.mail_outline, Icons.event_note_outlined, Icons.edit_note];
     final anteriores = c.conversaciones.where((x) => !x.activa && (x.titulo ?? '').isNotEmpty).take(3).toList();
     return ListView(padding: const EdgeInsets.fromLTRB(20, 24, 20, 16), children: [
-      const Align(alignment: Alignment.centerLeft, child: InsigniaIa(tamano: 48)),
-      const SizedBox(height: 14),
-      Text(t.iaInicioTitulo, style: tema.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
-      const SizedBox(height: 4),
-      Text(t.iaVacioTexto, style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
-      const SizedBox(height: 22),
+      const Center(child: ExcludeSemantics(child: OrbeIa(tamano: 112))),
+      const SizedBox(height: 16),
+      Text(t.iaInicioTitulo, textAlign: TextAlign.center, style: tema.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+      const SizedBox(height: 6),
+      Text(t.iaVacioTexto, textAlign: TextAlign.center, style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
+      const SizedBox(height: 24),
       EtiquetaSeccion(contexto == null ? t.iaSugerenciasTitulo : t.iaAhoraMismo(contexto!), padding: const EdgeInsets.fromLTRB(2, 0, 2, 8)),
-      Material(
-        color: tema.colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: tema.colorScheme.outlineVariant)),
-        clipBehavior: Clip.antiAlias,
-        child: Column(children: [
-          for (final (i, texto) in sugerencias.indexed)
-            InkWell(
-              onTap: bloqueado ? null : () => alEnviar(texto),
-              child: Container(
-                constraints: const BoxConstraints(minHeight: 60),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(border: i == 0 ? null : Border(top: BorderSide(color: tema.colorScheme.outlineVariant))),
-                child: Row(children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(color: ColoresIa.de(context).fondo, borderRadius: BorderRadius.circular(12)),
-                    child: ExcludeSemantics(child: Icon(iconos[i % iconos.length], size: 20, color: ColoresIa.de(context).acento)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(texto, style: tema.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700))),
-                ]),
-              ),
+      for (final (i, texto) in sugerencias.indexed)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: TarjetaBento(
+            alPulsar: bloqueado ? null : () => alEnviar(texto),
+            etiqueta: texto,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: ExcludeSemantics(
+              child: Row(children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(color: ColoresIa.de(context).fondo, borderRadius: BorderRadius.circular(12)),
+                  child: Icon(iconos[i % iconos.length], size: 22, color: ColoresIa.de(context).acento),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Text(texto, style: tema.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700))),
+              ]),
             ),
-        ]),
-      ),
+          ),
+        ),
       if (anteriores.isNotEmpty) ...[
         EtiquetaSeccion(t.iaContinua, padding: const EdgeInsets.fromLTRB(2, 22, 2, 4)),
         for (final x in anteriores) FilaConversacion(titulo: x.titulo!, alAbrir: () => alRetomar(x)),
@@ -165,7 +162,7 @@ class _Mensajes extends StatelessWidget {
       itemCount: visibles.length + (hayTextoVivo || enviando ? 1 : 0),
       itemBuilder: (context, i) {
         if (i >= visibles.length) {
-          return _Asistente(ancho: ancho, child: hayTextoVivo ? Text(c.textoVivo ?? '') : PasosRespuesta(hechos: pasosHechos));
+          return _Asistente(ancho: ancho, child: hayTextoVivo ? TextoVivo(texto: c.textoVivo ?? '', construir: spansMarkdownLite) : PasosPlegables(hechos: pasosHechos));
         }
         return _Burbuja(c: c, mensaje: visibles[i], ancho: ancho, esUltima: i == ultimoAsistente && !enviando, alAbrirFuente: alAbrirFuente, alCopiar: alCopiar);
       },
@@ -236,7 +233,7 @@ class _Burbuja extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: ancho * 0.8),
             decoration: BoxDecoration(
               color: tema.colorScheme.primary,
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(18), topRight: Radius.circular(4), bottomLeft: Radius.circular(18), bottomRight: Radius.circular(18)),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(22), topRight: Radius.circular(6), bottomLeft: Radius.circular(22), bottomRight: Radius.circular(22)),
             ),
             // El texto va con el color que toca sobre el acento elegido (negro o blanco según contraste), no con el del tema.
             child: _contenidoUsuario(context, m.contenido ?? ''),
@@ -264,7 +261,7 @@ class _Burbuja extends StatelessWidget {
             SelectableText.rich(TextSpan(children: spansMarkdownLite(context, crudo))),
             // La cautela solo donde hay importes o plazos fiscales, y si no la has silenciado.
             if (c.recordarCifras && contieneCifrasFiscales(crudo)) const Padding(padding: EdgeInsets.only(top: 8), child: CautelaFiscal()),
-            if (fuentes.isNotEmpty) FuentesPlegables(fuentes: fuentes, alAbrir: alAbrirFuente),
+            if (fuentes.isNotEmpty) TarjetasResultado(fuentes: fuentes, alAbrir: alAbrirFuente),
             if (esUltima) AccionesRespuesta(alCopiar: () => alCopiar(crudo), alLeer: c.voz.disponible ? () => c.voz.hablar(crudo) : null),
           ]),
         );

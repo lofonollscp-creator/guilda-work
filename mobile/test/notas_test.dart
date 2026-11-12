@@ -185,6 +185,9 @@ void main() {
       ..proy = [Proyecto.fromJson({'id': 5, 'nombre': 'Acme'})];
 
     testWidgets('en una tableta el asistente va en un panel junto a la lista; se cierra y la chispa lo reabre', (t) async {
+      // El orbe del inicio anima sin parar: con «reducir movimiento» se queda quieto y `pumpAndSettle` termina.
+      t.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(t.platformDispatcher.clearAccessibilityFeaturesTestValue);
       t.view.physicalSize = const Size(1400, 800);
       t.view.devicePixelRatio = 1;
       addTearDown(t.view.reset);

@@ -45,7 +45,7 @@ void main() {
       await t.pump();
       turno.add(_delta('dos tareas'));
       await t.pump();
-      expect(find.text('Tienes dos tareas'), findsOneWidget);
+      expect(find.textContaining('Tienes dos tareas', findRichText: true), findsOneWidget); // con el cursor suave al final
 
       turno.add(_mensaje(iaMsg(10, 'assistant', 'Tienes dos tareas.')));
       turno.add(_fin());
@@ -85,6 +85,9 @@ void main() {
       turno.add(_mensaje(iaMsg(11, 'tool', '{"ok": true}', callId: 'c1', herramienta: 'listar_tareas')));
       await t.pump();
       expect(find.byIcon(Icons.build_circle_outlined), findsNothing); // en curso: va en los pasos, no suelto
+      expect(find.text('usó listar_tareas'), findsNothing); // los pasos van plegados: solo se cuentan
+      await t.tap(find.textContaining('1 paso'));
+      await t.pump();
       expect(find.text('usó listar_tareas'), findsOneWidget);
 
       turno.add(_mensaje(iaMsg(12, 'assistant', 'Aquí las tienes.')));

@@ -145,7 +145,8 @@ void main() {
       await t.pumpWidget(appDePantalla(IaChatScreen(api: api, locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)]));
       await t.pumpAndSettle();
       expect(find.text('¿Qué tengo pendiente hoy?'), findsOneWidget);
-      expect(find.text('Crea una nota con lo que te dicte'), findsOneWidget);
+      // Con el orbe grande, la última tarjeta queda fuera de la pantalla hasta desplazar (la lista es perezosa).
+      expect(find.text('Crea una nota con lo que te dicte', skipOffstage: false), findsOneWidget);
       // En una pantalla baja la lista de tarjetas se desplaza por debajo del campo de escritura.
       await t.ensureVisible(find.text('¿Qué tengo pendiente hoy?'));
       await t.pumpAndSettle();
@@ -251,13 +252,11 @@ void main() {
       expect(find.text('gastos.csv'), findsOneWidget);
       expect(find.text('¿Cuánto suman?'), findsOneWidget);
       expect(find.textContaining('[Adjunto'), findsNothing);
-      // Las fuentes van plegadas («2 fuentes») y al tocarlas se despliegan.
-      expect(find.text('2 fuentes'), findsOneWidget);
-      expect(find.text('Pagar a Acme'), findsNothing);
-      await t.tap(find.text('2 fuentes'));
-      await t.pumpAndSettle();
+      // Las fuentes salen como tarjetas de resultado, con su tipo, y se ven sin desplegar nada.
       expect(find.text('Pagar a Acme'), findsOneWidget);
       expect(find.text('Gastos de octubre'), findsOneWidget);
+      expect(find.text('Tareas'), findsOneWidget);
+      expect(find.text('Notas'), findsOneWidget);
     });
 
     testWidgets('con historial: lo tuyo a la derecha con el acento, lo del asistente en tarjeta, lo que hizo por detrás en píldora, y la acción pendiente pide confirmar', (t) async {

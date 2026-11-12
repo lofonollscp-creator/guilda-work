@@ -868,5 +868,14 @@
   "hoyLoSiguiente": "Up next",
   "hoyAbrir": "Open",
   "hoyContadorPendientes": "Pending",
-  "hoyContadorUrgentes": "Urgent"
+  "hoyContadorUrgentes": "Urgent",
+  "iaPasosN": "{n, plural, =1{1 step} other{{n} steps}}",
+  "@iaPasosN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "iaTipoVencimiento": "Deadline"
 }

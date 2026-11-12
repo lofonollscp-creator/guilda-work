@@ -868,5 +868,14 @@
   "hoyLoSiguiente": "El següent",
   "hoyAbrir": "Obre",
   "hoyContadorPendientes": "Pendents",
-  "hoyContadorUrgentes": "Urgents"
+  "hoyContadorUrgentes": "Urgents",
+  "iaPasosN": "{n, plural, =1{1 pas} other{{n} passos}}",
+  "@iaPasosN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "iaTipoVencimiento": "Venciment"
 }

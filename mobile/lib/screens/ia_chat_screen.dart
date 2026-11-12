@@ -271,9 +271,11 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Container(
-        padding: const EdgeInsets.only(left: 12),
-        decoration: BoxDecoration(color: c.fondo, borderRadius: BorderRadius.circular(99)),
+        padding: const EdgeInsets.only(left: 10),
+        decoration: BoxDecoration(color: c.fondo, border: Border.all(color: c.borde), borderRadius: BorderRadius.circular(99)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
+          ExcludeSemantics(child: Icon(Icons.auto_awesome, size: 14, color: c.acento)),
+          const SizedBox(width: 6),
           Text(AppLocalizations.of(context).iaContexto(contexto), style: Theme.of(context).textTheme.labelMedium?.copyWith(color: c.sobreFondo, fontWeight: FontWeight.w700)),
           IconButton(
             icon: Icon(Icons.close, size: 16, color: c.sobreFondo),
