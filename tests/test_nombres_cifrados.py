@@ -6,7 +6,7 @@ from app import cifrado_despacho as cd
 from app import db, nucleo
 
 FRASE = "una frase de paso larga y segura"
-NOMBRE = "nomina-secreta-QW3.pdf"
+NOMBRE = "nomina-secreta-QW3LTHD8.pdf"
 
 
 @pytest.fixture(autouse=True)
@@ -64,13 +64,13 @@ def test_el_nombre_no_se_cuela_en_eventos_registros_ni_en_el_fichero(usuario_id,
     db.registrar_acceso_cliente(t, f, u, "documento_descargado", NOMBRE)
     db.registrar_acceso_cliente(t, f, u, "documento_eliminado", NOMBRE)
     linea = " ".join(e["texto"] for e in nucleo.linea_de_tiempo(t, u, x))
-    assert "Documento añadido" in linea and "Documento eliminado" in linea and "QW3" not in linea
+    assert "Documento añadido" in linea and "Documento eliminado" in linea and "QW3LTHD8" not in linea
     conn = db.get_connection()
     detalles = [r[0] for r in conn.execute("SELECT detalle FROM cliente_accesos WHERE accion LIKE 'documento%'")]
     conn.close()
-    assert detalles and all("QW3" not in (x or "") for x in detalles)
+    assert detalles and all("QW3LTHD8" not in (x or "") for x in detalles)
     c2 = db.get_connection(); c2.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall(); c2.close()
-    assert b"QW3" not in db.DB_PATH.read_bytes() and b"qw3" not in db.DB_PATH.read_bytes()
+    assert b"QW3LTHD8" not in db.DB_PATH.read_bytes() and b"qw3lthd8" not in db.DB_PATH.read_bytes()
 
 
 def test_en_laxo_el_nombre_si_se_ve_en_los_eventos(usuario_id):

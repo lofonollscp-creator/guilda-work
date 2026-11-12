@@ -8,11 +8,11 @@ from app import cifrado_despacho as cd
 from app import correo, correo_cifrado as cc, db, nucleo
 
 FRASE = "una frase de paso larga y segura"
-ASUNTO = "Reclamación del IVA trimestral XJ7"
+ASUNTO = "Reclamación del IVA trimestral XJ7MNBV4"
 DE = "Marta Puig <marta@cliente-secreto.com>"
-CUERPO = "el cuerpo secreto ZK9 plenilunio del mensaje"
-ADJ_NOMBRE = "nomina-QW3.pdf"
-ADJ_CONTENIDO = b"%PDF-adjunto-secreto-LM5"
+CUERPO = "el cuerpo secreto ZK9QPXR7 plenilunio del mensaje"
+ADJ_NOMBRE = "nomina-QW3LTHD8.pdf"
+ADJ_CONTENIDO = b"%PDF-adjunto-secreto-LM5GYWE2"
 
 
 @pytest.fixture(autouse=True)
@@ -78,7 +78,7 @@ def test_sin_activar_el_correo_va_en_claro_y_nada_cambia(usuario_id):
     f = _columnas(mid)
     assert f["cifrado"] == 0 and f["asunto"] == ASUNTO and CUERPO in f["cuerpo_texto"] and f["datos"] is None
     assert db.obtener_mensaje_correo(mid)["protegido"] is False
-    assert [m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="ZK9")] == [mid]       # índice de texto completo de siempre
+    assert [m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="ZK9QPXR7")] == [mid]       # índice de texto completo de siempre
 
 
 def test_para_activar_el_correo_hace_falta_el_cifrado_de_documentos(usuario_id):
@@ -118,7 +118,7 @@ def test_nada_secreto_queda_en_el_fichero_de_la_base_de_datos(usuario_id):
     datos = db.DB_PATH.read_bytes()
     wal = db.DB_PATH.with_name(db.DB_PATH.name + "-wal")
     datos += wal.read_bytes() if wal.exists() else b""
-    for marca in (b"ZK9", b"XJ7", b"Marta Puig", b"LM5", b"QW3", b"zk9", b"xj7", b"puig", b"plenilunio", b"reclamacion"):
+    for marca in (b"ZK9QPXR7", b"XJ7MNBV4", b"Marta Puig", b"LM5GYWE2", b"QW3LTHD8", b"zk9qpxr7", b"xj7mnbv4", b"puig", b"plenilunio", b"reclamacion"):
         assert marca not in datos, f"«{marca.decode()}» sigue en claro en el fichero de la base de datos"
 
 
@@ -126,7 +126,7 @@ def test_nada_secreto_queda_en_el_fichero_de_la_base_de_datos(usuario_id):
 def test_nivel_laxo_deja_el_asunto_buscable_pero_no_el_cuerpo(usuario_id):
     d, antes, despues, _ = _con_cifrado("laxo")
     datos = db.DB_PATH.read_bytes()
-    assert b"XJ7" in datos and b"ZK9" not in datos
+    assert b"XJ7MNBV4" in datos and b"ZK9QPXR7" not in datos
 
 
 # --- leer ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ def test_si_el_sellado_falla_el_mensaje_se_reintenta_en_la_siguiente_sincronizac
         m.setattr(cc, "sellar_mensaje", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("fallo simulado")))
         pendiente = d.entra(msgid="<fallo@x.com>")
     assert _columnas(pendiente)["cifrado"] == 2 and CUERPO in _columnas(pendiente)["cuerpo_texto"]
-    assert db.listar_mensajes_correo(d.cuenta_id, texto="zk9") and db.obtener_mensaje_correo(pendiente)["protegido"] is False, "mientras está por sellar se lee como un mensaje normal"
+    assert db.listar_mensajes_correo(d.cuenta_id, texto="zk9qpxr7") and db.obtener_mensaje_correo(pendiente)["protegido"] is False, "mientras está por sellar se lee como un mensaje normal"
     assert cc.sellar_pendientes_de_cuenta(d.cuenta_id) == 1
     assert _columnas(pendiente)["cifrado"] == 1 and not _columnas(pendiente)["cuerpo_texto"]
 
@@ -177,8 +177,8 @@ def test_si_el_sellado_falla_el_mensaje_se_reintenta_en_la_siguiente_sincronizac
 def test_buscar_por_cuerpo_asunto_remitente_y_cliente_funciona_en_los_tres_niveles(usuario_id, nivel):
     d, antes, despues, _ = _con_cifrado(nivel, bloquear=False)
     ids = lambda **f: sorted(m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, **f))      # noqa: E731
-    assert ids(texto="zk9") == sorted([antes, despues])                       # cuerpo, sin mayúsculas
-    assert ids(texto="reclamacion xj7") == sorted([antes, despues])            # sin acentos, todas las palabras
+    assert ids(texto="zk9qpxr7") == sorted([antes, despues])                       # cuerpo, sin mayúsculas
+    assert ids(texto="reclamacion xj7mnbv4") == sorted([antes, despues])            # sin acentos, todas las palabras
     assert ids(asunto="Otro") == [despues]
     assert ids(remitente="cliente-secreto") == sorted([antes, despues])
     assert ids(texto="inexistente") == []
@@ -191,14 +191,14 @@ def test_buscar_por_cuerpo_asunto_remitente_y_cliente_funciona_en_los_tres_nivel
 
 def test_buscar_sin_clave_solo_encuentra_lo_que_el_nivel_deja_en_claro(usuario_id):
     d, antes, despues, _ = _con_cifrado("medio")
-    assert db.listar_mensajes_correo(d.cuenta_id, texto="zk9") == [], "el cuerpo está cifrado: sin clave no se puede buscar"
+    assert db.listar_mensajes_correo(d.cuenta_id, texto="zk9qpxr7") == [], "el cuerpo está cifrado: sin clave no se puede buscar"
     assert sorted(m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, remitente="cliente-secreto")) == sorted([antes, despues])
     assert all(m["protegido"] for m in db.listar_mensajes_correo(d.cuenta_id))
 
 
 def test_la_busqueda_en_memoria_se_olvida_al_bloquear(usuario_id):
     d, antes, _, _ = _con_cifrado("laxo", bloquear=False)
-    db.listar_mensajes_correo(d.cuenta_id, texto="zk9")
+    db.listar_mensajes_correo(d.cuenta_id, texto="zk9qpxr7")
     assert cc._memoria.get(d.t)
     cd.bloquear(d.t)
     assert not cc._memoria.get(d.t)
@@ -214,8 +214,8 @@ def test_la_ia_sigue_encontrando_el_correo_aunque_ya_no_este_en_el_buscador_exte
     d.entra(msgid="<nuevo@x.com>")
     assert indexados == [], "el correo de un despacho con correo cifrado no se manda a ningún índice externo"
     monkeypatch.setattr(mcp_tools, "_uid", lambda: d.u)
-    r = mcp_tools.buscar_semantico("zk9")
-    assert r and r[0]["tipo"] == "mensaje" and "ZK9" in r[0]["texto"]
+    r = mcp_tools.buscar_semantico("zk9qpxr7")
+    assert r and r[0]["tipo"] == "mensaje" and "ZK9QPXR7" in r[0]["texto"]
 
 
 def test_el_asistente_recibe_un_aviso_claro_si_esta_protegido(usuario_id, monkeypatch):
@@ -260,7 +260,7 @@ def test_subir_de_nivel_no_necesita_clave_y_bajar_si(usuario_id):
     f = _columnas(antes)
     assert f["asunto"] == ASUNTO and not f["cuerpo_texto"] and f["cifrado"] == 1 and not f["hilo_clave"].startswith("h:")
     assert db.listar_adjuntos_correo(antes)[0]["nombre_archivo"] == ADJ_NOMBRE
-    assert [m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="zk9", limite=1)] != []
+    assert [m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="zk9qpxr7", limite=1)] != []
 
 
 def test_desactivar_deja_el_correo_exactamente_como_estaba(usuario_id):
@@ -319,8 +319,8 @@ def test_el_correo_de_otro_despacho_no_se_toca(usuario_id):
     mid2, _ = correo._guardar_mensaje_imap(db.obtener_cuenta_correo(u2, c2), "INBOX", "1", crudo(adjunto=False, msgid="<o@x.com>"), set())
     f = _columnas(mid2)
     assert f["cifrado"] == 0 and f["asunto"] == ASUNTO and CUERPO in f["cuerpo_texto"]
-    assert [m["id"] for m in db.listar_mensajes_correo(c2, texto="zk9")] == [mid2]
-    assert db.listar_mensajes_correo(c2, texto="zk9")[0]["protegido"] is False
+    assert [m["id"] for m in db.listar_mensajes_correo(c2, texto="zk9qpxr7")] == [mid2]
+    assert db.listar_mensajes_correo(c2, texto="zk9qpxr7")[0]["protegido"] is False
 
 
 def test_una_concesion_de_token_lee_el_correo_con_el_despacho_bloqueado(usuario_id):
@@ -333,7 +333,7 @@ def test_una_concesion_de_token_lee_el_correo_con_el_despacho_bloqueado(usuario_
     try:
         m = db.obtener_mensaje_correo(antes)
         assert m["protegido"] is False and CUERPO in m["cuerpo_texto"] and m["asunto"] == ASUNTO
-        assert [x["id"] for x in db.listar_mensajes_correo(d.cuenta_id, texto="zk9")] != []
+        assert [x["id"] for x in db.listar_mensajes_correo(d.cuenta_id, texto="zk9qpxr7")] != []
         assert db.obtener_adjunto_correo(db.listar_adjuntos_correo(antes)[0]["id"])["contenido"] == ADJ_CONTENIDO
     finally:
         cd.restablecer_concesion(testigo)
@@ -346,7 +346,7 @@ def _observar(d, antes, despues):
     import mcp_tools
     obs = {}
     obs["lista"] = sorted((m["asunto"], m["remitente"], m["destinatarios"], bool(m["leido"])) for m in db.listar_mensajes_correo(d.cuenta_id))
-    obs["busca_cuerpo"] = sorted(m["asunto"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="ZK9 plenilunio"))
+    obs["busca_cuerpo"] = sorted(m["asunto"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="ZK9QPXR7 plenilunio"))
     obs["busca_asunto"] = [m["asunto"] for m in db.listar_mensajes_correo(d.cuenta_id, asunto="otro")]
     obs["busca_remitente"] = len(db.listar_mensajes_correo(d.cuenta_id, remitente="marta"))
     obs["por_categoria"] = len(db.listar_mensajes_correo(d.cuenta_id, categoria_id=d.cat))
@@ -358,8 +358,8 @@ def _observar(d, antes, despues):
     a = db.listar_adjuntos_correo(antes)[0]
     obs["adjunto"] = (a["nombre_archivo"], db.obtener_adjunto_correo(a["id"])["contenido"])
     obs["ia_leer"] = mcp_tools.leer_correo(antes)["cuerpo_texto"].strip()
-    obs["ia_lista"] = len(mcp_tools.listar_bandeja_entrada(d.cuenta_id, texto="ZK9"))
-    obs["ia_buscar"] = [r["tipo"] for r in mcp_tools.buscar_semantico("ZK9")]
+    obs["ia_lista"] = len(mcp_tools.listar_bandeja_entrada(d.cuenta_id, texto="ZK9QPXR7"))
+    obs["ia_buscar"] = [r["tipo"] for r in mcp_tools.buscar_semantico("ZK9QPXR7")]
     return obs
 
 
@@ -414,24 +414,24 @@ def test_el_historial_del_chat_guarda_sellado_lo_que_la_ia_lee_del_correo(usuari
     conn = db.get_connection()
     crudo = {r["nombre_herramienta"]: r["contenido"] for r in conn.execute("SELECT nombre_herramienta, contenido FROM ia_mensajes WHERE rol = 'tool'")}
     conn.close()
-    assert crudo["leer_correo"].startswith("enc1:") and "ZK9" not in crudo["leer_correo"], "lo leído del correo va sellado"
+    assert crudo["leer_correo"].startswith("enc1:") and "ZK9QPXR7" not in crudo["leer_correo"], "lo leído del correo va sellado"
     assert crudo["listar_tareas"] == '{"tareas": 3}', "el resto de resultados se queda como siempre"
     assert [m["contenido"] for m in db.listar_mensajes_ia(d.u) if m["rol"] == "tool"][0] == leido, "con clave, el asistente recuerda lo leído"
     cd.bloquear(d.t)
     visto = [m["contenido"] for m in db.listar_mensajes_ia(d.u) if m["rol"] == "tool"]
-    assert "ZK9" not in visto[0] and "protegido" in visto[0].lower() and visto[1] == '{"tareas": 3}'
+    assert "ZK9QPXR7" not in visto[0] and "protegido" in visto[0].lower() and visto[1] == '{"tareas": 3}'
 
 
 def test_al_activar_se_sella_el_historial_que_ya_habia(usuario_id):
     d = Despacho()
-    db.agregar_mensaje_ia(d.u, "tool", contenido="cuerpo ZK9 plenilunio", tool_call_id="1", nombre_herramienta="leer_correo")
+    db.agregar_mensaje_ia(d.u, "tool", contenido="cuerpo ZK9QPXR7 plenilunio", tool_call_id="1", nombre_herramienta="leer_correo")
     cd.activar(d.t, d.u, FRASE)
     conn = db.get_connection()
     assert conn.execute("SELECT contenido FROM ia_mensajes").fetchone()[0].startswith("enc1:")
     conn.close()
-    assert db.listar_mensajes_ia(d.u)[0]["contenido"] == "cuerpo ZK9 plenilunio"
+    assert db.listar_mensajes_ia(d.u)[0]["contenido"] == "cuerpo ZK9QPXR7 plenilunio"
     cd.rotar_clave(d.t, d.u, FRASE)
-    assert db.listar_mensajes_ia(d.u)[0]["contenido"] == "cuerpo ZK9 plenilunio", "la rotación de la clave también re-cifra el historial"
+    assert db.listar_mensajes_ia(d.u)[0]["contenido"] == "cuerpo ZK9QPXR7 plenilunio", "la rotación de la clave también re-cifra el historial"
 
 
 def test_sin_cifrado_el_historial_no_cambia(usuario_id):
@@ -532,7 +532,7 @@ def test_activar_el_correo_con_un_nivel_distinto_al_de_los_documentos_funciona(u
     for mid in (antes, despues):
         f = _columnas(mid)
         assert f["cifrado"] == 1 and f["cifrado_nivel"] == "estricto" and f["asunto"] == "" and f["remitente"] == ""
-    assert sorted(m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="zk9")) == sorted([antes, despues])
+    assert sorted(m["id"] for m in db.listar_mensajes_correo(d.cuenta_id, texto="zk9qpxr7")) == sorted([antes, despues])
 
 
 def test_la_bandeja_web_busca_en_memoria_con_el_correo_cifrado(cliente):
@@ -544,7 +544,7 @@ def test_la_bandeja_web_busca_en_memoria_con_el_correo_cifrado(cliente):
     m1, _ = correo._guardar_mensaje_imap(cuenta, "INBOX", "1", crudo(adjunto=False), set())
     m2, _ = correo._guardar_mensaje_imap(cuenta, "INBOX", "2", crudo(asunto="Cita para la firma", de="Notaría <n@notaria.example>", cuerpo="el jueves", adjunto=False, msgid="<2@x>"), set())
     cd.activar(t, uid, FRASE, "medio"); cc.activar(t, uid, "estricto")
-    html = cliente.get(f"/correo/?cuenta_id={cuenta_id}&q=ZK9").get_data(as_text=True)
+    html = cliente.get(f"/correo/?cuenta_id={cuenta_id}&q=ZK9QPXR7").get_data(as_text=True)
     assert ASUNTO in html and "Cita para la firma" not in html, "con el correo cifrado la búsqueda web devuelve solo lo que coincide"
     todo = cliente.get(f"/correo/?cuenta_id={cuenta_id}").get_data(as_text=True)
     assert ASUNTO in todo and "Cita para la firma" in todo
