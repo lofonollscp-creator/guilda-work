@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../api/errores.dart';
@@ -41,3 +42,19 @@ class AccionesFichaje {
 }
 
 final accionesFichajeProvider = Provider<AccionesFichaje>((ref) => AccionesFichaje(ref));
+
+/// Ubicación opcional (Fase G3): solo se pide si el despacho la tiene activada [activa]; nunca bloquea fichar. Si el permiso se deniega, tarda
+/// o falla por lo que sea, se sigue sin coordenadas (mismo criterio que la web). Es la misma para la pantalla de Fichaje y la tarjeta de Hoy.
+Future<(double?, double?)> ubicacionOpcionalFichaje({required bool activa}) async {
+  if (!activa) return (null, null);
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) return (null, null);
+    var permiso = await Geolocator.checkPermission();
+    if (permiso == LocationPermission.denied) permiso = await Geolocator.requestPermission();
+    if (permiso == LocationPermission.denied || permiso == LocationPermission.deniedForever) return (null, null);
+    final posicion = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium)).timeout(const Duration(seconds: 3));
+    return (posicion.latitude, posicion.longitude);
+  } catch (_) {
+    return (null, null);
+  }
+}

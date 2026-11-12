@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:guilda_work_mobile/funciones/hoy/hoy_fichaje.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -224,4 +225,21 @@ IaMensaje iaMsg(int id, String rol, String? contenido, {String? calls, String? c
 Servicios serviciosFalsos([ApiClient? api]) {
   final cliente = api ?? ApiFalsa();
   return Servicios(sesion: SessionService(), api: cliente, sync: SyncService(), push: PushService(cliente), tema: ThemeService(), locale: LocaleService());
+}
+
+/// El fichaje de la tarjeta de Hoy sin red: devuelve [inicial] y apunta lo que se marca (y pasa al estado que toca).
+class FichajeHoyFalso extends FichajeHoyControlador {
+  final EstadoFichajeHoy inicial;
+  final List<String> marcadas;
+  FichajeHoyFalso(this.marcadas, [this.inicial = const EstadoFichajeHoy('fuera', true)]);
+
+  @override
+  Future<EstadoFichajeHoy> build() async => inicial;
+
+  @override
+  Future<ResultadoMarca> marcar(String tipo) async {
+    marcadas.add(tipo);
+    state = AsyncData(EstadoFichajeHoy({'entrada': 'dentro', 'pausa_inicio': 'en_pausa', 'pausa_fin': 'dentro', 'salida': 'fuera'}[tipo]!, true, '09:00'));
+    return ResultadoMarca.enviada;
+  }
 }

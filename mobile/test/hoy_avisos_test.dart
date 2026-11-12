@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guilda_work_mobile/api/errores.dart';
 import 'package:guilda_work_mobile/api/generado/modelos.g.dart';
 import 'package:guilda_work_mobile/funciones/hoy/hoy_controlador.dart';
+import 'package:guilda_work_mobile/funciones/hoy/hoy_fichaje.dart';
 import 'package:guilda_work_mobile/funciones/hoy/hoy_screen.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
 import 'package:guilda_work_mobile/nucleo/abrir_destino.dart';
@@ -13,6 +14,8 @@ import 'package:guilda_work_mobile/nucleo/avisos.dart';
 import 'package:guilda_work_mobile/nucleo/destinos.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
 import 'package:guilda_work_mobile/services/push_service.dart';
+
+import 'ayudas/pantallas.dart' show FichajeHoyFalso;
 
 void main() {
   group('Destino.desdePush', () {
@@ -168,9 +171,17 @@ void main() {
           ],
         });
 
+    final marcadas = <String>[];
+    var estadoFichaje = const EstadoFichajeHoy('fuera', true);
+    setUp(() {
+      marcadas.clear();
+      estadoFichaje = const EstadoFichajeHoy('fuera', true);
+    });
+
     Widget app(Future<EstadoHoy> Function() datos, List<(Destino, String?)> abiertos) => ProviderScope(
           overrides: [
             hoyProvider.overrideWith(() => _HoyFalso(datos)),
+            fichajeHoyProvider.overrideWith(() => FichajeHoyFalso(marcadas, estadoFichaje)),
             estadoSesionProvider.overrideWith(() => _SesionFija(const EstadoSesion(fase: FaseSesion.conSesion))),
             navegadorDeAvisosProvider.overrideWithValue(NavegadorDeAvisos(
               haySesion: () => true,
@@ -185,6 +196,8 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('es'),
+            // El orbe del asistente anima sin parar: con «reducir movimiento» queda quieto y `pumpAndSettle` termina.
+            builder: (c, h) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: h!),
             home: const HoyScreen(),
           ),
         );
@@ -228,6 +241,58 @@ void main() {
       await t.pumpWidget(app(() async => EstadoHoy(bandeja(), ahora), []));
       await t.pumpAndSettle();
       expect(find.byTooltip('Completar'), findsNWidgets(2));
+    });
+
+    testWidgets('la tarjeta de fichaje enseña tu estado y fichar la entrada es un toque, sin salir de Hoy', (t) async {
+      await t.pumpWidget(app(() async => EstadoHoy(bandeja(), DateTime(2026, 11, 12, 9)), []));
+      await t.pumpAndSettle();
+      expect(find.text('Fuera de jornada'), findsOneWidget);
+      expect(find.text('Aún no has fichado hoy'), findsOneWidget);
+      await t.tap(find.text('Entrada'));
+      await t.pumpAndSettle();
+      expect(marcadas, ['entrada']);
+      expect(find.text('Dentro de jornada'), findsOneWidget);
+      expect(find.text('Desde las 09:00'), findsOneWidget);
+      expect(find.text('Salida'), findsOneWidget);
+      expect(find.text('Iniciar pausa'), findsOneWidget);
+    });
+
+    testWidgets('en pausa ofrece terminarla o salir', (t) async {
+      estadoFichaje = const EstadoFichajeHoy('en_pausa', true, '11:00');
+      await t.pumpWidget(app(() async => EstadoHoy(bandeja(), DateTime(2026, 11, 12, 9)), []));
+      await t.pumpAndSettle();
+      expect(find.text('En pausa desde las 11:00'), findsOneWidget);
+      await t.tap(find.text('Fin de pausa'));
+      await t.pumpAndSettle();
+      expect(marcadas, ['pausa_fin']);
+    });
+
+    testWidgets('sin los datos de fichaje no se puede marcar: se explica y no hay botones', (t) async {
+      estadoFichaje = const EstadoFichajeHoy('fuera', false);
+      await t.pumpWidget(app(() async => EstadoHoy(bandeja(), DateTime(2026, 11, 12, 9)), []));
+      await t.pumpAndSettle();
+      expect(find.textContaining('rellena tu nombre completo y DNI/NIE'), findsOneWidget);
+      expect(find.text('Entrada'), findsNothing);
+    });
+
+    testWidgets('la tarjeta del asistente invita a pedir el resumen y abre el chat con esa consulta', (t) async {
+      await t.pumpWidget(app(() async => EstadoHoy(bandeja(), DateTime(2026, 11, 12, 9)), []));
+      await t.pumpAndSettle();
+      expect(find.text('Pídele un resumen de tu día'), findsOneWidget);
+      expect(find.text('Pendientes'), findsOneWidget); // los números van en los contadores, sin repetirse en la tarjeta
+    });
+
+    testWidgets('el mosaico cumple las pautas de accesibilidad: toques de 48, etiquetas y contraste', (t) async {
+      final h = t.ensureSemantics();
+      t.view.physicalSize = const Size(800, 2400);
+      t.view.devicePixelRatio = 2;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(app(() async => EstadoHoy(bandeja(), DateTime(2026, 11, 12, 9)), []));
+      await t.pumpAndSettle();
+      await expectLater(t, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(t, meetsGuideline(labeledTapTargetGuideline));
+      await expectLater(t, meetsGuideline(textContrastGuideline));
+      h.dispose();
     });
 
     testWidgets('sin nada pendiente: «Todo al día»', (t) async {

@@ -32,7 +32,8 @@ import 'package:guilda_work_mobile/theme/app_theme.dart';
 import 'package:guilda_work_mobile/services/api_client.dart' as sv;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'ayudas/pantallas.dart' show serviciosFalsos;
+import 'ayudas/pantallas.dart' show FichajeHoyFalso, serviciosFalsos;
+import 'package:guilda_work_mobile/funciones/hoy/hoy_fichaje.dart';
 
 // ---------- servidor falso para el repositorio ----------
 
@@ -987,6 +988,7 @@ void main() {
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
               themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+              builder: (c, h) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: h!),
               home: home,
             ),
           ),
@@ -1092,7 +1094,7 @@ void main() {
         t.view.physicalSize = const Size(1170, 2532);
         t.view.devicePixelRatio = 3;
         addTearDown(t.view.reset);
-        await t.pumpWidget(conTema(const HoyScreen(), [..._over(_RepoFalso()), hoyProvider.overrideWith(_HoyFalso.new)], oscuro: oscuro, clave: clave));
+        await t.pumpWidget(conTema(const HoyScreen(), [..._over(_RepoFalso()), hoyProvider.overrideWith(_HoyFalso.new), fichajeHoyProvider.overrideWith(() => FichajeHoyFalso([], const EstadoFichajeHoy('dentro', true, '08:58')))], oscuro: oscuro, clave: clave));
         await t.pumpAndSettle();
         await capturar(t, clave, 'hoy_$sufijo');
       });

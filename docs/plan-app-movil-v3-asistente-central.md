@@ -237,3 +237,28 @@ Decisiones aprobadas: botón ✦ central en la barra + barra de entrada flotante
 **Pruebas:** 454 en verde (13 sobre la barra, 6 de ellas nuevas). Se actualizaron las de «Barra inferior» (cuatro destinos más el ✦, Fichaje por «Más») y dos ayudas de test corren con «reducir movimiento» porque el aura anima sin parar. `analyze`: los mismos 5 avisos.
 
 **Texto nuevo** (es, ca, en, fr): `iaPideme`.
+
+## 15. Fase 4 — Hoy como mosaico (2026-11-12)
+
+**Hecho.** Capturas en `docs/ux-app-movil-v3/fase4/` (`hoy_claro.png`, `hoy_oscuro.png`). **Aquí toca revisar el diseño juntos** (acordado en §8).
+
+| Bloque | Qué es |
+|---|---|
+| **Cabecera grande** | «Hoy» (y el despacho debajo si hay varios) que se pliega al desplazar; búsqueda y campana a la derecha |
+| **Tarjeta del asistente** | Orbe + «Pídele un resumen de tu día». Un toque sube el chat como hoja con la consulta ya enviada. No repite números: están en los contadores |
+| **Lo siguiente** | Lo más urgente (vencido, si no de hoy) con su botón «Abrir». Tarjeta con tinte de acento |
+| **Tarjeta de fichaje** | Tu estado (dentro / en pausa / fuera), desde cuándo y **el botón que toca ahora**: Entrada, o Pausa + Salida, o Fin de pausa + Salida. Fichar es un toque, sin salir de Hoy. Sin red se encola igual que en la pantalla de Fichaje y el estado se adelanta. Tocar la tarjeta abre el Fichaje completo. Si faltan los datos de fichaje se explica y se quitan los botones |
+| **Contadores** | Pendientes y urgentes, como dos fichas |
+| **Secciones** | Las de siempre (tareas, correo, plazos, vencimientos…), debajo; en tableta, en dos columnas, y el mosaico también en dos |
+| **Carga** | Esqueleto del mosaico con su brillo, en vez de la lista gris |
+
+**Cambios de fondo**
+- `funciones/hoy/hoy_fichaje.dart`: `FichajeHoyControlador` (estado + `marcar`) y `TarjetaFichajeHoy`. Si no se puede leer el estado (sin red, sin permiso) la tarjeta se apaga y Hoy sigue funcionando.
+- La **ubicación opcional** de fichar se extrajo a `ubicacionOpcionalFichaje()` (`fichaje_acciones.dart`): la usan la pantalla de Fichaje y la tarjeta, con el mismo criterio (solo si el despacho la activa; nunca bloquea fichar).
+- Se quitó la barra del asistente que Hoy tenía bajo la lista: la nueva «Pídeme algo…» de la barra inferior la sustituye.
+
+**Lo que NO entra, a propósito**
+- **El resumen no está redactado por la IA.** El plan lo imaginaba («Tienes 3 vencimientos…»). Hacerlo bien pide un endpoint que lo genere y lo cachee en el servidor (coste y latencia al abrir la app); no existe. La tarjeta pide el resumen al asistente al tocarla, que es lo que ya hacía. Si se quiere, es una tarea de backend aparte.
+- **Propuestas, comunicados y certificados en el mosaico.** Los comunicados ya salen en su banner sobre el mosaico. Las propuestas llegan con su bandeja en la fase 5 (tarjeta + pantalla a la vez); los certificados ya salen como sección de la bandeja.
+
+**Pruebas:** 459 en verde (6 nuevas sobre Hoy: estado y fichar la entrada de un toque, en pausa, sin datos, tarjeta del asistente, pautas de accesibilidad). Las de Hoy y las capturas usan un `FichajeHoyFalso` y «reducir movimiento» (el orbe anima sin parar). `analyze`: los mismos 5 avisos.
