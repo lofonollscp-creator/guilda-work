@@ -197,7 +197,7 @@ class _PasosPlegablesState extends State<PasosPlegables> {
               Flexible(child: Text(widget.enCurso ?? t.iaPensando, style: suave)),
               if (hay) ...[
                 const SizedBox(width: 8),
-                Text('· ${t.iaPasosN(widget.hechos.length)}', style: suave),
+                Flexible(child: Text('· ${t.iaPasosN(widget.hechos.length)}', style: suave, maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ExcludeSemantics(child: Icon(_abierto ? Icons.expand_less : Icons.expand_more, size: 18, color: tema.colorScheme.onSurfaceVariant)),
               ],
             ]),

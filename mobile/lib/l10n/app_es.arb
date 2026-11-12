@@ -1409,5 +1409,7 @@
       }
     }
   },
-  "propuestasHoyDetalle": "Revísalas y aprueba o rechaza"
+  "propuestasHoyDetalle": "Revísalas y aprueba o rechaza",
+  "ajustesVidrioTitulo": "Efecto cristal",
+  "ajustesVidrioAyuda": "Barras translúcidas con desenfoque. Apágalo si tu móvil va justo: se ven opacas y gastan menos."
 }

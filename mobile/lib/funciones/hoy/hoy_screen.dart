@@ -234,9 +234,8 @@ class _LoSiguiente extends ConsumerWidget {
       child: TarjetaBento(
         tono: TonoBento.acento,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
+          Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
             Pildora(icono: vencido ? Icons.error_outline : Icons.today_outlined, texto: vencido ? t.hoyUrgenciaVencido : t.hoyUrgenciaHoy, color: color, fuerte: true),
-            const SizedBox(width: 8),
             Text(t.hoyLoSiguiente, style: tema.textTheme.labelMedium?.copyWith(color: p.suaveSobre(fondo))),
           ]),
           const SizedBox(height: 10),

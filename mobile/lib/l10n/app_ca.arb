@@ -909,5 +909,7 @@
       }
     }
   },
-  "propuestasHoyDetalle": "Revisa-les i aprova o rebutja"
+  "propuestasHoyDetalle": "Revisa-les i aprova o rebutja",
+  "ajustesVidrioTitulo": "Efecte vidre",
+  "ajustesVidrioAyuda": "Barres translúcides amb desenfocament. Apaga'l si el teu mòbil va just: es veuen opaques i gasten menys."
 }

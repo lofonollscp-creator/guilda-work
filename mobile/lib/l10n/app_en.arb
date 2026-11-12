@@ -909,5 +909,7 @@
       }
     }
   },
-  "propuestasHoyDetalle": "Review and approve or reject"
+  "propuestasHoyDetalle": "Review and approve or reject",
+  "ajustesVidrioTitulo": "Glass effect",
+  "ajustesVidrioAyuda": "Translucent bars with blur. Turn it off if your phone struggles: they look solid and use less power."
 }

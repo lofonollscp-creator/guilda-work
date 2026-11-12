@@ -97,11 +97,9 @@ class _TarjetaPropuestaState extends ConsumerState<_TarjetaPropuesta> {
     return TarjetaBento(
       tono: TonoBento.ia,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
+        Wrap(spacing: 8, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
           const ExcludeSemantics(child: OrbeIa(tamano: 22)),
-          const SizedBox(width: 8),
           Text(t.propuestasPropone, style: tema.textTheme.labelMedium?.copyWith(color: pa.suaveSobre(fondo), fontWeight: FontWeight.w700)),
-          const Spacer(),
           if (p.urgente) Pildora(icono: Icons.priority_high, texto: t.propuestasUrgente, color: tema.brightness == Brightness.dark ? const Color(0xFFFF8A80) : const Color(0xFFB3261E), fuerte: true),
         ]),
         const SizedBox(height: 10),

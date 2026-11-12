@@ -34,10 +34,11 @@ class CabeceraGrande extends StatelessWidget {
           child: FlexibleSpaceBar(
             expandedTitleScale: 1.45,
             titlePadding: const EdgeInsetsDirectional.only(start: 16, bottom: 14),
-            title: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Con la letra del sistema muy grande el título no cabe en la cabecera plegada: se limita su escala (el resto de la pantalla sigue a la del sistema).
+            title: MediaQuery.withClampedTextScaling(maxScaleFactor: 1.2, child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(titulo, style: tema.textTheme.titleLarge?.copyWith(fontSize: 20, letterSpacing: -0.4)),
               if (subtitulo != null) Text(subtitulo!, style: tema.textTheme.labelSmall?.copyWith(color: p.textoSuave)),
-            ]),
+            ])),
           ),
         ),
       ),

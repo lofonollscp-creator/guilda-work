@@ -909,5 +909,7 @@
       }
     }
   },
-  "propuestasHoyDetalle": "Consultez-les, approuvez ou rejetez"
+  "propuestasHoyDetalle": "Consultez-les, approuvez ou rejetez",
+  "ajustesVidrioTitulo": "Effet verre",
+  "ajustesVidrioAyuda": "Barres translucides avec flou. Désactivez-le si votre téléphone peine : elles deviennent opaques et consomment moins."
 }

@@ -145,6 +145,17 @@ class AjustesScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(t.ajustesColorAyuda, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 8),
+                AnimatedBuilder(
+                  animation: tema,
+                  builder: (context, _) => SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t.ajustesVidrioTitulo),
+                    subtitle: Text(t.ajustesVidrioAyuda),
+                    value: tema.vidrio,
+                    onChanged: tema.cambiarVidrio,
+                  ),
+                ),
               ]),
             ),
           ),

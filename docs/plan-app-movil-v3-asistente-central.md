@@ -300,3 +300,29 @@ Decisiones aprobadas: botón ✦ central en la barra + barra de entrada flotante
 - **Rehacer las filas de tarea y de correo.** Ya usan las pastillas de estado y las tarjetas del tema; cambiarlas sería gusto, no coherencia.
 
 **Pruebas:** 481 en verde (5 nuevas o ampliadas: «Pídeme algo…» no se apila en Tareas, «Más» con y sin propuestas). Las capturas de «Más» y de las pantallas que viven dentro de la barra funcionan ahora también en modo captura (el aura animaba sin parar y `pumpAndSettle` no terminaba). `analyze`: los mismos 5 avisos.
+
+## 18. Fase 7 — calidad y cierre (2026-11-12)
+
+**Resultado: la v3 está terminada en código.** Capturas en `docs/ux-app-movil-v3/fase7/`; notas de versión en `docs/notas-version-app-movil-v3.md`.
+
+**Lo que se comprobó, con tests (`test/calidad_v3_test.dart`)**
+
+| Comprobación | Resultado |
+|---|---|
+| **Traducciones**: ca, en y fr tienen exactamente las claves de es, ninguna vacía, y los mismos marcadores (`{n}`, `{hora}`…) en cada texto | Pasa, todas las claves (también las anteriores a la v3) |
+| **Textos largos y letra al doble** en catalán, francés e inglés, en un móvil de 320 dp de ancho: barra con insignia, Hoy completo, bandeja de propuestas, tarjetas de resultado, pasos y avisos de tope | **Encontró 5 desbordes reales**, ya corregidos (ver abajo). Ahora pasa |
+| **Los ocho acentos × claro y oscuro**: contraste AA y toques de 48 dp en la barra y en la bandeja | Pasa los 32 casos |
+| **Efecto cristal**: por defecto activo, el ajuste se guarda y se recupera, y apagado la barra pierde su desenfoque | Pasa |
+
+**Desbordes corregidos** (solo aparecían con letra muy grande): la cabecera plegada de Hoy y Más (su título ahora limita la escala a ×1,2; el resto sigue la del sistema), la fila «Lo siguiente» de Hoy, la cabecera de cada tarjeta de propuesta, y el contador de pasos del asistente. Ahora esas filas se parten en líneas (`Wrap`) o recortan con puntos suspensivos.
+
+**Ajuste nuevo:** *Ajustes → Apariencia → Efecto cristal* (`ThemeService.cambiarVidrio`, guardado en el móvil). Es la salida para móviles modestos: apagado, las barras son opacas y no hay desenfoque.
+
+**Lo que no se hizo, a propósito**
+- **Detección automática de móvil lento.** Sin datos reales de dispositivos sería adivinar; el interruptor lo resuelve y se puede decidir con tu uso.
+- **Medir fotogramas en un dispositivo real.** Este entorno no tiene móvil ni emulador; el barrido de rendimiento (aura y orbe animados, desenfoque) es lo primero que debe probar quien compile el APK/IPA.
+- **Compilar y publicar.** El APK/IPA y la tienda siguen siendo tuyos.
+
+**Pendiente conocido, menor:** la captura de «tableta_notas» (solo con `CAPTURAS=…`) no termina porque el panel del chat anima sin parar y su test usa `pumpAndSettle`; los tests normales no se ven afectados.
+
+**Estado final de la v3:** fases 0–7 hechas; 548 tests; `analyze` con los 5 avisos anteriores a este trabajo; SDK Dart al día con la API.
