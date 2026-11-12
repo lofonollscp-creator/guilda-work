@@ -25,6 +25,14 @@ EnvironmentFile=/etc/guilda-work.env
 ExecStart=/home/USUARIO/guilda-work/.venv/bin/python mcp_server_remoto.py
 Restart=always
 RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target

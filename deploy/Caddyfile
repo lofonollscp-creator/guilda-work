@@ -23,7 +23,20 @@
 # puertos publicados NUNCA quedan en 0.0.0.0).
 
 # Centro de ayuda: sitio estático (repo guilda-help, `./publicar.sh` lo copia a /var/www/help). Las rutas que no existen devuelven su propia página 404.
+# Cabeceras comunes a TODOS los sitios (auditoría de seguridad 2026-11-12): HSTS (sin includeSubDomains), sin adivinar tipos y sin
+# publicar qué software y versión hay detrás.
+(seguridad) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		-Server
+		-X-Powered-By
+		-Via
+	}
+}
+
 help.HOSTNAME {
+	import seguridad
 	log
 	root * /var/www/help
 	file_server
@@ -35,6 +48,7 @@ help.HOSTNAME {
 }
 
 app.HOSTNAME {
+	import seguridad
 	log
 	encode gzip zstd
 	route {
@@ -63,15 +77,18 @@ app.HOSTNAME {
 # Caddy — gestión de clientes OAuth2 solo desde el propio servidor
 # (scripts/registrar_cliente_hydra.py).
 hydra.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:4444
 }
 
 outline.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:3001
 }
 
 # Element (interfaz de chat) — sirve la SPA estática.
 chat.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8009
 }
 
@@ -83,6 +100,7 @@ chat.HOSTNAME {
 # porque la librería OIDC de Synapse exige HTTPS de verdad en cualquier
 # caso).
 matrix.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8008
 }
 
@@ -93,6 +111,7 @@ matrix.HOSTNAME {
 # oficial de self-hosting de Element Call
 # (element-hq/element-call docs/self_hosting.md).
 matrix-rtc.HOSTNAME {
+	import seguridad
 	route {
 		@jwt_service path /livekit/jwt/sfu/get /livekit/jwt/healthz
 		handle @jwt_service {
@@ -110,38 +129,47 @@ matrix-rtc.HOSTNAME {
 # `ssh -L 3000:localhost:3000 guilda@tu-servidor`), simplemente no los
 # publiques aquí y bórralos de esta plantilla.
 metabase.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:3000
 }
 
 n8n.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:5678
 }
 
 minio.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:9001
 }
 
 openproject.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8010
 }
 
 chatwoot.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8011
 }
 
 vaultwarden.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8013
 }
 
 status.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8014
 }
 
 crm.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8015
 }
 
 drive.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8016
 }
 
@@ -150,18 +178,22 @@ drive.HOSTNAME {
 # (no a través de drive.HOSTNAME), confirmado por la propia salida de
 # `occ richdocuments:activate-config`.
 office.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8032
 }
 
 firmas.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8018
 }
 
 documentos.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8019
 }
 
 hojas.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8020
 }
 
@@ -170,10 +202,12 @@ hojas.HOSTNAME {
 # La API v2 (puerto 8022) no necesita entrada propia aquí: solo la habla
 # serve.py desde dentro del host, nunca el navegador.
 citas.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8021
 }
 
 newsletter.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8023
 }
 
@@ -183,17 +217,20 @@ newsletter.HOSTNAME {
 # directamente en el host, Caddy no puede hacerles de proxy (no son
 # HTTP), ver docker-compose.yml y HOSTING.md.
 correo-stalwart.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8025
 }
 
 # ntfy (notificaciones push, Fase notificaciones) — ver HOSTING.md 8.28.
 notificaciones.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8027
 }
 
 # Jitsi Meet (videollamadas, Fase videollamadas) — ver HOSTING.md 8.29.
 # El puerto UDP del videobridge (10000) no pasa por aquí, no es HTTP.
 videollamadas.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8028
 }
 
@@ -201,6 +238,7 @@ videollamadas.HOSTNAME {
 # servidores MCP por HTTPS real (ver mcp_server_remoto.py, HOSTING.md).
 # Corre fuera de Docker, en el mismo host que serve.py.
 mcp.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8017
 }
 
@@ -209,5 +247,6 @@ mcp.HOSTNAME {
 # certificado autofirmado propio: Caddy ya termina TLS aquí, igual que
 # el resto del stack.
 portainer.HOSTNAME {
+	import seguridad
 	reverse_proxy localhost:8033
 }

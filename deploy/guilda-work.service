@@ -24,6 +24,19 @@ EnvironmentFile=/etc/guilda-work.env
 ExecStart=/home/USUARIO/guilda-work/.venv/bin/python serve.py
 Restart=always
 RestartSec=5
+# Endurecimiento sin depender de rutas (ver HOSTING.md): sin ProtectSystem/ProtectHome porque el servicio escribe en rutas variadas.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target
