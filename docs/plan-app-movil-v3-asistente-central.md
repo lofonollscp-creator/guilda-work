@@ -283,3 +283,20 @@ Decisiones aprobadas: botón ✦ central en la barra + barra de entrada flotante
 - **Aprobar sin red:** no se encola (a diferencia de fichar): ejecuta algo en el servidor y hace falta ver su resultado.
 
 **Pruebas:** 476 en verde (19 nuevas en `test/propuestas_test.dart`: modelo, bandeja, aprobar y rechazar, confirmación, conflicto 409, accesibilidad, tarjeta, tope de IA con cifras, política de acceso). Un test de accesibilidad del chat ahora simula las preferencias (antes pasaba por casualidad de tiempos). `analyze`: los mismos 5 avisos.
+
+## 17. Fase 6 — resto de pantallas (2026-11-12)
+
+**Qué se encontró.** Con el tema de la fase 1 y las tarjetas/botones heredados, Tareas, Correo, Fichaje, Ajustes y Ausencias ya se veían coherentes (capturas «antes» en `docs/ux-app-movil-v3/fase6/antes/`). No hacía falta rediseñarlas una a una; se hicieron los retoques que sí daban coherencia, y no más:
+
+| Retoque | Dónde |
+|---|---|
+| **Fichaje**: la tarjeta de estado pasa a `TarjetaBento` y los botones a píldora (como los de Hoy), con vibración al fichar | `screens/fichaje_screen.dart` |
+| **Más**: cabecera grande como Hoy y una fila «El asistente propone» con su cuenta cuando hay propuestas | `nucleo/shell.dart` |
+| **Vacíos y errores de toda la app**: el icono va en un círculo suave en vez de suelto | `diseno/componentes.dart` (`EstadoVacio`, que usa `EstadoError`) |
+| **Tareas sin barras apiladas**: Tareas ya tiene su «Nueva tarea…» abajo; ahí no se pinta «Pídeme algo…» (el ✦ sigue). En el resto de pestañas sí | `nucleo/shell.dart` |
+
+**Decidido no hacer**
+- **Cabeceras grandes plegables en Tareas, Correo y Fichaje.** Tareas lleva pestañas y filtros pegados a la cabecera y Correo, una búsqueda; una cabecera de 132 dp les quitaría altura útil en móviles pequeños a cambio de poco. Hoy y Más (listas cortas, sin controles arriba) sí la llevan.
+- **Rehacer las filas de tarea y de correo.** Ya usan las pastillas de estado y las tarjetas del tema; cambiarlas sería gusto, no coherencia.
+
+**Pruebas:** 481 en verde (5 nuevas o ampliadas: «Pídeme algo…» no se apila en Tareas, «Más» con y sin propuestas). Las capturas de «Más» y de las pantallas que viven dentro de la barra funcionan ahora también en modo captura (el aura animaba sin parar y `pumpAndSettle` no terminaba). `analyze`: los mismos 5 avisos.

@@ -7,6 +7,8 @@ import '../diseno/asistente.dart';
 import '../diseno/componentes.dart';
 import '../l10n/app_localizations.dart';
 import '../funciones/propuestas/propuestas_controlador.dart';
+import '../funciones/propuestas/propuestas_screen.dart';
+import '../diseno/v3/v3.dart' show CabeceraGrande;
 import 'abrir_asistente.dart';
 import 'barra_v3.dart';
 import 'paginas.dart';
@@ -73,7 +75,8 @@ class ShellApp extends ConsumerWidget {
     return Scaffold(
       body: shell,
       bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
-        BarraPideme(alPulsar: () => abrirHojaAsistente(context, contexto: contexto, enfocar: true)),
+        // En Tareas el pie ya es su «Nueva tarea…»: no se apila otra barra; el ✦ sigue ahí.
+        if (shell.currentIndex != 1) BarraPideme(alPulsar: () => abrirHojaAsistente(context, contexto: contexto, enfocar: true)),
         BarraNavegacion(
           destinos: [for (final i in ramas) DestinoBarra(destinos[i].$1.icon!, (destinos[i].$2 ?? destinos[i].$1).icon!, destinos[i].$3)],
           seleccionado: enBarra < 0 ? null : enBarra,
@@ -108,36 +111,49 @@ class MasScreen extends ConsumerWidget {
     final estado = ref.watch(estadoSesionProvider);
     final usuario = estado.usuario;
     final accesos = usuario == null ? const <AccesoMas>[] : ref.read(paginasProvider).accesosMas(ref, usuario);
+    final propuestas = ref.watch(propuestasPendientesProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(t.masTitulo)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-        children: [
-          if (estado.capacidades.variosDespachos)
-            GrupoAjustes(children: [
-              FilaAjuste(
-                icono: Icons.business_outlined,
-                titulo: t.despachoActivoTitulo,
-                subtitulo: estado.capacidades.despachoPorId(estado.despacho)?.nombre ?? '',
-                final_: const Icon(Icons.unfold_more),
-                alPulsar: () => _elegirDespacho(context, ref),
-              ),
+      body: CustomScrollView(slivers: [
+        CabeceraGrande(titulo: t.masTitulo),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              if (estado.capacidades.variosDespachos)
+                GrupoAjustes(children: [
+                  FilaAjuste(
+                    icono: Icons.business_outlined,
+                    titulo: t.despachoActivoTitulo,
+                    subtitulo: estado.capacidades.despachoPorId(estado.despacho)?.nombre ?? '',
+                    final_: const Icon(Icons.unfold_more),
+                    alPulsar: () => _elegirDespacho(context, ref),
+                  ),
+                ]),
+              // Fichaje ya no está en la barra: aquí (y en Hoy) sigue a un toque. Las propuestas, con su cuenta cuando las hay.
+              GrupoAjustes(children: [
+                FilaAjuste(icono: Icons.punch_clock_outlined, titulo: t.navFichaje, final_: const Icon(Icons.chevron_right), alPulsar: () => context.go(rutaFichaje)),
+                if (propuestas > 0)
+                  FilaAjuste(
+                    icono: Icons.auto_awesome,
+                    titulo: t.propuestasTitulo,
+                    subtitulo: t.propuestasHoy(propuestas),
+                    final_: const Icon(Icons.chevron_right),
+                    alPulsar: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PropuestasScreen())),
+                  ),
+              ]),
+              GrupoAjustes(children: [
+                for (final a in accesos)
+                  FilaAjuste(
+                    icono: a.icono,
+                    titulo: _etiqueta(t, a.etiqueta),
+                    final_: const Icon(Icons.chevron_right),
+                    alPulsar: () => a.construir != null ? Navigator.of(context).push(MaterialPageRoute(builder: a.construir!)) : a.alPulsar?.call(),
+                  ),
+              ]),
             ]),
-          // Fichaje ya no está en la barra: aquí (y en Hoy) sigue a un toque.
-          GrupoAjustes(children: [
-            FilaAjuste(icono: Icons.punch_clock_outlined, titulo: t.navFichaje, final_: const Icon(Icons.chevron_right), alPulsar: () => context.go(rutaFichaje)),
-          ]),
-          GrupoAjustes(children: [
-            for (final a in accesos)
-              FilaAjuste(
-                icono: a.icono,
-                titulo: _etiqueta(t, a.etiqueta),
-                final_: const Icon(Icons.chevron_right),
-                alPulsar: () => a.construir != null ? Navigator.of(context).push(MaterialPageRoute(builder: a.construir!)) : a.alPulsar?.call(),
-              ),
-          ]),
-        ],
-      ),
+          ),
+        ),
+      ]),
     );
   }
 

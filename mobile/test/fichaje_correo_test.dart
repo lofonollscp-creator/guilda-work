@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guilda_work_mobile/funciones/fichaje/fichaje_acciones.dart';
+import 'package:guilda_work_mobile/funciones/propuestas/propuestas_controlador.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
 import 'package:guilda_work_mobile/models/models.dart';
 import 'package:guilda_work_mobile/nucleo/barra_v3.dart';
@@ -383,13 +384,13 @@ void main() {
     testWidgets('la barra «Pídeme algo…» sube el chat como hoja sobre la pantalla, con el contexto de la pestaña', (t) async {
       sinVoz();
       await montar(t);
-      await t.tap(find.text('Tareas'));
+      await t.tap(find.text('Correo'));
       await t.pumpAndSettle();
       await t.tap(find.text('Pídeme algo…'));
       await t.pumpAndSettle();
       expect(find.byType(IaChatScreen), findsOneWidget);
-      expect(find.text('Contexto: Tareas'), findsOneWidget);
-      expect(find.text('Pantalla b'), findsOneWidget); // la pantalla sigue debajo
+      expect(find.text('Contexto: Correo'), findsOneWidget);
+      expect(find.text('Pantalla c'), findsOneWidget); // la pantalla sigue debajo
       expect(t.widget<TextField>(find.byType(TextField)).autofocus, isTrue);
       await t.tap(find.byTooltip('Ocultar el asistente'));
       await t.pumpAndSettle();
@@ -435,6 +436,19 @@ void main() {
       });
     }
 
+    testWidgets('en Tareas no se apila «Pídeme algo…» sobre su «Nueva tarea…»; en el resto sí', (t) async {
+      sinVoz();
+      await montar(t);
+      expect(find.text('Pídeme algo…'), findsOneWidget); // Hoy
+      await t.tap(find.text('Tareas'));
+      await t.pumpAndSettle();
+      expect(find.text('Pídeme algo…'), findsNothing);
+      expect(find.bySemanticsLabel('Asistente IA'), findsOneWidget); // el ✦ sigue ahí
+      await t.tap(find.text('Correo'));
+      await t.pumpAndSettle();
+      expect(find.text('Pídeme algo…'), findsOneWidget);
+    });
+
     testWidgets('el ✦ abre el chat a pantalla completa', (t) async {
       sinVoz();
       await montar(t);
@@ -442,6 +456,39 @@ void main() {
       await t.pumpAndSettle();
       expect(find.byType(IaChatScreen), findsOneWidget);
       expect(find.byType(BarraNavegacion), findsNothing); // pantalla completa, sin la barra
+    });
+
+    testWidgets('«Más» tiene su cabecera grande, la fila de Fichaje y, solo si hay, la de propuestas con su cuenta', (t) async {
+      final paginas = PaginasApp(
+        login: (_) => const SizedBox(),
+        inicio: (_, _) => const SizedBox(),
+        tareas: (_) => const SizedBox(),
+        correo: (_) => const SizedBox(),
+        fichaje: (_, _) => const SizedBox(),
+        accesosMas: (_, _) => const [],
+      );
+      Widget mas(List<PropuestaIa> propuestas) => appDePantalla(const MasScreen(), [estadoSesionProvider.overrideWith(SesionConUsuario.new), paginasProvider.overrideWithValue(paginas), propuestasProvider.overrideWith(() => PropuestasFalsas(propuestas))], propuestasVacias: false);
+      await t.pumpWidget(mas(const []));
+      await t.pumpAndSettle();
+      expect(find.text('Más'), findsWidgets);
+      expect(find.text('Fichaje'), findsOneWidget);
+      expect(find.text('El asistente propone'), findsNothing);
+    });
+
+    testWidgets('«Más» enseña la fila de propuestas con su cuenta cuando las hay', (t) async {
+      final paginas = PaginasApp(
+        login: (_) => const SizedBox(),
+        inicio: (_, _) => const SizedBox(),
+        tareas: (_) => const SizedBox(),
+        correo: (_) => const SizedBox(),
+        fichaje: (_, _) => const SizedBox(),
+        accesosMas: (_, _) => const [],
+      );
+      Widget mas(List<PropuestaIa> propuestas) => appDePantalla(const MasScreen(), [estadoSesionProvider.overrideWith(SesionConUsuario.new), paginasProvider.overrideWithValue(paginas), propuestasProvider.overrideWith(() => PropuestasFalsas(propuestas))], propuestasVacias: false);
+      await t.pumpWidget(mas(const [PropuestaIa(id: 1, tipo: 'tarea', origen: '', titulo: 'x', detalle: '', prioridad: 'normal'), PropuestaIa(id: 2, tipo: 'tarea', origen: '', titulo: 'y', detalle: '', prioridad: 'normal')]));
+      await t.pumpAndSettle();
+      expect(find.text('El asistente propone'), findsOneWidget);
+      expect(find.text('2 propuestas del asistente'), findsOneWidget);
     });
 
     testWidgets('«Más» agrupa los accesos en tarjetas con su icono', (t) async {
@@ -524,7 +571,7 @@ void main() {
           ),
         ]);
         await t.pumpWidget(ProviderScope(
-          overrides: [estadoSesionProvider.overrideWith(SesionConUsuario.new), paginasProvider.overrideWithValue(paginas)],
+          overrides: [estadoSesionProvider.overrideWith(SesionConUsuario.new), paginasProvider.overrideWithValue(paginas), propuestasProvider.overrideWith(PropuestasFalsas.new)],
           child: RepaintBoundary(
             key: clave,
             child: MaterialApp.router(
@@ -535,6 +582,7 @@ void main() {
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
               themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+              builder: (c, h) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: h!),
               routerConfig: r,
             ),
           ),

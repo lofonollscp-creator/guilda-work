@@ -4,6 +4,7 @@ import '../nucleo/abrir_asistente.dart';
 
 import '../../diseno/adaptable.dart';
 import '../diseno/componentes.dart';
+import '../diseno/v3/v3.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -220,11 +221,9 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
       _ => ultima == null ? t.fichajeAunNoHoy : t.fichajeSalisteALas(hora),
     };
     final pendientes = ref.watch(numFichajesPendientesProvider);
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(children: [
+    return TarjetaBento(
+      padding: const EdgeInsets.all(20),
+      child: Row(children: [
           Container(
             width: 64,
             height: 64,
@@ -240,7 +239,6 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
             ]),
           ),
         ]),
-      ),
     );
   }
 
@@ -254,8 +252,11 @@ class _FichajeScreenState extends ConsumerState<FichajeScreen> {
           child: SizedBox(
             height: 64,
             child: FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: color, foregroundColor: BrandColors.onAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-              onPressed: _marcando ? null : () => _marcar(tipo),
+              style: FilledButton.styleFrom(backgroundColor: color, foregroundColor: BrandColors.onAccent, shape: const StadiumBorder()),
+              onPressed: _marcando ? null : () {
+                Haptica.hecho();
+                _marcar(tipo);
+              },
               icon: Icon(icono),
               label: Text(texto, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: BrandColors.onAccent)),
             ),

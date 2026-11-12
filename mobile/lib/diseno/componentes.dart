@@ -42,8 +42,16 @@ class EstadoVacio extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ExcludeSemantics(child: Icon(icono, size: 56, color: tema.colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 12),
+          // El icono en un círculo suave: un vacío que se ve cuidado, no un hueco.
+          ExcludeSemantics(
+            child: Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(color: tema.colorScheme.surfaceContainerHigh, shape: BoxShape.circle),
+              child: Icon(icono, size: 44, color: tema.colorScheme.onSurfaceVariant),
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(titulo, style: tema.textTheme.titleMedium, textAlign: TextAlign.center),
           if (detalle != null) ...[const SizedBox(height: 4), Text(detalle!, style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant), textAlign: TextAlign.center)],
           if (accion != null) ...[const SizedBox(height: 16), FilledButton(onPressed: alAccionar, child: Text(accion!))],
