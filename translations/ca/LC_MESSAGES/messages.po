@@ -27777,3 +27777,6 @@ msgstr "Kratos no ofereix el mètode passkey: revisa deploy/kratos/kratos.yml i 
 
 msgid "Tu despacho exige verificación en dos pasos o una passkey. Actívala desde la web (Ajustes → Contraseña y email) y vuelve a entrar."
 msgstr "El teu despatx exigeix verificació en dos passos o una passkey. Activa-la des del web (Ajustos → Contrasenya i correu) i torna a entrar."
+
+msgid "El alta de cuentas desde la API está cerrada: pide acceso a tu despacho o regístrate en la web."
+msgstr "L'alta de comptes des de l'API està tancada: demana accés al teu despatx o registra't a la web."

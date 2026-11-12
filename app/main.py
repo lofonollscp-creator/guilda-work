@@ -482,12 +482,17 @@ def _cabeceras_de_seguridad(respuesta):
     cabeceras.setdefault("X-Content-Type-Options", "nosniff")
     cabeceras.setdefault("X-Frame-Options", "SAMEORIGIN")
     cabeceras.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    # Sensores que la app no usa quedan apagados; cámara, micrófono y ubicación solo para esta propia web (voz del asistente, fichaje).
+    cabeceras.setdefault("Permissions-Policy", "camera=(self), microphone=(self), geolocation=(self), payment=(), usb=(), serial=(), bluetooth=(), interest-cohort=()")
     nonce = g.get("csp_nonce")
     forma = seguridad_csp.modo()
     if nonce and forma != "no":
         cabecera = "Content-Security-Policy" if forma == "forzar" else "Content-Security-Policy-Report-Only"
         cabeceras.setdefault(cabecera, seguridad_csp.politica(nonce, con_informe=forma == "reportar"))
     # Lo que se hace cumplir SIEMPRE, también en modo informe (no puede romper nada): sin marcos ajenos, sin plugins, sin <base> ajeno.
+    if forma == "forzar":
+        # `form-action 'self'` solo en modo informe: Chrome también lo aplica a la redirección posterior al POST y rompería el consentimiento de SSO (Hydra).
+        cabeceras.setdefault("Content-Security-Policy-Report-Only", "form-action 'self'; report-uri /csp-report")
     cabeceras.setdefault("Content-Security-Policy", "frame-ancestors 'self'; object-src 'none'; base-uri 'self'")
     if request.headers.get("X-Forwarded-Proto") == "https":
         cabeceras.setdefault("Strict-Transport-Security", "max-age=31536000")

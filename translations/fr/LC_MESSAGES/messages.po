@@ -27853,3 +27853,6 @@ msgstr "Kratos ne propose pas la méthode passkey : vérifiez deploy/kratos/krat
 
 msgid "Tu despacho exige verificación en dos pasos o una passkey. Actívala desde la web (Ajustes → Contraseña y email) y vuelve a entrar."
 msgstr "Votre cabinet exige la vérification en deux étapes ou une passkey. Activez-la depuis le web (Paramètres → Mot de passe et e-mail) et reconnectez-vous."
+
+msgid "El alta de cuentas desde la API está cerrada: pide acceso a tu despacho o regístrate en la web."
+msgstr "L'inscription de comptes via l'API est fermée : demandez l'accès à votre cabinet ou inscrivez-vous sur le web."

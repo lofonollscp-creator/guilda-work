@@ -10,11 +10,13 @@ Los proveedores que no leen PDF reciben cada página como imagen (app/pdf_factur
 from __future__ import annotations
 
 import base64
+import http.client
 import ipaddress
 import json
 import os
 import re
 import socket
+import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -122,6 +124,43 @@ def comprobar_destino(url: str) -> None:
             raise ErrorIA("La dirección del servidor apunta a una red no pública: no se consulta.")
 
 
+def _conectar_seguro(host: str, puerto: int, timeout) -> socket.socket:
+    """Resuelve el nombre UNA vez, comprueba que todas las direcciones son públicas (o están en la lista de excepciones) y conecta a una de esas
+    mismas direcciones: un DNS que cambie de respuesta entre la comprobación y la conexión (rebinding) ya no sirve."""
+    interno = f"{host.lower()}:{puerto}" in _destinos_internos()
+    direcciones = [r[4] for r in socket.getaddrinfo(host, puerto, type=socket.SOCK_STREAM)]
+    if not interno and any(not ipaddress.ip_address(d[0].split("%")[0]).is_global for d in direcciones):
+        raise ErrorIA("La dirección del servidor apunta a una red no pública: no se consulta.")
+    ultimo: OSError | None = None
+    for d in direcciones:
+        try:
+            return socket.create_connection((d[0], puerto), timeout)
+        except OSError as e:
+            ultimo = e
+    raise ultimo or OSError("sin direcciones")
+
+
+class _ConexionHttp(http.client.HTTPConnection):
+    def connect(self):
+        self.sock = _conectar_seguro(self.host, self.port, self.timeout)
+
+
+class _ConexionHttps(http.client.HTTPSConnection):
+    def connect(self):
+        sock = _conectar_seguro(self.host, self.port, self.timeout)
+        self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
+
+
+class _ManejadorHttp(urllib.request.HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(_ConexionHttp, req)
+
+
+class _ManejadorHttps(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(_ConexionHttps, req, context=ssl.create_default_context())
+
+
 class _SinRedirecciones(urllib.request.HTTPRedirectHandler):
     """Un 302 no puede llevar la petición a un destino que no se ha comprobado."""
 
@@ -129,7 +168,7 @@ class _SinRedirecciones(urllib.request.HTTPRedirectHandler):
         return None
 
 
-_abridor = urllib.request.build_opener(_SinRedirecciones)
+_abridor = urllib.request.build_opener(_SinRedirecciones, _ManejadorHttp, _ManejadorHttps)
 
 
 def _cabeceras(prov: Proveedor, clave: str) -> dict:

@@ -27768,3 +27768,6 @@ msgstr "Kratos does not offer the passkey method: check deploy/kratos/kratos.yml
 
 msgid "Tu despacho exige verificación en dos pasos o una passkey. Actívala desde la web (Ajustes → Contraseña y email) y vuelve a entrar."
 msgstr "Your firm requires two-step verification or a passkey. Turn it on from the web (Settings → Password and email) and sign in again."
+
+msgid "El alta de cuentas desde la API está cerrada: pide acceso a tu despacho o regístrate en la web."
+msgstr "Account sign-up through the API is closed: ask your firm for access or sign up on the web."

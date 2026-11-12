@@ -209,3 +209,18 @@ def test_un_nombre_que_resuelve_a_una_ip_privada_se_rechaza(monkeypatch):
 
 def test_una_redireccion_no_se_sigue():
     assert pv._SinRedirecciones().redirect_request(None, None, 302, "x", {}, "http://127.0.0.1/") is None
+
+
+def test_la_conexion_usa_la_ip_comprobada_y_no_vuelve_a_resolver(monkeypatch):
+    llamadas = []
+    monkeypatch.setattr(pv.socket, "getaddrinfo", lambda h, p, **k: llamadas.append(h) or [(2, 1, 6, "", ("93.184.216.34", p))])
+    visto = {}
+    monkeypatch.setattr(pv.socket, "create_connection", lambda dir, t=None: visto.setdefault("dir", dir) or object())
+    pv._conectar_seguro("ia.ejemplo.org", 443, 5)
+    assert visto["dir"] == ("93.184.216.34", 443) and llamadas == ["ia.ejemplo.org"]
+
+
+def test_la_conexion_rechaza_un_nombre_que_resuelve_a_la_red_interna(monkeypatch):
+    monkeypatch.setattr(pv.socket, "getaddrinfo", lambda h, p, **k: [(2, 1, 6, "", ("127.0.0.1", p))])
+    with pytest.raises(ErrorIA, match="red no pública"):
+        pv._conectar_seguro("rebinding.ejemplo.org", 80, 5)

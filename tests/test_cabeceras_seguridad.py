@@ -39,7 +39,7 @@ def test_por_defecto_la_csp_de_scripts_va_en_modo_informe_con_nonce_distinto_por
 def test_modo_forzar_y_modo_no(cliente, monkeypatch):
     monkeypatch.setenv("GUILDA_CSP", "forzar")
     h = cliente.get("/login").headers
-    assert "script-src 'self' 'nonce-" in h["Content-Security-Policy"] and "Content-Security-Policy-Report-Only" not in h
+    assert "script-src 'self' 'nonce-" in h["Content-Security-Policy"] and "script-src" not in h.get("Content-Security-Policy-Report-Only", "")
     monkeypatch.setenv("GUILDA_CSP", "no")
     h = cliente.get("/login").headers
     assert "script-src" not in h["Content-Security-Policy"] and "Content-Security-Policy-Report-Only" not in h
@@ -115,3 +115,10 @@ def test_un_post_del_propio_sitio_o_sin_cabeceras_de_navegador_pasa(cliente, cab
 
 def test_los_get_no_se_ven_afectados(cliente):
     assert cliente.get("/login", headers={"Sec-Fetch-Site": "cross-site"}).status_code != 403
+
+
+def test_permissions_policy_y_form_action_solo_en_informe(cliente, monkeypatch):
+    monkeypatch.setenv("GUILDA_CSP", "forzar")
+    h = cliente.get("/login").headers
+    assert "payment=()" in h["Permissions-Policy"] and "microphone=(self)" in h["Permissions-Policy"]
+    assert "form-action" not in h["Content-Security-Policy"] and "form-action 'self'" in h["Content-Security-Policy-Report-Only"]
