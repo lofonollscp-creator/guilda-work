@@ -27881,3 +27881,15 @@ msgstr "Llegeix"
 
 msgid "Fallan o se rechazan en más de un tercio de los usos (revisa su descripción o sus parámetros):"
 msgstr "Fallen o es rebutgen en més d'un terç dels usos (revisa'n la descripció o els paràmetres):"
+
+msgid "Versión desplegada"
+msgstr "Versió desplegada"
+
+msgid "No se pudo leer la versión (¿sin repositorio Git?)."
+msgstr "No s'ha pogut llegir la versió (sense repositori Git?)."
+
+msgid "%(hash)s «%(asunto)s» (commit de hace %(c)s; este proceso arrancó hace %(a)s)."
+msgstr "%(hash)s «%(asunto)s» (commit de fa %(c)s; aquest procés va arrencar fa %(a)s)."
+
+msgid "Hay código commiteado sin desplegar (falta reiniciar los servicios). "
+msgstr "Hi ha codi comès sense desplegar (falta reiniciar els serveis). "

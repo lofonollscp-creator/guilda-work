@@ -27872,3 +27872,15 @@ msgstr "Reads"
 
 msgid "Fallan o se rechazan en más de un tercio de los usos (revisa su descripción o sus parámetros):"
 msgstr "They fail or are rejected in more than a third of uses (review their description or parameters):"
+
+msgid "Versión desplegada"
+msgstr "Deployed version"
+
+msgid "No se pudo leer la versión (¿sin repositorio Git?)."
+msgstr "The version could not be read (no Git repository?)."
+
+msgid "%(hash)s «%(asunto)s» (commit de hace %(c)s; este proceso arrancó hace %(a)s)."
+msgstr "%(hash)s “%(asunto)s” (commit from %(c)s ago; this process started %(a)s ago)."
+
+msgid "Hay código commiteado sin desplegar (falta reiniciar los servicios). "
+msgstr "There is committed code that has not been deployed (the services need a restart). "

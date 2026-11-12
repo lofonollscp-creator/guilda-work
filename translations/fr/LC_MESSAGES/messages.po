@@ -27957,3 +27957,15 @@ msgstr "Lit"
 
 msgid "Fallan o se rechazan en más de un tercio de los usos (revisa su descripción o sus parámetros):"
 msgstr "Elles échouent ou sont refusées dans plus d'un tiers des utilisations (revoyez leur description ou leurs paramètres) :"
+
+msgid "Versión desplegada"
+msgstr "Version déployée"
+
+msgid "No se pudo leer la versión (¿sin repositorio Git?)."
+msgstr "Impossible de lire la version (pas de dépôt Git ?)."
+
+msgid "%(hash)s «%(asunto)s» (commit de hace %(c)s; este proceso arrancó hace %(a)s)."
+msgstr "%(hash)s « %(asunto)s » (commit d'il y a %(c)s ; ce processus a démarré il y a %(a)s)."
+
+msgid "Hay código commiteado sin desplegar (falta reiniciar los servicios). "
+msgstr "Du code commité n'a pas été déployé (les services doivent être redémarrés). "

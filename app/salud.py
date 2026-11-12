@@ -207,6 +207,19 @@ def _estado_prueba_restauracion(ahora: datetime) -> dict:
     return _item("Copias de seguridad", "restauracion", titulo, item_estado, _("Última prueba correcta hace %(hace)s.", hace=_legible(edad)))
 
 
+def _estado_version(ahora: datetime) -> dict:
+    """La versión que corre: el último commit en disco y cuánto lleva arrancado el proceso. En ámbar si hay commits posteriores al arranque (código sin desplegar)."""
+    from . import version
+    titulo = _("Versión desplegada")
+    v = version.estado(ahora)
+    if v is None:
+        return _item("Servidor", "version", titulo, GRIS, _("No se pudo leer la versión (¿sin repositorio Git?)."))
+    detalle = _("%(hash)s «%(asunto)s» (commit de hace %(c)s; este proceso arrancó hace %(a)s).", hash=v["hash"], asunto=v["asunto"][:70], c=_legible(max(v["commit_hace_s"], 0)), a=_legible(max(v["corriendo_desde_s"], 0)))
+    if v["pendiente"]:
+        return _item("Servidor", "version", titulo, AMBAR, _("Hay código commiteado sin desplegar (falta reiniciar los servicios). ") + detalle)
+    return _item("Servidor", "version", titulo, VERDE, detalle)
+
+
 CALIDAD_IA_AMBAR_DIAS = 14
 
 
@@ -533,6 +546,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Servidor", "aws_gasto", _("Gasto de AWS este mes"), lambda: _estado_gasto_aws(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "dependencias", _("Dependencias con vulnerabilidades conocidas"), lambda: _estado_dependencias(ahora))
+    _seguro("Servidor", "version", _("Versión desplegada"), lambda: _estado_version(ahora))
     _seguro("Servidor", "calidad_ia", _("Calidad de la IA (evaluación semanal)"), lambda: _estado_calidad_ia(ahora))
     _seguro("Servidor", "exposicion", _("Exposición pública (cabeceras y puertos)"), lambda: _estado_exposicion(ahora))
     _seguro("Servidor", "crowdsec", _("CrowdSec (bloqueos)"), lambda: _estado_crowdsec(ahora))
