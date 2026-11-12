@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-SCRIPTS = ("scripts/desplegar.sh", "scripts/verificar_despliegue.sh", "scripts/auditar_dependencias.sh")
+SCRIPTS = ("scripts/desplegar_produccion.sh", "scripts/verificar_despliegue.sh", "scripts/auditar_dependencias.sh")
 
 
 def test_sintaxis_de_bash():
@@ -13,9 +13,9 @@ def test_sintaxis_de_bash():
 
 
 def test_desplegar_pide_ayuda_sin_tocar_nada_y_rechaza_opciones_raras():
-    r = subprocess.run([str(RAIZ / "scripts/desplegar.sh"), "--ayuda"], capture_output=True, text=True)
+    r = subprocess.run([str(RAIZ / "scripts/desplegar_produccion.sh"), "--ayuda"], capture_output=True, text=True)
     assert r.returncode == 0 and "--simular" in r.stdout
-    r = subprocess.run([str(RAIZ / "scripts/desplegar.sh"), "--borra-todo"], capture_output=True, text=True)
+    r = subprocess.run([str(RAIZ / "scripts/desplegar_produccion.sh"), "--borra-todo"], capture_output=True, text=True)
     assert r.returncode == 2 and "desconocida" in r.stderr
 
 

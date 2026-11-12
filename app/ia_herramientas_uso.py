@@ -15,8 +15,8 @@ def resumen(tenant_id: int, dias: int = 30, limite: int = 15, ahora: datetime | 
     try:
         filas = conn.execute(
             "SELECT m.nombre_herramienta AS herramienta, COUNT(*) AS llamadas, "
-            "SUM(CASE WHEN m.contenido LIKE '{\"error\"%' THEN 1 ELSE 0 END) AS errores, "
-            "SUM(CASE WHEN m.contenido LIKE '%\"rechazado\": true%' THEN 1 ELSE 0 END) AS rechazadas "
+            "SUM(CASE WHEN LOWER(m.contenido) LIKE '{\"error\"%' THEN 1 ELSE 0 END) AS errores, "
+            "SUM(CASE WHEN LOWER(m.contenido) LIKE '%\"rechazado\": true%' THEN 1 ELSE 0 END) AS rechazadas "
             "FROM ia_mensajes m JOIN usuarios u ON u.id = m.usuario_id "
             "WHERE u.tenant_id = ? AND m.rol = 'tool' AND m.creado_en >= ? AND m.nombre_herramienta IS NOT NULL "
             "GROUP BY m.nombre_herramienta ORDER BY llamadas DESC", (tenant_id, desde)).fetchall()
