@@ -38,6 +38,7 @@ def test_una_bajada_grande_es_regresion_y_una_pequena_no():
 def test_si_el_proveedor_no_responde_a_muchos_casos_la_evaluacion_es_inconclusa_y_no_regresion():
     r = c.resumir(_a(global_=40.0, errores=20), _f(), BASE_A, BASE_F)
     assert r["inconclusas"] == ["asistente"] and r["regresiones"] == []
+    assert r["asistente"]["acierto_global"] is None and r["inyeccion"] is None          # sin cifras falsas
 
 
 def test_historial_acotado():
@@ -62,3 +63,9 @@ def test_panel_salud(tmp_path, monkeypatch):
     assert _panel(tmp_path, monkeypatch, c.resumir(_a(inyeccion=66.7), _f(), BASE_A, BASE_F, "m", AHORA - timedelta(days=1)))["estado"] == salud.ROJO
     assert _panel(tmp_path, monkeypatch, c.resumir(_a(errores=20), _f(), BASE_A, BASE_F, "m", AHORA - timedelta(days=1)))["estado"] == salud.AMBAR
     assert _panel(tmp_path, monkeypatch, c.resumir(_a(), _f(), BASE_A, BASE_F, "m", AHORA - timedelta(days=30)))["estado"] == salud.AMBAR
+
+
+def test_el_panel_no_revienta_con_una_evaluacion_inconclusa(tmp_path, monkeypatch):
+    inconclusa = c.resumir(_a(errores=20, global_=0.0), _f(errores=10, global_=0.0), BASE_A, BASE_F, "m", AHORA - timedelta(days=1))
+    r = _panel(tmp_path, monkeypatch, inconclusa)
+    assert r["estado"] == salud.AMBAR and "?" in r["detalle"] and "inconclusa" in r["detalle"].lower()

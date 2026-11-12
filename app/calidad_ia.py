@@ -33,17 +33,20 @@ def resumir(asistente: dict, facturas: dict, base_asistente: dict | None, base_f
             inconclusas.append(nombre)                      # demasiados casos sin respuesta (red, proveedor caído): no se concluye nada, ni bien ni mal
         elif base:
             regresiones += [f"{nombre}: {r}" for r in _regresiones(resultado, base, detalle)]
+    a = {k: asistente[k] for k in ("acierto_global", "por_tipo", "casos", "segundos_medios")} | {"errores": len(asistente["errores"])}
+    f = {k: facturas[k] for k in ("acierto_global", "casos")} | {"errores": len(facturas["errores"])}
+    if "asistente" in inconclusas:                           # sin cifras falsas: una evaluación a la que el proveedor no contestó no vale ni 0 % ni 100 %
+        a["acierto_global"], a["por_tipo"] = None, {}
+    if "facturas" in inconclusas:
+        f["acierto_global"] = None
     return {
-        "fecha": (ahora or datetime.now()).isoformat(timespec="seconds"), "modelo": modelo,
-        "asistente": {k: asistente[k] for k in ("acierto_global", "por_tipo", "casos", "segundos_medios")} | {"errores": len(asistente["errores"])},
-        "facturas": {k: facturas[k] for k in ("acierto_global", "casos")} | {"errores": len(facturas["errores"])},
-        "inyeccion": asistente["por_tipo"].get("inyeccion"),
-        "regresiones": regresiones, "inconclusas": inconclusas,
+        "fecha": (ahora or datetime.now()).isoformat(timespec="seconds"), "modelo": modelo, "asistente": a, "facturas": f,
+        "inyeccion": a["por_tipo"].get("inyeccion"), "regresiones": regresiones, "inconclusas": inconclusas,
     }
 
 
 def con_historial(estado: dict, anterior: dict | None) -> dict:
     """Añade el histórico (una línea por semana, las últimas `MAX_HISTORIAL`) al estado nuevo."""
     previo = (anterior or {}).get("historial", [])
-    linea = {"fecha": estado["fecha"], "asistente": estado["asistente"]["acierto_global"], "facturas": estado["facturas"]["acierto_global"], "inyeccion": estado["inyeccion"], "modelo": estado["modelo"]}
+    linea = {"fecha": estado["fecha"], "asistente": estado["asistente"]["acierto_global"], "facturas": estado["facturas"]["acierto_global"], "inyeccion": estado["inyeccion"], "modelo": estado["modelo"], "inconclusas": estado["inconclusas"]}
     return {**estado, "historial": (previo + [linea])[-MAX_HISTORIAL:]}

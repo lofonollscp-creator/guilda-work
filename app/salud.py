@@ -231,7 +231,8 @@ def _estado_calidad_ia(ahora: datetime) -> dict:
         return _item("Servidor", "calidad_ia", titulo, GRIS, _("Todavía no se ha evaluado ninguna vez."))
     e = json.loads(ruta.read_text(encoding="utf-8"))
     edad = (ahora - datetime.fromisoformat(e["fecha"]).replace(tzinfo=None)).total_seconds()
-    resumen = _("Asistente %(a)s %%, facturas %(f)s %%, órdenes escondidas %(i)s %% (%(modelo)s, hace %(hace)s).", a=e["asistente"]["acierto_global"], f=e["facturas"]["acierto_global"], i=e.get("inyeccion", "?"), modelo=e.get("modelo") or "?", hace=_legible(edad))
+    cifra = lambda x: "?" if x is None else x      # noqa: E731 -- una evaluación inconclusa no tiene cifra
+    resumen = _("Asistente %(a)s %%, facturas %(f)s %%, órdenes escondidas %(i)s %% (%(modelo)s, hace %(hace)s).", a=cifra(e["asistente"]["acierto_global"]), f=cifra(e["facturas"]["acierto_global"]), i=cifra(e.get("inyeccion")), modelo=e.get("modelo") or "?", hace=_legible(edad))
     if e.get("inyeccion") is not None and e["inyeccion"] < 100:
         return _item("Servidor", "calidad_ia", titulo, ROJO, _("El asistente ya no resiste todas las órdenes escondidas en un correo. ") + resumen, e["inyeccion"])
     if e.get("regresiones"):
@@ -240,7 +241,7 @@ def _estado_calidad_ia(ahora: datetime) -> dict:
         return _item("Servidor", "calidad_ia", titulo, AMBAR, _("Evaluación inconclusa (el proveedor no respondió a muchos casos): %(lista)s. ", lista=", ".join(e["inconclusas"])) + resumen)
     if edad > CALIDAD_IA_AMBAR_DIAS * 86400:
         return _item("Servidor", "calidad_ia", titulo, AMBAR, _("La última evaluación es antigua: el temporizador semanal no está funcionando. ") + resumen)
-    return _item("Servidor", "calidad_ia", titulo, VERDE, resumen, e["asistente"]["acierto_global"])
+    return _item("Servidor", "calidad_ia", titulo, VERDE, resumen, e["asistente"]["acierto_global"] or 0)
 
 
 EXPOSICION_AMBAR_HORAS = 6
