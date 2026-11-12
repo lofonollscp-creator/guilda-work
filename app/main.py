@@ -425,6 +425,11 @@ def _cabecera_id_de_peticion(respuesta):
 _POST_DE_OTROS_ORIGENES = ("/contacto", "/api/", "/ayuda-metricas/")
 
 
+def _post_ajeno_rechazado():
+    """403 sin plantilla: este filtro corre antes de resolver el usuario y la página de error lo necesita."""
+    return Response("Petición no permitida desde otro sitio.", 403, mimetype="text/plain")
+
+
 @app.before_request
 def _rechazar_posts_de_otros_origenes():
     """Defensa contra CSRF para todas las rutas que cambian datos con sesión de navegador (el portal no lleva token). Un navegador
@@ -439,12 +444,12 @@ def _rechazar_posts_de_otros_origenes():
         # same-site = otro subdominio nuestro (vault, n8n...): tampoco es de fiar para cambiar datos.
         if request.path.startswith(_POST_DE_OTROS_ORIGENES):
             return None
-        abort(403)
+        return _post_ajeno_rechazado()
     origen = request.headers.get("Origin")
     if origen is None or request.path.startswith(_POST_DE_OTROS_ORIGENES):
         return None
     if urllib.parse.urlsplit(origen).netloc != request.host:
-        abort(403)
+        return _post_ajeno_rechazado()
     return None
 
 
