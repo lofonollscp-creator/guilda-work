@@ -160,6 +160,9 @@ services:
       - kratos-migrate
     environment:
       DSN: postgres://kratos:${KRATOS_DB_PASSWORD:-CambiaEstaClaveKratos2026}@postgres-kratos:5432/kratos?sslmode=disable
+      # Secretos explícitos (sin ellos Kratos genera unos nuevos en cada arranque y se pierden las sesiones al reiniciar). El de cifrado: exactamente 32 caracteres.
+      SECRETS_COOKIE: ${KRATOS_SECRET_COOKIE:?define KRATOS_SECRET_COOKIE (64 caracteres aleatorios)}
+      SECRETS_CIPHER: ${KRATOS_SECRET_CIPHER:?define KRATOS_SECRET_CIPHER (exactamente 32 caracteres aleatorios)}
       # Estas dos son sobre Kratos mismo: se quedan en 127.0.0.1 siempre —
       # solo las usa serve.py, en la misma máquina, y sus URLs se
       # reescriben a rutas relativas /.ory/... antes de llegar al
@@ -872,7 +875,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: documenso
-      POSTGRES_PASSWORD: ${DOCUMENSO_DB_PASSWORD:-CambiaEstaClaveDocumenso2026}
+      POSTGRES_PASSWORD: ${DOCUMENSO_DB_PASSWORD:?define DOCUMENSO_DB_PASSWORD (python -c "import secrets; print(secrets.token_urlsafe(30))")}
       POSTGRES_DB: documenso
     volumes:
       - postgres-documenso-data:/var/lib/postgresql/data
@@ -889,8 +892,8 @@ services:
       NEXT_PRIVATE_ENCRYPTION_KEY: ${DOCUMENSO_ENCRYPTION_KEY:?define DOCUMENSO_ENCRYPTION_KEY (openssl rand -hex 32)}
       NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY: ${DOCUMENSO_ENCRYPTION_SECONDARY_KEY:?define DOCUMENSO_ENCRYPTION_SECONDARY_KEY (openssl rand -hex 32)}
       NEXT_PUBLIC_WEBAPP_URL: ${DOCUMENSO_PUBLIC_ORIGIN:-http://127.0.0.1:8018}
-      NEXT_PRIVATE_DATABASE_URL: postgres://documenso:${DOCUMENSO_DB_PASSWORD:-CambiaEstaClaveDocumenso2026}@postgres-documenso:5432/documenso
-      NEXT_PRIVATE_DIRECT_DATABASE_URL: postgres://documenso:${DOCUMENSO_DB_PASSWORD:-CambiaEstaClaveDocumenso2026}@postgres-documenso:5432/documenso
+      NEXT_PRIVATE_DATABASE_URL: postgres://documenso:${DOCUMENSO_DB_PASSWORD:?define DOCUMENSO_DB_PASSWORD (python -c "import secrets; print(secrets.token_urlsafe(30))")}@postgres-documenso:5432/documenso
+      NEXT_PRIVATE_DIRECT_DATABASE_URL: postgres://documenso:${DOCUMENSO_DB_PASSWORD:?define DOCUMENSO_DB_PASSWORD (python -c "import secrets; print(secrets.token_urlsafe(30))")}@postgres-documenso:5432/documenso
       NEXT_PRIVATE_SMTP_TRANSPORT: ${DOCUMENSO_SMTP_TRANSPORT:-smtp-auth}
       NEXT_PRIVATE_SMTP_HOST: ${DOCUMENSO_SMTP_HOST:?define DOCUMENSO_SMTP_HOST}
       NEXT_PRIVATE_SMTP_PORT: ${DOCUMENSO_SMTP_PORT:-587}
