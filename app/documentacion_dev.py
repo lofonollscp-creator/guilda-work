@@ -247,6 +247,10 @@ PAGINAS = [
                 "instancia) — esta API nunca ve ni guarda la contraseña en texto plano, solo emite un token "
                 "opaco propio tras validar contra Kratos."},
             {"type": "h2", "id": "registro", "text": "Registrar una cuenta nueva"},
+            {"type": "callout", "kind": "warn", "html":
+                "En el servidor de Guilda Work este endpoint está <b>cerrado</b> (responde <code>403 registro_cerrado</code>): "
+                "el alta es por invitación de un despacho o por la web, con verificación del correo. Solo responde si el "
+                "administrador del servidor define <code>GUILDA_REGISTRO_API=1</code> (instalaciones propias y desarrollo)."},
             {"type": "code", "lang": "bash", "code":
                 'curl -X POST https://tu-hostname/api/v1/auth/registro \\\n'
                 '  -H "Content-Type: application/json" \\\n'

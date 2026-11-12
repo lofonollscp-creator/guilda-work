@@ -29,6 +29,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+# Los tests usan /auth/registro para sacar tokens; en producción está cerrado por defecto (ver rutas_api.registro).
+os.environ.setdefault("GUILDA_REGISTRO_API", "1")
+
 # Clave secreta propia de los tests, definida ANTES de importar la aplicación: lo que se firma fuera de una petición (el enlace público del logo en los correos, las tareas programadas)
 # la lee del entorno. Sin esto, esos tests dependían de que quien los ejecutara tuviera GUILDA_SECRET_KEY exportada; si ya está definida (la de quien desarrolla), manda la suya.
 os.environ.setdefault("GUILDA_SECRET_KEY", "clave-secreta-solo-para-los-tests-no-es-real")

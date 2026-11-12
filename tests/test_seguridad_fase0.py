@@ -226,3 +226,10 @@ def test_cada_herramienta_tiene_area_conocida_y_las_restringidas_no_cruzan_areas
     for n in ("buscar_semantico", "resumen_del_dia", "exportar_historial", "crear_tarea_desde_correo", "guardar_nota_desde_correo", "listar_papelera"):
         assert hg.area_de_herramienta(n) == "transversal", n
     assert hg.area_de_herramienta("crm_crear_lead") == "transversal" and hg.area_de_herramienta("webhooks_crear") == "webhooks"
+
+
+def test_el_registro_por_api_esta_cerrado_por_defecto(cliente, monkeypatch):
+    monkeypatch.delenv("GUILDA_REGISTRO_API", raising=False)
+    r = cliente.post("/api/v1/auth/registro", json={"email": "nuevo@ejemplo.com", "contrasena": "contrasena123"})
+    assert r.status_code == 403 and r.get_json()["codigo"] == "registro_cerrado"
+    assert "token" not in r.get_data(as_text=True)

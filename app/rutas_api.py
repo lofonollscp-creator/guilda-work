@@ -15,6 +15,7 @@ Formato de respuesta uniforme: `{"ok": true, "data": ...}` en éxito,
 errorhandler de más abajo, para que un cliente Flutter nunca reciba HTML.
 """
 import logging
+import os
 import base64
 import hashlib
 import json
@@ -273,6 +274,10 @@ def registro():
     """Fase 7a: la contraseña la custodia Kratos, no esta tabla — el móvil
     sigue recibiendo el mismo token opaco propio de siempre (sin cambios en
     mobile/), solo cambia qué la valida por debajo."""
+    # Cerrado por defecto: crea la cuenta y entrega el token sin verificar el correo y delata con el 409 qué correos existen.
+    # El alta es por invitación de un despacho o por la web (con verificación). `GUILDA_REGISTRO_API=1` lo reabre (desarrollo y pruebas).
+    if os.environ.get("GUILDA_REGISTRO_API") != "1":
+        return _err(gettext("El alta de cuentas desde la API está cerrada: pide acceso a tu despacho o regístrate en la web."), 403, "registro_cerrado")
     datos = _body()
     email = (datos.get("email") or "").strip()
     contrasena = datos.get("contrasena") or ""
