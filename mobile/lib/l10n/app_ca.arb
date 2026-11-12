@@ -877,5 +877,6 @@
       }
     }
   },
-  "iaTipoVencimiento": "Venciment"
+  "iaTipoVencimiento": "Venciment",
+  "iaPideme": "Demana'm alguna cosa…"
 }

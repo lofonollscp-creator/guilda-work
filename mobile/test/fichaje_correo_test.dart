@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guilda_work_mobile/funciones/fichaje/fichaje_acciones.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
 import 'package:guilda_work_mobile/models/models.dart';
+import 'package:guilda_work_mobile/nucleo/barra_v3.dart';
 import 'package:guilda_work_mobile/nucleo/paginas.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
 import 'package:guilda_work_mobile/nucleo/shell.dart';
@@ -327,26 +328,120 @@ void main() {
       expect(find.text('Pantalla c'), findsOneWidget);
     });
 
-    testWidgets('cinco destinos con su etiqueta siempre visible; tocar uno cambia de pestaña', (t) async {
+    Future<GoRouter> montar(WidgetTester t) async {
       final r = enrutador();
       await t.pumpWidget(ProviderScope(
-        overrides: [estadoSesionProvider.overrideWith(SesionFija.new)],
+        overrides: [estadoSesionProvider.overrideWith(SesionFija.new), serviciosProvider.overrideWithValue(serviciosFalsos())],
         child: MaterialApp.router(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('es'),
           theme: AppTheme.light,
+          builder: (c, h) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: h!),
           routerConfig: r,
         ),
       ));
       await t.pumpAndSettle();
-      for (final etiqueta in ['Hoy', 'Tareas', 'Correo', 'Fichaje', 'Más']) {
+      return r;
+    }
+
+    testWidgets('cuatro destinos con su etiqueta siempre visible y el ✦ del asistente en el centro; tocar uno cambia de pestaña', (t) async {
+      sinVoz();
+      await montar(t);
+      for (final etiqueta in ['Hoy', 'Tareas', 'Correo', 'Más']) {
         expect(find.text(etiqueta), findsOneWidget, reason: etiqueta);
       }
+      expect(find.text('Fichaje'), findsNothing);
+      // El ✦ está entre Tareas y Correo.
+      final x = {for (final e in ['Tareas', 'Correo']) e: t.getCenter(find.text(e)).dx, 'ia': t.getCenter(find.bySemanticsLabel('Asistente IA')).dx};
+      expect(x['Tareas']! < x['ia']! && x['ia']! < x['Correo']!, isTrue);
       expect(find.text('Pantalla a'), findsOneWidget);
       await t.tap(find.text('Correo'));
       await t.pumpAndSettle();
       expect(find.text('Pantalla c'), findsOneWidget);
+    });
+
+    testWidgets('la pestaña de ahora se anuncia como seleccionada', (t) async {
+      final h = t.ensureSemantics();
+      await montar(t);
+      expect(find.bySemanticsLabel('Hoy'), findsOneWidget);
+      expect(t.getSemantics(find.bySemanticsLabel('Hoy')), isSemantics(label: 'Hoy', isButton: true, isSelected: true, hasTapAction: true));
+      expect(t.getSemantics(find.bySemanticsLabel('Tareas')), isSemantics(label: 'Tareas', isButton: true, isSelected: false, hasTapAction: true));
+      expect(t.getSemantics(find.bySemanticsLabel('Asistente IA')), isSemantics(label: 'Asistente IA', isButton: true, hasTapAction: true));
+      h.dispose();
+    });
+
+    testWidgets('la barra cumple las pautas de accesibilidad: toques de 48, etiquetas y contraste', (t) async {
+      final h = t.ensureSemantics();
+      await montar(t);
+      await expectLater(t, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(t, meetsGuideline(labeledTapTargetGuideline));
+      await expectLater(t, meetsGuideline(textContrastGuideline));
+      h.dispose();
+    });
+
+    testWidgets('la barra «Pídeme algo…» sube el chat como hoja sobre la pantalla, con el contexto de la pestaña', (t) async {
+      sinVoz();
+      await montar(t);
+      await t.tap(find.text('Tareas'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Pídeme algo…'));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsOneWidget);
+      expect(find.text('Contexto: Tareas'), findsOneWidget);
+      expect(find.text('Pantalla b'), findsOneWidget); // la pantalla sigue debajo
+      expect(t.widget<TextField>(find.byType(TextField)).autofocus, isTrue);
+      await t.tap(find.byTooltip('Ocultar el asistente'));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsNothing);
+    });
+
+    for (final oscuro in [false, true]) {
+      testWidgets('captura de la barra ${oscuro ? 'oscuro' : 'claro'}', (t) async {
+        if (carpeta == null) return;
+        final clave = GlobalKey();
+        t.view.physicalSize = const Size(1170, 2532);
+        t.view.devicePixelRatio = 3;
+        addTearDown(t.view.reset);
+        final r = GoRouter(initialLocation: '/a', routes: [
+          StatefulShellRoute.indexedStack(
+            builder: (c, e, shell) => ShellApp(shell: shell),
+            branches: [
+              for (final n in ['a', 'b', 'c', 'd', 'e'])
+                StatefulShellBranch(routes: [
+                  GoRoute(path: '/$n', builder: (c, e) => ListView(padding: const EdgeInsets.all(16), children: [for (var i = 0; i < 12; i++) Card(child: ListTile(title: Text('Elemento ${i + 1}'), subtitle: const Text('Contenido que pasa por debajo')))])),
+                ]),
+            ],
+          ),
+        ]);
+        await t.pumpWidget(RepaintBoundary(
+          key: clave,
+          child: ProviderScope(
+            overrides: [estadoSesionProvider.overrideWith(SesionFija.new), serviciosProvider.overrideWithValue(serviciosFalsos())],
+            child: MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('es'),
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: oscuro ? ThemeMode.dark : ThemeMode.light,
+              routerConfig: r,
+            ),
+          ),
+        ));
+        await t.pump(const Duration(seconds: 1));
+        await capturar(t, clave, 'barra_${oscuro ? 'oscuro' : 'claro'}');
+      });
+    }
+
+    testWidgets('el ✦ abre el chat a pantalla completa', (t) async {
+      sinVoz();
+      await montar(t);
+      await t.tap(find.bySemanticsLabel('Asistente IA'));
+      await t.pumpAndSettle();
+      expect(find.byType(IaChatScreen), findsOneWidget);
+      expect(find.byType(BarraNavegacion), findsNothing); // pantalla completa, sin la barra
     });
 
     testWidgets('«Más» agrupa los accesos en tarjetas con su icono', (t) async {

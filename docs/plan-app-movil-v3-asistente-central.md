@@ -211,3 +211,29 @@ Decisiones aprobadas: botón ✦ central en la barra + barra de entrada flotante
 **Se quitó** código muerto: `FuentesPlegables` y `PasosRespuesta`.
 
 **Pendiente de la fase 3:** los comandos de un toque ya existen por tipo de contexto (correo, tarea, nota); extenderlos por pantalla (Fichaje, Más) llega con la barra nueva de la fase 2.
+
+## 14. Fase 2 — cáscara y navegación (2026-11-12)
+
+**Hecho.** Capturas en `docs/ux-app-movil-v3/fase2/` (claro y oscuro).
+
+| Cambio | Dónde |
+|---|---|
+| **Barra inferior v3**: píldora de vidrio con Hoy · Tareas · **✦** · Correo · Más. Etiqueta siempre visible, pestaña activa con una cápsula de acento, vibración suave al cambiar | `nucleo/barra_v3.dart` (`BarraNavegacion`) |
+| **Botón ✦ central**: círculo violeta con el aura viva detrás; abre el chat a pantalla completa con el contexto de la pestaña | `_BotonAsistente` |
+| **«✦ Pídeme algo…»**: barra que flota sobre la de navegación; un toque sube el chat **como hoja** (90 % de alto, la pantalla sigue debajo) con el teclado ya listo | `BarraPideme`, `abrirHojaAsistente`, `IaChatScreen(enfocar:)` |
+| **Fichaje sale de la barra**: sigue accesible desde «Más» (primera fila); su enlace profundo `/fichaje` y los avisos que llevan allí no cambian. La tarjeta fija en Hoy llega en la fase 4 | `shell.dart` |
+| **Tableta**: el raíl conserva las cinco pestañas y gana el ✦ arriba | `shell.dart` |
+
+**Contexto automático.** Desde Tareas y Correo la hoja y el ✦ abren el chat con «Contexto: Tareas / Correo» (píldora quitable de la fase 3). Hoy y Más no llevan contexto.
+
+**Desviaciones respecto al plan, a propósito**
+- **Sin `Provider` del controlador.** El plan lo pedía para compartir la conversación entre la barra y el chat. No hace falta: la conversación la guarda el servidor y cada apertura la recarga, así que la hoja y la pantalla completa ya enseñan lo mismo. El controlador no cambia. Coste: una recarga del historial al abrir.
+- **Hoja de altura fija (90 %)**, no «media → completa» arrastrable: el chat tiene su propia lista desplazable y anidarla en una hoja arrastrable pelea con el scroll. Se cierra arrastrando hacia abajo o con su aspa.
+- **La barra «Pídeme algo…» abre la hoja, no es un campo editable** en la propia barra: así el teclado no empuja la barra de navegación ni tapa el contenido. El micro de la barra aún no dicta (llega con la voz de primera clase, fase 7).
+- **Sin vidrio con desenfoque real tras la barra**: la barra va en `bottomNavigationBar` (no solapa el contenido, no hace falta reservar espacio). Si en la fase 7 se prefiere que el contenido pase por debajo, es un cambio local.
+
+**Accesibilidad.** Un test de pautas (toques de 48 dp, etiquetas, contraste) sobre la barra y otro de semántica (seleccionada, botón, acción de tocar). Este último cazó un fallo real: al excluir la semántica interna los botones perdían la acción de tocar para un lector de pantalla; arreglado con `onTap` en el nodo.
+
+**Pruebas:** 454 en verde (13 sobre la barra, 6 de ellas nuevas). Se actualizaron las de «Barra inferior» (cuatro destinos más el ✦, Fichaje por «Más») y dos ayudas de test corren con «reducir movimiento» porque el aura anima sin parar. `analyze`: los mismos 5 avisos.
+
+**Texto nuevo** (es, ca, en, fr): `iaPideme`.

@@ -42,7 +42,10 @@ class IaChatScreen extends ConsumerStatefulWidget {
   /// Si se pasa, el chat va incrustado en un panel (tableta) en vez de a pantalla completa, y este es el aspa que lo cierra.
   final VoidCallback? alCerrar;
 
-  const IaChatScreen({super.key, required this.api, required this.locale, this.consultaInicial, this.contexto, this.contextoIa, this.alCerrar});
+  /// Abrir con el teclado listo para escribir (la hoja que sube desde «Pídeme algo…»).
+  final bool enfocar;
+
+  const IaChatScreen({super.key, required this.api, required this.locale, this.consultaInicial, this.contexto, this.contextoIa, this.alCerrar, this.enfocar = false});
 
   @override
   ConsumerState<IaChatScreen> createState() => _IaChatScreenState();
@@ -194,7 +197,7 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
                 child: Text(textoDeErrorAsistente(AppLocalizations.of(context), error), style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ),
             AtajosRapidos(c: _c, alEnviar: _enviar),
-            CajaEntrada(c: _c, campo: _campo, alEnviar: _enviar, alAdjuntar: _adjuntar),
+            CajaEntrada(c: _c, campo: _campo, alEnviar: _enviar, alAdjuntar: _adjuntar, enfocar: widget.enfocar),
           ],
         );
       });

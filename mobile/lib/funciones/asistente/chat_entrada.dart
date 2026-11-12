@@ -35,7 +35,10 @@ class CajaEntrada extends StatelessWidget {
   final TextEditingController campo;
   final VoidCallback alEnviar;
   final VoidCallback alAdjuntar;
-  const CajaEntrada({super.key, required this.c, required this.campo, required this.alEnviar, required this.alAdjuntar});
+
+  /// Con el teclado ya abierto al aparecer (cuando se llega desde «Pídeme algo…»).
+  final bool enfocar;
+  const CajaEntrada({super.key, required this.c, required this.campo, required this.alEnviar, required this.alAdjuntar, this.enfocar = false});
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +71,7 @@ class CajaEntrada extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: campo,
+              autofocus: enfocar,
               enabled: !bloqueado && !enviando,
               minLines: 1,
               maxLines: 4,

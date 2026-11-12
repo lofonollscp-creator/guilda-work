@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../diseno/adaptable.dart';
+import '../diseno/asistente.dart';
 import '../diseno/componentes.dart';
 import '../l10n/app_localizations.dart';
+import 'abrir_asistente.dart';
+import 'barra_v3.dart';
 import 'paginas.dart';
+import 'rutas.dart' show rutaFichaje;
 import 'sesion.dart';
 
 /// La barra inferior: Inicio · Tareas · Correo · Fichaje · Más. Cada pestaña
@@ -39,6 +43,16 @@ class ShellApp extends StatelessWidget {
               selectedIndex: shell.currentIndex,
               onDestinationSelected: elegir,
               labelType: NavigationRailLabelType.all,
+              // El ✦ del asistente, arriba del raíl: en tableta abre el chat a pantalla completa (Tareas, Notas y Correo ya llevan su panel).
+              leading: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: IconButton.filled(
+                  tooltip: t.dashboardAsistenteIaTooltip,
+                  icon: const Icon(Icons.auto_awesome),
+                  style: IconButton.styleFrom(backgroundColor: ColoresIa.de(context).acento, foregroundColor: ColoresIa.de(context).sobreAcento, minimumSize: const Size(52, 52)),
+                  onPressed: () => abrirAsistente(context),
+                ),
+              ),
               destinations: [for (final d in destinos) NavigationRailDestination(icon: d.$1, selectedIcon: d.$2, label: Text(d.$3))],
             ),
           ),
@@ -46,17 +60,25 @@ class ShellApp extends StatelessWidget {
         ]),
       );
     }
+    // Fichaje sale de la barra (vive en Hoy y en «Más»); sus enlaces profundos siguen llevando a su pestaña.
+    const ramas = [0, 1, 2, 4];
+    final enBarra = ramas.indexOf(shell.currentIndex);
+    final contexto = switch (shell.currentIndex) {
+      1 => t.navTareas,
+      2 => t.navCorreo,
+      _ => null,
+    };
     return Scaffold(
       body: shell,
-      // Un filo arriba separa la barra del contenido (sin sombra: en oscuro no se veía y en claro pesaba).
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(border: Border(top: filo)),
-        child: NavigationBar(
-          selectedIndex: shell.currentIndex,
-          onDestinationSelected: elegir,
-          destinations: [for (final d in destinos) NavigationDestination(icon: d.$1, selectedIcon: d.$2, label: d.$3)],
+      bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
+        BarraPideme(alPulsar: () => abrirHojaAsistente(context, contexto: contexto, enfocar: true)),
+        BarraNavegacion(
+          destinos: [for (final i in ramas) DestinoBarra(destinos[i].$1.icon!, (destinos[i].$2 ?? destinos[i].$1).icon!, destinos[i].$3)],
+          seleccionado: enBarra < 0 ? null : enBarra,
+          alElegir: (i) => elegir(ramas[i]),
+          alAsistente: () => abrirAsistente(context, contexto: contexto),
         ),
-      ),
+      ]),
     );
   }
 }
@@ -98,6 +120,10 @@ class MasScreen extends ConsumerWidget {
                 alPulsar: () => _elegirDespacho(context, ref),
               ),
             ]),
+          // Fichaje ya no está en la barra: aquí (y en Hoy) sigue a un toque.
+          GrupoAjustes(children: [
+            FilaAjuste(icono: Icons.punch_clock_outlined, titulo: t.navFichaje, final_: const Icon(Icons.chevron_right), alPulsar: () => context.go(rutaFichaje)),
+          ]),
           GrupoAjustes(children: [
             for (final a in accesos)
               FilaAjuste(

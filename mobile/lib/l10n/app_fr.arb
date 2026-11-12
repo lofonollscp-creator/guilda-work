@@ -877,5 +877,6 @@
       }
     }
   },
-  "iaTipoVencimiento": "Échéance"
+  "iaTipoVencimiento": "Échéance",
+  "iaPideme": "Demandez-moi quelque chose…"
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guilda_work_mobile/nucleo/barra_v3.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guilda_work_mobile/l10n/app_localizations.dart';
@@ -42,6 +43,8 @@ Widget _app(EstadoSesion estado, {ProviderContainer? contenedor}) => Uncontrolle
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('es'),
+          // El aura del botón del asistente anima sin parar: con «reducir movimiento» queda quieta y `pumpAndSettle` termina.
+          builder: (c, h) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: h!),
         ),
       ),
     );
@@ -118,13 +121,16 @@ void main() {
       await t.pumpWidget(_app(EstadoSesion(fase: FaseSesion.conSesion, usuario: _usuario)));
       await t.pumpAndSettle();
       expect(find.text('INICIO'), findsOneWidget);
-      for (final e in ['Hoy', 'Tareas', 'Correo', 'Fichaje', 'Más']) {
+      for (final e in ['Hoy', 'Tareas', 'Correo', 'Más']) {
         expect(find.text(e), findsWidgets);
       }
-      await t.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Tareas')));
+      expect(find.text('Fichaje'), findsNothing); // sale de la barra: vive en «Más» (y en Hoy)
+      await t.tap(find.descendant(of: find.byType(BarraNavegacion), matching: find.text('Tareas')));
       await t.pumpAndSettle();
       expect(find.text('TAREAS'), findsOneWidget);
-      await t.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Fichaje')));
+      await t.tap(find.descendant(of: find.byType(BarraNavegacion), matching: find.text('Más')));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Fichaje'));
       await t.pumpAndSettle();
       expect(find.text('FICHAJE'), findsOneWidget);
     });
@@ -133,20 +139,20 @@ void main() {
       await t.pumpWidget(_app(const EstadoSesion(fase: FaseSesion.sinSesion)));
       await t.pumpAndSettle();
       expect(find.text('LOGIN'), findsOneWidget);
-      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(BarraNavegacion), findsNothing);
     });
 
     testWidgets('versión no admitida enseña «Actualiza la app»', (t) async {
       await t.pumpWidget(_app(EstadoSesion(fase: FaseSesion.conSesion, usuario: _usuario, actualizar: true)));
       await t.pumpAndSettle();
       expect(find.text('Actualiza la app'), findsOneWidget);
-      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(BarraNavegacion), findsNothing);
     });
 
     testWidgets('con un solo despacho «Más» no enseña el selector', (t) async {
       await t.pumpWidget(_app(EstadoSesion(fase: FaseSesion.conSesion, usuario: _usuario)));
       await t.pumpAndSettle();
-      await t.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Más')));
+      await t.tap(find.descendant(of: find.byType(BarraNavegacion), matching: find.text('Más')));
       await t.pumpAndSettle();
       expect(find.text('Despacho activo'), findsNothing);
       expect(find.text('Ajustes'), findsOneWidget);
@@ -156,7 +162,7 @@ void main() {
       final contenedor = _contenedor(EstadoSesion(fase: FaseSesion.conSesion, usuario: _usuario, capacidades: _cap2, despacho: '3'));
       await t.pumpWidget(_app(const EstadoSesion(), contenedor: contenedor));
       await t.pumpAndSettle();
-      await t.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Más')));
+      await t.tap(find.descendant(of: find.byType(BarraNavegacion), matching: find.text('Más')));
       await t.pumpAndSettle();
       expect(find.text('Gestoría Pla'), findsOneWidget);
       await t.tap(find.text('Despacho activo'));
