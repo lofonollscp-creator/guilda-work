@@ -11,7 +11,7 @@ puede moverlos de estado en el Kanban.
 from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 from flask_babel import lazy_gettext as _l
 
-from . import db, notificaciones
+from . import adjuntos_seguros, db, notificaciones, redireccion
 from .auth import login_required
 
 tiquets_bp = Blueprint("tiquets", __name__, url_prefix="/tiquets")
@@ -133,7 +133,7 @@ def crear():
             g.usuario_id, tipo=tipo, titulo=titulo, descripcion=request.form.get("descripcion") or None,
         )
         _guardar_adjuntos(tiquet_id)
-    return redirect(request.form.get("volver_a") or url_for("tiquets.tarjetas"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("tiquets.tarjetas")))
 
 
 @tiquets_bp.route("/<int:tiquet_id>/editar", methods=["GET", "POST"])
@@ -183,7 +183,7 @@ def eliminar(tiquet_id: int):
     if not _puede_borrar(tiquet):
         abort(403)
     db.eliminar_tiquet(tiquet_id)
-    return redirect(request.form.get("volver_a") or url_for("tiquets.tarjetas"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("tiquets.tarjetas")))
 
 
 @tiquets_bp.route("/<int:tiquet_id>/estado", methods=["POST"])
@@ -197,7 +197,7 @@ def cambiar_estado(tiquet_id: int):
     estado = request.form.get("estado", "")
     if estado in dict(ESTADOS):
         db.cambiar_estado_tiquet(tiquet_id, estado)
-    return redirect(request.form.get("volver_a") or url_for("tiquets.kanban"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("tiquets.kanban")))
 
 
 @tiquets_bp.route("/<int:tiquet_id>/asignar", methods=["POST"])
@@ -227,10 +227,9 @@ def asignar(tiquet_id: int):
             f"#{tiquet_id} — {tiquet['titulo']}", url=url_for("tiquets.tarjetas"),
             datos={"tipo": "tiquet_asignado", "tiquet_id": tiquet_id},
         )
-    return redirect(request.form.get("volver_a") or url_for("tiquets.tarjetas"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("tiquets.tarjetas")))
 
 
-TIPOS_PREVISUALIZABLES = ("application/pdf",)
 
 
 @tiquets_bp.route("/<int:tiquet_id>/adjunto/<int:adjunto_id>")
@@ -243,14 +242,13 @@ def descargar_adjunto(tiquet_id: int, adjunto_id: int):
     adjunto = db.obtener_adjunto_tiquet(adjunto_id)
     if adjunto is None or adjunto["tiquet_id"] != tiquet_id:
         abort(404)
-    previsualizable = adjunto["tipo_mime"].startswith("image/") or adjunto["tipo_mime"] in TIPOS_PREVISUALIZABLES
-    disposicion = "inline" if previsualizable else "attachment"
+    disposicion = "inline" if adjuntos_seguros.se_muestra_en_linea(adjunto["tipo_mime"]) else "attachment"
     respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
     # .set(..., filename=...) deja que Werkzeug escape/cite el nombre según
     # RFC 6266 -- un nombre_archivo con comillas o `;` no puede romper la
     # cabecera (antes se interpolaba con un f-string sin escapar).
     respuesta.headers.set("Content-Disposition", disposicion, filename=adjunto["nombre_archivo"])
-    return respuesta
+    return adjuntos_seguros.endurecer(respuesta, adjunto["tipo_mime"])
 
 
 @tiquets_bp.route("/<int:tiquet_id>/adjunto/<int:adjunto_id>/eliminar", methods=["POST"])

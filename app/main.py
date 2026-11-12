@@ -36,7 +36,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from .bd import contexto as contexto_bd
 from .bd.errores import ErrorIntegridad
 from .notas_formato import nota_a_html
-from . import acceso, acento, politica_acceso, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_avisos, portal_peticiones_recurrentes, portal_recordatorios, proyecto_plantillas, salud
+from . import acceso, acento, adjuntos_seguros, redireccion, politica_acceso, ai_local, ayuda, ayuda_novedades, busqueda, estado_herramientas, navegacion, seguridad_csp, captcha, comunicados, correo, mantenimiento, onboarding_despacho, ver_como, db, export, generador_documentos, herramientas, verticales, fichaje_avisos, recordatorios_tareas, ia_asistente, ia_atajos, importador, kratos, notificaciones, peticion, portal_avisos, portal_peticiones_recurrentes, portal_recordatorios, proyecto_plantillas, salud
 from .auth import limiter, login_required
 from .rutas_api import api_bp
 from . import rutas_api_ampliada, rutas_api_comercial, rutas_api_juridico, rutas_api_control_fiscal, rutas_api_documentos, rutas_api_extras, rutas_api_fiscal, rutas_api_tareas, rutas_api_verticales  # noqa: F401 -- registran más rutas en api_bp
@@ -138,6 +138,12 @@ app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
 # GUILDA_SECRET_KEY como variable de entorno para que las sesiones no se
 # invaliden cada vez que se reinicie el proceso.
 app.secret_key = os.environ.get("GUILDA_SECRET_KEY") or secrets.token_hex(32)
+# Cookie de sesión de Flask (portal de clientes, despacho activo, «ver como»): sin SameSite el navegador la manda también en POST
+# hechos desde otra web (Safari y Firefox no aplican Lax por defecto). Secure solo si el despliegue es https; el modo escritorio
+# va por http://localhost y la perdería.
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("GUILDA_URL_PUBLICA", "").startswith("https://")
 # En modo hospedado, Caddy reenvía a Flask por localhost -- sin esto,
 # request.remote_addr (y por tanto el rate-limit de app/auth.py y el
 # contador de fallos de login de app/rutas_kratos_proxy.py) verían siempre
@@ -413,6 +419,33 @@ def _cabecera_id_de_peticion(respuesta):
         except Exception:  # noqa: BLE001
             logger.warning("No se pudo anotar el error 5xx en errores_servidor", exc_info=True)
     return respuesta
+
+
+# Rutas públicas que reciben POST de otra web a propósito (landing, métricas del centro de ayuda, API con token y CORS propio) y comprueban su origen ellas mismas.
+_POST_DE_OTROS_ORIGENES = ("/contacto", "/api/", "/ayuda-metricas/")
+
+
+@app.before_request
+def _rechazar_posts_de_otros_origenes():
+    """Defensa contra CSRF para todas las rutas que cambian datos con sesión de navegador (el portal no lleva token). Un navegador
+    moderno declara de dónde sale la petición: `Sec-Fetch-Site`; los antiguos, `Origin`. Los clientes que no son navegador (API con
+    token, webhooks de Stripe/Twilio/Documenso, MCP) no mandan ninguna de las dos y no se ven afectados."""
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return None
+    sitio = request.headers.get("Sec-Fetch-Site")
+    if sitio is not None:
+        if sitio in ("same-origin", "none"):
+            return None
+        # same-site = otro subdominio nuestro (vault, n8n...): tampoco es de fiar para cambiar datos.
+        if request.path.startswith(_POST_DE_OTROS_ORIGENES):
+            return None
+        abort(403)
+    origen = request.headers.get("Origin")
+    if origen is None or request.path.startswith(_POST_DE_OTROS_ORIGENES):
+        return None
+    if urllib.parse.urlsplit(origen).netloc != request.host:
+        abort(403)
+    return None
 
 
 @app.before_request
@@ -1321,7 +1354,7 @@ def crear_plantilla(menu_id: int):
 @login_required
 def eliminar_plantilla(plantilla_id: int):
     db.eliminar_plantilla(plantilla_id)
-    return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), request.referrer, por_defecto=url_for("inicio")))
 
 
 @app.route("/menu/<int:menu_id>/renombrar", methods=["POST"])
@@ -1446,7 +1479,7 @@ def editar_nota(nota_id: int):
     if request.method == "POST":
         texto = request.form.get("texto", "").strip()
         titulo = request.form.get("titulo", "").strip()
-        volver_a = request.form.get("volver_a") or url_for("inicio")
+        volver_a = redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("inicio"))
         if texto or titulo:
             cliente = request.form.get("cliente_fiscal_id", type=int)
             db.editar_nota(
@@ -1454,7 +1487,7 @@ def editar_nota(nota_id: int):
                 cliente_fiscal_id=cliente,
             )
         return redirect(volver_a)
-    volver_a = request.args.get("volver_a") or request.referrer or url_for("inicio")
+    volver_a = redireccion.destino_local(request.args.get("volver_a"), request.referrer, por_defecto=url_for("inicio"))
     return render_template(
         "editar_nota.html", nota=nota, volver_a=volver_a,
         adjuntos=db.listar_adjuntos_nota(nota_id),
@@ -1508,7 +1541,7 @@ def dejar_de_compartir_nota(nota_id: int):
 def fijar_nota(nota_id: int):
     if not db.alternar_fijada_nota(g.usuario_id, nota_id):
         abort(404)
-    return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), request.referrer, por_defecto=url_for("inicio")))
 
 
 @app.route("/nota/<int:nota_id>/adjuntos", methods=["POST"])
@@ -1518,7 +1551,7 @@ def subir_adjuntos_nota(nota_id: int):
     primer error; los válidos anteriores ya quedan adjuntos."""
     if db.obtener_nota(g.usuario_id, nota_id) is None:
         abort(404)
-    volver_a = request.form.get("volver_a") or url_for("inicio")
+    volver_a = redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("inicio"))
     error = None
     for fichero in request.files.getlist("adjunto"):
         if not fichero or not fichero.filename:
@@ -1538,12 +1571,11 @@ def descargar_adjunto_nota(adjunto_id: int):
     adjunto = db.obtener_adjunto_nota(g.usuario_id, adjunto_id)
     if adjunto is None:
         abort(404)
-    en_linea = request.args.get("ver") == "1" and adjunto["tipo_mime"].startswith("image/")
+    en_linea = request.args.get("ver") == "1" and adjuntos_seguros.se_muestra_en_linea(adjunto["tipo_mime"], pdf=False)
     respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
     nombre = adjunto["nombre"].replace('"', "")
     respuesta.headers["Content-Disposition"] = f'{"inline" if en_linea else "attachment"}; filename="{nombre}"'
-    respuesta.headers["X-Content-Type-Options"] = "nosniff"
-    return respuesta
+    return adjuntos_seguros.endurecer(respuesta, adjunto["tipo_mime"])
 
 
 @app.route("/nota/adjunto/<int:adjunto_id>/eliminar", methods=["POST"])
@@ -1553,7 +1585,7 @@ def eliminar_adjunto_nota(adjunto_id: int):
     if adjunto is None:
         abort(404)
     db.eliminar_adjunto_nota(g.usuario_id, adjunto_id)
-    return redirect(url_for("editar_nota", nota_id=adjunto["nota_id"], volver_a=request.form.get("volver_a") or url_for("inicio")))
+    return redirect(url_for("editar_nota", nota_id=adjunto["nota_id"], volver_a=redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("inicio"))))
 
 
 @app.route("/nota/<int:nota_id>/eliminar", methods=["POST"])
@@ -1562,7 +1594,7 @@ def eliminar_nota(nota_id: int):
     if db.obtener_nota(g.usuario_id, nota_id) is None:
         abort(404)
     db.eliminar_nota(g.usuario_id, nota_id)
-    return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), request.referrer, por_defecto=url_for("inicio")))
 
 
 @app.route("/tareas", methods=["POST"])
@@ -1589,7 +1621,7 @@ def editar_tarea(tarea_id: int):
         nombre = request.form.get("nombre", "").strip()
         inicio = request.form.get("inicio") or None
         fin = request.form.get("fin") or None
-        volver_a = request.form.get("volver_a") or url_for("inicio")
+        volver_a = redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("inicio"))
         if nombre:
             db.editar_tarea(g.usuario_id, tarea_id, nombre)
         if inicio:
@@ -1597,12 +1629,7 @@ def editar_tarea(tarea_id: int):
         if error is None:
             return redirect(volver_a)
         tarea = db.obtener_tarea(g.usuario_id, tarea_id)
-    volver_a = (
-        request.form.get("volver_a")
-        or request.args.get("volver_a")
-        or request.referrer
-        or url_for("inicio")
-    )
+    volver_a = redireccion.destino_local(request.form.get("volver_a"), request.args.get("volver_a"), request.referrer, por_defecto=url_for("inicio"))
     return render_template("editar_tarea.html", tarea=tarea, error=error, volver_a=volver_a)
 
 
@@ -1612,7 +1639,7 @@ def eliminar_tarea(tarea_id: int):
     if db.obtener_tarea(g.usuario_id, tarea_id) is None:
         abort(404)
     db.eliminar_tarea(g.usuario_id, tarea_id)
-    return redirect(request.form.get("volver_a") or request.referrer or url_for("inicio"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), request.referrer, por_defecto=url_for("inicio")))
 
 
 @app.route("/tareas/<int:tarea_id>/pausar", methods=["POST"])

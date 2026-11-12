@@ -10,9 +10,13 @@ Los proveedores que no leen PDF reciben cada página como imagen (app/pdf_factur
 from __future__ import annotations
 
 import base64
+import ipaddress
 import json
+import os
 import re
+import socket
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -91,6 +95,43 @@ def url_valida(url: str) -> str:
 
 # --- HTTP ---------------------------------------------------------------------------------------------------------------------------------------------------
 
+def _destinos_internos() -> set[str]:
+    """`host:puerto` que sí se pueden alcanzar aunque sean de la red interna (por defecto, el Ollama del propio servidor)."""
+    bruto = os.environ.get("GUILDA_IA_DESTINOS_INTERNOS", "localhost:11434,127.0.0.1:11434")
+    return {d.strip().lower() for d in bruto.split(",") if d.strip()}
+
+
+def comprobar_destino(url: str) -> None:
+    """Evita que la URL de un servidor propio sirva para sondear la red interna (SSRF: Kratos/Hydra admin en 127.0.0.1, la red de Docker,
+    los metadatos de la nube). Solo pasan direcciones públicas o las de `GUILDA_IA_DESTINOS_INTERNOS`. Un nombre que no resuelve se deja
+    pasar: la conexión fallará sola. `ErrorIA` si el destino no es público."""
+    partes = urllib.parse.urlsplit(url)
+    host = (partes.hostname or "").lower()
+    try:
+        puerto = partes.port or (443 if partes.scheme == "https" else 80)
+    except ValueError:
+        raise ErrorIA("La dirección del servidor no es válida.") from None
+    if f"{host}:{puerto}" in _destinos_internos():
+        return
+    try:
+        direcciones = {r[4][0] for r in socket.getaddrinfo(host, puerto, type=socket.SOCK_STREAM)}
+    except (OSError, UnicodeError):
+        return
+    for d in direcciones:
+        if not ipaddress.ip_address(d.split("%")[0]).is_global:
+            raise ErrorIA("La dirección del servidor apunta a una red no pública: no se consulta.")
+
+
+class _SinRedirecciones(urllib.request.HTTPRedirectHandler):
+    """Un 302 no puede llevar la petición a un destino que no se ha comprobado."""
+
+    def redirect_request(self, *a, **k):
+        return None
+
+
+_abridor = urllib.request.build_opener(_SinRedirecciones)
+
+
 def _cabeceras(prov: Proveedor, clave: str) -> dict:
     h = {"Content-Type": "application/json"}
     if prov.formato == "anthropic":
@@ -102,9 +143,10 @@ def _cabeceras(prov: Proveedor, clave: str) -> dict:
 
 def _http_json(url: str, payload: dict | None, cabeceras: dict, timeout: int, claves: list[str], nombre: str, metodo: str = "POST") -> dict:
     data = json.dumps(payload).encode("utf-8") if payload is not None else None
+    comprobar_destino(url)
     req = urllib.request.Request(url, data=data, method=metodo, headers=cabeceras)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with _abridor.open(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         detalle = limpiar(e.read().decode("utf-8", errors="replace"), claves)[:600]
@@ -118,9 +160,10 @@ def _http_json(url: str, payload: dict | None, cabeceras: dict, timeout: int, cl
 
 
 def _abrir_stream(url: str, payload: dict, cabeceras: dict, claves: list[str], nombre: str):
+    comprobar_destino(url)
     req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), method="POST", headers={**cabeceras, "Accept": "text/event-stream"})
     try:
-        return urllib.request.urlopen(req, timeout=TIMEOUT_SEGUNDOS)
+        return _abridor.open(req, timeout=TIMEOUT_SEGUNDOS)
     except urllib.error.HTTPError as e:
         raise ErrorIA(f"{nombre} devolvió un error ({e.code}): {limpiar(e.read().decode('utf-8', errors='replace'), claves)[:600]}", codigo_http=e.code) from e
     except urllib.error.URLError as e:

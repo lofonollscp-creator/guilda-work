@@ -7,7 +7,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _, ngettext
 
-from . import acceso, cobro_contabilidad, db, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
+from . import acceso, cobro_contabilidad, db, redireccion, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
 from . import cierre_trimestre, cola_contabilidad, cuadre_303, terceros_duplicados, facturas_control, panel_cierre, retorno_a3, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
@@ -410,7 +410,7 @@ def estado(factura_id: int):
     if request.form.get("siguiente"):
         siguiente = fc.siguiente_pendiente(g.tenant_id, g.usuario_id, factura_id, "confianza" if request.form.get("orden") == "confianza" else None)
         return redirect(url_for("contabilidad.ver", factura_id=siguiente) if siguiente else url_for("contabilidad.lista", estado="pendiente", todas_revisadas=1))
-    return redirect(request.form.get("volver") or url_for("contabilidad.ver", factura_id=factura_id))
+    return redirect(redireccion.destino_local(request.form.get("volver"), por_defecto=url_for("contabilidad.ver", factura_id=factura_id)))
 
 
 @contabilidad_bp.route("/<int:factura_id>/mensajes", methods=["POST"])

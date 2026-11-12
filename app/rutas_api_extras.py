@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import Response, abort, g, request
 from flask_babel import gettext
 
-from . import correo, db, fichaje_export
+from . import adjuntos_seguros, correo, db, fichaje_export
 from .auth import token_required
 from .rutas_api import _body, _dict, _dicts, _err, _ok, _ok_paginado, api_bp
 from . import rutas_api_hoy  # noqa: F401 -- registra GET /hoy en api_bp
@@ -55,11 +55,10 @@ def descargar_adjunto_nota(adjunto_id: int):
     adjunto = db.obtener_adjunto_nota(g.usuario_id, adjunto_id)
     if adjunto is None:
         abort(404, gettext("Adjunto no encontrado."))
-    en_linea = request.args.get("ver") == "1" and adjunto["tipo_mime"].startswith("image/")
+    en_linea = request.args.get("ver") == "1" and adjuntos_seguros.se_muestra_en_linea(adjunto["tipo_mime"], pdf=False)
     r = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
     r.headers["Content-Disposition"] = f'{"inline" if en_linea else "attachment"}; filename="{adjunto["nombre"].replace(chr(34), "")}"'
-    r.headers["X-Content-Type-Options"] = "nosniff"
-    return r
+    return adjuntos_seguros.endurecer(r, adjunto["tipo_mime"])
 
 
 @api_bp.route("/notas/adjuntos/<int:adjunto_id>", methods=["DELETE"])

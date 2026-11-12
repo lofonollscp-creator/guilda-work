@@ -158,7 +158,8 @@ def test_los_errores_http_no_llevan_la_clave(monkeypatch):
 
     def falla(req, timeout=0):
         raise urllib.error.HTTPError(req.full_url, 401, "no", {}, io.BytesIO(b'{"error":"Incorrect API key provided: sk-secreta-1234567890abcd"}'))
-    monkeypatch.setattr(pv.urllib.request, "urlopen", falla)
+    monkeypatch.setattr(pv._abridor, "open", falla)
+    monkeypatch.setattr(pv, "comprobar_destino", lambda url: None)
     with pytest.raises(ErrorIA) as e:
         pv.llamar("openai", "gpt-4o", {"messages": []}, "sk-secreta-1234567890abcd")
     assert e.value.codigo_http == 401 and "secreta" not in str(e.value) and "***" in str(e.value)
@@ -181,3 +182,30 @@ def test_listar_modelos_filtra_lo_que_no_es_chat(monkeypatch):
     assert pv.listar_modelos("openai", "sk-clave-de-prueba") == ["gpt-4o", "gpt-4o-mini"]
     monkeypatch.setattr(pv, "_http_json", lambda *a, **k: {"models": [{"id": "models/gemini-2.0-flash"}]})
     assert pv.listar_modelos("gemini", "AIzaclavedeprueba") == ["gemini-2.0-flash"]
+
+
+@pytest.mark.parametrize("url", ["http://127.0.0.1:4434/admin/identities#", "http://169.254.169.254/latest/meta-data/", "http://10.0.0.5/v1", "http://[::1]:4445/", "http://172.17.0.2:8000/v1", "http://localhost:4434/v1"])
+def test_las_urls_propias_no_pueden_apuntar_a_la_red_interna(url):
+    with pytest.raises(ErrorIA, match="red no pública"):
+        pv.comprobar_destino(url)
+
+
+def test_el_ollama_del_servidor_y_las_direcciones_publicas_si_pasan(monkeypatch):
+    pv.comprobar_destino("http://localhost:11434/v1")
+    monkeypatch.setattr(pv.socket, "getaddrinfo", lambda h, p, **k: [(2, 1, 6, "", ("93.184.216.34", p))])
+    pv.comprobar_destino("https://ia.ejemplo.org/v1")
+    monkeypatch.setenv("GUILDA_IA_DESTINOS_INTERNOS", "10.1.1.1:8080")
+    pv.comprobar_destino("http://10.1.1.1:8080/v1")
+    monkeypatch.setattr(pv.socket, "getaddrinfo", lambda h, p, **k: [(2, 1, 6, "", ("127.0.0.1", p))])
+    with pytest.raises(ErrorIA):
+        pv.comprobar_destino("http://localhost:11434/v1")
+
+
+def test_un_nombre_que_resuelve_a_una_ip_privada_se_rechaza(monkeypatch):
+    monkeypatch.setattr(pv.socket, "getaddrinfo", lambda h, p, **k: [(2, 1, 6, "", ("192.168.1.9", p))])
+    with pytest.raises(ErrorIA, match="red no pública"):
+        pv.comprobar_destino("https://interno.ejemplo.org/v1")
+
+
+def test_una_redireccion_no_se_sigue():
+    assert pv._SinRedirecciones().redirect_request(None, None, 302, "x", {}, "http://127.0.0.1/") is None

@@ -8,7 +8,7 @@ from flask import (
 
 from flask_babel import gettext as _
 
-from . import db, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_proveedores, ia_salidas, ia_soporte, ia_uso, ocr_local
+from . import adjuntos_seguros, db, redireccion, ia_asistente as asistente, ia_atajos, ia_claves, ia_consumo, ia_despacho, ia_proveedores, ia_salidas, ia_soporte, ia_uso, ocr_local
 from .ia_errores import ErrorIA
 from .auth import login_required
 
@@ -60,7 +60,7 @@ def resolver_propuesta(propuesta_id: int, accion: str):
         abort(404)
     from . import ia_propuestas
     volver = request.form.get("volver", "")
-    destino = volver if volver.startswith("/") and not volver.startswith("//") else url_for("ia.propuestas")
+    destino = redireccion.destino_local(volver, por_defecto=url_for("ia.propuestas"))
     sep = "&" if "?" in destino else "?"
     try:
         if accion == "aprobar":
@@ -162,7 +162,6 @@ def subir_adjunto():
     return jsonify({"ok": True, "id": adjunto_id, "nombre_archivo": fichero.filename})
 
 
-_TIPOS_PREVISUALIZABLES = ("application/pdf",)
 
 
 @ia_bp.route("/adjuntos/<int:adjunto_id>")
@@ -178,11 +177,10 @@ def descargar_adjunto(adjunto_id: int):
     if adjunto is None:
         abort(404)
     tipo_mime = adjunto["tipo_mime"] or "application/octet-stream"
-    previsualizable = tipo_mime.startswith("image/") or tipo_mime in _TIPOS_PREVISUALIZABLES
-    disposicion = "inline" if previsualizable else "attachment"
+    disposicion = "inline" if adjuntos_seguros.se_muestra_en_linea(tipo_mime) else "attachment"
     respuesta = Response(adjunto["contenido"], mimetype=tipo_mime)
     respuesta.headers.set("Content-Disposition", disposicion, filename=adjunto["nombre_archivo"])
-    return respuesta
+    return adjuntos_seguros.endurecer(respuesta, tipo_mime)
 
 
 @ia_bp.route("/confirmar", methods=["POST"])

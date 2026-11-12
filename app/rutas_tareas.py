@@ -13,7 +13,7 @@ from flask_babel import format_date, ngettext
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import calcom, db, fichaje_export, notificaciones, outlook_ics, quickadd, tareas_agrupar, tareas_trabajo
+from . import calcom, db, fichaje_export, notificaciones, outlook_ics, quickadd, redireccion, tareas_agrupar, tareas_trabajo
 from .auth import login_required
 
 tareas_bp = Blueprint("tareas", __name__, url_prefix="/tareas")
@@ -467,7 +467,7 @@ def crear():
                 db.iniciar_cronometro_tarea_outlook(g.usuario_id, tarea_id)
             except ValueError as e:
                 return _volver_con_error(str(e))
-    return redirect(request.form.get("volver_a") or url_for("tareas.listar"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("tareas.listar")))
 
 
 @tareas_bp.route("/<int:tarea_id>/editar", methods=["GET", "POST"])
@@ -599,9 +599,7 @@ def lote():
         resultado = db.accion_en_lote(g.usuario_id, request.form.getlist("ids"), accion, request.form.get(f"valor_{accion}"))
     except ValueError:
         resultado = {"ok": 0, "fallos": 0}
-    volver = request.form.get("volver_a") or ""
-    if not volver.startswith("/") or volver.startswith("//"):
-        volver = url_for("tareas.listar")
+    volver = redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("tareas.listar"))
     separador = "&" if "?" in volver else "?"
     return redirect(f"{volver}{separador}aviso={quote(aviso_de_lote(resultado))}")
 
@@ -1049,10 +1047,7 @@ def completar(tarea_id: int):
         return _volver_con_error(MENSAJE_BLOQUEADA)
     db.completar_tarea_outlook(g.usuario_id, tarea_id)
     _avisar_desbloqueos(g.usuario_id, tarea_id, previa is not None and previa["estado"] == "completada")
-    volver = request.form.get("volver_a") or ""
-    if volver.startswith("/") and not volver.startswith("//"):      # solo rutas de esta aplicación
-        return redirect(volver)
-    return redirect(request.referrer or url_for("tareas.listar"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), request.referrer, por_defecto=url_for("tareas.listar")))
 
 
 @tareas_bp.route("/<int:tarea_id>/eliminar", methods=["POST"])
@@ -1068,14 +1063,14 @@ def eliminar(tarea_id: int):
 @login_required
 def restaurar(tarea_id: int):
     db.restaurar_tarea_outlook(g.usuario_id, tarea_id)
-    return redirect(request.form.get("volver_a") or url_for("papelera"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("papelera")))
 
 
 @tareas_bp.route("/<int:tarea_id>/eliminar-definitivamente", methods=["POST"])
 @login_required
 def eliminar_definitivamente(tarea_id: int):
     db.eliminar_tarea_outlook_definitivamente(g.usuario_id, tarea_id)
-    return redirect(request.form.get("volver_a") or url_for("papelera"))
+    return redirect(redireccion.destino_local(request.form.get("volver_a"), por_defecto=url_for("papelera")))
 
 
 @tareas_bp.route("/sincronizar")

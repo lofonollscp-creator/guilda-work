@@ -15,7 +15,7 @@ from flask_babel import get_locale, ngettext
 from flask_babel import gettext as _
 from flask_babel import lazy_gettext as _l
 
-from . import acceso, contactos, correo, correo_buzones, correo_autorespuesta, correo_contexto, correo_dominio, dns_simple, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
+from . import acceso, adjuntos_seguros, contactos, correo, correo_buzones, correo_autorespuesta, correo_contexto, correo_dominio, dns_simple, correo_ia, correo_oauth, correo_vista, db, ficha_cliente, ia_asistente, nucleo, notificaciones, peticion, quickadd
 from .auth import login_required
 from .rutas_tareas import color_categoria
 
@@ -654,7 +654,6 @@ def ver_mensaje(mensaje_id: int):
     ))
 
 
-TIPOS_PREVISUALIZABLES = ("application/pdf",)
 
 
 @correo_bp.route("/<int:mensaje_id>/adjunto/<int:adjunto_id>")
@@ -665,11 +664,10 @@ def descargar_adjunto(mensaje_id: int, adjunto_id: int):
     adjunto = db.obtener_adjunto_correo(adjunto_id)
     if adjunto is None or adjunto["mensaje_id"] != mensaje_id:
         abort(404)
-    previsualizable = adjunto["tipo_mime"].startswith("image/") or adjunto["tipo_mime"] in TIPOS_PREVISUALIZABLES
-    disposicion = "inline" if previsualizable else "attachment"
+    disposicion = "inline" if adjuntos_seguros.se_muestra_en_linea(adjunto["tipo_mime"]) else "attachment"
     respuesta = Response(adjunto["contenido"], mimetype=adjunto["tipo_mime"])
     respuesta.headers.set("Content-Disposition", disposicion, filename=adjunto["nombre_archivo"])
-    return respuesta
+    return adjuntos_seguros.endurecer(respuesta, adjunto["tipo_mime"])
 
 
 @correo_bp.route("/<int:mensaje_id>/confiar-remitente", methods=["POST"])

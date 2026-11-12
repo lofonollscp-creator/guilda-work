@@ -94,3 +94,24 @@ def test_el_informe_de_csp_se_registra_sin_exigir_sesion(cliente, caplog):
     assert r.status_code == 204
     assert any("script-src-elem" in rec.getMessage() and "inline" in rec.getMessage() for rec in caplog.records)
     assert cliente.post("/csp-report", data="no es json", content_type="text/plain").status_code == 204        # basura: se ignora sin romper
+
+
+# --- Cookie de sesión de Flask y POST de otros orígenes (CSRF del portal) -----------------------------------------------------------
+
+def test_la_cookie_de_sesion_de_flask_es_lax_y_httponly():
+    from app.main import app
+    assert app.config["SESSION_COOKIE_SAMESITE"] == "Lax" and app.config["SESSION_COOKIE_HTTPONLY"] is True
+
+
+@pytest.mark.parametrize("cabeceras", [{"Sec-Fetch-Site": "cross-site"}, {"Sec-Fetch-Site": "same-site"}, {"Origin": "https://evil.example"}, {"Origin": "null"}])
+def test_un_post_hecho_desde_otra_web_se_rechaza(cliente, cabeceras):
+    assert cliente.post("/portal/salir", headers=cabeceras).status_code == 403
+
+
+@pytest.mark.parametrize("cabeceras", [{}, {"Sec-Fetch-Site": "same-origin"}, {"Sec-Fetch-Site": "none"}, {"Origin": "http://localhost"}])
+def test_un_post_del_propio_sitio_o_sin_cabeceras_de_navegador_pasa(cliente, cabeceras):
+    assert cliente.post("/portal/salir", headers=cabeceras, base_url="http://localhost").status_code != 403
+
+
+def test_los_get_no_se_ven_afectados(cliente):
+    assert cliente.get("/login", headers={"Sec-Fetch-Site": "cross-site"}).status_code != 403
