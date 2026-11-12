@@ -87,6 +87,9 @@ class ApiException implements Exception {
   /// La cuenta tiene verificación en dos pasos y falta el código.
   bool get requiere2fa => codigo == 'requiere_2fa';
 
+  /// El despacho exige verificación en dos pasos o passkey y esta cuenta aún no la tiene (403 al entrar): se activa en la web.
+  bool get politicaAcceso => codigo == 'politica_acceso';
+
   /// Se decide por el estado, salvo los `codigo` que el servidor usa para
   /// conflictos con otro número (tareas 409, fiscal 412: mismo concepto).
   CategoriaError get categoria {

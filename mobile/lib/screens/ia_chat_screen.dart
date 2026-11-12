@@ -9,6 +9,7 @@ import '../funciones/asistente/asistente_controlador.dart';
 import '../funciones/asistente/asistente_piezas.dart';
 import '../funciones/asistente/chat_cuerpo.dart';
 import '../funciones/asistente/chat_entrada.dart';
+import '../funciones/asistente/chat_v3.dart';
 import '../funciones/asistente/motor_voz.dart';
 import '../l10n/app_localizations.dart';
 import '../models/models.dart';
@@ -196,6 +197,7 @@ class _IaChatScreenState extends ConsumerState<IaChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: Text(textoDeErrorAsistente(AppLocalizations.of(context), error), style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ),
+            AvisoConsumoIa(consumo: _c.consumo),
             AtajosRapidos(c: _c, alEnviar: _enviar),
             CajaEntrada(c: _c, campo: _campo, alEnviar: _enviar, alAdjuntar: _adjuntar, enfocar: widget.enfocar),
           ],

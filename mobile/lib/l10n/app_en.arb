@@ -878,5 +878,36 @@
     }
   },
   "iaTipoVencimiento": "Deadline",
-  "iaPideme": "Ask me anything…"
+  "iaPideme": "Ask me anything…",
+  "iaConsumoCerca": "Your firm has used {usadas} of {limite} AI requests this month.",
+  "@iaConsumoCerca": {
+    "placeholders": {
+      "usadas": {"type": "int"},
+      "limite": {"type": "int"}
+    }
+  },
+  "iaConsumoAgotado": "Your firm has used up this month's AI requests. They renew on the 1st.",
+  "errPoliticaAcceso": "Your firm requires two-step verification or a passkey. Turn it on from the web (Settings → Password and email) and sign in again.",
+  "loginAbrirWeb": "Open the Guilda website",
+  "propuestasTitulo": "The assistant suggests",
+  "propuestasIntro": "Things the assistant thinks are worth doing. Nothing happens until you approve it; if you reject one, it won't come back for 30 days.",
+  "propuestasVacioTitulo": "Nothing to approve",
+  "propuestasVacioDetalle": "When the assistant spots something worth doing, it will suggest it here.",
+  "propuestasPropone": "Suggests",
+  "propuestasUrgente": "Urgent",
+  "propuestasAprobar": "Approve",
+  "propuestasRechazar": "Reject",
+  "propuestasAprobada": "Done: suggestion approved",
+  "propuestasRechazada": "Rejected: it won't come back for 30 days",
+  "propuestasConfirmarTitulo": "Approve this suggestion?",
+  "propuestasConfirmarCuerpo": "Approving it will act towards a client (portal or third-party account), not just inside your firm.",
+  "propuestasHoy": "{n, plural, =1{1 suggestion from the assistant} other{{n} suggestions from the assistant}}",
+  "@propuestasHoy": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "propuestasHoyDetalle": "Review and approve or reject"
 }

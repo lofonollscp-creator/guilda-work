@@ -1262,6 +1262,16 @@ class ApiClient {
     }
   }
 
+  /// El consumo de IA del despacho este mes (`GET /ia/consumo`): lo gastado, el tope y qué parte es.
+  Future<ConsumoIa> obtenerConsumoIa() async {
+    try {
+      final resp = await _dio.get('/ia/consumo');
+      return ConsumoIa.desdeJson((resp.data['data'] as Map).cast<String, dynamic>());
+    } on DioException catch (e) {
+      throw _errorLegible(e);
+    }
+  }
+
   Future<List<IaConversacion>> listarConversacionesIa() async {
     try {
       final resp = await _dio.get('/ia/conversaciones');

@@ -6,6 +6,7 @@ import '../diseno/adaptable.dart';
 import '../diseno/asistente.dart';
 import '../diseno/componentes.dart';
 import '../l10n/app_localizations.dart';
+import '../funciones/propuestas/propuestas_controlador.dart';
 import 'abrir_asistente.dart';
 import 'barra_v3.dart';
 import 'paginas.dart';
@@ -15,14 +16,15 @@ import 'sesion.dart';
 /// La barra inferior: Inicio · Tareas · Correo · Fichaje · Más. Cada pestaña
 /// conserva su propia pila de pantallas (`StatefulShellRoute`), así que cambiar
 /// de sección ya no obliga a volver atrás hasta el inicio.
-class ShellApp extends StatelessWidget {
+class ShellApp extends ConsumerWidget {
   final StatefulNavigationShell shell;
   const ShellApp({super.key, required this.shell});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final tema = Theme.of(context);
+    final propuestas = ref.watch(propuestasPendientesProvider);
     final destinos = [
       (const Icon(Icons.home_outlined), const Icon(Icons.home), t.navInicio),
       (const Icon(Icons.checklist), null, t.navTareas),
@@ -77,6 +79,7 @@ class ShellApp extends StatelessWidget {
           seleccionado: enBarra < 0 ? null : enBarra,
           alElegir: (i) => elegir(ramas[i]),
           alAsistente: () => abrirAsistente(context, contexto: contexto),
+          propuestas: propuestas,
         ),
       ]),
     );

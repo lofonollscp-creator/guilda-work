@@ -878,5 +878,36 @@
     }
   },
   "iaTipoVencimiento": "Venciment",
-  "iaPideme": "Demana'm alguna cosa…"
+  "iaPideme": "Demana'm alguna cosa…",
+  "iaConsumoCerca": "El teu despatx porta {usadas} de {limite} consultes d'IA aquest mes.",
+  "@iaConsumoCerca": {
+    "placeholders": {
+      "usadas": {"type": "int"},
+      "limite": {"type": "int"}
+    }
+  },
+  "iaConsumoAgotado": "El teu despatx ha esgotat les consultes d'IA d'aquest mes. Es renoven l'1.",
+  "errPoliticaAcceso": "El teu despatx exigeix verificació en dos passos o una passkey. Activa-la des del web (Ajustos → Contrasenya i correu) i torna a entrar.",
+  "loginAbrirWeb": "Obre el web de Guilda",
+  "propuestasTitulo": "L'assistent proposa",
+  "propuestasIntro": "Coses que l'assistent creu que convé fer. No es fa res fins que ho aproves; si en rebutges una, no torna a sortir en 30 dies.",
+  "propuestasVacioTitulo": "Res per aprovar",
+  "propuestasVacioDetalle": "Quan l'assistent detecti alguna cosa convenient, te la proposarà aquí.",
+  "propuestasPropone": "Proposa",
+  "propuestasUrgente": "Urgent",
+  "propuestasAprobar": "Aprova",
+  "propuestasRechazar": "Rebutja",
+  "propuestasAprobada": "Fet: proposta aprovada",
+  "propuestasRechazada": "Rebutjada: no tornarà a sortir en 30 dies",
+  "propuestasConfirmarTitulo": "Aprovar aquesta proposta?",
+  "propuestasConfirmarCuerpo": "En aprovar-la s'actuarà cap a un client (portal o compte de tercer), no només dins del teu despatx.",
+  "propuestasHoy": "{n, plural, =1{1 proposta de l'assistent} other{{n} propostes de l'assistent}}",
+  "@propuestasHoy": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "propuestasHoyDetalle": "Revisa-les i aprova o rebutja"
 }

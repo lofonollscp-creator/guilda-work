@@ -10,6 +10,7 @@ import 'estados.dart';
 /// Un error de validación enseña el mensaje del servidor (dice qué campo está mal); el resto, un texto claro y una salida.
 String mensajeDeError(AppLocalizations t, Object error) {
   if (error is! ApiException) return t.errDesconocido;
+  if (error.politicaAcceso) return t.errPoliticaAcceso; // un 403 que no es «no tienes permiso»: falta activar el segundo factor
   return switch (error.categoria) {
     CategoriaError.red => t.errRed,
     CategoriaError.autenticacion => t.errAutenticacion,

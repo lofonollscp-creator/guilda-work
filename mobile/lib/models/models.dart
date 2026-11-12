@@ -871,6 +871,20 @@ class IaFuente {
       );
 }
 
+/// Cuánto ha gastado el despacho de su tope mensual de consultas de IA. Sin tope ([limite] nulo) nunca hay aviso; con tope, avisa al 80 % y cuando se agota.
+class ConsumoIa {
+  final int usadas;
+  final int? limite;
+  const ConsumoIa({required this.usadas, this.limite});
+
+  factory ConsumoIa.desdeJson(Map<String, dynamic> j) => ConsumoIa(usadas: (j['usadas'] as num?)?.toInt() ?? 0, limite: (j['limite'] as num?)?.toInt());
+
+  /// Porcentaje gastado (0–100), o null si no hay tope (o es 0: la IA está desactivada, que no es «gastarse» nada).
+  int? get pct => (limite == null || limite == 0) ? null : (usadas * 100 ~/ limite!).clamp(0, 100);
+  bool get agotado => limite != null && limite! > 0 && usadas >= limite!;
+  bool get cerca => !agotado && (pct ?? 0) >= 80;
+}
+
 /// Un archivo de texto ya subido al chat: su id es lo que el asistente necesita para leerlo.
 class IaAdjunto {
   final int id;

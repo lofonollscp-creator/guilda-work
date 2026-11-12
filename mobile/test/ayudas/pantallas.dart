@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:guilda_work_mobile/funciones/hoy/hoy_fichaje.dart';
+import 'package:guilda_work_mobile/funciones/propuestas/propuestas_controlador.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -77,6 +78,11 @@ class ApiFalsa extends ApiClient {
   Object? falloCargaIa;
   Object? falloSubidaIa;
   final List<String> subidosIa = [];
+
+  /// Lo gastado del tope de IA que contesta el servidor falso (por defecto, sin tope).
+  ConsumoIa consumoIa = const ConsumoIa(usadas: 0);
+  @override
+  Future<ConsumoIa> obtenerConsumoIa() async => consumoIa;
 
   @override
   Future<List<IaMensaje>> listarMensajesIa() async {
@@ -166,7 +172,7 @@ Mensaje msg(int id, String de, String asunto, String texto, {bool leido = true, 
       leido: leido, destacado: destacado, remitenteConfiable: true, adjuntos: const [],
     );
 
-Widget appDePantalla(Widget home, List<Override> overrides, {bool oscuro = false, GlobalKey? clave}) {
+Widget appDePantalla(Widget home, List<Override> overrides, {bool oscuro = false, GlobalKey? clave, bool propuestasVacias = true}) {
   final app = MaterialApp(
     debugShowCheckedModeBanner: false,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -179,7 +185,7 @@ Widget appDePantalla(Widget home, List<Override> overrides, {bool oscuro = false
     builder: (c, h) => MediaQuery(data: MediaQuery.of(c).copyWith(disableAnimations: true), child: h!),
     home: home,
   );
-  return ProviderScope(overrides: overrides, child: clave == null ? app : RepaintBoundary(key: clave, child: app));
+  return ProviderScope(overrides: [...overrides, if (propuestasVacias) propuestasProvider.overrideWith(PropuestasFalsas.new)], child: clave == null ? app : RepaintBoundary(key: clave, child: app));
 }
 
 
@@ -241,5 +247,31 @@ class FichajeHoyFalso extends FichajeHoyControlador {
     marcadas.add(tipo);
     state = AsyncData(EstadoFichajeHoy({'entrada': 'dentro', 'pausa_inicio': 'en_pausa', 'pausa_fin': 'dentro', 'salida': 'fuera'}[tipo]!, true, '09:00'));
     return ResultadoMarca.enviada;
+  }
+}
+
+/// La bandeja de propuestas sin red: devuelve [lista] y apunta lo aprobado y lo rechazado.
+class PropuestasFalsas extends PropuestasControlador {
+  final List<PropuestaIa> lista;
+  final List<String> hechas;
+  final Object? falloAlResolver;
+  PropuestasFalsas([this.lista = const [], List<String>? hechas, this.falloAlResolver]) : hechas = hechas ?? [];
+
+  @override
+  Future<List<PropuestaIa>> build() async => lista;
+
+  @override
+  Future<String?> aprobar(PropuestaIa p) async {
+    if (falloAlResolver != null) throw falloAlResolver!;
+    hechas.add('aprobar:${p.id}');
+    state = AsyncData([for (final x in state.value!) if (x.id != p.id) x]);
+    return 'tarea:1';
+  }
+
+  @override
+  Future<void> rechazar(PropuestaIa p) async {
+    if (falloAlResolver != null) throw falloAlResolver!;
+    hechas.add('rechazar:${p.id}');
+    state = AsyncData([for (final x in state.value!) if (x.id != p.id) x]);
   }
 }

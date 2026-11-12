@@ -132,6 +132,36 @@ class _TextoVivoState extends State<TextoVivo> with SingleTickerProviderStateMix
   }
 }
 
+/// El aviso discreto del tope de IA: al 80 % «llevas X de Y» y, agotado, cuándo se renueva. Sin tope o lejos de él no sale.
+class AvisoConsumoIa extends StatelessWidget {
+  final ConsumoIa? consumo;
+  const AvisoConsumoIa({super.key, required this.consumo});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = consumo;
+    if (c == null || !(c.agotado || c.cerca)) return const SizedBox.shrink();
+    final t = AppLocalizations.of(context);
+    final tema = Theme.of(context);
+    final p = PaletaV3.de(context);
+    final texto = c.agotado ? t.iaConsumoAgotado : t.iaConsumoCerca(c.usadas, c.limite!);
+    final fondo = Color.alphaBlend((c.agotado ? tema.colorScheme.error : p.acento).withValues(alpha: 0.12), p.superficie);
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(V3.radioS)),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          ExcludeSemantics(child: Icon(c.agotado ? Icons.block : Icons.speed, size: 18, color: p.texto)),
+          const SizedBox(width: 8),
+          Expanded(child: Text(texto, style: tema.textTheme.labelMedium?.copyWith(color: p.texto))),
+        ]),
+      ),
+    );
+  }
+}
+
 /// Lo que hace el asistente mientras responde: el orbe pensando y, plegados, los pasos ya dados. Un toque los despliega.
 class PasosPlegables extends StatefulWidget {
   final List<String> hechos;

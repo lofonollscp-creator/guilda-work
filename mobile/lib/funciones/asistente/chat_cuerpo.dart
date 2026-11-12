@@ -8,6 +8,7 @@ import '../../models/models.dart';
 import '../../services/api_client.dart';
 import '../../theme/brand_colors.dart';
 import 'asistente_controlador.dart';
+import '../propuestas/propuestas_screen.dart';
 import 'asistente_piezas.dart';
 import 'chat_v3.dart';
 
@@ -95,6 +96,7 @@ class _Inicio extends StatelessWidget {
       const SizedBox(height: 6),
       Text(t.iaVacioTexto, textAlign: TextAlign.center, style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
       const SizedBox(height: 24),
+      const TarjetaPropuestas(margen: EdgeInsets.only(bottom: 20)),
       EtiquetaSeccion(contexto == null ? t.iaSugerenciasTitulo : t.iaAhoraMismo(contexto!), padding: const EdgeInsets.fromLTRB(2, 0, 2, 8)),
       for (final (i, texto) in sugerencias.indexed)
         Padding(

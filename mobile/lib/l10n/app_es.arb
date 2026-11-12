@@ -1378,5 +1378,36 @@
     }
   },
   "iaTipoVencimiento": "Vencimiento",
-  "iaPideme": "Pídeme algo…"
+  "iaPideme": "Pídeme algo…",
+  "iaConsumoCerca": "Tu despacho lleva {usadas} de {limite} consultas de IA este mes.",
+  "@iaConsumoCerca": {
+    "placeholders": {
+      "usadas": {"type": "int"},
+      "limite": {"type": "int"}
+    }
+  },
+  "iaConsumoAgotado": "Tu despacho ha agotado las consultas de IA de este mes. Se renuevan el día 1.",
+  "errPoliticaAcceso": "Tu despacho exige verificación en dos pasos o una passkey. Actívala desde la web (Ajustes → Contraseña y email) y vuelve a entrar.",
+  "loginAbrirWeb": "Abrir la web de Guilda",
+  "propuestasTitulo": "El asistente propone",
+  "propuestasIntro": "Cosas que el asistente cree que conviene hacer. No se hace nada hasta que tú lo apruebas; si rechazas una, no vuelve a salir en 30 días.",
+  "propuestasVacioTitulo": "Nada que aprobar",
+  "propuestasVacioDetalle": "Cuando el asistente detecte algo que convenga hacer, te lo propondrá aquí.",
+  "propuestasPropone": "Propone",
+  "propuestasUrgente": "Urgente",
+  "propuestasAprobar": "Aprobar",
+  "propuestasRechazar": "Rechazar",
+  "propuestasAprobada": "Hecho: propuesta aprobada",
+  "propuestasRechazada": "Rechazada: no volverá a salir en 30 días",
+  "propuestasConfirmarTitulo": "¿Aprobar esta propuesta?",
+  "propuestasConfirmarCuerpo": "Al aprobarla se actuará hacia un cliente (portal o cuenta de tercero), no solo dentro de tu despacho.",
+  "propuestasHoy": "{n, plural, =1{1 propuesta del asistente} other{{n} propuestas del asistente}}",
+  "@propuestasHoy": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "propuestasHoyDetalle": "Revísalas y aprueba o rechaza"
 }

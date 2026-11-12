@@ -21,7 +21,10 @@ class BarraNavegacion extends StatelessWidget {
   final int? seleccionado;
   final ValueChanged<int> alElegir;
   final VoidCallback alAsistente;
-  const BarraNavegacion({super.key, required this.destinos, required this.seleccionado, required this.alElegir, required this.alAsistente});
+
+  /// Propuestas del asistente esperando tu respuesta: se ven como una insignia en el ✦.
+  final int propuestas;
+  const BarraNavegacion({super.key, required this.destinos, required this.seleccionado, required this.alElegir, required this.alAsistente, this.propuestas = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +44,7 @@ class BarraNavegacion extends StatelessWidget {
           height: 68,
           child: Row(children: [
             for (var i = 0; i < mitad; i++) destino(i),
-            _BotonAsistente(etiqueta: t.dashboardAsistenteIaTooltip, alPulsar: () {
+            _BotonAsistente(etiqueta: t.dashboardAsistenteIaTooltip, propuestas: propuestas, alPulsar: () {
               Haptica.toque();
               alAsistente();
             }),
@@ -93,15 +96,16 @@ class _ItemBarra extends StatelessWidget {
 /// El ✦: un círculo violeta con el aura viva detrás. Es el centro de la app.
 class _BotonAsistente extends StatelessWidget {
   final String etiqueta;
+  final int propuestas;
   final VoidCallback alPulsar;
-  const _BotonAsistente({required this.etiqueta, required this.alPulsar});
+  const _BotonAsistente({required this.etiqueta, required this.propuestas, required this.alPulsar});
 
   @override
   Widget build(BuildContext context) {
     final ia = PaletaV3.de(context).ia;
     return Semantics(
       button: true,
-      label: etiqueta,
+      label: propuestas > 0 ? '$etiqueta. ${AppLocalizations.of(context).propuestasHoy(propuestas)}' : etiqueta,
       onTap: alPulsar,
       excludeSemantics: true,
       child: Pulsable(
@@ -112,7 +116,11 @@ class _BotonAsistente extends StatelessWidget {
           width: 72,
           height: 68,
           child: Center(
-            child: Container(
+            child: Badge(
+              isLabelVisible: propuestas > 0,
+              label: Text(propuestas > 9 ? '9+' : '$propuestas'),
+              offset: const Offset(2, -2),
+              child: Container(
               width: 56,
               height: 56,
               decoration: BoxDecoration(shape: BoxShape.circle, color: ia.acento, boxShadow: [BoxShadow(color: ia.acento.withValues(alpha: 0.45), blurRadius: 18, spreadRadius: 1)]),
@@ -122,6 +130,7 @@ class _BotonAsistente extends StatelessWidget {
                 periodo: const Duration(seconds: 8),
                 child: Center(child: Icon(Icons.auto_awesome, size: 28, color: ia.sobreAcento)),
               ),
+            ),
             ),
           ),
         ),

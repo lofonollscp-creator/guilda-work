@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../diseno/adaptable.dart';
 import 'package:flutter/services.dart';
@@ -54,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _contrasena = TextEditingController();
   final _codigo2fa = TextEditingController();
   String? _error;
+  bool _politicaAcceso = false; // el error es «tu despacho exige segundo factor»: se ofrece abrir la web para activarlo
   bool _cargando = false;
   bool _verContrasena = false;
 
@@ -76,6 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _cargando = true;
       _error = null;
+      _politicaAcceso = false;
     });
     try {
       final (token, usuario) = await widget.api.login(
@@ -112,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _pide2fa = true;
           _error = null;
         } else {
+          _politicaAcceso = e.politicaAcceso;
           _error = mensajeDeError(AppLocalizations.of(context), e);
           if (_pide2fa) _codigo2fa.clear();
         }
@@ -121,6 +125,11 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
+  }
+
+  Future<void> _abrirWeb() async {
+    final servidor = await widget.sesion.obtenerServidor();
+    await launchUrl(Uri.parse(servidor), mode: LaunchMode.externalApplication);
   }
 
   void _volverACredenciales() => setState(() {
@@ -203,6 +212,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ]),
                         ),
                       ),
+                      if (_politicaAcceso)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: SizedBox(width: double.infinity, child: AppButton(texto: t.loginAbrirWeb, onPressed: _abrirWeb)),
+                        ),
                     ],
                   ],
                 ),

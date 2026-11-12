@@ -262,3 +262,24 @@ Decisiones aprobadas: botón ✦ central en la barra + barra de entrada flotante
 - **Propuestas, comunicados y certificados en el mosaico.** Los comunicados ya salen en su banner sobre el mosaico. Las propuestas llegan con su bandeja en la fase 5 (tarjeta + pantalla a la vez); los certificados ya salen como sección de la bandeja.
 
 **Pruebas:** 459 en verde (6 nuevas sobre Hoy: estado y fichar la entrada de un toque, en pausa, sin datos, tarjeta del asistente, pautas de accesibilidad). Las de Hoy y las capturas usan un `FichajeHoyFalso` y «reducir movimiento» (el orbe anima sin parar). `analyze`: los mismos 5 avisos.
+
+## 16. Fase 5 — propuestas y novedades del servidor (2026-11-12)
+
+**Hecho.** Capturas en `docs/ux-app-movil-v3/fase5/`. Todo se apoya en endpoints que el servidor ya tenía; no se ha tocado el backend.
+
+| Novedad | Cómo se ve |
+|---|---|
+| **Bandeja de propuestas** (`GET /propuestas`, `POST …/aprobar` y `…/rechazar`) | Pantalla «El asistente propone»: una tarjeta por propuesta con su porqué, etiqueta «Urgente» escrita (no solo color) y *Rechazar* / *Aprobar*. Las urgentes primero (lo ordena el servidor). Aprobar crea la tarea al momento; rechazar avisa de que no vuelve en 30 días |
+| **Confirmación en lo que sale fuera** | Las propuestas de tipo `peticion_portal`, `mensaje_portal` y `cuenta_tercero` actúan hacia un cliente: antes de aprobar pide confirmar. Solo `tarea` se aprueba directo |
+| **Dónde se ve que hay propuestas** | Insignia con el número en el ✦ de la barra; tarjeta «N propuestas del asistente» en Hoy y en el inicio del chat; fila en ninguna parte más (no hace falta). Sin propuestas, nada de eso sale |
+| **Política de acceso** (403 `politica_acceso` al entrar) | Antes se leía como «No tienes permiso» (la categoría genérica de 403). Ahora dice lo que pasa y qué hacer («Tu despacho exige verificación en dos pasos o una passkey. Actívala desde la web…») y la pantalla de acceso ofrece **Abrir la web de Guilda** |
+| **Tope de IA** (`GET /ia/consumo`) | Aviso discreto encima del campo del chat: al 80 % «Tu despacho lleva 85 de 100 consultas de IA este mes» y, agotado, «…ha agotado las consultas de IA de este mes. Se renuevan el día 1». Sin tope, con la IA desactivada o lejos del límite no sale nada. Se relee al acabar cada turno |
+
+**Cambios de fondo:** `funciones/propuestas/` (controlador + pantalla + tarjeta), `ApiException.politicaAcceso`, `ConsumoIa` (modelo y `ApiClient.obtenerConsumoIa`), `AvisoConsumoIa`, el destino `propuesta` → bandeja (para avisos futuros). Textos nuevos en es, ca, en y fr.
+
+**No entra, a propósito**
+- **Push de `propuesta.creada`.** Ese evento del servidor (`app/eventos.py`) es para flujos externos (chat, webhooks), no para el push del móvil; no existe aviso push de propuestas. Hasta que el servidor lo emita, la insignia se actualiza al abrir la app y al tirar para refrescar. Si se quiere el push, es una tarea de backend.
+- **Estado del proveedor de IA** («el proveedor falla»): el servidor no expone un estado aparte. Si falla un turno, ya se enseña el error del turno.
+- **Aprobar sin red:** no se encola (a diferencia de fichar): ejecuta algo en el servidor y hace falta ver su resultado.
+
+**Pruebas:** 476 en verde (19 nuevas en `test/propuestas_test.dart`: modelo, bandeja, aprobar y rechazar, confirmación, conflicto 409, accesibilidad, tarjeta, tope de IA con cifras, política de acceso). Un test de accesibilidad del chat ahora simula las preferencias (antes pasaba por casualidad de tiempos). `analyze`: los mismos 5 avisos.

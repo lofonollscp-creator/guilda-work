@@ -103,6 +103,9 @@ Apertura resolverDestino(Destino d) {
       return const IrAPestana('/inicio');
     case 'ia':
       return const AbrirPantalla('ia');
+    case 'propuesta':
+    case 'propuestas':
+      return const AbrirPantalla('propuestas');
     case 'tiquet':
       return const AbrirPantalla('tiquets');
     default:

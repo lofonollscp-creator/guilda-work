@@ -878,5 +878,36 @@
     }
   },
   "iaTipoVencimiento": "Échéance",
-  "iaPideme": "Demandez-moi quelque chose…"
+  "iaPideme": "Demandez-moi quelque chose…",
+  "iaConsumoCerca": "Votre cabinet a utilisé {usadas} requêtes IA sur {limite} ce mois-ci.",
+  "@iaConsumoCerca": {
+    "placeholders": {
+      "usadas": {"type": "int"},
+      "limite": {"type": "int"}
+    }
+  },
+  "iaConsumoAgotado": "Votre cabinet a épuisé ses requêtes IA de ce mois. Elles se renouvellent le 1er.",
+  "errPoliticaAcceso": "Votre cabinet exige la vérification en deux étapes ou une passkey. Activez-la depuis le web (Paramètres → Mot de passe et e-mail) puis reconnectez-vous.",
+  "loginAbrirWeb": "Ouvrir le site Guilda",
+  "propuestasTitulo": "L'assistant propose",
+  "propuestasIntro": "Des choses que l'assistant juge utile de faire. Rien n'est fait tant que vous n'approuvez pas ; si vous en rejetez une, elle ne revient pas avant 30 jours.",
+  "propuestasVacioTitulo": "Rien à approuver",
+  "propuestasVacioDetalle": "Quand l'assistant repérera quelque chose d'utile, il vous le proposera ici.",
+  "propuestasPropone": "Propose",
+  "propuestasUrgente": "Urgent",
+  "propuestasAprobar": "Approuver",
+  "propuestasRechazar": "Rejeter",
+  "propuestasAprobada": "Fait : proposition approuvée",
+  "propuestasRechazada": "Rejetée : elle ne reviendra pas avant 30 jours",
+  "propuestasConfirmarTitulo": "Approuver cette proposition ?",
+  "propuestasConfirmarCuerpo": "L'approuver agira envers un client (portail ou compte tiers), pas seulement dans votre cabinet.",
+  "propuestasHoy": "{n, plural, =1{1 proposition de l'assistant} other{{n} propositions de l'assistant}}",
+  "@propuestasHoy": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "propuestasHoyDetalle": "Consultez-les, approuvez ou rejetez"
 }

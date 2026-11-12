@@ -75,6 +75,7 @@ class AsistenteControlador extends ChangeNotifier {
   bool _recordarCifras = true;
   int _inicioTurno = 0;
   List<IaConversacion> _conversaciones = [];
+  ConsumoIa? _consumo;
   String? _textoVivo;
   int _idLocal = -1; // ids negativos para los mensajes optimistas: nunca chocan con los reales del servidor
   String? _contextoIa;
@@ -108,6 +109,9 @@ class AsistenteControlador extends ChangeNotifier {
   /// Desde esta posición de [mensajes] es lo que ha ido haciendo el asistente en el turno en curso.
   int get inicioTurno => _inicioTurno;
   List<IaConversacion> get conversaciones => _conversaciones;
+
+  /// Lo gastado del tope mensual de IA (`null` si no se pudo saber: entonces no se avisa de nada).
+  ConsumoIa? get consumo => _consumo;
   bool get recordarCifras => _recordarCifras;
 
   /// De qué elemento habla la persona (`tarea #7 «…»`), y si lo ha quitado de la píldora.
@@ -154,6 +158,7 @@ class AsistenteControlador extends ChangeNotifier {
       _avisar();
     }));
     unawaited(cargarConversaciones());
+    unawaited(cargarConsumo());
     unawaited(voz.inicializar(_idiomaVoz()).catchError((_) {}));
     await cargarHistorial();
     final consulta = consultaInicial?.trim() ?? '';
@@ -167,6 +172,18 @@ class AsistenteControlador extends ChangeNotifier {
   }
 
   /// Las conversaciones anteriores, para «Continúa» (un extra: si falla, simplemente no se enseñan).
+  /// Lee cuánto lleva gastado el despacho. Es un extra: si falla, no se avisa y el chat sigue igual.
+  Future<void> cargarConsumo() async {
+    try {
+      final c = await api.obtenerConsumoIa();
+      if (_liberado) return;
+      _consumo = c;
+      _avisar();
+    } catch (_) {
+      // sin aviso de tope
+    }
+  }
+
   Future<void> cargarConversaciones() async {
     try {
       final lista = await api.listarConversacionesIa();
@@ -296,6 +313,7 @@ class AsistenteControlador extends ChangeNotifier {
       if (!_liberado && miTurno == _idTurno) {
         _enviando = false;
         _avisar();
+        unawaited(cargarConsumo()); // este turno ha gastado una consulta
         alAvanzar?.call();
         if (voz.liveActivo && !voz.hablando && voz.colaVacia) voz.empezarEscucha();
       }

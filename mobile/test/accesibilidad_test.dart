@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guilda_work_mobile/nucleo/sesion.dart';
 import 'package:guilda_work_mobile/screens/correo_bandeja_screen.dart';
 import 'package:guilda_work_mobile/screens/fichaje_screen.dart';
@@ -42,6 +43,7 @@ void main() {
 
       testWidgets('Asistente IA', (t) async {
         sinVoz();
+        SharedPreferences.setMockInitialValues({}); // el chat lee sus preferencias al abrir
         await t.pumpWidget(appDePantalla(IaChatScreen(api: ApiFalsa()..chat = [iaMsg(1, 'user', 'Hola'), iaMsg(2, 'assistant', 'Hola, ¿en qué te ayudo?')], locale: LocaleService()), [estadoSesionProvider.overrideWith(SesionFija.new)], oscuro: oscuro));
         await t.pumpAndSettle();
         await pautas(t, 'Asistente IA');

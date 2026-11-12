@@ -22,6 +22,7 @@ import '../avisos/avisos_screen.dart';
 import '../avisos/comunicados.dart';
 import '../busqueda/busqueda_screen.dart';
 import '../pendientes/pendientes_sheet.dart';
+import '../propuestas/propuestas_screen.dart';
 import 'hoy_controlador.dart';
 import 'hoy_fichaje.dart';
 
@@ -122,6 +123,7 @@ List<Widget> _bandeja(BuildContext context, BandejaHoy bandeja, {required bool d
   final secciones = bandeja.secciones ?? const [];
   final aviso = desactualizado ? t.hoySinConexionDatosDe(context.formatos.hora(obtenidoEn.hour, obtenidoEn.minute)) : null;
   const ia = _TarjetaIa();
+  const propuestas = TarjetaPropuestas();
   final siguiente = _LoSiguiente(bandeja: bandeja);
   const fichaje = TarjetaFichajeHoy();
   final contadores = _Contadores(total: bandeja.total ?? 0, urgentes: bandeja.urgentes ?? 0);
@@ -131,12 +133,12 @@ List<Widget> _bandeja(BuildContext context, BandejaHoy bandeja, {required bool d
     if (esAncha(context)) {
       // Tableta: dos columnas (el asistente y lo siguiente a la izquierda; el fichaje y los contadores a la derecha).
       return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: Column(children: [ia, hueco, siguiente])),
+        Expanded(child: Column(children: [ia, hueco, propuestas, siguiente])),
         const SizedBox(width: 12),
         Expanded(child: Column(children: [fichaje, hueco, contadores])),
       ]);
     }
-    return Column(children: [ia, hueco, siguiente, fichaje, hueco, contadores]);
+    return Column(children: [ia, hueco, propuestas, siguiente, fichaje, hueco, contadores]);
   }
 
   return [
