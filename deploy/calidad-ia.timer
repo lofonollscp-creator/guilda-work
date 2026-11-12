@@ -1,0 +1,10 @@
+[Unit]
+Description=Guilda Work - evaluación semanal de la IA
+
+[Timer]
+OnCalendar=Sun 04:30
+RandomizedDelaySec=20m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

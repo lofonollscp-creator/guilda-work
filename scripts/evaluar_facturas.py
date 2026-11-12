@@ -24,14 +24,13 @@ def main() -> int:
     ap.add_argument("--modelo", help="evalúa este modelo del proveedor de la persona (sin tocar su configuración) en vez del suyo; sirve para comparar modelos")
     ap.add_argument("--margen", type=float, default=2.0, help="puntos de bajada tolerados (por defecto 2)")
     a = ap.parse_args()
-    from app import evals_facturas as ev, ia_asistente, lectura_facturas
+    from app import evals_facturas as ev, ia_asistente
     casos = ev.cargar_casos(a.casos)
     if a.modelo:
         original = ia_asistente.candidatos
         ia_asistente.candidatos = lambda uid, tarea: [{**c, "modelo": a.modelo} for c in original(uid, tarea)][:1]
 
-    def leer(texto: str) -> dict:
-        return lectura_facturas._json_de(ia_asistente.completar_partes(a.usuario, lectura_facturas.PROMPT_TEXTO, [{"type": "text", "text": "Extrae los datos de esta factura.\n\nTEXTO DEL DOCUMENTO:\n" + texto}]))
+    leer = ev.leer_con_ia(a.usuario)
     r = ev.ejecutar(casos, leer)
     print(f"Acierto global: {r['acierto_global']} %  ({r['casos']} casos)")
     for campo, p in r["por_campo"].items():

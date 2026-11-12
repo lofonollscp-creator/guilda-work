@@ -27828,3 +27828,24 @@ msgstr "CrowdSec ha bandejat una IP del propi servidor: %(ips)s. Treu-la amb «c
 
 msgid "%(n)s bloqueos activos%(esc)s."
 msgstr "%(n)s bloquejos actius%(esc)s."
+
+msgid "Calidad de la IA (evaluación semanal)"
+msgstr "Qualitat de la IA (avaluació setmanal)"
+
+msgid "Todavía no se ha evaluado ninguna vez."
+msgstr "Encara no s'ha avaluat cap vegada."
+
+msgid "Asistente %(a)s %%, facturas %(f)s %%, órdenes escondidas %(i)s %% (%(modelo)s, hace %(hace)s)."
+msgstr "Assistent %(a)s %%, factures %(f)s %%, ordres amagades %(i)s %% (%(modelo)s, fa %(hace)s)."
+
+msgid "El asistente ya no resiste todas las órdenes escondidas en un correo. "
+msgstr "L'assistent ja no resisteix totes les ordres amagades en un correu. "
+
+msgid "Ha empeorado respecto a la base: %(lista)s. "
+msgstr "Ha empitjorat respecte a la base: %(lista)s. "
+
+msgid "Evaluación inconclusa (el proveedor no respondió a muchos casos): %(lista)s. "
+msgstr "Avaluació inconclusa (el proveïdor no ha respost a molts casos): %(lista)s. "
+
+msgid "La última evaluación es antigua: el temporizador semanal no está funcionando. "
+msgstr "L'última avaluació és antiga: el temporitzador setmanal no està funcionant. "

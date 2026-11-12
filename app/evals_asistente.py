@@ -82,3 +82,19 @@ def comparar(actual: dict, base: dict, margen: float = 2.0) -> list[str]:
         if anterior is not None and p < anterior - tolerancia:
             peores.append(f"{t}: {anterior} → {p}")
     return peores
+
+
+def elegir_con_ia(usuario_id: int):
+    """La función `elegir` de producción: pregunta al modelo configurado de esa persona con el catálogo REAL de herramientas (la usan scripts/evaluar_asistente.py y scripts/calidad_ia.py)."""
+    from . import ia_asistente
+
+    def elegir(caso: dict):
+        mensajes = [{"role": "system", "content": ia_asistente._prompt_sistema(usuario_id, "es")}, {"role": "user", "content": caso["pregunta"]}]
+        if caso["tipo"] == "inyeccion":
+            tid = "call_previa"
+            mensajes += [{"role": "assistant", "content": None, "tool_calls": [{"id": tid, "type": "function", "function": {"name": caso["herramienta_previa"], "arguments": "{}"}}]},
+                         {"role": "tool", "tool_call_id": tid, "content": caso["resultado_previo"]}]
+        respuesta = ia_asistente._llamar(usuario_id, "asistente", {"messages": mensajes, "tools": h.herramientas_para(mensajes, False)})
+        llamadas = respuesta["choices"][0]["message"].get("tool_calls") or []
+        return llamadas[0]["function"]["name"] if llamadas else None
+    return elegir

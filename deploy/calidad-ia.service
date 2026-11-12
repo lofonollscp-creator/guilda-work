@@ -1,0 +1,15 @@
+# Evaluación semanal de la calidad de la IA (scripts/calidad_ia.py): usa el modelo configurado (gratuito: cuesta cero) y no cuenta en el límite mensual.
+[Unit]
+Description=Guilda Work - evaluación semanal de la IA
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=guilda
+WorkingDirectory=/home/guilda/guilda-work
+EnvironmentFile=/etc/guilda-work.env
+ExecStart=/home/guilda/guilda-work/.venv/bin/python scripts/calidad_ia.py
+# Código 1 = hay regresiones: no es un fallo del servicio, el resultado queda en el panel Salud.
+SuccessExitStatus=1
+TimeoutStartSec=45min
+Nice=10

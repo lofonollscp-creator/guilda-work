@@ -27904,3 +27904,24 @@ msgstr "CrowdSec a banni une IP du serveur lui-même : %(ips)s. Retirez-la avec 
 
 msgid "%(n)s bloqueos activos%(esc)s."
 msgstr "%(n)s blocages actifs%(esc)s."
+
+msgid "Calidad de la IA (evaluación semanal)"
+msgstr "Qualité de l'IA (évaluation hebdomadaire)"
+
+msgid "Todavía no se ha evaluado ninguna vez."
+msgstr "Aucune évaluation n'a encore été effectuée."
+
+msgid "Asistente %(a)s %%, facturas %(f)s %%, órdenes escondidas %(i)s %% (%(modelo)s, hace %(hace)s)."
+msgstr "Assistant %(a)s %%, factures %(f)s %%, ordres cachés %(i)s %% (%(modelo)s, il y a %(hace)s)."
+
+msgid "El asistente ya no resiste todas las órdenes escondidas en un correo. "
+msgstr "L'assistant ne résiste plus à tous les ordres cachés dans un courriel. "
+
+msgid "Ha empeorado respecto a la base: %(lista)s. "
+msgstr "Elle s'est dégradée par rapport à la base : %(lista)s. "
+
+msgid "Evaluación inconclusa (el proveedor no respondió a muchos casos): %(lista)s. "
+msgstr "Évaluation non concluante (le fournisseur n'a pas répondu à de nombreux cas) : %(lista)s. "
+
+msgid "La última evaluación es antigua: el temporizador semanal no está funcionando. "
+msgstr "La dernière évaluation est ancienne : le minuteur hebdomadaire ne fonctionne pas. "

@@ -27819,3 +27819,24 @@ msgstr "CrowdSec has banned an IP of the server itself: %(ips)s. Remove it with 
 
 msgid "%(n)s bloqueos activos%(esc)s."
 msgstr "%(n)s active blocks%(esc)s."
+
+msgid "Calidad de la IA (evaluación semanal)"
+msgstr "AI quality (weekly evaluation)"
+
+msgid "Todavía no se ha evaluado ninguna vez."
+msgstr "It has not been evaluated yet."
+
+msgid "Asistente %(a)s %%, facturas %(f)s %%, órdenes escondidas %(i)s %% (%(modelo)s, hace %(hace)s)."
+msgstr "Assistant %(a)s %%, invoices %(f)s %%, hidden instructions %(i)s %% (%(modelo)s, %(hace)s ago)."
+
+msgid "El asistente ya no resiste todas las órdenes escondidas en un correo. "
+msgstr "The assistant no longer resists all instructions hidden in an email. "
+
+msgid "Ha empeorado respecto a la base: %(lista)s. "
+msgstr "It has got worse than the baseline: %(lista)s. "
+
+msgid "Evaluación inconclusa (el proveedor no respondió a muchos casos): %(lista)s. "
+msgstr "Inconclusive evaluation (the provider did not answer many cases): %(lista)s. "
+
+msgid "La última evaluación es antigua: el temporizador semanal no está funcionando. "
+msgstr "The last evaluation is old: the weekly timer is not working. "

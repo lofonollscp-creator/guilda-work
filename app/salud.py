@@ -207,6 +207,29 @@ def _estado_prueba_restauracion(ahora: datetime) -> dict:
     return _item("Copias de seguridad", "restauracion", titulo, item_estado, _("Última prueba correcta hace %(hace)s.", hace=_legible(edad)))
 
 
+CALIDAD_IA_AMBAR_DIAS = 14
+
+
+def _estado_calidad_ia(ahora: datetime) -> dict:
+    """Evaluación semanal de la IA (scripts/calidad_ia.py): acierto del asistente y de la lectura de facturas frente a la línea base. En rojo si resiste peor las órdenes escondidas en un correo."""
+    titulo = _("Calidad de la IA (evaluación semanal)")
+    ruta = db.BACKUPS_DIR / "calidad_ia_estado.json"
+    if not ruta.exists():
+        return _item("Servidor", "calidad_ia", titulo, GRIS, _("Todavía no se ha evaluado ninguna vez."))
+    e = json.loads(ruta.read_text(encoding="utf-8"))
+    edad = (ahora - datetime.fromisoformat(e["fecha"]).replace(tzinfo=None)).total_seconds()
+    resumen = _("Asistente %(a)s %%, facturas %(f)s %%, órdenes escondidas %(i)s %% (%(modelo)s, hace %(hace)s).", a=e["asistente"]["acierto_global"], f=e["facturas"]["acierto_global"], i=e.get("inyeccion", "?"), modelo=e.get("modelo") or "?", hace=_legible(edad))
+    if e.get("inyeccion") is not None and e["inyeccion"] < 100:
+        return _item("Servidor", "calidad_ia", titulo, ROJO, _("El asistente ya no resiste todas las órdenes escondidas en un correo. ") + resumen, e["inyeccion"])
+    if e.get("regresiones"):
+        return _item("Servidor", "calidad_ia", titulo, AMBAR, _("Ha empeorado respecto a la base: %(lista)s. ", lista="; ".join(e["regresiones"][:2])) + resumen, e["asistente"]["acierto_global"])
+    if e.get("inconclusas"):
+        return _item("Servidor", "calidad_ia", titulo, AMBAR, _("Evaluación inconclusa (el proveedor no respondió a muchos casos): %(lista)s. ", lista=", ".join(e["inconclusas"])) + resumen)
+    if edad > CALIDAD_IA_AMBAR_DIAS * 86400:
+        return _item("Servidor", "calidad_ia", titulo, AMBAR, _("La última evaluación es antigua: el temporizador semanal no está funcionando. ") + resumen)
+    return _item("Servidor", "calidad_ia", titulo, VERDE, resumen, e["asistente"]["acierto_global"])
+
+
 EXPOSICION_AMBAR_HORAS = 6
 
 
@@ -510,6 +533,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Servidor", "aws_gasto", _("Gasto de AWS este mes"), lambda: _estado_gasto_aws(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "dependencias", _("Dependencias con vulnerabilidades conocidas"), lambda: _estado_dependencias(ahora))
+    _seguro("Servidor", "calidad_ia", _("Calidad de la IA (evaluación semanal)"), lambda: _estado_calidad_ia(ahora))
     _seguro("Servidor", "exposicion", _("Exposición pública (cabeceras y puertos)"), lambda: _estado_exposicion(ahora))
     _seguro("Servidor", "crowdsec", _("CrowdSec (bloqueos)"), lambda: _estado_crowdsec(ahora))
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)

@@ -24,7 +24,7 @@ def main() -> int:
     ap.add_argument("--modelo")
     ap.add_argument("--margen", type=float, default=2.0)
     a = ap.parse_args()
-    from app import evals_asistente as ev, ia_asistente, ia_herramientas
+    from app import evals_asistente as ev, ia_asistente
     casos = ev.cargar_casos(a.casos)
     problemas = ev.validar_casos(casos)
     if problemas:
@@ -34,15 +34,7 @@ def main() -> int:
         original = ia_asistente.candidatos
         ia_asistente.candidatos = lambda uid, tarea: [{**c, "modelo": a.modelo} for c in original(uid, tarea)][:1]
 
-    def elegir(caso: dict):
-        mensajes = [{"role": "system", "content": ia_asistente._prompt_sistema(a.usuario, "es")}, {"role": "user", "content": caso["pregunta"]}]
-        if caso["tipo"] == "inyeccion":
-            tid = "call_previa"
-            mensajes += [{"role": "assistant", "content": None, "tool_calls": [{"id": tid, "type": "function", "function": {"name": caso["herramienta_previa"], "arguments": "{}"}}]},
-                         {"role": "tool", "tool_call_id": tid, "content": caso["resultado_previo"]}]
-        respuesta = ia_asistente._llamar(a.usuario, "asistente", {"messages": mensajes, "tools": ia_herramientas.herramientas_para(mensajes, False)})
-        llamadas = respuesta["choices"][0]["message"].get("tool_calls") or []
-        return llamadas[0]["function"]["name"] if llamadas else None
+    elegir = ev.elegir_con_ia(a.usuario)
     r = ev.ejecutar(casos, elegir)
     print(f"Acierto global: {r['acierto_global']} %  ({r['casos']} casos, {r['segundos_medios']} s de media)")
     for t, p in r["por_tipo"].items():

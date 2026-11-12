@@ -98,3 +98,12 @@ def comparar(actual: dict, base: dict, margen: float = 2.0) -> list[str]:
         if ahora is not None and ahora < antes - margen:
             peores.append(f"{campo}: {antes} → {ahora}")
     return peores
+
+
+def leer_con_ia(usuario_id: int):
+    """La función `leer` de producción (texto de la factura → datos) con el modelo configurado de esa persona (la usan scripts/evaluar_facturas.py y scripts/calidad_ia.py)."""
+    from . import ia_asistente, lectura_facturas
+
+    def leer(texto: str) -> dict:
+        return lectura_facturas._json_de(ia_asistente.completar_partes(usuario_id, lectura_facturas.PROMPT_TEXTO, [{"type": "text", "text": "Extrae los datos de esta factura.\n\nTEXTO DEL DOCUMENTO:\n" + texto}]))
+    return leer
