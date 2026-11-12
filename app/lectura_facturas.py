@@ -172,6 +172,14 @@ def _a_factura(datos: dict, f: dict, cliente_nif: str, texto: str = "") -> tuple
     return tipo, nuevos, lineas, avisos
 
 
+_PROFORMA = re.compile(r"\b(factura\s+pro[- ]?forma|pro[- ]?forma\s+invoice|facture\s+pro[- ]?forma|factura\s+proforma)\b")
+
+
+def _es_proforma(plano: str) -> bool:
+    """El documento se presenta como proforma («Factura Proforma», «Proforma invoice»), no solo la menciona (una factura definitiva puede decir «según proforma 12»)."""
+    return bool(_PROFORMA.search(plano)) or plano.startswith(("proforma", "pro forma", "pro-forma"))
+
+
 def _casos_especiales(datos: dict, tipo: str, nuevos: dict, lineas: list[dict], avisos: list[str], texto: str) -> None:
     """Lo que no es una operación interior corriente: inversión del sujeto pasivo, intracomunitarias, Canarias, otras monedas y gastos de vehículo. Pone el tipo de operación de las líneas cuando se sabe
     con seguridad y, cuando no, avisa para que lo decida una persona (nunca se adivina una operación fiscal)."""
@@ -187,6 +195,8 @@ def _casos_especiales(datos: dict, tipo: str, nuevos: dict, lineas: list[dict], 
             avisos.append(f"Operación detectada: {operacion.replace('_', ' ')}. Se ha marcado en las líneas; compruébalo.")
         else:
             avisos.append(f"Operación especial detectada ({operacion.replace('_', ' ')}): elige a mano el tipo de operación de las líneas.")
+    if _es_proforma(plano):
+        avisos.append("Es una factura proforma: no es un justificante fiscal (no da derecho a deducir el IVA ni se declara) y repite el importe de la factura definitiva. No la contabilices; contabiliza la factura definitiva.")
     moneda = re.sub(r"[^A-Z]", "", str(datos.get("moneda") or "EUR").upper())[:3] or "EUR"
     if moneda != "EUR":
         avisos.append(f"La factura está en {moneda}: los importes se han dejado como figuran. Conviértelos a euros antes de darla por buena.")

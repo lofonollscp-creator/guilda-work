@@ -118,3 +118,17 @@ def test_si_dos_familias_de_explicaciones_encajan_a_la_vez_calla():
 def test_si_no_hay_explicacion_calla():
     assert lc.explicar_descuadre([_l("1000.00", "21", cuota_iva="210.00"), _l("500.00", "21", cuota_iva="105.00")], "", "1234.56") is None
     assert lc.explicar_descuadre([_l("1000.00", "21", cuota_iva="210.00")], "", "1234.56") is None
+
+
+def test_una_factura_proforma_se_avisa_pero_una_que_solo_la_menciona_no():
+    from app import lectura_facturas as lf
+    f = {"tipo": "emitida", "tercero_nombre": "X", "tercero_nif": "", "numero": "1", "fecha": "2026-01-01"}
+    base = {"emisor_nif": "A58818501", "receptor_nif": "", "numero": "8", "fecha": "2026-10-16", "total": 1210, "lineas": [{"base": 1000, "pct_iva": 21, "cuota_iva": 210}]}
+    _, _, _, avisos = lf._a_factura(base, f, "", "Factura Proforma\nNúmero 0008\nFecha 16-10-2026\nVálido hasta 14-01-2027\nEsta factura proforma ha sido generada desde un programa")
+    assert any("factura proforma" in a and "No la contabilices" in a for a in avisos)
+    _, _, _, avisos = lf._a_factura(base, f, "", "Proforma invoice 0008\nTotal 1210")
+    assert any("proforma" in a.lower() for a in avisos)
+    _, _, _, avisos = lf._a_factura(base, f, "", "Factura\nNúmero 2026 0008\nConcepto: servicios según proforma 0008 aceptada")
+    assert not any("proforma" in a.lower() for a in avisos)
+    _, _, _, avisos = lf._a_factura(base, f, "", "Factura\nNúmero 2026 0008\nServicios de septiembre")
+    assert not any("proforma" in a.lower() for a in avisos)
