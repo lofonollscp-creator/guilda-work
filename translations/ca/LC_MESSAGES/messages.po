@@ -27780,3 +27780,18 @@ msgstr "El teu despatx exigeix verificació en dos passos o una passkey. Activa-
 
 msgid "El alta de cuentas desde la API está cerrada: pide acceso a tu despacho o regístrate en la web."
 msgstr "L'alta de comptes des de l'API està tancada: demana accés al teu despatx o registra't a la web."
+
+msgid "Dependencias con vulnerabilidades conocidas"
+msgstr "Dependències amb vulnerabilitats conegudes"
+
+msgid "Todavía no se ha escaneado ninguna vez."
+msgstr "Encara no s'ha escanejat cap vegada."
+
+msgid "%(n)s paquete(s) con vulnerabilidades (escaneo hace %(hace)s): %(resumen)s."
+msgstr "%(n)s paquet(s) amb vulnerabilitats (escaneig fa %(hace)s): %(resumen)s."
+
+msgid "El último escaneo es de hace %(hace)s: el temporizador semanal no está funcionando."
+msgstr "L'últim escaneig és de fa %(hace)s: el temporitzador setmanal no està funcionant."
+
+msgid "Sin vulnerabilidades conocidas (escaneo hace %(hace)s)."
+msgstr "Sense vulnerabilitats conegudes (escaneig fa %(hace)s)."

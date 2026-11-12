@@ -25,8 +25,8 @@ _GRAVEDAD = {VERDE: 0, GRIS: 1, AMBAR: 2, ROJO: 3}
 
 BACKUP_VERDE_HORAS = 36
 BACKUP_AMBAR_DIAS = 7
-DISCO_ROJO_PORCENTAJE = 5
-DISCO_AMBAR_PORCENTAJE = 15
+DISCO_ROJO_PORCENTAJE = 10
+DISCO_AMBAR_PORCENTAJE = 20
 WEBHOOKS_AMBAR = 1
 WEBHOOKS_ROJO = 10
 ERRORES_VENTANA_MIN = 15
@@ -205,6 +205,26 @@ def _estado_prueba_restauracion(ahora: datetime) -> dict:
     edad = (ahora - datetime.fromisoformat(estado["ultimo_ok"]).replace(tzinfo=None)).total_seconds()
     item_estado = VERDE if edad <= RESTAURACION_VERDE_DIAS * 86400 else AMBAR
     return _item("Copias de seguridad", "restauracion", titulo, item_estado, _("Última prueba correcta hace %(hace)s.", hace=_legible(edad)))
+
+
+CVE_AMBAR_DIAS = 10
+
+
+def _estado_dependencias(ahora: datetime) -> dict:
+    """Escaneo semanal de vulnerabilidades conocidas en las dependencias instaladas (scripts/auditar_dependencias.sh → data/backups/cve_estado.json)."""
+    titulo = _("Dependencias con vulnerabilidades conocidas")
+    ruta = db.BACKUPS_DIR / "cve_estado.json"
+    if not ruta.exists():
+        return _item("Servidor", "dependencias", titulo, GRIS, _("Todavía no se ha escaneado ninguna vez."))
+    estado = json.loads(ruta.read_text(encoding="utf-8"))
+    edad = (ahora - datetime.fromisoformat(estado["fecha"]).replace(tzinfo=None)).total_seconds()
+    vulnerables = estado.get("vulnerables") or []
+    if vulnerables:
+        resumen = ", ".join(f"{v['paquete']} {v['version']}" + (f" → {v['corregida'][0]}" if v.get("corregida") else "") for v in vulnerables[:4])
+        return _item("Servidor", "dependencias", titulo, AMBAR, _("%(n)s paquete(s) con vulnerabilidades (escaneo hace %(hace)s): %(resumen)s.", n=len(vulnerables), hace=_legible(edad), resumen=resumen), len(vulnerables))
+    if edad > CVE_AMBAR_DIAS * 86400:
+        return _item("Servidor", "dependencias", titulo, AMBAR, _("El último escaneo es de hace %(hace)s: el temporizador semanal no está funcionando.", hace=_legible(edad)), 0)
+    return _item("Servidor", "dependencias", titulo, VERDE, _("Sin vulnerabilidades conocidas (escaneo hace %(hace)s).", hace=_legible(edad)), 0)
 
 
 def _estado_disco() -> dict:
@@ -447,6 +467,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
         _seguro("Base de datos", "postgres", "Base de datos PostgreSQL", salud_postgres.panel_items)
     _seguro("Servidor", "aws_gasto", _("Gasto de AWS este mes"), lambda: _estado_gasto_aws(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
+    _seguro("Servidor", "dependencias", _("Dependencias con vulnerabilidades conocidas"), lambda: _estado_dependencias(ahora))
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
     _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))
     _seguro("Servidor", "cola_ia", _("Cola de IA"), lambda: _estado_cola_ia(ahora))

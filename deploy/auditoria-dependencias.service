@@ -1,0 +1,13 @@
+# Escaneo semanal de CVE de las dependencias (scripts/auditar_dependencias.sh). Copiar a /etc/systemd/system/ junto con el .timer.
+[Unit]
+Description=Guilda Work - auditoría de vulnerabilidades de las dependencias
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=guilda
+WorkingDirectory=/home/guilda/guilda-work
+ExecStart=/home/guilda/guilda-work/scripts/auditar_dependencias.sh
+# Código 1 = hay vulnerabilidades: no es un fallo del servicio, el resultado queda en el panel Salud.
+SuccessExitStatus=1
+Nice=10

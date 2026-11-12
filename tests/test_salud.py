@@ -118,7 +118,7 @@ def test_webhooks_envios_atascados_y_disco(monkeypatch):
 
     from collections import namedtuple
     Uso = namedtuple("Uso", "total used free")
-    for libre, esperado in ((50, salud.VERDE), (10, salud.AMBAR), (2, salud.ROJO)):
+    for libre, esperado in ((50, salud.VERDE), (25, salud.VERDE), (15, salud.AMBAR), (8, salud.ROJO), (2, salud.ROJO)):
         monkeypatch.setattr(salud.shutil, "disk_usage", lambda p, l=libre: Uso(100 * 1024**3, 0, l * 1024**3))
         assert salud._estado_disco()["estado"] == esperado
 
@@ -235,3 +235,20 @@ def test_el_panel_avisa_si_kratos_deja_de_ofrecer_passkeys(monkeypatch):
         monkeypatch.setattr(kratos, "_peticion", respuesta)
         assert salud._estado_passkeys()["estado"] == esperado
     salud._PASSKEYS_CACHE.update(hasta=0.0, ofrece=None)
+
+
+def test_dependencias_con_vulnerabilidades_en_el_panel(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path)
+    assert salud._estado_dependencias(AHORA)["estado"] == salud.GRIS
+    ruta = tmp_path / "cve_estado.json"
+
+    def escribir(fecha, vulnerables):
+        ruta.write_text(json.dumps({"fecha": fecha.isoformat(), "vulnerables": vulnerables}), encoding="utf-8")
+    escribir(AHORA - timedelta(days=2), [])
+    assert salud._estado_dependencias(AHORA)["estado"] == salud.VERDE
+    escribir(AHORA - timedelta(days=2), [{"paquete": "pillow", "version": "12.3.0", "ids": ["CVE-1"], "corregida": ["13.0.0"]}])
+    r = salud._estado_dependencias(AHORA)
+    assert r["estado"] == salud.AMBAR and "pillow 12.3.0 → 13.0.0" in r["detalle"]
+    escribir(AHORA - timedelta(days=30), [])
+    assert salud._estado_dependencias(AHORA)["estado"] == salud.AMBAR and "temporizador" in salud._estado_dependencias(AHORA)["detalle"]

@@ -1,0 +1,12 @@
+# El registro de eventos de Docker (facturascripts-docker-events.service) crecía sin límite: 797 MB en noviembre de 2026.
+# copytruncate porque el servicio lo mantiene abierto con `>>`.
+/var/log/guilda-work/docker-events.log {
+    weekly
+    rotate 8
+    maxsize 100M
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}
