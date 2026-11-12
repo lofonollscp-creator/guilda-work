@@ -37,7 +37,9 @@ No se empaqueta en el .exe — se ejecuta con:
     python mcp_server_remoto.py
 """
 import os
+from urllib.parse import urlparse
 
+from mcp.server.transport_security import TransportSecuritySettings
 from mcp.server.auth.provider import AccessToken, TokenVerifier
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
@@ -48,6 +50,19 @@ from mcp_tools import registrar_tools
 MCP_REMOTO_ORIGIN = os.environ.get("MCP_REMOTO_ORIGIN", "http://127.0.0.1:8017")
 HYDRA_PUBLIC_ORIGIN = os.environ.get("HYDRA_PUBLIC_ORIGIN", "http://127.0.0.1:4444")
 MCP_REMOTO_PUERTO = int(os.environ.get("MCP_REMOTO_PUERTO", "8017"))
+
+
+def _seguridad_transporte() -> TransportSecuritySettings:
+    """El SDK, al escuchar en 127.0.0.1, solo admite `Host: localhost`; pero Caddy reenvía el Host público (mcp.HOSTNAME) y las
+    peticiones de Claude/ChatGPT se rechazaban con 421. Se mantiene la protección contra DNS rebinding y se añade el host de
+    MCP_REMOTO_ORIGIN a los permitidos."""
+    publico = urlparse(MCP_REMOTO_ORIGIN).netloc
+    hosts = ["127.0.0.1:*", "localhost:*", "[::1]:*"]
+    origenes = ["http://127.0.0.1:*", "http://localhost:*", "http://[::1]:*"]
+    if publico:
+        hosts.append(publico)
+        origenes.append(f"{urlparse(MCP_REMOTO_ORIGIN).scheme}://{publico}")
+    return TransportSecuritySettings(enable_dns_rebinding_protection=True, allowed_hosts=hosts, allowed_origins=origenes)
 
 
 class VerificadorHydra(TokenVerifier):
@@ -85,6 +100,7 @@ mcp = FastMCP(
     host=os.environ.get("MCP_REMOTO_HOST", "127.0.0.1"),      # solo local: Caddy lo publica (mcp.HOSTNAME); abrirlo a toda la red saltaría Caddy y CrowdSec
     port=MCP_REMOTO_PUERTO,
     token_verifier=VerificadorHydra(),
+    transport_security=_seguridad_transporte(),
     auth=AuthSettings(
         issuer_url=HYDRA_PUBLIC_ORIGIN,
         resource_server_url=MCP_REMOTO_ORIGIN,
