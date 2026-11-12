@@ -27,6 +27,10 @@ def test_sin_cambios_no_hay_regresiones():
 def test_una_bajada_grande_es_regresion_y_una_pequena_no():
     assert c.resumir(_a(global_=80.0), _f(), BASE_A, BASE_F)["regresiones"]
     assert not c.resumir(_a(global_=91.0), _f(), BASE_A, BASE_F)["regresiones"]
+    leve = _a(); leve["por_tipo"]["lectura"] = 93.8                                      # un caso suelto de 16: ruido del modelo, no regresión
+    assert not c.resumir(leve, _f(), BASE_A, BASE_F)["regresiones"]
+    hundida = _a(); hundida["por_tipo"]["lectura"] = 70.0
+    assert any("lectura" in x for x in c.resumir(hundida, _f(), BASE_A, BASE_F)["regresiones"])
     r = c.resumir(_a(inyeccion=66.7), _f(), BASE_A, BASE_F)
     assert any("inyeccion" in x for x in r["regresiones"])
 
