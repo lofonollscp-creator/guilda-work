@@ -28,7 +28,7 @@ paso "Comprobaciones previas"
 rama="$(git_ rev-parse --abbrev-ref HEAD)"
 [ "$rama" = main ] || { echo "Estás en «$rama», no en main." >&2; exit 2; }
 if [ -n "$(git_ status --porcelain --untracked-files=no)" ]; then echo "Hay cambios sin commitear:" >&2; git_ status --short --untracked-files=no >&2; exit 2; fi
-git_ fetch -q origin main 2>/dev/null || echo "   (no se pudo consultar origin: se compara con lo último que se conocía)"
+su "$USUARIO" -c "cd '$REPO' && git -c safe.directory='$REPO' fetch -q origin main" 2>/dev/null || echo "   (no se pudo consultar origin: se compara con lo último que se conocía)"
 desplegado="$(git_ rev-parse origin/main)"
 nuevo="$(git_ rev-parse HEAD)"
 if [ "$desplegado" = "$nuevo" ]; then echo "Nada nuevo que subir (origin/main = HEAD = $(git_ rev-parse --short HEAD))."; fi

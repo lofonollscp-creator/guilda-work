@@ -1,0 +1,12 @@
+# Qué ve el mundo de Guilda Work: cabeceras, puertos y CrowdSec (scripts/auditar_exposicion.py). Corre como root (lee el Caddyfile y usa cscli) y solo lee.
+[Unit]
+Description=Guilda Work - auditoría de exposición pública
+After=network-online.target caddy.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/guilda/guilda-work
+ExecStart=/usr/bin/python3 /home/guilda/guilda-work/scripts/auditar_exposicion.py
+# Código 1 = hay fallos: no es un fallo del servicio, el resultado queda en el panel Salud.
+SuccessExitStatus=1
+Nice=10

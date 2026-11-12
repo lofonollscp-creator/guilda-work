@@ -82,7 +82,7 @@ class VerificadorHydra(TokenVerifier):
 
 mcp = FastMCP(
     "guilda-work-remoto",
-    host="0.0.0.0",
+    host=os.environ.get("MCP_REMOTO_HOST", "127.0.0.1"),      # solo local: Caddy lo publica (mcp.HOSTNAME); abrirlo a toda la red saltaría Caddy y CrowdSec
     port=MCP_REMOTO_PUERTO,
     token_verifier=VerificadorHydra(),
     auth=AuthSettings(

@@ -27798,3 +27798,33 @@ msgstr "Sense vulnerabilitats conegudes (escaneig fa %(hace)s)."
 
 msgid "Te lo pregunto porque en esta conversación he leído contenido escrito por terceros (correo, adjunto, mensaje de un cliente) y podría traer instrucciones ocultas."
 msgstr "Te'l pregunto perquè en aquesta conversa he llegit contingut escrit per tercers (correu, adjunt, missatge d'un client) i podria portar instruccions ocultes."
+
+msgid "Exposición pública (cabeceras y puertos)"
+msgstr "Exposició pública (capçaleres i ports)"
+
+msgid "Todavía no se ha comprobado ninguna vez."
+msgstr "Encara no s'ha comprovat cap vegada."
+
+msgid "La última comprobación es de hace %(hace)s: el temporizador no está funcionando."
+msgstr "L'última comprovació és de fa %(hace)s: el temporitzador no està funcionant."
+
+msgid "%(n)s problema(s): %(lista)s."
+msgstr "%(n)s problema(es): %(lista)s."
+
+msgid "Escuchan hacia fuera, pero el cortafuegos los bloquea: %(p)s."
+msgstr "Escolten cap a fora, però el tallafoc els bloqueja: %(p)s."
+
+msgid "%(n)s sitios con las cabeceras en orden y sin puertos inesperados abiertos."
+msgstr "%(n)s llocs amb les capçaleres en ordre i sense ports inesperats oberts."
+
+msgid "CrowdSec (bloqueos)"
+msgstr "CrowdSec (bloquejos)"
+
+msgid "No se pudo consultar CrowdSec: %(error)s"
+msgstr "No s'ha pogut consultar CrowdSec: %(error)s"
+
+msgid "CrowdSec ha baneado una IP del propio servidor: %(ips)s. Quítala con «cscli decisions delete --ip …»."
+msgstr "CrowdSec ha bandejat una IP del propi servidor: %(ips)s. Treu-la amb «cscli decisions delete --ip …»."
+
+msgid "%(n)s bloqueos activos%(esc)s."
+msgstr "%(n)s bloquejos actius%(esc)s."

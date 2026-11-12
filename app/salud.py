@@ -207,6 +207,48 @@ def _estado_prueba_restauracion(ahora: datetime) -> dict:
     return _item("Copias de seguridad", "restauracion", titulo, item_estado, _("Última prueba correcta hace %(hace)s.", hace=_legible(edad)))
 
 
+EXPOSICION_AMBAR_HORAS = 6
+
+
+def _leer_exposicion(ahora: datetime):
+    ruta = db.BACKUPS_DIR / "exposicion_estado.json"
+    if not ruta.exists():
+        return None, None
+    estado = json.loads(ruta.read_text(encoding="utf-8"))
+    return estado, (ahora - datetime.fromisoformat(estado["fecha"]).replace(tzinfo=None)).total_seconds()
+
+
+def _estado_exposicion(ahora: datetime) -> dict:
+    """Lo que ve el mundo desde fuera (scripts/auditar_exposicion.py, cada hora): cabeceras de seguridad de cada sitio y puertos abiertos al exterior."""
+    titulo = _("Exposición pública (cabeceras y puertos)")
+    estado, edad = _leer_exposicion(ahora)
+    if estado is None:
+        return _item("Servidor", "exposicion", titulo, GRIS, _("Todavía no se ha comprobado ninguna vez."))
+    if edad > EXPOSICION_AMBAR_HORAS * 3600:
+        return _item("Servidor", "exposicion", titulo, AMBAR, _("La última comprobación es de hace %(hace)s: el temporizador no está funcionando.", hace=_legible(edad)))
+    fallos = [f for f in estado.get("fallos", []) if not f.startswith("CrowdSec")]
+    if fallos:
+        return _item("Servidor", "exposicion", titulo, AMBAR, _("%(n)s problema(s): %(lista)s.", n=len(fallos), lista="; ".join(fallos[:3])), len(fallos))
+    filtrados = estado.get("puertos_filtrados") or []
+    extra = (" " + _("Escuchan hacia fuera, pero el cortafuegos los bloquea: %(p)s.", p=", ".join(filtrados))) if filtrados else ""
+    return _item("Servidor", "exposicion", titulo, VERDE, _("%(n)s sitios con las cabeceras en orden y sin puertos inesperados abiertos.", n=len(estado.get("hosts", []))) + extra)
+
+
+def _estado_crowdsec(ahora: datetime) -> dict:
+    """Decisiones activas de CrowdSec. En rojo si ha baneado una IP del propio servidor (se dejaría fuera a sí mismo: ya pasó con las pruebas de 403)."""
+    titulo = _("CrowdSec (bloqueos)")
+    estado, edad = _leer_exposicion(ahora)
+    if estado is None or "crowdsec" not in estado:
+        return _item("Servidor", "crowdsec", titulo, GRIS, _("Todavía no se ha comprobado ninguna vez."))
+    cs = estado["crowdsec"]
+    if "error" in cs:
+        return _item("Servidor", "crowdsec", titulo, AMBAR, _("No se pudo consultar CrowdSec: %(error)s", error=cs["error"]))
+    if cs.get("propias_baneadas"):
+        return _item("Servidor", "crowdsec", titulo, ROJO, _("CrowdSec ha baneado una IP del propio servidor: %(ips)s. Quítala con «cscli decisions delete --ip …».", ips=", ".join(cs["propias_baneadas"])))
+    esc = ", ".join(f"{k.split('/')[-1]} ({v})" for k, v in list(cs.get("por_escenario", {}).items())[:3])
+    return _item("Servidor", "crowdsec", titulo, VERDE, _("%(n)s bloqueos activos%(esc)s.", n=cs.get("activas", 0), esc=(": " + esc) if esc else ""), cs.get("activas", 0))
+
+
 CVE_AMBAR_DIAS = 10
 
 
@@ -468,6 +510,8 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Servidor", "aws_gasto", _("Gasto de AWS este mes"), lambda: _estado_gasto_aws(ahora))
     _seguro("Servidor", "disco", _("Espacio libre en disco"), _estado_disco)
     _seguro("Servidor", "dependencias", _("Dependencias con vulnerabilidades conocidas"), lambda: _estado_dependencias(ahora))
+    _seguro("Servidor", "exposicion", _("Exposición pública (cabeceras y puertos)"), lambda: _estado_exposicion(ahora))
+    _seguro("Servidor", "crowdsec", _("CrowdSec (bloqueos)"), lambda: _estado_crowdsec(ahora))
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)
     _seguro("Servidor", "errores_servidor", _("Errores del servidor (5xx)"), lambda: _estado_errores(ahora))
     _seguro("Servidor", "cola_ia", _("Cola de IA"), lambda: _estado_cola_ia(ahora))

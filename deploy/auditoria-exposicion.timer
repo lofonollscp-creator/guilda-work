@@ -1,0 +1,10 @@
+[Unit]
+Description=Guilda Work - auditoría horaria de exposición pública
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

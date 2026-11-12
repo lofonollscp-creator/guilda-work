@@ -27874,3 +27874,33 @@ msgstr "Aucune vulnérabilité connue (analyse il y a %(hace)s)."
 
 msgid "Te lo pregunto porque en esta conversación he leído contenido escrito por terceros (correo, adjunto, mensaje de un cliente) y podría traer instrucciones ocultas."
 msgstr "Je vous le demande parce que, dans cette conversation, j'ai lu du contenu écrit par des tiers (courriel, pièce jointe, message d'un client) et il pourrait contenir des instructions cachées."
+
+msgid "Exposición pública (cabeceras y puertos)"
+msgstr "Exposition publique (en-têtes et ports)"
+
+msgid "Todavía no se ha comprobado ninguna vez."
+msgstr "Aucune vérification n'a encore été effectuée."
+
+msgid "La última comprobación es de hace %(hace)s: el temporizador no está funcionando."
+msgstr "La dernière vérification date d'il y a %(hace)s : le minuteur ne fonctionne pas."
+
+msgid "%(n)s problema(s): %(lista)s."
+msgstr "%(n)s problème(s) : %(lista)s."
+
+msgid "Escuchan hacia fuera, pero el cortafuegos los bloquea: %(p)s."
+msgstr "Ils écoutent vers l'extérieur, mais le pare-feu les bloque : %(p)s."
+
+msgid "%(n)s sitios con las cabeceras en orden y sin puertos inesperados abiertos."
+msgstr "%(n)s sites avec les en-têtes en ordre et sans ports inattendus ouverts."
+
+msgid "CrowdSec (bloqueos)"
+msgstr "CrowdSec (blocages)"
+
+msgid "No se pudo consultar CrowdSec: %(error)s"
+msgstr "Impossible de consulter CrowdSec : %(error)s"
+
+msgid "CrowdSec ha baneado una IP del propio servidor: %(ips)s. Quítala con «cscli decisions delete --ip …»."
+msgstr "CrowdSec a banni une IP du serveur lui-même : %(ips)s. Retirez-la avec « cscli decisions delete --ip … »."
+
+msgid "%(n)s bloqueos activos%(esc)s."
+msgstr "%(n)s blocages actifs%(esc)s."

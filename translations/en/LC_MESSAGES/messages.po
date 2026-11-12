@@ -27789,3 +27789,33 @@ msgstr "No known vulnerabilities (scanned %(hace)s ago)."
 
 msgid "Te lo pregunto porque en esta conversación he leído contenido escrito por terceros (correo, adjunto, mensaje de un cliente) y podría traer instrucciones ocultas."
 msgstr "I'm asking because in this conversation I have read content written by third parties (an email, an attachment, a client's message) and it could carry hidden instructions."
+
+msgid "Exposición pública (cabeceras y puertos)"
+msgstr "Public exposure (headers and ports)"
+
+msgid "Todavía no se ha comprobado ninguna vez."
+msgstr "It has not been checked yet."
+
+msgid "La última comprobación es de hace %(hace)s: el temporizador no está funcionando."
+msgstr "The last check was %(hace)s ago: the timer is not working."
+
+msgid "%(n)s problema(s): %(lista)s."
+msgstr "%(n)s problem(s): %(lista)s."
+
+msgid "Escuchan hacia fuera, pero el cortafuegos los bloquea: %(p)s."
+msgstr "They listen externally, but the firewall blocks them: %(p)s."
+
+msgid "%(n)s sitios con las cabeceras en orden y sin puertos inesperados abiertos."
+msgstr "%(n)s sites with their headers in order and no unexpected open ports."
+
+msgid "CrowdSec (bloqueos)"
+msgstr "CrowdSec (blocks)"
+
+msgid "No se pudo consultar CrowdSec: %(error)s"
+msgstr "CrowdSec could not be queried: %(error)s"
+
+msgid "CrowdSec ha baneado una IP del propio servidor: %(ips)s. Quítala con «cscli decisions delete --ip …»."
+msgstr "CrowdSec has banned an IP of the server itself: %(ips)s. Remove it with “cscli decisions delete --ip …”."
+
+msgid "%(n)s bloqueos activos%(esc)s."
+msgstr "%(n)s active blocks%(esc)s."
