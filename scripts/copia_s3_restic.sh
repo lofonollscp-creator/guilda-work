@@ -4,7 +4,8 @@
 # Así, si se pierde el VPS y su disco, las bases de datos, secretos y volúmenes se restauran desde S3 (docs: HOSTING.md «Copia de seguridad en S3»).
 #
 # Requiere /etc/restic.env (RESTIC_REPOSITORY local, RESTIC_PASSWORD) y las GUILDA_S3_* de /etc/guilda-work.env (las mismas claves del almacén de objetos: deben poder escribir en
-# la carpeta copias-restic/ y borrar ahí, para la retención). Retención en S3: 7 diarias, 4 semanales, 6 mensuales y 6 anuales por objetivo. Los domingos comprueba una muestra del 2 %.
+# la carpeta copias-restic/). Las claves de la app NO pueden borrar en S3 (a propósito: si alguien las roba, no puede destruir las copias), así que esta copia es de SOLO AÑADIR: no se aplica
+# retención ni se usan bloqueos (--no-lock). Crece poco cada día; para podarla hace falta una credencial con s3:DeleteObject, a mano. Los domingos comprueba una muestra del 2 %.
 # Estado en data/backups/restic_s3_estado.json (lo lee el panel Salud). Uso: scripts/copia_s3_restic.sh   (lo lanza deploy/restic-s3.timer a las 04:15; también a mano, como root)
 set -uo pipefail
 
@@ -49,17 +50,15 @@ export RESTIC_FROM_REPOSITORY="$RESTIC_REPOSITORY" RESTIC_FROM_PASSWORD="$RESTIC
 _restic() { docker run --rm -v restic-cache:/cache -v "$RESTIC_REPOSITORY:$RESTIC_REPOSITORY" -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION \
   -e RESTIC_PASSWORD -e RESTIC_FROM_REPOSITORY -e RESTIC_FROM_PASSWORD -e RESTIC_REPOSITORY="$DESTINO" "$IMAGEN" "$@"; }
 
-if ! _restic cat config >/dev/null 2>&1; then
+if ! _restic cat config --no-lock >/dev/null 2>&1; then
   echo "== Creando el repositorio en S3 (primera vez) =="
   _restic init --from-repo "$RESTIC_REPOSITORY" --copy-chunker-params -q || { echo "FALLO: no se pudo crear el repositorio en S3" >&2; terminar 1 "init del repositorio en S3"; }
 fi
 echo "== Copiando snapshots nuevos a S3 =="
-ANTES="$(_restic snapshots --json 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' 2>/dev/null || echo 0)"
-_restic copy -q || { echo "FALLO: restic copy" >&2; terminar 1 "restic copy"; }
-DESPUES="$(_restic snapshots --json 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' 2>/dev/null || echo 0)"
+ANTES="$(_restic snapshots --no-lock --json 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' 2>/dev/null || echo 0)"
+_restic copy --no-lock -q || { echo "FALLO: restic copy" >&2; terminar 1 "restic copy"; }
+DESPUES="$(_restic snapshots --no-lock --json 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' 2>/dev/null || echo 0)"
 COPIADOS=$((DESPUES - ANTES))
-echo "== Retención en S3 =="
-_restic forget --prune --group-by host,tags --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --keep-yearly 6 -q || { echo "FALLO: forget" >&2; terminar 1 "forget en S3"; }
-if [ "$(date +%u)" = "7" ]; then _restic check --read-data-subset=2% -q || { echo "FALLO: check" >&2; terminar 1 "check en S3"; }; fi
+if [ "$(date +%u)" = "7" ]; then _restic check --no-lock --read-data-subset=2% -q || { echo "FALLO: check" >&2; terminar 1 "check en S3"; }; fi
 echo "Terminado: $COPIADOS snapshots copiados."
 terminar 0
