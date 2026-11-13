@@ -347,7 +347,7 @@
    "esperado": {
     "numero": "2026/0187",
     "fecha": "2026-11-03",
-    "emisor_nif": null,
+    "emisor_nif": "B08123457",
     "receptor_nif": "B99887762",
     "total": 363.0,
     "lineas": [
@@ -385,7 +385,7 @@
    "esperado": {
     "numero": "4412/A",
     "fecha": "2026-11-11",
-    "emisor_nif": null,
+    "emisor_nif": "B85049435",
     "receptor_nif": null,
     "total": 50.0,
     "lineas": [
