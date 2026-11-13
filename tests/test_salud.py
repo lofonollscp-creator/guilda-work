@@ -252,3 +252,16 @@ def test_dependencias_con_vulnerabilidades_en_el_panel(tmp_path, monkeypatch):
     assert r["estado"] == salud.AMBAR and "pillow 12.3.0 → 13.0.0" in r["detalle"]
     escribir(AHORA - timedelta(days=30), [])
     assert salud._estado_dependencias(AHORA)["estado"] == salud.AMBAR and "temporizador" in salud._estado_dependencias(AHORA)["detalle"]
+
+
+def test_la_tendencia_del_disco_estima_los_dias_que_quedan(tmp_path):
+    from datetime import datetime, timedelta
+    from app import salud
+    ruta = tmp_path / "t.json"
+    inicio = datetime(2026, 11, 1)
+    gb = 1024 ** 3
+    assert salud._tendencia_disco(20 * gb, inicio, ruta) is None                           # un solo dato: no se puede saber
+    salud._tendencia_disco(18 * gb, inicio + timedelta(days=1), ruta)
+    dias = salud._tendencia_disco(16 * gb, inicio + timedelta(days=2), ruta)                # 2 GB al día, quedan 16 GB
+    assert dias == 8
+    assert salud._tendencia_disco(16 * gb, inicio + timedelta(days=2), ruta) == 8           # el mismo día no duplica la muestra

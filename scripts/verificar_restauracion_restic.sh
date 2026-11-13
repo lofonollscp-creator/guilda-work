@@ -15,11 +15,20 @@ if [ -f "$ENV_FILE" ]; then set -a; source "$ENV_FILE"; set +a; fi
 if [ -z "${RESTIC_REPOSITORY:-}" ] || [ -z "${RESTIC_PASSWORD:-}" ]; then
   echo "RESTIC_REPOSITORY/RESTIC_PASSWORD no configuradas (¿falta $ENV_FILE?)." >&2; exit 1
 fi
+# GUILDA_VERIFICAR_S3=1: la misma prueba, pero contra la copia de AWS S3 (scripts/copia_s3_restic.sh): lo que importa si se pierde el servidor entero.
+S3=0
+if [ "${GUILDA_VERIFICAR_S3:-0}" = "1" ]; then
+  set -a; . "${GUILDA_ENV_FILE:-/etc/guilda-work.env}"; set +a
+  S3=1
+  export AWS_ACCESS_KEY_ID="$GUILDA_S3_ACCESS_KEY" AWS_SECRET_ACCESS_KEY="$GUILDA_S3_SECRET_KEY" AWS_DEFAULT_REGION="${GUILDA_S3_REGION:-eu-north-1}"
+  RESTIC_REPOSITORY="s3:https://${GUILDA_S3_ENDPOINT:-s3.amazonaws.com}/$GUILDA_S3_BUCKET/${GUILDA_RESTIC_S3_PREFIJO:-copias-restic}"
+fi
 
 IMAGEN="${RESTIC_IMAGEN:-restic/restic@sha256:9940e6c7421ab3a21ee9fdc4e91596d04c792b600d31b102696c75cbf3ac4481}"
 IMAGEN_PG="${RESTIC_IMAGEN_PG:-postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777}"
 REPO_APP="${GUILDA_REPO:-/home/guilda/guilda-work}"
 ESTADO="${GUILDA_RESTIC_ESTADO_RESTAURACION:-$REPO_APP/data/backups/restic_estado_restauracion.json}"
+[ "$S3" = "1" ] && ESTADO="$REPO_APP/data/backups/restic_s3_restauracion.json"
 TRABAJO="$(mktemp -d /var/tmp/restic-verificacion.XXXXXX)"
 CONTENEDOR_PG="restic-verificacion-pg-$$"
 RESULTADOS=()
@@ -28,7 +37,13 @@ FALLOS=0
 limpiar() { docker rm -f "$CONTENEDOR_PG" >/dev/null 2>&1; rm -rf "$TRABAJO"; }
 trap limpiar EXIT INT TERM
 
-R() { docker run --rm -v restic-cache:/cache -v "$RESTIC_REPOSITORY:$RESTIC_REPOSITORY" -v "$TRABAJO:/out" -e RESTIC_REPOSITORY -e RESTIC_PASSWORD "$IMAGEN" "$@"; }
+R() {
+  if [ "$S3" = "1" ]; then   # copia en S3: de solo añadir, sin bloqueos (las claves de la app no pueden borrar)
+    docker run --rm -v "$TRABAJO:/out" -e RESTIC_REPOSITORY -e RESTIC_PASSWORD -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION "$IMAGEN" "$@" --no-lock
+  else
+    docker run --rm -v restic-cache:/cache -v "$RESTIC_REPOSITORY:$RESTIC_REPOSITORY" -v "$TRABAJO:/out" -e RESTIC_REPOSITORY -e RESTIC_PASSWORD "$IMAGEN" "$@"
+  fi
+}
 registrar() { RESULTADOS+=("$1=$2"); [ "$2" = "ok" ] || FALLOS=$((FALLOS + 1)); echo "  $1: $2"; }
 
 echo "== 1. Integridad del repositorio (10 % de los datos) =="
@@ -53,7 +68,8 @@ echo "== 3. Volcado de Kratos en un Postgres desechable =="
 if R restore latest --tag pg-kratos --target /out/kratos -q >/dev/null 2>&1; then
   volcado="$(find "$TRABAJO/kratos" -name '*.sql' | head -1)"
   if [ -n "$volcado" ] && docker run -d --rm --name "$CONTENEDOR_PG" --network none -e POSTGRES_PASSWORD=verificacion -v "$volcado:/volcado.sql:ro" "$IMAGEN_PG" >/dev/null 2>&1; then
-    for _ in $(seq 1 30); do docker exec "$CONTENEDOR_PG" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+    # La imagen de Postgres arranca un servidor TEMPORAL para inicializarse y luego lo reinicia: hay que esperar a que diga «ready» DOS veces (si no, psql se corta a mitad).
+    for _ in $(seq 1 90); do [ "$(docker logs "$CONTENEDOR_PG" 2>&1 | grep -c 'ready to accept connections')" -ge 2 ] && break; sleep 1; done
     if docker exec "$CONTENEDOR_PG" psql -U postgres -v ON_ERROR_STOP=0 -q -f /volcado.sql >/dev/null 2>&1; then
       n="$(docker exec "$CONTENEDOR_PG" psql -U postgres -d kratos -At -c 'select count(*) from identities' 2>/dev/null || echo 0)"
       if [ "${n:-0}" -gt 0 ] 2>/dev/null; then registrar kratos "ok"; else registrar kratos "error: la base restaurada no tiene identidades"; fi

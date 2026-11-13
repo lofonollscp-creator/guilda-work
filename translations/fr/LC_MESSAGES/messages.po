@@ -28190,3 +28190,15 @@ msgstr "sans limite"
 
 msgid "Guardar topes"
 msgstr "Enregistrer les limites"
+
+msgid "Al ritmo de los últimos días se llenaría en unos %(d)s días."
+msgstr "Au rythme des derniers jours, il serait plein dans environ %(d)s jours."
+
+msgid "Prueba de restauración de la copia en S3"
+msgstr "Test de restauration de la copie sur S3"
+
+msgid "Tamaño: %(gb)s GB."
+msgstr "Taille : %(gb)s Go."
+
+msgid "Pasa de %(max)s GB: conviene podarla a mano (HOSTING.md, «Copia fuera del servidor»)."
+msgstr "Plus de %(max)s Go : il faut l'élaguer à la main (HOSTING.md, « Copie hors du serveur »)."

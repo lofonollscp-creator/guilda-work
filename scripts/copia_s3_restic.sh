@@ -19,12 +19,12 @@ INICIO="$(date -Is)"
 terminar() {
   local codigo="$1"; shift
   mkdir -p "$(dirname "$ESTADO")"
-  python3 -I - "$ESTADO" "$INICIO" "${COPIADOS:-}" "$@" <<'PY'
+  python3 -I - "$ESTADO" "$INICIO" "${COPIADOS:-}" "${TAMANO:-}" "$@" <<'PY'
 import json, sys, datetime
-ruta, inicio, copiados, *errores = sys.argv[1:]
+ruta, inicio, copiados, tamano, *errores = sys.argv[1:]
 errores = [e for e in errores if e]
 fin = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
-estado = {"inicio": inicio, "fin": fin, "snapshots_copiados": int(copiados) if copiados.isdigit() else None, "errores": errores[:20]}
+estado = {"inicio": inicio, "fin": fin, "snapshots_copiados": int(copiados) if copiados.isdigit() else None, "tamano_bytes": int(tamano) if tamano.isdigit() else None, "errores": errores[:20]}
 try:
     previo = json.load(open(ruta))
 except Exception:
@@ -59,6 +59,7 @@ ANTES="$(_restic snapshots --no-lock --json 2>/dev/null | python3 -c 'import jso
 _restic copy --no-lock -q || { echo "FALLO: restic copy" >&2; terminar 1 "restic copy"; }
 DESPUES="$(_restic snapshots --no-lock --json 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' 2>/dev/null || echo 0)"
 COPIADOS=$((DESPUES - ANTES))
+TAMANO="$(_restic stats --no-lock --mode raw-data --json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)["total_size"])' 2>/dev/null || echo)"
 if [ "$(date +%u)" = "7" ]; then _restic check --no-lock --read-data-subset=2% -q || { echo "FALLO: check" >&2; terminar 1 "check en S3"; }; fi
 echo "Terminado: $COPIADOS snapshots copiados."
 terminar 0

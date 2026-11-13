@@ -169,8 +169,25 @@ def _estado_copia_documentos(ahora: datetime) -> dict:
                                   lambda e, hace: _("Última copia completa hace %(hace)s (%(n)s documentos nuevos).", hace=hace, n=e.get("nuevos") if e.get("nuevos") is not None else "?"))
 
 
+S3_TAMANO_AVISO_GB = float(os.environ.get("GUILDA_S3_TAMANO_AVISO_GB", "20"))
+
+
 def _estado_copia_s3(ahora: datetime) -> dict:
-    """Segunda copia de Restic en AWS S3, fuera del servidor (scripts/copia_s3_restic.sh → data/backups/restic_s3_estado.json)."""
+    """Segunda copia de Restic en AWS S3, fuera del servidor (scripts/copia_s3_restic.sh → data/backups/restic_s3_estado.json). Es de solo añadir: avisa cuando pesa más de S3_TAMANO_AVISO_GB (hay que podarla a mano)."""
+    item = _estado_copia_s3_basico(ahora)
+    try:
+        tam = json.loads((db.BACKUPS_DIR / "restic_s3_estado.json").read_text(encoding="utf-8")).get("tamano_bytes")
+    except (OSError, ValueError):
+        tam = None
+    if tam:
+        item["detalle"] += " " + _("Tamaño: %(gb)s GB.", gb=f"{tam / 1024**3:.1f}")
+        if tam / 1024**3 > S3_TAMANO_AVISO_GB and item["estado"] == VERDE:
+            item["estado"] = AMBAR
+            item["detalle"] += " " + _("Pasa de %(max)s GB: conviene podarla a mano (HOSTING.md, «Copia fuera del servidor»).", max=f"{S3_TAMANO_AVISO_GB:.0f}")
+    return item
+
+
+def _estado_copia_s3_basico(ahora: datetime) -> dict:
     return _estado_restic_fichero(ahora, "restic_s3_estado.json", "restic_s3", _("Copia de seguridad fuera del servidor (Restic en AWS S3)"),
                                   _("Todavía no se ha ejecutado la copia a S3."),
                                   lambda e, hace: _("Última copia en S3 completa hace %(hace)s (%(n)s snapshots nuevos).", hace=hace, n=e.get("snapshots_copiados") if e.get("snapshots_copiados") is not None else "?"))
@@ -231,19 +248,20 @@ def _estado_gasto_aws(ahora: datetime) -> dict:
 RESTAURACION_VERDE_DIAS = 40
 
 
-def _estado_prueba_restauracion(ahora: datetime) -> dict:
-    """Prueba mensual de restauración (scripts/verificar_restauracion_restic.sh): una copia que no se puede restaurar no vale."""
-    titulo = _("Prueba de restauración de la copia")
-    ruta = db.BACKUPS_DIR / "restic_estado_restauracion.json"
+def _estado_prueba_restauracion(ahora: datetime, s3: bool = False) -> dict:
+    """Prueba mensual de restauración (scripts/verificar_restauracion_restic.sh): una copia que no se puede restaurar no vale. Con `s3`, la de la copia de AWS S3 (GUILDA_VERIFICAR_S3=1)."""
+    titulo = _("Prueba de restauración de la copia en S3") if s3 else _("Prueba de restauración de la copia")
+    clave = "restauracion_s3" if s3 else "restauracion"
+    ruta = db.BACKUPS_DIR / ("restic_s3_restauracion.json" if s3 else "restic_estado_restauracion.json")
     if not ruta.exists():
-        return _item("Copias de seguridad", "restauracion", titulo, GRIS, _("Todavía no se ha hecho ninguna prueba de restauración."))
+        return _item("Copias de seguridad", clave, titulo, GRIS, _("Todavía no se ha hecho ninguna prueba de restauración."))
     estado = json.loads(ruta.read_text(encoding="utf-8"))
     fallos = sorted(k for k, v in (estado.get("comprobaciones") or {}).items() if v != "ok")
     if not estado.get("ok"):
-        return _item("Copias de seguridad", "restauracion", titulo, ROJO, _("La última prueba falló en: %(fallos)s.", fallos=", ".join(fallos) or "?"))
+        return _item("Copias de seguridad", clave, titulo, ROJO, _("La última prueba falló en: %(fallos)s.", fallos=", ".join(fallos) or "?"))
     edad = (ahora - datetime.fromisoformat(estado["ultimo_ok"]).replace(tzinfo=None)).total_seconds()
     item_estado = VERDE if edad <= RESTAURACION_VERDE_DIAS * 86400 else AMBAR
-    return _item("Copias de seguridad", "restauracion", titulo, item_estado, _("Última prueba correcta hace %(hace)s.", hace=_legible(edad)))
+    return _item("Copias de seguridad", clave, titulo, item_estado, _("Última prueba correcta hace %(hace)s.", hace=_legible(edad)))
 
 
 def _estado_version(ahora: datetime) -> dict:
@@ -377,12 +395,46 @@ def _estado_dependencias(ahora: datetime) -> dict:
     return _item("Servidor", "dependencias", titulo, VERDE, _("Sin vulnerabilidades conocidas (escaneo hace %(hace)s).", hace=_legible(edad)), 0)
 
 
-def _estado_disco() -> dict:
+def _tendencia_disco(libre_bytes: int, ahora: datetime, ruta=None) -> int | None:
+    """Anota (una vez al día) el espacio libre y estima en cuántos días se llenará el disco al ritmo de los últimos 14 días. None si no crece el uso o aún hay pocos datos."""
+    ruta = ruta or db.BACKUPS_DIR / "disco_tendencia.json"
+    try:
+        muestras = json.loads(ruta.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        muestras = []
+    hoy = ahora.strftime("%Y-%m-%d")
+    if not muestras or muestras[-1][0] != hoy:
+        muestras.append([hoy, libre_bytes])
+        muestras = muestras[-30:]
+        try:
+            ruta.write_text(json.dumps(muestras), encoding="utf-8")
+        except OSError:
+            pass
+    desde = (ahora - timedelta(days=14)).strftime("%Y-%m-%d")
+    recientes = [m for m in muestras if m[0] >= desde]
+    if len(recientes) < 3:
+        return None
+    dias = (datetime.fromisoformat(recientes[-1][0]) - datetime.fromisoformat(recientes[0][0])).days
+    gastado = recientes[0][1] - recientes[-1][1]
+    if dias <= 0 or gastado <= 0:
+        return None
+    return int(libre_bytes / (gastado / dias))
+
+
+def _estado_disco(ahora: datetime | None = None) -> dict:
+    ahora = ahora or datetime.now()
     uso = shutil.disk_usage(db.DB_PATH.parent if db.DB_PATH.parent.exists() else "/")
     libre = uso.free / uso.total * 100
     estado = VERDE if libre >= DISCO_AMBAR_PORCENTAJE else (AMBAR if libre >= DISCO_ROJO_PORCENTAJE else ROJO)
-    return _item("Servidor", "disco", _("Espacio libre en disco"), estado,
-                 _("%(libre)s %% libre (%(gb)s GB de %(total)s GB).", libre=f"{libre:.0f}", gb=f"{uso.free / 1024**3:.1f}", total=f"{uso.total / 1024**3:.0f}"), round(libre, 1))
+    detalle = _("%(libre)s %% libre (%(gb)s GB de %(total)s GB).", libre=f"{libre:.0f}", gb=f"{uso.free / 1024**3:.1f}", total=f"{uso.total / 1024**3:.0f}")
+    dias = _tendencia_disco(uso.free, ahora)
+    if dias is not None and dias < 60:
+        detalle += " " + _("Al ritmo de los últimos días se llenaría en unos %(d)s días.", d=dias)
+        if dias < 14:
+            estado = ROJO
+        elif estado == VERDE:
+            estado = AMBAR
+    return _item("Servidor", "disco", _("Espacio libre en disco"), estado, detalle, round(libre, 1))
 
 
 def _estado_bd() -> dict:
@@ -612,6 +664,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
         _seguro("Copias de seguridad", "restic_objetos", _("Copia de los documentos del almacén de objetos (Restic)"), lambda: _estado_copia_documentos(ahora))
     _seguro("Copias de seguridad", "restic_s3", _("Copia de seguridad fuera del servidor (Restic en AWS S3)"), lambda: _estado_copia_s3(ahora))
     _seguro("Copias de seguridad", "restauracion", _("Prueba de restauración de la copia"), lambda: _estado_prueba_restauracion(ahora))
+    _seguro("Copias de seguridad", "restauracion_s3", _("Prueba de restauración de la copia en S3"), lambda: _estado_prueba_restauracion(ahora, True))
     if _motor_postgres():
         _seguro("Copias de seguridad", "restauracion_pg", _("Ensayo de restauración de la base de datos"), lambda: _estado_ensayo_restauracion_pg(ahora))
         from . import salud_postgres
