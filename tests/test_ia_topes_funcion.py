@@ -28,3 +28,22 @@ def test_sin_tope_propio_solo_cuenta_y_quitar_el_tope_lo_libera(cliente):
     ia_consumo.reservar(uid, funcion="correo")
     with pytest.raises(ValueError):
         ia_consumo.fijar_tope_funcion(tenant, "inventada", 3)
+
+
+def test_el_aviso_llega_al_80_por_ciento_del_tope_de_una_funcion(cliente, monkeypatch):
+    from app import ia_vigilancia
+    h, uid, tenant = _despacho(cliente, "topes3@ejemplo.com")
+    avisos = []
+    monkeypatch.setattr(ia_vigilancia, "avisar_consumo_funcion", lambda t, f, n, antes, despues, lim: avisos.append((f, antes, despues, lim)))
+    ia_consumo.fijar_tope_funcion(tenant, "facturas", 5)
+    for _ in range(4):
+        ia_consumo.reservar(uid, funcion="facturas")
+    assert avisos[-1] == ("facturas", 3, 4, 5) and len(avisos) == 4
+
+
+def test_el_resumen_global_trae_el_desglose_por_funcion(cliente):
+    h, uid, tenant = _despacho(cliente, "topes4@ejemplo.com")
+    ia_consumo.fijar_tope_funcion(tenant, "facturas", 10)
+    ia_consumo.reservar(uid, funcion="facturas")
+    fila = next(f for f in ia_consumo.resumen_global() if f["id"] == tenant)
+    assert fila["funciones"] == ["Lectura de facturas: 1 / 10"]

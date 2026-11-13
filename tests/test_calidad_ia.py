@@ -11,7 +11,7 @@ def _a(global_=93.3, inyeccion=100.0, errores=0, casos=30):
     return {"casos": casos, "acierto_global": global_, "por_tipo": {"lectura": 100.0, "inyeccion": inyeccion}, "errores": [{"caso": f"c{i}", "error": "x"} for i in range(errores)], "fallos": [], "segundos_medios": 4.0}
 
 
-def _f(global_=85.0, errores=0, casos=12):
+def _f(global_=99.0, errores=0, casos=12):
     return {"casos": casos, "acierto_global": global_, "por_campo": {"total": 90.0}, "errores": [{"caso": f"c{i}", "error": "x"} for i in range(errores)], "fallos": []}
 
 
@@ -60,6 +60,7 @@ def test_panel_salud(tmp_path, monkeypatch):
     bueno = c.resumir(_a(), _f(), BASE_A, BASE_F, "m", AHORA - timedelta(days=1))
     assert _panel(tmp_path, monkeypatch, bueno)["estado"] == salud.VERDE
     assert _panel(tmp_path, monkeypatch, c.resumir(_a(global_=80.0), _f(), BASE_A, BASE_F, "m", AHORA - timedelta(days=1)))["estado"] == salud.AMBAR
+    assert _panel(tmp_path, monkeypatch, c.resumir(_a(), _f(global_=94.0), BASE_A, {"acierto_global": 94.0, "por_campo": {"total": 90.0}}, "m", AHORA - timedelta(days=1)))["estado"] == salud.AMBAR     # por debajo del 95 % aunque no empeore
     assert _panel(tmp_path, monkeypatch, c.resumir(_a(inyeccion=66.7), _f(), BASE_A, BASE_F, "m", AHORA - timedelta(days=1)))["estado"] == salud.ROJO
     assert _panel(tmp_path, monkeypatch, c.resumir(_a(errores=20), _f(), BASE_A, BASE_F, "m", AHORA - timedelta(days=1)))["estado"] == salud.AMBAR
     assert _panel(tmp_path, monkeypatch, c.resumir(_a(), _f(), BASE_A, BASE_F, "m", AHORA - timedelta(days=30)))["estado"] == salud.AMBAR

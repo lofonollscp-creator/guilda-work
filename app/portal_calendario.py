@@ -6,7 +6,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import re
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from . import db, portal_citas, portal_peticiones, portal_subida_rapida
 
@@ -70,7 +70,7 @@ def _evento_con_hora(uid: str, inicio: datetime, minutos: int, resumen: str, des
 
 def contenido(cliente, ahora: datetime | None = None) -> str:
     """El texto del calendario (.ics) de ese cliente."""
-    ahora = ahora or datetime.utcnow()
+    ahora = ahora or datetime.now(timezone.utc).replace(tzinfo=None)
     hoy, marca = ahora.date(), ahora.strftime("%Y%m%dT%H%M%SZ")
     limite = hoy + timedelta(days=HORIZONTE_DIAS)
     lineas = ["BEGIN:VCALENDAR", "VERSION:2.0", f"PRODID:{PRODID}", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", f"X-WR-CALNAME:{_escapar('Plazos · ' + cliente['nombre'])}", "X-WR-TIMEZONE:Europe/Madrid",

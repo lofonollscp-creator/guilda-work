@@ -139,3 +139,16 @@ def test_los_movimientos_guardados_no_se_duplican_y_alimentan_el_aviso_de_cierre
     assert fcn.facturas_sin_pago(tenant, cid, date(2026, 7, 1), date(2026, 9, 30)) == 0              # cubre el trimestre y no hay facturas
     assert fcn.facturas_sin_pago(tenant, cid, date(2025, 1, 1), date(2025, 3, 31)) is None           # no cubre ese periodo: no se puede saber
     assert fcn.borrar_movimientos(tenant, uid, cid) == 4 and fcn.resumen_guardados(tenant, cid) is None
+
+
+def test_un_pago_que_suma_varias_facturas_del_mismo_proveedor_se_propone_agrupado():
+    from datetime import date
+    from app import fiscal_conciliacion as fcn
+    def fac(i, importe, nif="B12345674"):
+        return {"id": i, "origen": "factura", "tipo": "recibida", "fecha": date(2026, 7, 10), "numero": f"F{i}", "tercero_nombre": "Proveedor", "tercero_nif": nif, "esperado": -importe, "en_periodo": True}
+    facturas = [fac(1, 10000), fac(2, 5050), fac(3, 2500), fac(4, 7777, nif="A58818501")]
+    mov = [fcn.Movimiento(1, date(2026, 7, 20), -15050, "TRANSF PROVEEDOR")]
+    r = fcn.conciliar(mov, facturas)
+    assert r["conciliados"] == [] and len(r["agrupados"]) == 1
+    assert sorted(f["id"] for f in r["agrupados"][0]["facturas"]) == [1, 2]
+    assert {f["id"] for f in r["facturas_sin_movimiento"]} == {3, 4} and r["movimientos_sin_factura"] == []

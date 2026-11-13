@@ -4,7 +4,7 @@
 <header class="cabecera"><h1>Consumo de IA</h1><p class="muted">Consultas al asistente de IA este mes ({{ mes }}), por despacho. {{ total }} en total. El tope se fija en la ficha de cada tenant.</p></header>
 <div class="tabla-caja">
   <table class="tabla">
-    <thead><tr><th>Tenant</th><th>Consultas</th><th>Tope</th><th>Uso del tope</th></tr></thead>
+    <thead><tr><th>Tenant</th><th>Consultas</th><th>Tope</th><th>Uso del tope</th><th>Por función (usadas / tope)</th></tr></thead>
     <tbody>
       {% for f in filas %}
       <tr>
@@ -12,8 +12,9 @@
         <td>{{ f.usadas }}</td>
         <td>{% if f.ilimitado %}Ilimitado{% elif f.limite == 0 %}<span class="insignia insignia-riesgo">IA DESACTIVADA</span>{% else %}{{ f.limite }}{% endif %}</td>
         <td>{% if f.pct is not none %}<div class="barra-progreso"><span style="width: {{ f.pct }}%"></span></div> <span class="{{ 'texto-riesgo' if f.pct >= 100 else ('muted' if f.pct < 80 else 'ko') }}">{{ f.pct }} %</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td>{% if f.funciones %}{{ f.funciones|join(' · ') }}{% else %}<span class="muted">—</span>{% endif %}</td>
       </tr>
-      {% else %}<tr><td colspan="4" class="vacio">Ningún despacho ha usado la IA este mes.</td></tr>{% endfor %}
+      {% else %}<tr><td colspan="5" class="vacio">Ningún despacho ha usado la IA este mes.</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>

@@ -48,6 +48,17 @@ def avisar_consumo(tenant_id: int, antes: int, despues: int, limite: int | None)
     return _avisar(tenant_id, "ia_consumo", _("Tu despacho ha usado el %(p)s %% del límite mensual de IA", p=u), _("Van %(d)s de %(l)s consultas este mes.", d=despues, l=limite))
 
 
+def avisar_consumo_funcion(tenant_id: int, funcion: str, nombre: str, antes: int, despues: int, limite: int | None) -> int:
+    """Como `avisar_consumo`, pero para el tope propio de una función de IA (lectura de facturas, asistente, correo)."""
+    from flask_babel import gettext as _
+    u = umbral_cruzado(antes, despues, limite)
+    if u is None:
+        return 0
+    if u >= 100:
+        return _avisar(tenant_id, "ia_consumo", _("Se ha agotado el tope mensual de «%(f)s»", f=nombre), _("Has usado las %(n)s consultas de esta función en el mes. Se renueva el día 1; puedes ampliar el tope en los ajustes de IA.", n=limite))
+    return _avisar(tenant_id, "ia_consumo", _("«%(f)s» ha usado el %(p)s %% de su tope mensual", f=nombre, p=u), _("Van %(d)s de %(l)s consultas de esta función este mes.", d=despues, l=limite))
+
+
 def avisar_fallos(tenant_id: int, proveedor: str, errores: int, llamadas: int) -> int:
     """Notifica a la dirección cuando un proveedor acumula `ERRORES_PARA_AVISAR` fallos en el mes y fallan al menos tantas consultas como salen bien."""
     from flask_babel import gettext as _

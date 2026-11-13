@@ -66,5 +66,14 @@
       <td><span class="pill {{ {'seguro': 'semaforo-verde', 'probable': 'semaforo-ambar', 'posible': 'semaforo-gris'}[x.confianza] }}">{{ {'seguro': _('Seguro'), 'probable': _('Probable'), 'posible': _('Posible')}[x.confianza] }}</span> <span class="muted">{{ x.motivos|join(' · ') }}</span></td></tr>{% endfor %}</tbody></table></div>
   {% else %}<p class="muted">{{ _('Ningún movimiento casa con una factura.') }}</p>{% endif %}
 </section>
+{% if r.agrupados %}
+<section class="dash-panel ds-mt-16">
+  <h2>{{ _('Pagos agrupados (propuesta)') }}</h2>
+  <p class="muted">{{ _('Un movimiento cuyo importe es la suma exacta de varias facturas de la misma contraparte. Confírmalo antes de darlo por bueno.') }}</p>
+  <div class="table-wrap"><table class="fiscal-table"><thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Concepto del banco') }}</th><th>{{ _('Importe') }}</th><th>{{ _('Facturas') }}</th></tr></thead><tbody>
+    {% for x in r.agrupados %}{% set m = x.movimiento %}<tr><td>{{ m.fecha.strftime('%d/%m/%Y') }}</td><td>{{ m.concepto }}</td><td>{{ euros(m.importe) }}</td>
+      <td>{% for f in x.facturas %}{{ f.numero }} ({{ euros(f.esperado) }}){{ ', ' if not loop.last }}{% endfor %} · {{ x.facturas[0].tercero_nombre }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endif %}
 {% endif %}
 {% endblock %}

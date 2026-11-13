@@ -9,7 +9,7 @@ import json
 import os
 import threading
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import requests
 
@@ -68,7 +68,7 @@ def _llamar(operacion: str, cuerpo: dict, ahora: datetime | None = None) -> dict
         raise ErrorCostes("Faltan las claves de costes de AWS.")
     datos = json.dumps(cuerpo).encode()
     cabeceras = firmar("POST", "/", datos, {"host": HOST, "content-type": "application/x-amz-json-1.1", "x-amz-target": f"AWSInsightsIndexService.{operacion}"}, acceso, secreto,
-                       ahora or datetime.utcnow(), os.environ.get("GUILDA_AWS_COSTES_SESSION_TOKEN") or None)
+                       ahora or datetime.now(timezone.utc).replace(tzinfo=None), os.environ.get("GUILDA_AWS_COSTES_SESSION_TOKEN") or None)
     try:
         r = requests.post(f"https://{HOST}/", data=datos, headers=cabeceras, timeout=15)
     except requests.RequestException as e:

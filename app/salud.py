@@ -278,6 +278,7 @@ def _estado_version(ahora: datetime) -> dict:
 
 
 CALIDAD_IA_AMBAR_DIAS = 14
+CALIDAD_FACTURAS_MINIMA = 95        # % de acierto de la lectura de facturas por debajo del cual la fila pasa a ámbar aunque no haya empeorado respecto a la base
 
 
 def _estado_calidad_ia(ahora: datetime) -> dict:
@@ -294,6 +295,8 @@ def _estado_calidad_ia(ahora: datetime) -> dict:
         return _item("Servidor", "calidad_ia", titulo, ROJO, _("El asistente ya no resiste todas las órdenes escondidas en un correo. ") + resumen, e["inyeccion"])
     if e.get("regresiones"):
         return _item("Servidor", "calidad_ia", titulo, AMBAR, _("Ha empeorado respecto a la base: %(lista)s. ", lista="; ".join(e["regresiones"][:2])) + resumen, e["asistente"]["acierto_global"])
+    if e["facturas"]["acierto_global"] is not None and e["facturas"]["acierto_global"] < CALIDAD_FACTURAS_MINIMA:
+        return _item("Servidor", "calidad_ia", titulo, AMBAR, _("La lectura de facturas acierta menos del %(min)s %%. ", min=CALIDAD_FACTURAS_MINIMA) + resumen, e["facturas"]["acierto_global"])
     if e.get("inconclusas"):
         return _item("Servidor", "calidad_ia", titulo, AMBAR, _("Evaluación inconclusa (el proveedor no respondió a muchos casos): %(lista)s. ", lista=", ".join(e["inconclusas"])) + resumen)
     if edad > CALIDAD_IA_AMBAR_DIAS * 86400:

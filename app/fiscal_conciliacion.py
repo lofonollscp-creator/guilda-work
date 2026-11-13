@@ -221,6 +221,7 @@ def conciliar(movimientos: list[Movimiento], facturas: list[dict]) -> dict:
             motivos = ["mismo importe y fechas compatibles"]
         conciliados.append({"movimiento": m, "factura": f, "confianza": confianza, "motivos": motivos})
     conciliados.sort(key=lambda c: c["movimiento"].fecha)
+    agrupados = _agrupar(movimientos, facturas, usados_m, usados_f)
     sin_mov = [f for f in facturas if f.get("en_periodo") and (f["origen"], f["id"]) not in usados_f]
     sin_factura = []
     for m in movimientos:
@@ -228,7 +229,35 @@ def conciliar(movimientos: list[Movimiento], facturas: list[dict]) -> dict:
             continue
         plano = _plano(m.concepto)
         sin_factura.append({"movimiento": m, "sin_factura_esperable": any(k in plano for k in SIN_FACTURA_ESPERABLE)})
-    return {"conciliados": conciliados, "facturas_sin_movimiento": sin_mov, "movimientos_sin_factura": sin_factura}
+    return {"conciliados": conciliados, "agrupados": agrupados, "facturas_sin_movimiento": sin_mov, "movimientos_sin_factura": sin_factura}
+
+
+MAX_AGRUPADAS = 4                     # facturas que pueden sumar un mismo movimiento (un pago de varias facturas del mismo proveedor o cliente)
+MAX_CANDIDATAS_AGRUPAR = 25
+
+
+def _agrupar(movimientos: list[Movimiento], facturas: list[dict], usados_m: set, usados_f: set) -> list[dict]:
+    """Movimientos sin pareja que son la SUMA exacta de 2 a MAX_AGRUPADAS facturas sin pareja de la misma contraparte (mismo NIF o, sin NIF, mismo nombre), dentro de la ventana de fechas.
+    Es solo una propuesta («pago agrupado»): quien revisa decide. Marca como usados los movimientos y las facturas que propone."""
+    from itertools import combinations
+    libres = [f for f in facturas if (f["origen"], f["id"]) not in usados_f and f["esperado"] != 0]
+    por_contraparte: dict[str, list[dict]] = {}
+    for f in libres:
+        por_contraparte.setdefault(f["tercero_nif"] or _plano(f["tercero_nombre"]), []).append(f)
+    salida = []
+    for m in movimientos:
+        if m.fila in usados_m or m.importe == 0:
+            continue
+        for grupo in por_contraparte.values():
+            cand = [f for f in grupo if (f["origen"], f["id"]) not in usados_f and -VENTANA_ANTES <= (m.fecha - f["fecha"]).days <= VENTANA_DESPUES and f["esperado"] * m.importe > 0][:MAX_CANDIDATAS_AGRUPAR]
+            elegido = next((c for n in range(2, MAX_AGRUPADAS + 1) for c in combinations(cand, n) if sum(f["esperado"] for f in c) == m.importe), None)
+            if elegido:
+                usados_m.add(m.fila)
+                usados_f.update((f["origen"], f["id"]) for f in elegido)
+                salida.append({"movimiento": m, "facturas": list(elegido), "confianza": "posible",
+                               "motivos": [f"suma exacta de {len(elegido)} facturas de la misma contraparte: confírmalo"]})
+                break
+    return salida
 
 
 # --- Con los datos del titular ------------------------------------------------------------------------------------------------------------------

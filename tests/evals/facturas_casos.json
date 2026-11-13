@@ -340,6 +340,63 @@
     ],
     "es_abono": false
    }
+  },
+  {
+   "id": "factura_en_catalan",
+   "texto": "Serveis Informàtics del Vallès, SL\nNIF: B08123457\nCarrer Major 12, 08201 Sabadell\n\nFACTURA Núm. 2026/0187\nData: 03/11/2026\n\nClient: Cliente Prueba SL\nNIF: B99887762\n\nManteniment de servidors (novembre) ........ 300,00\nBase imposable ............................. 300,00\nIVA 21 % ................................... 63,00\nTOTAL FACTURA .............................. 363,00 EUR",
+   "esperado": {
+    "numero": "2026/0187",
+    "fecha": "2026-11-03",
+    "emisor_nif": null,
+    "receptor_nif": "B99887762",
+    "total": 363.0,
+    "lineas": [
+     {
+      "base": 300.0,
+      "pct_iva": 21,
+      "cuota_iva": 63.0
+     }
+    ],
+    "es_abono": false
+   }
+  },
+  {
+   "id": "facture_francaise_ue",
+   "texto": "Atelier Dupont SARL\nTVA intracommunautaire : FR40303265045\n12 rue de la Paix, 75002 Paris\n\nFACTURE N° FA-2026-0932\nDate : 08/11/2026\n\nClient : Cliente Prueba SL - NIF ES B99887762\n\nPrestation de conseil .......... 1 000,00 EUR\nTotal HT ....................... 1 000,00 EUR\nTVA 0 % (autoliquidation) ...... 0,00 EUR\nTotal TTC ...................... 1 000,00 EUR",
+   "esperado": {
+    "numero": "FA-2026-0932",
+    "fecha": "2026-11-08",
+    "emisor_nif": "FR40303265045",
+    "receptor_nif": "B99887762",
+    "total": 1000.0,
+    "lineas": [
+     {
+      "base": 1000.0,
+      "pct_iva": 0,
+      "cuota_iva": 0.0
+     }
+    ],
+    "es_abono": false
+   }
+  },
+  {
+   "id": "escaneo_con_ruido_de_ocr",
+   "texto": "FERRETERIA E1 BARRIO S.L.\nC.1.F. B 8 5 O 4 9 4 3 5\nAvda. de la Constitucion 4\n\nFactura n° 4 4 1 2 / A\nFecha 1 1 - 1 1 - 2 O 2 6\n\nTornilleria varia ............ 41,32\nBASE IMPONIBLE ............... 41,32\nI.V.A. 21 % .................. 8,68\nTOTAL ........................ 50,00",
+   "esperado": {
+    "numero": "4412/A",
+    "fecha": "2026-11-11",
+    "emisor_nif": null,
+    "receptor_nif": null,
+    "total": 50.0,
+    "lineas": [
+     {
+      "base": 41.32,
+      "pct_iva": 21,
+      "cuota_iva": 8.68
+     }
+    ],
+    "es_abono": false
+   }
   }
  ]
 }

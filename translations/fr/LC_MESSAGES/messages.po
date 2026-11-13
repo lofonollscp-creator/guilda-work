@@ -28202,3 +28202,24 @@ msgstr "Taille : %(gb)s Go."
 
 msgid "Pasa de %(max)s GB: conviene podarla a mano (HOSTING.md, «Copia fuera del servidor»)."
 msgstr "Plus de %(max)s Go : il faut l'élaguer à la main (HOSTING.md, « Copie hors du serveur »)."
+
+msgid "Se ha agotado el tope mensual de «%(f)s»"
+msgstr "Le plafond mensuel de « %(f)s » est épuisé"
+
+msgid "Has usado las %(n)s consultas de esta función en el mes. Se renueva el día 1; puedes ampliar el tope en los ajustes de IA."
+msgstr "Vous avez utilisé les %(n)s requêtes de cette fonction ce mois-ci. Il se renouvelle le 1er ; vous pouvez relever le plafond dans les réglages IA."
+
+msgid "«%(f)s» ha usado el %(p)s %% de su tope mensual"
+msgstr "« %(f)s » a utilisé %(p)s %% de son plafond mensuel"
+
+msgid "Van %(d)s de %(l)s consultas de esta función este mes."
+msgstr "%(d)s requêtes sur %(l)s pour cette fonction ce mois-ci."
+
+msgid "Pagos agrupados (propuesta)"
+msgstr "Paiements groupés (proposition)"
+
+msgid "Un movimiento cuyo importe es la suma exacta de varias facturas de la misma contraparte. Confírmalo antes de darlo por bueno."
+msgstr "Un mouvement dont le montant est la somme exacte de plusieurs factures de la même contrepartie. Confirmez-le avant de le valider."
+
+msgid "La lectura de facturas acierta menos del %(min)s %%. "
+msgstr "La lecture des factures est sous les %(min)s %% de réussite. "

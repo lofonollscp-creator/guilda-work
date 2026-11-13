@@ -37,9 +37,11 @@ def reservar(usuario_id: int, ahora: datetime | None = None, funcion: str | None
             if limite == 0:
                 raise LimiteIA("El asistente de IA no está activado para tu despacho. Contacta con soporte.")
             raise LimiteIA(f"Tu despacho ha agotado su límite mensual de IA ({limite} consultas). Se renueva el día 1 del mes que viene, o contacta con soporte para ampliarlo.")
+        tope_funcion, gastadas_funcion = None, 0
         if funcion:
             tope = conn.execute("SELECT limite_mensual FROM ia_tope_funcion WHERE tenant_id = ? AND funcion = ?", (tenant_id, funcion)).fetchone()
             gastadas = (conn.execute("SELECT usadas FROM ia_consumo_funcion WHERE tenant_id = ? AND mes = ? AND funcion = ?", (tenant_id, mes, funcion)).fetchone() or {"usadas": 0})["usadas"]
+            tope_funcion, gastadas_funcion = (tope["limite_mensual"] if tope is not None else None), gastadas
             if tope is not None and gastadas >= tope["limite_mensual"]:
                 conn.rollback()
                 raise LimiteIA(f"Tu despacho ha agotado su límite mensual de «{FUNCIONES.get(funcion, funcion)}» ({tope['limite_mensual']} consultas). Se renueva el día 1 del mes que viene, o contacta con soporte para ampliarlo.")
@@ -57,6 +59,8 @@ def reservar(usuario_id: int, ahora: datetime | None = None, funcion: str | None
     try:
         from . import ia_vigilancia
         ia_vigilancia.avisar_consumo(tenant_id, usadas, usadas + 1, limite)
+        if funcion and tope_funcion is not None:
+            ia_vigilancia.avisar_consumo_funcion(tenant_id, funcion, FUNCIONES.get(funcion, funcion), gastadas_funcion, gastadas_funcion + 1, tope_funcion)
     except Exception:  # noqa: BLE001 -- el aviso nunca debe impedir la consulta
         pass
 
@@ -124,10 +128,20 @@ def resumen_global(ahora: datetime | None = None) -> list[dict]:
         ).fetchall()
     finally:
         conn.close()
+    por_funcion: dict[int, list[str]] = {}
+    conn = db.get_connection()
+    try:
+        usos = {(f["tenant_id"], f["funcion"]): f["usadas"] for f in conn.execute("SELECT tenant_id, funcion, usadas FROM ia_consumo_funcion WHERE mes = ?", (_mes(ahora),)).fetchall()}
+        topes = {(f["tenant_id"], f["funcion"]): f["limite_mensual"] for f in conn.execute("SELECT tenant_id, funcion, limite_mensual FROM ia_tope_funcion").fetchall()}
+    finally:
+        conn.close()
+    for (tid, funcion) in sorted(set(usos) | set(topes)):
+        tope = topes.get((tid, funcion))
+        por_funcion.setdefault(tid, []).append(f"{FUNCIONES.get(funcion, funcion)}: {usos.get((tid, funcion), 0)}" + (f" / {tope}" if tope is not None else ""))
     out = []
     for f in filas:
         pct = None if not f["limite"] else min(100, f["usadas"] * 100 // f["limite"])
-        out.append({**dict(f), "pct": pct, "ilimitado": f["limite"] is None})
+        out.append({**dict(f), "pct": pct, "ilimitado": f["limite"] is None, "funciones": por_funcion.get(f["id"], [])})
     return out
 
 

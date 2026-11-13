@@ -28117,3 +28117,24 @@ msgstr "Size: %(gb)s GB."
 
 msgid "Pasa de %(max)s GB: conviene podarla a mano (HOSTING.md, «Copia fuera del servidor»)."
 msgstr "Over %(max)s GB: it should be pruned by hand (HOSTING.md, «Off-server copy»)."
+
+msgid "Se ha agotado el tope mensual de «%(f)s»"
+msgstr "The monthly limit for «%(f)s» has been used up"
+
+msgid "Has usado las %(n)s consultas de esta función en el mes. Se renueva el día 1; puedes ampliar el tope en los ajustes de IA."
+msgstr "You have used all %(n)s queries of this function this month. It renews on the 1st; you can raise the limit in the AI settings."
+
+msgid "«%(f)s» ha usado el %(p)s %% de su tope mensual"
+msgstr "«%(f)s» has used %(p)s %% of its monthly limit"
+
+msgid "Van %(d)s de %(l)s consultas de esta función este mes."
+msgstr "%(d)s of %(l)s queries of this function used this month."
+
+msgid "Pagos agrupados (propuesta)"
+msgstr "Grouped payments (proposal)"
+
+msgid "Un movimiento cuyo importe es la suma exacta de varias facturas de la misma contraparte. Confírmalo antes de darlo por bueno."
+msgstr "A transaction whose amount is the exact sum of several invoices from the same counterparty. Confirm it before accepting it."
+
+msgid "La lectura de facturas acierta menos del %(min)s %%. "
+msgstr "Invoice reading is below %(min)s %% accuracy. "

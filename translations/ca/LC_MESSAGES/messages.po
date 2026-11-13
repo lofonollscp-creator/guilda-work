@@ -28126,3 +28126,24 @@ msgstr "Mida: %(gb)s GB."
 
 msgid "Pasa de %(max)s GB: conviene podarla a mano (HOSTING.md, «Copia fuera del servidor»)."
 msgstr "Passa de %(max)s GB: convé podar-la a mà (HOSTING.md, «Còpia fora del servidor»)."
+
+msgid "Se ha agotado el tope mensual de «%(f)s»"
+msgstr "S'ha esgotat el límit mensual de «%(f)s»"
+
+msgid "Has usado las %(n)s consultas de esta función en el mes. Se renueva el día 1; puedes ampliar el tope en los ajustes de IA."
+msgstr "Has fet servir les %(n)s consultes d'aquesta funció aquest mes. Es renova l'1; pots ampliar el límit als ajustos d'IA."
+
+msgid "«%(f)s» ha usado el %(p)s %% de su tope mensual"
+msgstr "«%(f)s» ha fet servir el %(p)s %% del seu límit mensual"
+
+msgid "Van %(d)s de %(l)s consultas de esta función este mes."
+msgstr "Van %(d)s de %(l)s consultes d'aquesta funció aquest mes."
+
+msgid "Pagos agrupados (propuesta)"
+msgstr "Pagaments agrupats (proposta)"
+
+msgid "Un movimiento cuyo importe es la suma exacta de varias facturas de la misma contraparte. Confírmalo antes de darlo por bueno."
+msgstr "Un moviment l'import del qual és la suma exacta de diverses factures de la mateixa contrapart. Confirma'l abans de donar-lo per bo."
+
+msgid "La lectura de facturas acierta menos del %(min)s %%. "
+msgstr "La lectura de factures encerta menys del %(min)s %%. "
