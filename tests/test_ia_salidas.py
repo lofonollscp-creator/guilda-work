@@ -53,7 +53,7 @@ def test_lo_viejo_se_purga_y_lo_reciente_se_queda():
 def test_una_consulta_real_al_asistente_deja_su_anotacion(monkeypatch):
     t, u = _t()
     monkeypatch.setattr(ia_asistente, "candidatos", lambda uid, tarea: [{"proveedor": "openai", "modelo": "gpt-4o-mini", "claves": ["k"], "url_base": None, "origen": "despacho"}])
-    monkeypatch.setattr(ia_asistente, "_reservar_uso", lambda uid: None)
+    monkeypatch.setattr(ia_asistente, "_reservar_uso", lambda uid, f="asistente": None)
     monkeypatch.setattr(ia_asistente.ia_proveedores, "llamar", lambda *a, **k: {"choices": [{"message": {"content": "ok"}}], "usage": {}})
     def proteger(self, mensajes):                                                                         # el detector real (≈300 MB) está apagado en las pruebas: se simula que vio un NIF y un IBAN
         self.protegidos.update({"NIF": 1, "IBAN": 1})
@@ -71,7 +71,7 @@ def test_la_latencia_y_los_errores_por_proveedor_se_miden_y_se_pasa_al_siguiente
     monkeypatch.setattr(ia_asistente, "candidatos", lambda uid, tarea: [
         {"proveedor": "openai", "modelo": "gpt-4o-mini", "claves": ["k"], "url_base": None, "origen": "despacho"},
         {"proveedor": "anthropic", "modelo": "claude", "claves": ["k"], "url_base": None, "origen": "despacho"}])
-    monkeypatch.setattr(ia_asistente, "_reservar_uso", lambda uid: None)
+    monkeypatch.setattr(ia_asistente, "_reservar_uso", lambda uid, f="asistente": None)
 
     def llamar(proveedor, modelo, payload, clave, url_base=None, timeout=90):
         if proveedor == "openai":

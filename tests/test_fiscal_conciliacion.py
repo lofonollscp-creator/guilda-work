@@ -123,3 +123,19 @@ def test_con_las_facturas_del_titular_y_sin_guardar_el_extracto():
         conn.close()
     with pytest.raises(ErrorFiscal):
         fc.conciliar_extracto(t, u, c, 2026, "13", "x.csv", csv.encode())
+
+
+def test_los_movimientos_guardados_no_se_duplican_y_alimentan_el_aviso_de_cierre(cliente):
+    from datetime import date
+    from app import fiscal_conciliacion as fcn
+    from tests.test_api_fiscal import _cliente_fiscal, _despacho
+    h, uid, tenant = _despacho(cliente, "banco-guardado@ejemplo.com")
+    cid = _cliente_fiscal(cliente, h)
+    movs = [fcn.Movimiento(1, date(2026, 7, 5), -12100, "RECIBO PROVEEDOR"), fcn.Movimiento(2, date(2026, 7, 5), -250, "CAFE"), fcn.Movimiento(3, date(2026, 7, 5), -250, "CAFE"), fcn.Movimiento(4, date(2026, 10, 20), 5000, "COBRO")]
+    assert fcn.guardar_movimientos(tenant, cid, movs, "jul.csv") == {"nuevos": 4, "repetidos": 0}      # dos cafés idénticos no son un duplicado
+    assert fcn.guardar_movimientos(tenant, cid, movs, "jul-otra-vez.csv") == {"nuevos": 0, "repetidos": 4}
+    r = fcn.resumen_guardados(tenant, cid)
+    assert r["n"] == 4 and r["desde"] == "2026-07-05"
+    assert fcn.facturas_sin_pago(tenant, cid, date(2026, 7, 1), date(2026, 9, 30)) == 0              # cubre el trimestre y no hay facturas
+    assert fcn.facturas_sin_pago(tenant, cid, date(2025, 1, 1), date(2025, 3, 31)) is None           # no cubre ese periodo: no se puede saber
+    assert fcn.borrar_movimientos(tenant, uid, cid) == 4 and fcn.resumen_guardados(tenant, cid) is None

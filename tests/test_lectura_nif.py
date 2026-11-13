@@ -76,7 +76,7 @@ def test_con_saldo_corto_se_reintenta_con_un_tope_de_tokens(monkeypatch):
         return {"choices": [{"message": {"content": "{}"}}]}
     monkeypatch.setattr(ia, "_llamar", falsa)
     monkeypatch.setattr(ia, "candidatos", lambda u, t: [{"proveedor": "openrouter", "modelo": "m"}])
-    monkeypatch.setattr(ia, "_reservar_uso", lambda u: None)
+    monkeypatch.setattr(ia, "_reservar_uso", lambda u, f="asistente": None)
     monkeypatch.setattr(ia, "_envio_protegido", lambda u, m: (type("S", (), {"restaurar": lambda self, x: x})(), m))
     assert ia.completar_partes(1, "s", [{"type": "text", "text": "x"}]) == "{}"
     assert llamadas == [None, 5175]
@@ -85,3 +85,18 @@ def test_con_saldo_corto_se_reintenta_con_un_tope_de_tokens(monkeypatch):
 def test_el_texto_del_pdf_no_lleva_caracteres_nulos():
     from app import pdf_facturas
     assert pdf_facturas._sin_nulos("HGBVOBQK\x000003") == "HGBVOBQK 0003"
+
+
+def test_nif_cruzados_se_recolocan_segun_su_posicion():
+    from app import lectura_nif
+    texto = "IONOS CLOUD SL\nCIF: B85049435\nCalle Uno 1\n\nFactura para:\nCLIENTE PRUEBA SL\nCIF: B99887762\nTotal 10,00 EUR"
+    datos = {"emisor_nombre": "IONOS CLOUD SL", "receptor_nombre": "CLIENTE PRUEBA SL", "emisor_nif": "B99887762", "receptor_nif": "B85049435"}
+    avisos = lectura_nif.completar(datos, texto)
+    assert (datos["emisor_nif"], datos["receptor_nif"]) == ("B85049435", "B99887762") and any("cambiado" in a for a in avisos)
+
+
+def test_nif_bien_colocados_no_se_tocan():
+    from app import lectura_nif
+    texto = "IONOS CLOUD SL\nCIF: B85049435\nCalle Uno 1\n\nFactura para:\nCLIENTE PRUEBA SL\nCIF: B99887762\nTotal 10,00 EUR"
+    datos = {"emisor_nombre": "IONOS CLOUD SL", "receptor_nombre": "CLIENTE PRUEBA SL", "emisor_nif": "B85049435", "receptor_nif": "B99887762"}
+    assert lectura_nif.completar(datos, texto) == [] and datos["emisor_nif"] == "B85049435"

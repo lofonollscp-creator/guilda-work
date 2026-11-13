@@ -2200,5 +2200,20 @@
     "padre": "webhooks"
    }
   ]
+ },
+ "ia_consumo_funcion": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "ia_tope_funcion": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
+ },
+ "banco_movimientos": {
+  "clase": "propio",
+  "motivo": "ya lleva tenant_id",
+  "via": []
  }
 }

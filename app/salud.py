@@ -169,6 +169,45 @@ def _estado_copia_documentos(ahora: datetime) -> dict:
                                   lambda e, hace: _("Última copia completa hace %(hace)s (%(n)s documentos nuevos).", hace=hace, n=e.get("nuevos") if e.get("nuevos") is not None else "?"))
 
 
+def _estado_copia_s3(ahora: datetime) -> dict:
+    """Segunda copia de Restic en AWS S3, fuera del servidor (scripts/copia_s3_restic.sh → data/backups/restic_s3_estado.json)."""
+    return _estado_restic_fichero(ahora, "restic_s3_estado.json", "restic_s3", _("Copia de seguridad fuera del servidor (Restic en AWS S3)"),
+                                  _("Todavía no se ha ejecutado la copia a S3."),
+                                  lambda e, hace: _("Última copia en S3 completa hace %(hace)s (%(n)s snapshots nuevos).", hace=hace, n=e.get("snapshots_copiados") if e.get("snapshots_copiados") is not None else "?"))
+
+
+def _estado_buzon_facturas(ahora: datetime) -> dict:
+    """Buzón de facturas por correo (app/facturas_correo.py): avisa si la cuenta de algún despacho que lo usa deja de sincronizar. Gris si nadie lo usa."""
+    from . import facturas_correo
+    titulo = _("Buzón de facturas por correo")
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT tenant_id FROM contabilidad_despacho WHERE buzon_cuenta_id IS NOT NULL").fetchall()
+    finally:
+        conn.close()
+    if not filas:
+        return _item("Servidor", "buzon_facturas", titulo, GRIS, _("Ningún despacho lo tiene configurado."))
+    malos = []
+    for f in filas:
+        m = facturas_correo.metricas(f["tenant_id"], dias=1)
+        if m["estado"] in ("atrasado", "error"):
+            malos.append(m["estado"])
+    if malos:
+        return _item("Servidor", "buzon_facturas", titulo, AMBAR, _("%(n)s buzón(es) sin sincronizar con normalidad: no llegan facturas por correo.", n=len(malos)))
+    return _item("Servidor", "buzon_facturas", titulo, VERDE, _("%(n)s buzón(es) sincronizando.", n=len(filas)))
+
+
+def _estado_uso_modulos(ahora: datetime) -> dict:
+    """Qué módulos de la app se usan más (últimos 7 días): solo cuentas por módulo, sin personas ni datos (app/rendimiento.py → data/backups/uso_modulos.json)."""
+    from . import rendimiento
+    titulo = _("Módulos más usados (7 días)")
+    uso = rendimiento.uso_de_modulos(db.BACKUPS_DIR / "uso_modulos.json", 7, ahora)
+    if not uso:
+        return _item("Servidor", "uso_modulos", titulo, GRIS, _("Todavía no hay datos de uso."))
+    top = ", ".join(f"{m} ({n})" for m, n in uso[:6])
+    return _item("Servidor", "uso_modulos", titulo, VERDE, _("Pantallas vistas por módulo: %(top)s.", top=top))
+
+
 def _estado_gasto_aws(ahora: datetime) -> dict:
     """Gasto del mes en AWS frente al umbral (app/aws_costes.py). Sin claves de costes sale en gris: no es obligatorio tener AWS."""
     from . import aws_costes
@@ -571,6 +610,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Copias de seguridad", "restic", _("Copia de seguridad en otro disco (Restic)"), lambda: _estado_copia_externa(ahora))
     if os.environ.get("GUILDA_OBJETOS") == "s3" or (db.BACKUPS_DIR / "restic_objetos_estado.json").exists():      # solo si hay bucket que copiar
         _seguro("Copias de seguridad", "restic_objetos", _("Copia de los documentos del almacén de objetos (Restic)"), lambda: _estado_copia_documentos(ahora))
+    _seguro("Copias de seguridad", "restic_s3", _("Copia de seguridad fuera del servidor (Restic en AWS S3)"), lambda: _estado_copia_s3(ahora))
     _seguro("Copias de seguridad", "restauracion", _("Prueba de restauración de la copia"), lambda: _estado_prueba_restauracion(ahora))
     if _motor_postgres():
         _seguro("Copias de seguridad", "restauracion_pg", _("Ensayo de restauración de la base de datos"), lambda: _estado_ensayo_restauracion_pg(ahora))
@@ -582,6 +622,8 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Servidor", "version", _("Versión desplegada"), lambda: _estado_version(ahora))
     _seguro("Servidor", "calidad_ia", _("Calidad de la IA (evaluación semanal)"), lambda: _estado_calidad_ia(ahora))
     _seguro("Servidor", "rendimiento", _("Rendimiento de la web"), lambda: _estado_rendimiento(ahora))
+    _seguro("Servidor", "buzon_facturas", _("Buzón de facturas por correo"), lambda: _estado_buzon_facturas(ahora))
+    _seguro("Servidor", "uso_modulos", _("Módulos más usados (7 días)"), lambda: _estado_uso_modulos(ahora))
     _seguro("Servidor", "exposicion", _("Exposición pública (cabeceras y puertos)"), lambda: _estado_exposicion(ahora))
     _seguro("Servidor", "crowdsec", _("CrowdSec (bloqueos)"), lambda: _estado_crowdsec(ahora))
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)

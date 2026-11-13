@@ -385,15 +385,34 @@ def conciliacion(cliente_id: int):
     resultado, error = None, _error()
     if request.method == "POST":
         archivo = request.files.get("extracto")
-        if archivo is None or not archivo.filename:
+        if request.form.get("usar_guardados") == "1":
+            try:
+                resultado = fiscal_conciliacion.conciliar_guardados(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo)
+            except ErrorFiscal as e:
+                error = str(e)
+        elif archivo is None or not archivo.filename:
             error = _("Elige el extracto del banco (CSV o Excel).")
         else:
             try:
-                resultado = fiscal_conciliacion.conciliar_extracto(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, archivo.filename, archivo.read(fiscal_conciliacion.MAX_BYTES + 1))
+                resultado = fiscal_conciliacion.conciliar_extracto(g.tenant_id, g.usuario_id, cliente_id, ejercicio, periodo, archivo.filename, archivo.read(fiscal_conciliacion.MAX_BYTES + 1),
+                                                                   guardar=request.form.get("guardar") == "on")
             except ErrorFiscal as e:
                 error = str(e)
     return render_template("fiscal_conciliacion.html", c=c, ejercicio=ejercicio, periodo=periodo, periodos=PERIODOS, resultado=resultado, error=error,
+                           guardados=fiscal_conciliacion.resumen_guardados(g.tenant_id, cliente_id),
                            puede_pedir_justificantes=verticales.esta_activo(g.tenant_id, "contabilizacion"), pedidos=request.args.get("pedidos", type=int))
+
+
+@guilda_fiscal_bp.route("/<int:cliente_id>/conciliacion/borrar-guardados", methods=["POST"])
+@login_required
+def borrar_movimientos_guardados(cliente_id: int):
+    """Borra todos los movimientos bancarios guardados de este titular."""
+    _cliente_o_404(cliente_id)
+    try:
+        n = fiscal_conciliacion.borrar_movimientos(g.tenant_id, g.usuario_id, cliente_id)
+    except ErrorFiscal as e:
+        return redirect(url_for("guilda_fiscal.conciliacion", cliente_id=cliente_id, error=_(str(e))[:300]))
+    return redirect(url_for("guilda_fiscal.conciliacion", cliente_id=cliente_id, borrados=n))
 
 
 @guilda_fiscal_bp.route("/<int:cliente_id>/conciliacion/justificantes", methods=["POST"])

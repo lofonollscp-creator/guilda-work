@@ -28027,3 +28027,90 @@ msgid "Falta la factura de %(n)s proveedor habitual en el trimestre"
 msgid_plural "Faltan facturas de %(n)s proveedores habituales en el trimestre"
 msgstr[0] "Falta la factura de %(n)s proveïdor habitual al trimestre"
 msgstr[1] "Falten factures de %(n)s proveïdors habituals al trimestre"
+
+msgid "El tope debe ser un número entero (o vacío para quitarlo)."
+msgstr "El límit ha de ser un nombre enter (o buit per treure'l)."
+
+msgid "Copia de seguridad fuera del servidor (Restic en AWS S3)"
+msgstr "Còpia de seguretat fora del servidor (Restic a AWS S3)"
+
+msgid "Todavía no se ha ejecutado la copia a S3."
+msgstr "Encara no s'ha executat la còpia a S3."
+
+msgid "Última copia en S3 completa hace %(hace)s (%(n)s snapshots nuevos)."
+msgstr "Darrera còpia completa a S3 fa %(hace)s (%(n)s snapshots nous)."
+
+msgid "Ningún despacho lo tiene configurado."
+msgstr "Cap despatx el té configurat."
+
+msgid "%(n)s buzón(es) sin sincronizar con normalidad: no llegan facturas por correo."
+msgstr "%(n)s bústia(es) sense sincronitzar amb normalitat: no arriben factures per correu."
+
+msgid "%(n)s buzón(es) sincronizando."
+msgstr "%(n)s bústia(es) sincronitzant."
+
+msgid "Módulos más usados (7 días)"
+msgstr "Mòduls més usats (7 dies)"
+
+msgid "Todavía no hay datos de uso."
+msgstr "Encara no hi ha dades d'ús."
+
+msgid "Pantallas vistas por módulo: %(top)s."
+msgstr "Pantalles vistes per mòdul: %(top)s."
+
+msgid "La cuenta del buzón sincroniza con normalidad (última vez: %(f)s)."
+msgstr "El compte de la bústia sincronitza amb normalitat (darrera vegada: %(f)s)."
+
+msgid "La cuenta del buzón lleva más de 2 horas sin sincronizar"
+msgstr "El compte de la bústia fa més de 2 hores que no sincronitza"
+
+msgid "última vez: %(f)s"
+msgstr "darrera vegada: %(f)s"
+
+msgid "Mientras tanto no llegan facturas nuevas."
+msgstr "Mentrestant no arriben factures noves."
+
+msgid "La cuenta del buzón falla al sincronizar:"
+msgstr "El compte de la bústia falla en sincronitzar:"
+
+msgid "Últimos 30 días: %(m)s mensajes, %(f)s facturas anotadas, %(r)s rechazados por remitente no autorizado, %(s)s sin adjuntos válidos, %(x)s con error."
+msgstr "Darrers 30 dies: %(m)s missatges, %(f)s factures anotades, %(r)s rebutjats per remitent no autoritzat, %(s)s sense adjunts vàlids, %(x)s amb error."
+
+msgid "Facturas del trimestre sin cobro o pago en los extractos guardados"
+msgstr "Factures del trimestre sense cobrament o pagament als extractes guardats"
+
+msgid "Sube el extracto del banco del titular (CSV o Excel con fecha, concepto e importe) y se cruza con sus facturas por importe exacto. El fichero nunca se guarda. Si marcas la casilla, se conservan solo los movimientos (fecha, importe y concepto) para avisar en el cierre de las facturas sin cobro o pago. Nada se aprueba ni se registra desde aquí."
+msgstr "Puja l'extracte del banc del titular (CSV o Excel amb data, concepte i import) i es creua amb les seves factures per import exacte. El fitxer mai es guarda. Si marques la casella, es conserven només els moviments (data, import i concepte) per avisar al tancament de les factures sense cobrament o pagament. Res s'aprova ni es registra des d'aquí."
+
+msgid "Guardar los movimientos para el cierre"
+msgstr "Guardar els moviments per al tancament"
+
+msgid "Movimientos borrados: %(n)s."
+msgstr "Moviments esborrats: %(n)s."
+
+msgid "Movimientos guardados: %(n)s (del %(d)s al %(h)s)."
+msgstr "Moviments guardats: %(n)s (del %(d)s al %(h)s)."
+
+msgid "Conciliar con los guardados"
+msgstr "Conciliar amb els guardats"
+
+msgid "¿Borrar todos los movimientos guardados de este titular?"
+msgstr "Vols esborrar tots els moviments guardats d'aquest titular?"
+
+msgid "Borrar los guardados"
+msgstr "Esborrar els guardats"
+
+msgid "Tope de consultas por función (este mes)"
+msgstr "Límit de consultes per funció (aquest mes)"
+
+msgid "Además del límite general del despacho, puedes limitar cada función para que una lectura masiva de facturas no se coma todas las consultas. Vacío = sin tope propio."
+msgstr "A més del límit general del despatx, pots limitar cada funció perquè una lectura massiva de factures no es mengi totes les consultes. Buit = sense límit propi."
+
+msgid "%(n)s usadas este mes"
+msgstr "%(n)s usades aquest mes"
+
+msgid "sin tope"
+msgstr "sense límit"
+
+msgid "Guardar topes"
+msgstr "Guardar límits"

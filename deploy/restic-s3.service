@@ -1,0 +1,14 @@
+# Segunda copia de Restic en AWS S3, fuera del servidor (ver scripts/copia_s3_restic.sh). Copia junto al timer a /etc/systemd/system/.
+[Unit]
+Description=Guilda Work - copia de Restic a AWS S3 (fuera del servidor)
+After=docker.service network-online.target restic-backup.service restic-objetos.service
+Requires=docker.service
+RequiresMountsFor=/mnt/HC_Volume_106540289
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/guilda/guilda-work
+ExecStart=/home/guilda/guilda-work/scripts/copia_s3_restic.sh
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=4h

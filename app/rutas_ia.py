@@ -334,6 +334,7 @@ def ajustes():
         uso=ia_uso.resumen(g.tenant_id) if g.tenant_id else None,
         salidas=ia_salidas.resumen(g.tenant_id) if g.tenant_id and direccion else None,
         herramientas_uso=ia_herramientas_uso.resumen(g.tenant_id) if g.tenant_id and direccion else None,
+        funciones=ia_consumo.estado_funciones(g.tenant_id) if g.tenant_id and direccion else None,
         es_direccion=direccion,
         error=request.args.get("error"),
         aviso=request.args.get("aviso"),
@@ -387,6 +388,20 @@ def guardar_voz_despacho():
     from . import auditoria
     auditoria.registrar(g.tenant_id, g.usuario_id, "ia.voz_despacho", "ia_config", None, {})
     return redirect(url_for("ia.ajustes", guardado="voz") + "#voz")
+
+
+@ia_bp.route("/ajustes/despacho/topes", methods=["POST"])
+@login_required
+def guardar_topes_por_funcion():
+    _exigir_direccion()
+    for funcion in ia_consumo.FUNCIONES:
+        bruto = (request.form.get(f"tope_{funcion}") or "").strip()
+        if bruto and not bruto.isdigit():
+            return redirect(url_for("ia.ajustes", error=_("El tope debe ser un número entero (o vacío para quitarlo).")) + "#topes")
+        ia_consumo.fijar_tope_funcion(g.tenant_id, funcion, int(bruto) if bruto else None)
+    from . import auditoria
+    auditoria.registrar(g.tenant_id, g.usuario_id, "ia.topes_por_funcion", "ia_config", None, {})
+    return redirect(url_for("ia.ajustes", aviso=_("Guardado.")) + "#topes")
 
 
 @ia_bp.route("/ajustes/despacho/normas", methods=["POST"])

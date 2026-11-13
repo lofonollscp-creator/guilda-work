@@ -28018,3 +28018,90 @@ msgid "Falta la factura de %(n)s proveedor habitual en el trimestre"
 msgid_plural "Faltan facturas de %(n)s proveedores habituales en el trimestre"
 msgstr[0] "Missing the invoice of %(n)s regular supplier in the quarter"
 msgstr[1] "Missing invoices of %(n)s regular suppliers in the quarter"
+
+msgid "El tope debe ser un número entero (o vacío para quitarlo)."
+msgstr "The limit must be a whole number (or empty to remove it)."
+
+msgid "Copia de seguridad fuera del servidor (Restic en AWS S3)"
+msgstr "Off-server backup (Restic on AWS S3)"
+
+msgid "Todavía no se ha ejecutado la copia a S3."
+msgstr "The copy to S3 has not run yet."
+
+msgid "Última copia en S3 completa hace %(hace)s (%(n)s snapshots nuevos)."
+msgstr "Last full copy to S3 %(hace)s ago (%(n)s new snapshots)."
+
+msgid "Ningún despacho lo tiene configurado."
+msgstr "No firm has it set up."
+
+msgid "%(n)s buzón(es) sin sincronizar con normalidad: no llegan facturas por correo."
+msgstr "%(n)s mailbox(es) not syncing normally: invoices are not arriving by email."
+
+msgid "%(n)s buzón(es) sincronizando."
+msgstr "%(n)s mailbox(es) syncing."
+
+msgid "Módulos más usados (7 días)"
+msgstr "Most used modules (7 days)"
+
+msgid "Todavía no hay datos de uso."
+msgstr "There is no usage data yet."
+
+msgid "Pantallas vistas por módulo: %(top)s."
+msgstr "Screens viewed per module: %(top)s."
+
+msgid "La cuenta del buzón sincroniza con normalidad (última vez: %(f)s)."
+msgstr "The mailbox account is syncing normally (last time: %(f)s)."
+
+msgid "La cuenta del buzón lleva más de 2 horas sin sincronizar"
+msgstr "The mailbox account has not synced for over 2 hours"
+
+msgid "última vez: %(f)s"
+msgstr "last time: %(f)s"
+
+msgid "Mientras tanto no llegan facturas nuevas."
+msgstr "Meanwhile no new invoices arrive."
+
+msgid "La cuenta del buzón falla al sincronizar:"
+msgstr "The mailbox account fails to sync:"
+
+msgid "Últimos 30 días: %(m)s mensajes, %(f)s facturas anotadas, %(r)s rechazados por remitente no autorizado, %(s)s sin adjuntos válidos, %(x)s con error."
+msgstr "Last 30 days: %(m)s messages, %(f)s invoices recorded, %(r)s rejected for unauthorised sender, %(s)s without valid attachments, %(x)s with errors."
+
+msgid "Facturas del trimestre sin cobro o pago en los extractos guardados"
+msgstr "Quarter invoices with no collection or payment in the saved statements"
+
+msgid "Sube el extracto del banco del titular (CSV o Excel con fecha, concepto e importe) y se cruza con sus facturas por importe exacto. El fichero nunca se guarda. Si marcas la casilla, se conservan solo los movimientos (fecha, importe y concepto) para avisar en el cierre de las facturas sin cobro o pago. Nada se aprueba ni se registra desde aquí."
+msgstr "Upload the holder's bank statement (CSV or Excel with date, description and amount) and it is matched with their invoices by exact amount. The file is never stored. If you tick the box, only the transactions (date, amount and description) are kept, to warn at closing about invoices with no collection or payment. Nothing is approved or recorded from here."
+
+msgid "Guardar los movimientos para el cierre"
+msgstr "Keep the transactions for closing"
+
+msgid "Movimientos borrados: %(n)s."
+msgstr "Transactions deleted: %(n)s."
+
+msgid "Movimientos guardados: %(n)s (del %(d)s al %(h)s)."
+msgstr "Saved transactions: %(n)s (from %(d)s to %(h)s)."
+
+msgid "Conciliar con los guardados"
+msgstr "Reconcile with the saved ones"
+
+msgid "¿Borrar todos los movimientos guardados de este titular?"
+msgstr "Delete all saved transactions for this holder?"
+
+msgid "Borrar los guardados"
+msgstr "Delete saved ones"
+
+msgid "Tope de consultas por función (este mes)"
+msgstr "Query limit per function (this month)"
+
+msgid "Además del límite general del despacho, puedes limitar cada función para que una lectura masiva de facturas no se coma todas las consultas. Vacío = sin tope propio."
+msgstr "Besides the firm's general limit, you can cap each function so that a bulk invoice reading does not use up all the queries. Empty = no limit of its own."
+
+msgid "%(n)s usadas este mes"
+msgstr "%(n)s used this month"
+
+msgid "sin tope"
+msgstr "no limit"
+
+msgid "Guardar topes"
+msgstr "Save limits"

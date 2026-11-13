@@ -17,6 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_auto_ejec_tenant ON automatizaciones_ejecuciones 
 CREATE INDEX IF NOT EXISTS idx_auto_eventos_pendientes ON automatizaciones_eventos (procesado_en, id);
 CREATE INDEX IF NOT EXISTS idx_auto_reglas_tenant ON automatizaciones_reglas (tenant_id, activa);
 CREATE INDEX IF NOT EXISTS idx_ayuda_valoraciones_pagina ON ayuda_valoraciones (pagina, util);
+CREATE INDEX IF NOT EXISTS idx_banco_movimientos_fecha ON banco_movimientos (tenant_id, cliente_fiscal_id, fecha);
 CREATE INDEX IF NOT EXISTS idx_bolsa_ajustes ON bolsa_horas_ajustes (usuario_id, fecha);
 CREATE INDEX IF NOT EXISTS idx_categorias_papelera ON categorias (papelera_en);
 CREATE INDEX IF NOT EXISTS idx_categorias_usuario ON categorias (usuario_id);
@@ -232,6 +233,7 @@ CREATE INDEX IF NOT EXISTS jur_informes_tenant ON jur_informes (tenant_id, exped
 CREATE INDEX IF NOT EXISTS jur_outbox_pendiente ON jur_outbox (estado, id);
 CREATE INDEX IF NOT EXISTS jur_registros_estado ON jur_registros_fuente (fuente_id, estado);
 CREATE INDEX IF NOT EXISTS jur_versiones_activa ON jur_versiones (documento_id, activa);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_banco_movimientos_huella ON banco_movimientos (tenant_id, cliente_fiscal_id, huella);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cert_renovacion_activa ON certificados_renovaciones (tenant_id, certificado_id) WHERE fase NOT IN ('cerrado', 'cancelada');
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cliente_documentos_unico ON cliente_documentos (tenant_id, cliente_fiscal_id, hash_sha256);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_clientes_fiscales_nif_unico ON clientes_fiscales (tenant_id, pais, nif_normalizado) WHERE papelera_en IS NULL AND nif_normalizado IS NOT NULL AND nif_duplicado_autorizado IS NULL;

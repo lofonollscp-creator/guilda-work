@@ -1,13 +1,14 @@
 """Guilda Fiscal · conciliación con el banco: de un extracto (CSV o Excel) a tres listas: movimientos que casan con una factura, facturas sin movimiento y movimientos sin factura.
 
-**No guarda el extracto ni los movimientos**: se lee, se cruza con las facturas del titular y se enseña el resultado; para volver a verlo se vuelve a subir el fichero. Es lo prudente con datos bancarios y evita
-una tabla nueva. La IA no interviene: las reglas son fijas y cada pareja dice por qué se propone. Quien revisa decide; nada se aprueba ni se registra desde aquí.
+Guarda, si quien sube el extracto lo deja marcado, solo los movimientos (fecha, importe y concepto; nunca el fichero ni el IBAN) para poder avisar en el cierre de las facturas sin cobro o pago y para volver a
+conciliar sin subir nada. Se pueden borrar todos con un botón. La IA no interviene: las reglas son fijas y cada pareja dice por qué se propone. Quien revisa decide; nada se aprueba ni se registra desde aquí.
 
 Importes en céntimos con signo (cargo negativo, ingreso positivo). Una factura emitida se espera como ingreso y una recibida como cargo, por su total (que ya descuenta la retención de IRPF); los abonos al revés.
 Solo se cruzan importes **exactos**: un cobro parcial, un pago agrupado de varias facturas o una diferencia por comisión quedan como movimiento sin factura y factura sin movimiento, para mirarlos a mano."""
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import re
 import unicodedata
@@ -259,9 +260,9 @@ def _facturas_candidatas(tenant_id: int, cliente_fiscal_id: int, desde: date, ha
     return salida
 
 
-def conciliar_extracto(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str, nombre_fichero: str, contenido: bytes) -> dict:
-    """Lee el extracto y lo cruza con las facturas del titular. Devuelve el resultado de `conciliar` más `avisos`, `movimientos` (total) y el rango de fechas del extracto. No guarda nada salvo una línea de
-    auditoría con las cifras (nunca el contenido del extracto)."""
+def conciliar_extracto(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str, nombre_fichero: str, contenido: bytes, guardar: bool = False) -> dict:
+    """Lee el extracto y lo cruza con las facturas del titular. Devuelve el resultado de `conciliar` más `avisos`, `movimientos` (total) y el rango de fechas del extracto. Con `guardar` conserva los
+    movimientos (fecha, importe, concepto; nunca el fichero); siempre deja una línea de auditoría con las cifras."""
     from .fiscal_nucleo import _limites_periodo
     if not acceso.puede_ver_cliente(tenant_id, usuario_id, cliente_fiscal_id):
         raise ErrorFiscal("No tienes acceso a este titular.", "prohibido")
@@ -276,8 +277,103 @@ def conciliar_extracto(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, 
         avisos.append(f"El extracto va del {primero.strftime('%d/%m/%Y')} al {ultimo.strftime('%d/%m/%Y')} y el periodo del {desde_p.strftime('%d/%m/%Y')} al {hasta_p.strftime('%d/%m/%Y')}: "
                       "las facturas cuyo cobro o pago cae fuera del extracto saldrán como «sin movimiento».")
     avisos.append("Solo se cruzan importes exactos. Un pago de varias facturas juntas, un cobro parcial o una diferencia por comisión salen como movimiento sin factura y factura sin movimiento.")
+    if guardar:
+        g = guardar_movimientos(tenant_id, cliente_fiscal_id, movimientos, nombre_fichero)
+        avisos.append(f"Movimientos guardados para el cierre: {g['nuevos']} nuevos, {g['repetidos']} ya estaban.")
     r.update({"avisos": avisos, "movimientos": len(movimientos), "desde": primero, "hasta": ultimo, "ejercicio": ejercicio, "periodo": periodo})
     auditoria.registrar(tenant_id, usuario_id, "fiscal.conciliacion", "cliente_fiscal", cliente_fiscal_id,
                         {"ejercicio": ejercicio, "periodo": periodo, "movimientos": len(movimientos), "conciliados": len(r["conciliados"]), "facturas_sin_movimiento": len(r["facturas_sin_movimiento"]),
-                         "movimientos_sin_factura": len(r["movimientos_sin_factura"])})
+                         "movimientos_sin_factura": len(r["movimientos_sin_factura"]), "guardados": bool(guardar)})
     return r
+
+
+# --- Movimientos guardados (AD6) -----------------------------------------------------------------------------------------------------------------
+def _huellas(movimientos: list[Movimiento]) -> list[str]:
+    """Una huella por movimiento: fecha, importe y concepto, más su orden entre los idénticos del mismo extracto (dos cafés iguales el mismo día no son un duplicado)."""
+    vistos: dict[tuple, int] = {}
+    salida = []
+    for m in movimientos:
+        clave = (m.fecha.isoformat(), m.importe, _plano(m.concepto))
+        vistos[clave] = vistos.get(clave, 0) + 1
+        salida.append(hashlib.sha256("|".join(map(str, clave + (vistos[clave],))).encode()).hexdigest())
+    return salida
+
+
+def guardar_movimientos(tenant_id: int, cliente_fiscal_id: int, movimientos: list[Movimiento], fichero: str = "") -> dict:
+    """Guarda los movimientos que aún no estaban (por su huella). Devuelve `{nuevos, repetidos}`."""
+    ahora = datetime.now().isoformat(timespec="seconds")
+    nuevos = 0
+    conn = db.get_connection()
+    try:
+        for m, huella in zip(movimientos, _huellas(movimientos)):
+            c = conn.execute("INSERT INTO banco_movimientos (tenant_id, cliente_fiscal_id, fecha, importe_centimos, concepto, huella, fichero, creado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+                             "ON CONFLICT DO NOTHING", (tenant_id, cliente_fiscal_id, m.fecha.isoformat(), m.importe, m.concepto, huella, (fichero or "")[:120], ahora))
+            nuevos += max(c.rowcount, 0)
+        conn.commit()
+    finally:
+        conn.close()
+    return {"nuevos": nuevos, "repetidos": len(movimientos) - nuevos}
+
+
+def movimientos_guardados(tenant_id: int, cliente_fiscal_id: int, desde: date | None = None, hasta: date | None = None) -> list[Movimiento]:
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT id, fecha, importe_centimos, concepto FROM banco_movimientos WHERE tenant_id = ? AND cliente_fiscal_id = ? AND fecha >= ? AND fecha <= ? ORDER BY fecha, id",
+                             (tenant_id, cliente_fiscal_id, (desde or date.min).isoformat(), (hasta or date.max).isoformat())).fetchall()
+    finally:
+        conn.close()
+    return [Movimiento(f["id"], date.fromisoformat(f["fecha"][:10]), f["importe_centimos"], f["concepto"]) for f in filas]
+
+
+def resumen_guardados(tenant_id: int, cliente_fiscal_id: int) -> dict | None:
+    conn = db.get_connection()
+    try:
+        f = conn.execute("SELECT COUNT(*) AS n, MIN(fecha) AS desde, MAX(fecha) AS hasta FROM banco_movimientos WHERE tenant_id = ? AND cliente_fiscal_id = ?", (tenant_id, cliente_fiscal_id)).fetchone()
+    finally:
+        conn.close()
+    return {"n": f["n"], "desde": f["desde"], "hasta": f["hasta"]} if f and f["n"] else None
+
+
+def borrar_movimientos(tenant_id: int, usuario_id: int, cliente_fiscal_id: int) -> int:
+    if not acceso.puede_ver_cliente(tenant_id, usuario_id, cliente_fiscal_id):
+        raise ErrorFiscal("No tienes acceso a este titular.", "prohibido")
+    conn = db.get_connection()
+    try:
+        n = conn.execute("DELETE FROM banco_movimientos WHERE tenant_id = ? AND cliente_fiscal_id = ?", (tenant_id, cliente_fiscal_id)).rowcount
+        conn.commit()
+    finally:
+        conn.close()
+    auditoria.registrar(tenant_id, usuario_id, "fiscal.conciliacion_borrar", "cliente_fiscal", cliente_fiscal_id, {"movimientos": n})
+    return n
+
+
+def conciliar_guardados(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, ejercicio: int, periodo: str) -> dict:
+    """Concilia los movimientos ya guardados del titular con sus facturas del periodo, sin subir nada."""
+    from .fiscal_nucleo import _limites_periodo
+    if not acceso.puede_ver_cliente(tenant_id, usuario_id, cliente_fiscal_id):
+        raise ErrorFiscal("No tienes acceso a este titular.", "prohibido")
+    desde_p, hasta_p = (date.fromisoformat(x) for x in _limites_periodo(ejercicio, periodo))
+    movimientos = movimientos_guardados(tenant_id, cliente_fiscal_id, desde_p - timedelta(days=VENTANA_ANTES), hasta_p + timedelta(days=VENTANA_DESPUES))
+    if not movimientos:
+        raise ErrorFiscal("No hay movimientos guardados de este titular en ese periodo. Sube un extracto.")
+    facturas = _facturas_candidatas(tenant_id, cliente_fiscal_id, desde_p, hasta_p, hasta_p, desde_p)
+    r = conciliar(movimientos, facturas)
+    r.update({"avisos": ["Resultado con los movimientos guardados del titular. Solo se cruzan importes exactos."], "movimientos": len(movimientos), "desde": movimientos[0].fecha, "hasta": movimientos[-1].fecha,
+              "ejercicio": ejercicio, "periodo": periodo})
+    return r
+
+
+def facturas_sin_pago(tenant_id: int, cliente_fiscal_id: int, desde_p: date, hasta_p: date) -> int | None:
+    """Cuántas facturas del periodo no tienen movimiento guardado que las cobre o pague. None si los movimientos guardados no cubren el periodo (no se puede saber, y no se avisa). Solo cuentan las facturas
+    con al menos 30 días de extracto por delante: una factura de última hora aún puede no haberse cobrado."""
+    guardados = resumen_guardados(tenant_id, cliente_fiscal_id)
+    if not guardados or guardados["desde"] > (desde_p + timedelta(days=20)).isoformat() or guardados["hasta"] < (hasta_p - timedelta(days=10)).isoformat():
+        return None
+    ultimo = date.fromisoformat(guardados["hasta"][:10])
+    r = conciliar_guardados_sin_permiso(tenant_id, cliente_fiscal_id, desde_p, hasta_p)
+    return sum(1 for f in r["facturas_sin_movimiento"] if f["fecha"] + timedelta(days=30) <= ultimo)
+
+
+def conciliar_guardados_sin_permiso(tenant_id: int, cliente_fiscal_id: int, desde_p: date, hasta_p: date) -> dict:
+    movimientos = movimientos_guardados(tenant_id, cliente_fiscal_id, desde_p - timedelta(days=VENTANA_ANTES), hasta_p + timedelta(days=VENTANA_DESPUES))
+    return conciliar(movimientos, _facturas_candidatas(tenant_id, cliente_fiscal_id, desde_p, hasta_p, hasta_p, desde_p))

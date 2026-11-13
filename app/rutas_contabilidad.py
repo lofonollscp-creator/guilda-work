@@ -653,7 +653,7 @@ def buzon_del_cliente(cliente_id: int):
 @login_required
 def buzon():
     """Lo último que ha hecho el buzón de facturas por correo: qué llegó, de quién y qué se hizo con ello."""
-    return render_template("contabilidad_buzon.html", filas=facturas_correo.registro(g.tenant_id), buzon=facturas_correo.config(g.tenant_id), activados=facturas_correo.activados(g.tenant_id), subnav=None)
+    return render_template("contabilidad_buzon.html", metricas=facturas_correo.metricas(g.tenant_id), filas=facturas_correo.registro(g.tenant_id), buzon=facturas_correo.config(g.tenant_id), activados=facturas_correo.activados(g.tenant_id), subnav=None)
 
 
 @contabilidad_bp.route("/periodo", methods=["POST"])

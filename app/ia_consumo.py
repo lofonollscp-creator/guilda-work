@@ -16,8 +16,11 @@ def _mes(ahora: datetime | None = None) -> str:
     return (ahora or datetime.now()).strftime("%Y-%m")
 
 
-def reservar(usuario_id: int, ahora: datetime | None = None) -> None:
-    """Cuenta una consulta o lanza LimiteIA. Atómico: dos consultas simultáneas no pueden pasarse del tope."""
+FUNCIONES = {"asistente": "Asistente y chat", "facturas": "Lectura de facturas", "correo": "Acciones de IA del correo"}
+
+
+def reservar(usuario_id: int, ahora: datetime | None = None, funcion: str | None = None) -> None:
+    """Cuenta una consulta o lanza LimiteIA. Atómico: dos consultas simultáneas no pueden pasarse del tope (el general del despacho ni el de su función, si lo tiene)."""
     conn = db.get_connection()
     try:
         conn.execute("BEGIN IMMEDIATE")
@@ -34,6 +37,16 @@ def reservar(usuario_id: int, ahora: datetime | None = None) -> None:
             if limite == 0:
                 raise LimiteIA("El asistente de IA no está activado para tu despacho. Contacta con soporte.")
             raise LimiteIA(f"Tu despacho ha agotado su límite mensual de IA ({limite} consultas). Se renueva el día 1 del mes que viene, o contacta con soporte para ampliarlo.")
+        if funcion:
+            tope = conn.execute("SELECT limite_mensual FROM ia_tope_funcion WHERE tenant_id = ? AND funcion = ?", (tenant_id, funcion)).fetchone()
+            gastadas = (conn.execute("SELECT usadas FROM ia_consumo_funcion WHERE tenant_id = ? AND mes = ? AND funcion = ?", (tenant_id, mes, funcion)).fetchone() or {"usadas": 0})["usadas"]
+            if tope is not None and gastadas >= tope["limite_mensual"]:
+                conn.rollback()
+                raise LimiteIA(f"Tu despacho ha agotado su límite mensual de «{FUNCIONES.get(funcion, funcion)}» ({tope['limite_mensual']} consultas). Se renueva el día 1 del mes que viene, o contacta con soporte para ampliarlo.")
+            conn.execute(
+                "INSERT INTO ia_consumo_funcion (tenant_id, mes, funcion, usadas) VALUES (?, ?, ?, 1) ON CONFLICT(tenant_id, mes, funcion) DO UPDATE SET usadas = ia_consumo_funcion.usadas + 1",
+                (tenant_id, mes, funcion),
+            )
         conn.execute(
             "INSERT INTO ia_consumo (tenant_id, mes, usadas) VALUES (?, ?, 1) ON CONFLICT(tenant_id, mes) DO UPDATE SET usadas = ia_consumo.usadas + 1",
             (tenant_id, mes),
@@ -116,3 +129,33 @@ def resumen_global(ahora: datetime | None = None) -> list[dict]:
         pct = None if not f["limite"] else min(100, f["usadas"] * 100 // f["limite"])
         out.append({**dict(f), "pct": pct, "ilimitado": f["limite"] is None})
     return out
+
+
+def fijar_tope_funcion(tenant_id: int, funcion: str, limite: int | None) -> None:
+    """Pone (o quita, con None) el tope mensual de una función de IA del despacho."""
+    if funcion not in FUNCIONES:
+        raise ValueError(f"Función de IA desconocida: {funcion}")
+    conn = db.get_connection()
+    try:
+        if limite is None:
+            conn.execute("DELETE FROM ia_tope_funcion WHERE tenant_id = ? AND funcion = ?", (tenant_id, funcion))
+        else:
+            conn.execute(
+                "INSERT INTO ia_tope_funcion (tenant_id, funcion, limite_mensual) VALUES (?, ?, ?) ON CONFLICT(tenant_id, funcion) DO UPDATE SET limite_mensual = excluded.limite_mensual",
+                (tenant_id, funcion, max(0, int(limite))),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def estado_funciones(tenant_id: int, ahora: datetime | None = None) -> list[dict]:
+    """Por cada función de IA: lo gastado este mes y su tope propio (None = sin tope)."""
+    mes = _mes(ahora)
+    conn = db.get_connection()
+    try:
+        topes = {f["funcion"]: f["limite_mensual"] for f in conn.execute("SELECT funcion, limite_mensual FROM ia_tope_funcion WHERE tenant_id = ?", (tenant_id,)).fetchall()}
+        usadas = {f["funcion"]: f["usadas"] for f in conn.execute("SELECT funcion, usadas FROM ia_consumo_funcion WHERE tenant_id = ? AND mes = ?", (tenant_id, mes)).fetchall()}
+    finally:
+        conn.close()
+    return [{"funcion": k, "nombre": n, "usadas": usadas.get(k, 0), "limite": topes.get(k)} for k, n in FUNCIONES.items()]

@@ -117,6 +117,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Asistente jurídico: biblioteca autorizada, consultas con citas e informes (octubre de 2026)](#asistente-jurídico-biblioteca-autorizada-consultas-con-citas-e-informes-octubre-de-2026)
 - [Rendimiento de la web (AB)](#rendimiento-de-la-web-ab)
 - [Lectura de facturas, contabilidad y portal (AC)](#lectura-de-facturas-contabilidad-y-portal-ac)
+- [Copia fuera del servidor, topes de IA, banco y analítica (AD)](#copia-fuera-del-servidor-topes-de-ia-banco-y-analítica-ad)
 
 <!-- /INDICE -->
 
@@ -3752,3 +3753,14 @@ Módulo vertical `juridico` (`app/juridico/`, `app/rutas_juridico.py`, `app/ruta
 - **Cierre del trimestre**: el panel de cierre y la lista de comprobación avisan (sin bloquear el cierre) de los proveedores habituales —con factura en al menos 3 de los 6 meses anteriores— a los que les falta la factura en algún mes del trimestre que se cierra, contando un mes solo pasado su día 10. Preguntas rápidas al cliente por dato dudoso («Confirmar el total», «Confirmar la fecha») en la ficha de la factura.
 - Pruebas: `tests/test_lectura_nif.py`, `tests/test_facturas_correo.py` (buzón y cierre), `tests/test_rendimiento_web.py`, `tests/test_ia_trabajos.py`.
 
+
+
+## Copia fuera del servidor, topes de IA, banco y analítica (AD)
+
+- **Copia de Restic en AWS S3** (`scripts/copia_s3_restic.sh`, `deploy/restic-s3.{service,timer}`, cada noche a las 04:15): replica con `restic copy` el repositorio local (segundo disco) en el bucket que ya usa el almacén de documentos (`GUILDA_S3_BUCKET`), carpeta `copias-restic/`, con las mismas claves `GUILDA_S3_*` y la misma contraseña `RESTIC_PASSWORD` (sin ella la copia no se abre: guárdala fuera del servidor). Solo sube los snapshots nuevos, aplica la retención (7 diarias, 4 semanales, 6 mensuales, 6 anuales) y los domingos comprueba una muestra del 2 %. Estado en `data/backups/restic_s3_estado.json`, fila «Copia de seguridad fuera del servidor» de Salud. **Restaurar desde S3**: `docker run --rm -e AWS_ACCESS_KEY_ID=… -e AWS_SECRET_ACCESS_KEY=… -e RESTIC_PASSWORD=… -e RESTIC_REPOSITORY=s3:https://s3.eu-north-1.amazonaws.com/<bucket>/copias-restic -v /destino:/destino restic/restic restore latest --tag <objetivo> --target /destino`. Las claves del bucket deben poder escribir y borrar en esa carpeta. No se usa Object Lock en ella (restic borra al aplicar la retención).
+- **Topes de IA por función** (`app/ia_consumo.py`, migración 058): además del tope mensual general, la dirección puede limitar «Asistente y chat», «Lectura de facturas» y «Acciones de IA del correo» (Ajustes de IA, «Tope de consultas por función»). Una función agotada no bloquea las demás y todas suman al tope general.
+- **Movimientos bancarios guardados** (migración 059, `app/fiscal_conciliacion.py`): al conciliar un extracto se pueden conservar solo fecha, importe y concepto (nunca el fichero ni el IBAN) por titular, sin duplicados (huella). Sirven para «Conciliar con los guardados» sin volver a subir nada y para el punto «Facturas del trimestre sin cobro o pago» del cierre (solo si los movimientos cubren el trimestre; una factura con menos de 30 días de extracto por delante no cuenta). El botón «Borrar los guardados» los elimina todos.
+- **Lectura de facturas**: NIF de emisor y receptor intercambiados por el modelo se recolocan según su posición en el texto (`lectura_nif.corregir_cruce`); nuevo caso de evaluación con una factura intracomunitaria alemana.
+- **Buzón por correo**: `facturas_correo.metricas` (mensajes, facturas, rechazos y estado de la cuenta) en *Contabilidad → Buzón* y fila «Buzón de facturas por correo» de Salud (ámbar si la cuenta lleva más de 2 horas sin sincronizar o falla).
+- **Analítica de uso** (`app/rendimiento.py`, `data/backups/uso_modulos.json`): cuenta pantallas vistas por módulo y día (30 días), sin personas ni parámetros; fila «Módulos más usados (7 días)» de Salud.
+- Pruebas: `tests/test_ia_topes_funcion.py`, `tests/test_fiscal_conciliacion.py`, `tests/test_lectura_nif.py`, `tests/test_facturas_correo.py`, `tests/test_rendimiento_web.py`.

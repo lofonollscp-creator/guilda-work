@@ -180,6 +180,17 @@
     </table></div>
     <p class="muted">{{ _('Es una estimación con las tarifas públicas de cada modelo. La cifra real es la que te cobra cada proveedor.') }}</p>
     {% endif %}
+    {% if funciones %}
+    <h3 id="topes">{{ _('Tope de consultas por función (este mes)') }}</h3>
+    <p class="muted">{{ _('Además del límite general del despacho, puedes limitar cada función para que una lectura masiva de facturas no se coma todas las consultas. Vacío = sin tope propio.') }}</p>
+    <form method="post" action="{{ url_for('ia.guardar_topes_por_funcion') }}" class="correo-form-seccion">
+      {% for f in funciones %}
+      <label>{{ f.nombre }} <span class="muted">({{ _('%(n)s usadas este mes', n=f.usadas) }})</span>
+        <input type="number" min="0" name="tope_{{ f.funcion }}" value="{{ f.limite if f.limite is not none }}" placeholder="{{ _('sin tope') }}"></label>
+      {% endfor %}
+      <button type="submit" class="btn">{{ _('Guardar topes') }}</button>
+    </form>
+    {% endif %}
     {% if herramientas_uso and herramientas_uso.total %}
     <h3 id="uso-herramientas">{{ _('Herramientas del asistente (últimos %(d)s días)', d=herramientas_uso.dias) }}</h3>
     <p>{{ ngettext('%(n)s llamada a una herramienta', '%(n)s llamadas a herramientas', herramientas_uso.total, n=herramientas_uso.total) }} · {{ _('%(e)s con error', e=herramientas_uso.errores) }} · {{ _('%(r)s acciones rechazadas al pedir confirmación', r=herramientas_uso.rechazadas) }}.</p>

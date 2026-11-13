@@ -688,12 +688,12 @@ def sin_consumo():
         _sin_consumo.reset(testigo)
 
 
-def _reservar_uso(usuario_id: int) -> None:
-    """Cuenta una consulta al modelo en el consumo mensual del despacho; ErrorIA si ha agotado su tope."""
+def _reservar_uso(usuario_id: int, funcion: str = "asistente") -> None:
+    """Cuenta una consulta al modelo en el consumo mensual del despacho y de su función; ErrorIA si ha agotado alguno de los topes."""
     if _sin_consumo.get():
         return
     try:
-        ia_consumo.reservar(usuario_id)
+        ia_consumo.reservar(usuario_id, funcion=funcion)
     except ia_consumo.LimiteIA as e:
         raise ErrorIA(str(e)) from e
 
@@ -713,7 +713,7 @@ def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
     cands = candidatos(usuario_id, "asistente")
     if not cands:
         raise _sin_candidatos(usuario_id)
-    _reservar_uso(usuario_id)
+    _reservar_uso(usuario_id, "correo")
     sp, enviados = _envio_protegido(usuario_id, [{"role": "system", "content": sistema}, {"role": "user", "content": contenido}])
     respuesta = _llamar(usuario_id, "asistente", {"messages": enviados}, cands=cands)
     try:
@@ -731,7 +731,7 @@ def completar_partes(usuario_id: int, sistema: str, partes: list[dict], timeout:
     cands = candidatos(usuario_id, tarea)
     if not cands:
         raise _sin_candidatos(usuario_id)
-    _reservar_uso(usuario_id)
+    _reservar_uso(usuario_id, "facturas" if tarea == "facturas" else "asistente")
     sp, enviados = _envio_protegido(usuario_id, [{"role": "system", "content": sistema}, {"role": "user", "content": partes}])   # las imágenes y PDF no se pueden proteger: solo las partes de texto
     try:
         respuesta = _llamar(usuario_id, tarea, {"temperature": 0, "messages": enviados}, timeout, cands=cands)

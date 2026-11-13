@@ -8,6 +8,14 @@
   </div>
   <a class="btn btn-ghost" href="{{ url_for('contabilidad.ajustes') }}">‹ {{ _('Ajustes') }}</a>
 </header>
+{% if metricas.estado != 'sin_configurar' %}
+<section class="dash-panel">
+  <p>{% if metricas.estado == 'ok' %}{{ _('La cuenta del buzón sincroniza con normalidad (última vez: %(f)s).', f=(metricas.ultima_sincronizacion or '')[:16].replace('T', ' ')) }}
+     {% elif metricas.estado == 'atrasado' %}<strong>{{ _('La cuenta del buzón lleva más de 2 horas sin sincronizar') }}</strong>{% if metricas.ultima_sincronizacion %} ({{ _('última vez: %(f)s', f=metricas.ultima_sincronizacion[:16].replace('T', ' ')) }}){% endif %}. {{ _('Mientras tanto no llegan facturas nuevas.') }}
+     {% else %}<strong>{{ _('La cuenta del buzón falla al sincronizar:') }}</strong> {{ metricas.error }}{% endif %}</p>
+  <p class="muted">{{ _('Últimos 30 días: %(m)s mensajes, %(f)s facturas anotadas, %(r)s rechazados por remitente no autorizado, %(s)s sin adjuntos válidos, %(x)s con error.', m=metricas.mensajes, f=metricas.facturas, r=metricas.rechazados, s=metricas.sin_adjuntos, x=metricas.fallos) }}</p>
+</section>
+{% endif %}
 {% if filas %}
 <div class="table-wrap"><table class="ds-table">
   <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Qué pasó') }}</th></tr></thead>

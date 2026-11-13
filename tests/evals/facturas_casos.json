@@ -123,11 +123,11 @@
   },
   {
    "id": "tique_simplificado",
-   "texto": "BAR RESTAURANTE LA PLAZA\nNIF: B99887766\nFACTURA SIMPLIFICADA Nº T-5521\nFecha: 12/11/2026 14:35\nMenú del día x3 ........ 33,00\nIVA 10% incluido ....... 3,00\nTOTAL .................. 33,00 EUR",
+   "texto": "BAR RESTAURANTE LA PLAZA\nNIF: B99887762\nFACTURA SIMPLIFICADA Nº T-5521\nFecha: 12/11/2026 14:35\nMenú del día x3 ........ 33,00\nIVA 10% incluido ....... 3,00\nTOTAL .................. 33,00 EUR",
    "esperado": {
     "numero": "T-5521",
     "fecha": "2026-11-12",
-    "emisor_nif": "B99887766",
+    "emisor_nif": "B99887762",
     "receptor_nif": null,
     "total": 33.0,
     "lineas": [
@@ -320,6 +320,25 @@
       "cuota_iva": 0.0
      }
     ]
+   }
+  },
+  {
+   "id": "intracomunitaria_alemana",
+   "texto": "Muster GmbH\nUSt-IdNr.: DE811128135\nHauptstrasse 5, 10115 Berlin\n\nRechnung Nr. RE-2026-0415\nDatum: 05.11.2026\n\nRechnungsempfänger:\nCliente Prueba SL\nNIF: B99887762\nCalle Mayor 1, Madrid\n\nSoftware-Lizenz ............ 200,00 EUR\nUSt 0 % (innergemeinschaftliche Lieferung) .... 0,00 EUR\nGesamtbetrag ............... 200,00 EUR",
+   "esperado": {
+    "numero": "RE-2026-0415",
+    "fecha": "2026-11-05",
+    "emisor_nif": "DE811128135",
+    "receptor_nif": "B99887762",
+    "total": 200.0,
+    "lineas": [
+     {
+      "base": 200.0,
+      "pct_iva": 0,
+      "cuota_iva": 0.0
+     }
+    ],
+    "es_abono": false
    }
   }
  ]

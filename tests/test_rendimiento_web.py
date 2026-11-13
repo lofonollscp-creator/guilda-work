@@ -135,3 +135,19 @@ def test_periodos_cerrados_de_varios_da_lo_mismo_que_uno_a_uno():
     for cid, ts in pedido.items():
         assert varios.get(cid, {}) == fc.periodos_cerrados(t, cid, ts)
     assert fc.periodos_cerrados_de_varios(t, {}) == {}
+
+
+def test_el_uso_de_modulos_cuenta_por_modulo_y_se_acumula_en_el_fichero(tmp_path):
+    from datetime import datetime
+    from app import rendimiento
+    ruta = tmp_path / "uso_modulos.json"
+    rendimiento._uso_pendiente.clear()
+    for _ in range(3):
+        rendimiento.registrar_uso("tareas")
+    rendimiento.registrar_uso("contabilidad")
+    assert rendimiento.volcar_uso(ruta)
+    rendimiento.registrar_uso("tareas")
+    assert rendimiento.volcar_uso(ruta)
+    assert rendimiento.uso_de_modulos(ruta, 7) == [("tareas", 4), ("contabilidad", 1)]
+    assert rendimiento.uso_de_modulos(ruta, 7, datetime(2030, 1, 1)) == []             # fuera de la ventana
+    assert not rendimiento.volcar_uso(ruta)                                           # nada pendiente: no escribe

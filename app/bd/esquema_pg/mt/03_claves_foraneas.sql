@@ -38,6 +38,7 @@ ALTER TABLE automatizaciones_eventos ADD CONSTRAINT fk_automatizaciones_eventos_
 ALTER TABLE automatizaciones_reglas ADD CONSTRAINT fk_automatizaciones_reglas_creada_por FOREIGN KEY (creada_por) REFERENCES usuarios (id);
 ALTER TABLE automatizaciones_reglas ADD CONSTRAINT fk_automatizaciones_reglas_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE avisos_config ADD CONSTRAINT fk_avisos_config_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE banco_movimientos ADD CONSTRAINT fk_banco_movimientos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE bolsa_horas_ajustes ADD CONSTRAINT fk_bolsa_horas_ajustes_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id);
 ALTER TABLE bolsa_horas_ajustes ADD CONSTRAINT fk_bolsa_horas_ajustes_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE bolsa_horas_ajustes ADD CONSTRAINT fk_bolsa_horas_ajustes_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;
@@ -275,6 +276,7 @@ ALTER TABLE ia_adjuntos ADD CONSTRAINT fk_ia_adjuntos_usuario_id FOREIGN KEY (us
 ALTER TABLE ia_atajos ADD CONSTRAINT fk_ia_atajos_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE ia_config_despacho ADD CONSTRAINT fk_ia_config_despacho_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_consumo ADD CONSTRAINT fk_ia_consumo_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
+ALTER TABLE ia_consumo_funcion ADD CONSTRAINT fk_ia_consumo_funcion_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_conversaciones ADD CONSTRAINT fk_ia_conversaciones_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE ia_mensajes ADD CONSTRAINT fk_ia_mensajes_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE ia_preferencias ADD CONSTRAINT fk_ia_preferencias_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
@@ -283,6 +285,7 @@ ALTER TABLE ia_proveedores_despacho ADD CONSTRAINT fk_ia_proveedores_despacho_te
 ALTER TABLE ia_salidas_datos ADD CONSTRAINT fk_ia_salidas_datos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);
 ALTER TABLE ia_soporte_uso ADD CONSTRAINT fk_ia_soporte_uso_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE;
+ALTER TABLE ia_tope_funcion ADD CONSTRAINT fk_ia_tope_funcion_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_trabajos ADD CONSTRAINT fk_ia_trabajos_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE ia_uso_proveedor ADD CONSTRAINT fk_ia_uso_proveedor_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE CASCADE;
 ALTER TABLE informes_tareas_suscripciones ADD CONSTRAINT fk_informes_tareas_suscripciones_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id);

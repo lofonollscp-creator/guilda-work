@@ -230,3 +230,36 @@ def registro(tenant_id: int, limite: int = 50) -> list[dict]:
         d = e["detalle"] if isinstance(e["detalle"], dict) else {}
         salida.append({"fecha": e["creado_en"], "cliente": nombres.get(d.get("cliente_fiscal_id"), ""), "resultado": d.get("resultado", ""), "detalle": d})
     return salida
+
+
+def metricas(tenant_id: int, dias: int = 30) -> dict:
+    """Qué ha hecho el buzón en los últimos `dias` días y si la cuenta sigue sincronizando: {mensajes, facturas, rechazados, motivos, sin_adjuntos, fallos, ultima_sincronizacion, error, estado}.
+    `estado`: sin_configurar, ok, atrasado (más de 2 horas sin sincronizar) o error (el último intento falló)."""
+    from . import db_correo
+    corte = (datetime.now() - timedelta(days=dias)).isoformat(timespec="seconds")
+    m = {"mensajes": 0, "facturas": 0, "rechazados": 0, "sin_adjuntos": 0, "fallos": 0, "motivos": {}}
+    for e in auditoria.listar(tenant_id, accion=ACCION, limite=1000):
+        if (e["creado_en"] or "") < corte:
+            continue
+        d = e["detalle"] if isinstance(e["detalle"], dict) else {}
+        r = d.get("resultado", "")
+        m["mensajes"] += 1
+        if r == "anotadas":
+            m["facturas"] += int(d.get("facturas") or 0)
+        elif r == "remitente_no_autorizado":
+            m["rechazados"] += 1
+            m["motivos"]["remitente_no_autorizado"] = m["motivos"].get("remitente_no_autorizado", 0) + 1
+        elif r == "sin_adjuntos_validos":
+            m["sin_adjuntos"] += 1
+        else:
+            m["fallos"] += 1
+    c = config(tenant_id)
+    m.update({"ultima_sincronizacion": None, "error": None, "estado": "sin_configurar"})
+    if c["cuenta_id"] and c["direccion"]:
+        cuenta = db_correo.obtener_cuenta_correo_por_id(c["cuenta_id"])
+        if cuenta is not None:
+            ultima, error = cuenta["ultima_sincronizacion"], cuenta["ultimo_error_sincronizacion"]
+            m.update({"ultima_sincronizacion": ultima, "error": error})
+            atrasada = not ultima or datetime.fromisoformat(str(ultima)[:19]) < datetime.now() - timedelta(hours=2)
+            m["estado"] = "error" if error else "atrasado" if atrasada else "ok"
+    return m

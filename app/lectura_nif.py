@@ -63,11 +63,37 @@ def _mas_cercano(cands: list[tuple[int, str]], posiciones: list[tuple[int, int]]
     return mejor
 
 
+def _distancia(posiciones: list[tuple[int, int]], pos_nif: list[int]) -> int:
+    """Distancia mínima en caracteres entre un nombre (sus apariciones) y un NIF (sus apariciones)."""
+    return min((abs(p - (ini if p < ini else fin)) for ini, fin in posiciones for p in pos_nif), default=10 ** 9)
+
+
+def corregir_cruce(datos: dict, texto: str) -> list[str]:
+    """Emisor y receptor con los NIF cambiados (un modelo los intercambió): si cada NIF está claramente más cerca del nombre de la OTRA parte, se vuelven a su sitio. Solo con los dos nombres y los dos NIF en el texto."""
+    if not texto or len(texto) < 40:
+        return []
+    ne, nr = datos.get("emisor_nif"), datos.get("receptor_nif")
+    if not (ne and nr and datos.get("emisor_nombre") and datos.get("receptor_nombre")):
+        return []
+    t = _limpio(texto)
+    pe, pr = _posiciones(t, datos["emisor_nombre"]), _posiciones(t, datos["receptor_nombre"])
+    ae, ar = [m.start() for m in re.finditer(re.escape(sin_es(ne)), t)], [m.start() for m in re.finditer(re.escape(sin_es(nr)), t)]
+    if not (pe and pr and ae and ar):
+        return []
+    propios = _distancia(pe, ae) + _distancia(pr, ar)
+    cruzados = _distancia(pr, ae) + _distancia(pe, ar)
+    if cruzados + 40 < propios:
+        datos["emisor_nif"], datos["receptor_nif"] = nr, ne
+        return ["El modelo había cambiado entre sí los NIF del emisor y del receptor: se han colocado según su posición en el documento. Compruébalo."]
+    return []
+
+
 def completar(datos: dict, texto: str) -> list[str]:
     """Rellena emisor_nif / receptor_nif cuando el modelo los dejó vacíos y el documento los tiene junto al nombre. Devuelve los avisos (el NIF leído que no está en el texto)."""
     avisos: list[str] = []
     if not texto or len(texto) < 40:
         return avisos
+    avisos += corregir_cruce(datos, texto)
     plano = re.sub(r"[\s.\-]", "", texto).upper()
     for parte in ("emisor", "receptor"):
         leido = sin_es(datos.get(f"{parte}_nif"))

@@ -1,0 +1,11 @@
+# Timer de restic-s3.service: cada noche a las 04:15, después de la copia general (03:00) y la de documentos (03:40).
+[Unit]
+Description=Guilda Work - copia diaria de Restic a AWS S3 (ver restic-s3.service)
+
+[Timer]
+OnCalendar=*-*-* 04:15:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target

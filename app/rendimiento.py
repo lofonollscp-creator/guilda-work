@@ -13,7 +13,7 @@ import os
 import threading
 import time
 from collections import defaultdict, deque
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger("guilda")
 
@@ -26,6 +26,8 @@ _lock = threading.Lock()
 _peticiones: deque = deque(maxlen=MAX_REGISTROS)     # (instante, ruta, método, estado, ms)
 _colas: deque = deque(maxlen=1000)                   # instantes en que waitress avisó de cola
 _ultimo_volcado = 0.0
+_uso_pendiente: dict = defaultdict(lambda: defaultdict(int))       # {día: {módulo: peticiones}} aún sin volcar (analítica de uso, AD10: solo cuenta, nunca quién ni qué)
+DIAS_DE_USO = 30
 
 # Rutas que no cuentan: se piden muy a menudo y no dicen nada del rendimiento de las pantallas.
 _IGNORAR = ("/static/", "/notificaciones/recientes", "/sw.js")
@@ -35,6 +37,55 @@ def registrar(ruta: str, metodo: str, estado: int, ms: float, ahora: float | Non
     ahora = time.time() if ahora is None else ahora
     with _lock:
         _peticiones.append((ahora, ruta, metodo, estado, ms))
+
+
+def registrar_uso(modulo: str, ahora: float | None = None) -> None:
+    """Cuenta una petición a un módulo de la app (su blueprint: tareas, contabilidad, correo…). Sin personas, sin rutas con datos, sin parámetros."""
+    dia = datetime.fromtimestamp(time.time() if ahora is None else ahora).strftime("%Y-%m-%d")
+    with _lock:
+        _uso_pendiente[dia][modulo] += 1
+
+
+def volcar_uso(ruta_fichero) -> bool:
+    """Suma lo pendiente a `uso_modulos.json` ({día: {módulo: n}}, solo los últimos `DIAS_DE_USO` días)."""
+    with _lock:
+        if not _uso_pendiente:
+            return False
+        pendiente = {d: dict(m) for d, m in _uso_pendiente.items()}
+        _uso_pendiente.clear()
+    try:
+        try:
+            total = json.load(open(ruta_fichero, encoding="utf-8"))
+        except (OSError, ValueError):
+            total = {}
+        for dia, modulos in pendiente.items():
+            for m, n in modulos.items():
+                total.setdefault(dia, {})[m] = total.get(dia, {}).get(m, 0) + n
+        for dia in sorted(total)[:-DIAS_DE_USO]:
+            del total[dia]
+        tmp = str(ruta_fichero) + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(total, f, ensure_ascii=False)
+        os.replace(tmp, ruta_fichero)
+        return True
+    except OSError:
+        logger.debug("No se pudo volcar el uso de módulos", exc_info=True)
+        return False
+
+
+def uso_de_modulos(ruta_fichero, dias: int = 7, hoy: datetime | None = None) -> list[tuple[str, int]]:
+    """[(módulo, peticiones)] de los últimos `dias` días, de más a menos usado."""
+    try:
+        total = json.load(open(ruta_fichero, encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    desde = ((hoy or datetime.now()) - timedelta(days=dias - 1)).strftime("%Y-%m-%d")
+    suma: dict[str, int] = defaultdict(int)
+    for dia, modulos in total.items():
+        if dia >= desde:
+            for m, n in modulos.items():
+                suma[m] += n
+    return sorted(suma.items(), key=lambda x: -x[1])
 
 
 def registrar_cola(ahora: float | None = None) -> None:
@@ -139,7 +190,10 @@ def instalar(app, ruta_fichero) -> None:
             return respuesta
         ruta = request.url_rule.rule if request.url_rule else "(sin ruta)"
         registrar(ruta, request.method, respuesta.status_code, ms)
+        if request.blueprint and respuesta.status_code < 400 and request.method == "GET":
+            registrar_uso(request.blueprint)
         if ms >= LENTA_MS:
             logger.warning("Petición lenta: %s %s -> %s en %.0f ms (id %s)", request.method, ruta, respuesta.status_code, ms, g.get("request_id"))
-        volcar(ruta_fichero)
+        if volcar(ruta_fichero):
+            volcar_uso(str(ruta_fichero).replace("rendimiento_estado.json", "uso_modulos.json"))
         return respuesta

@@ -12,13 +12,22 @@
 </header>
 {{ aviso_error(error) }}
 <section class="dash-panel">
-  <p class="muted">{{ _('Sube el extracto del banco del titular (CSV o Excel con fecha, concepto e importe) y se cruza con sus facturas por importe exacto. El extracto no se guarda: para volver a ver el resultado hay que subirlo otra vez. Nada se aprueba ni se registra desde aquí.') }}</p>
+  <p class="muted">{{ _('Sube el extracto del banco del titular (CSV o Excel con fecha, concepto e importe) y se cruza con sus facturas por importe exacto. El fichero nunca se guarda. Si marcas la casilla, se conservan solo los movimientos (fecha, importe y concepto) para avisar en el cierre de las facturas sin cobro o pago. Nada se aprueba ni se registra desde aquí.') }}</p>
   <form method="post" enctype="multipart/form-data" class="ds-fila ds-envolver">
     <label>{{ _('Ejercicio') }} <input type="number" name="ejercicio" value="{{ ejercicio }}" min="2026" max="2100"></label>
     <label>{{ _('Periodo') }} <select name="periodo">{% for p in periodos %}<option {{ 'selected' if p == periodo }}>{{ p }}</option>{% endfor %}</select></label>
     <label>{{ _('Extracto') }} <input type="file" name="extracto" accept=".csv,.xlsx,.txt" required></label>
+    <label class="correo-form-checkbox"><input type="checkbox" name="guardar" checked> {{ _('Guardar los movimientos para el cierre') }}</label>
     <button class="btn btn-primary" type="submit">{{ _('Conciliar') }}</button>
   </form>
+  {% if request.args.get('borrados') is not none %}<p class="muted">{{ _('Movimientos borrados: %(n)s.', n=request.args.get('borrados')) }}</p>{% endif %}
+  {% if guardados %}
+  <div class="ds-fila ds-envolver ds-mt-16">
+    <span class="muted">{{ _('Movimientos guardados: %(n)s (del %(d)s al %(h)s).', n=guardados.n, d=guardados.desde, h=guardados.hasta) }}</span>
+    <form method="post"><input type="hidden" name="ejercicio" value="{{ ejercicio }}"><input type="hidden" name="periodo" value="{{ periodo }}"><input type="hidden" name="usar_guardados" value="1"><button class="btn btn-ghost" type="submit">{{ _('Conciliar con los guardados') }}</button></form>
+    <form method="post" action="{{ url_for('guilda_fiscal.borrar_movimientos_guardados', cliente_id=c.id) }}" data-confirmar-envio="{{ _('¿Borrar todos los movimientos guardados de este titular?') }}" data-confirmar-peligro><button class="btn btn-ghost" type="submit">{{ _('Borrar los guardados') }}</button></form>
+  </div>
+  {% endif %}
 </section>
 {% if resultado %}
 {% set r = resultado %}

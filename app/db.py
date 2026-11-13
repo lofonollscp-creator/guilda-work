@@ -1105,6 +1105,36 @@ CREATE TABLE IF NOT EXISTS ia_consumo (
     PRIMARY KEY (tenant_id, mes)
 );
 
+-- Movimientos del extracto bancario de cada titular (fecha, importe y concepto; la huella evita duplicados al subir extractos que se solapan). app/fiscal_conciliacion.py
+CREATE TABLE IF NOT EXISTS banco_movimientos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    cliente_fiscal_id INTEGER NOT NULL,
+    fecha TEXT NOT NULL,
+    importe_centimos INTEGER NOT NULL,
+    concepto TEXT NOT NULL DEFAULT '',
+    huella TEXT NOT NULL,
+    fichero TEXT NOT NULL DEFAULT '',
+    creado_en TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_banco_movimientos_huella ON banco_movimientos(tenant_id, cliente_fiscal_id, huella);
+CREATE INDEX IF NOT EXISTS idx_banco_movimientos_fecha ON banco_movimientos(tenant_id, cliente_fiscal_id, fecha);
+
+-- Topes por función de IA (facturas, asistente, correo…) y su consumo mensual (app/ia_consumo.py); sin fila de tope = sin tope propio
+CREATE TABLE IF NOT EXISTS ia_consumo_funcion (
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    mes TEXT NOT NULL,
+    funcion TEXT NOT NULL,
+    usadas INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (tenant_id, mes, funcion)
+);
+CREATE TABLE IF NOT EXISTS ia_tope_funcion (
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    funcion TEXT NOT NULL,
+    limite_mensual INTEGER NOT NULL,
+    PRIMARY KEY (tenant_id, funcion)
+);
+
 -- Consultas de soporte del asistente que no cuentan en el límite de IA: cupo diario por persona (app/ia_soporte.py).
 CREATE TABLE IF NOT EXISTS ia_soporte_uso (
     usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,

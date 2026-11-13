@@ -28103,3 +28103,90 @@ msgid "Falta la factura de %(n)s proveedor habitual en el trimestre"
 msgid_plural "Faltan facturas de %(n)s proveedores habituales en el trimestre"
 msgstr[0] "Il manque la facture de %(n)s fournisseur habituel au trimestre"
 msgstr[1] "Il manque des factures de %(n)s fournisseurs habituels au trimestre"
+
+msgid "El tope debe ser un número entero (o vacío para quitarlo)."
+msgstr "La limite doit être un nombre entier (ou vide pour la supprimer)."
+
+msgid "Copia de seguridad fuera del servidor (Restic en AWS S3)"
+msgstr "Sauvegarde hors du serveur (Restic sur AWS S3)"
+
+msgid "Todavía no se ha ejecutado la copia a S3."
+msgstr "La copie vers S3 n'a pas encore été exécutée."
+
+msgid "Última copia en S3 completa hace %(hace)s (%(n)s snapshots nuevos)."
+msgstr "Dernière copie complète vers S3 il y a %(hace)s (%(n)s nouveaux snapshots)."
+
+msgid "Ningún despacho lo tiene configurado."
+msgstr "Aucun cabinet ne l'a configuré."
+
+msgid "%(n)s buzón(es) sin sincronizar con normalidad: no llegan facturas por correo."
+msgstr "%(n)s boîte(s) ne se synchronise(nt) pas normalement : les factures n'arrivent pas par e-mail."
+
+msgid "%(n)s buzón(es) sincronizando."
+msgstr "%(n)s boîte(s) en cours de synchronisation."
+
+msgid "Módulos más usados (7 días)"
+msgstr "Modules les plus utilisés (7 jours)"
+
+msgid "Todavía no hay datos de uso."
+msgstr "Il n'y a pas encore de données d'utilisation."
+
+msgid "Pantallas vistas por módulo: %(top)s."
+msgstr "Écrans consultés par module : %(top)s."
+
+msgid "La cuenta del buzón sincroniza con normalidad (última vez: %(f)s)."
+msgstr "Le compte de la boîte se synchronise normalement (dernière fois : %(f)s)."
+
+msgid "La cuenta del buzón lleva más de 2 horas sin sincronizar"
+msgstr "Le compte de la boîte ne s'est pas synchronisé depuis plus de 2 heures"
+
+msgid "última vez: %(f)s"
+msgstr "dernière fois : %(f)s"
+
+msgid "Mientras tanto no llegan facturas nuevas."
+msgstr "En attendant, aucune nouvelle facture n'arrive."
+
+msgid "La cuenta del buzón falla al sincronizar:"
+msgstr "Le compte de la boîte échoue à se synchroniser :"
+
+msgid "Últimos 30 días: %(m)s mensajes, %(f)s facturas anotadas, %(r)s rechazados por remitente no autorizado, %(s)s sin adjuntos válidos, %(x)s con error."
+msgstr "30 derniers jours : %(m)s messages, %(f)s factures enregistrées, %(r)s rejetés (expéditeur non autorisé), %(s)s sans pièce jointe valide, %(x)s en erreur."
+
+msgid "Facturas del trimestre sin cobro o pago en los extractos guardados"
+msgstr "Factures du trimestre sans encaissement ni paiement dans les relevés enregistrés"
+
+msgid "Sube el extracto del banco del titular (CSV o Excel con fecha, concepto e importe) y se cruza con sus facturas por importe exacto. El fichero nunca se guarda. Si marcas la casilla, se conservan solo los movimientos (fecha, importe y concepto) para avisar en el cierre de las facturas sin cobro o pago. Nada se aprueba ni se registra desde aquí."
+msgstr "Téléversez le relevé bancaire du titulaire (CSV ou Excel avec date, libellé et montant) : il est rapproché de ses factures par montant exact. Le fichier n'est jamais conservé. Si vous cochez la case, seuls les mouvements (date, montant et libellé) sont gardés pour signaler à la clôture les factures sans encaissement ni paiement. Rien n'est approuvé ni enregistré d'ici."
+
+msgid "Guardar los movimientos para el cierre"
+msgstr "Conserver les mouvements pour la clôture"
+
+msgid "Movimientos borrados: %(n)s."
+msgstr "Mouvements supprimés : %(n)s."
+
+msgid "Movimientos guardados: %(n)s (del %(d)s al %(h)s)."
+msgstr "Mouvements enregistrés : %(n)s (du %(d)s au %(h)s)."
+
+msgid "Conciliar con los guardados"
+msgstr "Rapprocher avec ceux enregistrés"
+
+msgid "¿Borrar todos los movimientos guardados de este titular?"
+msgstr "Supprimer tous les mouvements enregistrés de ce titulaire ?"
+
+msgid "Borrar los guardados"
+msgstr "Supprimer les enregistrés"
+
+msgid "Tope de consultas por función (este mes)"
+msgstr "Limite de requêtes par fonction (ce mois-ci)"
+
+msgid "Además del límite general del despacho, puedes limitar cada función para que una lectura masiva de facturas no se coma todas las consultas. Vacío = sin tope propio."
+msgstr "En plus de la limite générale du cabinet, vous pouvez plafonner chaque fonction pour qu'une lecture massive de factures n'épuise pas toutes les requêtes. Vide = pas de limite propre."
+
+msgid "%(n)s usadas este mes"
+msgstr "%(n)s utilisées ce mois-ci"
+
+msgid "sin tope"
+msgstr "sans limite"
+
+msgid "Guardar topes"
+msgstr "Enregistrer les limites"

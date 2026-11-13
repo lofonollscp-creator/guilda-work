@@ -158,3 +158,11 @@ def test_los_proveedores_habituales_que_faltan_en_el_trimestre(monkeypatch):
     assert next(x for x in p["clientes"] if x["cliente_fiscal_id"] == c)["periodicas_trimestre"] == 1
     punto = next(x for x in cierre_trimestre.checklist(t, u, c, "2026-T3")["puntos"] if x["clave"] == "periodicas_trimestre")
     assert punto["estado"] in ("aviso", "ok")                                                           # es un aviso: nunca bloquea el cierre
+
+
+def test_las_metricas_del_buzon_sin_configurar_dicen_sin_configurar(cliente):
+    from app import facturas_correo
+    from tests.test_api_fiscal import _despacho
+    h, uid, tenant = _despacho(cliente, "metricas-buzon@ejemplo.com")
+    m = facturas_correo.metricas(tenant)
+    assert m["estado"] == "sin_configurar" and m["mensajes"] == 0 and m["facturas"] == 0

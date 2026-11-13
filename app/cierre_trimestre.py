@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from . import auditoria, db, facturas_contables as fc, facturas_periodicas, facturas_portal, justificantes, verticales
+from . import auditoria, db, facturas_contables as fc, facturas_periodicas, fiscal_conciliacion, facturas_portal, justificantes, verticales
 
 
 def _punto(puntos: list, clave: str, estado: str, cuantos: int = 0, filtro: dict | None = None) -> None:
@@ -37,6 +37,9 @@ def checklist(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, trimestre
     _punto(puntos, "devueltas", "aviso" if devueltas else "ok", len(devueltas))
     habituales = facturas_periodicas.por_cliente_del_trimestre(tenant_id, trimestre).get(cliente_fiscal_id, [])
     _punto(puntos, "periodicas_trimestre", "aviso" if habituales else "ok", len(habituales))
+    sin_pago = fiscal_conciliacion.facturas_sin_pago(tenant_id, cliente_fiscal_id, date.fromisoformat(desde), date.fromisoformat(hasta))
+    if sin_pago is not None:                                                  # solo si el despacho ha guardado extractos que cubren el trimestre
+        _punto(puntos, "facturas_sin_pago", "aviso" if sin_pago else "ok", sin_pago)
     jus = justificantes.para_el_cierre(tenant_id, cliente_fiscal_id, desde, hasta)
     _punto(puntos, "justificantes_sin_contestar", "aviso" if jus["sin_contestar"] else "ok", jus["sin_contestar"])
     _punto(puntos, "justificantes_por_cerrar", "pendiente" if jus["por_cerrar"] else "ok", jus["por_cerrar"])
