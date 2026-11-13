@@ -514,6 +514,8 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
         conn.close()
     if fuente != "ocr":                                           # un texto de OCR puede traer erratas que nadie contrasta: lo revisa siempre una persona
         _revisar_sola_si_procede(tenant_id, usuario_id, factura_id, config, puntos["global"], avisos, comprobaciones)
+    from . import facturas_portal
+    facturas_portal.avisar_lectura(tenant_id, fc.obtener(tenant_id, usuario_id, factura_id) or f)      # opcional por cliente; nunca rompe la lectura
     return avisos
 
 

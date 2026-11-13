@@ -166,3 +166,18 @@ def test_las_metricas_del_buzon_sin_configurar_dicen_sin_configurar(cliente):
     h, uid, tenant = _despacho(cliente, "metricas-buzon@ejemplo.com")
     m = facturas_correo.metricas(tenant)
     assert m["estado"] == "sin_configurar" and m["mensajes"] == 0 and m["facturas"] == 0
+
+
+def test_el_aviso_de_lectura_al_cliente_solo_sale_si_el_despacho_lo_activa_y_la_factura_es_del_portal(monkeypatch):
+    from app import facturas_correo, facturas_portal, portal_avisos
+    from tests.test_facturas_contables import _despacho
+    t, u, c = _despacho()
+    enviados = []
+    monkeypatch.setattr(portal_avisos, "avisar", lambda cliente, destino, texto, **kw: enviados.append((destino, texto()["asunto"])) or 1)
+    f = {"cliente_fiscal_id": c, "origen": "portal", "fecha": "2026-08-15", "tercero_nombre": "Proveedor SA"}
+    assert facturas_portal.avisar_lectura(t, f) is False and enviados == []                       # por defecto no se avisa
+    facturas_correo.fijar_aviso_lectura(t, u, c, True)
+    assert facturas_portal.avisar_lectura(t, {**f, "origen": "despacho"}) is False                # solo facturas que subió el propio cliente
+    assert facturas_portal.avisar_lectura(t, f) is True and "Proveedor SA" in enviados[0][1]
+    facturas_correo.fijar_aviso_lectura(t, u, c, False)
+    assert facturas_portal.avisar_lectura(t, f) is False

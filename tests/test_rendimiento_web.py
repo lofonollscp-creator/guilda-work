@@ -151,3 +151,16 @@ def test_el_uso_de_modulos_cuenta_por_modulo_y_se_acumula_en_el_fichero(tmp_path
     assert rendimiento.uso_de_modulos(ruta, 7) == [("tareas", 4), ("contabilidad", 1)]
     assert rendimiento.uso_de_modulos(ruta, 7, datetime(2030, 1, 1)) == []             # fuera de la ventana
     assert not rendimiento.volcar_uso(ruta)                                           # nada pendiente: no escribe
+
+
+def test_los_modulos_sin_uso_salen_de_los_conocidos_menos_los_vistos(tmp_path):
+    from datetime import datetime
+    from app import rendimiento
+    ruta = tmp_path / "uso.json"
+    rendimiento._uso_pendiente.clear()
+    rendimiento._modulos_conocidos.clear()
+    rendimiento._modulos_conocidos.update({"tareas", "contabilidad", "notas"})
+    rendimiento.registrar_uso("tareas")
+    assert rendimiento.volcar_uso(ruta)
+    assert rendimiento.modulos_sin_uso(ruta, 30) == (["contabilidad", "notas"], 1)
+    assert rendimiento.uso_de_modulos(ruta, 7) == [("tareas", 1)]               # la clave interna de módulos conocidos no cuenta como un día

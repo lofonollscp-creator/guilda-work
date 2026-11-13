@@ -349,6 +349,7 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "contabilidad_reglas", "pct_deducible", "INTEGER")              # % de IVA deducible en centésimas (5000 = 50 %); vacío = todo
     db._asegurar_columna(conn, "contabilidad_clientes", "buzon_activo", "INTEGER NOT NULL DEFAULT 0")      # migración 057: buzón de facturas por correo, solo en los clientes que el despacho active
     db._asegurar_columna(conn, "contabilidad_clientes", "buzon_codigo", "TEXT")
+    db._asegurar_columna(conn, "contabilidad_clientes", "avisar_lectura", "INTEGER NOT NULL DEFAULT 0")      # migración 060: avisar al cliente cuando una factura suya del portal queda leída
     db._asegurar_columna(conn, "contabilidad_despacho", "buzon_cuenta_id", "INTEGER")
     db._asegurar_columna(conn, "contabilidad_despacho", "buzon_direccion", "TEXT")
     db._asegurar_columna(conn, "contabilidad_lotes", "clase", "TEXT")                          # vacío = facturas; «pagos» = asientos de cobro y pago (migración 047)

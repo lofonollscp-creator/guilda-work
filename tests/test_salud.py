@@ -265,3 +265,24 @@ def test_la_tendencia_del_disco_estima_los_dias_que_quedan(tmp_path):
     dias = salud._tendencia_disco(16 * gb, inicio + timedelta(days=2), ruta)                # 2 GB al día, quedan 16 GB
     assert dias == 8
     assert salud._tendencia_disco(16 * gb, inicio + timedelta(days=2), ruta) == 8           # el mismo día no duplica la muestra
+
+
+def test_la_fila_de_vpn_avisa_antes_de_que_caduque_una_identidad(tmp_path, monkeypatch):
+    import json
+    from datetime import datetime
+    from app import db, salud
+    monkeypatch.setattr(db, "BACKUPS_DIR", tmp_path)
+    ahora = datetime(2026, 11, 13, 12, 0)
+    assert salud._estado_vpn(ahora)["estado"] == salud.GRIS
+    def escribir(dias, revocada=False, fecha="2026-11-13T06:10:00"):
+        (tmp_path / "vpn_estado.json").write_text(json.dumps({"fecha": fecha, "identidades": [{"nombre": "mac", "tipo": "cliente", "caduca": "x", "dias": dias, "revocada": revocada}]}))
+    escribir(400)
+    assert salud._estado_vpn(ahora)["estado"] == salud.VERDE
+    escribir(40)
+    assert salud._estado_vpn(ahora)["estado"] == salud.AMBAR
+    escribir(5)
+    assert salud._estado_vpn(ahora)["estado"] == salud.ROJO
+    escribir(5, revocada=True)                                       # una identidad revocada ya no importa
+    assert salud._estado_vpn(ahora)["estado"] == salud.VERDE
+    escribir(400, fecha="2026-11-01T06:10:00")
+    assert salud._estado_vpn(ahora)["estado"] == salud.AMBAR         # el estado no se actualiza

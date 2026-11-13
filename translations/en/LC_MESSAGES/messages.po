@@ -28138,3 +28138,50 @@ msgstr "A transaction whose amount is the exact sum of several invoices from the
 
 msgid "La lectura de facturas acierta menos del %(min)s %%. "
 msgstr "Invoice reading is below %(min)s %% accuracy. "
+
+msgid "Tu gestoría ha leído tu factura: %(tercero)s"
+msgstr "Your firm has read your invoice: %(tercero)s"
+
+msgid "Ver mis facturas"
+msgstr "See my invoices"
+
+msgid "Hemos leído la factura que subiste (%(tercero)s). Ahora la revisa tu gestoría; si le falta algún dato, te lo preguntará aquí."
+msgstr "We have read the invoice you uploaded (%(tercero)s). Your firm is now reviewing it; if any data is missing, they will ask you here."
+
+msgid "Tu factura de %(tercero)s ya está leída"
+msgstr "Your invoice from %(tercero)s has been read"
+
+msgid "Sin ninguna pantalla vista en 30 días: %(lista)s."
+msgstr "No screens viewed in 30 days: %(lista)s."
+
+msgid "Aún hay pocos días de datos (%(d)s) para saber qué módulos no se usan."
+msgstr "There are still few days of data (%(d)s) to tell which modules are not used."
+
+msgid "Identidades de VPN (OpenVPN)"
+msgstr "VPN identities (OpenVPN)"
+
+msgid "Todavía no hay datos de las identidades de VPN."
+msgstr "There is no data on the VPN identities yet."
+
+msgid "%(n)s identidades de cliente activas."
+msgstr "%(n)s active client identities."
+
+msgid "La próxima en caducar: %(nombre)s, dentro de %(d)s días."
+msgstr "Next to expire: %(nombre)s, in %(d)s days."
+
+msgid "El estado no se actualiza desde hace días."
+msgstr "The status has not been updated for days."
+
+msgid "Aviso al cliente al leer sus facturas"
+msgstr "Notice to the client when their invoices are read"
+
+msgid "Si lo activas, cuando una factura que este cliente sube desde su portal queda leída le llega un aviso (por defecto, no se avisa)."
+msgstr "If you turn it on, when an invoice this client uploads from their portal has been read they receive a notice (off by default)."
+
+msgid "Avisar al cliente"
+msgstr "Notify the client"
+
+msgid "%(n)s factura sin cobro o pago"
+msgid_plural "%(n)s facturas sin cobro o pago"
+msgstr[0] "%(n)s invoice with no collection or payment"
+msgstr[1] "%(n)s invoices with no collection or payment"

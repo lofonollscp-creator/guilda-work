@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from . import acceso, db, facturas_contables as fc, facturas_periodicas
+from . import acceso, db, facturas_contables as fc, facturas_periodicas, fiscal_conciliacion
 
 MESES_DE_HISTORIAL = 6                  # cuántos meses atrás se mira para saber si un cliente suele entregar facturas
 MESES_PARA_SER_HABITUAL = 3             # con facturas en al menos tantos de esos meses se le considera un cliente que entrega cada mes
@@ -89,6 +89,8 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
     silenciosos = sin_entregas(tenant_id, hoy)
     periodicas = facturas_periodicas.por_cliente(tenant_id, hoy)
     periodicas_trimestre = facturas_periodicas.por_cliente_del_trimestre(tenant_id, trimestre, hoy)
+    desde_t, hasta_t = fc.rango_del_trimestre(trimestre)
+    sin_pago = fiscal_conciliacion.sin_pago_por_cliente(tenant_id, date.fromisoformat(desde_t), date.fromisoformat(hasta_t), visibles)
     por_id = {f["cliente_fiscal_id"]: dict(f) for f in filas}
     for cid, nombre in configurados.items():
         por_id.setdefault(cid, {"cliente_fiscal_id": cid, "nombre": nombre, "total": 0, "sin_leer": 0, "por_revisar": 0, "listas": 0, "exportadas": 0, "sin_confirmar": 0, "sin_confirmar_antiguas": 0, "a_corregir": 0})
@@ -108,6 +110,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
         c["sin_facturas"] = c["total"] == 0
         c["periodicas_que_faltan"] = len(periodicas.get(cid, []))
         c["periodicas_trimestre"] = len(periodicas_trimestre.get(cid, []))                 # proveedores habituales sin factura en algún mes del trimestre que se cierra
+        c["facturas_sin_pago"] = sin_pago.get(cid, 0)                                      # con extractos guardados que cubren el trimestre: facturas sin cobro o pago
         c["sin_entregas_este_mes"] = silenciosos.get(cid, 0)                              # >0 = suele entregar y este mes aún no ha mandado nada (los meses que lo hizo)
         clientes.append(c)
     clientes.sort(key=lambda c: (c["cerrado"], c["listo"], -c["faltan"], c["sin_facturas"] is False, c["nombre"].lower()))

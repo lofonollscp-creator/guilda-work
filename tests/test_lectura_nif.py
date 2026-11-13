@@ -100,3 +100,15 @@ def test_nif_bien_colocados_no_se_tocan():
     texto = "IONOS CLOUD SL\nCIF: B85049435\nCalle Uno 1\n\nFactura para:\nCLIENTE PRUEBA SL\nCIF: B99887762\nTotal 10,00 EUR"
     datos = {"emisor_nombre": "IONOS CLOUD SL", "receptor_nombre": "CLIENTE PRUEBA SL", "emisor_nif": "B85049435", "receptor_nif": "B99887762"}
     assert lectura_nif.completar(datos, texto) == [] and datos["emisor_nif"] == "B85049435"
+
+
+def test_dia_y_mes_cambiados_se_corrigen_si_el_texto_solo_tiene_la_fecha_inversa():
+    from app import lectura_nif
+    texto = "Rechnung Nr. RE-2026-0415\nDatum: 05.11.2026\nGesamtbetrag 200,00 EUR por favor pague en 30 dias, gracias"
+    datos = {"fecha": "2026-05-11"}                                    # el modelo leyó mes/día
+    avisos = lectura_nif.completar(datos, texto)
+    assert datos["fecha"] == "2026-11-05" and any("día y el mes" in a for a in avisos)
+    bien = {"fecha": "2026-11-05"}
+    assert lectura_nif.completar(bien, texto) == [] and bien["fecha"] == "2026-11-05"
+    ambigua = {"fecha": "2026-07-07"}                                  # día = mes: no hay nada que corregir
+    assert lectura_nif.corregir_fecha(ambigua, "Fecha 07.07.2026 ........ texto de relleno para pasar el mínimo") == []

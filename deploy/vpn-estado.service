@@ -1,0 +1,11 @@
+# Estado de las identidades de OpenVPN para el panel Salud (scripts/vpn_identidades.sh estado). Solo lee. Copia junto al timer a /etc/systemd/system/.
+[Unit]
+Description=Guilda Work - estado de las identidades de OpenVPN
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/guilda/guilda-work
+ExecStart=/home/guilda/guilda-work/scripts/vpn_identidades.sh estado
+Nice=10

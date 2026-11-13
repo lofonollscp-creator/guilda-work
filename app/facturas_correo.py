@@ -102,6 +102,20 @@ def activar(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, activo: boo
     return estado_del_cliente(tenant_id, cliente_fiscal_id)
 
 
+def fijar_aviso_lectura(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, activo: bool) -> None:
+    """Activa o desactiva el aviso al cliente cuando una factura suya del portal queda leída (por defecto, no)."""
+    if not acceso.puede_ver_cliente(tenant_id, usuario_id, cliente_fiscal_id):
+        raise ValueError("No tienes acceso a ese cliente.")
+    conn = db.get_connection()
+    try:
+        conn.execute("INSERT INTO contabilidad_clientes (tenant_id, cliente_fiscal_id) VALUES (?, ?) ON CONFLICT DO NOTHING", (tenant_id, cliente_fiscal_id))
+        conn.execute("UPDATE contabilidad_clientes SET avisar_lectura = ? WHERE tenant_id = ? AND cliente_fiscal_id = ?", (1 if activo else 0, tenant_id, cliente_fiscal_id))
+        auditoria.registrar(tenant_id, usuario_id, "factura_contable.aviso_lectura_cliente", "cliente_fiscal", cliente_fiscal_id, {"activo": bool(activo)}, conn=conn)
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def activados(tenant_id: int) -> list[dict]:
     """Los clientes con el buzón activado (para el aviso de la pantalla de ajustes)."""
     conn = db.get_connection()

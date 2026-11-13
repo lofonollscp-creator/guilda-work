@@ -28223,3 +28223,50 @@ msgstr "Un mouvement dont le montant est la somme exacte de plusieurs factures d
 
 msgid "La lectura de facturas acierta menos del %(min)s %%. "
 msgstr "La lecture des factures est sous les %(min)s %% de réussite. "
+
+msgid "Tu gestoría ha leído tu factura: %(tercero)s"
+msgstr "Votre cabinet a lu votre facture : %(tercero)s"
+
+msgid "Ver mis facturas"
+msgstr "Voir mes factures"
+
+msgid "Hemos leído la factura que subiste (%(tercero)s). Ahora la revisa tu gestoría; si le falta algún dato, te lo preguntará aquí."
+msgstr "Nous avons lu la facture que vous avez téléversée (%(tercero)s). Votre cabinet la vérifie ; s'il manque une donnée, il vous le demandera ici."
+
+msgid "Tu factura de %(tercero)s ya está leída"
+msgstr "Votre facture de %(tercero)s est lue"
+
+msgid "Sin ninguna pantalla vista en 30 días: %(lista)s."
+msgstr "Aucun écran consulté en 30 jours : %(lista)s."
+
+msgid "Aún hay pocos días de datos (%(d)s) para saber qué módulos no se usan."
+msgstr "Il y a encore peu de jours de données (%(d)s) pour savoir quels modules ne sont pas utilisés."
+
+msgid "Identidades de VPN (OpenVPN)"
+msgstr "Identités VPN (OpenVPN)"
+
+msgid "Todavía no hay datos de las identidades de VPN."
+msgstr "Il n'y a pas encore de données sur les identités VPN."
+
+msgid "%(n)s identidades de cliente activas."
+msgstr "%(n)s identités client actives."
+
+msgid "La próxima en caducar: %(nombre)s, dentro de %(d)s días."
+msgstr "La prochaine à expirer : %(nombre)s, dans %(d)s jours."
+
+msgid "El estado no se actualiza desde hace días."
+msgstr "L'état n'est plus mis à jour depuis des jours."
+
+msgid "Aviso al cliente al leer sus facturas"
+msgstr "Avis au client à la lecture de ses factures"
+
+msgid "Si lo activas, cuando una factura que este cliente sube desde su portal queda leída le llega un aviso (por defecto, no se avisa)."
+msgstr "Si vous l'activez, quand une facture que ce client téléverse depuis son portail est lue, il reçoit un avis (désactivé par défaut)."
+
+msgid "Avisar al cliente"
+msgstr "Prévenir le client"
+
+msgid "%(n)s factura sin cobro o pago"
+msgid_plural "%(n)s facturas sin cobro o pago"
+msgstr[0] "%(n)s facture sans encaissement ni paiement"
+msgstr[1] "%(n)s factures sans encaissement ni paiement"

@@ -47,6 +47,7 @@
           {% if c.fichero_rechazado and not c.cerrado %} {{ chip(_('Fichero rechazado por a3'), 'peligro') }}{% endif %}
           {% if c.sin_confirmar_antiguas and not c.cerrado %} {{ chip(_('Exportadas hace días sin confirmar'), 'aviso') }}{% endif %}
           {% if c.periodicas_que_faltan and not c.cerrado %} {{ chip(ngettext('Falta %(n)s factura periódica', 'Faltan %(n)s facturas periódicas', c.periodicas_que_faltan, n=c.periodicas_que_faltan), 'aviso') }}{% endif %} {% if c.periodicas_trimestre and not c.cerrado %} {{ chip(ngettext('Falta la factura de %(n)s proveedor habitual en el trimestre', 'Faltan facturas de %(n)s proveedores habituales en el trimestre', c.periodicas_trimestre, n=c.periodicas_trimestre), 'aviso') }}{% endif %}
+          {% if c.facturas_sin_pago and not c.cerrado %} <a href="{{ url_for('guilda_fiscal.conciliacion', cliente_id=c.cliente_fiscal_id) }}">{{ chip(ngettext('%(n)s factura sin cobro o pago', '%(n)s facturas sin cobro o pago', c.facturas_sin_pago, n=c.facturas_sin_pago), 'aviso') }}</a>{% endif %}
           {% if c.sin_entregas_este_mes and not c.cerrado %} {{ chip(_('Sin entregas este mes'), 'aviso') }}{% endif %}
         </td>
         <td>{% if not c.cerrado %}<a class="btn btn-ghost" href="{{ url_for('contabilidad.cierre', cliente_id=c.cliente_fiscal_id, trimestre=trimestre) }}">{{ _('Cierre guiado') }}</a>{% endif %}</td>

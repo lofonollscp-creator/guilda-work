@@ -222,7 +222,37 @@ def _estado_uso_modulos(ahora: datetime) -> dict:
     if not uso:
         return _item("Servidor", "uso_modulos", titulo, GRIS, _("Todavía no hay datos de uso."))
     top = ", ".join(f"{m} ({n})" for m, n in uso[:6])
-    return _item("Servidor", "uso_modulos", titulo, VERDE, _("Pantallas vistas por módulo: %(top)s.", top=top))
+    detalle = _("Pantallas vistas por módulo: %(top)s.", top=top)
+    sin_uso, dias_datos = rendimiento.modulos_sin_uso(db.BACKUPS_DIR / "uso_modulos.json", 30, ahora)
+    if sin_uso and dias_datos >= 14:                      # con menos de dos semanas de datos «sin uso» no quiere decir nada
+        detalle += " " + _("Sin ninguna pantalla vista en 30 días: %(lista)s.", lista=", ".join(sin_uso[:12]) + ("…" if len(sin_uso) > 12 else ""))
+    elif sin_uso:
+        detalle += " " + _("Aún hay pocos días de datos (%(d)s) para saber qué módulos no se usan.", d=dias_datos)
+    return _item("Servidor", "uso_modulos", titulo, VERDE, detalle)
+
+
+VPN_AMBAR_DIAS, VPN_ROJO_DIAS = 60, 14
+
+
+def _estado_vpn(ahora: datetime) -> dict:
+    """Identidades de OpenVPN (scripts/vpn_identidades.sh estado → data/backups/vpn_estado.json): avisa cuando una identidad sin revocar está a punto de caducar."""
+    titulo = _("Identidades de VPN (OpenVPN)")
+    ruta = db.BACKUPS_DIR / "vpn_estado.json"
+    if not ruta.exists():
+        return _item("Servidor", "vpn", titulo, GRIS, _("Todavía no hay datos de las identidades de VPN."))
+    e = json.loads(ruta.read_text(encoding="utf-8"))
+    edad = (ahora - datetime.fromisoformat(e["fecha"]).replace(tzinfo=None)).total_seconds()
+    vivas = [i for i in e["identidades"] if not i["revocada"]]
+    clientes = [i for i in vivas if i["tipo"] == "cliente"]
+    detalle = _("%(n)s identidades de cliente activas.", n=len(clientes))
+    proxima = min(vivas, key=lambda i: i["dias"], default=None)
+    if proxima is not None:
+        detalle += " " + _("La próxima en caducar: %(nombre)s, dentro de %(d)s días.", nombre=proxima["nombre"], d=proxima["dias"])
+    if proxima is not None and proxima["dias"] < VPN_ROJO_DIAS:
+        return _item("Servidor", "vpn", titulo, ROJO, detalle, proxima["dias"])
+    if (proxima is not None and proxima["dias"] < VPN_AMBAR_DIAS) or edad > 3 * 86400:
+        return _item("Servidor", "vpn", titulo, AMBAR, detalle + (" " + _("El estado no se actualiza desde hace días.") if edad > 3 * 86400 else ""), proxima["dias"] if proxima else None)
+    return _item("Servidor", "vpn", titulo, VERDE, detalle, proxima["dias"] if proxima else None)
 
 
 def _estado_gasto_aws(ahora: datetime) -> dict:
@@ -680,6 +710,7 @@ def panel(ahora: datetime | None = None) -> list[dict]:
     _seguro("Servidor", "rendimiento", _("Rendimiento de la web"), lambda: _estado_rendimiento(ahora))
     _seguro("Servidor", "buzon_facturas", _("Buzón de facturas por correo"), lambda: _estado_buzon_facturas(ahora))
     _seguro("Servidor", "uso_modulos", _("Módulos más usados (7 días)"), lambda: _estado_uso_modulos(ahora))
+    _seguro("Servidor", "vpn", _("Identidades de VPN (OpenVPN)"), lambda: _estado_vpn(ahora))
     _seguro("Servidor", "exposicion", _("Exposición pública (cabeceras y puertos)"), lambda: _estado_exposicion(ahora))
     _seguro("Servidor", "crowdsec", _("CrowdSec (bloqueos)"), lambda: _estado_crowdsec(ahora))
     _seguro("Servidor", "bd", _("Tamaño de la base de datos"), _estado_bd)

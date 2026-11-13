@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import auditar_sql  # noqa: E402
 
 # Tablas de backoffice.db (la base SQLite propia del backoffice): no existen en el esquema de PostgreSQL de la aplicación.
-TABLAS_DEL_BACKOFFICE = r"(admins|intentos_login|auditoria|cobros|notas_tenant|snapshots_tenants|salud_historial|seguimiento_tenant|auditorias_dependencias|resumenes_enviados)"
+TABLAS_DEL_BACKOFFICE = r"(admins|intentos_login|auditoria|cobros|notas_tenant|snapshots_tenants|salud_historial|seguimiento_tenant|auditorias_dependencias|resumenes_enviados|cuotas_despacho)"
 OMITIR = re.compile(r"\bMATCH\b|\bpg_dist_\w+|\bcitus_\w+|\bfts5\b|_fts\b|PRAGMA|sqlite_|\bbm25\b|_nueva\b|\b(FROM|INTO|UPDATE|JOIN)\s+" + TABLAS_DEL_BACKOFFICE + r"\b", re.I)
 
 

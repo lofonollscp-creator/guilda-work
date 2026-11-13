@@ -118,6 +118,7 @@ Esta guía está en orden cronológico; aquí está ordenada por temas.
 - [Rendimiento de la web (AB)](#rendimiento-de-la-web-ab)
 - [Lectura de facturas, contabilidad y portal (AC)](#lectura-de-facturas-contabilidad-y-portal-ac)
 - [Copia fuera del servidor, topes de IA, banco y analítica (AD)](#copia-fuera-del-servidor-topes-de-ia-banco-y-analítica-ad)
+- [Mejoras AF](#mejoras-af)
 
 <!-- /INDICE -->
 
@@ -3770,3 +3771,14 @@ Módulo vertical `juridico` (`app/juridico/`, `app/rutas_juridico.py`, `app/ruta
 - **Espacio en disco** (`app/salud.py`): la fila «Espacio libre en disco» anota el espacio libre una vez al día (`data/backups/disco_tendencia.json`) y estima en cuántos días se llenaría al ritmo de los últimos 14 días: ámbar por debajo de 60 días y rojo por debajo de 14. Candidatos a liberar espacio detectados el 2026-11-13 (NO borrados, esperan el visto bueno): volúmenes huérfanos de Docker (~4,5 GB), imagen `facturascripts/facturascripts:<none>` (1,2 GB) e imagen `la-cesta-e2e` (3,2 GB, de otro proyecto), caché de compilación de Docker (~0,2 GB); `/var/lib/containerd` ocupa 26 GB (imágenes y capas).
 - **Ensayo de restauración desde S3** (`GUILDA_VERIFICAR_S3=1 scripts/verificar_restauracion_restic.sh`, `deploy/restic-verificacion-s3.{service,timer}`, el día 2 de cada mes): la misma prueba que la local (integridad, `registro.db`, volcado de Kratos en un Postgres desechable sin red y un volumen) pero leyendo solo de S3, sin bloqueos. Estado en `data/backups/restic_s3_restauracion.json`, fila «Prueba de restauración de la copia en S3» de Salud.
 - **Poda de la copia en S3** (`scripts/podar_s3_restic.sh`): manual, con una credencial temporal con `s3:DeleteObject` (nunca la de la app). Sin `--aplicar` solo simula. La fila de Salud avisa cuando el repositorio pasa de `GUILDA_S3_TAMANO_AVISO_GB` (20 por defecto).
+
+
+## Mejoras AF
+
+- **Tests de PostgreSQL completos en el Citus de ensayo** (`scripts/pg_ensayo.sh arrancar`, `GUILDA_TEST_PG_URL=$(scripts/pg_ensayo.sh url) scripts/probar.sh tests/test_esquema_pg.py tests/test_citus.py …`): el modo `simple` del esquema base incluye ahora `11_backoffice.sql` (la migración 023 toca el esquema `backoffice`) y el validador de SQL conoce `cuotas_despacho`. La suite entera tarda unos 340 s con `-n 3`; lo más lento son ~7 s de arranque por proceso y los tests que recorren todo el código (`test_sql_portable`), sin ganancias fáciles.
+- **Lectura de facturas**: si el modelo lee día y mes cambiados (05.11.2026 como 2026-05-11) y el texto solo trae la fecha inversa, se corrige y se avisa (`lectura_nif.corregir_fecha`).
+- **Facturas sin cobro o pago en el panel de cierre**: con extractos guardados que cubren el trimestre, cada cliente del panel muestra el chip «N facturas sin cobro o pago», que lleva a la conciliación. Se calcula solo para los clientes con movimientos guardados (una consulta para saberlo).
+- **Aviso al cliente al leer sus facturas** (migración 060, opcional por cliente, desactivado por defecto): en la configuración de contabilidad del cliente, «Avisar al cliente». Solo para facturas que sube el propio cliente desde el portal.
+- **Módulos sin uso** (`rendimiento.modulos_sin_uso`): la fila «Módulos más usados» de Salud lista, con al menos 14 días de datos, los módulos sin ninguna pantalla vista en 30 días.
+- **Identidades de OpenVPN** (`scripts/vpn_identidades.sh listar|crear|revocar|estado`, `deploy/vpn-estado.{service,timer}` diario): se gestionan a mano como root, nunca desde la web (un panel web que crea credenciales de VPN daría acceso a la red a quien lo comprometa). La fila «Identidades de VPN» de Salud avisa 60 días antes de que caduque una identidad (rojo a 14). `revocar` revoca, regenera la lista de revocación y reinicia el servidor VPN (los clientes conectados se reconectan).
+- **Centro de ayuda**: guías nuevas «Topes de IA por función» y «Buzón de contabilidad y aviso al cliente», y la conciliación actualizada, en es/ca/en/fr (`/home/guilda/guilda-help`; se publica con `../guilda-help/publicar.sh`, o `scripts/desplegar_produccion.sh --ayuda-web`).

@@ -42,6 +42,14 @@
   <p class="muted">{{ _('Importa la lista de subcuentas de proveedores y clientes que este cliente ya tiene en a3 para usar esas y no crear otras.') }} <a class="btn btn-ghost" href="{{ url_for('contabilidad.plan', cliente_id=cliente.id) }}">{{ _('Importar el plan de cuentas') }}</a></p>
 </section>
 <section class="ds-max-640 ds-mt-24">
+  <h2>{{ _('Aviso al cliente al leer sus facturas') }}</h2>
+  <p class="muted">{{ _('Si lo activas, cuando una factura que este cliente sube desde su portal queda leída le llega un aviso (por defecto, no se avisa).') }}</p>
+  <form method="post" action="{{ url_for('contabilidad.aviso_lectura_del_cliente', cliente_id=cliente.id) }}" class="ds-fila">
+    <label class="ds-check"><input type="checkbox" name="activo" value="1" {{ 'checked' if cfg.avisar_lectura }}> {{ _('Avisar al cliente') }}</label>
+    <button type="submit" class="btn btn-ghost">{{ _('Guardar') }}</button>
+  </form>
+</section>
+<section class="ds-max-640 ds-mt-24">
   <h2>{{ _('Buzón de facturas por correo') }}</h2>
   <p class="muted">{{ _('Una dirección propia de este cliente a la que reenviar sus facturas: llegan como facturas por leer. Solo funciona en los clientes en los que lo actives y solo acepta correo de su titular, sus contactos del portal y tu equipo.') }}</p>
   {% if not buzon_listo and not buzon.activo %}<p class="muted">{{ _('Primero configura el buzón del despacho en Ajustes de contabilidad.') }} <a href="{{ url_for('contabilidad.ajustes') }}">{{ _('Ir a los ajustes') }}</a></p>{% endif %}

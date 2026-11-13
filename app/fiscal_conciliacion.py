@@ -406,3 +406,21 @@ def facturas_sin_pago(tenant_id: int, cliente_fiscal_id: int, desde_p: date, has
 def conciliar_guardados_sin_permiso(tenant_id: int, cliente_fiscal_id: int, desde_p: date, hasta_p: date) -> dict:
     movimientos = movimientos_guardados(tenant_id, cliente_fiscal_id, desde_p - timedelta(days=VENTANA_ANTES), hasta_p + timedelta(days=VENTANA_DESPUES))
     return conciliar(movimientos, _facturas_candidatas(tenant_id, cliente_fiscal_id, desde_p, hasta_p, hasta_p, desde_p))
+
+
+def sin_pago_por_cliente(tenant_id: int, desde_p: date, hasta_p: date, clientes: set[int] | None = None) -> dict[int, int]:
+    """{cliente: facturas del periodo sin cobro o pago} SOLO de los titulares con movimientos guardados que cubren el periodo. Una consulta para saber quién tiene extractos; el cruce solo se hace con ellos
+    (no por cada cliente del despacho)."""
+    conn = db.get_connection()
+    try:
+        tienen = [f["cliente_fiscal_id"] for f in conn.execute("SELECT cliente_fiscal_id FROM banco_movimientos WHERE tenant_id = ? GROUP BY cliente_fiscal_id", (tenant_id,)).fetchall()]
+    finally:
+        conn.close()
+    salida = {}
+    for cid in tienen:
+        if clientes is not None and cid not in clientes:
+            continue
+        n = facturas_sin_pago(tenant_id, cid, desde_p, hasta_p)
+        if n is not None:
+            salida[cid] = n
+    return salida

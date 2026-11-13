@@ -26,6 +26,7 @@ _lock = threading.Lock()
 _peticiones: deque = deque(maxlen=MAX_REGISTROS)     # (instante, ruta, método, estado, ms)
 _colas: deque = deque(maxlen=1000)                   # instantes en que waitress avisó de cola
 _ultimo_volcado = 0.0
+_modulos_conocidos: set = set()                                     # los blueprints de la app (para saber cuáles no se han visto nunca)
 _uso_pendiente: dict = defaultdict(lambda: defaultdict(int))       # {día: {módulo: peticiones}} aún sin volcar (analítica de uso, AD10: solo cuenta, nunca quién ni qué)
 DIAS_DE_USO = 30
 
@@ -61,8 +62,10 @@ def volcar_uso(ruta_fichero) -> bool:
         for dia, modulos in pendiente.items():
             for m, n in modulos.items():
                 total.setdefault(dia, {})[m] = total.get(dia, {}).get(m, 0) + n
+        conocidos = set(total.pop("_modulos", [])) | _modulos_conocidos
         for dia in sorted(total)[:-DIAS_DE_USO]:
             del total[dia]
+        total["_modulos"] = sorted(conocidos)
         tmp = str(ruta_fichero) + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(total, f, ensure_ascii=False)
@@ -82,10 +85,21 @@ def uso_de_modulos(ruta_fichero, dias: int = 7, hoy: datetime | None = None) -> 
     desde = ((hoy or datetime.now()) - timedelta(days=dias - 1)).strftime("%Y-%m-%d")
     suma: dict[str, int] = defaultdict(int)
     for dia, modulos in total.items():
-        if dia >= desde:
+        if dia != "_modulos" and dia >= desde:
             for m, n in modulos.items():
                 suma[m] += n
     return sorted(suma.items(), key=lambda x: -x[1])
+
+
+def modulos_sin_uso(ruta_fichero, dias: int = 30, hoy: datetime | None = None) -> tuple[list[str], int]:
+    """([módulos que no se han visto en los últimos `dias` días], días con datos). Solo es fiable con varias semanas de datos: con pocos días devuelve la lista igual y quien la muestra avisa."""
+    try:
+        total = json.load(open(ruta_fichero, encoding="utf-8"))
+    except (OSError, ValueError):
+        return [], 0
+    usados = {m for m, _n in uso_de_modulos(ruta_fichero, dias, hoy)}
+    dias_con_datos = len([d for d in total if d != "_modulos"])
+    return sorted(set(total.get("_modulos", [])) - usados), dias_con_datos
 
 
 def registrar_cola(ahora: float | None = None) -> None:
@@ -171,6 +185,7 @@ def instalar(app, ruta_fichero) -> None:
     if getattr(app, "_rendimiento_instalado", False):
         return
     app._rendimiento_instalado = True
+    _modulos_conocidos.update(app.blueprints)
     cola = logging.getLogger("waitress.queue")
     if not any(isinstance(h, _AvisoDeCola) for h in cola.handlers):
         cola.addHandler(_AvisoDeCola())

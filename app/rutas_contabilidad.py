@@ -649,6 +649,19 @@ def buzon_del_cliente(cliente_id: int):
     return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id))
 
 
+@contabilidad_bp.route("/cliente/<int:cliente_id>/aviso-lectura", methods=["POST"])
+@login_required
+def aviso_lectura_del_cliente(cliente_id: int):
+    """Activa o desactiva el aviso al cliente cuando una factura que subió desde el portal queda leída (por defecto, no)."""
+    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+        abort(404)
+    try:
+        facturas_correo.fijar_aviso_lectura(g.tenant_id, g.usuario_id, cliente_id, bool(request.form.get("activo")))
+    except ValueError as e:
+        return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id, error=_(str(e))[:300]))
+    return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id))
+
+
 @contabilidad_bp.route("/buzon")
 @login_required
 def buzon():

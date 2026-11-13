@@ -767,6 +767,7 @@ CREATE TABLE IF NOT EXISTS contabilidad_clientes (
     columnas_retorno text,
     buzon_activo bigint NOT NULL DEFAULT 0,
     buzon_codigo text,
+    avisar_lectura bigint NOT NULL DEFAULT 0,
     plan_cuentas text,
     PRIMARY KEY (tenant_id, cliente_fiscal_id)
 );

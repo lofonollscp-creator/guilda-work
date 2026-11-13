@@ -47,6 +47,30 @@ def devolver(tenant_id: int, usuario_id: int, factura_id: int, motivo: str) -> b
     return _avisar_devolucion(f, factura_id, motivo)
 
 
+def avisar_lectura(tenant_id: int, f: dict) -> bool:
+    """Si el despacho lo activó para este cliente, le dice que la factura que subió desde el portal ya está leída y la gestoría la revisará. Solo para facturas del portal; nunca rompe la lectura."""
+    try:
+        if f.get("origen") != "portal":
+            return False
+        if not fc.configuracion(tenant_id, f["cliente_fiscal_id"]).get("avisar_lectura"):
+            return False
+        from . import portal_avisos, portal_recordatorios
+        cliente = db.obtener_cliente_fiscal_por_id(f["cliente_fiscal_id"])
+        if cliente is None:
+            return False
+        _ = portal_recordatorios._
+        trimestre = fc.trimestre_de(f["fecha"])
+        tercero = f.get("tercero_nombre") or ""
+
+        def texto():
+            return {"asunto": _("Tu gestoría ha leído tu factura: %(tercero)s", tercero=tercero), "boton": _("Ver mis facturas"),
+                    "lineas": [_("Hola, %(nombre)s.", nombre=cliente["nombre"]), _("Hemos leído la factura que subiste (%(tercero)s). Ahora la revisa tu gestoría; si le falta algún dato, te lo preguntará aquí.", tercero=tercero)],
+                    "push": _("Tu factura de %(tercero)s ya está leída", tercero=tercero)}
+        return portal_avisos.avisar(cliente, f"/portal/facturas?trimestre={trimestre}", texto, accion="subir") > 0
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def _avisar_devolucion(f: dict, factura_id: int, motivo: str) -> bool:
     """Nunca rompe la devolución, que ya está hecha: un fallo de correo solo significa que el cliente se entera al entrar."""
     try:

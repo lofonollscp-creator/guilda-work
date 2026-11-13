@@ -130,3 +130,12 @@ def test_las_exportadas_que_llevan_dias_sin_confirmar_se_destacan():
     cl = cc.panel(t, u, "2026-T3", hoy=date(2026, 10, 20))["clientes"][0]
     assert cl["usa_retorno"] and cl["sin_confirmar"] == 1 and cl["sin_confirmar_antiguas"] == 1
     assert cc.panel(t, u, "2026-T3", hoy=date(2026, 10, 5))["clientes"][0]["sin_confirmar_antiguas"] == 0       # solo 4 días
+
+
+def test_el_panel_cuenta_las_facturas_sin_pago_solo_con_extractos_guardados_que_cubren_el_trimestre():
+    from app import fiscal_conciliacion as fcn
+    t, u, c = _despacho()
+    _crear(t, u, c, "A-1")                                                          # factura recibida de agosto sin movimiento
+    assert cc.panel(t, u, "2026-T3", hoy=date(2026, 11, 10))["clientes"][0]["facturas_sin_pago"] == 0      # sin extractos guardados no se sabe: no se avisa
+    fcn.guardar_movimientos(t, c, [fcn.Movimiento(1, date(2026, 7, 3), -100, "CAFE"), fcn.Movimiento(2, date(2026, 10, 25), -200, "OTRO")], "x.csv")
+    assert cc.panel(t, u, "2026-T3", hoy=date(2026, 11, 10))["clientes"][0]["facturas_sin_pago"] == 1

@@ -88,12 +88,32 @@ def corregir_cruce(datos: dict, texto: str) -> list[str]:
     return []
 
 
+_FECHA_TEXTO = re.compile(r"(?<!\d)(\d{1,2})[./-](\d{1,2})[./-](\d{4})(?!\d)")
+
+
+def corregir_fecha(datos: dict, texto: str) -> list[str]:
+    """Día y mes cambiados (05.11.2026 leído como 2026-05-11): los documentos europeos escriben día/mes/año. Si la fecha leída no sale en el texto pero su inversa sí, se corrige. Solo con una única fecha inversa posible."""
+    leida = str(datos.get("fecha") or "")
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", leida)
+    if not m or not texto:
+        return []
+    anio, mes, dia = m.group(1), int(m.group(2)), int(m.group(3))
+    en_texto = {(int(d), int(mm), a) for d, mm, a in _FECHA_TEXTO.findall(texto)}
+    if (dia, mes, anio) in en_texto or dia > 12 or dia == mes:
+        return []
+    if (mes, dia, anio) in en_texto:
+        datos["fecha"] = f"{anio}-{dia:02d}-{mes:02d}"
+        return [f"La fecha se había leído con el día y el mes cambiados: en el documento es {mes:02d}/{dia:02d}/{anio} (día/mes/año). Se ha corregido: compruébalo."]
+    return []
+
+
 def completar(datos: dict, texto: str) -> list[str]:
     """Rellena emisor_nif / receptor_nif cuando el modelo los dejó vacíos y el documento los tiene junto al nombre. Devuelve los avisos (el NIF leído que no está en el texto)."""
     avisos: list[str] = []
     if not texto or len(texto) < 40:
         return avisos
     avisos += corregir_cruce(datos, texto)
+    avisos += corregir_fecha(datos, texto)
     plano = re.sub(r"[\s.\-]", "", texto).upper()
     for parte in ("emisor", "receptor"):
         leido = sin_es(datos.get(f"{parte}_nif"))
