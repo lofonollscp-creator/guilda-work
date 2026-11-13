@@ -347,6 +347,10 @@ def crear_esquema(conn) -> None:
     db._asegurar_columna(conn, "contabilidad_clientes", "columnas_retorno", "TEXT")            # JSON: las columnas del listado de a3 que la persona indicó la última vez
     db._asegurar_columna(conn, "facturas_contables", "pago_exportado_en", "TEXT")              # cuándo salió su asiento de cobro o pago en un fichero para a3
     db._asegurar_columna(conn, "contabilidad_reglas", "pct_deducible", "INTEGER")              # % de IVA deducible en centésimas (5000 = 50 %); vacío = todo
+    db._asegurar_columna(conn, "contabilidad_clientes", "buzon_activo", "INTEGER NOT NULL DEFAULT 0")      # migración 057: buzón de facturas por correo, solo en los clientes que el despacho active
+    db._asegurar_columna(conn, "contabilidad_clientes", "buzon_codigo", "TEXT")
+    db._asegurar_columna(conn, "contabilidad_despacho", "buzon_cuenta_id", "INTEGER")
+    db._asegurar_columna(conn, "contabilidad_despacho", "buzon_direccion", "TEXT")
     db._asegurar_columna(conn, "contabilidad_lotes", "clase", "TEXT")                          # vacío = facturas; «pagos» = asientos de cobro y pago (migración 047)
     db._asegurar_columna(conn, "contabilidad_clientes", "plan_cuentas", "TEXT")                # JSON: todas las cuentas del plan de a3 importado (J12)
     db._asegurar_columna(conn, "contabilidad_lotes", "estado_a3", "TEXT")                      # importado · rechazado (lo que dice la persona tras importar el fichero en a3)

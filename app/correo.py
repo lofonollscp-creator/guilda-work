@@ -1149,6 +1149,8 @@ def sincronizar_bandeja(usuario_id: int, cuenta_id: int) -> dict:
         if nuevos:
             correo_cifrado.vaciar_wal()
             _reindexar_mensajes_recientes(usuario_id, cuenta_id)
+            from . import facturas_correo
+            facturas_correo.procesar_cuenta(cuenta_id)            # si esta cuenta es el buzón de facturas del despacho: los adjuntos de los clientes activados pasan a facturas por leer (nunca lanza)
         if sin_leer:
             # Solo avisa de lo que de verdad es nuevo para el usuario: el historial que ya
             # estaba leído en el servidor (primera sincronización) no genera notificaciones.

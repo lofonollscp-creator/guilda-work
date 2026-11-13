@@ -238,7 +238,9 @@
                            (_('¿Empresa o personal?'), _('¿Este gasto es de la empresa o es personal? Si es personal no podemos deducir el IVA.')),
                            (_('Pedir otra foto'), _('No se lee bien la factura %(numero)s. ¿Puedes enviarla de nuevo, entera y con buena luz?', numero=f.numero)),
                            (_('Pedir NIF o nombre'), _('Nos falta el NIF o el nombre completo del proveedor de la factura %(numero)s. ¿Puedes decírnoslo?', numero=f.numero)),
-                           (_('¿Cómo la pagó?'), _('¿Cómo pagaste la factura %(numero)s: tarjeta, transferencia o efectivo?', numero=f.numero))) %}
+                           (_('¿Cómo la pagó?'), _('¿Cómo pagaste la factura %(numero)s: tarjeta, transferencia o efectivo?', numero=f.numero)))
+                          + ((((_('Confirmar el total'), _('¿Puedes confirmarnos el importe total de la factura %(numero)s? No estamos seguros de haberlo leído bien.', numero=f.numero)),) if dudosos and dudosos|selectattr('campo', 'equalto', 'total')|list else ())
+                          + (((_('Confirmar la fecha'), _('¿Puedes confirmarnos la fecha de la factura %(numero)s? No estamos seguros de haberla leído bien.', numero=f.numero)),) if dudosos and dudosos|selectattr('campo', 'equalto', 'fecha')|list else ())) %}
     <form method="post" action="{{ url_for('contabilidad.mensaje', factura_id=f.id) }}"><button type="submit" class="btn btn-ghost btn-sm" name="texto" value="{{ q }}">{{ etiqueta }}</button></form>
     {% endfor %}
   </div>

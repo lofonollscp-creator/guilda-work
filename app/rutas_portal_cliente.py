@@ -687,7 +687,9 @@ def facturas():
     error = error or (request.args.get("error") or "")[:200] or None
     hoy_iso = date.today().isoformat()
     puede_valorar_subida = bool(anotada and g.portal_rol != "consulta" and not g.get("vista_previa") and not portal_valoraciones.ya_valorada(cliente, g.portal_email or cliente["email"] or "", "subida", hoy_iso))
-    return render_template("portal_facturas.html", puede_valorar_subida=puede_valorar_subida, hoy_iso=hoy_iso, cliente=cliente, lectura_previa=g.portal_rol != "consulta" and not g.get("vista_previa") and portal_lectura_previa.disponible(cliente), tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
+    from . import facturas_correo
+    buzon = facturas_correo.estado_del_cliente(cliente["tenant_id"], cliente["id"]) if g.portal_rol != "consulta" and not g.get("vista_previa") else {}
+    return render_template("portal_facturas.html", buzon_direccion=buzon.get("direccion"), puede_valorar_subida=puede_valorar_subida, hoy_iso=hoy_iso, cliente=cliente, lectura_previa=g.portal_rol != "consulta" and not g.get("vista_previa") and portal_lectura_previa.disponible(cliente), tablero=facturas_portal.tablero(cliente["id"], request.args.get("trimestre")), etiqueta=facturas_portal.etiqueta_trimestre,
                            datos=datos, error=error, anotada=anotada, recibidas=request.args.get("n", type=int) or 0, compromiso=portal_compromiso.para_el_cliente(cliente), atendida=request.args.get("atendida"), con_informe=verticales.esta_activo(cliente["tenant_id"], "fiscal"), justificantes_pendientes=len(justificantes.pendientes_del_cliente(cliente["id"])), repetidas=request.args.get("repetidas", type=int) or 0, sin_leer={m["factura_id"] for m in facturas_portal.sin_leer_para_cliente(cliente["id"])}, cerrados=facturas_portal.trimestres_cerrados(cliente["id"]), portal_seccion="facturas", textos=facturas_contables.TEXTO_ESTADO_PORTAL,
                            max_archivos=facturas_contables.MAX_ARCHIVOS_POR_SUBIDA)
 

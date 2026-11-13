@@ -51,3 +51,38 @@ def por_cliente(tenant_id: int, hoy: date | None = None) -> dict[int, list[dict]
 
 def que_faltan(tenant_id: int, cliente_fiscal_id: int, hoy: date | None = None) -> list[dict]:
     return por_cliente(tenant_id, hoy).get(cliente_fiscal_id, [])
+
+
+def por_cliente_del_trimestre(tenant_id: int, trimestre: str, hoy: date | None = None) -> dict[int, list[dict]]:
+    """Lo mismo, pero mirando el trimestre que se va a cerrar (AC8): {cliente_fiscal_id: [{nif, nombre, meses, faltan: [AAAA-MM…]}]} de los proveedores periódicos (factura en al menos 3 de los 6 meses anteriores
+    al trimestre, la última de los 2 últimos) a los que les falta la factura en alguno de los meses del trimestre. Un mes solo cuenta como «falta» pasado su día 10; no se escribe nada."""
+    hoy = hoy or date.today()
+    desde, hasta = fc.rango_del_trimestre(trimestre)
+    a, m0 = int(desde[:4]), int(desde[5:7])
+    del_trimestre = [_mes(a, m0 + i) for i in range(3)]
+    pasados = [mes for mes in del_trimestre if mes < _mes(hoy.year, hoy.month) or (mes == _mes(hoy.year, hoy.month) and hoy.day >= DIA_DEL_MES_PARA_AVISAR)]
+    if not pasados:
+        return {}
+    previos_rango = [_mes(a, m0, i) for i in range(1, MESES_DE_HISTORIAL + 1)]
+    conn = db.get_connection()
+    try:
+        filas = conn.execute("SELECT cliente_fiscal_id, tercero_nif, MAX(tercero_nombre) AS nombre, substr(fecha, 1, 7) AS mes FROM facturas_contables WHERE tenant_id = ? AND tipo = 'recibida' AND abono = 0 "
+                             "AND estado != 'descartada' AND tercero_nif IS NOT NULL AND tercero_nif != '' AND fecha >= ? AND fecha <= ? GROUP BY cliente_fiscal_id, tercero_nif, substr(fecha, 1, 7)",
+                             (tenant_id, previos_rango[-1] + "-01", hasta)).fetchall()
+    finally:
+        conn.close()
+    datos: dict[tuple[int, str], dict] = {}
+    for f in filas:
+        d = datos.setdefault((f["cliente_fiscal_id"], fc._nif(f["tercero_nif"])), {"nombre": f["nombre"], "meses": set()})
+        d["meses"].add(f["mes"])
+    res: dict[int, list[dict]] = {}
+    for (cliente, nif), d in datos.items():
+        previos = d["meses"] & set(previos_rango)
+        if len(previos) < MESES_PARA_SER_PERIODICA or not (previos & set(previos_rango[:RECIENTE])):
+            continue
+        faltan = [mes for mes in pasados if mes not in d["meses"]]
+        if faltan:
+            res.setdefault(cliente, []).append({"nif": nif, "nombre": d["nombre"], "meses": len(previos), "faltan": faltan})
+    for lista in res.values():
+        lista.sort(key=lambda x: (-len(x["faltan"]), -x["meses"], x["nombre"].lower()))
+    return res

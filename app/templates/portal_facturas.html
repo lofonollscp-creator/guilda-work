@@ -5,6 +5,7 @@
 {% block contenido %}
     {% set t = tablero %}
     {% set c = t.cuentas %}
+    {% if buzon_direccion %}<p class="portal-peticion"><strong>{{ _('También puedes reenviar tus facturas por correo a:') }}</strong> <code>{{ buzon_direccion }}</code> <span class="muted">{{ _('(desde el correo que nos tienes dado: tu gestoría las recibirá igual)') }}</span></p>{% endif %}
     {% if anotada %}<p class="portal-peticion" role="status"><strong>{% if recibidas > 1 %}{{ _('Hemos recibido %(n)s archivos. Tu gestoría los revisará.', n=recibidas) }}{% else %}{{ _('Factura anotada. Tu gestoría la revisará.') }}{% endif %}</strong>{% if compromiso.plazo %} {{ ngettext('Solemos contestar en %(n)s día laborable.', 'Solemos contestar en %(n)s días laborables.', compromiso.plazo, n=compromiso.plazo) }}{% endif %}{% if request.args.get('compartido') %} {{ _('Se han guardado como compras y gastos; si son ventas, dilo a tu gestoría.') }}{% endif %}</p>{% endif %}
     {% if request.args.get('valorado') %}<p class="muted" role="status">{{ _('¡Gracias por contárnoslo!') }}</p>
     {% elif puede_valorar_subida %}

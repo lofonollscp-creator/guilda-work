@@ -743,6 +743,8 @@ CREATE TABLE IF NOT EXISTS contabilidad_clientes (
     formato_enlace text NOT NULL DEFAULT '512',
     cuenta_tesoreria text NOT NULL DEFAULT '57200000',
     columnas_retorno text,
+    buzon_activo bigint NOT NULL DEFAULT 0,
+    buzon_codigo text,
     plan_cuentas text,
     PRIMARY KEY (cliente_fiscal_id)
 );
@@ -762,6 +764,8 @@ CREATE TABLE IF NOT EXISTS contabilidad_despacho (
     retencion_emitidas bigint NOT NULL DEFAULT 0,
     formato_enlace text NOT NULL DEFAULT '512',
     cuenta_tesoreria text NOT NULL DEFAULT '57200000',
+    buzon_cuenta_id bigint,
+    buzon_direccion text,
     PRIMARY KEY (tenant_id)
 );
 

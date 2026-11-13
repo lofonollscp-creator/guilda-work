@@ -93,6 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_facturacion_accesos_token ON facturacion_accesos(
 CREATE INDEX IF NOT EXISTS idx_facturacion_expedientes ON facturacion_expedientes(tenant_id, expediente_id);
 CREATE INDEX IF NOT EXISTS idx_facturas_contables ON facturas_contables(tenant_id, cliente_fiscal_id, estado, fecha);
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_duplicadas ON facturas_contables(tenant_id, cliente_fiscal_id, tercero_nif, numero);
+CREATE INDEX IF NOT EXISTS idx_facturas_contables_fecha ON facturas_contables(tenant_id, fecha DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_lineas ON facturas_contables_lineas(factura_id);
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_mensajes ON facturas_contables_mensajes(tenant_id, factura_id, id);
 CREATE INDEX IF NOT EXISTS idx_fichajes_tenant_marca ON fichajes(tenant_id, marca_tiempo);

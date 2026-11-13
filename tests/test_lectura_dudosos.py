@@ -30,5 +30,6 @@ def test_la_pantalla_de_revision_enseña_los_dudosos_primero(cliente):
     botones = re.findall(r'data-ir-campo="(\w+)">([^<]+)<', html)
     assert [b[0] for b in botones] == ["emisor_nif", "total"] and "NIF / CIF · 62 %" in botones[0][1] and "Total · 71 %" in botones[1][1]
     assert "Mira primero:" in html and "contabilidad_dudosos.js" in html
+    assert "Confirmar el total" in html and "Confirmar la fecha" not in html                      # pregunta rápida solo de lo que la IA dudó
     conn = db.get_connection(); conn.execute("UPDATE facturas_contables SET estado = 'revisada' WHERE id = ?", (f,)); conn.commit(); conn.close()
     assert "data-ir-campo" not in cliente.get(f"/contabilidad/{f}").get_data(as_text=True)          # ya revisada: no hay nada que mirar primero

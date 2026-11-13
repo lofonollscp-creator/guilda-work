@@ -42,6 +42,16 @@
   <p class="muted">{{ _('Importa la lista de subcuentas de proveedores y clientes que este cliente ya tiene en a3 para usar esas y no crear otras.') }} <a class="btn btn-ghost" href="{{ url_for('contabilidad.plan', cliente_id=cliente.id) }}">{{ _('Importar el plan de cuentas') }}</a></p>
 </section>
 <section class="ds-max-640 ds-mt-24">
+  <h2>{{ _('Buzón de facturas por correo') }}</h2>
+  <p class="muted">{{ _('Una dirección propia de este cliente a la que reenviar sus facturas: llegan como facturas por leer. Solo funciona en los clientes en los que lo actives y solo acepta correo de su titular, sus contactos del portal y tu equipo.') }}</p>
+  {% if not buzon_listo and not buzon.activo %}<p class="muted">{{ _('Primero configura el buzón del despacho en Ajustes de contabilidad.') }} <a href="{{ url_for('contabilidad.ajustes') }}">{{ _('Ir a los ajustes') }}</a></p>{% endif %}
+  <form method="post" action="{{ url_for('contabilidad.buzon_del_cliente', cliente_id=cliente.id) }}" class="ds-fila">
+    <label class="ds-check"><input type="checkbox" name="activo" value="1" {{ 'checked' if buzon.activo }} {{ 'disabled' if not buzon_listo and not buzon.activo }}> {{ _('Activar para este cliente') }}</label>
+    <button type="submit" class="btn btn-ghost" {{ 'disabled' if not buzon_listo and not buzon.activo }}>{{ _('Guardar') }}</button>
+  </form>
+  {% if buzon.activo and buzon.direccion %}<p><strong>{{ _('Dirección del cliente') }}:</strong> <code>{{ buzon.direccion }}</code></p>{% endif %}
+</section>
+<section class="ds-max-640 ds-mt-24">
   <h2>{{ _('Copiar ajustes') }}</h2>
   <form method="post" action="{{ url_for('contabilidad.copiar_configuracion', cliente_id=cliente.id) }}" class="ds-fila">
     <select name="origen" aria-label="{{ _('Copiar los ajustes de') }}">

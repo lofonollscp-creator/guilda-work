@@ -27920,3 +27920,101 @@ msgstr "Reading the invoice with AI in the background; this page will refresh by
 
 msgid "El proveedor de IA ha limitado las consultas (cupo o saldo): la lectura sigue sola a partir de las %(hora)s."
 msgstr "The AI provider has limited requests (quota or balance): reading will resume on its own from %(hora)s."
+
+msgid "Buzón de facturas por correo"
+msgstr "Invoice mailbox by email"
+
+msgid "Una dirección propia de este cliente a la que reenviar sus facturas: llegan como facturas por leer. Solo funciona en los clientes en los que lo actives y solo acepta correo de su titular, sus contactos del portal y tu equipo."
+msgstr "A dedicated address for this client to forward their invoices to: they arrive as invoices to read. It only works for the clients you turn it on for and only accepts email from their owner, their portal contacts and your team."
+
+msgid "Primero configura el buzón del despacho en Ajustes de contabilidad."
+msgstr "First set up the firm's mailbox in Accounting settings."
+
+msgid "Ir a los ajustes"
+msgstr "Go to settings"
+
+msgid "Activar para este cliente"
+msgstr "Turn on for this client"
+
+msgid "Dirección del cliente"
+msgstr "Client address"
+
+msgid "Elige una de tus cuentas de correo como buzón (por ejemplo facturas@tudominio.com). Después activa el buzón solo en los clientes que quieras, desde su configuración: cada uno tiene su dirección propia, del tipo facturas+código@tudominio.com."
+msgstr "Choose one of your email accounts as the mailbox (for example invoices@yourdomain.com). Then turn it on only for the clients you want, from their settings: each has its own address, like invoices+code@yourdomain.com."
+
+msgid "Cuenta de correo"
+msgstr "Email account"
+
+msgid "Sin buzón de facturas"
+msgstr "No invoice mailbox"
+
+msgid "Dirección del buzón"
+msgstr "Mailbox address"
+
+msgid "Guardar el buzón"
+msgstr "Save the mailbox"
+
+msgid "Ver lo que ha llegado"
+msgstr "See what has arrived"
+
+msgid "Activado en %(n)s clientes."
+msgstr "Turned on for %(n)s clients."
+
+msgid "Buzón de facturas"
+msgstr "Invoice mailbox"
+
+msgid "Buzón del despacho: %(d)s"
+msgstr "Firm mailbox: %(d)s"
+
+msgid "Todavía no hay buzón configurado."
+msgstr "No mailbox set up yet."
+
+msgid "Clientes activados: %(n)s"
+msgstr "Clients turned on: %(n)s"
+
+msgid "%(n)s facturas anotadas para leer"
+msgstr "%(n)s invoices added to read"
+
+msgid "%(n)s ya estaban"
+msgstr "%(n)s were already there"
+
+msgid "Rechazado: %(r)s no es el titular, un contacto del cliente ni del equipo."
+msgstr "Rejected: %(r)s is not the owner, a client contact or on the team."
+
+msgid "Sin PDF ni imágenes válidas (los logotipos de firma no cuentan)."
+msgstr "No valid PDFs or images (signature logos don't count)."
+
+msgid "No se pudo anotar: %(m)s"
+msgstr "Could not be added: %(m)s"
+
+msgid "Todavía no ha llegado nada."
+msgstr "Nothing has arrived yet."
+
+msgid "También puedes reenviar tus facturas por correo a:"
+msgstr "You can also forward your invoices by email to:"
+
+msgid "(desde el correo que nos tienes dado: tu gestoría las recibirá igual)"
+msgstr "(from the email you gave us: your advisor will receive them the same)"
+
+msgid "Buzón de facturas guardado."
+msgstr "Invoice mailbox saved."
+
+msgid "Confirmar el total"
+msgstr "Confirm the total"
+
+msgid "¿Puedes confirmarnos el importe total de la factura %(numero)s? No estamos seguros de haberlo leído bien."
+msgstr "Can you confirm the total amount of invoice %(numero)s? We are not sure we read it correctly."
+
+msgid "Confirmar la fecha"
+msgstr "Confirm the date"
+
+msgid "¿Puedes confirmarnos la fecha de la factura %(numero)s? No estamos seguros de haberla leído bien."
+msgstr "Can you confirm the date of invoice %(numero)s? We are not sure we read it correctly."
+
+msgid "Proveedores habituales sin factura en algún mes del trimestre"
+msgstr "Regular suppliers with no invoice in some month of the quarter"
+
+msgid "Falta la factura de %(n)s proveedor habitual en el trimestre"
+msgid_plural "Faltan facturas de %(n)s proveedores habituales en el trimestre"
+msgstr[0] "Missing the invoice of %(n)s regular supplier in the quarter"
+msgstr[1] "Missing invoices of %(n)s regular suppliers in the quarter"

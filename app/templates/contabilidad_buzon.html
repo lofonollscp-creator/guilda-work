@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Buzón de facturas') }} — Guilda Work{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <h1>{{ _('Buzón de facturas por correo') }}</h1>
+    <p class="subtitle">{% if buzon.direccion %}{{ _('Buzón del despacho: %(d)s', d=buzon.direccion) }}{% else %}{{ _('Todavía no hay buzón configurado.') }}{% endif %} · {{ _('Clientes activados: %(n)s', n=activados|length) }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('contabilidad.ajustes') }}">‹ {{ _('Ajustes') }}</a>
+</header>
+{% if filas %}
+<div class="table-wrap"><table class="ds-table">
+  <thead><tr><th>{{ _('Fecha') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Qué pasó') }}</th></tr></thead>
+  <tbody>{% for f in filas %}<tr><td>{{ f.fecha[:16].replace('T', ' ') }}</td><td>{{ f.cliente }}</td><td>
+    {% if f.resultado == 'anotadas' %}{{ _('%(n)s facturas anotadas para leer', n=f.detalle.facturas) }}{% if f.detalle.repetidas %} ({{ _('%(n)s ya estaban', n=f.detalle.repetidas) }}){% endif %}
+    {% elif f.resultado == 'remitente_no_autorizado' %}{{ _('Rechazado: %(r)s no es el titular, un contacto del cliente ni del equipo.', r=f.detalle.remitente) }}
+    {% elif f.resultado == 'sin_adjuntos_validos' %}{{ _('Sin PDF ni imágenes válidas (los logotipos de firma no cuentan).') }}
+    {% else %}{{ _('No se pudo anotar: %(m)s', m=f.detalle.motivo or '') }}{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p class="muted">{{ _('Todavía no ha llegado nada.') }}</p>{% endif %}
+{% endblock %}

@@ -71,6 +71,22 @@
   {% endif %}
 </section>
 
+{% if puede_despacho %}
+<section class="dash-panel">
+  <h2>{{ _('Buzón de facturas por correo') }}</h2>
+  <p class="muted">{{ _('Elige una de tus cuentas de correo como buzón (por ejemplo facturas@tudominio.com). Después activa el buzón solo en los clientes que quieras, desde su configuración: cada uno tiene su dirección propia, del tipo facturas+código@tudominio.com.') }}</p>
+  <form method="post" class="edit-form ds-max-640">
+    <input type="hidden" name="accion" value="buzon">
+    <label>{{ _('Cuenta de correo') }}
+      <select name="buzon_cuenta_id"><option value="">{{ _('Sin buzón de facturas') }}</option>
+        {% for c in cuentas_correo %}<option value="{{ c.id }}" {{ 'selected' if buzon.cuenta_id == c.id }}>{{ c.nombre }} ({{ c.usuario }})</option>{% endfor %}
+      </select></label>
+    <label>{{ _('Dirección del buzón') }} <input type="email" name="buzon_direccion" value="{{ buzon.direccion }}" placeholder="facturas@tudominio.com"></label>
+    <div class="ds-fila"><button type="submit" class="btn btn-primary">{{ _('Guardar el buzón') }}</button> <a class="btn btn-ghost" href="{{ url_for('contabilidad.buzon') }}">{{ _('Ver lo que ha llegado') }}</a></div>
+    {% if buzon_activados %}<p class="muted">{{ _('Activado en %(n)s clientes.', n=buzon_activados|length) }}</p>{% endif %}
+  </form>
+</section>
+{% endif %}
 <section class="dash-panel">
   <h2>{{ _('Pegar los códigos de golpe') }}</h2>
   <p class="muted">{{ _('Una pareja por línea: NIF y código de a3, separados por punto y coma, coma, tabulador o espacio. Se asigna a cada cliente por su NIF.') }}</p>

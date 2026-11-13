@@ -28005,3 +28005,101 @@ msgstr "Lecture de la facture par l'IA en arrière-plan ; cette page se rafraîc
 
 msgid "El proveedor de IA ha limitado las consultas (cupo o saldo): la lectura sigue sola a partir de las %(hora)s."
 msgstr "Le fournisseur d'IA a limité les requêtes (quota ou solde) : la lecture reprendra toute seule à partir de %(hora)s."
+
+msgid "Buzón de facturas por correo"
+msgstr "Boîte de factures par e-mail"
+
+msgid "Una dirección propia de este cliente a la que reenviar sus facturas: llegan como facturas por leer. Solo funciona en los clientes en los que lo actives y solo acepta correo de su titular, sus contactos del portal y tu equipo."
+msgstr "Une adresse propre à ce client où transférer ses factures : elles arrivent comme factures à lire. Elle ne fonctionne que pour les clients où vous l'activez et n'accepte que les e-mails de son titulaire, de ses contacts du portail et de votre équipe."
+
+msgid "Primero configura el buzón del despacho en Ajustes de contabilidad."
+msgstr "Configurez d'abord la boîte du cabinet dans les paramètres de comptabilité."
+
+msgid "Ir a los ajustes"
+msgstr "Aller aux paramètres"
+
+msgid "Activar para este cliente"
+msgstr "Activer pour ce client"
+
+msgid "Dirección del cliente"
+msgstr "Adresse du client"
+
+msgid "Elige una de tus cuentas de correo como buzón (por ejemplo facturas@tudominio.com). Después activa el buzón solo en los clientes que quieras, desde su configuración: cada uno tiene su dirección propia, del tipo facturas+código@tudominio.com."
+msgstr "Choisissez l'un de vos comptes e-mail comme boîte (par exemple factures@votredomaine.com). Activez-la ensuite uniquement pour les clients voulus, depuis leurs paramètres : chacun a sa propre adresse, du type factures+code@votredomaine.com."
+
+msgid "Cuenta de correo"
+msgstr "Compte e-mail"
+
+msgid "Sin buzón de facturas"
+msgstr "Pas de boîte de factures"
+
+msgid "Dirección del buzón"
+msgstr "Adresse de la boîte"
+
+msgid "Guardar el buzón"
+msgstr "Enregistrer la boîte"
+
+msgid "Ver lo que ha llegado"
+msgstr "Voir ce qui est arrivé"
+
+msgid "Activado en %(n)s clientes."
+msgstr "Activé pour %(n)s clients."
+
+msgid "Buzón de facturas"
+msgstr "Boîte de factures"
+
+msgid "Buzón del despacho: %(d)s"
+msgstr "Boîte du cabinet : %(d)s"
+
+msgid "Todavía no hay buzón configurado."
+msgstr "Aucune boîte configurée pour l'instant."
+
+msgid "Clientes activados: %(n)s"
+msgstr "Clients activés : %(n)s"
+
+msgid "%(n)s facturas anotadas para leer"
+msgstr "%(n)s factures ajoutées à lire"
+
+msgid "%(n)s ya estaban"
+msgstr "%(n)s déjà présentes"
+
+msgid "Rechazado: %(r)s no es el titular, un contacto del cliente ni del equipo."
+msgstr "Refusé : %(r)s n'est ni le titulaire, ni un contact du client, ni de l'équipe."
+
+msgid "Sin PDF ni imágenes válidas (los logotipos de firma no cuentan)."
+msgstr "Aucun PDF ni image valide (les logos de signature ne comptent pas)."
+
+msgid "No se pudo anotar: %(m)s"
+msgstr "Impossible d'ajouter : %(m)s"
+
+msgid "Todavía no ha llegado nada."
+msgstr "Rien n'est encore arrivé."
+
+msgid "También puedes reenviar tus facturas por correo a:"
+msgstr "Vous pouvez aussi transférer vos factures par e-mail à :"
+
+msgid "(desde el correo que nos tienes dado: tu gestoría las recibirá igual)"
+msgstr "(depuis l'e-mail que vous nous avez donné : votre cabinet les recevra de la même façon)"
+
+msgid "Buzón de facturas guardado."
+msgstr "Boîte de factures enregistrée."
+
+msgid "Confirmar el total"
+msgstr "Confirmer le total"
+
+msgid "¿Puedes confirmarnos el importe total de la factura %(numero)s? No estamos seguros de haberlo leído bien."
+msgstr "Pouvez-vous nous confirmer le montant total de la facture %(numero)s ? Nous ne sommes pas sûrs de l'avoir bien lu."
+
+msgid "Confirmar la fecha"
+msgstr "Confirmer la date"
+
+msgid "¿Puedes confirmarnos la fecha de la factura %(numero)s? No estamos seguros de haberla leído bien."
+msgstr "Pouvez-vous nous confirmer la date de la facture %(numero)s ? Nous ne sommes pas sûrs de l'avoir bien lue."
+
+msgid "Proveedores habituales sin factura en algún mes del trimestre"
+msgstr "Fournisseurs habituels sans facture certains mois du trimestre"
+
+msgid "Falta la factura de %(n)s proveedor habitual en el trimestre"
+msgid_plural "Faltan facturas de %(n)s proveedores habituales en el trimestre"
+msgstr[0] "Il manque la facture de %(n)s fournisseur habituel au trimestre"
+msgstr[1] "Il manque des factures de %(n)s fournisseurs habituels au trimestre"

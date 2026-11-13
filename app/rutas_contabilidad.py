@@ -7,7 +7,7 @@ from datetime import date
 from flask import Blueprint, Response, abort, g, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _, ngettext
 
-from . import acceso, cobro_contabilidad, db, redireccion, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
+from . import acceso, cobro_contabilidad, db, redireccion, enlace_a3, exportacion_generica, ia_comparador, ia_despacho, ia_trabajos, lectura_calidad, facturas_correo, enlace_a3_chequeo, importador_clientes, lectura_facturas, plan_cuentas, verticales
 from . import facturas_contables as fc
 from . import cierre_trimestre, cola_contabilidad, cuadre_303, terceros_duplicados, facturas_control, panel_cierre, retorno_a3, facturas_portal, justificantes as justificantes_mod
 from .auth import login_required
@@ -473,6 +473,11 @@ def ajustes():
                     abort(403)
                 cfg = fc.guardar_configuracion_despacho(g.tenant_id, g.usuario_id, request.form)
                 mensaje = _("Valores del despacho guardados. Los heredan los clientes que no tengan los suyos.")
+            elif accion == "buzon":
+                if not _es_supervisor():
+                    abort(403)
+                facturas_correo.guardar_config(g.tenant_id, g.usuario_id, request.form.get("buzon_cuenta_id", type=int), request.form.get("buzon_direccion", ""))
+                mensaje = _("Buzón de facturas guardado.")
             elif accion == "codigos":
                 n = fc.guardar_codigos(g.tenant_id, g.usuario_id, {int(k[7:]): v for k, v in request.form.items() if k.startswith("codigo_") and k[7:].isdigit()})
                 mensaje = _("Códigos de a3 guardados: %(n)s cambios.", n=n)
@@ -488,7 +493,9 @@ def ajustes():
             if accion == "despacho":
                 cfg = {**cfg, **{k: request.form.get(k, "") for k in cfg}}
     clientes = fc.resumen_clientes(g.tenant_id, g.usuario_id)
-    return render_template("contabilidad_ajustes.html", cfg=cfg, clientes=clientes, listos=sum(1 for c in clientes if c["a3_empresa"]), error=error, mensaje=mensaje, puede_despacho=_es_supervisor())
+    from . import db_correo
+    return render_template("contabilidad_ajustes.html", buzon=facturas_correo.config(g.tenant_id), buzon_activados=facturas_correo.activados(g.tenant_id), cuentas_correo=db_correo.listar_cuentas_correo(g.usuario_id),
+                           cfg=cfg, clientes=clientes, listos=sum(1 for c in clientes if c["a3_empresa"]), error=error, mensaje=mensaje, puede_despacho=_es_supervisor())
 
 
 @contabilidad_bp.route("/cliente/<int:cliente_id>/plan", methods=["GET", "POST"])
@@ -625,8 +632,28 @@ def configuracion(cliente_id: int):
         except ValueError as e:
             error = str(e)
             cfg = {**cfg, **{k: request.form.get(k, "") for k in cfg}}
-    return render_template("contabilidad_config.html", cliente=cliente, cfg=cfg, error=error, terceros=fc.terceros_del_cliente(g.tenant_id, g.usuario_id, cliente_id),
+    return render_template("contabilidad_config.html", buzon=facturas_correo.estado_del_cliente(g.tenant_id, cliente_id), buzon_listo=facturas_correo.configurado(g.tenant_id), cliente=cliente, cfg=cfg, error=error or _error(), terceros=fc.terceros_del_cliente(g.tenant_id, g.usuario_id, cliente_id),
                            otros=[c for c in fc.resumen_clientes(g.tenant_id, g.usuario_id) if c["id"] != cliente_id and c["a3_empresa"]])
+
+
+@contabilidad_bp.route("/cliente/<int:cliente_id>/buzon", methods=["POST"])
+@login_required
+def buzon_del_cliente(cliente_id: int):
+    """Activa o desactiva el buzón de facturas por correo de ESTE cliente (por defecto ninguno lo tiene)."""
+    if db.obtener_cliente_fiscal(g.tenant_id, cliente_id) is None:
+        abort(404)
+    try:
+        facturas_correo.activar(g.tenant_id, g.usuario_id, cliente_id, bool(request.form.get("activo")))
+    except ValueError as e:
+        return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id, error=_(str(e))[:300]))
+    return redirect(url_for("contabilidad.configuracion", cliente_id=cliente_id))
+
+
+@contabilidad_bp.route("/buzon")
+@login_required
+def buzon():
+    """Lo último que ha hecho el buzón de facturas por correo: qué llegó, de quién y qué se hizo con ello."""
+    return render_template("contabilidad_buzon.html", filas=facturas_correo.registro(g.tenant_id), buzon=facturas_correo.config(g.tenant_id), activados=facturas_correo.activados(g.tenant_id), subnav=None)
 
 
 @contabilidad_bp.route("/periodo", methods=["POST"])
