@@ -28002,3 +28002,6 @@ msgstr "La facture n'a pas pu être lue : %(error)s"
 
 msgid "Leyendo la factura con IA en segundo plano; esta página se actualizará sola cuando termine."
 msgstr "Lecture de la facture par l'IA en arrière-plan ; cette page se rafraîchira toute seule à la fin."
+
+msgid "El proveedor de IA ha limitado las consultas (cupo o saldo): la lectura sigue sola a partir de las %(hora)s."
+msgstr "Le fournisseur d'IA a limité les requêtes (quota ou solde) : la lecture reprendra toute seule à partir de %(hora)s."

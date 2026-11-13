@@ -1,0 +1,22 @@
+{
+ "casos": 16,
+ "acierto_global": 99.1,
+ "por_campo": {
+  "emisor_nif": 93.3,
+  "es_abono": 100.0,
+  "fecha": 100.0,
+  "lineas": 100.0,
+  "numero": 100.0,
+  "receptor_nif": 100.0,
+  "total": 100.0
+ },
+ "fallos": [
+  {
+   "caso": "tique_simplificado",
+   "campos": [
+    "emisor_nif"
+   ]
+  }
+ ],
+ "errores": []
+}

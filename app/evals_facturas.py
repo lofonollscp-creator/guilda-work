@@ -18,8 +18,8 @@ def cargar_casos(ruta: Path | str | None = None) -> list[dict]:
 
 
 def _nif(v) -> str | None:
-    v = re.sub(r"[\s.\-]", "", str(v or "")).upper()
-    return v or None
+    from .lectura_nif import sin_es
+    return sin_es(v) or None
 
 
 def _num(v) -> float | None:
@@ -102,8 +102,10 @@ def comparar(actual: dict, base: dict, margen: float = 2.0) -> list[str]:
 
 def leer_con_ia(usuario_id: int):
     """La función `leer` de producción (texto de la factura → datos) con el modelo configurado de esa persona (la usan scripts/evaluar_facturas.py y scripts/calidad_ia.py)."""
-    from . import ia_asistente, lectura_facturas
+    from . import ia_asistente, lectura_facturas, lectura_nif
 
     def leer(texto: str) -> dict:
-        return lectura_facturas._json_de(ia_asistente.completar_partes(usuario_id, lectura_facturas.PROMPT_TEXTO, [{"type": "text", "text": "Extrae los datos de esta factura.\n\nTEXTO DEL DOCUMENTO:\n" + texto}]))
+        datos = lectura_facturas._json_de(ia_asistente.completar_partes(usuario_id, lectura_facturas.PROMPT_TEXTO, [{"type": "text", "text": "Extrae los datos de esta factura.\n\nTEXTO DEL DOCUMENTO:\n" + texto}]))
+        lectura_nif.completar(datos, texto)              # igual que en producción: el NIF que el modelo deja vacío se busca en el texto
+        return datos
     return leer

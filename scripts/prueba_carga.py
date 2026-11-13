@@ -80,12 +80,26 @@ def sembrar(db, n_usuarios: int, n_vencimientos: int, n_clientes: int = 300, n_d
         infos.append({"usuario": u, "cuenta": cuenta, "proyecto": cat, "tenant": t})
     conn.commit()
     conn.close()
+    from app import facturas_contables as fc, verticales            # contabilidad: 30 clientes por despacho y unas 1.500 facturas (AC4)
+    for t in tenants:
+        verticales.fijar_activo(t, "contabilizacion", True)
+        responsable = next(u for i, u in enumerate(usuarios) if tenants[i % n_despachos] == t)
+        db.asignar_supervisor_tenant(responsable, True)
+        for k, c in enumerate(clientes[t][:30]):
+            fc.guardar_configuracion(t, responsable, c, {"a3_empresa": str(10 + k), "digitos": "8"})
+            for j in range(50):
+                try:
+                    fc.crear(t, responsable, c, {"tipo": "recibida", "fecha": f"2026-{1 + j % 9:02d}-{1 + j % 27:02d}", "numero": f"F-{k}-{j}", "tercero_nombre": f"Proveedor {j % 20}",
+                                                 "tercero_nif": f"A{5000000 + j % 20}0", "concepto": "Servicios"}, [{"base": f"{100 + j * 7},00", "pct_iva": "21"}])
+                except ValueError:
+                    pass
     return infos
 
 
 LECTURAS = [
     ("/", 3), ("/tareas/", 3), ("/tareas/hoy", 2), ("/tareas/tablero", 1), ("/tareas/carga", 1), ("/notas", 2), ("/correo/?cuenta_id={cuenta}", 3),
     ("/correo/?cuenta_id={cuenta}&q=factura", 2), ("/fiscal/vencimientos", 2), ("/fiscal/clientes", 1), ("/proyecto/{proyecto}", 1), ("/estadisticas", 1),
+    ("/contabilidad/", 2), ("/contabilidad/panel-cierre", 1), ("/contabilidad/?estado=pendiente", 1),
 ]
 
 

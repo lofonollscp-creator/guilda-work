@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS facturas_contables_lineas (
 );
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_lineas ON facturas_contables_lineas(factura_id);
 CREATE INDEX IF NOT EXISTS idx_facturas_contables_duplicadas ON facturas_contables(tenant_id, cliente_fiscal_id, tercero_nif, numero);
+CREATE INDEX IF NOT EXISTS idx_facturas_contables_fecha ON facturas_contables(tenant_id, fecha DESC, id DESC);
 CREATE TABLE IF NOT EXISTS facturas_contables_mensajes (
     id INTEGER PRIMARY KEY,
     tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -805,6 +806,18 @@ def _anio_de(trimestre: str) -> int:
     return int(trimestre[:4])
 
 
+def _cierres_de(trimestres, manual: dict, presentados: set) -> dict[str, dict]:
+    res = {}
+    for t in trimestres:
+        if t in manual:
+            res[t] = {"motivo": "manual", "detalle": f"cerrado a mano el {manual[t]['cerrado_en'][:10]}"}
+        elif ("303", t) in presentados:
+            res[t] = {"motivo": "303", "detalle": "modelo 303 presentado"}
+        elif ("390", f"{_anio_de(t)}-anual") in presentados:
+            res[t] = {"motivo": "390", "detalle": f"modelo 390 de {_anio_de(t)} presentado"}
+    return res
+
+
 def periodos_cerrados(tenant_id: int, cliente_fiscal_id: int, trimestres) -> dict[str, dict]:
     """{trimestre: {motivo, detalle}} de los trimestres pedidos que están cerrados. `motivo`: manual · 303 · 390."""
     trimestres = sorted({t for t in trimestres if t})
@@ -818,15 +831,28 @@ def periodos_cerrados(tenant_id: int, cliente_fiscal_id: int, trimestres) -> dic
             (cliente_fiscal_id, tenant_id))}
     finally:
         conn.close()
-    res = {}
-    for t in trimestres:
-        if t in manual:
-            res[t] = {"motivo": "manual", "detalle": f"cerrado a mano el {manual[t]['cerrado_en'][:10]}"}
-        elif ("303", t) in presentados:
-            res[t] = {"motivo": "303", "detalle": "modelo 303 presentado"}
-        elif ("390", f"{_anio_de(t)}-anual") in presentados:
-            res[t] = {"motivo": "390", "detalle": f"modelo 390 de {_anio_de(t)} presentado"}
-    return res
+    return _cierres_de(trimestres, manual, presentados)
+
+
+def periodos_cerrados_de_varios(tenant_id: int, por_cliente: dict) -> dict[int, dict[str, dict]]:
+    """Lo mismo para varios clientes de golpe, con dos consultas en vez de dos por cliente (la lista de facturas de todos los clientes salía con 60 consultas de más).
+    `por_cliente`: {cliente_fiscal_id: trimestres}. Devuelve {cliente_fiscal_id: {trimestre: cierre}}."""
+    ids = sorted(c for c, ts in por_cliente.items() if any(ts))
+    if not ids:
+        return {}
+    marcas = ",".join("?" * len(ids))
+    conn = db.get_connection()
+    try:
+        manual: dict[int, dict] = {}
+        for r in conn.execute(f"SELECT cliente_fiscal_id, trimestre, cerrado_en FROM contabilidad_cierres WHERE tenant_id = ? AND cliente_fiscal_id IN ({marcas})", (tenant_id, *ids)):
+            manual.setdefault(r["cliente_fiscal_id"], {})[r["trimestre"]] = r
+        presentados: dict[int, set] = {}
+        for r in conn.execute(f"SELECT cliente_fiscal_id, modelo, periodo FROM vencimientos_fiscales WHERE tenant_id = ? AND estado = 'presentado' AND papelera_en IS NULL AND modelo IN ('303', '390') "
+                              f"AND cliente_fiscal_id IN ({marcas})", (tenant_id, *ids)):
+            presentados.setdefault(r["cliente_fiscal_id"], set()).add((r["modelo"], r["periodo"]))
+    finally:
+        conn.close()
+    return {c: _cierres_de(sorted({t for t in por_cliente[c] if t}), manual.get(c, {}), presentados.get(c, set())) for c in ids}
 
 
 def cerrar_periodo(tenant_id: int, usuario_id: int, cliente_fiscal_id: int, trimestre: str) -> None:
@@ -1443,6 +1469,14 @@ def con_duplicado_entre(tenant_id: int, ids: list[int]) -> set[int]:
     return {r["id"] for r in filas}
 
 
+# Las columnas de la lista: todas menos las dos que pesan (de dónde sacó la IA cada dato y los datos de a3, JSON de varios KB por factura): ninguna pantalla de lista las usa y con 300 filas eran megas por clic.
+_COLUMNAS_PESADAS = ("lectura_evidencia", "datos_a3")
+COLUMNAS_LISTA = ", ".join(f"x.{c}" for c in (
+    "id", "tenant_id", "cliente_fiscal_id", "tipo", "origen", "estado", "fecha", "fecha_operacion", "numero", "tercero_nombre", "tercero_nif", "tercero_cuenta", "concepto", "referencia", "abono",
+    "rectifica_fecha", "rectifica_numero", "documento_id", "suplidos_centimos", "total_centimos", "notas", "creado_por", "creado_en", "actualizado_en", "revisado_por", "revisado_en", "lote_id",
+    "criterio_caja", "lectura", "lectura_error", "incluir_en_fiscal", "lectura_confianza", "lectura_fuente", "revision_auto", "confirmada_en", "pago_exportado_en"))
+
+
 def listar(tenant_id: int, usuario_id: int, *, cliente_fiscal_id: int | None = None, estado: str | None = None, tipo: str | None = None, desde: str | None = None, hasta: str | None = None,
            limite: int = 300, orden: str | None = None) -> list[dict]:
     """Las facturas visibles, de la más reciente a la más antigua; con `orden="confianza"` primero las que peor se leyeron (las dudosas arriba, para mirarlas antes)."""
@@ -1458,7 +1492,7 @@ def listar(tenant_id: int, usuario_id: int, *, cliente_fiscal_id: int | None = N
     conn = db.get_connection()
     try:
         filas = [dict(f) for f in conn.execute(
-            "SELECT x.*, c.nombre AS cliente_nombre FROM facturas_contables x JOIN clientes_fiscales c ON c.id = x.cliente_fiscal_id WHERE " + " AND ".join(donde) +
+            "SELECT " + COLUMNAS_LISTA + ", c.nombre AS cliente_nombre FROM facturas_contables x JOIN clientes_fiscales c ON c.id = x.cliente_fiscal_id WHERE " + " AND ".join(donde) +
             (" ORDER BY CASE WHEN x.lectura_confianza IS NULL THEN 101 ELSE x.lectura_confianza END ASC, x.fecha DESC, x.id DESC LIMIT ?" if orden == "confianza" else " ORDER BY x.fecha DESC, x.id DESC LIMIT ?"), [*p, limite])]
     finally:
         conn.close()

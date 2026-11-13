@@ -94,9 +94,10 @@ def lista():
     orden = "confianza" if request.args.get("orden") == "confianza" else None
     facturas = fc.listar(g.tenant_id, g.usuario_id, cliente_fiscal_id=cliente_id, estado=estado, tipo=tipo, desde=desde, hasta=hasta, orden=orden)
     cfg = fc.configuracion(g.tenant_id, cliente_id) if cliente_id else None
-    cierres = {}                                                       # {cliente_fiscal_id: {trimestre: cierre}} de los trimestres que salen en la lista
-    for cid in {f["cliente_fiscal_id"] for f in facturas}:
-        cierres[cid] = fc.periodos_cerrados(g.tenant_id, cid, {fc.trimestre_de(f["fecha"]) for f in facturas if f["cliente_fiscal_id"] == cid})
+    por_cliente: dict = {}                                             # {cliente_fiscal_id: trimestres que salen en la lista}
+    for f in facturas:
+        por_cliente.setdefault(f["cliente_fiscal_id"], set()).add(fc.trimestre_de(f["fecha"]))
+    cierres = fc.periodos_cerrados_de_varios(g.tenant_id, por_cliente)       # {cliente_fiscal_id: {trimestre: cierre}}
     for f in facturas:
         f["periodo_cerrado"] = cierres.get(f["cliente_fiscal_id"], {}).get(fc.trimestre_de(f["fecha"]))
     cierre = fc.periodos_cerrados(g.tenant_id, cliente_id, [trimestre]).get(trimestre) if cliente_id and trimestre else None

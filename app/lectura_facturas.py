@@ -10,7 +10,7 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 
-from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_clasificacion, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, lectura_historial, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, tipos_cambio, vies
+from . import acceso, auditoria, db, enlace_a3, facturas_contables as fc, facturas_estructuradas, ia_asistente, ia_despacho, ia_trabajos, lectura_calidad, lectura_clasificacion, lectura_confianza, lectura_correcciones, lectura_cuadre, lectura_evidencias, lectura_historial, lectura_nif, ocr_local, pdf_facturas, qr_facturas, segmentacion_pdf, tipos_cambio, vies
 
 FORMA_DE_PAGO = {"domiciliacion": "DO", "transferencia": "TR", "cheque": "CH", "pagare": "PA", "letra": "LA", "efectivo": "ME"}      # lo que lee la IA → código de a3
 
@@ -94,8 +94,8 @@ def _partes(doc: dict) -> list[dict]:
 
 def _a_factura(datos: dict, f: dict, cliente_nif: str, texto: str = "") -> tuple[str, dict, list[dict], list[str]]:
     """(tipo, datos de la factura, líneas, avisos) a partir de lo que devolvió el modelo. El tipo sale de comparar el NIF del cliente con el emisor y el receptor."""
-    avisos: list[str] = []
-    emisor_nif, receptor_nif = fc._nif(datos.get("emisor_nif")), fc._nif(datos.get("receptor_nif"))
+    avisos: list[str] = lectura_nif.completar(datos, texto)
+    emisor_nif, receptor_nif = lectura_nif.sin_es(datos.get("emisor_nif")), lectura_nif.sin_es(datos.get("receptor_nif"))
     tipo = f["tipo"]
     if cliente_nif and emisor_nif == cliente_nif and receptor_nif != cliente_nif:
         tipo = "emitida"
@@ -211,7 +211,11 @@ def configurada(usuario_id: int) -> bool:
 
 
 MAX_TEXTO_PDF = 24000
-CODIGOS_PASAJEROS = (None, 408, 409, 425, 429, 500, 502, 503, 504)
+CODIGOS_PASAJEROS = (None, 408, 409, 425, 500, 502, 503, 504)           # (429 y 402 son LecturaLimitada: pausan la cola)
+
+
+class LecturaLimitada(ValueError):
+    """El proveedor de IA limita las consultas (429: cupo o ritmo; 402: sin saldo). En la cola pausa el proveedor entero; leída a mano, se explica."""
 
 
 class LecturaTransitoria(ValueError):
@@ -455,6 +459,8 @@ def leer(tenant_id: int, usuario_id: int, factura_id: int, separar: bool = True)
                 raise ValueError("no se vieron los importes")
         except ia_asistente.ErrorIA as e:
             _marcar_fallida(tenant_id, f, "el modelo no pudo leerlo" + (" (¿tiene visión el modelo elegido?)" if e.codigo_http == 400 else ""))
+            if e.codigo_http in (402, 429):
+                raise LecturaLimitada("No se pudo leer: el proveedor de IA ha limitado las consultas (cupo diario, ritmo o saldo agotado). Inténtalo más tarde o cambia de modelo en Ajustes del Asistente IA.") from None
             clase = LecturaTransitoria if e.codigo_http in CODIGOS_PASAJEROS and "tope" not in str(e).lower() else ValueError
             raise clase("No se pudo leer: " + ("el modelo elegido no admite imágenes o PDF; elige uno con visión en Ajustes del Asistente IA." if e.codigo_http == 400
                                                else "falló la consulta a la IA o se agotó el tope mensual.")) from None
@@ -682,6 +688,8 @@ def _trabajo_de_lectura(trabajo: dict) -> dict:
     """El trabajo «lectura» de la cola de fondo: lee una factura (un fallo pasajero del proveedor se reintenta; lo demás la deja marcada como fallida)."""
     try:
         avisos = leer(trabajo["tenant_id"], trabajo["usuario_id"], trabajo["referencia"])
+    except LecturaLimitada as e:
+        raise ia_trabajos.LimiteDelProveedor(str(e)) from None
     except LecturaTransitoria as e:
         raise ia_trabajos.Transitorio(str(e)) from None
     return {"avisos": len(avisos)}

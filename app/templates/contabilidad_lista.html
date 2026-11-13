@@ -124,7 +124,7 @@
   <div class="dash-panel-cab"><h2>{{ _('Facturas por leer: %(n)s', n=por_leer|length) }}</h2></div>
   {% if ia_lista %}
   <div class="ds-fila"><button type="button" id="leer-todas" class="btn btn-primary" data-url-cola="{{ url_for('contabilidad.leer_todas') }}" data-url-estado="{{ url_for('contabilidad.progreso_lectura', lote='0') }}" {% if cliente_id %}data-cliente="{{ cliente_id }}"{% endif %}
-      data-txt-en-marcha="{{ _('Leyendo en segundo plano: %(hechas)s de %(total)s', hechas='%(hechas)s', total='%(total)s') }}" data-txt-fin="{{ _('Terminado: %(hechas)s leídas, %(errores)s con error.', hechas='%(hechas)s', errores='%(errores)s') }}" data-txt-error="{{ _('No se pudo empezar.') }}">{{ _('Leerlas todas con IA') }}</button>
+      data-txt-pausa="{{ _('El proveedor de IA ha limitado las consultas (cupo o saldo): la lectura sigue sola a partir de las %(hora)s.', hora='%(hora)s') }}" data-txt-en-marcha="{{ _('Leyendo en segundo plano: %(hechas)s de %(total)s', hechas='%(hechas)s', total='%(total)s') }}" data-txt-fin="{{ _('Terminado: %(hechas)s leídas, %(errores)s con error.', hechas='%(hechas)s', errores='%(errores)s') }}" data-txt-error="{{ _('No se pudo empezar.') }}">{{ _('Leerlas todas con IA') }}</button>
     <progress id="leer-todas-barra" max="1" value="0" hidden aria-label="{{ _('Avance de la lectura') }}"></progress><span id="leer-todas-estado" class="muted" role="status"></span></div>
   <p class="muted">{{ _('La lectura se hace en segundo plano: puedes seguir trabajando o cerrar la página. Después revisa cada factura con el documento delante: la IA puede equivocarse.') }}</p>
   {% else %}

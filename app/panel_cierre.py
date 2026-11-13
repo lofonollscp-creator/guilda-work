@@ -91,6 +91,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
     por_id = {f["cliente_fiscal_id"]: dict(f) for f in filas}
     for cid, nombre in configurados.items():
         por_id.setdefault(cid, {"cliente_fiscal_id": cid, "nombre": nombre, "total": 0, "sin_leer": 0, "por_revisar": 0, "listas": 0, "exportadas": 0, "sin_confirmar": 0, "sin_confirmar_antiguas": 0, "a_corregir": 0})
+    cerrados = fc.periodos_cerrados_de_varios(tenant_id, {cid: {trimestre} for cid in por_id if visibles is None or cid in visibles})        # dos consultas para todos los clientes, no dos por cliente
     clientes = []
     for cid, c in por_id.items():
         if visibles is not None and cid not in visibles:
@@ -100,7 +101,7 @@ def panel(tenant_id: int, usuario_id: int, trimestre: str | None = None, hoy: da
         c["fichero_rechazado"] = cid in rechazados
         if not c["usa_retorno"]:
             c["sin_confirmar"] = c["sin_confirmar_antiguas"] = 0
-        c["cerrado"] = bool(fc.periodos_cerrados(tenant_id, cid, [trimestre]).get(trimestre))
+        c["cerrado"] = bool(cerrados.get(cid, {}).get(trimestre))
         c["faltan"] = c["sin_leer"] + c["por_revisar"] + c["listas"] + c["sin_confirmar"]        # `a_corregir` ya cuenta dentro de por revisar o de listas: son las reabiertas tras exportarlas
         c["listo"] = c["total"] > 0 and c["faltan"] == 0
         c["sin_facturas"] = c["total"] == 0

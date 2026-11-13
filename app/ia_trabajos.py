@@ -38,6 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_ia_trabajos_estado ON ia_trabajos(estado, no_ante
 """
 
 MAX_INTENTOS = 3
+MENSAJE_PAUSA = "Pausa: el proveedor de IA limita las consultas (cupo o saldo); sigue solo más tarde."
 ESPERA_REINTENTO_SEGUNDOS = (30, 120)                 # tras el 1.º y el 2.º fallo pasajero
 MINUTOS_ATASCADO = 10
 SEGUNDOS_ENTRE_COMPROBACIONES = 2.0
@@ -55,6 +56,14 @@ _candado_ritmo = threading.Lock()
 
 class Transitorio(Exception):
     """El trabajo falló por algo pasajero (el proveedor está saturado o caído): vale la pena reintentarlo más tarde."""
+
+
+class LimiteDelProveedor(Transitorio):
+    """El proveedor limita las consultas (cupo diario agotado, demasiadas por minuto o sin saldo): la cola de ese proveedor se pausa y los trabajos no gastan intentos, en vez de fallar uno tras otro."""
+
+
+PAUSAS_SEGUNDOS = (300, 900, 3600)                   # cada vez que el proveedor sigue limitando, la pausa crece: 5 min, 15 min, 1 h
+_pausas: dict[str, tuple[float, int]] = {}           # proveedor -> (hasta cuándo, nivel de pausa)
 
 
 def crear_esquema(conn) -> None:
@@ -118,13 +127,14 @@ def reclamar() -> dict | None:
     return None
 
 
-def _terminar(trabajo: dict, estado: str, error: str | None = None, resultado: dict | None = None, reintentar_en: int | None = None) -> None:
+def _terminar(trabajo: dict, estado: str, error: str | None = None, resultado: dict | None = None, reintentar_en: int | None = None, devolver_intento: bool = False) -> None:
     from .bd import contexto
     with contexto.como_plataforma():
         conn = db.get_connection()
         try:
             if reintentar_en is not None:
-                conn.execute("UPDATE ia_trabajos SET estado = 'pendiente', error = ?, no_antes_de = ? WHERE id = ?", ((error or "")[:300], _iso(_ahora() + timedelta(seconds=reintentar_en)), trabajo["id"]))
+                conn.execute("UPDATE ia_trabajos SET estado = 'pendiente', error = ?, no_antes_de = ?, intentos = intentos - ? WHERE id = ?",
+                             ((error or "")[:300], _iso(_ahora() + timedelta(seconds=reintentar_en)), 1 if devolver_intento else 0, trabajo["id"]))
             else:
                 conn.execute("UPDATE ia_trabajos SET estado = ?, error = ?, resultado = ?, terminado_en = ? WHERE id = ?",
                              (estado, (error or "")[:300] or None, json.dumps(resultado, ensure_ascii=False) if resultado is not None else None, _iso(_ahora()), trabajo["id"]))
@@ -157,11 +167,22 @@ def ejecutar(trabajo: dict) -> None:
         datos = json.loads(trabajo["datos"]) if trabajo.get("datos") else {}
     except ValueError:
         datos = {}
+    proveedor = datos.get("proveedor") or "?"
+    hasta = _pausas.get(proveedor)
+    if hasta and hasta[0] > time.time():                  # el proveedor está limitando: el trabajo espera sin gastar un intento ni hacer otra consulta que fallaría
+        _terminar(trabajo, "pendiente", MENSAJE_PAUSA, reintentar_en=int(hasta[0] - time.time()) + 1, devolver_intento=True)
+        return
     _esperar_ritmo(datos.get("proveedor"))
     try:
         with contexto.en_despacho(trabajo["tenant_id"]):
             resultado = manejador({**trabajo, "datos": datos})
+        _pausas.pop(proveedor, None)
         _terminar(trabajo, "hecha", resultado=resultado if isinstance(resultado, dict) else None)
+    except LimiteDelProveedor:
+        nivel = min(_pausas.get(proveedor, (0, -1))[1] + 1, len(PAUSAS_SEGUNDOS) - 1)
+        _pausas[proveedor] = (time.time() + PAUSAS_SEGUNDOS[nivel], nivel)
+        logger.warning("El proveedor de IA %s limita las consultas: la cola espera %s s", proveedor, PAUSAS_SEGUNDOS[nivel])
+        _terminar(trabajo, "pendiente", MENSAJE_PAUSA, reintentar_en=PAUSAS_SEGUNDOS[nivel], devolver_intento=True)
     except Transitorio as e:
         if trabajo["intentos"] < MAX_INTENTOS:
             _terminar(trabajo, "pendiente", str(e), reintentar_en=ESPERA_REINTENTO_SEGUNDOS[min(trabajo["intentos"], len(ESPERA_REINTENTO_SEGUNDOS)) - 1])
@@ -216,11 +237,12 @@ def progreso(tenant_id: int, lote: str) -> dict:
     """{total, hechas, errores, pendientes, leyendo, terminado, fallos: [{referencia, error}]} de un lote."""
     conn = db.get_connection()
     try:
-        filas = conn.execute("SELECT referencia, estado, error FROM ia_trabajos WHERE tenant_id = ? AND lote = ? ORDER BY id", (tenant_id, lote)).fetchall()
+        filas = conn.execute("SELECT referencia, estado, error, no_antes_de FROM ia_trabajos WHERE tenant_id = ? AND lote = ? ORDER BY id", (tenant_id, lote)).fetchall()
     finally:
         conn.close()
     c = {"hecha": 0, "error": 0, "pendiente": 0, "leyendo": 0}
     for f in filas:
         c[f["estado"]] += 1
-    return {"total": len(filas), "hechas": c["hecha"], "errores": c["error"], "pendientes": c["pendiente"], "leyendo": c["leyendo"], "terminado": bool(filas) and not (c["pendiente"] or c["leyendo"]),
+    pausa = max((f["no_antes_de"] for f in filas if f["estado"] == "pendiente" and (f["error"] or "").startswith("Pausa") and f["no_antes_de"]), default=None)
+    return {"pausa_hasta": pausa, "total": len(filas), "hechas": c["hecha"], "errores": c["error"], "pendientes": c["pendiente"], "leyendo": c["leyendo"], "terminado": bool(filas) and not (c["pendiente"] or c["leyendo"]),
             "fallos": [{"referencia": f["referencia"], "error": f["error"]} for f in filas if f["estado"] == "error"][:10]}

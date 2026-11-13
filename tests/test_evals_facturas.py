@@ -14,7 +14,7 @@ def test_los_casos_sinteticos_son_coherentes_y_no_llevan_datos_reales():
         retencion = sum(l["base"] * l.get("pct_retencion", 0) / 100 for l in e["lineas"])
         recargo = sum(l["base"] * l.get("pct_recargo", 0) / 100 for l in e["lineas"])
         assert abs(base + cuota + recargo - retencion - e["total"]) <= 0.011, c["id"]              # lo que se espera cuadra consigo mismo
-        assert e["numero"] in c["texto"].replace(" ", "") or c["id"] == "formato_europeo_miles", c["id"]
+        assert e["numero"].replace(" ", "") in c["texto"].replace(" ", "") or c["id"] == "formato_europeo_miles", c["id"]
 
 
 def test_un_lector_perfecto_acierta_todo_y_uno_malo_se_nota_por_campo():

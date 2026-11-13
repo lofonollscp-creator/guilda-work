@@ -12,7 +12,9 @@ from tests.test_lectura_facturas import RESPUESTA, modelo  # noqa: F401 -- fixtu
 def _sin_esperas(monkeypatch):
     monkeypatch.setattr(tr, "_esperar_ritmo", lambda proveedor: None)
     tr._manejadores_originales = dict(tr._manejadores)
+    tr._pausas.clear()
     yield
+    tr._pausas.clear()
     tr._manejadores.clear(); tr._manejadores.update(tr._manejadores_originales)
 
 
@@ -22,7 +24,7 @@ def test_encolar_no_repite_lo_que_ya_espera_y_el_progreso_cuenta():
     assert tr.progreso(t, lote)["total"] == 3
     lote2 = tr.encolar(t, u, "prueba", [2, 3, 4])
     assert tr.progreso(t, lote2)["total"] == 1                               # solo el 4: los otros ya estaban esperando
-    assert tr.progreso(t, "inexistente") == {"total": 0, "hechas": 0, "errores": 0, "pendientes": 0, "leyendo": 0, "terminado": False, "fallos": []}
+    assert tr.progreso(t, "inexistente") == {"pausa_hasta": None, "total": 0, "hechas": 0, "errores": 0, "pendientes": 0, "leyendo": 0, "terminado": False, "fallos": []}
 
 
 def test_cada_trabajo_se_ejecuta_una_sola_vez_y_en_orden():
@@ -154,3 +156,33 @@ def test_un_error_definitivo_de_la_ia_no_se_reintenta(cliente, monkeypatch):
     tr.procesar_uno()
     p = tr.progreso(t, lote)
     assert p["errores"] == 1 and p["pendientes"] == 0 and "no admite imágenes" in p["fallos"][0]["error"]
+
+
+def test_si_el_proveedor_limita_la_cola_se_pausa_sin_gastar_intentos_y_se_reanuda(cliente, monkeypatch):
+    uid, t, c = _web(cliente, "pausa1@ejemplo.com")
+    monkeypatch.setattr(lf, "configurada", lambda x: True)
+    llamadas = []
+
+    def falso(x, s, p, timeout=90):
+        llamadas.append(1)
+        if len(llamadas) <= 1:
+            raise ia_asistente.ErrorIA("429 demasiadas consultas", codigo_http=429)
+        return json.dumps(RESPUESTA)
+    monkeypatch.setattr(ia_asistente, "completar_partes", falso)
+    tr._pausas.clear()
+    ids = [fc.subir_archivos(t, uid, c, "recibida", [("f.pdf", "application/pdf", PDF + bytes([40 + i]))])[0] for i in range(3)]
+    lote = cliente.post("/contabilidad/leer-todas").get_json()["lote"]
+    assert tr.procesar_uno()                                                   # la primera consulta choca con el límite
+    p = tr.progreso(t, lote)
+    assert p["pendientes"] == 3 and p["errores"] == 0 and p["pausa_hasta"] and not p["terminado"]
+    assert tr.procesar_uno() and tr.procesar_uno() and len(llamadas) == 1      # los demás se aplazan al tocarles, sin hacer otra consulta que fallaría
+    assert tr.reclamar() is None and tr.progreso(t, lote)["pendientes"] == 3
+    conn = db.get_connection(); conn.execute("UPDATE ia_trabajos SET no_antes_de = '2000-01-01T00:00:00'"); conn.commit(); conn.close()
+    assert tr.procesar_uno() and len(llamadas) == 1                            # sigue pausado: de nuevo sin consulta
+    tr._pausas.clear()                                                         # (acaba la pausa)
+    conn = db.get_connection(); conn.execute("UPDATE ia_trabajos SET no_antes_de = '2000-01-01T00:00:00'"); conn.commit(); conn.close()
+    while tr.procesar_uno():
+        pass
+    p = tr.progreso(t, lote)
+    assert p["hechas"] == 3 and p["errores"] == 0 and all(fc.obtener(t, uid, i)["lectura"] == "ia" for i in ids)
+    assert tr.MENSAJE_PAUSA.startswith("Pausa")

@@ -30,6 +30,9 @@ PANTALLAS = [
     # núcleo con un despacho grande (5.000 clientes, 3.000 expedientes, 4.000 plazos, 6.000 partes de horas)
     "/clientes/", "/clientes/?q=garcia", "/clientes/?pagina=40", "/clientes/{ncliente}", "/expedientes/", "/expedientes/?q=asunto+12", "/expedientes/{nexp}",
     "/plazos/", "/tiempo/", "/seguridad/privacidad",
+    # contabilidad con volumen (AC4): una gestoría con 60 clientes y varios miles de facturas
+    "/contabilidad/", "/contabilidad/?cliente_id={cfac}", "/contabilidad/?estado=pendiente", "/contabilidad/?cliente_id={cfac}&estado=revisada", "/contabilidad/{nfac}", "/contabilidad/panel-cierre",
+    "/contabilidad/cola", "/contabilidad/calidad", "/contabilidad/lotes", "/contabilidad/justificantes", "/contabilidad/ajustes", "/contabilidad/cliente/{cfac}/terceros", "/contabilidad/cliente/{cfac}/reglas",
     "/proyecto/{proyecto}", "/proyecto/{proyecto}/lista", "/proyecto/{proyecto}/tablero", "/proyecto/{proyecto}/calendario",
     "/proyecto/{proyecto}/notas", "/proyecto/{proyecto}/actividad", "/correo/cuentas",
 ]
@@ -77,10 +80,15 @@ def sembrar(db, tmp: Path, n_correos: int):
     conn.close()
     _sembrar_nucleo(db, t, us)
     _sembrar_fiscal(db, t, us[0], cf)
+    _sembrar_contabilidad(db, t, us[0], FACTURAS)
     return cuentas[0], cats[0]
 
 
 NUCLEO = {}
+# el portal del cliente (una persona entra con su enlace y ve SUS facturas: unas 100 de las 6.000)
+PORTAL = ["/portal/", "/portal/facturas", "/portal/facturas/{pfac}", "/portal/justificantes", "/portal/extracto", "/portal/mensajes", "/portal/impuestos", "/portal/avisos", "/portal/documentos",
+          "/portal/gestiones", "/portal/carpeta", "/portal/actividad"]
+FACTURAS = 6000
 
 
 def _sembrar_fiscal(db, t, yo, cf):
@@ -110,6 +118,34 @@ def _sembrar_fiscal(db, t, yo, cf):
     NUCLEO.update(fiscal_cliente=cf[len(cf) // 2])
 
 
+def _sembrar_contabilidad(db, t, yo, n_facturas):
+    """Facturas para contabilizar: 60 clientes con la configuración de a3, `n_facturas` repartidas, de proveedores repetidos (como en la vida real), en todos los estados."""
+    from app import facturas_contables as fc, verticales
+    from app.db_fiscal import crear_cliente_fiscal
+    verticales.fijar_activo(t, "contabilizacion", True)
+    db.asignar_supervisor_tenant(yo, True)
+    clientes = [crear_cliente_fiscal(t, f"Empresa conta {i} S.L.", nif=f"B{1000000 + i}{'A'}", email=f"titular{i}@cli.com") for i in range(60)]
+    for c in clientes:
+        fc.guardar_configuracion(t, yo, c, {"a3_empresa": str(10 + c % 80), "digitos": "8"})
+    ultimo = None
+    for i in range(n_facturas):
+        c = clientes[i % len(clientes)]
+        d = {"tipo": "recibida" if i % 5 else "emitida", "fecha": f"2026-{1 + i % 9:02d}-{1 + i % 27:02d}", "numero": f"F-{i}", "tercero_nombre": f"Proveedor {i % 150}",
+             "tercero_nif": f"A{5000000 + i % 150}0", "concepto": "Servicios profesionales"}
+        try:
+            ultimo = fc.crear(t, yo, c, d, [{"base": f"{100 + i % 900},00", "pct_iva": "21"}])
+        except ValueError:
+            continue
+        if c == clientes[len(clientes) // 2]:
+            NUCLEO["pfac"] = ultimo
+        if i % 3 == 0:
+            try:
+                fc.cambiar_estado(t, yo, ultimo, "revisada")
+            except ValueError:
+                pass
+    NUCLEO.update(cfac=clientes[len(clientes) // 2], nfac=ultimo, pemail=f"titular{len(clientes) // 2}@cli.com")
+
+
 def _sembrar_nucleo(db, t, us):
     """Despacho grande del núcleo común: ver la lista de pantallas. Se hace por la API del núcleo (con sus comprobaciones), no con SQL a mano."""
     from app import nucleo
@@ -130,9 +166,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--correos", type=int, default=10000, help="correos por cuenta (3 cuentas)")
     parser.add_argument("--repeticiones", type=int, default=3)
+    parser.add_argument("--facturas", type=int, default=6000, help="facturas para contabilizar (60 clientes)")
     parser.add_argument("--cprofile", metavar="RUTA", help="perfil de Python (funciones más costosas) de UNA pantalla, p. ej. /tareas/hoy")
     parser.add_argument("--detalle", action="store_true", help="muestra también las consultas más lentas de cada pantalla")
     args = parser.parse_args()
+    global FACTURAS
+    FACTURAS = args.facturas
 
     tmp = Path(tempfile.mkdtemp(prefix="guilda-perfil-"))
     try:
@@ -182,26 +221,34 @@ def main() -> int:
             pstats.Stats(perfil).sort_stats("tottime").print_stats(14)
             return 0
 
+        def pasada(http, rutas):
+            for ruta in rutas:
+                medidas = []
+                for _ in range(args.repeticiones + 1):  # la primera calienta cachés
+                    tiempos.clear()
+                    t0 = time.perf_counter()
+                    r = http.get(ruta)
+                    total = (time.perf_counter() - t0) * 1000
+                    n = sum(v[0] for v in tiempos.values())
+                    esc = sum(v[0] for k, v in tiempos.items() if k.split(" ", 1)[0].upper() in ("INSERT", "UPDATE", "DELETE"))
+                    medidas.append((total, sum(v[1] for v in tiempos.values()), n, esc, len(r.data) // 1024, r.status_code))
+                medidas = medidas[1:]
+                ms = statistics.median(m[0] for m in medidas)
+                sql = statistics.median(m[1] for m in medidas)
+                ult = medidas[-1]
+                marca = "" if ult[5] == 200 else f"  HTTP {ult[5]}"
+                print(f"{ruta[:50]:50s} {ms:5.0f} {sql:7.0f} {ult[2]:9d} {ult[3]:10d} {ult[4]:5d}{marca}")
+                if args.detalle:
+                    for k, (veces, t) in sorted(tiempos.items(), key=lambda kv: -kv[1][1])[:4]:
+                        print(f"      {t:6.1f} ms {veces}x {k}")
+
         print(f"{'pantalla':50s} {'ms':>5s} {'SQL ms':>7s} {'consultas':>9s} {'escrituras':>10s} {'KB':>5s}")
-        for ruta in [p.format(cuenta=cuenta, proyecto=proyecto, **NUCLEO) for p in PANTALLAS]:
-            medidas = []
-            for _ in range(args.repeticiones + 1):  # la primera calienta cachés
-                tiempos.clear()
-                t0 = time.perf_counter()
-                r = cli.get(ruta)
-                total = (time.perf_counter() - t0) * 1000
-                n = sum(v[0] for v in tiempos.values())
-                esc = sum(v[0] for k, v in tiempos.items() if k.split(" ", 1)[0].upper() in ("INSERT", "UPDATE", "DELETE"))
-                medidas.append((total, sum(v[1] for v in tiempos.values()), n, esc, len(r.data) // 1024, r.status_code))
-            medidas = medidas[1:]
-            ms = statistics.median(m[0] for m in medidas)
-            sql = statistics.median(m[1] for m in medidas)
-            ult = medidas[-1]
-            marca = "" if ult[5] == 200 else f"  HTTP {ult[5]}"
-            print(f"{ruta[:50]:50s} {ms:5.0f} {sql:7.0f} {ult[2]:9d} {ult[3]:10d} {ult[4]:5d}{marca}")
-            if args.detalle:
-                for k, (veces, t) in sorted(tiempos.items(), key=lambda kv: -kv[1][1])[:4]:
-                    print(f"      {t:6.1f} ms {veces}x {k}")
+        pasada(cli, [p.format(cuenta=cuenta, proyecto=proyecto, **NUCLEO) for p in PANTALLAS])
+        portal = app.test_client()
+        token = db.crear_acceso_cliente_fiscal(NUCLEO["cfac"], "127.0.0.1", email=NUCLEO["pemail"])
+        r = portal.get(f"/portal/entrar/{token}")
+        print("(portal: entrada", r.status_code, ")")
+        pasada(portal, [p.format(**NUCLEO) for p in PORTAL])
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     return 0

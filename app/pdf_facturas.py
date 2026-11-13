@@ -20,6 +20,10 @@ def numero_de_paginas(contenido: bytes) -> int | None:
         return None
 
 
+def _sin_nulos(texto: str) -> str:
+    return texto.replace("\x00", " ")
+
+
 def texto_de_paginas(contenido: bytes) -> list[str] | None:
     """El texto de cada página (la lista tiene una entrada por página, vacía si esa página no tiene capa de texto), o None si el PDF no se puede leer."""
     try:
@@ -27,7 +31,7 @@ def texto_de_paginas(contenido: bytes) -> list[str] | None:
         lector = PdfReader(io.BytesIO(contenido))
         if lector.is_encrypted:
             return None
-        return [(p.extract_text() or "") for p in lector.pages[:MAX_PAGINAS * 4]]
+        return [_sin_nulos(p.extract_text() or "") for p in lector.pages[:MAX_PAGINAS * 4]]     # (algunos PDF escriben el espacio como carácter NUL, que PostgreSQL no admite en un texto)
     except Exception:  # noqa: BLE001
         return None
 

@@ -27917,3 +27917,6 @@ msgstr "The invoice could not be read: %(error)s"
 
 msgid "Leyendo la factura con IA en segundo plano; esta página se actualizará sola cuando termine."
 msgstr "Reading the invoice with AI in the background; this page will refresh by itself when it finishes."
+
+msgid "El proveedor de IA ha limitado las consultas (cupo o saldo): la lectura sigue sola a partir de las %(hora)s."
+msgstr "The AI provider has limited requests (quota or balance): reading will resume on its own from %(hora)s."

@@ -16,6 +16,7 @@ excepción dura de enviar_borrador_correo (envío real de correo, acción
 externa irreversible), que siempre pide confirmación pase lo que pase.
 """
 import json
+import re
 import logging
 import time
 from datetime import datetime
@@ -721,6 +722,9 @@ def completar_texto(usuario_id: int, sistema: str, contenido: str) -> str:
         raise ErrorIA(f"Respuesta inesperada de OpenRouter: {respuesta}") from e
 
 
+MAX_TOKENS_LECTURA = 8000          # tope solo si hace falta: sin él, un modelo de pago reserva su máximo (64.000) y OpenRouter rechaza con 402 si el saldo no lo cubre. Un tope fijo desde el principio deja sin respuesta a los modelos que razonan (los tokens de razonamiento también cuentan)
+
+
 def completar_partes(usuario_id: int, sistema: str, partes: list[dict], timeout: int = 90, tarea: str = "facturas") -> str:
     """Como `completar_texto`, pero el mensaje del usuario puede llevar imágenes o PDF (partes `text`, `image_url` o `file` en el formato de OpenRouter). Usa la clave y el modelo del
     usuario, que debe ser un modelo capaz de leer imágenes. Cuenta una consulta en el consumo del despacho."""
@@ -729,7 +733,16 @@ def completar_partes(usuario_id: int, sistema: str, partes: list[dict], timeout:
         raise _sin_candidatos(usuario_id)
     _reservar_uso(usuario_id)
     sp, enviados = _envio_protegido(usuario_id, [{"role": "system", "content": sistema}, {"role": "user", "content": partes}])   # las imágenes y PDF no se pueden proteger: solo las partes de texto
-    respuesta = _llamar(usuario_id, tarea, {"temperature": 0, "messages": enviados}, timeout, cands=cands)
+    try:
+        respuesta = _llamar(usuario_id, tarea, {"temperature": 0, "messages": enviados}, timeout, cands=cands)
+    except ErrorIA as e:
+        if getattr(e, "codigo_http", None) != 402 or "max_tokens" not in str(e):
+            raise
+        cabe = re.search(r"can only afford (\d+)", str(e))
+        tope = min(MAX_TOKENS_LECTURA, int(cabe.group(1)) - 200) if cabe else MAX_TOKENS_LECTURA
+        if tope < 1500:
+            raise
+        respuesta = _llamar(usuario_id, tarea, {"temperature": 0, "max_tokens": tope, "messages": enviados}, timeout, cands=cands)     # saldo corto: se pide solo lo que cabe
     try:
         return (sp.restaurar(respuesta["choices"][0]["message"].get("content")) or "").strip()
     except (KeyError, IndexError, AttributeError, TypeError) as e:

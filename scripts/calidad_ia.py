@@ -28,7 +28,7 @@ def main() -> int:
     with ia_asistente.sin_consumo():
         r_asistente = evals_asistente.ejecutar(evals_asistente.cargar_casos(), evals_asistente.elegir_con_ia(a.usuario))
         r_facturas = evals_facturas.ejecutar(evals_facturas.cargar_casos(), evals_facturas.leer_con_ia(a.usuario))
-    estado = calidad_ia.resumir(r_asistente, r_facturas, _json(EVALS / "base_asistente.json"), _json(EVALS / "base_nvidia-nemotron-free_2026-11-11.json"), modelo)
+    estado = calidad_ia.resumir(r_asistente, r_facturas, _json(EVALS / "base_asistente.json"), _json(EVALS / "base_facturas.json"), modelo)
     estado = calidad_ia.con_historial(estado, _json(Path(a.salida)))
     Path(a.salida).parent.mkdir(parents=True, exist_ok=True)
     Path(a.salida).write_text(json.dumps(estado, ensure_ascii=False, indent=1), encoding="utf-8")

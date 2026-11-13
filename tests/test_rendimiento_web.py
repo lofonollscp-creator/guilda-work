@@ -84,6 +84,7 @@ def test_la_fila_de_salud_pasa_de_verde_a_rojo(tmp_path, monkeypatch):
 
 
 def test_leer_con_ia_desde_la_ficha_va_a_la_cola_y_no_retiene_la_peticion(cliente, modelo, monkeypatch):
+    tr._pausas.clear()
     uid, t, c = _web(cliente, "rend1@ejemplo.com")
     from app import facturas_contables as fc
     monkeypatch.setattr(lf, "configurada", lambda x: True)
@@ -111,3 +112,26 @@ def test_encolar_despierta_a_los_trabajadores_dormidos():
     tr.encolar(t, u, "prueba_despertar", [1])
     hilo.join(3)
     assert despertado == [True]
+
+
+def test_la_lista_de_facturas_no_trae_las_columnas_pesadas_y_cubre_el_resto():
+    from app import facturas_contables as fc
+    conn = db.get_connection()
+    try:
+        todas = {r["name"] for r in conn.execute("PRAGMA table_info(facturas_contables)")}
+    finally:
+        conn.close()
+    usadas = {c.split(".")[1] for c in fc.COLUMNAS_LISTA.split(", ")}
+    assert todas - usadas == set(fc._COLUMNAS_PESADAS), "si se añade una columna a la tabla, hay que añadirla también a COLUMNAS_LISTA"
+
+
+def test_periodos_cerrados_de_varios_da_lo_mismo_que_uno_a_uno():
+    from app import facturas_contables as fc
+    t, u, c = _despacho()
+    c2 = __import__("app.db_fiscal", fromlist=["crear_cliente_fiscal"]).crear_cliente_fiscal(t, "Otra S.L.", nif="B87654321")
+    fc.cerrar_periodo(t, u, c, "2026-T1")
+    pedido = {c: {"2026-T1", "2026-T2"}, c2: {"2026-T1"}}
+    varios = fc.periodos_cerrados_de_varios(t, pedido)
+    for cid, ts in pedido.items():
+        assert varios.get(cid, {}) == fc.periodos_cerrados(t, cid, ts)
+    assert fc.periodos_cerrados_de_varios(t, {}) == {}

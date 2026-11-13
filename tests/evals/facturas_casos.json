@@ -1,5 +1,5 @@
 {
- "descripcion": "Casos sintéticos (sin datos reales) para medir el acierto de la lectura de facturas por campo. NIF y cifras inventados.",
+ "descripcion": "Casos sintéticos (sin datos reales) para medir el acierto de la lectura de facturas por campo. NIF y cifras inventados. Los cuatro casos «real_*» salen de facturas reales con nombres, NIF, direcciones, IBAN y correos sustituidos por inventados.",
  "casos": [
   {
    "id": "simple_21",
@@ -242,6 +242,84 @@
      }
     ],
     "es_abono": false
+   }
+  },
+  {
+   "id": "real_emitida_con_irpf",
+   "texto": "Factura\nNúmero 2026 0008\nFecha 16-10-2026\nDocumento emitido por:\nMARTA SOLER VIDAL\n12345678Z\nCARRER DEL MOLÍ, 7\n25500 LA SEU D'URGELL (ALT URGELL)\nLleida\nSERVEIS DEL PLA, S.L.\nB77123453\nCARRER DE LA FONT\nNÚM. 21\n08301 MATARÓ (Barcelona)\nConcepto Cantidad Precio Total\nGESTIÓN CERTIFICADOS-KD EN SEPTIEMBRE 1 734,55 734,55\nSubtotal 734,55\nIVA 21% (Base: 734,55) 154,26\nIRPF 15% (Base: 734,55) -110,18\nTotal (EUR) 778,63€\nVencimiento Método de pago\n16-10-2026 ES91 2100 0418 4502 0005 1332\nEsta factura ha sido generada desde facturadirecta.com",
+   "esperado": {
+    "numero": "2026 0008",
+    "fecha": "2026-10-16",
+    "emisor_nif": "12345678Z",
+    "receptor_nif": "B77123453",
+    "total": 778.63,
+    "es_abono": false,
+    "lineas": [
+     {
+      "base": 734.55,
+      "pct_iva": 21,
+      "cuota_iva": 154.26,
+      "pct_retencion": 15
+     }
+    ]
+   }
+  },
+  {
+   "id": "real_proforma_con_irpf",
+   "texto": "Factura Proforma\nNúmero 0008\nFecha 16-10-2026\nDocumento emitido por:\nMARTA SOLER VIDAL\n12345678Z\nCARRER DEL MOLÍ, 7\n25500 LA SEU D'URGELL (ALT URGELL)\nLleida\nSERVEIS DEL PLA, S.L.\nB77123453\nCARRER DE LA FONT\nNÚM. 21\n08301 MATARÓ (Barcelona)\nEspaña\nConcepto Cantidad Precio Total\nMARTA 1 450,00 450,00\nAUTÓNOMO 2 110,00 220,00\nCERTIFICADOS-KD 10/09/2026 16:00 - 17:00\nTras los nuevos problemas planteados por Laia por el la web, se ha\nvuelto a hacer una importación.\n1 24,55 24,55\nINFORMÁTICA 26/10/2026 21:00-22:00\nArreglar correos electrónicos, conexión con IONOS.\n1 40,00 40,00\nSubtotal 734,55\nIVA 21% (Base: 734,55) 154,26\nIRPF 15% (Base: 734,55) -110,18\nTotal (EUR) 778,63€\nVálido hasta Método de pago\n14-01-2027 ES91 2100 0418 4502 0005 1332\nEsta factura proforma ha sido generada desde facturadirecta.com",
+   "esperado": {
+    "numero": "0008",
+    "fecha": "2026-10-16",
+    "emisor_nif": "12345678Z",
+    "receptor_nif": "B77123453",
+    "total": 778.63,
+    "es_abono": false,
+    "lineas": [
+     {
+      "base": 734.55,
+      "pct_iva": 21,
+      "cuota_iva": 154.26,
+      "pct_retencion": 15
+     }
+    ]
+   }
+  },
+  {
+   "id": "real_recibida_proveedor_espanol",
+   "texto": "IONOS Cloud S.L.U. · Avenida de La Vega, 1\nEdiﬁcio Veganova · 28108 Alcobendas (Madrid)\nASSESSORS DEL RIU SL\nMarta Soler Vidal\nCamí del Riu 4\n25600 Balaguer\nESPAÑA\nIONOS Cloud S.L.U.\nAvenida de La Vega, 1\nEdiﬁcio Veganova (Ediﬁcio 3, 5º-C)\n28108 Alcobendas (Madrid)\nN.° de factura: 202786130350\nFecha de facturación: 13/04/26\nID de cliente: 300000001\nN.° de contrato: 100000002\nNIF/CIF: B86543212\nConsultas: www.ionos.es/ayuda\nMy IONOS: my.ionos.es/invoices\nTeléfono: 91 136 0000\nHorario de atención al cliente: 24/7\nPor favor, tenga a mano su PIN telefónico para \nautentiﬁcarse de una forma rápida y segura cuando desee \ncontactar con el departamento de soporte. Puede generar y \nadministrar su PIN telefónico desde .my.ionos.es\nIONOS Cloud S.L.U., NIF B-85049435, Madre de Dios nº 21, 26004-Logroño (La Rioja) Spain, Inscrita en el Registro Mercantil de La Rioja,\nTomo y Folio electrónico, Hoja LO-21627,\nCommerzbank Frankfurt, IBAN: DE93500400000589486002 Página 1 de 1\nFactura\nInicio de facturación: 12/04/26\nCon. Servicios facturados Tarifa Cantidad Importe (EUR) IVA\nContrato: 100000002 - WordPress Hosting Expand\nCuota (10,00 EUR)\n1 Cuota mensual 10.00 EUR al mes 1 m. 10,00 21,0 %\n12.04.2026-11.05.2026\nServicios adicionales (0,00 EUR)\n2 IONOS BeyondSEO 0.00 EUR al mes 1 m. 0,00 21,0 %\n28.03.2026-27.04.2026\nTotal (base imponible) 10,00 EUR\n+ IVA (21,0 %) 2,10 EUR\nTotal a pagar 12,10 EUR\nEl importe total a pagar será cargado en su tarjeta de crédito durante los próximos siete días. Gracias.\n¿Tiene dudas o preguntas sobre esta factura?\nEncontrará información adicional en  o en nuestro .my.ionos.es Centro de Ayuda\n",
+   "esperado": {
+    "numero": "202786130350",
+    "fecha": "2026-04-13",
+    "emisor_nif": "B85049435",
+    "receptor_nif": "B86543212",
+    "total": 12.1,
+    "es_abono": false,
+    "lineas": [
+     {
+      "base": 10.0,
+      "pct_iva": 21,
+      "cuota_iva": 2.1
+     }
+    ]
+   }
+  },
+  {
+   "id": "real_recibida_extranjera_inversion",
+   "texto": " \nPage 1 of 1\nInvoice\nInvoice number HGBVOBQK 0003\nDate of issue August 1, 2026\nDate due August 1, 2026\nVAT Registration EU VAT  IE4276970QH\nAnthropic, PBC @anthropic\n548 Market Street\nPMB 90375\nSan Francisco, California 94104\nUnited States\nsupport@anthropic.com\nBill to\nASSESSORS DEL RIU SL\nCAMÍ DEL RIU, 4\n25600 BALAGUER Lérida\nSpain\nadmin@assessorsdelriu.example\nES VAT ESB86543212\n€18.00 due August 1, 2026\nPay online\nWhile we prefer electronic payment methods,  \nany checks must be sent to the address below, NOT to our San Francisco office. \n---------------------------- \nPAYMENT ADDRESS  \nAnthropic, PBC \nP.O. Box 104477 \nPasadena, CA 91189 4477\nDescription Qty Unit price Tax Amount\nClaude Pro\nAug 1 Sep 1, 2026\n1 €18.00 0% €18.00\n \nSubtotal €18.00\nTotal €18.00\nAmount due €18.00\n 1  Tax to be paid on reverse charge basis\n \n 1 ",
+   "esperado": {
+    "numero": "HGBVOBQK 0003",
+    "fecha": "2026-08-01",
+    "emisor_nif": "IE4276970QH",
+    "receptor_nif": "B86543212",
+    "total": 18.0,
+    "es_abono": false,
+    "lineas": [
+     {
+      "base": 18.0,
+      "pct_iva": 0,
+      "cuota_iva": 0.0
+     }
+    ]
    }
   }
  ]

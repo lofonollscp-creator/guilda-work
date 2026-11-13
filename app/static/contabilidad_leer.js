@@ -20,7 +20,7 @@
           estado.textContent = texto("fin", { hechas: p.hechas, errores: p.errores });
           setTimeout(function () { window.location.reload(); }, p.errores ? 3500 : 900);
         } else {
-          estado.textContent = texto("en-marcha", { hechas: p.hechas + p.errores, total: p.total });
+          estado.textContent = p.pausa_hasta ? texto("pausa", { hora: p.pausa_hasta.slice(11, 16) }) : texto("en-marcha", { hechas: p.hechas + p.errores, total: p.total });
           setTimeout(function () { seguir(lote); }, 2000);
         }
       })
